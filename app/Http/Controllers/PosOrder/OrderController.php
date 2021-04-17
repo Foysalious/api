@@ -31,7 +31,17 @@ class OrderController extends Controller
             ->store();
         return http_response($request, null, 200, $response);
 
+    }
 
+    public function updateStatus(Request $request)
+    {
+        $partner = $request->auth_user->getPartner();
+        $response = $this->orderService
+            ->setPartnerId($partner->id)
+            ->setOrderId($request->order)
+            ->setStatus($request->status)
+            ->updateStatus();
+        return http_response($request, null, 200, $response);
     }
 
 }

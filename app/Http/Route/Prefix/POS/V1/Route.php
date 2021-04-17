@@ -15,8 +15,7 @@ class Route
 
    $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers', 'middleware' => ['accessToken']], function ($api) {
       
-
-            $api->group(['prefix' => 'collections'], function ($api) {
+        $api->group(['prefix' => 'collections'], function ($api) {
                 $api->get('/', 'Inventory\CollectionController@index');
                 $api->post('/', 'Inventory\CollectionController@store');
                 $api->get('/{collection}', 'Inventory\CollectionController@show');
@@ -79,9 +78,10 @@ class Route
 
             $api->group(['prefix' => 'orders'], function ($api) {
                 $api->post('/', 'PosOrder\OrderController@store');
+                $api->group(['prefix' => '{order}'], function ($api) {
+                    $api->post('/update-status', 'PosOrder\OrderController@updateStatus');
+                });
             });
-
-
         });
         $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
             $api->post('test-migrate', 'Partner\DataMigrationController@testMigration');

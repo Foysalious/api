@@ -14,6 +14,7 @@ class OrderService
     private $salesChannelId;
     private $deliveryCharge;
     private $status;
+    private $orderId;
 
     public function __construct(PosOrderServerClient $client)
     {
@@ -23,6 +24,12 @@ class OrderService
     public function setPartnerId($partnerId)
     {
         $this->partnerId = $partnerId;
+        return $this;
+    }
+
+    public function setOrderId($orderId)
+    {
+        $this->orderId = $orderId;
         return $this;
     }
 
@@ -60,6 +67,14 @@ class OrderService
     {
         $data = $this->makeCreateData();
         return $this->client->post('api/v1/partners/'.$this->partnerId.'/orders', $data, true);
+    }
+
+    public function updateStatus()
+    {
+        $data = [
+            ['name' => 'status','contents' => $this->status]
+        ];
+        return $this->client->post('api/v1/partners/'.$this->partnerId.'/orders/'.$this->orderId.'/update-status', $data, true);
     }
 
     private function makeCreateData()
