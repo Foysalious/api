@@ -33,9 +33,8 @@ use Factory\CategoryPartnerFactory;
 use Factory\BusinessFactory;
 use Factory\BusinessMemberFactory;
 use Factory\BusinessHolidayFactory;
-=======
 use Factory\CategoryLocationFactory;
->>>>>>> tests/mx-orde-journey
+
 
 
 $factory_classes = [

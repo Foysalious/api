@@ -229,7 +229,7 @@ class CategoryTreeTest extends FeatureTestCase
 
         $response = $this->get("v3/categories/tree?location_id=" . $this->location->id);
         $data = $response->decodeResponseJson();
-        dd($data);
+        //dd($data);
         //dd($data);
     }
 
