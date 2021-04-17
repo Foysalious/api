@@ -76,6 +76,12 @@ class Route
                 });
             });
             $api->post('migrate', 'Partner\DataMigrationController@migrate');
+
+            $api->group(['prefix' => 'orders'], function ($api) {
+                $api->post('/', 'PosOrder\OrderController@store');
+            });
+
+
         });
         $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
             $api->post('test-migrate', 'Partner\DataMigrationController@testMigration');
