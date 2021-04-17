@@ -774,7 +774,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
                 'otf_name_en' => isset($topup_otfs[$topup->otf_id]) ? $topup_otfs[$topup->otf_id]['name_en'] : "",
                 'otf_name_bn' => isset($topup_otfs[$topup->otf_id]) ? $topup_otfs[$topup->otf_id]['name_bn'] : "",
                 'created_at' => $topup->created_at->format('jS M, Y h:i A'),
-                'created_at_raw' => $topup->created_at->format('Y-m-d h:i:s')
+                'created_at_raw' => $topup->created_at->format('Y-m-d H:i:s')
             ];
             array_push($topup_data, $topup);
         }
