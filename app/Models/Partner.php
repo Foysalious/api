@@ -1,21 +1,16 @@
 <?php namespace App\Models;
 
-use AlgoliaSearch\Laravel\AlgoliaEloquentTrait;
-use App\Models\CanTopUpUpdateLog;
 use App\Models\Transport\TransportTicketOrder;
 use App\Sheba\Payment\Rechargable;
 use Carbon\Carbon;
 use DB;
-use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Sheba\Business\Bid\Bidder;
 use Sheba\Checkout\CommissionCalculator;
-use Sheba\Dal\ArtisanLeave\ArtisanLeave;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\Complain\Model as Complain;
-use Sheba\Dal\Partner\Events\PartnerSaved;
-use Sheba\Dal\TradeFair\Model as TradeFair;
 use Sheba\Dal\PartnerBankInformation\Purposes;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
@@ -55,7 +50,7 @@ use Sheba\Dal\PartnerNeoBankingAccount\Model as PartnerNeoBankingAccount;
 
 class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent, Rechargable, Bidder, HasWalletTransaction, HasReferrals, PayableUser
 {
-    use Wallet, TopUpTrait, MovieTicketTrait,AlgoliaEloquentTrait;
+    use Wallet, TopUpTrait, MovieTicketTrait;
 
     public $totalCreditForSubscription;
     public $totalPriceRequiredForSubscription;
@@ -133,17 +128,6 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     ];
     private $resourceTypes;
 
-    public static $savedEventClass = PartnerSaved::class;
-    public static $autoIndex = false;
-
-    public $algoliaSettings = [
-        'searchableAttributes' => [
-            'name',
-            'business_type',
-            'description',
-        ]
-    ];
-
     public function __construct($attributes = [])
     {
         parent::__construct($attributes);
@@ -153,10 +137,6 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function basicInformations()
     {
         return $this->hasOne(PartnerBasicInformation::class);
-    }
-    public function topupChangeLogs()
-    {
-        return $this->hasMany(CanTopUpUpdateLog::class);
     }
 
     public function financeResources()
@@ -257,14 +237,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function commission($service_id)
     {
         $service_category = Service::find($service_id)->category;
-        $commissions = (new CommissionCalculator())->setCategory($service_category)->setPartner($this);
-        return $commissions->getServiceCommission();
-    }
-
-    public function categoryCommission($category_id)
-    {
-        $category = Category::find($category_id);
-        $commissions = (new CommissionCalculator())->setCategory($category)->setPartner($this);
+        $commissions      = (new CommissionCalculator())->setCategory($service_category)->setPartner($this);
         return $commissions->getServiceCommission();
     }
 
@@ -296,8 +269,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function leaves()
     {
-        Relation::morphMap(['partner' => 'App\Models\Partner']);
-        return $this->morphMany(ArtisanLeave::class, 'artisan');
+        return $this->hasMany(PartnerLeave::class);
     }
 
     public function shebaCredit()
@@ -313,11 +285,6 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function bonuses()
     {
         return $this->morphMany(Bonus::class, 'user');
-    }
-
-    public function retailers()
-    {
-        return $this->getContactResource()->retailers();
     }
 
     public function hasLeave($date)
@@ -502,7 +469,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function resourcesInCategory($category)
     {
-        $category = $category instanceof Category ? $category->id : $category;
+        $category             = $category instanceof Category ? $category->id : $category;
         $partner_resource_ids = [];
         $this->handymanResources()->verified()->get()->map(function ($resource) use (&$partner_resource_ids) {
             $partner_resource_ids[$resource->pivot->id] = $resource;
@@ -526,7 +493,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function hasAppropriateCreditLimit()
     {
-        return (double)$this->wallet >= ($this->walletSetting ? (double)$this->walletSetting->min_wallet_threshold : constants('PARTNER_DEFAULT_SECURITY_MONEY'));
+        return (double)$this->wallet >= (double)$this->walletSetting->min_wallet_threshold;
     }
 
     public function bankInfos()
@@ -551,7 +518,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function neoBankInfo()
     {
-        return $this->hasOne(PartnerNeoBankingInfo::class, 'partner_id', 'id');
+        return $this->hasOne(PartnerNeoBankingInfo::class,'partner_id','id');
     }
 
     public function affiliation()
@@ -607,8 +574,8 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function subscribe($package, $billing_type)
     {
-        $package = $package ? (($package) instanceof PartnerSubscriptionPackage ? $package : PartnerSubscriptionPackage::find($package)) : $this->subscription;
-        $discount = $package->runningDiscount($billing_type);
+        $package     = $package ? (($package) instanceof PartnerSubscriptionPackage ? $package : PartnerSubscriptionPackage::find($package)) : $this->subscription;
+        $discount    = $package->runningDiscount($billing_type);
         $discount_id = $discount ? $discount->id : null;
         $this->subscriber()->getPackage($package)->subscribe($billing_type, $discount_id);
     }
@@ -640,6 +607,11 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         $this->subscriber()->getBilling()->runSubscriptionBilling();
     }
 
+
+    public function retailers()
+    {
+        return $this->getFirstAdminResource()->retailers();
+    }
 
     public function movieTicketOrders()
     {
@@ -777,9 +749,9 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function hasCoverageOn(Coords $coords)
     {
-        $geo = json_decode($this->geo_informations);
+        $geo           = json_decode($this->geo_informations);
         $partner_coord = new Coords(floatval($geo->lat), floatval($geo->lng));
-        $distance = (new Distance(DistanceStrategy::$VINCENTY))->linear();
+        $distance      = (new Distance(DistanceStrategy::$VINCENTY))->linear();
         return $distance->to($coords)->from($partner_coord)->isWithin($geo->radius * 1000);
     }
 
@@ -918,14 +890,14 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     /**
      * @param PartnerSubscriptionPackage $package
      * @param                            $billingType
-     * @param int $billingCycle
+     * @param int                        $billingCycle
      * @return bool
      * @throws InvalidPreviousSubscriptionRules
      */
     public function hasCreditForSubscription(PartnerSubscriptionPackage $package, $billingType, $billingCycle = 1)
     {
         $this->totalPriceRequiredForSubscription = $package->originalPrice($billingType) - (double)$package->discountPrice($billingType, $billingCycle);
-        $this->totalCreditForSubscription = $this->getTotalCreditExistsForSubscription();
+        $this->totalCreditForSubscription        = $this->getTotalCreditExistsForSubscription();
         return $this->totalCreditForSubscription >= $this->totalPriceRequiredForSubscription;
     }
 
@@ -1045,11 +1017,11 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->id == config('sheba.mission_save_bangladesh_partner_id');
     }
 
-
     public function canTopup()
     {
         return $this->can_topup == 1;
     }
+
     public function posCategories()
     {
         return $this->hasMany(PartnerPosCategory::class);
@@ -1061,37 +1033,9 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->hasOne(PartnerWebstoreBanner::class);
     }
 
-    public function tradeFair()
+    public function topupChangeLogs()
     {
-        return $this->hasOne(TradeFair::class,'partner_id');
-    }
-
-    public function getAlgoliaRecord()
-    {
-        $business_types = constants('PARTNER_BUSINESS_TYPE');
-        $converted_business_types = [];
-        foreach ($business_types as $business_type) {
-            $converted_business_types[$business_type['bn']] = $business_type['en'];
-        }
-
-        $this->load([
-            'categories' => function ($q) {
-                $q->wherePivot('is_verified', 1);
-            }
-        ]);
-
-        $master_cat_names = Category::select('name')->whereIn('id', $this->categories->pluck('parent_id')->unique()->toArray())->get()->pluck('name')->toArray();
-
-        return [
-            'id' => $this->id,
-            'name' => $this->name,
-            'slug' => $this->sub_domain,
-            'logo' => $this->logo,
-            'categories' => $master_cat_names,
-            'business_type' => $converted_business_types[$this->business_type],
-            'description' => $this->tradeFair ? $this->tradeFair->description :null,
-            'in_trade_fair' => $this->tradeFair ? 1 :0,
-        ];
+        return $this->hasMany(CanTopUpUpdateLog::class);
     }
     public function isMigrationCompleted()
     {
