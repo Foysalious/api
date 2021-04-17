@@ -1,5 +1,7 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Sheba\Business\PayrollComponent\Components\GrossComponents\Creator;
+use App\Sheba\Business\PayrollComponent\Components\GrossComponents\Updater;
 use Sheba\Business\PayrollSetting\Requester as PayrollSettingRequester;
 use Sheba\Business\PayrollSetting\Updater as PayrollSettingUpdater;
 use Sheba\Business\PayrollComponent\Updater as PayrollComponentUpdater;
@@ -159,6 +161,28 @@ class PayrollController extends Controller
         if (!$gross_component) return api_response($request, null, 404);
         if ($gross_component->is_default) return api_response($request, null, 420);
         $gross_component->delete();
+
+        return api_response($request, null, 200);
+    }
+
+    public function grossComponentAddUpdate($business, $payroll_setting, Request $request, Creator $creator, Updater $updater)
+    {
+        $this->validate($request, [
+            'added_data' => 'required',
+            'updated_data' => 'required',
+        ]);
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
+
+        $this->setModifier($business_member->member);
+
+        $payroll_setting = $this->payrollSettingRepository->find((int)$payroll_setting);
+        if (!$payroll_setting) return api_response($request, null, 404);
+
+        $this->payrollComponentRequester->setSetting($payroll_setting)->setGrossComponentAdd($request->added_data)->setGrossComponentUpdate($request->updated_data);
+        $creator->setPayrollComponentRequester($this->payrollComponentRequester)->create();
+        $updater->setPayrollComponentRequester($this->payrollComponentRequester)->Update();
 
         return api_response($request, null, 200);
     }
