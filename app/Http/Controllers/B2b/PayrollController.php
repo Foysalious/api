@@ -167,10 +167,6 @@ class PayrollController extends Controller
 
     public function grossComponentAddUpdate($business, $payroll_setting, Request $request, Creator $creator, Updater $updater)
     {
-        $this->validate($request, [
-            'added_data' => 'required',
-            'updated_data' => 'required',
-        ]);
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
