@@ -15,6 +15,7 @@ class OrderService
     private $deliveryCharge;
     private $status;
     private $orderId;
+    private $skus;
 
     public function __construct(PosOrderServerClient $client)
     {
@@ -63,6 +64,12 @@ class OrderService
         return $this;
     }
 
+    public function setSkus($skus)
+    {
+        $this->skus = $skus;
+        return $this;
+    }
+
     public function store()
     {
         $data = $this->makeCreateData();
@@ -85,7 +92,8 @@ class OrderService
             ['name' => 'delivery_address','contents' => $this->deliveryAddress],
             ['name' => 'delivery_charge','contents' => $this->deliveryCharge],
             ['name' => 'sales_channel_id','contents' => $this->salesChannelId ?: 0],
-            ['name' => 'status','contents' => $this->status ?: 'completed']
+            ['name' => 'status','contents' => $this->status ?: 'completed'],
+            ['name' => 'skus','contents' => $this->skus]
         ];
     }
 
