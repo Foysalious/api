@@ -3,18 +3,15 @@
 use App\Models\Affiliate;
 use App\Models\Business;
 use App\Models\Partner;
-use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Facades\Event;
 use Sheba\Dal\TopUpBlacklistNumber\Contract;
 use Sheba\TopUp\Events\TopUpRequestOfBlockedNumber;
 use Sheba\TopUp\Vendor\Vendor;
 use Sheba\TopUp\Vendor\VendorFactory;
-use Event;
 
 class TopUpRequest
 {
-    const MINIMUM_INTERVAL_BETWEEN_TWO_TOPUP_IN_SECOND = 10;
-
     private $mobile;
     private $amount;
     private $type;
@@ -28,7 +25,6 @@ class TopUpRequest
     private $name;
     private $bulk_id;
     private $isFromRobiTopUpWallet;
-    private $walletType;
     private $topUpBlockNumberRepository;
     /** @var array $blockedAmountByOperator */
     private $blockedAmountByOperator = [];
@@ -191,7 +187,7 @@ class TopUpRequest
         }
 
         if ($this->topUpBlockNumberRepository->findByMobile($this->mobile)) {
-            Event::fire(new TopUpRequestOfBlockedNumber($this));
+            Event::dispatch(new TopUpRequestOfBlockedNumber($this));
             $this->errorMessage = "You can't recharge to a blocked number.";
             return 1;
         }

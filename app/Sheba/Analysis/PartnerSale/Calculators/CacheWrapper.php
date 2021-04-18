@@ -1,6 +1,7 @@
 <?php namespace Sheba\Analysis\PartnerSale\Calculators;
 
 use Cache;
+use Carbon\Carbon;
 use Illuminate\Contracts\Cache\Repository;
 use Sheba\Analysis\PartnerSale\PartnerSale;
 
@@ -27,7 +28,7 @@ class CacheWrapper extends PartnerSale
         $store = Cache::store('redis');
         /** @var Repository $store */
         $cache_name = $this->getCacheName();
-        $store->add($cache_name, $data, 24 * 60);
+        $store->add($cache_name, $data, Carbon::tomorrow());
     }
 
     private function getCacheName()

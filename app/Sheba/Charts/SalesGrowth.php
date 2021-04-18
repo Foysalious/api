@@ -51,10 +51,8 @@ class SalesGrowth
 
     public function getWeekData()
     {
-        Carbon::setWeekStartsAt(Carbon::SATURDAY);
-        Carbon::setWeekEndsAt(Carbon::FRIDAY);
-        $start_time = Carbon::now()->startOfWeek();
-        $end_time = Carbon::now()->endOfWeek();
+        $start_time = Carbon::now()->startOfWeek(Carbon::SATURDAY);
+        $end_time = Carbon::now()->endOfWeek(Carbon::FRIDAY);
         $this->processOrders($data, "day", $start_time, $end_time, $this->location, $this->service, $this->category, $this->resource);
         return $this->_getBreakdown($data);
     }
@@ -80,10 +78,8 @@ class SalesGrowth
                 $this->processOrderWithMonth($data, 'month', $i, $year, $location, $service, $category, $resource);
             }
             return $data;
-//            $data = $this->makeChartDataMonthWise($data);
         } else if ($month && $year) {
             $this->processOrderWithMonth($data, 'day', $month, $year, $location, $service, $category, $resource);
-//            $data = $this->makeChartDataDayWise($data, $month, $year);
             return $this->_getBreakdown($data);
         }
     }
@@ -190,7 +186,7 @@ class SalesGrowth
 
     private function _getBreakdown($data)
     {
-        $breakdown = collect(array_fill(1, Carbon::create($this->year, $this->month, null)->daysInMonth, 0));
+        $breakdown = collect(array_fill(1, Carbon::create($this->year, $this->month)->daysInMonth, 0));
         if (empty($data)) {
             return $breakdown;
         }

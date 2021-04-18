@@ -6,13 +6,6 @@ use Sheba\Helpers\TimeFrame;
 
 class TimeFrameHandler
 {
-    private $reward;
-    public function __construct()
-    {
-        Carbon::setWeekStartsAt(Carbon::SUNDAY);
-        Carbon::setWeekEndsAt(Carbon::SATURDAY);
-    }
-
     public function isValid(Reward $reward)
     {
         if ($reward->detail->timeline_type == constants('CAMPAIGN_REWARD_TIMELINE_TYPE')['Onetime']) {
