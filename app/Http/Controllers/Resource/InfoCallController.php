@@ -10,6 +10,7 @@ use Sheba\Dal\InfoCall\InfoCallRepository;
 use Sheba\Dal\InfoCall\Statuses;
 use Sheba\Dal\InfoCallStatusLogs\InfoCallStatusLogRepository;
 use Sheba\Dal\Service\Service;
+use Sheba\Resource\InfoCalls\InfoCallList;
 use Sheba\ModificationFields;
 use Sheba\OAuth2\AuthUser;
 
@@ -29,13 +30,23 @@ class InfoCallController extends Controller
         $this->infoCallStatusLogRepository = $status_repo;
     }
 
-    public function index(Request $request)
+    public function index(Request $request, InfoCallList $infoCallList)
     {
+        $this->validate($request, [
+            'offset' => 'numeric|min:0', 'limit' => 'numeric|min:1',
+            'month' => 'sometimes|required|integer|between:1,12', 'year' => 'sometimes|required|integer'
+        ]);
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+        if ($request->has('limit')) $info_calls = $infoCallList->setOffset($request->offset)->setLimit($request->limit);
+        if ($request->has('year')) $info_calls = $infoCallList->setYear($request->year);
+        if ($request->has('month')) $info_calls = $infoCallList->setMonth($request->month);
         $auth_user_array = $auth_user->toArray();
         $created_by = $auth_user_array['resource']['id'];
-        $info_call_list = InfoCall::where('created_by', $created_by)->get()->sortByDesc('id')->toArray();
+        $query = InfoCall::where('created_by', $created_by)->where('created_by_type', get_class($resource));
+        $filtered_info_calls = $info_calls->getFilteredInfoCalls($query);
+        $info_call_list = $filtered_info_calls->get()->sortByDesc('id')->toArray();
         $list = [];
         foreach ($info_call_list as $info_call) {
             array_push($list, [
@@ -48,26 +59,35 @@ class InfoCallController extends Controller
         return api_response($request, $list, 200, ['service_request_list' => $list]);
     }
 
-    public function serviceRequestDashboard(Request $request)
+    public function serviceRequestDashboard(Request $request, InfoCallList $infoCallList)
     {
+        $this->validate($request, [
+            'offset' => 'numeric|min:0', 'limit' => 'numeric|min:1',
+            'month' => 'sometimes|required|integer|between:1,12', 'year' => 'sometimes|required|integer'
+        ]);
+
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
         $resource = $auth_user->getResource();
+        if ($request->has('limit')) $info_calls = $infoCallList->setOffset($request->offset)->setLimit($request->limit);
+        if ($request->has('year')) $info_calls = $infoCallList->setYear($request->year);
+        if ($request->has('month')) $info_calls = $infoCallList->setMonth($request->month);
         $auth_user_array = $auth_user->toArray();
         $created_by = $auth_user_array['resource']['id'];
         $data = [
             'total_rewards' => 40000,
             'completed_order' => 77,
         ];
-        $total_service_requests =  InfoCall::where('created_by', $created_by)->where('created_by_type', get_class($resource))->count();
+        $query = InfoCall::where('created_by', $created_by)->where('created_by_type', get_class($resource));
+        $filtered_info_calls = $info_calls->getFilteredInfoCalls($query)->get();
+        $total_service_requests = $filtered_info_calls->count();
         if($total_service_requests) $data['total_service_requests'] = $total_service_requests;
         else $data['total_service_requests'] = 0;
-
-        $total_orders = InfoCall::where('created_by', $created_by)->where('status', Statuses::CONVERTED)->where('created_by_type', get_class($resource))->count();
+        $total_orders = $filtered_info_calls->where('status', Statuses::CONVERTED)->count();
         if($total_orders) $data['total_order'] = $total_orders;
         else $data['total_order'] = 0;
 
-        $rejected_requests = InfoCall::where('created_by', $created_by)->where('status', Statuses::REJECTED)->where('created_by_type', get_class($resource))->count();
+        $rejected_requests = $filtered_info_calls->where('status', Statuses::REJECTED)->count();
         $rejected_orders = 0;
         $cancelled_orders = $rejected_requests + $rejected_orders;
         $data['cancelled_order'] = $cancelled_orders;
@@ -92,7 +112,8 @@ class InfoCallController extends Controller
             'location_id' => $request->location_id,
             'service_id' => $request->service_id,
             'service_name' => $service_name,
-            'created_by_type'=> get_class($resource)
+            'created_by_type'=> get_class($resource),
+            'portal_name' => 'resource-app'
         ];
         $info_call = $this->infoCallRepository->create($data);
         return api_response($request, $info_call, 200, ['info_call' => $info_call]);

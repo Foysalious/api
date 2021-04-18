@@ -1,4 +1,4 @@
-<?php namespace Sheba\Reward\Event\Resource\Action\InfoCallToOrderServedAndPaid\Parameter;
+<?php namespace Sheba\Reward\Event\Resource\Action\InfoCallCompleted\Parameter;
 
 use Sheba\Reward\Event\ActionEventParameter;
 use Sheba\Reward\Exception\ParameterTypeMismatchException;
