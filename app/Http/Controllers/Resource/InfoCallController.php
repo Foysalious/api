@@ -39,13 +39,18 @@ class InfoCallController extends Controller
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
         $resource = $auth_user->getResource();
-        if ($request->has('limit')) $info_calls = $infoCallList->setOffset($request->offset)->setLimit($request->limit);
-        if ($request->has('year')) $info_calls = $infoCallList->setYear($request->year);
-        if ($request->has('month')) $info_calls = $infoCallList->setMonth($request->month);
         $auth_user_array = $auth_user->toArray();
         $created_by = $auth_user_array['resource']['id'];
         $query = InfoCall::where('created_by', $created_by)->where('created_by_type', get_class($resource));
-        $filtered_info_calls = $info_calls->getFilteredInfoCalls($query);
+        if (!($request->has('limit')) && !($request->has('year')) && !($request->has('month'))) {
+            $filtered_info_calls = $query;
+        }
+        else {
+            if ($request->has('limit')) $info_calls = $infoCallList->setOffset($request->offset)->setLimit($request->limit);
+            if ($request->has('year')) $info_calls = $infoCallList->setYear($request->year);
+            if ($request->has('month')) $info_calls = $infoCallList->setMonth($request->month);
+            $filtered_info_calls = $info_calls->getFilteredInfoCalls($query);
+        }
         $info_call_list = $filtered_info_calls->get()->sortByDesc('id')->toArray();
         $list = [];
         foreach ($info_call_list as $info_call) {
@@ -79,15 +84,23 @@ class InfoCallController extends Controller
             'completed_order' => 77,
         ];
         $query = InfoCall::where('created_by', $created_by)->where('created_by_type', get_class($resource));
-        $filtered_info_calls = $info_calls->getFilteredInfoCalls($query)->get();
-        $total_service_requests = $filtered_info_calls->count();
+        if (!($request->has('limit')) && !($request->has('year')) && !($request->has('month'))) {
+            $filtered_info_calls = $query->get();
+            $total_orders = $filtered_info_calls->where('status', Statuses::CONVERTED)->count();
+            $total_service_requests = $filtered_info_calls->count();
+            $rejected_requests = $filtered_info_calls->where('status', Statuses::REJECTED)->count();
+        }
+        else {
+            $filtered_info_calls = $info_calls->getFilteredInfoCalls($query)->get();
+            $total_service_requests = $filtered_info_calls->count();
+            $total_orders = $filtered_info_calls->where('status', Statuses::CONVERTED)->count();
+            $rejected_requests = $filtered_info_calls->where('status', Statuses::REJECTED)->count();
+        }
         if($total_service_requests) $data['total_service_requests'] = $total_service_requests;
         else $data['total_service_requests'] = 0;
-        $total_orders = $filtered_info_calls->where('status', Statuses::CONVERTED)->count();
         if($total_orders) $data['total_order'] = $total_orders;
         else $data['total_order'] = 0;
 
-        $rejected_requests = $filtered_info_calls->where('status', Statuses::REJECTED)->count();
         $rejected_orders = 0;
         $cancelled_orders = $rejected_requests + $rejected_orders;
         $data['cancelled_order'] = $cancelled_orders;
