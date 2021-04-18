@@ -39,7 +39,7 @@ class TopUpRequestOfBlockedNumber
         if ($event->topupRequest->getAgent() instanceof Affiliate) $event->topupRequest->getAgent()->update(['verification_status' => 'rejected', 'reject_reason' => "Unusual / Suspicious account activity"]);
         elseif ($event->topupRequest->getAgent() instanceof Partner) {
             $event->topupRequest->getAgent()->update(['can_topup' => 0] );
-            $event->topupRequest->getAgent()->topupChangeLogs()->create(['from' => 1, 'to' => 0, 'created_at'=>Carbon::now(), 'partner_id' => $event->topupRequest->getAgent(),  'log' => 'Partner has been blacklisted due to top up request to this'. $event->topupRequest->getMobile()]);
+            $event->topupRequest->getAgent()->topupChangeLogs()->create(['from' => 1, 'to' => 0, 'created_at'=>Carbon::now(), 'partner_id' => $event->topupRequest->getAgent()->id,  'log' => 'Partner has been blacklisted due to top up request to this'. $event->topupRequest->getMobile()]);
         }
     }
 
