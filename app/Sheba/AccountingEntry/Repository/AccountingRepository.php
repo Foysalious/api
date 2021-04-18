@@ -86,7 +86,6 @@ class AccountingRepository extends BaseRepository
             $request['customer_id'] = $partner_pos_customer->id;
             $request['customer_name'] = $partner_pos_customer->details()["name"];
         }
-
         return $request;
     }
 
