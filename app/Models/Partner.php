@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Sheba\Business\Bid\Bidder;
 use Sheba\Checkout\CommissionCalculator;
+use Sheba\Dal\ArtisanLeave\ArtisanLeave;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\Complain\Model as Complain;
 use Sheba\Dal\PartnerBankInformation\Purposes;
@@ -269,7 +270,8 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function leaves()
     {
-        return $this->hasMany(PartnerLeave::class);
+        Relation::morphMap(['partner' => 'App\Models\Partner']);
+        return $this->morphMany(ArtisanLeave::class, 'artisan');
     }
 
     public function shebaCredit()
