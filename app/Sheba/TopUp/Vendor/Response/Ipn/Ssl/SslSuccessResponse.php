@@ -21,7 +21,7 @@ class SslSuccessResponse extends SuccessResponse
     public function getTopUpOrder(): TopUpOrder
     {
         $today = Carbon::today()->endOfDay()->toDateTimeString();
-        $yesterday = Carbon::yesterday()->startOfDay()->toDateTimeString();
+        $yesterday = Carbon::yesterday()->subDays(3)->startOfDay()->toDateTimeString();
 
         return TopUpOrder::where('transaction_id', $this->response['guid'])
             ->where('gateway', Gateway::SSL)
