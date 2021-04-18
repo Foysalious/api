@@ -10,7 +10,7 @@ class ThemeSettingController extends Controller
 {
     public function index()
     {
-        $data= ' {
+        $data= '{
   "name": "theme-1",
   "primary_color": "#126C09",
   "secondary_color": "#126C09",
@@ -41,19 +41,20 @@ class ThemeSettingController extends Controller
     },
     {
       "type": "all_categories",
+      "name": "All Categories",
       "category": [
         {
           "id": 1,
           "name": "Women Fashion",
           "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
-          "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
+          "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg",
           "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
         },
         {
           "name": "Men Fashion",
           "id": 10,
           "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
-          "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
+          "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg",
           "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
         }
       ]
@@ -61,6 +62,7 @@ class ThemeSettingController extends Controller
     {
       "type": "collection",
       "type_id": 5,
+      "name": "Collection Name",
       "collection_banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
       "product": [
         {
@@ -75,10 +77,10 @@ class ThemeSettingController extends Controller
           "discount_applicable": 0,
           "discounted_amount": 0,
           "discount_percentage": 0,
-          
           "rating": 4,
+          "count_rating": 7,
           "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
-          "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
+          "thumb": "https://s3.ap-shttps://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg",
           "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
         },
         {
@@ -93,16 +95,17 @@ class ThemeSettingController extends Controller
           "discount_applicable": 0,
           "discounted_amount": 0,
           "discount_percentage": 0,
-          
           "rating": 5,
+          "count_rating": 7,
           "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
-          "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
+          "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg",
           "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
         }
       ]
     },
     {
       "type": "new_arrival",
+      "name": "New Arrival",
       "product": [
         {
           "id": 1,
@@ -116,10 +119,10 @@ class ThemeSettingController extends Controller
           "discount_applicable": 0,
           "discounted_amount": 0,
           "discount_percentage": 0,
-          
           "rating": 5,
+          "count_rating": 7,
           "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
-          "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
+          "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg",
           "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
         },
         {
@@ -134,16 +137,17 @@ class ThemeSettingController extends Controller
           "discount_applicable": 0,
           "discounted_amount": 0,
           "discount_percentage": 0,
-          
           "rating": 5,
+          "count_rating": 7,
           "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
-          "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
+          "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg",
           "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
         }
       ]
     },
     {
       "type": "trending",
+      "name": "Trending",
       "product": [
         {
           "id": 1,
@@ -157,10 +161,10 @@ class ThemeSettingController extends Controller
           "discount_applicable": 0,
           "discounted_amount": 0,
           "discount_percentage": 0,
-          
           "rating": 5,
+          "count_rating": 7,
           "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
-          "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
+          "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg",
           "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
         },
         {
@@ -175,16 +179,17 @@ class ThemeSettingController extends Controller
           "discount_applicable": 0,
           "discounted_amount": 0,
           "discount_percentage": 0,
-          
           "rating": 5,
+          "count_rating": 7,
           "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
-          "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
+          "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg",
           "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
         }
       ]
     },
     {
       "type": "sale",
+      "name": "Sales",
       "product": [
         {
           "id": 1,
@@ -198,10 +203,10 @@ class ThemeSettingController extends Controller
           "discount_applicable": 0,
           "discounted_amount": 0,
           "discount_percentage": 0,
-          
           "rating": 5,
+          "count_rating": 7,
           "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
-          "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
+          "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg",
           "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
         },
         {
@@ -216,10 +221,10 @@ class ThemeSettingController extends Controller
           "discount_applicable": 0,
           "discounted_amount": 0,
           "discount_percentage": 0,
-          
           "rating": 5,
+          "count_rating": 7,
           "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
-          "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
+          "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg",
           "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
         }
       ]
@@ -227,6 +232,7 @@ class ThemeSettingController extends Controller
     {
       "type": "category",
       "type_id": 5,
+      "name": "Category Name ",
       "product": [
         {
           "id": 1,
@@ -240,10 +246,10 @@ class ThemeSettingController extends Controller
           "discount_applicable": 0,
           "discounted_amount": 0,
           "discount_percentage": 0,
-          
           "rating": 5,
+          "count_rating": 72,
           "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
-          "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
+          "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg",
           "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
         },
         {
@@ -257,16 +263,18 @@ class ThemeSettingController extends Controller
           "discount_applicable": 0,
           "discounted_amount": 0,
           "discount_percentage": 0,
-          
+          "count_rating": 72,
+          "rating": 5,
           "name": "Coat",
           "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
-          "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
+          "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg",
           "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
         }
       ]
     },
     {
       "type": "banner",
+      "name": "Banner",
       "url": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
       "target": {
         "type": "category",
@@ -274,7 +282,7 @@ class ThemeSettingController extends Controller
       }
     }
   ]
-}';
+} ';
         return response()->json($data);
     }
 

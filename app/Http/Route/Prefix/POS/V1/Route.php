@@ -14,7 +14,7 @@ class Route
         });
 
    $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers', 'middleware' => ['accessToken']], function ($api) {
-
+      
             $api->group(['prefix' => 'collections'], function ($api) {
                 $api->get('/', 'Inventory\CollectionController@index');
                 $api->post('/', 'Inventory\CollectionController@store');
@@ -37,7 +37,7 @@ class Route
             });
             $api->group(['prefix' => 'categories'], function ($api) {
                 $api->get('/', 'Inventory\CategoryController@index');
-
+                $api->get('/units', "Inventory\UnitController@index");
                 $api->delete('/value1/{valueId}', "Inventory\ValueController@destroy");
             });
 
@@ -115,6 +115,13 @@ class Route
 
 
             $api->post('migrate', 'Partner\DataMigrationController@migrate');
+
+            $api->group(['prefix' => 'orders'], function ($api) {
+                $api->post('/', 'PosOrder\OrderController@store');
+                $api->group(['prefix' => '{order}'], function ($api) {
+                    $api->post('/update-status', 'PosOrder\OrderController@updateStatus');
+                });
+            });
         });
         $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
             $api->post('test-migrate', 'Partner\DataMigrationController@testMigration');

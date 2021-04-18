@@ -13,6 +13,8 @@ class Requester
     private $updateDeductionComponent;
     private $addDeductionComponent;
     private $error =  false;
+    public $grossComponentAdd;
+    public $grossComponentUpdate;
 
     public function setName($name)
     {
@@ -98,5 +100,17 @@ class Requester
     public function checkError()
     {
         return $this->error;
+    }
+
+    public function setGrossComponentAdd($gross_component_add)
+    {
+        $this->grossComponentAdd = json_decode($gross_component_add, 1);
+        return $this;
+    }
+
+    public function setGrossComponentUpdate($gross_component_update)
+    {
+        $this->grossComponentUpdate = json_decode($gross_component_update, 1);
+        return $this;
     }
 }
