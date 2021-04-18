@@ -3,6 +3,7 @@
 
 
 
+use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Constants\UserType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -30,8 +31,8 @@ class DueTrackerRepository extends BaseRepository
         $data['amount']             = (double)$request->amount;
         $data['source_type']        = $type;
         $data['note']               = $request->note;
-        $data['debit_account_key']  = $type === 'due' ? $request->customer_id : $request->account_key;
-        $data['credit_account_key'] = $type === 'due' ? $request->account_key : $request->customer_id;
+        $data['debit_account_key']  = $type === EntryTypes::DUE ? $request->customer_id : $request->account_key;
+        $data['credit_account_key'] = $type === EntryTypes::DUE ? $request->account_key : $request->customer_id;
         $data['customer_id']        = $request->customer_id;
         $data['customer_name']      = $request->customer_name;
         $data['entry_at']           = $request->date ?: Carbon::now()->format('Y-m-d H:i:s');

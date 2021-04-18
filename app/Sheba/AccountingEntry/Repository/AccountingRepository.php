@@ -1,5 +1,6 @@
 <?php namespace App\Sheba\AccountingEntry\Repository;
 
+use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Constants\UserType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -11,7 +12,7 @@ class AccountingRepository extends BaseRepository
     public function accountTransfer(Request $request){
         $source_id = rand(0000,9999).date('s').preg_replace("/^.*\./i","", microtime(true));
         $this->setModifier($request->partner);
-        $data     = $this->createJournalData($request, "transfer", $source_id);
+        $data     = $this->createJournalData($request, EntryTypes::TRANSFER, $source_id);
         $url = "api/journals";
         try {
             return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);

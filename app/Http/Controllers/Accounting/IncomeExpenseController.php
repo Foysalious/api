@@ -2,6 +2,7 @@
 
 
 use App\Http\Controllers\Controller;
+use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\AccountingRepository;
 use Illuminate\Http\Request;
 use Sheba\ModificationFields;
@@ -26,7 +27,7 @@ class IncomeExpenseController extends Controller
             'amount_cleared' => 'sometimes|required|numeric',
             'customer_id' => 'required_with:amount_cleared'
         ]);
-        $response = $this->accountingRepo->storeEntry($request, "income");
+        $response = $this->accountingRepo->storeEntry($request, EntryTypes::INCOME);
         return api_response($request, $response, 200, ['data' => $response]);
     }
 
@@ -39,7 +40,7 @@ class IncomeExpenseController extends Controller
             'amount_cleared' => 'sometimes|required|numeric',
             'customer_id' => 'required_with:amount_cleared'
         ]);
-        $response = $this->accountingRepo->storeEntry($request, "expense");
+        $response = $this->accountingRepo->storeEntry($request, EntryTypes::EXPENSE);
         return api_response($request, $response, 200, ['data' => $response]);
     }
 
