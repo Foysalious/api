@@ -28,4 +28,10 @@ class DueTrackerController extends Controller
         return api_response($request, $response, 200, ['data' => $response]);
     }
 
+    public function update(Request $request, $customer_id ) {
+        $request->merge(['customer_id' => $customer_id]);
+        $response = $this->dueTrackerRepo->storeEntry($request, $request->entry_type);
+        return api_response($request, $response, 200, ['data' => $response]);
+    }
+
 }
