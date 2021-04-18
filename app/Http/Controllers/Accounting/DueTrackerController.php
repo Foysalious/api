@@ -2,7 +2,7 @@
 
 
 use App\Http\Controllers\Controller;
-use App\Sheba\AccountingEntry\Repository\AccountingRepository;
+use App\Sheba\AccountingEntry\Repository\DueTrackerRepository;
 use Illuminate\Http\Request;
 use Sheba\ModificationFields;
 
@@ -10,15 +10,22 @@ class DueTrackerController extends Controller
 {
     use ModificationFields;
 
-    /** @var AccountingRepository */
-    private $accountingRepo;
+    /** @var DueTrackerRepository */
+    private $dueTrackerRepo;
 
-    public function __construct(AccountingRepository $accountingRepo) {
-        $this->accountingRepo = $accountingRepo;
+    public function __construct(DueTrackerRepository $dueTrackerRepo) {
+        $this->dueTrackerRepo = $dueTrackerRepo;
     }
 
     public function store(Request $request, $customer_id ) {
-        return "hello";
+        $this->validate($request, [
+            'amount' => 'required',
+            'entry_type' => 'required|in:due,deposit',
+            'account_key' => 'required'
+        ]);
+        $request->merge(['customer_id' => $customer_id]);
+        $response = $this->dueTrackerRepo->storeEntry($request, $request->entry_type);
+        return api_response($request, $response, 200, ['data' => $response]);
     }
 
 }
