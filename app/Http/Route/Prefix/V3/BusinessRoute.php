@@ -25,6 +25,9 @@ class BusinessRoute
                         $api->delete('/', 'B2b\ApprovalSettingsController@delete');
                     });
                 });
+                $api->group(['prefix' => 'office-setting'], function ($api) {
+                    $api->get('/operational', 'B2b\AttendanceController@getOperationalOfficeSettings');
+                });
             });
         });
     }
