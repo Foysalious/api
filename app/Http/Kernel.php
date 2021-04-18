@@ -27,6 +27,7 @@ use App\Http\Middleware\PaymentLinkAuthMiddleware;
 use App\Http\Middleware\ProfileAuthMiddleware;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\ResourceJobAuthMiddleware;
+use App\Http\Middleware\SetRequestToJwtWhileTesting;
 use App\Http\Middleware\Sheba\ShebaNetworkMiddleware;
 use App\Http\Middleware\ThrottleRequests;
 use App\Http\Middleware\TopUpAuthMiddleware;
@@ -56,7 +57,8 @@ class Kernel extends HttpKernel
         CheckForMaintenanceMode::class,
         CriticalAppVersionMiddleware::class,
         XSS::class,
-        TrustProxies::class
+        TrustProxies::class,
+        SetRequestToJwtWhileTesting::class
     ];
 
     /**
