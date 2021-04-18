@@ -28,6 +28,7 @@ class OrderController extends Controller
             ->setSalesChannelId($request->sales_channel_id)
             ->setDeliveryCharge($request->delivery_charge)
             ->setStatus($request->status)
+            ->setSkus($request->skus)
             ->store();
         return http_response($request, null, 200, $response);
 
