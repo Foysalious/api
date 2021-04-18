@@ -227,10 +227,10 @@ class TopUpRequest
         return ($this->agent instanceof Partner && (!$this->agent->isNIDVerified())) ||
             ($this->agent instanceof Affiliate && $this->agent->isNotVerified());
     }
-    private function isCanTopUpNo()
+    /*private function isCanTopUpNo()
     {
         return ($this->agent instanceof Partner && (!$this->agent->canTopUp()));
-    }
+    }*/
 
 
     /**

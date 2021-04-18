@@ -5,8 +5,13 @@ use App\Models\Bonus;
 use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Models\Customer;
+use App\Models\CustomerDeliveryAddress;
+use App\Models\Job;
+use App\Models\Location;
 use App\Models\Member;
+use App\Models\Order;
 use App\Models\Partner;
+use App\Models\PartnerOrder;
 use App\Models\PartnerResource;
 use App\Models\PartnerSubscriptionPackage;
 use App\Models\Profile;
@@ -16,6 +21,12 @@ use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\Schema;
 use Sheba\Dal\AuthorizationRequest\AuthorizationRequest;
 use Sheba\Dal\AuthorizationToken\AuthorizationToken;
+use Sheba\Dal\Category\Category;
+use Sheba\Dal\CategoryLocation\CategoryLocation;
+use Sheba\Dal\JobService\JobService;
+use Sheba\Dal\LocationService\LocationService;
+use Sheba\Dal\Service\Service;
+use Sheba\Services\Type as ServiceType;
 use TestCase;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
@@ -163,6 +174,68 @@ class FeatureTestCase extends TestCase
         $PartnerBonus =  factory(Bonus::class)->create([
             'user_type' => "App\\Models\\Partner",
             'user_id' => $this->partner->id
+        ]);
+    }
+    protected function mxOrderCreate(){
+        $this->location = Location::find(1);
+        $this->truncateTables([
+            Category::class,
+            Service::class,
+            CategoryLocation::class,
+            LocationService::class,
+            CustomerDeliveryAddress::class,
+            Order::class,
+            PartnerOrder::class,
+            Job::class,
+
+        ]);
+        $master_category = factory(Category::class)->create();
+
+        $this->secondaryCategory = factory(Category::class)->create([
+            'parent_id' => $master_category->id,
+            'publication_status' => 1
+        ]);
+        $this->secondaryCategory->locations()->attach($this->location->id);
+        $this->service = factory(Service::class)->create([
+            'category_id' => $this->secondaryCategory->id,
+            'variable_type' => ServiceType::FIXED,
+            'variables' => '{"price":"1700","min_price":"1000","max_price":"2500","description":""}',
+            'publication_status' => 1
+        ]);
+        $this->customer_delivery_address = factory(CustomerDeliveryAddress::class)->create([
+            'customer_id'=>$this->customer->id
+        ]);
+        $this->order = factory(Order::class)->create([
+            'customer_id'=>$this->customer->id,
+            'partner_id'=>$this->partner->id,
+            'delivery_address'=>$this->customer_delivery_address->address,
+            'location_id'=>$this->location->id
+        ]);
+
+        $this->partner_order = factory(PartnerOrder::class)->create([
+            'partner_id'=>$this->partner->id,
+            'order_id'=>$this->order->id
+
+        ]);
+
+        $this->job = factory(Job::class)->create([
+            'partner_order_id'=>$this->partner_order->id,
+            'category_id'=>$this->secondaryCategory->id,
+            'service_id'=>$this->service->id,
+            'service_variable_type'=>$this->service->variable_type,
+            'service_variables'=>$this->service->variables,
+            'resource_id'=>$this->resource->id,
+            'schedule_date'=>"2021-02-16",
+            'preferred_time'=>"19:48:04-20:48:04",
+            'preferred_time_start'=>"19:48:04",
+            'preferred_time_end'=>"20:48:04"
+        ]);
+        $this->job_service = factory(JobService::class)->create([
+            'job_id'=>$this->job->id,
+            'service_id'=>$this->job->service_id,
+            'name'=>$this->job->service_name,
+            'variable_type'=>$this->job->service_variable_type,
+            'variables'=>json_encode([])
         ]);
     }
 

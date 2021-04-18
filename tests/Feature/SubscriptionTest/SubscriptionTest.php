@@ -65,7 +65,7 @@ class SubscriptionTest extends FeatureTestCase
             "version-code" => "21121"
         ]);
         $data= $respose->decodeResponseJson();
-        dd($data);
+        //dd($data);
         $publication_status_monthly=$data ['data'] ['subscription_package'] [0] ['rules'] ['subscription_fee'] [0] ['is_published'];
         $publication_status_yearly=$data ['data'] ['subscription_package'] [0] ['rules'] ['subscription_fee'] [1] ['is_published'];
         $publication_status_two_yearly=$data ['data'] ['subscription_package'] [0] ['rules'] ['subscription_fee'] [2] ['is_published'];
