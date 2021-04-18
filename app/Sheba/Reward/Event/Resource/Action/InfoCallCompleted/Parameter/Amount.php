@@ -1,13 +1,12 @@
-<?php namespace Sheba\Reward\Event\Resource\Action\InfoCallToOrderServedAndPaid\Parameter;
+<?php namespace Sheba\Reward\Event\Resource\Action\InfoCallCompleted\Parameter;
 
 use Sheba\Reward\Event\ActionEventParameter;
 
-class ServePortal extends ActionEventParameter
+class Amount extends ActionEventParameter
 {
 
     public function check(array $params)
     {
-        // TODO: Implement check() method.
     }
 
     public function validate()
