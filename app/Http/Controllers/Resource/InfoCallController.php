@@ -48,15 +48,29 @@ class InfoCallController extends Controller
         return api_response($request, $list, 200, ['service_request_list' => $list]);
     }
 
-    public function serviceRequestDashboard()
+    public function serviceRequestDashboard(Request $request)
     {
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+        $auth_user_array = $auth_user->toArray();
+        $created_by = $auth_user_array['resource']['id'];
         $data = [
             'total_rewards' => 40000,
-            'total_service_requests' => 234,
-            'total_order' => 123,
             'completed_order' => 77,
-            'cancelled_order' => 34
         ];
+        $total_service_requests =  InfoCall::where('created_by', $created_by)->where('created_by_type', get_class($resource))->count();
+        if($total_service_requests) $data['total_service_requests'] = $total_service_requests;
+        else $data['total_service_requests'] = 0;
+
+        $total_orders = InfoCall::where('created_by', $created_by)->where('status', Statuses::CONVERTED)->where('created_by_type', get_class($resource))->count();
+        if($total_orders) $data['total_order'] = $total_orders;
+        else $data['total_order'] = 0;
+
+        $rejected_requests = InfoCall::where('created_by', $created_by)->where('status', Statuses::REJECTED)->where('created_by_type', get_class($resource))->count();
+        $rejected_orders = 0;
+        $cancelled_orders = $rejected_requests + $rejected_orders;
+        $data['cancelled_order'] = $cancelled_orders;
         return ['code' => 200, 'service_request_dashboard' => $data];
     }
 
