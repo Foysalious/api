@@ -163,7 +163,7 @@ class CollectionService
             ['name' => 'app_banner', 'contents' => $this->app_banner ? File::get($this->app_banner->getRealPath()) : null, 'filename' => $this->app_banner ? $this->app_banner->getClientOriginalName() : ''],
             [
                 'name' => 'products',
-                'contents' => $this->products ? json_decode($this->products) : []
+                'contents' => $this->products ? $this->products : []
             ]
         ];
     }
