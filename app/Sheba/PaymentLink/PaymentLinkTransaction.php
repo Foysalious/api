@@ -159,7 +159,7 @@ class PaymentLinkTransaction
 
     public function isPaidByCustomer()
     {
-        return $this->paymentLink->getPaidBy() == $this->paidByTypes[0];
+        return $this->paymentLink->getPaidBy() == $this->paidByTypes[1];
     }
 
     private function feeTransaction()
