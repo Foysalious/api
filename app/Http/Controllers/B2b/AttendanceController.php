@@ -8,7 +8,6 @@ use App\Sheba\Business\BusinessBasicInformation;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Sheba\Business\Attendance\AttendanceList;
 use Sheba\Business\Attendance\Daily\DailyExcel;
 use Sheba\Business\Attendance\Monthly\Excel;
@@ -647,5 +646,34 @@ class AttendanceController extends Controller
     {
         $business_office = $business_office_repo->find($location);
         return $business_office ? $business_office->ip : null;
+    }
+
+    public function getOperationalOfficeSettings($business, Request $request, BusinessWeekendRepoInterface $business_weekend_repo, BusinessOfficeHoursRepoInterface $office_hours, AttendanceSettingTransformer $transformer, BusinessOfficeRepoInterface $business_office_repo)
+    {
+        $business = $request->business;
+
+        $business_offices = $business_office_repo->getAllByBusiness($business);
+        $attendance_types = $business->attendanceTypes()->withTrashed()->get();
+        $attendance_setting_data = $transformer->getData($attendance_types, $business_offices);
+
+        $weekends = $business_weekend_repo->getAllByBusiness($business);
+        $weekend_days = $weekends->pluck('weekday_name')->toArray();
+        $weekend_days = array_map('ucfirst', $weekend_days);
+
+        $office_time = $office_hours->getOfficeTime($business);
+        $data = [
+            'office_hour_type' => 'Fixed Time',
+            'start_time' => $office_time ? Carbon::parse($office_time->start_time)->format('h:i a') : '09:00 am',
+            'end_time' => $office_time ? Carbon::parse($office_time->end_time)->format('h:i a') : '05:00 pm',
+            'total_working_days_type' => $office_time->type,
+            'total_working_days' => $office_time->number_of_days,
+            'is_weekend_included' => $office_time->is_weekend_included,
+            'weekends' => $weekend_days,
+            'sheba_attendance_types' => $attendance_setting_data["sheba_attendance_types"],
+            'business_attendance_types' => $attendance_setting_data["attendance_types"],
+            'business_offices' => $attendance_setting_data["business_offices"]
+        ];
+
+        return api_response($request, null, 200, ['office_setting' => $data]);
     }
 }

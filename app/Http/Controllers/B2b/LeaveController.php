@@ -101,7 +101,7 @@ class LeaveController extends Controller
         if ($request->has('limit') && !$request->has('file')) $leave_approval_requests = $leave_approval_requests->splice($offset, $limit);
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Collection($leave_approval_requests, new LeaveApprovalRequestListTransformer($business));
+        $resource = new Collection($leave_approval_requests, new LeaveApprovalRequestListTransformer($business, $business_member));
         $leaves = $manager->createData($resource)->toArray()['data'];
 
         if ($request->has('sort')) {
