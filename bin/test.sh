@@ -31,4 +31,4 @@ else
     suite="$1"
 fi
 
-php vendor/bin/phpunit --filter "${suite}"
+php vendor/bin/phpunit -d memory_limit=2048M --filter "${suite}"

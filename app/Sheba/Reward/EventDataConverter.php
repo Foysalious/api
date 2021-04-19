@@ -334,23 +334,28 @@ class EventDataConverter
                         ]
                     ],
                 'action' => [
-                    'infocall_to_order_served_and_paid' => [
+                    'infocall_completed' => [
                         'name' => 'InfoCall to Order Served and Paid',
-                        'event_class' => 'Sheba\Reward\Event\Resource\Action\InfoCallToOrderServedAndPaid\Event',
-                        'rule_class' => 'Sheba\Reward\Event\Resource\Action\InfoCallToOrderServedAndPaid\Rule',
+                        'event_class' => 'Sheba\Reward\Event\Resource\Action\InfoCallCompleted\Event',
+                        'rule_class' => 'Sheba\Reward\Event\Resource\Action\InfoCallCompleted\Rule',
                         'parameters' => [
                             'amount' => [
                                 'type' => 'number',
                                 'min' => 0,
-                                'class' => 'Sheba\Reward\Event\Resource\Action\InfoCallToOrderServedAndPaid\Parameter\Amount'
+                                'class' => 'Sheba\Reward\Event\Resource\Action\InfoCallCompleted\Parameter\Amount'
                             ],
                             'create_portal'=> [
                                 'type' => 'select',
                                 'possible_value' => indexedArrayToAssociative(config('sheba.portals'), config('sheba.portals')),
-                                'is_multi_selectable' => 1,
-                                'class' => 'Sheba\Reward\Event\Resource\Action\InfoCallToOrderServedAndPaid\Parameter\CreatePortal'
+                                'is_multi_selectable' => 0,
+                                'class' => 'Sheba\Reward\Event\Resource\Action\InfoCallCompleted\Parameter\CreatePortal'
                             ],
-                            'serve_portal' => ''
+                            'serve_portal' => [
+                                'type' => 'select',
+                                'possible_value'=> indexedArrayToAssociative(config('sheba.portals'), config('sheba.portals')),
+                                'is_multi_selectable' => 1,
+                                'class' => 'Sheba\Reward\Event\Resource\Action\InfoCallCompleted\Parameter\ServePortal'
+                            ]
                         ]
                     ]
             ],
@@ -433,6 +438,7 @@ class EventDataConverter
                     ],
                 ],
             ]
+        ]
         ]);
     }
 

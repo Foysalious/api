@@ -17,7 +17,7 @@ use Sheba\Dal\TopUpVendorOTF\Model as TopUpVendorOTF;
 use Sheba\Dal\TopUpVendorOTFChangeLog\Model as TopUpVendorOTFChangeLog;
 use Sheba\ExpenseTracker\Repository\ExpenseTrackerClient;
 use Sheba\OAuth2\AccountServer;
-use Sheba\TopUp\Verification\VerifyPin;
+use Sheba\OAuth2\VerifyPin;
 use Tests\Feature\FeatureTestCase;
 use Tests\Mocks\MockExpenseClient;
 

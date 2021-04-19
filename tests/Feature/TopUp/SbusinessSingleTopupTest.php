@@ -19,7 +19,7 @@ use Sheba\Dal\TopUpOTFSettings\Model as TopUpOTFSettings;
 use Sheba\Dal\TopUpVendorOTF\Model as TopUpVendorOTF;
 use Sheba\Dal\TopUpVendorOTFChangeLog\Model as TopUpVendorOTFChangeLog;
 use Sheba\OAuth2\AccountServer;
-use Sheba\TopUp\Verification\VerifyPin;
+use Sheba\OAuth2\VerifyPin;
 use Tests\Feature\FeatureTestCase;
 
 class SbusinessSingleTopupTest extends FeatureTestCase

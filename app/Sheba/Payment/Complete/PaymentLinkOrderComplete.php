@@ -181,7 +181,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             ];
             $payment_creator = app(PaymentCreator::class);
             $payment_creator->credit($payment_data);
-            if ($this->transaction->isPaidByPartner()) {
+            if ($this->transaction->isPaidByCustomer()) {
                 $this->target->update(['interest' => 0, 'bank_transaction_charge' => 0]);
             }
         }
