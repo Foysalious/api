@@ -21,6 +21,7 @@ class CustomerOrderController extends Controller
     public function index($customer, Request $request)
     {
         try {
+            ini_set('memory_limit', '2048M');
             $this->validate($request, [
                 'filter' => 'sometimes|string|in:ongoing,history',
                 'for' => 'sometimes|required|string|in:eshop,business',
@@ -68,6 +69,7 @@ class CustomerOrderController extends Controller
                     });
                 }
                 $all_jobs = $this->getInformation($all_orders);
+                dd($all_jobs);
                 $cancelled_served_jobs = $all_jobs->filter(function ($job) {
                     return $job['cancelled_date'] != null || $job['status'] == 'Served';
                 });
@@ -211,17 +213,17 @@ class CustomerOrderController extends Controller
             'partner_name' => $partnerOrder->partner ? $partnerOrder->partner->name : null,
             'partner_logo' => $partnerOrder->partner ? $partnerOrder->partner->logo : null,
             'partner_mobile_number' => $partnerOrder->partner ? $partnerOrder->partner->getManagerMobile() : null,
-            'partner_total_rating'=> $partnerOrder->partner ?  $partnerOrder->partner->reviews->count():null,
-            'partner_avg_rating' => $partnerOrder->partner ?  (new ReviewRepository)->getAvgRating($partnerOrder->partner->reviews):null,
-            'resource_name' => $job->resource ? $job->resource->profile->name : null,
-            'resource_pic' => $job->resource ? $job->resource->profile->pro_pic : null,
-            'resource_mobile_number' => $job->resource ? $job->resource->profile->mobile : null,
-            'resource_total_rating' => $job->resource ? $job->resource->reviews->count(): null,
-            'resource_avg_rating' => $job->resource ? (new ReviewRepository)->getAvgRating($job->resource->reviews): null,
-            'contact_number' => $show_expert ? ($job->resource ? $job->resource->profile->mobile : null) : ($partnerOrder->partner ? $partnerOrder->partner->getManagerMobile() : null),
-            'contact_person' => $show_expert ? 'expert' : 'partner',
-            'rating' => $job->review != null ? $job->review->rating : null,
-            'price' => $partnerOrder->getCustomerPayable(),
+//            'partner_total_rating'=> $partnerOrder->partner ?  $partnerOrder->partner->reviews->count():null,
+//            'partner_avg_rating' => $partnerOrder->partner ?  (new ReviewRepository)->getAvgRating($partnerOrder->partner->reviews):null,
+//            'resource_name' => $job->resource ? $job->resource->profile->name : null,
+//            'resource_pic' => $job->resource ? $job->resource->profile->pro_pic : null,
+//            'resource_mobile_number' => $job->resource ? $job->resource->profile->mobile : null,
+//            'resource_total_rating' => $job->resource ? $job->resource->reviews->count(): null,
+//            'resource_avg_rating' => $job->resource ? (new ReviewRepository)->getAvgRating($job->resource->reviews): null,
+//            'contact_number' => $show_expert ? ($job->resource ? $job->resource->profile->mobile : null) : ($partnerOrder->partner ? $partnerOrder->partner->getManagerMobile() : null),
+//            'contact_person' => $show_expert ? 'expert' : 'partner',
+//            'rating' => $job->review != null ? $job->review->rating : null,
+//            'price' => $partnerOrder->getCustomerPayable(),
             'order_code' => $partnerOrder->order->code(),
             'created_at' => $partnerOrder->created_at->format('Y-m-d'),
             'created_at_timestamp' => $partnerOrder->created_at->timestamp,
