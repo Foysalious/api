@@ -13,6 +13,7 @@ use Sheba\Business\Attendance\Daily\DailyExcel;
 use Sheba\Business\Attendance\Monthly\Excel;
 use Sheba\Business\Attendance\Member\Excel as MemberMonthlyExcel;
 use Sheba\Business\Attendance\Setting\ActionType;
+use Sheba\Business\OfficeTiming\OperationalSetting;
 use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
 use Sheba\Dal\Attendance\Statuses;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
@@ -658,5 +659,80 @@ class AttendanceController extends Controller
         ];
 
         return api_response($request, null, 200, ['office_settings_operational' => $data]);
+    }
+
+    public function updateOperationalOfficeSettings($business, Request $request, TypeUpdater $type_updater,
+                                                    SettingCreator $setting_creator, SettingUpdater $setting_updater, SettingDeleter $setting_deleter, OperationalSetting $operational_setting_updater)
+    {
+        $this->validate($request, [
+            'attendance_types' => 'required|string',
+            'business_offices' => 'required|string'
+        ]);
+
+        $business_member = $request->business_member;
+        $business = $request->business;
+        $this->setModifier($business_member->member);
+        $errors = [];
+
+        $attendance_types = json_decode($request->attendance_types);
+        if (!is_null($attendance_types)) {
+            foreach ($attendance_types as $attendance_type) {
+                $attendance_type_id = isset($attendance_type->id) ? $attendance_type->id : null;
+
+                $type_updater->setBusiness($business)
+                    ->setTypeId($attendance_type_id)
+                    ->setType($attendance_type->type)
+                    ->setAction($attendance_type->action)
+                    ->update();
+            }
+        }
+
+        $business_offices = json_decode($request->business_offices);
+
+        if (!is_null($business_offices)) {
+            $offices = collect($business_offices);
+            $deleted_offices = $offices->where('action', ActionType::DELETE);
+            $deleted_offices->each(function ($deleted_office) use ($setting_deleter) {
+                $setting_deleter->setBusinessOfficeId($deleted_office->id);
+                $setting_deleter->delete();
+            });
+
+            $added_offices = $offices->where('action', ActionType::ADD);
+            $added_offices->each(function ($added_office) use ($setting_creator, $business, &$errors) {
+                $setting_creator->setBusiness($business)->setName($added_office->name)->setIp($added_office->ip);
+                if ($setting_creator->hasError()) {
+                    array_push($errors, $setting_creator->getErrorMessage());
+                    $setting_creator->resetError();
+                    return;
+                }
+                $setting_creator->create();
+            });
+
+            $edited_offices = $offices->where('action', ActionType::EDIT);
+            $edited_offices->each(function ($edited_office) use ($setting_updater, $business, &$errors) {
+                $setting_updater->setBusinessOfficeId($edited_office->id)->setName($edited_office->name)->setIp($edited_office->ip);
+                if ($setting_updater->hasError()) {
+                    array_push($errors, $setting_updater->getErrorMessage());
+                    $setting_updater->resetError();
+                    return;
+                }
+                $setting_updater->update();
+            });
+        }
+
+        if ($errors) {
+            if ($this->isFailedToUpdateAllSettings($errors, $business_offices)) return api_response($request, null, 422, ['message' => implode(', ', $errors)]);
+            return api_response($request, null, 303, ['message' => implode(', ', $errors)]);
+        }
+
+        $office_timing = $operational_setting_updater->setBusiness($request->business)
+            ->setMember($business_member->member)
+            ->setWeekends($request->weekends)
+            ->setTotalWorkingDaysType($request->working_days_type)
+            ->setNumberOfDays($request->days)
+            ->setIsWeekendIncluded($request->is_weekend_included)
+            ->update();
+
+        if ($office_timing) return api_response($request, null, 200, ['msg' => "Update Successful"]);
     }
 }
