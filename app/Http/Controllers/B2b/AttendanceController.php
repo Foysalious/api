@@ -662,7 +662,8 @@ class AttendanceController extends Controller
     }
 
     public function updateOperationalOfficeSettings($business, Request $request, TypeUpdater $type_updater,
-                                                    SettingCreator $setting_creator, SettingUpdater $setting_updater, SettingDeleter $setting_deleter, OperationalSetting $operational_setting_updater)
+                                                                    SettingCreator $setting_creator, SettingUpdater $setting_updater,
+                                                                    SettingDeleter $setting_deleter, OperationalSetting $operational_setting_updater)
     {
         $this->validate($request, [
             'attendance_types' => 'required|string',
@@ -734,5 +735,27 @@ class AttendanceController extends Controller
             ->update();
 
         if ($office_timing) return api_response($request, null, 200, ['msg' => "Update Successful"]);
+    }
+
+    public function getAttendanceOfficeSettings($business, Request $request, BusinessWeekendRepoInterface $business_weekend_repo, BusinessOfficeHoursRepoInterface $office_hours)
+    {
+        $business = $request->business;
+        $office_time = $office_hours->getOfficeTime($business);
+        $half_day_leave_types = $business->leaveTypes()->isHalfDayEnable();
+        $data = [
+            'office_hour_type' => 'Fixed Time',
+            'start_time' => $office_time ? Carbon::parse($office_time->start_time)->format('h:i a') : '09:00 am',
+            'is_allow_start_time_grace' => $office_time->is_start_grace_time_enable,
+            'starting_grace_time' => $office_time->start_grace_time,
+            'end_time' => $office_time ? Carbon::parse($office_time->end_time)->format('h:i a') : '05:00 pm',
+            'is_allow_end_time_grace' => $office_time->is_end_grace_time_enable,
+            'ending_grace_time' => $office_time->end_grace_time,
+            'is_half_day_enable' => $business->is_half_day_enable,
+            'half_day_leave_types_count' => $half_day_leave_types->count(),
+            'half_day_leave_types' => $half_day_leave_types->pluck('title'),
+            'half_day_initial_timings' => $this->getHalfDayTimings($business)
+        ];
+
+        return api_response($request, null, 200, ['office_settings_attendance' => $data]);
     }
 }
