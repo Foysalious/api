@@ -10,6 +10,7 @@ use Sheba\Business\ApprovalSetting\FindApprovalSettings;
 use Sheba\Business\ApprovalSetting\FindApprovers;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
+use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepository;
 use Sheba\Dal\ApprovalRequest\Type as ApprovalRequestType;
 use Sheba\Dal\Leave\LeaveStatusPresenter as LeaveStatusPresenter;
 use Sheba\Dal\Leave\Model as Leave;
@@ -19,13 +20,16 @@ class LeaveApprovalRequestListTransformer extends TransformerAbstract
 {
     private $requestableType;
     private $business;
-    /** @var BusinessMember  */
+    /** @var BusinessMember */
     private $businessMember;
+    /*** @var ApprovalRequestRepository */
+    private $approvalRequestRepository;
 
     public function __construct(Business $business, BusinessMember $business_member)
     {
         $this->business = $business;
         $this->businessMember = $business_member;
+        $this->approvalRequestRepository = app(ApprovalRequestRepository::class);
     }
 
     public function transform($approval_request)
@@ -81,8 +85,10 @@ class LeaveApprovalRequestListTransformer extends TransformerAbstract
         $find_approvers = (new FindApprovers())->calculateApprovers($approval_setting, $requestable_business_member);
         $requestable_approval_request_ids = $requestable->requests()->pluck('approver_id', 'id')->toArray();
         $remainingApprovers = array_diff($find_approvers, $requestable_approval_request_ids);
-        if(in_array($this->businessMember->id, $remainingApprovers)) return Status::PENDING;
-        return null;
+        $aprroval_request = $this->approvalRequestRepository->where('approver_id', $this->businessMember->id)->where('requestable_id', $requestable->id)->first();
+        if (in_array($this->businessMember->id, $remainingApprovers) && !$aprroval_request) return Status::PENDING;
+        if (!in_array($this->businessMember->id, $remainingApprovers) && !$aprroval_request) return null;
+        return $aprroval_request->status;
     }
 
     private function getApprover($requestable, $requestable_business_member)
