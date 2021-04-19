@@ -27,10 +27,8 @@ class CollectionController extends Controller
     {
         $partner = $request->auth_user->getPartner();
         $collection = $this->collectionService->setPartnerId($partner->id)->getAllCollection();
-        if(empty($collection))
-            return api_response($request, "No data found!", 500, $collection);
-        else
-            return api_response($request, null, 200, $collection);
+        if(empty($collection)) return api_response($request, "No data found!", 500, $collection);
+        else return api_response($request, null, 200, $collection);
     }
 
     /**
@@ -90,13 +88,8 @@ class CollectionController extends Controller
 
     public function destroy(Request $request, $collection_id)
     {
-        try {
-            $partner = $request->auth_user->getPartner();
-            $response = $this->collectionService->setPartnerId($partner->id)->setCollectionId($collection_id)->delete();
-        } catch (\Exception $exception) {
-            return http_response($request, null, 500, null);
-        }
-
+        $partner = $request->auth_user->getPartner();
+        $response = $this->collectionService->setPartnerId($partner->id)->setCollectionId($collection_id)->delete();
         return http_response($request, null, 200, $response);
     }
 }
