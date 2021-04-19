@@ -11,12 +11,17 @@ class ServePortal extends ActionEventParameter
 
     public function check(array $params)
     {
-        // TODO: Implement check() method.
+        $order = $params[0];
+        if ($this->value != null) {
+
+        }
+
+        return true;
     }
 
     public function validate()
     {
         if (empty($this->value) && !is_null($this->value))
-            throw new ParameterTypeMismatchException("Portal can't be empty");
+            throw new ParameterTypeMismatchException("Serve Portal can't be empty");
     }
 }
