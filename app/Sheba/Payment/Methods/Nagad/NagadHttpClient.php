@@ -1,8 +1,4 @@
-<?php
-
-
-namespace Sheba\Payment\Methods\Nagad;
-
+<?php namespace Sheba\Payment\Methods\Nagad;
 
 use Sheba\TPProxy\TPRequest;
 
@@ -10,8 +6,8 @@ class NagadHttpClient
 {
     public function call(TPRequest $request)
     {
-        $url     = curl_init($request->getUrl());
-        $inputs  = $request->getInput();
+        $url = curl_init($request->getUrl());
+        $inputs = $request->getInput();
         $headers = $request->getHeaders();
         curl_setopt($url, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($url, CURLOPT_CUSTOMREQUEST, "POST");
@@ -20,7 +16,7 @@ class NagadHttpClient
         curl_setopt($url, CURLOPT_FOLLOWLOCATION, 1);
         curl_setopt($url, CURLOPT_SSL_VERIFYHOST, 0);
         curl_setopt($url, CURLOPT_SSL_VERIFYPEER, 0);
-        $resultData  = curl_exec($url);
+        $resultData = curl_exec($url);
         $ResultArray = json_decode($resultData, true);
         curl_close($url);
         return $ResultArray;
@@ -34,5 +30,4 @@ class NagadHttpClient
         }
         return $headers;
     }
-
 }

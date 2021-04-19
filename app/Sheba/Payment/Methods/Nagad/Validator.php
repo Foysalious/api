@@ -1,8 +1,4 @@
-<?php
-
-
-namespace Sheba\Payment\Methods\Nagad;
-
+<?php namespace Sheba\Payment\Methods\Nagad;
 
 use App\Models\Payable;
 use App\Models\Payment;
@@ -44,6 +40,11 @@ class Validator
         return $this;
     }
 
+    private function setOthers()
+    {
+        $this->status = isset($this->data['status']) && $this->data['status'] == 'Success' ? 'paid' : false;
+    }
+
     public function getPaymentRefId()
     {
         if (isset($this->data['payment_ref_id'])) {
@@ -60,6 +61,11 @@ class Validator
         return $this->data['order_id'];
     }
 
+    public function getPayment()
+    {
+        return $this->payment;
+    }
+
     /**
      * @throws InvalidOrderId
      */
@@ -73,11 +79,6 @@ class Validator
         }
     }
 
-    public function getPayment()
-    {
-        return $this->payment;
-    }
-
     public function getPayable()
     {
         return $this->payable;
@@ -86,11 +87,6 @@ class Validator
     public function toString()
     {
         return json_encode($this->data);
-    }
-
-    private function setOthers()
-    {
-        $this->status = isset($this->data['status']) && $this->data['status'] == 'Success' ? 'paid' : false;
     }
 
     public function getStatus()

@@ -1,8 +1,4 @@
-<?php
-
-
-namespace Sheba\Payment\Methods\Nagad;
-
+<?php namespace Sheba\Payment\Methods\Nagad;
 
 use Carbon\Carbon;
 use Sheba\Payment\Methods\Nagad\Exception\EncryptionFailed;

@@ -1,7 +1,4 @@
-<?php
-
-
-namespace App\Sheba\Payment\Methods\Nagad;
+<?php namespace App\Sheba\Payment\Methods\Nagad;
 
 use App\Models\Affiliate;
 use App\Models\Customer;
@@ -14,7 +11,6 @@ use Sheba\Payment\PayableUser;
 
 class NagadBuilder
 {
-
     /**
      * @param Payable $payable
      * @return Nagad
@@ -41,7 +37,6 @@ class NagadBuilder
         return new DefaultStore();
     }
 
-
     /**
      * @param $store_name
      * @return Nagad
@@ -61,10 +56,9 @@ class NagadBuilder
     public static function getStoreByName($name)
     {
         if ($name == AffiliateStore::NAME) return new AffiliateStore();
-        if ($name==MarketplaceStore::NAME) return new MarketplaceStore();
+        if ($name == MarketplaceStore::NAME) return new MarketplaceStore();
         return new DefaultStore();
     }
-
 
     /**
      * @param Payable $payable
@@ -74,5 +68,4 @@ class NagadBuilder
     {
         return $payable->payments()->initiationFailed()->count() > 0;
     }
-
 }

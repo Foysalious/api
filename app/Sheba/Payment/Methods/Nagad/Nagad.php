@@ -1,6 +1,5 @@
 <?php namespace Sheba\Payment\Methods\Nagad;
 
-
 use App\Models\Payable;
 use App\Models\Payment;
 use Exception;
@@ -23,6 +22,13 @@ class Nagad extends PaymentMethod
      */
     private $store;
 
+    public function __construct()
+    {
+        parent::__construct();
+        $this->client = app(NagadClient::class);
+        $this->VALIDATE_URL = config('sheba.api_url') . "/v1/nagad/validate/";
+    }
+
     /**
      * @param mixed $refId
      * @return Nagad
@@ -33,20 +39,11 @@ class Nagad extends PaymentMethod
         return $this;
     }
 
-    public function __construct()
-    {
-        parent::__construct();
-        $this->client       = app(NagadClient::class);
-        $this->VALIDATE_URL = config('sheba.api_url') . "/v1/nagad/validate/";
-    }
-
     public function setStore(NagadStore $store)
     {
         $this->store = $store;
         return $this;
     }
-
-
 
     /**
      * @param Payable $payable
@@ -56,7 +53,7 @@ class Nagad extends PaymentMethod
      */
     public function init(Payable $payable): Payment
     {
-        $payment                         = $this->createPayment($payable,$this->store->getName());
+        $payment = $this->createPayment($payable, $this->store->getName());
         $payment->gateway_transaction_id = Inputs::orderID();
         $payment->update();
         try {
@@ -69,7 +66,7 @@ class Nagad extends PaymentMethod
                 throw new Exception($resp->toString());
             }
             $resp->setRefId($initResponse->getPaymentReferenceId());
-            $payment->redirect_url        = $resp->getCallbackUrl();
+            $payment->redirect_url = $resp->getCallbackUrl();
             $payment->transaction_details = $resp->toString();
             $payment->update();
             return $payment;
@@ -79,6 +76,17 @@ class Nagad extends PaymentMethod
         }
     }
 
+    private function onInitFailed(Payment $payment, $error)
+    {
+        $this->paymentLogRepo->setPayment($payment);
+        $this->paymentLogRepo->create([
+            'to' => Statuses::INITIATION_FAILED, 'from' => $payment->status, 'transaction_details' => $error
+        ]);
+        $payment->status = Statuses::INITIATION_FAILED;
+        $payment->transaction_details = $error;
+        $payment->update();
+    }
+
     /**
      * @param Payment $payment
      * @return Payment
@@ -86,7 +94,7 @@ class Nagad extends PaymentMethod
      */
     public function validate(Payment $payment): Payment
     {
-        $res=(new Validator([],true));
+        $res = (new Validator([], true));
         try {
             if (empty($this->refId)) throw new InvalidPaymentRef();
             $res = $this->client->setStore($this->store)->validate($this->refId);
@@ -104,18 +112,5 @@ class Nagad extends PaymentMethod
     public function getMethodName()
     {
         return self::NAME;
-    }
-
-    private function onInitFailed(Payment $payment, $error)
-    {
-        $this->paymentLogRepo->setPayment($payment);
-        $this->paymentLogRepo->create([
-            'to'                  => Statuses::INITIATION_FAILED,
-            'from'                => $payment->status,
-            'transaction_details' => $error
-        ]);
-        $payment->status              = Statuses::INITIATION_FAILED;
-        $payment->transaction_details = $error;
-        $payment->update();
     }
 }

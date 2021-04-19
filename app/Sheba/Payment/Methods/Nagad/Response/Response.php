@@ -1,8 +1,4 @@
-<?php
-
-
-namespace Sheba\Payment\Methods\Nagad\Response;
-
+<?php namespace Sheba\Payment\Methods\Nagad\Response;
 
 use Sheba\Payment\Methods\Nagad\Outputs;
 use Sheba\Payment\Methods\Nagad\Stores\NagadStore;
@@ -12,15 +8,15 @@ abstract class Response
     protected $output;
     protected $data;
     protected $error;
-    protected $decode       = 'sensitiveData';
-    protected $msg          = 'message';
+    protected $decode = 'sensitiveData';
+    protected $msg = 'message';
     protected $shouldDecode = true;
     protected $store;
 
     public function __construct($data, NagadStore $store)
     {
         $this->store = $store;
-        $this->data  = (array)$data;
+        $this->data = (array)$data;
         if (!array_key_exists($this->decode, $this->data) && !array_key_exists('callBackUrl', $this->data)) {
             $this->error = $this->data[$this->msg];
         } else {
@@ -28,7 +24,6 @@ abstract class Response
                 $this->decodeOutput();
             }
         }
-
     }
 
     private function decodeOutput()

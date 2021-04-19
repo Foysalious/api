@@ -20,6 +20,4 @@ class Initialize extends Response
     {
         return isset($this->output['challenge']) ? $this->output['challenge'] : null;
     }
-
-
 }

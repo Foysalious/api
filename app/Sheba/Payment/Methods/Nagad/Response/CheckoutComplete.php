@@ -1,7 +1,4 @@
-<?php
-
-
-namespace Sheba\Payment\Methods\Nagad\Response;
+<?php namespace Sheba\Payment\Methods\Nagad\Response;
 
 use Sheba\Payment\Methods\Nagad\Stores\NagadStore;
 
@@ -18,5 +15,4 @@ class CheckoutComplete extends Response
     {
         return isset($this->data["callBackUrl"]) ? $this->data["callBackUrl"] : null;
     }
-
 }
