@@ -69,7 +69,6 @@ class CustomerOrderController extends Controller
                     });
                 }
                 $all_jobs = $this->getInformation($all_orders);
-                dd($all_jobs);
                 $cancelled_served_jobs = $all_jobs->filter(function ($job) {
                     return $job['cancelled_date'] != null || $job['status'] == 'Served';
                 });
