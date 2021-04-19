@@ -438,6 +438,7 @@ class EventDataConverter
                     ],
                 ],
             ]
+        ]
         ]);
     }
 
