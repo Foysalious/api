@@ -26,10 +26,8 @@ class CollectionController extends Controller
     {
         $partner = $request->auth_user->getPartner();
         $collection = $this->collectionService->setPartnerId($partner->id)->getAllCollection();
-        if(empty($collection))
-            return api_response($request, "No data found!", 500, $collection);
-        else
-            return api_response($request, null, 200, $collection);
+        if(empty($collection)) return api_response($request, "No data found!", 500, $collection);
+        else return api_response($request, null, 200, $collection);
     }
 
     /**

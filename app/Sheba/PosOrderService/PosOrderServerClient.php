@@ -30,6 +30,7 @@ class PosOrderServerClient
      * @param bool $multipart
      * @return mixed
      * @throws InventoryServiceServerError
+     * @throws PosOrderServiceServerError
      */
     private function call($method, $uri, $data = null, $multipart = false)
     {
