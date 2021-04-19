@@ -47,7 +47,7 @@ class LeaveApprovalRequestListTransformer extends TransformerAbstract
             'id' => $approval_request->id,
             'type' => Type::LEAVE,
             'status' => ApprovalRequestPresenter::statuses()[$approval_request->status],
-            'your_approval' => $this->businessMember->id == $approval_request->approver_id ? $approval_request->status : $this->getYourApprovalStatus($requestable, $business_member),
+            'your_approval' => $this->businessMember->id == $approval_request->approver_id ? ApprovalRequestPresenter::statuses()[$approval_request->status] : $this->getYourApprovalStatus($requestable, $business_member),
             'created_at' => $approval_request->created_at->format('M d, Y'),
             'leave' => [
                 'id' => $requestable->id,
