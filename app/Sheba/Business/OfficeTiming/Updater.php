@@ -117,7 +117,6 @@ class Updater
         $weekends->each(function ($weekend) {
             $weekend->delete();
         });
-
         foreach ($this->weekends as $weekend) {
             $this->createWeekend($this->business->id, $weekend);
         }
