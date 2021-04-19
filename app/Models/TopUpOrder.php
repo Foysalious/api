@@ -198,6 +198,11 @@ class TopUpOrder extends BaseModel implements PayableType
         return $this->isPending() || $this->isAttempted();
     }
 
+    public function getStatusForAgent()
+    {
+        return Statuses::getForAgent($this->status);
+    }
+
     public function getOriginalMobile()
     {
         return getOriginalMobileNumber($this->payee_mobile);
