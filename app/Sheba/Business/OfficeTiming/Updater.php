@@ -22,9 +22,6 @@ class Updater
     private $office_hour_repo;
     private $halfDay;
     private $halfDayConfiguration;
-    private $totalWorkingDaysType;
-    private $numberOfDays;
-    private $isWeekendIncluded;
 
     /**
      * Updater constructor.
@@ -70,7 +67,7 @@ class Updater
 
     public function setWeekends($weekends)
     {
-       $this->weekends = json_decode($weekends,1);
+       $this->weekends = $weekends;
        return $this;
     }
 
@@ -157,41 +154,6 @@ class Updater
         $data = ['is_half_day_enable' => 0];
         $this->business->update($this->withUpdateModificationField($data));
         LeaveType::withTrashed()->where('business_id', $this->business->id)->where('is_half_day_enable', 1)->update(['is_half_day_enable' => 0]);
-
-        return true;
-    }
-
-    public function setTotalWorkingDaysType($total_working_days_type)
-    {
-        $this->totalWorkingDaysType = $total_working_days_type;
-        return $this;
-    }
-
-    public function setNumberOfDays($number_of_days)
-    {
-        $this->numberOfDays = $number_of_days;
-        return $this;
-    }
-
-    public function setIsWeekendIncluded($is_weekend_included)
-    {
-        $this->isWeekendIncluded = $is_weekend_included;
-        return $this;
-    }
-
-    public function updateOperational()
-    {
-        $this->setModifier($this->member);
-        $update_weekends = $this->updateWeekends();
-        $update_office_hours = $this->updateOperationalOfficeHours();
-        return true;
-    }
-
-    private function updateOperationalOfficeHours()
-    {
-        $office_time = $this->office_hour_repo->getOfficeTime($this->business);
-        $data = ['type' => $this->totalWorkingDaysType, 'number_of_days' => $this->numberOfDays, 'is_weekend_included' => $this->isWeekendIncluded];
-        $this->office_hour_repo->update($office_time, $this->withUpdateModificationField($data));
 
         return true;
     }
