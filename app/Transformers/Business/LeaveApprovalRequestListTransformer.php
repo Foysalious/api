@@ -85,10 +85,10 @@ class LeaveApprovalRequestListTransformer extends TransformerAbstract
         $find_approvers = (new FindApprovers())->calculateApprovers($approval_setting, $requestable_business_member);
         $requestable_approval_request_ids = $requestable->requests()->pluck('approver_id', 'id')->toArray();
         $remainingApprovers = array_diff($find_approvers, $requestable_approval_request_ids);
-        $aprroval_request = $this->approvalRequestRepository->where('approver_id', $this->businessMember->id)->where('requestable_id', $requestable->id)->first();
-        if (in_array($this->businessMember->id, $remainingApprovers) && !$aprroval_request) return Status::PENDING;
-        if (!in_array($this->businessMember->id, $remainingApprovers) && !$aprroval_request) return null;
-        return $aprroval_request->status;
+        $approval_request = $this->approvalRequestRepository->where('approver_id', $this->businessMember->id)->where('requestable_id', $requestable->id)->first();
+        if (in_array($this->businessMember->id, $remainingApprovers) && !$approval_request) return Status::PENDING;
+        if (!in_array($this->businessMember->id, $remainingApprovers) && !$approval_request) return null;
+        return ApprovalRequestPresenter::statuses()[$approval_request->status];
     }
 
     private function getApprover($requestable, $requestable_business_member)
