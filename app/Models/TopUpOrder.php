@@ -1,8 +1,7 @@
 <?php namespace App\Models;
 
 use Sheba\Dal\BaseModel;
-use Sheba\Dal\TopupOrder\Events\Created;
-use Sheba\Dal\TopupOrder\Events\Updated;
+use Sheba\Dal\TopupOrder\Events\Saved;
 use Sheba\Dal\TopupOrder\FailedReason;
 use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\Elasticsearch\ElasticsearchTrait;
@@ -17,8 +16,7 @@ class TopUpOrder extends BaseModel implements PayableType
     protected $table = 'topup_orders';
     protected $dates = ['created_at', 'updated_at'];
 
-    public static $createdEventClass = Created::class;
-    public static $updatedEventClass = Updated::class;
+    public static $savedEventClass = Saved::class;
 
     /**
      * The elasticsearch settings.
