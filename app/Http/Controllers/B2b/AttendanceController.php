@@ -648,9 +648,6 @@ class AttendanceController extends Controller
 
         $office_time = $office_hours->getOfficeTime($business);
         $data = [
-            'office_hour_type' => 'Fixed Time',
-            'start_time' => $office_time ? Carbon::parse($office_time->start_time)->format('h:i a') : '09:00 am',
-            'end_time' => $office_time ? Carbon::parse($office_time->end_time)->format('h:i a') : '05:00 pm',
             'total_working_days_type' => $office_time->type,
             'total_working_days' => $office_time->number_of_days,
             'is_weekend_included' => $office_time->is_weekend_included,
@@ -660,6 +657,6 @@ class AttendanceController extends Controller
             'business_offices' => $attendance_setting_data["business_offices"]
         ];
 
-        return api_response($request, null, 200, ['office_setting' => $data]);
+        return api_response($request, null, 200, ['office_settings_operational' => $data]);
     }
 }
