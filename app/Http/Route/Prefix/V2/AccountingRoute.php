@@ -6,10 +6,14 @@ class AccountingRoute
     {
         $api->group(['prefix' => 'accounting', 'middleware' => ['accounting.auth']], function ($api) {
             $api->post('/transfer', 'Accounting\\AccountingController@storeAccountsTransfer');
-            $api->post('/expense', 'Accounting\\ExpenseController@storeExpenseEntry');
-            $api->post('/income', 'Accounting\\IncomeController@storeIncomeEntry');
+            $api->post('/expense', 'Accounting\\IncomeExpenseController@storeExpenseEntry');
+            $api->post('/income', 'Accounting\\IncomeExpenseController@storeIncomeEntry');
             $api->get('/account-types', 'Accounting\\AccountController@getAccountTypeList');
             $api->get('/accounts', 'Accounting\\AccountController@getAccountList');
+            $api->get('/cash-accounts', 'Accounting\\AccountController@getCashAccountList');
+            $api->group(['prefix' => 'due-tracker'], function ($api) {
+                $api->post('/{customer_id}', 'Accounting\\DueTrackerController@store');
+            });
         });
     }
 }
