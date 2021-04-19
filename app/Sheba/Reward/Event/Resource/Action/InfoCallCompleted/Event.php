@@ -7,7 +7,7 @@ use Sheba\Reward\Exception\RulesTypeMismatchException;
 use Sheba\Reward\Event\Resource\Action\InfoCallCompleted\Rule;
 use Sheba\Reward\Event\Rule as BaseRule;
 
-class Event extends Action implements AmountCalculator
+class Event extends Action
 {
     /**
      * @param BaseRule $rule
@@ -31,8 +31,4 @@ class Event extends Action implements AmountCalculator
         // TODO: Implement getLogEvent() method.
     }
 
-    public function calculateAmount()
-    {
-        // TODO: Implement calculateAmount() method.
-    }
 }
