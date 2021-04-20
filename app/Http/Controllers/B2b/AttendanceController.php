@@ -5,9 +5,13 @@ use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Sheba\Business\Attendance\MonthlyStat;
 use App\Sheba\Business\BusinessBasicInformation;
+use App\Sheba\Business\OfficeSetting\PolicyTransformer;
+use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
 use Sheba\Business\Attendance\AttendanceList;
 use Sheba\Business\Attendance\Daily\DailyExcel;
 use Sheba\Business\Attendance\Monthly\Excel;
@@ -791,5 +795,18 @@ class AttendanceController extends Controller
             ->update();
 
         if ($office_timing) return api_response($request, null, 200, ['msg' => "Update Successful"]);
+    }
+
+    public function getGracePolicy(Request $request)
+    {
+        $business = $request->business;
+        if (!$business) return api_response($request, null, 403, ['message' => 'You Are not authorized to show this settings']);
+        $grace_policy = $business->gracePolicy;
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Collection($grace_policy, new PolicyTransformer());
+        $grace_policy_rules = $manager->createData($resource)->toArray()['data'];
+
+        return api_response($request, $grace_policy_rules, 200, [ 'grace_policy_rules' => $grace_policy_rules]);
     }
 }

@@ -7,6 +7,9 @@ use Sheba\Business\CoWorker\Statuses;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\BusinessAttendanceTypes\AttendanceTypes;
 use Sheba\Dal\LeaveType\Model as LeaveTypeModel;
+use Sheba\Dal\OfficePolicy\OfficePolicy;
+use Sheba\Dal\OfficePolicy\Type;
+use Sheba\Dal\OfficePolicyRule\OfficePolicyRule;
 use Sheba\Dal\PayrollSetting\PayrollSetting;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Helpers\TimeFrame;
@@ -382,5 +385,14 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
     {
         if (in_array(AttendanceTypes::IP_BASED, $this->attendanceTypes->pluck('attendance_type')->toArray())) return true;
         return false;
+    }
+
+    public function policy()
+    {
+        return $this->hasMany(OfficePolicyRule::class);
+    }
+    public function gracePolicy()
+    {
+        return $this->policy()->where('policy_type', Type::GRACE_PERIOD)->orderBy('from_days');
     }
 }
