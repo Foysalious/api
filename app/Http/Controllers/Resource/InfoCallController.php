@@ -152,12 +152,11 @@ class InfoCallController extends Controller
         ];
         if ($info_call->status == Statuses::REJECTED || $info_call->status == Statuses::CONVERTED) $info_call_details['bn_info_call_status'] = Statuses::getBanglaStatus($info_call->status);
         if ($info_call->status == Statuses::REJECTED && $log) $info_call_details['service_comment'] = $service_comment;
-        if (!$info_call->service_id) $info_call_details['service_name'] = $info_call->service_name;
         if ($info_call->status == Statuses::CONVERTED) {
             $order = Order::where('info_call_id', $id)->get();
             $info_call_details['order_id'] = $order[0]->id;
             $info_call_details['order_created_at'] = $order[0]->created_at->toDateTimeString();
-            $partner_order = PartnerOrder::where('order_id', $order[0]->id)->latest();
+            $partner_order = PartnerOrder::where('order_id', $order[0]->id)->get();
             if ($partner_order[0]->closed_and_paid_at!=null)  {
                 $info_call_details['bn_order_status'] = 'শেষ';
                 $info_call_details['reward'] = 200; //dummy
@@ -166,6 +165,7 @@ class InfoCallController extends Controller
             else $info_call_details['bn_order_status'] = 'চলছে';
 
         }
+        if (!$info_call->service_id) $info_call_details['service_name'] = $info_call->service_name;
         else {
             $service_name = Service::select('name')->where('id', $info_call->service_id)->get();
             $info_call_details['service_name'] =$service_name[0]['name'];
