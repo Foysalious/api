@@ -5,18 +5,22 @@ namespace Sheba\TopUp\Gateway;
 
 
 use App\Models\TopUpOrder;
+use App\Sheba\TopUp\Exception\BdRechargeTopUpStillProcessing;
 use App\Sheba\TopUp\Vendor\Internal\BdRechargeClient;
+use App\Sheba\TopUp\Vendor\Response\Ipn\BdRecharge\BdRechargeFailResponse;
+use App\Sheba\TopUp\Vendor\Response\Ipn\BdRecharge\BdRechargeSuccessResponse;
 use Exception;
 use Sheba\Dal\TopupOrder\Statuses;
-use Sheba\TopUp\Exception\GatewayTimeout;
-use Sheba\TopUp\Exception\PaywellTopUpStillNotResolved;
 use Sheba\TopUp\Vendor\Response\BdRechargeResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
+use Sheba\TPProxy\TPProxyServerError;
 
 class BdRecharge implements Gateway
 {
     CONST SHEBA_COMMISSION = 0.0;
+    CONST SUCCESS = 1;
+    CONST FAILED = 2;
     private $client;
 
     public function __construct(BdRechargeClient $client)
@@ -41,7 +45,7 @@ class BdRecharge implements Gateway
 
     public static function getInitialStatusStatically()
     {
-        return Statuses::PENDING;
+        return Statuses::ATTEMPTED;
     }
 
     public function getShebaCommission()
@@ -54,8 +58,24 @@ class BdRecharge implements Gateway
         return Names::BD_RECHARGE;
     }
 
+    /**
+     * @param TopUpOrder $topup_order
+     * @return IpnResponse
+     * @throws TPProxyServerError | BdRechargeTopUpStillProcessing
+     */
     public function enquireIpnResponse(TopUpOrder $topup_order): IpnResponse
     {
-        // TODO: Implement enquireIpnResponse() method.
+        $response = $this->client->enquiry($topup_order);
+        /** @var IpnResponse $ipn_response */
+        $ipn_response = null;
+        if ($response->data->status == 'success' ) {
+            $ipn_response = app(BdRechargeSuccessResponse::class);
+        } else if ($response->data->status_code == 'failed') {
+            $ipn_response = app(BdRechargeFailResponse::class);
+        } else if ($response->data->status_code == 'processing') {
+            Throw new BdRechargeTopUpStillProcessing($response);
+        }
+        $ipn_response->setResponse($response->data);
+        return $ipn_response;
     }
 }

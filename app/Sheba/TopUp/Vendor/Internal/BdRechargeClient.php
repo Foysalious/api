@@ -9,7 +9,6 @@ use GuzzleHttp\Client as HttpClient;
 use Jose\Factory\JWEFactory;
 use Jose\Factory\JWKFactory;
 use Sheba\TopUp\Exception\GatewayTimeout;
-use Sheba\TopUp\Vendor\Response\PaywellResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 use Sheba\TPProxy\TPProxyClient;
 use Sheba\TPProxy\TPProxyServerError;
@@ -81,19 +80,18 @@ class BdRechargeClient
     }
 
     /**
-     * @param $topup_order_id
+     * @param TopUpOrder $topup_order
      * @return mixed
      * @throws TPProxyServerError
      * this function is for enquiring the topup status manually to bdRecharge gateway if needed
      */
-    public function enquiry($topup_order_id)
+    public function enquiry(TopUpOrder $topup_order)
     {
         $unencrypted_data = [
             "srcuid" => $this->username,
             "srcpwd" => $this->password,
-            "tid" => "$topup_order_id"
+            "tid" => $this->getRefId($topup_order)
         ];
-
         $request_data = [
             'payload' => $this->encryptData($unencrypted_data)
         ];
@@ -161,5 +159,10 @@ class BdRechargeClient
             $json_data, $secret_key, $this->jweHeader
         );
         return $encrypted_data;
+    }
+
+    private function getRefId(TopUpOrder $topup_order)
+    {
+        return $topup_order->getGatewayRefId();
     }
 }

@@ -2,6 +2,7 @@
 
 
 use App\Models\TopUpOrder;
+use Carbon\Carbon;
 use Sheba\Dal\TopupVendor\Gateway;
 
 trait SslResponse
@@ -10,14 +11,21 @@ trait SslResponse
     {
         $response = json_decode(json_encode($this->response), 1);
 
-        $order = TopUpOrder::where('transaction_id', $response['guid'])
-            ->where('gateway', Gateway::SSL)
-            ->first();
+        $order = $this->runQuery(TopUpOrder::where('transaction_id', $response['guid']));
 
         if ($order) return $order;
 
-        return TopUpOrder::where('transaction_details', 'like', '%' . $response['vr_guid'] . '%')
+        return $this->runQuery(TopUpOrder::where('transaction_details', 'like', '%' . $response['vr_guid'] . '%'));
+    }
+
+    private function runQuery($base_query)
+    {
+        $today = Carbon::today()->endOfDay()->toDateTimeString();
+        $yesterday = Carbon::yesterday()->startOfDay()->toDateTimeString();
+
+        return $base_query
             ->where('gateway', Gateway::SSL)
+            ->whereBetween('created_at', [$yesterday, $today])
             ->first();
     }
 }

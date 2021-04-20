@@ -48,4 +48,9 @@ class BdRechargeResponse extends TopUpResponse
     {
         return BdRecharge::getInitialStatusStatically();
     }
+
+    public function isPending()
+    {
+        return $this->hasSuccess();
+    }
 }
