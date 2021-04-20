@@ -6,21 +6,27 @@ use App\Models\Partner;
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
+use App\Sheba\TopUp\Vendor\Internal\BdRechargeClient;
+use App\Sheba\TopUp\Vendor\Response\Ipn\BdRecharge\BdRechargeFailResponse;
+use App\Sheba\TopUp\Vendor\Response\Ipn\BdRecharge\BdRechargeSuccessResponse;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
+use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\TopUp\Creator;
 use Sheba\TopUp\Exception\PaywellTopUpStillNotResolved;
+use Sheba\TopUp\Gateway\BdRecharge;
 use Sheba\TopUp\Jobs\TopUpExcelJob;
 use Sheba\TopUp\Jobs\TopUpJob;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpExcel;
 use Sheba\TopUp\TopUpLifecycleManager;
 use Sheba\TopUp\TopUpRequest;
+use Sheba\TopUp\Vendor\Response\Ipn\FailResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\Ssl\SslSuccessResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\Ssl\SslFailResponse;
@@ -352,5 +358,38 @@ class TopUpController extends Controller
         }
 
         return api_response($actual_response, json_encode($actual_response), 200);
+    }
+
+    /**
+     * @param Request $request
+     * @param BdRechargeSuccessResponse $success_response
+     * @param BdRechargeFailResponse $fail_response
+     * @return JsonResponse
+     * @throws Exception
+     */
+    public function bdRechargeStatusUpdate(Request $request, BdRechargeSuccessResponse $success_response, BdRechargeFailResponse $fail_response)
+    {
+        $data = $request->all();
+        if( $data['status'] == BdRecharge::SUCCESS){
+            $this->ipnHandle($success_response, $request);
+        }
+        elseif ($data['status'] == BdRecharge::FAILED){
+            $this->ipnHandle($fail_response, $request);
+        }
+        return api_response($request, 1, 200);
+    }
+
+    private function ipnHandle(IpnResponse $ipn_response, Request $request){
+        $data = $request->all();
+        $ipn_response->setResponse($data);
+        $ipn_response->handleTopUp();
+        $this->logIpn($ipn_response, $data);
+    }
+
+    private function logIpn(IpnResponse $ipn_response, $request_data)
+    {
+        $key = 'Topup::' . ($ipn_response instanceof FailResponse ? "Failed:failed" : "Success:success") . "_";
+        $key .= Carbon::now()->timestamp . '_' . $ipn_response->getTopUpOrder()->id;
+        Redis::set($key, json_encode($request_data));
     }
 }
