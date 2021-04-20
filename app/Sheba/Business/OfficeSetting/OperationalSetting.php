@@ -1,4 +1,4 @@
-<?php namespace Sheba\Business\OfficeTiming;
+<?php namespace Sheba\Business\OfficeSetting;
 
 use App\Models\Business;
 use App\Models\Member;
