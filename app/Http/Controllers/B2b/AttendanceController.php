@@ -5,14 +5,19 @@ use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Sheba\Business\Attendance\MonthlyStat;
 use App\Sheba\Business\BusinessBasicInformation;
+use App\Sheba\Business\OfficeSetting\PolicyTransformer;
+use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
 use Sheba\Business\Attendance\AttendanceList;
 use Sheba\Business\Attendance\Daily\DailyExcel;
 use Sheba\Business\Attendance\Monthly\Excel;
 use Sheba\Business\Attendance\Member\Excel as MemberMonthlyExcel;
 use Sheba\Business\Attendance\Setting\ActionType;
+use Sheba\Business\OfficeTiming\AttendaceSettingUpdater;
 use Sheba\Business\OfficeTiming\OperationalSetting;
 use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
 use Sheba\Dal\Attendance\Statuses;
@@ -771,5 +776,51 @@ class AttendanceController extends Controller
         ];
 
         return api_response($request, null, 200, ['office_settings_attendance' => $data]);
+    }
+
+    public function updateAttendanceOfficeSettings(Request $request, AttendaceSettingUpdater $updater)
+    {
+        $this->validate($request, [
+            'office_hour_type' => 'required',
+            'start_time' => 'date_format:H:i:s',
+            'end_time' => 'date_format:H:i:s|after:start_time',
+            'half_day' => 'required', 'half_day_config' => 'string',
+            'is_start_grace_period_allow" => "required',
+            'starting_grace_time" => "required_if:is_start_grace_period_allow,==,1',
+            'is_end_grace_period_allow" => "required',
+            'ending_grace_time" => "required_if:is_end_grace_period_allow,==,1',
+        ], [
+            'end_time.after' => 'Start Time Must Be Less Than End Time'
+        ]);
+        $start_time = Carbon::parse($request->start_time)->format('H:i') . ':59';
+        $end_time = Carbon::parse($request->end_time)->format('H:i') . ':59';
+
+        $business_member = $request->business_member;
+        $office_timing = $updater->setBusiness($request->business)
+            ->setMember($business_member->member)
+            ->setOfficeHourType($request->office_hour_type)
+            ->setStartTime($start_time)
+            ->setStartGracePeriod($request->is_start_grace_period_allow)
+            ->setStartGracePeriodTime($request->starting_grace_time)
+            ->setEndTime($end_time)
+            ->setEndGracePeriod($request->is_end_grace_period_allow)
+            ->setEndGracePeriodTime($request->ending_grace_time)
+            ->setHalfDayTimings($request)
+            ->update();
+
+        if ($office_timing) return api_response($request, null, 200, ['msg' => "Update Successful"]);
+    }
+
+    public function getGracePolicy(Request $request)
+    {
+        $business = $request->business;
+        if (!$business) return api_response($request, null, 403, ['message' => 'You Are not authorized to show this settings']);
+        $grace_policy = $business->gracePolicy;
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Collection($grace_policy, new PolicyTransformer());
+        $grace_policy_rules = $manager->createData($resource)->toArray()['data'];
+
+        return api_response($request, $grace_policy_rules, 200, [ 'grace_policy_rules' => $grace_policy_rules]);
     }
 }
