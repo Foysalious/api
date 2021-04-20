@@ -3,6 +3,7 @@
 use App\Models\TopUpOrder;
 use Exception;
 use App\Models\TopUpVendor;
+use Sheba\Dal\TopupOrder\TopUpOrderRepository;
 use Sheba\ModificationFields;
 use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\TopUp\Vendor\Response\TopUpErrorResponse;
@@ -17,6 +18,8 @@ class TopUpRechargeManager extends TopUpManager
 
     /** @var TopUpValidator */
     private $validator;
+    /** @var TopUpOrderRepository */
+    private $orderRepo;
 
     /** @var Vendor */
     private $vendor;
@@ -29,10 +32,11 @@ class TopUpRechargeManager extends TopUpManager
     /** @var TopUpResponse */
     private $response;
 
-    public function __construct(TopUpValidator $validator, StatusChanger $status_changer)
+    public function __construct(TopUpValidator $validator, StatusChanger $status_changer, TopUpOrderRepository $order_repo)
     {
         parent::__construct($status_changer);
         $this->validator = $validator;
+        $this->orderRepo = $order_repo;
     }
 
     /**
@@ -123,6 +127,7 @@ class TopUpRechargeManager extends TopUpManager
             $this->topUpOrder = $this->updateSuccessfulTopOrder($this->response->getSuccess());
             $this->agent->getCommission()->setTopUpOrder($this->topUpOrder)->disburse();
             $this->vendor->deductAmount($this->topUpOrder->amount);
+            $this->orderRepo->update($this->topUpOrder, [ 'is_agent_debited' => 1 ]);
         });
 
         if ($this->topUpOrder->isAgentPartner()) {
