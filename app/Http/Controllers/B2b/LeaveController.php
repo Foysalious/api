@@ -549,7 +549,6 @@ class LeaveController extends Controller
         return api_response($request, null, 200);
     }
 
-
     /**
      * @param $business_id
      * @param Request $request

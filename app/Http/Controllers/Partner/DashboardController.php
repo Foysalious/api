@@ -44,7 +44,7 @@ class DashboardController extends Controller
 {
     use ModificationFields, LocationSetter;
 
-    public function get(Request $request, PartnerPerformance $performance, PartnerReward $partner_reward)
+    public function get(Request $request, PartnerPerformance $performance)
     {
         ini_set('memory_limit', '6096M');
         ini_set('max_execution_time', 660);
@@ -95,7 +95,6 @@ class DashboardController extends Controller
                 'show_status'                  => constants('PARTNER_STATUSES_SHOW')[$partner['status']]['partner'],
                 'balance'                      => $partner->totalWalletAmount(),
                 'credit'                       => $partner->wallet,
-                'bonus'                        => round($partner->bonusWallet(), 2),
                 'is_credit_limit_exceed'       => $partner->isCreditLimitExceed(),
                 'is_on_leave'                  => $partner->runningLeave() ? 1 : 0,
                 'bonus_credit'                 => $partner->bonusWallet(),
@@ -157,7 +156,6 @@ class DashboardController extends Controller
                     'package_badge'   => $upgradable_package->badge,
                     'package_usp_bn'  => json_decode($upgradable_package->usps, 1)['usp_bn']
                 ] : null,
-                'has_reward_campaign'          => count($partner_reward->upcoming()) > 0 ? 1 : 0,
                 'leave_info'                   => (new LeaveStatus())->setArtisan($partner)->getCurrentStatus(),
                 'sheba_order'                  => $partner->orders->isEmpty() ? 0 : 1,
                 'manager_dashboard_banner'     => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner_assets/dashboard/manager_dashboard.png',
@@ -197,13 +195,13 @@ class DashboardController extends Controller
         }
     }
 
-    public function getV3DashBoard(Request $request, PartnerPerformance $performance, PartnerReward $partner_reward) {
+    public function getV3DashBoard(Request $request, PartnerPerformance $performance) {
         ini_set('memory_limit', '6096M');
         ini_set('max_execution_time', 660);
         try {
             /** @var Partner $partner */
             $partner       = $request->partner;
-            $data     = (new PartnerRepository($partner))->getNewDashboard($request, $performance, $partner_reward);
+            $data     = (new PartnerRepository($partner))->getNewDashboard($request, $performance);
             if (request()->hasHeader('Portal-Name'))
                 $this->setDailyUsageRecord($partner, request()->header('Portal-Name'));
             return api_response($request, $data, 200, ['data' => $data]);

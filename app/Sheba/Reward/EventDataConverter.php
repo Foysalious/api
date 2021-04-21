@@ -334,7 +334,7 @@ class EventDataConverter
                         ]
                     ],
                 'action' => [
-                    'infocall_completed' => [
+                    'info_call_completed' => [
                         'name' => 'InfoCall to Order Served and Paid',
                         'event_class' => 'Sheba\Reward\Event\Resource\Action\InfoCallCompleted\Event',
                         'rule_class' => 'Sheba\Reward\Event\Resource\Action\InfoCallCompleted\Rule',

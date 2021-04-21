@@ -3,6 +3,8 @@
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\InfoCallCreateRequest;
+use App\Models\PartnerOrder;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Models\Order;
 use Sheba\Dal\InfoCall\InfoCall;
@@ -60,6 +62,13 @@ class InfoCallController extends Controller
                 'order_status' => 'বাতিল', //dummy
                 'reward' => 200 //dummy
             ]);
+            if ($info_call['status'] == Statuses::CONVERTED) {
+                $order = Order::where('info_call_id', $info_call['id'])->get()->toArray();
+                $partner_order = PartnerOrder::where('order_id', $order[0]['id'])->latest();
+//                if ($partner_order[0]->cancelled_at!=null) array_push($list, ['order_status' => 'বাতিল']);
+//                if ($partner_order[0]->closed_and_paid_at!=null) array_push($list, ['order_status' => 'শেষ']);
+//                else array_push($list, ['order_status' => 'চলছে']);
+            }
         }
         return api_response($request, $list, 200, ['service_request_list' => $list]);
     }
@@ -70,7 +79,8 @@ class InfoCallController extends Controller
             'offset' => 'numeric|min:0', 'limit' => 'numeric|min:1',
             'month' => 'sometimes|required|integer|between:1,12', 'year' => 'sometimes|required|integer'
         ]);
-
+        $cancelled_order = 0;
+        $completed_order = 0;
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
         $resource = $auth_user->getResource();
@@ -79,32 +89,40 @@ class InfoCallController extends Controller
         if ($request->has('month')) $info_calls = $infoCallList->setMonth($request->month);
         $auth_user_array = $auth_user->toArray();
         $created_by = $auth_user_array['resource']['id'];
-        $data = [
-            'total_rewards' => 40000,
-            'completed_order' => 77,
-        ];
         $query = InfoCall::where('created_by', $created_by)->where('created_by_type', get_class($resource));
-        if (!($request->has('limit')) && !($request->has('year')) && !($request->has('month'))) {
+        $total_requests = $query->get()->count();
+        $data = [
+            'total_rewards' => 40000, //dummy
+            'total_service_requests' => ! ($total_requests) ? 0 : $total_requests,
+        ];
+        if (!($request->has('year')) && !($request->has('month'))) {
             $filtered_info_calls = $query->get();
             $total_orders = $filtered_info_calls->where('status', Statuses::CONVERTED)->count();
-            $total_service_requests = $filtered_info_calls->count();
+            $month_wise_service_requests = $filtered_info_calls->count();
             $rejected_requests = $filtered_info_calls->where('status', Statuses::REJECTED)->count();
         }
         else {
             $filtered_info_calls = $info_calls->getFilteredInfoCalls($query)->get();
-            $total_service_requests = $filtered_info_calls->count();
+            $converted_info_call_ids = $info_calls->getFilteredInfoCalls($query)->where('status',Statuses::CONVERTED)->pluck('id')->toArray();
+            $order_ids = Order::whereIn('info_call_id',$converted_info_call_ids)->pluck('id')->toArray();
+            $partner_orders = PartnerOrder::select('id', 'cancelled_at', 'closed_and_paid_at')->whereIn('order_id',$order_ids)->get()->toArray();
+            foreach ($partner_orders as $partner_order) {
+                if ($partner_order['cancelled_at']!=null) $cancelled_order++;
+                if ($partner_order['closed_and_paid_at']!=null) $completed_order++;
+            }
+            $month_wise_service_requests = $filtered_info_calls->count();
             $total_orders = $filtered_info_calls->where('status', Statuses::CONVERTED)->count();
             $rejected_requests = $filtered_info_calls->where('status', Statuses::REJECTED)->count();
         }
-        if($total_service_requests) $data['total_service_requests'] = $total_service_requests;
-        else $data['total_service_requests'] = 0;
+        if($month_wise_service_requests) $data['service_requests'] = $month_wise_service_requests;
+        else $data['service_requests'] = 0;
         if($total_orders) $data['total_order'] = $total_orders;
         else $data['total_order'] = 0;
 
-        $rejected_orders = 0;
-        $cancelled_orders = $rejected_requests + $rejected_orders;
+        $cancelled_orders = $rejected_requests + $cancelled_order;
         $data['cancelled_order'] = $cancelled_orders;
-        return ['code' => 200, 'service_request_dashboard' => $data];
+        $data['completed_order'] = $completed_order;
+        return ['code' => 200, 'message'=>'Successful','service_request_dashboard' => $data];
     }
 
     public function store(InfoCallCreateRequest $request)
@@ -126,10 +144,12 @@ class InfoCallController extends Controller
             'service_id' => $request->service_id,
             'service_name' => $service_name,
             'created_by_type'=> get_class($resource),
-            'portal_name' => 'resource-app'
+            'portal_name' => 'resource-app',
+            'follow_up_date' => Carbon::now()->addMinutes(30),
+            'intended_closing_date' => Carbon::now()->addMinutes(30)
         ];
         $info_call = $this->infoCallRepository->create($data);
-        return api_response($request, $info_call, 200, ['info_call' => $info_call]);
+        return api_response($request, $info_call, 200, ['message'=>'Successful','info_call' => $info_call]);
     }
 
     public function show($id)
@@ -139,21 +159,29 @@ class InfoCallController extends Controller
         if ($log) $service_comment = $log->rejectReason->name;
         $info_call_details = [
             'id' => $id,
-            'status' => $info_call->status,
+            'info_call_status' => $info_call->status,
             'created_at'=> $info_call->created_at->toDateTimeString()
         ];
-        if ($info_call->status == Statuses::REJECTED || $info_call->status == Statuses::CONVERTED) $info_call_details['bn_status'] = Statuses::getBanglaStatus($info_call->status);
+        if ($info_call->status == Statuses::REJECTED || $info_call->status == Statuses::CONVERTED) $info_call_details['bn_info_call_status'] = Statuses::getBanglaStatus($info_call->status);
         if ($info_call->status == Statuses::REJECTED && $log) $info_call_details['service_comment'] = $service_comment;
-        if (!$info_call->service_id) $info_call_details['service_name'] = $info_call->service_name;
         if ($info_call->status == Statuses::CONVERTED) {
             $order = Order::where('info_call_id', $id)->get();
             $info_call_details['order_id'] = $order[0]->id;
             $info_call_details['order_created_at'] = $order[0]->created_at->toDateTimeString();
+            $partner_order = PartnerOrder::where('order_id', $order[0]->id)->get();
+            if ($partner_order[0]->closed_and_paid_at!=null)  {
+                $info_call_details['bn_order_status'] = 'শেষ';
+                $info_call_details['reward'] = 200; //dummy
+            }
+            if ($partner_order[0]->cancelled_at!=null)  $info_call_details['bn_order_status'] = 'বাতিল';
+            else $info_call_details['bn_order_status'] = 'চলছে';
+
         }
+        if (!$info_call->service_id) $info_call_details['service_name'] = $info_call->service_name;
         else {
             $service_name = Service::select('name')->where('id', $info_call->service_id)->get();
             $info_call_details['service_name'] =$service_name[0]['name'];
         }
-        return ['code' => 200, 'info_call_details' => $info_call_details];
+        return ['code' => 200, 'message'=>'Successful','info_call_details' => $info_call_details];
     }
 }

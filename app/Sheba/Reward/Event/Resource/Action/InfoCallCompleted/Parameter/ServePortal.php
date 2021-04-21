@@ -11,9 +11,10 @@ class ServePortal extends ActionEventParameter
 
     public function check(array $params)
     {
-        $order = $params[0];
+        $partner_order = $params[0];
         if ($this->value != null) {
-
+            $status_change_logs = $partner_order->active_job->load('statusChangeLogs')->statusChangeLogs;
+            return $status_change_logs->where('to_status', 'Served')->whereIn('portal_name', $this->value)->count() > 0;
         }
 
         return true;
