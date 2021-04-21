@@ -20,5 +20,4 @@ class AffiliateStore extends NagadStore
     {
         return self::NAME;
     }
-
 }

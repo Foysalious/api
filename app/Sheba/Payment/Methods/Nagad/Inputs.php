@@ -73,8 +73,8 @@ class Inputs
         ]);
 
         return [
-            'sensitiveData' => self::getEncoded($data, $store),
-            'signature' => self::generateSignature($data, $store),
+            // 'sensitiveData' => self::getEncoded($data, $store),
+            // 'signature' => self::generateSignature($data, $store),
             'dateTime' => $date
         ];
     }

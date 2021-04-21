@@ -1,6 +1,5 @@
 <?php namespace Sheba\TPProxy;
 
-
 use Exception;
 use Throwable;
 

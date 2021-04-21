@@ -3,9 +3,9 @@
 use Sheba\Payment\Methods\Nagad\Response\CheckoutComplete;
 use Sheba\Payment\Methods\Nagad\Response\Initialize;
 use Sheba\Payment\Methods\Nagad\Stores\NagadStore;
-use Sheba\TPProxy\TPProxyClient;
+use Sheba\TPProxy\NagadProxyClient;
+use Sheba\TPProxy\NagadRequest;
 use Sheba\TPProxy\TPProxyServerError;
-use Sheba\TPProxy\TPRequest;
 
 class NagadClient
 {
@@ -20,7 +20,7 @@ class NagadClient
      * NagadClient constructor.
      * @param \Sheba\TPProxy\TPProxyClient $client
      */
-    public function __construct(TPProxyClient $client)
+    public function __construct(NagadProxyClient $client)
     {
         $this->client = $client;
     }
@@ -38,16 +38,18 @@ class NagadClient
      * @throws Exception\EncryptionFailed
      * @throws TPProxyServerError
      */
-    public function init($transactionId)
+    public function init($transaction_id)
     {
         $merchantId = $this->store->getMerchantId();
-        $url = "$this->baseUrl/api/dfs/check-out/initialize/$merchantId/$transactionId";
-        $data = Inputs::init($transactionId, $this->store);
-        $request = (new TPRequest())
-            ->setMethod(TPRequest::METHOD_POST)
+        $url = "$this->baseUrl/api/dfs/check-out/initialize/$merchantId/$transaction_id";
+        $data = Inputs::init($transaction_id, $this->store);
+
+        $request = (new NagadRequest())
+            ->setMethod(NagadRequest::METHOD_POST)
             ->setHeaders(Inputs::headers())
             ->setInput($data)
             ->setUrl($url);
+
 
         $resp = $this->client->call($request);
 
@@ -68,9 +70,9 @@ class NagadClient
         $paymentRefId = $resp->getPaymentReferenceId();
         $url = "$this->baseUrl/api/dfs/check-out/complete/$paymentRefId";
         $data = Inputs::complete($transactionId, $resp, $amount, $callbackUrl, $this->store);
-        $request = (new TPRequest())
+        $request = (new NagadRequest())
             ->setUrl($url)
-            ->setMethod(TPRequest::METHOD_POST)
+            ->setMethod(NagadRequest::METHOD_POST)
             ->setHeaders(Inputs::headers())
             ->setInput($data);
 
@@ -88,9 +90,9 @@ class NagadClient
     public function validate($refId)
     {
         $url = "$this->baseUrl/api/dfs/verify/payment/$refId";
-        $request = (new TPRequest())
+        $request = (new NagadRequest())
             ->setUrl($url)
-            ->setMethod(TPRequest::METHOD_GET)
+            ->setMethod(NagadRequest::METHOD_GET)
             ->setHeaders(Inputs::headers());
 
         $resp = $this->client->call($request);
