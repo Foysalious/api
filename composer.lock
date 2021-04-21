@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a7389c28bab6b18619c00a1ed359ca8c",
+    "content-hash": "0e2df4037ec4d3afa3cef4355542d32e",
     "packages": [
         {
             "name": "algolia/algoliasearch-client-php",
@@ -926,17 +926,17 @@
             "time": "2017-07-18T21:11:11+00:00"
         },
         {
-            "name": "fideloper/proxy",
-            "version": "3.3.4",
+            "name": "fgrosse/phpasn1",
+            "version": "1.5.0",
             "source": {
                 "type": "git",
-                "url": "https://github.com/fideloper/TrustedProxy.git",
-                "reference": "9cdf6f118af58d89764249bbcc7bb260c132924f"
+                "url": "https://github.com/fgrosse/PHPASN1.git",
+                "reference": "7fe7bec5f3c11084066da03493b6074e3e29491f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/fideloper/TrustedProxy/zipball/9cdf6f118af58d89764249bbcc7bb260c132924f",
-                "reference": "9cdf6f118af58d89764249bbcc7bb260c132924f",
+                "url": "https://api.github.com/repos/fgrosse/PHPASN1/zipball/7fe7bec5f3c11084066da03493b6074e3e29491f",
+                "reference": "7fe7bec5f3c11084066da03493b6074e3e29491f",
                 "shasum": ""
             },
             "require": {
