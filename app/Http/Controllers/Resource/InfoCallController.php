@@ -147,7 +147,7 @@ class InfoCallController extends Controller
         if ($log) $service_comment = $log->rejectReason->name;
         $info_call_details = [
             'id' => $id,
-            'status' => $info_call->status,
+            'info_call_status' => $info_call->status,
             'created_at'=> $info_call->created_at->toDateTimeString()
         ];
         if ($info_call->status == Statuses::REJECTED || $info_call->status == Statuses::CONVERTED) $info_call_details['bn_info_call_status'] = Statuses::getBanglaStatus($info_call->status);
