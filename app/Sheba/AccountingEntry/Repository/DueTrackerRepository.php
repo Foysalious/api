@@ -17,7 +17,7 @@ class DueTrackerRepository extends BaseRepository
         try {
             return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
         } catch (AccountingEntryServerError $e) {
-            logError($e);
+            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
     }
 
