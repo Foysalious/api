@@ -59,9 +59,7 @@ class AccountingEntryClient
             return $res['data'];
         } catch (GuzzleException $e) {
             $res = decodeGuzzleResponse($e->getResponse());
-            dd($res);
-            if ($res['code'] == 400) throw new AccountingEntryServerError($res['message']);
-            logError($e);
+            throw new AccountingEntryServerError($res['message'], $res['code']);
         }
     }
 
