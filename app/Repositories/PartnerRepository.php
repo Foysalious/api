@@ -341,8 +341,7 @@ class PartnerRepository
             'has_qr_code' => ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0
         ];
     }
-    public function getNewDashboard($request, $performance, $partner_reward) {
-
+    public function getNewDashboard($request, $performance) {
         $slider_portal = SliderPortal::with('slider.slides')->where('portal_name', 'manager-app')->where('screen', 'home')->get();
         $slides_query = !$slider_portal->isEmpty() ? $slider_portal->last()->slider->slides()->where('location_id', $this->location)->orderBy('id', 'desc') : null;
         $all_slides   = $slides_query ? $slides_query->get() : null;
@@ -384,12 +383,9 @@ class PartnerRepository
             'show_status'                  => constants('PARTNER_STATUSES_SHOW')[$this->partner['status']]['partner'],
             'balance'                      => $this->partner->totalWalletAmount(),
             'credit'                       => $this->partner->wallet,
-            'bonus'                        => round($this->partner->bonusWallet(), 2),
             'is_credit_limit_exceed'       => $this->partner->isCreditLimitExceed(),
             'is_on_leave'                  => $this->partner->runningLeave() ? 1 : 0,
             'bonus_credit'                 => $this->partner->bonusWallet(),
-            'reward_point'                 => $this->partner->reward_point,
-            'bkash_no'                     => $this->partner->bkash_no,
             'current_stats'                => [
                 'total_new_order'     => count($new_order) > 0 ? $new_order->total_new_orders : 0,
                 'total_order'         => $this->partner->orders()->count(),
@@ -416,7 +412,6 @@ class PartnerRepository
                 ],
                 'total_due_for_pos_orders' => 0,
             ],
-            'is_nid_verified'              => (int)$request->manager_resource->profile->nid_verified ? true : false,
             'weekly_performance'           => [
                 'timeline'                   => date("jS F", strtotime(Carbon::today()->startOfWeek())) . "-" . date("jS F", strtotime(Carbon::today())),
                 'successfully_completed'     => [
@@ -446,9 +441,7 @@ class PartnerRepository
                 'package_badge'   => $upgradable_package->badge,
                 'package_usp_bn'  => json_decode($upgradable_package->usps, 1)['usp_bn']
             ] : null,
-            'has_reward_campaign'          => count($partner_reward->upcoming()) > 0 ? 1 : 0,
             'leave_info'                   => (new LeaveStatus($this->partner))->getCurrentStatus(),
-            'sheba_order'                  => $this->partner->orders->isEmpty() ? 0 : 1,
             'home_videos'    => $videos ? $videos : null,
             'feature_videos' => $details,
             'has_qr_code'    => ($this->partner->qr_code_image && $this->partner->qr_code_account_type) ? 1 : 0,
