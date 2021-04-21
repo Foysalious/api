@@ -79,7 +79,8 @@ class InfoCallController extends Controller
             'offset' => 'numeric|min:0', 'limit' => 'numeric|min:1',
             'month' => 'sometimes|required|integer|between:1,12', 'year' => 'sometimes|required|integer'
         ]);
-
+        $cancelled_order = 0;
+        $completed_order = 0;
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
         $resource = $auth_user->getResource();
@@ -91,8 +92,7 @@ class InfoCallController extends Controller
         $query = InfoCall::where('created_by', $created_by)->where('created_by_type', get_class($resource));
         $total_requests = $query->get()->count();
         $data = [
-            'total_rewards' => 40000,
-            'completed_order' => 77,
+            'total_rewards' => 40000, //dummy
             'total_service_requests' => ! ($total_requests) ? 0 : $total_requests,
         ];
         if (!($request->has('limit')) && !($request->has('year')) && !($request->has('month')) && !($request->has('offset'))) {
@@ -103,6 +103,13 @@ class InfoCallController extends Controller
         }
         else {
             $filtered_info_calls = $info_calls->getFilteredInfoCalls($query)->get();
+            $converted_info_call_ids = $info_calls->getFilteredInfoCalls($query)->where('status',Statuses::CONVERTED)->pluck('id')->toArray();
+            $order_ids = Order::whereIn('info_call_id',$converted_info_call_ids)->pluck('id')->toArray();
+            $partner_orders = PartnerOrder::select('id', 'cancelled_at', 'closed_and_paid_at')->whereIn('order_id',$order_ids)->get()->toArray();
+            foreach ($partner_orders as $partner_order) {
+                if ($partner_order['cancelled_at']!=null) $cancelled_order++;
+                if ($partner_order['closed_and_paid_at']!=null) $completed_order++;
+            }
             $month_wise_service_requests = $filtered_info_calls->count();
             $total_orders = $filtered_info_calls->where('status', Statuses::CONVERTED)->count();
             $rejected_requests = $filtered_info_calls->where('status', Statuses::REJECTED)->count();
@@ -112,10 +119,10 @@ class InfoCallController extends Controller
         if($total_orders) $data['total_order'] = $total_orders;
         else $data['total_order'] = 0;
 
-        $rejected_orders = 0;
-        $cancelled_orders = $rejected_requests + $rejected_orders;
+        $cancelled_orders = $rejected_requests + $cancelled_order;
         $data['cancelled_order'] = $cancelled_orders;
-        return ['code' => 200, 'service_request_dashboard' => $data];
+        $data['completed_order'] = $completed_order;
+        return ['code' => 200, 'message'=>'Successful','service_request_dashboard' => $data];
     }
 
     public function store(InfoCallCreateRequest $request)
