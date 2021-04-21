@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a7389c28bab6b18619c00a1ed359ca8c",
+    "content-hash": "0e2df4037ec4d3afa3cef4355542d32e",
     "packages": [
         {
             "name": "algolia/algoliasearch-client-php",
@@ -927,16 +927,16 @@
         },
         {
             "name": "fgrosse/phpasn1",
-            "version": "v1.5.4",
+            "version": "1.5.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/fgrosse/PHPASN1.git",
-                "reference": "4fe0afb91b4ce3ca08c63d9cf31cec1150828e97"
+                "reference": "7fe7bec5f3c11084066da03493b6074e3e29491f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/fgrosse/PHPASN1/zipball/4fe0afb91b4ce3ca08c63d9cf31cec1150828e97",
-                "reference": "4fe0afb91b4ce3ca08c63d9cf31cec1150828e97",
+                "url": "https://api.github.com/repos/fgrosse/PHPASN1/zipball/7fe7bec5f3c11084066da03493b6074e3e29491f",
+                "reference": "7fe7bec5f3c11084066da03493b6074e3e29491f",
                 "shasum": ""
             },
             "require": {
@@ -944,8 +944,8 @@
                 "php": ">=5.6.0"
             },
             "require-dev": {
-                "php-coveralls/php-coveralls": "^1.0|^2.0",
-                "phpunit/phpunit": "~4.5"
+                "phpunit/phpunit": "~4.5",
+                "satooshi/php-coveralls": "dev-master"
             },
             "suggest": {
                 "php-curl": "For loading OID information from the web if they have not bee defined statically"
@@ -953,7 +953,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "1.5.x-dev"
+                    "dev-master": "1.4.x-dev"
                 }
             },
             "autoload": {
@@ -979,20 +979,7 @@
             ],
             "description": "A PHP Framework that allows you to encode and decode arbitrary ASN.1 structures using the ITU-T X.690 Encoding Rules.",
             "homepage": "https://github.com/FGrosse/PHPASN1",
-            "keywords": [
-                "DER",
-                "asn.1",
-                "asn1",
-                "ber",
-                "binary",
-                "decoding",
-                "encoding",
-                "x.509",
-                "x.690",
-                "x509",
-                "x690"
-            ],
-            "time": "2018-12-02T01:31:42+00:00"
+            "time": "2015-09-30T18:16:42+00:00"
         },
         {
             "name": "firebase/php-jwt",
