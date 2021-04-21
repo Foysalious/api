@@ -175,16 +175,21 @@ class ApprovalRequestController extends Controller
         /** @var BusinessMember $business_member */
         $business_member = $this->getBusinessMember($request);
 
-        /** @var ApprovalRequest $approval_request */
-        $approval_request = $this->approvalRequestRepo->getApprovalRequestByIdAndType($type_ids, $type)->first();
+        $this->approvalRequestRepo->getApprovalRequestByIdAndType($type_ids, $type)
+            ->each(function ($approval_request) use ($business_member, $updater, $request) {
+                /** @var ApprovalRequest $approval_request */
+                if ($approval_request->approver_id != $business_member->id) return;
+                $this->leaveRejectionRequester->setNote($request->note)->setReasons($request->reasons);
+                $updater->setBusinessMember($business_member)->setApprovalRequest($approval_request)->setLeaveRejectionRequester($this->leaveRejectionRequester);
+                $updater->setStatus($request->status)->change();
+            });
+
+       /* $approval_request = $this->approvalRequestRepo->getApprovalRequestByIdAndType($type_ids, $type)->first();
         if (!$approval_request) return api_response($request, null, 404, ['message' => 'Approval request not found.']);
-
         #if ($approval_request->approver_id != $business_member->id) return api_response($request, null, 420);
-
         $this->leaveRejectionRequester->setNote($request->note)->setReasons($request->reasons);
-
         $updater->setBusinessMember($business_member)->setApprovalRequest($approval_request)->setLeaveRejectionRequester($this->leaveRejectionRequester);
-        $updater->setStatus($request->status)->change();
+        $updater->setStatus($request->status)->change();*/
 
         return api_response($request, null, 200);
     }
