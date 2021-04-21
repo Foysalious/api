@@ -51,6 +51,6 @@ class BdRechargeResponse extends TopUpResponse
 
     public function isPending()
     {
-        return $this->hasSuccess() && $this->response->status == 200;
+        return $this->hasSuccess();
     }
 }
