@@ -5,7 +5,7 @@ use Throwable;
 
 class AccountingEntryServerError extends Exception
 {
-    public function __construct($message = "", $code = 402, Throwable $previous = null)
+    public function __construct($message = "", $code = 406, Throwable $previous = null)
     {
         if (!$message || $message == "") {
             $message = 'Accounting Entry server not working as expected.';
