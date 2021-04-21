@@ -4,6 +4,7 @@
 use App\Http\Controllers\Controller;
 use App\Http\Requests\InfoCallCreateRequest;
 use App\Models\PartnerOrder;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Models\Order;
 use Sheba\Dal\InfoCall\InfoCall;
@@ -134,7 +135,9 @@ class InfoCallController extends Controller
             'service_id' => $request->service_id,
             'service_name' => $service_name,
             'created_by_type'=> get_class($resource),
-            'portal_name' => 'resource-app'
+            'portal_name' => 'resource-app',
+            'follow_up_date' => Carbon::now()->addMinutes(30),
+            'intended_closing_date' => Carbon::now()->addMinutes(30)
         ];
         $info_call = $this->infoCallRepository->create($data);
         return api_response($request, $info_call, 200, ['message'=>'Successful','info_call' => $info_call]);
@@ -147,7 +150,7 @@ class InfoCallController extends Controller
         if ($log) $service_comment = $log->rejectReason->name;
         $info_call_details = [
             'id' => $id,
-            'status' => $info_call->status,
+            'info_call_status' => $info_call->status,
             'created_at'=> $info_call->created_at->toDateTimeString()
         ];
         if ($info_call->status == Statuses::REJECTED || $info_call->status == Statuses::CONVERTED) $info_call_details['bn_info_call_status'] = Statuses::getBanglaStatus($info_call->status);
