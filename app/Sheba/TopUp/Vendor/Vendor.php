@@ -6,12 +6,14 @@ use App\Models\TopUpVendor;
 use Carbon\Carbon;
 use Exception;
 use Sheba\TopUp\Exception\GatewayTimeout;
+use Sheba\TopUp\Exception\PaywellTopUpStillNotResolved;
 use Sheba\TopUp\Gateway\Gateway;
 use Sheba\TopUp\Gateway\GatewayFactory;
 use Sheba\TopUp\Gateway\Names;
 use Sheba\TopUp\Gateway\Ssl;
 use Sheba\TopUp\GatewayTimeoutHandler;
 use Sheba\TopUp\Vendor\Response\GenericGatewayErrorResponse;
+use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
 use Sheba\TopUp\Vendor\Response\TopUpGatewayTimeoutResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
@@ -65,9 +67,15 @@ abstract class Vendor
         }
     }
 
-    public function getTopUpInitialStatus()
+    /**
+     * @param TopUpOrder $topup_order
+     * @return IpnResponse
+     * @throws Exception | PaywellTopUpStillNotResolved
+     */
+    public function enquire(TopUpOrder $topup_order): IpnResponse
     {
-        return $this->topUpGateway->getInitialStatus();
+        $this->resolveGateway($topup_order);
+        return $this->topUpGateway->enquireIpnResponse($topup_order)->setTopUpOrder($topup_order);
     }
 
     public function deductAmount($amount)
