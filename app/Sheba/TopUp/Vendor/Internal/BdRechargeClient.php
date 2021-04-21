@@ -26,8 +26,8 @@ class BdRechargeClient
     private $singleTopupUrl;
     private $topupEnquiryUrl;
     private $balanceEnquiryUrl;
-    /** @var HttpClient */
-    private $httpClient;
+    /** @var TPProxyClient */
+    private $tpClient;
     /** @var TPRequest $tpRequest */
     private $tpRequest;
 
@@ -38,7 +38,7 @@ class BdRechargeClient
      */
     public function __construct(TPProxyClient $client, TPRequest $request)
     {
-        $this->httpClient = $client;
+        $this->tpClient = $client;
         $this->tpRequest = $request;
 
         $this->username = config('topup.bd_recharge.username');
@@ -128,7 +128,7 @@ class BdRechargeClient
             ->setInput($data);
 
         try {
-            $response = $this->httpClient->call($this->tpRequest);
+            $response = $this->tpClient->call($this->tpRequest);
         } catch (TPProxyServerTimeout $e) {
             throw new GatewayTimeout($e->getMessage());
         }
