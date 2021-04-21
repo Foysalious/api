@@ -1,8 +1,5 @@
 <?php namespace App\Sheba\AccountingEntry\Repository;
 
-
-
-
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Constants\UserType;
 use Carbon\Carbon;
@@ -12,17 +9,16 @@ use Sheba\RequestIdentification;
 
 class DueTrackerRepository extends BaseRepository
 {
-    public function storeEntry(Request $request, $type) {
+    public function storeEntry(Request $request, $type, $with_update = false) {
         $this->getCustomer($request);
         $this->setModifier($request->partner);
         $data     = $this->createEntryData($request, $type);
-        $url = "api/entries";
+        $url = $with_update ? "api/entries/".$request->entry_id : "api/entries/";
         try {
             return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
         } catch (AccountingEntryServerError $e) {
             logError($e);
         }
-
     }
 
     private function createEntryData(Request $request, $type)

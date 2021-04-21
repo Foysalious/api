@@ -25,11 +25,11 @@ class AccountingRepository extends BaseRepository
         $this->getCustomer($request);
         $this->setModifier($request->partner);
         $data     = $this->createEntryData($request, $type);
-        $url = "api/entries";
+        $url = "api/entries/";
         try {
             return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
         } catch (AccountingEntryServerError $e) {
-            logError($e);
+            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
     }
 
