@@ -4,6 +4,7 @@
 use App\Http\Controllers\Controller;
 use App\Sheba\AccountingEntry\Repository\DueTrackerRepository;
 use Illuminate\Http\Request;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\ModificationFields;
 
 class DueTrackerController extends Controller
@@ -17,28 +18,45 @@ class DueTrackerController extends Controller
         $this->dueTrackerRepo = $dueTrackerRepo;
     }
 
+    /**
+     * @param Request $request
+     * @param $customer_id
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function store(Request $request, $customer_id ) {
-        $this->validate($request, [
-            'amount' => 'required',
-            'entry_type' => 'required|in:due,deposit',
-            'account_key' => 'required'
-        ]);
-        $request->merge(['customer_id' => $customer_id]);
-        $response = $this->dueTrackerRepo->storeEntry($request, $request->entry_type);
-        return api_response($request, $response, 200, ['data' => $response]);
+        try {
+            $this->validate($request, [
+                'amount' => 'required',
+                'entry_type' => 'required|in:due,deposit',
+                'account_key' => 'required'
+            ]);
+            $request->merge(['customer_id' => $customer_id]);
+            $response = $this->dueTrackerRepo->storeEntry($request, $request->entry_type);
+            return api_response($request, $response, 200, ['data' => $response]);
+        } catch (AccountingEntryServerError $e) {
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
+        }
     }
 
+    /**
+     * @param Request $request
+     * @param $customer_id
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function update(Request $request, $customer_id ) {
-        $this->validate($request, [
-            'amount' => 'required',
-            'entry_type' => 'required|in:due,deposit',
-            'account_key' => 'required',
-            'entry_id' => 'required|integer',
-            'date' => 'required|date_format:Y-m-d'
-        ]);
-        $request->merge(['customer_id' => $customer_id]);
-        $response = $this->dueTrackerRepo->storeEntry($request, $request->entry_type, true);
-        return api_response($request, $response, 200, ['data' => $response]);
+        try {
+            $this->validate($request, [
+                'amount' => 'required',
+                'entry_type' => 'required|in:due,deposit',
+                'account_key' => 'required',
+                'entry_id' => 'required|integer',
+                'date' => 'required|date_format:Y-m-d'
+            ]);
+            $request->merge(['customer_id' => $customer_id]);
+            $response = $this->dueTrackerRepo->storeEntry($request, $request->entry_type, true);
+            return api_response($request, $response, 200, ['data' => $response]);
+        } catch (AccountingEntryServerError $e) {
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
+        }
     }
-
 }
