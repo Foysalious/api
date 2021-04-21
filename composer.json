@@ -47,7 +47,7 @@
     "ext-intl": "*",
     "algolia/algoliasearch-laravel": "^1.7",
     "rosell-dk/webp-convert": "^2.4",
-    "spomky-labs/jose": "^7.1"
+    "spomky-labs/jose": "6.1.7"
   },
   "require-dev": {
     "fzaninotto/faker": "~1.4",
