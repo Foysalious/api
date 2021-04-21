@@ -153,7 +153,7 @@ class StatusUpdater
     {
         $topic = config('sheba.push_notification_topic_name.employee') . (int)$business_member->member->id;
         $channel = config('sheba.push_notification_channel_name.employee');
-        $sound  = config('sheba.push_notification_sound.employee');
+        $sound = config('sheba.push_notification_sound.employee');
         $start_date = $this->leave->start_date->format('d/m/Y');
         $end_date = $this->leave->end_date->format('d/m/Y');
         $notification_data = [
@@ -167,5 +167,15 @@ class StatusUpdater
         ];
 
         $this->pushNotificationHandler->send($notification_data, $topic, $channel, $sound);
+    }
+
+    private function calculateDays($type)
+    {
+        $business_member = $this->leave->businessMember;
+        $used_leave_days = $business_member->getCountOfUsedLeaveDaysByTypeOnAFiscalYear($this->leave->leave_type_id);
+        $leave_type_total_days = $business_member->getTotalLeaveDaysByLeaveTypes($this->leave->leave_type_id);
+        $leave_days = $this->leave->total_days;
+        if ($type == Status::ACCEPTED) return (($leave_type_total_days - $used_leave_days) - $leave_days);
+        if ($type == Status::REJECTED || $type == Status::CANCELED) return (($leave_type_total_days - $used_leave_days) + $leave_days);
     }
 }
