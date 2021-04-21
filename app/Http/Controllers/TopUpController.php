@@ -18,7 +18,6 @@ use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\TopUp\Creator;
 use Sheba\TopUp\Exception\PaywellTopUpStillNotResolved;
-use Sheba\TopUp\Gateway\Paywell;
 use Sheba\TopUp\Jobs\TopUpExcelJob;
 use Sheba\TopUp\Jobs\TopUpJob;
 use Sheba\TopUp\TopUpAgent;
@@ -40,7 +39,6 @@ use App\Models\Affiliate;
 use Sheba\ModificationFields;
 use Sheba\Dal\TopUpOTFSettings\Contract as TopUpOTFSettingsRepo;
 use Sheba\Dal\TopUpVendorOTF\Contract as TopUpVendorOTFRepo;
-use Sheba\TopUp\Vendor\Internal\PaywellClient;
 
 class TopUpController extends Controller
 {

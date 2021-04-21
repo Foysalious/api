@@ -211,6 +211,11 @@ class TopUpOrder extends BaseModel implements PayableType
         return !!$this->is_robi_topup_wallet;
     }
 
+    public function isAgentDebited()
+    {
+        return (boolean) $this->is_agent_debited;
+    }
+
     public function isViaPaywell()
     {
         return $this->gateway == Names::PAYWELL;

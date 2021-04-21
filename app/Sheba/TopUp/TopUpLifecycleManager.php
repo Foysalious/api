@@ -20,7 +20,7 @@ class TopUpLifecycleManager extends TopUpManager
 
         $this->doTransaction(function () use ($fail_response) {
             $this->statusChanger->failed(FailedReason::GATEWAY_ERROR, $fail_response->getTransactionDetailsString());
-            $this->refund();
+            if ($this->topUpOrder->isAgentDebited()) $this->refund();
             $this->getVendor()->refill($this->topUpOrder->amount);
         });
     }
