@@ -68,9 +68,7 @@ class InfoCallList
         $query = $query->where('created_at', '>=', Carbon::now()->subMonth(12));
         if ($this->month) $query = $query
             ->whereYear('created_at', '=', $this->year)
-            ->whereMonth('created_at', '=', $this->month)
-            ->skip($this->offset)
-            ->limit($this->limit);
+            ->whereMonth('created_at', '=', $this->month);
         return $query;
     }
 

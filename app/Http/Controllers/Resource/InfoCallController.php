@@ -95,7 +95,7 @@ class InfoCallController extends Controller
             'total_rewards' => 40000, //dummy
             'total_service_requests' => ! ($total_requests) ? 0 : $total_requests,
         ];
-        if (!($request->has('limit')) && !($request->has('year')) && !($request->has('month')) && !($request->has('offset'))) {
+        if (!($request->has('year')) && !($request->has('month'))) {
             $filtered_info_calls = $query->get();
             $total_orders = $filtered_info_calls->where('status', Statuses::CONVERTED)->count();
             $month_wise_service_requests = $filtered_info_calls->count();
