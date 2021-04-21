@@ -66,7 +66,11 @@ class InfoCallList
     public function getFilteredInfoCalls($query)
     {
         $query = $query->where('created_at', '>=', Carbon::now()->subMonth(12));
-        if ($this->month) $query = $query->whereYear('created_at', '=', $this->year)->whereMonth('created_at', '=', $this->month);
+        if ($this->month) $query = $query
+            ->whereYear('created_at', '=', $this->year)
+            ->whereMonth('created_at', '=', $this->month)
+            ->skip($this->offset)
+            ->limit($this->limit);
         return $query;
     }
 
