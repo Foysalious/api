@@ -31,6 +31,7 @@ class BusinessRoute
                     $api->get('/attendance', 'B2b\AttendanceController@getAttendanceOfficeSettings');
                     $api->post('/attendance', 'B2b\AttendanceController@updateAttendanceOfficeSettings');
                     $api->get('/grace-policy', 'B2b\AttendanceController@getGracePolicy');
+                    $api->post('/grace-policy', 'B2b\AttendanceController@createGracePolicy');
                 });
             });
         });

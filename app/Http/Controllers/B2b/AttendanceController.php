@@ -5,6 +5,8 @@ use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Sheba\Business\Attendance\MonthlyStat;
 use App\Sheba\Business\BusinessBasicInformation;
+use App\Sheba\Business\OfficeSetting\PolicyRuleRequester;
+use App\Sheba\Business\OfficeSetting\PolicyRuleUpdater;
 use App\Sheba\Business\OfficeSetting\PolicyTransformer;
 use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
@@ -822,5 +824,19 @@ class AttendanceController extends Controller
         $grace_policy_rules = $manager->createData($resource)->toArray()['data'];
 
         return api_response($request, $grace_policy_rules, 200, [ 'grace_policy_rules' => $grace_policy_rules]);
+    }
+
+    public function createGracePolicy(Request $request, PolicyRuleRequester $requester, PolicyRuleUpdater $updater)
+    {
+        $business = $request->business;
+        if (!$business) return api_response($request, null, 403, ['message' => 'You Are not authorized to show this settings']);
+
+        $requester->setBusiness($business)
+            ->setPolicyType($request->policy_type)
+            ->setRules($request->rules);
+
+        $updater->setPolicyRuleRequester($requester)->update();
+
+        return api_response($request, null, 200);
     }
 }
