@@ -88,25 +88,27 @@ class InfoCallController extends Controller
         if ($request->has('month')) $info_calls = $infoCallList->setMonth($request->month);
         $auth_user_array = $auth_user->toArray();
         $created_by = $auth_user_array['resource']['id'];
+        $query = InfoCall::where('created_by', $created_by)->where('created_by_type', get_class($resource));
+        $total_requests = $query->get()->count();
         $data = [
             'total_rewards' => 40000,
             'completed_order' => 77,
+            'total_service_requests' => ! ($total_requests) ? 0 : $total_requests,
         ];
-        $query = InfoCall::where('created_by', $created_by)->where('created_by_type', get_class($resource));
-        if (!($request->has('limit')) && !($request->has('year')) && !($request->has('month'))) {
+        if (!($request->has('limit')) && !($request->has('year')) && !($request->has('month')) && !($request->has('offset'))) {
             $filtered_info_calls = $query->get();
             $total_orders = $filtered_info_calls->where('status', Statuses::CONVERTED)->count();
-            $total_service_requests = $filtered_info_calls->count();
+            $month_wise_service_requests = $filtered_info_calls->count();
             $rejected_requests = $filtered_info_calls->where('status', Statuses::REJECTED)->count();
         }
         else {
             $filtered_info_calls = $info_calls->getFilteredInfoCalls($query)->get();
-            $total_service_requests = $filtered_info_calls->count();
+            $month_wise_service_requests = $filtered_info_calls->count();
             $total_orders = $filtered_info_calls->where('status', Statuses::CONVERTED)->count();
             $rejected_requests = $filtered_info_calls->where('status', Statuses::REJECTED)->count();
         }
-        if($total_service_requests) $data['total_service_requests'] = $total_service_requests;
-        else $data['total_service_requests'] = 0;
+        if($month_wise_service_requests) $data['service_requests'] = $month_wise_service_requests;
+        else $data['service_requests'] = 0;
         if($total_orders) $data['total_order'] = $total_orders;
         else $data['total_order'] = 0;
 
