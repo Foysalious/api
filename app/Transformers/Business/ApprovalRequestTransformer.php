@@ -53,6 +53,12 @@ class ApprovalRequestTransformer extends TransformerAbstract
         $leave_type = $requestable->leaveType()->withTrashed()->first();
         $approvers = $this->getApprover($requestable);
         $business_member = $requestable->businessMember;
+        $substitute_business_member = $requestable->substitute;
+        $substitute_member = $substitute_business_member ? $substitute_business_member->member : null;
+        /** @var Profile $profile */
+        $leave_substitute = $substitute_member ? $substitute_member->profile : null;
+        $leave_substitute_role = $substitute_business_member ? $substitute_business_member->role : null;
+        $leave_substitute_department = $substitute_business_member ? $substitute_business_member->department() : null;
 
         return [
             'id' => $approval_request->id,
@@ -76,6 +82,15 @@ class ApprovalRequestTransformer extends TransformerAbstract
                     'half_day_time' => $this->business->halfDayStartEnd($requestable->half_day_configuration),
                 ] : null,
                 'time' => $requestable->is_half_day ? $this->business->halfDayStartEndTime($requestable->half_day_configuration) : $this->business->fullDayStartEndTime(),
+                'substitute' => $substitute_business_member ? [
+                    'id' => $substitute_business_member->id,
+                    'name' => $leave_substitute->name,
+                    'pro_pic' => $leave_substitute->pro_pic,
+                    'mobile' => $leave_substitute->mobile ? $leave_substitute->mobile : null,
+                    'email' => $leave_substitute->email,
+                    'department' => $leave_substitute_department? $leave_substitute_department->name : null,
+                    'designation' => $leave_substitute_role ? $leave_substitute_role->name : null,
+                ] : null,
                 'is_leave_days_exceeded' => $requestable->isLeaveDaysExceeded(),
                 'leave_date' => ($requestable->start_date->format('M d, Y') == $requestable->end_date->format('M d, Y')) ? $requestable->start_date->format('M d, Y') : $requestable->start_date->format('M d, Y') . ' - ' . $requestable->end_date->format('M d, Y'),
                 'status' => LeaveStatusPresenter::statuses()[$requestable->status],
