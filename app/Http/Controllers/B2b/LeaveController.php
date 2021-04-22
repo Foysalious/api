@@ -79,6 +79,8 @@ class LeaveController extends Controller
      */
     public function index(Request $request, LeaveRequestExcel $leave_request_report)
     {
+        $agent = $_SERVER['HTTP_PORTAL_NAME'];
+        return api_response($request, $agent, 200, ['message' => $agent]);
         $this->validate($request, ['sort' => 'sometimes|required|string|in:asc,desc']);
 
         /** @var BusinessMember $business_member */

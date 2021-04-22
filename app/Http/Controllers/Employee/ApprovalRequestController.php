@@ -54,8 +54,6 @@ class ApprovalRequestController extends Controller
      */
     public function index(Request $request, ApprovalRequestRepositoryInterface $approval_request_repo)
     {
-        $agent = $_SERVER;
-        return api_response($request, $agent, 200, ['message' => $agent]);
         $this->validate($request, [
                 'type' => 'sometimes|string|in:' . implode(',', Type::get()),
                 'limit' => 'numeric', 'offset' => 'numeric'
