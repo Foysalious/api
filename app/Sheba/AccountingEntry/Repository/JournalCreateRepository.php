@@ -138,8 +138,7 @@ class JournalCreateRepository
     {
         $data = $this->toArray();
         if (empty($this->source) || !is_object($this->source)) throw new InvalidSourceException();
-        if (empty($this->creditAccountKey) || !is_object($this->creditAccountKey) || empty($this->debitAccountKey) || !is_object($this->debitAccountKey))
-            throw new KeyNotFoundException();
+        if (empty($this->creditAccountKey) || empty($this->debitAccountKey)) throw new KeyNotFoundException();
         $data['entryAt']     = $data['entryAt'] ?: Carbon::now()->format('Y-m-d H:i:s');
         $data['debit_account_key']  = $this->debitAccountKey;
         $data['credit_account_key'] = $this->creditAccountKey;

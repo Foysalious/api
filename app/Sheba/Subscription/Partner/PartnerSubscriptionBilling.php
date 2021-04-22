@@ -14,6 +14,11 @@ use App\Sheba\Subscription\Partner\PartnerSubscriptionCharges;
 use Carbon\Carbon;
 use DB;
 use Exception;
+use ReflectionException;
+use Sheba\AccountingEntry\Accounts\Accounts;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\AccountingEntry\Exceptions\InvalidSourceException;
+use Sheba\AccountingEntry\Repository\JournalCreateRepository;
 use Sheba\ExpenseTracker\AutomaticExpense;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
@@ -122,6 +127,7 @@ class PartnerSubscriptionBilling
         if(isset($this->notification) && $this->notification === 1)
             $this->sendSmsForSubscriptionUpgrade($old_package, $new_package, $old_billing_type, $new_billing_type, $grade);
         $this->storeEntry();
+        $this->storeJournal();
         return $this;
     }
 
@@ -391,5 +397,18 @@ class PartnerSubscriptionBilling
          */
         $entry = app(AutomaticEntryRepository::class);
         $entry->setPartner($this->partner)->setHead(AutomaticExpense::SUBSCRIPTION_FEE)->setAmount($this->packagePrice)->store();
+    }
+
+    /**
+     * @throws ReflectionException
+     * @throws AccountingEntryServerError
+     * @throws InvalidSourceException
+     */
+    private function storeJournal()
+    {
+        (new JournalCreateRepository())->setTypeId($this->partner->id)->setSource($this->partner)
+            ->setAmount($this->packagePrice)->setDebitAccountKey("subscription_purchase")
+            ->setCreditAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
+            ->setDetails("Subscription purchase")->setReference($this->packageTo->id)->store();
     }
 }
