@@ -175,7 +175,7 @@ class TopUpController extends Controller
      */
     public function sslFail(Request $request, SslFailResponse $error_response)
     {
-        $this->sslHandle($error_response, $request);
+        $this->ipnHandle($error_response, $request);
         return api_response($request, 1, 200);
     }
 
@@ -187,29 +187,10 @@ class TopUpController extends Controller
      */
     public function sslSuccess(Request $request, SslSuccessResponse $success_response)
     {
-        $this->sslHandle($success_response, $request);
+        $this->ipnHandle($success_response, $request);
         return api_response($request, 1, 200);
     }
 
-    /**
-     * @param IpnResponse $ipn_response
-     * @param Request $request
-     * @throws \Throwable
-     */
-    private function sslHandle(IpnResponse $ipn_response, Request $request)
-    {
-        $data = $request->all();
-        $ipn_response->setResponse($data);
-        $ipn_response->handleTopUp();
-        $this->logSslIpn($ipn_response, $data);
-    }
-
-    private function logSslIpn(IpnResponse $ipn_response, $request_data)
-    {
-        $key = 'Topup::' . ($ipn_response instanceof SslFailResponse ? "Failed:failed" : "Success:success") . "_";
-        $key .= Carbon::now()->timestamp . '_' . $ipn_response->getTopUpOrder()->id;
-        Redis::set($key, json_encode($request_data));
-    }
 
     private function getAgent(Request $request)
     {
