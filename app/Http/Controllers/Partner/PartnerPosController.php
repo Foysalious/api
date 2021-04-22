@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\Partner;
 
 use App\Http\Controllers\Controller;
+use App\Models\PartnerPosService;
 use App\Models\PosCategory;
 use App\Transformers\Partner\PosServiceTransformer;
 use Illuminate\Http\Request;
@@ -20,8 +21,8 @@ class PartnerPosController extends Controller
             $products = $products->getAvailableProducts();
             if (count($products) > 0) {
 
-                $categories = PosCategory::parents()->published()->select(['id','name'])
-                    ->whereHas('children',function ($q) use ($products) {
+                $categories = PosCategory::parents()->published()->select(['id', 'name'])
+                    ->whereHas('children', function ($q) use ($products) {
                         $q->whereIn('id', $products->pluck('pos_category_id')->unique()->toArray());
                     })->get();
 
@@ -37,5 +38,38 @@ class PartnerPosController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function search(Request $request)
+    {
+        $query = [
+            [
+                "bool" => [
+                    "filter" => [
+                        "bool" => [
+                            "must" => [
+                                [
+                                    "term" => [
+                                        "is_published_for_shop" => 1
+                                    ]
+                                ],
+                                [
+                                    "term" => [
+                                        "partner_id" => $request->partner_id
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ],
+                    "must" => [
+                        "match" => [
+                            "message,description" => $request->search
+                        ]
+                    ]
+                ]
+            ]
+        ];
+        $products = PartnerPosService::searchByQuery($query, null, null, 5, 0, null);
+        dd($products->pluck('id')->toArray());
     }
 }
