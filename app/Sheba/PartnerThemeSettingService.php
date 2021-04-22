@@ -1,7 +1,6 @@
 <?php namespace App\Sheba;
 
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\GuzzleException;
+
 class PartnerThemeSettingService
 {
 
@@ -41,6 +40,7 @@ class PartnerThemeSettingService
     {
         $client = new \GuzzleHttp\Client();
         $data = $this->makeData();
-        return $this->client->post('api/v1/partners/'.$this->partnerId.'/options', $data);
+        return $client->post('http://localhost:3000/partner-settings', $data);
+
     }
 }

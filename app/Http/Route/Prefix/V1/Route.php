@@ -8,6 +8,7 @@ class Route
     public function set($api)
     {
         $api->group(['prefix' => 'v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
+            $api->post('webstore-partner-settings','PartnerThemeSettingController@store');
             $api->get('hour-logs', 'ShebaController@getHourLogs');
             (new EmployeeRoute())->set($api);
             (new PartnerRoute())->set($api);
