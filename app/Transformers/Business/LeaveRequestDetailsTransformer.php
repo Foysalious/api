@@ -75,8 +75,8 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
         $substitute_member = $substitute_business_member ? $substitute_business_member->member : null;
         /** @var Profile $profile */
         $leave_substitute = $substitute_member ? $substitute_member->profile : null;
-        $leave_substitute_role = $substitute_business_member->role;
-        $leave_substitute_department = $substitute_business_member->department();
+        $leave_substitute_role = $substitute_business_member ? $substitute_business_member->role : null;
+        $leave_substitute_department = $substitute_business_member ? $substitute_business_member->department() : null;
 
         return [
             'id' => $approval_request->id,
