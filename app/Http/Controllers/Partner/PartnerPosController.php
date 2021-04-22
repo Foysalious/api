@@ -40,7 +40,7 @@ class PartnerPosController extends Controller
         }
     }
 
-    public function search( Request $request)
+    public function search(Request $request)
     {
         $this->validate($request, ['search' => 'required|string', 'partner_id' => 'required|numeric']);
         $query = [
@@ -70,6 +70,7 @@ class PartnerPosController extends Controller
         ];
 
         $products = PartnerPosService::searchByQuery($query, null, null, 5, 0, null);
-        dd($products);
+        if (count($products->toArray()) > 0) return response()->json(['products' => $products->toArray()]);
+        return response("Not found", 404);
     }
 }
