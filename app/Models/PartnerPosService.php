@@ -7,11 +7,12 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\PartnerPosServiceImageGallery\Model as PartnerPosServiceImageGallery;
+use Sheba\Elasticsearch\ElasticsearchTrait;
 
 
 class PartnerPosService extends BaseModel
 {
-    use SoftDeletes, AlgoliaEloquentTrait;
+    use SoftDeletes, ElasticsearchTrait;
 
     protected $guarded = ['id'];
     protected $casts = ['cost' => 'double', 'price' => 'double', 'stock' => 'double', 'vat_percentage' => 'double', 'show_image' => 'int'];
@@ -19,6 +20,68 @@ class PartnerPosService extends BaseModel
 
 //    public static $savedEventClass = PartnerPosServiceSaved::class;
     public static $autoIndex = false;
+    /**
+     * The elasticsearch settings.
+     *
+     * @var array
+     */
+    protected $indexSettings = [
+        'analysis' => [
+            'char_filter' => [
+                'replace' => [
+                    'type' => 'mapping', 'mappings' => [
+                        '&=> and '
+                    ],
+                ],
+            ],
+            'filter' => [
+                'word_delimiter' => [
+                    'type' => 'word_delimiter', 'split_on_numerics' => false, 'split_on_case_change' => true, 'generate_word_parts' => true, 'generate_number_parts' => true, 'catenate_all' => true, 'preserve_original' => true, 'catenate_numbers' => true,
+                ]
+            ],
+            'analyzer' => [
+                'default' => [
+                    'type' => 'custom',
+                    'char_filter' => [
+                        'html_strip', 'replace'
+                    ],
+                    'tokenizer' => 'whitespace',
+                    'filter' => [
+                        'lowercase', 'word_delimiter'
+                    ]
+                ],
+                'custom_like_query_analyzer' => [
+                    'tokenizer' => 'custom_like_query_tokenizer'
+                ]
+            ],
+            'tokenizer' => [
+                'custom_like_query_tokenizer' => [
+                    "type" => "ngram",
+                    "min_gram" => 2,
+                    "max_gram" => 14,
+                    "token_chars" => ["letter", "digit"]
+                ]
+            ]
+        ],
+        'max_ngram_diff' => 12
+    ];
+
+    protected $mappingProperties = [
+        'id' => ['type' => 'integer'],
+        'partner_id' => ['type' => 'integer'],
+        'pos_category_id' => ['type' => 'integer'],
+        'name' => ['type' => 'text', "analyzer" => "custom_like_query_analyzer", "search_analyzer" => "standard"],
+        'description' => ['type' => 'text', "analyzer" => "custom_like_query_analyzer", "search_analyzer" => "standard"],
+        'publication_status' => ['type' => 'integer'],
+        'is_published_for_shop' => ['type' => 'integer'],
+        'created_at' => ['type' => 'date', "format" => "yyyy-MM-dd HH:mm:ss"],
+        'updated_at' => ['type' => 'date', "format" => "yyyy-MM-dd HH:mm:ss"]
+    ];
+
+    public function getIndexName(): string
+    {
+        return $this->getTable();
+    }
 
     public $algoliaSettings = [
         'searchableAttributes' => [
