@@ -19,11 +19,9 @@ class PartnerThemeSettingController extends Controller
 
     public function store(Request $request)
     {
-//        $partner = $request->auth_user->getPartner();
-        $setting = $this->partnerThemeSettingService->setPartnerId($request->partner_id)->setThemeID($request->theme_id)->setSettiings($request->settings)->store();
-//         return http_response($request, null, 200, $setting);
-        return http_response_code(201);
-
+       $partner = $request->auth_user->getPartner();
+        $setting = $this->partnerThemeSettingService->setPartnerId($partner->id)->setThemeID($request->theme_id)->setSettiings($request->settings)->store();
+        return api_response($request, null, 200);
 
 
     }
