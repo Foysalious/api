@@ -55,7 +55,8 @@ class Kernel extends HttpKernel
     protected $middleware = [
         CheckForMaintenanceMode::class,
         CriticalAppVersionMiddleware::class,
-        XSS::class
+        XSS::class,
+        // \Fruitcake\Cors\HandleCors::class
     ];
 
     /**

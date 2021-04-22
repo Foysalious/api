@@ -1,7 +1,7 @@
 <?php namespace Sheba\Exceptions;
 
 use App\Exceptions\DoNotReportException;
-use Exception as BaseException;
+use Throwable;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Exceptions\Exceptions\ExceptionForClient;
@@ -24,16 +24,15 @@ use Sheba\TopUp\Exception\PinMismatchExceptionHandler;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
-use Throwable;
 
 class HandlerFactory
 {
     /**
      * @param Request $request
-     * @param BaseException $e
-     * @return Handler|null
+     * @param Throwable $e
+     * @return Handler
      */
-    public static function get(Request $request, BaseException $e)
+    public static function get(Request $request, Throwable $e)
     {
         $handler = self::getHandler($e);
 
@@ -43,10 +42,10 @@ class HandlerFactory
     }
 
     /**
-     * @param BaseException $e
+     * @param Throwable $e
      * @return Handler
      */
-    private static function getHandler(BaseException $e)
+    private static function getHandler(Throwable $e)
     {
         if ($e instanceof ValidationException) return app(ValidationExceptionHandler::class);
         if ($e instanceof WrongPinError) return app(WrongPinErrorHandler::class);
@@ -58,7 +57,6 @@ class HandlerFactory
         if ($e instanceof NotFoundHttpException) return app(NotFoundHttpExceptionHandler::class);
         if ($e instanceof RouteNotFoundException) return app(RouteNotFoundExceptionHandler::class);
         if ($e instanceof ExceptionForClient) return app(ExceptionForClientHandler::class);
-        if ($e instanceof Throwable) return app(ThrowableHandler::class);
-        return null;
+        return app(ThrowableHandler::class);
     }
 }
