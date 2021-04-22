@@ -48,7 +48,7 @@ return [
             'port' => env('REDIS_PORT', 6379),
             'database' => 0,
         ],
-        'client' => 'predis',
+        'client' => env('REDIS_CLIENT', 'phpredis'),
         'options' => [
             'cluster' => 'redis',
         ],
