@@ -359,6 +359,7 @@ class EventDataConverter
                         ]
                     ]
             ],
+                ],
             'affiliate' =>[
                 'campaign' => [
                     'topup' => [
@@ -438,7 +439,6 @@ class EventDataConverter
                     ],
                 ],
             ]
-        ]
         ]);
     }
 
