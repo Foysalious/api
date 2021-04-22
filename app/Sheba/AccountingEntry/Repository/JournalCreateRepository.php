@@ -160,6 +160,4 @@ class JournalCreateRepository
         $data = $this->toData();
         return $this->client->setUserId($this->typeId)->setUserType($this->type)->post('api/journals/', $data);
     }
-
-
 }

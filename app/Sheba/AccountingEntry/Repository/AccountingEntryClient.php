@@ -51,7 +51,7 @@ class AccountingEntryClient
     {
         try {
             if (!$this->userType || !$this->userId) {
-                return "set userType and userId";
+                throw new AccountingEntryServerError('Set user type and user id', 0);
             }
             $res = decodeGuzzleResponse($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data)));
             if ($res['code'] != 200) throw new AccountingEntryServerError($res['message']);
