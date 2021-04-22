@@ -2,10 +2,12 @@
 
 use Carbon\Carbon;
 use Sheba\AppSettings\HomePageSetting\Exceptions\UnsupportedTarget;
+use Sheba\AppSettings\HomePageSetting\Supported\Sections;
 use Sheba\AppSettings\HomePageSetting\Supported\Targets;
 
 class Item
 {
+    protected $sectionType;
     protected $targetType;
     protected $targetId;
     protected $name;
@@ -15,6 +17,8 @@ class Item
     protected $thumb;
     protected $appBanner;
     protected $banner;
+    protected $video;
+    protected $isVideo;
     protected $isParent;
     protected $isFlash;
     protected $height;
@@ -28,6 +32,27 @@ class Item
     protected $link;
     protected $children;
     protected $slug;
+    protected $startDate;
+    protected $endDate;
+    protected $variables;
+    protected $universalSlug;
+    protected $categoryId;
+
+    public function setSectionType($section_type)
+    {
+        $this->sectionType = $section_type;
+        return $this;
+    }
+
+    /**
+     * @param mixed $variables
+     * @return Item
+     */
+    public function setVariables($variables)
+    {
+        $this->variables = $variables;
+        return $this;
+    }
 
     /**
      * @param string $target_type
@@ -41,12 +66,32 @@ class Item
     }
 
     /**
-     * @param int $target_id
+     * @param $id
+     * @return $this
+     */
+    public function setTargetId($id)
+    {
+        $this->targetId = $id;
+        return $this;
+    }
+
+    /**
+     * @param mixed $startDate
      * @return Item
      */
-    public function setTargetId($target_id)
+    public function setStartDate($startDate)
     {
-        $this->targetId = $target_id;
+        $this->startDate = $startDate;
+        return $this;
+    }
+
+    /**
+     * @param mixed $endDate
+     * @return Item
+     */
+    public function setEndDate($endDate)
+    {
+        $this->endDate = $endDate;
         return $this;
     }
 
@@ -196,11 +241,6 @@ class Item
         return $this;
     }
 
-    public function getPackageName()
-    {
-        return $this->packageName;
-    }
-
     /**
      * @param mixed $link
      * @return Item
@@ -209,38 +249,6 @@ class Item
     {
         $this->link = $link;
         return $this;
-    }
-
-    public function getLink()
-    {
-        return $this->link;
-    }
-
-    public function toArray()
-    {
-        return [
-            'target_type' => $this->targetType,
-            'target_id' => $this->targetId,
-            'name' => $this->name,
-            'icon' => $this->icon,
-            'icon_png' => $this->iconPng,
-            'app_thumb' => $this->appThumb,
-            'thumb' => $this->thumb,
-            'app_banner' => $this->appBanner,
-            'banner' => $this->banner,
-            'is_parent' => $this->isParent,
-            'is_flash' => $this->isFlash,
-            'height' => $this->height,
-            'valid_till' => $this->validTill ? $this->validTill->toDateTimeString() : null,
-            'voucher_code' => $this->voucherCode,
-            'updated_at' => $this->updatedAt ? $this->updatedAt->toDateTimeString() : null,
-            'updated_at_timestamp' => $this->updatedAt ? $this->updatedAt->timestamp : null,
-            'ratio' => $this->ratio,
-            'package_name' => $this->packageName,
-            'link' => $this->link,
-            'children' => $this->children,
-            'slug' => $this->slug
-        ];
     }
 
     /**
@@ -261,5 +269,98 @@ class Item
     {
         $this->slug = $slug;
         return $this;
+    }
+
+    /**
+     * @param mixed $video_info
+     * @return Item
+     */
+    public function setVideo($video_info)
+    {
+        $this->video = json_decode($video_info);
+        return $this;
+    }
+
+    /**
+     * @param $is_video
+     * @return Item
+     */
+    public function setIsVideo($is_video)
+    {
+        $this->isVideo = $is_video;
+        return $this;
+    }
+
+    public function setUniversalSlug($universal_slug)
+    {
+        $this->universalSlug = $universal_slug;
+        return $this;
+    }
+
+    /**
+     * @param $categoryId
+     * @return Item
+     */
+    public function setCategoryId($categoryId)
+    {
+        $this->categoryId = $categoryId;
+        return $this;
+    }
+
+    public function toArray()
+    {
+        return [
+                'target_type' => $this->targetType,
+                'target_id' => $this->targetId ? (int)$this->targetId : null,
+                'category_id' => $this->categoryId ? (int)$this->categoryId : null,
+                'name' => $this->name,
+                'icon' => $this->icon,
+                'icon_png' => $this->iconPng,
+                'app_thumb' => $this->appThumb,
+                'thumb' => $this->thumb,
+                'app_banner' => $this->appBanner,
+                'banner' => $this->banner,
+                'video' => $this->video,
+                'is_parent' => $this->isParent,
+                'is_flash' => $this->isFlash,
+                'is_video' => $this->isVideo,
+                'height' => $this->height,
+                'valid_till' => $this->validTill ? $this->validTill->toDateTimeString() : null,
+                'voucher_code' => $this->voucherCode,
+                'updated_at' => $this->updatedAt ? $this->updatedAt->toDateTimeString() : null,
+                'updated_at_timestamp' => $this->updatedAt ? $this->updatedAt->timestamp : null,
+                'ratio' => $this->ratio,
+                'package_name' => $this->packageName,
+                'link' => $this->link,
+                'children' => $this->children,
+                'slug' => $this->slug,
+                'universal_slug' => $this->universalSlug,
+                'start_date' => $this->startDate,
+                'end_date' => $this->endDate,
+                'variables' => $this->variables
+            ] + $this->getResizedImages();
+    }
+
+    private function getResizedImages()
+    {
+        // Category images are considered as default. Reason: NFI.
+        $category_sizes = config('image_sizes.category');
+        $icon_png_size = $category_sizes['icon_png'];
+        $thumb_size = $category_sizes['thumb'];
+        $app_thumb_size = $category_sizes['app_thumb'];
+        $app_banner_size = $category_sizes['app_banner'];
+
+        if ($this->sectionType == Sections::SLIDER) {
+            $app_banner_size = config('image_sizes.slider.app_banner');
+        } else if ($this->sectionType == Sections::BANNER || $this->sectionType == Sections::BANNER_GROUP) {
+            $app_banner_size = config('image_sizes.offer.app_banner');
+        }
+
+        return [
+            'icon_png_sizes' => getResizedUrls($this->iconPng, $icon_png_size['height'], $icon_png_size['width']),
+            'app_thumb_sizes' => getResizedUrls($this->appThumb, $app_thumb_size['height'], $app_thumb_size['width']),
+            'thumb_sizes' => getResizedUrls($this->thumb, $thumb_size['height'], $thumb_size['width']),
+            'app_banner_sizes' => getResizedUrls($this->appBanner, $app_banner_size['height'], $app_banner_size['width']),
+        ];
     }
 }
