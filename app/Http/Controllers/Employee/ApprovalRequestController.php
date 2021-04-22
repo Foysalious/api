@@ -54,6 +54,7 @@ class ApprovalRequestController extends Controller
      */
     public function index(Request $request, ApprovalRequestRepositoryInterface $approval_request_repo)
     {
+        dd($request->header('user-agent'));
         $this->validate($request, [
                 'type' => 'sometimes|string|in:' . implode(',', Type::get()),
                 'limit' => 'numeric', 'offset' => 'numeric'
