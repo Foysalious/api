@@ -157,8 +157,6 @@ class JournalCreateRepository
     public function store()
     {
         $data = $this->toData();
-        return $this->client->setUserId($this->typeId)->setUserType($this->type)->post('journals', $data);
+        return $this->client->setUserId($this->typeId)->setUserType($this->type)->post('api/journals/', $data);
     }
-
-
 }
