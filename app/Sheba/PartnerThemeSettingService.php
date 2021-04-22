@@ -7,7 +7,7 @@ class PartnerThemeSettingService
     private $settings;
     private $theme_id;
     private $partnerId;
-    private $client;
+
 
     public function setPartnerId($partnerId)
     {
@@ -40,7 +40,14 @@ class PartnerThemeSettingService
     {
         $client = new \GuzzleHttp\Client();
         $data = $this->makeData();
-        return $client->post('http://localhost:3000/partner-settings', $data);
+        return $client->post('http://localhost:3000/partner-settings', [
+            'form_params' =>
+                $data
+            ,
+            'headers' => [
+                'Content-Type' => 'application/x-www-form-urlencoded',
+            ]
+        ]);
 
     }
 }
