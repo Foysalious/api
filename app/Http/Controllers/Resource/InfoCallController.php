@@ -43,7 +43,7 @@ class InfoCallController extends Controller
         $resource = $auth_user->getResource();
         $auth_user_array = $auth_user->toArray();
         $created_by = $auth_user_array['resource']['id'];
-        $query = InfoCall::where('created_by', $created_by)->where('created_by_type', get_class($resource));
+        $query = InfoCall::where('status', '<>', Statuses::OPEN)->where('created_by', $created_by)->where('created_by_type', get_class($resource));
         if (!($request->has('limit')) && !($request->has('year')) && !($request->has('month'))) {
             $filtered_info_calls = $query;
         }
@@ -56,19 +56,32 @@ class InfoCallController extends Controller
         $info_call_list = $filtered_info_calls->get()->sortByDesc('id')->toArray();
         $list = [];
         foreach ($info_call_list as $info_call) {
+            if ($info_call['status'] == Statuses::REJECTED) {
+                $order_status = 'বাতিল';
+                $reward = 0;
+            }
+            if ($info_call['status'] == Statuses::CONVERTED) {
+                $order = Order::where('info_call_id', $info_call['id'])->get()->toArray();
+                $partner_order = PartnerOrder::where('order_id', $order[0]['id'])->get()->last()->toArray();
+                if ($partner_order['cancelled_at']!=null) {
+                    $order_status = 'বাতিল';
+                    $reward = 0;
+                }
+                elseif ($partner_order['closed_and_paid_at']!=null) {
+                    $order_status = 'শেষ';
+                    $reward = 200; //dummy
+                }
+                else {
+                    $order_status = 'চলছে';
+                    $reward = 0;
+                }
+            }
             array_push($list, [
                 'created_at'=> $info_call['created_at'],
                 'service_request_id' => $info_call['id'],
-                'order_status' => 'বাতিল', //dummy
-                'reward' => 200 //dummy
+                'order_status' => $order_status, //dummy
+                'reward' => $reward //dummy
             ]);
-            if ($info_call['status'] == Statuses::CONVERTED) {
-                $order = Order::where('info_call_id', $info_call['id'])->get()->toArray();
-                $partner_order = PartnerOrder::where('order_id', $order[0]['id'])->latest();
-//                if ($partner_order[0]->cancelled_at!=null) array_push($list, ['order_status' => 'বাতিল']);
-//                if ($partner_order[0]->closed_and_paid_at!=null) array_push($list, ['order_status' => 'শেষ']);
-//                else array_push($list, ['order_status' => 'চলছে']);
-            }
         }
         return api_response($request, $list, 200, ['service_request_list' => $list]);
     }
@@ -168,12 +181,12 @@ class InfoCallController extends Controller
             $order = Order::where('info_call_id', $id)->get();
             $info_call_details['order_id'] = $order[0]->id;
             $info_call_details['order_created_at'] = $order[0]->created_at->toDateTimeString();
-            $partner_order = PartnerOrder::where('order_id', $order[0]->id)->get();
-            if ($partner_order[0]->closed_and_paid_at!=null)  {
+            $partner_order = PartnerOrder::where('order_id', $order[0]->id)->get()->last()->toArray();
+            if ($partner_order['closed_and_paid_at']!=null)  {
                 $info_call_details['bn_order_status'] = 'শেষ';
                 $info_call_details['reward'] = 200; //dummy
             }
-            if ($partner_order[0]->cancelled_at!=null)  $info_call_details['bn_order_status'] = 'বাতিল';
+            if ($partner_order['cancelled_at']!=null)  $info_call_details['bn_order_status'] = 'বাতিল';
             else $info_call_details['bn_order_status'] = 'চলছে';
 
         }
