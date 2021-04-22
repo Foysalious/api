@@ -65,7 +65,7 @@ class BdRechargeClient
             "amount" => (int) $topup_order->amount,
             "type" => strtoupper($topup_order->payee_mobile_type),
             "operator" => $this->getOperatorId($topup_order->vendor_id),
-            "customer_tid" => "$topup_order->id",
+            "customer_tid" => $this->getRefId($topup_order),
         ];
 
         $request_data = [
@@ -90,7 +90,7 @@ class BdRechargeClient
         $unencrypted_data = [
             "srcuid" => $this->username,
             "srcpwd" => $this->password,
-            "tid" => $this->getRefId($topup_order)
+            "customer_tid" => $this->getRefId($topup_order)
         ];
         $request_data = [
             'payload' => $this->encryptData($unencrypted_data)
@@ -163,6 +163,6 @@ class BdRechargeClient
 
     private function getRefId(TopUpOrder $topup_order)
     {
-        return $topup_order->getGatewayRefId();
+        return str_pad($topup_order->getGatewayRefId(), 15, '0', STR_PAD_LEFT);
     }
 }

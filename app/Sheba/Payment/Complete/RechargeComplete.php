@@ -43,8 +43,8 @@ class RechargeComplete extends PaymentComplete
     private function storeTransaction()
     {
         /** @var HasWalletTransaction $user */
-        $user = $this->payment->payable->user;
-        (new WalletTransactionHandler())->setModel($user)->setAmount((double)$this->payment->payable->amount)->setType(Types::credit())->setLog('Credit Purchase')->setTransactionDetails($this->payment->getShebaTransaction()->toArray())->setSource($this->payment->paymentDetails->last()->method)->store();
+        $user              = $this->payment->payable->user;
+        $this->transaction = (new WalletTransactionHandler())->setModel($user)->setAmount((double)$this->payment->payable->amount)->setType(Types::credit())->setLog('Credit Purchase')->setTransactionDetails($this->payment->getShebaTransaction()->toArray())->setSource($this->payment->paymentDetails->last()->method)->store();
     }
 
     protected function saveInvoice()
@@ -83,6 +83,6 @@ class RechargeComplete extends PaymentComplete
     private function storeJournal()
     {
         $payable = $this->payment->payable;
-        (new JournalCreateRepository())->setTypeId($payable->user->id)->setSource($this->transaction)->setAmount($payable->amount)->setDebitAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)->setCreditAccountKey($this->payment->paymentDetails->first()->method)->setDetails("Entry For Wallet Transaction")->setReference($this->payment->id)->store();
+        (new JournalCreateRepository())->setTypeId($payable->user->id)->setSource($this->transaction)->setAmount($payable->amount)->setDebitAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)->setCreditAccountKey($this->payment->paymentDetails->last()->method)->setDetails("Entry For Wallet Transaction")->setReference($this->payment->id)->store();
     }
 }

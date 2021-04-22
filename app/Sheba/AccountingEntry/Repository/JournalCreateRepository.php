@@ -10,6 +10,7 @@ use GuzzleHttp\Client;
 use ReflectionException;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Exceptions\InvalidSourceException;
+use Sheba\AccountingEntry\Exceptions\KeyNotFoundException;
 use Sheba\ModificationFields;
 use Sheba\NeoBanking\Traits\ProtectedGetterTrait;
 use Sheba\RequestIdentification;
@@ -131,12 +132,17 @@ class JournalCreateRepository
     /**
      * @throws InvalidSourceException
      * @throws ReflectionException
+     * @throws KeyNotFoundException
      */
     public function toData()
     {
         $data = $this->toArray();
         if (empty($this->source) || !is_object($this->source)) throw new InvalidSourceException();
+        if (empty($this->creditAccountKey) || !is_object($this->creditAccountKey) || empty($this->debitAccountKey) || !is_object($this->debitAccountKey))
+            throw new KeyNotFoundException();
         $data['entryAt']     = $data['entryAt'] ?: Carbon::now()->format('Y-m-d H:i:s');
+        $data['debit_account_key']  = $this->debitAccountKey;
+        $data['credit_account_key'] = $this->creditAccountKey;
         $data['sourceType']  = class_basename($this->source);
         $data['sourceId']    = $this->source->id;
         $data['createdFrom'] = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
@@ -152,7 +158,7 @@ class JournalCreateRepository
     public function store()
     {
         $data = $this->toData();
-        return $this->client->setUserId($this->typeId)->setUserType($this->type)->post('journals', $data);
+        return $this->client->setUserId($this->typeId)->setUserType($this->type)->post('api/journals/', $data);
     }
 
 
