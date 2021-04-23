@@ -17,6 +17,7 @@ use Sheba\ExternalPaymentLink\Exceptions\TransactionIDNotFoundException;
 use Sheba\ExternalPaymentLink\Statics\ExternalPaymentStatics;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\ModificationFields;
+use Sheba\PaymentLink\PaymentLinkStatics;
 use Sheba\Pos\Repositories\PartnerPosCustomerRepository;
 use Sheba\Pos\Repositories\PosCustomerRepository;
 use Sheba\Repositories\ProfileRepository;
@@ -187,7 +188,18 @@ class ExternalPayments
     {
         $emi_month_invalid = Creator::validateEmiMonth($this->data);
         if ($emi_month_invalid !== false) throw new InvalidEmiMonthException($emi_month_invalid);
-        $this->creator->setIsDefault(0)->setAmount($this->data['amount'])->setReason($this->data['purpose'])->setUserName($this->client->partner->name)->setUserId($this->client->partner->id)->setUserType('partner')->setTargetId($payment->id)->setTargetType('external_payment')->setEmiMonth((int)$this->data['emi_month'])->setEmiCalculations();
+        $this->creator->setIsDefault(0)
+                      ->setAmount($this->data['amount'])
+                      ->setReason($this->data['purpose'])
+                      ->setUserName($this->client->partner->name)
+                      ->setUserId($this->client->partner->id)
+                      ->setUserType('partner')->setPaidBy(
+                array_key_exists('interest_paid_by',$this->data) ?$this->data['interest_paid_by']: PaymentLinkStatics::paidByTypes()[$this->data["emi_month"] ? 1 : 0]
+            )
+                      ->setTargetId($payment->id)
+                      ->setTargetType('external_payment')
+                      ->setEmiMonth((int)$this->data['emi_month'])
+                      ->calculate();
         $this->setCustomer();
         $external_link = $this->creator->save();
         if (!$external_link) throw new PaymentLinkInitiateException();

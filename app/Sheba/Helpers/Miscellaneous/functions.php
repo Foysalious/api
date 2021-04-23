@@ -248,6 +248,16 @@ if (!function_exists('simplifyExceptionTrace')) {
     }
 }
 
+if (!function_exists('dde')) {
+    /**
+     * @param \Throwable $e
+     */
+    function dde(\Throwable $e)
+    {
+        dd(get_class($e), $e->getMessage(), $e->getFile(), $e->getLine(), simplifyExceptionTrace($e));
+    }
+}
+
 if (!function_exists('array_push_on_array')) {
     /**
      * @param array $array
