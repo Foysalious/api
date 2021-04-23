@@ -7,16 +7,6 @@ use App\Sheba\Algolia\Listeners\PartnerPosServiceSaved as PartnerPosServiceSaved
 
 class EventsListenerProvider extends EventServiceProvider
 {
-    /**
-     * Register the service provider.
-     *
-     * @return void
-     */
-    public function register()
-    {
-        // TODO: Implement register() method.DalEventsListenerProvider
-    }
-
     public function boot()
     {
         Event::listen(PartnerPosServiceSavedEvent::class, PartnerPosServiceSavedListener::class);
