@@ -4,6 +4,8 @@
 use App\Http\Controllers\Controller;
 use App\Http\Requests\InfoCallCreateRequest;
 use App\Models\PartnerOrder;
+use App\Models\Reward;
+use App\Models\RewardAction;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Models\Order;
@@ -44,6 +46,10 @@ class InfoCallController extends Controller
         $auth_user_array = $auth_user->toArray();
         $created_by = $auth_user_array['resource']['id'];
         $query = InfoCall::where('status', '<>', Statuses::OPEN)->where('created_by', $created_by)->where('created_by_type', get_class($resource));
+        $reward_action = RewardAction::where('event_name', 'info_call_completed')->latest('id')->first();
+        $info_call_reward = Reward::where('detail_id', $reward_action->id)
+            ->select('rewards.*')
+            ->get();
         if (!($request->has('limit')) && !($request->has('year')) && !($request->has('month'))) {
             $filtered_info_calls = $query;
         }
@@ -69,7 +75,7 @@ class InfoCallController extends Controller
                 }
                 elseif ($partner_order['closed_and_paid_at']!=null) {
                     $order_status = 'শেষ';
-                    $reward = 200; //dummy
+                    $reward = $info_call_reward[0]->amount;
                 }
                 else {
                     $order_status = 'চলছে';
@@ -169,6 +175,10 @@ class InfoCallController extends Controller
     {
         $info_call = InfoCall::findOrFail($id);
         $log = $this->infoCallStatusLogRepository->getLastRejectLogOfInfoCall($info_call);
+        $reward_action = RewardAction::where('event_name', 'info_call_completed')->latest('id')->first();
+        $info_call_reward = Reward::where('detail_id', $reward_action->id)
+            ->select('rewards.*')
+            ->get();
         if ($log) $service_comment = $log->rejectReason->name;
         $info_call_details = [
             'id' => $id,
@@ -184,9 +194,9 @@ class InfoCallController extends Controller
             $partner_order = PartnerOrder::where('order_id', $order[0]->id)->get()->last()->toArray();
             if ($partner_order['closed_and_paid_at']!=null)  {
                 $info_call_details['bn_order_status'] = 'শেষ';
-                $info_call_details['reward'] = 200; //dummy
+                $info_call_details['reward'] = $info_call_reward[0]->amount; //dummy
             }
-            if ($partner_order['cancelled_at']!=null)  $info_call_details['bn_order_status'] = 'বাতিল';
+            elseif ($partner_order['cancelled_at']!=null)  $info_call_details['bn_order_status'] = 'বাতিল';
             else $info_call_details['bn_order_status'] = 'চলছে';
 
         }
