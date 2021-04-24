@@ -94,6 +94,7 @@ class InventoryDataMigration
         $this->migrateCategories();
         $this->migrateCategoryPartner();
         $this->migrateProducts();
+        $this->migrateProductsImages();
         $this->migrateProductUpdateLogs();
         $this->migrateDiscounts();
     }
@@ -124,6 +125,14 @@ class InventoryDataMigration
         $chunks = array_chunk($this->generatePartnerPosServicesMigrationData(), self::CHUNK_SIZE);
         foreach ($chunks as $chunk) {
             dispatch(new PartnerDataMigrationToInventoryJob($this->partner, ['products' => $chunk]));
+        }
+    }
+
+    private function migrateProductsImages()
+    {
+        $chunks = array_chunk($this->generatePartnerPosServiceImageGalleryData(), self::CHUNK_SIZE);
+        foreach ($chunks as $chunk) {
+            dispatch(new PartnerDataMigrationToInventoryJob($this->partner, ['partner_pos_service_image_gallery' => $chunk]));
         }
     }
 
@@ -173,11 +182,19 @@ class InventoryDataMigration
         $partner_pos_services = $this->partnerPosServiceRepository->where('partner_id', $this->partner->id);
         $this->partnerPosServiceIds = $partner_pos_services;
         $products = $partner_pos_services->withTrashed()->select('id', 'partner_id', 'pos_category_id AS category_id',
-            'name', 'description', 'cost', 'price', 'unit', 'wholesale_price', 'stock', 'warranty', 'warranty_unit',
+            'name', 'app_thumb', 'description', 'cost', 'price', 'unit', 'wholesale_price', 'stock', 'warranty', 'warranty_unit',
             'vat_percentage', 'publication_status', 'is_published_for_shop', 'created_by_name', 'updated_by_name',
             'created_at', 'updated_at', 'deleted_at')->get()->toArray();
         $this->partnerPosServiceIds = array_column($products, 'id');
         return $products;
+    }
+
+    private function generatePartnerPosServiceImageGalleryData()
+    {
+        return DB::table('partner_pos_service_image_gallery')
+            ->whereIn('partner_pos_service_id', $this->partnerPosServiceIds)
+            ->select('partner_pos_service_id AS product_id', 'image_link', 'created_by_name', 'created_at',
+                'updated_by_name', 'updated_at')->get();
     }
 
     private function generatePartnerPosServiceLogsMigrationData()
