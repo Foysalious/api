@@ -1,6 +1,7 @@
 <?php namespace Sheba\Payment\Complete;
 
 use App\Jobs\Partner\PaymentLink\SendPaymentLinkSms;
+use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PosOrder;
 use App\Models\Profile;
@@ -180,15 +181,18 @@ class PaymentLinkOrderComplete extends PaymentComplete
     {
         $this->target = $this->paymentLink->getTarget();
         if ($this->target instanceof PosOrder) {
+            $order = Order::find($this->target->id);
+            $is_partner_migrated = $order ? $order->partner->isMigrationCompleted() : true;
             $payment_data    = [
-                'order_id' => $this->target->id,
+                'pos_order_id' => $this->target->id,
                 'amount'       => $this->payment->payable->amount,
                 'method'       => $this->payment->payable->type,
                 'emi_month'    => $this->payment->payable->emi_month,
                 'interest'     => $this->paymentLink->getInterest(),
             ];
             $payment_creator = app(PaymentCreator::class);
-            $payment_creator->credit($payment_data);
+            /** @var $payment_creator PaymentCreator */
+            $payment_creator->credit($payment_data, $is_partner_migrated);
         }
         if ($this->target instanceof ExternalPayment) {
             $this->target->payment_id = $this->payment->id;
