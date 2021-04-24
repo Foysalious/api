@@ -44,7 +44,7 @@ class Transfer
     public function process()
     {
         $data = [
-            'order_id' => $this->order->id,
+            'pos_order_id' => $this->order->id,
             'amount' => $this->amount,
             'transaction_type' => 'Credit',
             'method' => 'transfer'

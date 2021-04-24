@@ -413,7 +413,7 @@ class OrderController extends Controller
         /** @var PosOrder $order */
         $order        = PosOrder::find($request->order);
         $payment_data = [
-            'order_id' => $order->id,
+            'pos_order_id' => $order->id,
             'amount'       => $request->paid_amount,
             'method'       => $request->payment_method
         ];
