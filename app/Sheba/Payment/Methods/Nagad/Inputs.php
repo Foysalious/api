@@ -46,39 +46,48 @@ class Inputs
     }
 
     /**
-     * @param $transactionID
+     * @param $transaction_id
      * @param NagadStore $store
      * @return array
      * @throws EncryptionFailed
      */
-    public static function init($transactionID, NagadStore $store)
+    public static function init($transaction_id, NagadStore $store)
     {
-        return self::data($transactionID, $store);
+        return self::data($transaction_id, $store);
     }
 
     /**
-     * @param $transactionId
+     * @param $transaction_id
      * @param NagadStore $store
      * @return array
      * @throws EncryptionFailed
      */
-    private static function data($transactionId, NagadStore $store)
+    private static function data($transaction_id, NagadStore $store)
     {
         $date = Carbon::now()->format('YmdHis');
-        $data = json_encode([
+        /*$data = json_encode([
             'merchantId' => $store->getMerchantId(),
-            'orderId' => $transactionId,
+            'orderId' => $transaction_id,
             'datetime' => $date,
             'challenge' => self::generateRandomString(40)
-        ]);
+        ]);*/
 
         return [
             // 'sensitiveData' => self::getEncoded($data, $store),
             // 'signature' => self::generateSignature($data, $store),
-            'dateTime' => $date
+            // 'dateTime' => $date
+            'merchantId'=> $store->getMerchantId(),
+            'orderId'   => $transaction_id,
+            'datetime'  => $date,
+            'challenge' => self::generateRandomString(40),
+            'storeType' => class_basename($store)
         ];
     }
 
+    /**
+     * @param int $length
+     * @return string
+     */
     private static function generateRandomString($length = 40)
     {
         $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
