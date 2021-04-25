@@ -9,8 +9,10 @@ class LocationTest extends FeatureTestCase
     {
         $response = $this->get("/v1/locations/");
         $data = $response->decodeResponseJson();
+        //dd($data);
         $locations = collect($data['locations']);
         $this->assertEquals(79, $locations->count());
+
     }
 
     public function  testNewlyPublishedLocationIsAvailableOnTheList()

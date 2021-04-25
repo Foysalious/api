@@ -90,7 +90,7 @@ class SbusinessBulkTopupTest extends FeatureTestCase
         $this->app->instance(VerifyPin::class, $verify_pin_mock);
     }
 
-    public function testSuccessfulBulkTopupResponse()
+  /*  public function testSuccessfulBulkTopupResponse()
     {
         $businessWallet = Business::find(1);;
         $businessWallet->update(["wallet" => 1000]);
@@ -508,5 +508,5 @@ class SbusinessBulkTopupTest extends FeatureTestCase
                 $sheet->fromArray($data);
             });
         });
-    }
+    }*/
 }

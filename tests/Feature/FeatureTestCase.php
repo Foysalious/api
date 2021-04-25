@@ -99,6 +99,11 @@ class FeatureTestCase extends TestCase
        // $this->beforeApplicationDestroyed(function () {
        //     \Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
       //  });
+        $this->beforeApplicationDestroyed(function () {
+            foreach ($this->app->make('db')->getConnections() as $connection) {
+                $connection->disconnect();
+            }
+        });
     }
 
     protected function logIn()

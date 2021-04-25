@@ -42,4 +42,5 @@ class TestCase extends Illuminate\Foundation\Testing\TestCase
             $this->arrayHasKey($key)->evaluate($array);
         }
     }
+
 }
