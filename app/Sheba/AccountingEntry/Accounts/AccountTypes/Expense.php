@@ -4,6 +4,7 @@
 namespace Sheba\AccountingEntry\Accounts\AccountTypes;
 
 
+use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Expense\Purchase;
 use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Expense\SubscriptionPurchase;
 
 class Expense extends AccountTypes

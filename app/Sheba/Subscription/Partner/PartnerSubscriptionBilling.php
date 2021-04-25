@@ -14,6 +14,7 @@ use App\Sheba\Subscription\Partner\PartnerSubscriptionCharges;
 use Carbon\Carbon;
 use DB;
 use Exception;
+use Illuminate\Database\Eloquent\Model;
 use ReflectionException;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
@@ -23,7 +24,6 @@ use Sheba\ExpenseTracker\AutomaticExpense;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\ModificationFields;
-use Sheba\NeoBanking\Banks\Categories\Account;
 use Sheba\Partner\PartnerStatuses;
 use Sheba\PartnerWallet\PartnerTransactionHandler;
 use Sheba\PartnerWallet\PaymentByBonusAndWallet;
@@ -61,6 +61,8 @@ class PartnerSubscriptionBilling
      * @var int
      */
     public $exchangeDaysToBeAdded = 0;
+
+    private $wallet_transaction;
 
     /**
      * PartnerSubscriptionBilling constructor.
@@ -186,7 +188,7 @@ class PartnerSubscriptionBilling
         $package_price = $this->packagePrice;
         DB::transaction(function () use ($package_price) {
             if (!$this->isCollectAdvanceSubscriptionFee) {
-                $this->partnerTransactionForSubscriptionBilling($package_price);
+                $this->wallet_transaction = $this->partnerTransactionForSubscriptionBilling($package_price);
             }
             $this->partner->last_billed_date   = $this->today;
             $this->partner->last_billed_amount = $this->packageOriginalPrice;
@@ -195,6 +197,11 @@ class PartnerSubscriptionBilling
             }
             $this->partner->save();
         });
+    }
+
+    public function getWalletTransaction()
+    {
+        return $this->wallet_transaction;
     }
 
     private function revokeStatus()
@@ -219,6 +226,7 @@ class PartnerSubscriptionBilling
 
     /**
      * @param $package_price
+     * @throws Exception
      */
     private function advanceBillingDatabaseTransactions($package_price)
     {
@@ -229,13 +237,14 @@ class PartnerSubscriptionBilling
 
     /**
      * @param $package_price
+     * @return Model|null
      * @throws Exception
      */
     private function partnerTransactionForSubscriptionBilling($package_price)
     {
         $package_price=round($package_price,2);
         $package_price = number_format($package_price, 2, '.', '');
-        $this->partnerBonusHandler->pay($package_price, '%d BDT has been deducted for subscription package', [$this->getSubscriptionTag()->id]);
+        return $this->partnerBonusHandler->pay($package_price, '%d BDT has been deducted for subscription package', [$this->getSubscriptionTag()->id]);
     }
 
     /**
@@ -408,10 +417,13 @@ class PartnerSubscriptionBilling
      */
     private function storeJournal()
     {
-        (new JournalCreateRepository())->setTypeId($this->partner->id)->setSource($this->partner)
-            ->setAmount($this->packagePrice)->setDebitAccountKey((new Accounts())->expense->subscription_purchase::SUBSCRIPTION_PURCHASE)
-            ->setCreditAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
-            ->setDetails("Subscription purchase")->setReference($this->packageTo->id)
-            ->store();
+        $transaction = $this->getWalletTransaction();
+        if(isset($transaction)) {
+            (new JournalCreateRepository())->setTypeId($this->partner->id)->setSource($transaction)
+                ->setAmount($transaction->amount)->setDebitAccountKey((new Accounts())->expense->subscription_purchase::SUBSCRIPTION_PURCHASE)
+                ->setCreditAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
+                ->setDetails("Subscription purchase")->setReference("Package updated from ".$this->packageFrom->id. " to ".$this->packageTo->id)
+                ->store();
+        }
     }
 }
