@@ -3,10 +3,12 @@
 use App\Http\Controllers\Controller;
 use App\Models\PartnerPosService;
 use App\Models\PosCategory;
+use App\Models\TopUpOrder;
 use App\Transformers\Partner\PosServiceTransformer;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
+use Sheba\Dal\PartnerPosService\PartnerPosServiceRepository;
 use Sheba\Pos\Product\Index;
 use Sheba\Pos\Repositories\Interfaces\PosCategoryRepositoryInterface;
 
@@ -47,37 +49,12 @@ class PartnerPosController extends Controller
         }
     }
 
-    public function search(Request $request)
+    public function search(Request $request, PartnerPosServiceRepository $partnerPosServiceRepository)
     {
         $this->validate($request, ['search' => 'required|string', 'partner_id' => 'required|numeric']);
-        $query = [
-            "bool" => [
-                "filter" => [
-                    "bool" => [
-                        "must" => [
-                            [
-                                "term" => [
-                                    "is_published_for_shop" => 1
-                                ]
-                            ],
-                            [
-                                "term" => [
-                                    "partner_id" => +$request->partner_id
-                                ]
-                            ]
-                        ]
-                    ]
-                ],
-                "must" => [
-                    "match" => [
-                        "name" => $request->search
-                    ]
-                ]
-            ]
-        ];
-
-        $products = PartnerPosService::searchByQuery($query, null, null, 5, 0, null);
+        $products = $partnerPosServiceRepository->searchProductFromWebstore($request->search, +$request->partner_id, 5);
         if (count($products->toArray()) > 0) return response()->json(['products' => $products->toArray()]);
-        return response("Not found", 404);
+        return response("No products found", 404);
     }
+
 }
