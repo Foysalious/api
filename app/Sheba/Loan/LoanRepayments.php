@@ -4,6 +4,7 @@
 namespace Sheba\Loan;
 
 
+use App\Http\Requests\Request;
 use App\Models\Partner;
 use App\Models\Resource;
 use App\Sheba\Loan\DLSV2\Exceptions\InsufficientWalletCreditForRepayment;
@@ -11,6 +12,10 @@ use App\Sheba\Loan\DLSV2\LoanClaim;
 use App\Sheba\Loan\DLSV2\Repayment;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Asset\Bank;
+use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Asset\Sheba;
+use Sheba\AccountingEntry\Accounts\RootAccounts;
+use Sheba\AccountingEntry\Repository\JournalCreateRepository;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
 use Sheba\Transactions\Types;
@@ -27,6 +32,8 @@ class LoanRepayments
      * @var LoanRepository
      */
     private $repo;
+
+    private $repayment;
 
     public function __construct() {
         $this->repo           = new LoanRepository();
@@ -61,7 +68,8 @@ class LoanRepayments
         $this->balanceCheck($request->amount);
         DB::transaction(function () use ($last_claim, $request) {
             $this->debitFromWallet($request->loan_id, $request->amount);
-            (new Repayment())->setLoan($request->loan_id)->setClaim($last_claim->id)->setAmount($request->amount)->repaymentFromWallet();
+            $this->repayment = (new Repayment())->setLoan($request->loan_id)->setClaim($last_claim->id)->setAmount($request->amount)->repaymentFromWallet();
+            $this->storeJournal($request);
         });
     }
 
@@ -116,5 +124,9 @@ class LoanRepayments
     public function getDue($claim_id)
     {
         return (new Repayment())->setClaim($claim_id)->getDue();
+    }
+
+    private function storeJournal(Request $request) {
+        (new JournalCreateRepository())->setTypeId($this->partner->id)->setSource($this->repayment)->setAmount($request->amount)->setDebitAccountKey(Bank::CITY_BANK)->setCreditAccountKey(Sheba::SHEBA_ACCOUNT)->setDetails("Entry For Loan Repayment")->setReference($request->loan_id)->store();
     }
 }
