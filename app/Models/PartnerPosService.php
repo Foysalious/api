@@ -1,6 +1,6 @@
 <?php namespace App\Models;
 
-use AlgoliaSearch\Laravel\AlgoliaEloquentTrait;
+use Laravel\Scout\Searchable;
 use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceSaved;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -8,10 +8,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\PartnerPosServiceImageGallery\Model as PartnerPosServiceImageGallery;
 
-
 class PartnerPosService extends BaseModel
 {
-    use SoftDeletes, AlgoliaEloquentTrait;
+    use SoftDeletes, Searchable;
 
     protected $guarded = ['id'];
     protected $casts = ['cost' => 'double', 'price' => 'double', 'stock' => 'double', 'vat_percentage' => 'double', 'show_image' => 'int'];
@@ -19,17 +18,6 @@ class PartnerPosService extends BaseModel
 
     public static $savedEventClass = PartnerPosServiceSaved::class;
     public static $autoIndex = false;
-
-    public $algoliaSettings = [
-        'searchableAttributes' => [
-            'name',
-            'description',
-        ],
-        'attributesForFaceting' => ['partner'],
-        'unretrievableAttributes' => [
-            'partner'
-        ]
-    ];
 
     public function subCategory()
     {
@@ -146,7 +134,7 @@ class PartnerPosService extends BaseModel
         return $this->hasMany(PartnerPosServiceLog::class);
     }
 
-    public function getAlgoliaRecord()
+    public function toSearchableArray()
     {
         return [
             'id' => (int)$this->id,
