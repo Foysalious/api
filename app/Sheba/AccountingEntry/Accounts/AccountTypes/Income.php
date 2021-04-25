@@ -1,11 +1,13 @@
 <?php
 
-
 namespace Sheba\AccountingEntry\Accounts\AccountTypes;
 
+use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Income\Reffer;
 
 class Income extends AccountTypes
 {
+    /** @var Reffer */
+    public $reffer;
     public $other_income;
     public $sales;
     public $sales_bechabikri;
