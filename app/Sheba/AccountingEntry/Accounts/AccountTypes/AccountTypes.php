@@ -15,7 +15,7 @@ abstract class AccountTypes
             try {
                 $this->$name = app("$typePrefix\\AccountKeys\\$class_name\\" . ucfirst(camel_case($name)));
             } catch (\Throwable $e) {
-
+                return $e->getMessage();
             }
         }
 
