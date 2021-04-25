@@ -33,7 +33,7 @@ class LoanRepayments
      */
     private $repo;
 
-    private $repayment;
+    private $transaction;
 
     public function __construct() {
         $this->repo           = new LoanRepository();
@@ -68,8 +68,8 @@ class LoanRepayments
         $this->balanceCheck($request->amount);
         DB::transaction(function () use ($last_claim, $request) {
             $this->debitFromWallet($request->loan_id, $request->amount);
-            $this->repayment = (new Repayment())->setLoan($request->loan_id)->setClaim($last_claim->id)->setAmount($request->amount)->repaymentFromWallet();
-            $this->storeJournal($request, $last_claim);
+            (new Repayment())->setLoan($request->loan_id)->setClaim($last_claim->id)->setAmount($request->amount)->repaymentFromWallet();
+            $this->storeJournal($request);
         });
     }
 
@@ -90,7 +90,7 @@ class LoanRepayments
     private function debitFromWallet($loan_id, $amount)
     {
         $this->setModifier($this->resource);
-        (new WalletTransactionHandler())->setModel($this->partner)->setAmount($amount)->setSource(TransactionSources::LOAN_REPAYMENT)->setType(Types::debit())->setLog("$amount BDT has been collected from {$this->resource->profile->name} as Loan Repayment  for  loan: $loan_id")->store();
+        $this->transaction = (new WalletTransactionHandler())->setModel($this->partner)->setAmount($amount)->setSource(TransactionSources::LOAN_REPAYMENT)->setType(Types::debit())->setLog("$amount BDT has been collected from {$this->resource->profile->name} as Loan Repayment  for  loan: $loan_id")->store();
         return true;
     }
 
@@ -126,7 +126,15 @@ class LoanRepayments
         return (new Repayment())->setClaim($claim_id)->getDue();
     }
 
-    private function storeJournal($request, $last_claim) {
-        (new JournalCreateRepository())->setTypeId($this->partner->id)->setSource($last_claim)->setAmount($request->amount)->setDebitAccountKey(Bank::CITY_BANK)->setCreditAccountKey(Sheba::SHEBA_ACCOUNT)->setDetails("Entry For Loan Repayment")->setReference($request->loan_id)->store();
+    private function storeJournal($request) {
+        (new JournalCreateRepository())
+            ->setTypeId($this->partner->id)
+            ->setSource($this->transaction)
+            ->setAmount($request->amount)
+            ->setDebitAccountKey(Bank::CITY_BANK)
+            ->setCreditAccountKey(Sheba::SHEBA_ACCOUNT)
+            ->setDetails("Entry For Loan Repayment")
+            ->setReference($request->loan_id)
+            ->store();
     }
 }
