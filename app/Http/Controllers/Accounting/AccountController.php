@@ -17,13 +17,19 @@ class AccountController extends Controller
 
     public function getAccountTypeList(Request $request)
     {
-        $response = $this->accountRepo->getAccountType($request->all());
+        $response = $this->accountRepo->getAccountType($request->partner->id, $request->all());
         return api_response($request, $response, 200, ['data' => $response]);
     }
 
     public function getAccountList(Request $request)
     {
-        $response = $this->accountRepo->getAccounts($request->all());
+        $response = $this->accountRepo->getAccounts($request->partner->id, $request->all());
+        return api_response($request, $response, 200, ['data' => $response]);
+    }
+
+    public function getCashAccountList(Request $request)
+    {
+        $response = $this->accountRepo->getCashAccounts($request->partner->id);
         return api_response($request, $response, 200, ['data' => $response]);
     }
 }

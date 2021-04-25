@@ -27,6 +27,11 @@ class BusinessRoute
                 });
                 $api->group(['prefix' => 'office-setting'], function ($api) {
                     $api->get('/operational', 'B2b\AttendanceController@getOperationalOfficeSettings');
+                    $api->post('/operational', 'B2b\AttendanceController@updateOperationalOfficeSettings');
+                    $api->get('/attendance', 'B2b\AttendanceController@getAttendanceOfficeSettings');
+                    $api->post('/attendance', 'B2b\AttendanceController@updateAttendanceOfficeSettings');
+                    $api->get('/grace-policy', 'B2b\AttendanceController@getGracePolicy');
+                    $api->post('/grace-policy', 'B2b\AttendanceController@createGracePolicy');
                 });
             });
         });

@@ -1,8 +1,7 @@
 <?php namespace App\Models;
 
 use Sheba\Dal\BaseModel;
-use Sheba\Dal\TopupOrder\Events\Created;
-use Sheba\Dal\TopupOrder\Events\Updated;
+use Sheba\Dal\TopupOrder\Events\Saved;
 use Sheba\Dal\TopupOrder\FailedReason;
 use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\Dal\TopUpOrderStatusLog\TopUpOrderStatusLog;
@@ -18,8 +17,7 @@ class TopUpOrder extends BaseModel implements PayableType
     protected $table = 'topup_orders';
     protected $dates = ['created_at', 'updated_at'];
 
-    public static $createdEventClass = Created::class;
-    public static $updatedEventClass = Updated::class;
+    public static $savedEventClass = Saved::class;
 
     /**
      * The elasticsearch settings.
@@ -198,6 +196,11 @@ class TopUpOrder extends BaseModel implements PayableType
         return $this->isPending() || $this->isAttempted();
     }
 
+    public function getStatusForAgent()
+    {
+        return Statuses::getForAgent($this->status);
+    }
+
     public function getOriginalMobile()
     {
         return getOriginalMobileNumber($this->payee_mobile);
@@ -206,6 +209,11 @@ class TopUpOrder extends BaseModel implements PayableType
     public function isRobiWalletTopUp()
     {
         return !!$this->is_robi_topup_wallet;
+    }
+
+    public function isAgentDebited()
+    {
+        return (boolean) $this->is_agent_debited;
     }
 
     public function isViaPaywell()
@@ -223,6 +231,11 @@ class TopUpOrder extends BaseModel implements PayableType
         return in_array($this->gateway, [Names::ROBI, Names::AIRTEL, Names::BANGLALINK]);
     }
 
+    public function isViaBdRecharge()
+    {
+        return $this->gateway == Names::BD_RECHARGE;
+    }
+
     public function getTransactionDetailsObject()
     {
         return json_decode($this->transaction_details);
@@ -235,6 +248,7 @@ class TopUpOrder extends BaseModel implements PayableType
 
     public function getGatewayRefId()
     {
+
         if ($this->isGatewayRefUniform()) return dechex($this->id);
 
         if ($this->isViaPaywell()) return $this->id;
@@ -242,6 +256,8 @@ class TopUpOrder extends BaseModel implements PayableType
         if ($this->isViaPretups()) return "";
 
         if ($this->isViaSsl()) return $this->getTransactionDetailsObject()->guid;
+
+        if ($this->isViaBdRecharge()) return $this->id;
 
         return "";
     }

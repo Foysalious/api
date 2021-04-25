@@ -117,10 +117,14 @@ class Route
             $api->post('migrate', 'Partner\DataMigrationController@migrate');
 
             $api->group(['prefix' => 'orders'], function ($api) {
+                $api->get('/', 'PosOrder\OrderController@index');
+                $api->get('/{order}', 'PosOrder\OrderController@show');
                 $api->post('/', 'PosOrder\OrderController@store');
                 $api->group(['prefix' => '{order}'], function ($api) {
                     $api->post('/update-status', 'PosOrder\OrderController@updateStatus');
                 });
+                $api->put('/{order}', 'PosOrder\OrderController@update');
+                $api->delete('/{order}', 'PosOrder\OrderController@destroy');
             });
         });
         $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers'], function ($api) {

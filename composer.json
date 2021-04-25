@@ -48,8 +48,10 @@
     "algolia/algoliasearch-laravel": "^1.7",
     "fideloper/proxy": "^3.3",
     "rosell-dk/webp-convert": "^2.4",
-    "spomky-labs/jose": "^7.1",
-    "fgrosse/phpasn1": "^2.2"
+    "symfony/polyfill-mbstring": "1.5.0",
+    "spomky-labs/jose": "6.1.7",
+    "symfony/polyfill-mbstring": "1.5.0",
+    "fgrosse/phpasn1": "1.5"
   },
   "require-dev": {
     "fzaninotto/faker": "~1.4",

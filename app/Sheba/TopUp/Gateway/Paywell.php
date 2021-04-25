@@ -65,8 +65,4 @@ class Paywell implements Gateway
         return $ipn_response;
     }
 
-    public function getName()
-    {
-        return Names::PAYWELL;
-    }
 }

@@ -5,14 +5,22 @@ use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Sheba\Business\Attendance\MonthlyStat;
 use App\Sheba\Business\BusinessBasicInformation;
+use App\Sheba\Business\OfficeSetting\PolicyRuleRequester;
+use App\Sheba\Business\OfficeSetting\PolicyRuleUpdater;
+use App\Sheba\Business\OfficeSetting\PolicyTransformer;
+use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
 use Sheba\Business\Attendance\AttendanceList;
 use Sheba\Business\Attendance\Daily\DailyExcel;
 use Sheba\Business\Attendance\Monthly\Excel;
 use Sheba\Business\Attendance\Member\Excel as MemberMonthlyExcel;
 use Sheba\Business\Attendance\Setting\ActionType;
+use Sheba\Business\OfficeSetting\AttendaceSettingUpdater;
+use Sheba\Business\OfficeSetting\OperationalSetting;
 use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
 use Sheba\Dal\Attendance\Statuses;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
@@ -662,9 +670,6 @@ class AttendanceController extends Controller
 
         $office_time = $office_hours->getOfficeTime($business);
         $data = [
-            'office_hour_type' => 'Fixed Time',
-            'start_time' => $office_time ? Carbon::parse($office_time->start_time)->format('h:i a') : '09:00 am',
-            'end_time' => $office_time ? Carbon::parse($office_time->end_time)->format('h:i a') : '05:00 pm',
             'total_working_days_type' => $office_time->type,
             'total_working_days' => $office_time->number_of_days,
             'is_weekend_included' => $office_time->is_weekend_included,
@@ -674,6 +679,164 @@ class AttendanceController extends Controller
             'business_offices' => $attendance_setting_data["business_offices"]
         ];
 
-        return api_response($request, null, 200, ['office_setting' => $data]);
+        return api_response($request, null, 200, ['office_settings_operational' => $data]);
+    }
+
+    public function updateOperationalOfficeSettings($business, Request $request, TypeUpdater $type_updater,
+                                                                    SettingCreator $setting_creator, SettingUpdater $setting_updater,
+                                                                    SettingDeleter $setting_deleter, OperationalSetting $operational_setting_updater)
+    {
+        $this->validate($request, [
+            'attendance_types' => 'required|string',
+            'business_offices' => 'required|string'
+        ]);
+
+        $business_member = $request->business_member;
+        $business = $request->business;
+        $this->setModifier($business_member->member);
+        $errors = [];
+
+        $attendance_types = json_decode($request->attendance_types);
+        if (!is_null($attendance_types)) {
+            foreach ($attendance_types as $attendance_type) {
+                $attendance_type_id = isset($attendance_type->id) ? $attendance_type->id : null;
+
+                $type_updater->setBusiness($business)
+                    ->setTypeId($attendance_type_id)
+                    ->setType($attendance_type->type)
+                    ->setAction($attendance_type->action)
+                    ->update();
+            }
+        }
+
+        $business_offices = json_decode($request->business_offices);
+
+        if (!is_null($business_offices)) {
+            $offices = collect($business_offices);
+            $deleted_offices = $offices->where('action', ActionType::DELETE);
+            $deleted_offices->each(function ($deleted_office) use ($setting_deleter) {
+                $setting_deleter->setBusinessOfficeId($deleted_office->id);
+                $setting_deleter->delete();
+            });
+
+            $added_offices = $offices->where('action', ActionType::ADD);
+            $added_offices->each(function ($added_office) use ($setting_creator, $business, &$errors) {
+                $setting_creator->setBusiness($business)->setName($added_office->name)->setIp($added_office->ip);
+                if ($setting_creator->hasError()) {
+                    array_push($errors, $setting_creator->getErrorMessage());
+                    $setting_creator->resetError();
+                    return;
+                }
+                $setting_creator->create();
+            });
+
+            $edited_offices = $offices->where('action', ActionType::EDIT);
+            $edited_offices->each(function ($edited_office) use ($setting_updater, $business, &$errors) {
+                $setting_updater->setBusinessOfficeId($edited_office->id)->setName($edited_office->name)->setIp($edited_office->ip);
+                if ($setting_updater->hasError()) {
+                    array_push($errors, $setting_updater->getErrorMessage());
+                    $setting_updater->resetError();
+                    return;
+                }
+                $setting_updater->update();
+            });
+        }
+
+        if ($errors) {
+            if ($this->isFailedToUpdateAllSettings($errors, $business_offices)) return api_response($request, null, 422, ['message' => implode(', ', $errors)]);
+            return api_response($request, null, 303, ['message' => implode(', ', $errors)]);
+        }
+
+        $office_timing = $operational_setting_updater->setBusiness($request->business)
+            ->setMember($business_member->member)
+            ->setWeekends($request->weekends)
+            ->setTotalWorkingDaysType($request->working_days_type)
+            ->setNumberOfDays($request->days)
+            ->setIsWeekendIncluded($request->is_weekend_included)
+            ->update();
+
+        if ($office_timing) return api_response($request, null, 200, ['msg' => "Update Successful"]);
+    }
+
+    public function getAttendanceOfficeSettings($business, Request $request, BusinessWeekendRepoInterface $business_weekend_repo, BusinessOfficeHoursRepoInterface $office_hours)
+    {
+        $business = $request->business;
+        $office_time = $office_hours->getOfficeTime($business);
+        $half_day_leave_types = $business->leaveTypes()->isHalfDayEnable();
+        $data = [
+            'office_hour_type' => 'Fixed Time',
+            'start_time' => $office_time ? Carbon::parse($office_time->start_time)->format('h:i a') : '09:00 am',
+            'is_allow_start_time_grace' => $office_time->is_start_grace_time_enable,
+            'starting_grace_time' => $office_time->start_grace_time,
+            'end_time' => $office_time ? Carbon::parse($office_time->end_time)->format('h:i a') : '05:00 pm',
+            'is_allow_end_time_grace' => $office_time->is_end_grace_time_enable,
+            'ending_grace_time' => $office_time->end_grace_time,
+            'is_half_day_enable' => $business->is_half_day_enable,
+            'half_day_leave_types_count' => $half_day_leave_types->count(),
+            'half_day_leave_types' => $half_day_leave_types->pluck('title'),
+            'half_day_initial_timings' => $this->getHalfDayTimings($business)
+        ];
+
+        return api_response($request, null, 200, ['office_settings_attendance' => $data]);
+    }
+
+    public function updateAttendanceOfficeSettings(Request $request, AttendaceSettingUpdater $updater)
+    {
+        $this->validate($request, [
+            'office_hour_type' => 'required',
+            'start_time' => 'date_format:H:i:s',
+            'end_time' => 'date_format:H:i:s|after:start_time',
+            'half_day' => 'required', 'half_day_config' => 'string',
+            'is_start_grace_period_allow" => "required',
+            'starting_grace_time" => "required_if:is_start_grace_period_allow,==,1',
+            'is_end_grace_period_allow" => "required',
+            'ending_grace_time" => "required_if:is_end_grace_period_allow,==,1',
+        ], [
+            'end_time.after' => 'Start Time Must Be Less Than End Time'
+        ]);
+        $start_time = Carbon::parse($request->start_time)->format('H:i') . ':59';
+        $end_time = Carbon::parse($request->end_time)->format('H:i') . ':59';
+
+        $business_member = $request->business_member;
+        $office_timing = $updater->setBusiness($request->business)
+            ->setMember($business_member->member)
+            ->setOfficeHourType($request->office_hour_type)
+            ->setStartTime($start_time)
+            ->setStartGracePeriod($request->is_start_grace_period_allow)
+            ->setStartGracePeriodTime($request->starting_grace_time)
+            ->setEndTime($end_time)
+            ->setEndGracePeriod($request->is_end_grace_period_allow)
+            ->setEndGracePeriodTime($request->ending_grace_time)
+            ->setHalfDayTimings($request)
+            ->update();
+
+        if ($office_timing) return api_response($request, null, 200, ['msg' => "Update Successful"]);
+    }
+
+    public function getGracePolicy(Request $request)
+    {
+        $business = $request->business;
+        if (!$business) return api_response($request, null, 403, ['message' => 'You Are not authorized to show this settings']);
+        $grace_policy = $business->gracePolicy;
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Collection($grace_policy, new PolicyTransformer());
+        $grace_policy_rules = $manager->createData($resource)->toArray()['data'];
+
+        return api_response($request, $grace_policy_rules, 200, [ 'grace_policy_rules' => $grace_policy_rules]);
+    }
+
+    public function createGracePolicy(Request $request, PolicyRuleRequester $requester, PolicyRuleUpdater $updater)
+    {
+        $business = $request->business;
+        if (!$business) return api_response($request, null, 403, ['message' => 'You Are not authorized to show this settings']);
+
+        $requester->setBusiness($business)
+            ->setPolicyType($request->policy_type)
+            ->setRules($request->rules);
+
+        $updater->setPolicyRuleRequester($requester)->update();
+
+        return api_response($request, null, 200);
     }
 }

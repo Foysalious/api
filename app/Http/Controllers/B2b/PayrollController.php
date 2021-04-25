@@ -9,6 +9,7 @@ use Sheba\Business\PayrollComponent\Requester as PayrollComponentRequester;
 use App\Sheba\Business\PayrollComponent\Components\Additions\Creator as AdditionCreator;
 use App\Sheba\Business\PayrollComponent\Components\Deductions\Creator as DeductionsCreator;
 use App\Transformers\Business\PayrollSettingsTransformer;
+use Sheba\Dal\PayrollComponent\Components;
 use Sheba\Dal\PayrollComponent\PayrollComponentRepository;
 use Sheba\Dal\PayrollSetting\PayDayType;
 use Sheba\Dal\PayrollSetting\PayrollSettingRepository;
@@ -181,6 +182,23 @@ class PayrollController extends Controller
         $updater->setPayrollComponentRequester($this->payrollComponentRequester)->Update();
 
         return api_response($request, null, 200);
+    }
+
+    public function getPayrollcomponents(Request $request)
+    {
+        /** @var Business $business */
+        $business = $request->business;
+        $payroll_components = $business->payrollSetting->components->sortBy('type');
+        $data = [];
+        foreach ($payroll_components as $payroll_component) {
+                array_push($data, [
+                    'id' => $payroll_component->id,
+                    'name' => $payroll_component->name,
+                    'title' => $payroll_component->is_default ? Components::getComponents($payroll_component->name)['value'] : $payroll_component->value,
+                    'type' => $payroll_component->type
+                ]);
+        }
+        return api_response($request, null, 200, ['payroll_components' => $data]);
     }
 
 }

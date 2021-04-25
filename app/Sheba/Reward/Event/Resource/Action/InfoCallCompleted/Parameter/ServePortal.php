@@ -11,12 +11,18 @@ class ServePortal extends ActionEventParameter
 
     public function check(array $params)
     {
-        // TODO: Implement check() method.
+        $partner_order = $params[0];
+        if ($this->value != null) {
+            $status_change_logs = $partner_order->active_job->load('statusChangeLogs')->statusChangeLogs;
+            return $status_change_logs->where('to_status', 'Served')->whereIn('portal_name', $this->value)->count() > 0;
+        }
+
+        return true;
     }
 
     public function validate()
     {
         if (empty($this->value) && !is_null($this->value))
-            throw new ParameterTypeMismatchException("Portal can't be empty");
+            throw new ParameterTypeMismatchException("Serve Portal can't be empty");
     }
 }

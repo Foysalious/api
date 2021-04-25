@@ -242,6 +242,13 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $commissions->getServiceCommission();
     }
 
+    public function categoryCommission($category_id)
+    {
+        $category = Category::find($category_id);
+        $commissions = (new CommissionCalculator())->setCategory($category)->setPartner($this);
+        return $commissions->getServiceCommission();
+    }
+
     public function categories()
     {
         return $this->belongsToMany(Category::class)->withPivot($this->categoryPivotColumns);

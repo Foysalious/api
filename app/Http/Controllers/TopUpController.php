@@ -8,7 +8,8 @@ use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
 use App\Repositories\NotificationRepository;
 use App\Sheba\TopUp\Vendor\Vendors;
-use App\Sheba\TopUp\Vendor\Internal\BdRechargeClient;
+use App\Sheba\TopUp\Vendor\Response\Ipn\BdRecharge\BdRechargeFailResponse;
+use App\Sheba\TopUp\Vendor\Response\Ipn\BdRecharge\BdRechargeSuccessResponse;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -18,16 +19,15 @@ use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\TopUp\Creator;
 use Sheba\TopUp\Exception\PaywellTopUpStillNotResolved;
-use Sheba\TopUp\Gateway\Paywell;
+use Sheba\TopUp\Gateway\BdRecharge;
 use Sheba\TopUp\Jobs\TopUpExcelJob;
 use Sheba\TopUp\Jobs\TopUpJob;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpExcel;
 use Sheba\TopUp\TopUpLifecycleManager;
 use Sheba\TopUp\TopUpRequest;
+use Sheba\TopUp\Vendor\Response\Ipn\FailResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
-use Sheba\TopUp\Vendor\Response\BdRecharge\BdRechargeFailResponse;
-use Sheba\TopUp\Vendor\Response\BdRecharge\BdRechargeSuccessResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\Ssl\SslSuccessResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\Ssl\SslFailResponse;
 use Sheba\TopUp\Vendor\VendorFactory;
@@ -40,7 +40,6 @@ use App\Models\Affiliate;
 use Sheba\ModificationFields;
 use Sheba\Dal\TopUpOTFSettings\Contract as TopUpOTFSettingsRepo;
 use Sheba\Dal\TopUpVendorOTF\Contract as TopUpVendorOTFRepo;
-use Sheba\TopUp\Vendor\Internal\PaywellClient;
 
 class TopUpController extends Controller
 {
@@ -176,7 +175,7 @@ class TopUpController extends Controller
      */
     public function sslFail(Request $request, SslFailResponse $error_response)
     {
-        $this->sslHandle($error_response, $request);
+        $this->ipnHandle($error_response, $request);
         return api_response($request, 1, 200);
     }
 
@@ -188,29 +187,10 @@ class TopUpController extends Controller
      */
     public function sslSuccess(Request $request, SslSuccessResponse $success_response)
     {
-        $this->sslHandle($success_response, $request);
+        $this->ipnHandle($success_response, $request);
         return api_response($request, 1, 200);
     }
 
-    /**
-     * @param IpnResponse $ipn_response
-     * @param Request $request
-     * @throws \Throwable
-     */
-    private function sslHandle(IpnResponse $ipn_response, Request $request)
-    {
-        $data = $request->all();
-        $ipn_response->setResponse($data);
-        $ipn_response->handleTopUp();
-        $this->logSslIpn($ipn_response, $data);
-    }
-
-    private function logSslIpn(IpnResponse $ipn_response, $request_data)
-    {
-        $key = 'Topup::' . ($ipn_response instanceof SslFailResponse ? "Failed:failed" : "Success:success") . "_";
-        $key .= Carbon::now()->timestamp . '_' . $ipn_response->getTopUpOrder()->id;
-        Redis::set($key, json_encode($request_data));
-    }
 
     private function getAgent(Request $request)
     {
@@ -365,27 +345,32 @@ class TopUpController extends Controller
      * @param Request $request
      * @param BdRechargeSuccessResponse $success_response
      * @param BdRechargeFailResponse $fail_response
-     * @param TopUp $top_up
      * @return JsonResponse
      * @throws Exception
      */
-    public function bdrechargeStatusUpdate(Request $request, BdRechargeSuccessResponse $success_response, BdRechargeFailResponse $fail_response, TopUp $top_up)
+    public function bdRechargeStatusUpdate(Request $request, BdRechargeSuccessResponse $success_response, BdRechargeFailResponse $fail_response)
     {
-        if($request->status == 'success'){
-            $success_response->setResponse($request->all());
-            $topup_order = $success_response->getTopUpOrder();
-            if($topup_order->status == Statuses::PENDING){
-                $top_up->processSuccessfulTopUp($topup_order, $success_response);
-            }
+        $data = $request->all();
+        if( $data['status'] == BdRecharge::SUCCESS){
+            $this->ipnHandle($success_response, $request);
         }
-        elseif ($request->status == 'failed'){
-            $fail_response->setResponse($request->all());
-            $topup_order = $fail_response->getTopUpOrder();
-            if($topup_order->status == Statuses::PENDING){
-                $top_up->processFailedTopUp($topup_order, $fail_response);
-            }
+        elseif ($data['status'] == BdRecharge::FAILED){
+            $this->ipnHandle($fail_response, $request);
         }
-
         return api_response($request, 1, 200);
+    }
+
+    private function ipnHandle(IpnResponse $ipn_response, Request $request){
+        $data = $request->all();
+        $ipn_response->setResponse($data);
+        $ipn_response->handleTopUp();
+        $this->logIpn($ipn_response, $data);
+    }
+
+    private function logIpn(IpnResponse $ipn_response, $request_data)
+    {
+        $key = 'Topup::' . ($ipn_response instanceof FailResponse ? "Failed:failed" : "Success:success") . "_";
+        $key .= Carbon::now()->timestamp . '_' . $ipn_response->getTopUpOrder()->id;
+        Redis::set($key, json_encode($request_data));
     }
 }

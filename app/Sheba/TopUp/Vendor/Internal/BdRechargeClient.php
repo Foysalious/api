@@ -9,7 +9,6 @@ use GuzzleHttp\Client as HttpClient;
 use Jose\Factory\JWEFactory;
 use Jose\Factory\JWKFactory;
 use Sheba\TopUp\Exception\GatewayTimeout;
-use Sheba\TopUp\Vendor\Response\PaywellResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 use Sheba\TPProxy\TPProxyClient;
 use Sheba\TPProxy\TPProxyServerError;
@@ -27,8 +26,8 @@ class BdRechargeClient
     private $singleTopupUrl;
     private $topupEnquiryUrl;
     private $balanceEnquiryUrl;
-    /** @var HttpClient */
-    private $httpClient;
+    /** @var TPProxyClient */
+    private $tpClient;
     /** @var TPRequest $tpRequest */
     private $tpRequest;
 
@@ -39,7 +38,7 @@ class BdRechargeClient
      */
     public function __construct(TPProxyClient $client, TPRequest $request)
     {
-        $this->httpClient = $client;
+        $this->tpClient = $client;
         $this->tpRequest = $request;
 
         $this->username = config('topup.bd_recharge.username');
@@ -66,7 +65,7 @@ class BdRechargeClient
             "amount" => (int) $topup_order->amount,
             "type" => strtoupper($topup_order->payee_mobile_type),
             "operator" => $this->getOperatorId($topup_order->vendor_id),
-            "customer_tid" => "$topup_order->id",
+            "customer_tid" => $this->getRefId($topup_order),
         ];
 
         $request_data = [
@@ -81,19 +80,18 @@ class BdRechargeClient
     }
 
     /**
-     * @param $topup_order_id
+     * @param TopUpOrder $topup_order
      * @return mixed
      * @throws TPProxyServerError
      * this function is for enquiring the topup status manually to bdRecharge gateway if needed
      */
-    public function enquiry($topup_order_id)
+    public function enquiry(TopUpOrder $topup_order)
     {
         $unencrypted_data = [
             "srcuid" => $this->username,
             "srcpwd" => $this->password,
-            "tid" => "$topup_order_id"
+            "customer_tid" => $this->getRefId($topup_order)
         ];
-
         $request_data = [
             'payload' => $this->encryptData($unencrypted_data)
         ];
@@ -130,7 +128,7 @@ class BdRechargeClient
             ->setInput($data);
 
         try {
-            $response = $this->httpClient->call($this->tpRequest);
+            $response = $this->tpClient->call($this->tpRequest);
         } catch (TPProxyServerTimeout $e) {
             throw new GatewayTimeout($e->getMessage());
         }
@@ -161,5 +159,10 @@ class BdRechargeClient
             $json_data, $secret_key, $this->jweHeader
         );
         return $encrypted_data;
+    }
+
+    private function getRefId(TopUpOrder $topup_order)
+    {
+        return str_pad($topup_order->getGatewayRefId(), 15, '0', STR_PAD_LEFT);
     }
 }

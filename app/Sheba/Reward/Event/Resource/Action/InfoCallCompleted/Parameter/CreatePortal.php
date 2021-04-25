@@ -12,6 +12,8 @@ class CreatePortal extends ActionEventParameter
 
     public function check(array $params)
     {
+        $order = $params[0];
+        return $this->value == null || $order->portal_name == $this->value;
     }
 
     public function validate()
