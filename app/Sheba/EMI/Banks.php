@@ -235,7 +235,7 @@ class Banks
             ],
             [
                 "name"     => "LankaBangla Finance Limited",
-                "logo"     => "https://cdn-marketplacedev.s3.ap-south-1.amazonaws.com/sheba_xyz/images/png/lanka_bangla.png",
+                "logo"     => "https://cdn-shebadev.s3.ap-south-1.amazonaws.com/images/emi_bank_icon/lanka_bangla_bank.png",
                 "asset"    => "bank_asia",
                 "emi" => [
                     3 => 3,
@@ -249,7 +249,7 @@ class Banks
             ],
             [
                 "name"     => "NRB Commercial Bank",
-                "logo"     => "https://cdn-marketplacedev.s3.ap-south-1.amazonaws.com/sheba_xyz/images/png/nrbc_bank.png",
+                "logo"     => "https://cdn-shebadev.s3.ap-south-1.amazonaws.com/images/emi_bank_icon/nrbc_bank.png",
                 "asset"    => "bank_asia",
                 "emi" => [
                     3 => 3,
@@ -263,7 +263,7 @@ class Banks
             ],
             [
                 "name"     => "Shahjalal Islami Bank Limited (SJIBL)",
-                "logo"     => "https://cdn-marketplacedev.s3.ap-south-1.amazonaws.com/sheba_xyz/images/png/sjibl_bank.png",
+                "logo"     => "https://cdn-shebadev.s3.ap-south-1.amazonaws.com/images/emi_bank_icon/shahjala_bank.png",
                 "asset"    => "bank_asia",
                 "emi" => [
                     3 => 3,
