@@ -9,6 +9,7 @@ use Sheba\TPProxy\TPProxyServerError;
 
 class NagadClient
 {
+    /** @var NagadProxyClient $client */
     private $client;
     private $baseUrl;
     /**
@@ -18,14 +19,18 @@ class NagadClient
 
     /**
      * NagadClient constructor.
-     * @param \Sheba\TPProxy\TPProxyClient $client
+     * @param NagadProxyClient $client
      */
     public function __construct(NagadProxyClient $client)
     {
         $this->client = $client;
     }
 
-    public function setStore(NagadStore $store)
+    /**
+     * @param NagadStore $store
+     * @return $this
+     */
+    public function setStore(NagadStore $store): NagadClient
     {
         $this->store = $store;
         $this->baseUrl = $this->store->getBaseUrl();
@@ -33,12 +38,12 @@ class NagadClient
     }
 
     /**
-     * @param $transactionId
+     * @param $transaction_id
      * @return Initialize
      * @throws Exception\EncryptionFailed
      * @throws TPProxyServerError
      */
-    public function init($transaction_id)
+    public function init($transaction_id): Initialize
     {
         $merchantId = $this->store->getMerchantId();
         $url = "$this->baseUrl/api/dfs/check-out/initialize/$merchantId/$transaction_id";
@@ -50,10 +55,9 @@ class NagadClient
             ->setInput($data)
             ->setUrl($url);
 
+        $response = $this->client->call($request);
 
-        $resp = $this->client->call($request);
-
-        return new Initialize($resp, $this->store);
+        return new Initialize($response, $this->store);
     }
 
     /**
@@ -65,7 +69,7 @@ class NagadClient
      * @throws Exception\EncryptionFailed
      * @throws TPProxyServerError
      */
-    public function placeOrder($transactionId, Initialize $resp, $amount, $callbackUrl)
+    public function placeOrder($transactionId, Initialize $resp, $amount, $callbackUrl): CheckoutComplete
     {
         $paymentRefId = $resp->getPaymentReferenceId();
         $url = "$this->baseUrl/api/dfs/check-out/complete/$paymentRefId";
@@ -87,7 +91,7 @@ class NagadClient
      * @throws Exception\InvalidOrderId
      * @throws TPProxyServerError
      */
-    public function validate($refId)
+    public function validate($refId): Validator
     {
         $url = "$this->baseUrl/api/dfs/verify/payment/$refId";
         $request = (new NagadRequest())
