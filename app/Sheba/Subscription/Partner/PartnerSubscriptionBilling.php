@@ -23,6 +23,7 @@ use Sheba\ExpenseTracker\AutomaticExpense;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\ModificationFields;
+use Sheba\NeoBanking\Banks\Categories\Account;
 use Sheba\Partner\PartnerStatuses;
 use Sheba\PartnerWallet\PartnerTransactionHandler;
 use Sheba\PartnerWallet\PaymentByBonusAndWallet;
@@ -407,8 +408,9 @@ class PartnerSubscriptionBilling
     private function storeJournal()
     {
         (new JournalCreateRepository())->setTypeId($this->partner->id)->setSource($this->partner)
-            ->setAmount($this->packagePrice)->setDebitAccountKey("subscription_purchase")
+            ->setAmount($this->packagePrice)->setDebitAccountKey((new Accounts())->expense->subscription_purchase::SUBSCRIPTION_PURCHASE)
             ->setCreditAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
-            ->setDetails("Subscription purchase")->setReference($this->packageTo->id)->store();
+            ->setDetails("Subscription purchase")->setReference($this->packageTo->id)
+            ->store();
     }
 }
