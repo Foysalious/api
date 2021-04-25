@@ -36,7 +36,7 @@ else
 fi
 
 # shellcheck disable=SC2124
-test_run_script="docker exec ${CONTAINER_NAME} php vendor/bin/phpunit"
+test_run_script="docker exec ${CONTAINER_NAME} php vendor/bin/phpunit -d memory_limit=4096M"
 # shellcheck disable=SC2236
 if [ ! -z "$suite" ]; then
   test_run_script+=" --filter ${suite}"
