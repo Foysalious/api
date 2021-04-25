@@ -1,11 +1,12 @@
-<?php
+<?php namespace Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Asset;
 
 
-namespace Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Asset;
-
+use Sheba\Helpers\ConstGetter;
 
 class Bank
 {
+    use ConstGetter;
+
     const CITY_BANK   = 'city_bank';
     const BKASH       = 'bkash';
     const NAGAD       = 'nagad';

@@ -4,8 +4,11 @@
 namespace Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Asset;
 
 
+use Sheba\Helpers\ConstGetter;
+
 class Sheba
 {
-    const SHEBA_ACCOUNT = 'sheba_account';
+    use ConstGetter;
 
+    const SHEBA_ACCOUNT = 'sheba_account';
 }
