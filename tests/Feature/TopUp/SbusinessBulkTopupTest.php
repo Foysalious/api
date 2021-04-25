@@ -94,7 +94,7 @@ class SbusinessBulkTopupTest extends FeatureTestCase
     {
         $businessWallet = Business::find(1);;
         $businessWallet->update(["wallet" => 1000]);
-       // dd($businessWallet);
+       $businessWallet);
 
         $file = $this->getFileForUpload([
             [

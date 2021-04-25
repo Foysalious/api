@@ -45,7 +45,6 @@ class TopupSettingAPITest extends FeatureTestCase
     {
         $response = $this->get('/v2/settings/top-up?bondhu_app');
         $data = $response->decodeResponseJson();
-        dd($data);
         $this->assertEquals(200, $data['code']);
         $this->assertEquals("Successful", $data['message']);
         $this->assertEquals(1, $data['vendors'][0]['id']);
