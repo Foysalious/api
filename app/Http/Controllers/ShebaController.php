@@ -320,7 +320,6 @@ class ShebaController extends Controller
             "minimum_amount" => number_format(config('sheba.min_order_amount_for_emi')),
             "static_info" =>[
                 "how_emi_works"=>[
-                    "What is EMI?",
                     "EMI (Equated Monthly Installment) is one of the payment methods of online purchasing, only for the customers using any of the accepted Credit Cards on Sheba.xyz.* It allows customers to pay for their ordered services  in easy equal monthly installments.*",
                     "Sheba.xyz has introduced a convenient option of choosing up to 12 months EMI facility for customers who use Credit Cards for buying services worth BDT 5,000 or more. The duration and extent of the EMI options available will be visible on the payment page after order placement. EMI plans are also viewable on the checkout page in the EMI Banner below the bill section.",
                     "NOTE:",
