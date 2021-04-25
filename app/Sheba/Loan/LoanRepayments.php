@@ -69,7 +69,7 @@ class LoanRepayments
         DB::transaction(function () use ($last_claim, $request) {
             $this->debitFromWallet($request->loan_id, $request->amount);
             $this->repayment = (new Repayment())->setLoan($request->loan_id)->setClaim($last_claim->id)->setAmount($request->amount)->repaymentFromWallet();
-            $this->storeJournal($request);
+            $this->storeJournal($request, $last_claim);
         });
     }
 
@@ -126,7 +126,7 @@ class LoanRepayments
         return (new Repayment())->setClaim($claim_id)->getDue();
     }
 
-    private function storeJournal(Request $request) {
-        (new JournalCreateRepository())->setTypeId($this->partner->id)->setSource($this->repayment)->setAmount($request->amount)->setDebitAccountKey(Bank::CITY_BANK)->setCreditAccountKey(Sheba::SHEBA_ACCOUNT)->setDetails("Entry For Loan Repayment")->setReference($request->loan_id)->store();
+    private function storeJournal($request, $last_claim) {
+        (new JournalCreateRepository())->setTypeId($this->partner->id)->setSource($last_claim)->setAmount($request->amount)->setDebitAccountKey(Bank::CITY_BANK)->setCreditAccountKey(Sheba::SHEBA_ACCOUNT)->setDetails("Entry For Loan Repayment")->setReference($request->loan_id)->store();
     }
 }
