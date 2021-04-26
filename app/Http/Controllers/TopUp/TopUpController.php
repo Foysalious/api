@@ -13,6 +13,8 @@ use Carbon\Carbon;
 use Elasticsearch\Common\Exceptions\Missing404Exception;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Sheba\Dal\AuthenticationRequest\Purpose;
+use Sheba\Dal\TopUpBulkRequest\Statuses;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
 
@@ -30,7 +32,7 @@ use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpDataFormat;
 use Sheba\TopUp\TopUpHistoryExcel;
 use Sheba\TopUp\TopUpSpecialAmount;
-use Sheba\TopUp\Verification\VerifyPin;
+use Sheba\OAuth2\VerifyPin;
 use Sheba\UserAgentInformation;
 use DB;
 use Excel;
@@ -39,7 +41,7 @@ use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\TopUp\Creator;
 use Sheba\TopUp\Jobs\TopUpExcelJob;
 use Sheba\TopUp\Jobs\TopUpJob;
-use Sheba\TopUp\TopUp;
+use Sheba\TopUp\TopUpRechargeManager;
 use Sheba\TopUp\TopUpExcel;
 use Sheba\TopUp\TopUpRequest;
 use Sheba\TopUp\Vendor\VendorFactory;
@@ -132,7 +134,7 @@ class TopUpController extends Controller
             }
 
         } else return api_response($request, null, 400);
-        $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->verify();
+        $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setPurpose(Purpose::TOPUP)->setRequest($request)->verify();
 
         $userAgentInformation->setRequest($request);
         $top_up_request->setAmount($request->amount)
@@ -225,6 +227,7 @@ class TopUpController extends Controller
 
         $verifyPin->setAgent($agent)
             ->setProfile($request->access_token->authorizationRequest->profile)
+            ->setPurpose(Purpose::TOPUP)
             ->setRequest($request)
             ->verify();
 
@@ -427,12 +430,9 @@ class TopUpController extends Controller
         $topup_order = $creator->setTopUpRequest($top_up_request)->create();
         if (!$topup_order) return api_response($request, null, 500);
 
-        $vendor_factory = app(VendorFactory::class);
-        $vendor = $vendor_factory->getById($request->vendor_id);
-
-        /** @var TopUp $topUp */
-        $topUp = app(TopUp::class);
-        $topUp->setAgent($agent)->setVendor($vendor)->recharge($topup_order);
+        /** @var TopUpRechargeManager $topUp */
+        $topUp = app(TopUpRechargeManager::class);
+        $topUp->setTopUpOrder($topup_order)->recharge();
         return api_response($request, null, 200, [
             'message' => "Recharge Request Successful",
             'id' => $topup_order->id

@@ -8,7 +8,7 @@ use Illuminate\Queue\Failed\FailedJobProviderInterface;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Sheba\TopUp\TopUp;
+use Sheba\TopUp\TopUpRechargeManager;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\Vendor\Vendor;
 use Sheba\TopUp\Vendor\VendorFactory;
@@ -18,18 +18,13 @@ class TopUpJob extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
 
-    /** @var TopUp */
+    /** @var TopUpRechargeManager */
     protected $topUp;
-    /** @var VendorFactory */
-    private $vendorFactory;
     /** @var FailedJobProviderInterface */
     private $failedJobLogger;
 
-    protected $vendorId;
     /** @var TopUpAgent */
     protected $agent;
-    /** @var Vendor */
-    protected $vendor;
     /** @var TopUpOrder */
     protected $topUpOrder;
 
@@ -37,7 +32,6 @@ class TopUpJob extends Job implements ShouldQueue
     {
         $this->topUpOrder = $top_up_order;
         $this->agent = $this->topUpOrder->agent;
-        $this->vendorId = $this->topUpOrder->vendor_id;
         $this->connection = $this->getConnectionName();
         $this->queue = $this->connection;
     }
@@ -45,16 +39,14 @@ class TopUpJob extends Job implements ShouldQueue
     /**
      * Execute the job.
      *
-     * @param VendorFactory $vendor_factory
-     * @param TopUp $top_up
+     * @param TopUpRechargeManager $top_up
      * @param FailedJobProviderInterface|null $logger
      * @return void
      */
-    public function handle(VendorFactory $vendor_factory, TopUp $top_up, FailedJobProviderInterface $logger = null)
+    public function handle(TopUpRechargeManager $top_up, FailedJobProviderInterface $logger = null)
     {
         if ($this->attempts() > 1) return;
 
-        $this->vendorFactory = $vendor_factory;
         $this->topUp = $top_up;
         $this->failedJobLogger = $logger;
 
@@ -94,10 +86,7 @@ class TopUpJob extends Job implements ShouldQueue
      */
     private function _handle()
     {
-        $this->vendor = $this->vendorFactory->getById($this->vendorId);
-        $this->topUp->setAgent($this->agent)->setVendor($this->vendor);
-
-        $this->topUp->recharge($this->topUpOrder);
+        $this->topUp->setTopUpOrder($this->topUpOrder)->recharge();
 
         event(new TopUpCompletedEvent([
             'id' => $this->topUpOrder->id,

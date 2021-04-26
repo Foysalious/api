@@ -45,7 +45,7 @@ class Route
             $api->post('events', 'EventController@store');
             $api->get('top-up/fail/ssl', 'TopUpController@sslFail');
             $api->get('top-up/success/ssl', 'TopUpController@sslSuccess');
-            $api->post('top-up/paywell/status-update', 'TopUpController@paywellStatusUpdate');
+            $api->post('top-up/status-update', 'TopUpController@statusUpdate');
             $api->get('top-up/restart-queue', 'TopUpController@restartQueue');
             $api->group(['prefix' => 'wallet'], function ($api) {
                 $api->post('recharge', 'WalletController@recharge');
@@ -136,7 +136,11 @@ class Route
                     $api->get('', 'OfferGroupController@show');
                 });
             });
-            (new BusinessRoute())->set($api);
+
+            $api->group(['middleware' => 'terminate'], function ($api) {
+                (new BusinessRoute())->set($api);
+            });
+
             $api->group(['prefix' => 'services'], function ($api) {
                 $api->get('', 'ServiceController@index');
             });
