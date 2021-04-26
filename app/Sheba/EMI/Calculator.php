@@ -12,6 +12,14 @@ class Calculator
     {
         $emi = [];
         foreach ($this->getInterestRatesBreakDowns() as $item) {
+            array_push($emi, $this->calculateMonthWiseCharge($amount, $item['month'], $item['interest']));
+        }
+        return $emi;
+    }
+    public function getChargesV3($amount)
+    {
+        $emi        = collect([]);
+        foreach ($this->getInterestRatesBreakDowns() as $item) {
             $emi->push($this->calculateMonthWiseCharge($amount, $item['month'], $item['interest']));
         }
 
