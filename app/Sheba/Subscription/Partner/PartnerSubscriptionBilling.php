@@ -19,6 +19,7 @@ use ReflectionException;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Exceptions\InvalidSourceException;
+use Sheba\AccountingEntry\Exceptions\KeyNotFoundException;
 use Sheba\AccountingEntry\Repository\JournalCreateRepository;
 use Sheba\ExpenseTracker\AutomaticExpense;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
@@ -413,7 +414,7 @@ class PartnerSubscriptionBilling
     /**
      * @throws ReflectionException
      * @throws AccountingEntryServerError
-     * @throws InvalidSourceException
+     * @throws InvalidSourceException|KeyNotFoundException
      */
     private function storeJournal()
     {
@@ -422,7 +423,7 @@ class PartnerSubscriptionBilling
             (new JournalCreateRepository())->setTypeId($this->partner->id)->setSource($transaction)
                 ->setAmount($transaction->amount)->setDebitAccountKey((new Accounts())->expense->subscription_purchase::SUBSCRIPTION_PURCHASE)
                 ->setCreditAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
-                ->setDetails("Subscription purchase")->setReference("Package updated from ".$this->packageFrom->id. " to ".$this->packageTo->id)
+                ->setDetails("Subscription purchase")->setReference("Package changed from ".$this->packageFrom->id. " to ".$this->packageTo->id)
                 ->store();
         }
     }

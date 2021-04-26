@@ -152,7 +152,7 @@ class JournalCreateRepository
     /**
      * @throws InvalidSourceException
      * @throws AccountingEntryServerError
-     * @throws ReflectionException
+     * @throws ReflectionException|KeyNotFoundException
      */
     public function store()
     {
