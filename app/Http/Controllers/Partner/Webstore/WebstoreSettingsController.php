@@ -43,6 +43,7 @@ class WebstoreSettingsController extends Controller
      */
     public function update($partner, Request $request, WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest)
     {
+
         $this->validate($request, [
             'is_webstore_published' => 'sometimes|numeric|between:0,1', 'name' => 'sometimes|string',
             'sub_domain' => 'sometimes|string', 'delivery_charge' => 'sometimes|numeric|digits_between:1,5'
