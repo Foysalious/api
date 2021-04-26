@@ -52,6 +52,7 @@ class Updater
     private $leaveRejectionCreator;
     /** @var LeaveRejectionRequester $leaveRejectionRequester */
     private $leaveRejectionRequester;
+
     /**
      * Updater constructor.
      * @param LeaveRepository $leave_repository
@@ -190,7 +191,7 @@ class Updater
             $this->leaveStatusLogCreator->setLeave($this->leave)->setPreviousStatus($previous_status)->setStatus($this->status)
                 ->setBusinessMember($this->businessMember)
                 ->create();
-            if ($this->status == Status::REJECTED) $this->leaveRejectionCreator->setLeaveRejectionRequester($this->leaveRejectionRequester)->setLeave($this->leave)->create();
+            if ($this->status == Status::REJECTED && count($this->leaveRejectionRequester->getReasons()) > 1) $this->leaveRejectionCreator->setLeaveRejectionRequester($this->leaveRejectionRequester)->setLeave($this->leave)->create();
 
         });
 
