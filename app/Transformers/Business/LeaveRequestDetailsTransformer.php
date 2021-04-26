@@ -67,6 +67,8 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
         $substitute_member = $substitute_business_member ? $substitute_business_member->member : null;
         /** @var Profile $profile */
         $leave_substitute = $substitute_member ? $substitute_member->profile : null;
+        $leave_substitute_role = $substitute_business_member ? $substitute_business_member->role : null;
+        $leave_substitute_department = $substitute_business_member ? $substitute_business_member->department() : null;
 
         return [
             'id' => $approval_request->id,
@@ -109,6 +111,9 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
                     'name' => $leave_substitute->name,
                     'pro_pic' => $leave_substitute->pro_pic,
                     'mobile' => $leave_substitute->mobile ? $leave_substitute->mobile : null,
+                    'email' => $leave_substitute->email,
+                    'department' => $leave_substitute_department? $leave_substitute_department->name : null,
+                    'designation' => $leave_substitute_role ? $leave_substitute_role->name : null,
                 ] : null,
             ],
             'department' => [

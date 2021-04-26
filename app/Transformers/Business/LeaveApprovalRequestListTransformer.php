@@ -60,7 +60,7 @@ class LeaveApprovalRequestListTransformer extends TransformerAbstract
                 'time' => $requestable->is_half_day ? $this->business->halfDayStartEndTime($requestable->half_day_configuration) : $this->business->fullDayStartEndTime(),
 
                 'is_leave_days_exceeded' => $requestable->isLeaveDaysExceeded(),
-                'period' => $requestable->start_date->format('M d') . ' - ' . $requestable->end_date->format('M d'),
+                'period' => $requestable->start_date->format('M d, Y') == $requestable->end_date->format('M d, Y') ? $requestable->start_date->format('M d') : $requestable->start_date->format('M d')  . ' - ' . $requestable->end_date->format('M d'),
                 'leave_date' => ($requestable->start_date->format('M d, Y') == $requestable->end_date->format('M d, Y')) ? $requestable->start_date->format('M d, Y') : $requestable->start_date->format('M d, Y') . ' - ' . $requestable->end_date->format('M d, Y'),
                 'status' => LeaveStatusPresenter::statuses()[$requestable->status],
                 'note' => $requestable->note
