@@ -180,12 +180,6 @@ class LeaveController extends Controller
 
         /** @var ApprovalRequest $approval_request */
 
-        /*$approval_request = $this->approvalRequestRepo->getApprovalRequestByIdAndType($type_ids,Type::LEAVE)->first();
-        if ($approval_request->approver_id != $business_member->id) return api_response($request, null, 420);
-
-        $updater->setBusinessMember($business_member)->setApprovalRequest($approval_request);
-        $updater->setStatus($request->status)->change();*/
-
         $this->approvalRequestRepo->getApprovalRequestByIdAndType($type_ids, Type::LEAVE)
             ->each(function ($approval_request) use ($business_member, $updater, $request) {
                 /** @var ApprovalRequest $approval_request */
