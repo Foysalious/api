@@ -17,6 +17,7 @@ use Sheba\Dal\Leave\LeaveStatusPresenter as LeaveStatusPresenter;
 use Sheba\Dal\Leave\Status;
 use Sheba\Dal\LeaveLog\Contract as LeaveLogRepo;
 use Sheba\Dal\LeaveStatusChangeLog\Contract as LeaveStatusChangeLogRepo;
+use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepository;
 
 class LeaveRequestDetailsTransformer extends TransformerAbstract
 {
@@ -33,22 +34,29 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
      * @var LeaveStatusChangeLogRepo
      */
     private $leaveStatusChangeLogRepo;
+    /*** @var BusinessMember */
+    private $businessMember;
+    /*** @var ApprovalRequestRepository */
+    private $approvalRequestRepo;
 
     /**
      * LeaveRequestDetailsTransformer constructor.
      * @param Business $business
+     * @param BusinessMember $business_member
      * @param Profile $profile
      * @param BusinessRole $role
      * @param LeaveLogRepo $leave_log_repo
      * @param LeaveStatusChangeLogRepo $leave_status_change_log_repo
      */
-    public function __construct(Business $business, Profile $profile, BusinessRole $role, LeaveLogRepo $leave_log_repo, LeaveStatusChangeLogRepo $leave_status_change_log_repo)
+    public function __construct(Business $business, BusinessMember $business_member, Profile $profile, BusinessRole $role, LeaveLogRepo $leave_log_repo, LeaveStatusChangeLogRepo $leave_status_change_log_repo)
     {
         $this->business = $business;
+        $this->businessMember = $business_member;
         $this->profile = $profile;
         $this->role = $role;
         $this->leaveLogRepo = $leave_log_repo;
         $this->leaveStatusChangeLogRepo = $leave_status_change_log_repo;
+        $this->approvalRequestRepo = app(ApprovalRequestRepository::class);
     }
 
     /**
@@ -78,6 +86,7 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
             'super_admin_section_show' => $this->isLeaveCancelled($requestable),
             'show_approve_reject_buttons' => $this->isLeaveApprovedOrRejected($requestable),
             'super_admin_action_reason' => (new ApproverWithReason())->getRejectReason($approval_request, self::SUPER_ADMIN, null),
+            'show_normal_approver_approve_reject_buttons' => $requestable->status == Status::PENDING ? $this->isApproverButtonShow($requestable) : 0,
             'leave' => [
                 'id' => $requestable->id,
                 'business_member_id' => $business_member->id,
@@ -146,6 +155,16 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
         /** @var Leave $requestable */
         $result = $requestable->where('id', $requestable->id)->whereIn('status', [Status::ACCEPTED, Status::REJECTED])->first();
         return $result ? 0 : 1;
+    }
+
+    private function isApproverButtonShow($requestable)
+    {
+        $result = $this->approvalRequestRepo
+            ->where('requestable_id', $requestable->id)
+            ->where('approver_id',$this->businessMember->id)
+            ->where('status', Status::PENDING)
+            ->first();
+        return $result ? 1: 0;
     }
 
     private function getLeaveLogDetails($requestable)
