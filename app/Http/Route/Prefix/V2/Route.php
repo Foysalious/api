@@ -45,7 +45,7 @@ class Route
             $api->post('events', 'EventController@store');
             $api->get('top-up/fail/ssl', 'TopUpController@sslFail');
             $api->get('top-up/success/ssl', 'TopUpController@sslSuccess');
-            $api->post('top-up/paywell/status-update', 'TopUpController@paywellStatusUpdate');
+            $api->post('top-up/status-update', 'TopUpController@statusUpdate');
             $api->get('top-up/restart-queue', 'TopUpController@restartQueue');
             $api->group(['prefix' => 'wallet'], function ($api) {
                 $api->post('recharge', 'WalletController@recharge');
