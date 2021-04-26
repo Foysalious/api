@@ -28,15 +28,16 @@ class PartnerReferralController extends Controller
             $income        = $reference->totalIncome();
             $total_sms     = $reference->totalRefer();
             $total_success = $reference->totalSuccessfulRefer();
+            $steps=collect(config('partner.referral_steps'))->where('visible', true);
             return api_response($request, $reference->refers, 200, [
                 'data' => [
                     'refers'          => $refers,
                     'total_income'    => $income,
                     'total_sms'       => $total_sms,
                     'total_success'   => $total_success,
-                    'total_step'      => count(config('partner.referral_steps')),
-                    'stepwise_income' => collect(config('partner.referral_steps'))
-                        ->map(function ($item) {
+                    'total_step'      => count($steps),
+                    'stepwise_income' =>
+                        $steps->map(function ($item) {
                             return $item['amount'];
                         })
                 ]
@@ -161,7 +162,7 @@ class PartnerReferralController extends Controller
     public function getReferralSteps(Request $request)
     {
         try {
-            $stepDetails          = collect(config('partner.referral_steps'))
+            $stepDetails          = collect(config('partner.referral_steps'))->where('visible',true)
                 ->map(function ($item) {
                     return [
                         'ধাপ'          => $item['step'],

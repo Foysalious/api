@@ -13,6 +13,10 @@ class CblController extends Controller
         $invoice = "SHEBA_CBL_" . $xml->OrderID->__toString();
         $payment = Payment::where('gateway_transaction_id', $invoice)->valid()->first();
         if (!$payment) return redirect(config('sheba.front_url'));
+
+        if (!$payment->isValid()||$payment->isComplete()){
+            return api_response($request, null, 402,['message'=>"Invalid or completed payment"]);
+        }
         try {
             $this->validate($request, [
                 'xmlmsg' => 'required|string',

@@ -28,6 +28,7 @@ use DB;
 class MemberController extends Controller
 {
     use ModificationFields, FilesAttachment;
+
     /** BusinessMemberRequester $businessMemberRequester */
     private $businessMemberRequester;
     /** BusinessMemberCreator $businessMemberCreator */
@@ -69,6 +70,7 @@ class MemberController extends Controller
                 'mobile' => 'sometimes|required|string|mobile:bd',
             ]);
             $member = Member::find($member);
+
             $this->setModifier($member);
             $business_creator_request = $business_creator_request->setName($request->name)
                 ->setEmployeeSize($request->no_employee)
@@ -178,6 +180,7 @@ class MemberController extends Controller
             'business_id' => $business ? $business->id : null,
             'remember_token' => $member->remember_token,
             'is_super' => $member->businessMember ? $member->businessMember->is_super : null,
+            'is_payroll_enable' => $business->is_payroll_enable,
             'access' => [
                 'support' => $business ? (in_array($business->id, config('business.WHITELISTED_BUSINESS_IDS')) && $access_control->hasAccess('support.rw') ? 1 : 0) : 0,
                 'expense' => $business ? (in_array($business->id, config('business.WHITELISTED_BUSINESS_IDS')) && $access_control->hasAccess('expense.rw') ? 1 : 0) : 0,

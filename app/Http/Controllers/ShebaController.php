@@ -1,9 +1,11 @@
 <?php namespace App\Http\Controllers;
 
+use App\Http\Controllers\Employee\AttendanceController;
 use App\Http\Presenters\PresentableDTOPresenter;
 use App\Http\Requests\AppVersionRequest;
 use App\Jobs\SendFaqEmail;
 use Sheba\AppVersion\AppVersionManager;
+use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
 use Sheba\Dal\Category\Category;
 use App\Models\HyperLocal;
 use App\Models\Job;
@@ -48,20 +50,20 @@ class ShebaController extends Controller
 
     public function __construct(ServiceRepository $service_repo, ReviewRepository $review_repo, PaymentLinkRepository $paymentLinkRepository)
     {
-        $this->serviceRepository     = $service_repo;
-        $this->reviewRepository      = $review_repo;
+        $this->serviceRepository = $service_repo;
+        $this->reviewRepository = $review_repo;
         $this->paymentLinkRepo = $paymentLinkRepository;
     }
 
     public function getInfo()
     {
-        $job_count      = Job::all()->count() + 16000;
-        $service_count  = Service::where('publication_status', 1)->get()->count();
+        $job_count = Job::all()->count() + 16000;
+        $service_count = Service::where('publication_status', 1)->get()->count();
         $resource_count = Resource::where('is_verified', 1)->get()->count();
         return response()->json([
-            'service'  => $service_count, 'job' => $job_count,
+            'service' => $service_count, 'job' => $job_count,
             'resource' => $resource_count,
-            'msg'      => 'successful', 'code' => 200
+            'msg' => 'successful', 'code' => 200
         ]);
     }
 
@@ -126,7 +128,7 @@ class ShebaController extends Controller
          * $images = $images->show();
          * }
          * return count($images) > 0 ? api_response($request, $images, 200, ['images' => $images]) : api_response($request, null, 404);*/
-}
+    }
 
     /**
      * @param $location
@@ -211,11 +213,11 @@ class ShebaController extends Controller
                 $message = 'Payment Failed.';
             }
             $fail_url = null;
-            if($external_payment){
+            if ($external_payment) {
                 $fail_url = $external_payment->fail_url;
             }
             return api_response($request, null, 404,
-                ['message' => $message,'external_payment_redirection_url'=>$fail_url]);
+                ['message' => $message, 'external_payment_redirection_url' => $fail_url]);
         }
 
         /** @var Payable $payable */
@@ -227,7 +229,7 @@ class ShebaController extends Controller
             'created_at' => $payment->created_at->format('jS M, Y, h:i A'),
             'invoice_link' => $payment->invoice_link,
             'transaction_id' => $transaction_id,
-            'external_payment_redirection_url'=>$external_payment ? $external_payment->success_url : null
+            'external_payment_redirection_url' => $external_payment ? $external_payment->success_url : null
         ];
 
         if ($payable->isPaymentLink()) $this->mergePaymentLinkInfo($info, $payable);
@@ -288,7 +290,8 @@ class ShebaController extends Controller
 
     public function getEmiInfo(Request $request, Calculator $emi_calculator)
     {
-        $amount       = $request->amount;
+        $amount = $request->amount;
+
         if (!$amount) {
             return api_response($request, null, 400, ['message' => 'Amount missing']);
         }
@@ -387,7 +390,7 @@ class ShebaController extends Controller
             return api_response($request, null, 400, ['message' => isset($check['message']) ? $check['message'] : 'NID is not verified']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry  = app('sentry');
+            $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
@@ -419,5 +422,16 @@ class ShebaController extends Controller
         $new_url = RedirectUrl::where('old_url', '=' , $request->url)->first();
         if (!$new_url) return api_response($request, true, 404, ['message' => 'Not Found']);
         return api_response($request, true, 200, ['new_url' => $new_url->new_url]);
+    }
+
+    public function getHourLogs(Request $request, AttendanceRepoInterface $attendance_repo)
+    {
+        $this->validate($request, ['start_date' => 'required|date_format:Y-m-d', 'end_date' => 'required|date_format:Y-m-d']);
+        $ids = json_decode($request->id);
+        $attendances = $attendance_repo->builder()
+            ->whereIn('business_member_id', $ids)->where([['date', ">=", $request->start_date], ['date', '<=', $request->end_date]])
+            ->select('id', 'business_member_id', 'date', 'checkin_time', 'checkout_time', 'staying_time_in_minutes')
+            ->get();
+        return api_response($request, null, 200, ['data' => $attendances->groupBy('business_member_id')]);
     }
 }
