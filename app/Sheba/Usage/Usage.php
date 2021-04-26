@@ -10,6 +10,7 @@ use Sheba\Transactions\Wallet\WalletTransactionHandler;
 class Usage
 {
     use ModificationFields;
+
     private $user;
     private $config;
     private $type;
@@ -63,18 +64,12 @@ class Usage
 
     private function findAndUpgradeLevel($usage)
     {
+        $duration = 0;
         foreach ($this->config as $index => $level) {
-            if ($level['nid_verification'] && !$this->user->isNIDVerified()){
-                return -1;
-            }
-
-            if (($level['nid_verification'] && !!$this->user->isNIDVerified()) && ((int)$this->user->refer_level == $index)) {
-
-                $this->upgradeLevel($index + 1, true);
-            }
-            if ($usage >= $level['duration'] && !$level['nid_verification']) {
-                $this->upgradeLevel($index + 1);
-            }
+            $duration      += $level['duration'];
+            $duration_pass = $usage >= $duration;
+            $nid_pass=$level['nid_verification']?$this->user->isNIDVerified():true;
+            if ($nid_pass&&$duration_pass) $this->upgradeLevel($index+1,true);
         }
         return -1;
     }
@@ -83,10 +78,10 @@ class Usage
     {
         if ((is_null($this->user->refer_level)) || (int)$this->user->refer_level < $level) {
             $this->user->refer_level     = $level;
-            $amount                      = ($this->config[$level-1]['amount']);
+            $amount                      = ($this->config[$level - 1]['amount']);
             $this->user->referrer_income += $amount;
             $this->user->save();
-            if ($amount>0){
+            if ($amount > 0) {
                 (new WalletTransactionHandler())->setModel($this->user->referredBy)->setSource(TransactionSources::SHEBA_WALLET)->setType(Types::credit())->setAmount($amount)->setLog("$amount BDT has been credited for partner referral from usage of name: " . $this->user->name . ', ID: ' . $this->user->id)->store();
             }
         }
