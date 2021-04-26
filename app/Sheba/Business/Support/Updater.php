@@ -1,6 +1,5 @@
 <?php namespace Sheba\Business\Support;
 
-
 use App\Models\BusinessMember;
 use Carbon\Carbon;
 use Sheba\Dal\Support\Model as Support;
