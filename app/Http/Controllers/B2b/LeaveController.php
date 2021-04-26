@@ -51,8 +51,10 @@ use App\Transformers\Business\LeaveApprovalRequestListTransformer;
 class LeaveController extends Controller
 {
     use ModificationFields, BusinessBasicInformation;
+
     const SUPER_ADMIN = 1;
     const APPROVER = 0;
+    const REJECTION_APPLICABLE_FOR = 1;
 
 
     private $approvalRequestRepo;
@@ -166,11 +168,12 @@ class LeaveController extends Controller
             'type_id' => 'required|string',
             'status' => 'required|string',
         ];
-        if ($request->status == LeaveStatus::REJECTED) $validation_data['reasons'] = 'required|string';
-        $this->validate($request, $validation_data);
 
         /** type_id approval_request id*/
         $type_ids = json_decode($request->type_id);
+
+        if ($request->status == LeaveStatus::REJECTED && count($type_ids) === self::REJECTION_APPLICABLE_FOR) $validation_data['reasons'] = 'required|string';
+        $this->validate($request, $validation_data);
 
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
