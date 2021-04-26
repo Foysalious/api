@@ -154,7 +154,7 @@ return [
     'resource_max_withdraw_limit' => 1000,
     'tp_proxy_url' => env('TP_PROXY_URL'),
     'sbs_proxy_url' => env('SBS_PROXY_URL', 'https://sbs-proxy.dev-sheba.xyz'),
-    'nagad_proxy_url' => env('NAGAD_PROXY_URL', 'https://nagad-proxy.dev-sheba.xyz'),
+    'nagad_proxy_url' => env('NAGAD_PROXY_URL'),
     'address' => 'House #63 (1st Floor), Road #04, Block-C, Banani, Dhaka 1213',
     'email' => 'info@sheba.xyz',
     'lpg_service_id' => env('LPG_SERVICE_ID'),

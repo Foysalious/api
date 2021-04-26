@@ -58,17 +58,17 @@ class Nagad extends PaymentMethod
         $payment->update();
         try {
             $initResponse = $this->client->setStore($this->store)->init($payment->gateway_transaction_id);
-            if ($initResponse->hasError()) {
-                throw  new Exception($initResponse->toString());
-            }
+            if ($initResponse->hasError()) throw  new Exception($initResponse->toString());
+
             $resp = $this->client->setStore($this->store)->placeOrder($payment->gateway_transaction_id, $initResponse, $payable->amount, $this->VALIDATE_URL);
-            if ($resp->hasError()) {
-                throw new Exception($resp->toString());
-            }
+
+            if ($resp->hasError()) throw new Exception($resp->toString());
+
             $resp->setRefId($initResponse->getPaymentReferenceId());
             $payment->redirect_url = $resp->getCallbackUrl();
             $payment->transaction_details = $resp->toString();
             $payment->update();
+
             return $payment;
         } catch (Throwable $e) {
             $this->onInitFailed($payment, $e->getMessage());

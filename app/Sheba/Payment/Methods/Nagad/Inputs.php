@@ -58,30 +58,51 @@ class Inputs
 
     /**
      * @param $transaction_id
+     * @param \Sheba\Payment\Methods\Nagad\Response\Initialize $init
+     * @param $amount
+     * @param $call_back_url
+     * @param \Sheba\Payment\Methods\Nagad\Stores\NagadStore $store
+     * @return array
+     */
+    public static function complete($transaction_id, Initialize $init, $amount, $call_back_url, NagadStore $store): array
+    {
+        $merchant_additional_info = '{"Service Name": "Sheba.xyz"}';
+        $payment_data = [
+            'merchantId' => $store->getMerchantId(),
+            'orderId' => $transaction_id,
+            'amount' => $amount,
+            'currencyCode' => '050',
+            'challenge' => $init->getChallenge()
+        ];
+
+        $store_data = [
+            'storeType' => class_basename($store),
+            'merchantCallbackURL' => $call_back_url,
+            'additionalMerchantInfo' => json_decode($merchant_additional_info)
+        ];
+
+        return [$payment_data, $store_data];
+    }
+
+    /**
+     * @param $transaction_id
      * @param NagadStore $store
      * @return array
      * @throws EncryptionFailed
      */
-    private static function data($transaction_id, NagadStore $store)
+    private static function data($transaction_id, NagadStore $store): array
     {
         $date = Carbon::now()->format('YmdHis');
-        /*$data = json_encode([
-            'merchantId' => $store->getMerchantId(),
-            'orderId' => $transaction_id,
-            'datetime' => $date,
-            'challenge' => self::generateRandomString(40)
-        ]);*/
-
-        return [
-            // 'sensitiveData' => self::getEncoded($data, $store),
-            // 'signature' => self::generateSignature($data, $store),
-            // 'dateTime' => $date
+        $payment_data = [
             'merchantId'=> $store->getMerchantId(),
             'orderId'   => $transaction_id,
             'datetime'  => $date,
-            'challenge' => self::generateRandomString(40),
-            'storeType' => class_basename($store)
+            'challenge' => self::generateRandomString(40)
         ];
+
+        $store_data = ['storeType' => class_basename($store)];
+
+        return [$payment_data, $store_data];
     }
 
     /**
@@ -118,34 +139,6 @@ class Inputs
         $private_key = $store->getPrivateKey();
         openssl_sign($data, $signature, $private_key, OPENSSL_ALGO_SHA256);
         return base64_encode($signature);
-    }
-
-    /**
-     * @param $transactionId
-     * @param Initialize $init
-     * @param $amount
-     * @param $callbackUrl
-     * @param NagadStore $store
-     * @return array
-     * @throws EncryptionFailed
-     */
-    public static function complete($transactionId, Initialize $init, $amount, $callbackUrl, NagadStore $store)
-    {
-        $merchantAdditionalInfo = '{"Service Name": "Sheba.xyz"}';
-        $data = json_encode([
-            'merchantId' => $store->getMerchantId(),
-            'orderId' => $transactionId,
-            'amount' => $amount,
-            'currencyCode' => '050',
-            'challenge' => $init->getChallenge()
-        ]);
-
-        return [
-            'sensitiveData' => self::getEncoded($data, $store),
-            'signature' => self::generateSignature($data, $store),
-            'merchantCallbackURL' => $callbackUrl,
-            'additionalMerchantInfo' => json_decode($merchantAdditionalInfo)
-        ];
     }
 
     static function orderID()

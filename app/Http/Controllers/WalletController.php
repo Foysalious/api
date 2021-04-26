@@ -59,7 +59,7 @@ class WalletController extends Controller
      * @throws InitiateFailedException
      * @throws InvalidPaymentMethod
      */
-    public function recharge(Request $request, PaymentManager $payment_manager)
+    public function recharge(Request $request, PaymentManager $payment_manager): JsonResponse
     {
         $methods = implode(',', $request->user_type == 'affiliate' ? AvailableMethods::getBondhuPointPayments() : AvailableMethods::getWalletRechargePayments());
         $this->validate($request, [

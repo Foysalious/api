@@ -47,13 +47,14 @@ class NagadClient
     {
         $merchantId = $this->store->getMerchantId();
         $url = "$this->baseUrl/api/dfs/check-out/initialize/$merchantId/$transaction_id";
-        $data = Inputs::init($transaction_id, $this->store);
+        list($payment_data, $store_data) = Inputs::init($transaction_id, $this->store);
 
         $request = (new NagadRequest())
+            ->setUrl($url)
             ->setMethod(NagadRequest::METHOD_POST)
             ->setHeaders(Inputs::headers())
-            ->setInput($data)
-            ->setUrl($url);
+            ->setInput($payment_data)
+            ->setStoreData($store_data);
 
         $response = $this->client->call($request);
 
@@ -61,24 +62,25 @@ class NagadClient
     }
 
     /**
-     * @param $transactionId
+     * @param $transaction_id
      * @param Initialize $resp
      * @param $amount
-     * @param $callbackUrl
+     * @param $call_back_url
      * @return CheckoutComplete
-     * @throws Exception\EncryptionFailed
      * @throws TPProxyServerError
      */
-    public function placeOrder($transactionId, Initialize $resp, $amount, $callbackUrl): CheckoutComplete
+    public function placeOrder($transaction_id, Initialize $resp, $amount, $call_back_url): CheckoutComplete
     {
         $paymentRefId = $resp->getPaymentReferenceId();
         $url = "$this->baseUrl/api/dfs/check-out/complete/$paymentRefId";
-        $data = Inputs::complete($transactionId, $resp, $amount, $callbackUrl, $this->store);
+        list($payment_data, $store_data) = Inputs::complete($transaction_id, $resp, $amount, $call_back_url, $this->store);
+
         $request = (new NagadRequest())
             ->setUrl($url)
             ->setMethod(NagadRequest::METHOD_POST)
             ->setHeaders(Inputs::headers())
-            ->setInput($data);
+            ->setInput($payment_data)
+            ->setStoreData($store_data);
 
         $resp = $this->client->call($request);
 
