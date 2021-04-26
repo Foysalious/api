@@ -184,13 +184,6 @@ class ApprovalRequestController extends Controller
                 $updater->setStatus($request->status)->change();
             });
 
-       /* $approval_request = $this->approvalRequestRepo->getApprovalRequestByIdAndType($type_ids, $type)->first();
-        if (!$approval_request) return api_response($request, null, 404, ['message' => 'Approval request not found.']);
-        #if ($approval_request->approver_id != $business_member->id) return api_response($request, null, 420);
-        $this->leaveRejectionRequester->setNote($request->note)->setReasons($request->reasons);
-        $updater->setBusinessMember($business_member)->setApprovalRequest($approval_request)->setLeaveRejectionRequester($this->leaveRejectionRequester);
-        $updater->setStatus($request->status)->change();*/
-
         return api_response($request, null, 200);
     }
 
