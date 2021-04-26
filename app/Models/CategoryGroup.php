@@ -1,10 +1,14 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use  Sheba\Dal\Category\Category;
+use Sheba\Dal\Category\Category;
+use Sheba\Dal\Extras\Traits\HasLocationScope;
+use App\Models\ScreenSettingElement;
 
 class CategoryGroup extends Model
 {
+    use HasLocationScope;
+
     protected $guarded = ['id'];
 
     public function categories()
@@ -25,5 +29,10 @@ class CategoryGroup extends Model
     public function locations()
     {
         return $this->belongsToMany(Location::class);
+    }
+
+    public function screenSettingElements()
+    {
+        return $this->morphMany(ScreenSettingElement::class, 'item');
     }
 }

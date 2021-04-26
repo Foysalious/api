@@ -59,6 +59,7 @@ class PaymentLinkOrderAdapter implements PayableAdapter
         $payable->description = $this->description;
         $payable->completion_type = "payment_link";
         $payable->success_url = $this->resolveSuccessUrl();
+        $payable->fail_url = $this->resolveFailUrl();
         $payable->created_at = Carbon::now();
         $payable->emi_month = $this->paymentLink->getEmiMonth();
         $payable->save();
@@ -93,6 +94,16 @@ class PaymentLinkOrderAdapter implements PayableAdapter
     }
 
     private function resolveSuccessUrl()
+    {
+        $target = $this->paymentLink->getTarget();
+        if ($target && $target instanceof PosOrder && $target->sales_channel == SalesChannels::WEBSTORE) {
+            return config('sheba.webstore_url') . '/' . $target->partner->sub_domain .'/redirect-after-payment/' . $target->id;
+        } else {
+            return config('sheba.payment_link_web_url') . '/' . $this->paymentLink->getLinkIdentifier() . '/success';
+        }
+    }
+
+    private function resolveFailUrl()
     {
         $target = $this->paymentLink->getTarget();
         if ($target && $target instanceof PosOrder && $target->sales_channel == SalesChannels::WEBSTORE) {
