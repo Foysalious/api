@@ -65,7 +65,7 @@ class Route
                 $api->get('/{id}', 'SubscriptionController@details');
             });
 //            emi-info with static info
-            $api->get('emi-info', 'ShebaController@getEmiInfo_v3');
+            $api->get('emi-info', 'ShebaController@getEmiInfoV3');
         });
 
 
