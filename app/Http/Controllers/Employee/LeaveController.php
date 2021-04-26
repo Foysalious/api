@@ -20,6 +20,7 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use Sheba\Business\Leave\Breakdown\LeaveBreakdown;
+use Sheba\Business\Leave\RejectReason\RejectReason;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\LeaveType\Contract as LeaveTypesRepoInterface;
@@ -46,25 +47,20 @@ class LeaveController extends Controller
      */
     public function index(Request $request, LeaveRepoInterface $leave_repo, ApprovalRequestRepositoryInterface $approval_request_repository)
     {
-        try {
-            $business_member = $this->getBusinessMember($request);
-            if (!$business_member) return api_response($request, null, 404);
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
 
-            $leaves = $leave_repo->getLeavesByBusinessMember($business_member)->orderBy('id', 'desc');
-            if ($request->has('type')) $leaves = $leaves->where('leave_type_id', $request->type);
-            $leaves = $leaves->get();
-            $fractal = new Manager();
-            $resource = new Collection($leaves, new LeaveListTransformer());
-            $leaves = $fractal->createData($resource)->toArray()['data'];
-            $pending_approval_requests = $approval_request_repository->getPendingApprovalRequestByBusinessMember($business_member);
-            return api_response($request, null, 200, [
-                'leaves' => $leaves,
-                'pending_approval_request' => $pending_approval_requests
-            ]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $leaves = $leave_repo->getLeavesByBusinessMember($business_member)->orderBy('id', 'desc');
+        if ($request->has('type')) $leaves = $leaves->where('leave_type_id', $request->type);
+        $leaves = $leaves->get();
+        $fractal = new Manager();
+        $resource = new Collection($leaves, new LeaveListTransformer());
+        $leaves = $fractal->createData($resource)->toArray()['data'];
+        $pending_approval_requests = $approval_request_repository->getPendingApprovalRequestByBusinessMember($business_member);
+        return api_response($request, null, 200, [
+            'leaves' => $leaves,
+            'pending_approval_request' => $pending_approval_requests
+        ]);
     }
 
     /**
@@ -82,8 +78,8 @@ class LeaveController extends Controller
         /** @var BusinessMember $business_member */
         $business_member = $this->getBusinessMember($request);
         $is_substitute_required = $this->isNeedSubstitute($business_member) ? 1 : 0;
-        if (!$leave || $leave->business_member_id != $business_member->id)
-            return api_response($request, null, 403);
+        /*if (!$leave || $leave->business_member_id != $business_member->id)
+            return api_response($request, null, 403);*/
 
         $leave = $leave->load(['leaveType' => function ($q) {
             return $q->withTrashed();
@@ -261,6 +257,19 @@ class LeaveController extends Controller
 
         return api_response($request, null, 200, ['full_day_leaves' => $full_day_leaves, 'half_day_leaves' => $half_day_leaves]);
     }
+
+    /**
+     * @param Request $request
+     * @param RejectReason $reject_reason
+     * @return JsonResponse
+     */
+    public function rejectReasons(Request $request, RejectReason $reject_reason)
+    {
+        $reject_reasons = $reject_reason->reasons();
+
+        return api_response($request, $reject_reasons, 200, ['reject_reasons' => $reject_reasons]);
+    }
+
 
     /**
      * @param BusinessMember $business_member
