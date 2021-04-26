@@ -43,7 +43,6 @@ class Updater
                     'name' => $component['key'],
                     'value' => $component['title'],
                     'type' => 'gross',
-                    'is_default' => 0,
                     'is_active' => $component['is_active'],
                     'is_taxable' => $component['taxable'],
                     'setting' => json_encode(['percentage' => $component['value']]),
