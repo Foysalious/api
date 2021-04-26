@@ -8,7 +8,6 @@ trait ProtectedGetterTrait
 {
     /**
      * @return array
-     * @throws ReflectionException
      */
     public function toArray(){
         $reflection_class = new ReflectionClass($this);
