@@ -305,7 +305,7 @@ class ShebaController extends Controller
         }
 
         $emi_data = [
-            "emi"   => $emi_calculator->getChargesV3($amount),
+            "emi"   => $emi_calculator->getCharges($amount),
             "banks" => (new Banks())->setAmount($amount)->get()
         ];
 
@@ -322,7 +322,7 @@ class ShebaController extends Controller
             return api_response($request, null, 400, ['message' => 'Amount is less than minimum emi amount']);
         }
         $emi_data = [
-            "emi"   => $emi_calculator->getChargesV3($amount),
+            "emi"   => $emi_calculator->getCharges($amount),
             "banks" => (new Banks())->setAmount($amount)->get(),
             "minimum_amount" => number_format(config('sheba.min_order_amount_for_emi')),
             "static_info" =>[
