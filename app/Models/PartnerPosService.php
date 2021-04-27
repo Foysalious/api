@@ -1,11 +1,13 @@
 <?php namespace App\Models;
 
 use AlgoliaSearch\Laravel\AlgoliaEloquentTrait;
+use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceCreated;
 use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceSaved;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Sheba\Dal\BaseModel;
+use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceUpdated;
 use Sheba\Dal\PartnerPosServiceImageGallery\Model as PartnerPosServiceImageGallery;
 use Sheba\Elasticsearch\ElasticsearchTrait;
 
@@ -18,7 +20,10 @@ class PartnerPosService extends BaseModel
     protected $casts = ['cost' => 'double', 'price' => 'double', 'stock' => 'double', 'vat_percentage' => 'double', 'show_image' => 'int'];
     protected $dates = ['deleted_at'];
 
-//    public static $savedEventClass = PartnerPosServiceSaved::class;
+    public static $savedEventClass = PartnerPosServiceSaved::class;
+    public static $updatedEventClass = PartnerPosServiceUpdated::class;
+    public static $createdEventClass = PartnerPosServiceCreated::class;
+
     public static $autoIndex = false;
     protected $indexSettings = [
         'analysis' => [
@@ -151,7 +156,7 @@ class PartnerPosService extends BaseModel
         $discount = $this->discount();
         if ($discount->is_amount_percentage)
             return $discount->amount;
-        return round((($discount->amount/ $this->price) * 100),1);
+        return round((($discount->amount / $this->price) * 100), 1);
     }
 
     public function runningDiscounts()
