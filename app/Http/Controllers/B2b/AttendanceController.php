@@ -825,4 +825,18 @@ class AttendanceController extends Controller
 
         return api_response($request, null, 200);
     }
+
+    public function createUnpaidLeavePolicy(Request $request, PolicyRuleRequester $requester, PolicyRuleUpdater $updater)
+    {
+        $business = $request->business;
+        if (!$business) return api_response($request, null, 403, ['message' => 'You Are not authorized to show this settings']);
+
+        $requester->setBusiness($business)
+            ->setPolicyType($request->policy_type)
+            ->setRules($request->rules);
+
+        $updater->setPolicyRuleRequester($requester)->update();
+
+        return api_response($request, null, 200);
+    }
 }
