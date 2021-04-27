@@ -2,6 +2,7 @@
 
 
 use App\Sheba\InventoryService\InventoryServerClient;
+use Illuminate\Support\Facades\File;
 
 class CategoryService
 {
@@ -60,11 +61,11 @@ class CategoryService
 
     public function makeStoreData()
     {
-        $data = [];
-        $data['name'] = $this->categoryName;
-        $data['modifier']  = $this->modifier;
-        $data['thumb'] = $this->thumb ? $this->thumb : null;
-        return $data;
+        return [
+        ['name' => 'name', 'contents' => $this->categoryName],
+        ['name' => 'modifier', 'contents' => $this->modifier],
+        ['name' => 'thumb', 'contents' => $this->thumb ? File::get($this->thumb->getRealPath()) : null, 'filename' => $this->thumb ? $this->thumb->getClientOriginalName() : '']
+        ];
 
     }
 
