@@ -22,24 +22,11 @@ class PartnerPosService extends BaseModel
     public static $autoIndex = false;
     protected $indexSettings = [
         'analysis' => [
-            'char_filter' => [
-                'replace' => [
-                    'type' => 'mapping',
-                    'mappings' => [
-                        '&=> and '
-                    ],
-                ],
-            ],
-            'filter' => [
-                'word_delimiter' => [
-                    'type' => 'word_delimiter',
-                    'split_on_numerics' => false,
-                    'split_on_case_change' => true,
-                    'generate_word_parts' => true,
-                    'generate_number_parts' => true,
-                    'catenate_all' => true,
-                    'preserve_original' => true,
-                    'catenate_numbers' => true,
+            "analyzer" => [
+                "pos_service_search_analyzer" => [
+                    "type" => "standard",
+                    "filter" => ["lowercase", "asciifolding"],
+                    "max_token_length" => 2,
                 ]
             ]
         ],
@@ -48,8 +35,8 @@ class PartnerPosService extends BaseModel
         'id' => ['type' => 'integer'],
         'partner_id' => ['type' => 'integer'],
         'pos_category_id' => ['type' => 'integer'],
-        'name' => ['type' => 'text', 'analyzer' => 'whitespace'],
-        'description' => ['type' => 'text', 'analyzer' => 'whitespace'],
+        'name' => ['type' => 'text', 'analyzer' => 'pos_service_search_analyzer'],
+        'description' => ['type' => 'text', 'analyzer' => 'pos_service_search_analyzer'],
         'publication_status' => ['type' => 'integer'],
         'is_published_for_shop' => ['type' => 'integer'],
         'created_at' => ['type' => 'date', "format" => "yyyy-MM-dd HH:mm:ss"],
