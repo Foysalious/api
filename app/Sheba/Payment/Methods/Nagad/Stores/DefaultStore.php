@@ -8,8 +8,6 @@ class DefaultStore extends NagadStore
     {
         $this->baseUrl = config('payment.nagad.stores.default.base_url');
         $this->merchantId = config('payment.nagad.stores.default.merchant_id');
-        $this->publicKey = file_get_contents(config('payment.nagad.stores.default.public_key_path'));
-        $this->privateKey = file_get_contents(config('payment.nagad.stores.default.private_key_path'));
         $this->contextPath = config('payment.nagad.stores.default.context_path');
     }
 

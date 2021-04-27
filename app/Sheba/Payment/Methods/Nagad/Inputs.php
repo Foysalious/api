@@ -1,7 +1,6 @@
 <?php namespace Sheba\Payment\Methods\Nagad;
 
 use Carbon\Carbon;
-use Sheba\Payment\Methods\Nagad\Exception\EncryptionFailed;
 use Sheba\Payment\Methods\Nagad\Response\Initialize;
 use Sheba\Payment\Methods\Nagad\Stores\NagadStore;
 
@@ -10,7 +9,7 @@ class Inputs
     /** @var NagadStore $store */
     private $store;
 
-    public static function headers()
+    public static function headers(): array
     {
         return self::makeHeaders([
             'Content-Type' => 'application/json',
@@ -41,10 +40,10 @@ class Inputs
 
     /**
      * @param $transaction_id
-     * @param \Sheba\Payment\Methods\Nagad\Response\Initialize $init
+     * @param Initialize $init
      * @param $amount
      * @param $call_back_url
-     * @param \Sheba\Payment\Methods\Nagad\Stores\NagadStore $store
+     * @param NagadStore $store
      * @return array
      */
     public static function complete($transaction_id, Initialize $init, $amount, $call_back_url, NagadStore $store): array
