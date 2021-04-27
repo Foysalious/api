@@ -158,10 +158,10 @@ class PayrollController extends Controller
 
         $payroll_setting = $this->payrollSettingRepository->find((int)$payroll_setting);
         if (!$payroll_setting) return api_response($request, null, 404);
-        $gross_component = $this->payrollComponentRepository->find((int)$component);
-        if (!$gross_component) return api_response($request, null, 404);
-        if ($gross_component->is_default) return api_response($request, null, 420);
-        $gross_component->delete();
+        $payroll_component = $this->payrollComponentRepository->find((int)$component);
+        if (!$payroll_component) return api_response($request, null, 404);
+        if ($payroll_component->is_default) return api_response($request, null, 420);
+        $payroll_component->delete();
 
         return api_response($request, null, 200);
     }
