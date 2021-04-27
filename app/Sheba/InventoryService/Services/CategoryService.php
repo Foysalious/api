@@ -62,20 +62,20 @@ class CategoryService
     public function makeStoreData()
     {
         return [
-        ['name' => 'name', 'contents' => $this->categoryName],
-        ['name' => 'modifier', 'contents' => $this->modifier],
-        ['name' => 'thumb', 'contents' => $this->thumb ? File::get($this->thumb->getRealPath()) : null, 'filename' => $this->thumb ? $this->thumb->getClientOriginalName() : '']
+            ['name' => 'name', 'contents' => $this->categoryName],
+            ['name' => 'modifier', 'contents' => $this->modifier],
+            ['name' => 'thumb', 'contents' => $this->thumb ? File::get($this->thumb->getRealPath()) : null, 'filename' => $this->thumb ? $this->thumb->getClientOriginalName() : '']
         ];
 
     }
 
     public function makeUpdateData()
     {
-        $data = [];
-        $data['name'] =  $this->categoryName;
-        $data['modifier']  = $this->modifier;
-        return $data;
-
+        return [
+            ['name' => 'name', 'contents' => $this->categoryName],
+            ['name' => 'modifier', 'contents' => $this->modifier],
+            ['name' => 'thumb', 'contents' => $this->thumb ? File::get($this->thumb->getRealPath()) : null, 'filename' => $this->thumb ? $this->thumb->getClientOriginalName() : '']
+        ];
     }
 
     public function store()
@@ -87,7 +87,7 @@ class CategoryService
     public function update()
     {
         $data = $this->makeUpdateData();
-        return $this->client->put('api/v1/partners/'.$this->partnerId.'/categories/'.$this->categoryId, $data);
+        return $this->client->put('api/v1/partners/'.$this->partnerId.'/categories/'.$this->categoryId, $data, true);
     }
 
     public function delete()
