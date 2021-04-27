@@ -27,6 +27,7 @@ use App\Http\Middleware\PaymentLinkAuthMiddleware;
 use App\Http\Middleware\ProfileAuthMiddleware;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\ResourceJobAuthMiddleware;
+use App\Http\Middleware\SetRequestToJwtWhileTesting;
 use App\Http\Middleware\Sheba\ShebaNetworkMiddleware;
 use App\Http\Middleware\ThrottleRequests;
 use App\Http\Middleware\TopUpAuthMiddleware;
@@ -42,6 +43,7 @@ use Illuminate\Foundation\Http\Kernel as HttpKernel;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Fideloper\Proxy\TrustProxies;
 
 class Kernel extends HttpKernel
 {
@@ -57,6 +59,8 @@ class Kernel extends HttpKernel
         CriticalAppVersionMiddleware::class,
         XSS::class,
         // \Fruitcake\Cors\HandleCors::class
+        TrustProxies::class,
+        SetRequestToJwtWhileTesting::class
     ];
 
     /**
@@ -73,7 +77,6 @@ class Kernel extends HttpKernel
             VerifyCsrfToken::class,
             SubstituteBindings::class,
         ],
-
         'api' => [
             'throttle:60,1',
             'bindings'

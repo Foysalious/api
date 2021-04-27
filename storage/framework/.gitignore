@@ -1,7 +1,5 @@
 # Ignore everything in this directory
 *
-
-# Except these
-!data/
+# Except this file
 !.gitignore
 !.gitkeep
