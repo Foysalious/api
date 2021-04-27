@@ -17,6 +17,7 @@ use App\Http\Middleware\EncryptCookies;
 use App\Http\Middleware\ExternalPaymentLinkAuthMiddleware;
 use App\Http\Middleware\GeoAuthMiddleware;
 use App\Http\Middleware\JWT\ResourceAuthMiddleware;
+use App\Http\Middleware\JwtAccessTokenMiddleware;
 use App\Http\Middleware\JWTAuthentication;
 use App\Http\Middleware\JWTAuthMiddleware;
 use App\Http\Middleware\ManagerAuthMiddleware;
@@ -119,7 +120,7 @@ class Kernel extends HttpKernel
         'apiRequestLog' => ApiRequestMiddleware::class,
         'shebaServer' => ShebaNetworkMiddleware::class,
         'terminate' => TerminatingMiddleware::class,
-        'accounting.auth' => AccountingAuthMiddleware::class
-
+        'accounting.auth' => AccountingAuthMiddleware::class,
+        'jwtAccessToken' => JwtAccessTokenMiddleware::class,
     ];
 }
