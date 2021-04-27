@@ -41,21 +41,7 @@ class PartnerPosService extends BaseModel
                     'preserve_original' => true,
                     'catenate_numbers' => true,
                 ]
-            ],
-            'analyzer' => [
-                'default' => [
-                    'type' => 'custom',
-                    'char_filter' => [
-                        'html_strip',
-                        'replace',
-                    ],
-                    'tokenizer' => 'whitespace',
-                    'filter' => [
-                        'lowercase',
-                        'word_delimiter',
-                    ],
-                ],
-            ],
+            ]
         ],
     ];
     protected $mappingProperties = [
