@@ -13,6 +13,7 @@ use Sheba\Pos\Repositories\PosOrderItemRepository;
 use Sheba\Pos\Repositories\PosOrderLogRepository;
 use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Repositories\PartnerRepository;
+use DB;
 
 class PosOrderDataMigration
 {
@@ -137,7 +138,10 @@ class PosOrderDataMigration
     private function generatePosOrdersMigrationData()
     {
         $pos_orders = PosOrder::where('partner_id', $this->partner->id)
-            ->select('id', 'partner_wise_order_id', 'partner_id', 'customer_id', 'sales_channel', 'emi_month',
+            ->select('id', 'partner_wise_order_id', 'partner_id', 'customer_id', DB::raw('(CASE 
+                        WHEN pos_orders.sales_channel = "pos" THEN "1" 
+                        ELSE "2" 
+                        END) AS sales_channel_id'), 'emi_month',
                 'bank_transaction_charge', 'interest', 'delivery_charge', 'address AS delivery_address', 'note',
                 'voucher_id')->get()->toArray();
         $this->partnerPosOrderIds = array_column($pos_orders, 'id');
