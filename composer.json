@@ -41,13 +41,16 @@
     "league/fractal": "0.19.*",
     "sentry/sentry-laravel": "2.4.*",
     "rosell-dk/webp-convert": "^2.4",
+    "algolia/scout-extended": "^1.17",
+    "spomky-labs/jose": "6.1.7",
+    "symfony/polyfill-mbstring": "1.5.0",
+    "fgrosse/phpasn1": "1.5",
     "sheba/dal": "dev-feature/laravel-upgrade",
     "sheba/voucher": "dev-master",
     "sheba/notification": "dev-master",
     "sheba/sms": "dev-master",
     "sheba/report": "dev-feature/laravel-upgrade",
-    "sheba/elasticsearch": "dev-feature/laravel-upgrade",
-    "algolia/scout-extended": "^1.17"
+    "sheba/elasticsearch": "dev-feature/laravel-upgrade"
   },
   "require-dev": {
     "nunomaduro/collision": "^5.0",

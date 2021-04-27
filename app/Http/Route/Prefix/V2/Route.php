@@ -44,6 +44,7 @@ class Route
             $api->get('top-up/fail/ssl', 'TopUpController@sslFail');
             $api->get('top-up/success/ssl', 'TopUpController@sslSuccess');
             $api->post('top-up/status-update', 'TopUpController@statusUpdate');
+            $api->post('top-up/bdrecharge/status', 'TopUpController@bdRechargeStatusUpdate');
             $api->get('top-up/restart-queue', 'TopUpController@restartQueue');
             $api->group(['prefix' => 'wallet'], function ($api) {
                 $api->post('recharge', 'WalletController@recharge');
