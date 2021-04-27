@@ -33,7 +33,6 @@ class CategoryController extends Controller
      */
     public function store(Request $request)
     {
-        dd($request->all());
         $partner = $request->auth_user->getPartner();
         $modifier = $request->auth_user->getResource()->profile->name;
         $response = $this->categoryService->setModifier($modifier)->setPartner($partner->id)->setCategoryName($request->name)->setThumb($request->thumb)->store();
