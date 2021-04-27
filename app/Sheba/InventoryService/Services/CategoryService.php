@@ -80,7 +80,7 @@ class CategoryService
     public function store()
     {
         $data = $this->makeStoreData();
-        return $this->client->post('api/v1/partners/'.$this->partnerId.'/categories', $data);
+        return $this->client->post('api/v1/partners/'.$this->partnerId.'/categories', $data, true);
     }
 
     public function update()
