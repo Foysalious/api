@@ -153,9 +153,6 @@ class PayrollController extends Controller
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
-
-        $this->setModifier($business_member->member);
-
         $payroll_setting = $this->payrollSettingRepository->find((int)$payroll_setting);
         if (!$payroll_setting) return api_response($request, null, 404);
         $payroll_component = $this->payrollComponentRepository->find((int)$component);
