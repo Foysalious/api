@@ -6,6 +6,7 @@ use App\Sheba\AccountingEntry\Repository\DueTrackerRepository;
 use Illuminate\Http\Request;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\ModificationFields;
+use Sheba\Usage\Usage;
 
 class DueTrackerController extends Controller
 {
@@ -32,6 +33,7 @@ class DueTrackerController extends Controller
             ]);
             $request->merge(['customer_id' => $customer_id]);
             $response = $this->dueTrackerRepo->storeEntry($request, $request->entry_type);
+            (new Usage())->setUser($request->partner)->setType(Usage::Partner()::DUE_TRACKER_TRANSACTION)->create($request->auth_user);
             return api_response($request, $response, 200, ['data' => $response]);
         } catch (AccountingEntryServerError $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
