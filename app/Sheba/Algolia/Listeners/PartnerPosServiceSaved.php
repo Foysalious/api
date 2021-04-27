@@ -17,7 +17,7 @@ class PartnerPosServiceSaved
         if ($partner_pos_service->trashed() || !$partner_pos_service->isWebstorePublished()) {
             $partner_pos_service->removeFromIndex();
         } else {
-            $partner_pos_service->updateIndex();
+            $partner_pos_service->addToIndex();
         }
     }
 
