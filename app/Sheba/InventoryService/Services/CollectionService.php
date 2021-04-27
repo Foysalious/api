@@ -132,24 +132,24 @@ class CollectionService
 
     public function getAllCollection()
     {
-        return $this->client->get('api/v1/partners/' . $this->partner_id . '/collection');
+        return $this->client->get('api/v1/partners/' . $this->partner_id . '/collections');
     }
 
     public function store()
     {
         $data = $this->makeCreateData();
-        return $this->client->post('api/v1/partners/' . $this->partner_id . '/collection', $data, true);
+        return $this->client->post('api/v1/partners/' . $this->partner_id . '/collections', $data, true);
     }
 
     public function update()
     {
         $data = $this->makeCreateData();
-        return $this->client->put('api/v1/partners/' . $this->partner_id . '/collection/' . $this->collection_id, $data, true);
+        return $this->client->put('api/v1/partners/' . $this->partner_id . '/collections/' . $this->collection_id, $data, true);
     }
 
     public function getDetails()
     {
-        return $this->client->get('api/v1/partners/' . $this->partner_id . '/collection/'. $this->collection_id);
+        return $this->client->get('api/v1/partners/' . $this->partner_id . '/collections/'. $this->collection_id);
     }
 
     private function makeCreateData()
