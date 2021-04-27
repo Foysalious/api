@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'non_uniform_gateway_ref_last_id' => env('NON_UNIFORM_GATEWAY_REF_LAST_ID'),
     'robi' => [
         'url' => env('ROBI_TOPUP_URL'),
         'login_id' => env('ROBI_TOPUP_LOGIN'),
@@ -40,5 +41,25 @@ return [
         'encryption_key' => env('PAYWELL_ENCRYPTION_KEY'),
         'single_topup_url' => env('PAYWELL_SINGLE_TOPUP_URL'),
         'topup_enquiry_url' => env('PAYWELL_TOPUP_ENQUIRY_URL'),
+    ],
+    'bd_recharge' => [
+        'username' => env('BD_RECHARGE_USERNAME'),
+        'password' => env('BD_RECHARGE_PASSWORD'),
+        'single_topup_url' => env('BD_RECHARGE_SINGLE_TOPUP_URL'),
+        'topup_enquiry_url' => env('BD_RECHARGE_TOPUP_ENQUIRY_URL'),
+        'balance_enquiry_url' => env('BD_RECHARGE_BALANCE_ENQUIRY_URL'),
+        'jwe_header' => [
+            "zip" => "DEF",
+            "enc" => "A128CBC-HS256",
+            "alg" => "dir",
+            "kid" => env('BD_RECHARGE_KEY_ID'),
+        ],
+        'key' => [
+            'kty' => 'oct',
+            'kid' => env('BD_RECHARGE_KEY_ID'),
+            'use' => 'enc',
+            'alg' => 'A128CBC-HS256',
+            'k' => env('BD_RECHARGE_ENCRYPTION_KEY'),
+        ]
     ],
 ];

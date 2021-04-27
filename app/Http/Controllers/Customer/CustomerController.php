@@ -4,6 +4,8 @@ use App\Http\Controllers\Controller;
 use App\Models\HyperLocal;
 use App\Models\Job;
 use App\Models\Location;
+use App\Models\Reward;
+use App\Models\RewardAction;
 use Sheba\Dal\LocationService\LocationService;
 use App\Models\Review;
 use Sheba\Dal\Service\Service;
@@ -48,16 +50,11 @@ class CustomerController extends Controller
                     }]);
                 }]);
             }])->whereHas('category', function ($q) use ($location) {
-                $q->published()->select('id', 'publication_status')->whereHas('locations', function ($q) use ($location) {
-                    $q->where('locations.id', $location);
-                });
+                $q->published()->hasLocation($location)->select('id', 'publication_status');
             })->whereHas('job', function ($q) use ($location) {
                 $q->whereHas('jobServices', function ($q) use ($location) {
                     $q->whereHas('service', function ($q) use ($location) {
-                        $q->published()->select('id', 'publication_status')
-                            ->whereHas('locations', function ($q) use ($location) {
-                                $q->where('locations.id', $location);
-                            });
+                        $q->published()->select('id', 'publication_status')->hasLocation($location);
                     });
                 });
             })->where('created_at', '>=', Carbon::now()->subMonths(6)->toDateTimeString())->orderBy('id', 'desc');
@@ -68,6 +65,7 @@ class CustomerController extends Controller
         $reviews = $reviews->get();
 
         if (count($reviews) == 0) return api_response($request, null, 404);
+
         $final = collect();
         foreach ($reviews->groupBy('category_id') as $key => $reviews) {
             foreach ($reviews as $review) {
@@ -130,13 +128,15 @@ class CustomerController extends Controller
                 $data['category']['is_inspection_service'] = $all_services[0]->is_inspection_service;
                 $data['category']['services'] = $all_services;
                 $data['category']['max_order_amount'] = $data['category']['max_order_amount'] ? (double) $data['category']['max_order_amount'] : null;
+                $data['category']['app_thumb_sizes'] = getResizedUrls($data['category']['app_thumb'], 100, 100);
                 $data['rating'] = $review->rating;
                 $data['partner'] = $review->job->partnerOrder->partner;
                 $final->push(collect($data));
             }
         }
         if (count($final) > 0) return api_response($request, $final, 200, ['data' => $final]);
-        else return api_response($request, null, 404);
+
+        return api_response($request, null, 404);
     }
 
     private function canThisServiceAvailableForOrderAgain($final, Job $job)
@@ -169,6 +169,24 @@ class CustomerController extends Controller
             }
         }
         return 0;
+
+    }
+    public function getProfileCompletion($customer, Request $request)
+    {
+        $reward_action = RewardAction::where('event_name', 'profile_complete')->latest('id')->first();
+        $reward = Reward::where('detail_id', $reward_action->id)
+            ->select('rewards.*')
+            ->get();
+        $decision = (($reward[0]->start_time <= Carbon::now()) && ($reward[0]->end_time >= Carbon::now()));
+        $customer = $request->customer;
+        $data = [];
+        $data['is_completed'] = $customer->is_completed;
+        if ($data['is_completed'] == 1) $data['reward_active'] = 0;
+        if ($decision && $data['is_completed'] == 0){
+            $data['reward_active'] = 1;
+            $data['not_complete_profile'] = "https://cdn-marketplacedev.s3.ap-south-1.amazonaws.com/sheba_xyz/images/png/sheba-credit-banner.png";
+        }
+        return api_response($request, $data, 200, ['data' => $data]);
 
     }
 }
