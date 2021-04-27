@@ -460,3 +460,24 @@ Removing symfony/polyfill-util (v1.19.0)
 - Installing laravel/scout (v8.6.1)
 - Installing algolia/algoliasearch-client-php (3.0.1)
 - Installing algolia/scout-extended (v1.17.0)
+
+
+
+
+
+8
+==================================================================================
+
+
+- Upgrading guzzlehttp/psr7 (1.8.1 => 1.8.2)
+- Upgrading filp/whoops (2.12.0 => 2.12.1)
+- Upgrading fruitcake/laravel-cors (v2.0.3 => v2.0.4)
+- Upgrading google/apiclient-services (v0.170.0 => v0.171.0)
+- Upgrading aws/aws-sdk-php (3.178.8 => 3.178.10)
+- Installing beberlei/assert (v2.9.9)
+- Installing spomky-labs/php-aes-gcm (v1.2.1)
+- Installing spomky-labs/base64url (v1.0.2)
+- Installing spomky-labs/aes-key-wrap (v4.0.1)
+- Installing fgrosse/phpasn1 (v2.2.0)
+- Installing mdanter/ecc (v0.5.2)
+- Installing spomky-labs/jose (v7.1.0)
