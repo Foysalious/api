@@ -10,6 +10,7 @@ class CategoryService
     public $categoryName;
     public $categoryId;
     public $client;
+    protected $thumb;
 
     public function __construct(InventoryServerClient $client)
     {
@@ -27,6 +28,17 @@ class CategoryService
         $this->partnerId = $partner_id;
         return $this;
     }
+
+    /**
+     * @param mixed $thumb
+     * @return CategoryService
+     */
+    public function setThumb($thumb)
+    {
+        $this->thumb = $thumb;
+        return $this;
+    }
+
 
     public function setCategoryName($category_name)
     {
@@ -51,6 +63,7 @@ class CategoryService
         $data = [];
         $data['name'] = $this->categoryName;
         $data['modifier']  = $this->modifier;
+        $data['thumb'] = $this->thumb ? $this->thumb : null;
         return $data;
 
     }
