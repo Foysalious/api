@@ -64,7 +64,7 @@ class NagadBuilder
      * @param Payable $payable
      * @return bool
      */
-    public static function isPortWalletFailed(Payable $payable)
+    public static function isPortWalletFailed(Payable $payable): bool
     {
         return $payable->payments()->initiationFailed()->count() > 0;
     }

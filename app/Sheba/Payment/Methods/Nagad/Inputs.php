@@ -7,9 +7,7 @@ use Sheba\Payment\Methods\Nagad\Stores\NagadStore;
 
 class Inputs
 {
-    /**
-     * @var NagadStore
-     */
+    /** @var NagadStore $store */
     private $store;
 
     public static function headers()
@@ -22,7 +20,7 @@ class Inputs
         ]);
     }
 
-    static function makeHeaders(array $getHeaders)
+    private static function makeHeaders(array $getHeaders): array
     {
         $headers = [];
         foreach ($getHeaders as $key => $header) {
@@ -31,27 +29,12 @@ class Inputs
         return $headers;
     }
 
-    static function get_client_ip()
-    {
-        $ipaddress = '';
-        if (isset($_SERVER['HTTP_CLIENT_IP'])) $ipaddress = $_SERVER['HTTP_CLIENT_IP'];
-        else if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) $ipaddress = $_SERVER['HTTP_X_FORWARDED_FOR'];
-        else if (isset($_SERVER['HTTP_X_FORWARDED'])) $ipaddress = $_SERVER['HTTP_X_FORWARDED'];
-        else if (isset($_SERVER['HTTP_FORWARDED_FOR'])) $ipaddress = $_SERVER['HTTP_FORWARDED_FOR'];
-        else if (isset($_SERVER['HTTP_FORWARDED'])) $ipaddress = $_SERVER['HTTP_FORWARDED'];
-        else if (isset($_SERVER['REMOTE_ADDR'])) $ipaddress = $_SERVER['REMOTE_ADDR'];
-        else $ipaddress = 'UNKNOWN';
-
-        return $ipaddress;
-    }
-
     /**
      * @param $transaction_id
      * @param NagadStore $store
      * @return array
-     * @throws EncryptionFailed
      */
-    public static function init($transaction_id, NagadStore $store)
+    public static function init($transaction_id, NagadStore $store): array
     {
         return self::data($transaction_id, $store);
     }
@@ -68,17 +51,10 @@ class Inputs
     {
         $merchant_additional_info = '{"Service Name": "Sheba.xyz"}';
         $payment_data = [
-            'merchantId' => $store->getMerchantId(),
-            'orderId' => $transaction_id,
-            'amount' => $amount,
-            'currencyCode' => '050',
-            'challenge' => $init->getChallenge()
+            'merchantId' => $store->getMerchantId(), 'orderId' => $transaction_id, 'amount' => $amount, 'currencyCode' => '050', 'challenge' => $init->getChallenge()
         ];
-
         $store_data = [
-            'storeType' => class_basename($store),
-            'merchantCallbackURL' => $call_back_url,
-            'additionalMerchantInfo' => json_decode($merchant_additional_info)
+            'storeType' => class_basename($store), 'merchantCallbackURL' => $call_back_url, 'additionalMerchantInfo' => json_decode($merchant_additional_info)
         ];
 
         return [$payment_data, $store_data];
@@ -88,18 +64,16 @@ class Inputs
      * @param $transaction_id
      * @param NagadStore $store
      * @return array
-     * @throws EncryptionFailed
      */
     private static function data($transaction_id, NagadStore $store): array
     {
         $date = Carbon::now()->format('YmdHis');
         $payment_data = [
-            'merchantId'=> $store->getMerchantId(),
-            'orderId'   => $transaction_id,
-            'datetime'  => $date,
+            'merchantId' => $store->getMerchantId(),
+            'orderId' => $transaction_id,
+            'datetime' => $date,
             'challenge' => self::generateRandomString(40)
         ];
-
         $store_data = ['storeType' => class_basename($store)];
 
         return [$payment_data, $store_data];
@@ -109,7 +83,7 @@ class Inputs
      * @param int $length
      * @return string
      */
-    private static function generateRandomString($length = 40)
+    private static function generateRandomString(int $length = 40): string
     {
         $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $charactersLength = strlen($characters);
@@ -121,27 +95,7 @@ class Inputs
         return $randomString;
     }
 
-    /**
-     * @param string $data
-     * @param NagadStore $store
-     * @return string
-     * @throws EncryptionFailed
-     */
-    static function getEncoded($data, NagadStore $store)
-    {
-        $key = openssl_get_publickey($store->getPublicKey());
-        if (!openssl_public_encrypt($data, $encrypted, $key)) throw new EncryptionFailed();
-        return base64_encode($encrypted);
-    }
-
-    static function generateSignature($data, NagadStore $store)
-    {
-        $private_key = $store->getPrivateKey();
-        openssl_sign($data, $signature, $private_key, OPENSSL_ALGO_SHA256);
-        return base64_encode($signature);
-    }
-
-    static function orderID()
+    public static function orderID(): string
     {
         try {
             return 'S' . time() . randomString(4, 1, 1);
@@ -150,7 +104,7 @@ class Inputs
         }
     }
 
-    public function setStore(NagadStore $store)
+    public function setStore(NagadStore $store): Inputs
     {
         $this->store = $store;
         return $this;
