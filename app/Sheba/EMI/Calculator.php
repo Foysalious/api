@@ -10,24 +10,17 @@ class Calculator
      */
     public function getCharges($amount)
     {
-        $emi = [];
-        foreach ($this->getInterestRatesBreakDowns() as $item) {
-            array_push($emi, $this->calculateMonthWiseCharge($amount, $item['month'], $item['interest']));
-        }
-        return $emi;
-    }
-    public function getChargesV3($amount)
-    {
-        $emi        = collect([]);
+        $emi = collect([]);
         foreach ($this->getInterestRatesBreakDowns() as $item) {
             $emi->push($this->calculateMonthWiseCharge($amount, $item['month'], $item['interest']));
         }
         return $emi->forgetEach('interest_value')->toArray();
     }
+
     public function calculateMonthWiseCharge($amount, $month, $interest, $format = true)
     {
+        $rate                 = ($interest / 100);
         $interest_two_decimal = number_format((float)$interest, 2, '.', '');
-        $rate         = ($interest / 100);
         $bank_trx_fee = $this->getBankTransactionFee($amount + ceil(($amount * $rate))) + $this->getTax();
         return $format ? [
             "number_of_months"     => $month,

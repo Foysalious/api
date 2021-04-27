@@ -112,6 +112,8 @@ class ServiceTransformer extends TransformerAbstract
             'option_prices' => isset($prices) && $this->locationService ? $service->isOptions() ? $this->formatOptionWithPrice($prices) : null : null,
             'min_price' => $this->locationService ? $this->minMaxPrice->getMin() : null,
             'max_price' => $this->locationService ? $this->minMaxPrice->getMax() : null,
+            'min_price' => $this->minMaxPrice->getMin(),
+            'max_price' => $this->minMaxPrice->getMax(),
             'discount' => isset($discount) && $discount ? [
                 'value' => (double)$discount->amount,
                 'is_percentage' => $discount->isPercentage(),

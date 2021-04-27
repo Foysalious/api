@@ -81,16 +81,16 @@ class PaymentStrategy
      */
     private static function getRealOnlineMethod(Payable $payable)
     {
-//        /** @var PayableUser $user */
-//        $user = $payable->user;
-//
-//        if ($payable->isPaymentLink()) {
-//            return SslBuilder::shouldUseForPaymentLink($payable) ? self::SSL : self::PORT_WALLET;
-//        }
-//
-//        if ($user instanceof Customer) return self::SSL;
-//        else if ($user instanceof Partner) return self::PORT_WALLET;
-        return self::getDefaultOnlineMethod();
+        /** @var PayableUser $user */
+        $user = $payable->user;
+
+        if ($payable->isPaymentLink()) {
+            return SslBuilder::shouldUseForPaymentLink($payable) ? self::SSL : self::PORT_WALLET;
+        }
+
+        if ($user instanceof Customer) return self::SSL;
+        else if ($user instanceof Partner) return self::PORT_WALLET;
+
     }
 
     /**

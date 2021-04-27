@@ -87,8 +87,8 @@ class StatusUpdater
     public function updateStatus()
     {
         $this->previousStatus = $this->leave->status;
-        $left_leave_days = $this->calculateDays($this->status);
-        DB::transaction(function () use($left_leave_days){
+       DB::transaction(function () {
+            $left_leave_days = $this->calculateDays($this->status);
             $this->leaveRepository->update($this->leave, $this->withUpdateModificationField(['status' => $this->status, 'left_days' => $left_leave_days]));
             $this->makeLeaveRejectionData();
             $this->leaveRejectionRepository->create($this->leaveRejectionData);
