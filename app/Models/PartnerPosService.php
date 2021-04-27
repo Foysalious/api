@@ -49,8 +49,8 @@ class PartnerPosService extends BaseModel
         'partner_id' => ['type' => 'integer'],
         'pos_category_id' => ['type' => 'integer'],
         'name' => ['type' => 'text', 'analyzer' => 'standard'],
-        'description' => ['type' => 'text', 'analyzer' => 'standard'],
-        'publication_status' => ['type' => 'integer'],
+        'description' => ['type' => 'text', 'analyzer' => 'whitespace'],
+        'publication_status' => ['type' => 'whitespace'],
         'is_published_for_shop' => ['type' => 'integer'],
         'created_at' => ['type' => 'date', "format" => "yyyy-MM-dd HH:mm:ss"],
         'updated_at' => ['type' => 'date', "format" => "yyyy-MM-dd HH:mm:ss"]
