@@ -25,7 +25,7 @@ class EventsListenerProvider extends ServiceProvider
     public function boot(Dispatcher $events)
     {
         parent::boot($events);
-        $events->listen([PartnerPosServiceSaved::class, PartnerPosServiceCreated::class, PartnerPosServiceUpdated::class], PartnerPosServiceSavedListener::class);
+        $events->listen(PartnerPosServiceSaved::class, PartnerPosServiceSavedListener::class);
     }
 
 
