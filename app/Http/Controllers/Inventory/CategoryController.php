@@ -36,7 +36,7 @@ class CategoryController extends Controller
         $partner = $request->auth_user->getPartner();
         $modifier = $request->auth_user->getResource()->profile->name;
         $response = $this->categoryService->setModifier($modifier)->setPartner($partner->id)->setCategoryName($request->name)->setThumb($request->thumb)->store();
-        return http_response($request, null, 200, $response);
+        return http_response($request, null, 201, $response);
     }
 
     public function update(Request $request,$category_id)
