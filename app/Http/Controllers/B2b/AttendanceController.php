@@ -828,9 +828,13 @@ class AttendanceController extends Controller
 
     public function createUnpaidLeavePolicy(Request $request, PolicyRuleRequester $requester, PolicyRuleUpdater $updater)
     {
+        $this->validate($request, [
+            'rules' => 'required',
+            'policy_type' => 'required'
+        ]);
         $business = $request->business;
         if (!$business) return api_response($request, null, 403, ['message' => 'You Are not authorized to show this settings']);
-
+        $this->setModifier($request->manager_member);
         $requester->setBusiness($business)
             ->setPolicyType($request->policy_type)
             ->setRules($request->rules);
