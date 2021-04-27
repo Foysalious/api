@@ -15,6 +15,7 @@ use App\Http\Middleware\EncryptCookies;
 use App\Http\Middleware\ExternalPaymentLinkAuthMiddleware;
 use App\Http\Middleware\GeoAuthMiddleware;
 use App\Http\Middleware\JWT\ResourceAuthMiddleware;
+use App\Http\Middleware\JwtAccessTokenMiddleware;
 use App\Http\Middleware\JWTAuthentication;
 use App\Http\Middleware\JWTAuthMiddleware;
 use App\Http\Middleware\ManagerAuthMiddleware;
@@ -111,6 +112,7 @@ class Kernel extends HttpKernel
         'resource.jwt.auth' => ResourceAuthMiddleware::class,//1
         'paymentLink.auth' => PaymentLinkAuthMiddleware::class,//1
         'accessToken' => AccessTokenMiddleware::class,
-        'apiRequestLog' => ApiRequestMiddleware::class
+        'apiRequestLog' => ApiRequestMiddleware::class,
+        'jwtAccessToken' => JwtAccessTokenMiddleware::class,
     ];
 }
