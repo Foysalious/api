@@ -28,6 +28,7 @@ use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\BusinessOfficeHours\Contract as BusinessOfficeHoursRepoInterface;
 use Sheba\Dal\BusinessAttendanceTypes\Contract as BusinessAttendanceTypesRepoInterface;
 use Sheba\Dal\BusinessOffice\Contract as BusinessOfficeRepoInterface;
+use Sheba\Dal\OfficePolicy\Type;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
@@ -766,20 +767,24 @@ class AttendanceController extends Controller
         return api_response($request, null, 200, ['office_settings_attendance' => $data]);
     }
 
-    public function updateAttendanceOfficeSettings(Request $request, AttendaceSettingUpdater $updater)
+    public function updateAttendanceOfficeSettings(Request $request, AttendaceSettingUpdater $updater, PolicyRuleRequester $requester, PolicyRuleUpdater $policy_updater)
     {
-        $this->validate($request, [
-            'office_hour_type' => 'required',
-            'start_time' => 'date_format:H:i:s',
-            'end_time' => 'date_format:H:i:s|after:start_time',
-            'half_day' => 'required', 'half_day_config' => 'string',
-            'is_start_grace_period_allow" => "required',
-            'starting_grace_time" => "required_if:is_start_grace_period_allow,==,1',
-            'is_end_grace_period_allow" => "required',
-            'ending_grace_time" => "required_if:is_end_grace_period_allow,==,1',
-        ], [
+        $validation_data = [
+                'office_hour_type' => 'required',
+                'start_time' => 'date_format:H:i:s',
+                'end_time' => 'date_format:H:i:s|after:start_time',
+                'half_day' => 'required', 'half_day_config' => 'string',
+                'is_start_grace_period_allow" => "required',
+                'is_end_grace_period_allow" => "required',
+                'is_grace_policy_enable' => 'required',
+                'is_checkin_checkout_policy_enable' => 'required',
+            ];
+        if ($request->is_grace_policy_enable == 1) $data['grace_policy_rules'] = 'required';
+        if ($request->is_checkin_checkout_policy_enable == 1) $data['checkin_checkout_policy_rules'] = 'required';
+        $this->validate($request, $validation_data, [
             'end_time.after' => 'Start Time Must Be Less Than End Time'
         ]);
+
         $start_time = Carbon::parse($request->start_time)->format('H:i') . ':59';
         $end_time = Carbon::parse($request->end_time)->format('H:i') . ':59';
 
@@ -796,7 +801,24 @@ class AttendanceController extends Controller
             ->setHalfDayTimings($request)
             ->update();
 
-        if ($office_timing) return api_response($request, null, 200, ['msg' => "Update Successful"]);
+        if ($office_timing) {
+             $requester->setBusiness($request->business)
+                ->setIsEnable($request->is_grace_policy_enable)
+                ->setPolicyType(Type::GRACE_PERIOD)
+                ->setRules($request->grace_policy_rules);
+            $grace_policy = $policy_updater->setPolicyRuleRequester($requester)->update();
+        }
+
+        if ($grace_policy) {
+             $requester->setBusiness($request->business)
+                ->setIsEnable($request->is_checkin_checkout_policy_enable)
+                ->setPolicyType(Type::LATE_CHECKIN_EARLY_CHECKOUT)
+                ->setForLateCheckIn($request->for_checkin)
+                ->setForEarlyCheckOut($request->for_checkout)
+                ->setRules($request->checkin_checkout_policy_rules);
+            $checkin_checkout_policy = $policy_updater->setPolicyRuleRequester($requester)->update();
+        }
+        if ($checkin_checkout_policy) return api_response($request, null, 200, ['msg' => "Update Successful"]);
     }
 
     public function getGracePolicy(Request $request)
@@ -812,23 +834,10 @@ class AttendanceController extends Controller
         return api_response($request, $grace_policy_rules, 200, [ 'grace_policy_rules' => $grace_policy_rules]);
     }
 
-    public function createGracePolicy(Request $request, PolicyRuleRequester $requester, PolicyRuleUpdater $updater)
-    {
-        $business = $request->business;
-        if (!$business) return api_response($request, null, 403, ['message' => 'You Are not authorized to show this settings']);
-
-        $requester->setBusiness($business)
-            ->setPolicyType($request->policy_type)
-            ->setRules($request->rules);
-
-        $updater->setPolicyRuleRequester($requester)->update();
-
-        return api_response($request, null, 200);
-    }
-
     public function createUnpaidLeavePolicy(Request $request, PolicyRuleRequester $requester, PolicyRuleUpdater $updater)
     {
         $this->validate($request, [
+            'is_enable' => 'required',
             'rules' => 'required',
             'policy_type' => 'required'
         ]);
@@ -836,6 +845,7 @@ class AttendanceController extends Controller
         if (!$business) return api_response($request, null, 403, ['message' => 'You Are not authorized to show this settings']);
         $this->setModifier($request->manager_member);
         $requester->setBusiness($business)
+            ->setIsEnable($request->is_enable)
             ->setPolicyType($request->policy_type)
             ->setRules($request->rules);
 

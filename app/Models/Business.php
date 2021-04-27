@@ -395,4 +395,14 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
     {
         return $this->policy()->where('policy_type', Type::GRACE_PERIOD)->orderBy('from_days');
     }
+
+    public function unpaidLeavePolicy()
+    {
+        return $this->policy()->where('policy_type', Type::UNPAID_LEAVE)->orderBy('from_days');
+    }
+    public function checkinCheckoutPolicy()
+    {
+        return $this->policy()->where('policy_type', Type::LATE_CHECKIN_EARLY_CHECKOUT)->orderBy('from_days');
+    }
+
 }
