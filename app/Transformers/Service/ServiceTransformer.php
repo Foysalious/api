@@ -107,6 +107,7 @@ class ServiceTransformer extends TransformerAbstract
             'fixed_upsell_price' => $service->isFixed() && $this->locationService ? $this->upsellCalculation->getAllUpsellWithMinMaxQuantity() : null,
             'option_prices' => isset($prices) && $this->locationService ? $service->isOptions() ? $this->formatOptionWithPrice($prices) : null : null,
             'min_price' => $this->minMaxPrice->getMin(),
+            'max_price' => $this->minMaxPrice->getMax(),
             'discount' => isset($discount) && $discount ? [
                 'value' => (double)$discount->amount,
                 'is_percentage' => $discount->isPercentage(),
