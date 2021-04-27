@@ -48,6 +48,21 @@ class PartnerPosService extends BaseModel
         'updated_at' => ['type' => 'date', "format" => "yyyy-MM-dd HH:mm:ss"]
     ];
 
+    public function getIndexDocumentData(): array
+    {
+        return [
+            'id' => $this->id,
+            'partner_id' => $this->partner_id,
+            'pos_category_id' => $this->pos_category_id,
+            'name' => $this->name,
+            'description' => $this->description,
+            'publication_status' => +$this->publication_status,
+            'is_published_for_shop' => +$this->is_published_for_shop,
+            'created_at' => $this->created_at->toDateTimeString(),
+            'updated_at' => $this->updated_at->toDateTimeString(),
+        ];
+    }
+
     public function getIndexName(): string
     {
         return $this->getTable();
