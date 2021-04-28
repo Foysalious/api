@@ -145,7 +145,7 @@ class ServiceController extends Controller
         }
         if (isset($request->is_published_for_shop) && $request->is_published_for_shop == 1 && (!isset($request->weight) || !($request->weight_unit)))
         {
-            return api_response($request, null, 400, ['message' => 'Weight is not provided']);
+            return api_response($request, null, 400, ['message' => 'Weight or Weight Unit is not provided']);
         }
 
 
