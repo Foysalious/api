@@ -6,6 +6,7 @@ use App\Sheba\Business\Leave\Updater as LeaveUpdater;
 use Sheba\Business\ApprovalRequest\Creator as ApprovalRequestCreator;
 use Sheba\Business\ApprovalSetting\FindApprovalSettings;
 use Sheba\Business\ApprovalSetting\FindApprovers;
+use Sheba\Business\LeaveRejection\Requester as LeaveRejectionRequester;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use Sheba\Dal\ApprovalRequest\Status;
@@ -42,6 +43,8 @@ class UpdaterV2
      */
     private $remainingApprovers;
     private $requestableBusinessMember;
+    /** @var LeaveRejectionRequester $leaveRejectionRequester */
+    private $leaveRejectionRequester;
 
     /**
      * Updater constructor.
@@ -100,6 +103,12 @@ class UpdaterV2
         return $this;
     }
 
+    public function setLeaveRejectionRequester(LeaveRejectionRequester $leave_rejection_requester)
+    {
+        $this->leaveRejectionRequester = $leave_rejection_requester;
+        return $this;
+    }
+
     public function change()
     {
         $this->setModifier($this->member);
@@ -121,9 +130,14 @@ class UpdaterV2
                 $this->leaveUpdater->setLeave($leave)->setStatus(LeaveStatus::ACCEPTED)->setBusinessMember($this->businessMember)->updateStatus();
             }
         }
+
         if ($this->requestableType == ApprovalRequestType::LEAVE && $this->approvalRequest->status == Status::REJECTED) {
             $leave = $this->requestable;
-            $this->leaveUpdater->setLeave($leave)->setStatus(LeaveStatus::REJECTED)->setBusinessMember($this->businessMember)->updateStatus();
+            $this->leaveUpdater->setLeave($leave)
+                ->setStatus(LeaveStatus::REJECTED)
+                ->setBusinessMember($this->businessMember)
+                ->setLeaveRejectionRequester($this->leaveRejectionRequester)
+                ->updateStatus();
         }
     }
 }

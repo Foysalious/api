@@ -31,6 +31,7 @@ class GatewayFactory
         if ($this->gatewayName == Names::ROBI) return app(Robi::class);
         if ($this->gatewayName == Names::AIRTEL) return app(Airtel::class);
         if ($this->gatewayName == Names::PAYWELL) return app(Paywell::class);
+        if ($this->gatewayName == Names::BD_RECHARGE) return app(BdRecharge::class);
         else return app(Ssl::class);
     }
 
