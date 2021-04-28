@@ -209,7 +209,7 @@ class LeaveAdjustmentController extends Controller
 
             if ($halt_execution) {
                 $excel_data_format_errors = $leave_adjustment_excel_error->takeCompletedAction();
-                return api_response($request, null, 420, ['message' => 'Check The ExpenseExcel Properly', 'excel_errors' => $excel_data_format_errors]);
+                return api_response($request, null, 420, ['message' => 'Check The Excel Properly', 'excel_errors' => $excel_data_format_errors]);
             }
 
             $data->each(function ($value) use (

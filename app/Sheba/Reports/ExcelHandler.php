@@ -75,7 +75,7 @@ class ExcelHandler extends Handler
     }
 
     /**
-     * Set auto sizing option. (Wrapper on Maatwebsite\ExpenseExcel)
+     * Set auto sizing option. (Wrapper on Maatwebsite\Excel)
      *
      * @param bool $value
      * @return $this
@@ -87,7 +87,7 @@ class ExcelHandler extends Handler
     }
 
     /**
-     * Set column formatting options. (Wrapper on Maatwebsite\ExpenseExcel)
+     * Set column formatting options. (Wrapper on Maatwebsite\Excel)
      *
      * @param array $value Options to be set on different columns.
      * @return $this

@@ -64,7 +64,7 @@ return array(
         'description'    => 'Default spreadsheet export',
         'subject'        => 'Spreadsheet export',
         'keywords'       => 'maatwebsite, excel, export',
-        'category'       => 'ExpenseExcel',
+        'category'       => 'Excel',
         'manager'        => 'Maatwebsite',
         'company'        => 'Maatwebsite',
     ],
@@ -102,7 +102,7 @@ return array(
     | Creator
     |--------------------------------------------------------------------------
     |
-    | The default creator of a new ExpenseExcel file
+    | The default creator of a new Excel file
     |
     */
 
