@@ -42,7 +42,7 @@ class PartnerPosService extends BaseModel
         'pos_category_id' => ['type' => 'integer'],
         'name' => ['type' => 'text', 'analyzer' => 'pos_service_search_analyzer'],
         'description' => ['type' => 'text', 'analyzer' => 'pos_service_search_analyzer'],
-        'publication_status' => ['type' => 'integer'],
+        'stock' => ['type' => 'double'],
         'is_published_for_shop' => ['type' => 'integer'],
         'created_at' => ['type' => 'date', "format" => "yyyy-MM-dd HH:mm:ss"],
         'updated_at' => ['type' => 'date', "format" => "yyyy-MM-dd HH:mm:ss"]
@@ -56,7 +56,7 @@ class PartnerPosService extends BaseModel
             'pos_category_id' => $this->pos_category_id,
             'name' => $this->name,
             'description' => $this->description,
-            'publication_status' => +$this->publication_status,
+            'stock' => (double)$this->stock,
             'is_published_for_shop' => +$this->is_published_for_shop,
             'created_at' => $this->created_at->toDateTimeString(),
             'updated_at' => $this->updated_at->toDateTimeString(),
