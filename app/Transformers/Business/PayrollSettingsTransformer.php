@@ -117,7 +117,10 @@ class PayrollSettingsTransformer extends TransformerAbstract
     {
         $data = [];
         foreach ($addition_components as $addition) {
-            if (!$addition->is_default) $data['addition'][] = ['id' => $addition->id, 'name' => ucwords(implode(" ", explode("_",$addition->name))), 'is_default' => 0];
+            if (!$addition->is_default) {
+                $packages = $this->makeComponentsData($addition);
+                $data['addition'][] = ['id' => $addition->id, 'name' => $addition->value, 'is_default' => 0, 'package' => $packages];
+            }
             if ($addition->is_default) $data['addition'][] = ['id' => $addition->id, 'name' => Components::getComponents($addition->name)['value'], 'is_default' => 1];
         }
         return $data;
@@ -127,8 +130,47 @@ class PayrollSettingsTransformer extends TransformerAbstract
     {
         $data = [];
         foreach ($deduction_components as $deduction) {
-            if (!$deduction->is_default) $data['deduction'][] = ['id' => $deduction->id, 'name' => ucwords(implode(" ", explode("_",$deduction->name))), 'is_default' => 0];
+            if (!$deduction->is_default) {
+                $packages = $this->makeComponentsData($deduction);
+                $data['addition'][] = ['id' => $deduction->id, 'name' => $deduction->value, 'is_default' => 0, 'package' => $packages];
+            }
             if ($deduction->is_default) $data['deduction'][] = ['id' => $deduction->id, 'name' => Components::getComponents($deduction->name)['value'], 'is_default' => 1];
+        }
+        return $data;
+    }
+
+    private function makeComponentsData($component)
+    {
+        $component_packages = $component->componentPackages;
+        $data = [];
+        foreach ( $component_packages as $packages) {
+            $targets = $packages->packageTargets;
+            array_push($data , [
+                'package_key' => $packages->key,
+                'package_name' => $packages->name,
+                'is_active' => $packages->is_active,
+                'is_taxable' => $packages->is_taxable,
+                'calculation_type' => $packages->calculation_type,
+                'is_percentage' => $packages->is_percentage,
+                'on_what' => $packages->on_what,
+                'amount' => $packages->amount,
+                'schedule_type' => $packages->schedule_type,
+                'periodic_schedule' => $packages->periodic_schedule,
+                'schedule_date' => $packages->schedule_date,
+                'target' => $this->getTarget($targets)
+            ]);
+        }
+        return $data;
+    }
+
+    private function getTarget($targets)
+    {
+        $data = [];
+        foreach ($targets as $target){
+            array_push($data, [
+                'effective_for' => $target->effective_for,
+                'target_id' => $target->target_id
+            ]);
         }
         return $data;
     }
