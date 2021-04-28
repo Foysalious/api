@@ -121,7 +121,7 @@ class DataFormatValidator extends Validator
 
         if ($halt_top_up) {
             $top_up_excel_data_format_errors = $this->excelDataFormatError->takeCompletedAction();
-            throw new InvalidTopupData($top_up_excel_data_format_errors, 'Check The ExpenseExcel Data Format Properly.', 420);
+            throw new InvalidTopupData($top_up_excel_data_format_errors, 'Check The Excel Data Format Properly.', 420);
         }
 
         $this->bulkExcelCdnFilePath = $this->excel->saveTopupFileToCDN();
