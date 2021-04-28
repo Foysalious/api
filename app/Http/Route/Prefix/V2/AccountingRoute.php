@@ -11,6 +11,9 @@ class AccountingRoute
             $api->get('/account-types', 'Accounting\\AccountController@getAccountTypeList');
             $api->get('/accounts', 'Accounting\\AccountController@getAccountList');
             $api->get('/cash-accounts', 'Accounting\\AccountController@getCashAccountList');
+            $api->post('/accounts', 'Accounting\\AccountController@createAccount');
+            $api->put('/accounts/{id}', 'Accounting\\AccountController@updateAccount');
+            $api->delete('/accounts/{id}', 'Accounting\\AccountController@deleteAccount');
             $api->group(['prefix' => 'due-tracker'], function ($api) {
                 $api->post('/{customer_id}', 'Accounting\\DueTrackerController@store');
                 $api->post('update/{customer_id}', 'Accounting\\DueTrackerController@update');
