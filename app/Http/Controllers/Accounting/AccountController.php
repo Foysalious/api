@@ -97,7 +97,6 @@ class AccountController extends Controller
 
     public function updateAccount($accountId, Request $request)
     {
-
         try {
             $this->validate(
                 $request,
@@ -129,7 +128,12 @@ class AccountController extends Controller
     {
         try {
             $response = $this->accountRepo->deleteAccount($accountId, $request->partner->id);
-            return api_response($request, $response, 200, ['data' => $response]);
+            return response()->json(
+                [
+                    "code" => 200,
+                    "message" => $response
+                ]
+            );
         } catch (Exception $e) {
             return api_response(
                 $request,
