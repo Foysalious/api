@@ -156,7 +156,7 @@ class UserAccountRepository extends BaseRepository
         try {
             $payload = $this->makeData();
             return $this->client->setUserType($userType)->setUserId($userId)
-                ->put($this->api . $accountId . '/', $payload);
+                ->put($this->api . $accountId, $payload);
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
@@ -166,7 +166,7 @@ class UserAccountRepository extends BaseRepository
     {
         try {
             return $this->client->setUserType($userType)->setUserId($userId)
-                ->delete($this->api . $accountId . '/');
+                ->delete($this->api . $accountId);
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
