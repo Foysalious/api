@@ -163,7 +163,7 @@ class VendorController extends Controller
             });
             if ($halt_top_up) {
                 $excel_data_format_errors = $bulk_upload_excel_error->takeCompletedAction();
-                return api_response($request, null, 420, ['message' => 'Check The Excel Properly', 'excel_errors' => $excel_data_format_errors]);
+                return api_response($request, null, 420, ['message' => 'Check The ExpenseExcel Properly', 'excel_errors' => $excel_data_format_errors]);
             }
 
             $data->each(function ($value) use (
