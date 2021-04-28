@@ -51,6 +51,7 @@ class AccountingRepository extends BaseRepository
         $data['credit_account_key'] = $request->to_account_key;
         $data['customer_id']        = $request->customer_id;
         $data['customer_name']      = $request->customer_name;
+        $data['inventory_products']  = $request->inventory_products;
         $data['entry_at']           = $request->date ?: Carbon::now()->format('Y-m-d H:i:s');
         $data['attachments']        = $this->uploadAttachments($request);
         return $data;
