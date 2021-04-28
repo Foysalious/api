@@ -153,7 +153,6 @@ class EmployeeController extends Controller
         $data = [
             'id' => $member->id,
             'business_id' => $business->id,
-            'is_sheba_platform' => in_array($business->id, [110, 1416, 1274] ) ? 1 : 0,
             'notification_count' => $member->notifications()->unSeen()->count(),
             'attendance' => [
                 'can_checkin' => !$attendance ? 1 : ($attendance->canTakeThisAction(Actions::CHECKIN) ? 1 : 0),
