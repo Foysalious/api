@@ -1,21 +1,28 @@
 <?php namespace App\Transformers\Business;
 
-use App\Sheba\Business\PayrollComponent\Components\GrossSalaryBreakdownCalculate;
+use App\Models\BusinessMember;
 use Sheba\Dal\PayrollComponent\Components;
 use Sheba\Dal\PayrollComponent\Type;
 use Sheba\Dal\PayrollSetting\PayrollSetting;
 use Sheba\Dal\PayrollSetting\PayDayType;
 use League\Fractal\TransformerAbstract;
+use Sheba\Dal\PayrollComponentPackage\TargetType;
+use Sheba\Repositories\Interfaces\Business\DepartmentRepositoryInterface;
 
 class PayrollSettingsTransformer extends TransformerAbstract
 {
     private $payrollComponentData = [];
     private $payScheduleData;
     private $totalGrossPercentage = 0;
+    /** @var BusinessMember */
+    private $businessMember;
+    private $department;
 
     public function __construct()
     {
         $this->payScheduleData = [];
+        $this->businessMember = app(BusinessMember::class);
+        $this->department = app(DepartmentRepositoryInterface::class);
     }
 
     /**
@@ -99,14 +106,14 @@ class PayrollSettingsTransformer extends TransformerAbstract
      */
     private function payrollSettingCompletion()
     {
-        $total = ( $this->totalGrossPercentage / 2 ) + $this->payScheduleData['pay_schedule_completion'];
+        $total = ($this->totalGrossPercentage / 2) + $this->payScheduleData['pay_schedule_completion'];
         return round($total, 0);
     }
 
     private function payComponents($payroll_setting)
     {
-        $addition_components = $payroll_setting->components->where('type',Type::ADDITION)->sortBy('name');
-        $deduction_components = $payroll_setting->components->where('type',Type::DEDUCTION)->sortBy('name');
+        $addition_components = $payroll_setting->components->where('type', Type::ADDITION)->sortBy('name');
+        $deduction_components = $payroll_setting->components->where('type', Type::DEDUCTION)->sortBy('name');
         $addition = $this->getAdditionComponents($addition_components);
         $deduction = $this->getDeductionComponents($deduction_components);
 
@@ -143,15 +150,16 @@ class PayrollSettingsTransformer extends TransformerAbstract
     {
         $component_packages = $component->componentPackages;
         $data = [];
-        foreach ( $component_packages as $packages) {
+        foreach ($component_packages as $packages) {
             $targets = $packages->packageTargets;
-            array_push($data , [
+            array_push($data, [
+                'id' => $packages->id,
                 'package_key' => $packages->key,
                 'package_name' => $packages->name,
                 'is_active' => $packages->is_active,
                 'is_taxable' => $packages->is_taxable,
                 'calculation_type' => $packages->calculation_type,
-                'is_percentage' => $packages->is_percentage,
+                'is_percentage' => (float)$packages->is_percentage,
                 'on_what' => $packages->on_what,
                 'amount' => $packages->amount,
                 'schedule_type' => $packages->schedule_type,
@@ -166,12 +174,23 @@ class PayrollSettingsTransformer extends TransformerAbstract
     private function getTarget($targets)
     {
         $data = [];
-        foreach ($targets as $target){
-            array_push($data, [
-                'effective_for' => $target->effective_for,
-                'target_id' => $target->target_id
-            ]);
+        foreach ($targets as $target) {
+            $data['effective_for'] = $target->effective_for;
+            if ($target->effective_for == TargetType::GENERAL) continue;
+            $data['selected'][] = [
+                'target_id' => $target->target_id,
+                'name' => $this->getTargetDetails($target->effective_for, $target->target_id)['name']
+            ];
         }
         return $data;
+    }
+
+    private function getTargetDetails($type, $target_id)
+    {
+        if ($type == TargetType::EMPLOYEE) $target =  $this->businessMember->find($target_id)->profile();
+        if($type == TargetType::DEPARTMENT) $target = $this->department->find($target_id);
+        return [
+            'name' => $target->name
+        ];
     }
 }
