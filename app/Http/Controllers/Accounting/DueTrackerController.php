@@ -3,6 +3,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Sheba\AccountingEntry\Repository\DueTrackerRepository;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\ModificationFields;
@@ -22,7 +23,7 @@ class DueTrackerController extends Controller
     /**
      * @param Request $request
      * @param $customer_id
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function store(Request $request, $customer_id ) {
         try {
@@ -43,7 +44,7 @@ class DueTrackerController extends Controller
     /**
      * @param Request $request
      * @param $customer_id
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function update(Request $request, $customer_id ) {
         try {
@@ -59,6 +60,24 @@ class DueTrackerController extends Controller
             return api_response($request, $response, 200, ['data' => $response]);
         } catch (AccountingEntryServerError $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @param $customer_id
+     * @return JsonResponse
+     */
+    public function delete(Request $request, $customer_id)
+    {
+        try {
+            $this->dueTrackerRepo->setPartner($request->partner)->setEntryId($request->entry_id)->deleteEntry();
+            return api_response($request, null, 200, ['data' => "Entry delete successful"]);
+        } catch (AccountingEntryServerError $e) {
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
         }
     }
 }
