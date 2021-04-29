@@ -64,14 +64,15 @@ class RechargeComplete extends PaymentComplete
                                              ->where('status', 'Published')
                                              ->first();
 
-        if ($payment_gateway && $payment_gateway->cash_in_charge > 0) {
+        if($payment_gateway && $payment_gateway->cash_in_charge > 0){
+            $amount = (double)( ($payment_gateway->cash_in_charge * $this->payment->payable->amount) / 100);
             (new WalletTransactionHandler())->setModel($user)
-                                            ->setAmount((double)(($payment_gateway->cash_in_charge * $this->payment->payable->amount) / 100))
-                                            ->setType(Types::debit())
-                                            ->setLog('Credit Purchase Gateway Charge')
-                                            ->setTransactionDetails($this->payment->getShebaTransaction()->toArray())
-                                            ->setSource($this->payment->paymentDetails->last()->method)
-                                            ->store();
+                ->setAmount($amount)
+                ->setType(Types::debit())
+                ->setLog($amount . ' BDT has been deducted as a gateway charge for SHEBA credit recharge')
+                ->setTransactionDetails($this->payment->getShebaTransaction()->toArray())
+                ->setSource($this->payment->paymentDetails->last()->method)
+                ->store();
         }
     }
 
