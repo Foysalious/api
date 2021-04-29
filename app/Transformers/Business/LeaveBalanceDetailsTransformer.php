@@ -111,7 +111,7 @@ class LeaveBalanceDetailsTransformer extends TransformerAbstract
 
             array_push($all_leaves, [
                 'id' => $leave->id,
-                'date' => $leave->created_at->format('d/m/Y'),
+                'date' => ($leave->start_date->format('M d, Y') == $leave->end_date->format('M d, Y')) ? $leave->start_date->format('M d') : $leave->start_date->format('M d') . ' - ' . $leave->end_date->format('M d'),
                 'leave_type' => $leave->leaveType->title,
                 'leave_days' => (double)$leave->total_days,
                 'status' => LeaveStatusPresenter::statuses()[$leave->status],
