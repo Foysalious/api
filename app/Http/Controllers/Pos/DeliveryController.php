@@ -16,7 +16,7 @@ class DeliveryController extends Controller
     {
         try {
             $vendor_list = [];
-            $all_vendor_list = config('weight.weight_unit');
+            $all_vendor_list = config('pos_delivery.vendor_list');
             foreach ($all_vendor_list as $key => $list) {
                 array_push($vendor_list, $list);
             }
