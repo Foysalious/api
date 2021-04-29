@@ -9,6 +9,28 @@ use Sheba\RequestIdentification;
 
 class DueTrackerRepository extends BaseRepository
 {
+    private $entry_id, $partner;
+
+    /**
+     * @param $entry_id
+     * @return $this
+     */
+    public function setEntryId($entry_id)
+    {
+        $this->entry_id = $entry_id;
+        return $this;
+    }
+
+    /**
+     * @param $partner
+     * @return $this
+     */
+    public function setPartner($partner)
+    {
+        $this->partner = $partner;
+        return $this;
+    }
+
     public function storeEntry(Request $request, $type, $with_update = false) {
         $this->getCustomer($request);
         $this->setModifier($request->partner);
@@ -34,5 +56,19 @@ class DueTrackerRepository extends BaseRepository
         $data['entry_at']           = $request->date ?: Carbon::now()->format('Y-m-d H:i:s');
         $data['attachments']        = $this->uploadAttachments($request);
         return $data;
+    }
+
+    /**
+     * @return mixed
+     * @throws AccountingEntryServerError
+     */
+    public function deleteEntry()
+    {
+        try {
+            $url = "api/entries/".$this->entry_id;
+            return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->delete($url);
+        } catch (AccountingEntryServerError $e) {
+            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+        }
     }
 }

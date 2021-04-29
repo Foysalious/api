@@ -69,7 +69,7 @@ class AccountingEntryClient
      * @param      $uri
      * @param null $data
      * @return mixed
-     * @throws AccountingEntryServerError|GuzzleException
+     * @throws AccountingEntryServerError
      */
     public function call($method, $uri, $data = null)
     {
