@@ -42,10 +42,11 @@ class IncomeExpenseController extends Controller
                 'amount' => 'required|numeric',
                 'from_account_key' => 'required',
                 'to_account_key' => 'required',
-                'date' => 'required|date_format:Y-m-d',
+                'date' => 'required|date_format:Y-m-d H:i:s',
                 'amount_cleared' => 'sometimes|required|numeric',
                 'customer_id' => 'required_with:amount_cleared'
             ]);
+//            $product = collect(json_decode($request->inventory_products, true))->toArray();
             $response = $this->accountingRepo->storeEntry($request, EntryTypes::EXPENSE);
             return api_response($request, $response, 200, ['data' => $response]);
         } catch (AccountingEntryServerError $e) {
