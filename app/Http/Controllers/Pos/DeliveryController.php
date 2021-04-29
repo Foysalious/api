@@ -9,6 +9,7 @@ class DeliveryController extends Controller
     public function getInfoForRegistration(Request $request)
     {
 
+
     }
 
     public function getVendorList(Request $request)

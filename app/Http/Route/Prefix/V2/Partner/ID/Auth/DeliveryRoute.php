@@ -5,7 +5,7 @@ class DeliveryRoute
     public function set($api)
     {
         $api->group(['prefix' => 'delivery'], function ($api) {
-            $api->get('/get-registration-info', 'Pos\\DeliveryController@getInfoForRegistration');
+            $api->get('registration', 'Pos\\DeliveryController@getInfoForRegistration');
         });
     }
 }
