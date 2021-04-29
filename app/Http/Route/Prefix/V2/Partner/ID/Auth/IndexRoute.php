@@ -6,7 +6,7 @@ class IndexRoute
 {
     public function set($api)
     {
-        $api->group(['prefix' => '{partner}'/*, 'middleware' => ['manager.auth']*/], function ($api) {
+        $api->group(['prefix' => '{partner}', 'middleware' => ['manager.auth']], function ($api) {
             $api->get('dashboard', 'Partner\DashboardController@get');
             $api->get('webstore-dashboard', 'Partner\Webstore\WebstoreDashboardController@getDashboard');
             $api->get('home-setting', 'Partner\DashboardController@getHomeSetting');
