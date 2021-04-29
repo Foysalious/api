@@ -289,14 +289,16 @@ class ShebaController extends Controller
             ->where('status', 'Published')
             ->get();
 
-        $payments = array_map(function (PaymentMethodDetails $details) use ($dbGateways){
-            return (new PresentableDTOPresenter($details, $dbGateways))->mergeWithDbGateways();
+        $payments = array_map(function (PaymentMethodDetails $details) use ($dbGateways, $user_type){
+            return (new PresentableDTOPresenter($details, $dbGateways))->mergeWithDbGateways($user_type);
         }, AvailableMethods::getDetails($request->payable_type, $request->payable_type_id, $version_code, $platform_name, $user_type));
 
-        $payments = collect($payments)->sortBy('cash_in_charge')->toArray();
+        if ($user_type == 'partner') {
+            $payments = array_values(collect($payments)->sortBy('cash_in_charge')->toArray());
+        }
 
         return api_response($request, $payments, 200, [
-            'payments' => array_values($payments),
+            'payments' => $payments,
             'discount_message' => 'Pay online and stay relaxed!!!'
         ]);
     }
