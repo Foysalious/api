@@ -7,12 +7,11 @@ use Sheba\ModificationFields;
 use Throwable;
 
 
-
 class DeliveryController extends Controller
 {
     use ModificationFields;
 
-    public function getInfoForRegistration(Request $request,$partner, DeliveryService $delivery_service)
+    public function getInfoForRegistration(Request $request, $partner, DeliveryService $delivery_service)
     {
         $partner = $request->partner;
         $this->setModifier($request->manager_resource);
@@ -28,11 +27,20 @@ class DeliveryController extends Controller
             foreach ($all_vendor_list as $key => $list) {
                 array_push($vendor_list, $list);
             }
-            return api_response($request,$vendor_list,200,['vendor_list' => $vendor_list]);
+            return api_response($request, $vendor_list, 200, ['vendor_list' => $vendor_list]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function getOrderInformation(Request $request, $partner, DeliveryService $delivery_service,$order_id)
+    {
+        $partner = $request->partner;
+        $this->setModifier($request->manager_resource);
+        $order_information = $delivery_service->setPartner($partner)->getOrderInfo($order_id);
+        return api_response($request, null, 200, ['order_information' => $order_information]);
+
     }
 
 }
