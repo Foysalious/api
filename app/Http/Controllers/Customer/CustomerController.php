@@ -199,24 +199,18 @@ class CustomerController extends Controller
      */
     public function getProfileCompletion($customer, Request $request): JsonResponse
     {
-        $customer = $request->customer;
-        $decision = false;
+        $reward_action = RewardAction::where('event_name', 'profile_complete')->latest('id')->first();
+        $reward = Reward::where('detail_id', $reward_action->id)->select('rewards.*')->get();
 
         $data = [];
-        $data['is_completed'] = $customer->is_completed;
-        if ($data['is_completed'] == 1) $data['reward_active'] = 0;
+        $data['is_completed'] = $request->customer->is_completed;
+        $data['reward_active'] = 0;
+        $data['not_complete_profile'] = "https://cdn-marketplacedev.s3.ap-south-1.amazonaws.com/sheba_xyz/images/png/sheba-credit-banner.png";
 
-        $reward_action = RewardAction::where('event_name', 'profile_complete')->latest('id')->first();
-        if ($reward_action) {
-            $reward = Reward::where('detail_id', $reward_action->id)->select('rewards.*')->get();
-            $decision = (($reward[0]->start_time <= Carbon::now()) && ($reward[0]->end_time >= Carbon::now()));
-        }
+        $decision = count($reward) > 1 ? (($reward[0]->start_time <= Carbon::now()) && ($reward[0]->end_time >= Carbon::now())) : null;
+        if ($decision && $data['is_completed'] == 0)  $data['reward_active'] = 1;
 
-        if ($decision && $data['is_completed'] == 0) {
-            $data['reward_active'] = 1;
-            $data['not_complete_profile'] = "https://cdn-marketplacedev.s3.ap-south-1.amazonaws.com/sheba_xyz/images/png/sheba-credit-banner.png";
-        }
+        return api_response($request, $data, 200, ['data' => $data]);
 
-        return api_response($request, null, 200, ['data' => $data]);
     }
 }
