@@ -1,28 +1,21 @@
 <?php namespace App\Transformers\Business;
 
-use App\Models\BusinessMember;
+use App\Sheba\Business\ComponentPackage\Formatter;
 use Sheba\Dal\PayrollComponent\Components;
 use Sheba\Dal\PayrollComponent\Type;
 use Sheba\Dal\PayrollSetting\PayrollSetting;
 use Sheba\Dal\PayrollSetting\PayDayType;
 use League\Fractal\TransformerAbstract;
-use Sheba\Dal\PayrollComponentPackage\TargetType;
-use Sheba\Repositories\Interfaces\Business\DepartmentRepositoryInterface;
 
 class PayrollSettingsTransformer extends TransformerAbstract
 {
     private $payrollComponentData = [];
     private $payScheduleData;
     private $totalGrossPercentage = 0;
-    /** @var BusinessMember */
-    private $businessMember;
-    private $department;
 
     public function __construct()
     {
         $this->payScheduleData = [];
-        $this->businessMember = app(BusinessMember::class);
-        $this->department = app(DepartmentRepositoryInterface::class);
     }
 
     /**
@@ -125,10 +118,11 @@ class PayrollSettingsTransformer extends TransformerAbstract
         $data = [];
         foreach ($addition_components as $addition) {
             if (!$addition->is_default) {
-                $packages = $this->makeComponentsData($addition);
-                $data['addition'][] = ['id' => $addition->id, 'name' => $addition->value, 'is_default' => 0, 'package' => $packages];
+                $package_formatter = new Formatter();
+                $packages = $package_formatter->makePackageData($addition);
+                $data['addition'][] = ['id' => $addition->id, 'key' =>$addition->name,  'value' => $addition->value, 'is_default' => 0, 'package' => $packages];
             }
-            if ($addition->is_default) $data['addition'][] = ['id' => $addition->id, 'name' => Components::getComponents($addition->name)['value'], 'is_default' => 1];
+            if ($addition->is_default) $data['addition'][] = ['id' => $addition->id, 'key' =>$addition->name, 'value' => Components::getComponents($addition->name)['value'], 'is_default' => 1];
         }
         return $data;
     }
@@ -138,59 +132,12 @@ class PayrollSettingsTransformer extends TransformerAbstract
         $data = [];
         foreach ($deduction_components as $deduction) {
             if (!$deduction->is_default) {
-                $packages = $this->makeComponentsData($deduction);
-                $data['addition'][] = ['id' => $deduction->id, 'name' => $deduction->value, 'is_default' => 0, 'package' => $packages];
+                $package_formatter = new Formatter();
+                $packages = $package_formatter->makePackageData($deduction);
+                $data['addition'][] = ['id' => $deduction->id, 'key' =>$deduction->name,  'value' => $deduction->value, 'is_default' => 0, 'package' => $packages];
             }
-            if ($deduction->is_default) $data['deduction'][] = ['id' => $deduction->id, 'name' => Components::getComponents($deduction->name)['value'], 'is_default' => 1];
+            if ($deduction->is_default) $data['deduction'][] = ['id' => $deduction->id, 'key' =>$deduction->name, 'value' => Components::getComponents($deduction->name)['value'], 'is_default' => 1];
         }
         return $data;
-    }
-
-    private function makeComponentsData($component)
-    {
-        $component_packages = $component->componentPackages;
-        $data = [];
-        foreach ($component_packages as $packages) {
-            $targets = $packages->packageTargets;
-            array_push($data, [
-                'id' => $packages->id,
-                'package_key' => $packages->key,
-                'package_name' => $packages->name,
-                'is_active' => $packages->is_active,
-                'is_taxable' => $packages->is_taxable,
-                'calculation_type' => $packages->calculation_type,
-                'is_percentage' => (float)$packages->is_percentage,
-                'on_what' => $packages->on_what,
-                'amount' => $packages->amount,
-                'schedule_type' => $packages->schedule_type,
-                'periodic_schedule' => $packages->periodic_schedule,
-                'schedule_date' => $packages->schedule_date,
-                'target' => $this->getTarget($targets)
-            ]);
-        }
-        return $data;
-    }
-
-    private function getTarget($targets)
-    {
-        $data = [];
-        foreach ($targets as $target) {
-            $data['effective_for'] = $target->effective_for;
-            if ($target->effective_for == TargetType::GENERAL) continue;
-            $data['selected'][] = [
-                'target_id' => $target->target_id,
-                'name' => $this->getTargetDetails($target->effective_for, $target->target_id)['name']
-            ];
-        }
-        return $data;
-    }
-
-    private function getTargetDetails($type, $target_id)
-    {
-        if ($type == TargetType::EMPLOYEE) $target =  $this->businessMember->find($target_id)->profile();
-        if($type == TargetType::DEPARTMENT) $target = $this->department->find($target_id);
-        return [
-            'name' => $target->name
-        ];
     }
 }
