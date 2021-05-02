@@ -173,18 +173,7 @@ class DeliveryService
             ]
         ];
         return json_encode($data);
-//        return '{
-//        "weight": "2.5",
-//    "cod_amount": 5000,
-//    "pick_up":{
-//            "thana": "Mohammadpur",
-//        "district":"Manikganj"
-//    },
-//    "delivery":{
-//            "thana": "Khilgaon",
-//        "district":"Dhaka"
-//    }
-//}';
+
     }
 
 
@@ -206,10 +195,16 @@ class DeliveryService
         $data = $this->makeDataDeliveryCharge();
 
         $client = new \GuzzleHttp\Client();
-dd($data);
+
+
         return $client->post('https://dev-sdp-api.padmatechnology.com/api/v1/s-delivery/price-check', $data);
 //        return $this->client->post('', $data);
 
+    }
+
+    public function districts(){
+//        $client = new \GuzzleHttp\Client();
+        return $this->client->get('https://private-anon-65fef00aea-shebadeliveryapi.apiary-mock.com/api/v1/s-delivery/districts');
     }
 
 }

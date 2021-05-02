@@ -76,4 +76,12 @@ class DeliveryController extends Controller
 
     }
 
+    public function districts(Request $request, $partner, DeliveryService $delivery_service)
+    {
+        $partner= $request->partner;
+        $this->setModifier($request->manager_resource);
+        $district = $delivery_service->setPartner($partner)->districts();
+        return api_response($request, null, 200, ['info' => $district]);
+    }
+
 }
