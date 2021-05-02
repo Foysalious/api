@@ -29,6 +29,35 @@ class DeliveryService
         $this->data = $data;
         return $this;
     }
+    public function setWeight($weight)
+    {
+        $this->$weight = $weight;
+        return $this;
+    }
+
+    public function setcashOnDelivery($cashOnDelivery){
+        $this->$cashOnDelivery = $cashOnDelivery;
+        return $this;
+    }
+
+    public function setpickupThana($pickupThana){
+        $this->$pickupThana = $pickupThana;
+        return $this;
+    }
+
+    public function setpickupDistrict($pickupDistrict){
+        $this->$pickupDistrict = $pickupDistrict;
+        return $this;
+    }
+
+    public function setDeliveryThana($deliveryThana){
+        $this->$deliveryThana = $deliveryThana;
+        return $this;
+    }
+    public function setDeliveryDistrict($deliveryDistrict){
+        $this->$deliveryDistrict = $deliveryDistrict;
+        return $this;
+    }
 
     /**
      * @return mixed

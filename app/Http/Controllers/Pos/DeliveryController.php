@@ -68,6 +68,7 @@ class DeliveryController extends Controller
         $partner= $request->partner;
         $this->setModifier($request->manager_resource);
 
+
         $charge= $delivery_service->setPartner($partner)->setData($request->all())->deliveryCharge();
 
         return api_response($request, null, 200, ['info' => $charge]);
