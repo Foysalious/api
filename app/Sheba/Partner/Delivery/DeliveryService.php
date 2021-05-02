@@ -5,20 +5,27 @@ use App\Exceptions\DoNotReportException;
 use App\Http\Requests\Request;
 use App\Models\Partner;
 use App\Models\PosOrder;
+use Throwable;
 
 class DeliveryService
 {
     private $partner;
 
 
-    public function __construct()
+    public function __construct(DeliveryServerClient $client)
     {
-
+        $this->client = $client;
     }
 
     public function setPartner(Partner $partner)
     {
         $this->partner = $partner;
+        return $this;
+    }
+
+    public function setData($data)
+    {
+        $this->data = $data;
         return $this;
     }
 
@@ -43,8 +50,8 @@ class DeliveryService
         return [
             'mobile_banking_providers' => config('pos_delivery.mobile_banking_providers'),
             'merchant_name' => $this->partner->name,
-            'contact_person' => $this->partner->getContactPerson(),
-            'mobile' => $this->partner->getContactNumber(),
+            'contact_name' => $this->partner->getContactPerson(),
+            'contact_number' => $this->partner->getContactNumber(),
             'email' => $this->partner->getContactEmail(),
             'business_type' => $this->partner->business_type,
             'address' => [
@@ -87,6 +94,27 @@ class DeliveryService
 
             ]
         ];
+    }
+
+    public function makeData()
+    {
+        return [
+            'name' => $this->name,
+            ''
+
+        ];
+    }
+
+    public function register()
+    {
+        try{
+            $data = $this->makeData();
+            return $this->client->post('',$data);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return false;
+        }
+
     }
 
 
