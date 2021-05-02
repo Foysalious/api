@@ -115,6 +115,10 @@ class DeliveryService
         ];
     }
 
+    public function makeDataDeliveryCharge(){
+
+    }
+
     public function register()
     {
         try{

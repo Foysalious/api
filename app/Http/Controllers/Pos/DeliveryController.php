@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\Pos;
 
 use App\Http\Controllers\Controller;
+use App\Models\Partner;
 use App\Models\PosOrder;
 use App\Sheba\Partner\Delivery\DeliveryService;
 use Illuminate\Http\Request;
@@ -22,7 +23,7 @@ class DeliveryController extends Controller
 
     public function register(Request $request, $partner, DeliveryService $delivery_service)
     {
-        $this->validate($request,[
+        $this->validate($request, [
             'name' => 'required',
             'address' => 'required',
             'district' => 'required',
@@ -38,13 +39,24 @@ class DeliveryController extends Controller
         $delivery_service->setPartner($partner)->setData($request->all())->register();
     }
 
-    public function getVendorList(Request $request,DeliveryService $delivery_service)
+    public function deliveryCharge(Request $request, $partner, DeliveryService $delivery_service)
     {
-        $vendor= $delivery_service->vendorlist();
+        $this->validate($request, [
+            'weight' => 'required'
+        ]);
+
+        $partner= $request->partner;
+        $this->setModifier($request->manager_resource);
+        $delivery_service->setPartner($partner)->setData($request->all())->register();
+    }
+
+    public function getVendorList(Request $request, DeliveryService $delivery_service)
+    {
+        $vendor = $delivery_service->vendorlist();
         return api_response($request, null, 200, ['delivery_vendor' => $vendor]);
     }
 
-    public function getOrderInformation(Request $request, $partner,$order_id ,DeliveryService $delivery_service)
+    public function getOrderInformation(Request $request, $partner, $order_id, DeliveryService $delivery_service)
     {
 
         $partner = $request->partner;
