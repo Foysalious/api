@@ -69,7 +69,8 @@ class DeliveryController extends Controller
         $this->setModifier($request->manager_resource);
 
 
-        $charge= $delivery_service->setPartner($partner)->setData($request->all())->deliveryCharge();
+        $charge= $delivery_service->setPartner($partner)->setWeight($request->weight)->setcashOnDelivery($request->cod_amount)->setpickupThana($request->pickupThana)
+            ->setpickupDistrict($request->pickupDistrict)->setDeliveryDistrict($request->deliveryDistrict)->setDeliveryThana($request->deliveryThana)->deliveryCharge();
 
         return api_response($request, null, 200, ['info' => $charge]);
 

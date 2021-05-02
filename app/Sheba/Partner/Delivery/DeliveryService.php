@@ -11,6 +11,12 @@ use Throwable;
 class DeliveryService
 {
     private $partner;
+    private $cashOnDelivery;
+    private $weight;
+    private $pickupThana;
+    private $pickupDistrict;
+    private $deliveryThana;
+    private $deliveryDistrict;
 
 
     public function __construct(DeliveryServerClient $client)
@@ -29,33 +35,40 @@ class DeliveryService
         $this->data = $data;
         return $this;
     }
+
     public function setWeight($weight)
     {
-        $this->$weight = $weight;
+        $this->weight = $weight;
         return $this;
     }
 
-    public function setcashOnDelivery($cashOnDelivery){
-        $this->$cashOnDelivery = $cashOnDelivery;
+    public function setcashOnDelivery($cashOnDelivery)
+    {
+        $this->cashOnDelivery = $cashOnDelivery;
         return $this;
     }
 
-    public function setpickupThana($pickupThana){
-        $this->$pickupThana = $pickupThana;
+    public function setpickupThana($pickupThana)
+    {
+        $this->pickupThana = $pickupThana;
         return $this;
     }
 
-    public function setpickupDistrict($pickupDistrict){
-        $this->$pickupDistrict = $pickupDistrict;
+    public function setpickupDistrict($pickupDistrict)
+    {
+        $this->pickupDistrict = $pickupDistrict;
         return $this;
     }
 
-    public function setDeliveryThana($deliveryThana){
-        $this->$deliveryThana = $deliveryThana;
+    public function setDeliveryThana($deliveryThana)
+    {
+        $this->deliveryThana = $deliveryThana;
         return $this;
     }
-    public function setDeliveryDistrict($deliveryDistrict){
-        $this->$deliveryDistrict = $deliveryDistrict;
+
+    public function setDeliveryDistrict($deliveryDistrict)
+    {
+        $this->deliveryDistrict = $deliveryDistrict;
         return $this;
     }
 
@@ -146,18 +159,32 @@ class DeliveryService
 
     public function makeDataDeliveryCharge()
     {
-        return [
+        $data= [
+
             'weight' => $this->weight,
-            'cod_amount' => $this->cod_amount,
+            'cod_amount' => $this->cashOnDelivery,
             'pick_up' => [
-                'thana' => $this->thana,
-                'district' => $this->district,
+                'thana' => $this->pickupThana ,
+                'district' => $this->pickupDistrict,
             ],
             'delivery' => [
-                'thana' => $this->thana,
-                'district' => $this->district,
+                'thana' => $this->deliveryThana,
+                'district' => $this->deliveryDistrict,
             ]
         ];
+        return json_encode($data);
+//        return '{
+//        "weight": "2.5",
+//    "cod_amount": 5000,
+//    "pick_up":{
+//            "thana": "Mohammadpur",
+//        "district":"Manikganj"
+//    },
+//    "delivery":{
+//            "thana": "Khilgaon",
+//        "district":"Dhaka"
+//    }
+//}';
     }
 
 
@@ -176,19 +203,12 @@ class DeliveryService
     public function deliveryCharge()
     {
 
-        $data = '{
-        "weight": "2.5",
-            "cod_amount": 5000,
-            "pick_up":{
-                    "thana": "Mohammadpur",
-                "district":"Manikganj"
-            },
-            "delivery":{
-                    "thana": "Khilgaon",
-                "district":"Dhaka"
-            }
-        }';
-        return $this->client->post('https://dev-sdp-api.padmatechnology.com/api/v1/s-delivery/price-check', $data);
+        $data = $this->makeDataDeliveryCharge();
+
+        $client = new \GuzzleHttp\Client();
+dd($data);
+        return $client->post('https://dev-sdp-api.padmatechnology.com/api/v1/s-delivery/price-check', $data);
+//        return $this->client->post('', $data);
 
     }
 

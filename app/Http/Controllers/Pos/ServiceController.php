@@ -110,7 +110,9 @@ class ServiceController extends Controller
                 'id' => $partner->id,
                 'name' => $partner->name,
                 'logo' => $partner->logo,
-                'is_webstore_published' => $partner->is_webstore_published ?: 0
+                'is_webstore_published' => $partner->is_webstore_published ?: 0,
+                'weight'=> $partner->weight,
+                'weight_unit'=> $partner->weight_unit,
             ]]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
