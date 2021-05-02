@@ -65,13 +65,13 @@ class DueTrackerController extends Controller
 
     /**
      * @param Request $request
-     * @param $customer_id
+     * @param $entry_id
      * @return JsonResponse
      */
-    public function delete(Request $request, $customer_id)
+    public function delete(Request $request, $entry_id)
     {
         try {
-            $this->dueTrackerRepo->setPartner($request->partner)->setEntryId($request->entry_id)->deleteEntry();
+            $this->dueTrackerRepo->setPartner($request->partner)->setEntryId($entry_id)->deleteEntry();
             return api_response($request, null, 200, ['data' => "Entry delete successful"]);
         } catch (AccountingEntryServerError $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
