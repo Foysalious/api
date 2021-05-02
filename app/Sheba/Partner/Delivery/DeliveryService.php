@@ -10,6 +10,24 @@ use Throwable;
 class DeliveryService
 {
     private $partner;
+    private $name;
+    private $companyRefId;
+    private $productNature;
+    private $address;
+    private $district;
+    private $thana;
+    private $fbPageUrl;
+    private $phone;
+    private $paymentMethod;
+    private $website;
+    private $contactName;
+    private $email;
+    private $designation;
+    private $accountName;
+    private $accountNumber;
+    private $bankName;
+    private $branchName;
+    private $routingNumber;
 
 
     public function __construct(DeliveryServerClient $client)
@@ -65,7 +83,7 @@ class DeliveryService
     public function getOrderInfo($order_id)
     {
         $order = PosOrder::where('id', $order_id)->with('customer', 'customer.profile')->first();
- //       $order = PosOrder::where('id', $order_id)->first();
+        //       $order = PosOrder::where('id', $order_id)->first();
         if ($this->partner->id != $order->partner_id) {
             throw new DoNotReportException("Order does not belongs to this partner", 400);
         }
@@ -97,25 +115,161 @@ class DeliveryService
         ];
     }
 
+    public function setName($name)
+    {
+        $this->name = $name;
+        return $this;
+    }
+
+    public function setCompanyRefId($companyRefId)
+    {
+        $this->companyRefId = $companyRefId;
+    }
+
+    public function setProductNature($productNature)
+    {
+        $this->productNature = $productNature;
+        return $this;
+    }
+
+    public function setAddress($address)
+    {
+        $this->address = $address;
+        return $this;
+    }
+
+    public function setDistrict($district)
+    {
+        $this->district = $district;
+        return $this;
+    }
+
+    /**
+     * @param mixed $thana
+     * @return DeliveryService
+     */
+    public function setThana($thana)
+    {
+        $this->thana = $thana;
+        return $this;
+    }
+
+    public function setPhone($phone)
+    {
+        $this->phone = $phone;
+        return $this;
+    }
+
+
+    public function setPaymentMethod($paymentMethod)
+    {
+        $this->paymentMethod = $paymentMethod;
+        return $this;
+    }
+
+
+    public function setWebsite($website)
+    {
+        $this->website = $website;
+        return $this;
+    }
+
+
+    public function setContactName($contactName)
+    {
+        $this->contactName = $contactName;
+        return $this;
+    }
+
+
+    public function setContactNumber($contactNumber)
+    {
+        $this->contactNumber = $contactNumber;
+        return $this;
+    }
+
+
+    public function setEmail($email)
+    {
+        $this->email = $email;
+        return $this;
+    }
+
+
+    public function setDesignation($designation)
+    {
+        $this->designation = $designation;
+        return $this;
+    }
+
+    public function setAccountName($accountName)
+    {
+        $this->accountName = $accountName;
+        return $this;
+    }
+
+    public function setAccountNumber($accountNumber)
+    {
+        $this->accountNumber = $accountNumber;
+        return $this;
+    }
+
+    public function setBankName($bankName)
+    {
+        $this->bankName = $bankName;
+        return $this;
+    }
+
+    public function setBranchName($branchName)
+    {
+        $this->branchName = $branchName;
+        return $this;
+    }
+
+    public function setRoutingNumber($routingNumber)
+    {
+        $this->routingNumber = $routingNumber;
+        return $this;
+    }
+
+    public function setFbPageUrl($fbPageUrl)
+    {
+        $this->fbPageUrl = $fbPageUrl;
+        return $this;
+    }
+
     public function makeData()
     {
         return [
             'name' => $this->name,
-            ''
+            'company_ref_id' => $this->companyRefId,
+            'product_nature' => $this->productNature,
+            'address' => $this->address,
+            'district' => $this->district,
+            'thana' => $this->thana,
+            'fb_page_url' => $this->fbPageUrl,
+            'phone' => $this->phone,
+            'payment_method' => $this->paymentMethod,
+            'website' => $this->website,
+            'contact_name' => $this->contactName,
+            'contact_number' => $this->partner->getContactNumber(),
+            'email' => $this->email,
+            'designation' => $this->designation,
+            'mfs_info' => [
+                'account_name' => $this->accountName,
+                'account_number' => $this->accountNumber,
+                'bank_name' => $this->bankName,
+                'branch_name' => $this->branchName,
+                'routing_number' => $this->routingNumber
+            ]
 
         ];
     }
 
     public function register()
     {
-        try{
-            $data = $this->makeData();
-            return $this->client->post('',$data);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return false;
-        }
-
+        $data = $this->makeData();
+        return $this->client->post('merchants/register', $data);
     }
 
 
