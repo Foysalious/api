@@ -1,0 +1,81 @@
+<?php namespace App\Sheba\Business\ComponentPackage;
+
+use Illuminate\Support\Facades\DB;
+use Sheba\Dal\ComponentPackageTarget\ComponentPackageTargetRepository;
+use Sheba\Dal\PayrollComponentPackage\PayrollComponentPackageRepository;
+
+class Updater
+{
+    /** @var PayrollComponentPackageRepository */
+    private $payrollComponentPackageRepository;
+    /**@var ComponentPackageTargetRepository */
+    private $componentPackageTargetRepository;
+    private $packageRequester;
+
+    public function __construct()
+    {
+        $this->payrollComponentPackageRepository = app(PayrollComponentPackageRepository::class);
+        $this->componentPackageTargetRepository = app(ComponentPackageTargetRepository::class);
+    }
+
+    public function setPackageRequester($package_requester)
+    {
+        $this->packageRequester = $package_requester;
+        return $this;
+    }
+
+    public function update()
+    {
+        DB::transaction(function () {
+            $this->makeData();
+        });
+    }
+
+    private function makeData()
+    {
+        foreach ($this->packageRequester as $packages) {
+            $existing_package = $this->payrollComponentPackageRepository->find($packages['id']);
+            $data = [
+                'payroll_component_id' => $existing_package->payroll_component_id,
+                'key' => $packages['key'],
+                'name' => $packages['name'],
+                'is_active' => $packages['is_active'],
+                'is_taxable' => $packages['is_taxable'],
+                'calculation_type' => $packages['calculation_type'],
+                'is_percentage' => $packages['is_percentage'],
+                'on_what' => $packages['on_what'],
+                'amount' => $packages['amount'],
+                'schedule_type' => $packages['schedule_type'],
+                'periodic_schedule' => $packages['periodic_schedule'],
+                'schedule_date' => $packages['schedule_date'],
+            ];
+             $this->payrollComponentPackageRepository->update($existing_package, $data);
+             if (!empty($packages['effective_for'])) $this->makeTargetData($existing_package, $packages['effective_for'], $packages['target']);
+        }
+    }
+
+    private function makeTargetData($package, $effective_for, $targets)
+    {
+        $existing_package_targets = $package->packageTargets;
+        if ($existing_package_targets) {
+            foreach ($existing_package_targets as $existing_target) {
+                $this->componentPackageTargetRepository->delete($existing_target);
+            }
+        }
+        $data = [];
+        if (empty($targets)) {
+            $this->componentPackageTargetRepository->create(['package_id' => $package->id, 'effective_for' => $effective_for]);
+            return;
+        }
+        foreach ($targets as $target) {
+            array_push($data, [
+                'package_id' => $package->id,
+                'effective_for' => $effective_for,
+                'target_id' => $target
+            ]);
+        }
+        $this->componentPackageTargetRepository->insert($data);
+    }
+
+
+}

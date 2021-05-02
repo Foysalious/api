@@ -86,12 +86,11 @@ class Requester
     {
         $new_components = [];
         foreach ($components as $components_type) {
-            foreach ($components_type as $components_value) {
-                array_push($new_components, $components_value);
+            foreach ($components_type as $key => $components_value) {
+                if ($key == 'name') array_push($new_components, $components_value);
             }
         }
         $existing_components = $this->setting->components->whereIn('type', [Type::ADDITION, Type::DEDUCTION])->pluck('name')->toArray();
-
         if (count(array_intersect($new_components, $existing_components)) > 0) $this->error = true;
 
         return $this->error;
