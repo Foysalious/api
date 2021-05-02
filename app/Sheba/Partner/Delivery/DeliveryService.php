@@ -5,6 +5,7 @@ use App\Exceptions\DoNotReportException;
 use App\Http\Requests\Request;
 use App\Models\Partner;
 use App\Models\PosOrder;
+use App\Models\PosOrderPayment;
 
 class DeliveryService
 {
@@ -57,8 +58,8 @@ class DeliveryService
 
     public function getOrderInfo($order_id)
     {
-        $order = PosOrder::where('id', $order_id)->with('customer', 'customer.profile')->first();
- //       $order = PosOrder::where('id', $order_id)->first();
+        $order = PosOrder::where('id', $order_id)->with('customer', 'customer.profile', 'payments')->first();
+        //       $order = PosOrder::where('id', $order_id)->first();
         if ($this->partner->id != $order->partner_id) {
             throw new DoNotReportException("Order does not belongs to this partner", 400);
         }
@@ -83,11 +84,19 @@ class DeliveryService
                     'thana' => $order->delivery_thana,
                     'zilla' => $order->delivery_zilla
                 ],
-                'payment_method' => 'bkash',
-                'cash_amount' => 5680
+                'payment_method' => $this->paymentInfo($order_id)->method,
+                'cash_amount' => $order->payments,
 
             ]
         ];
+    }
+
+    public function paymentInfo($order_id)
+    {
+
+
+        return PosOrderPayment::where('pos_order_id', $order_id)->where('transaction_type', 'Credit')->first();
+
     }
 
 
