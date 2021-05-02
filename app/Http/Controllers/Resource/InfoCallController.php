@@ -38,7 +38,8 @@ class InfoCallController extends Controller
     {
         $this->validate($request, [
             'offset' => 'numeric|min:0', 'limit' => 'numeric|min:1',
-            'month' => 'sometimes|required|integer|between:1,12', 'year' => 'sometimes|required|integer'
+            'month' => 'sometimes|required|integer|between:1,12', 'year' => 'sometimes|required|integer',
+            'mobile' => 'string|mobile:bd'
         ]);
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
@@ -54,8 +55,14 @@ class InfoCallController extends Controller
             $reward_exists = $info_call_reward[0]->amount;
         }
         else $reward_exists = 0;
-        if (!($request->has('limit')) && !($request->has('year')) && !($request->has('month'))) {
-            $filtered_info_calls = $query;
+        if (!($request->has('year')) && !($request->has('month'))) {
+            if (($request->has('mobile'))) {
+                $customer_exists = $query->where('customer_mobile','like', '%'. $request->mobile);
+                $info_call_exists = $customer_exists->get()->count();
+                if ($info_call_exists > 0)  $filtered_info_calls = $customer_exists;
+                else return api_response($request, 1, 404);
+            }
+            else $filtered_info_calls = $query;
         }
         else {
             if ($request->has('limit')) $info_calls = $infoCallList->setOffset($request->offset)->setLimit($request->limit);
@@ -94,65 +101,6 @@ class InfoCallController extends Controller
             ]);
         }
         return api_response($request, $list, 200, ['service_request_list' => $list]);
-    }
-
-    public function serviceRequestSearch(Request $request)
-    {
-        $this->validate($request, [
-            'customer_mobile' => 'required|string|mobile:bd'
-        ]);
-        /** @var AuthUser $auth_user */
-        $auth_user = $request->auth_user;
-        $resource = $auth_user->getResource();
-        $auth_user_array = $auth_user->toArray();
-        $created_by = $auth_user_array['resource']['id'];
-        $customer_exists = InfoCall::where('customer_mobile','like', '%'. $request->customer_mobile)
-            ->where('status', '<>', Statuses::OPEN)
-            ->where('created_by', $created_by)
-            ->where('created_by_type', get_class($resource));
-        $info_call_exists = $customer_exists->get()->count();
-        if ($info_call_exists > 0) {
-            $info_call_list = $customer_exists->get()->sortByDesc('id')->toArray();
-            $reward_action = RewardAction::where('event_name', 'info_call_completed')->latest('id')->first();
-            if ($reward_action != null) {
-                $info_call_reward = Reward::where('detail_id', $reward_action->id)
-                    ->select('rewards.*')
-                    ->get();
-                $reward_exists = $info_call_reward[0]->amount;
-            }
-            else $reward_exists = 0;
-            $list = [];
-            foreach ($info_call_list as $info_call) {
-                if ($info_call['status'] == Statuses::REJECTED) {
-                    $order_status = 'বাতিল';
-                    $reward = 0;
-                }
-                if ($info_call['status'] == Statuses::CONVERTED) {
-                    $order = Order::where('info_call_id', $info_call['id'])->get()->toArray();
-                    $partner_order = PartnerOrder::where('order_id', $order[0]['id'])->get()->last()->toArray();
-                    if ($partner_order['cancelled_at'] != null) {
-                        $order_status = 'বাতিল';
-                        $reward = 0;
-                    }
-                    elseif ($partner_order['closed_and_paid_at'] != null) {
-                        $order_status = 'শেষ';
-                        $reward = $reward_exists;
-                    }
-                    else {
-                        $order_status = 'চলছে';
-                        $reward = 0;
-                    }
-                }
-                array_push($list, [
-                    'created_at'=> $info_call['created_at'],
-                    'service_request_id' => $info_call['id'],
-                    'order_status' => $order_status,
-                    'reward' => $reward
-                ]);
-            }
-            return api_response($request, $list, 200, ['service_request_list' => $list]);
-        }
-        else return api_response($request, 1, 404);
     }
 
     public function serviceRequestDashboard(Request $request, InfoCallList $infoCallList)
@@ -236,7 +184,7 @@ class InfoCallController extends Controller
     public function show($id)
     {
         $info_call_exixsts = InfoCall::where('id', $id)->count();
-        if ($info_call_exixsts > 0) {
+        if ($info_call_exixsts > 0 && is_numeric($id)) {
             $info_call = InfoCall::findOrFail($id);
             $log = $this->infoCallStatusLogRepository->getLastRejectLogOfInfoCall($info_call);
             $reward_action = RewardAction::where('event_name', 'info_call_completed')->latest('id')->first();

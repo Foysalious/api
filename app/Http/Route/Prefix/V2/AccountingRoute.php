@@ -15,9 +15,9 @@ class AccountingRoute
             $api->put('/accounts/{id}', 'Accounting\\AccountController@updateAccount');
             $api->delete('/accounts/{id}', 'Accounting\\AccountController@deleteAccount');
             $api->group(['prefix' => 'due-tracker'], function ($api) {
-                $api->post('/{customer_id}', 'Accounting\\DueTrackerController@store');
-                $api->post('update/{customer_id}', 'Accounting\\DueTrackerController@update');
-                $api->delete('/{customer_id}', 'Accounting\\DueTrackerController@delete');
+                $api->post('/', 'Accounting\\DueTrackerController@store');
+                $api->post('/{entry_id}', 'Accounting\\DueTrackerController@update');
+                $api->delete('/{entry_id}', 'Accounting\\DueTrackerController@delete');
             });
         });
     }
