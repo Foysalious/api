@@ -44,15 +44,13 @@ class DeliveryController extends Controller
         return api_response($request, null, 200, ['delivery_vendor' => $vendor]);
     }
 
-    public function getOrderInformation(Request $request, $partner, DeliveryService $delivery_service,$order_id)
+    public function getOrderInformation(Request $request, $partner,$order_id ,DeliveryService $delivery_service)
     {
 
         $partner = $request->partner;
+
         $this->setModifier($request->manager_resource);
-        $order = PosOrder::where('id', $order_id)->with('postCustomer', 'posCustomer.profile')->first();
-        if ($this->partner->id != $order->partner_id) {
-            return api_response($request, null, 200);
-        }
+
         $order_information = $delivery_service->setPartner($partner)->getOrderInfo($order_id);
         return api_response($request, null, 200, ['order_information' => $order_information]);
 

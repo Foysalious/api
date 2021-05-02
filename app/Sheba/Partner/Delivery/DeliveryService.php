@@ -64,7 +64,8 @@ class DeliveryService
 
     public function getOrderInfo($order_id)
     {
-        $order = PosOrder::where('id', $order_id)->with('postCustomer', 'posCustomer.profile')->first();
+        $order = PosOrder::where('id', $order_id)->with('customer', 'customer.profile')->first();
+ //       $order = PosOrder::where('id', $order_id)->first();
         if ($this->partner->id != $order->partner_id) {
             throw new DoNotReportException("Order does not belongs to this partner", 400);
         }
@@ -82,8 +83,8 @@ class DeliveryService
                 ],
             ],
             'customer-delivery_information' => [
-                'name' => $order->posCustomer->profile->name,
-                'number' => $order->posCustomer->profile->mobile,
+                'name' => $order->customer->profile->name,
+                'number' => $order->customer->profile->mobile,
                 'address' => [
                     'full_address' => $order->address,
                     'thana' => $order->delivery_thana,
