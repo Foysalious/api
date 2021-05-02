@@ -294,6 +294,9 @@ class ShebaController extends Controller
         }, AvailableMethods::getDetails($request->payable_type, $request->payable_type_id, $version_code, $platform_name, $user_type));
 
         if ($user_type == 'partner') {
+            $payments = array_filter($payments, function ($arr){
+                return $arr !== null;
+            });
             $payments = array_values(collect($payments)->sortBy('cash_in_charge')->toArray());
         }
 
