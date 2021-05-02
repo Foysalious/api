@@ -5,6 +5,7 @@ use App\Exceptions\DoNotReportException;
 use App\Http\Requests\Request;
 use App\Models\Partner;
 use App\Models\PosOrder;
+use App\Models\PosOrderPayment;
 use Throwable;
 
 class DeliveryService
@@ -28,6 +29,12 @@ class DeliveryService
     private $bankName;
     private $branchName;
     private $routingNumber;
+    private $cashOnDelivery;
+    private $weight;
+    private $pickupThana;
+    private $pickupDistrict;
+    private $deliveryThana;
+    private $deliveryDistrict;
 
 
     public function __construct(DeliveryServerClient $client)
@@ -44,6 +51,42 @@ class DeliveryService
     public function setData($data)
     {
         $this->data = $data;
+        return $this;
+    }
+
+    public function setWeight($weight)
+    {
+        $this->weight = $weight;
+        return $this;
+    }
+
+    public function setcashOnDelivery($cashOnDelivery)
+    {
+        $this->cashOnDelivery = $cashOnDelivery;
+        return $this;
+    }
+
+    public function setpickupThana($pickupThana)
+    {
+        $this->pickupThana = $pickupThana;
+        return $this;
+    }
+
+    public function setpickupDistrict($pickupDistrict)
+    {
+        $this->pickupDistrict = $pickupDistrict;
+        return $this;
+    }
+
+    public function setDeliveryThana($deliveryThana)
+    {
+        $this->deliveryThana = $deliveryThana;
+        return $this;
+    }
+
+    public function setDeliveryDistrict($deliveryDistrict)
+    {
+        $this->deliveryDistrict = $deliveryDistrict;
         return $this;
     }
 
@@ -82,7 +125,7 @@ class DeliveryService
 
     public function getOrderInfo($order_id)
     {
-        $order = PosOrder::where('id', $order_id)->with('customer', 'customer.profile')->first();
+        $order = PosOrder::where('id', $order_id)->with('customer', 'customer.profile', 'payments')->first();
         //       $order = PosOrder::where('id', $order_id)->first();
         if ($this->partner->id != $order->partner_id) {
             throw new DoNotReportException("Order does not belongs to this partner", 400);
@@ -108,11 +151,19 @@ class DeliveryService
                     'thana' => $order->delivery_thana,
                     'zilla' => $order->delivery_zilla
                 ],
-                'payment_method' => 'bkash',
-                'cash_amount' => 5680
+                'payment_method' => $this->paymentInfo($order_id)->method,
+                'cash_amount' => $order->payments,
 
             ]
         ];
+    }
+
+    public function paymentInfo($order_id)
+    {
+
+
+        return PosOrderPayment::where('pos_order_id', $order_id)->where('transaction_type', 'Credit')->first();
+
     }
 
     public function setName($name)
@@ -266,11 +317,59 @@ class DeliveryService
         ];
     }
 
-    public function register()
+    public function makeDataDeliveryCharge()
     {
-        $data = $this->makeData();
-        return $this->client->post('merchants/register', $data);
+        $data= [
+
+            'weight' => $this->weight,
+            'cod_amount' => $this->cashOnDelivery,
+            'pick_up' => [
+                'thana' => $this->pickupThana ,
+                'district' => $this->pickupDistrict,
+            ],
+            'delivery' => [
+                'thana' => $this->deliveryThana,
+                'district' => $this->deliveryDistrict,
+            ]
+        ];
+        return json_encode($data);
+//        return '{
+//        "weight": "2.5",
+//    "cod_amount": 5000,
+//    "pick_up":{
+//            "thana": "Mohammadpur",
+//        "district":"Manikganj"
+//    },
+//    "delivery":{
+//            "thana": "Khilgaon",
+//        "district":"Dhaka"
+//    }
+//}';
     }
 
+
+
+    public function register()
+    {
+        try {
+            $data = $this->makeData();
+            return $this->client->post('', $data);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return false;
+        }
+
+    }
+    public function deliveryCharge()
+    {
+
+        $data = $this->makeDataDeliveryCharge();
+
+        $client = new \GuzzleHttp\Client();
+dd($data);
+        return $client->post('https://dev-sdp-api.padmatechnology.com/api/v1/s-delivery/price-check', $data);
+//        return $this->client->post('', $data);
+
+    }
 
 }

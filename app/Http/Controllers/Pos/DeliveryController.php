@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\Pos;
 
 use App\Http\Controllers\Controller;
+use App\Models\Partner;
 use App\Models\PosOrder;
 use App\Sheba\Partner\Delivery\DeliveryService;
 use Illuminate\Http\Request;
@@ -63,13 +64,15 @@ class DeliveryController extends Controller
         return api_response($request, null, 200, ['messages' => 'আপনার রেজিস্ট্রেশন সফল হয়েছে']);
     }
 
-    public function getVendorList(Request $request,DeliveryService $delivery_service)
+
+
+    public function getVendorList(Request $request, DeliveryService $delivery_service)
     {
-        $vendor= $delivery_service->vendorlist();
+        $vendor = $delivery_service->vendorlist();
         return api_response($request, null, 200, ['delivery_vendor' => $vendor]);
     }
 
-    public function getOrderInformation(Request $request, $partner,$order_id ,DeliveryService $delivery_service)
+    public function getOrderInformation(Request $request, $partner, $order_id, DeliveryService $delivery_service)
     {
 
         $partner = $request->partner;
@@ -78,6 +81,22 @@ class DeliveryController extends Controller
 
         $order_information = $delivery_service->setPartner($partner)->getOrderInfo($order_id);
         return api_response($request, null, 200, ['order_information' => $order_information]);
+
+    }
+    public function deliveryCharge(Request $request, $partner, DeliveryService $delivery_service)
+    {
+//        $this->validate($request, [
+//            'weight' => 'required'
+//        ]);
+
+        $partner= $request->partner;
+        $this->setModifier($request->manager_resource);
+
+
+        $charge= $delivery_service->setPartner($partner)->setWeight($request->weight)->setcashOnDelivery($request->cod_amount)->setpickupThana($request->pickupThana)
+            ->setpickupDistrict($request->pickupDistrict)->setDeliveryDistrict($request->deliveryDistrict)->setDeliveryThana($request->deliveryThana)->deliveryCharge();
+
+        return api_response($request, null, 200, ['info' => $charge]);
 
     }
 
