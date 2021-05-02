@@ -55,11 +55,14 @@ class InfoCallController extends Controller
             $reward_exists = $info_call_reward[0]->amount;
         }
         else $reward_exists = 0;
-        if (($request->has('mobile')) && !($request->has('year')) && !($request->has('month'))) {
-            $customer_exists = $query->where('customer_mobile','like', '%'. $request->mobile);
-            $info_call_exists = $customer_exists->get()->count();
-            if ($info_call_exists > 0)  $filtered_info_calls = $customer_exists;
-            else return api_response($request, 1, 404);
+        if (!($request->has('year')) && !($request->has('month'))) {
+            if (($request->has('mobile'))) {
+                $customer_exists = $query->where('customer_mobile','like', '%'. $request->mobile);
+                $info_call_exists = $customer_exists->get()->count();
+                if ($info_call_exists > 0)  $filtered_info_calls = $customer_exists;
+                else return api_response($request, 1, 404);
+            }
+            else $filtered_info_calls = $query;
         }
         else {
             if ($request->has('limit')) $info_calls = $infoCallList->setOffset($request->offset)->setLimit($request->limit);
@@ -181,7 +184,7 @@ class InfoCallController extends Controller
     public function show($id)
     {
         $info_call_exixsts = InfoCall::where('id', $id)->count();
-        if ($info_call_exixsts > 0) {
+        if ($info_call_exixsts > 0 && is_numeric($id)) {
             $info_call = InfoCall::findOrFail($id);
             $log = $this->infoCallStatusLogRepository->getLastRejectLogOfInfoCall($info_call);
             $reward_action = RewardAction::where('event_name', 'info_call_completed')->latest('id')->first();
