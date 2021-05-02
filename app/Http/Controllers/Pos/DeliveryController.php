@@ -40,16 +40,7 @@ class DeliveryController extends Controller
         return api_response($request, null, 200, ['info' => $info]);
     }
 
-    public function deliveryCharge(Request $request, $partner, DeliveryService $delivery_service)
-    {
-        $this->validate($request, [
-            'weight' => 'required'
-        ]);
 
-        $partner= $request->partner;
-        $this->setModifier($request->manager_resource);
-        $delivery_service->setPartner($partner)->setData($request->all())->register();
-    }
 
     public function getVendorList(Request $request, DeliveryService $delivery_service)
     {
@@ -66,6 +57,20 @@ class DeliveryController extends Controller
 
         $order_information = $delivery_service->setPartner($partner)->getOrderInfo($order_id);
         return api_response($request, null, 200, ['order_information' => $order_information]);
+
+    }
+    public function deliveryCharge(Request $request, $partner, DeliveryService $delivery_service)
+    {
+//        $this->validate($request, [
+//            'weight' => 'required'
+//        ]);
+
+        $partner= $request->partner;
+        $this->setModifier($request->manager_resource);
+
+        $charge= $delivery_service->setPartner($partner)->setData($request->all())->deliveryCharge();
+
+        return api_response($request, null, 200, ['info' => $charge]);
 
     }
 

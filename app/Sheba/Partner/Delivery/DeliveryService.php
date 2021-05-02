@@ -115,21 +115,52 @@ class DeliveryService
         ];
     }
 
-    public function makeDataDeliveryCharge(){
-
+    public function makeDataDeliveryCharge()
+    {
+        return [
+            'weight' => $this->weight,
+            'cod_amount' => $this->cod_amount,
+            'pick_up' => [
+                'thana' => $this->thana,
+                'district' => $this->district,
+            ],
+            'delivery' => [
+                'thana' => $this->thana,
+                'district' => $this->district,
+            ]
+        ];
     }
+
+
 
     public function register()
     {
-        try{
+        try {
             $data = $this->makeData();
-            return $this->client->post('',$data);
+            return $this->client->post('', $data);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return false;
         }
 
     }
+    public function deliveryCharge()
+    {
 
+        $data = '{
+        "weight": "2.5",
+            "cod_amount": 5000,
+            "pick_up":{
+                    "thana": "Mohammadpur",
+                "district":"Manikganj"
+            },
+            "delivery":{
+                    "thana": "Khilgaon",
+                "district":"Dhaka"
+            }
+        }';
+        return $this->client->post('https://dev-sdp-api.padmatechnology.com/api/v1/s-delivery/price-check', $data);
+
+    }
 
 }
