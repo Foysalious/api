@@ -5,7 +5,8 @@ class DeliveryRoute
     public function set($api)
     {
         $api->group(['prefix' => 'delivery'], function ($api) {
-            $api->get('registration', 'Pos\\DeliveryController@getInfoForRegistration');
+            $api->get('register', 'Pos\\DeliveryController@getInfoForRegistration');
+            $api->post('register', 'Pos\\DeliveryController@register');
             $api->get('/order-information/{order_id}', 'Pos\\DeliveryController@getOrderInformation');
             $api->post('/delivery-charge', 'Pos\\DeliveryController@deliveryCharge');
             $api->get('/district', 'Pos\\DeliveryController@districts');
