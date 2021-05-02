@@ -31,12 +31,13 @@ class DeliveryController extends Controller
             'payment_method' => 'required:in',
             'contact_name' => 'required',
             'contact_number' => 'required',
-
-
         ]);
         $partner = $request->partner;
         $this->setModifier($request->manager_resource);
-        $delivery_service->setPartner($partner)->setData($request->all())->register();
+        $registration = $delivery_service->setPartner($partner)
+            ->setData($request->all())
+            ->register();
+        return api_response($request, null, 200, ['info' => $info]);
     }
 
     public function deliveryCharge(Request $request, $partner, DeliveryService $delivery_service)
