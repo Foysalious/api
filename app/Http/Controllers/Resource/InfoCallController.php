@@ -181,7 +181,7 @@ class InfoCallController extends Controller
     public function show($id)
     {
         $info_call_exixsts = InfoCall::where('id', $id)->count();
-        if ($info_call_exixsts > 0) {
+        if ($info_call_exixsts > 0 && is_numeric($id)) {
             $info_call = InfoCall::findOrFail($id);
             $log = $this->infoCallStatusLogRepository->getLastRejectLogOfInfoCall($info_call);
             $reward_action = RewardAction::where('event_name', 'info_call_completed')->latest('id')->first();
