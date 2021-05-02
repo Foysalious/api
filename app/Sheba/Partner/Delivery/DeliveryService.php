@@ -8,6 +8,7 @@ use App\Models\PosOrder;
 use App\Models\PosOrderPayment;
 use Throwable;
 
+
 class DeliveryService
 {
     private $partner;
@@ -203,8 +204,12 @@ class DeliveryService
     }
 
     public function districts(){
-//        $client = new \GuzzleHttp\Client();
-        return $this->client->get('https://private-anon-65fef00aea-shebadeliveryapi.apiary-mock.com/api/v1/s-delivery/districts');
+        $client = new \GuzzleHttp\Client();
+        $request = $client->get('http://randomuser.me/api');
+        $response = $request->getBody();
+
+        return $request;
+
     }
 
 }

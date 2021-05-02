@@ -9,6 +9,7 @@ class PosRoute
             $api->get('warranty-units', 'Pos\ServiceController@getWarrantyUnits');
             $api->get('weight-units', 'Pos\ServiceController@getPosProductWeightUnit');
             $api->get('vendor-list', 'Pos\DeliveryController@getVendorList');
+
         });
     }
 }
