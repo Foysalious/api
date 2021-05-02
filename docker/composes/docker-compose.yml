@@ -1,10 +1,10 @@
 version: '3.5'
 services:
-  api-service:
+  upgraded-api-service:
     build:
       context: ../
       dockerfile: Dockerfile
-    image: sheba.xyz/php-fpm-7.0.33-with-nginx
+    image: ${CONTAINER_NAME}
     container_name: ${CONTAINER_NAME}
     restart: unless-stopped
     tty: true
@@ -15,4 +15,4 @@ services:
       timeout: 10s
       retries: 3
     networks:
-      - api-service-network
+      - upgraded-api-service-network
