@@ -26,7 +26,7 @@ class InfoCallController extends Controller
             ]);
             if ($request->has('location_id')) {
                 $location = Location::find($request->location_id);
-                if ($location == null) return api_response($request, null, 404);
+                if ($location == null) return api_response($request, null, 404, ['message' => 'Location Not Found']);;
             }
             $profile_exists = Profile::select('id', 'name', 'address')->where('mobile', 'like', '%'.$request->mobile.'%')->get()->toArray();
             if ($profile_exists) {
