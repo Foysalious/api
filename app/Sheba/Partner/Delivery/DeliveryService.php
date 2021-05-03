@@ -9,6 +9,7 @@ use App\Models\PosOrderPayment;
 use Sheba\Dal\PartnerDeliveryInformation\Contract as PartnerDeliveryInformationRepositoryInterface;
 use Throwable;
 
+
 class DeliveryService
 {
     private $partner;
@@ -40,6 +41,7 @@ class DeliveryService
      * @var PartnerDeliveryInformationRepositoryInterface
      */
     private $partnerDeliveryInfoRepositoryInterface;
+    private $order;
 
 
     public function __construct(DeliveryServerClient $client , PartnerDeliveryInformationRepositoryInterface $partnerDeliveryInfoRepositoryInterface)
@@ -131,7 +133,8 @@ class DeliveryService
 
     public function getOrderInfo($order_id)
     {
-        $order = PosOrder::where('id', $order_id)->with('customer', 'customer.profile', 'payments')->first();
+
+        $this->order = $order = PosOrder::where('id', $order_id)->with('customer', 'customer.profile', 'payments')->first();
         //       $order = PosOrder::where('id', $order_id)->first();
         if ($this->partner->id != $order->partner_id) {
             throw new DoNotReportException("Order does not belongs to this partner", 400);
@@ -158,17 +161,23 @@ class DeliveryService
                     'zilla' => $order->delivery_zilla
                 ],
                 'payment_method' => $this->paymentInfo($order_id)->method,
-                'cash_amount' => $order->payments,
+                'cash_amount' => $this->getDueAmount(),
 
             ]
         ];
+    }
+
+    private function getDueAmount()
+    {
+        $this->order->calculate();
+        return $this->order->getDue();
     }
 
     public function paymentInfo($order_id)
     {
 
 
-        return PosOrderPayment::where('pos_order_id', $order_id)->where('transaction_type', 'Credit')->first();
+        return PosOrderPayment::where('pos_order_id', $order_id)->where('transaction_type', 'Credit')->orderBy('id', 'desc')->first();
 
     }
 
@@ -325,12 +334,12 @@ class DeliveryService
 
     public function makeDataDeliveryCharge()
     {
-        $data= [
+        $data = [
 
             'weight' => $this->weight,
             'cod_amount' => $this->cashOnDelivery,
             'pick_up' => [
-                'thana' => $this->pickupThana ,
+                'thana' => $this->pickupThana,
                 'district' => $this->pickupDistrict,
             ],
             'delivery' => [
@@ -338,21 +347,9 @@ class DeliveryService
                 'district' => $this->deliveryDistrict,
             ]
         ];
-        return json_encode($data);
-//        return '{
-//        "weight": "2.5",
-//    "cod_amount": 5000,
-//    "pick_up":{
-//            "thana": "Mohammadpur",
-//        "district":"Manikganj"
-//    },
-//    "delivery":{
-//            "thana": "Khilgaon",
-//        "district":"Dhaka"
-//    }
-//}';
-    }
+        return ($data);
 
+    }
 
 
     public function register()
@@ -360,6 +357,7 @@ class DeliveryService
         $data = $this->makeData();
         return $this->client->post('merchants/register', $data);
     }
+
 
     public function storeDeliveryInformation($info)
     {
@@ -388,13 +386,29 @@ class DeliveryService
     }
     public function deliveryCharge()
     {
+        try {
 
-        $data = $this->makeDataDeliveryCharge();
 
-        $client = new \GuzzleHttp\Client();
-dd($data);
-        return $client->post('https://dev-sdp-api.padmatechnology.com/api/v1/s-delivery/price-check', $data);
-//        return $this->client->post('', $data);
+            $data = $this->makeDataDeliveryCharge();
+
+            return $this->client->post('price-check', $data);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return false;
+        }
+    }
+
+    public function districts()
+    {
+
+        return $this->client->get('districts');
+
+    }
+
+    public function upzillas($district_name)
+    {
+
+        return $this->client->get('districts/' . $district_name . '/upazilas');
 
     }
 
