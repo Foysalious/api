@@ -1,5 +1,8 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Sheba\Business\ComponentPackage\Requester;
+use App\Sheba\Business\ComponentPackage\Creator as PackageCreator;
+use App\Sheba\Business\ComponentPackage\Updater as PackageUpdater;
 use App\Sheba\Business\PayrollComponent\Components\GrossComponents\Creator;
 use App\Sheba\Business\PayrollComponent\Components\GrossComponents\Updater;
 use Sheba\Business\PayrollSetting\Requester as PayrollSettingRequester;
@@ -124,7 +127,7 @@ class PayrollController extends Controller
         return api_response($request, null, 200);
     }
 
-    public function addComponent($business, $payroll_setting, Request $request, AdditionCreator $addition_creator, DeductionsCreator $deduction_creator)
+    public function addComponent($business, $payroll_setting, Request $request, AdditionCreator $addition_creator, DeductionsCreator $deduction_creator, Requester $package_requester, PackageCreator $package_creator, PackageUpdater $package_updater)
     {
         $this->validate($request, [
             'addition' => 'required',
@@ -144,6 +147,10 @@ class PayrollController extends Controller
 
         $addition_creator->setPayrollComponentRequester($this->payrollComponentRequester)->createOrUpdate();
         $deduction_creator->setPayrollComponentRequester($this->payrollComponentRequester)->createOrUpdate();
+        $package_requester->setPackage($request->packages);
+        $package_creator->setModifier($business_member->member)->setPackageRequester($package_requester->getPackagesForAdd())->create();
+        $package_updater->setPackageRequester($package_requester->getPackagesForUpdate())->update();
+
 
         return api_response($request, null, 200);
     }

@@ -28,9 +28,9 @@ class Formatter
                 'is_active' => $packages->is_active,
                 'is_taxable' => $packages->is_taxable,
                 'calculation_type' => $packages->calculation_type,
-                'is_percentage' => (float)$packages->is_percentage,
+                'is_percentage' => floatval($packages->is_percentage),
                 'on_what' => $packages->on_what,
-                'amount' => $packages->amount,
+                'amount' => floatval($packages->amount),
                 'schedule_type' => $packages->schedule_type,
                 'periodic_schedule' => $packages->periodic_schedule,
                 'schedule_date' => $packages->schedule_date,
@@ -45,7 +45,10 @@ class Formatter
         $data = [];
         foreach ($targets as $target) {
             $data['effective_for'] = $target->effective_for;
-            if ($target->effective_for == TargetType::GENERAL) continue;
+            if ($target->effective_for == TargetType::GENERAL) {
+                $data['selected'] = null;
+                continue;
+            }
             $data['selected'][] = [
                 'target_id' => $target->target_id,
                 'name' => $this->getTargetDetails($target->effective_for, $target->target_id)['name']
