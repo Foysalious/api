@@ -148,7 +148,7 @@ class PayrollController extends Controller
         $addition_creator->setPayrollComponentRequester($this->payrollComponentRequester)->createOrUpdate();
         $deduction_creator->setPayrollComponentRequester($this->payrollComponentRequester)->createOrUpdate();
         $package_requester->setPackage($request->packages);
-        $package_creator->setModifier($business_member->member)->setPackageRequester($package_requester->getPackagesForAdd())->create();
+        $package_creator->setPackageRequester($package_requester->getPackagesForAdd())->create();
         $package_updater->setPackageRequester($package_requester->getPackagesForUpdate())->update();
 
 
