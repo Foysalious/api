@@ -36,6 +36,7 @@ class DeliveryService
     private $pickupDistrict;
     private $deliveryThana;
     private $deliveryDistrict;
+    private $order;
 
 
     public function __construct(DeliveryServerClient $client)
@@ -126,7 +127,8 @@ class DeliveryService
 
     public function getOrderInfo($order_id)
     {
-        $order = PosOrder::where('id', $order_id)->with('customer', 'customer.profile', 'payments')->first();
+
+        $this->order = $order = PosOrder::where('id', $order_id)->with('customer', 'customer.profile', 'payments')->first();
         //       $order = PosOrder::where('id', $order_id)->first();
         if ($this->partner->id != $order->partner_id) {
             throw new DoNotReportException("Order does not belongs to this partner", 400);
@@ -153,17 +155,23 @@ class DeliveryService
                     'zilla' => $order->delivery_zilla
                 ],
                 'payment_method' => $this->paymentInfo($order_id)->method,
-                'cash_amount' => $order->payments,
+                'cash_amount' => $this->getDueAmount(),
 
             ]
         ];
+    }
+
+    private function getDueAmount()
+    {
+        $this->order->calculate();
+        return $this->order->getDue();
     }
 
     public function paymentInfo($order_id)
     {
 
 
-        return PosOrderPayment::where('pos_order_id', $order_id)->where('transaction_type', 'Credit')->first();
+        return PosOrderPayment::where('pos_order_id', $order_id)->where('transaction_type', 'Credit')->orderBy('id', 'desc')->first();
 
     }
 
@@ -368,7 +376,7 @@ class DeliveryService
     public function upzillas($district_name)
     {
 
-        return $this->client->get('districts/'.$district_name.'/upazilas');
+        return $this->client->get('districts/' . $district_name . '/upazilas');
 
     }
 
