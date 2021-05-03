@@ -2,6 +2,7 @@
 
 use App\Models\BusinessMember;
 use Illuminate\Support\Facades\DB;
+use Sheba\Dal\PayrollComponent\PayrollComponentRepository;
 use Sheba\Dal\Salary\SalaryRepository;
 
 class Creator
@@ -12,6 +13,8 @@ class Creator
     private $businessMember;
     /** @var SalaryRepository */
     private $salaryRepository;
+    /*** @var PayrollComponentRepository*/
+    private $payrollComponentRepository;
 
     /**
      * Updater constructor.
@@ -20,6 +23,7 @@ class Creator
     public function __construct(SalaryRepository $salary_repository)
     {
         $this->salaryRepository = $salary_repository;
+        $this->payrollComponentRepository = app(PayrollComponentRepository::class);
     }
 
     /** @param $salary_request */
@@ -40,6 +44,7 @@ class Creator
         $this->makeData();
         DB::transaction(function () {
             $this->salaryRepository->create($this->salaryData);
+            //$this->createComponentPercentage();
         });
         return true;
     }
@@ -48,6 +53,12 @@ class Creator
     {
         $this->salaryData['business_member_id'] = $this->salaryRequest->getBusinessMember()->id;
         $this->salaryData['gross_salary'] = $this->salaryRequest->getGrossSalary();
+    }
+
+    public function createComponentPercentage()
+    {
+        $payroll_Setting = $this->businessMember->business->payrollSetting;
+        dd($payroll_Setting);
     }
 
 }

@@ -353,6 +353,7 @@ class CoWorkerController extends Controller
         $business = $request->business;
         $this->coWorkerSalaryRequester->setMember($member_id)
             ->setGrossSalary($request->gross_salary)
+            ->setBreakdownPercentage($request->breakdown_percentage)
             ->setManagerMember($manager_member)
             ->createOrUpdate();
         return api_response($request, null, 200);

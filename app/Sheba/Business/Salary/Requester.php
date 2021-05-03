@@ -18,6 +18,7 @@ class Requester
     private $creator;
     private $updater;
     private $managerMember;
+    private $breakdownPercentage;
 
     public function __construct(BusinessMemberRepositoryInterface $business_member_repository,
                                 CoWorkerSalaryCreator $salary_creator,
@@ -76,6 +77,17 @@ class Requester
         $this->grossSalary = $gross_salary;
         if (!$this->grossSalary) $this->grossSalary = 0;
         return $this;
+    }
+
+    public function setBreakdownPercentage($breakdown_percentage)
+    {
+        $this->breakdownPercentage = json_decode($breakdown_percentage, 1);
+        return $this;
+    }
+
+    public function getBreakdownPercentage()
+    {
+        return $this->breakdownPercentage;
     }
 
     public function getGrossSalary()
