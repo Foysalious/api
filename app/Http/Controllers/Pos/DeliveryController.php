@@ -3,6 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Sheba\Partner\Delivery\DeliveryService;
 use App\Sheba\Partner\Delivery\OrderPlace;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\ModificationFields;
 use Throwable;
@@ -20,6 +21,12 @@ class DeliveryController extends Controller
         return api_response($request, null, 200, ['info' => $info]);
     }
 
+    /**
+     * @param Request $request
+     * @param $partner
+     * @param DeliveryService $delivery_service
+     * @return JsonResponse
+     */
     public function register(Request $request, $partner, DeliveryService $delivery_service)
     {
         $this->validate($request, [
@@ -27,10 +34,10 @@ class DeliveryController extends Controller
             'address' => 'required',
             'district' => 'required',
             'thana' => 'required',
-            'payment_method' => 'required|in:cheque,beftn,cash,bKash,rocket,nagad',
+            'payment_method' => 'required|in:'. implode(',', config('pos_delivery.payment_method')),
             'contact_name' => 'required',
             'mobile' => 'required',
-            'account_type' => 'required|in:mobile,bank',
+            'account_type' => 'required|in:'. implode(',', config('pos_delivery.account_type')),
             'business_type' => 'required',
             'account_name' => 'sometimes',
             'account_number' => 'sometimes',
@@ -59,9 +66,7 @@ class DeliveryController extends Controller
             ->setRoutingNumber($request->routing_number)
             ->setProductNature($request->business_type)
             ->register();
-
         $delivery_service->setPartner($partner)->storeDeliveryInformation($registration['data']);
-
         return api_response($request, null, 200, ['messages' => 'আপনার রেজিস্ট্রেশন সফল হয়েছে','data' => $registration['data']]);
     }
 
