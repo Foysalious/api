@@ -44,7 +44,7 @@ class DeliveryService
     private $order;
 
 
-    public function __construct(DeliveryServerClient $client , PartnerDeliveryInformationRepositoryInterface $partnerDeliveryInfoRepositoryInterface)
+    public function __construct(DeliveryServerClient $client, PartnerDeliveryInformationRepositoryInterface $partnerDeliveryInfoRepositoryInterface)
     {
         $this->client = $client;
         $this->partnerDeliveryInfoRepositoryInterface = $partnerDeliveryInfoRepositoryInterface;
@@ -361,29 +361,30 @@ class DeliveryService
 
     public function storeDeliveryInformation($info)
     {
-       $data = [
-           'name' => $info['contact_info']['name'],
-           'partner_id' => $this->partner->id,
-           'mobile' => $info['phone'],
-           'email' => $info['contact_info']['email'],
-           'business_type' => $info['product_nature'],
-           'address' => $info['address'],
-           'district' => $info['district'],
-           'thana' => $info['thana'],
-           'website' => $info['website'],
-           'facebook' => $info['fb_page_url'],
-           'mobile_banking_provider' => null,
-           'agent_number' => null,
-           'account_holder_name' => $info['mfs_info']['account_name'],
-           'bank_name' => $info['mfs_info']['bank_name'],
-           'branch_name' => $info['mfs_info']['branch_name'],
-           'account_number' => $info['mfs_info']['account_number'],
-           'routing_number' => $info['mfs_info']['routing_number'],
-           'delivery_vendor' => null
-       ];
+        $data = [
+            'name' => $info['contact_info']['name'],
+            'partner_id' => $this->partner->id,
+            'mobile' => $info['phone'],
+            'email' => $info['contact_info']['email'],
+            'business_type' => $info['product_nature'],
+            'address' => $info['address'],
+            'district' => $info['district'],
+            'thana' => $info['thana'],
+            'website' => $info['website'],
+            'facebook' => $info['fb_page_url'],
+            'mobile_banking_provider' => null,
+            'agent_number' => null,
+            'account_holder_name' => $info['mfs_info']['account_name'],
+            'bank_name' => $info['mfs_info']['bank_name'],
+            'branch_name' => $info['mfs_info']['branch_name'],
+            'account_number' => $info['mfs_info']['account_number'],
+            'routing_number' => $info['mfs_info']['routing_number'],
+            'delivery_vendor' => null
+        ];
 
-       return $this->partnerDeliveryInfoRepositoryInterface->create($data);
+        return $this->partnerDeliveryInfoRepositoryInterface->create($data);
     }
+
     public function deliveryCharge()
     {
         try {
