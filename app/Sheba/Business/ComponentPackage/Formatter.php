@@ -50,7 +50,7 @@ class Formatter
                 continue;
             }
             $data['selected'][] = [
-                'target_id' => $target->target_id,
+                'id' => $target->target_id,
                 'name' => $this->getTargetDetails($target->effective_for, $target->target_id)['name']
             ];
         }
