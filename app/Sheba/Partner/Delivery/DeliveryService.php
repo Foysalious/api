@@ -351,14 +351,8 @@ class DeliveryService
 
     public function register()
     {
-        try {
-            $data = $this->makeData();
-            return $this->client->post('', $data);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return false;
-        }
-
+        $data = $this->makeData();
+        return $this->client->post('merchants/register', $data);
     }
     public function deliveryCharge()
     {
