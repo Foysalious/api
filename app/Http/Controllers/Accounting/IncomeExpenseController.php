@@ -46,8 +46,9 @@ class IncomeExpenseController extends Controller
                 'amount_cleared' => 'sometimes|required|numeric',
                 'customer_id' => 'required_with:amount_cleared'
             ]);
-//            $product = collect(json_decode($request->inventory_products, true))->toArray();
-            $response = $this->accountingRepo->storeEntry($request, EntryTypes::EXPENSE);
+//            $product = (json_decode($request->inventory_products, true));
+            $type = count(json_decode($request->inventory_products, true)) ? EntryTypes::INVENTORY : EntryTypes::EXPENSE;
+            $response = $this->accountingRepo->storeEntry($request, $type);
             return api_response($request, $response, 200, ['data' => $response]);
         } catch (AccountingEntryServerError $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
