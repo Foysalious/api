@@ -12,4 +12,5 @@ class EntryTypes
     const INCOME = "income";
     const EXPENSE = "expense";
     const TRANSFER = "transfer";
+    const INVENTORY = "inventory";
 }
