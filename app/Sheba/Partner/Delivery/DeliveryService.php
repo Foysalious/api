@@ -358,14 +358,14 @@ class DeliveryService
         $client = new \GuzzleHttp\Client();
 
 
-        return $client->post('https://dev-sdp-api.padmatechnology.com/api/v1/s-delivery/price-check', $data);
-//        return $this->client->post('', $data);
+//        return $client->post('https://dev-sdp-api.padmatechnology.com/api/v1/s-delivery/price-check', $data);
+      return $this->client->post('https://dev-sdp-api.padmatechnology.com/api/v1/s-delivery/price-check', $data);
 
     }
 
     public function districts(){
         $client = new \GuzzleHttp\Client();
-        $request = $client->get('http://randomuser.me/api');
+        $request = $client->get('https://private-anon-65fef00aea-shebadeliveryapi.apiary-mock.com/api/v1/s-delivery/districts');
         $response = $request->getBody();
 
         return $request;

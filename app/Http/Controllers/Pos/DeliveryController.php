@@ -105,7 +105,7 @@ class DeliveryController extends Controller
         $partner= $request->partner;
         $this->setModifier($request->manager_resource);
         $district = $delivery_service->setPartner($partner)->districts();
-        return api_response($request, null, 200, ['info' => $district]);
+        return api_response($request, null, 200, ['district' => $district]);
     }
 
 }
