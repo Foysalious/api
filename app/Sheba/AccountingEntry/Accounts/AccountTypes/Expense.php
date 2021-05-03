@@ -18,4 +18,5 @@ class Expense extends AccountTypes
     public $other_expense;
     /** @var Purchase */
     public $purchase;
+    public $loan_service;
 }
