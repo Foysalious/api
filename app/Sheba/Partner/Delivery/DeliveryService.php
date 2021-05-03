@@ -5,20 +5,90 @@ use App\Exceptions\DoNotReportException;
 use App\Http\Requests\Request;
 use App\Models\Partner;
 use App\Models\PosOrder;
+use App\Models\PosOrderPayment;
+use Throwable;
+
 
 class DeliveryService
 {
     private $partner;
+    private $name;
+    private $companyRefId;
+    private $productNature;
+    private $address;
+    private $district;
+    private $thana;
+    private $fbPageUrl;
+    private $phone;
+    private $paymentMethod;
+    private $website;
+    private $contactName;
+    private $email;
+    private $designation;
+    private $accountName;
+    private $accountNumber;
+    private $bankName;
+    private $branchName;
+    private $routingNumber;
+    private $cashOnDelivery;
+    private $weight;
+    private $pickupThana;
+    private $pickupDistrict;
+    private $deliveryThana;
+    private $deliveryDistrict;
+    private $order;
 
 
-    public function __construct()
+    public function __construct(DeliveryServerClient $client)
     {
-
+        $this->client = $client;
     }
 
     public function setPartner(Partner $partner)
     {
         $this->partner = $partner;
+        return $this;
+    }
+
+    public function setData($data)
+    {
+        $this->data = $data;
+        return $this;
+    }
+
+    public function setWeight($weight)
+    {
+        $this->weight = $weight;
+        return $this;
+    }
+
+    public function setcashOnDelivery($cashOnDelivery)
+    {
+        $this->cashOnDelivery = $cashOnDelivery;
+        return $this;
+    }
+
+    public function setpickupThana($pickupThana)
+    {
+        $this->pickupThana = $pickupThana;
+        return $this;
+    }
+
+    public function setpickupDistrict($pickupDistrict)
+    {
+        $this->pickupDistrict = $pickupDistrict;
+        return $this;
+    }
+
+    public function setDeliveryThana($deliveryThana)
+    {
+        $this->deliveryThana = $deliveryThana;
+        return $this;
+    }
+
+    public function setDeliveryDistrict($deliveryDistrict)
+    {
+        $this->deliveryDistrict = $deliveryDistrict;
         return $this;
     }
 
@@ -43,8 +113,8 @@ class DeliveryService
         return [
             'mobile_banking_providers' => config('pos_delivery.mobile_banking_providers'),
             'merchant_name' => $this->partner->name,
-            'contact_person' => $this->partner->getContactPerson(),
-            'mobile' => $this->partner->getContactNumber(),
+            'contact_name' => $this->partner->getContactPerson(),
+            'contact_number' => $this->partner->getContactNumber(),
             'email' => $this->partner->getContactEmail(),
             'business_type' => $this->partner->business_type,
             'address' => [
@@ -57,8 +127,9 @@ class DeliveryService
 
     public function getOrderInfo($order_id)
     {
-        $order = PosOrder::where('id', $order_id)->with('customer', 'customer.profile')->first();
- //       $order = PosOrder::where('id', $order_id)->first();
+
+        $this->order = $order = PosOrder::where('id', $order_id)->with('customer', 'customer.profile', 'payments')->first();
+        //       $order = PosOrder::where('id', $order_id)->first();
         if ($this->partner->id != $order->partner_id) {
             throw new DoNotReportException("Order does not belongs to this partner", 400);
         }
@@ -83,12 +154,230 @@ class DeliveryService
                     'thana' => $order->delivery_thana,
                     'zilla' => $order->delivery_zilla
                 ],
-                'payment_method' => 'bkash',
-                'cash_amount' => 5680
+                'payment_method' => $this->paymentInfo($order_id)->method,
+                'cash_amount' => $this->getDueAmount(),
 
             ]
         ];
     }
 
+    private function getDueAmount()
+    {
+        $this->order->calculate();
+        return $this->order->getDue();
+    }
+
+    public function paymentInfo($order_id)
+    {
+
+
+        return PosOrderPayment::where('pos_order_id', $order_id)->where('transaction_type', 'Credit')->orderBy('id', 'desc')->first();
+
+    }
+
+    public function setName($name)
+    {
+        $this->name = $name;
+        return $this;
+    }
+
+    public function setCompanyRefId($companyRefId)
+    {
+        $this->companyRefId = $companyRefId;
+    }
+
+    public function setProductNature($productNature)
+    {
+        $this->productNature = $productNature;
+        return $this;
+    }
+
+    public function setAddress($address)
+    {
+        $this->address = $address;
+        return $this;
+    }
+
+    public function setDistrict($district)
+    {
+        $this->district = $district;
+        return $this;
+    }
+
+    /**
+     * @param mixed $thana
+     * @return DeliveryService
+     */
+    public function setThana($thana)
+    {
+        $this->thana = $thana;
+        return $this;
+    }
+
+    public function setPhone($phone)
+    {
+        $this->phone = $phone;
+        return $this;
+    }
+
+
+    public function setPaymentMethod($paymentMethod)
+    {
+        $this->paymentMethod = $paymentMethod;
+        return $this;
+    }
+
+
+    public function setWebsite($website)
+    {
+        $this->website = $website;
+        return $this;
+    }
+
+
+    public function setContactName($contactName)
+    {
+        $this->contactName = $contactName;
+        return $this;
+    }
+
+
+    public function setContactNumber($contactNumber)
+    {
+        $this->contactNumber = $contactNumber;
+        return $this;
+    }
+
+
+    public function setEmail($email)
+    {
+        $this->email = $email;
+        return $this;
+    }
+
+
+    public function setDesignation($designation)
+    {
+        $this->designation = $designation;
+        return $this;
+    }
+
+    public function setAccountName($accountName)
+    {
+        $this->accountName = $accountName;
+        return $this;
+    }
+
+    public function setAccountNumber($accountNumber)
+    {
+        $this->accountNumber = $accountNumber;
+        return $this;
+    }
+
+    public function setBankName($bankName)
+    {
+        $this->bankName = $bankName;
+        return $this;
+    }
+
+    public function setBranchName($branchName)
+    {
+        $this->branchName = $branchName;
+        return $this;
+    }
+
+    public function setRoutingNumber($routingNumber)
+    {
+        $this->routingNumber = $routingNumber;
+        return $this;
+    }
+
+    public function setFbPageUrl($fbPageUrl)
+    {
+        $this->fbPageUrl = $fbPageUrl;
+        return $this;
+    }
+
+    public function makeData()
+    {
+        return [
+            'name' => $this->name,
+            'company_ref_id' => $this->companyRefId,
+            'product_nature' => $this->productNature,
+            'address' => $this->address,
+            'district' => $this->district,
+            'thana' => $this->thana,
+            'fb_page_url' => $this->fbPageUrl,
+            'phone' => $this->phone,
+            'payment_method' => $this->paymentMethod,
+            'website' => $this->website,
+            'contact_name' => $this->contactName,
+            'contact_number' => $this->partner->getContactNumber(),
+            'email' => $this->email,
+            'designation' => $this->designation,
+            'mfs_info' => [
+                'account_name' => $this->accountName,
+                'account_number' => $this->accountNumber,
+                'bank_name' => $this->bankName,
+                'branch_name' => $this->branchName,
+                'routing_number' => $this->routingNumber
+            ]
+
+        ];
+    }
+
+    public function makeDataDeliveryCharge()
+    {
+        $data = [
+
+            'weight' => $this->weight,
+            'cod_amount' => $this->cashOnDelivery,
+            'pick_up' => [
+                'thana' => $this->pickupThana,
+                'district' => $this->pickupDistrict,
+            ],
+            'delivery' => [
+                'thana' => $this->deliveryThana,
+                'district' => $this->deliveryDistrict,
+            ]
+        ];
+        return ($data);
+
+    }
+
+
+    public function register()
+    {
+        $data = $this->makeData();
+        return $this->client->post('merchants/register', $data);
+    }
+
+    public function deliveryCharge()
+    {
+        try {
+
+
+            $data = $this->makeDataDeliveryCharge();
+
+            return $this->client->post('price-check', $data);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return false;
+        }
+    }
+
+    public function districts()
+    {
+
+        return $this->client->get('districts');
+
+    }
+
+    public function upzillas($district_name)
+    {
+
+        return $this->client->get('districts/' . $district_name . '/upazilas');
+
+    }
 
 }
