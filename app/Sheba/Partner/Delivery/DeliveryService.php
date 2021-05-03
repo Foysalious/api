@@ -320,12 +320,12 @@ class DeliveryService
 
     public function makeDataDeliveryCharge()
     {
-        $data= [
+        $data = [
 
             'weight' => $this->weight,
             'cod_amount' => $this->cashOnDelivery,
             'pick_up' => [
-                'thana' => $this->pickupThana ,
+                'thana' => $this->pickupThana,
                 'district' => $this->pickupDistrict,
             ],
             'delivery' => [
@@ -333,10 +333,9 @@ class DeliveryService
                 'district' => $this->deliveryDistrict,
             ]
         ];
-        return json_encode($data);
+        return ($data);
 
     }
-
 
 
     public function register()
@@ -350,26 +349,30 @@ class DeliveryService
         }
 
     }
+
     public function deliveryCharge()
     {
-
-        $data = $this->makeDataDeliveryCharge();
-
-        $client = new \GuzzleHttp\Client();
+        try {
 
 
-//        return $client->post('https://dev-sdp-api.padmatechnology.com/api/v1/s-delivery/price-check', $data);
-      return $this->client->post('https://dev-sdp-api.padmatechnology.com/api/v1/s-delivery/price-check', $data);
+            $data = $this->makeDataDeliveryCharge();
 
+            return $this->client->post('price-check', $data);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return false;
+        }
     }
 
-    public function districts(){
-        $client = new \GuzzleHttp\Client();
-        $request = $client->get('https://private-anon-65fef00aea-shebadeliveryapi.apiary-mock.com/api/v1/s-delivery/districts');
-        $response = $request->getBody();
+    public function districts()
+    {
 
-        return $request;
-
+        try {
+            return $this->client->get('districts');
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return false;
+        }
     }
 
 }

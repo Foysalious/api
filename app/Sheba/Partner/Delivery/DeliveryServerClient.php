@@ -23,8 +23,10 @@ class DeliveryServerClient
     private function call($method, $uri, $data = null, $multipart = false)
     {
         try {
+            dd($this->makeUrl($uri));
             return json_decode($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data, $multipart))->getBody()->getContents(), true);
-        } catch (GuzzleException $e) {
+        }
+        catch (GuzzleException $e) {
             $res = $e->getResponse();
             $http_code = $res->getStatusCode();
             $message = $res->getBody()->getContents();
