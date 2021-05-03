@@ -45,7 +45,7 @@ class WebstoreOrderSmsHandler
             (new JournalCreateRepository())->setTypeId($partner->id)
                 ->setSource($transaction)
                 ->setAmount($sms_cost)
-                ->setDebitAccountKey(SmsPurchase::SMS_PURCHASE)
+                ->setDebitAccountKey(SmsPurchase::SMS_PURCHASE_FROM_SHEBA)
                 ->setCreditAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
                 ->setDetails("Webstore sms cost")
                 ->setReference($this->order->id)

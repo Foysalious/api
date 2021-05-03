@@ -1,6 +1,10 @@
 <?php namespace Sheba\SmsCampaign;
 
 use App\Models\Partner;
+use Sheba\AccountingEntry\Accounts\Accounts;
+use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Expense\SmsPurchase;
+use Sheba\AccountingEntry\Accounts\RootAccounts;
+use Sheba\AccountingEntry\Repository\JournalCreateRepository;
 use Sheba\Dal\SmsCampaignOrder\SmsCampaignOrder;
 use Sheba\Dal\SmsCampaignOrder\SmsCampaignOrderRepository;
 use Sheba\Dal\SmsCampaignOrderReceiver\SmsCampaignOrderReceiver;
@@ -37,6 +41,7 @@ class SmsCampaign
     private $ratePerSms;
     /** @var Partner $partner */
     private $partner;
+    private $transaction;
 
     public function __construct(SmsHandler $sms, CampaignSmsStatusChanger $sms_status_changer,
                                 SmsCampaignOrderReceiverRepository $receiver_repo, SmsCampaignOrderRepository $order_repo)
@@ -104,6 +109,7 @@ class SmsCampaign
         }
 
         $this->createTransactions($campaign_order, $amount_to_be_deducted);
+        $this->storeJournal($amount_to_be_deducted, $campaign_order->id);
         $this->smsStatusChanger->processPendingSms();
 
         return true;
@@ -134,6 +140,18 @@ class SmsCampaign
             ->store();
         $tag = Tag::where('name', 'credited sms campaign')->pluck('id')->toArray();
         $partner_transactions->tags()->sync($tag);
+        $this->transaction = $partner_transactions;
+    }
+
+    public function storeJournal($cost, $campaignOrderId){
+        (new JournalCreateRepository())->setTypeId($this->partner->id)
+            ->setSource($this->transaction)
+            ->setAmount($cost)
+            ->setDebitAccountKey(SmsPurchase::SMS_PURCHASE)
+            ->setCreditAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
+            ->setDetails("SMS marketing")
+            ->setReference($campaignOrderId)
+            ->store();
     }
 
     private function createExpenseTrackerEntry(SmsCampaignOrder $campaign_order, $amount_to_be_deducted)
