@@ -5,6 +5,10 @@ use App\Models\PosOrder;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
 use App\Sheba\Sms\BusinessType;
 use App\Sheba\Sms\FeatureType;
+use Sheba\AccountingEntry\Accounts\Accounts;
+use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Expense\SmsPurchase;
+use Sheba\AccountingEntry\Accounts\RootAccounts;
+use Sheba\AccountingEntry\Repository\JournalCreateRepository;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Transactions\Types;
@@ -36,7 +40,16 @@ class WebstoreOrderSmsHandler
         if ((double)$partner->wallet > (double)$sms_cost) {
             /** @var WalletTransactionHandler $walletTransactionHandler */
             $sms->setFeatureType(FeatureType::WEB_STORE)->setBusinessType(BusinessType::SMANAGER)->shoot();
-            (new WalletTransactionHandler())->setModel($partner)->setAmount($sms_cost)->setType(Types::debit())->setLog($sms_cost . " BDT has been deducted for sending pos order update sms to customer(order id: {$this->order->id})")->setTransactionDetails([])->setSource(TransactionSources::SMS)->store();
+            $transaction = (new WalletTransactionHandler())->setModel($partner)->setAmount($sms_cost)->setType(Types::debit())->setLog($sms_cost . " BDT has been deducted for sending pos order update sms to customer(order id: {$this->order->id})")->setTransactionDetails([])->setSource(TransactionSources::SMS)->store();
+
+            (new JournalCreateRepository())->setTypeId($partner->id)
+                ->setSource($transaction)
+                ->setAmount($sms_cost)
+                ->setDebitAccountKey(SmsPurchase::SMS_PURCHASE)
+                ->setCreditAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
+                ->setDetails("Webstore sms cost")
+                ->setReference($this->order->id)
+                ->store();
         }
 
     }

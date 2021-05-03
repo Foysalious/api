@@ -10,7 +10,7 @@ use App\Models\Profile;
 use App\Models\Resource;
 use App\Models\User;
 use App\Repositories\FileRepository;
-use App\Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Expense\LoanService;
+use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Expense\LoanService;
 use App\Sheba\Loan\DLSV2\Exceptions\InsufficientWalletCreditForRepayment;
 use App\Sheba\Loan\DLSV2\LoanClaim;
 use App\Sheba\Loan\DLSV2\Repayment;
