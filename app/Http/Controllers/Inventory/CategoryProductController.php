@@ -17,8 +17,8 @@ class CategoryProductController extends Controller
     {
         $partner = $request->auth_user->getPartner();
         $category_products = $this->categoryProductService
-            ->setMasterCategoryId($request->master_category_id)
-            ->setCategoryId($request->category_id)
+            ->setMasterCategoryIds($request->master_category_ids)
+            ->setCategoryIds($request->category_ids)
             ->setUpdatedAfter($request->updated_after)
             ->setOffset($request->offset)
             ->setLimit($request->limit)
