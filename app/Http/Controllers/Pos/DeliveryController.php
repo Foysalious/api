@@ -60,6 +60,8 @@ class DeliveryController extends Controller
             ->setProductNature($request->business_type)
             ->register();
 
+        $delivery_service->setPartner($partner)->storeDeliveryInformation($registration['data']);
+
         return api_response($request, null, 200, ['messages' => 'আপনার রেজিস্ট্রেশন সফল হয়েছে','data' => $registration['data']]);
     }
 

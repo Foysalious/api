@@ -354,6 +354,11 @@ class DeliveryService
         $data = $this->makeData();
         return $this->client->post('merchants/register', $data);
     }
+
+    public function storeDeliveryInformation($info)
+    {
+
+    }
     public function deliveryCharge()
     {
 
