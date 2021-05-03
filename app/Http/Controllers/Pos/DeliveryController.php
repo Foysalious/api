@@ -45,7 +45,7 @@ class DeliveryController extends Controller
         ]);
         $partner = $request->partner;
         $this->setModifier($request->manager_resource);
-        $delivery_service->setPartner($partner)
+        $registration = $delivery_service->setPartner($partner)
             ->setName($request->name)
             ->setAddress($request->address)
             ->setDistrict($request->district)
@@ -61,7 +61,7 @@ class DeliveryController extends Controller
             ->setProductNature($request->business_type)
             ->register();
 
-        return api_response($request, null, 200, ['messages' => 'আপনার রেজিস্ট্রেশন সফল হয়েছে']);
+        return api_response($request, null, 200, ['messages' => 'আপনার রেজিস্ট্রেশন সফল হয়েছে','data' => $registration['data']]);
     }
 
 
