@@ -108,4 +108,12 @@ class DeliveryController extends Controller
         return api_response($request, null, 200, ['district' => $district]);
     }
 
+    public function upzillas(Request $request, $partner,$district_name, DeliveryService $delivery_service)
+    {
+        $partner= $request->partner;
+        $this->setModifier($request->manager_resource);
+        $upzillas = $delivery_service->setPartner($partner)->upzillas($district_name);
+        return api_response($request, null, 200, ['upzillas' => $upzillas]);
+    }
+
 }

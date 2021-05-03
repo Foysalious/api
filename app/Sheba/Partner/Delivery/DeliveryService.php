@@ -367,12 +367,15 @@ class DeliveryService
     public function districts()
     {
 
-        try {
-            return $this->client->get('districts');
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return false;
-        }
+        return $this->client->get('districts');
+
+    }
+
+    public function upzillas($district_name)
+    {
+
+        return $this->client->get('districts/'.$district_name.'/upazilas');
+
     }
 
 }
