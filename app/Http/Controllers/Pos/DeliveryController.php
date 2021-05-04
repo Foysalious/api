@@ -134,7 +134,7 @@ class DeliveryController extends Controller
 //        ]);
 
         $partner= $request->partner;
-        $this->setModifier($request->manager_resource);
+//        $this->setModifier($request->manager_resource);
 
 
         $charge= $delivery_service->setPartner($partner)->setWeight($request->weight)->setcashOnDelivery($request->cod_amount)->setpickupThana($request->pickupThana)
@@ -146,17 +146,17 @@ class DeliveryController extends Controller
 
     public function districts(Request $request, $partner, DeliveryService $delivery_service)
     {
-        $partner= $request->partner;
-        $this->setModifier($request->manager_resource);
-        $district = $delivery_service->setPartner($partner)->districts();
+//        $partner= $request->partner;
+//        $this->setModifier($request->manager_resource);
+        $district = $delivery_service->districts();
         return api_response($request, null, 200, ['district' => $district]);
     }
 
     public function upzillas(Request $request, $partner,$district_name, DeliveryService $delivery_service)
     {
-        $partner= $request->partner;
-        $this->setModifier($request->manager_resource);
-        $upzillas = $delivery_service->setPartner($partner)->upzillas($district_name);
+//        $partner= $request->partner;
+//        $this->setModifier($request->manager_resource);
+        $upzillas = $delivery_service->upzillas($district_name);
         return api_response($request, null, 200, ['upzillas' => $upzillas]);
     }
 

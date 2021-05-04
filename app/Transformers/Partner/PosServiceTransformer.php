@@ -17,6 +17,8 @@ class PosServiceTransformer extends TransformerAbstract
             'unit' => $pos_service->unit,
             'stock' => $pos_service->stock,
             'category_id' => $pos_service->subCategory->parent->id,
+            'weight' => $pos_service->weight,
+            'weight_unit'=>$pos_service->weight_unit,
             'discount_applicable' => $pos_service->discount() ? 1 : 0,
             'discounted_amount' => $pos_service->discount() ? $pos_service->getDiscountedAmount() : 0,
             'discount_percentage' => $pos_service->discount() ? $pos_service->getDiscountPercentage() : 0,
