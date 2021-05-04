@@ -73,7 +73,9 @@ class AccountController extends Controller
                     'name_bn' => 'required|string',
                     'root_account' => 'required|string',
                     'account_type' => 'required|string',
-                    'icon' => 'nullable'
+                    'icon' => 'string',
+                    'opening_balance' => 'numeric',
+                    'balance_type' => 'required_with:opening_balance|in:positive,negative'
                 ]
             );
 
@@ -83,6 +85,8 @@ class AccountController extends Controller
                 ->setRootAccount($request->root_account)
                 ->setAccountType($request->account_type)
                 ->setIcon($request->icon)
+                ->setOpeningBalance($request->opening_balance)
+                ->setBalanceType($request->balance_type)
                 ->storeAccount($request->partner->id);
             return api_response($request, $response, 200, ['data' => $response]);
         } catch (Exception $e) {
@@ -103,14 +107,12 @@ class AccountController extends Controller
                 [
                     'name' => 'required|string',
                     'name_bn' => 'required|string',
-                    'icon' => 'nullable',
-                    'account_type' => 'required|string',
+                    'icon' => 'string'
                 ]
             );
             $response = $this->accountRepo
                 ->setName($request->name)
                 ->setNameBn($request->name_bn)
-                ->setAccountType($request->account_type)
                 ->setIcon($request->icon)
                 ->updateAccount($accountId, $request->partner->id);
             return api_response($request, $response, 200, ['data' => $response]);
