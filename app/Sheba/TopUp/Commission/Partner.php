@@ -10,6 +10,12 @@ use Sheba\TopUp\TopUpCommission;
 class Partner extends TopUpCommission
 {
     private $partner;
+    private $topUpDisburse;
+
+    public function __construct(TopUpCommission $topUpCommission)
+    {
+        $this->topUpDisburse =$topUpCommission;
+    }
 
     /**
      * @param \App\Models\Partner $partner
@@ -60,20 +66,14 @@ class Partner extends TopUpCommission
 
     private function saleTopUp()
     {
-        $transaction = $this->getWalletTransaction();
         (new JournalCreateRepository())
             ->setTypeId($this->partner->id)
-            ->setSource($transaction)
-            ->setAmount($transaction->amount)
+            ->setSource($this->topUpDisburse->getTransaction())
+            ->setAmount($this->topUpDisburse->amount)
             ->setDebitAccountKey(Cash::CASH)
             ->setCreditAccountKey(AutomaticIncomes::TOP_UP)
             ->setDetails("Top Up for sale")
-            ->setReference("write Something")
+            ->setReference("TopUp selling amount is" . $this->topUpDisburse->amount . " tk.")
             ->store();
-    }
-
-    public function getWalletTransaction()
-    {
-        return $this->wallet_transaction;
     }
 }
