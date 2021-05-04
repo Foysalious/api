@@ -20,6 +20,7 @@ class CategoryProductController extends Controller
             ->setMasterCategoryIds($request->master_category_ids)
             ->setCategoryIds($request->category_ids)
             ->setUpdatedAfter($request->updated_after)
+            ->setIsPublishedForWebstore($request->is_published_for_webstore)
             ->setOffset($request->offset)
             ->setLimit($request->limit)
             ->getProducts($partner->id);
