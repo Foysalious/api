@@ -33,7 +33,7 @@ class LoanRepaymentComplete extends PaymentComplete
                                  ->setClaim($lastClaim ? $lastClaim->id : null)
                                  ->storeDebit("Online, Payment ID : {$this->payment->id}");
                 $this->completePayment();
-                (new JournalCreateRepository())->setTypeId($payable->user->id)->setSource($repayment)->setAmount($payable->amount)->setDebitAccountKey($this->payment->paymentDetails->last()->method)->setCreditAccountKey(Sheba::SHEBA_ACCOUNT)->setDetails("Entry For Loan Repayment")->setReference($this->payment->id)->store();
+//                (new JournalCreateRepository())->setTypeId($payable->user->id)->setSource($repayment)->setAmount($payable->amount)->setDebitAccountKey($this->payment->paymentDetails->last()->method)->setCreditAccountKey(Sheba::SHEBA_ACCOUNT)->setDetails("Entry For Loan Repayment")->setReference($this->payment->id)->store();
             });
         } catch (QueryException $e) {
             $this->payment->transaction_details = $e->getMessage();
