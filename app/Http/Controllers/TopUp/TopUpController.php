@@ -229,9 +229,10 @@ class TopUpController extends Controller
             ->setRequest($request)
             ->verify();
 
-        $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
+        #$blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
         $validator = (new ExtensionValidator())->setFile($request->file('file'));
-        $data_validator = (new DataFormatValidator())->setAgent($agent)->setBlockedAmountByOperator($blocked_amount_by_operator)->setRequest($request);
+        #$data_validator = (new DataFormatValidator())->setAgent($agent)->setBlockedAmountByOperator($blocked_amount_by_operator)->setRequest($request);
+        $data_validator = (new DataFormatValidator())->setAgent($agent)->setRequest($request);
         $validator->linkWith(new SheetNameValidator())->linkWith($data_validator);
         $validator->check();
 

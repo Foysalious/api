@@ -20,6 +20,12 @@ class OtfAmountCheck
     private $vendorId;
     private $agent;
 
+    /**
+     * OtfAmountCheck constructor.
+     * @param TopUpVendorOTFRepo $vendor_otf
+     * @param TopUpOTFSettingsRepo $otf_settings
+     * @param VendorFactory $vendor_factory
+     */
     public function __construct(TopUpVendorOTFRepo $vendor_otf, TopUpOTFSettingsRepo $otf_settings, VendorFactory $vendor_factory)
     {
         $this->vendorOtf = $vendor_otf;
@@ -27,6 +33,9 @@ class OtfAmountCheck
         $this->vendorFactory = $vendor_factory;
     }
 
+    /**
+     * @return float
+     */
     public function getAmount()
     {
         return (double)$this->amount;
@@ -55,6 +64,22 @@ class OtfAmountCheck
         return $this;
     }
 
+    /**
+     * operator gp|robi etc.
+     * @param $vendor
+     * @return $this
+     * @throws Exception
+     */
+    public function setVendor($vendor)
+    {
+        $this->vendor = $this->vendorFactory->getByName($vendor);
+        $this->vendorId = $this->vendor->getModel()->id;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
     public function getType()
     {
         return $this->type;
