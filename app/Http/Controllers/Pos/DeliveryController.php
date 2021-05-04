@@ -34,10 +34,10 @@ class DeliveryController extends Controller
             'address' => 'required',
             'district' => 'required',
             'thana' => 'required',
-            'payment_method' => 'required|in:'. implode(',', config('pos_delivery.payment_method')),
+            'payment_method' => 'required|in:' . implode(',', config('pos_delivery.payment_method')),
             'contact_name' => 'required',
             'mobile' => 'required',
-            'account_type' => 'required|in:'. implode(',', config('pos_delivery.account_type')),
+            'account_type' => 'required|in:' . implode(',', config('pos_delivery.account_type')),
             'business_type' => 'required',
             'account_name' => 'sometimes',
             'account_number' => 'sometimes',
@@ -67,12 +67,23 @@ class DeliveryController extends Controller
             ->setProductNature($request->business_type)
             ->register();
         $delivery_service->setPartner($partner)->storeDeliveryInformation($registration['data']);
-        return api_response($request, null, 200, ['messages' => 'আপনার রেজিস্ট্রেশন সফল হয়েছে','data' => $registration['data']]);
+        return api_response($request, null, 200, ['messages' => 'আপনার রেজিস্ট্রেশন সফল হয়েছে', 'data' => $registration['data']]);
     }
+
+//    public function vendorUpdate(Request $request, $partner, DeliveryService $delivery_service)
+//    {
+//        $partner = $request->partner;
+//        $this->setModifier($request->manager_resource);
+//        $registration = $delivery_service->setPartner($partner)
+//            ->setVendor($request->vendor)
+//            ->register();
+//        $delivery_service->setPartner($partner)->storeDeliveryInformation($registration['data']);
+//        return api_response($request, null, 200, ['messages' => 'আপনার রেজিস্ট্রেশন সফল হয়েছে', 'data' => $registration['data']]);
+//    }
 
     public function orderPlace(Request $request, $partner, OrderPlace $orderPlace)
     {
-        $this->validate($request,[
+        $this->validate($request, [
             'customer_name' => 'required',
             'customer_phone' => 'required',
             'delivery_address' => 'required',
@@ -105,9 +116,8 @@ class DeliveryController extends Controller
             ->orderPlace();
 
         $orderPlace->setPartner($partner)->setPosOrder($request->pos_order_id)->storeDeliveryInformation($orderPlaceInfo['data']);
-        return api_response($request, null, 200, ['messages' => 'ডেলিভারি রিকোয়েস্ট সম্পন্ন','data' => $orderPlaceInfo['data']]);
+        return api_response($request, null, 200, ['messages' => 'ডেলিভারি রিকোয়েস্ট সম্পন্ন', 'data' => $orderPlaceInfo['data']]);
     }
-
 
 
     public function getVendorList(Request $request, DeliveryService $delivery_service)
@@ -127,18 +137,18 @@ class DeliveryController extends Controller
         return api_response($request, null, 200, ['order_information' => $order_information]);
 
     }
+
     public function deliveryCharge(Request $request, $partner, DeliveryService $delivery_service)
     {
-//        $this->validate($request, [
-//            'weight' => 'required'
-//        ]);
 
-        $partner= $request->partner;
+
+
+        $partner = $request->partner;
+
 //        $this->setModifier($request->manager_resource);
 
 
-        $charge= $delivery_service->setPartner($partner)->setWeight($request->weight)->setcashOnDelivery($request->cod_amount)->setpickupThana($request->pickupThana)
-            ->setpickupDistrict($request->pickupDistrict)->setDeliveryDistrict($request->deliveryDistrict)->setDeliveryThana($request->deliveryThana)->deliveryCharge();
+        $charge = $delivery_service->setPartner($partner)->setWeight($request->weight)->setcashOnDelivery($request->cod_amount)->setDeliveryDistrict($request->deliveryDistrict)->setDeliveryThana($request->deliveryThana)->deliveryCharge($partner);
 
         return api_response($request, null, 200, ['info' => $charge]);
 
@@ -152,7 +162,7 @@ class DeliveryController extends Controller
         return api_response($request, null, 200, ['district' => $district]);
     }
 
-    public function upzillas(Request $request, $partner,$district_name, DeliveryService $delivery_service)
+    public function upzillas(Request $request, $partner, $district_name, DeliveryService $delivery_service)
     {
 //        $partner= $request->partner;
 //        $this->setModifier($request->manager_resource);

@@ -334,15 +334,17 @@ class DeliveryService
         ];
     }
 
-    public function makeDataDeliveryCharge()
+    public function makeDataDeliveryCharge($partner)
     {
+        $partnerDeliveryInformation= $this->partnerDeliveryInformation($partner);
+
         $data = [
 
             'weight' => $this->weight,
             'cod_amount' => $this->cashOnDelivery,
             'pick_up' => [
-                'thana' => $this->pickupThana,
-                'district' => $this->pickupDistrict,
+                'thana' => $partnerDeliveryInformation->thana,
+                'district' => $partnerDeliveryInformation->district,
             ],
             'delivery' => [
                 'thana' => $this->deliveryThana,
@@ -387,18 +389,23 @@ class DeliveryService
         return $this->partnerDeliveryInfoRepositoryInterface->create($data);
     }
 
-    public function deliveryCharge()
+    public function deliveryCharge($partner)
     {
         try {
 
 
-            $data = $this->makeDataDeliveryCharge();
+            $data = $this->makeDataDeliveryCharge($partner);
 
             return $this->client->post('price-check', $data);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return false;
         }
+    }
+
+    public function partnerDeliveryInformation($partner){
+
+        return $this->partnerDeliveryInfoRepositoryInterface->where('partner_id',$partner)->first();
     }
 
     public function districts()

@@ -50,8 +50,8 @@ class ServiceController extends Controller
                 ->each(function ($service) use (&$services) {
                     $services[] = [
                         'id' => $service->id,
-                        'wight' => $service->weight,
-                        'wight_unit' => $service->wight_unit,
+                        'weight' => $service->weight,
+                        'weight_unit' => $service->weight_unit,
                         'name' => $service->name,
                         'app_thumb' => $service->app_thumb,
                         'app_banner' => $service->app_banner,
