@@ -155,7 +155,7 @@ class DeliveryController extends Controller
 
     }
 
-    public function districts(Request $request, $partner, DeliveryService $delivery_service)
+    public function districts(Request $request, DeliveryService $delivery_service)
     {
 //        $partner= $request->partner;
 //        $this->setModifier($request->manager_resource);
@@ -163,7 +163,7 @@ class DeliveryController extends Controller
         return api_response($request, null, 200, ['district' => $district]);
     }
 
-    public function upzillas(Request $request, $partner, $district_name, DeliveryService $delivery_service)
+    public function upzillas(Request $request, $district_name, DeliveryService $delivery_service)
     {
 //        $partner= $request->partner;
 //        $this->setModifier($request->manager_resource);
