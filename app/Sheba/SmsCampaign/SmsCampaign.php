@@ -147,7 +147,7 @@ class SmsCampaign
         (new JournalCreateRepository())->setTypeId($this->partner->id)
             ->setSource($this->transaction)
             ->setAmount($cost)
-            ->setDebitAccountKey(SmsPurchase::SMS_PURCHASE)
+            ->setDebitAccountKey(SmsPurchase::SMS_PURCHASE_FROM_SHEBA)
             ->setCreditAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
             ->setDetails("SMS marketing")
             ->setReference($campaignOrderId)

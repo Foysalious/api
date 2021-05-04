@@ -10,6 +10,5 @@ class SmsPurchase
 {
     use ConstGetter;
 
-    const SMS_PURCHASE = 'sms_purchase';
     const SMS_PURCHASE_FROM_SHEBA = 'sms_purchase_from_sheba';
 }
