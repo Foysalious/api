@@ -67,6 +67,8 @@ class ServiceController extends Controller
                         'show_image' => $service->show_image,
                         'shape' => $service->shape,
                         'color' => $service->color,
+                        'wight' => $service->weight,
+                        'wight_unit' => $service->wight_unit,
                         'image_gallery' => $service->imageGallery ? $service->imageGallery->map(function ($image) {
                             return [
                                 'id' => $image->id,
