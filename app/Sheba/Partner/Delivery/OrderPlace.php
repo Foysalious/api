@@ -1,6 +1,10 @@
 <?php namespace App\Sheba\Partner\Delivery;
 
 
+use App\Models\PosOrder;
+use Illuminate\Database\Eloquent\Model;
+use Sheba\Pos\Repositories\PosOrderRepository;
+
 class OrderPlace
 {
 
@@ -18,10 +22,16 @@ class OrderPlace
     private $pickupAddress;
     private $pickupThana;
     private $pickupDistrict;
+    private $posOrder;
+    /**
+     * @var PosOrderRepository
+     */
+    private $posOrderRepository;
 
-    public function __construct(DeliveryServerClient $client)
+    public function __construct(DeliveryServerClient $client, PosOrderRepository $posOrderRepository)
     {
         $this->client = $client;
+        $this->posOrderRepository = $posOrderRepository;
     }
 
     public function setPartner($partner)
@@ -102,6 +112,12 @@ class OrderPlace
         return $this;
     }
 
+    public function setPosOrder($posOrderId)
+    {
+        $this->posOrder  = PosOrder::find($posOrderId);
+        return $this;
+    }
+
     /**
      * @return mixed
      */
@@ -111,6 +127,27 @@ class OrderPlace
         return $this->client->post('orders', $data);
 
     }
+
+    /**
+     * @param $info
+     * @return Model
+     */
+    public function storeDeliveryInformation($info)
+    {
+        $data = [
+            'delivery_charge' => $info['delivery_charge'],
+            'delivery_vendor_name' => $info['logistic_partner_id'],
+            'address' => $info['delivery_address']['address'],
+            'delivery_zilla' => $info['delivery_address']['district'],
+            'delivery_thana' => $info['delivery_address']['thana'],
+            'delivery_status' => $info['status'],
+            'delivery_request_id' => $info['uid']
+        ];
+
+        return $this->posOrderRepository->update($this->posOrder, $data);
+    }
+
+
 
     private function makeData()
     {
