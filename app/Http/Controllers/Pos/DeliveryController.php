@@ -170,6 +170,15 @@ class DeliveryController extends Controller
         return api_response($request, null, 200, ['status' => $statusInfo['data']['status']]);
     }
 
+    public function cancelDeliveryOrder(Request $request, $partner, DeliveryService $delivery_service)
+    {
+        $this->validate($request,[
+            'pos_order_id' => 'required',
+        ]);
+        $status = $delivery_service->setPartner($partner)->setPosOrder($request->pos_order_id)->getDeliveryStatus()['data']['status'];
+
+    }
+
 
 
 }
