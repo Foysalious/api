@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use Exception;
 use Sheba\Dal\TopUpBlacklistNumber\Contract;
 use Sheba\TopUp\Events\TopUpRequestOfBlockedNumber;
+use Sheba\TopUp\OTF\OtfAmountCheck;
 use Sheba\TopUp\Vendor\Vendor;
 use Sheba\TopUp\Vendor\VendorFactory;
 use Event;
@@ -35,6 +36,9 @@ class TopUpRequest
     protected $userAgent;
     private $lat;
     private $long;
+    /** @var OtfAmountCheck */
+    private $otfAmountCheck;
+    private $isOtfAllow;
 
 
     public function __construct(VendorFactory $vendor_factory, Contract $top_up_block_number_repository)
@@ -164,6 +168,19 @@ class TopUpRequest
         return $this;
     }
 
+    public function setIsOtfAllow($is_otf_allow)
+    {
+        $this->isOtfAllow = $is_otf_allow;
+
+        $this->otfAmountCheck = app(OtfAmountCheck::class);
+        $this->otfAmountCheck->setAmount($this->amount)
+            ->setVendorId($this->vendorId)
+            ->setType($this->type)
+            ->setAgent($this->agent);
+        #$this->otfAmountCheck->isAmountInOtf();
+        return $this;
+    }
+
     public function hasError()
     {
         if ($this->doesAgentNotHaveBalance()) {
@@ -185,7 +202,7 @@ class TopUpRequest
             return 1;
         }
 
-        if ($this->agent instanceof Business && $this->isAmountBlocked()) {
+        if ($this->agent instanceof Business && $this->isOtfAllow && $this->otfAmountCheck->isAmountInOtf()) {
             $this->errorMessage = "The recharge amount is blocked due to OTF activation issue.";
             return 1;
         }
@@ -195,11 +212,11 @@ class TopUpRequest
             return 1;
         }
 
-        if ($this->topUpBlockNumberRepository->findByMobile($this->mobile)) {
+        /*if ($this->topUpBlockNumberRepository->findByMobile($this->mobile)) {
             Event::fire(new TopUpRequestOfBlockedNumber($this));
             $this->errorMessage = "You can't recharge to a blocked number.";
             return 1;
-        }
+        }*/
 
         return 0;
     }
@@ -220,6 +237,11 @@ class TopUpRequest
     {
         return ($this->agent instanceof Partner && (!$this->agent->isNIDVerified())) ||
             ($this->agent instanceof Affiliate && $this->agent->isNotVerified());
+    }
+
+    private function isCanTopUpNo()
+    {
+        return ($this->agent instanceof Partner && (!$this->agent->canTopUp()));
     }
 
 

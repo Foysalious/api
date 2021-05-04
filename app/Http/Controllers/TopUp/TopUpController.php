@@ -146,16 +146,14 @@ class TopUpController extends Controller
         $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id)->setLat($request->lat ? $request->lat : null)->setLong($request->long ? $request->long : null)->setUserAgent($userAgentInformation->getUserAgent());
 
         if ($agent instanceof Business && $request->has('is_otf_allow') && !($request->is_otf_allow)) {
-            $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
-            $top_up_request->setBlockedAmount($blocked_amount_by_operator);
+            $top_up_request->setIsOtfAllow(!$request->is_otf_allow);
         }
 
         if ($top_up_request->hasError()) {
             return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
         }
-
+        
         $topup_order = $creator->setTopUpRequest($top_up_request)->create();
-
         if ($topup_order) {
             dispatch((new TopUpJob($topup_order)));
 
@@ -237,9 +235,10 @@ class TopUpController extends Controller
             ->setRequest($request)
             ->verify();
 
-        $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
+        #$blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
         $validator = (new ExtensionValidator())->setFile($request->file('file'));
-        $data_validator = (new DataFormatValidator())->setAgent($agent)->setBlockedAmountByOperator($blocked_amount_by_operator)->setRequest($request);
+        #$data_validator = (new DataFormatValidator())->setAgent($agent)->setBlockedAmountByOperator($blocked_amount_by_operator)->setRequest($request);
+        $data_validator = (new DataFormatValidator())->setAgent($agent)->setRequest($request);
         $validator->linkWith(new SheetNameValidator())->linkWith($data_validator);
         $validator->check();
 
@@ -314,11 +313,17 @@ class TopUpController extends Controller
     private function getFullAgentType($type)
     {
         switch ($type) {
-            case 'customer': return Customer::class;
-            case 'partner': return Partner::class;
-            case 'affiliate': return Affiliate::class;
-            case 'business': case 'Company': return Business::class;
-            default: return '';
+            case 'customer':
+                return Customer::class;
+            case 'partner':
+                return Partner::class;
+            case 'affiliate':
+                return Affiliate::class;
+            case 'business':
+            case 'Company':
+                return Business::class;
+            default:
+                return '';
         }
     }
 
@@ -384,7 +389,10 @@ class TopUpController extends Controller
         $user = $this->getAgent($request, $user);
 
         $is_excel_report = ($request->has('content_type') && $request->content_type == 'excel');
-        if ($is_excel_report) {$offset = 0; $limit = 10000;}
+        if ($is_excel_report) {
+            $offset = 0;
+            $limit = 10000;
+        }
 
         $request_builder->setOffset($offset)->setLimit($limit)->setAgent($user);
         if ($request->has('from') && $request->from !== "null") {

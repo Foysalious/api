@@ -1,6 +1,7 @@
 <?php namespace Sheba\TopUp\Bulk\Validator;
 
 use App\Helper\BangladeshiMobileValidator;
+use Exception;
 use Illuminate\Http\Request;
 use App\Models\Business;
 use App\Sheba\TopUp\TopUpExcelDataFormatError;
@@ -9,6 +10,7 @@ use Sheba\TopUp\Bulk\Exception\InvalidTopupData;
 use Sheba\TopUp\Bulk\Exception\InvalidTotalAmount;
 use Sheba\TopUp\Bulk\ReadExcelAndProcessData;
 use Sheba\TopUp\ConnectionType;
+use Sheba\TopUp\OTF\OtfAmountCheck;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpExcel;
 use Sheba\TopUp\TopUpSpecialAmount;
@@ -32,6 +34,10 @@ class DataFormatValidator extends Validator
     private $filePath;
     /** @var string $bulkExcelCdnFilePath */
     private $bulkExcelCdnFilePath;
+    /**
+     * @var OtfAmountCheck
+     */
+    private $otfAmountCheck;
 
     public function __construct()
     {
@@ -101,7 +107,7 @@ class DataFormatValidator extends Validator
             } elseif (!$this->isAmountInteger($value->$amount_field)) {
                 $halt_top_up = true;
                 $excel_error = 'Amount Should be Integer';
-            } elseif ($this->isOtfNumberBlockedForBusiness() && $this->isAmountBlocked($value->$operator_field, $value->$amount_field)) {
+            } elseif ($this->isOtfNumberBlockedForBusiness() && $this->isAmountBlockedV2($value->$operator_field, $value->$connection_type,$value->$amount_field)) {
                 $halt_top_up = true;
                 $excel_error = 'The recharge amount is blocked due to OTF activation issue';
             } elseif ($this->isPrepaidAmountLimitExceedForBusiness($amount_field, $value, $connection_type)) {
@@ -154,6 +160,24 @@ class DataFormatValidator extends Validator
     private function isOtfNumberBlockedForBusiness(): bool
     {
         return $this->agent instanceof Business && $this->request->has('is_otf_allow') && !($this->request->is_otf_allow);
+    }
+
+    /**
+     * @param $operator
+     * @param $connection_type
+     * @param $amount
+     * @return bool
+     * @throws Exception
+     */
+    public function isAmountBlockedV2($operator, $connection_type, $amount) : bool
+    {
+        $this->otfAmountCheck = app(OtfAmountCheck::class);
+        $this->otfAmountCheck->setAmount($amount)
+            ->setVendor($operator)
+            ->setType($connection_type)
+            ->setAgent($this->agent);
+
+        return $this->otfAmountCheck->isAmountInOtf();
     }
 
     /**
