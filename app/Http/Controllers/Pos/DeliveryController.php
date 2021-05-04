@@ -170,13 +170,13 @@ class DeliveryController extends Controller
         return api_response($request, null, 200, ['status' => $statusInfo['data']['status']]);
     }
 
-    public function cancelDeliveryOrder(Request $request, $partner, DeliveryService $delivery_service)
+    public function cancelOrder(Request $request, $partner, DeliveryService $delivery_service)
     {
-        $this->validate($request,[
+        $this->validate($request, [
             'pos_order_id' => 'required',
         ]);
-        $status = $delivery_service->setPartner($partner)->setPosOrder($request->pos_order_id)->getDeliveryStatus()['data']['status'];
-
+        $delivery_service->setPartner($partner)->setPosOrder($request->pos_order_id)->cancelOrder();
+        return api_response($request, null, 200, ['messages' => 'ডেলিভারি অর্ডারটি বাতিল করা হয়েছে']);
     }
 
 

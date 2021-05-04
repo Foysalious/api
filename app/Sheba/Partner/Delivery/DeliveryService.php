@@ -6,6 +6,7 @@ use App\Http\Requests\Request;
 use App\Models\Partner;
 use App\Models\PosOrder;
 use App\Models\PosOrderPayment;
+use App\Sheba\Partner\Delivery\Exceptions\DeliveryCancelRequestError;
 use Sheba\Dal\PartnerDeliveryInformation\Contract as PartnerDeliveryInformationRepositoryInterface;
 use Throwable;
 
@@ -427,6 +428,18 @@ class DeliveryService
            'uid' => $this->posOrder->delivery_request_id
         ];
         return $this->client->post('orders/track',$data);
+    }
+
+    public function cancelOrder()
+    {
+        $status = $this->getDeliveryStatus()['data']['status'];
+        $data = [
+            'uid' => $this->posOrder->delivery_request_id
+        ];
+        if ($status == Statuses::PICKED_UP)
+            throw new DeliveryCancelRequestError();
+        $this->client->post('orders/cancel', $data);
+        return true;
     }
 
 }
