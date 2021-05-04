@@ -66,14 +66,15 @@ class Partner extends TopUpCommission
 
     private function saleTopUp()
     {
+        $transaction = $this->topUpDisburse->getTransaction();
         (new JournalCreateRepository())
             ->setTypeId($this->partner->id)
-            ->setSource($this->topUpDisburse->getTransaction())
-            ->setAmount($this->topUpDisburse->amount)
+            ->setSource($transaction)
+            ->setAmount($transaction->amount)
             ->setDebitAccountKey(Cash::CASH)
             ->setCreditAccountKey(AutomaticIncomes::TOP_UP)
             ->setDetails("Top Up for sale")
-            ->setReference("TopUp selling amount is" . $this->topUpDisburse->amount . " tk.")
+            ->setReference("TopUp selling amount is" . $transaction->amount . " tk.")
             ->store();
     }
 }
