@@ -140,16 +140,15 @@ class DeliveryController extends Controller
 
     public function deliveryCharge(Request $request, $partner, DeliveryService $delivery_service)
     {
-//        $this->validate($request, [
-//            'weight' => 'required'
-//        ]);
+
+
 
         $partner = $request->partner;
+
 //        $this->setModifier($request->manager_resource);
 
 
-        $charge = $delivery_service->setPartner($partner)->setWeight($request->weight)->setcashOnDelivery($request->cod_amount)->setpickupThana($request->pickupThana)
-            ->setpickupDistrict($request->pickupDistrict)->setDeliveryDistrict($request->deliveryDistrict)->setDeliveryThana($request->deliveryThana)->deliveryCharge();
+        $charge = $delivery_service->setPartner($partner)->setWeight($request->weight)->setcashOnDelivery($request->cod_amount)->setDeliveryDistrict($request->deliveryDistrict)->setDeliveryThana($request->deliveryThana)->deliveryCharge($partner);
 
         return api_response($request, null, 200, ['info' => $charge]);
 
