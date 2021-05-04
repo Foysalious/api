@@ -92,7 +92,7 @@ class Partner extends BusTicketCommission
 
     private function purchaseBusTicketForSale()
     {
-        $transaction = $this->getWalletTransaction();
+        $transaction = $this->busTicketDisburse->getTransaction();
         (new JournalCreateRepository())
             ->setTypeId($this->partner->id)
             ->setSource($transaction)
@@ -100,7 +100,7 @@ class Partner extends BusTicketCommission
             ->setDebitAccountKey(Cash::CASH)
             ->setCreditAccountKey(Sheba::SHEBA_ACCOUNT)
             ->setDetails("Purchase Bus Ticket for sale.")
-            ->setReference("write something")       //write
+            ->setReference("Bus Ticket purchasing amount is" . $transaction->amount . " tk.")
             ->store();
     }
 }
