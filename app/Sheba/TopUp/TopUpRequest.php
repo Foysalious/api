@@ -221,12 +221,6 @@ class TopUpRequest
         return 0;
     }
 
-
-    private function isCanTopUpNo()
-    {
-        return ($this->agent instanceof Partner && (!$this->agent->canTopUp()));
-    }
-
     private function doesAgentNotHaveBalance()
     {
         return ($this->isFromRobiTopUpWallet == 1 && $this->agent->robi_topup_wallet < $this->amount) ||
@@ -243,9 +237,7 @@ class TopUpRequest
     {
         return ($this->agent instanceof Partner && (!$this->agent->canTopUp()));
     }
-
-
-
+    
     /**
      * @return bool
      */
