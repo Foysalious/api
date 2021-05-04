@@ -137,22 +137,22 @@ class DeliveryService
 
         $this->order = $order = PosOrder::where('id', $order_id)->with('customer', 'customer.profile', 'payments')->first();
         //       $order = PosOrder::where('id', $order_id)->first();
-//        if ($this->partner->id != $order->partner_id) {
-//            throw new DoNotReportException("Order does not belongs to this partner", 400);
-//        }
+        if ($this->partner->id != $order->partner_id) {
+            throw new DoNotReportException("Order does not belongs to this partner", 400);
+        }
         return [
-//            'partner_pickup_information' => [
-//                'merchant_name' => $this->partner->name,
-//                'contact_person' => $this->partner->getContactPerson(),
-//                'mobile' => $this->partner->getContactNumber(),
-//                'email' => $this->partner->getContactEmail(),
-//                'business_type' => $this->partner->business_type,
-//                'address' => [
-//                    'full_address' => $this->partner->deliveryInformation->address,
-//                    'thana' => $this->partner->deliveryInformation->thana,
-//                    'zilla' => $this->partner->deliveryInformation->district
-//                ],
-//            ],
+            'partner_pickup_information' => [
+                'merchant_name' => $this->partner->name,
+                'contact_person' => $this->partner->getContactPerson(),
+                'mobile' => $this->partner->getContactNumber(),
+                'email' => $this->partner->getContactEmail(),
+                'business_type' => $this->partner->business_type,
+                'address' => [
+                    'full_address' => $this->partner->deliveryInformation->address,
+                    'thana' => $this->partner->deliveryInformation->thana,
+                    'zilla' => $this->partner->deliveryInformation->district
+                ],
+            ],
             'customer-delivery_information' => [
                 'name' => $order->customer->profile->name,
                 'number' => $order->customer->profile->mobile,
