@@ -12,7 +12,7 @@ class DeliveryServerClient
     public function __construct(Client $client)
     {
         $this->client = $client;
-        $this->baseUrl = rtrim(config('pos_delivery.api_url'),'/');
+        $this->baseUrl = rtrim(config('pos_delivery.api_url'), '/');
     }
 
     public function get($uri)
@@ -23,11 +23,10 @@ class DeliveryServerClient
     private function call($method, $uri, $data = null, $multipart = false)
     {
         try {
-//            dd($this->makeUrl($uri));
+
             return json_decode($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data, $multipart))->getBody()->getContents(), true);
-        }
-        catch (GuzzleException $e) {
-            dd($e);
+        } catch (GuzzleException $e) {
+
             $res = $e->getResponse();
             $http_code = $res->getStatusCode();
             $message = $res->getBody()->getContents();
@@ -36,10 +35,12 @@ class DeliveryServerClient
             throw new DeliveryServiceServerError($e->getMessage(), $http_code);
         }
     }
+
     private function makeUrl($uri)
     {
         return $this->baseUrl . "/" . $uri;
     }
+
     private function getOptions($data = null, $multipart = false)
     {
         $options['headers'] = [
@@ -54,6 +55,7 @@ class DeliveryServerClient
         }
         return $options;
     }
+
     public function post($uri, $data, $multipart = false)
     {
         return $this->call('post', $uri, $data, $multipart);
