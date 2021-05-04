@@ -11,6 +11,12 @@ use Sheba\MovieTicket\MovieTicketCommission;
 class Partner extends MovieTicketCommission
 {
     private $partner;
+    private $movieTicketDisburse;
+
+    public function __construct(MovieTicketCommission $movieTicketCommission)
+    {
+        $this->movieTicketDisburse = $movieTicketCommission;
+    }
 
     /**
      * @param \App\Models\Partner $partner
@@ -78,7 +84,7 @@ class Partner extends MovieTicketCommission
 
     private function saleMovieTicket()
     {
-        $transaction = $this->getWalletTransaction();
+        $transaction = $this->movieTicketDisburse->getTransaction();
         (new JournalCreateRepository())
             ->setTypeId($this->partner->id)
             ->setSource($transaction)
@@ -86,12 +92,7 @@ class Partner extends MovieTicketCommission
             ->setDebitAccountKey(Cash::CASH)
             ->setCreditAccountKey(AutomaticIncomes::MOVIE_TICKET)
             ->setDetails("Movie Ticket for sale.")
-            ->setReference($transaction->id)
+            ->setReference("Movie Ticket purchasing amount is" . $transaction->amount . " tk.")
             ->store();
-    }
-
-    public function getWalletTransaction()
-    {
-        return $this->wallet_transaction;
     }
 }
