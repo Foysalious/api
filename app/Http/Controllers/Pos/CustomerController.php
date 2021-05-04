@@ -113,12 +113,12 @@ class CustomerController extends Controller
                 'is_supplier' => 'sometimes|required|in:1,0'
             ]);
             $this->setModifier($request->manager_resource);
-            $creator = $creator->setData($request->except([
-                'partner_id',
+            $creator = $creator->setData($request->except(['partner_id',
                 'remember_token'
             ]));
             if ($error = $creator->hasError())
                 return api_response($request, null, 400, ['message' => $error['msg']]);
+
             $customer = $creator->setPartner($request->partner)->create();
             /**
              * USAGE LOG
@@ -143,28 +143,16 @@ class CustomerController extends Controller
      */
     public function update(Request $request, $partner, PosCustomer $customer, Updater $updater)
     {
-        try {
-            $this->validate($request, ['mobile' => 'required|mobile:bd']);
-            $this->setModifier($request->manager_resource);
-            $updater->setCustomer($customer)->setData($request->except([
-                'partner_id',
-                'remember_token',
-                'email'
-            ]));
-            if ($error = $updater->hasError())
-                return api_response($request, null, 400, ['message' => $error['msg']]);
-            $customer = $updater->update();
-            $customerDetails = $customer->details();
-            $customerDetails['name'] = isset($customer['name']) && !empty($customer['name']) ? $customer['name'] : $customerDetails['name'];
-            $customerDetails['is_supplier'] = isset($customer['is_supplier']) && !is_null($customer['is_supplier']) ? $customer['is_supplier'] : 0;
-            return api_response($request, $customer, 200, ['customer' => $customerDetails]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $this->validate($request, ['mobile' => 'required|mobile:bd']);
+        $this->setModifier($request->manager_resource);
+        $updater->setCustomer($customer)->setPartner($request->partner)->setData($request->except(['partner_id', 'remember_token']));
+        if ($error = $updater->hasError())
+            return api_response($request, null, 400, ['message' => $error['msg']]);
+        $customer = $updater->update();
+        $customerDetails = $customer->details();
+        $customerDetails['name'] = isset($customer['name']) && !empty($customer['name']) ? $customer['name'] : $customerDetails['name'];
+        $customerDetails['is_supplier'] = isset($customer['is_supplier']) && !is_null($customer['is_supplier']) ? $customer['is_supplier'] : 0;
+        return api_response($request, $customer, 200, ['customer' => $customerDetails]);
     }
 
     /**
