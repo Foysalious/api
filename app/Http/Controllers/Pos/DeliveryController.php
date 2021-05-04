@@ -86,9 +86,9 @@ class DeliveryController extends Controller
             'pickup_district' => 'required',
             'pickup_thana' => 'required',
             'payment_method' => 'sometimes',
+            'pos_order_id' => 'required'
         ]);
-
-        $orderPlace = $orderPlace
+        $orderPlaceInfo = $orderPlace
             ->setPartner($partner)
             ->setCustomerName($request->customer_name)
             ->setCustomerPhone($request->customer_phone)
@@ -104,7 +104,8 @@ class DeliveryController extends Controller
             ->setPickupThana($request->pickup_thana)
             ->orderPlace();
 
-        return api_response($request, null, 200, ['messages' => 'আপনার রেজিস্ট্রেশন সফল হয়েছে','data' => $orderPlace['data']]);
+        $orderPlace->setPartner($partner)->setPosOrder($request->pos_order_id)->storeDeliveryInformation($orderPlaceInfo['data']);
+        return api_response($request, null, 200, ['messages' => 'ডেলিভারি রিকোয়েস্ট সম্পন্ন','data' => $orderPlaceInfo['data']]);
     }
 
 
