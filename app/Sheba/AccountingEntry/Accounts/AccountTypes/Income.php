@@ -16,4 +16,5 @@ class Income extends AccountTypes
     public $sales_sheba_xyz;
     public $sales_ticket;
     public $sales_top_up;
+    public $reward;
 }
