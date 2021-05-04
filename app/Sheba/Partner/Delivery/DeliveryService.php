@@ -141,18 +141,18 @@ class DeliveryService
 //            throw new DoNotReportException("Order does not belongs to this partner", 400);
 //        }
         return [
-            'partner_pickup_information' => [
-                'merchant_name' => $this->partner->name,
-                'contact_person' => $this->partner->getContactPerson(),
-                'mobile' => $this->partner->getContactNumber(),
-                'email' => $this->partner->getContactEmail(),
-                'business_type' => $this->partner->business_type,
-                'address' => [
-                    'full_address' => $this->partner->deliveryInformation->address,
-                    'thana' => $this->partner->deliveryInformation->thana,
-                    'zilla' => $this->partner->deliveryInformation->district
-                ],
-            ],
+//            'partner_pickup_information' => [
+//                'merchant_name' => $this->partner->name,
+//                'contact_person' => $this->partner->getContactPerson(),
+//                'mobile' => $this->partner->getContactNumber(),
+//                'email' => $this->partner->getContactEmail(),
+//                'business_type' => $this->partner->business_type,
+//                'address' => [
+//                    'full_address' => $this->partner->deliveryInformation->address,
+//                    'thana' => $this->partner->deliveryInformation->thana,
+//                    'zilla' => $this->partner->deliveryInformation->district
+//                ],
+//            ],
             'customer-delivery_information' => [
                 'name' => $order->customer->profile->name,
                 'number' => $order->customer->profile->mobile,
