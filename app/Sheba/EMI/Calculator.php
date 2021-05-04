@@ -1,5 +1,7 @@
 <?php namespace Sheba\EMI;
 
+use Sheba\PaymentLink\PaymentLinkStatics;
+
 class Calculator
 {
     /**
@@ -8,20 +10,22 @@ class Calculator
      */
     public function getCharges($amount)
     {
-        $emi        = [];
+        $emi = collect([]);
         foreach ($this->getInterestRatesBreakDowns() as $item) {
-            array_push($emi, $this->calculateMonthWiseCharge($amount, $item['month'], $item['interest']));
+            $emi->push($this->calculateMonthWiseCharge($amount, $item['month'], $item['interest']));
         }
-        return $emi;
+        return $emi->forgetEach('interest_value')->toArray();
     }
 
     public function calculateMonthWiseCharge($amount, $month, $interest, $format = true)
     {
         $rate                 = ($interest / 100);
-        $bank_trx_fee = $this->getBankTransactionFee($amount + ceil(($amount * $rate)));
+        $interest_two_decimal = number_format((float)$interest, 2, '.', '');
+        $bank_trx_fee = $this->getBankTransactionFee($amount + ceil(($amount * $rate))) + $this->getTax();
         return $format ? [
             "number_of_months"     => $month,
-            "interest"             => "$interest%",
+            "interest"             => "$interest_two_decimal%",
+            "interest_value"       => $interest,
             "total_interest"       => number_format(ceil(($amount * $rate))),
             "bank_transaction_fee" => number_format($bank_trx_fee),
             "amount"               => number_format(ceil((($amount + ($amount * $rate)) + $bank_trx_fee) / $month)),
@@ -29,6 +33,7 @@ class Calculator
         ] : [
             "number_of_months"     => $month,
             "interest"             => $interest,
+            "interest_value"       => $interest,
             "total_interest"       => ceil(($amount * $rate)),
             "bank_transaction_fee" => $bank_trx_fee,
             "amount"               => ceil((($amount + ($amount * $rate)) + $bank_trx_fee) / $month),
@@ -41,11 +46,16 @@ class Calculator
         return ceil($amount * ($this->getBankFeePercentage() / 100));
     }
 
-    public function getMonthData($amount, $month, $format=true)
+    public function getMonthData($amount, $month, $format = true)
     {
         $data = $this->getMonthInterest($month);
 
         return empty($data) ? [] : $this->calculateMonthWiseCharge($amount, $data['month'], $data['interest'], $format);
+    }
+
+    public function getTax()
+    {
+        return PaymentLinkStatics::get_payment_link_tax();
     }
 
     public function getMonthInterest($month)
