@@ -14,6 +14,8 @@ class UserAccountRepository extends BaseRepository
     private $root_account;
     private $account_type;
     private $icon;
+    private $balanceType;
+    private $openingBalance;
     private $editable = true;
     private $deletable = true;
     private $visible = true;
@@ -60,6 +62,18 @@ class UserAccountRepository extends BaseRepository
     public function setIcon($icon)
     {
         $this->icon = $icon;
+        return $this;
+    }
+
+    public function setOpeningBalance($openingBalance)
+    {
+        $this->openingBalance = $openingBalance;
+        return $this;
+    }
+
+    public function setBalanceType($balanceType)
+    {
+        $this->balanceType = $balanceType;
         return $this;
     }
 
@@ -174,6 +188,9 @@ class UserAccountRepository extends BaseRepository
 
     private function makeData()
     {
+        if ($this->balanceType == 'negative') {
+            $this->openingBalance = 0 - $this->openingBalance;
+        }
         $data['name'] = $this->name;
         $data['name_bn'] = $this->name_bn;
         $data['root_account'] = $this->root_account;
@@ -182,6 +199,8 @@ class UserAccountRepository extends BaseRepository
         $data['editable'] = $this->editable;
         $data['deletable'] = $this->deletable;
         $data['visible'] = $this->visible;
+        $data['opening_balance'] = $this->openingBalance;
+        $data['closing_balance'] = $this->openingBalance;
         return $data;
     }
 }
