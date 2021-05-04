@@ -5,6 +5,7 @@ use Sheba\ExpenseTracker\AutomaticExpense;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Asset\Cash;
+use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Asset\Sheba;
 use Sheba\Transport\Bus\BusTicketCommission;
 
 class Partner extends BusTicketCommission
@@ -26,6 +27,7 @@ class Partner extends BusTicketCommission
         $this->storeAgentsCommission();
         $this->storeIncomeExpense();
         $this->saleBusTicket();
+        $this->purchaseBusTicketForSale();
     }
 
     private function storeIncomeExpense()
@@ -78,6 +80,20 @@ class Partner extends BusTicketCommission
             ->setDebitAccountKey(Cash::CASH)
             ->setCreditAccountKey(AutomaticIncomes::BUS_TICKET)
             ->setDetails("Bus Ticket for sale.")
+            ->setReference("write something")       //write
+            ->store();
+    }
+
+    private function purchaseBusTicketForSale()
+    {
+        $transaction = $this->getWalletTransaction();
+        (new JournalCreateRepository())
+            ->setTypeId($this->partner->id)
+            ->setSource($transaction)
+            ->setAmount($transaction->amount)
+            ->setDebitAccountKey(Cash::CASH)
+            ->setCreditAccountKey(Sheba::SHEBA_ACCOUNT)
+            ->setDetails("Purchase Bus Ticket for sale.")
             ->setReference("write something")       //write
             ->store();
     }
