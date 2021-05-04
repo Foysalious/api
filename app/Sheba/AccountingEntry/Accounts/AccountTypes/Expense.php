@@ -19,4 +19,5 @@ class Expense extends AccountTypes
     /** @var Purchase */
     public $purchase;
     public $loan_service;
+    public $sms_purchase;
 }
