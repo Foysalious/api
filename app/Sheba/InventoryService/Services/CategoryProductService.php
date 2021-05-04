@@ -8,6 +8,7 @@ class CategoryProductService
     private $category_ids;
     private $master_category_ids;
     private $updated_after;
+    private $is_published_for_webstore;
     private $offset;
     private $limit;
 
@@ -61,6 +62,15 @@ class CategoryProductService
         return $this;
     }
 
+    /**
+     * @param mixed $is_published_for_webstore
+     */
+    public function setIsPublishedForWebstore($is_published_for_webstore)
+    {
+        $this->is_published_for_webstore = $is_published_for_webstore;
+        return $this;
+    }
+
     public function __construct(InventoryServerClient $client)
     {
         $this->client = $client;
@@ -72,7 +82,8 @@ class CategoryProductService
         if (isset($this->limit)) $url .= 'offset='.$this->offset.'&limit='.$this->limit.'&';
         if (isset($this->master_category_ids)) $url .= 'master_category_ids='.$this->master_category_ids.'&';
         if (isset($this->category_ids)) $url .= 'category_ids='.$this->category_ids.'&';
-        if (isset($this->updated_after)) $url .= 'updated_after='.$this->updated_after;
+        if (isset($this->updated_after)) $url .= 'updated_after='.$this->updated_after . '&';
+        if (isset($this->is_published_for_webstore)) $url .= 'is_published_for_webstore=' . $this->is_published_for_webstore;
         return $this->client->get($url);
     }
 
