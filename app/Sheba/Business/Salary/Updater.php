@@ -2,6 +2,7 @@
 
 use App\Models\BusinessMember;
 use App\Models\Member;
+use App\Sheba\Business\Salary\Component\Maker;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\PayrollComponent\PayrollComponentRepository;
 use Sheba\Dal\PayrollComponent\TargetType;
@@ -66,9 +67,11 @@ class Updater
     {
         $this->makeData();
         DB::transaction(function () {
-            $this->salaryRepository->update($this->salary, $this->salaryData);
-            //$this->createComponentPercentage();
-            $this->salaryLogCreate();
+            if ($this->oldSalary != $this->salary) {
+                $this->salaryRepository->update($this->salary, $this->salaryData);
+                $this->salaryLogCreate();
+            }
+            $this->createComponentPercentage();
         });
         return true;
     }
@@ -88,24 +91,26 @@ class Updater
             ->setSalary($this->salary);
         $this->salaryLogCreator->setSalaryLogRequester($this->salaryLogRequester)->create();
     }
-    public function createComponentPercentage()
+    private function createComponentPercentage()
     {
         $business_member = $this->salaryRequest->getBusinessMember();
-        $payroll_Setting = $business_member->business->payrollSetting;
         foreach ($this->salaryRequest->getBreakdownPercentage() as $component) {
-            $this->payrollComponentRepository->create([
-                'payroll_setting_id' => $payroll_Setting->id,
-                'name' => $component['name'],
-                'value' => $component['title'],
-                'setting' => json_encode(['percentage' => $component['value']]),
-                'type' => Type::GROSS,
-                'target_type' => TargetType::EMPLOYEE,
-                'target_id' => $business_member->id,
-                ''
-
-            ]);
+            $gross_salary_breakdown_maker = new Maker($component);
+            if (!empty($component['id'])) {
+                $existing_payroll_component = $this->payrollComponentRepository->find($component['id']);
+                $gross_salary_breakdown_maker->setBusinessMember($business_member)
+                    ->setManagerMember($this->salaryRequest->getManagerMember())
+                    ->setPayrollComponent($existing_payroll_component)
+                    ->setOldSalaryAmount($this->oldSalary)
+                    ->updateCoWorkerGrossComponent();
+            }else {
+                $existing_payroll_component = $this->payrollComponentRepository->where('name', $component['name'])->first();
+                $gross_salary_breakdown_maker->setBusinessMember($business_member)
+                    ->setManagerMember($this->salaryRequest->getManagerMember())
+                    ->setPayrollComponent($existing_payroll_component)
+                    ->setOldSalaryAmount($this->oldSalary)
+                    ->createCoWorkerGrossComponent();
+            }
         }
     }
-
-
 }
