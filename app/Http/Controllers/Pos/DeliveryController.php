@@ -1,9 +1,9 @@
 <?php namespace App\Http\Controllers\Pos;
 
 use App\Http\Controllers\Controller;
-use App\Models\Partner;
-use App\Models\PosOrder;
 use App\Sheba\Partner\Delivery\DeliveryService;
+use App\Sheba\Partner\Delivery\OrderPlace;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\ModificationFields;
 use Throwable;
@@ -21,6 +21,12 @@ class DeliveryController extends Controller
         return api_response($request, null, 200, ['info' => $info]);
     }
 
+    /**
+     * @param Request $request
+     * @param $partner
+     * @param DeliveryService $delivery_service
+     * @return JsonResponse
+     */
     public function register(Request $request, $partner, DeliveryService $delivery_service)
     {
         $this->validate($request, [
@@ -28,10 +34,10 @@ class DeliveryController extends Controller
             'address' => 'required',
             'district' => 'required',
             'thana' => 'required',
-            'payment_method' => 'required|in:cheque,beftn,cash,bKash,rocket,nagad',
+            'payment_method' => 'required|in:'. implode(',', config('pos_delivery.payment_method')),
             'contact_name' => 'required',
             'mobile' => 'required',
-            'account_type' => 'required|in:mobile,bank',
+            'account_type' => 'required|in:'. implode(',', config('pos_delivery.account_type')),
             'business_type' => 'required',
             'account_name' => 'sometimes',
             'account_number' => 'sometimes',
@@ -41,8 +47,8 @@ class DeliveryController extends Controller
             'fb_page_url' => 'sometimes',
             'website' => 'sometimes',
             'email' => 'sometimes',
-
         ]);
+
         $partner = $request->partner;
         $this->setModifier($request->manager_resource);
         $registration = $delivery_service->setPartner($partner)
@@ -60,8 +66,45 @@ class DeliveryController extends Controller
             ->setRoutingNumber($request->routing_number)
             ->setProductNature($request->business_type)
             ->register();
-
+        $delivery_service->setPartner($partner)->storeDeliveryInformation($registration['data']);
         return api_response($request, null, 200, ['messages' => 'আপনার রেজিস্ট্রেশন সফল হয়েছে','data' => $registration['data']]);
+    }
+
+    public function orderPlace(Request $request, $partner, OrderPlace $orderPlace)
+    {
+        $this->validate($request,[
+            'customer_name' => 'required',
+            'customer_phone' => 'required',
+            'delivery_address' => 'required',
+            'delivery_district' => 'required',
+            'delivery_thana' => 'required',
+            'weight' => 'required',
+            'cod_amount' => 'required',
+            'partner_name' => 'required',
+            'partner_phone' => 'required',
+            'pickup_address' => 'required',
+            'pickup_district' => 'required',
+            'pickup_thana' => 'required',
+            'payment_method' => 'sometimes',
+        ]);
+
+        $orderPlace = $orderPlace
+            ->setPartner($partner)
+            ->setCustomerName($request->customer_name)
+            ->setCustomerPhone($request->customer_phone)
+            ->setDeliveryAddress($request->delivery_address)
+            ->setDeliveryDistrict($request->delivery_district)
+            ->setDeliveryThana($request->delivery_thana)
+            ->setWeight($request->weight)
+            ->setCodAmount($request->cod_amount)
+            ->setPartnerName($request->partner_name)
+            ->setPartnerPhone($request->partner_phone)
+            ->setPickupAddress($request->pickup_address)
+            ->setPickupDistrict($request->pickup_district)
+            ->setPickupThana($request->pickup_thana)
+            ->orderPlace();
+
+        return api_response($request, null, 200, ['messages' => 'আপনার রেজিস্ট্রেশন সফল হয়েছে','data' => $orderPlace['data']]);
     }
 
 
@@ -115,5 +158,7 @@ class DeliveryController extends Controller
         $upzillas = $delivery_service->setPartner($partner)->upzillas($district_name);
         return api_response($request, null, 200, ['upzillas' => $upzillas]);
     }
+
+
 
 }

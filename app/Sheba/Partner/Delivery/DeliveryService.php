@@ -6,6 +6,7 @@ use App\Http\Requests\Request;
 use App\Models\Partner;
 use App\Models\PosOrder;
 use App\Models\PosOrderPayment;
+use Sheba\Dal\PartnerDeliveryInformation\Contract as PartnerDeliveryInformationRepositoryInterface;
 use Throwable;
 
 
@@ -36,12 +37,17 @@ class DeliveryService
     private $pickupDistrict;
     private $deliveryThana;
     private $deliveryDistrict;
+    /**
+     * @var PartnerDeliveryInformationRepositoryInterface
+     */
+    private $partnerDeliveryInfoRepositoryInterface;
     private $order;
 
 
-    public function __construct(DeliveryServerClient $client)
+    public function __construct(DeliveryServerClient $client, PartnerDeliveryInformationRepositoryInterface $partnerDeliveryInfoRepositoryInterface)
     {
         $this->client = $client;
+        $this->partnerDeliveryInfoRepositoryInterface = $partnerDeliveryInfoRepositoryInterface;
     }
 
     public function setPartner(Partner $partner)
@@ -350,6 +356,33 @@ class DeliveryService
     {
         $data = $this->makeData();
         return $this->client->post('merchants/register', $data);
+    }
+
+
+    public function storeDeliveryInformation($info)
+    {
+        $data = [
+            'name' => $info['contact_info']['name'],
+            'partner_id' => $this->partner->id,
+            'mobile' => $info['phone'],
+            'email' => $info['contact_info']['email'],
+            'business_type' => $info['product_nature'],
+            'address' => $info['address'],
+            'district' => $info['district'],
+            'thana' => $info['thana'],
+            'website' => $info['website'],
+            'facebook' => $info['fb_page_url'],
+            'mobile_banking_provider' => null,
+            'agent_number' => null,
+            'account_holder_name' => $info['mfs_info']['account_name'],
+            'bank_name' => $info['mfs_info']['bank_name'],
+            'branch_name' => $info['mfs_info']['branch_name'],
+            'account_number' => $info['mfs_info']['account_number'],
+            'routing_number' => $info['mfs_info']['routing_number'],
+            'delivery_vendor' => null
+        ];
+
+        return $this->partnerDeliveryInfoRepositoryInterface->create($data);
     }
 
     public function deliveryCharge()
