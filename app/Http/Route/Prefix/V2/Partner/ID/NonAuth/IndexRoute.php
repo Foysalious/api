@@ -1,5 +1,7 @@
 <?php namespace App\Http\Route\Prefix\V2\Partner\ID\NonAuth;
 
+use App\Http\Route\Prefix\V2\Partner\ID\Auth\DeliveryRoute;
+
 class IndexRoute
 {
     public function set($api)
@@ -13,6 +15,7 @@ class IndexRoute
             $api->get('categories', 'PartnerController@getCategories');
             $api->get('categories/{category}/services', 'PartnerController@getServices');
             $api->get('categories/{category}/addable-services', 'PartnerController@getAddableServices');
+            (new DeliveryRoute())->set($api);
         });
     }
 }
