@@ -11,6 +11,12 @@ use Sheba\Transport\Bus\BusTicketCommission;
 class Partner extends BusTicketCommission
 {
     private $partner;
+    private $busTicketDisburse;
+
+    public function __construct(BusTicketCommission $busTicketCommission)
+    {
+        $this->busTicketDisburse =$busTicketCommission;
+    }
 
     /**
      * @param \App\Models\Partner $partner
@@ -72,7 +78,7 @@ class Partner extends BusTicketCommission
 
     private function saleBusTicket()
     {
-        $transaction = $this->getWalletTransaction();
+        $transaction = $this->busTicketDisburse->getTransaction();
         (new JournalCreateRepository())
             ->setTypeId($this->partner->id)
             ->setSource($transaction)
@@ -80,7 +86,7 @@ class Partner extends BusTicketCommission
             ->setDebitAccountKey(Cash::CASH)
             ->setCreditAccountKey(AutomaticIncomes::BUS_TICKET)
             ->setDetails("Bus Ticket for sale.")
-            ->setReference("write something")       //write
+            ->setReference("Bus Ticket selling amount is" . $transaction->amount . " tk.")
             ->store();
     }
 
@@ -96,10 +102,5 @@ class Partner extends BusTicketCommission
             ->setDetails("Purchase Bus Ticket for sale.")
             ->setReference("write something")       //write
             ->store();
-    }
-
-    public function getWalletTransaction()
-    {
-        return $this->wallet_transaction;
     }
 }
