@@ -10,6 +10,7 @@ class CashDisburse
 
     /** @var Rewardable */
     private $rewardable;
+    private $transaction;
 
     public function setRewardable(Rewardable $rewardable)
     {
@@ -21,7 +22,10 @@ class CashDisburse
     {
         $transaction = (new WalletTransactionHandler())->setModel($this->rewardable)->setSource(TransactionSources::BONUS)
             ->setType(Types::credit())->setAmount($amount)->setLog($log);
-        $transaction->store();
+        $this->transaction = $transaction->store();
     }
 
+    public function getTransaction(){
+        return $this->transaction;
+    }
 }
