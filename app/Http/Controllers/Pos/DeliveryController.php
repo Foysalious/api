@@ -133,7 +133,7 @@ class DeliveryController extends Controller
 //        ]);
 
         $partner= $request->partner;
-        $this->setModifier($request->manager_resource);
+//        $this->setModifier($request->manager_resource);
 
 
         $charge= $delivery_service->setPartner($partner)->setWeight($request->weight)->setcashOnDelivery($request->cod_amount)->setpickupThana($request->pickupThana)

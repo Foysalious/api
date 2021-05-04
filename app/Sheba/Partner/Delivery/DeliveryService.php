@@ -50,7 +50,7 @@ class DeliveryService
         $this->partnerDeliveryInfoRepositoryInterface = $partnerDeliveryInfoRepositoryInterface;
     }
 
-    public function setPartner(Partner $partner)
+    public function setPartner( $partner)
     {
         $this->partner = $partner;
         return $this;
