@@ -50,6 +50,8 @@ class ServiceController extends Controller
                 ->each(function ($service) use (&$services) {
                     $services[] = [
                         'id' => $service->id,
+                        'wight' => $service->weight,
+                        'wight_unit' => $service->wight_unit,
                         'name' => $service->name,
                         'app_thumb' => $service->app_thumb,
                         'app_banner' => $service->app_banner,
@@ -67,8 +69,7 @@ class ServiceController extends Controller
                         'show_image' => $service->show_image,
                         'shape' => $service->shape,
                         'color' => $service->color,
-                        'wight' => $service->weight,
-                        'wight_unit' => $service->wight_unit,
+
                         'image_gallery' => $service->imageGallery ? $service->imageGallery->map(function ($image) {
                             return [
                                 'id' => $image->id,
@@ -113,8 +114,7 @@ class ServiceController extends Controller
                 'name' => $partner->name,
                 'logo' => $partner->logo,
                 'is_webstore_published' => $partner->is_webstore_published ?: 0,
-                'weight'=> $partner->weight,
-                'weight_unit'=> $partner->weight_unit,
+
             ]]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
