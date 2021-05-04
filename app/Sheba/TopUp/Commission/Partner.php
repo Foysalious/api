@@ -3,14 +3,29 @@
 use Sheba\ExpenseTracker\AutomaticExpense;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
+use Sheba\AccountingEntry\Repository\JournalCreateRepository;
+use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Asset\Cash;
 use Sheba\TopUp\TopUpCommission;
 
 class Partner extends TopUpCommission
 {
+    private $partner;
+
+    /**
+     * @param \App\Models\Partner $partner
+     * @return $this
+     */
+    public function setPartner($partner)
+    {
+        $this->partner = $partner;
+        return $this;
+    }
+
     public function disburse()
     {
         $this->storeAgentsCommission();
         $this->storeExpenseIncome();
+        $this->saleTopUp();
     }
 
     private function storeExpenseIncome()
@@ -41,5 +56,24 @@ class Partner extends TopUpCommission
         $entryRepo = app(AutomaticEntryRepository::class);
         $entryRepo = $entryRepo->setPartner($partner)->setSourceType(class_basename($this->topUpOrder))->setSourceId($this->topUpOrder->id);
         $entryRepo->delete();
+    }
+
+    private function saleTopUp()
+    {
+        $transaction = $this->getWalletTransaction();
+        (new JournalCreateRepository())
+            ->setTypeId($this->partner->id)
+            ->setSource($transaction)
+            ->setAmount($transaction->amount)
+            ->setDebitAccountKey(Cash::CASH)
+            ->setCreditAccountKey(AutomaticIncomes::TOP_UP)
+            ->setDetails("Top Up for sale")
+            ->setReference("write Something")
+            ->store();
+    }
+
+    public function getWalletTransaction()
+    {
+        return $this->wallet_transaction;
     }
 }
