@@ -14,6 +14,7 @@ class AccountingRoute
             $api->post('/accounts', 'Accounting\\AccountController@createAccount');
             $api->put('/accounts/{id}', 'Accounting\\AccountController@updateAccount');
             $api->delete('/accounts/{id}', 'Accounting\\AccountController@deleteAccount');
+            $api->get('/icons', 'Accounting\\IconsController@getIcons');
             $api->group(['prefix' => 'due-tracker'], function ($api) {
                 $api->post('/', 'Accounting\\DueTrackerController@store');
                 $api->post('/{entry_id}', 'Accounting\\DueTrackerController@update');
