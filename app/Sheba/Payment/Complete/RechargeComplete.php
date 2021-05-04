@@ -46,7 +46,7 @@ class RechargeComplete extends PaymentComplete
 
     private function calculateCommission($charge)
     {
-        if ($this->payment->payable->user instanceof Partner) return round($this->payment->payable->amount - ($this->payment->payable->amount / (100 + $charge)) * $charge, 2);
+        if ($this->payment->payable->user instanceof Partner) return round (($this->payment->payable->amount / (100 + $charge)) * $charge, 2);
         return (double)round(($charge * $this->payment->payable->amount) / 100, 2);
     }
 
