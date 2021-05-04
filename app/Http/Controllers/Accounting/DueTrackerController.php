@@ -53,7 +53,7 @@ class DueTrackerController extends Controller
                 'entry_type' => 'required|in:due,deposit',
                 'account_key' => 'required',
                 'customer_id' => 'required|integer',
-                'date' => 'required|date_format:Y-m-d'
+                'date' => 'required|date_format:Y-m-d H:i:s'
             ]);
             $request->merge(['entry_id' => $entry_id]);
             $response = $this->dueTrackerRepo->storeEntry($request, $request->entry_type, true);

@@ -13,7 +13,7 @@ class AccountingRepository extends BaseRepository
         $source_id = rand(0000,9999).date('s').preg_replace("/^.*\./i","", microtime(true));
         $this->setModifier($request->partner);
         $data     = $this->createJournalData($request, EntryTypes::TRANSFER, $source_id);
-        $url = "api/journals";
+        $url = "api/journals/";
         try {
             return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
         } catch (AccountingEntryServerError $e) {
