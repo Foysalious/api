@@ -297,7 +297,7 @@ class ShebaController extends Controller
             $payments = array_filter($payments, function ($arr){
                 return $arr !== null;
             });
-            $payments = array_values(collect($payments)->sortBy('cash_in_charge')->toArray());
+            $payments = array_values(collect($payments)->sortBy('order')->toArray());
         }
 
         return api_response($request, $payments, 200, [

@@ -20,11 +20,16 @@ class PresentableDTOPresenter extends Presenter
             $dto['name'] = $gateway->name_en;
             $dto['name_bn'] = $gateway->name_bn;
             $dto['cash_in_charge'] = $gateway->cash_in_charge;
+            $dto['order'] = $gateway->order;
             return $dto;
         }
 
-        if ( $userType == 'partner' && $dto['method_name'] == 'online' && $maxCashInCharge = $this->dbGateways->whereIn('method_name', ['ssl', 'port_wallet'])){
-            $dto['cash_in_charge'] = $maxCashInCharge->max('cash_in_charge');
+        if ( $userType == 'partner' && $dto['method_name'] == 'online' && $onlineMethods = $this->dbGateways->whereIn('method_name', ['ssl', 'port_wallet'])){
+            $maxCashInCharge = $onlineMethods->max('cash_in_charge');
+            $method = $onlineMethods->where('cash_in_charge', $maxCashInCharge)->first();
+            $dto['cash_in_charge'] = $maxCashInCharge;
+            $dto['asset'] = $method->asset_name;
+            $dto['order'] = $method['order'];
             return $dto;
         }
 
