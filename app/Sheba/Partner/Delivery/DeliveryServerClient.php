@@ -8,12 +8,20 @@ class DeliveryServerClient
 {
     protected $client;
     protected $baseUrl;
+    protected $token;
 
     public function __construct(Client $client)
     {
         $this->client = $client;
         $this->baseUrl = rtrim(config('pos_delivery.api_url'), '/');
     }
+
+    public function setToken($token)
+    {
+        $this->token = $token;
+        return $this;
+    }
+
 
     public function get($uri)
     {
@@ -44,6 +52,7 @@ class DeliveryServerClient
         $options['headers'] = [
             'Accept' => 'application/json'
         ];
+        if ($this->token)  $options['headers'] += ['Authorization' => 'Bearer ' . $this->token];
         if (!$data) return $options;
         if ($multipart) {
             $options['multipart'] = $data;
@@ -68,5 +77,6 @@ class DeliveryServerClient
     {
         return $this->call('DELETE', $uri);
     }
+
 
 }

@@ -39,6 +39,7 @@ class DeliveryService
     private $deliveryThana;
     private $deliveryDistrict;
     private $posOrder;
+    private $token;
     /**
      * @var PartnerDeliveryInformationRepositoryInterface
      */
@@ -97,6 +98,12 @@ class DeliveryService
     public function setDeliveryDistrict($deliveryDistrict)
     {
         $this->deliveryDistrict = $deliveryDistrict;
+        return $this;
+    }
+
+    public function setToken($token)
+    {
+        $this->token = $token;
         return $this;
     }
 
@@ -359,7 +366,7 @@ class DeliveryService
     public function register()
     {
         $data = $this->makeData();
-        return $this->client->post('merchants/register', $data);
+        return $this->client->setToken($this->token)->post('merchants/register', $data);
     }
 
 
@@ -448,5 +455,7 @@ class DeliveryService
         $this->client->post('orders/cancel', $data);
         return true;
     }
+
+
 
 }

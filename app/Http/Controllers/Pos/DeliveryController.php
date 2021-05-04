@@ -5,6 +5,7 @@ use App\Sheba\Partner\Delivery\DeliveryService;
 use App\Sheba\Partner\Delivery\OrderPlace;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Sheba\ModificationFields;
 use Throwable;
 
@@ -27,7 +28,7 @@ class DeliveryController extends Controller
      * @param DeliveryService $delivery_service
      * @return JsonResponse
      */
-    public function register(Request $request, $partner, DeliveryService $delivery_service)
+    public function register(Request $request, DeliveryService $delivery_service)
     {
         $this->validate($request, [
             'name' => 'required',
@@ -48,10 +49,10 @@ class DeliveryController extends Controller
             'website' => 'sometimes',
             'email' => 'sometimes',
         ]);
-
-        $partner = $request->partner;
-        $this->setModifier($request->manager_resource);
-        $registration = $delivery_service->setPartner($partner)
+        $partner = $request->auth_user->getPartner();
+        $registration = $delivery_service
+            ->setToken($this->bearerToken($request))
+            ->setPartner($partner)
             ->setName($request->name)
             ->setAddress($request->address)
             ->setDistrict($request->district)
@@ -189,6 +190,13 @@ class DeliveryController extends Controller
         return api_response($request, null, 200, ['messages' => 'ডেলিভারি অর্ডারটি বাতিল করা হয়েছে']);
     }
 
-
+    private function bearerToken($request)
+    {
+        $header = $request->header('Authorization', '');
+        if (Str::startsWith($header, 'Bearer ')) {
+            return Str::substr($header, 7);
+        }
+        return false;
+    }
 
 }
