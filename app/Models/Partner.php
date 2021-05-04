@@ -13,6 +13,7 @@ use Sheba\Dal\ArtisanLeave\ArtisanLeave;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\Complain\Model as Complain;
 use Sheba\Dal\PartnerBankInformation\Purposes;
+use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInformation;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
@@ -1037,6 +1038,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     }
 
+
     public function webstoreBanner()
     {
         return $this->hasOne(PartnerWebstoreBanner::class);
@@ -1051,4 +1053,9 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->is_migration_completed == 1;
     }
 
+
+    public function deliveryInformation()
+    {
+        return $this->hasOne(PartnerDeliveryInformation::class);
+    }
 }

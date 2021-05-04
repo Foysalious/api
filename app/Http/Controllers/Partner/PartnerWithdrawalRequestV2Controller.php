@@ -162,6 +162,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
         if (($partner->id == $partnerWithdrawalRequest->requester->id) && ($partnerWithdrawalRequest->requester_type=='partner') && ($partnerWithdrawalRequest->status == 'pending')) {
             $withdrawal_update = $partnerWithdrawalRequest->update([
                                                                        'status'          => $request->status,
+                                                                       'reject_reason'   => $request->reject_reason,
                                                                        'updated_by'      => $request->manager_resource->id,
                                                                        'updated_by_name' => 'Resource - ' . $request->manager_resource->profile->name,
                                                                    ]);

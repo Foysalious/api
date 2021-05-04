@@ -48,6 +48,7 @@ class Creator
                 $this->payrollComponentData[] = [
                     'payroll_setting_id' => $payroll_settings->id,
                     'name' => $component['name'],
+                    'value' => $component['title'],
                     'type' => 'addition',
                     'is_default' => 0,
                     'setting' => json_encode([]),
@@ -63,6 +64,7 @@ class Creator
                 $data = [
                     'payroll_setting_id' => $payroll_settings->id,
                     'name' => $component['name'],
+                    'value' => $component['title'],
                     'type' => 'addition',
                     'is_default' => 0,
                     'setting' => json_encode([]),

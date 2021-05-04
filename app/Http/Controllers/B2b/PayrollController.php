@@ -1,5 +1,8 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Sheba\Business\ComponentPackage\Requester;
+use App\Sheba\Business\ComponentPackage\Creator as PackageCreator;
+use App\Sheba\Business\ComponentPackage\Updater as PackageUpdater;
 use App\Sheba\Business\PayrollComponent\Components\GrossComponents\Creator;
 use App\Sheba\Business\PayrollComponent\Components\GrossComponents\Updater;
 use Sheba\Business\PayrollSetting\Requester as PayrollSettingRequester;
@@ -124,7 +127,7 @@ class PayrollController extends Controller
         return api_response($request, null, 200);
     }
 
-    public function addComponent($business, $payroll_setting, Request $request, AdditionCreator $addition_creator, DeductionsCreator $deduction_creator)
+    public function addComponent($business, $payroll_setting, Request $request, AdditionCreator $addition_creator, DeductionsCreator $deduction_creator, Requester $package_requester, PackageCreator $package_creator, PackageUpdater $package_updater)
     {
         $this->validate($request, [
             'addition' => 'required',
@@ -144,6 +147,10 @@ class PayrollController extends Controller
 
         $addition_creator->setPayrollComponentRequester($this->payrollComponentRequester)->createOrUpdate();
         $deduction_creator->setPayrollComponentRequester($this->payrollComponentRequester)->createOrUpdate();
+        $package_requester->setPackage($request->packages);
+        $package_creator->setPackageRequester($package_requester->getPackagesForAdd())->create();
+        $package_updater->setPackageRequester($package_requester->getPackagesForUpdate())->update();
+
 
         return api_response($request, null, 200);
     }
@@ -153,15 +160,12 @@ class PayrollController extends Controller
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
-
-        $this->setModifier($business_member->member);
-
         $payroll_setting = $this->payrollSettingRepository->find((int)$payroll_setting);
         if (!$payroll_setting) return api_response($request, null, 404);
-        $gross_component = $this->payrollComponentRepository->find((int)$component);
-        if (!$gross_component) return api_response($request, null, 404);
-        if ($gross_component->is_default) return api_response($request, null, 420);
-        $gross_component->delete();
+        $payroll_component = $this->payrollComponentRepository->find((int)$component);
+        if (!$payroll_component) return api_response($request, null, 404);
+        if ($payroll_component->is_default) return api_response($request, null, 420);
+        $payroll_component->delete();
 
         return api_response($request, null, 200);
     }

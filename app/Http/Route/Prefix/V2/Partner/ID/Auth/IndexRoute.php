@@ -294,6 +294,7 @@ class IndexRoute
             (new BidRoute())->set($api);
             (new DueTrackerRoute())->set($api);
             (new ReferralRoute())->individuals($api);
+            (new DeliveryRoute())->set($api);
         });
     }
 }

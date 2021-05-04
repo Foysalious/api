@@ -110,7 +110,9 @@ class ServiceController extends Controller
                 'id' => $partner->id,
                 'name' => $partner->name,
                 'logo' => $partner->logo,
-                'is_webstore_published' => $partner->is_webstore_published ?: 0
+                'is_webstore_published' => $partner->is_webstore_published ?: 0,
+                'weight'=> $partner->weight,
+                'weight_unit'=> $partner->weight_unit,
             ]]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
@@ -143,10 +145,9 @@ class ServiceController extends Controller
             $request->request->remove('category_id');
             $request->merge($this->resolveSubcategory($request->master_category_id));
         }
-        if (isset($request->is_published_for_shop) && $request->is_published_for_shop == 1 && (!isset($request->weight) || !($request->weight_unit)))
-        {
-            return api_response($request, null, 400, ['message' => 'Weight or Weight Unit is not provided']);
-        }
+//        if (isset($request->is_published_for_shop) && $request->is_published_for_shop == 1 && (!isset($request->weight) || !($request->weight_unit))) {
+//            return api_response($request, null, 400, ['message' => 'Weight or Weight Unit is not provided']);
+//        }
 
 
         $partner_pos_service = $creator->setData($request->except('master_category_id'))->create();
@@ -265,7 +266,9 @@ class ServiceController extends Controller
                 $request->merge($this->resolveSubcategory($request->master_category_id));
             }
         }
-
+//        if (isset($request->is_published_for_shop) && $request->is_published_for_shop == 1 && (!isset($request->weight) || !($request->weight_unit))) {
+//            return api_response($request, null, 400, ['message' => 'Weight or Weight Unit is not provided']);
+//        }
         $updater->setService($partner_pos_service)->setData($request->except('master_category_id'))->update();
 
         if ($request->discount_id) {
@@ -364,6 +367,21 @@ class ServiceController extends Controller
                 array_push($warranty_units, $unit);
             }
             return api_response($request, $warranty_units, 200, ['warranty_units' => $warranty_units]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getPosProductWeightUnit(Request $request)
+    {
+        try {
+            $weight_units = [];
+            $all_product_weight_unit = config('weight.weight_unit');
+            foreach ($all_product_weight_unit as $key => $unit) {
+                array_push($weight_units, $unit);
+            }
+            return api_response($request,$weight_units,200,['product_weight_units' => $weight_units]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

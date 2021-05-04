@@ -1,6 +1,6 @@
 <?php namespace App\Transformers\Business;
 
-use App\Sheba\Business\PayrollComponent\Components\GrossSalaryBreakdownCalculate;
+use App\Sheba\Business\ComponentPackage\Formatter;
 use Sheba\Dal\PayrollComponent\Components;
 use Sheba\Dal\PayrollComponent\Type;
 use Sheba\Dal\PayrollSetting\PayrollSetting;
@@ -99,14 +99,14 @@ class PayrollSettingsTransformer extends TransformerAbstract
      */
     private function payrollSettingCompletion()
     {
-        $total = ( $this->totalGrossPercentage / 2 ) + $this->payScheduleData['pay_schedule_completion'];
+        $total = ($this->totalGrossPercentage / 2) + $this->payScheduleData['pay_schedule_completion'];
         return round($total, 0);
     }
 
     private function payComponents($payroll_setting)
     {
-        $addition_components = $payroll_setting->components->where('type',Type::ADDITION)->sortBy('name');
-        $deduction_components = $payroll_setting->components->where('type',Type::DEDUCTION)->sortBy('name');
+        $addition_components = $payroll_setting->components->where('type', Type::ADDITION)->sortBy('name');
+        $deduction_components = $payroll_setting->components->where('type', Type::DEDUCTION)->sortBy('name');
         $addition = $this->getAdditionComponents($addition_components);
         $deduction = $this->getDeductionComponents($deduction_components);
 
@@ -117,8 +117,12 @@ class PayrollSettingsTransformer extends TransformerAbstract
     {
         $data = [];
         foreach ($addition_components as $addition) {
-            if (!$addition->is_default) $data['addition'][] = ['id' => $addition->id, 'name' => ucwords(implode(" ", explode("_",$addition->name))), 'is_default' => 0];
-            if ($addition->is_default) $data['addition'][] = ['id' => $addition->id, 'name' => Components::getComponents($addition->name)['value'], 'is_default' => 1];
+            if (!$addition->is_default) {
+                $package_formatter = new Formatter();
+                $packages = $package_formatter->makePackageData($addition);
+                $data['addition'][] = ['id' => $addition->id, 'key' =>$addition->name,  'value' => $addition->value, 'is_default' => 0, 'package' => $packages];
+            }
+            if ($addition->is_default) $data['addition'][] = ['id' => $addition->id, 'key' =>$addition->name, 'value' => Components::getComponents($addition->name)['value'], 'is_default' => 1];
         }
         return $data;
     }
@@ -127,8 +131,12 @@ class PayrollSettingsTransformer extends TransformerAbstract
     {
         $data = [];
         foreach ($deduction_components as $deduction) {
-            if (!$deduction->is_default) $data['deduction'][] = ['id' => $deduction->id, 'name' => ucwords(implode(" ", explode("_",$deduction->name))), 'is_default' => 0];
-            if ($deduction->is_default) $data['deduction'][] = ['id' => $deduction->id, 'name' => Components::getComponents($deduction->name)['value'], 'is_default' => 1];
+            if (!$deduction->is_default) {
+                $package_formatter = new Formatter();
+                $packages = $package_formatter->makePackageData($deduction);
+                $data['addition'][] = ['id' => $deduction->id, 'key' =>$deduction->name,  'value' => $deduction->value, 'is_default' => 0, 'package' => $packages];
+            }
+            if ($deduction->is_default) $data['deduction'][] = ['id' => $deduction->id, 'key' =>$deduction->name, 'value' => Components::getComponents($deduction->name)['value'], 'is_default' => 1];
         }
         return $data;
     }

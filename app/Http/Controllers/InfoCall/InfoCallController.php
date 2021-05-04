@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\Location;
 use App\Models\Profile;
 use App\Models\User;
 use Carbon\Carbon;
@@ -21,8 +22,12 @@ class InfoCallController extends Controller
             $this->validate($request, [
                 'service_name' => 'required|string',
                 'mobile' => 'required|string|mobile:bd',
-                'location_id' => 'numeric',
+                'location_id' => 'required|numeric',
             ]);
+            if ($request->has('location_id')) {
+                $location = Location::find($request->location_id);
+                if ($location == null) return api_response($request, null, 404, ['message' => 'Location Not Found']);;
+            }
             $profile_exists = Profile::select('id', 'name', 'address')->where('mobile', 'like', '%'.$request->mobile.'%')->get()->toArray();
             if ($profile_exists) {
                 $customer = Customer::where('profile_id', $profile_exists[0]['id'])->get();
@@ -44,7 +49,7 @@ class InfoCallController extends Controller
                 $this->sendNotificationToSD($info_call);
             }
             else {
-                InfoCall::create([
+                $info_call =   InfoCall::create([
                 'customer_mobile'=>$request->mobile,
                 'is_customer_vip'=>0,
                 'priority'=>'Low',
@@ -59,6 +64,7 @@ class InfoCallController extends Controller
                  'follow_up_date'=> Carbon::now()->addMinutes(30),
                     'intended_closing_date' => Carbon::now()->addMinutes(30)
             ]);
+                $this->sendNotificationToSD($info_call);
             }
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
