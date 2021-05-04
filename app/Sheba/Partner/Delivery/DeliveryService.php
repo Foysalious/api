@@ -137,9 +137,9 @@ class DeliveryService
 
         $this->order = $order = PosOrder::where('id', $order_id)->with('customer', 'customer.profile', 'payments')->first();
         //       $order = PosOrder::where('id', $order_id)->first();
-        if ($this->partner->id != $order->partner_id) {
-            throw new DoNotReportException("Order does not belongs to this partner", 400);
-        }
+//        if ($this->partner->id != $order->partner_id) {
+//            throw new DoNotReportException("Order does not belongs to this partner", 400);
+//        }
         return [
             'partner_pickup_information' => [
                 'merchant_name' => $this->partner->name,
