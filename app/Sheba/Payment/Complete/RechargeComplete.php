@@ -8,6 +8,7 @@ use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Exceptions\InvalidSourceException;
 use Sheba\AccountingEntry\Repository\JournalCreateRepository;
+
 use Sheba\Dal\PaymentGateway\Contract as PaymentGatewayRepo;
 use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Transactions\Types;
@@ -52,6 +53,12 @@ class RechargeComplete extends PaymentComplete
         // TODO: Implement saveInvoice() method.
     }
 
+    private function calculateCommission($charge)
+    {
+        if ($this->payment->payable->user instanceof Partner) return round($this->payment->payable->amount - ($this->payment->payable->amount / (100 + $charge)) * $charge, 2);
+        return (double)round(($charge * $this->payment->payable->amount) / 100, 2);
+    }
+
     private function storeCommissionTransaction()
     {
         /** @var HasWalletTransaction $user */
@@ -64,15 +71,15 @@ class RechargeComplete extends PaymentComplete
                                              ->where('status', 'Published')
                                              ->first();
 
-        if($payment_gateway && $payment_gateway->cash_in_charge > 0){
-            $amount = (double)( ($payment_gateway->cash_in_charge * $this->payment->payable->amount) / 100);
+        if ($payment_gateway && $payment_gateway->cash_in_charge > 0) {
+            $amount = $this->calculateCommission($payment_gateway->cash_in_charge);
             (new WalletTransactionHandler())->setModel($user)
-                ->setAmount($amount)
-                ->setType(Types::debit())
-                ->setLog($amount . ' BDT has been deducted as a gateway charge for SHEBA credit recharge')
-                ->setTransactionDetails($this->payment->getShebaTransaction()->toArray())
-                ->setSource($this->payment->paymentDetails->last()->method)
-                ->store();
+                                            ->setAmount($amount)
+                                            ->setType(Types::debit())
+                                            ->setLog($amount . ' BDT has been deducted as a gateway charge for SHEBA credit recharge')
+                                            ->setTransactionDetails($this->payment->getShebaTransaction()->toArray())
+                                            ->setSource($this->payment->paymentDetails->last()->method)
+                                            ->store();
         }
     }
 
