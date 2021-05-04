@@ -8,6 +8,7 @@ class DeliveryRoute
             $api->get('register', 'Pos\\DeliveryController@getInfoForRegistration');
             $api->post('register', 'Pos\\DeliveryController@register');
             $api->get('/order-information/{order_id}', 'Pos\\DeliveryController@getOrderInformation');
+            $api->get('delivery-status', 'Pos\\DeliveryController@getDeliveryStatus');
             $api->post('/delivery-charge', 'Pos\\DeliveryController@deliveryCharge');
             $api->post('orders', 'Pos\\DeliveryController@orderPlace');
             $api->get('/district', 'Pos\\DeliveryController@districts');

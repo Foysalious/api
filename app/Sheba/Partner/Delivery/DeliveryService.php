@@ -37,6 +37,7 @@ class DeliveryService
     private $pickupDistrict;
     private $deliveryThana;
     private $deliveryDistrict;
+    private $posOrder;
     /**
      * @var PartnerDeliveryInformationRepositoryInterface
      */
@@ -408,9 +409,24 @@ class DeliveryService
 
     public function upzillas($district_name)
     {
-
         return $this->client->get('districts/' . $district_name . '/upazilas');
+    }
 
+    public function setPosOrder($posOrderId)
+    {
+        $this->posOrder = PosOrder::find($posOrderId);
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getDeliveryStatus()
+    {
+        $data = [
+           'uid' => $this->posOrder->delivery_request_id
+        ];
+        return $this->client->post('orders/track',$data);
     }
 
 }
