@@ -39,6 +39,7 @@ class Partner extends BusTicketCommission
     public function refund()
     {
         $this->deleteIncomeExpense();
+        $this->refundBusTicket();
     }
 
     private function deleteIncomeExpense()
@@ -68,7 +69,7 @@ class Partner extends BusTicketCommission
 
     private function saleBusTicket()
     {
-        $transaction = $this->busTicketDisburse->getTransaction();
+        $transaction = $this->getBusTicketTransaction();
         (new JournalCreateRepository())
             ->setTypeId($this->partner->id)
             ->setSource($transaction)
@@ -82,7 +83,7 @@ class Partner extends BusTicketCommission
 
     private function purchaseBusTicketForSale()
     {
-        $transaction = $this->busTicketDisburse->getTransaction();
+        $transaction = $this->getBusTicketTransaction();
         (new JournalCreateRepository())
             ->setTypeId($this->partner->id)
             ->setSource($transaction)
@@ -92,5 +93,24 @@ class Partner extends BusTicketCommission
             ->setDetails("Purchase Bus Ticket for sale.")
             ->setReference("Bus Ticket purchasing amount is" . $transaction->amount . " tk.")
             ->store();
+    }
+
+    private function refundBusTicket()
+    {
+        $transaction = $this->getBusTicketTransaction();
+        (new JournalCreateRepository())
+            ->setTypeId($this->partner->id)
+            ->setSource($transaction)
+            ->setAmount($transaction->amount)
+            ->setDebitAccountKey(AutomaticExpense::GENERAL_REFUNDS)
+            ->setCreditAccountKey(Cash::CASH)
+            ->setDetails("Refund BusTicket")
+            ->setReference("BusTicket refunds amount is" . $transaction->amount . " tk.")
+            ->store();
+    }
+
+    public function getBusTicketTransaction()
+    {
+        return $this->busTicketDisburse->getTransaction();
     }
 }

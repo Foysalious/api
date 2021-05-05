@@ -15,6 +15,7 @@ class AutomaticExpense
     const OTHER_EXPENSES     = 'Other Expenses';
     const DUE_TRACKER        = 'Due Tracker';
     const SHEBA_ACCOUNT      = 'Sheba Account';
+    const GENERAL_REFUNDS    = 'General Refunds';
 
     public static function heads()
     {
