@@ -33,6 +33,7 @@ class JournalCreateRepository
     protected $debitAccountKey;
     protected $creditAccountKey;
     protected $entryAt;
+    private   $end_point = "api/journals/";
 
     public function __construct()
     {
@@ -47,6 +48,16 @@ class JournalCreateRepository
     public function setType($type)
     {
         $this->type = $type;
+    }
+
+    /**
+     * @param mixed $end_point
+     * @return JournalCreateRepository
+     */
+    public function setEndPoint($end_point): JournalCreateRepository
+    {
+        $this->end_point = $end_point;
+        return $this;
     }
 
     /**
@@ -150,13 +161,16 @@ class JournalCreateRepository
     }
 
     /**
-     * @throws InvalidSourceException
+     * @param string $end_point
+     * @return mixed
      * @throws AccountingEntryServerError
-     * @throws ReflectionException|KeyNotFoundException
+     * @throws InvalidSourceException
+     * @throws KeyNotFoundException
+     * @throws ReflectionException
      */
     public function store()
     {
         $data = $this->toData();
-        return $this->client->setUserId($this->typeId)->setUserType($this->type)->post('api/journals/', $data);
+        return $this->client->setUserId($this->typeId)->setUserType($this->type)->post($this->end_point, $data);
     }
 }
