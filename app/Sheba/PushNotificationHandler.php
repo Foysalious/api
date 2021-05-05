@@ -57,17 +57,8 @@ class PushNotificationHandler
         }
         $topicResponse = null;
         if (config('sheba.send_push_notifications')) {
-
             $topicResponse = FCM::sendToTopic($topic, $options, $notification, $data);
-//            if (strpos($str_topic, config('sheba.push_notification_topic_name.manager')) !== false) {
-//                $str_topic = str_replace(config('sheba.push_notification_topic_name.manager'), config('sheba.push_notification_topic_name.manager_new'), $str_topic);
-//                $topic = (new Topics())->topic($str_topic);
-//                $topicResponse = FCM::sendToTopic($topic, $options, null, $data);
-//            }
         }
         return $topicResponse;
-        //$topicResponse->isSuccess();
-        //$topicResponse->shouldRetry();
-        //$topicResponse->error();
     }
 }
