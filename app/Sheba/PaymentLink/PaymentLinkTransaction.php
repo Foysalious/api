@@ -3,10 +3,10 @@
 
 namespace Sheba\PaymentLink;
 
-
+use Exception;
 use App\Models\Payment;
-use Sheba\AccountingEntry\Accounts\Accounts;
-use Sheba\AccountingEntry\Repository\JournalCreateRepository;
+use App\Sheba\AccountingEntry\Repository\PaymentLinkRepository;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
@@ -131,7 +131,8 @@ class PaymentLinkTransaction
     public function create()
     {
         $this->walletTransactionHandler->setModel($this->receiver);
-        return $this->amountTransaction()->interestTransaction()->feeTransaction()->setEntryAmount();
+        $this->amountTransaction()->interestTransaction()->feeTransaction()->setEntryAmount();
+        $this->storePaymentLinkEntry($this->amount, $this->fee, $this->interest);
 
     }
 
@@ -141,13 +142,6 @@ class PaymentLinkTransaction
         $this->formattedRechargeAmount = number_format($this->amount, 2);
         $recharge_log                  = "$this->formattedRechargeAmount TK has been collected from {$this->payment->payable->getName()}, {$this->paymentLink->getReason()}";
         $this->rechargeTransaction     = $this->walletTransactionHandler->setType(Types::credit())->setAmount($this->amount)->setSource(TransactionSources::PAYMENT_LINK)->setTransactionDetails($this->payment->getShebaTransaction()->toArray())->setLog($recharge_log)->store();
-        //create journal in accounting project
-        if ($this->paymentLink->isEmi()) {
-            $this->storeJournal($this->rechargeTransaction->id, $this->rechargeTransaction, $this->amount ,(new Accounts())->asset->sheba::SHEBA_ACCOUNT, (new Accounts())->income->incomeFromEmi::INCOME_FROM_EMI);
-        } else {
-            $this->storeJournal($this->rechargeTransaction->id, $this->rechargeTransaction, $this->amount ,(new Accounts())->asset->sheba::SHEBA_ACCOUNT, (new Accounts())->income->incomeFromPaymentLink::INCOME_FROM_PAYMENT_LINK);
-        }
-
         return $this;
     }
 
@@ -156,8 +150,7 @@ class PaymentLinkTransaction
         if ($this->paymentLink->isEmi()) {
             $formatted_interest = number_format($this->interest, 2);
             $log                = "$formatted_interest TK has been charged as emi interest fees against of Transc ID {$this->rechargeTransaction->id}, and Transc amount $this->formattedRechargeAmount";
-            $transaction = $this->walletTransactionHandler->setLog($log)->setType(Types::debit())->setAmount($this->interest)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
-            $this->storeJournal($transaction->id, $transaction, $this->interest ,(new Accounts())->expense->emiInterest::EMI_INTEREST, (new Accounts())->asset->sheba::SHEBA_ACCOUNT);
+            $this->walletTransactionHandler->setLog($log)->setType(Types::debit())->setAmount($this->interest)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
         }
         return $this;
     }
@@ -183,10 +176,7 @@ class PaymentLinkTransaction
         }
         $formatted_minus_amount = number_format($this->fee, 2);
         $minus_log              = "($this->tax" . "TK + $this->linkCommission%) $formatted_minus_amount TK has been charged as link service fees against of Transc ID: {$this->rechargeTransaction->id}, and Transc amount: $this->formattedRechargeAmount";
-        $feeTransaction = $this->walletTransactionHandler->setLog($minus_log)->setType(Types::debit())->setAmount($this->fee)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
-        //create journal in accounting project
-        $this->storeJournal($feeTransaction->id, $feeTransaction, $this->fee ,(new Accounts())->expense->paymentLinkServiceCharge::PAYMENT_LINK_SERVICE_CHARGE, (new Accounts())->asset->sheba::SHEBA_ACCOUNT);
-
+        $this->walletTransactionHandler->setLog($minus_log)->setType(Types::debit())->setAmount($this->fee)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
         return $this;
     }
 
@@ -206,13 +196,13 @@ class PaymentLinkTransaction
         return $this;
     }
 
-    private function storeJournal($typeId, $sourceType, $amount, $debitAccount, $creditAccount) {
-        return (new JournalCreateRepository())->setTypeId($typeId)->setSource($sourceType)
-            ->setAmount($amount)
-            ->setDebitAccountKey($debitAccount)
-            ->setCreditAccountKey($creditAccount)
-            ->setDetails("Payment link transaction")
-            ->store();
+    private function storePaymentLinkEntry($amount, $feeTransaction, $interest) {
+        /** @var PaymentLinkRepository $paymentLinkRepo */
+        $paymentLinkRepo =  app(PaymentLinkRepository::class);
+        $paymentLinkRepo->setAmount($amount)
+            ->setBankTransactionCharge($feeTransaction)
+            ->setInterest($interest)
+            ->store($this->receiver->id);
     }
 
 }
