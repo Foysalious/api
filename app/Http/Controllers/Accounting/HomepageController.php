@@ -2,8 +2,8 @@
 
 use Exception;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Request;
 use App\Sheba\AccountingEntry\Repository\HomepageRepository;
+use Illuminate\Http\Request;
 
 class HomepageController extends Controller
 {
