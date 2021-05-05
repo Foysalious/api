@@ -1,6 +1,5 @@
 <?php namespace Sheba\OAuth2;
 
-use App\Exceptions\DoNotThrowException;
 use GuzzleHttp\Client;
 use Psr\Http\Message\ResponseInterface;
 use Sheba\Dal\AuthenticationRequest\Purpose;
@@ -237,10 +236,12 @@ class AccountServer
      */
     public function passwordAuthenticate($mobile, $email, $password, $purpose)
     {
-        $data = ['password' => $password, 'purpose' => $purpose];
-        if (!empty($email) && filter_var($email, FILTER_VALIDATE_EMAIL)) $data['email'] = $email;
+        $data = [
+            'password' => $password,
+            'purpose' => $purpose
+        ];
+        if (!empty($email)) $data['email'] = $email;
         if (!empty($mobile)) $data['mobile'] = $mobile;
-        if (!isset($data['mobile']) && !isset($data['email'])) throw new DoNotThrowException();
 
         return $this->client->post("/api/v1/authenticate/password", $data);
     }
@@ -263,6 +264,7 @@ class AccountServer
      * @return string
      * @throws AccountServerAuthenticationError
      * @throws AccountServerNotWorking
+     * @throws WrongPinError
      */
     public function getTokenByShebaAccountKit($code)
     {
@@ -270,14 +272,18 @@ class AccountServer
         return $data['token'];
     }
 
+    /**
+     * @param $partner_id
+     * @param $customer_id
+     * @param $data
+     * @param $token
+     * @return array
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     * @throws WrongPinError
+     */
     public function updatePosCustomer($partner_id, $customer_id, $data, $token)
     {
-        return (new Client())->put(config('account.account_url') . "/api/v1/partners/$partner_id/pos-customers/$customer_id", [
-            'query' => $data,
-            'headers' => [
-                'Authorization' => 'Bearer ' . $token
-            ]
-        ]);
+        return $this->client->setToken($token)->put("/api/v1/partners/$partner_id/pos-customers/$customer_id", $data);
     }
-
 }
