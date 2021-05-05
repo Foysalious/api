@@ -8,6 +8,6 @@ return [
     ],
     'api_url' => env('S_DELIVERY_API_URL'),
 
-    'payment_method' => ['cheque','beftn','cash','bKash','rocket','nagad'],
+    'payment_method' => ['cheque','beftn','cash','bkash','rocket','nagad'],
     'account_type'  => ['bank','mobile']
 ];
