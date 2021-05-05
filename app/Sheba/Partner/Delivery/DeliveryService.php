@@ -172,7 +172,9 @@ class DeliveryService
                 'payment_method' => $this->paymentInfo($order_id)->method,
                 'cash_amount' => $this->getDueAmount(),
 
-            ]
+            ],
+            'delivery_charge' => '',
+
         ];
     }
 

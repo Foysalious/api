@@ -132,9 +132,7 @@ class DeliveryController extends Controller
     {
 
         $partner = $request->auth_user->getPartner();
-
         $this->setModifier($request->manager_resource);
-
         $order_information = $delivery_service->setPartner($partner)->getOrderInfo($order_id);
         return api_response($request, null, 200, ['order_information' => $order_information]);
 
@@ -150,9 +148,7 @@ class DeliveryController extends Controller
             'delivery_thana'=>'required',
 
         ]);
-
         $partner= $request->partner_id;
-
         $charge = $delivery_service->setPartner($partner)->setWeight($request->weight)->setcashOnDelivery($request->cod_amount)->setDeliveryDistrict($request->delivery_district)->setDeliveryThana($request->delivery_thana)->deliveryCharge($partner);
         return api_response($request, null, 200, ['info' => $charge]);
 
