@@ -14,10 +14,9 @@ class DeliveryController extends Controller
 {
     use ModificationFields;
 
-    public function getInfoForRegistration(Request $request, $partner, DeliveryService $delivery_service)
+    public function getInfoForRegistration(Request $request, DeliveryService $delivery_service)
     {
-        $partner = $request->partner;
-        $this->setModifier($request->manager_resource);
+        $partner = $request->auth_user->getPartner();
         $info = $delivery_service->setPartner($partner)->getRegistrationInfo();
         return api_response($request, null, 200, ['info' => $info]);
     }
@@ -37,7 +36,7 @@ class DeliveryController extends Controller
             'thana' => 'required',
             'payment_method' => 'required|in:' . implode(',', config('pos_delivery.payment_method')),
             'contact_name' => 'required',
-            'mobile' => 'required',
+            'mobile' => 'required|mobile:bd',
             'account_type' => 'required|in:' . implode(',', config('pos_delivery.account_type')),
             'business_type' => 'required',
             'account_name' => 'sometimes',
@@ -66,8 +65,10 @@ class DeliveryController extends Controller
             ->setBranchName($request->branch_name)
             ->setRoutingNumber($request->routing_number)
             ->setProductNature($request->business_type)
+            ->setEmail($request->email)
+            ->setAccountType($request->account_type)
             ->register();
-        $delivery_service->setPartner($partner)->storeDeliveryInformation($registration['data']);
+        $delivery_service->setPartner($partner)->setAccountType($request->account_type)->storeDeliveryInformation($registration['data']);
         return api_response($request, null, 200, ['messages' => 'আপনার রেজিস্ট্রেশন সফল হয়েছে', 'data' => $registration['data']]);
     }
 
