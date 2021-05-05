@@ -10,6 +10,7 @@ class CategoryService
     public $modifier;
     public $categoryName;
     public $categoryId;
+    public $parentId;
     public $client;
     protected $thumb;
 
@@ -53,6 +54,12 @@ class CategoryService
         return $this;
     }
 
+    public function setParentId($parentId)
+    {
+        $this->parentId = $parentId;
+        return $this;
+    }
+
     public function getAllMasterCategories($partner_id)
     {
         $url = 'api/v1/partners/'.$partner_id.'/categories';
@@ -61,12 +68,20 @@ class CategoryService
 
     public function makeStoreData()
     {
-        return [
+        $data =  [
             ['name' => 'name', 'contents' => $this->categoryName],
             ['name' => 'modifier', 'contents' => $this->modifier],
             ['name' => 'thumb', 'contents' => $this->thumb ? File::get($this->thumb->getRealPath()) : null, 'filename' => $this->thumb ? $this->thumb->getClientOriginalName() : '']
         ];
-
+        if ($this->parentId != null) {
+            $data = array_merge_recursive($data,[
+                [
+                    'name' => 'parent_id',
+                    'contents' => $this->parentId,
+                ]
+            ]);
+        }
+        return $data;
     }
 
     public function makeUpdateData()
