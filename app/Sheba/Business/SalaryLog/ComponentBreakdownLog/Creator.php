@@ -35,7 +35,7 @@ class Creator
         $this->componentBreakdownLogData['salary_id'] = $this->componentBreakdownLogRequester->getSalary()->id;
         $this->componentBreakdownLogData['new'] = floatValFormat($this->componentBreakdownLogRequester->getComponentAmount());
         $this->componentBreakdownLogData['old'] = floatValFormat($this->componentBreakdownLogRequester->getOldAmount());
-        $this->componentBreakdownLogData['log'] = $this->getManagerMember() . ' changed "'.$this->componentBreakdownLogRequester->getComponentTitle() .'" from "'. floatValFormat($this->componentBreakdownLogRequester->getOldPercentage()) . '" ("৳'.floatValFormat($this->componentBreakdownLogRequester->getOldAmount()).'" to "' . floatValFormat($this->componentBreakdownLogRequester->getComponentPercentage()). '" ("৳'.floatValFormat($this->componentBreakdownLogRequester->getComponentAmount()).'")';
+        $this->componentBreakdownLogData['log'] = $this->getManagerMember() . ' changed "'.$this->componentBreakdownLogRequester->getComponentTitle() .'" from "'. floatValFormat($this->componentBreakdownLogRequester->getOldPercentage()) . '%" ("৳'.floatValFormat($this->componentBreakdownLogRequester->getOldAmount()).'") to "' . floatValFormat($this->componentBreakdownLogRequester->getComponentPercentage()). '%" ("৳'.floatValFormat($this->componentBreakdownLogRequester->getComponentAmount()).'")';
     }
 
     private function getManagerMember()

@@ -67,7 +67,7 @@ class Updater
     {
         $this->makeData();
         DB::transaction(function () {
-            if ($this->oldSalary != $this->salary) {
+            if ($this->oldSalary != $this->salary->gross_salary) {
                 $this->salaryRepository->update($this->salary, $this->salaryData);
                 $this->salaryLogCreate();
             }
@@ -94,6 +94,7 @@ class Updater
     private function createComponentPercentage()
     {
         $business_member = $this->salaryRequest->getBusinessMember();
+        $payroll_setting = $business_member->business->payrollSetting;
         foreach ($this->salaryRequest->getBreakdownPercentage() as $component) {
             $gross_salary_breakdown_maker = new Maker($component);
             if (!empty($component['id'])) {
@@ -101,14 +102,16 @@ class Updater
                 $gross_salary_breakdown_maker->setBusinessMember($business_member)
                     ->setManagerMember($this->salaryRequest->getManagerMember())
                     ->setPayrollComponent($existing_payroll_component)
+                    ->setPayrollSetting($payroll_setting)
                     ->setOldSalaryAmount($this->oldSalary)
                     ->updateCoWorkerGrossComponent();
             }else {
-                $existing_payroll_component = $this->payrollComponentRepository->where('name', $component['name'])->first();
+                $existing_payroll_component = $this->payrollComponentRepository->where('name', $component['name'])->where('payroll_setting_id', $payroll_setting->id)->first();
                 $gross_salary_breakdown_maker->setBusinessMember($business_member)
                     ->setManagerMember($this->salaryRequest->getManagerMember())
+                    ->setOldSalaryAmount($business_member->salary->gross_salary)
                     ->setPayrollComponent($existing_payroll_component)
-                    ->setOldSalaryAmount($this->oldSalary)
+                    ->setPayrollSetting($payroll_setting)
                     ->createCoWorkerGrossComponent();
             }
         }

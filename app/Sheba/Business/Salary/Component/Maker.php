@@ -40,8 +40,13 @@ class Maker
     public function setBusinessMember(BusinessMember $business_member)
     {
         $this->businessMember = $business_member;
-        $this->payrollSetting = $this->businessMember->business->payrollSetting;
         $this->salary = $this->businessMember->salary;
+        return $this;
+    }
+
+    public function setPayrollSetting($payroll_setting)
+    {
+        $this->payrollSetting = $payroll_setting;
         return $this;
     }
 
