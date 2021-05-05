@@ -23,13 +23,14 @@ class PresentableDTOPresenter extends Presenter
             $dto['order'] = $gateway->order;
             return $dto;
         }
-
-        if ( $userType == 'partner' && $dto['method_name'] == 'online' && $onlineMethods = $this->dbGateways->whereIn('method_name', ['ssl', 'port_wallet'])){
+        $onlineMethods = $this->dbGateways->whereIn('method_name', ['ssl', 'port_wallet']);
+        if ( $userType == 'partner' && $dto['method_name'] == 'online' && count($onlineMethods) > 0){
             $maxCashInCharge = $onlineMethods->max('cash_in_charge');
             $method = $onlineMethods->where('cash_in_charge', $maxCashInCharge)->first();
             $dto['cash_in_charge'] = $maxCashInCharge;
             $dto['asset'] = $method->asset_name;
             $dto['order'] = $method['order'];
+            $dto['name_bn'] = 'ভিসা/মাস্টার ও অন্যান্য';
             return $dto;
         }
 
