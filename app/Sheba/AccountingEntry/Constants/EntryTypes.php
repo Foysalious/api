@@ -13,5 +13,6 @@ class EntryTypes
     const EXPENSE = "expense";
     const TRANSFER = "transfer";
     const INVENTORY = "inventory";
+    const PAYMENT_LINK = "payment_link";
     const POS = "pos";
 }

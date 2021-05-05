@@ -26,7 +26,7 @@ class PartnerTransactionHandler
     {
         $data = $this->formatData($amount, $log, $partner_order);
         $data['type'] = 'Credit';
-        $this->partnerTransactionRepo->save($data, $tags);
+        return $this->partnerTransactionRepo->save($data, $tags);
     }
 
     /**
