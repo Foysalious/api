@@ -12,19 +12,10 @@ class Partner extends BusTicketCommission
     private $partner;
     private $busTicketDisburse;
 
-    public function __construct(BusTicketCommission $busTicketCommission)
+    public function __construct(BusTicketCommission $busTicketCommission, \App\Models\Partner $partner)
     {
         $this->busTicketDisburse =$busTicketCommission;
-    }
-
-    /**
-     * @param \App\Models\Partner $partner
-     * @return Partner
-     */
-    public function setPartner($partner)
-    {
         $this->partner = $partner;
-        return $this;
     }
 
     public function disburse()
