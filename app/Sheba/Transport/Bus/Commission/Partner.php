@@ -5,7 +5,6 @@ use Sheba\ExpenseTracker\AutomaticExpense;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Asset\Cash;
-use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Asset\Sheba;
 use Sheba\Transport\Bus\BusTicketCommission;
 
 class Partner extends BusTicketCommission
@@ -98,7 +97,7 @@ class Partner extends BusTicketCommission
             ->setSource($transaction)
             ->setAmount($transaction->amount)
             ->setDebitAccountKey(Cash::CASH)
-            ->setCreditAccountKey(Sheba::SHEBA_ACCOUNT)
+            ->setCreditAccountKey(AutomaticExpense::BUS_TICKET)
             ->setDetails("Purchase Bus Ticket for sale.")
             ->setReference("Bus Ticket purchasing amount is" . $transaction->amount . " tk.")
             ->store();
