@@ -114,7 +114,9 @@ class DeliveryController extends Controller
     public function partnerVendorUpdate(Request $request, DeliveryService $delivery_service){
         $partner = $request->auth_user->getPartner();
         $vendorInfo= $delivery_service
-            ->setDeliveryVendor($request->vendor_name);
+            ->setVendorName($request->vendor_name)
+            ->vendorUpdate();
+        $delivery_service->setPartner($partner)->setDeliveryInfo($request->pos_order_id)->updateVendorInformation($vendorInfo['data']);
 
     }
 
