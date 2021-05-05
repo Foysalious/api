@@ -21,6 +21,12 @@ class AccountingRepository extends BaseRepository
         }
     }
 
+    /**
+     * @param Request $request
+     * @param $type
+     * @return mixed
+     * @throws AccountingEntryServerError
+     */
     public function storeEntry(Request $request, $type) {
         $this->getCustomer($request);
         $this->setModifier($request->partner);
