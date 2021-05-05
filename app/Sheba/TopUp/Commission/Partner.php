@@ -4,7 +4,7 @@ use Sheba\ExpenseTracker\AutomaticExpense;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\AccountingEntry\Repository\JournalCreateRepository;
-use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Asset\Cash;
+use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys;
 use Sheba\TopUp\TopUpCommission;
 
 class Partner extends TopUpCommission
@@ -63,8 +63,8 @@ class Partner extends TopUpCommission
             ->setTypeId($this->partner->id)
             ->setSource($transaction)
             ->setAmount($transaction->amount)
-            ->setDebitAccountKey(Cash::CASH)
-            ->setCreditAccountKey(AutomaticIncomes::TOP_UP)
+            ->setDebitAccountKey(AccountKeys\Asset\Cash::CASH)
+            ->setCreditAccountKey(AccountKeys\Income\TopUp::TOP_UP)
             ->setDetails("TopUp for sale")
             ->setReference("TopUp sales amount is" . $transaction->amount . " tk.")
             ->store();
@@ -77,8 +77,8 @@ class Partner extends TopUpCommission
             ->setTypeId($this->partner->id)
             ->setSource($transaction)
             ->setAmount($transaction->amount)
-            ->setDebitAccountKey(AutomaticExpense::SHEBA_ACCOUNT)
-            ->setCreditAccountKey(AutomaticIncomes::GENERAL_REFUNDS)
+            ->setDebitAccountKey(AccountKeys\Asset\Sheba::SHEBA_ACCOUNT)
+            ->setCreditAccountKey(AccountKeys\Income\Refund::GENERAL_REFUNDS)
             ->setDetails("Refund TopUp")
             ->setReference("TopUp refunds amount is" . $transaction->amount . " tk.")
             ->store();
