@@ -5,6 +5,8 @@ use App\Models\PartnerPosCustomer;
 use App\Models\PosCustomer;
 use App\Models\Profile;
 
+use Carbon\Carbon;
+use Firebase\JWT\JWT;
 use Illuminate\Http\UploadedFile;
 
 use Intervention\Image\Image;
@@ -12,6 +14,7 @@ use Intervention\Image\Image;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 
+use Sheba\OAuth2\AccountServer;
 use Sheba\Pos\Repositories\PartnerPosCustomerRepository;
 use Sheba\Pos\Repositories\PosCustomerRepository;
 
@@ -34,13 +37,16 @@ class Updater
     private $profile;
     /** @var Partner */
     private $partner;
+    /** @var AccountServer */
+    private $accountServer;
 
     public function __construct(ProfileRepository $profile_repo, PartnerPosCustomerRepository $customer_repo,
-                                PosCustomerRepository $pos_customer_repo)
+                                PosCustomerRepository $pos_customer_repo, AccountServer $account_server)
     {
         $this->profileRepo = $profile_repo;
         $this->partnerPosCustomers = $customer_repo;
         $this->posCustomers = $pos_customer_repo;
+        $this->accountServer = $account_server;
     }
 
     public function setData($data)
@@ -58,6 +64,16 @@ class Updater
     public function setPartner(Partner $partner)
     {
         $this->partner = $partner;
+        return $this;
+    }
+
+    /**
+     * @param PosCustomer $customer
+     * @return $this
+     */
+    public function setCustomer(PosCustomer $customer)
+    {
+        $this->posCustomer = $customer;
         return $this;
     }
 
@@ -86,7 +102,7 @@ class Updater
         $this->saveImages();
         $this->format();
         $this->data['profile_id'] = $this->resolveProfileId();
-        return  $this->createOrUpdatePosCustomer();
+        return $this->createOrUpdatePosCustomer();
     }
 
     private function saveImages()
@@ -109,19 +125,29 @@ class Updater
     {
         $profile_data = [
 //            'name'      => $this->data['name'],
-            'mobile'    => $this->data['mobile'],
-            'email'     => $this->data['email'],
-            'address'   => $this->data['address']
+            'mobile' => $this->data['mobile'],
+            'email' => $this->data['email'],
+            'address' => $this->data['address']
         ];
         if (isset($this->data['profile_image'])) $profile_data += ['pro_pic' => $this->data['profile_image']];
         if (!$this->profile) {
             $profile = $this->profileRepo->store($profile_data);
             $this->setProfile($profile);
         } else {
-            unset($profile_data['email']);
+            $this->updateCustomerAccount($profile_data['mobile'], $profile_data['email']);
+            unset($profile_data['email'], $profile_data['mobile']);
             $this->profileRepo->update($this->profile, $profile_data);
         }
         return $this->profile->id;
+    }
+
+    private function updateCustomerAccount($mobile, $email)
+    {
+        if (!$email && !$mobile) return;
+        $data = [];
+        if ($email) $data['email'] = $email;
+        if ($mobile) $data['mobile'] = $mobile;
+        $this->accountServer->updatePosCustomer($this->partner->id, $this->posCustomer->id, $data, $this->getPartnerAuthorizationToken());
     }
 
     private function createOrUpdatePosCustomer()
@@ -181,13 +207,14 @@ class Updater
         return array_key_exists($filename, $this->data) && ($this->data[$filename] instanceof Image || ($this->data[$filename] instanceof UploadedFile && $this->data[$filename]->getPath() != ''));
     }
 
-    /**
-     * @param PosCustomer $customer
-     * @return $this
-     */
-    public function setCustomer(PosCustomer $customer)
+
+    private function getPartnerAuthorizationToken()
     {
-        $this->posCustomer = $customer;
-        return $this;
+        return JWT::encode([
+            'iss' => "smanager_authorization",
+            'sub' => $this->partner->id,
+            'iat' => Carbon::now()->timestamp,
+            'exp' => Carbon::now()->addMinutes(100)->timestamp
+        ], config('jwt.secret'));
     }
 }
