@@ -16,6 +16,7 @@ class DeliveryRoute
             $api->get('delivery-status', 'Pos\\DeliveryController@getDeliveryStatus');
             $api->post('cancel-order', 'Pos\\DeliveryController@cancelOrder');
             $api->post('orders', 'Pos\\DeliveryController@orderPlace');
+            $api->post('partner-vendor', 'Pos\\DeliveryController@partnerVendorUpdate');
         });
     }
 }
