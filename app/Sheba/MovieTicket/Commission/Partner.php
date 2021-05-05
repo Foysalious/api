@@ -5,7 +5,7 @@ use Sheba\AccountingEntry\Repository\JournalCreateRepository;
 use Sheba\ExpenseTracker\AutomaticExpense;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
-use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Asset\Cash;
+use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys;
 use Sheba\MovieTicket\MovieTicketCommission;
 
 class Partner extends MovieTicketCommission
@@ -90,8 +90,8 @@ class Partner extends MovieTicketCommission
             ->setTypeId($this->partner->id)
             ->setSource($transaction)
             ->setAmount($transaction->amount)
-            ->setDebitAccountKey(Cash::CASH)
-            ->setCreditAccountKey(AutomaticIncomes::MOVIE_TICKET)
+            ->setDebitAccountKey(AccountKeys\Asset\Cash::CASH)
+            ->setCreditAccountKey(AccountKeys\Income\MovieTicketSale::MOVIE_TICKET)
             ->setDetails("Movie Ticket for sale.")
             ->setReference("Movie Ticket purchasing amount is" . $transaction->amount . " tk.")
             ->store();
