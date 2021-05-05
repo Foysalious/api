@@ -13,9 +13,10 @@ class Partner extends MovieTicketCommission
     private $partner;
     private $movieTicketDisburse;
 
-    public function __construct(MovieTicketCommission $movieTicketCommission)
+    public function __construct(MovieTicketCommission $movieTicketCommission,  \App\Models\Partner $partner)
     {
         $this->movieTicketDisburse = $movieTicketCommission;
+        $this->partner = $partner;
     }
 
     /**
