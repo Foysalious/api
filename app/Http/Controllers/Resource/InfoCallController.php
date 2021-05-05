@@ -213,10 +213,17 @@ class InfoCallController extends Controller
                 $info_call_details['order_created_at'] = $order[0]->created_at->toDateTimeString();
                 $partner_order = PartnerOrder::where('order_id', $order[0]->id)->get()->last()->toArray();
                 if ($partner_order['closed_and_paid_at'] != null) {
+                    $info_call_details['order_status'] = 'Completed';
                     $info_call_details['bn_order_status'] = 'শেষ';
                     $info_call_details['reward'] = $reward_exists;
-                } elseif ($partner_order['cancelled_at'] != null) $info_call_details['bn_order_status'] = 'বাতিল';
-                else $info_call_details['bn_order_status'] = 'চলছে';
+                } elseif ($partner_order['cancelled_at'] != null) {
+                    $info_call_details['order_status'] = 'Cancelled';
+                    $info_call_details['bn_order_status'] = 'বাতিল';
+                }
+                else {
+                    $info_call_details['order_status'] = 'Running';
+                    $info_call_details['bn_order_status'] = 'চলছে';
+                }
 
             }
             if (!$info_call->service_id) $info_call_details['service_name'] = $info_call->service_name;
