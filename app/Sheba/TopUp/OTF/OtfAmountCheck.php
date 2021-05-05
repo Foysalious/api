@@ -60,7 +60,7 @@ class OtfAmountCheck
     public function setVendorId($vendor_id)
     {
         $this->vendorId = $vendor_id;
-        $this->vendor = $this->vendorFactory->getById($this->vendorId);
+        $this->vendor = $this->vendorFactory->getById($this->vendorId)->getModel();
         return $this;
     }
 
@@ -72,8 +72,8 @@ class OtfAmountCheck
      */
     public function setVendor($vendor)
     {
-        $this->vendor = $this->vendorFactory->getByName($vendor);
-        $this->vendorId = $this->vendor->getModel()->id;
+        $this->vendor = $this->vendorFactory->getByName($vendor)->getModel();
+        $this->vendorId = $this->vendor->id;
         return $this;
     }
 
@@ -142,7 +142,7 @@ class OtfAmountCheck
      */
     private function isGatewayExist()
     {
-        return in_array($this->vendor->getModel()->gateway, json_decode($this->otfSettings()->applicable_gateways));
+        return in_array($this->vendor->gateway, json_decode($this->otfSettings()->applicable_gateways));
     }
 
     /**
