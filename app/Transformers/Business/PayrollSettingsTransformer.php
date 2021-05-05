@@ -2,6 +2,7 @@
 
 use App\Sheba\Business\ComponentPackage\Formatter;
 use Sheba\Dal\PayrollComponent\Components;
+use Sheba\Dal\PayrollComponent\TargetType;
 use Sheba\Dal\PayrollComponent\Type;
 use Sheba\Dal\PayrollSetting\PayrollSetting;
 use Sheba\Dal\PayrollSetting\PayDayType;
@@ -54,7 +55,7 @@ class PayrollSettingsTransformer extends TransformerAbstract
 
     private function grossSalaryBreakdown($payroll_setting)
     {
-        $payroll_components = $payroll_setting->components()->where('type', Type::GROSS)->get();
+        $payroll_components = $payroll_setting->components->where('type', Type::GROSS)->whereIn('target_type', [TargetType::GENERAL, null]);
         foreach ($payroll_components as $payroll_component) {
             $salary_percentage = json_decode($payroll_component->setting, 1);
             $percentage_value = $salary_percentage['percentage'];
