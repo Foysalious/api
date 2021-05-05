@@ -59,7 +59,7 @@ class ExpenseController extends Controller
                 });
             });
         }
-        
+
         $members_ids = $business_members->pluck('member_id')->toArray();
 
         $expenses = $this->expense_repo->getExpenseByMember($members_ids);
@@ -85,7 +85,10 @@ class ExpenseController extends Controller
         $total_expense_count = count($expenses);
 
         if ($request->has('limit')) $expenses = collect($expenses)->splice($offset, $limit);
-        if ($request->file == 'excel') return $excel->setData($expenses->toArray())->setName('Expense Report')->get();
+
+        if ($request->file == 'excel') return $excel->setData(is_array($expenses) ? $expenses : $expenses->toArray())
+            ->setName('Expense Report')
+            ->get();
 
         return api_response($request, $expenses, 200, ['expenses' => $expenses, 'total_expenses_count' => $total_expense_count]);
     }
