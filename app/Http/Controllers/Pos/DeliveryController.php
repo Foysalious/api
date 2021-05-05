@@ -121,7 +121,7 @@ class DeliveryController extends Controller
         ]);
         $partner = $request->auth_user->getPartner();
         $delivery_service->setPartner($partner)->setVendorName($request->vendor_name)->updateVendorInformation();
-        return api_response($request, null, 200, ['messages' => 'successful']);
+        return api_response($request, null, 200);
 
     }
 

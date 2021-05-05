@@ -311,28 +311,6 @@ class DeliveryService
         return $this;
     }
 
-    public function setDeliveryInfo($delivery_info_id)
-    {
-
-
-        $this->deliveryInfo = $this->partnerDeliveryInfoRepositoryInterface->where('partner_id', $this->partner->id)->first();
-
-        return $this;
-    }
-
-    public function vendorUpdateData()
-    {
-
-        return [
-            'delivery_vendor' => $this->vendorName,
-        ];
-    }
-
-    public function vendorUpdate()
-    {
-        return $this->vendorUpdateData();
-    }
-
     public function makeData()
     {
         return [
@@ -398,23 +376,23 @@ class DeliveryService
                 ]
             ];
             return $data;
-        } else {
-            $data = [
-
-                'weight' => $this->weight,
-                'cod_amount' => $this->cashOnDelivery,
-
-                'pick_up' => [
-                    'thana' => $this->pickupThana,
-                    'district' => $this->pickupDistrict,
-                ],
-                'delivery' => [
-                    'thana' => $this->deliveryThana,
-                    'district' => $this->deliveryDistrict,
-                ]
-            ];
-            return $data;
         }
+        $data = [
+
+            'weight' => $this->weight,
+            'cod_amount' => $this->cashOnDelivery,
+
+            'pick_up' => [
+                'thana' => $this->pickupThana,
+                'district' => $this->pickupDistrict,
+            ],
+            'delivery' => [
+                'thana' => $this->deliveryThana,
+                'district' => $this->deliveryDistrict,
+            ]
+        ];
+        return $data;
+
     }
 
 
@@ -455,9 +433,12 @@ class DeliveryService
     public function updateVendorInformation()
     {
         $data = [
-            'vendor_name' => $this->vendorName
+            'delivery_vendor' => $this->vendorName
         ];
-        return $this->partnerDeliveryInfoRepositoryInterface->update($this->deliveryInfo, $data);
+
+        $deliveryInfo = $this->partnerDeliveryInfoRepositoryInterface->where('partner_id', $this->partner->id)->first();
+
+        return $this->partnerDeliveryInfoRepositoryInterface->update($deliveryInfo, $data);
     }
 
     public function deliveryCharge()
