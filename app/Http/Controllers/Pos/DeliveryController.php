@@ -14,10 +14,9 @@ class DeliveryController extends Controller
 {
     use ModificationFields;
 
-    public function getInfoForRegistration(Request $request, $partner, DeliveryService $delivery_service)
+    public function getInfoForRegistration(Request $request, DeliveryService $delivery_service)
     {
-        $partner = $request->partner;
-        $this->setModifier($request->manager_resource);
+        $partner = $request->auth_user->getPartner();
         $info = $delivery_service->setPartner($partner)->getRegistrationInfo();
         return api_response($request, null, 200, ['info' => $info]);
     }

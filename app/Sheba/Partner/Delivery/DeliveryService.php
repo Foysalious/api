@@ -135,11 +135,7 @@ class DeliveryService
             'contact_number' => $this->partner->getContactNumber(),
             'email' => $this->partner->getContactEmail(),
             'business_type' => $this->partner->business_type,
-            'address' => [
-                'full_address' => $this->partner->deliveryInformation->address,
-                'thana' => $this->partner->deliveryInformation->thana,
-                'zilla' => $this->partner->deliveryInformation->district
-            ],
+            'address' => $this->partner->address
         ];
     }
 
