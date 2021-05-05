@@ -29,6 +29,7 @@ abstract class TopUpCommission
     /** @var TopUpVendorCommission */
     protected $vendorCommission;
     protected $amount;
+    protected $transaction;
 
     /**
      * @param TopUpOrder $top_up_order
@@ -107,7 +108,7 @@ abstract class TopUpCommission
             ->setLog($log_message)
             ->setTopUpOrder($this->topUpOrder)
             ->setIsRobiTopUp($this->topUpOrder->isRobiWalletTopUp());
-        $this->agent->topUpTransaction($transaction);
+        $this->transaction =  $this->agent->topUpTransaction($transaction);
     }
 
     /**
@@ -187,6 +188,11 @@ abstract class TopUpCommission
                 ->store();
         }
 
+    }
+
+    public function getTransaction()
+    {
+        return $this->transaction;
     }
 
     private function getVendorOTFDetails($vendor_id, $amount, $gateway, $con_type)

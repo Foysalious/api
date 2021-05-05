@@ -22,6 +22,7 @@ abstract class MovieTicketCommission
     /** @var MovieTicketCommission */
     protected $vendorCommission;
     protected $amount;
+    protected $transaction;
 
     /**
      * @param MovieTicketOrder $movie_ticket_order
@@ -126,7 +127,12 @@ abstract class MovieTicketCommission
         $transaction = (new MovieTicketTransaction())->setAmount($this->movieTicketOrder->agent_commission)
             ->setLog(number_format($this->movieTicketOrder->agent_commission, 2) . " point has been collected from Sheba for movie ticket sales commission. of user with mobile number: " . $this->movieTicketOrder->reserver_mobile)
             ->setMovieTicketOrder($this->movieTicketOrder);
-        $this->agent->movieTicketTransactionNew($transaction);
+        $this->transaction = $this->agent->movieTicketTransactionNew($transaction);
+    }
+
+    public function getTransaction()
+    {
+        return $this->transaction;
     }
 
     /**
