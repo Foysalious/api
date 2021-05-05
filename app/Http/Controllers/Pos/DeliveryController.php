@@ -112,7 +112,7 @@ class DeliveryController extends Controller
     }
 
 
-    //test ???
+
     public function vendorUpdate(Request $request, DeliveryService $delivery_service)
     {
 
@@ -133,7 +133,7 @@ class DeliveryController extends Controller
     }
 
 
-    //test
+
     public function getOrderInformation(Request $request, $order_id, DeliveryService $delivery_service)
     {
         $partner = $request->auth_user->getPartner();
@@ -141,7 +141,7 @@ class DeliveryController extends Controller
         return api_response($request, null, 200, ['order_information' => $order_information]);
     }
 
-    //test
+
     public function getDeliveryCharge(Request $request, DeliveryService $delivery_service)
     {
         $this->validate($request, [
