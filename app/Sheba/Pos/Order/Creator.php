@@ -137,9 +137,12 @@ class Creator
 
     /**
      * @return PosOrder
-     * @throws InvalidDiscountType
-     * @throws ExpenseTrackingServerError
+     * @throws AccountingEntryServerError
      * @throws DoNotReportException
+     * @throws InvalidDiscountType
+     * @throws NotEnoughStockException
+     * @throws PartnerPosCustomerNotFoundException
+     * @throws PosCustomerNotFoundException
      */
     public function create()
     {
