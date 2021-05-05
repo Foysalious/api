@@ -120,7 +120,6 @@ class ProfileRepository
                     $info['has_changed_password'] = 0;
                 else
                     $info['has_changed_password'] = 1;
-                $info['token'] = $this->getJwtToken($avatar, $from);
             } elseif ($from == 'customer') {
                 $info['referral']     = $avatar->referral ? $avatar->referral->code : '';
                 $info['order_count']  = $avatar->orders->count();
@@ -147,9 +146,9 @@ class ProfileRepository
                     $info['has_changed_password'] = 0;
                 else
                     $info['has_changed_password'] = 1;
-                $info['token'] = $this->getJwtToken($avatar, $from);
             }
 
+            $info['token'] = $this->getJwtToken($avatar, $from);
             return $info;
         }
 

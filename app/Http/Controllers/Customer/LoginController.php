@@ -74,8 +74,6 @@ class LoginController extends Controller
         if (!$info) return api_response($request, null, 404);
 
         $info['is_new'] = $is_profile_newly_created;
-        $info['token'] = $this->accounts->getTokenByAvatar($profile->$from, $from);;
-
         return api_response($request, null, 200, ['info' => $info]);
     }
 

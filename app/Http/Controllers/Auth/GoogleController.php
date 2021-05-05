@@ -8,6 +8,7 @@ use App\Repositories\ProfileRepository;
 use App\Sheba\SocialProfile;
 use Google_Client;
 use Illuminate\Http\Request;
+use Sheba\OAuth2\AccountServer;
 use Sheba\ShebaAccountKit\Requests\AccessTokenRequest;
 use Sheba\ShebaAccountKit\ShebaAccountKit;
 
@@ -20,12 +21,15 @@ class GoogleController extends Controller
     private $facebookRepository;
     /** @var FacebookAccountKit  */
     private $fbKit;
+    /** @var AccountServer $accounts */
+    private $accounts;
 
-    public function __construct(ProfileRepository $profile_repo, FacebookRepository $fb_repo, FacebookAccountKit $fb_kit)
+    public function __construct(ProfileRepository $profile_repo, FacebookRepository $fb_repo, FacebookAccountKit $fb_kit, AccountServer $accounts)
     {
         $this->profileRepository = $profile_repo;
         $this->facebookRepository = $fb_repo;
         $this->fbKit = $fb_kit;
+        $this->accounts = $accounts;
     }
 
     public function login(Request $request)
