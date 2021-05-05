@@ -12,19 +12,10 @@ class Partner extends TopUpCommission
     private $partner;
     private $topUpDisburse;
 
-    public function __construct(TopUpCommission $topUpCommission)
+    public function __construct(TopUpCommission $topUpCommission, \App\Models\Partner $partner)
     {
         $this->topUpDisburse =$topUpCommission;
-    }
-
-    /**
-     * @param \App\Models\Partner $partner
-     * @return $this
-     */
-    public function setPartner($partner)
-    {
         $this->partner = $partner;
-        return $this;
     }
 
     public function disburse()
