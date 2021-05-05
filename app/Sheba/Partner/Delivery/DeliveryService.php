@@ -46,6 +46,7 @@ class DeliveryService
     private $partnerDeliveryInfoRepositoryInterface;
     private $order;
     private $vendorName;
+    private $delivery_info_id;
 
 
     public function __construct(DeliveryServerClient $client, PartnerDeliveryInformationRepositoryInterface $partnerDeliveryInfoRepositoryInterface)
@@ -54,7 +55,7 @@ class DeliveryService
         $this->partnerDeliveryInfoRepositoryInterface = $partnerDeliveryInfoRepositoryInterface;
     }
 
-    public function setPartner( $partner)
+    public function setPartner($partner)
     {
         $this->partner = $partner;
         return $this;
@@ -313,19 +314,21 @@ class DeliveryService
         $this->fbPageUrl = $fbPageUrl;
         return $this;
     }
+
     public function setVendorName($vendorName)
     {
         $this->vendorName = $vendorName;
         return $this;
     }
 
-    public function setDeliveryInfo($posDelivery)
+    public function setDeliveryInfo($delivery_info_id)
     {
-        $this->posDelivery = $posDelivery;
+        $this->delivery_info_id = PartnerDeliveryInformationRepositoryInterface::find($delivery_info_id);
         return $this;
     }
 
-    public function vendorUpdateData(){
+    public function vendorUpdateData()
+    {
         return [
             'delivery_vendor' => $this->vendorName,
         ];
@@ -361,7 +364,7 @@ class DeliveryService
 
     public function makeDataDeliveryCharge($partner)
     {
-        $partnerDeliveryInformation= $this->partnerDeliveryInformation($partner);
+        $partnerDeliveryInformation = $this->partnerDeliveryInformation($partner);
 
         $data = [
 
@@ -387,7 +390,8 @@ class DeliveryService
         return $this->client->setToken($this->token)->post('merchants/register', $data);
     }
 
-    public function vendorUpdate(){
+    public function vendorUpdate()
+    {
         return $this->vendorUpdateData();
     }
 
@@ -418,6 +422,17 @@ class DeliveryService
         return $this->partnerDeliveryInfoRepositoryInterface->create($data);
     }
 
+    public function updateVendorInformation($info)
+    {
+        $data = [
+            'delivery_vendor' => $info['delivery_vendor']
+        ];
+
+        return $this->partnerDeliveryInfoRepositoryInterface->update($this->delivery_info_id, $data );
+
+
+    }
+
     public function deliveryCharge($partner)
     {
         try {
@@ -432,9 +447,10 @@ class DeliveryService
         }
     }
 
-    public function partnerDeliveryInformation($partner){
+    public function partnerDeliveryInformation($partner)
+    {
 
-        return $this->partnerDeliveryInfoRepositoryInterface->where('partner_id',$partner)->first();
+        return $this->partnerDeliveryInfoRepositoryInterface->where('partner_id', $partner)->first();
     }
 
     public function districts()
@@ -461,9 +477,9 @@ class DeliveryService
     public function getDeliveryStatus()
     {
         $data = [
-           'uid' => $this->posOrder->delivery_request_id
+            'uid' => $this->posOrder->delivery_request_id
         ];
-        return $this->client->post('orders/track',$data);
+        return $this->client->post('orders/track', $data);
     }
 
     public function cancelOrder()
@@ -477,8 +493,6 @@ class DeliveryService
         $this->client->post('orders/cancel', $data);
         return true;
     }
-
-
 
 
 }
