@@ -5,7 +5,6 @@ use Sheba\ExpenseTracker\AutomaticExpense;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Asset\Cash;
-use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Asset\Sheba;
 use Sheba\Transport\Bus\BusTicketCommission;
 
 class Partner extends BusTicketCommission
@@ -13,19 +12,10 @@ class Partner extends BusTicketCommission
     private $partner;
     private $busTicketDisburse;
 
-    public function __construct(BusTicketCommission $busTicketCommission)
+    public function __construct(BusTicketCommission $busTicketCommission, \App\Models\Partner $partner)
     {
         $this->busTicketDisburse =$busTicketCommission;
-    }
-
-    /**
-     * @param \App\Models\Partner $partner
-     * @return Partner
-     */
-    public function setPartner($partner)
-    {
         $this->partner = $partner;
-        return $this;
     }
 
     public function disburse()
@@ -49,6 +39,7 @@ class Partner extends BusTicketCommission
     public function refund()
     {
         $this->deleteIncomeExpense();
+        $this->refundBusTicket();
     }
 
     private function deleteIncomeExpense()
@@ -78,7 +69,7 @@ class Partner extends BusTicketCommission
 
     private function saleBusTicket()
     {
-        $transaction = $this->busTicketDisburse->getTransaction();
+        $transaction = $this->getBusTicketTransaction();
         (new JournalCreateRepository())
             ->setTypeId($this->partner->id)
             ->setSource($transaction)
@@ -92,15 +83,34 @@ class Partner extends BusTicketCommission
 
     private function purchaseBusTicketForSale()
     {
-        $transaction = $this->busTicketDisburse->getTransaction();
+        $transaction = $this->getBusTicketTransaction();
         (new JournalCreateRepository())
             ->setTypeId($this->partner->id)
             ->setSource($transaction)
             ->setAmount($transaction->amount)
             ->setDebitAccountKey(Cash::CASH)
-            ->setCreditAccountKey(Sheba::SHEBA_ACCOUNT)
+            ->setCreditAccountKey(AutomaticExpense::BUS_TICKET)
             ->setDetails("Purchase Bus Ticket for sale.")
             ->setReference("Bus Ticket purchasing amount is" . $transaction->amount . " tk.")
             ->store();
+    }
+
+    private function refundBusTicket()
+    {
+        $transaction = $this->getBusTicketTransaction();
+        (new JournalCreateRepository())
+            ->setTypeId($this->partner->id)
+            ->setSource($transaction)
+            ->setAmount($transaction->amount)
+            ->setDebitAccountKey(AutomaticExpense::GENERAL_REFUNDS)
+            ->setCreditAccountKey(Cash::CASH)
+            ->setDetails("Refund BusTicket")
+            ->setReference("BusTicket refunds amount is" . $transaction->amount . " tk.")
+            ->store();
+    }
+
+    public function getBusTicketTransaction()
+    {
+        return $this->busTicketDisburse->getTransaction();
     }
 }

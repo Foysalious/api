@@ -13,6 +13,7 @@ class AutomaticIncomes
     const OTHER_INCOME = 'Other Income';
     const DUE_TRACKER  = 'Due Tracker';
     const WEBSTORE_SALES = 'Webstore sales';
+    const GENERAL_REFUNDS = 'General Refunds';
 
     public static function heads()
     {

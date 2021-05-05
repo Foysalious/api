@@ -23,4 +23,5 @@ class Income extends AccountTypes
     public $sales_ticket;
     public $sales_top_up;
     public $reward;
+    public $refund;
 }
