@@ -9,6 +9,7 @@ class Refund
     /** @var Partner $refundReceiver */
     private $refundReceiver;
     private $smsCount;
+    private $transaction;
 
     /**
      * @param $refund_receiver
@@ -37,6 +38,10 @@ class Refund
         $log = $amount . " BDT has been credited for failing to sent a message in a campaign you have created.";
         $tag = Tag::where('name', 'refunded sms campaign')->pluck('id')->toArray();
 
-        $handler->credit($amount, $log, null, $tag);
+        $this->transaction = $handler->credit($amount, $log, null, $tag);
+    }
+
+    public function getTransaction(){
+        return $this->transaction;
     }
 }
