@@ -20,6 +20,9 @@ class AccountingRoute
                 $api->post('/{entry_id}', 'Accounting\\DueTrackerController@update');
                 $api->delete('/{entry_id}', 'Accounting\\DueTrackerController@delete');
             });
+            $api->group(['prefix' => 'home'], function ($api) {
+                $api->get('/asset-balance', 'Accounting\\HomepageController@getAssetAccountBalance');
+            });
         });
     }
 }
