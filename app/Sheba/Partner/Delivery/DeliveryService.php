@@ -47,6 +47,7 @@ class DeliveryService
     private $partnerDeliveryInfoRepositoryInterface;
     private $order;
     private $accountType;
+    private $vendorName;
 
 
     public function __construct(DeliveryServerClient $client, PartnerDeliveryInformationRepositoryInterface $partnerDeliveryInfoRepositoryInterface)
@@ -55,7 +56,7 @@ class DeliveryService
         $this->partnerDeliveryInfoRepositoryInterface = $partnerDeliveryInfoRepositoryInterface;
     }
 
-    public function setPartner($partner)
+    public function setPartner( $partner)
     {
         $this->partner = $partner;
         return $this;
@@ -233,7 +234,7 @@ class DeliveryService
 
     public function setPhone($phone)
     {
-        $this->phone = $phone ;
+        $this->phone = $phone;
         return $this;
     }
 
@@ -316,6 +317,23 @@ class DeliveryService
         $this->fbPageUrl = $fbPageUrl;
         return $this;
     }
+    public function setVendorName($vendorName)
+    {
+        $this->vendorName = $vendorName;
+        return $this;
+    }
+
+    public function setDeliveryInfo($posDelivery)
+    {
+        $this->posDelivery = $posDelivery;
+        return $this;
+    }
+
+    public function vendorUpdateData(){
+        return [
+            'delivery_vendor' => $this->vendorName,
+        ];
+    }
 
     public function makeData()
     {
@@ -387,6 +405,10 @@ class DeliveryService
     {
         $data = $this->makeData();
         return $this->client->setToken($this->token)->post('merchants/register', $data);
+    }
+
+    public function vendorUpdate(){
+        return $this->vendorUpdateData();
     }
 
 
