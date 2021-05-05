@@ -7,6 +7,7 @@ use App\Models\Partner;
 use App\Models\PosOrder;
 use App\Models\PosOrderPayment;
 use App\Sheba\Partner\Delivery\Exceptions\DeliveryCancelRequestError;
+use Illuminate\Support\Str;
 use Sheba\Dal\PartnerDeliveryInformation\Contract as PartnerDeliveryInformationRepositoryInterface;
 use Throwable;
 
@@ -45,6 +46,7 @@ class DeliveryService
      */
     private $partnerDeliveryInfoRepositoryInterface;
     private $order;
+    private $accountType;
     private $vendorName;
 
 
@@ -267,6 +269,8 @@ class DeliveryService
 
     public function setEmail($email)
     {
+        if (!$email)
+            $email = $this->partner->getContactEmail();
         $this->email = $email;
         return $this;
     }
@@ -345,18 +349,34 @@ class DeliveryService
             'payment_method' => $this->paymentMethod,
             'website' => $this->website,
             'contact_name' => $this->contactName,
-            'contact_number' => $this->partner->getContactNumber(),
+            'contact_number' => Str::substr($this->partner->getContactNumber(),3),
             'email' => $this->email,
             'designation' => $this->designation,
-            'mfs_info' => [
-                'account_name' => $this->accountName,
-                'account_number' => $this->accountNumber,
+            'mfs_info' => $this->createMfsInfo(),
+        ];
+    }
+
+    public function setAccountType($accountType)
+    {
+        $this->accountType = $accountType;
+        return $this;
+    }
+
+    private function createMfsInfo()
+    {
+        $data = [
+            'account_name' => $this->accountName,
+            'account_number' => $this->accountNumber,
+        ];
+        if($this->accountType == 'bank')
+        {
+            $data =  array_merge($data,[
                 'bank_name' => $this->bankName,
                 'branch_name' => $this->branchName,
                 'routing_number' => $this->routingNumber
-            ]
-
-        ];
+            ]) ;
+        }
+        return $data;
     }
 
     public function makeDataDeliveryCharge($partner)
@@ -412,7 +432,8 @@ class DeliveryService
             'branch_name' => $info['mfs_info']['branch_name'],
             'account_number' => $info['mfs_info']['account_number'],
             'routing_number' => $info['mfs_info']['routing_number'],
-            'delivery_vendor' => null
+            'delivery_vendor' => null,
+            'account_type' => $this->accountType
         ];
 
         return $this->partnerDeliveryInfoRepositoryInterface->create($data);
@@ -477,7 +498,6 @@ class DeliveryService
         $this->client->post('orders/cancel', $data);
         return true;
     }
-
 
 
 
