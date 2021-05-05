@@ -117,7 +117,10 @@ class DeliveryController extends Controller
         $vendorInfo= $delivery_service
             ->setVendorName($request->vendor_name)
             ->vendorUpdate();
-        $delivery_service->setPartner($partner)->setDeliveryInfo($request->delivery_info_id)->updateVendorInformation($vendorInfo['data']);
+
+
+        $delivery_service->setPartner($partner)->setDeliveryInfo($request->delivery_info_id)->updateVendorInformation($vendorInfo);
+        return api_response($request, null, 200, ['messages' => 'successful']);
 
     }
 

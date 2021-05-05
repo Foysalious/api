@@ -48,7 +48,8 @@ class DeliveryService
     private $order;
     private $accountType;
     private $vendorName;
-    private $delivery_info_id;
+
+    private $deliveryInfo;
 
 
     public function __construct(DeliveryServerClient $client, PartnerDeliveryInformationRepositoryInterface $partnerDeliveryInfoRepositoryInterface)
@@ -320,20 +321,30 @@ class DeliveryService
     public function setVendorName($vendorName)
     {
         $this->vendorName = $vendorName;
+
         return $this;
     }
 
     public function setDeliveryInfo($delivery_info_id)
     {
-        $this->delivery_info_id = PartnerDeliveryInformationRepositoryInterface::find($delivery_info_id);
+
+
+        $this->deliveryInfo = $this->partnerDeliveryInfoRepositoryInterface->where('id',$delivery_info_id)->where('partner_id',$this->partner->id)->first();
+
         return $this;
     }
 
     public function vendorUpdateData()
     {
+
         return [
             'delivery_vendor' => $this->vendorName,
         ];
+    }
+
+    public function vendorUpdate()
+    {
+        return $this->vendorUpdateData();
     }
 
     public function makeData()
@@ -350,7 +361,7 @@ class DeliveryService
             'payment_method' => $this->paymentMethod,
             'website' => $this->website,
             'contact_name' => $this->contactName,
-            'contact_number' => Str::substr($this->partner->getContactNumber(),3),
+            'contact_number' => Str::substr($this->partner->getContactNumber(), 3),
             'email' => $this->email,
             'designation' => $this->designation,
             'mfs_info' => $this->createMfsInfo(),
@@ -369,13 +380,12 @@ class DeliveryService
             'account_name' => $this->accountName,
             'account_number' => $this->accountNumber,
         ];
-        if($this->accountType == 'bank')
-        {
-            $data =  array_merge($data,[
+        if ($this->accountType == 'bank') {
+            $data = array_merge($data, [
                 'bank_name' => $this->bankName,
                 'branch_name' => $this->branchName,
                 'routing_number' => $this->routingNumber
-            ]) ;
+            ]);
         }
         return $data;
     }
@@ -408,11 +418,6 @@ class DeliveryService
         return $this->client->setToken($this->token)->post('merchants/register', $data);
     }
 
-    public function vendorUpdate()
-    {
-        return $this->vendorUpdateData();
-    }
-
 
     public function storeDeliveryInformation($info)
     {
@@ -443,11 +448,11 @@ class DeliveryService
 
     public function updateVendorInformation($info)
     {
-        $data = [
-            'delivery_vendor' => $info['delivery_vendor']
-        ];
 
-        return $this->partnerDeliveryInfoRepositoryInterface->update($this->delivery_info_id, $data );
+
+
+
+        return $this->partnerDeliveryInfoRepositoryInterface->update($this->deliveryInfo, $info);
 
 
     }
@@ -512,7 +517,6 @@ class DeliveryService
         $this->client->post('orders/cancel', $data);
         return true;
     }
-
 
 
 }
