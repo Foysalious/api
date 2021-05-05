@@ -10,6 +10,15 @@ use App\Models\PartnerPosService;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Models\Profile;
+use App\Sheba\AccountingEntry\Constants\EntryTypes;
+use App\Sheba\AccountingEntry\Repository\AccountingRepository;
+use Illuminate\Http\Request;
+use ReflectionException;
+use Sheba\AccountingEntry\Accounts\Accounts;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\AccountingEntry\Exceptions\InvalidSourceException;
+use Sheba\AccountingEntry\Exceptions\KeyNotFoundException;
+use Sheba\AccountingEntry\Repository\JournalCreateRepository;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Dal\POSOrder\SalesChannels;
@@ -51,6 +60,8 @@ class Creator
     private $paymentMethod;
     /** @var OrderStatuses $status */
     protected $status;
+    /** @var Request*/
+    private $request;
 
     public function __construct(PosOrderRepository $order_repo, PosOrderItemRepository $item_repo,
                                 PaymentCreator $payment_creator, StockManager $stock_manager,
@@ -90,6 +101,13 @@ class Creator
         $this->createValidator->setServices(json_decode($this->data['services'], true));
         if (!isset($this->data['payment_method'])) $this->data['payment_method'] = 'cod';
         if (isset($this->data['customer_address'])) $this->setAddress($this->data['customer_address']);
+        return $this;
+    }
+
+    public function setRequest(Request $request)
+    {
+        $this->request = $request;
+        $this->setData($request->all());
         return $this;
     }
 
@@ -177,7 +195,8 @@ class Creator
 
         $this->voucherCalculation($order);
         $this->resolvePaymentMethod();
-        $this->storeIncome($order);
+//        $this->storeIncome($order);
+        $this->storeJournal($order);
         return $order;
     }
 
@@ -329,5 +348,40 @@ class Creator
     private function getDiscountAmount($discount)
     {
         return (isset($discount) && isset($discount['amount'])) ? $discount['amount'] : 0;
+    }
+
+    /**
+     * @param PosOrder $order
+     * @throws AccountingEntryServerError
+     */
+    private function storeJournal(PosOrder $order)
+    {
+        $this->additionalAccountingData($order);
+        /** @var AccountingRepository $accounting_repo */
+        $accounting_repo = app()->make(AccountingRepository::class);
+        $accounting_repo->storeEntry($this->request, EntryTypes::POS);
+    }
+
+    private function additionalAccountingData(PosOrder $order)
+    {
+        $services = $order->items;
+        $inventory_products = [];
+        foreach ($services as $service) {
+            $original_service = ($service->service);
+            $inventory_products[] = [
+                "id"           => $original_service->id,
+                "name"         => $original_service->name,
+                "unit_price"   => $original_service->cost,
+                "selling_rice" => $original_service->price
+            ];
+        }
+
+        $this->request->merge([
+            "from_account_key"   => "general_equity_discount",
+            "to_account_key"     => "sales_from_pos",
+            "amount"             => (double)$order->getNetBill(),
+            "amount_cleared"     => $order->getPaid(),
+            "inventory_products" => json_encode($inventory_products)
+        ]);
     }
 }
