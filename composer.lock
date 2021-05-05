@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d811e8e01a260def3dfd3e6c3f01f3f3",
+    "content-hash": "c776551ebfc845b17e0810cd605b68d3",
     "packages": [
         {
             "name": "algolia/algoliasearch-client-php",
@@ -980,6 +980,63 @@
             "description": "A PHP Framework that allows you to encode and decode arbitrary ASN.1 structures using the ITU-T X.690 Encoding Rules.",
             "homepage": "https://github.com/FGrosse/PHPASN1",
             "time": "2015-09-30T18:16:42+00:00"
+        },
+        {
+            "name": "fideloper/proxy",
+            "version": "3.3.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/fideloper/TrustedProxy.git",
+                "reference": "9cdf6f118af58d89764249bbcc7bb260c132924f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/fideloper/TrustedProxy/zipball/9cdf6f118af58d89764249bbcc7bb260c132924f",
+                "reference": "9cdf6f118af58d89764249bbcc7bb260c132924f",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/contracts": "~5.0",
+                "php": ">=5.4.0"
+            },
+            "require-dev": {
+                "illuminate/http": "~5.0",
+                "mockery/mockery": "~0.9.3",
+                "phpunit/phpunit": "^5.7"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "3.3-dev"
+                },
+                "laravel": {
+                    "providers": [
+                        "Fideloper\\Proxy\\TrustedProxyServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Fideloper\\Proxy\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Chris Fidao",
+                    "email": "fideloper@gmail.com"
+                }
+            ],
+            "description": "Set trusted proxies for Laravel",
+            "keywords": [
+                "load balancing",
+                "proxy",
+                "trusted proxy"
+            ],
+            "time": "2017-06-15T17:19:42+00:00"
         },
         {
             "name": "firebase/php-jwt",
@@ -3799,7 +3856,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
+                "url": "https://bitbucket.org/startern/sheba_dal.git",
                 "reference": "2e4db391fa10d683a9f89ca8701b10b869d23528"
             },
             "require": {
@@ -3834,7 +3891,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://mac_pasha@bitbucket.org/startern/sheba_elasticsearch.git",
+                "url": "https://bitbucket.org/startern/sheba_elasticsearch.git",
                 "reference": "fd7d025e5b9428a78a44b85fa70d2e0d703a7993"
             },
             "require": {
@@ -3881,7 +3938,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://mac_pasha@bitbucket.org/startern/sheba_notification.git",
+                "url": "https://bitbucket.org/startern/sheba_notification.git",
                 "reference": "5c77770b2cea422d4ad8d909b6bd22d152bde39d"
             },
             "require": {
@@ -3913,7 +3970,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://mac_pasha@bitbucket.org/startern/sheba_report.git",
+                "url": "https://bitbucket.org/startern/sheba_report.git",
                 "reference": "548e3494488c089f2a5b6e0b43ccbb0882a70f7d"
             },
             "require": {
@@ -3942,7 +3999,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://mac_pasha@bitbucket.org/startern/sheba_sms.git",
+                "url": "https://bitbucket.org/startern/sheba_sms.git",
                 "reference": "bf52f38f3a2f78d5aa5a5bdfd102e6f6f0b0a96d"
             },
             "require": {
@@ -3971,7 +4028,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://mac_pasha@bitbucket.org/startern/sheba_voucher.git",
+                "url": "https://bitbucket.org/startern/sheba_voucher.git",
                 "reference": "935f243725f82caf0e5d717627ead59c076f581f"
             },
             "require": {
@@ -5764,6 +5821,7 @@
                 "faker",
                 "fixtures"
             ],
+            "abandoned": true,
             "time": "2017-08-15T16:48:10+00:00"
         },
         {
@@ -7186,7 +7244,7 @@
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
-        "php": ">=5.5.9",
+        "php": ">=7.0",
         "ext-json": "*",
         "ext-curl": "*",
         "ext-soap": "*",
