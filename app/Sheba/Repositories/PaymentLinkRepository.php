@@ -1,6 +1,5 @@
 <?php namespace Sheba\Repositories;
 
-use App\Models\Payable;
 use App\Models\Payment;
 use App\Transformers\PaymentLinkTransactionDetailsTransformer;
 use GuzzleHttp\Exception\GuzzleException;
@@ -27,9 +26,10 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
 
     /**
      * PaymentLinkRepository constructor.
+     *
      * @param PaymentLinkTransformer $paymentLinkTransformer
-     * @param UrlTransformer $urlTransformer
-     * @param PaymentLinkClient $client
+     * @param UrlTransformer         $urlTransformer
+     * @param PaymentLinkClient      $client
      */
     public function __construct(PaymentLinkTransformer $paymentLinkTransformer, UrlTransformer $urlTransformer, PaymentLinkClient $client)
     {
@@ -89,7 +89,7 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
         return Payment::leftJoin('payables', 'payments.payable_id', '=', 'payables.id')->where([
             ['type', 'payment_link'], ['type_id', $payment_link_details['linkId']],
         ])->select('payments.id', 'type', 'type_id', 'amount', 'payments.created_at', 'payable_id')
-            ->where('status', Statuses::COMPLETED)->orderBy('payments.created_at', 'desc');
+                      ->where('status', Statuses::COMPLETED)->orderBy('payments.created_at', 'desc');
     }
 
     public function payment($payment)
@@ -113,7 +113,7 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
     }
 
     /**
-     * @param $id
+     * @param        $id
      * @param string $type
      * @return mixed
      */
@@ -150,18 +150,19 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
                 $links[$val['linkId']] = $val;
             });
             $transactionQuery = DB::table('payments as pa')
-                ->select('pa.id as payment_id', 'pb.id as payable_id', 'customerProfile.name', 'pb.type_id')
-                ->join('payables as pb', 'pa.payable_id', '=', 'pb.id')
-                ->leftJoin('customers as cus', function ($join) {
-                    $join->on('pb.user_id', '=', 'cus.id')
-                        ->on('pb.user_type', '=', DB::raw('"App\\\Models\\\Customer"'));
-                })
-                ->leftJoin('profiles as customerProfile', function ($join) {
-                    $join->on('cus.profile_id', '=', 'customerProfile.id')
-                        ->on('pb.user_type', '=', DB::raw('"App\\\Models\\\Customer"'));
-                })
-                ->whereIn('type_id', $linkIds)
-                ->where('type', 'payment_link');
+                                  ->select('pa.id as payment_id', 'pb.id as payable_id', 'customerProfile.name', 'pb.type_id')
+                                  ->join('payables as pb', 'pa.payable_id', '=', 'pb.id')
+                                  ->leftJoin('customers as cus', function ($join) {
+                                      $join->on('pb.user_id', '=', 'cus.id')
+                                           ->on('pb.user_type', '=', DB::raw('"App\\\Models\\\Customer"'));
+                                  })
+                                  ->leftJoin('profiles as customerProfile', function ($join) {
+                                      $join->on('cus.profile_id', '=', 'customerProfile.id')
+                                           ->on('pb.user_type', '=', DB::raw('"App\\\Models\\\Customer"'));
+                                  })
+                                  ->whereIn('type_id', $linkIds)
+                                  ->where('status', Statuses::COMPLETED)
+                                  ->where('type', 'payment_link');
 
             $transactions = $transactionQuery->get();
 

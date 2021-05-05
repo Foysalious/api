@@ -2,6 +2,8 @@
 
 use App\Models\TopUpOrder;
 use App\Models\User;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Illuminate\Database\Eloquent\Collection;
 use Sheba\Dal\TopUpGateway\TopUpGatewayRepository;
 use Sheba\Dal\TopupOrder\TopUpOrderRepository;
@@ -96,7 +98,12 @@ class GatewayTimeoutHandler
         $gateway = $this->gateway->getName();
         $message = "All top up operators using $gateway gateway has been unpublished due to connection timeout. Please take necessary actions.";
         $this->gatewayRepo->findByName($gateway)->smsReceivers->each(function (User $user) use ($message) {
-            $this->sms->msg($message)->to($user->phone)->shoot();
+            $this->sms
+                ->setBusinessType(BusinessType::BONDHU)
+                ->setFeatureType(FeatureType::TOP_UP)
+                ->msg($message)
+                ->to($user->phone)
+                ->shoot();
         });
     }
 }

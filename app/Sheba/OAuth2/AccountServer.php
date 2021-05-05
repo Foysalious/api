@@ -1,6 +1,8 @@
 <?php namespace Sheba\OAuth2;
 
 use GuzzleHttp\Client;
+use Psr\Http\Message\ResponseInterface;
+use Sheba\Dal\AuthenticationRequest\Purpose;
 
 class AccountServer
 {
@@ -247,7 +249,7 @@ class AccountServer
     /**
      * @param $token
      * @param $purpose
-     * @return array|\Psr\Http\Message\ResponseInterface
+     * @return array|ResponseInterface
      * @throws AccountServerAuthenticationError
      * @throws AccountServerNotWorking
      * @throws WrongPinError
@@ -262,10 +264,26 @@ class AccountServer
      * @return string
      * @throws AccountServerAuthenticationError
      * @throws AccountServerNotWorking
+     * @throws WrongPinError
      */
     public function getTokenByShebaAccountKit($code)
     {
         $data = $this->client->post("api/v3/profile/authenticate/sheba-accountkit", ['code' => $code]);
         return $data['token'];
+    }
+
+    /**
+     * @param $partner_id
+     * @param $customer_id
+     * @param $data
+     * @param $token
+     * @return array
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     * @throws WrongPinError
+     */
+    public function updatePosCustomer($partner_id, $customer_id, $data, $token)
+    {
+        return $this->client->setToken($token)->put("/api/v1/partners/$partner_id/pos-customers/$customer_id", $data);
     }
 }

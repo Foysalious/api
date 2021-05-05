@@ -25,7 +25,26 @@ class XSS
         'v2/businesses/*/departments/*',
         'service',
         'service/*',
-        'category/*'
+        'category/*',
+        '/v1/employee/attendances/action',
+        'v1/employee/leaves',
+        'v1/employee/approval-requests/status',
+        'v1/employee/leaves/*',
+        'v1/employee/approval-requests/*',
+        'v1/employee/expense',
+        'v1/employee/expense/*',
+        'v1/employee/supports',
+        'v1/employee/supports/*',
+        'v1/employee/me/basic',
+        'v1/employee/me',
+        'v2/businesses/*/employees/*',
+        'v2/businesses/*/employees/*/basic-info',
+        'v2/businesses/*/leaves/approval-requests/*',
+        'v2/businesses/*/leaves/approval-requests/change-status-by-super-admin',
+        'v2/businesses/*/leaves/approval-requests/status',
+        'v2/businesses/*/expense/filter-month',
+        'v2/businesses/*/supports',
+        'v2/businesses/*/supports/*'
     ];
 
     /**

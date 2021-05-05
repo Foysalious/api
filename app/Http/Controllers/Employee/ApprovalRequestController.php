@@ -1,5 +1,8 @@
 <?php namespace App\Http\Controllers\Employee;
 
+use App\Transformers\Business\LeaveListTransformer;
+use League\Fractal\Resource\Collection;
+use Sheba\Business\LeaveRejection\Requester as LeaveRejectionRequester;
 use App\Models\Attachment;
 use App\Models\Business;
 use App\Models\BusinessMember;
@@ -13,28 +16,35 @@ use Illuminate\Http\JsonResponse;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Business\ApprovalRequest\UpdaterV2;
+use Sheba\Business\LeaveRejection\Creator as LeaveRejectionCreator;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use App\Sheba\Business\BusinessBasicInformation;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Sheba\Dal\Leave\Contract as LeaveRepoInterface;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\ModificationFields;
+use Sheba\Dal\Leave\Status;
 
 class ApprovalRequestController extends Controller
 {
     use BusinessBasicInformation, ModificationFields;
 
     private $approvalRequestRepo;
+    /** @var LeaveRejectionRequester $leaveRejectionRequester */
+    private $leaveRejectionRequester;
 
     /**
      * ApprovalRequestController constructor.
      * @param ApprovalRequestRepositoryInterface $approval_request_repo
+     * @param LeaveRejectionRequester $leave_rejection_requester
      */
-    public function __construct(ApprovalRequestRepositoryInterface $approval_request_repo)
+    public function __construct(ApprovalRequestRepositoryInterface $approval_request_repo,LeaveRejectionRequester $leave_rejection_requester)
     {
         $this->approvalRequestRepo = $approval_request_repo;
+        $this->leaveRejectionRequester = $leave_rejection_requester;
     }
 
     /**
@@ -61,21 +71,20 @@ class ApprovalRequestController extends Controller
         if ($request->has('limit')) $approval_requests = $approval_requests->splice($offset, $limit);
 
         foreach ($approval_requests as $approval_request) {
-           if ($approval_request->requestable) {
-               /** @var Leave $requestable */
-               $requestable = $approval_request->requestable;
-               /** @var Member $member */
-               $member = $requestable->businessMember->member;
-               /** @var Profile $profile */
-               $profile = $member->profile;
+            if (!$approval_request->requestable) continue;
+            /** @var Leave $requestable */
+            $requestable = $approval_request->requestable;
+            /** @var Member $member */
+            $member = $requestable->businessMember->member;
+            /** @var Profile $profile */
+            $profile = $member->profile;
 
-               $manager = new Manager();
-               $manager->setSerializer(new CustomSerializer());
-               $resource = new Item($approval_request, new ApprovalRequestTransformer($profile, $business));
-               $approval_request = $manager->createData($resource)->toArray()['data'];
+            $manager = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+            $resource = new Item($approval_request, new ApprovalRequestTransformer($profile, $business));
+            $approval_request = $manager->createData($resource)->toArray()['data'];
 
-               array_push($approval_requests_list, $approval_request);
-           }
+            array_push($approval_requests_list, $approval_request);
         }
 
         return api_response($request, $approval_requests_list, 200, [
@@ -146,11 +155,13 @@ class ApprovalRequestController extends Controller
      */
     public function updateStatus(Request $request, UpdaterV2 $updater)
     {
-        $this->validate($request, [
+        $validation_data = [
             'type' => 'required|string',
             'type_id' => 'required|string',
             'status' => 'required|string',
-        ]);
+        ];
+        if ($request->status == Status::REJECTED) $validation_data['reasons'] = 'required|string';
+        $this->validate($request, $validation_data);
 
         /**
          *  $type leave, support, expense
@@ -164,14 +175,30 @@ class ApprovalRequestController extends Controller
         /** @var BusinessMember $business_member */
         $business_member = $this->getBusinessMember($request);
 
-        /** @var ApprovalRequest $approval_request */
-        $approval_request = $this->approvalRequestRepo->getApprovalRequestByIdAndType($type_ids, $type)->first();
-        if ($approval_request->approver_id != $business_member->id) return api_response($request, null, 420);
-
-        $updater->setBusinessMember($business_member)->setApprovalRequest($approval_request);
-        $updater->setStatus($request->status)->change();
+        $this->approvalRequestRepo->getApprovalRequestByIdAndType($type_ids, $type)
+            ->each(function ($approval_request) use ($business_member, $updater, $request) {
+                /** @var ApprovalRequest $approval_request */
+                if ($approval_request->approver_id != $business_member->id) return;
+                $this->leaveRejectionRequester->setNote($request->note)->setReasons($request->reasons);
+                $updater->setBusinessMember($business_member)->setApprovalRequest($approval_request)->setLeaveRejectionRequester($this->leaveRejectionRequester);
+                $updater->setStatus($request->status)->change();
+            });
 
         return api_response($request, null, 200);
+    }
+
+    public function leaveHistory($business_member,Request $request, LeaveRepoInterface $leave_repo)
+    {
+        $business_member = $this->getBusinessMemberById($business_member);
+        if (!$business_member) return api_response($request, null, 404);
+
+        $leaves = $leave_repo->getLeavesByBusinessMember($business_member)->orderBy('id', 'desc');
+        if ($request->has('type')) $leaves = $leaves->where('leave_type_id', $request->type);
+        $leaves = $leaves->get();
+        $fractal = new Manager();
+        $resource = new Collection($leaves, new LeaveListTransformer());
+        $leaves = $fractal->createData($resource)->toArray()['data'];
+        return api_response($request, null, 200, ['leaves' => $leaves]);
     }
 }
 
