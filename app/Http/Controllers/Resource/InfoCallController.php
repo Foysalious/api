@@ -46,7 +46,7 @@ class InfoCallController extends Controller
         $resource = $auth_user->getResource();
         $auth_user_array = $auth_user->toArray();
         $created_by = $auth_user_array['resource']['id'];
-        $query = InfoCall::where('status', '<>', Statuses::OPEN)->where('created_by', $created_by)->where('created_by_type', get_class($resource));
+        $query = InfoCall::where('created_by', $created_by)->where('created_by_type', get_class($resource));
         $reward_action = RewardAction::where('event_name', 'info_call_completed')->latest('id')->first();
         if ($reward_action != null) {
             $info_call_reward = Reward::where('detail_id', $reward_action->id)
@@ -76,6 +76,10 @@ class InfoCallController extends Controller
             if ($info_call['status'] == Statuses::REJECTED) {
                 $order_status = 'বাতিল';
                 $reward = 0;
+            }
+            if ($info_call['status'] == Statuses::OPEN) {
+                $order_status = 'সাবমিট';
+                $reward = 'N/A';
             }
             if ($info_call['status'] == Statuses::CONVERTED) {
                 $order = Order::where('info_call_id', $info_call['id'])->get()->toArray();
