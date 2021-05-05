@@ -426,12 +426,12 @@ class DeliveryService
             'website' => $info['website'],
             'facebook' => $info['fb_page_url'],
             'mobile_banking_provider' => null,
-            'agent_number' => null,
+            'agent_number' => null ,
             'account_holder_name' => $info['mfs_info']['account_name'],
-            'bank_name' => $info['mfs_info']['bank_name'],
-            'branch_name' => $info['mfs_info']['branch_name'],
-            'account_number' => $info['mfs_info']['account_number'],
-            'routing_number' => $info['mfs_info']['routing_number'],
+            'bank_name' => isset($info['mfs_info']['bank_name']) ? $info['mfs_info']['bank_name'] : null,
+            'branch_name' => isset($info['mfs_info']['branch_name']) ? $info['mfs_info']['branch_name'] : null,
+            'account_number' =>   $info['mfs_info']['account_number'] ,
+            'routing_number' => isset($info['mfs_info']['routing_number']) ? $info['mfs_info']['routing_number'] : null,
             'delivery_vendor' => null,
             'account_type' => $this->accountType
         ];
