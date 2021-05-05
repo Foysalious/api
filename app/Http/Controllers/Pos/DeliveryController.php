@@ -5,6 +5,7 @@ use App\Sheba\Partner\Delivery\DeliveryService;
 use App\Sheba\Partner\Delivery\OrderPlace;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Sheba\ModificationFields;
 use Throwable;
 
@@ -27,7 +28,7 @@ class DeliveryController extends Controller
      * @param DeliveryService $delivery_service
      * @return JsonResponse
      */
-    public function register(Request $request, $partner, DeliveryService $delivery_service)
+    public function register(Request $request, DeliveryService $delivery_service)
     {
         $this->validate($request, [
             'name' => 'required',
@@ -48,10 +49,10 @@ class DeliveryController extends Controller
             'website' => 'sometimes',
             'email' => 'sometimes',
         ]);
-
-        $partner = $request->partner;
-        $this->setModifier($request->manager_resource);
-        $registration = $delivery_service->setPartner($partner)
+        $partner = $request->auth_user->getPartner();
+        $registration = $delivery_service
+            ->setToken($this->bearerToken($request))
+            ->setPartner($partner)
             ->setName($request->name)
             ->setAddress($request->address)
             ->setDistrict($request->district)
@@ -70,16 +71,7 @@ class DeliveryController extends Controller
         return api_response($request, null, 200, ['messages' => 'আপনার রেজিস্ট্রেশন সফল হয়েছে', 'data' => $registration['data']]);
     }
 
-//    public function vendorUpdate(Request $request, $partner, DeliveryService $delivery_service)
-//    {
-//        $partner = $request->partner;
-//        $this->setModifier($request->manager_resource);
-//        $registration = $delivery_service->setPartner($partner)
-//            ->setVendor($request->vendor)
-//            ->register();
-//        $delivery_service->setPartner($partner)->storeDeliveryInformation($registration['data']);
-//        return api_response($request, null, 200, ['messages' => 'আপনার রেজিস্ট্রেশন সফল হয়েছে', 'data' => $registration['data']]);
-//    }
+
 
     public function orderPlace(Request $request, $partner, OrderPlace $orderPlace)
     {
@@ -119,6 +111,13 @@ class DeliveryController extends Controller
         return api_response($request, null, 200, ['messages' => 'ডেলিভারি রিকোয়েস্ট সম্পন্ন', 'data' => $orderPlaceInfo['data']]);
     }
 
+    public function partnerVendorUpdate(Request $request, DeliveryService $delivery_service){
+        $partner = $request->auth_user->getPartner();
+        $vendorInfo= $delivery_service
+            ->setDeliveryVendor($request->vendor_name);
+
+    }
+
 
     public function getVendorList(Request $request, DeliveryService $delivery_service)
     {
@@ -126,10 +125,10 @@ class DeliveryController extends Controller
         return api_response($request, null, 200, ['delivery_vendor' => $vendor]);
     }
 
-    public function getOrderInformation(Request $request, $partner, $order_id, DeliveryService $delivery_service)
+    public function getOrderInformation(Request $request, $order_id, DeliveryService $delivery_service)
     {
 
-        $partner = $request->partner;
+        $partner = $request->auth_user->getPartner();
 
         $this->setModifier($request->manager_resource);
 
@@ -138,34 +137,34 @@ class DeliveryController extends Controller
 
     }
 
-    public function deliveryCharge(Request $request, $partner, DeliveryService $delivery_service)
+    public function getDeliveryCharge(Request $request, DeliveryService $delivery_service)
     {
+        $this->validate($request, [
+            'partner_id' => 'required',
+            'weight' => 'required',
+            'cod_amount'=>'required',
+            'delivery_district'=>'required',
+            'delivery_thana'=>'required',
 
+        ]);
 
+        $partner= $request->partner_id;
 
-        $partner = $request->partner;
-
-//        $this->setModifier($request->manager_resource);
-
-
-        $charge = $delivery_service->setPartner($partner)->setWeight($request->weight)->setcashOnDelivery($request->cod_amount)->setDeliveryDistrict($request->deliveryDistrict)->setDeliveryThana($request->deliveryThana)->deliveryCharge($partner);
-
+        $charge = $delivery_service->setPartner($partner)->setWeight($request->weight)->setcashOnDelivery($request->cod_amount)->setDeliveryDistrict($request->delivery_district)->setDeliveryThana($request->delivery_thana)->deliveryCharge($partner);
         return api_response($request, null, 200, ['info' => $charge]);
 
     }
 
-    public function districts(Request $request, $partner, DeliveryService $delivery_service)
+    public function getDistrict(Request $request, DeliveryService $delivery_service)
     {
-//        $partner= $request->partner;
-//        $this->setModifier($request->manager_resource);
+
         $district = $delivery_service->districts();
         return api_response($request, null, 200, ['district' => $district]);
     }
 
-    public function upzillas(Request $request, $partner, $district_name, DeliveryService $delivery_service)
+    public function getUpzilla(Request $request, $district_name, DeliveryService $delivery_service)
     {
-//        $partner= $request->partner;
-//        $this->setModifier($request->manager_resource);
+
         $upzillas = $delivery_service->upzillas($district_name);
         return api_response($request, null, 200, ['upzillas' => $upzillas]);
     }
@@ -173,13 +172,29 @@ class DeliveryController extends Controller
 
     public function getDeliveryStatus(Request $request, $partner, DeliveryService $delivery_service)
     {
-        $this->validate($request,[
-           'pos_order_id' => 'required',
+        $this->validate($request, [
+            'pos_order_id' => 'required',
         ]);
         $statusInfo = $delivery_service->setPartner($partner)->setPosOrder($request->pos_order_id)->getDeliveryStatus();
         return api_response($request, null, 200, ['status' => $statusInfo['data']['status']]);
     }
 
+    public function cancelOrder(Request $request, $partner, DeliveryService $delivery_service)
+    {
+        $this->validate($request, [
+            'pos_order_id' => 'required',
+        ]);
+        $delivery_service->setPartner($partner)->setPosOrder($request->pos_order_id)->cancelOrder();
+        return api_response($request, null, 200, ['messages' => 'ডেলিভারি অর্ডারটি বাতিল করা হয়েছে']);
+    }
 
+    private function bearerToken($request)
+    {
+        $header = $request->header('Authorization', '');
+        if (Str::startsWith($header, 'Bearer ')) {
+            return Str::substr($header, 7);
+        }
+        return false;
+    }
 
 }

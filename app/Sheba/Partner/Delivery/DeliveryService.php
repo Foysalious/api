@@ -6,6 +6,7 @@ use App\Http\Requests\Request;
 use App\Models\Partner;
 use App\Models\PosOrder;
 use App\Models\PosOrderPayment;
+use App\Sheba\Partner\Delivery\Exceptions\DeliveryCancelRequestError;
 use Sheba\Dal\PartnerDeliveryInformation\Contract as PartnerDeliveryInformationRepositoryInterface;
 use Throwable;
 
@@ -38,6 +39,7 @@ class DeliveryService
     private $deliveryThana;
     private $deliveryDistrict;
     private $posOrder;
+    private $token;
     /**
      * @var PartnerDeliveryInformationRepositoryInterface
      */
@@ -96,6 +98,12 @@ class DeliveryService
     public function setDeliveryDistrict($deliveryDistrict)
     {
         $this->deliveryDistrict = $deliveryDistrict;
+        return $this;
+    }
+
+    public function setToken($token)
+    {
+        $this->token = $token;
         return $this;
     }
 
@@ -358,7 +366,7 @@ class DeliveryService
     public function register()
     {
         $data = $this->makeData();
-        return $this->client->post('merchants/register', $data);
+        return $this->client->setToken($this->token)->post('merchants/register', $data);
     }
 
 
@@ -435,5 +443,19 @@ class DeliveryService
         ];
         return $this->client->post('orders/track',$data);
     }
+
+    public function cancelOrder()
+    {
+        $status = $this->getDeliveryStatus()['data']['status'];
+        $data = [
+            'uid' => $this->posOrder->delivery_request_id
+        ];
+        if ($status == Statuses::PICKED_UP)
+            throw new DeliveryCancelRequestError();
+        $this->client->post('orders/cancel', $data);
+        return true;
+    }
+
+
 
 }

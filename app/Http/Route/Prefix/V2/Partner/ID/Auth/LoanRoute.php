@@ -3,6 +3,7 @@
 
 class LoanRoute
 {
+
     public function set($api)
     {
         $api->group(['prefix' => 'loans', 'middleware' => 'shebaServer'], function ($api) {
