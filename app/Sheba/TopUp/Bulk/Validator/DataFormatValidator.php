@@ -19,8 +19,6 @@ class DataFormatValidator extends Validator
 {
     /** @var TopUpAgent $agent */
     private $agent;
-    /** @var array $blockedAmountByOperator */
-    private $blockedAmountByOperator;
     /** @var TopUpExcelDataFormatError $excelDataFormatError */
     private $excelDataFormatError;
     /** @var ReadExcelAndProcessData $excel */
@@ -52,16 +50,6 @@ class DataFormatValidator extends Validator
     public function setAgent(TopUpAgent $agent): DataFormatValidator
     {
         $this->agent = $agent;
-        return $this;
-    }
-
-    /**
-     * @param array $blocked_amount_by_operator
-     * @return $this
-     */
-    public function setBlockedAmountByOperator(array $blocked_amount_by_operator): DataFormatValidator
-    {
-        $this->blockedAmountByOperator = $blocked_amount_by_operator;
         return $this;
     }
 
@@ -107,7 +95,7 @@ class DataFormatValidator extends Validator
             } elseif (!$this->isAmountInteger($value->$amount_field)) {
                 $halt_top_up = true;
                 $excel_error = 'Amount Should be Integer';
-            } elseif ($this->isOtfNumberBlockedForBusiness() && $this->isAmountBlockedV2($value->$operator_field, $value->$connection_type,$value->$amount_field)) {
+            } elseif ($this->isOtfNumberBlockedForBusiness() && $this->isAmountBlocked($value->$operator_field, $value->$connection_type,$value->$amount_field)) {
                 $halt_top_up = true;
                 $excel_error = 'The recharge amount is blocked due to OTF activation issue';
             } elseif ($this->isPrepaidAmountLimitExceedForBusiness($amount_field, $value, $connection_type)) {
@@ -169,7 +157,7 @@ class DataFormatValidator extends Validator
      * @return bool
      * @throws Exception
      */
-    public function isAmountBlockedV2($operator, $connection_type, $amount) : bool
+    public function isAmountBlocked($operator, $connection_type, $amount) : bool
     {
         $this->otfAmountCheck = app(OtfAmountCheck::class);
         $this->otfAmountCheck->setAmount($amount)
@@ -178,22 +166,6 @@ class DataFormatValidator extends Validator
             ->setAgent($this->agent);
 
         return $this->otfAmountCheck->isAmountInOtf();
-    }
-
-    /**
-     * @param $operator
-     * @param $amount
-     * @return bool
-     */
-    private function isAmountBlocked($operator, $amount): bool
-    {
-        if ($operator == 'GP') return in_array($amount, $this->blockedAmountByOperator[TopUpSpecialAmount::GP]);
-        if ($operator == 'BANGLALINK') return in_array($amount, $this->blockedAmountByOperator[TopUpSpecialAmount::BANGLALINK]);
-        if ($operator == 'ROBI') return in_array($amount, $this->blockedAmountByOperator[TopUpSpecialAmount::ROBI]);
-        if ($operator == 'AIRTEL') return in_array($amount, $this->blockedAmountByOperator[TopUpSpecialAmount::AIRTEL]);
-        if ($operator == 'TELETALK') return in_array($amount, $this->blockedAmountByOperator[TopUpSpecialAmount::TELETALK]);
-
-        return false;
     }
 
     /**

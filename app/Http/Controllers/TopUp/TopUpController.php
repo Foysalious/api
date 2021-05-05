@@ -37,6 +37,7 @@ use Sheba\TopUp\ConnectionType;
 use Sheba\OAuth2\AuthUser;
 use Sheba\TopUp\Exception\PinMismatchException;
 use Sheba\TopUp\History\RequestBuilder;
+use Sheba\TopUp\OTF\OtfAmount;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpDataFormat;
 use Sheba\TopUp\TopUpHistoryExcel;
@@ -180,31 +181,6 @@ class TopUpController extends Controller
     }
 
     /**
-     * @param TopUpSpecialAmount $special_amount
-     * @return array
-     */
-    private function getBlockedAmountForTopup(TopUpSpecialAmount $special_amount)
-    {
-        $special_amount = $special_amount->get();
-        $blocked_amount = $special_amount->blockedAmount->list;
-        $trigger_amount = $special_amount->triggerAmount->list;
-
-        $blocked_amount_by_operator = [];
-
-        foreach ($blocked_amount as $data) {
-            if (isset($blocked_amount_by_operator[$data->operator_id])) array_push($blocked_amount_by_operator[$data->operator_id], $data->amount); else
-                $blocked_amount_by_operator[$data->operator_id] = [$data->amount];
-        }
-
-        foreach ($trigger_amount as $data) {
-            if (isset($blocked_amount_by_operator[$data->operator_id])) array_push($blocked_amount_by_operator[$data->operator_id], $data->amount); else
-                $blocked_amount_by_operator[$data->operator_id] = [$data->amount];
-        }
-
-        return $blocked_amount_by_operator;
-    }
-
-    /**
      * @param Request $request
      * @param $user
      * @param VerifyPin $verifyPin
@@ -235,9 +211,7 @@ class TopUpController extends Controller
             ->setRequest($request)
             ->verify();
 
-        #$blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
         $validator = (new ExtensionValidator())->setFile($request->file('file'));
-        #$data_validator = (new DataFormatValidator())->setAgent($agent)->setBlockedAmountByOperator($blocked_amount_by_operator)->setRequest($request);
         $data_validator = (new DataFormatValidator())->setAgent($agent)->setRequest($request);
         $validator->linkWith(new SheetNameValidator())->linkWith($data_validator);
         $validator->check();
@@ -466,13 +440,14 @@ class TopUpController extends Controller
 
     /**
      * @param Request $request
-     * @param TopUpSpecialAmount $topUp_special_amount
+     * @param OtfAmount $otf_amount
      * @return JsonResponse
+     * @throws Exception
      */
-    public function specialAmount(Request $request, TopUpSpecialAmount $topUp_special_amount)
+    public function specialAmount(Request $request, OtfAmount $otf_amount)
     {
-        $special_amount = $topUp_special_amount->get();
-        return api_response($request, null, 200, ['data' => $special_amount]);
+        $special_amount = $otf_amount->get();
+        return api_response($request, null, 200, ['otf_lists' => $special_amount]);
     }
 
     public function generateJwt(Request $request, AccessTokenRequest $access_token_request, ShebaAccountKit $sheba_accountKit)
