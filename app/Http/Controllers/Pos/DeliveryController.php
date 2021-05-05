@@ -73,7 +73,6 @@ class DeliveryController extends Controller
     }
 
 
-
     public function orderPlace(Request $request, $partner, OrderPlace $orderPlace)
     {
         $this->validate($request, [
@@ -112,11 +111,14 @@ class DeliveryController extends Controller
         return api_response($request, null, 200, ['messages' => 'ডেলিভারি রিকোয়েস্ট সম্পন্ন', 'data' => $orderPlaceInfo['data']]);
     }
 
-    //method name change ??
-    //test ???
-    public function partnerVendorUpdate(Request $request, DeliveryService $delivery_service){
 
-        //validation ??
+    //test ???
+    public function vendorUpdate(Request $request, DeliveryService $delivery_service)
+    {
+
+        $this->validate($request, [
+            'vendor_name' => 'required'
+        ]);
         $partner = $request->auth_user->getPartner();
         $delivery_service->setPartner($partner)->setVendorName($request->vendor_name)->updateVendorInformation();
         return api_response($request, null, 200, ['messages' => 'successful']);
@@ -145,24 +147,25 @@ class DeliveryController extends Controller
         $this->validate($request, [
             'partner_id' => 'required',
             'weight' => 'required',
-            'cod_amount'=>'required',
-            'delivery_district'=>'required',
-            'delivery_thana'=>'required',
+            'cod_amount' => 'required',
+            'delivery_district' => 'required',
+            'delivery_thana' => 'required',
         ]);
-        $partner= $request->partner_id;
-        $charge = $delivery_service->setPartner($partner)->setWeight($request->weight)->setCashOnDelivery($request->cod_amount)->setDeliveryDistrict($request->delivery_district)->setDeliveryThana($request->delivery_thana)->deliveryCharge();
+
+        $partner = $request->partner_id;
+        $charge = $delivery_service->setPartner($partner)->setWeight($request->weight)->setpickupThana($request->pickup_thana)->setpickupDistrict($request->pickup_district)->setCashOnDelivery($request->cod_amount)->setDeliveryDistrict($request->delivery_district)->setDeliveryThana($request->delivery_thana)->deliveryCharge();
         return api_response($request, null, 200, ['info' => $charge]);
     }
 
-    //methodname
-    public function getDistrict(Request $request, DeliveryService $delivery_service)
+
+    public function getDistricts(Request $request, DeliveryService $delivery_service)
     {
         $districts = $delivery_service->districts();
         return api_response($request, null, 200, ['districts' => $districts]);
     }
 
-    //method name
-    public function getUpzilla(Request $request, $district_name, DeliveryService $delivery_service)
+
+    public function getUpzillas(Request $request, $district_name, DeliveryService $delivery_service)
     {
 
         $upzillas = $delivery_service->upzillas($district_name);
