@@ -2,6 +2,9 @@
 
 use App\Exceptions\DoNotReportException;
 use App\Exceptions\Pos\Order\OrderNotFoundException;
+use App\Exceptions\Pos\Customer\PartnerPosCustomerNotFoundException;
+use App\Exceptions\Pos\Customer\PosCustomerNotFoundException;
+use App\Exceptions\Pos\Order\NotEnoughStockException;
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Models\PosCustomer;
@@ -15,6 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Dal\POSOrder\SalesChannels;
@@ -120,9 +124,12 @@ class OrderController extends Controller
      * @param PartnerRepository $partnerRepository
      * @param PaymentLinkCreator $paymentLinkCreator
      * @return array|false|JsonResponse
-     * @throws ExpenseTrackingServerError
      * @throws DoNotReportException
      * @throws InvalidDiscountType
+     * @throws PartnerPosCustomerNotFoundException
+     * @throws PosCustomerNotFoundException
+     * @throws NotEnoughStockException
+     * @throws AccountingEntryServerError
      */
     public function store($partner, Request $request, Creator $creator, ProfileCreator $profileCreator, PosCustomerCreator $posCustomerCreator, PartnerRepository $partnerRepository, PaymentLinkCreator $paymentLinkCreator)
     {

@@ -161,7 +161,6 @@ class JournalCreateRepository
     }
 
     /**
-     * @param string $end_point
      * @return mixed
      * @throws AccountingEntryServerError
      * @throws InvalidSourceException
