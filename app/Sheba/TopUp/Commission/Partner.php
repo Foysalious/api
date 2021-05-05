@@ -12,19 +12,10 @@ class Partner extends TopUpCommission
     private $partner;
     private $topUpDisburse;
 
-    public function __construct(TopUpCommission $topUpCommission)
+    public function __construct(TopUpCommission $topUpCommission, \App\Models\Partner $partner)
     {
         $this->topUpDisburse =$topUpCommission;
-    }
-
-    /**
-     * @param \App\Models\Partner $partner
-     * @return $this
-     */
-    public function setPartner($partner)
-    {
         $this->partner = $partner;
-        return $this;
     }
 
     public function disburse()
@@ -51,6 +42,7 @@ class Partner extends TopUpCommission
     {
         $this->refundAgentsCommission();
         $this->deleteExpenseIncome();
+        $this->refundTopUp();
     }
 
     private function deleteExpenseIncome()
@@ -66,15 +58,34 @@ class Partner extends TopUpCommission
 
     private function saleTopUp()
     {
-        $transaction = $this->topUpDisburse->getTransaction();
+        $transaction = $this->getTopUpTransaction();
         (new JournalCreateRepository())
             ->setTypeId($this->partner->id)
             ->setSource($transaction)
             ->setAmount($transaction->amount)
             ->setDebitAccountKey(Cash::CASH)
             ->setCreditAccountKey(AutomaticIncomes::TOP_UP)
-            ->setDetails("Top Up for sale")
-            ->setReference("TopUp selling amount is" . $transaction->amount . " tk.")
+            ->setDetails("TopUp for sale")
+            ->setReference("TopUp sales amount is" . $transaction->amount . " tk.")
             ->store();
+    }
+
+    private function refundTopUp()
+    {
+        $transaction = $this->getTopUpTransaction();
+        (new JournalCreateRepository())
+            ->setTypeId($this->partner->id)
+            ->setSource($transaction)
+            ->setAmount($transaction->amount)
+            ->setDebitAccountKey(AutomaticExpense::SHEBA_ACCOUNT)
+            ->setCreditAccountKey(AutomaticIncomes::GENERAL_REFUNDS)
+            ->setDetails("Refund TopUp")
+            ->setReference("TopUp refunds amount is" . $transaction->amount . " tk.")
+            ->store();
+    }
+
+    public function getTopUpTransaction()
+    {
+        return $this->topUpDisburse->getTransaction();
     }
 }

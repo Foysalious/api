@@ -23,6 +23,7 @@ abstract class MovieTicketCommission
     protected $vendorCommission;
     protected $amount;
     protected $transaction;
+    protected $amount_after_commission;
 
     /**
      * @param MovieTicketOrder $movie_ticket_order
@@ -161,9 +162,9 @@ abstract class MovieTicketCommission
     {
         $this->setModifier($this->agent);
         $amount                  = $this->movieTicketOrder->amount;
-        $amount_after_commission = round($amount - $this->calculateMovieTicketCommission($amount), 2);
-        $log                     = "Your movie ticket request of TK $amount has failed, TK $amount_after_commission is refunded in your account.";
-        $this->refundUser($amount_after_commission, $log);
+        $this->amount_after_commission = round($amount - $this->calculateMovieTicketCommission($amount), 2);
+        $log                     = "Your movie ticket request of TK $amount has failed, TK $this->amount_after_commission is refunded in your account.";
+        $this->refundUser($this->amount_after_commission, $log);
     }
 
     private function refundUser($amount, $log)
@@ -174,7 +175,7 @@ abstract class MovieTicketCommission
         $this->agent->walletTransaction(['amount' => $amount, 'type' => 'Credit', 'log' => $log]);*/
         /** @var HasWalletTransaction $model */
         $model = $this->agent;
-        (new WalletTransactionHandler())->setModel($model)->setSource(TransactionSources::MOVIE)->setAmount($amount)
-            ->setType(Types::credit())->setLog($log)->dispatch();
+        $this->transaction = (new WalletTransactionHandler())->setModel($model)->setSource(TransactionSources::MOVIE)->setAmount($amount)
+            ->setType(Types::credit())->setLog($log)->store();
     }
 }

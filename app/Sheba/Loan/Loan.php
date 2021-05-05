@@ -260,10 +260,9 @@ class Loan
         $this->validate();
         $created = null;
         DB::transaction(function () use (&$created) {
+            $applyFee = false;
             if ($this->version === 2) {
-                if($this->applyFee()){
-                    $this->storeJournal();
-                }
+                $applyFee = $this->applyFee();
             }
             if ($this->type === LoanTypes::TERM) {
                 if (!(isset($this->data['month']) && $this->data['month'])) {
@@ -274,6 +273,9 @@ class Loan
             }
             unset($this->data['month']);
             $created = $this->create();
+            if ($applyFee){
+                $this->storeJournal($created->id);
+            }
         });
         return $created;
     }
@@ -1065,7 +1067,7 @@ class Loan
         return false;
     }
 
-    private function storeJournal(){
+    private function storeJournal($loanId){
         $fee = (double)GeneralStatics::getFee($this->type);
         (new JournalCreateRepository())->setTypeId($this->partner->id)
             ->setSource($this->transaction)
@@ -1073,7 +1075,7 @@ class Loan
             ->setDebitAccountKey(LoanService::LOAN_SERVICE_CHARGE)
             ->setCreditAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
             ->setDetails("Loan fee charge")
-            ->setReference($this->type . ' type loan')
+            ->setReference($loanId)
             ->store();
     }
 }
