@@ -14,6 +14,7 @@ class AutomaticExpense
     const SMS                = 'SMS Purchase';
     const OTHER_EXPENSES     = 'Other Expenses';
     const DUE_TRACKER        = 'Due Tracker';
+    const SHEBA_ACCOUNT      = 'Sheba Account';
 
     public static function heads()
     {
