@@ -1,6 +1,9 @@
 <?php namespace Sheba\MovieTicket\Commission;
 
 use App\Models\MovieTicketOrder;
+use Sheba\AccountingEntry\Accounts\Accounts;
+use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Income\Refund;
+use Sheba\AccountingEntry\Accounts\RootAccounts;
 use Sheba\AccountingEntry\Repository\JournalCreateRepository;
 use Sheba\ExpenseTracker\AutomaticExpense;
 use Sheba\ExpenseTracker\AutomaticIncomes;
@@ -13,9 +16,10 @@ class Partner extends MovieTicketCommission
     private $partner;
     private $movieTicketDisburse;
 
-    public function __construct(MovieTicketCommission $movieTicketCommission)
+    public function __construct(MovieTicketCommission $movieTicketCommission,  \App\Models\Partner $partner)
     {
         $this->movieTicketDisburse = $movieTicketCommission;
+        $this->partner = $partner;
     }
 
     /**
@@ -36,7 +40,19 @@ class Partner extends MovieTicketCommission
     public function refund()
     {
         $this->refundAgentsCommission();
+        $this->storeJournal();
         $this->deleteMovieTicketExpenseIncome();
+    }
+
+    private function storeJournal(){
+        (new JournalCreateRepository())->setTypeId($this->partner->id)
+            ->setSource($this->transaction)
+            ->setAmount($this->amount_after_commission)
+            ->setDebitAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
+            ->setCreditAccountKey(Refund::GENERAL_REFUNDS)
+            ->setDetails("Movie ticket refund")
+            ->setReference($this->movieTicketOrder->id)
+            ->store();
     }
 
     public function disburseNew()
