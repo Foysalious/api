@@ -212,7 +212,7 @@ class PartnerPosService extends BaseModel
 
     public function scopeWebstorePublishedServiceByPartner($query, $partner_id)
     {
-        return $query->where('partner_id', $partner_id)->where('publication_status', 1)->where('is_published_for_shop', 1);
+        return $query->where([['partner_id', $partner_id], ['is_published_for_shop', 1]]);
     }
 
     /**
