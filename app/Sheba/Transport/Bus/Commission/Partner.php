@@ -4,7 +4,7 @@ use Sheba\AccountingEntry\Repository\JournalCreateRepository;
 use Sheba\ExpenseTracker\AutomaticExpense;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
-use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Asset\Cash;
+use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys;
 use Sheba\Transport\Bus\BusTicketCommission;
 
 class Partner extends BusTicketCommission
@@ -74,8 +74,8 @@ class Partner extends BusTicketCommission
             ->setTypeId($this->partner->id)
             ->setSource($transaction)
             ->setAmount($transaction->amount)
-            ->setDebitAccountKey(Cash::CASH)
-            ->setCreditAccountKey(AutomaticIncomes::BUS_TICKET)
+            ->setDebitAccountKey(AccountKeys\Asset\Cash::CASH)
+            ->setCreditAccountKey(AccountKeys\Income\BusTicketSale::BUS_TICKET)
             ->setDetails("Bus Ticket for sale.")
             ->setReference("Bus Ticket selling amount is" . $transaction->amount . " tk.")
             ->store();
@@ -88,8 +88,8 @@ class Partner extends BusTicketCommission
             ->setTypeId($this->partner->id)
             ->setSource($transaction)
             ->setAmount($transaction->amount)
-            ->setDebitAccountKey(Cash::CASH)
-            ->setCreditAccountKey(AutomaticExpense::BUS_TICKET)
+            ->setDebitAccountKey(AccountKeys\Asset\Cash::CASH)
+            ->setCreditAccountKey(AccountKeys\Expense\BusTicketPurchase::BUS_TICKET)
             ->setDetails("Purchase Bus Ticket for sale.")
             ->setReference("Bus Ticket purchasing amount is" . $transaction->amount . " tk.")
             ->store();
@@ -102,8 +102,8 @@ class Partner extends BusTicketCommission
             ->setTypeId($this->partner->id)
             ->setSource($transaction)
             ->setAmount($transaction->amount)
-            ->setDebitAccountKey(AutomaticExpense::GENERAL_REFUNDS)
-            ->setCreditAccountKey(Cash::CASH)
+            ->setDebitAccountKey(AccountKeys\Income\Refund::GENERAL_REFUNDS)
+            ->setCreditAccountKey(AccountKeys\Asset\Cash::CASH)
             ->setDetails("Refund BusTicket")
             ->setReference("BusTicket refunds amount is" . $transaction->amount . " tk.")
             ->store();
