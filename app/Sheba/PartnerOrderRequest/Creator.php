@@ -10,11 +10,12 @@ use App\Transformers\CustomSerializer;
 use App\Transformers\Partner\OrderRequestTransformer;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use LaravelFCM\Response\TopicResponse;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequest;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequestRepositoryInterface;
-use Sheba\Dal\PushNotificationMonitoring\PushNotificationMonitoringItemRepository;
+use Sheba\Dal\PushNotificationMonitoring\PushNotificationMonitoringItem;
 use Sheba\Partner\ImpressionManager;
 use Sheba\PartnerOrderRequest\Events\OrderRequestEvent;
 use Sheba\PartnerOrderRequest\Validators\CreateValidator;
@@ -39,17 +40,15 @@ class Creator
     private $partnerOrderRequestId;
     /** @var ImpressionManager ImpressionManager */
     private $impressionManager;
-    private $pushNotificationMonitoringRepo;
 
     public function __construct(PartnerOrderRequestRepositoryInterface $partner_order_request_repo,
                                 CreateValidator $create_validator,
-                                PushNotificationHandler $push_notification_handler, ImpressionManager $impressionManager, PushNotificationMonitoringItemRepository $pushNotificationMonitoringRepo)
+                                PushNotificationHandler $push_notification_handler, ImpressionManager $impressionManager)
     {
-        $this->partnerOrderRequestRepo        = $partner_order_request_repo;
-        $this->createValidator                = $create_validator;
-        $this->pushNotificationHandler        = $push_notification_handler;
-        $this->impressionManager              = $impressionManager;
-        $this->pushNotificationMonitoringRepo = $pushNotificationMonitoringRepo;
+        $this->partnerOrderRequestRepo = $partner_order_request_repo;
+        $this->createValidator         = $create_validator;
+        $this->pushNotificationHandler = $push_notification_handler;
+        $this->impressionManager       = $impressionManager;
     }
 
     /**
@@ -120,9 +119,13 @@ class Creator
                 'notification_monitoring_id' => null,
                 'create_time'                => Carbon::now()->format('Y-m-d H:i:s')
             ];
-            $notification                          = $this->pushNotificationMonitoringRepo->create(['partner_id' => $partner->id, 'sent_payload' => json_encode($payload)]);
+            $notification                          = (new PushNotificationMonitoringItem())->create(['partner_id' => $partner->id, 'sent_payload' => json_encode($payload)]);
             $payload['notification_monitoring_id'] = $notification ? $notification->id : null;
-            $this->pushNotificationHandler->setPriority(1)->send($payload, $topic, $channel, $sound);
+            /** @var TopicResponse $topic_response */
+            $topic_response                        = $this->pushNotificationHandler->setPriority(1)->send($payload, $topic, $channel, $sound);
+            if ($topic_response) {
+                $notification->update(['sent_payload' => json_encode($payload), 'topic_message_id' => $topic_response->isSuccess()]);
+            }
             event(new OrderRequestEvent(['user_type' => 'partner', 'user_id' => $partner->id, 'payload' => $payload]));
         } catch (Throwable $e) {
             logError($e);
