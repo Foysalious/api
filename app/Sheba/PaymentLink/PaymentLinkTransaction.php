@@ -157,7 +157,7 @@ class PaymentLinkTransaction
             $formatted_interest = number_format($this->interest, 2);
             $log                = "$formatted_interest TK has been charged as emi interest fees against of Transc ID {$this->rechargeTransaction->id}, and Transc amount $this->formattedRechargeAmount";
             $transaction = $this->walletTransactionHandler->setLog($log)->setType(Types::debit())->setAmount($this->interest)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
-            $this->storeJournal($transaction->id, $transaction, $this->amount ,(new Accounts())->expense->emiInterest::EMI_INTEREST, (new Accounts())->asset->sheba::SHEBA_ACCOUNT);
+            $this->storeJournal($transaction->id, $transaction, $this->interest ,(new Accounts())->expense->emiInterest::EMI_INTEREST, (new Accounts())->asset->sheba::SHEBA_ACCOUNT);
         }
         return $this;
     }
@@ -185,7 +185,7 @@ class PaymentLinkTransaction
         $minus_log              = "($this->tax" . "TK + $this->linkCommission%) $formatted_minus_amount TK has been charged as link service fees against of Transc ID: {$this->rechargeTransaction->id}, and Transc amount: $this->formattedRechargeAmount";
         $feeTransaction = $this->walletTransactionHandler->setLog($minus_log)->setType(Types::debit())->setAmount($this->fee)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
         //create journal in accounting project
-        $this->storeJournal($feeTransaction->id, $feeTransaction, $this->amount ,(new Accounts())->expense->paymentLinkServiceCharge::PAYMENT_LINK_SERVICE_CHARGE, (new Accounts())->asset->sheba::SHEBA_ACCOUNT);
+        $this->storeJournal($feeTransaction->id, $feeTransaction, $this->fee ,(new Accounts())->expense->paymentLinkServiceCharge::PAYMENT_LINK_SERVICE_CHARGE, (new Accounts())->asset->sheba::SHEBA_ACCOUNT);
 
         return $this;
     }
