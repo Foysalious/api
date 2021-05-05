@@ -14,6 +14,7 @@ abstract class BusTicketCommission
     /** @var TransportTicketVendor $vendor */
     protected $vendor;
     protected $vendorCommission;
+    protected $transaction;
 
     abstract public function disburse();
 
@@ -51,8 +52,13 @@ abstract class BusTicketCommission
                 ->setAmount($this->transportTicketOrder->agent_amount)
                 ->setLog($log)
                 ->setTransportTicketOrder($this->transportTicketOrder);
-            $this->agent->transportTicketTransaction($transaction);
+            $this->transaction = $this->agent->transportTicketTransaction($transaction);
         }
+    }
+
+    public function getTransaction()
+    {
+        return $this->transaction;
     }
 
     protected function setTransportTicketVendor(TransportTicketVendor $transport_ticket_vendor)
