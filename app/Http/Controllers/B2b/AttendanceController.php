@@ -820,19 +820,21 @@ class AttendanceController extends Controller
 
         if ($office_timing) {
              $requester->setBusiness($request->business)
-                ->setIsEnable($request->is_grace_policy_enable)
-                ->setPolicyType(Type::GRACE_PERIOD)
-                ->setRules($request->grace_policy_rules);
+                            ->setIsEnable($request->is_grace_policy_enable)
+                            ->setPolicyType(Type::GRACE_PERIOD)
+                            ->setRules($request->grace_policy_rules)
+                            ->setDeleteRules($request->grace_delete_rules);
             $grace_policy = $policy_updater->setPolicyRuleRequester($requester)->update();
         }
 
         if ($grace_policy) {
              $requester->setBusiness($request->business)
-                ->setIsEnable($request->is_checkin_checkout_policy_enable)
-                ->setPolicyType(Type::LATE_CHECKIN_EARLY_CHECKOUT)
-                ->setForLateCheckIn($request->for_checkin)
-                ->setForEarlyCheckOut($request->for_checkout)
-                ->setRules($request->checkin_checkout_policy_rules);
+                            ->setIsEnable($request->is_checkin_checkout_policy_enable)
+                            ->setPolicyType(Type::LATE_CHECKIN_EARLY_CHECKOUT)
+                            ->setForLateCheckIn($request->for_checkin)
+                            ->setForEarlyCheckOut($request->for_checkout)
+                            ->setRules($request->checkin_checkout_policy_rules)
+                            ->setDeleteRules($request->checkin_checkout_delete_rules);
             $checkin_checkout_policy = $policy_updater->setPolicyRuleRequester($requester)->update();
         }
         if ($checkin_checkout_policy) return api_response($request, null, 200, ['msg' => "Update Successful"]);
@@ -862,9 +864,10 @@ class AttendanceController extends Controller
         if (!$business) return api_response($request, null, 403, ['message' => 'You Are not authorized to show this settings']);
         $this->setModifier($request->manager_member);
         $requester->setBusiness($business)
-            ->setIsEnable($request->is_enable)
-            ->setPolicyType($request->policy_type)
-            ->setRules($request->rules);
+                        ->setIsEnable($request->is_enable)
+                        ->setPolicyType($request->policy_type)
+                        ->setRules($request->rules)
+                        ->setDeleteRules($request->delete_rules);
 
         $updater->setPolicyRuleRequester($requester)->update();
 

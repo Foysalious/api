@@ -12,6 +12,7 @@ class PolicyRuleRequester
     private $isEnable;
     private $forLateCheckIn;
     private $forEarlyCheckOut;
+    private $deleteRules;
 
     public function setBusiness(Business $business)
     {
@@ -64,6 +65,17 @@ class PolicyRuleRequester
     public function getRules()
     {
         return $this->rules;
+    }
+
+    public function setDeleteRules($delete_rules)
+    {
+        $this->deleteRules = json_decode($delete_rules, 1);
+        return $this;
+    }
+
+    public function getDeleteRules()
+    {
+        return $this->deleteRules;
     }
 
     public function setForLateCheckIn($for_late_checkin)
