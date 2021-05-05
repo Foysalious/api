@@ -33,6 +33,7 @@ class PolicyRuleUpdater
         $previous_policy = $this->policyRuleRequester->getPolicy();
         $this->makeData();
         DB::transaction(function () use ($previous_policy){
+            $this->deleteRules();
             $office_hour_data = $this->makeOfficeHourData();
             if ($office_hour_data) $this->businessOfficeHourRepoository->update($this->business->officeHour, $office_hour_data);
             if ($previous_policy) $this->deletePreviousPolicy($previous_policy);
@@ -81,5 +82,16 @@ class PolicyRuleUpdater
         }
 
         return $data;
+    }
+
+    private function deleteRules()
+    {
+        $delete_rules = $this->policyRuleRequester->getDeleteRules();
+        if (empty($delete_rules)) return;
+        foreach ($delete_rules as $delete_rule) {
+            $existing_rule = $this->officePolicyRuleRepository->find($delete_rule);
+            $this->officePolicyRuleRepository->delete($existing_rule);
+        }
+        return true;
     }
 }
