@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\Pos;
 
+use App\Exceptions\DoNotReportException;
 use App\Http\Controllers\Controller;
 use App\Sheba\Partner\Delivery\DeliveryService;
 use App\Sheba\Partner\Delivery\Exceptions\DeliveryCancelRequestError;
@@ -85,7 +86,7 @@ class DeliveryController extends Controller
      * @param OrderPlace $orderPlace
      * @return JsonResponse
      */
-    public function orderPlace(Request $request, $partner, OrderPlace $orderPlace)
+    public function orderPlace(Request $request, OrderPlace $orderPlace)
     {
         $this->validate($request, [
             'customer_name' => 'required',
@@ -103,8 +104,10 @@ class DeliveryController extends Controller
             'payment_method' => 'sometimes',
             'pos_order_id' => 'required'
         ]);
+        $partner = $request->auth_user->getPartner();
         $orderPlaceInfo = $orderPlace
             ->setPartner($partner)
+            ->setToken($this->bearerToken($request))
             ->setCustomerName($request->customer_name)
             ->setCustomerPhone($request->customer_phone)
             ->setDeliveryAddress($request->delivery_address)
@@ -159,7 +162,7 @@ class DeliveryController extends Controller
      * @param $order_id
      * @param DeliveryService $delivery_service
      * @return JsonResponse
-     * @throws \App\Exceptions\DoNotReportException
+     * @throws DoNotReportException
      */
     public function getOrderInformation(Request $request, $order_id, DeliveryService $delivery_service)
     {
