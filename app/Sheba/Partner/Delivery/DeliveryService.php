@@ -344,7 +344,7 @@ class DeliveryService
             'account_name' => $this->accountName,
             'account_number' => $this->accountNumber,
         ];
-        if ($this->accountType == 'bank') {
+        if ($this->accountType == AccountTypes::BANK) {
             $data = array_merge($data, [
                 'bank_name' => $this->bankName,
                 'branch_name' => $this->branchName,

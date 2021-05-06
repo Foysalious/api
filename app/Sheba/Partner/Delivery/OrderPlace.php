@@ -138,7 +138,7 @@ class OrderPlace
             'delivery_charge' => $info['delivery_charge'],
             'delivery_vendor_name' => $info['logistic_partner_id'],
             'address' => $info['delivery_address']['address'],
-            'delivery_zilla' => $info['delivery_address']['district'],
+            'delivery_district' => $info['delivery_address']['district'],
             'delivery_thana' => $info['delivery_address']['thana'],
             'delivery_status' => $info['status'],
             'delivery_request_id' => $info['uid']
