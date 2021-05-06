@@ -12,20 +12,20 @@ class Creator
         $this->paymentRepo = $payment_repo;
     }
 
-    public function credit(array $data, $is_partner_migrated = false)
+    public function credit(array $data, $is_new_pos_order = false)
     {
         $data['transaction_type'] = 'Credit';
-        $this->create($data, $is_partner_migrated);
+        $this->create($data, $is_new_pos_order);
     }
 
-    public function debit(array $data, $is_partner_migrated = false)
+    public function debit(array $data, $is_new_pos_order = false)
     {
         $data['transaction_type'] = 'Debit';
-        $this->create($data, $is_partner_migrated);
+        $this->create($data, $is_new_pos_order);
     }
 
-    private function create(array $data, $is_partner_migrated)
+    private function create(array $data, $is_new_pos_order)
     {
-        $is_partner_migrated ? $this->paymentRepo->saveToPosOrder($data) : $this->paymentRepo->save($data);
+        $is_new_pos_order ? $this->paymentRepo->saveToNewPosOrderSystem($data) : $this->paymentRepo->save($data);
     }
 }

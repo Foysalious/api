@@ -15,7 +15,7 @@ class PosOrderPaymentRepository extends BaseRepository
         return PosOrderPayment::create($this->withCreateModificationField($data));
     }
 
-    public function saveToPosOrder($data)
+    public function saveToNewPosOrderSystem($data)
     {
         $client = app(PosOrderServerClient::class);
         return $client->post('api/v1/payments', $data);

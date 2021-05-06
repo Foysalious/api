@@ -17,6 +17,8 @@ use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
 use Sheba\PaymentLink\InvoiceCreator;
 use Sheba\PaymentLink\PaymentLinkTransformer;
+use Sheba\Pos\Order\PosOrderResolver;
+use Sheba\Pos\Order\PosOrderTypes;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\PushNotificationHandler;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
@@ -180,19 +182,19 @@ class PaymentLinkOrderComplete extends PaymentComplete
     private function clearTarget()
     {
         $this->target = $this->paymentLink->getTarget();
-        if ($this->target instanceof PosOrder) {
-            $order = Order::find($this->target->id);
-            $is_partner_migrated = $order ? $order->partner->isMigrationCompleted() : true;
-            $payment_data    = [
-                'pos_order_id' => $this->target->id,
-                'amount'       => $this->payment->payable->amount,
-                'method'       => $this->payment->payable->type,
-                'emi_month'    => $this->payment->payable->emi_month,
-                'interest'     => $this->paymentLink->getInterest(),
-            ];
-            $payment_creator = app(PaymentCreator::class);
-            /** @var $payment_creator PaymentCreator */
-            $payment_creator->credit($payment_data, $is_partner_migrated);
+        if ($this->target instanceof PosOrderResolver) {
+            $posOrder = $this->target->getPosOrder();
+            $is_new_pos_order = $this->target->getType() == PosOrderTypes::OLD_POS_ORDER ? false : true;
+                $payment_data    = [
+                    'pos_order_id' => $posOrder->id,
+                    'amount'       => $this->payment->payable->amount,
+                    'method'       => $this->payment->payable->type,
+                    'emi_month'    => $this->payment->payable->emi_month,
+                    'interest'     => $this->paymentLink->getInterest(),
+                ];
+                $payment_creator = app(PaymentCreator::class);
+                /** @var $payment_creator PaymentCreator */
+                $payment_creator->credit($payment_data, $is_new_pos_order);
         }
         if ($this->target instanceof ExternalPayment) {
             $this->target->payment_id = $this->payment->id;
