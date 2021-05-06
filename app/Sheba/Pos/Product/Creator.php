@@ -2,6 +2,7 @@
 
 use App\Models\Partner;
 use App\Models\PartnerPosService;
+use App\Sheba\Pos\Product\Accounting\ExpenseEntry;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
@@ -21,11 +22,16 @@ class Creator
     private $data;
     private $serviceRepo;
     private $imageGalleryRepo;
+    /**
+     * @var ExpenseEntry
+     */
+    private $stockExpenseEntry;
 
-    public function __construct(PosServiceRepositoryInterface $service_repo, PosServiceRepositoryInterface $image_gallery_repo)
+    public function __construct(PosServiceRepositoryInterface $service_repo, PosServiceRepositoryInterface $image_gallery_repo, ExpenseEntry $stockExpenseEntry)
     {
         $this->serviceRepo = $service_repo;
         $this->imageGalleryRepo = $image_gallery_repo;
+        $this->stockExpenseEntry =  $stockExpenseEntry;
     }
 
     public function setData($data)
@@ -47,7 +53,15 @@ class Creator
         $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'image_gallery']);
         $partner_pos_service = $this->serviceRepo->save($this->data + (new RequestIdentification())->get());
         $this->storeImageGallery($partner_pos_service, json_decode($image_gallery,true));
+        if(isset($data['accounting_info']) && !empty($data['accounting_info']))
+        $this->createExpenseEntry($partner_pos_service);
         return $partner_pos_service;
+    }
+
+    private function createExpenseEntry($partner_pos_service)
+    {
+        $this->stockExpenseEntry->setName($partner_pos_service->name)->setId($partner_pos_service->id)->setNewStock($this->data['stock'])->setCostPerUnit($partner_pos_service->cost)->setAccountingInfo($this->data['account_info'])->create();
+
     }
 
     private function saveImages()
