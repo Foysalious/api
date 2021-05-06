@@ -1,4 +1,4 @@
-<?php namespace Pos\Product;
+<?php namespace Sheba\Pos\Product\Listeners;
 
 
 use App\Models\PartnerPosService;
