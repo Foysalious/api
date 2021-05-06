@@ -385,7 +385,8 @@ class Creator
             "to_account_key"     => "sales_from_pos",
             "amount"             => (double)$order->getNetBill(),
             "amount_cleared"     => $order->getPaid(),
-            "inventory_products" => json_encode($inventory_products)
+            "inventory_products" => json_encode($inventory_products),
+            "total_discount"     => $order->discounts()->sum('amount')
         ]);
     }
 }
