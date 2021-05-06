@@ -9,6 +9,7 @@ use App\Models\PosOrderPayment;
 use App\Sheba\Partner\Delivery\Exceptions\DeliveryCancelRequestError;
 use Illuminate\Support\Str;
 use Sheba\Dal\PartnerDeliveryInformation\Contract as PartnerDeliveryInformationRepositoryInterface;
+use Sheba\Transactions\Types;
 use Throwable;
 
 
@@ -76,7 +77,7 @@ class DeliveryService
         return $this;
     }
 
-    public function setcashOnDelivery($cashOnDelivery)
+    public function setCashOnDelivery($cashOnDelivery)
     {
         $this->cashOnDelivery = $cashOnDelivery;
         return $this;
@@ -117,15 +118,8 @@ class DeliveryService
      */
     public function vendorList()
     {
-
-
-        $vendor_list = [];
         $all_vendor_list = config('pos_delivery.vendor_list');
-        foreach ($all_vendor_list as $key => $list) {
-            array_push($vendor_list, $list);
-        }
-        return $vendor_list;
-
+        return array_values($all_vendor_list);
     }
 
     public function getRegistrationInfo()
@@ -141,12 +135,10 @@ class DeliveryService
         ];
     }
 
-    public function getOrderInfo($order_id)
+    public function getOrderInfo()
     {
 
-        $this->order = $order = PosOrder::where('id', $order_id)->with('customer', 'customer.profile', 'payments')->first();
-        //       $order = PosOrder::where('id', $order_id)->first();
-        if ($this->partner->id != $order->partner_id) {
+        if ($this->partner->id != $this->posOrder->partner_id) {
             throw new DoNotReportException("Order does not belongs to this partner", 400);
         }
         return [
@@ -163,32 +155,28 @@ class DeliveryService
                 ],
             ],
             'customer-delivery_information' => [
-                'name' => $order->customer->profile->name,
-                'number' => $order->customer->profile->mobile,
+                'name' => $this->posOrder->customer->profile->name,
+                'number' => $this->posOrder->customer->profile->mobile,
                 'address' => [
-                    'full_address' => $order->address,
-                    'thana' => $order->delivery_thana,
-                    'zilla' => $order->delivery_zilla
+                    'full_address' => $this->posOrder->address,
+                    'thana' => $this->posOrder->delivery_thana,
+                    'zilla' => $this->posOrder->delivery_zilla
                 ],
-                'payment_method' => $this->paymentInfo($order_id)->method,
-                'cash_amount' => $this->getDueAmount(),
-
-            ]
+                'payment_method' => $this->paymentInfo($this->posOrder->id)->method,
+                'cod_amount' => $this->getDueAmount(),
+            ],
         ];
     }
 
     private function getDueAmount()
     {
-        $this->order->calculate();
-        return $this->order->getDue();
+        $this->posOrder->calculate();
+        return $this->posOrder->getDue();
     }
 
     public function paymentInfo($order_id)
     {
-
-
-        return PosOrderPayment::where('pos_order_id', $order_id)->where('transaction_type', 'Credit')->orderBy('id', 'desc')->first();
-
+        return PosOrderPayment::where('pos_order_id', $order_id)->where('transaction_type', Types::CREDIT)->orderBy('id', 'desc')->first();
     }
 
     public function setName($name)
@@ -323,28 +311,6 @@ class DeliveryService
         return $this;
     }
 
-    public function setDeliveryInfo($delivery_info_id)
-    {
-
-
-        $this->deliveryInfo = $this->partnerDeliveryInfoRepositoryInterface->where('id',$delivery_info_id)->where('partner_id',$this->partner->id)->first();
-
-        return $this;
-    }
-
-    public function vendorUpdateData()
-    {
-
-        return [
-            'delivery_vendor' => $this->vendorName,
-        ];
-    }
-
-    public function vendorUpdate()
-    {
-        return $this->vendorUpdateData();
-    }
-
     public function makeData()
     {
         return [
@@ -388,25 +354,21 @@ class DeliveryService
         return $data;
     }
 
-    public function makeDataDeliveryCharge($partner)
+    public function makeDeliveryChargeData()
     {
-        $partnerDeliveryInformation = $this->partnerDeliveryInformation($partner);
-
-        $data = [
-
+        $partnerDeliveryInformation = $this->partnerDeliveryInfoRepositoryInterface->where('partner_id', $this->partner)->first();
+        return [
             'weight' => $this->weight,
             'cod_amount' => $this->cashOnDelivery,
             'pick_up' => [
-                'thana' => $partnerDeliveryInformation->thana,
-                'district' => $partnerDeliveryInformation->district,
+                'thana' => $this->pickupThana ?: $partnerDeliveryInformation->thana,
+                'district' => $this->pickupDistrict ?: $partnerDeliveryInformation->district,
             ],
             'delivery' => [
                 'thana' => $this->deliveryThana,
                 'district' => $this->deliveryDistrict,
             ]
         ];
-        return ($data);
-
     }
 
 
@@ -431,12 +393,12 @@ class DeliveryService
             'website' => $info['website'],
             'facebook' => $info['fb_page_url'],
             'mobile_banking_provider' => null,
-            'agent_number' => null ,
+            'agent_number' => null,
             'account_holder_name' => $info['mfs_info']['account_name'],
-            'bank_name' => isset($info['mfs_info']['bank_name']) ? $info['mfs_info']['bank_name'] : null,
-            'branch_name' => isset($info['mfs_info']['branch_name']) ? $info['mfs_info']['branch_name'] : null,
-            'account_number' =>   $info['mfs_info']['account_number'] ,
-            'routing_number' => isset($info['mfs_info']['routing_number']) ? $info['mfs_info']['routing_number'] : null,
+            'bank_name' => $info['mfs_info']['bank_name'] ?? null,
+            'branch_name' => $info['mfs_info']['branch_name'] ?? null,
+            'account_number' => $info['mfs_info']['account_number'],
+            'routing_number' => $info['mfs_info']['routing_number'] ?? null,
             'delivery_vendor' => null,
             'account_type' => $this->accountType
         ];
@@ -444,42 +406,27 @@ class DeliveryService
         return $this->partnerDeliveryInfoRepositoryInterface->create($data);
     }
 
-    public function updateVendorInformation($info)
+    public function updateVendorInformation()
     {
+        $data = [
+            'delivery_vendor' => $this->vendorName
+        ];
 
+        $deliveryInfo = $this->partnerDeliveryInfoRepositoryInterface->where('partner_id', $this->partner->id)->first();
 
-
-
-        return $this->partnerDeliveryInfoRepositoryInterface->update($this->deliveryInfo, $info);
-
-
+        return $this->partnerDeliveryInfoRepositoryInterface->update($deliveryInfo, $data);
     }
 
-    public function deliveryCharge($partner)
+    public function deliveryCharge()
     {
-        try {
-
-
-            $data = $this->makeDataDeliveryCharge($partner);
-
-            return $this->client->post('price-check', $data);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return false;
-        }
+        $data = $this->makeDeliveryChargeData();
+        return $this->client->post('price-check', $data);
     }
 
-    public function partnerDeliveryInformation($partner)
-    {
-
-        return $this->partnerDeliveryInfoRepositoryInterface->where('partner_id', $partner)->first();
-    }
 
     public function districts()
     {
-
         return $this->client->get('districts');
-
     }
 
     public function upzillas($district_name)
@@ -490,6 +437,7 @@ class DeliveryService
     public function setPosOrder($posOrderId)
     {
         $this->posOrder = PosOrder::find($posOrderId);
+
         return $this;
     }
 

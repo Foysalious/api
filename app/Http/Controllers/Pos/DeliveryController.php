@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Sheba\Partner\Delivery\DeliveryService;
+use App\Sheba\Partner\Delivery\Exceptions\DeliveryCancelRequestError;
 use App\Sheba\Partner\Delivery\OrderPlace;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,6 +15,11 @@ class DeliveryController extends Controller
 {
     use ModificationFields;
 
+    /**
+     * @param Request $request
+     * @param DeliveryService $delivery_service
+     * @return JsonResponse
+     */
     public function getInfoForRegistration(Request $request, DeliveryService $delivery_service)
     {
         $partner = $request->auth_user->getPartner();
@@ -73,7 +79,12 @@ class DeliveryController extends Controller
     }
 
 
-
+    /**
+     * @param Request $request
+     * @param $partner
+     * @param OrderPlace $orderPlace
+     * @return JsonResponse
+     */
     public function orderPlace(Request $request, $partner, OrderPlace $orderPlace)
     {
         $this->validate($request, [
@@ -112,70 +123,105 @@ class DeliveryController extends Controller
         return api_response($request, null, 200, ['messages' => 'ডেলিভারি রিকোয়েস্ট সম্পন্ন', 'data' => $orderPlaceInfo['data']]);
     }
 
-    public function partnerVendorUpdate(Request $request, DeliveryService $delivery_service){
+
+    /**
+     * @param Request $request
+     * @param DeliveryService $delivery_service
+     * @return JsonResponse
+     */
+    public function vendorUpdate(Request $request, DeliveryService $delivery_service)
+    {
+
+        $this->validate($request, [
+            'vendor_name' => 'required'
+        ]);
         $partner = $request->auth_user->getPartner();
-        $vendorInfo= $delivery_service
-            ->setVendorName($request->vendor_name)
-            ->vendorUpdate();
-
-
-        $delivery_service->setPartner($partner)->setDeliveryInfo($request->delivery_info_id)->updateVendorInformation($vendorInfo);
-        return api_response($request, null, 200, ['messages' => 'successful']);
+        $delivery_service->setPartner($partner)->setVendorName($request->vendor_name)->updateVendorInformation();
+        return api_response($request, null, 200);
 
     }
 
 
+    /**
+     * @param Request $request
+     * @param DeliveryService $delivery_service
+     * @return JsonResponse
+     */
     public function getVendorList(Request $request, DeliveryService $delivery_service)
     {
         $vendor = $delivery_service->vendorlist();
-        return api_response($request, null, 200, ['delivery_vendor' => $vendor]);
+        return api_response($request, null, 200, ['delivery_vendors' => $vendor]);
     }
 
+
+    /**
+     * @param Request $request
+     * @param $order_id
+     * @param DeliveryService $delivery_service
+     * @return JsonResponse
+     * @throws \App\Exceptions\DoNotReportException
+     */
     public function getOrderInformation(Request $request, $order_id, DeliveryService $delivery_service)
     {
-
         $partner = $request->auth_user->getPartner();
-
-        $this->setModifier($request->manager_resource);
-
-        $order_information = $delivery_service->setPartner($partner)->getOrderInfo($order_id);
+        $order_information = $delivery_service->setPartner($partner)->setPosOrder($order_id)->getOrderInfo();
         return api_response($request, null, 200, ['order_information' => $order_information]);
-
     }
 
+
+    /**
+     * @param Request $request
+     * @param DeliveryService $delivery_service
+     * @return JsonResponse
+     */
     public function getDeliveryCharge(Request $request, DeliveryService $delivery_service)
     {
         $this->validate($request, [
             'partner_id' => 'required',
             'weight' => 'required',
-            'cod_amount'=>'required',
-            'delivery_district'=>'required',
-            'delivery_thana'=>'required',
-
+            'cod_amount' => 'required',
+            'delivery_district' => 'required',
+            'delivery_thana' => 'required',
+            'pickup_thana' => 'sometimes',
+            'pickup_district' => 'sometimes'
         ]);
 
-        $partner= $request->partner_id;
-
-        $charge = $delivery_service->setPartner($partner)->setWeight($request->weight)->setcashOnDelivery($request->cod_amount)->setDeliveryDistrict($request->delivery_district)->setDeliveryThana($request->delivery_thana)->deliveryCharge($partner);
+        $partner = $request->partner_id;
+        $charge = $delivery_service->setPartner($partner)->setWeight($request->weight)->setpickupThana($request->pickup_thana)->setpickupDistrict($request->pickup_district)->setCashOnDelivery($request->cod_amount)->setDeliveryDistrict($request->delivery_district)->setDeliveryThana($request->delivery_thana)->deliveryCharge();
         return api_response($request, null, 200, ['info' => $charge]);
-
     }
 
-    public function getDistrict(Request $request, DeliveryService $delivery_service)
-    {
 
-        $district = $delivery_service->districts();
-        return api_response($request, null, 200, ['district' => $district]);
+    /**
+     * @param Request $request
+     * @param DeliveryService $delivery_service
+     * @return JsonResponse
+     */
+    public function getDistricts(Request $request, DeliveryService $delivery_service)
+    {
+        $districts = $delivery_service->districts();
+        return api_response($request, null, 200, ['districts' => $districts]);
     }
 
-    public function getUpzilla(Request $request, $district_name, DeliveryService $delivery_service)
-    {
 
+    /**
+     * @param Request $request
+     * @param $district_name
+     * @param DeliveryService $delivery_service
+     * @return JsonResponse
+     */
+    public function getUpzillas(Request $request, $district_name, DeliveryService $delivery_service)
+    {
         $upzillas = $delivery_service->upzillas($district_name);
         return api_response($request, null, 200, ['upzillas' => $upzillas]);
     }
 
 
+    /**
+     * @param Request $request
+     * @param DeliveryService $delivery_service
+     * @return JsonResponse
+     */
     public function getDeliveryStatus(Request $request, DeliveryService $delivery_service)
     {
         $partner = $request->auth_user->getPartner();
@@ -186,6 +232,12 @@ class DeliveryController extends Controller
         return api_response($request, null, 200, ['status' => $statusInfo['data']['status']]);
     }
 
+    /**
+     * @param Request $request
+     * @param DeliveryService $delivery_service
+     * @return JsonResponse
+     * @throws DeliveryCancelRequestError
+     */
     public function cancelOrder(Request $request, DeliveryService $delivery_service)
     {
         $this->validate($request, [
