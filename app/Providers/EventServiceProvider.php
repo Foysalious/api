@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Sheba\Algolia\Listeners\PartnerPosServiceSaved;
 use Illuminate\Contracts\Events\Dispatcher as DispatcherContract;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use Pos\Product\WebstorePublishCheck;
 use Sheba\Business\BusinessMember\Events\BusinessMemberCreated;
 use Sheba\Business\BusinessMember\Events\BusinessMemberDeleted;
 use Sheba\Business\BusinessMember\Events\BusinessMemberUpdated;
@@ -37,7 +39,8 @@ class EventServiceProvider extends ServiceProvider
         ],
         BusinessMemberDeleted::class => [
             BusinessMemberDeletedListener::class
-        ]
+        ],
+        PartnerPosServiceSaved::class => [WebstorePublishCheck::class]
     ];
 
     /**
