@@ -57,4 +57,24 @@ class HomepageController extends Controller
             );
         }
     }
+
+    public function getDueCollectionBalance(Request $request){
+        $startDate = $request->start_date ?? strtotime('today midnight');
+        $endDate = $request->end_date ?? strtotime('tomorrow midnight') - 1;
+        if ($endDate < $startDate){
+            return api_response($request,null, 400, ['message' => 'End date can not smaller than start date']);
+        }
+
+        try {
+            $response = $this->homepageRepo->getDueCollectionBalance($request->partner->id, $startDate, $endDate);
+            return api_response($request, $response, 200, ['data' => $response]);
+        } catch (Exception $e) {
+            return api_response(
+                $request,
+                null,
+                $e->getCode() == 0 ? 400 : $e->getCode(),
+                ['message' => $e->getMessage()]
+            );
+        }
+    }
 }
