@@ -1,5 +1,9 @@
 <?php namespace App\Http\Controllers\Pos;
 
+use App\Exceptions\DoNotReportException;
+use App\Exceptions\Pos\Customer\PartnerPosCustomerNotFoundException;
+use App\Exceptions\Pos\Customer\PosCustomerNotFoundException;
+use App\Exceptions\Pos\Order\NotEnoughStockException;
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Models\PosCustomer;
@@ -13,6 +17,8 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\ExpenseTracker\EntryType;
@@ -116,7 +122,13 @@ class OrderController extends Controller
      * @param PosCustomerCreator $posCustomerCreator
      * @param PartnerRepository $partnerRepository
      * @param PaymentLinkCreator $paymentLinkCreator
-     * @return array|JsonResponse
+     * @return array|false|JsonResponse
+     * @throws DoNotReportException
+     * @throws InvalidDiscountType
+     * @throws PartnerPosCustomerNotFoundException
+     * @throws PosCustomerNotFoundException
+     * @throws NotEnoughStockException
+     * @throws AccountingEntryServerError
      */
     public function store($partner, Request $request, Creator $creator, ProfileCreator $profileCreator, PosCustomerCreator $posCustomerCreator, PartnerRepository $partnerRepository, PaymentLinkCreator $paymentLinkCreator)
     {
@@ -159,7 +171,7 @@ class OrderController extends Controller
             $creator->setCustomer($pos_customer);
             $creator->setStatus(OrderStatuses::PENDING);
         }
-        $creator->setPartner($partner)->setData($request->all());
+        $creator->setPartner($partner)->setRequest($request);
         if ($error = $creator->hasDueError())
             return $error;
         /**
