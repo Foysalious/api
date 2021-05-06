@@ -25,6 +25,7 @@ class AccountingRoute
                 $api->get('/income-expense-balance', 'Accounting\\HomepageController@getIncomeExpenseBalance');
                 $api->get('income-expense-entries', 'Accounting\\HomepageController@getIncomeExpenseEntries');
                 $api->get('due-collection-balance', 'Accounting\\HomepageController@getDueCollectionBalance');
+                $api->get('account-list-balance', 'Accounting\\HomepageController@getAccountListBalance');
             });
         });
     }
