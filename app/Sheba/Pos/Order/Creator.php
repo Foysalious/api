@@ -198,7 +198,7 @@ class Creator
 
         $this->voucherCalculation($order);
         $this->resolvePaymentMethod();
-//        $this->storeIncome($order);
+        $this->storeIncome($order);
         $this->storeJournal($order);
         return $order;
     }
@@ -368,23 +368,35 @@ class Creator
     private function additionalAccountingData(PosOrder $order)
     {
         $services = $order->items;
+        $order_discount = $order->discounts()->sum('amount');
+        $this->request->merge([
+            "from_account_key"   => (new Accounts())->asset->cash::CASH,
+            "to_account_key"     => (new Accounts())->income->sales::SALES_FROM_POS,
+            "amount"             => (double)$order->getNetBill(),
+            "amount_cleared"     => $order->getPaid(),
+            "inventory_products" => $this->getInventoryProducts($services),
+            "total_discount"     => $order_discount
+        ]);
+    }
+
+    /**
+     * @param $services
+     * @return false|string
+     */
+    private function getInventoryProducts($services)
+    {
+        $requested_service = json_decode($this->data['services'], true);
         $inventory_products = [];
-        foreach ($services as $service) {
+        foreach ($services as $key => $service) {
             $original_service = ($service->service);
             $inventory_products[] = [
                 "id"           => $original_service->id,
                 "name"         => $original_service->name,
                 "unit_price"   => $original_service->cost,
-                "selling_rice" => $original_service->price
+                "selling_rice" => isset($requested_service[$key]['updated_price']) && $requested_service[$key]['updated_price'] ? $requested_service[$key]['updated_price'] : $original_service->price,
+                "quantity"     => isset($requested_service[$key]['quantity']) ? $requested_service[$key]['quantity'] : 1
             ];
         }
-
-        $this->request->merge([
-            "from_account_key"   => "general_equity_discount",
-            "to_account_key"     => "sales_from_pos",
-            "amount"             => (double)$order->getNetBill(),
-            "amount_cleared"     => $order->getPaid(),
-            "inventory_products" => json_encode($inventory_products)
-        ]);
+        return json_encode($inventory_products);
     }
 }
