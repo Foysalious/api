@@ -15,6 +15,7 @@ use App\Models\Payable;
 use App\Models\Payment;
 use App\Models\Profile;
 use App\Models\Resource;
+use Sheba\Dal\PaymentGateway\Contract as PaymentGatewayRepository;
 use Sheba\Dal\Service\Service;
 use App\Models\Slider;
 use App\Models\SliderPortal;
@@ -274,7 +275,7 @@ class ShebaController extends Controller
      * @return JsonResponse
      * @throws Exception
      */
-    public function getPayments(Request $request)
+    public function getPayments(Request $request, PaymentGatewayRepository $paymentGateWayRepository)
     {
         $version_code = (int)$request->header('Version-Code');
         $platform_name = $request->header('Platform-Name');
@@ -282,9 +283,22 @@ class ShebaController extends Controller
         if (!$user_type) $user_type = getUserTypeFromRequestHeader($request);
         if (!$user_type) $user_type = "customer";
 
-        $payments = array_map(function (PaymentMethodDetails $details) {
-            return (new PresentableDTOPresenter($details))->toArray();
+        $serviceType = 'App\\Models\\' . ucfirst($user_type);
+        $dbGateways = $paymentGateWayRepository->builder()
+            ->where('service_type', $serviceType)
+            ->where('status', 'Published')
+            ->get();
+
+        $payments = array_map(function (PaymentMethodDetails $details) use ($dbGateways, $user_type){
+            return (new PresentableDTOPresenter($details, $dbGateways))->mergeWithDbGateways($user_type);
         }, AvailableMethods::getDetails($request->payable_type, $request->payable_type_id, $version_code, $platform_name, $user_type));
+
+        if ($user_type == 'partner') {
+            $payments = array_filter($payments, function ($arr){
+                return $arr !== null;
+            });
+            $payments = array_values(collect($payments)->sortBy('order')->toArray());
+        }
 
         return api_response($request, $payments, 200, [
             'payments' => $payments,
