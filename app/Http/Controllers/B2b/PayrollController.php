@@ -15,6 +15,7 @@ use App\Transformers\Business\PayrollSettingsTransformer;
 use Sheba\Dal\PayrollComponent\Components;
 use Sheba\Dal\PayrollComponent\PayrollComponentRepository;
 use Sheba\Dal\PayrollComponent\TargetType;
+use Sheba\Dal\PayrollComponent\Type;
 use Sheba\Dal\PayrollSetting\PayDayType;
 use Sheba\Dal\PayrollSetting\PayrollSettingRepository;
 use Sheba\Dal\PayrollSetting\PayrollSetting;
@@ -194,7 +195,12 @@ class PayrollController extends Controller
         /** @var Business $business */
         $business = $request->business;
         $payroll_components = $business->payrollSetting->components->whereIn('target_type', [TargetType::GENERAL, null])->sortBy('type');
-        $data = [];
+        $data [] = [
+            'id' => null,
+            'name' => Type::GROSS,
+            'title' => 'Gross Salary',
+            'type' => null
+        ];
         foreach ($payroll_components as $payroll_component) {
                 array_push($data, [
                     'id' => $payroll_component->id,
