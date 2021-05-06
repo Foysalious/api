@@ -840,9 +840,10 @@ class AttendanceController extends Controller
         if ($checkin_checkout_policy) return api_response($request, null, 200, ['msg' => "Update Successful"]);
     }
 
-    public function getGracePolicy(Request $request)
+    public function getGracePolicy(Request $request, BusinessOfficeHoursRepoInterface $office_hours)
     {
         $business = $request->business;
+        $business_office_hour = $office_hours->getOfficeTime($business);
         if (!$business) return api_response($request, null, 403, ['message' => 'You Are not authorized to show this settings']);
         $grace_policy = $business->gracePolicy;
         $manager = new Manager();
@@ -850,7 +851,7 @@ class AttendanceController extends Controller
         $resource = new Collection($grace_policy, new PolicyTransformer());
         $grace_policy_rules = $manager->createData($resource)->toArray()['data'];
 
-        return api_response($request, $grace_policy_rules, 200, [ 'grace_policy_rules' => $grace_policy_rules]);
+        return api_response($request, $grace_policy_rules, 200, ['is_enable' => $business_office_hour->is_grace_period_policy_enable, 'grace_policy_rules' => $grace_policy_rules]);
     }
 
     public function createUnpaidLeavePolicy(Request $request, PolicyRuleRequester $requester, PolicyRuleUpdater $updater)
