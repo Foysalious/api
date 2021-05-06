@@ -1,4 +1,4 @@
-<?php namespace Tests\Feature\Order\OrderPlace;
+<?php namespace Tests\Feature\Order\PartnerList;
 
 use GuzzleHttp\Client;
 use Tests\Feature\FeatureTestCase;
