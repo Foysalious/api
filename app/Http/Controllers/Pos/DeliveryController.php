@@ -86,7 +86,7 @@ class DeliveryController extends Controller
      * @param OrderPlace $orderPlace
      * @return JsonResponse
      */
-    public function orderPlace(Request $request, $partner, OrderPlace $orderPlace)
+    public function orderPlace(Request $request, OrderPlace $orderPlace)
     {
         $this->validate($request, [
             'customer_name' => 'required',
@@ -104,6 +104,7 @@ class DeliveryController extends Controller
             'payment_method' => 'sometimes',
             'pos_order_id' => 'required'
         ]);
+        $partner = $request->auth_user->getPartner();
         $orderPlaceInfo = $orderPlace
             ->setPartner($partner)
             ->setToken($this->bearerToken($request))
