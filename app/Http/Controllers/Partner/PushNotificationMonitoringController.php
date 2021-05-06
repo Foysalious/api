@@ -22,10 +22,11 @@ class PushNotificationMonitoringController extends Controller
                     'priority'                   => 'required',
                     'original_priority'          => 'required',
                     'manufacturer'               => 'required',
-                    'model'                      => 'required'
+                    'model'                      => 'required',
+                    'message_id'                 => 'required'
                 ]
             );
-            $data = $request->only(['sent_time', 'receive_time', 'priority', 'original_priority', 'manufacturer', 'model']);
+            $data = $request->only(['sent_time', 'receive_time', 'priority', 'original_priority', 'manufacturer', 'model', 'message_id']);
             /** @var PushNotificationMonitoringItem $monitoringItem */
             $monitoringItem = $pushNotificationMonitoringItemRepository->find($request->notification_monitoring_id);
             if ($monitoringItem) {
