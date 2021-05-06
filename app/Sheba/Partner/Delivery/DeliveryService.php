@@ -356,43 +356,19 @@ class DeliveryService
 
     public function makeDeliveryChargeData()
     {
-
-        if ($this->pickupThana == NULL && $this->district == NULL) {
-
-            $partnerDeliveryInformation = $this->partnerDeliveryInfoRepositoryInterface->where('partner_id', $this->partner)->first();
-
-            $data = [
-
-                'weight' => $this->weight,
-                'cod_amount' => $this->cashOnDelivery,
-
-                'pick_up' => [
-                    'thana' => $partnerDeliveryInformation->thana,
-                    'district' => $partnerDeliveryInformation->district,
-                ],
-                'delivery' => [
-                    'thana' => $this->deliveryThana,
-                    'district' => $this->deliveryDistrict,
-                ]
-            ];
-            return $data;
-        }
-        $data = [
-
+        $partnerDeliveryInformation = $this->partnerDeliveryInfoRepositoryInterface->where('partner_id', $this->partner)->first();
+        return [
             'weight' => $this->weight,
             'cod_amount' => $this->cashOnDelivery,
-
             'pick_up' => [
-                'thana' => $this->pickupThana,
-                'district' => $this->pickupDistrict,
+                'thana' => $this->pickupThana ?: $partnerDeliveryInformation->thana,
+                'district' => $this->pickupDistrict ?: $partnerDeliveryInformation->district,
             ],
             'delivery' => [
                 'thana' => $this->deliveryThana,
                 'district' => $this->deliveryDistrict,
             ]
         ];
-        return $data;
-
     }
 
 

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Sheba\Partner\Delivery\DeliveryService;
+use App\Sheba\Partner\Delivery\Exceptions\DeliveryCancelRequestError;
 use App\Sheba\Partner\Delivery\OrderPlace;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,6 +15,11 @@ class DeliveryController extends Controller
 {
     use ModificationFields;
 
+    /**
+     * @param Request $request
+     * @param DeliveryService $delivery_service
+     * @return JsonResponse
+     */
     public function getInfoForRegistration(Request $request, DeliveryService $delivery_service)
     {
         $partner = $request->auth_user->getPartner();
@@ -73,6 +79,12 @@ class DeliveryController extends Controller
     }
 
 
+    /**
+     * @param Request $request
+     * @param $partner
+     * @param OrderPlace $orderPlace
+     * @return JsonResponse
+     */
     public function orderPlace(Request $request, $partner, OrderPlace $orderPlace)
     {
         $this->validate($request, [
@@ -112,7 +124,11 @@ class DeliveryController extends Controller
     }
 
 
-
+    /**
+     * @param Request $request
+     * @param DeliveryService $delivery_service
+     * @return JsonResponse
+     */
     public function vendorUpdate(Request $request, DeliveryService $delivery_service)
     {
 
@@ -126,14 +142,25 @@ class DeliveryController extends Controller
     }
 
 
+    /**
+     * @param Request $request
+     * @param DeliveryService $delivery_service
+     * @return JsonResponse
+     */
     public function getVendorList(Request $request, DeliveryService $delivery_service)
     {
         $vendor = $delivery_service->vendorlist();
-        return api_response($request, null, 200, ['delivery_vendor' => $vendor]);
+        return api_response($request, null, 200, ['delivery_vendors' => $vendor]);
     }
 
 
-
+    /**
+     * @param Request $request
+     * @param $order_id
+     * @param DeliveryService $delivery_service
+     * @return JsonResponse
+     * @throws \App\Exceptions\DoNotReportException
+     */
     public function getOrderInformation(Request $request, $order_id, DeliveryService $delivery_service)
     {
         $partner = $request->auth_user->getPartner();
@@ -142,6 +169,11 @@ class DeliveryController extends Controller
     }
 
 
+    /**
+     * @param Request $request
+     * @param DeliveryService $delivery_service
+     * @return JsonResponse
+     */
     public function getDeliveryCharge(Request $request, DeliveryService $delivery_service)
     {
         $this->validate($request, [
@@ -150,6 +182,8 @@ class DeliveryController extends Controller
             'cod_amount' => 'required',
             'delivery_district' => 'required',
             'delivery_thana' => 'required',
+            'pickup_thana' => 'sometimes',
+            'pickup_district' => 'sometimes'
         ]);
 
         $partner = $request->partner_id;
@@ -158,6 +192,11 @@ class DeliveryController extends Controller
     }
 
 
+    /**
+     * @param Request $request
+     * @param DeliveryService $delivery_service
+     * @return JsonResponse
+     */
     public function getDistricts(Request $request, DeliveryService $delivery_service)
     {
         $districts = $delivery_service->districts();
@@ -165,14 +204,24 @@ class DeliveryController extends Controller
     }
 
 
+    /**
+     * @param Request $request
+     * @param $district_name
+     * @param DeliveryService $delivery_service
+     * @return JsonResponse
+     */
     public function getUpzillas(Request $request, $district_name, DeliveryService $delivery_service)
     {
-
         $upzillas = $delivery_service->upzillas($district_name);
         return api_response($request, null, 200, ['upzillas' => $upzillas]);
     }
 
 
+    /**
+     * @param Request $request
+     * @param DeliveryService $delivery_service
+     * @return JsonResponse
+     */
     public function getDeliveryStatus(Request $request, DeliveryService $delivery_service)
     {
         $partner = $request->auth_user->getPartner();
@@ -183,6 +232,12 @@ class DeliveryController extends Controller
         return api_response($request, null, 200, ['status' => $statusInfo['data']['status']]);
     }
 
+    /**
+     * @param Request $request
+     * @param DeliveryService $delivery_service
+     * @return JsonResponse
+     * @throws DeliveryCancelRequestError
+     */
     public function cancelOrder(Request $request, DeliveryService $delivery_service)
     {
         $this->validate($request, [
