@@ -778,7 +778,8 @@ class AttendanceController extends Controller
             'is_half_day_enable' => $business->is_half_day_enable,
             'half_day_leave_types_count' => $half_day_leave_types->count(),
             'half_day_leave_types' => $half_day_leave_types->pluck('title'),
-            'half_day_initial_timings' => $this->getHalfDayTimings($business)
+            'half_day_initial_timings' => $this->getHalfDayTimings($business),
+            'is_grace_period_policy_enable' => $office_time->is_grace_period_policy_enable
         ];
 
         return api_response($request, null, 200, ['office_settings_attendance' => $data]);
@@ -840,10 +841,9 @@ class AttendanceController extends Controller
         if ($checkin_checkout_policy) return api_response($request, null, 200, ['msg' => "Update Successful"]);
     }
 
-    public function getGracePolicy(Request $request, BusinessOfficeHoursRepoInterface $office_hours)
+    public function getGracePolicy(Request $request)
     {
         $business = $request->business;
-        $business_office_hour = $office_hours->getOfficeTime($business);
         if (!$business) return api_response($request, null, 403, ['message' => 'You Are not authorized to show this settings']);
         $grace_policy = $business->gracePolicy;
         $manager = new Manager();
@@ -851,7 +851,7 @@ class AttendanceController extends Controller
         $resource = new Collection($grace_policy, new PolicyTransformer());
         $grace_policy_rules = $manager->createData($resource)->toArray()['data'];
 
-        return api_response($request, $grace_policy_rules, 200, ['is_enable' => $business_office_hour->is_grace_period_policy_enable, 'grace_policy_rules' => $grace_policy_rules]);
+        return api_response($request, $grace_policy_rules, 200, ['grace_policy_rules' => $grace_policy_rules]);
     }
 
     public function createUnpaidLeavePolicy(Request $request, PolicyRuleRequester $requester, PolicyRuleUpdater $updater)
