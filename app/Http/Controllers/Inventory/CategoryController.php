@@ -35,15 +35,25 @@ class CategoryController extends Controller
     {
         $partner = $request->auth_user->getPartner();
         $modifier = $request->auth_user->getResource()->profile->name;
-        $response = $this->categoryService->setModifier($modifier)->setPartner($partner->id)->setCategoryName($request->name)->store();
-        return http_response($request, null, 200, $response);
+        $response = $this->categoryService
+            ->setModifier($modifier)
+            ->setPartner($partner->id)
+            ->setCategoryName($request->name)
+            ->setThumb($request->thumb)
+            ->setParentId($request->has('parent_id') ? $request->parent_id : null)
+            ->store();
+        return http_response($request, null, 201, $response);
     }
 
     public function update(Request $request,$category_id)
     {
         $partner = $request->auth_user->getPartner();
         $modifier = $request->auth_user->getResource()->profile->name;
-        $response =  $this->categoryService->setModifier($modifier)->setPartner($partner->id)->setCategoryId($category_id)->setCategoryName($request->name)->update();
+        $response =  $this->categoryService->setModifier($modifier)->setPartner($partner->id)
+            ->setCategoryId($category_id)
+            ->setCategoryName($request->name)
+            ->setThumb($request->thumb)
+            ->update();
         return http_response($request, null, 200, $response);
     }
 

@@ -25,8 +25,10 @@ class DataMigrationController extends Controller
 
     public function testMigration(Request $request, DataMigration $dataMigration)
     {
-        $partner = Partner::find(91475);
-        $dataMigration->setPartner($partner)->migrate();
+        for ($partnerId = $request->partner_id_start; $partnerId <= $request->partner_id_end; $partnerId++) {
+            $partner = Partner::find($partnerId);
+            $dataMigration->setPartner($partner)->migrate();
+        }
         return http_response($request, null, 200);
     }
 }

@@ -30,6 +30,7 @@ class PosOrderServerClient
      * @param bool $multipart
      * @return mixed
      * @throws InventoryServiceServerError
+     * @throws PosOrderServiceServerError
      */
     private function call($method, $uri, $data = null, $multipart = false)
     {
@@ -39,7 +40,6 @@ class PosOrderServerClient
             $res = $e->getResponse();
             $http_code = $res->getStatusCode();
             $message = $res->getBody()->getContents();
-            dd($message);
             if ($http_code > 399 && $http_code < 500) throw new PosOrderServiceServerError($message, $http_code);
             throw new PosOrderServiceServerError($e->getMessage(), $http_code);
         }
