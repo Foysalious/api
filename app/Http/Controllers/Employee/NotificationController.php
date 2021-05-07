@@ -100,6 +100,7 @@ class NotificationController extends Controller
             'leave_request_id' => 'sometimes|required|numeric',
             'leave_id' => 'sometimes|required|numeric',
             'cancel_leave_id' => 'sometimes|required|numeric',
+            'homepage' => 'sometimes|required',
 
         ]);
 
@@ -110,6 +111,19 @@ class NotificationController extends Controller
         $topic = config('sheba.push_notification_topic_name.employee') . (int)$business_member['member_id'];
         $channel = config('sheba.push_notification_channel_name.employee');
         $sound  = config('sheba.push_notification_sound.employee');
+
+        if ($request->has('homepage')) {
+            $pushNotificationHandler->send([
+                "title" => 'Refer digiGO & Earn up to 10000 TK',
+                "message" => "Refer digiGO & win attractive referral fee. Just provide lead information & we do the rest. Visit digiGO Now!",
+                "event_type" => 'referral',
+                "event_id" => '',
+                "time" => Carbon::now(),
+                "sound" => "notification_sound",
+                "channel_id" => $channel,
+                "click_action" => "FLUTTER_NOTIFICATION_CLICK"
+            ], $topic, $channel, $sound);
+        }
 
         if ($request->has('support_id')) {
             $pushNotificationHandler->send([
