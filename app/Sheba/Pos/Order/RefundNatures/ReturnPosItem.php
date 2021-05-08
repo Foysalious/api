@@ -1,10 +1,12 @@
 <?php namespace Sheba\Pos\Order\RefundNatures;
 
 use App\Models\PosOrder;
+use Sheba\AccountingEntry\Repository\JournalCreateRepository;
 use Sheba\Dal\POSOrder\SalesChannels as POSOrderSalesChannel;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
+use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys;
 use Sheba\Pos\Log\Creator as LogCreator;
 use Sheba\Pos\Order\Updater;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
@@ -36,6 +38,7 @@ abstract class ReturnPosItem extends RefundNature
         ], 'service_id', true)->toArray();;
         $this->updater->setOrder($this->order)->setData($this->data)->setNew($this->new)->update();
         if ($this->order->calculate()->getPaid()) $this->refundPayment();
+        if ($this->order) $this->returnItem($this->order);
         $this->generateDetails();
         $this->saveLog();
         try {
@@ -58,6 +61,20 @@ abstract class ReturnPosItem extends RefundNature
                 $this->paymentCreator->debit($payment_data);
             }
         }
+    }
+
+    private function returnItem(PosOrder $order)
+    {
+        $amount = (double)$order->calculate()->getNetBill();
+        (new JournalCreateRepository())
+            ->setTypeId($order->partner->id)
+            ->setSource($order)
+            ->setAmount($amount)
+            ->setDebitAccountKey(AccountKeys\Asset\Cash::CASH)
+            ->setCreditAccountKey(AccountKeys\Income\Refund::GENERAL_REFUNDS)
+            ->setDetails("Refund Pos Item")
+            ->setReference("Pos Item refunds amount is" . $amount . " tk.")
+            ->store();
     }
 
     /**
