@@ -68,8 +68,8 @@ class Updater
         }
 
         $this->storeImageGallery($image_gallery);
-        if(isset($data['accounting_info']) && !empty($data['accounting_info']))
-            $this->createExpenseEntry($this->service);
+        //if(isset($data['accounting_info']) && !empty($data['accounting_info']))
+        //    $this->createExpenseEntry($this->service);
 
     }
 

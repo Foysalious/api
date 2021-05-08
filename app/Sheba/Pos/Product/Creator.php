@@ -53,8 +53,8 @@ class Creator
         $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'image_gallery']);
         $partner_pos_service = $this->serviceRepo->save($this->data + (new RequestIdentification())->get());
         $this->storeImageGallery($partner_pos_service, json_decode($image_gallery,true));
-        if(isset($data['accounting_info']) && !empty($data['accounting_info']))
-        $this->createExpenseEntry($partner_pos_service);
+      //  if(isset($data['accounting_info']) && !empty($data['accounting_info']))
+       // $this->createExpenseEntry($partner_pos_service);
         return $partner_pos_service;
     }
 
