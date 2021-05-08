@@ -41,7 +41,8 @@ class PosOrderTransformer extends TransformerAbstract
             'return_orders' => null,
             'partner_wise_order_id' => $order->partner_wise_order_id,
             'partner_wise_previous_order_id' => $order->previousOrder ? $order->previousOrder->partner_wise_order_id : null,
-            'sales_channel' => $order->sales_channel
+            'sales_channel' => $order->sales_channel,
+            'delivery_charge' => $order->delivery_charge
         ];
 
         if ($data['due'] > 0) $data['payment_link_target'] = $order->getPaymentLinkTarget();

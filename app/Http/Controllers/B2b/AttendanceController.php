@@ -778,7 +778,8 @@ class AttendanceController extends Controller
             'is_half_day_enable' => $business->is_half_day_enable,
             'half_day_leave_types_count' => $half_day_leave_types->count(),
             'half_day_leave_types' => $half_day_leave_types->pluck('title'),
-            'half_day_initial_timings' => $this->getHalfDayTimings($business)
+            'half_day_initial_timings' => $this->getHalfDayTimings($business),
+            'is_grace_period_policy_enable' => $office_time->is_grace_period_policy_enable
         ];
 
         return api_response($request, null, 200, ['office_settings_attendance' => $data]);
@@ -820,19 +821,21 @@ class AttendanceController extends Controller
 
         if ($office_timing) {
              $requester->setBusiness($request->business)
-                ->setIsEnable($request->is_grace_policy_enable)
-                ->setPolicyType(Type::GRACE_PERIOD)
-                ->setRules($request->grace_policy_rules);
+                            ->setIsEnable($request->is_grace_policy_enable)
+                            ->setPolicyType(Type::GRACE_PERIOD)
+                            ->setRules($request->grace_policy_rules)
+                            ->setDeleteRules($request->grace_delete_rules);
             $grace_policy = $policy_updater->setPolicyRuleRequester($requester)->update();
         }
 
         if ($grace_policy) {
              $requester->setBusiness($request->business)
-                ->setIsEnable($request->is_checkin_checkout_policy_enable)
-                ->setPolicyType(Type::LATE_CHECKIN_EARLY_CHECKOUT)
-                ->setForLateCheckIn($request->for_checkin)
-                ->setForEarlyCheckOut($request->for_checkout)
-                ->setRules($request->checkin_checkout_policy_rules);
+                            ->setIsEnable($request->is_checkin_checkout_policy_enable)
+                            ->setPolicyType(Type::LATE_CHECKIN_EARLY_CHECKOUT)
+                            ->setForLateCheckIn($request->for_checkin)
+                            ->setForEarlyCheckOut($request->for_checkout)
+                            ->setRules($request->checkin_checkout_policy_rules)
+                            ->setDeleteRules($request->checkin_checkout_delete_rules);
             $checkin_checkout_policy = $policy_updater->setPolicyRuleRequester($requester)->update();
         }
         if ($checkin_checkout_policy) return api_response($request, null, 200, ['msg' => "Update Successful"]);
@@ -848,7 +851,7 @@ class AttendanceController extends Controller
         $resource = new Collection($grace_policy, new PolicyTransformer());
         $grace_policy_rules = $manager->createData($resource)->toArray()['data'];
 
-        return api_response($request, $grace_policy_rules, 200, [ 'grace_policy_rules' => $grace_policy_rules]);
+        return api_response($request, $grace_policy_rules, 200, ['grace_policy_rules' => $grace_policy_rules]);
     }
 
     public function createUnpaidLeavePolicy(Request $request, PolicyRuleRequester $requester, PolicyRuleUpdater $updater)
@@ -862,9 +865,10 @@ class AttendanceController extends Controller
         if (!$business) return api_response($request, null, 403, ['message' => 'You Are not authorized to show this settings']);
         $this->setModifier($request->manager_member);
         $requester->setBusiness($business)
-            ->setIsEnable($request->is_enable)
-            ->setPolicyType($request->policy_type)
-            ->setRules($request->rules);
+                        ->setIsEnable($request->is_enable)
+                        ->setPolicyType($request->policy_type)
+                        ->setRules($request->rules)
+                        ->setDeleteRules($request->delete_rules);
 
         $updater->setPolicyRuleRequester($requester)->update();
 

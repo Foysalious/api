@@ -27,6 +27,7 @@ class OrderPlace
      * @var PosOrderRepository
      */
     private $posOrderRepository;
+    private $token;
 
     public function __construct(DeliveryServerClient $client, PosOrderRepository $posOrderRepository)
     {
@@ -37,6 +38,12 @@ class OrderPlace
     public function setPartner($partner)
     {
         $this->partner = $partner;
+        return $this;
+    }
+
+    public function setToken($token)
+    {
+        $this->token = $token;
         return $this;
     }
 
@@ -124,7 +131,7 @@ class OrderPlace
     public function orderPlace()
     {
         $data = $this->makeData();
-        return $this->client->post('orders', $data);
+        return $this->client->setToken($this->token)->post('orders', $data);
 
     }
 
@@ -138,7 +145,7 @@ class OrderPlace
             'delivery_charge' => $info['delivery_charge'],
             'delivery_vendor_name' => $info['logistic_partner_id'],
             'address' => $info['delivery_address']['address'],
-            'delivery_zilla' => $info['delivery_address']['district'],
+            'delivery_district' => $info['delivery_address']['district'],
             'delivery_thana' => $info['delivery_address']['thana'],
             'delivery_status' => $info['status'],
             'delivery_request_id' => $info['uid']

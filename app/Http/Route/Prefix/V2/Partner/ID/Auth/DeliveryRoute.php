@@ -6,8 +6,8 @@ class DeliveryRoute
     {
         $api->group(['prefix' => 'pos/delivery',], function ($api) {
             $api->post('/delivery-charge', 'Pos\\DeliveryController@getDeliveryCharge');
-            $api->get('/district', 'Pos\\DeliveryController@getDistrict');
-            $api->get('/upzillas/{district_name}/district', 'Pos\\DeliveryController@getUpzilla');
+            $api->get('/district', 'Pos\\DeliveryController@getDistricts');
+            $api->get('/upzillas/{district_name}/district', 'Pos\\DeliveryController@getUpzillas');
         });
         $api->group(['prefix' => 'pos/delivery', 'middleware' => ['accessToken']], function ($api) {
             $api->get('register', 'Pos\\DeliveryController@getInfoForRegistration');
@@ -16,6 +16,7 @@ class DeliveryRoute
             $api->get('delivery-status', 'Pos\\DeliveryController@getDeliveryStatus');
             $api->post('cancel-order', 'Pos\\DeliveryController@cancelOrder');
             $api->post('orders', 'Pos\\DeliveryController@orderPlace');
+            $api->post('partner-vendor', 'Pos\\DeliveryController@vendorUpdate');
         });
     }
 }

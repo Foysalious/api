@@ -175,22 +175,17 @@ class CoWorkerDetailTransformer extends TransformerAbstract
     private function getSalaryInfo($business_member)
     {
         $payroll_setting = $this->business->payrollSetting;
-        $payroll_percentage_breakdown = (new GrossSalaryBreakdownCalculate())->componentPercentageBreakdown($payroll_setting);
+        $payroll_percentage_breakdown = (new GrossSalaryBreakdownCalculate())->componentPercentageBreakdown($payroll_setting, $business_member);
 
         $count = 0;
         $salary = $business_member->salary;
         if ($salary && $salary->gross_salary) $count++;
         $salary_completion = round((($count / 1) * self::THRESHOLD), 0);
 
-        $gross_salary_breakdown[Components::BASIC_SALARY] = $payroll_percentage_breakdown->basicSalary;
-        $gross_salary_breakdown[Components::HOUSE_RENT] = $payroll_percentage_breakdown->houseRent;
-        $gross_salary_breakdown[Components::MEDICAL_ALLOWANCE] = $payroll_percentage_breakdown->medicalAllowance;
-        $gross_salary_breakdown[Components::CONVEYANCE] = $payroll_percentage_breakdown->conveyance;
-
+        $gross_salary_breakdown ['breakdown'] = $payroll_percentage_breakdown;
         $gross_salary_breakdown['gross_salary'] = $salary ? floatValFormat($salary->gross_salary) : null;
         $gross_salary_breakdown['gross_salary_log'] = $this->getSalaryLog($business_member);
         $gross_salary_breakdown['gross_salary_completion'] = $salary_completion;
-
         return $gross_salary_breakdown;
     }
 

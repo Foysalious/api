@@ -1,8 +1,7 @@
 <?php namespace App\Http\Controllers\Pos;
 
-
-use App\Exceptions\Pos\Order\OrderNotFoundException;
 use App\Exceptions\DoNotReportException;
+use App\Exceptions\Pos\Order\OrderNotFoundException;
 use App\Exceptions\Pos\Customer\PartnerPosCustomerNotFoundException;
 use App\Exceptions\Pos\Customer\PosCustomerNotFoundException;
 use App\Exceptions\Pos\Order\NotEnoughStockException;

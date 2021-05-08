@@ -46,7 +46,7 @@ class Updater
         $this->businessMember = $this->businessMemberRepository->find($business_member);
         $this->business = $this->businessMember->business;
         $payroll_setting = $this->business->payrollSetting;
-        $this->grossSalaryBreakdownCalculate->componentPercentageBreakdown($payroll_setting);
+        $this->grossSalaryBreakdownCalculate->componentPercentageBreakdown($payroll_setting, $this->businessMember);
         $this->payrollComponentCalculation->setPayrollSetting($payroll_setting);
         return $this;
     }

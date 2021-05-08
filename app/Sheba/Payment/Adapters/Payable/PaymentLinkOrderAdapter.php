@@ -52,7 +52,7 @@ class PaymentLinkOrderAdapter implements PayableAdapter
         $this->resolveDescription();
         $payable = new Payable();
         $payable->type = 'payment_link';
-        $payable->type_id = $this->paymentLink->getLinkID();
+        $payable->type_id = $this->paymentLink->getLinkIdentifier();
         $payable->user_id = $this->payableUser->id;
         $payable->user_type = "App\\Models\\" . class_basename($this->payableUser);
         $payable->amount = $this->getAmount();

@@ -10,6 +10,8 @@ use Sheba\Business\BusinessMember\Events\BusinessMemberUpdated;
 use Sheba\Business\BusinessMember\Listeners\BusinessMemberCreatedListener;
 use Sheba\Business\BusinessMember\Listeners\BusinessMemberUpdatedListener;
 use Sheba\Business\BusinessMember\Listeners\BusinessMemberDeletedListener;
+use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceSaved;
+use Sheba\Pos\Product\Listeners\WebstorePublishCheck;
 use Sheba\TopUp\Events\TopUpRequestOfBlockedNumber as TopUpRequestOfBlockedNumberEvent;
 use Sheba\TopUp\Listeners\TopUpRequestOfBlockedNumber;
 use Sheba\Dal\Profile\Events\ProfilePasswordUpdated;
@@ -37,7 +39,8 @@ class EventServiceProvider extends ServiceProvider
         ],
         BusinessMemberDeleted::class => [
             BusinessMemberDeletedListener::class
-        ]
+        ],
+        PartnerPosServiceSaved::class => [WebstorePublishCheck::class]
     ];
 
     /**
