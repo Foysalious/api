@@ -1,6 +1,9 @@
 <?php namespace App\Sheba\Pos\Product\Accounting;
 
 
+use App\Sheba\AccountingEntry\Constants\EntryTypes;
+use App\Sheba\AccountingEntry\Repository\AccountingRepository;
+
 class ExpenseEntry
 {
 
@@ -9,6 +12,17 @@ class ExpenseEntry
     protected $stock;
     protected $costPerUnit;
     protected $accountingInfo;
+    /**
+     * @var AccountingRepository
+     */
+    private $accountingRepository;
+
+
+
+    public function __construct(AccountingRepository $accountingRepository)
+    {
+        $this->accountingRepository = $accountingRepository;
+    }
 
     /**
      * @param mixed $stock
@@ -62,13 +76,12 @@ class ExpenseEntry
 
     public function create()
     {
-        $this->makeData();
-
+        $data = $this->makeData();
+        $this->accountingRepository->storeEntry($data, EntryTypes::INVENTORY);
     }
 
     private function makeData()
     {
-
         $data = [
             'amount' => $this->stock * $this->costPerUnit,
             'from_account_key' => $this->accountingInfo['from_account'],
