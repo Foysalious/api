@@ -26,32 +26,21 @@ class PosOrderResolver
         return $this;
     }
 
-    /**
-     * @param mixed $posOrderType
-     * @return PosOrderResolver
-     */
-    public function setPosOrderType($posOrderType)
+    public function isNewSystemPosOrder()
     {
-        $this->posOrderType = $posOrderType;
-        return $this;
+        return $this->posOrderType == PosOrderTypes::OLD_POS_ORDER ? false : true;
     }
 
-    public function getType()
-    {
-        return $this->posOrderType;
-    }
-
-    public function getPosOrder()
+    public function getPosOrderId()
     {
         $posOrder = PosOrder::find($this->orderId);
-        if ($posOrder) {
-            $this->setPosOrderType(PosOrderTypes::OLD_POS_ORDER);
-            return $posOrder;
+        if ($posOrder && !$posOrder->partner->isMigrationCompleted()) {
+            $this->posOrderType = PosOrderTypes::OLD_POS_ORDER;
+            return $posOrder->id;
         } else {
-            return $this->client->get('api/v1/orders/' . $this->orderId);
+            $this->posOrderType = PosOrderTypes::NEW_POS_ORDER;
+            $response = $this->client->get('api/v1/orders/' . $this->orderId);
+            return $response->order_id;
         }
     }
-
-
-
 }

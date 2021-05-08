@@ -20,6 +20,7 @@ use Sheba\PaymentLink\PaymentLinkTransformer;
 use Sheba\Pos\Order\PosOrderResolver;
 use Sheba\Pos\Order\PosOrderTypes;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
+use Sheba\Pos\Payment\PosOrderPayment;
 use Sheba\PushNotificationHandler;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
@@ -183,18 +184,15 @@ class PaymentLinkOrderComplete extends PaymentComplete
     {
         $this->target = $this->paymentLink->getTarget();
         if ($this->target instanceof PosOrderResolver) {
-            $posOrder = $this->target->getPosOrder();
-            $is_new_pos_order = $this->target->getType() == PosOrderTypes::OLD_POS_ORDER ? false : true;
-                $payment_data    = [
-                    'pos_order_id' => $posOrder->id,
-                    'amount'       => $this->payment->payable->amount,
-                    'method'       => $this->payment->payable->type,
-                    'emi_month'    => $this->payment->payable->emi_month,
-                    'interest'     => $this->paymentLink->getInterest(),
-                ];
-                $payment_creator = app(PaymentCreator::class);
-                /** @var $payment_creator PaymentCreator */
-                $payment_creator->credit($payment_data, $is_new_pos_order);
+            $pos_order_payment = app(PosOrderPayment::class);
+            /** @var $pos_order_payment PosOrderPayment */
+            $pos_order_payment->setPosOrderId($this->target->getPosOrderId())
+                ->setAmount($this->payment->payable->amount)
+                ->setMethod($this->payment->payable->type)
+                ->setEmiMonth($this->payment->payable->emi_month)
+                ->setInterest($this->paymentLink->getInterest())
+                ->setIsNewSystemPosOrder($this->target->isNewSystemPosOrder())
+                ->credit();
         }
         if ($this->target instanceof ExternalPayment) {
             $this->target->payment_id = $this->payment->id;
