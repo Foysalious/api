@@ -2,6 +2,7 @@
 
 use App\Models\PartnerPosService;
 use App\Repositories\FileRepository;
+use App\Sheba\Pos\Product\Accounting\ExpenseEntry;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
 use Sheba\Dal\PartnerPosServiceImageGallery\Model as PartnerPosServiceImageGallery;
@@ -22,16 +23,21 @@ class Updater
     private $serviceRepo;
     private $service;
     private $posServiceLogRepo;
+    /**
+     * @var ExpenseEntry
+     */
+    private $stockExpenseEntry;
 
     /**
      * Updater constructor.
      * @param PosServiceRepositoryInterface $service_repo
      * @param PosServiceLogRepositoryInterface $pos_service_log_repo
      */
-    public function __construct(PosServiceRepositoryInterface $service_repo, PosServiceLogRepositoryInterface $pos_service_log_repo)
+    public function __construct(PosServiceRepositoryInterface $service_repo, PosServiceLogRepositoryInterface $pos_service_log_repo, ExpenseEntry $stockExpenseEntry)
     {
         $this->serviceRepo       = $service_repo;
         $this->posServiceLogRepo = $pos_service_log_repo;
+        $this->stockExpenseEntry =  $stockExpenseEntry;
     }
 
     public function setService(PartnerPosService $service)
@@ -60,9 +66,18 @@ class Updater
             $this->serviceRepo->update($this->service, $this->updatedData);
             $this->storeLogs($old_service, $this->updatedData);
         }
+
         $this->storeImageGallery($image_gallery);
+        //if(isset($data['accounting_info']) && !empty($data['accounting_info']))
+        //    $this->createExpenseEntry($this->service);
 
     }
+
+    private function createExpenseEntry($partner_pos_service)
+    {
+        $this->stockExpenseEntry->setName($partner_pos_service->name)->setId($partner_pos_service->id)->setNewStock($this->data['new_stock'])->setCostPerUnit($partner_pos_service->cost)->setAccountingInfo($this->data['account_info'])->create();
+    }
+
 
     private function storeImageGallery($image_gallery)
     {
