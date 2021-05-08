@@ -375,7 +375,8 @@ class Creator
             "amount"             => (double)$order->getNetBill(),
             "amount_cleared"     => $order->getPaid(),
             "inventory_products" => $this->getInventoryProducts($services),
-            "total_discount"     => $order_discount
+            "total_discount"     => $order_discount,
+            "note"               => $order->sales_channel
         ]);
     }
 
