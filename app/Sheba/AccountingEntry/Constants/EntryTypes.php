@@ -14,4 +14,5 @@ class EntryTypes
     const TRANSFER = "transfer";
     const INVENTORY = "inventory";
     const PAYMENT_LINK = "payment_link";
+    const POS = "pos";
 }

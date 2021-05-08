@@ -5,6 +5,7 @@ namespace Sheba\AccountingEntry\Accounts\AccountTypes;
 use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Income\IncomeFromEmi;
 use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Income\IncomeFromPaymentLink;
 use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Income\Reffer;
+use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Income\Sales;
 
 class Income extends AccountTypes
 {
@@ -14,8 +15,9 @@ class Income extends AccountTypes
     public $incomeFromPaymentLink;
     /** @var IncomeFromEmi */
     public $incomeFromEmi;
-    public $other_income;
+    /** @var Sales */
     public $sales;
+    public $other_income;
     public $sales_bechabikri;
     public $sales_emi;
     public $sales_payment_link;

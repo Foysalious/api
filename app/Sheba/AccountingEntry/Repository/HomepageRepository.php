@@ -47,4 +47,31 @@ class HomepageRepository extends BaseRepository
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
     }
+
+    public function getIncomeExpenseEntries($userId, $limit, $userType = UserType::PARTNER){
+        try {
+            return $this->client->setUserType($userType)->setUserId($userId)
+                ->get($this->api . 'income-expense-entries?limit='.$limit );
+        } catch (AccountingEntryServerError $e) {
+            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+        }
+    }
+
+    public function getDueCollectionBalance($userId, $startDate, $endDate, $userType = UserType::PARTNER){
+        try {
+            return $this->client->setUserType($userType)->setUserId($userId)
+                ->get($this->api . "due-tracker-balance?start_date=$startDate&end_date=$endDate");
+        } catch (AccountingEntryServerError $e) {
+            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+        }
+    }
+
+    public function getAccountListBalance($userId, $startDate, $endDate, $limit, $userType = UserType::PARTNER) {
+        try {
+            return $this->client->setUserType($userType)->setUserId($userId)
+                ->get($this->api . "account-list-balance?start_date=$startDate&end_date=$endDate&limit=$limit");
+        } catch (AccountingEntryServerError $e) {
+            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+        }
+    }
 }

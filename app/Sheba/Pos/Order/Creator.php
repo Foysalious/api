@@ -10,6 +10,15 @@ use App\Models\PartnerPosService;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Models\Profile;
+use App\Sheba\AccountingEntry\Constants\EntryTypes;
+use App\Sheba\AccountingEntry\Repository\AccountingRepository;
+use Illuminate\Http\Request;
+use ReflectionException;
+use Sheba\AccountingEntry\Accounts\Accounts;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\AccountingEntry\Exceptions\InvalidSourceException;
+use Sheba\AccountingEntry\Exceptions\KeyNotFoundException;
+use Sheba\AccountingEntry\Repository\JournalCreateRepository;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Dal\POSOrder\SalesChannels;
@@ -51,6 +60,8 @@ class Creator
     private $paymentMethod;
     /** @var OrderStatuses $status */
     protected $status;
+    /** @var Request*/
+    private $request;
 
     public function __construct(PosOrderRepository $order_repo, PosOrderItemRepository $item_repo,
                                 PaymentCreator $payment_creator, StockManager $stock_manager,
@@ -93,6 +104,13 @@ class Creator
         return $this;
     }
 
+    public function setRequest(Request $request)
+    {
+        $this->request = $request;
+        $this->setData($request->all());
+        return $this;
+    }
+
     public function setCustomer(PosCustomer $customer)
     {
         $this->customer = $customer;
@@ -119,9 +137,12 @@ class Creator
 
     /**
      * @return PosOrder
-     * @throws InvalidDiscountType
-     * @throws ExpenseTrackingServerError
+     * @throws AccountingEntryServerError
      * @throws DoNotReportException
+     * @throws InvalidDiscountType
+     * @throws NotEnoughStockException
+     * @throws PartnerPosCustomerNotFoundException
+     * @throws PosCustomerNotFoundException
      */
     public function create()
     {
@@ -178,6 +199,7 @@ class Creator
         $this->voucherCalculation($order);
         $this->resolvePaymentMethod();
         $this->storeIncome($order);
+        $this->storeJournal($order);
         return $order;
     }
 
@@ -330,5 +352,53 @@ class Creator
     private function getDiscountAmount($discount)
     {
         return (isset($discount) && isset($discount['amount'])) ? $discount['amount'] : 0;
+    }
+
+    /**
+     * @param PosOrder $order
+     * @throws AccountingEntryServerError
+     */
+    private function storeJournal(PosOrder $order)
+    {
+        $this->additionalAccountingData($order);
+        /** @var AccountingRepository $accounting_repo */
+        $accounting_repo = app()->make(AccountingRepository::class);
+        $accounting_repo->storeEntry($this->request, EntryTypes::POS);
+    }
+
+    private function additionalAccountingData(PosOrder $order)
+    {
+        $services = $order->items;
+        $order_discount = $order->discounts()->sum('amount');
+        $this->request->merge([
+            "from_account_key"   => (new Accounts())->asset->cash::CASH,
+            "to_account_key"     => (new Accounts())->income->sales::SALES_FROM_POS,
+            "amount"             => (double)$order->getNetBill(),
+            "amount_cleared"     => $order->getPaid(),
+            "inventory_products" => $this->getInventoryProducts($services),
+            "total_discount"     => $order_discount,
+            "note"               => $order->sales_channel == SalesChannels::WEBSTORE ?? SalesChannels::POS
+        ]);
+    }
+
+    /**
+     * @param $services
+     * @return false|string
+     */
+    private function getInventoryProducts($services)
+    {
+        $requested_service = json_decode($this->data['services'], true);
+        $inventory_products = [];
+        foreach ($services as $key => $service) {
+            $original_service = ($service->service);
+            $inventory_products[] = [
+                "id"           => $original_service->id,
+                "name"         => $original_service->name,
+                "unit_price"   => $original_service->cost,
+                "selling_rice" => isset($requested_service[$key]['updated_price']) && $requested_service[$key]['updated_price'] ? $requested_service[$key]['updated_price'] : $original_service->price,
+                "quantity"     => isset($requested_service[$key]['quantity']) ? $requested_service[$key]['quantity'] : 1
+            ];
+        }
+        return json_encode($inventory_products);
     }
 }
