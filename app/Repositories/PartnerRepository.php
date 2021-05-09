@@ -342,18 +342,6 @@ class PartnerRepository
         ];
     }
     public function getNewDashboard($request, $performance) {
-        $slider_portal = SliderPortal::with('slider.slides')->where('portal_name', 'manager-app')->where('screen', 'home')->get();
-        $slides_query = !$slider_portal->isEmpty() ? $slider_portal->last()->slider->slides()->where('location_id', $this->location)->orderBy('id', 'desc') : null;
-        $all_slides   = $slides_query ? $slides_query->get() : null;
-        $videos       = [];
-        if ($all_slides && !$all_slides->isEmpty()) {
-            foreach ($all_slides as $key => $item) {
-                if ($item && json_decode($item->video_info)) {
-                    array_push($videos, json_decode($item->video_info));
-                }
-            }
-        }
-        $details = $this->featureVideos();
         $performance->setPartner($this->partner)->setTimeFrame((new TimeFrame())->forCurrentWeek())->calculate();
         $performanceStats = $performance->getData();
         $rating             = (new ReviewRepository)->getAvgRating($this->partner->reviews);
@@ -365,8 +353,6 @@ class PartnerRepository
         $upgradable_package = null;
         $new_order          = $this->newOrdersCount($this->partner, $request);
         return [
-            'name'                         => $this->partner->name,
-            'logo'                         => $this->partner->logo,
             'geo_informations'             => json_decode($this->partner->geo_informations),
             'current_subscription_package' => [
                 'id'            => $this->partner->subscription->id,
@@ -442,10 +428,7 @@ class PartnerRepository
                 'package_usp_bn'  => json_decode($upgradable_package->usps, 1)['usp_bn']
             ] : null,
             'leave_info'                   => (new LeaveStatus($this->partner))->getCurrentStatus(),
-            'home_videos'    => $videos ? $videos : null,
-            'feature_videos' => $details,
-            'has_qr_code'    => ($this->partner->qr_code_image && $this->partner->qr_code_account_type) ? 1 : 0,
-            'is_webstore_published' => $this->partner->is_webstore_published
+            'has_qr_code'    => ($this->partner->qr_code_image && $this->partner->qr_code_account_type) ? 1 : 0
         ];
 
     }
