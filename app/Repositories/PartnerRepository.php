@@ -427,8 +427,7 @@ class PartnerRepository
                 'package_badge'   => $upgradable_package->badge,
                 'package_usp_bn'  => json_decode($upgradable_package->usps, 1)['usp_bn']
             ] : null,
-            'leave_info'                   => (new LeaveStatus($this->partner))->getCurrentStatus(),
-            'has_qr_code'    => ($this->partner->qr_code_image && $this->partner->qr_code_account_type) ? 1 : 0
+            'leave_info'                   => (new LeaveStatus($this->partner))->getCurrentStatus()
         ];
 
     }
