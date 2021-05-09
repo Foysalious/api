@@ -231,6 +231,11 @@ class TopUpOrder extends BaseModel implements PayableType
         return in_array($this->gateway, [Names::ROBI, Names::AIRTEL, Names::BANGLALINK]);
     }
 
+    public function isViaBdRecharge()
+    {
+        return $this->gateway == Names::BD_RECHARGE;
+    }
+
     public function getTransactionDetailsObject()
     {
         return json_decode($this->transaction_details);
@@ -243,6 +248,7 @@ class TopUpOrder extends BaseModel implements PayableType
 
     public function getGatewayRefId()
     {
+
         if ($this->isGatewayRefUniform()) return dechex($this->id);
 
         if ($this->isViaPaywell()) return $this->id;
@@ -250,6 +256,8 @@ class TopUpOrder extends BaseModel implements PayableType
         if ($this->isViaPretups()) return "";
 
         if ($this->isViaSsl()) return $this->getTransactionDetailsObject()->guid;
+
+        if ($this->isViaBdRecharge()) return $this->id;
 
         return "";
     }

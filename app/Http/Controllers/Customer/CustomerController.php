@@ -4,6 +4,10 @@ use App\Http\Controllers\Controller;
 use App\Models\HyperLocal;
 use App\Models\Job;
 use App\Models\Location;
+use App\Models\Reward;
+use App\Models\RewardAction;
+use Illuminate\Http\JsonResponse;
+use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Dal\LocationService\LocationService;
 use App\Models\Review;
 use Sheba\Dal\Service\Service;
@@ -16,14 +20,26 @@ use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Dal\ServiceDiscount\Model as ServiceDiscount;
 use Sheba\JobDiscount\JobDiscountCheckingParams;
 use Sheba\JobDiscount\JobDiscountHandler;
+use Sheba\LocationService\CorruptedPriceStructureException;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\LocationService\UpsellCalculation;
 use Sheba\Service\ServiceQuestion;
 
 class CustomerController extends Controller
 {
-    public function getOrderAgain($customer, Request $request, PriceCalculation $price_calculation, DeliveryCharge $delivery_charge,
-                                  JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, ServiceQuestion $service_question)
+    /**
+     * @param $customer
+     * @param Request $request
+     * @param PriceCalculation $price_calculation
+     * @param DeliveryCharge $delivery_charge
+     * @param JobDiscountHandler $job_discount_handler
+     * @param UpsellCalculation $upsell_calculation
+     * @param ServiceQuestion $service_question
+     * @return JsonResponse
+     * @throws InvalidDiscountType
+     * @throws CorruptedPriceStructureException
+     */
+    public function getOrderAgain($customer, Request $request, PriceCalculation $price_calculation, DeliveryCharge $delivery_charge, JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, ServiceQuestion $service_question): JsonResponse
     {
         $customer = $request->customer;
         $location = null;
@@ -32,30 +48,37 @@ class CustomerController extends Controller
             if (!is_null($hyper_location)) $location = $hyper_location->location_id;
         }
         if (!$location) return api_response($request, null, 404);
-        $reviews = Review::where([['customer_id', $customer->id], ['rating', '>=', 4]])->select('id', 'category_id', 'job_id', 'rating', 'partner_id')
-            ->with(['category' => function ($q) {
+        $reviews = Review::where([['customer_id', $customer->id], ['rating', '>=', 4]])->select('id', 'category_id', 'job_id', 'rating', 'partner_id')->with([
+            'category' => function ($q) {
                 $q->select('id', 'name', 'thumb', 'app_thumb', 'banner', 'app_banner', 'frequency_in_days', 'publication_status', 'delivery_charge', 'min_order_amount', 'is_auto_sp_enabled', 'max_order_amount', 'is_vat_applicable');
             }, 'job' => function ($q) {
-                $q->select('id', 'category_id', 'partner_order_id')->with('category')->with(['jobServices' => function ($q) {
-                    $q->select('id', 'job_id', 'service_id', 'quantity', 'option', 'variable_type', 'created_at')->with(['service' => function ($q) {
-                        $q->select('id', 'name', 'min_quantity', 'thumb', 'app_thumb', 'banner', 'app_banner', 'variables', 'variable_type', 'publication_status', 'is_inspection_service');
-                    }]);
-                }, 'partnerOrder' => function ($q) {
-                    $q->select('id', 'order_id', 'partner_id')->with(['partner' => function ($q) {
-                        $q->select('id', 'name', 'logo');
-                    }, 'order' => function ($q) {
-                        $q->select('id', 'location_id');
-                    }]);
-                }]);
-            }])->whereHas('category', function ($q) use ($location) {
-                $q->published()->hasLocation($location)->select('id', 'publication_status');
-            })->whereHas('job', function ($q) use ($location) {
-                $q->whereHas('jobServices', function ($q) use ($location) {
-                    $q->whereHas('service', function ($q) use ($location) {
-                        $q->published()->select('id', 'publication_status')->hasLocation($location);
-                    });
+                $q->select('id', 'category_id', 'partner_order_id')->with('category')->with([
+                    'jobServices' => function ($q) {
+                        $q->select('id', 'job_id', 'service_id', 'quantity', 'option', 'variable_type', 'created_at')->with([
+                            'service' => function ($q) {
+                                $q->select('id', 'name', 'min_quantity', 'thumb', 'app_thumb', 'banner', 'app_banner', 'variables', 'variable_type', 'publication_status', 'is_inspection_service');
+                            }
+                        ]);
+                    }, 'partnerOrder' => function ($q) {
+                        $q->select('id', 'order_id', 'partner_id')->with([
+                            'partner' => function ($q) {
+                                $q->select('id', 'name', 'logo');
+                            }, 'order' => function ($q) {
+                                $q->select('id', 'location_id');
+                            }
+                        ]);
+                    }
+                ]);
+            }
+        ])->whereHas('category', function ($q) use ($location) {
+            $q->published()->hasLocation($location)->select('id', 'publication_status');
+        })->whereHas('job', function ($q) use ($location) {
+            $q->whereHas('jobServices', function ($q) use ($location) {
+                $q->whereHas('service', function ($q) use ($location) {
+                    $q->published()->select('id', 'publication_status')->hasLocation($location);
                 });
-            })->where('created_at', '>=', Carbon::now()->subMonths(6)->toDateTimeString())->orderBy('id', 'desc');
+            });
+        })->where('created_at', '>=', Carbon::now()->subMonths(6)->toDateTimeString())->orderBy('id', 'desc');
 
         if ($request->has('category_id')) {
             $reviews = $reviews->where('category_id', $request->category_id);
@@ -71,17 +94,13 @@ class CustomerController extends Controller
                 if ($this->canThisServiceAvailableForOrderAgain($final, $review->job)) continue;
                 $data = [];
                 $data['category'] = clone $review->category;
-                $data['category']['delivery_charge'] = $delivery_charge->setCategory($review->category)
-                    ->setLocation(Location::find($location))->get();
+                $data['category']['delivery_charge'] = $delivery_charge->setCategory($review->category)->setLocation(Location::find($location))->get();
                 $discount_checking_params = (new JobDiscountCheckingParams())->setDiscountableAmount($data['category']['delivery_charge']);
                 $job_discount_handler->setType(DiscountTypes::DELIVERY)->setCategory($review->category)->setCheckingParams($discount_checking_params)->calculate();
                 /** @var Discount $delivery_discount */
                 $delivery_discount = $job_discount_handler->getDiscount();
                 $data['category']['delivery_discount'] = $delivery_discount ? [
-                    'value' => (double)$delivery_discount->amount,
-                    'is_percentage' => $delivery_discount->is_percentage,
-                    'cap' => (double)$delivery_discount->cap,
-                    'min_order_amount' => (double)$delivery_discount->rules->getMinOrderAmount()
+                    'value' => (double)$delivery_discount->amount, 'is_percentage' => $delivery_discount->is_percentage, 'cap' => (double)$delivery_discount->cap, 'min_order_amount' => (double)$delivery_discount->rules->getMinOrderAmount()
                 ] : null;
                 $all_services = [];
                 foreach ($review->job->jobServices as $job_service) {
@@ -98,9 +117,8 @@ class CustomerController extends Controller
                     $upsell_calculation->setLocationService($location_service);
                     if ($service->isOptions()) {
                         if (count($option) == 0) continue;
-                        $service['option_prices'] = ['option' => $option,
-                            'price' => $price_calculation->setOption($option)->getUnitPrice(),
-                            'upsell_price' => $upsell_calculation->setOption($option)->getAllUpsellWithMinMaxQuantity()
+                        $service['option_prices'] = [
+                            'option' => $option, 'price' => $price_calculation->setOption($option)->getUnitPrice(), 'upsell_price' => $upsell_calculation->setOption($option)->getAllUpsellWithMinMaxQuantity()
                         ];
                         if (!$service['option_prices']['price']) continue;
                     } else {
@@ -108,9 +126,7 @@ class CustomerController extends Controller
                         $service['fixed_upsell_price'] = $upsell_calculation->getAllUpsellWithMinMaxQuantity();
                     }
                     $service['discount'] = $discount ? [
-                        'value' => (double)$discount->amount,
-                        'is_percentage' => $discount->isPercentage(),
-                        'cap' => (double)$discount->cap
+                        'value' => (double)$discount->amount, 'is_percentage' => $discount->isPercentage(), 'cap' => (double)$discount->cap
                     ] : null;
                     $service['id'] = $job_service->service->id;
                     $service['option'] = $option;
@@ -125,7 +141,7 @@ class CustomerController extends Controller
                 if (empty($all_services)) continue;
                 $data['category']['is_inspection_service'] = $all_services[0]->is_inspection_service;
                 $data['category']['services'] = $all_services;
-                $data['category']['max_order_amount'] = $data['category']['max_order_amount'] ? (double) $data['category']['max_order_amount'] : null;
+                $data['category']['max_order_amount'] = $data['category']['max_order_amount'] ? (double)$data['category']['max_order_amount'] : null;
                 $data['category']['app_thumb_sizes'] = getResizedUrls($data['category']['app_thumb'], 100, 100);
                 $data['rating'] = $review->rating;
                 $data['partner'] = $review->job->partnerOrder->partner;
@@ -137,7 +153,12 @@ class CustomerController extends Controller
         return api_response($request, null, 404);
     }
 
-    private function canThisServiceAvailableForOrderAgain($final, Job $job)
+    /**
+     * @param $final
+     * @param Job $job
+     * @return int
+     */
+    private function canThisServiceAvailableForOrderAgain($final, Job $job): int
     {
         if (count($final) == 0) return 0;
         $group_by_category = $final->groupBy('category.id');
@@ -166,7 +187,32 @@ class CustomerController extends Controller
                 if ($same == $count) return 1;
             }
         }
+
         return 0;
+    }
+
+    /**
+     * @param $customer
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getProfileCompletion($customer, Request $request): JsonResponse
+    {
+        $reward_action = RewardAction::where('event_name', 'profile_complete')->latest('id')->first();
+        $data = [];
+        $data['is_completed'] = $request->customer->is_completed;
+        $data['reward_active'] = 0;
+        if ($reward_action)
+        {
+            $reward = Reward::where('detail_id', $reward_action->id)->select('rewards.*')->get();
+            $decision = count($reward) > 0 ? (($reward[0]->start_time <= Carbon::now()) && ($reward[0]->end_time >= Carbon::now())) : null;
+            if ($decision && $data['is_completed'] == 0)  {
+                $data['reward_active'] = 1;
+                $data['not_complete_profile'] = "https://cdn-marketplacedev.s3.ap-south-1.amazonaws.com/sheba_xyz/images/png/sheba-credit-banner.png";
+            }
+        }
+
+        return api_response($request, $data, 200, ['data' => $data]);
 
     }
 }
