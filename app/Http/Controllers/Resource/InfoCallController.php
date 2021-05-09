@@ -171,11 +171,6 @@ class InfoCallController extends Controller
         if ($request->has('service_id')) $service_name = $service[0]['name'];
         else $service_name = $request->service_name;
         $profile_exists = Profile::select('id', 'name', 'address','email')->where('mobile', 'like', '%'.$request->mobile.'%')->get()->toArray();
-        if ($profile_exists) {
-            $customer = Customer::where('profile_id', $profile_exists[0]['id'])->get();
-            $profile = $customer->profile;
-        }
-        dd($profile);
         $data = [
             'priority' => 'High',
             'flag' => 'Red',
@@ -190,28 +185,16 @@ class InfoCallController extends Controller
             'follow_up_date' => Carbon::now()->addMinutes(30),
             'intended_closing_date' => Carbon::now()->addMinutes(30)
         ];
+        if ($profile_exists) {
+            $customer = Customer::where('profile_id', $profile_exists[0]['id'])->get();
+            $profile = $customer[0]->profile;
+            $data['customer_id'] = $customer[0]->id;
+            $data['customer_name'] = $profile->name;
+            $data['customer_email'] = $profile->email;
+            $data['customer_address'] = $profile->address;
+        }
         $info_call = $this->infoCallRepository->create($data);
         return api_response($request, $info_call, 200, ['message'=>'Successful','info_call' => $info_call]);
-//
-//        if ($profile_exists) {
-//            $customer = Customer::where('profile_id', $profile_exists[0]['id'])->get();
-//            $this->setModifier($customer[0]);
-//            $profile = $customer[0]->profile;
-//            $data = [
-//                'service_name' => $request->service_name,
-//                'customer_name' => $profile->name,
-//                'location_id' => $request->location_id,
-//                'customer_mobile' => $request->mobile,
-//                'customer_email' => !empty($profile->email) ? $profile->email : null,
-//                'customer_address' => !empty($profile->address) ? $profile->address : '',
-//                'status'=> Statuses::OPEN,
-//                'follow_up_date' => Carbon::now()->addMinutes(30),
-//                'intended_closing_date' => Carbon::now()->addMinutes(30)
-//            ];
-//
-//            $info_call = $customer[0]->infoCalls()->create($this->withCreateModificationField($data));
-//            $this->sendNotificationToSD($info_call);
-//        }
     }
     public function show($id)
     {
