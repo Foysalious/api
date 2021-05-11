@@ -167,7 +167,7 @@ class OrderService
 
     public function update()
     {
-        return $this->client->put('api/v1/partners/' . $this->partnerId. '/orders/' . (int)$this->orderId, $this->makeUpdateData());
+        return $this->client->put('api/v1/partners/' . $this->partnerId. '/orders/' . $this->orderId, $this->makeUpdateData(), false);
     }
 
     public function delete()
@@ -178,19 +178,32 @@ class OrderService
     private function makeUpdateData()
     {
         return [
-            ['name' => 'partner_id', 'contents' => $this->partnerId],
-            ['name' => 'customer_id', 'contents' => $this->customerId],
-            ['name' => 'emi_month', 'contents' => $this->emi_month],
-            ['name' => 'interest', 'contents' => $this->interest],
-            ['name' => 'bank_transaction_charge', 'contents' => $this->bank_transaction_charge],
-            ['name' => 'delivery_name', 'contents' => $this->delivery_name],
-            ['name' => 'delivery_mobile', 'contents' => $this->delivery_mobile],
-            ['name' => 'note', 'contents' => $this->note],
-            ['name' => 'voucher_id', 'contents' => $this->voucher_id],
-            ['name' => 'delivery_address', 'contents' => $this->deliveryAddress],
-            ['name' => 'delivery_charge', 'contents' => $this->deliveryCharge],
-            ['name' => 'sales_channel_id', 'contents' => $this->salesChannelId],
-            ['name' => 'skus', 'contents' => $this->skus]
+            'partner_id'                => $this->partnerId,
+            'customer_id'               => $this->customerId,
+            'emi_month'                 => $this->emi_month,
+            'interest'                  => $this->interest,
+            'bank_transaction_charge'   => $this->bank_transaction_charge,
+            'delivery_name'             => $this->delivery_name,
+            'delivery_mobile' => $this->delivery_mobile,
+            'note' => $this->note,
+            'voucher_id' => $this->voucher_id,
+            'delivery_address' => $this->deliveryAddress,
+            'delivery_charge' => $this->deliveryCharge,
+            'sales_channel_id' => $this->salesChannelId,
+            'skus' => $this->skus
+//            ['name' => 'partner_id', 'contents' => $this->partnerId],
+//            ['name' => 'customer_id', 'contents' => $this->customerId],
+//            ['name' => 'emi_month', 'contents' => $this->emi_month],
+//            ['name' => 'interest', 'contents' => $this->interest],
+//            ['name' => 'bank_transaction_charge', 'contents' => $this->bank_transaction_charge],
+//            ['name' => 'delivery_name', 'contents' => $this->delivery_name],
+//            ['name' => 'delivery_mobile', 'contents' => $this->delivery_mobile],
+//            ['name' => 'note', 'contents' => $this->note],
+//            ['name' => 'voucher_id', 'contents' => $this->voucher_id],
+//            ['name' => 'delivery_address', 'contents' => $this->deliveryAddress],
+//            ['name' => 'delivery_charge', 'contents' => $this->deliveryCharge],
+//            ['name' => 'sales_channel_id', 'contents' => $this->salesChannelId],
+//            ['name' => 'skus', 'contents' => $this->skus]
         ];
     }
 
