@@ -762,7 +762,10 @@ class AttendanceController extends Controller
             'half_day_leave_types_count' => $half_day_leave_types->count(),
             'half_day_leave_types' => $half_day_leave_types->pluck('title'),
             'half_day_initial_timings' => $this->getHalfDayTimings($business),
-            'is_grace_period_policy_enable' => $office_time->is_grace_period_policy_enable
+            'is_grace_period_policy_enable' => $office_time->is_grace_period_policy_enable,
+            'is_late_checkin_early_checkout_enable' => $office_time->is_late_checkin_early_checkout_policy_enable,
+            'is_for_late_checkin' => $office_time->is_for_late_checkin,
+            'is_for_early_checkout' => $office_time->is_for_early_checkout,
         ];
 
         return api_response($request, null, 200, ['office_settings_attendance' => $data]);
