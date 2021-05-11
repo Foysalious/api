@@ -372,7 +372,6 @@ class BusinessRoute
                     $api->post('/salary-breakdown/{id}', 'B2b\PayrollController@updateSalaryBreakdown');
                     $api->post('/component/{payroll_settings}', 'B2b\PayrollController@addComponent');
                     $api->post('/gross-component/{payroll_settings}', 'B2b\PayrollController@grossComponentAddUpdate');
-                    $api->delete('{payroll_settings}/component/{component}', 'B2b\PayrollController@deleteComponent');
                 });
             });
         });
