@@ -873,4 +873,17 @@ class AttendanceController extends Controller
 
         return api_response($request, $unpaid_leave_policy_rules, 200, ['unpaid_leave_policy_rules' => $unpaid_leave_policy_rules]);
     }
+
+    public function getLateCheckinEarlyCheckoutPolicy(Request $request)
+    {
+        $business = $request->business;
+        if (!$business) return api_response($request, null, 403, ['message' => 'You Are not authorized to show this settings']);
+        $checkin_checkout_policy = $business->checkinCheckoutPolicy;
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Collection($checkin_checkout_policy, new PolicyTransformer());
+        $checkin_checkout_policy_rules = $manager->createData($resource)->toArray()['data'];
+
+        return api_response($request, $checkin_checkout_policy_rules, 200, ['checkin_checkout_policy_rules' => $checkin_checkout_policy_rules]);
+    }
 }
