@@ -6,6 +6,7 @@ use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\GuzzleException;
 use Sheba\TopUp\Exception\GatewayTimeout;
+use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
 use Sheba\TopUp\Vendor\Response\PretupsResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 use Carbon\Carbon;
@@ -93,9 +94,9 @@ class Client
     public function recharge(TopUpOrder $topup_order): TopUpResponse
     {
         $vpn_response = $this->call($this->makeInputString($topup_order));
-        $rax_response = new PretupsResponse();
-        if ($vpn_response) $rax_response->setResponse($vpn_response);
-        return $rax_response;
+        $response = new PretupsResponse();
+        if ($vpn_response) $response->setResponse($vpn_response);
+        return $response;
     }
 
     private function makeInputString(TopUpOrder $topup_order)
@@ -109,7 +110,7 @@ class Client
         $input .= '<LOGINID></LOGINID>';
         $input .= '<PASSWORD></PASSWORD>';
         $input .= '<EXTCODE></EXTCODE>';
-        $input .= '<EXTREFNUM></EXTREFNUM>';
+        $input .= '<EXTREFNUM>' . $topup_order->getGatewayRefId() . '</EXTREFNUM>';
         $input .= "<MSISDN2>" . $topup_order->getOriginalMobile() . "</MSISDN2>";
         $input .= "<AMOUNT>" . ($topup_order->amount * $this->amountMultiplier) . "</AMOUNT>";
         $input .= "<LANGUAGE1>" . $this->language1 . "</LANGUAGE1>";
@@ -122,6 +123,38 @@ class Client
     private function getType($type)
     {
         return $type == 'prepaid' ? 'EXRCTRFREQ' : 'EXPPBREQ';
+    }
+
+    /**
+     * @param TopUpOrder $topup_order
+     * @return IpnResponse
+     * @throws Exception
+     * @throws GatewayTimeout
+     */
+    public function checkStatus(TopUpOrder $topup_order)
+    {
+        $vpn_response = $this->call($this->makeInputStringForStatus($topup_order));
+        $response = new PretupsResponse();
+        if ($vpn_response) $response->setResponse($vpn_response);
+        return $response->makeIpnResponse();
+    }
+
+    private function makeInputStringForStatus(TopUpOrder $topup_order)
+    {
+        $input = '<?xml version="1.0"?><COMMAND>';
+        $input .= "<TYPE>EXRCSTATREQ</TYPE>";
+        $input .= "<DATE>" . $topup_order->created_at->toDateTimeString() . "</DATE>";
+        $input .= "<EXTNWCODE>$this->EXTNWCODE</EXTNWCODE>";
+        $input .= "<MSISDN>$this->mId</MSISDN>";
+        $input .= "<PIN>$this->pin</PIN>";
+        $input .= '<LOGINID></LOGINID>';
+        $input .= '<PASSWORD></PASSWORD>';
+        $input .= '<EXTCODE></EXTCODE>';
+        $input .= '<EXTREFNUM>' . $topup_order->getGatewayRefId() . '</EXTREFNUM>';
+        $input .= "<TXNID>" . $topup_order->transaction_id . "</TXNID>";
+        $input .= "<LANGUAGE1>" . $this->language1 . "</LANGUAGE1>";
+        $input .= '</COMMAND>';
+        return $input;
     }
 
     /**

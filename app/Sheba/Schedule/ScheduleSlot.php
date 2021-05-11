@@ -104,7 +104,7 @@ class ScheduleSlot
             });
         }
         else $slots = $this->getShebaSlots();
-        
+
         $this->shebaSlots = $slots;
         if(!$this->shebaSlots->first()) return null;
         $start = $this->today->toDateString() . ' ' . $this->shebaSlots->first()->start;
