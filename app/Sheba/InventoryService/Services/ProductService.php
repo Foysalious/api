@@ -32,6 +32,7 @@ class ProductService
     protected $productDetails;
     private $offset;
     private $limit;
+    private $searchKey;
 
 
     public function __construct(InventoryServerClient $client)
@@ -219,10 +220,16 @@ class ProductService
         return $this;
     }
 
+    public function setSearchKey($searchKey)
+    {
+        $this->searchKey = $searchKey;
+        return $this;
+    }
+
 
     public function getAllProducts($partner_id)
     {
-        $url = 'api/v1/partners/' . $partner_id . '/products?offset='. $this->offset . '&limit='.$this->limit;
+        $url = 'api/v1/partners/' . $partner_id . '/products?offset='. $this->offset . '&limit='.$this->limit.'&q='. $this->searchKey;
         return $this->client->get($url);
     }
 
