@@ -148,7 +148,8 @@ class ProfileRepository
                     $info['has_changed_password'] = 1;
             }
 
-            $info['token'] = $this->getJwtToken($avatar, $from);
+//            $info['token'] = $this->getJwtToken($avatar, $from);
+            $info['auth_token'] = $this->getJwtToken($avatar, $from);
             return $info;
         }
 
