@@ -50,7 +50,8 @@ class CustomerJobController extends Controller
                             'discount' => ($amount > $total_price) ? $total_price : $amount,
                             'discount_percentage' => $discount_percentage,
                             'sheba_contribution' => $voucher->sheba_contribution,
-                            'partner_contribution' => $voucher->partner_contribution
+                            'partner_contribution' => $voucher->partner_contribution,
+                            'vendor_contribution' => $voucher->vendor_contribution,
                         ];
                         $job->update($this->withUpdateModificationField($voucher_data));
                     });
