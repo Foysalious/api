@@ -167,7 +167,7 @@ class OrderService
 
     public function update()
     {
-        return $this->client->put('api/v1/partners/' . $this->partnerId. '/orders/' . $this->orderId, $this->makeUpdateData());
+        return $this->client->put('api/v1/partners/' . $this->partnerId. '/orders/' . (int)$this->orderId, $this->makeUpdateData());
     }
 
     public function delete()
@@ -190,7 +190,6 @@ class OrderService
             ['name' => 'delivery_address', 'contents' => $this->deliveryAddress],
             ['name' => 'delivery_charge', 'contents' => $this->deliveryCharge],
             ['name' => 'sales_channel_id', 'contents' => $this->salesChannelId],
-            ['name' => 'status', 'contents' => $this->status],
             ['name' => 'skus', 'contents' => $this->skus]
         ];
     }
