@@ -19,7 +19,7 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         $partner = $request->auth_user->getPartner();
-        $products = $this->productService->getAllProducts($partner->id);
+        $products = $this->productService->setOffset($request->offset)->setLimit($request->limit)->setSearchKey($request->q)->getAllProducts($partner->id);
         return http_response($request, null, 200, $products);
     }
 

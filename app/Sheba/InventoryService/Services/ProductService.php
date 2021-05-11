@@ -30,6 +30,10 @@ class ProductService
     protected $discountAmount;
     protected $discountEndDate;
     protected $productDetails;
+    private $offset;
+    private $limit;
+    private $searchKey;
+
 
     public function __construct(InventoryServerClient $client)
     {
@@ -204,9 +208,28 @@ class ProductService
         return $this;
     }
 
+    public function setOffset($offset)
+    {
+        $this->offset = $offset;
+        return $this;
+    }
+
+    public function setLimit($limit)
+    {
+        $this->limit = $limit;
+        return $this;
+    }
+
+    public function setSearchKey($searchKey)
+    {
+        $this->searchKey = $searchKey;
+        return $this;
+    }
+
+
     public function getAllProducts($partner_id)
     {
-        $url = 'api/v1/partners/' . $partner_id . '/products';
+        $url = 'api/v1/partners/' . $partner_id . '/products?offset='. $this->offset . '&limit='.$this->limit.'&q='. $this->searchKey;
         return $this->client->get($url);
     }
 
@@ -278,5 +301,4 @@ class ProductService
     {
         return $this->client->delete('api/v1/partners/'.$this->partnerId.'/products/'.$this->productId);
     }
-
 }
