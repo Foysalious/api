@@ -9,6 +9,12 @@ class TestJob extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
 
+    public function __construct()
+    {
+        $this->queue = "test";
+        $this->connection = "test";
+    }
+
     /**
      * Execute the job.
      *
