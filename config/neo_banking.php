@@ -1,7 +1,7 @@
 <?php
 
 if (!function_exists('addressViews')) {
-    function addressViews($type)
+    function addressViews($type, $defaultCountry='')
     {
         return [
             [
@@ -45,7 +45,8 @@ if (!function_exists('addressViews')) {
                 'name'          => 'country_' . $type . '_address',
                 'id'            => 'country_' . $type . '_address',
                 'hint'          => 'দেশ',
-                'error_message' => 'দেশের নাম পূরণ আবশ্যক'
+                'error_message' => 'দেশের নাম পূরণ আবশ্যক',
+                'value'         => $defaultCountry,
             ]
         ];
     }
@@ -295,7 +296,8 @@ return [
                 'hint'          => 'arafat@gmail.com',
                 'error_message' => 'ই-মেইল আইডি পূরণ আবশ্যক',
                 'input_type'    => 'email',
-                'mandatory'     => true
+                'mandatory'     => true,
+                'purpose'       => 'আপনার প্রদত্ত এই ই-মেইল, প্রাইম ব্যাংক কর্তৃক ই-স্টেটমেন্ট ও ইন্টারনেট ব্যাংকিং সেবা প্রদানের উদ্দেশ্যে ব্যবহার করা হবে।',
             ],
             [
                 'field_type'    => 'editText',
@@ -435,6 +437,7 @@ return [
                 'title'         => 'প্রতিষ্ঠানের ধরণ',
                 'name'          => "organization_type_list",
                 'id'            => "organization_type_list",
+                'value'         => 'প্রোপ্রাইটরশিপ',
                 'hint'          => '',
                 'list_type'     => 'dialog',
                 'error_message' => 'প্রতিষ্ঠানের ধরণ পূরণ আবশ্যক',
@@ -452,19 +455,19 @@ return [
             ],
             [
                 'field_type'    => 'editText',
-                'title'         => 'বাৎসরিক আয়ের পরিমান',
-                'name'          => 'yearly_earning',
-                'id'            => 'yearly_earning',
+                'title'         => 'মাসিক আয়ের পরিমান *',
+                'name'          => 'monthly_income',
+                'id'            => 'monthly_income',
                 'hint'          => 'উদাহরণ: 10000',
-                'error_message' => 'বাৎসরিক আয়ের পরিমান পূরণ আবশ্যক',
-                'mandatory'     => false,
+                'error_message' => 'মাসিক আয়ের পরিমান পূরণ আবশ্যক',
+                'mandatory'     => true,
                 'input_type'    => 'number'
             ],
             [
                 'field_type'    => 'editText',
                 'title'         => 'সম্ভব্য মাসিক জমার পরিমান *',
-                'name'          => 'monthly_earning',
-                'id'            => 'monthly_earning',
+                'name'          => 'total_monthly_deposit',
+                'id'            => 'total_monthly_deposit',
                 'hint'          => 'উদাহরণ: 10000',
                 'error_message' => 'সম্ভব্য মাসিক জমার পরিমান পূরণ আবশ্যক',
                 'mandatory'     => true,
@@ -528,46 +531,84 @@ return [
                 'error_message' => 'নমিনীর মায়ের নাম পূরণ আবশ্যক'
             ],
             [
-                'field_type'    => 'editText',
-                'title'         => 'জাতীয় পরিচয়পত্র/পাসপোর্ট/জন্ম নিবন্ধন নাম্বার *',
-                'name'          => 'identification_number',
-                'id'            => 'identification_number',
-                'hint'          => 'এখানে লিখুন',
-                'error_message' => 'জাতীয় পরিচয়পত্র/পাসপোর্ট/জন্ম নিবন্ধন নাম্বার পূরণ আবশ্যক'
-            ],
-            [
-                'field_type' => 'radioGroup',
-                'title'      => '',
+                'field_type' => 'conditionalSelect',
+                'title'      => 'জাতীয় পরিচয়পত্র/পাসপোর্ট/জন্ম নিবন্ধন নাম্বার *',
+                'hint'       => 'সিলেক্ট করুন',
                 'name'       => 'identification_number_type',
                 'id'         => 'identification_number_type',
-                'mandatory'  => false,
+                'mandatory'  => true,
+                'error_message' => 'জাতীয় পরিচয়পত্র/পাসপোর্ট/জন্ম নিবন্ধন নাম্বার আবশ্যক',
                 'views'      => [
                     [
-                        'field_type' => 'radioButton',
+                        'field_type' => 'editText',
+                        'title' => 'জন্ম নিবন্ধন',
                         'name'       => 'birth_certificate_number',
                         'id'         => 'birth_certificate_number',
-                        'title'      => 'জন্ম নিবন্ধন নাম্বার',
-                        'mandatory'  => false,
-                        'value'      => 0
+                        'hint'      => 'জন্ম নিবন্ধন নাম্বার লিখুন',
+                        'mandatory'  => true,
+                        'error_message' => 'জন্ম নিবন্ধন নাম্বার আবশ্যক',
                     ],
                     [
-                        'field_type' => 'radioButton',
+                        'field_type' => 'editText',
+                        'title' => 'পাসপোর্ট',
                         'name'       => 'passport_number',
                         'id'         => 'passport_number',
-                        'title'      => 'পাসপোর্ট',
-                        'mandatory'  => false,
-                        'value'      => 0
+                        'hint'      => 'পাসপোর্ট নাম্বার লিখুন',
+                        'mandatory'  => true,
+                        'error_message' => 'পাসপোর্ট নাম্বার আবশ্যক',
                     ],
                     [
-                        'field_type' => 'radioButton',
+                        'field_type' => 'editText',
+                        'title'     => 'জাতীয় পরিচয়পত্র',
                         'name'       => 'nid_number',
                         'id'         => 'nid_number',
-                        'title'      => 'জাতীয় পরিচয়পত্র',
-                        'mandatory'  => false,
-                        'value'      => 0
+                        'hint'      => 'জাতীয় পরিচয়পত্র নাম্বার লিখুন',
+                        'mandatory'  => true,
+                        'error_message' => 'জাতীয় পরিচয়পত্র নাম্বার আবশ্যক',
                     ]
                 ]
             ],
+//            [
+//                'field_type'    => 'editText',
+//                'title'         => 'জাতীয় পরিচয়পত্র/পাসপোর্ট/জন্ম নিবন্ধন নাম্বার *',
+//                'name'          => 'identification_number',
+//                'id'            => 'identification_number',
+//                'hint'          => 'এখানে লিখুন',
+//                'error_message' => 'জাতীয় পরিচয়পত্র/পাসপোর্ট/জন্ম নিবন্ধন নাম্বার পূরণ আবশ্যক'
+//            ],
+//            [
+//                'field_type' => 'radioGroup',
+//                'title'      => '',
+//                'name'       => 'identification_number_type',
+//                'id'         => 'identification_number_type',
+//                'mandatory'  => false,
+//                'views'      => [
+//                    [
+//                        'field_type' => 'radioButton',
+//                        'name'       => 'birth_certificate_number',
+//                        'id'         => 'birth_certificate_number',
+//                        'title'      => 'জন্ম নিবন্ধন নাম্বার',
+//                        'mandatory'  => false,
+//                        'value'      => 0
+//                    ],
+//                    [
+//                        'field_type' => 'radioButton',
+//                        'name'       => 'passport_number',
+//                        'id'         => 'passport_number',
+//                        'title'      => 'পাসপোর্ট',
+//                        'mandatory'  => false,
+//                        'value'      => 0
+//                    ],
+//                    [
+//                        'field_type' => 'radioButton',
+//                        'name'       => 'nid_number',
+//                        'id'         => 'nid_number',
+//                        'title'      => 'জাতীয় পরিচয়পত্র',
+//                        'mandatory'  => false,
+//                        'value'      => 0
+//                    ]
+//                ]
+//            ],
             [
                 'field_type' => 'header',
                 'title'      => 'নমিনির স্থায়ী ঠিকানা ',
@@ -578,7 +619,7 @@ return [
                 'title'      => '',
                 'name'       => 'nominee_permanent_address',
                 'id'         => 'nominee_permanent_address',
-                'views'      => addressViews('nominee'),
+                'views'      => addressViews('nominee', 'Bangladesh'),
                 'mandatory'  => false
             ],
             [

@@ -163,5 +163,11 @@ class FormItemBuilder
     {
         return $this->initItem()->toArray();
     }
-
+    /**
+     * @return array
+     * @throws ReflectionException
+     */
+    private function conditionalSelect() {
+        return $this->multipleView();
+    }
 }
