@@ -4,7 +4,7 @@ class RejectReason
 {
     public function reasons()
     {
-        $reject_reasons = Reason::getReasons();
+        $reject_reasons = Reason::getReasonsV2();
         $reasons = [];
         foreach ($reject_reasons as $key => $reject_reason) {
             $reasons[] = [

@@ -157,21 +157,6 @@ class PayrollController extends Controller
         return api_response($request, null, 200);
     }
 
-    public function deleteComponent($business, $payroll_setting, $component, Request $request)
-    {
-        /** @var BusinessMember $business_member */
-        $business_member = $request->business_member;
-        if (!$business_member) return api_response($request, null, 401);
-        $payroll_setting = $this->payrollSettingRepository->find((int)$payroll_setting);
-        if (!$payroll_setting) return api_response($request, null, 404);
-        $payroll_component = $this->payrollComponentRepository->find((int)$component);
-        if (!$payroll_component) return api_response($request, null, 404);
-        if ($payroll_component->is_default) return api_response($request, null, 420);
-        $payroll_component->delete();
-
-        return api_response($request, null, 200);
-    }
-
     public function grossComponentAddUpdate($business, $payroll_setting, Request $request, Creator $creator, Updater $updater)
     {
         /** @var BusinessMember $business_member */
@@ -183,9 +168,10 @@ class PayrollController extends Controller
         $payroll_setting = $this->payrollSettingRepository->find((int)$payroll_setting);
         if (!$payroll_setting) return api_response($request, null, 404);
 
-        $this->payrollComponentRequester->setSetting($payroll_setting)->setGrossComponentAdd($request->added_data)->setGrossComponentUpdate($request->updated_data);
+        $this->payrollComponentRequester->setSetting($payroll_setting)->setGrossComponentAdd($request->added_data)->setGrossComponentUpdate($request->updated_data)->setGrossComponentDelete($request->delete_data);
         $creator->setPayrollComponentRequester($this->payrollComponentRequester)->create();
-        $updater->setPayrollComponentRequester($this->payrollComponentRequester)->Update();
+        $updater->setPayrollComponentRequester($this->payrollComponentRequester)->update();
+        $updater->setPayrollComponentRequester($this->payrollComponentRequester)->delete();
 
         return api_response($request, null, 200);
     }
