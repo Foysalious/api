@@ -16,6 +16,7 @@ use App\Repositories\ProfileRepository;
 use App\Repositories\ResourceJobRepository;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
+use App\Sheba\Partner\KYC\Statuses;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -216,14 +217,20 @@ class DashboardController extends Controller
         try {
             /** @var Partner $partner */
             $partner       = $request->partner;
+            /** @var Resource $resource */
+            $resource = $request->manager_resource;
+            $resource_status = $resource->status;
             $data = [
                 'name'                         => $partner->name,
                 'logo'                         => $partner->logo,
-                'status'                       => $partner->getStatusToCalculateAccess(),
-                'is_nid_verified'              =>(int)$request->manager_resource->profile->nid_verified ? true : false,
+                'resource_kyc_status'          => $resource_status,
+                'is_nid_verified'              => (bool)((int)$request->manager_resource->profile->nid_verified),
                 'is_webstore_published'        =>$partner->is_webstore_published,
                 'new_notification_count'       => $partner->notifications()->where('is_seen', '0')->count()
             ];
+            if ($resource_status === Statuses::VERIFIED){
+                $data['message_seen'] = (bool)((int)$resource->verification_message_seen);
+            }
             return api_response($request, $data, 200, ['data' => $data]);
         } catch (Throwable $e) {
             logError($e);
