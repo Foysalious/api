@@ -24,10 +24,9 @@
                         2. Use Your existing password
                     @endif
                     <br><br>
-                    You are ready to use digiGO app now. Please get guidance from your HR on how to use it.
-                    Moreover, to know it's features you can read this: <a target="_blank" href="https://www.sheba.xyz/blog/en/hr-work-is-now-hassle-free/">Article </a>
+                    We have the video tutorials ready for you to get started, check them out here: <a target="_blank" href="https://www.youtube.com/watch?v=i_w8iN2Q-uk&list=PLN1V1IQjMKZ0XiPJRUuhWlEFXtRCpl3r1">Tutorial </a>
                     <br><br>
-                    <strong>Regards,<br>sBusiness Team</strong>
+                    <strong>Regards,<br>Team sBusiness.xyz</strong>
                 </p>
             </td>
         </tr>
