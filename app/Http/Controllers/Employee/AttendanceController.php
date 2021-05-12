@@ -145,8 +145,10 @@ class AttendanceController extends Controller
         /** @var Business $business */
         $business = $this->getBusiness($request);
         $attendance_common_info->setLat($request->lat)->setLng($request->lng);
+        $is_in_wifi_area = $attendance_common_info->isInWifiArea($business) ? 1 : 0;
         $data = [
-            'is_in_wifi_area' => $attendance_common_info->isInWifiArea($business) ? 1 : 0,
+            'is_in_wifi_area' => $is_in_wifi_area,
+            'which_office' => $is_in_wifi_area ? $attendance_common_info->whichOffice($business) : null,
             'address' => $attendance_common_info->getAddress()
         ];
 
