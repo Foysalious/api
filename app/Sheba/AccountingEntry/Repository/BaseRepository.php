@@ -2,7 +2,9 @@
 
 
 use App\Models\PartnerPosCustomer;
+use App\Models\PosCustomer;
 use Illuminate\Http\Request;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
@@ -24,11 +26,17 @@ class BaseRepository
         $this->client = $client;
     }
 
+    /**
+     * @throws AccountingEntryServerError
+     */
     public function getCustomer(Request $request)
     {
         $partner_pos_customer = PartnerPosCustomer::byPartner($request->partner->id)->where('customer_id', $request->customer_id)->with(['customer'])->first();
-        if ( $request->has('customer_id') && empty($partner_pos_customer))
+        if ( $request->has('customer_id') && empty($partner_pos_customer)){
+            $customer = PosCustomer::find($request->customer_id);
+            if(!$customer) throw new AccountingEntryServerError('pos customer not available', 404);
             $partner_pos_customer = PartnerPosCustomer::create(['partner_id' => $request->partner->id, 'customer_id' => $request->customer_id]);
+        }
 
         if ($partner_pos_customer) {
             $request['customer_id'] = $partner_pos_customer->customer_id;
