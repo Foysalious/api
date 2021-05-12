@@ -47,8 +47,8 @@ class Route
                     $api->delete('/', 'Inventory\ProductController@destroy');
                 });
             });
-            $api->group(['prefix' => 'category-products'], function ($api) {
-                $api->get('/', 'Inventory\CategoryProductController@getProducts');
+            $api->group(['prefix' => 'webstore'], function ($api) {
+                $api->get('products', 'Inventory\ProductController@getWebstoreProducts');
             });
             $api->group(['prefix' => 'categories'], function ($api) {
                 $api->get('/', 'Inventory\CategoryController@index');
