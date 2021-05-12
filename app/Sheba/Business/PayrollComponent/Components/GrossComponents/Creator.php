@@ -37,7 +37,7 @@ class Creator
     public function makeData()
     {
         $payroll_settings = $this->payrollComponentRequester->getSetting();
-        $gross_component_add = $this->payrollComponentRequester->grossComponentAdd;
+        $gross_component_add = $this->payrollComponentRequester->getGrossComponentAdd();
         if ($gross_component_add)
             foreach ($gross_component_add as $component) {
                 $this->grossComponentData = [

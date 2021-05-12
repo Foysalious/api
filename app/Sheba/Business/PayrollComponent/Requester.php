@@ -13,8 +13,9 @@ class Requester
     private $updateDeductionComponent;
     private $addDeductionComponent;
     private $error =  false;
-    public $grossComponentAdd;
-    public $grossComponentUpdate;
+    private $grossComponentAdd;
+    private $grossComponentUpdate;
+    private $grossComponentDelete;
 
     public function setName($name)
     {
@@ -106,10 +107,30 @@ class Requester
         $this->grossComponentAdd = json_decode($gross_component_add, 1);
         return $this;
     }
+    public function getGrossComponentAdd()
+    {
+        return $this->grossComponentAdd;
+    }
 
     public function setGrossComponentUpdate($gross_component_update)
     {
         $this->grossComponentUpdate = json_decode($gross_component_update, 1);
         return $this;
+    }
+
+    public function getGrossComponentUpdate()
+    {
+        return $this->grossComponentUpdate;
+    }
+
+    public function setGrossComponentDelete($gross_component_delete)
+    {
+        $this->grossComponentDelete = json_decode($gross_component_delete, 1);
+        return $this;
+    }
+
+    public function getGrossComponentDelete()
+    {
+        return $this->grossComponentDelete;
     }
 }
