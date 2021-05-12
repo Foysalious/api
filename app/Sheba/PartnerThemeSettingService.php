@@ -40,7 +40,7 @@ class PartnerThemeSettingService
     {
         $client = new \GuzzleHttp\Client();
         $data = $this->makeData();
-        return $client->post('http://localhost:3000/partner-settings', [
+        return $client->post('https://settings-smanager-webstore.dev-sheba.xyz/partner-settings', [
             'form_params' =>
                 $data
             ,
