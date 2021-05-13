@@ -24,6 +24,7 @@ use Sheba\Transport\TransportAgent;
 use Sheba\Transport\TransportTicketTransaction;
 use Sheba\Voucher\Contracts\CanApplyVoucher;
 use Sheba\Voucher\VoucherGeneratorTrait;
+use Sheba\Dal\InfoCall\InfoCall;
 
 class Customer extends Authenticatable implements Rechargable, Rewardable, TopUpAgent, MovieAgent, TransportAgent, CanApplyVoucher, PayableUser, HasWalletTransaction, HasWallet
 {
