@@ -270,6 +270,77 @@ return [
                 'mandatory'  => false,
                 'views'      => addressViews('permanent')
             ],
+            [
+                'field_type' => 'header',
+                'title'      => 'ব্রাঞ্চ তথ্য',
+                'mandatory'  => false
+            ],
+            [
+                'field_type'    => 'dropdown',
+                'title'         => 'ব্রাঞ্চ কোড *',
+                'name'          => 'branch_code',
+                'id'            => 'branch_code',
+                'hint'          => 'এইখানে সিলেক্ট করুন',
+                'list_type'     => 'new_page_radio',
+                'error_message' => 'ব্রাঞ্চ কোড পূরণ আবশ্যক'
+            ],
+            [
+                'field_type' => 'header',
+                'title'      => 'PEP/ IP তথ্য',
+                'mandatory'  => false
+            ],
+            [
+                'field_type' => 'radioGroup',
+                'title'      => 'আপনি কি একজন PEP/ IP / বৈদেশিক সংস্থার নির্বাহী /ঊচ্চ  পদস্থ কর্মকর্তা? *',
+                'name'       => 'pep_ip_status',
+                'id'         => 'pep_ip_status',
+                'value'      => 'অপারেশনের ধরণ ',
+                'mandatory'  => false,
+                'views'      => [
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'pep_ip_status_yes',
+                        'id'         => 'pep_ip_status_yes',
+                        'title'      => 'হ্যাঁ',
+                        'mandatory'  => false,
+                        'value'      => 0
+                    ],
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'pep_ip_status_no',
+                        'id'         => 'pep_ip_status_no',
+                        'title'      => 'না',
+                        'mandatory'  => false,
+                        'value'      => 0
+                    ]
+                ]
+            ],
+            [
+                'field_type' => 'radioGroup',
+                'title'      => 'আপনি কি একজন PEP/ IP  / বৈদেশিক সংস্থার নির্বাহী / ঊচ্চ পদস্থ কর্মকর্তার সাথে সংশ্লিষ্ট সহযোগী অথবা পারিবারিক সদস্য? *',
+                'name'       => 'pep_ip_relation',
+                'id'         => 'pep_ip_relation',
+                'value'      => 'অপারেশনের ধরণ ',
+                'mandatory'  => false,
+                'views'      => [
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'pep_ip_relation_yes',
+                        'id'         => 'pep_ip_relation_yes',
+                        'title'      => 'হ্যাঁ',
+                        'mandatory'  => false,
+                        'value'      => 0
+                    ],
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'pep_ip_relation_no',
+                        'id'         => 'pep_ip_relation_no',
+                        'title'      => 'না',
+                        'mandatory'  => false,
+                        'value'      => 0
+                    ]
+                ]
+            ]
         ],
         'institution' => [
             [
