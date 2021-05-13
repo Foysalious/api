@@ -340,7 +340,47 @@ return [
                         'value'      => 0
                     ]
                 ]
-            ]
+            ],
+            [
+                'field_type'    => 'checkbox',
+                'name'          => 'pep_ip_definition_read',
+                'id'            => 'pep_ip_definition_read',
+                "error_message" => "",
+                "title"         => 'পেপ / আই পি এর সংজ্ঞা আমি পড়েছি এবং বুঝেছি',
+                'value'         => 0,
+                'mandatory'     => false
+            ],
+            [
+                'field_type' => 'header',
+                'title'      => 'FATCA তথ্য',
+                'mandatory'  => false
+            ],
+            [
+                'field_type' => 'radioGroup',
+                'title'      => 'আপনি কি যুক্তরাষ্ট্রের সাথে সম্পৃক্ত (বসবাসকারী, নাগরিক, গ্রীন কার্ডধারী, যুক্তরাষ্ট্র / যুক্তরাষ্ট্রের মালিকানাধীন প্রতিষ্ঠান) *',
+                'name'       => 'fatca_information',
+                'id'         => 'fatca_information',
+                'value'      => 'অপারেশনের ধরণ ',
+                'mandatory'  => false,
+                'views'      => [
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'fatca_information_yes',
+                        'id'         => 'fatca_information_yes',
+                        'title'      => 'হ্যাঁ',
+                        'mandatory'  => false,
+                        'value'      => 0
+                    ],
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'fatca_information_no',
+                        'id'         => 'fatca_information_no',
+                        'title'      => 'না',
+                        'mandatory'  => false,
+                        'value'      => 0
+                    ]
+                ]
+            ],
         ],
         'institution' => [
             [
