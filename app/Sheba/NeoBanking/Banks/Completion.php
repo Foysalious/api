@@ -66,7 +66,8 @@ class Completion
     private function setGigaTechData()
     {
         $this->mobile = str_replace('+88', '', $this->mobile);
-        $this->gigatech_data = $this->bank->getGigatechKycStatus(["mobile" => $this->mobile]);
+//        $this->gigatech_data = $this->bank->getGigatechKycStatus(["mobile" => $this->mobile]);
+        $this->gigatech_data = 1;
         return $this;
     }
 
