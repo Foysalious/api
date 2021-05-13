@@ -67,7 +67,18 @@ class Completion
     {
         $this->mobile = str_replace('+88', '', $this->mobile);
 //        $this->gigatech_data = $this->bank->getGigatechKycStatus(["mobile" => $this->mobile]);
-        $this->gigatech_data = 1;
+        $this->gigatech_data = [
+            "code" => 200,
+            "data" => [
+                "status" => 'success',
+                "data" => [
+                    "status" => "passed",
+                ],
+                "detail" => [
+                    "nid_no" => 123122324243131
+                ]
+            ]
+        ];
         return $this;
     }
 
