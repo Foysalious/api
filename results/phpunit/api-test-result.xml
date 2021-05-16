@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Application Test Suite" tests="1" assertions="1" failures="0" errors="0" time="4.894866">
+    <testsuite name="Tests\Feature\TopUp\SbusinessSingleTopupTest" file="/var/www/tests/Feature/TopUp/SbusinessSingleTopupTest.php" tests="1" assertions="1" failures="0" errors="0" time="4.894866">
+      <testcase name="testOneBusinessMemberTopUpRequestCreateOneTopUpOrder" class="Tests\Feature\TopUp\SbusinessSingleTopupTest" file="/var/www/tests/Feature/TopUp/SbusinessSingleTopupTest.php" line="520" assertions="1" time="4.894866"/>
+    </testsuite>
+  </testsuite>
+</testsuites>
