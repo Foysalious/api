@@ -15,14 +15,19 @@ class OrderVoucherData
         return (double)$this->result['original_amount'];
     }
 
+    public function getPartnerContribution()
+    {
+        return (double)$this->result['voucher']['partner_contribution'];
+    }
+
     public function getShebaContribution()
     {
         return (double)$this->result['voucher']['sheba_contribution'];
     }
 
-    public function getPartnerContribution()
+    public function getVendorContribution()
     {
-        return (double)$this->result['voucher']['partner_contribution'];
+        return (double)$this->result['voucher']['vendor_contribution'];
     }
 
     public function getDiscountPercentage()

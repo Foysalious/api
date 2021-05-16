@@ -211,6 +211,9 @@ class Route
             $api->get('service-price-calculate', 'Service\ServicePricingController@getCalculatedPrice');
             $api->post('due-tracker/create-pos-order-payment', 'Pos\DueTrackerController@createPosOrderPayment');
             $api->delete('due-tracker/remove-pos-order-payment/{pos_order_id}', 'Pos\DueTrackerController@removePosOrderPayment');
+            $api->group(['prefix' => 'voucher', 'middleware' => ['vendor.auth']], function ($api) {
+                $api->post('/vendor', 'VoucherController@voucherAgainstVendor');
+            });
         });
         return $api;
     }
