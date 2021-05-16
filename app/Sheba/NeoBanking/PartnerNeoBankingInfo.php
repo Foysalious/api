@@ -35,7 +35,6 @@ class PartnerNeoBankingInfo
                 'birth_date' =>  Carbon::parse($nidSelfie->dob)->format('d-m-Y'),
                 'father_name' => $nidSelfie->father_name,
                 'mother_name' => $nidSelfie->mother_name,
-                'husband_or_wife_name' => $nidSelfie->spouse_name,
                 'nid_passport_birth_cer_number' => $nidSelfie->nid_no,
             ];
         }
