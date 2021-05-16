@@ -13,6 +13,7 @@ class GrossSalaryBreakdownCalculate
     private $componentPercentage;
     private $totalAmountPerComponent;
     private $grossSalaryBreakdownWithTotalAmount;
+    private $totalPercentage;
 
     public function __construct()
     {
@@ -31,14 +32,17 @@ class GrossSalaryBreakdownCalculate
         $payroll_components = $payroll_setting->components()->where('type', Type::GROSS)->get();
         $payroll_component_by_target = $payroll_setting->components()->where('type', Type::GROSS)->where('target_id', $business_member->id)->get();
         if ($payroll_component_by_target) $gross_components = $this->makeGrossComponentCollection($payroll_components, $payroll_component_by_target);
+        $salary = $business_member->salary->gross_salary;
         $data = [];
         foreach ($gross_components as $payroll_component) {
+            $percentage = floatValFormat(json_decode($payroll_component->setting, 1)['percentage']);
             array_push($data, [
                 'id' => $payroll_component->id,
                 'payroll_setting_id' => $payroll_component->payroll_setting_id,
                 'name' => $payroll_component->name,
                 'title' => $payroll_component->is_default ? Components::getComponents($payroll_component->name)['value'] : $payroll_component->value,
-                'percentage' => json_decode($payroll_component->setting, 1)['percentage'],
+                'percentage' => $percentage,
+                'amount' => $this->percentageToAmountCalculation($salary, $percentage),
                 'type' => $payroll_component->type,
                 'is_default' => $payroll_component->is_default,
                 'is_active' => $payroll_component->is_active,
@@ -46,6 +50,7 @@ class GrossSalaryBreakdownCalculate
                 'is_overwritten' => $payroll_component->target_id == $business_member->id ? 1 : 0
             ]);
         }
+
         return $data;
     }
 
@@ -89,5 +94,15 @@ class GrossSalaryBreakdownCalculate
             });
         }
         return $payroll_components->merge($payroll_component_by_target);
+    }
+
+    public function getTotalPercentage()
+    {
+        return $this->totalPercentage;
+    }
+
+    private function percentageToAmountCalculation($gross_salary, $percentage)
+    {
+        return floatValFormat(($gross_salary * $percentage) / 100);
     }
 }
