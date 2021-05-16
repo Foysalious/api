@@ -80,4 +80,16 @@ class DueTrackerController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function details(Request $request, $entry_id) {
+        try {
+            $data = $this->dueTrackerRepo->setPartner($request->partner)->setEntryId($entry_id)->entryDetails();
+            return api_response($request, null, 200, ['data' => $data]);
+        } catch (AccountingEntryServerError $e) {
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
+    }
 }

@@ -29,7 +29,7 @@ class BaseRepository
     /**
      * @throws AccountingEntryServerError
      */
-    public function getCustomer(Request $request)
+    public function getCustomer($request)
     {
         $partner_pos_customer = PartnerPosCustomer::byPartner($request->partner->id)->where('customer_id', $request->customer_id)->with(['customer'])->first();
         if ( $request->has('customer_id') && empty($partner_pos_customer)){
@@ -45,7 +45,7 @@ class BaseRepository
         return $request;
     }
 
-    public function uploadAttachments(Request $request)
+    public function uploadAttachments($request)
     {
         $attachments = [];
         if ($request->hasFile('attachments')) {
