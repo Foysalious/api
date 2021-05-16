@@ -10,7 +10,10 @@ class EmployeeRoute
                 $api->get('/', 'Employee\EmployeeController@me');
                 $api->post('/', 'Employee\EmployeeController@updateMe');
                 $api->post('basic', 'Employee\EmployeeController@updateBasicInformation');
+            });
+            $api->group(['prefix' => 'payroll'], function ($api) {
                 $api->get('payslip', 'Employee\PayrollController@downloadPayslip');
+                $api->get('disbursed-month', 'Employee\PayrollController@disbursedMonth');
             });
             //$api->post('password', 'Employee\EmployeeController@updateMyPassword');
             $api->get('dashboard', 'Employee\EmployeeController@getDashboard');
