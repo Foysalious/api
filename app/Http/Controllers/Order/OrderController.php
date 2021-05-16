@@ -42,7 +42,7 @@ class OrderController extends Controller
     {
         try {
             $request->merge(['mobile' => formatMobile(preg_replace('/\b \b|-/', '', $request->mobile))]);
-            
+
             $this->validate($request, [
                 'name' => 'required|string',
                 'services' => 'required|string',
