@@ -184,6 +184,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
 
         $gross_salary_breakdown ['breakdown'] = $payroll_percentage_breakdown;
         $gross_salary_breakdown['gross_salary'] = $salary ? floatValFormat($salary->gross_salary) : null;
+        $gross_salary_breakdown['gross_salary_percentage'] = 100;
         $gross_salary_breakdown['gross_salary_log'] = $this->getSalaryLog($business_member);
         $gross_salary_breakdown['gross_salary_completion'] = $salary_completion;
         return $gross_salary_breakdown;
