@@ -52,6 +52,7 @@ class OrderController extends Controller
      */
     public function store(OrderPlaceRequest $request, OrderAdapter $order_adapter)
     {
+        $request->merge(['mobile' => formatMobile(preg_replace('/\b \b|-/g', '', $request->mobile))]);
         $this->setModifierFromRequest($request);
         $order = $request->buildOrderPlace()->create();
         if (!$order) return api_response($request, null, 500);
