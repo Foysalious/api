@@ -41,7 +41,7 @@ class OrderController extends Controller
     public function store(Request $request, OrderPlace $order_place, OrderAdapter $order_adapter, UserAgentInformation $userAgentInformation)
     {
         try {
-            $request->merge(['mobile' => formatMobile(str_replace(' ', '', $request->mobile))]);
+            $request->merge(['mobile' => formatMobile(preg_replace('/\b \b|-/g', '', $request->mobile))]);
             $this->validate($request, [
                 'name' => 'required|string',
                 'services' => 'required|string',
