@@ -14,14 +14,18 @@ class Gateway extends CampaignEventParameter
     public function check(Builder $query)
     {
         if ($this->value != null) {
+            $raw = '( ';
             foreach ($this->value as $key=>$each ){
                 if($key == 0){
-                    $query->where('payments.transaction_id', 'like', '%' . $each . '%' );
+                    $raw .= 'payments.transaction_id like "%' . $each . '%" ';
                 } else {
-                    $query->orWhere('payments.transaction_id', 'like', '%' . $each . '%' );
+                    $raw .= ' or payments.transaction_id like "%' . $each . '%"';
                 }
             }
+            $raw .= ' )';
+            $query->whereRaw($raw);
         }
+
     }
 
     public function validate()
