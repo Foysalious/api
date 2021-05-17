@@ -72,7 +72,7 @@ $factory_classes = [
     BusinessMemberFactory::class,
     BusinessHolidayFactory::class,
     PartnerBonus::class,
-    CategoryLocationFactory::class
+    CategoryLocationFactory::class,
 ];
 
 foreach ($factory_classes as $factory_class) {

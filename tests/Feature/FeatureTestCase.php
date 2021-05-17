@@ -62,6 +62,8 @@ class FeatureTestCase extends TestCase
      */
     protected $business_member;
 
+
+
     public function setUp()
     {
         parent::setUp();
