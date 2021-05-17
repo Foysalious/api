@@ -1,2 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites/>
+<testsuites>
+  <testsuite name="Application Test Suite" tests="1" assertions="1" failures="0" errors="0" time="0.860376">
+    <testsuite name="Tests\Feature\OrderManagement\OngoingOrderDetailsApiTest" file="/var/www/tests/Feature/OrderManagement/OngoingOrderDetailsApiTest.php" tests="1" assertions="1" failures="0" errors="0" time="0.860376">
+      <testcase name="testOngoingOrderServiceQuantity" class="Tests\Feature\OrderManagement\OngoingOrderDetailsApiTest" file="/var/www/tests/Feature/OrderManagement/OngoingOrderDetailsApiTest.php" line="81" assertions="1" time="0.860376"/>
+    </testsuite>
+  </testsuite>
+</testsuites>
