@@ -30,7 +30,7 @@ class AccountingRepository extends BaseRepository
     public function storeEntry(Request $request, $type) {
         $this->getCustomer($request);
         $this->setModifier($request->partner);
-        $data     = $this->createEntryData($request, $type);
+        $data     = $this->createEntryData($request, $type, $request->source_id);
         $url = "api/entries/";
         try {
             return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
