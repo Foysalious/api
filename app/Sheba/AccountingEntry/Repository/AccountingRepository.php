@@ -52,7 +52,7 @@ class AccountingRepository extends BaseRepository
         $data['source_type']        = $type;
         $data['source_id']          = $type_id;
         $data['note']               = $request->note;
-        $data['amount_cleared']     = $this->isValidAmountClear($request) ? $request->amount_cleared : null;
+        $data['amount_cleared']     = $request->amount_cleared;
         $data['debit_account_key']  = $request->from_account_key;
         $data['credit_account_key'] = $request->to_account_key;
         $data['customer_id']        = $request->customer_id;
