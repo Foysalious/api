@@ -5,6 +5,7 @@ class Requester
 {
     private $packagesForAdd;
     private $packagesForUpdate;
+    private $packageDeleteData;
 
     public function setPackage($packages)
     {
@@ -23,5 +24,16 @@ class Requester
     public function getPackagesForUpdate()
     {
         return $this->packagesForUpdate;
+    }
+
+    public function setPackageDelete($package_delete_data)
+    {
+        $this->packageDeleteData = json_decode($package_delete_data,1);
+        return $this;
+    }
+
+    public function getPackageDelete()
+    {
+        return $this->packageDeleteData;
     }
 }

@@ -31,8 +31,20 @@ class Updater
         });
     }
 
+    public function delete()
+    {
+        if (!$this->packageRequester) return;
+        foreach ($this->packageRequester as $package) {
+            $existing_package = $this->payrollComponentPackageRepository->find($package);
+            if (!$existing_package) continue;
+            $this->payrollComponentPackageRepository->delete($existing_package);
+        }
+        return true;
+    }
+
     private function makeData()
     {
+        if(!$this->packageRequester) return;
         foreach ($this->packageRequester as $packages) {
             $existing_package = $this->payrollComponentPackageRepository->find($packages['id']);
             $data = [
