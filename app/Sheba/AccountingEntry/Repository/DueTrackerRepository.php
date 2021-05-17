@@ -71,4 +71,13 @@ class DueTrackerRepository extends BaseRepository
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
     }
+
+    public function entryDetails() {
+        try {
+            $url = "api/entries/".$this->entry_id;
+            return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
+        } catch (AccountingEntryServerError $e) {
+            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+        }
+    }
 }

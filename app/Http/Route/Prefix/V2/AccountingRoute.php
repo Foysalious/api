@@ -27,6 +27,9 @@ class AccountingRoute
                 $api->get('due-collection-balance', 'Accounting\\HomepageController@getDueCollectionBalance');
                 $api->get('account-list-balance', 'Accounting\\HomepageController@getAccountListBalance');
             });
+            $api->group(['prefix' => 'entries'], function ($api) {
+                $api->get('/{entry_id}', 'Accounting\\DueTrackerController@details');
+            });
         });
     }
 }

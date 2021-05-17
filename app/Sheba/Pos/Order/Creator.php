@@ -194,7 +194,7 @@ class Creator
 
         $this->voucherCalculation($order);
         $this->resolvePaymentMethod();
-        $this->storeIncome($order);
+//        $this->storeIncome($order);
         $this->storeJournal($order);
         return $order;
     }
@@ -372,7 +372,8 @@ class Creator
             "amount_cleared"     => $order->getPaid(),
             "inventory_products" => $this->getInventoryProducts($services),
             "total_discount"     => $order_discount,
-            "note"               => $order->sales_channel == SalesChannels::WEBSTORE ? SalesChannels::WEBSTORE : SalesChannels::POS
+            "note"               => $order->sales_channel == SalesChannels::WEBSTORE ? SalesChannels::WEBSTORE : SalesChannels::POS,
+            "source_id"          => $order->id
         ]);
     }
 
@@ -388,7 +389,6 @@ class Creator
             $original_service = ($service->service);
             $sellingPrice = isset($requested_service[$key]['updated_price']) && $requested_service[$key]['updated_price'] ? $requested_service[$key]['updated_price'] : $original_service->price;
             $unitPrice = $original_service->cost ?? $sellingPrice;
-
             $inventory_products[] = [
                 "id"           => $original_service->id,
                 "name"         => $original_service->name,

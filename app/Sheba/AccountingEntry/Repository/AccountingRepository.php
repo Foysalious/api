@@ -30,7 +30,7 @@ class AccountingRepository extends BaseRepository
     public function storeEntry(Request $request, $type) {
         $this->getCustomer($request);
         $this->setModifier($request->partner);
-        $data     = $this->createEntryData($request, $type);
+        $data     = $this->createEntryData($request, $type, $request->source_id);
         $url = "api/entries/";
         try {
             return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
@@ -40,12 +40,12 @@ class AccountingRepository extends BaseRepository
     }
 
     /**
-     * @param Request $request
+     * @param $request
      * @param $type
      * @param null $type_id
      * @return array
      */
-    private function createEntryData(Request $request, $type, $type_id = null)
+    private function createEntryData($request, $type, $type_id = null): array
     {
         $data['created_from']       = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
         $data['amount']             = (double)$request->amount;
@@ -60,7 +60,14 @@ class AccountingRepository extends BaseRepository
         $data['inventory_products'] = $request->inventory_products;
         $data['entry_at']           = $request->date ?: Carbon::now()->format('Y-m-d H:i:s');
         $data['attachments']        = $this->uploadAttachments($request);
+        $data['total_discount']     = (double)$request->total_discount;
         return $data;
+    }
+
+    private function isValidAmountClear($request): bool
+    {
+        if ($request->amount_cleared && $request->amount_cleared != 0 ) return true;
+        return false;
     }
 
     private function createJournalData(Request $request, $source_type, $source_id)
