@@ -8,6 +8,7 @@ class Route
         $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
             $api->get('/channels', "Inventory\ChannelController@index");
             $api->get('/units', "Inventory\UnitController@index");
+            $api->get('/partners/{sub_domain}', "Webstore\PartnerController@show");
         });
 
    $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers', 'middleware' => ['jwtAccessToken']], function ($api) {
