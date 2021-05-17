@@ -98,9 +98,9 @@ class SslBuilder
 
         if ($payment_link->isForMissionSaveBangladesh()) return new Donation();
         /** Emi link moved from ssl to Port wallet */
+        if (self::isPortWalletFailed($payable)) return new DefaultStore();
         if ($payment_link->isEmi()) throw new InvalidPaymentMethod("SSL is not used for general payment links");
 
-        if (self::isPortWalletFailed($payable)) return new DefaultStore();
 
         throw new InvalidPaymentMethod("SSL is not used for general payment links.");
     }
