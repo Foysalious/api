@@ -100,8 +100,8 @@ class Event extends Campaign
     {
         $this->initiateQuery();
         $this->rule->setValues();
-        $this->filterAffiliate( $rewardable );
         $this->rule->check($this->query);
+        $this->filterAffiliate( $rewardable );
         return $this->query->get();
     }
 

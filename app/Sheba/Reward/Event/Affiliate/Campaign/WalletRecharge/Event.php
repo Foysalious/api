@@ -17,7 +17,7 @@ class Event extends Campaign
 {
     private $query;
 
-    private function initiateQuery()
+    private function initiateQuery($participated_all = true)
     {
         $timeFrame = $this->timeFrame;
         $from = $timeFrame->start->toDateString();
@@ -56,7 +56,7 @@ class Event extends Campaign
     {
         $query_result = $this->getTotalRechargedAmount( $rewardable );
         $progress = [
-            'target' => number_format($this->rule->target->value, 2),
+            'target' => (string) $this->rule->target->value,
         ];
         if ( $query_result->count() > 0 ) {
             $total_amount = $query_result[0]->total_amount;
@@ -101,13 +101,13 @@ class Event extends Campaign
     {
         $this->initiateQuery();
         $this->rule->setValues();
-        $this->filterAffiliate( $rewardable );
         $this->rule->check($this->query);
+        $this->filterAffiliate( $rewardable );
         return $this->query->get();
     }
 
     private function filterAffiliate(Rewardable $rewardable)
     {
-        $this->query->where('user_id', $rewardable->id );
+        $this->query = $this->query->where('user_id', $rewardable->id );
     }
 }
