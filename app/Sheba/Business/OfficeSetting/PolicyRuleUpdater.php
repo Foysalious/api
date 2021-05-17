@@ -90,6 +90,7 @@ class PolicyRuleUpdater
         if (empty($delete_rules)) return;
         foreach ($delete_rules as $delete_rule) {
             $existing_rule = $this->officePolicyRuleRepository->find($delete_rule);
+            if (!$existing_rule) continue;
             $this->officePolicyRuleRepository->delete($existing_rule);
         }
         return true;
