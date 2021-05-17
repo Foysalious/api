@@ -67,7 +67,7 @@ class Updater
     {
         $this->makeData();
         DB::transaction(function () {
-            if ($this->oldSalary != $this->salary->gross_salary) {
+            if ($this->oldSalary != $this->salaryRequest->getGrossSalary()) {
                 $this->salaryRepository->update($this->salary, $this->salaryData);
                 $this->salaryLogCreate();
             }
