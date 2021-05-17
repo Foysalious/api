@@ -7,17 +7,13 @@ use App\Sheba\PosOrderService\PosOrderServerClient;
 class PosOrderResolver
 {
     private $orderId;
-    private $posOrderType;
     /**  @var PosOrderServerClient */
     private $client;
-    /** @var \Sheba\Pos\Order\PosOrder */
-    private $posOrder;
     private $order;
 
-    public function __construct(PosOrderServerClient $client, \Sheba\Pos\Order\PosOrder $posOrder)
+    public function __construct(PosOrderServerClient $client)
     {
         $this->client = $client;
-        $this->posOrder = $posOrder;
     }
 
     /**
