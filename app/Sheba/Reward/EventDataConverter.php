@@ -6,16 +6,10 @@ use App\Models\TopUpVendor;
 class EventDataConverter
 {
     private $event;
-    private $operator = [
-        'all' => 'All',
-        'robi' => 'Robi',
-        'airtel' => 'Airtel',
-        'gp' => 'GP',
-        'banglalink' => 'Banglalink',
-        'teletalk' => 'Teletalk'
-    ];
+    private $operator;
     public function __construct()
     {
+        $this->setOperators();
         $this->event = collect([
             'partner' => [
                 'action' => [
@@ -378,7 +372,7 @@ class EventDataConverter
                             ],
                             'sim_type' => [
                                 'type' => 'select',
-                                'possible_value' => ['prepaid' => 'Prepaid', 'postpaid' => 'Postpaid'],
+                                'possible_value' => ['all' => 'All', 'prepaid' => 'Prepaid', 'postpaid' => 'Postpaid'],
                                 'is_multi_selectable' => 1
                             ]
                         ]
@@ -395,7 +389,7 @@ class EventDataConverter
                             ],
                             'gateway' => [
                                 'type' => 'select',
-                                'possible_value' => ['bkash' => 'bKash', 'nagad' => 'Nagad'],
+                                'possible_value' => ['all' => 'All', 'bkash' => 'bKash', 'nagad' => 'Nagad'],
                                 'is_multi_selectable' => 1
                             ],
                             'recharge_status' => [
@@ -464,8 +458,10 @@ class EventDataConverter
         return $this->event[$target_type][$event_type];
     }
 
-    public function setOperators(){
-        $operators = TopUpVendor::select('id', 'name')->where('is_published', 1)->get();
+    public function setOperators()
+    {
+        $operators = TopUpVendor::select('id', 'name')->get();
+        $this->operator['all'] = 'All';
         foreach ($operators as $operator){
             $this->operator[$operator->id] = $operator->name;
         }
