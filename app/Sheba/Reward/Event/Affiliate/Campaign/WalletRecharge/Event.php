@@ -17,19 +17,19 @@ class Event extends Campaign
 {
     private $query;
 
-    private function initiateQuery()
+    private function initiateQuery($participated_all = true)
     {
         $timeFrame = $this->timeFrame;
-        $from = $timeFrame->start->toDateString();
-        $to = $timeFrame->end->addDay(1)->toDateString();
+        $from = $timeFrame->start->toDateTimeString();
+        $to = $timeFrame->end->toDateTimeString();
         $rewards_for_affiliates = \DB::table('reward_affiliates')->select(['affiliate'])->where('reward', '=', $this->reward->id )->get();
         $this->query = Payable::select('user_id as affiliate_id', \DB::raw('sum(amount) as total_amount'))
             ->leftJoin('payments', function($join) {
                 $join->on('payables.id', '=', 'payments.payable_id');
             })
             ->where('payables.user_type', 'App\\Models\\Affiliate')
-            ->where('payments.created_at', '>=', $from)
-            ->where('payments.created_at', '<', $to)
+            ->where('payables.created_at', '>=', $from)
+            ->where('payables.created_at', '<=', $to)
             ->where('payables.type', 'wallet_recharge')
             ->whereIn('payables.user_id', array_column($rewards_for_affiliates, 'affiliate'))
             ->groupBy('payables.user_id')
@@ -56,7 +56,7 @@ class Event extends Campaign
     {
         $query_result = $this->getTotalRechargedAmount( $rewardable );
         $progress = [
-            'target' => number_format($this->rule->target->value, 2),
+            'target' => (string) $this->rule->target->value,
         ];
         if ( $query_result->count() > 0 ) {
             $total_amount = $query_result[0]->total_amount;
@@ -101,13 +101,13 @@ class Event extends Campaign
     {
         $this->initiateQuery();
         $this->rule->setValues();
-        $this->filterAffiliate( $rewardable );
         $this->rule->check($this->query);
+        $this->filterAffiliate( $rewardable );
         return $this->query->get();
     }
 
     private function filterAffiliate(Rewardable $rewardable)
     {
-        $this->query->where('user_id', $rewardable->id );
+        $this->query = $this->query->where('user_id', $rewardable->id );
     }
 }

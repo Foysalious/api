@@ -449,7 +449,7 @@ class DeliveryService
         $data = [
             'uid' => $this->posOrder->delivery_request_id
         ];
-        return $this->client->post('orders/track', $data);
+        return $this->client->setToken($this->token)->post('orders/track', $data);
     }
 
     public function cancelOrder()
@@ -460,7 +460,7 @@ class DeliveryService
         ];
         if ($status == Statuses::PICKED_UP)
             throw new DeliveryCancelRequestError();
-        $this->client->post('orders/cancel', $data);
+        $this->client->setToken($this->token)->post('orders/cancel', $data);
         return true;
     }
 

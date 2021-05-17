@@ -68,7 +68,6 @@ class OrderController extends Controller
             ->setPartnerId($partner->id)
             ->setCustomerId($request->customer_id)
             ->setOrderId($order_id)
-            ->setStatus($request->status)
             ->setSalesChannelId($request->sales_channel_id)
             ->setSkus($request->skus)
             ->setEmiMonth($request->emi_month)

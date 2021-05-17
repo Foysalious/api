@@ -32,10 +32,17 @@ class Updater
         });
     }
 
+    public function delete()
+    {
+        DB::transaction(function () {
+            $this->deleteEachData();
+        });
+    }
+
     private function updateEachData()
     {
         $payroll_settings = $this->payrollComponentRequester->getSetting();
-        $gross_component_update = $this->payrollComponentRequester->grossComponentUpdate;
+        $gross_component_update = $this->payrollComponentRequester->getGrossComponentUpdate();
         if ($gross_component_update)
             foreach ($gross_component_update as $component) {
                 $data = [
@@ -50,5 +57,17 @@ class Updater
                 $existing_component = $this->payrollComponentRepository->find($component['id']);
                 $this->payrollComponentRepository->update($existing_component, $this->withUpdateModificationField($data));
             }
+    }
+
+    private function deleteEachData()
+    {
+        $gross_component_delete = $this->payrollComponentRequester->getGrossComponentDelete();
+        if ($gross_component_delete) {
+            foreach ($gross_component_delete as $component) {
+                $existing_component = $this->payrollComponentRepository->find($component);
+                if (!$existing_component) return;
+                $existing_component->delete();
+            }
+        }
     }
 }

@@ -28,8 +28,6 @@ class OrderPlaceRequest extends ApiRequest
      */
     public function rules()
     {
-        $this->merge(['mobile' => formatMobile($this->input('mobile'))]);
-
         return [
             'name' => 'required|string',
             'services' => 'required|string',

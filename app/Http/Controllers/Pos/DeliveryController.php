@@ -231,7 +231,7 @@ class DeliveryController extends Controller
         $this->validate($request, [
             'pos_order_id' => 'required',
         ]);
-        $statusInfo = $delivery_service->setPartner($partner)->setPosOrder($request->pos_order_id)->getDeliveryStatus();
+        $statusInfo = $delivery_service->setPartner($partner)->setToken($this->bearerToken($request))->setPosOrder($request->pos_order_id)->getDeliveryStatus();
         return api_response($request, null, 200, ['status' => $statusInfo['data']['status']]);
     }
 
@@ -247,7 +247,7 @@ class DeliveryController extends Controller
             'pos_order_id' => 'required',
         ]);
         $partner = $request->auth_user->getPartner();
-        $delivery_service->setPartner($partner)->setPosOrder($request->pos_order_id)->cancelOrder();
+        $delivery_service->setPartner($partner)->setToken($this->bearerToken($request))->setPosOrder($request->pos_order_id)->cancelOrder();
         return api_response($request, null, 200, ['messages' => 'ডেলিভারি অর্ডারটি বাতিল করা হয়েছে']);
     }
 

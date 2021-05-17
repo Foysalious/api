@@ -6,11 +6,9 @@ class Route
     public function set($api)
     {
         $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
-
-
             $api->get('/channels', "Inventory\ChannelController@index");
             $api->get('/units', "Inventory\UnitController@index");
-
+            $api->get('/partners/{sub_domain}', "Webstore\PartnerController@show");
         });
 
    $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers', 'middleware' => ['jwtAccessToken']], function ($api) {
@@ -99,8 +97,8 @@ class Route
                     $api->delete('/', 'Inventory\ProductController@destroy');
                 });
             });
-            $api->group(['prefix' => 'category-products'], function ($api) {
-                $api->get('/', 'Inventory\CategoryProductController@getProducts');
+            $api->group(['prefix' => 'webstore'], function ($api) {
+                $api->get('products', 'Inventory\ProductController@getWebstoreProducts');
             });
             $api->group(['prefix' => 'categories'], function ($api) {
                 $api->get('/', 'Inventory\CategoryController@index');

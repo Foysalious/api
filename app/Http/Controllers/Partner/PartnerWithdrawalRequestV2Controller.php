@@ -99,6 +99,10 @@ class PartnerWithdrawalRequestV2Controller extends Controller
         if($partner->status === PartnerStatuses::BLACKLISTED || $partner->status === PartnerStatuses::PAUSED) {
             return api_response($request, null, 402, ['message' => 'ব্ল্যাক লিস্ট হওয়ার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে পারবেন না।']);
         }
+        $status_check = WithdrawalRequest::query()->where('status', 'pending')->where('requester_id', $partner->id)->first();
+        if ($status_check) {
+            return api_response($request, null, 402, ['message' => 'আপনার একটি রিকুয়েস্ট অনিষ্পন্ন (Pending) থাকার কারণে আপনি আরেকটয়ি রিকুয়েস্ট করতে পারবেন না ।']);
+        }
         if ($request->payment_method != 'bank') {
             if (
                 ($request->header('portal-name') && $request->header('portal-name') == 'partner-portal') ||

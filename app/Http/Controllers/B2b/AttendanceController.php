@@ -779,7 +779,10 @@ class AttendanceController extends Controller
             'half_day_leave_types_count' => $half_day_leave_types->count(),
             'half_day_leave_types' => $half_day_leave_types->pluck('title'),
             'half_day_initial_timings' => $this->getHalfDayTimings($business),
-            'is_grace_period_policy_enable' => $office_time->is_grace_period_policy_enable
+            'is_grace_period_policy_enable' => $office_time->is_grace_period_policy_enable,
+            'is_late_checkin_early_checkout_enable' => $office_time->is_late_checkin_early_checkout_policy_enable,
+            'is_for_late_checkin' => $office_time->is_for_late_checkin,
+            'is_for_early_checkout' => $office_time->is_for_early_checkout,
         ];
 
         return api_response($request, null, 200, ['office_settings_attendance' => $data]);
@@ -873,5 +876,32 @@ class AttendanceController extends Controller
         $updater->setPolicyRuleRequester($requester)->update();
 
         return api_response($request, null, 200);
+    }
+
+    public function getUnpaidLeavePolicy(Request $request, BusinessOfficeHoursRepoInterface $office_hours)
+    {
+        $business = $request->business;
+        if (!$business) return api_response($request, null, 403, ['message' => 'You Are not authorized to show this settings']);
+        $office_time = $office_hours->getOfficeTime($business);
+        $unpaid_leave_policy = $business->unpaidLeavePolicy;
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Collection($unpaid_leave_policy, new PolicyTransformer());
+        $unpaid_leave_policy_rules = $manager->createData($resource)->toArray()['data'];
+
+        return api_response($request, $unpaid_leave_policy_rules, 200, ['is_unpaid_leave_policy_enable' => $office_time->is_unpaid_leave_policy_enable, 'unpaid_leave_policy_rules' => $unpaid_leave_policy_rules]);
+    }
+
+    public function getLateCheckinEarlyCheckoutPolicy(Request $request)
+    {
+        $business = $request->business;
+        if (!$business) return api_response($request, null, 403, ['message' => 'You Are not authorized to show this settings']);
+        $checkin_checkout_policy = $business->checkinCheckoutPolicy;
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Collection($checkin_checkout_policy, new PolicyTransformer());
+        $checkin_checkout_policy_rules = $manager->createData($resource)->toArray()['data'];
+
+        return api_response($request, $checkin_checkout_policy_rules, 200, ['checkin_checkout_policy_rules' => $checkin_checkout_policy_rules]);
     }
 }

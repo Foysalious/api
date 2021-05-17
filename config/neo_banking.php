@@ -1,7 +1,7 @@
 <?php
 
 if (!function_exists('addressViews')) {
-    function addressViews($type)
+    function addressViews($type, $defaultCountry='')
     {
         return [
             [
@@ -45,7 +45,8 @@ if (!function_exists('addressViews')) {
                 'name'          => 'country_' . $type . '_address',
                 'id'            => 'country_' . $type . '_address',
                 'hint'          => 'দেশ',
-                'error_message' => 'দেশের নাম পূরণ আবশ্যক'
+                'error_message' => 'দেশের নাম পূরণ আবশ্যক',
+                'value'         => $defaultCountry,
             ]
         ];
     }
@@ -134,7 +135,7 @@ return [
                 'name'          => 'applicant_name',
                 'id'            => 'applicant_name',
                 'error_message' => 'আবেদনকারীর নাম পূরণ আবশ্যক',
-                'is_editable'   => true
+                'is_editable'   => false
             ],
             [
                 'field_type'    => 'date',
@@ -143,6 +144,7 @@ return [
                 'id'            => 'birth_date',
                 'hint'          => 'উদাহরণ: 01/01/2000',
                 'error_message' => 'জন্ম তারিখ পূরণ আবশ্যক',
+                'is_editable'   => false
             ],
             [
                 'field_type' => 'header',
@@ -180,7 +182,8 @@ return [
                 'name'          => 'father_name',
                 'id'            => 'father_name',
                 'hint'          => 'উদাহরণ: Abdul Kader',
-                'error_message' => 'বাবার নাম পূরণ আবশ্যক'
+                'error_message' => 'বাবার নাম পূরণ আবশ্যক',
+                'is_editable'   => false
             ],
             [
                 'field_type'    => 'editText',
@@ -188,7 +191,8 @@ return [
                 'name'          => 'mother_name',
                 'id'            => 'mother_name',
                 'hint'          => 'উদাহরণ: Salma Begum',
-                'error_message' => 'মায়ের নাম পূরণ আবশ্যক'
+                'error_message' => 'মায়ের নাম পূরণ আবশ্যক',
+                'is_editable'   => false
             ],
             [
                 'field_type'    => 'editText',
@@ -230,7 +234,8 @@ return [
                 'name'          => 'nid_passport_birth_cer_number',
                 'id'            => 'nid_passport_birth_cer_number',
                 'hint'          => '654564544645464',
-                'error_message' => 'জাতীয় পরিচয়পত্র/পাসপোর্ট/জন্ম নিবন্ধন নাম্বার পূরণ আবশ্যক'
+                'error_message' => 'জাতীয় পরিচয়পত্র/পাসপোর্ট/জন্ম নিবন্ধন নাম্বার পূরণ আবশ্যক',
+                'is_editable'   => false
             ],
             [
                 'field_type' => 'header',
@@ -269,6 +274,117 @@ return [
                 'mandatory'  => false,
                 'views'      => addressViews('permanent')
             ],
+            [
+                'field_type' => 'header',
+                'title'      => 'ব্রাঞ্চ তথ্য',
+                'mandatory'  => false
+            ],
+            [
+                'field_type'    => 'dropdown',
+                'title'         => 'ব্রাঞ্চ কোড *',
+                'name'          => 'branch_code',
+                'id'            => 'branch_code',
+                'hint'          => 'এইখানে সিলেক্ট করুন',
+                'list_type'     => 'new_page_radio',
+                'error_message' => 'ব্রাঞ্চ কোড পূরণ আবশ্যক'
+            ],
+            [
+                'field_type' => 'header',
+                'title'      => 'PEP/ IP তথ্য',
+                'mandatory'  => false
+            ],
+            [
+                'field_type' => 'radioGroup',
+                'title'      => 'আপনি কি একজন PEP/ IP / বৈদেশিক সংস্থার নির্বাহী /ঊচ্চ  পদস্থ কর্মকর্তা? *',
+                'name'       => 'pep_ip_status',
+                'id'         => 'pep_ip_status',
+                'value'      => 'অপারেশনের ধরণ ',
+                'mandatory'  => false,
+                'views'      => [
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'pep_ip_status_yes',
+                        'id'         => 'pep_ip_status_yes',
+                        'title'      => 'হ্যাঁ',
+                        'mandatory'  => false,
+                        'value'      => 0
+                    ],
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'pep_ip_status_no',
+                        'id'         => 'pep_ip_status_no',
+                        'title'      => 'না',
+                        'mandatory'  => false,
+                        'value'      => 0
+                    ]
+                ]
+            ],
+            [
+                'field_type' => 'radioGroup',
+                'title'      => 'আপনি কি একজন PEP/ IP  / বৈদেশিক সংস্থার নির্বাহী / ঊচ্চ পদস্থ কর্মকর্তার সাথে সংশ্লিষ্ট সহযোগী অথবা পারিবারিক সদস্য? *',
+                'name'       => 'pep_ip_relation',
+                'id'         => 'pep_ip_relation',
+                'value'      => 'অপারেশনের ধরণ ',
+                'mandatory'  => false,
+                'views'      => [
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'pep_ip_relation_yes',
+                        'id'         => 'pep_ip_relation_yes',
+                        'title'      => 'হ্যাঁ',
+                        'mandatory'  => false,
+                        'value'      => 0
+                    ],
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'pep_ip_relation_no',
+                        'id'         => 'pep_ip_relation_no',
+                        'title'      => 'না',
+                        'mandatory'  => false,
+                        'value'      => 0
+                    ]
+                ]
+            ],
+            [
+                'field_type'    => 'checkbox',
+                'name'          => 'pep_ip_definition_read',
+                'id'            => 'pep_ip_definition_read',
+                "error_message" => "",
+                "title"         => 'পেপ / আই পি এর সংজ্ঞা আমি পড়েছি এবং বুঝেছি',
+                'value'         => 0,
+                'mandatory'     => false
+            ],
+            [
+                'field_type' => 'header',
+                'title'      => 'FATCA তথ্য',
+                'mandatory'  => false
+            ],
+            [
+                'field_type' => 'radioGroup',
+                'title'      => 'আপনি কি যুক্তরাষ্ট্রের সাথে সম্পৃক্ত (বসবাসকারী, নাগরিক, গ্রীন কার্ডধারী, যুক্তরাষ্ট্র / যুক্তরাষ্ট্রের মালিকানাধীন প্রতিষ্ঠান) *',
+                'name'       => 'fatca_information',
+                'id'         => 'fatca_information',
+                'value'      => 'অপারেশনের ধরণ ',
+                'mandatory'  => false,
+                'views'      => [
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'fatca_information_yes',
+                        'id'         => 'fatca_information_yes',
+                        'title'      => 'হ্যাঁ',
+                        'mandatory'  => false,
+                        'value'      => 0
+                    ],
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'fatca_information_no',
+                        'id'         => 'fatca_information_no',
+                        'title'      => 'না',
+                        'mandatory'  => false,
+                        'value'      => 0
+                    ]
+                ]
+            ],
         ],
         'institution' => [
             [
@@ -295,7 +411,8 @@ return [
                 'hint'          => 'arafat@gmail.com',
                 'error_message' => 'ই-মেইল আইডি পূরণ আবশ্যক',
                 'input_type'    => 'email',
-                'mandatory'     => true
+                'mandatory'     => true,
+                'purpose'       => 'আপনার প্রদত্ত এই ই-মেইল, প্রাইম ব্যাংক কর্তৃক ই-স্টেটমেন্ট ও ইন্টারনেট ব্যাংকিং সেবা প্রদানের উদ্দেশ্যে ব্যবহার করা হবে।',
             ],
             [
                 'field_type'    => 'editText',
@@ -435,6 +552,7 @@ return [
                 'title'         => 'প্রতিষ্ঠানের ধরণ',
                 'name'          => "organization_type_list",
                 'id'            => "organization_type_list",
+                'value'         => 'প্রোপ্রাইটরশিপ',
                 'hint'          => '',
                 'list_type'     => 'dialog',
                 'error_message' => 'প্রতিষ্ঠানের ধরণ পূরণ আবশ্যক',
@@ -452,19 +570,19 @@ return [
             ],
             [
                 'field_type'    => 'editText',
-                'title'         => 'বাৎসরিক আয়ের পরিমান',
-                'name'          => 'yearly_earning',
-                'id'            => 'yearly_earning',
+                'title'         => 'মাসিক আয়ের পরিমান *',
+                'name'          => 'monthly_income',
+                'id'            => 'monthly_income',
                 'hint'          => 'উদাহরণ: 10000',
-                'error_message' => 'বাৎসরিক আয়ের পরিমান পূরণ আবশ্যক',
-                'mandatory'     => false,
+                'error_message' => 'মাসিক আয়ের পরিমান পূরণ আবশ্যক',
+                'mandatory'     => true,
                 'input_type'    => 'number'
             ],
             [
                 'field_type'    => 'editText',
                 'title'         => 'সম্ভব্য মাসিক জমার পরিমান *',
-                'name'          => 'monthly_earning',
-                'id'            => 'monthly_earning',
+                'name'          => 'total_monthly_deposit',
+                'id'            => 'total_monthly_deposit',
                 'hint'          => 'উদাহরণ: 10000',
                 'error_message' => 'সম্ভব্য মাসিক জমার পরিমান পূরণ আবশ্যক',
                 'mandatory'     => true,
@@ -528,46 +646,84 @@ return [
                 'error_message' => 'নমিনীর মায়ের নাম পূরণ আবশ্যক'
             ],
             [
-                'field_type'    => 'editText',
-                'title'         => 'জাতীয় পরিচয়পত্র/পাসপোর্ট/জন্ম নিবন্ধন নাম্বার *',
-                'name'          => 'identification_number',
-                'id'            => 'identification_number',
-                'hint'          => 'এখানে লিখুন',
-                'error_message' => 'জাতীয় পরিচয়পত্র/পাসপোর্ট/জন্ম নিবন্ধন নাম্বার পূরণ আবশ্যক'
-            ],
-            [
-                'field_type' => 'radioGroup',
-                'title'      => '',
+                'field_type' => 'conditionalSelect',
+                'title'      => 'জাতীয় পরিচয়পত্র/পাসপোর্ট/জন্ম নিবন্ধন নাম্বার *',
+                'hint'       => 'সিলেক্ট করুন',
                 'name'       => 'identification_number_type',
                 'id'         => 'identification_number_type',
-                'mandatory'  => false,
+                'mandatory'  => true,
+                'error_message' => 'জাতীয় পরিচয়পত্র/পাসপোর্ট/জন্ম নিবন্ধন নাম্বার আবশ্যক',
                 'views'      => [
                     [
-                        'field_type' => 'radioButton',
+                        'field_type' => 'editText',
+                        'title' => 'জন্ম নিবন্ধন',
                         'name'       => 'birth_certificate_number',
                         'id'         => 'birth_certificate_number',
-                        'title'      => 'জন্ম নিবন্ধন নাম্বার',
-                        'mandatory'  => false,
-                        'value'      => 0
+                        'hint'      => 'জন্ম নিবন্ধন নাম্বার লিখুন',
+                        'mandatory'  => true,
+                        'error_message' => 'জন্ম নিবন্ধন নাম্বার আবশ্যক',
                     ],
                     [
-                        'field_type' => 'radioButton',
+                        'field_type' => 'editText',
+                        'title' => 'পাসপোর্ট',
                         'name'       => 'passport_number',
                         'id'         => 'passport_number',
-                        'title'      => 'পাসপোর্ট',
-                        'mandatory'  => false,
-                        'value'      => 0
+                        'hint'      => 'পাসপোর্ট নাম্বার লিখুন',
+                        'mandatory'  => true,
+                        'error_message' => 'পাসপোর্ট নাম্বার আবশ্যক',
                     ],
                     [
-                        'field_type' => 'radioButton',
+                        'field_type' => 'editText',
+                        'title'     => 'জাতীয় পরিচয়পত্র',
                         'name'       => 'nid_number',
                         'id'         => 'nid_number',
-                        'title'      => 'জাতীয় পরিচয়পত্র',
-                        'mandatory'  => false,
-                        'value'      => 0
+                        'hint'      => 'জাতীয় পরিচয়পত্র নাম্বার লিখুন',
+                        'mandatory'  => true,
+                        'error_message' => 'জাতীয় পরিচয়পত্র নাম্বার আবশ্যক',
                     ]
                 ]
             ],
+//            [
+//                'field_type'    => 'editText',
+//                'title'         => 'জাতীয় পরিচয়পত্র/পাসপোর্ট/জন্ম নিবন্ধন নাম্বার *',
+//                'name'          => 'identification_number',
+//                'id'            => 'identification_number',
+//                'hint'          => 'এখানে লিখুন',
+//                'error_message' => 'জাতীয় পরিচয়পত্র/পাসপোর্ট/জন্ম নিবন্ধন নাম্বার পূরণ আবশ্যক'
+//            ],
+//            [
+//                'field_type' => 'radioGroup',
+//                'title'      => '',
+//                'name'       => 'identification_number_type',
+//                'id'         => 'identification_number_type',
+//                'mandatory'  => false,
+//                'views'      => [
+//                    [
+//                        'field_type' => 'radioButton',
+//                        'name'       => 'birth_certificate_number',
+//                        'id'         => 'birth_certificate_number',
+//                        'title'      => 'জন্ম নিবন্ধন নাম্বার',
+//                        'mandatory'  => false,
+//                        'value'      => 0
+//                    ],
+//                    [
+//                        'field_type' => 'radioButton',
+//                        'name'       => 'passport_number',
+//                        'id'         => 'passport_number',
+//                        'title'      => 'পাসপোর্ট',
+//                        'mandatory'  => false,
+//                        'value'      => 0
+//                    ],
+//                    [
+//                        'field_type' => 'radioButton',
+//                        'name'       => 'nid_number',
+//                        'id'         => 'nid_number',
+//                        'title'      => 'জাতীয় পরিচয়পত্র',
+//                        'mandatory'  => false,
+//                        'value'      => 0
+//                    ]
+//                ]
+//            ],
             [
                 'field_type' => 'header',
                 'title'      => 'নমিনির স্থায়ী ঠিকানা ',
@@ -578,7 +734,7 @@ return [
                 'title'      => '',
                 'name'       => 'nominee_permanent_address',
                 'id'         => 'nominee_permanent_address',
-                'views'      => addressViews('nominee'),
+                'views'      => addressViews('nominee', 'Bangladesh'),
                 'mandatory'  => false
             ],
             [

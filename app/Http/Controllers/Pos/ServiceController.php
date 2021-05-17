@@ -383,7 +383,12 @@ class ServiceController extends Controller
             foreach ($all_product_weight_unit as $key => $unit) {
                 array_push($weight_units, $unit);
             }
-            return api_response($request,$weight_units,200,['product_weight_units' => $weight_units]);
+            $default_unit = [
+                'key' => 'kg',
+                'en' => 'kg',
+                'bn' => 'কেজি'
+            ];
+            return api_response($request,$weight_units,200,['product_weight_units' => $weight_units,'default_unit' => $default_unit]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

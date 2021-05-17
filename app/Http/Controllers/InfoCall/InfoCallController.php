@@ -41,6 +41,7 @@ class InfoCallController extends Controller
                 'customer_email' => !empty($profile->email) ? $profile->email : null,
                 'customer_address' => !empty($profile->address) ? $profile->address : '',
                 'status'=> Statuses::OPEN,
+                    'portal_name' => 'customer-app',
                 'follow_up_date' => Carbon::now()->addMinutes(30),
                 'intended_closing_date' => Carbon::now()->addMinutes(30)
             ];
@@ -61,6 +62,7 @@ class InfoCallController extends Controller
                 'created_by_name'=>'Guest User',
                 'updated_by'=>0,
                 'updated_by_name'=>'Guest User',
+                    'portal_name' => 'customer-app',
                  'follow_up_date'=> Carbon::now()->addMinutes(30),
                     'intended_closing_date' => Carbon::now()->addMinutes(30)
             ]);

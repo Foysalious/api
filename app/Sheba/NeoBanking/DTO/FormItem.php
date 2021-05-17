@@ -25,6 +25,7 @@ class FormItem implements Arrayable
     protected $views         = [];
     protected $list          = [];
     protected $check_list    = [];
+    protected $purpose       = '';
 
     /**
      * @return array

@@ -3,7 +3,9 @@
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\InfoCallCreateRequest;
+use App\Models\Customer;
 use App\Models\PartnerOrder;
+use App\Models\Profile;
 use App\Models\Reward;
 use App\Models\RewardAction;
 use Carbon\Carbon;
@@ -168,6 +170,7 @@ class InfoCallController extends Controller
         $service = Service::select('name')->where('id', $request->service_id)->get();
         if ($request->has('service_id')) $service_name = $service[0]['name'];
         else $service_name = $request->service_name;
+        $profile_exists = Profile::select('id', 'name', 'address','email')->where('mobile', 'like', '%'.$request->mobile.'%')->get()->toArray();
         $data = [
             'priority' => 'High',
             'flag' => 'Red',
@@ -182,6 +185,14 @@ class InfoCallController extends Controller
             'follow_up_date' => Carbon::now()->addMinutes(30),
             'intended_closing_date' => Carbon::now()->addMinutes(30)
         ];
+        if ($profile_exists) {
+            $customer = Customer::where('profile_id', $profile_exists[0]['id'])->get();
+            $profile = $customer[0]->profile;
+            $data['customer_id'] = $customer[0]->id;
+            $data['customer_name'] = $profile->name;
+            $data['customer_email'] = $profile->email;
+            $data['customer_address'] = $profile->address;
+        }
         $info_call = $this->infoCallRepository->create($data);
         return api_response($request, $info_call, 200, ['message'=>'Successful','info_call' => $info_call]);
     }

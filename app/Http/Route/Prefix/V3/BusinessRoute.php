@@ -26,12 +26,14 @@ class BusinessRoute
                     });
                 });
                 $api->group(['prefix' => 'office-setting'], function ($api) {
-                    $api->get('/operational', 'B2b\AttendanceController@getOperationalOfficeSettings');
-                    $api->post('/operational', 'B2b\AttendanceController@updateOperationalOfficeSettings');
-                    $api->get('/attendance', 'B2b\AttendanceController@getAttendanceOfficeSettings');
-                    $api->post('/attendance', 'B2b\AttendanceController@updateAttendanceOfficeSettings');
-                    $api->get('/grace-policy', 'B2b\AttendanceController@getGracePolicy');
-                    $api->post('/unpaid-leave-policy', 'B2b\AttendanceController@createUnpaidLeavePolicy');
+                    $api->get('operational', 'B2b\AttendanceController@getOperationalOfficeSettings');
+                    $api->post('operational', 'B2b\AttendanceController@updateOperationalOfficeSettings');
+                    $api->get('attendance', 'B2b\AttendanceController@getAttendanceOfficeSettings');
+                    $api->post('attendance', 'B2b\AttendanceController@updateAttendanceOfficeSettings');
+                    $api->get('grace-policy', 'B2b\AttendanceController@getGracePolicy');
+                    $api->get('unpaid-leave-policy', 'B2b\AttendanceController@getUnpaidLeavePolicy');
+                    $api->post('unpaid-leave-policy', 'B2b\AttendanceController@createUnpaidLeavePolicy');
+                    $api->get('checkin-checkout-policy', 'B2b\AttendanceController@getLateCheckinEarlyCheckoutPolicy');
                 });
             });
         });
