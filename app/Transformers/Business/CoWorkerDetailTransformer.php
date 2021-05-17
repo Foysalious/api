@@ -181,7 +181,8 @@ class CoWorkerDetailTransformer extends TransformerAbstract
         $salary = $business_member->salary;
         if ($salary && $salary->gross_salary) $count++;
         $salary_completion = round((($count / 1) * self::THRESHOLD), 0);
-
+        
+        $gross_salary_breakdown['business_member_id'] = $business_member->id;
         $gross_salary_breakdown ['breakdown'] = $payroll_percentage_breakdown;
         $gross_salary_breakdown['gross_salary'] = $salary ? floatValFormat($salary->gross_salary) : null;
         $gross_salary_breakdown['gross_salary_percentage'] = 100;
