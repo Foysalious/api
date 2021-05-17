@@ -38,7 +38,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
         return [
             'basic_info' => $this->getBasicInfo($member, $business_member),
             'official_info' => $this->getOfficialInfo($business_member),
-            'personal_info' => $this->getPersonalInfo($member),
+            'personal_info' => $this->getPersonalInfo($member, $business_member),
             'financial_info' => $this->getFinancialInfo($member),
             'emergency_info' => $this->getEmergencyInfo($member),
             'salary_info' => $this->getSalaryInfo($business_member),
@@ -99,11 +99,11 @@ class CoWorkerDetailTransformer extends TransformerAbstract
         ];
     }
 
-    private function getPersonalInfo($member)
+    private function getPersonalInfo($member, $business_member)
     {
         $profile = $member->profile;
         $count = 0;
-        if ($profile->mobile ||
+        if ($business_member->mobile ||
             $profile->dob ||
             $profile->address ||
             $profile->nationality ||
@@ -115,7 +115,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
         $personal_info_completion = round((($count / 1) * self::THRESHOLD), 0);
 
         return [
-            'mobile' => $profile->mobile,
+            'mobile' => $business_member->mobile,
             'date_of_birth' => $profile->dob,
             'address' => $profile->address,
             'nationality' => $profile->nationality,
@@ -199,7 +199,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
         $count = 0;
         $basic_info_completion = $this->getBasicInfo($member, $business_member)['basic_info_completion'];
         $official_info_completion = $this->getOfficialInfo($business_member)['official_info_completion'];
-        $personal_info_completion = $this->getPersonalInfo($member)['personal_info_completion'];
+        $personal_info_completion = $this->getPersonalInfo($member, $business_member)['personal_info_completion'];
         $financial_info_completion = $this->getFinancialInfo($member)['financial_info_completion'];
         $emergency_info_completion = $this->getEmergencyInfo($member)['emergency_info_completion'];
         $gross_salary_info_completion = $this->getSalaryInfo($business_member)['gross_salary_completion'];
@@ -230,7 +230,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
                 'id' => $manager_profile->id,
                 'name' => $manager_profile->name,
                 'pro_pic' => $manager_profile->pro_pic,
-                'mobile' => $manager_profile->mobile,
+                'mobile' => $manager_business_member->mobile,
                 'email' => $manager_profile->email
             ],
             'status' => $manager_business_member->status,
