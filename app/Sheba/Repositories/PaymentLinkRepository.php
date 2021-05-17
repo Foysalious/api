@@ -108,13 +108,16 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
     public function find($linkId)
     {
 
-        $response = $this->isIdentifier($linkId)?$this->paymentLinkClient->getPaymentLinkByIdentifier($linkId):$this->paymentLinkClient->getPaymentLinkByLinkId($linkId);
+        $response = $this->isIdentifier($linkId) ? $this->paymentLinkClient->getPaymentLinkByIdentifier($linkId) : $this->paymentLinkClient->getPaymentLinkByLinkId($linkId);
         $response = json_decode(json_encode($response['links'][0]));
         return $response ? $this->paymentLinkTransformer->setResponse($response) : null;
     }
-    private function isIdentifier($linkId){
-        return preg_match('/^@.+/',(string)$linkId);
+
+    private function isIdentifier($linkId)
+    {
+        return preg_match('/^@.+/', (string)$linkId);
     }
+
     /**
      * @param        $id
      * @param string $type
