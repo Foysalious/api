@@ -14,6 +14,7 @@ use App\Models\Partner;
 use App\Models\PartnerOrder;
 use App\Models\PartnerResource;
 use App\Models\PartnerSubscriptionPackage;
+use App\Models\PosOrder;
 use App\Models\Profile;
 use App\Models\Resource;
 use Carbon\Carbon;
@@ -27,6 +28,7 @@ use Sheba\Dal\JobService\JobService;
 use Sheba\Dal\LocationService\LocationService;
 use Sheba\Dal\Service\Service;
 use Sheba\Services\Type as ServiceType;
+use Sheba\Subscription\Partner\Access\RulesDescriber\Pos;
 use TestCase;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
@@ -54,13 +56,17 @@ class FeatureTestCase extends TestCase
 //    @var ParnerSubscriptionPackage
     protected $partner_package;
     /**
-     * @var $business
+     * @var business
      */
     protected $business;
     /**
-     * @var $business_member
+     * @var business_member
      */
     protected $business_member;
+    /**
+     * @var PosOrder
+     */
+    protected $PosOrder;
 
 
 
@@ -97,7 +103,7 @@ class FeatureTestCase extends TestCase
     public function runDatabaseMigrations()
     {
         // \Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
-        // $this->artisan('migrate');
+        $this->artisan('migrate');
         // $this->beforeApplicationDestroyed(function () {
         //     \Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
         // });
@@ -136,6 +142,14 @@ class FeatureTestCase extends TestCase
 
         $this->createClientAccounts();
     }
+
+    protected function CreatePosOrder()
+    {
+        $this->PosOrder = factory(PosOrder::class)->create();
+      //  dd($this->PosOrder);
+
+    }
+
 
     protected function truncateTables(array $tables)
     {
