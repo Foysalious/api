@@ -40,27 +40,33 @@ class AccountingRepository extends BaseRepository
     }
 
     /**
-     * @param Request $request
+     * @param $request
      * @param $type
      * @param null $type_id
      * @return array
      */
-    private function createEntryData(Request $request, $type, $type_id = null)
+    private function createEntryData($request, $type, $type_id = null): array
     {
         $data['created_from']       = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
         $data['amount']             = (double)$request->amount;
         $data['source_type']        = $type;
         $data['source_id']          = $type_id;
         $data['note']               = $request->note;
-        $data['amount_cleared']     = $request->amount_cleared;
+        $data['amount_cleared']     = $this->isValidAmountClear($request) ? $request->amount_cleared : null;
         $data['debit_account_key']  = $request->from_account_key;
         $data['credit_account_key'] = $request->to_account_key;
-        $data['customer_id']        = $request->customer_id;
-        $data['customer_name']      = $request->customer_name;
+        $data['customer_id']        = $this->isValidAmountClear($request) ? $request->customer_id : null;
+        $data['customer_name']      = $this->isValidAmountClear($request) ? $request->customer_name: null;
         $data['inventory_products'] = $request->inventory_products;
         $data['entry_at']           = $request->date ?: Carbon::now()->format('Y-m-d H:i:s');
         $data['attachments']        = $this->uploadAttachments($request);
         return $data;
+    }
+
+    private function isValidAmountClear($request): bool
+    {
+        if ($request->amount_cleared && $request->amount_cleared != 0 ) return true;
+        return false;
     }
 
     private function createJournalData(Request $request, $source_type, $source_id)

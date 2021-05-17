@@ -135,7 +135,7 @@ return [
                 'name'          => 'applicant_name',
                 'id'            => 'applicant_name',
                 'error_message' => 'আবেদনকারীর নাম পূরণ আবশ্যক',
-                'is_editable'   => true
+                'is_editable'   => false
             ],
             [
                 'field_type'    => 'date',
@@ -144,6 +144,7 @@ return [
                 'id'            => 'birth_date',
                 'hint'          => 'উদাহরণ: 01/01/2000',
                 'error_message' => 'জন্ম তারিখ পূরণ আবশ্যক',
+                'is_editable'   => false
             ],
             [
                 'field_type' => 'header',
@@ -181,7 +182,8 @@ return [
                 'name'          => 'father_name',
                 'id'            => 'father_name',
                 'hint'          => 'উদাহরণ: Abdul Kader',
-                'error_message' => 'বাবার নাম পূরণ আবশ্যক'
+                'error_message' => 'বাবার নাম পূরণ আবশ্যক',
+                'is_editable'   => false
             ],
             [
                 'field_type'    => 'editText',
@@ -189,7 +191,8 @@ return [
                 'name'          => 'mother_name',
                 'id'            => 'mother_name',
                 'hint'          => 'উদাহরণ: Salma Begum',
-                'error_message' => 'মায়ের নাম পূরণ আবশ্যক'
+                'error_message' => 'মায়ের নাম পূরণ আবশ্যক',
+                'is_editable'   => false
             ],
             [
                 'field_type'    => 'editText',
@@ -231,7 +234,8 @@ return [
                 'name'          => 'nid_passport_birth_cer_number',
                 'id'            => 'nid_passport_birth_cer_number',
                 'hint'          => '654564544645464',
-                'error_message' => 'জাতীয় পরিচয়পত্র/পাসপোর্ট/জন্ম নিবন্ধন নাম্বার পূরণ আবশ্যক'
+                'error_message' => 'জাতীয় পরিচয়পত্র/পাসপোর্ট/জন্ম নিবন্ধন নাম্বার পূরণ আবশ্যক',
+                'is_editable'   => false
             ],
             [
                 'field_type' => 'header',
@@ -1131,10 +1135,35 @@ return [
                 'title'       => 'জন্ম তারিখ'
             ],
             [
+                'field_type' => 'radioGroup',
+                'title'      => 'ঠিকানা',
+                'name'       => 'address',
+                'id'         => 'address',
+                'mandatory'  => true,
+                'views'      => [
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'permanent_address',
+                        'id'         => 'permanent_address',
+                        'title'      => 'স্থায়ী ঠিকানা',
+                        'mandatory'  => false,
+                        'value'      => 'permanent'
+                    ],
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'present_address',
+                        'id'         => 'female',
+                        'title'      => 'বর্তমান ঠিকানা',
+                        'mandatory'  => false,
+                        'value'      => 'present'
+                    ]
+                ]
+            ],
+            [
                 'field_type'  => 'text',
-                'name'        => 'pres_address',
+                'name'        => 'address',
                 'is_editable' => false,
-                'title'       => 'ঠিকানা'
+                'title'       => ''
             ]
         ]
     ],

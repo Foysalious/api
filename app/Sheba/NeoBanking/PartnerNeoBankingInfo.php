@@ -28,6 +28,16 @@ class PartnerNeoBankingInfo
     public function personal()
     {
         if (!empty($this->information_for_bank_account) && isset($this->information_for_bank_account['personal'])) return $this->information_for_bank_account['personal'];
+        if (isset($this->information_for_bank_account['nid_selfie'])){
+            $nidSelfie = $this->information_for_bank_account['nid_selfie'];
+            return [
+                'applicant_name' => $nidSelfie->applicant_name_eng,
+                'birth_date' =>  Carbon::parse($nidSelfie->dob)->format('d-m-Y'),
+                'father_name' => $nidSelfie->father_name,
+                'mother_name' => $nidSelfie->mother_name,
+                'nid_passport_birth_cer_number' => $nidSelfie->nid_no,
+            ];
+        }
         return [];
     }
 

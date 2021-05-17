@@ -878,17 +878,18 @@ class AttendanceController extends Controller
         return api_response($request, null, 200);
     }
 
-    public function getUnpaidLeavePolicy(Request $request)
+    public function getUnpaidLeavePolicy(Request $request, BusinessOfficeHoursRepoInterface $office_hours)
     {
         $business = $request->business;
         if (!$business) return api_response($request, null, 403, ['message' => 'You Are not authorized to show this settings']);
+        $office_time = $office_hours->getOfficeTime($business);
         $unpaid_leave_policy = $business->unpaidLeavePolicy;
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
         $resource = new Collection($unpaid_leave_policy, new PolicyTransformer());
         $unpaid_leave_policy_rules = $manager->createData($resource)->toArray()['data'];
 
-        return api_response($request, $unpaid_leave_policy_rules, 200, ['unpaid_leave_policy_rules' => $unpaid_leave_policy_rules]);
+        return api_response($request, $unpaid_leave_policy_rules, 200, ['is_unpaid_leave_policy_enable' => $office_time->is_unpaid_leave_policy_enable, 'unpaid_leave_policy_rules' => $unpaid_leave_policy_rules]);
     }
 
     public function getLateCheckinEarlyCheckoutPolicy(Request $request)
