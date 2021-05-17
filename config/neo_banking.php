@@ -1135,10 +1135,35 @@ return [
                 'title'       => 'জন্ম তারিখ'
             ],
             [
+                'field_type' => 'radioGroup',
+                'title'      => 'ঠিকানা',
+                'name'       => 'address',
+                'id'         => 'address',
+                'mandatory'  => true,
+                'views'      => [
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'permanent_address',
+                        'id'         => 'permanent_address',
+                        'title'      => 'স্থায়ী ঠিকানা',
+                        'mandatory'  => false,
+                        'value'      => 'permanent'
+                    ],
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'present_address',
+                        'id'         => 'female',
+                        'title'      => 'বর্তমান ঠিকানা',
+                        'mandatory'  => false,
+                        'value'      => 'present'
+                    ]
+                ]
+            ],
+            [
                 'field_type'  => 'text',
-                'name'        => 'pres_address',
+                'name'        => 'address',
                 'is_editable' => false,
-                'title'       => 'ঠিকানা'
+                'title'       => ''
             ]
         ]
     ],
