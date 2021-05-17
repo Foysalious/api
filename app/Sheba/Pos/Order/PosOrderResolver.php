@@ -10,10 +10,14 @@ class PosOrderResolver
     private $posOrderType;
     /**  @var PosOrderServerClient */
     private $client;
+    /** @var \Sheba\Pos\Order\PosOrder */
+    private $posOrder;
+    private $order;
 
-    public function __construct(PosOrderServerClient $client)
+    public function __construct(PosOrderServerClient $client, \Sheba\Pos\Order\PosOrder $posOrder)
     {
         $this->client = $client;
+        $this->posOrder = $posOrder;
     }
 
     /**
@@ -23,35 +27,25 @@ class PosOrderResolver
     public function setOrderId($orderId)
     {
         $this->orderId = $orderId;
-        return $this;
-    }
-
-    /**
-     * @param mixed $posOrderType
-     * @return PosOrderResolver
-     */
-    public function setPosOrderType($posOrderType)
-    {
-        $this->posOrderType = $posOrderType;
-        return $this;
-    }
-
-    public function getType()
-    {
-        return $this->posOrderType;
-    }
-
-    public function getPosOrder()
-    {
-        $posOrder = PosOrder::find($this->orderId);
-        if ($posOrder) {
-            $this->setPosOrderType(PosOrderTypes::OLD_POS_ORDER);
-            return $posOrder;
+        $oldPosOrder = PosOrder::where('id', $orderId)->select('id', 'sales_channel', 'partner_id')->first();
+        if ($oldPosOrder && !$oldPosOrder->partner->isMigrationCompleted()) {
+            $this->order = $oldPosOrder;
+            $this->order->order_type = PosOrderTypes::OLD_POS_ORDER;
         } else {
-            return $this->client->get('api/v1/orders/' . $this->orderId);
+            $response = $this->client->get('api/v1/order-channel/' . $this->orderId);
+            $this->order = json_decode(json_encode($response['order']), FALSE);
+            $this->order->order_type = PosOrderTypes::NEW_POS_ORDER;
         }
+        return $this;
     }
 
+    public function get()
+    {
+        return $this->order;
+    }
 
-
+    public function isNewSystemPosOrder()
+    {
+        return $this->order->order_type == PosOrderTypes::OLD_POS_ORDER ? false : true;
+    }
 }
