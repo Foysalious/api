@@ -393,7 +393,7 @@ class Creator
                 "id"           => $original_service->id,
                 "name"         => $original_service->name,
                 "unit_price"   => $unitPrice,
-                "selling_rice" => $sellingPrice,
+                "selling_price" => $sellingPrice,
                 "quantity"     => isset($requested_service[$key]['quantity']) ? $requested_service[$key]['quantity'] : 1
             ];
         }
