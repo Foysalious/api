@@ -19,6 +19,7 @@ abstract class ReturnPosItem extends RefundNature
     protected $paymentCreator;
     /** @var PosOrder */
     private $oldOrder;
+    private $refundAmount = 0;
 
     public function __construct(LogCreator $log_creator, Updater $updater, PaymentCreator $payment_creator)
     {
@@ -35,7 +36,7 @@ abstract class ReturnPosItem extends RefundNature
         ], 'id', true)->toArray() : $this->old_services = $this->order->items->pluckMultiple([
             'quantity',
             'unit_price'
-        ], 'service_id', true)->toArray();;
+        ], 'service_id', true)->toArray();
         $this->updater->setOrder($this->order)->setData($this->data)->setNew($this->new)->update();
         if ($this->order->calculate()->getPaid()) $this->refundPayment();
         if ($this->order) $this->returnItem($this->order);
@@ -56,10 +57,12 @@ abstract class ReturnPosItem extends RefundNature
             if ($this->data['paid_amount'] > 0) {
                 $payment_data['method'] = $this->data['payment_method'];
                 $this->paymentCreator->credit($payment_data);
+
             } else {
                 $payment_data['amount'] = abs($payment_data['amount']);
                 $this->paymentCreator->debit($payment_data);
             }
+            $this->refundAmount = $payment_data['amount'];
         }
     }
 
