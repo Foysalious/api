@@ -144,15 +144,19 @@ class PayrollController extends Controller
         $payroll_setting = $this->payrollSettingRepository->find((int)$payroll_setting);
         if (!$payroll_setting) return api_response($request, null, 404);
 
-        $this->payrollComponentRequester->setSetting($payroll_setting)->setAddition($request->addition)->setDeduction($request->deduction);
+        $this->payrollComponentRequester->setSetting($payroll_setting)->setAddition($request->addition)->setDeduction($request->deduction)->setComponentDelete($request->component_delete_data);
         if ($this->payrollComponentRequester->checkError()) return api_response($request, null, 404, ['message' => 'Duplicate components found!']);
 
         $addition_creator->setPayrollComponentRequester($this->payrollComponentRequester)->createOrUpdate();
+        $addition_creator->setPayrollComponentRequester($this->payrollComponentRequester)->delete();
+
         $deduction_creator->setPayrollComponentRequester($this->payrollComponentRequester)->createOrUpdate();
-        $package_requester->setPackage($request->packages);
+        $deduction_creator->setPayrollComponentRequester($this->payrollComponentRequester)->delete();
+
+        $package_requester->setPackage($request->packages)->setPackageDelete($request->package_delete_data);
         $package_creator->setPackageRequester($package_requester->getPackagesForAdd())->create();
         $package_updater->setPackageRequester($package_requester->getPackagesForUpdate())->update();
-
+        $package_updater->setPackageRequester($package_requester->getPackageDelete())->delete();
 
         return api_response($request, null, 200);
     }

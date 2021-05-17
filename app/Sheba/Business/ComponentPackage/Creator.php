@@ -38,6 +38,7 @@ class Creator
 
     private function makeData()
     {
+        if(!$this->packageRequester) return;
         foreach ($this->packageRequester as $packages) {
             $component = $this->payrollComponentRepository->where('name', $packages['component'])->first();
             foreach ($packages['package'] as $package) {

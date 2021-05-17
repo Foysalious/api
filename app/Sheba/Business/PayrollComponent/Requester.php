@@ -16,6 +16,9 @@ class Requester
     private $grossComponentAdd;
     private $grossComponentUpdate;
     private $grossComponentDelete;
+    private $componentDeleteData;
+    private $additionDelete;
+    private $deductionDelete;
 
     public function setName($name)
     {
@@ -81,6 +84,24 @@ class Requester
     public function getUpdateDeductionComponent()
     {
         return $this->updateDeductionComponent;
+    }
+
+    public function setComponentDelete($component_delete_data)
+    {
+        $this->componentDeleteData = json_decode($component_delete_data,1);
+        $this->additionDelete = $this->componentDeleteData['addition'];
+        $this->deductionDelete = $this->componentDeleteData['deduction'];
+        return $this;
+    }
+
+    public function getAdditionComponentDelete()
+    {
+        return $this->additionDelete;
+    }
+
+    public function getDeductionComponentDelete()
+    {
+        return $this->deductionDelete;
     }
 
     public function hasError($components)
