@@ -28,8 +28,6 @@ class OrderPlaceRequest extends ApiRequest
      */
     public function rules()
     {
-        $request->merge(['mobile' => formatMobile(preg_replace('/\b \b|-/', '', $request->mobile))]);
-
         return [
             'name' => 'required|string',
             'services' => 'required|string',
