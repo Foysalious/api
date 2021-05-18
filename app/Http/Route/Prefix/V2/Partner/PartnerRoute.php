@@ -18,6 +18,7 @@ class PartnerRoute
             $api->get('rewards/faqs', 'Partner\PartnerRewardController@getFaqs');
             $api->get('resource-types', 'PartnerController@getResourceTypes');
             $api->get('business-types', 'PartnerController@getBusinessTypes');
+            $api->get('occupation-natures', 'PartnerController@getOccupationNatures');
             $api->get('subscriptions', 'Partner\PartnerSubscriptionController@getAllPackages');
             $api->post('notification-store', "NeoBanking\\NeoBankingController@sendNotification");
             $api->post('{partner}/account-number-store', "NeoBanking\\NeoBankingController@accountNumberStore");
