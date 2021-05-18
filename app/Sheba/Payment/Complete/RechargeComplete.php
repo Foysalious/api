@@ -8,7 +8,6 @@ use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Exceptions\InvalidSourceException;
 use Sheba\AccountingEntry\Repository\JournalCreateRepository;
-
 use Sheba\Dal\PaymentGateway\Contract as PaymentGatewayRepo;
 use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Transactions\Types;
