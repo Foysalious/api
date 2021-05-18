@@ -1,9 +1,9 @@
 <?php namespace App\Http\Controllers\Employee;
 
 use App\Http\Controllers\Controller;
+use App\Sheba\Business\Payslip\PayReport\PayReportPdfHandler;
 use Illuminate\Http\Request;
 use App\Sheba\Business\BusinessBasicInformation;
-use Illuminate\Support\Facades\App;
 use Sheba\Business\Payslip\PayReport\PayReportDetails;
 use Sheba\Dal\Payslip\PayslipRepository;
 use Sheba\Dal\Payslip\Status;
@@ -21,7 +21,7 @@ class PayrollController extends Controller
         $this->payslipRepository = $payslip_repository;
     }
 
-    public function downloadPayslip(Request $request, PayReportDetails $pay_report_details, TimeFrame $time_frame)
+    public function downloadPayslip(Request $request, PayReportDetails $pay_report_details, TimeFrame $time_frame, PayReportPdfHandler $pay_report_pdf_handler)
     {
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
@@ -29,7 +29,9 @@ class PayrollController extends Controller
         $payslip = $this->payslipRepository->where('business_member_id', $business_member->id)->whereBetween('schedule_date', [$time_period->start, $time_period->end])->first();
         if (!$payslip) return api_response($request, null, 404);
         $pay_report_detail = $pay_report_details->setPayslip($payslip)->get();
-        return App::make('dompdf.wrapper')->loadView('pdfs.payslip.payroll_details', compact('pay_report_detail'))->download("payroll_details.pdf");
+
+        $pay_report_pdf = $pay_report_pdf_handler->setPayReportDetails($pay_report_detail)->setTimePeriod($time_period)->generate();
+        return api_response($request, null, 200, ['payslip_pdf_link' => $pay_report_pdf]);
     }
 
     public function disbursedMonth(Request $request)
@@ -51,5 +53,4 @@ class PayrollController extends Controller
         }
         return api_response($request, null, 200, ['disbursed_months' => $disbursed_months_data]);
     }
-
 }
