@@ -39,6 +39,18 @@ class AccountingRepository extends BaseRepository
         }
     }
 
+    public function updateEntryBySource(Request $request, $sourceType, $sourceId)
+    {
+        try {
+            $this->getCustomer($request);
+            $this->setModifier($request->partner);
+            $data     = $this->createEntryData($request, $sourceType, $sourceId);
+            $url = "api/entries/source/".$sourceType.'/'.$sourceId;
+            return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
+        } catch (AccountingEntryServerError $e) {
+            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+        }
+    }
     /**
      * @param $request
      * @param $type
@@ -57,7 +69,7 @@ class AccountingRepository extends BaseRepository
         $data['credit_account_key'] = $request->to_account_key;
         $data['customer_id']        = $request->customer_id;
         $data['customer_name']      = $request->customer_name;
-        $data['inventory_products'] = $request->inventory_products;
+        $data['inventory_products'] = $this->getInventoryProducts($request->inventory_products, $request->requested_services);
         $data['entry_at']           = $request->date ?: Carbon::now()->format('Y-m-d H:i:s');
         $data['attachments']        = $this->uploadAttachments($request);
         $data['total_discount']     = (double)$request->total_discount;
@@ -81,5 +93,24 @@ class AccountingRepository extends BaseRepository
             $data['details']            = $request->note;
             $data['created_from']       = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
             return $data;
+    }
+
+    private function getInventoryProducts($services, $requestedServices)
+    {
+        $requested_service = json_decode($requestedServices, true);
+        $inventory_products = [];
+        foreach ($services as $key => $service) {
+            $original_service = ($service->service);
+            $sellingPrice = isset($requested_service[$key]['updated_price']) && $requested_service[$key]['updated_price'] ? $requested_service[$key]['updated_price'] : $original_service->price;
+            $unitPrice = $original_service->cost ?? $sellingPrice;
+            $inventory_products[] = [
+                "id" => $original_service->id,
+                "name" => $original_service->name,
+                "unit_price" => $unitPrice,
+                "selling_price" => $sellingPrice,
+                "quantity" => isset($requested_service[$key]['quantity']) ? $requested_service[$key]['quantity'] : 1
+            ];
+        }
+        return json_encode($inventory_products);
     }
 }
