@@ -364,17 +364,40 @@ class Creator
 
     private function additionalAccountingData(PosOrder $order)
     {
+        $services = $order->items;
         $order_discount = $order->discounts()->sum('amount');
         $this->request->merge([
             "from_account_key"   => $order->sales_channel == SalesChannels::WEBSTORE ? (new Accounts())->asset->sheba::SHEBA_ACCOUNT : (new Accounts())->asset->cash::CASH,
             "to_account_key"     => (new Accounts())->income->sales::SALES_FROM_POS,
             "amount"             => (double)$order->getNetBill(),
             "amount_cleared"     => $order->getPaid(),
-            "inventory_products" => $order->items,
-            "requested_services"   => $this->data['services'],
+            "inventory_products" => $this->getInventoryProducts($services),
             "total_discount"     => $order_discount,
             "note"               => $order->sales_channel == SalesChannels::WEBSTORE ? SalesChannels::WEBSTORE : SalesChannels::POS,
             "source_id"          => $order->id
         ]);
+    }
+
+    /**
+     * @param $services
+     * @return false|string
+     */
+    private function getInventoryProducts($services)
+    {
+        $requested_service = json_decode($this->data['services'], true);
+        $inventory_products = [];
+        foreach ($services as $key => $service) {
+            $original_service = ($service->service);
+            $sellingPrice = isset($requested_service[$key]['updated_price']) && $requested_service[$key]['updated_price'] ? $requested_service[$key]['updated_price'] : $original_service->price;
+            $unitPrice = $original_service->cost ?? $sellingPrice;
+            $inventory_products[] = [
+                "id"           => $original_service->id,
+                "name"         => $original_service->name,
+                "unit_price"   => $unitPrice,
+                "selling_price" => $sellingPrice,
+                "quantity"     => isset($requested_service[$key]['quantity']) ? $requested_service[$key]['quantity'] : 1
+            ];
+        }
+        return json_encode($inventory_products);
     }
 }
