@@ -164,7 +164,8 @@ class EmployeeController extends Controller
             'is_profile_complete' => $profile_completion_score ? 1 : 0,
             'is_eligible_for_lunch' => in_array($business->id, config('b2b.BUSINESSES_IDS_FOR_LUNCH')) ? [
                 'link' => config('b2b.BUSINESSES_LUNCH_LINK'),
-            ] : null
+            ] : null,
+            'is_sheba_platform' => in_array($business->id, config('b2b.BUSINESSES_IDS_FOR_REFERRAL') ) ? 1 : 0
         ];
 
         if ($data['attendance']['can_checkout']) {

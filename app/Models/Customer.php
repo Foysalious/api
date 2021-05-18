@@ -2,6 +2,7 @@
 
 use App\Models\Transport\TransportTicketOrder;
 use App\Sheba\Payment\Rechargable;
+use Sheba\Dal\Customer\Events\CustomerCreated;
 use Sheba\Dal\Customer\Events\CustomerSaved;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Transactions\Types;
@@ -23,6 +24,7 @@ use Sheba\Transport\TransportAgent;
 use Sheba\Transport\TransportTicketTransaction;
 use Sheba\Voucher\Contracts\CanApplyVoucher;
 use Sheba\Voucher\VoucherGeneratorTrait;
+use Sheba\Dal\InfoCall\InfoCall;
 
 class Customer extends Authenticatable implements Rechargable, Rewardable, TopUpAgent, MovieAgent, TransportAgent, CanApplyVoucher, PayableUser, HasWalletTransaction, HasWallet
 {
@@ -34,6 +36,7 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
     private $firstOrder;
 
     public static $savedEventClass = CustomerSaved::class;
+    public static $createdEventClass = CustomerCreated::class;
 
     public function mobiles()
     {
@@ -283,6 +286,11 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
     public function getMobile()
     {
         return $this->profile->mobile;
+    }
+
+    public function getName()
+    {
+        return $this->profile->name;
     }
 
     public function isCompleted()
