@@ -110,6 +110,17 @@ class NeoBankingController extends Controller
         }
     }
 
+    public function getBranchCode(Request $request)
+    {
+        try {
+            $data = config('branch_code.data');
+            return api_response($request, null, 200, ['branch_codes' => $data]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     public function getCategoryWiseDetails(Request $request, NeoBanking $neoBanking)
     {
         try {
