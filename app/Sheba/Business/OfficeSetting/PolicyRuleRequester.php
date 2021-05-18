@@ -67,17 +67,6 @@ class PolicyRuleRequester
         return $this->rules ? $this->policy : null;
     }
 
-    public function setDeleteRules($delete_rules)
-    {
-        $this->deleteRules = json_decode($delete_rules, 1);
-        return $this;
-    }
-
-    public function getDeleteRules()
-    {
-        return $this->deleteRules;
-    }
-
     public function setForLateCheckIn($for_late_checkin)
     {
         $this->forLateCheckIn = $for_late_checkin;

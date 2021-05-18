@@ -809,8 +809,7 @@ class AttendanceController extends Controller
              $requester->setBusiness($request->business)
                             ->setIsEnable($request->is_grace_policy_enable)
                             ->setPolicyType(Type::GRACE_PERIOD)
-                            ->setRules($request->grace_policy_rules)
-                            ->setDeleteRules($request->grace_delete_rules);
+                            ->setRules($request->grace_policy_rules);
             $grace_policy = $policy_updater->setPolicyRuleRequester($requester)->update();
         }
 
@@ -820,8 +819,7 @@ class AttendanceController extends Controller
                             ->setPolicyType(Type::LATE_CHECKIN_EARLY_CHECKOUT)
                             ->setForLateCheckIn($request->for_checkin)
                             ->setForEarlyCheckOut($request->for_checkout)
-                            ->setRules($request->checkin_checkout_policy_rules)
-                            ->setDeleteRules($request->checkin_checkout_delete_rules);
+                            ->setRules($request->checkin_checkout_policy_rules);
             $checkin_checkout_policy = $policy_updater->setPolicyRuleRequester($requester)->update();
         }
         if ($checkin_checkout_policy) return api_response($request, null, 200, ['msg' => "Update Successful"]);
@@ -853,8 +851,7 @@ class AttendanceController extends Controller
         $requester->setBusiness($business)
                         ->setIsEnable($request->is_enable)
                         ->setPolicyType($request->policy_type)
-                        ->setRules($request->rules)
-                        ->setDeleteRules($request->delete_rules);
+                        ->setRules($request->rules);
 
         $updater->setPolicyRuleRequester($requester)->update();
 
