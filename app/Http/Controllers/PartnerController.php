@@ -1097,16 +1097,6 @@ class PartnerController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function getOccupationNatures(Request $request)
-    {
-        $data = config('occupation_nature.values');
-        return api_response($request, null, 200, ['occupation_natures' => $data]);
-    }
-
-    /**
-     * @param Request $request
-     * @return JsonResponse
-     */
     public function getWalletBalance(Request $request)
     {
         $wallet_balance = $request->partner->wallet;

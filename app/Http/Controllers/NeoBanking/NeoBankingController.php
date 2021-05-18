@@ -110,6 +110,17 @@ class NeoBankingController extends Controller
         }
     }
 
+    public function getOccupationNatures(Request $request)
+    {
+        try {
+            $data = config('occupation_nature.values');
+            return api_response($request, null, 200, ['occupation_natures' => $data]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     public function getBranchCode(Request $request)
     {
         try {
