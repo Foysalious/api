@@ -13,6 +13,7 @@ use Sheba\NeoBanking\Traits\ProtectedGetterTrait;
     protected $can_apply;
     protected $bank_detail_link;
     protected $bank_detail_title;
+    protected $pbl_terms_and_condition_link;
     protected $message      = '';
     protected $message_type = 'info';
     protected $gigatech_status_info;
@@ -49,6 +50,12 @@ use Sheba\NeoBanking\Traits\ProtectedGetterTrait;
      public function setBankDetailTitle($bank_detail_title)
      {
          $this->bank_detail_title = $bank_detail_title;
+         return $this;
+     }
+
+     public function setPblTermsAndCondition($pbl_terms_and_condition_link)
+     {
+         $this->pbl_terms_and_condition_link = $pbl_terms_and_condition_link;
          return $this;
      }
 
