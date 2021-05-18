@@ -6,6 +6,7 @@ use Sheba\Business\PayrollComponent\Components\Conveyance;
 use Sheba\Business\PayrollComponent\Components\HouseRent;
 use Sheba\Dal\PayrollComponent\PayrollComponent;
 use Sheba\Dal\PayrollComponent\Components;
+use Sheba\Dal\PayrollComponent\TargetType;
 use Sheba\Dal\PayrollComponent\Type;
 
 class GrossSalaryBreakdownCalculate
@@ -29,8 +30,8 @@ class GrossSalaryBreakdownCalculate
     public function componentPercentageBreakdown($payroll_setting, $business_member)
     {
         /** @var PayrollComponent $payroll_components */
-        $payroll_components = $payroll_setting->components()->where('type', Type::GROSS)->get();
-        $payroll_component_by_target = $payroll_setting->components()->where('type', Type::GROSS)->where('target_id', $business_member->id)->get();
+        $payroll_components = $payroll_setting->components()->where('type', Type::GROSS)->where('target_type', null)->orWhere('target_type', TargetType::GENERAL)->orderBy('name')->get();
+        $payroll_component_by_target = $payroll_setting->components()->where('type', Type::GROSS)->where('target_id', $business_member->id)->orderBy('name')->get();
         if ($payroll_component_by_target) $gross_components = $this->makeGrossComponentCollection($payroll_components, $payroll_component_by_target);
         $salary = $business_member->salary->gross_salary;
         $data = [];
