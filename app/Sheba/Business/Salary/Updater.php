@@ -101,9 +101,9 @@ class Updater
                 $existing_payroll_component = $this->payrollComponentRepository->find($component['id']);
                 $gross_salary_breakdown_maker->setBusinessMember($business_member)
                     ->setManagerMember($this->salaryRequest->getManagerMember())
+                    ->setOldSalaryAmount($this->oldSalary)
                     ->setPayrollComponent($existing_payroll_component)
                     ->setPayrollSetting($payroll_setting)
-                    ->setOldSalaryAmount($this->oldSalary)
                     ->updateCoWorkerGrossComponent();
             }else {
                 $existing_payroll_component = $this->payrollComponentRepository->where('name', $component['name'])->where('payroll_setting_id', $payroll_setting->id)->first();
