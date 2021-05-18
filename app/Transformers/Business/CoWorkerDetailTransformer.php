@@ -2,6 +2,8 @@
 
 use App\Sheba\Business\PayrollComponent\Components\GrossSalaryBreakdownCalculate;
 use App\Sheba\Business\SalaryLog\Formatter as SalaryLogFormatter;
+use Sheba\Dal\PayrollComponent\TargetType;
+use Sheba\Dal\PayrollComponent\Type;
 use Sheba\Dal\SalaryLog\SalaryLogRepository;
 use Sheba\Dal\PayrollComponent\Components;
 use League\Fractal\TransformerAbstract;
@@ -186,6 +188,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
         $gross_salary_breakdown ['breakdown'] = $payroll_percentage_breakdown;
         $gross_salary_breakdown['gross_salary'] = $salary ? floatValFormat($salary->gross_salary) : null;
         $gross_salary_breakdown['gross_salary_percentage'] = 100;
+        $gross_salary_breakdown['global_gross_salary_component'] = $this->getGlobalGrossSalaryComponent($payroll_setting);
         $gross_salary_breakdown['gross_salary_log'] = $this->getSalaryLog($business_member);
         $gross_salary_breakdown['gross_salary_completion'] = $salary_completion;
         return $gross_salary_breakdown;
@@ -243,5 +246,26 @@ class CoWorkerDetailTransformer extends TransformerAbstract
         if (!$salary) return [];
         $salary_logs = $salary->logs()->orderBy('created_at', 'DESC')->get();
         return (new SalaryLogFormatter())->setSalaryLogs($salary_logs)->format();
+    }
+
+    private function getGlobalGrossSalaryComponent($payroll_setting)
+    {
+        $global_gross_components = $payroll_setting->components()->where('type', Type::GROSS)->where('target_type', null)->orWhere('target_type', TargetType::GENERAL)->orderBy('name')->get();
+        $global_gross_component_data = [];
+        foreach ($global_gross_components as $component) {
+            $percentage = floatValFormat(json_decode($component->setting, 1)['percentage']);
+            array_push($global_gross_component_data, [
+                'id' => $component->id,
+                'payroll_setting_id' => $component->payroll_setting_id,
+                'name' => $component->name,
+                'title' => $component->is_default ? Components::getComponents($component->name)['value'] : $component->value,
+                'percentage' => $percentage,
+                'type' => $component->type,
+                'is_default' => $component->is_default,
+                'is_active' => $component->is_active,
+                'is_taxable' => $component->is_taxable,
+            ]);
+        }
+        return $global_gross_component_data;
     }
 }
