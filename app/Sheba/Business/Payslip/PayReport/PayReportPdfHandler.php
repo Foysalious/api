@@ -29,7 +29,7 @@ class PayReportPdfHandler
         $pay_report_detail = $this->payReportDetails;
         App::make('dompdf.wrapper')->loadView('pdfs.payslip.payroll_details', compact('pay_report_detail'))->save($file);
         $s3_payslip_link = $this->saveToCDN($file, $filename);
-
+        unlink($file);
         return $s3_payslip_link;
     }
     private function saveToCDN($file, $filename)
