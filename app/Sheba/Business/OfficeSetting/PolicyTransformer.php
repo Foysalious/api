@@ -15,7 +15,8 @@ class PolicyTransformer extends TransformerAbstract
             'leave_penalty_type' => $policy->action == ActionType::LEAVE_ADJUSTMENT ? (int)$policy->penalty_type : null,
             'salary_penalty_type' => $policy->action == ActionType::SALARY_ADJUSTMENT ? $policy->penalty_type : null,
             'cash_penalty_amount' => $policy->action == ActionType::CASH_PENALTY ? floatval($policy->penalty_amount) : null,
-            'penalty_amount' => $policy->action == ActionType::CASH_PENALTY  ? null : floatval($policy->penalty_amount)
+            'leave_penalty_amount' => $policy->action == ActionType::LEAVE_ADJUSTMENT ? floatval($policy->penalty_amount) : null,
+            'salary_penalty_amount' => $policy->action == ActionType::SALARY_ADJUSTMENT ? floatval($policy->penalty_amount) : null,
         ];
     }
 
