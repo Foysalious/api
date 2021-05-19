@@ -28,6 +28,6 @@ class PosOrderFactory extends Factory
             'status'=>'Pending',
             'sales_channel'=>'webstore',
 
-        ]);// TODO: Implement getData() method.
+        ]);
     }
 }

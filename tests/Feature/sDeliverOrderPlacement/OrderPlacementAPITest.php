@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Tests\sDeliverOrderPlacement;
+namespace Tests\Feature\sDeliverOrderPlacement;
 
 
 use Tests\Feature\FeatureTestCase;
