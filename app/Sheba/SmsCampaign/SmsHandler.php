@@ -13,7 +13,7 @@ class SmsHandler
 
     public function __construct(Sms $sms)
     {
-        $this->sms = $sms->setVendor('adareach');
+        $this->sms = $sms->setVendor('infobip');
     }
 
     /**
