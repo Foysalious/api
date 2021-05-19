@@ -3659,6 +3659,10 @@
                 "png",
                 "png2webp"
             ],
+            "support": {
+                "issues": "https://github.com/rosell-dk/webp-convert/issues",
+                "source": "https://github.com/rosell-dk/webp-convert/tree/2.4.0"
+            },
             "time": "2020-11-10T11:24:50+00:00"
         },
         {
@@ -3981,8 +3985,8 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://bitbucket.org/startern/sheba_sms.git",
-                "reference": "bf52f38f3a2f78d5aa5a5bdfd102e6f6f0b0a96d"
+                "url": "https://mac_pasha@bitbucket.org/startern/sheba_sms.git",
+                "reference": "9fb24dbaa97e43d61140d74d7f9638e7a3eeeeb8"
             },
             "require": {
                 "ext-curl": "*"
@@ -4003,7 +4007,7 @@
                 }
             ],
             "description": "Sms for Sheba",
-            "time": "2021-03-07T11:16:33+00:00"
+            "time": "2021-05-18T09:09:47+00:00"
         },
         {
             "name": "sheba/voucher",
