@@ -1,9 +1,13 @@
 <?php namespace App\Sheba\AccountingEntry\Repository;
 
+use App\Models\PartnerPosCustomer;
+use App\Models\PosCustomer;
+use App\Models\Profile;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Constants\UserType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\RequestIdentification;
 
@@ -81,19 +85,97 @@ class DueTrackerRepository extends BaseRepository
         }
     }
 
-    public function getDueList($request) {
+    public function getDueList($request, $paginate=false): array
+    {
         try {
             $url = "api/due-list?";
             $url      = $this->updateRequestParam($request, $url);
-            return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
+            $result = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
+            $list = $this->attachProfile(collect($result['list']));
+
+            if ($request->has('balance_type') && in_array($request->balance_type, [
+                    'due',
+                    'received',
+                    'clear'
+                ])) {
+                $list = $list->where('balance_type', $request->balance_type)->values();
+            }
+            if($request->has('filter_by_supplier') && $request->filter_by_supplier == 1)
+            {
+                $list = $list->where('is_supplier', 1)->values();
+            }
+            if ($request->has('q') && !empty($request->q)) {
+                $query = trim($request->q);
+                $list  = $list->filter(function ($item) use ($query) {
+                    return strpos(strtolower($item['customer_name']), "$query") !== false || strpos(strtolower($item['customer_mobile']), "$query") !== false;
+                })->values();
+            }
+
+            if (!empty($order_by) && $order_by == "name") {
+                $order = ($request->order == 'desc') ? 'sortByDesc' : 'sortBy';
+                $list  = $list->$order('customer_name', SORT_NATURAL | SORT_FLAG_CASE)->values();
+            }
+            if ($paginate && isset($request['offset']) && isset($request['limit'])) {
+                list($offset, $limit) = calculatePagination($request);
+                $list = $list->slice($offset)->take($limit)->values();
+            }
+            return [
+                'list'               => $list,
+                'total_transactions' => $result['total_transactions'],
+                'total'              => $result['total'],
+                'stats'              => $result['stats'],
+                'partner'            => $this->getPartnerInfo($request->partner),
+            ];
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
     }
 
+    /**
+     * @param Collection $list
+     * @return Collection
+     */
+    private function attachProfile(Collection $list): Collection
+    {
+        $list = $list->map(function ($item) {
+            $customerId = $item['key'];
+            /** @var PosCustomer $posCustomer */
+            $posCustomer = PosCustomer::find($customerId);
+            $profile_id = $posCustomer->profile_id;
+            /** @var Profile $profile */
+            $profile                 = Profile::select('name', 'mobile', 'id', 'pro_pic')->find($profile_id);
+            $customerId              = $profile && isset($profile->posCustomer) ? $profile->posCustomer->id : null;
+            if(isset($customerId)) {
+                $posProfile = PartnerPosCustomer::byPartner($this->partner->id)->where('customer_id', $customerId)->first();
+            }
+
+            if (isset($posProfile) && isset($posProfile->nick_name)) {
+                $item['customer_name'] = $posProfile->nick_name;
+            } else {
+                $item['customer_name'] = $profile ? $profile->name : "Unknown";
+            }
+
+
+            $item['customer_mobile'] = $profile ? $profile->mobile : null;
+            $item['avatar']          = $profile ? $profile->pro_pic : null;
+            $item['customer_id']     = $customerId;
+            $item['is_supplier'] = isset($posProfile) ? $posProfile->is_supplier : 0;
+            return $item;
+        });
+        return $list;
+    }
+
+    /**
+     * @param Request $request
+     * @param $url
+     * @return mixed|string
+     */
     private function updateRequestParam(Request $request, $url)
     {
         $order_by = $request->order_by;
+        if ($request->has('limit') && $request->has('offset')) {
+            $url .= "limit=$request->limit&offset=$request->offset";
+        }
         if (!empty($order_by) && $order_by != "name") {
             $order = !empty($request->order) ? strtolower($request->order) : 'desc';
             $url   .= "&order_by=$order_by&order=$order";
@@ -107,5 +189,18 @@ class DueTrackerRepository extends BaseRepository
             $url .= "&start=$request->start_date&end=$request->end_date";
         }
         return $url;
+    }
+
+    /**
+     * @param $partner
+     * @return array
+     */
+    private function getPartnerInfo($partner): array
+    {
+        return [
+            'name'   => $partner->name,
+            'avatar' => $partner->logo,
+            'mobile' => $partner->mobile,
+        ];
     }
 }
