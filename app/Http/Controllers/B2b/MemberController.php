@@ -18,10 +18,12 @@ use Sheba\Business\BusinessMember\Requester as BusinessMemberRequester;
 use Sheba\Business\BusinessMember\Creator as BusinessMemberCreator;
 use Sheba\Business\BusinessUpdater;
 use Sheba\Business\CoWorker\Statuses;
+use Sheba\Business\CoWorker\UpdaterV2 as Updater;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use App\Models\Member;
 use Carbon\Carbon;
+use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
 use Throwable;
 use DB;
 
@@ -282,5 +284,37 @@ class MemberController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function updateMemberInfo($member, Request $request, MemberRepositoryInterface $member_repository, Updater $profile_updater)
+    {
+        $validation_rules = [
+            'name' => 'required|string',
+            'designation' => 'required|string',
+            'email' => 'required|email|string'
+        ];
+        if ($request->has('mobile')) $validation_rules['mobile'] = 'string|mobile:bd';
+        $this->validate($request, $validation_rules);
+
+        /** @var Member $member */
+        $member = $member_repository->find((int)$member);
+        if (!$member) return api_response($request, null, 404);
+        $business_member = $member->businessMember;
+        if (!$business_member) return api_response($request, null, 404);
+        $business = $business_member ? $business_member->business : null;
+        if (!$business) return api_response($request, null, 404);
+
+        $profile_updater->setBusinessMember($business_member)
+            ->setName($request->name)
+            ->setMobile($request->mobile)
+            ->setDepartment($request->department)
+            ->setDesignation($request->designation)
+            ->setManager($request->manager);
+
+        if ($profile_updater->hasError()) return api_response($request, null, $profile_updater->getErrorCode(), ['message' => $profile_updater->getErrorMessage()]);
+
+        $profile_updater->update();
+
+        return api_response($request, null, 200);
     }
 }
