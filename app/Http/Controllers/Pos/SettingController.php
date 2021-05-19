@@ -1,10 +1,12 @@
 <?php namespace App\Http\Controllers\Pos;
 
+use App\Exceptions\Pos\SMS\InsufficientBalanceException;
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Models\PartnerPosSetting;
 use App\Models\PosCustomer;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
+use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
 use App\Sheba\Sms\BusinessType;
 use App\Sheba\Sms\FeatureType;
 use Illuminate\Http\JsonResponse;
@@ -89,33 +91,33 @@ class SettingController extends Controller
         }
     }
 
+
     /**
      * @param Request $request
      * @return JsonResponse
+     * @throws InsufficientBalanceException
      */
     public function duePaymentRequestSms(Request $request)
     {
-        try {
-            $this->validate($request, ['customer_id' => 'required|numeric', 'due_amount' => 'required']);
-            $partner = $request->partner;
-            $this->setModifier($request->manager_resource);
-
-            $customer = PosCustomer::find($request->customer_id);
-            (new SmsHandlerRepo('due-payment-collect-request'))->setVendor('adareach')
-                ->setBusinessType(BusinessType::SMANAGER)
-                ->setFeatureType(FeatureType::POS)
-                ->send($customer->profile->mobile, [
-                    'partner_name' => $partner->name,
-                    'due_amount' => $request->due_amount
-                ]);
-
-            return api_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        $this->validate($request, ['customer_id' => 'required|numeric', 'due_amount' => 'required']);
+        $partner = $request->partner;
+        $this->setModifier($request->manager_resource);
+        $customer = PosCustomer::find($request->customer_id);
+        $sms = (new SmsHandlerRepo('due-payment-collect-request'))->setVendor('adareach')
+            ->setBusinessType(BusinessType::SMANAGER)
+            ->setFeatureType(FeatureType::POS)
+            ->setMessage([
+                'partner_name' => $partner->name,
+                'due_amount' => $request->due_amount
+            ]);
+        $sms_cost = $sms->getCost();
+        if ((double)$partner->wallet < (double)$sms_cost) {
+            throw new InsufficientBalanceException();
         }
+        $sms->send($customer->profile->mobile, [
+            'partner_name' => $partner->name,
+            'due_amount' => $request->due_amount
+        ]);
+        return api_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
     }
 }
