@@ -30,6 +30,11 @@ class BankStatics
         return config('sheba.partners_url') . "/pbl/terms-and-condition";
     }
 
+    public static function PepIpDefinition()
+    {
+        return config('sheba.partners_url') . "/pbl/pep-ip-definition";
+    }
+
     /**
      * @param $bankCode
      * @return mixed
