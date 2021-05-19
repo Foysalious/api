@@ -19,6 +19,7 @@ class Requester
     private $updater;
     private $managerMember;
     private $breakdownPercentage;
+    private $removeOverwritten;
 
     public function __construct(BusinessMemberRepositoryInterface $business_member_repository,
                                 CoWorkerSalaryCreator $salary_creator,
@@ -88,6 +89,17 @@ class Requester
     public function getBreakdownPercentage()
     {
         return $this->breakdownPercentage;
+    }
+
+    public function setRemoveOverwritten($remove_overwritten)
+    {
+        $this->removeOverwritten = json_decode($remove_overwritten, 1);
+        return $this;
+    }
+
+    public function getRemoveOverwritten()
+    {
+        return $this->removeOverwritten;
     }
 
     public function getGrossSalary()

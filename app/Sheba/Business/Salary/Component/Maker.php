@@ -96,8 +96,10 @@ class Maker
 
     public function updateCoWorkerGrossComponent()
     {
-        $this->makeData();
-        $this->payrollComponentRepository->update($this->payrollComponent, $this->newComponentData);
+        if($this->isOverwritten) {
+            $this->makeData();
+            $this->payrollComponentRepository->update($this->payrollComponent, $this->newComponentData);
+        }
         $this->grossSalaryBreakdownLogCreate($this->componentData['title'], $this->componentData['value'], $this->componentData['amount']);
     }
 
