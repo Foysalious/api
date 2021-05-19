@@ -116,6 +116,7 @@ class UpdaterV2
 
     private function getBusinessRole()
     {
+        if (!$this->department) $this->department = $this->businessMember->department()->id;
         $business_role = $this->businessRoleRepository
             ->where('name', $this->designation)
             ->where('business_department_id', $this->department)
@@ -172,6 +173,7 @@ class UpdaterV2
     {
         $profile_data = ['name' => $this->name];
         $this->profileRepository->updateRaw($this->profile, $profile_data);
+        if (!$this->manager) $this->manager = $this->businessMember->manager_id;
         $business_member_data = [
             'manager_id' => $this->manager,
             'business_role_id' => $this->businessRole->id,
