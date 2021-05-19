@@ -2,210 +2,129 @@
 
 return [
     'values' => [
-
-        'customer_business_natures' => [
-            [
-                'customer_business_nature' => 'Agro Business/Rice Miles/Beverage',
-                'business_value' => 201
-            ],
-            [
-                'customer_business_nature' => 'Auto-dealer (New/Reconditioned Car)',
-                'business_value' => 204
-            ],
-            [
-                'customer_business_nature' => 'Broker of Land/Building sale/purchase',
-                'business_value' => 206
-            ],
-            [
-                'customer_business_nature' => 'Business (Advertising)',
-                'business_value' => 207
-            ],
-            [
-                'customer_business_nature' => 'Business (Cold Storage)',
-                'business_value' => 208
-            ],
-            [
-                'customer_business_nature' => 'Business (Indenting)',
-                'business_value' => 209
-            ],
-            [
-                'customer_business_nature' => 'Business (Leather & Leather Goods)',
-                'business_value' => 210
-            ],
-            [
-                'customer_business_nature' => 'Business (Medicine manufacturing and distribution Agent)',
-                'business_value' => 211
-            ],
-            [
-                'customer_business_nature' => 'Business (Outsourcing)',
-                'business_value' => 212
-            ],
-            [
-                'customer_business_nature' => 'Business (Petrol Pump/CNG Station)',
-                'business_value' => 213
-            ],
-            [
-                'customer_business_nature' => 'Business Agent',
-                'business_value' => 214
-            ],
-            [
-                'customer_business_nature' => 'Business- Amusement Park and Recreation ',
-                'business_value' => 215
-            ],
-            [
-                'customer_business_nature' => 'Business of thread \ Jhut ',
-                'business_value' => 216
-            ],
-            [
-                'customer_business_nature' => 'Chain Store/Shopping mal',
-                'business_value' => 217
-            ],
-            [
-                'customer_business_nature' => 'Computer/Mobile Phone Dealer',
-                'business_value' => 218
-            ],
-            [
-                'customer_business_nature' => 'Construction Project Promoter/Contractor',
-                'business_value' => 219
-            ],
-            [
-                'customer_business_nature' => 'Freight/Shipping/Cargo Agent/CNF Agent',
-                'business_value' => 221
-            ],
-            [
-                'customer_business_nature' => 'Garments Business/Garments Accessories/Packaging/Buying House',
-                'business_value' => 222
-            ],
-            [
-                'customer_business_nature' => 'House Construction Material Business',
-                'business_value' => 223
-            ],
-            [
-                'customer_business_nature' => 'Import/Export & Import/Export Agent',
-                'business_value' => 224
-            ],
-            [
-                'customer_business_nature' => 'Jewelry Business/Gold related Business/Precious Metal Business',
-                'business_value' => 226
-            ],
-            [
-                'customer_business_nature' => 'Manufacturer (Other than Arms)',
-                'business_value' => 229
-            ],
-            [
-                'customer_business_nature' => 'Mobile Phone Operator/Internet/Cable TV Operator',
-                'business_value' => 230
-            ],
-            [
-                'customer_business_nature' => 'Money Exchange/Courier Service/Mobile Banking Agent',
-                'business_value' => 231
-            ],
-            [
-                'customer_business_nature' => 'Motor Parts Trader / Workshop Business',
-                'business_value' => 233
-            ],
-            [
-                'customer_business_nature' => 'NGO/NPO',
-                'business_value' => 234
-            ],
-            [
-                'customer_business_nature' => 'Poultry/Dairy/Fishing Farm',
-                'business_value' => 236
-            ],
-            [
-                'customer_business_nature' => 'Real Estate Developer/ Agent',
-                'business_value' => 239
-            ],
-            [
-                'customer_business_nature' => 'Religious Institution/Organization & Educational Institution',
-                'business_value' => 240
-            ],
-            [
-                'customer_business_nature' => 'Restaurant/Bar/Night Club /Parlor Business/Residential Hotel',
-                'business_value' => 241
-            ],
-            [
-                'customer_business_nature' => 'Service Provider',
-                'business_value' => 242
-            ],
-            [
-                'customer_business_nature' => 'Small Business(investment less than 50 lacs)',
-                'business_value' => 245
-            ],
-            [
-                'customer_business_nature' => 'Software/Information and Technology Business',
-                'business_value' => 246
-            ],
-            [
-                'customer_business_nature' => 'Tobacco and Cigarette Business',
-                'business_value' => 247
-            ],
-            [
-                'customer_business_nature' => 'Transport Operator',
-                'business_value' => 248
-            ],
-            [
-                'customer_business_nature' => 'Travel Agent/Tourism Company',
-                'business_value' => 249
-            ]
+        [
+            'smanager_business_type' => 'মুদি ব্যবসা',
+            'business_value' => 245
         ],
-        'others' => [
-            [
-                'customer_business_nature' => 'Arms Dealer',
-                'business_value' => 202
-            ],
-            [
-                'customer_business_nature' => 'Art and Antique Dealer',
-                'business_value' => 203
-            ],
-            [
-                'customer_business_nature' => 'Bank/Leasing/Finance Company',
-                'business_value' => 205
-            ],
-            [
-                'customer_business_nature' => 'Film Producer/Distributor',
-                'business_value' => 220
-            ],
-            [
-                'customer_business_nature' => 'Insurance/Brokerage Agency',
-                'business_value' => 225
-            ],
-            [
-                'customer_business_nature' => 'Law Farm/Engineering Farm/Consultancy Farm',
-                'business_value' => 227
-            ],
-            [
-                'customer_business_nature' => 'Manpower Export Business',
-                'business_value' => 228
-            ],
-            [
-                'customer_business_nature' => 'More Than Tk.10 Million investor merchant',
-                'business_value' => 232
-            ],
-            [
-                'customer_business_nature' => 'Offshore/Non Resident Corporation',
-                'business_value' => 235
-            ],
-            [
-                'customer_business_nature' => 'Power and Energy Manufacturing Company',
-                'business_value' => 237
-            ],
-            [
-                'customer_business_nature' => 'Print/Electronic Media',
-                'business_value' => 238
-            ],
-            [
-                'customer_business_nature' => 'Share/Stock Dealer, Broker, Portfolio Manager, Merchant Banker',
-                'business_value' => 243
-            ],
-            [
-                'customer_business_nature' => 'Ship Breaking Business',
-                'business_value' => 244
-            ],
-            [
-                'customer_business_nature' => 'Trust',
-                'business_value' => 250
-            ]
+        [
+            'smanager_business_type' => 'কাপড়ের ব্যবসা',
+            'business_value' => 245
+        ],
+        [
+            'smanager_business_type' => 'ইলেক্ট্রনিক্স',
+            'business_value' => 214
+        ],
+        [
+            'smanager_business_type' => 'মোবাইল এবং গ্যাজেট',
+            'business_value' => 214
+        ],
+        [
+            'smanager_business_type' => 'ঔষধের দোকান',
+            'business_value' => 245
+        ],
+        [
+            'smanager_business_type' => 'ই-কমার্স',
+            'business_value' => 245
+        ],
+        [
+            'smanager_business_type' => 'এম-কমার্স বা মোবাইল টপআপ ব্যবসা',
+            'business_value' => 245
+        ],
+        [
+            'smanager_business_type' => 'পোলট্রি এন্ড এগ্রো ব্যবসায়',
+            'business_value' => 201
+        ],
+        [
+            'smanager_business_type' => 'এফ-কমার্স বা ফেসবুক ব্যবসা',
+            'business_value' => 245
+        ],
+        [
+            'smanager_business_type' => 'কাঁচামালের ব্যবসায়',
+            'business_value' => 245
+        ],
+        [
+            'smanager_business_type' => 'কসমেটিক্স',
+            'business_value' => 245
+        ],
+        [
+            'smanager_business_type' => 'কনফেকশনারি এন্ড ফুডস',
+            'business_value' => 245
+        ],
+        [
+            'smanager_business_type' => 'হার্ডওয়্যার',
+            'business_value' => 245
+        ],
+        [
+            'smanager_business_type' => 'সার্ভিস ও রিপেয়ারিং',
+            'business_value' => 242
+        ],
+        [
+            'smanager_business_type' => 'সার্ভিস',
+            'business_value' => 242
+        ],
+        [
+            'smanager_business_type' => 'ফার্নিচার',
+            'business_value' => 245
+        ],
+        [
+            'smanager_business_type' => 'রেস্টুরেন্ট ও ক্যাটারিং ব্যবসায়',
+            'business_value' => 241
+        ],
+        [
+            'smanager_business_type' => 'গৃহস্থালি জিনিসপত্র',
+            'business_value' => 245
+        ],
+        [
+            'smanager_business_type' => 'মোটর যন্ত্রাংশের ব্যবসায়',
+            'business_value' => 233
+        ],
+        [
+            'smanager_business_type' => 'রেন্ট-এ-কার বা গাড়ি ভাড়া ব্যবসায়',
+            'business_value' => 248
+        ],
+        [
+            'smanager_business_type' => 'ট্রেডিং',
+            'business_value' => 245
+        ],
+        [
+            'smanager_business_type' => 'ম্যানুফ্যাকচারিং',
+            'business_value' => 245
+        ],
+        [
+            'smanager_business_type' => 'খেলনার দোকান',
+            'business_value' => 245
+        ],
+        [
+            'smanager_business_type' => 'বিউটি ও সেলুন',
+            'business_value' => 242
+        ],
+        [
+            'smanager_business_type' => 'লন্ড্রি',
+            'business_value' => 242
+        ],
+        [
+            'smanager_business_type' => 'টিকেট ও ট্রাভেলস ব্যবসায়',
+            'business_value' => 249
+        ],
+        [
+            'smanager_business_type' => 'পেইন্টিং ও রেনোভেশন',
+            'business_value' => 242
+        ],
+        [
+            'smanager_business_type' => 'বাসা বদল ব্যবসা',
+            'business_value' => 242
+        ],
+        [
+            'smanager_business_type' => 'চশমার দোকান',
+            'business_value' => 245
+        ],
+        [
+            'smanager_business_type' => 'হ্যান্ডি ক্রাফট ব্যবসায়',
+            'business_value' => 245
+        ],
+        [
+            'smanager_business_type' => 'ক্লিনিং ও পেস্ট কন্ট্রোল',
+            'business_value' => 242
         ]
     ]
 ];
