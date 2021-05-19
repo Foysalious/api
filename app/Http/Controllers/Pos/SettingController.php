@@ -94,6 +94,7 @@ class SettingController extends Controller
     /**
      * @param Request $request
      * @return JsonResponse
+     * @throws InsufficientBalanceException
      */
     public function duePaymentRequestSms(Request $request)
     {
