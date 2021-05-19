@@ -15,7 +15,7 @@ class SmsHandler
 
     public function __construct(Sms $sms)
     {
-        $this->sms = $sms->setVendor('infobip');
+        $this->sms = $sms->setVendor('adareach');
         $this->isOff = !config('sms.is_on');
     }
 
