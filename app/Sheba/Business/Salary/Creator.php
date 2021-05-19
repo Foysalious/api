@@ -16,6 +16,7 @@ class Creator
     private $salaryRepository;
     /*** @var PayrollComponentRepository*/
     private $payrollComponentRepository;
+    private $salary;
 
     /**
      * Updater constructor.
@@ -44,9 +45,10 @@ class Creator
     {
         $this->makeData();
         DB::transaction(function () {
-            $this->salaryRepository->create($this->salaryData);
+            $this->salary = $this->salaryRepository->create($this->salaryData);
             $this->createComponentPercentage();
         });
+
         return true;
     }
 
@@ -63,12 +65,14 @@ class Creator
         foreach ($this->salaryRequest->getBreakdownPercentage() as $component) {
             $gross_salary_breakdown_maker = new Maker($component);
             $existing_payroll_component = $this->payrollComponentRepository->where('name', $component['name'])->where('payroll_setting_id', $payroll_setting->id)->first();
-            $gross_salary_breakdown_maker->setBusinessMember($business_member)
+            $gross_salary_breakdown_maker->setSalary($this->salary)
+                ->setBusinessMember($business_member)
                 ->setManagerMember($this->salaryRequest->getManagerMember())
                 ->setOldSalaryAmount($this->salaryRequest->getGrossSalary())
-                ->setPayrollComponent($existing_payroll_component)
                 ->setPayrollSetting($payroll_setting)
-                ->createCoWorkerGrossComponent();
+                ->setPayrollComponent($existing_payroll_component)
+                ->setIsOverwritten($component['is_overwritten']);
+            $gross_salary_breakdown_maker->createCoWorkerGrossComponent();
         }
     }
 

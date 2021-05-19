@@ -104,6 +104,7 @@ class Updater
                     ->setOldSalaryAmount($this->oldSalary)
                     ->setPayrollComponent($existing_payroll_component)
                     ->setPayrollSetting($payroll_setting)
+                    ->setIsOverwritten($component['is_overwritten'])
                     ->updateCoWorkerGrossComponent();
             }else {
                 $existing_payroll_component = $this->payrollComponentRepository->where('name', $component['name'])->where('payroll_setting_id', $payroll_setting->id)->first();
@@ -112,6 +113,7 @@ class Updater
                     ->setOldSalaryAmount($business_member->salary->gross_salary)
                     ->setPayrollComponent($existing_payroll_component)
                     ->setPayrollSetting($payroll_setting)
+                    ->setIsOverwritten($component['is_overwritten'])
                     ->createCoWorkerGrossComponent();
             }
         }

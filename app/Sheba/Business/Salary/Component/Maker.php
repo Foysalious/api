@@ -7,6 +7,7 @@ use Sheba\Dal\PayrollComponent\PayrollComponent;
 use Sheba\Dal\PayrollComponent\PayrollComponentRepository;
 use Sheba\Dal\PayrollComponent\TargetType;
 use Sheba\Dal\PayrollComponent\Type;
+use Sheba\Dal\Salary\Salary;
 
 class Maker
 {
@@ -28,6 +29,7 @@ class Maker
     private $oldSalaryAmount;
     private $managerMember;
     private $payrollSetting;
+    private $isOverwritten;
 
     public function __construct($component)
     {
@@ -37,10 +39,17 @@ class Maker
         $this->componentBreakdownLogCreator = app(Creator::class);
     }
 
+    public function setSalary(Salary $salary)
+    {
+        $this->salary = $salary;
+        return $this;
+    }
+
     public function setBusinessMember(BusinessMember $business_member)
     {
         $this->businessMember = $business_member;
-        $this->salary = $this->businessMember->salary;
+        if(!$this->salary) $this->salary = $this->businessMember->salary;
+
         return $this;
     }
 
@@ -53,6 +62,12 @@ class Maker
     public function setOldSalaryAmount($old_salary_amount)
     {
         $this->oldSalaryAmount = $old_salary_amount;
+        return $this;
+    }
+
+    public function setIsOverwritten($is_overwritten)
+    {
+        $this->isOverwritten = $is_overwritten;
         return $this;
     }
 
@@ -72,8 +87,10 @@ class Maker
 
     public function createCoWorkerGrossComponent()
     {
-        $this->makeData();
-        $this->payrollComponentRepository->create($this->newComponentData);
+        if($this->isOverwritten) {
+            $this->makeData();
+            $this->payrollComponentRepository->create($this->newComponentData);
+        }
         $this->grossSalaryBreakdownLogCreate($this->componentData['title'], $this->componentData['value'], $this->componentData['amount']);
     }
 
