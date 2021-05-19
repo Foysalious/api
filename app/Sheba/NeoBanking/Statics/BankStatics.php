@@ -27,7 +27,7 @@ class BankStatics
 
     public static function PblTermsAndCondition()
     {
-        return config('sheba.partners_url') . "/pbl/terms-and-condition";
+        return config('sheba.partners_url') . "pbl/terms-and-condition";
     }
 
     /**
