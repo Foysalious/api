@@ -80,4 +80,32 @@ class DueTrackerRepository extends BaseRepository
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
     }
+
+    public function getDueList($request) {
+        try {
+            $url = "api/due-list?";
+            $url      = $this->updateRequestParam($request, $url);
+            return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
+        } catch (AccountingEntryServerError $e) {
+            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+        }
+    }
+
+    private function updateRequestParam(Request $request, $url)
+    {
+        $order_by = $request->order_by;
+        if (!empty($order_by) && $order_by != "name") {
+            $order = !empty($request->order) ? strtolower($request->order) : 'desc';
+            $url   .= "&order_by=$order_by&order=$order";
+        }
+
+        if($request->has('balance_type')) {
+            $url   .= "&balance_type=$request->balance_type";
+        }
+
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $url .= "&start=$request->start_date&end=$request->end_date";
+        }
+        return $url;
+    }
 }
