@@ -27,6 +27,7 @@ class PrimeBank extends Bank
 {
 
     private $apiClient;
+    private $partnerNeoBankingAccount;
     const CPV_PENDING_UNSIGNED    = "cpv_pending_unsigned";
 
     public function __construct()
@@ -46,7 +47,8 @@ class PrimeBank extends Bank
         if ($account) {
             $headers = ['CLIENT-ID:'. config('neo_banking.sbs_client_id'), 'CLIENT-SECRET:'.  config('neo_banking.sbs_client_secret')];
             $status = (new PrimeBankClient())->setPartner($this->partner)->get("api/v1/client/account/$account/status", $headers);
-            return $this->formatAccountData($status, $account);
+            $transactionId = $this->getTransactionId();
+            return $this->formatAccountData($status, $account, $transactionId);
         } else {
             if($this->hasAccountWithNullId()) {
                 return $this->pendingAccountData($this->partner, $account);
@@ -110,8 +112,17 @@ class PrimeBank extends Bank
 
     private function getAccount()
     {
-        $account = $this->partner->neoBankAccount()->where('bank_id', $this->id)->first();
-        return !empty($account) ? $account->account_no : null;
+        $this->partnerNeoBankingAccount = $this->partner->neoBankAccount()->where('bank_id', $this->id)->first();
+        return !empty($this->partnerNeoBankingAccount) ? $this->partnerNeoBankingAccount->account_no : null;
+    }
+
+    private function getTransactionId()
+    {
+        if (!isset($this->partnerNeoBankingAccount)){
+            $this->partnerNeoBankingAccount = $this->partner->neoBankAccount()->where('bank_id', $this->id)->first();;
+        }
+
+        return !empty($this->partnerNeoBankingAccount) ? $this->partnerNeoBankingAccount->transaction_id : null;
     }
 
     private function hasAccountWithNullId()
@@ -174,10 +185,11 @@ class PrimeBank extends Bank
         return json_decode(json_encode((new PrimeBankClient())->setPartner($this->partner)->post('api/v1/kyc-submit', $data)),1);
     }
 
-    public function formatAccountData($status, $account) {
+    public function formatAccountData($status, $account, $transactionId) {
         $data['has_account'] = 1;
         $data['applicant_name'] = $status->data->applicant_name;
         $data['account_no'] = $account;
+        $data['transaction_id'] = (string)$transactionId;
         $accountStatus = $status->data->account_status;
         $data['account_status'] = $accountStatus;
         $formattedStatus = NeoBankingGeneralStatics::formatStatus($accountStatus);

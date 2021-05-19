@@ -6,6 +6,7 @@ namespace Sheba\NeoBanking;
 
 use App\Models\Partner;
 use Carbon\Carbon;
+use Sheba\NeoBanking\Exceptions\CategoryPostDataInvalidException;
 
 class PartnerNeoBankingInfo
 {
@@ -35,7 +36,6 @@ class PartnerNeoBankingInfo
                 'birth_date' =>  Carbon::parse($nidSelfie->dob)->format('d-m-Y'),
                 'father_name' => $nidSelfie->father_name,
                 'mother_name' => $nidSelfie->mother_name,
-                'husband_or_wife_name' => $nidSelfie->spouse_name,
                 'nid_passport_birth_cer_number' => $nidSelfie->nid_no,
             ];
         }
@@ -84,10 +84,36 @@ class PartnerNeoBankingInfo
 
     public function postByCode($code, $data)
     {
-        $data['updated_at']                         = Carbon::now()->format('Y-m-d H:s:i');
-        if($code == 'personal' && isset($data['birth_date'])) $data['birth_date'] = Carbon::parse($data['birth_date'])->format('d-m-Y');
+        if ($code=== 'personal')
+        {
+            if (!isset($this->information_for_bank_account['nid_selfie'])) throw new CategoryPostDataInvalidException('You need to provide nid first');
+
+            $data = $this->setNidData($data);
+        }
+        $data['updated_at'] = Carbon::now()->format('Y-m-d H:s:i');
         if(isset($data['nominee_birth_date'])) $data['nominee_birth_date'] = Carbon::parse($data['nominee_birth_date'])->format('d-m-Y');
         $this->information_for_bank_account[$code]  = $data;
-        return $this->partner->neoBankInfo ? $this->partner->neoBankInfo->update(['information_for_bank_account' => json_encode($this->information_for_bank_account)]) : $this->partner->neoBankInfo()->create(['information_for_bank_account' => json_encode($this->information_for_bank_account), 'partner_id' => $this->partner->id, 'is_gigatech_verified' => 0]);
+        if ($this->partner->neoBankInfo)
+        {
+            return $this->partner->neoBankInfo->update(['information_for_bank_account' => json_encode($this->information_for_bank_account)]);
+        }
+        return $this->partner
+            ->neoBankInfo()
+            ->create([
+                'information_for_bank_account' => json_encode($this->information_for_bank_account),
+                'partner_id' => $this->partner->id,
+                'is_gigatech_verified' => 0
+            ]);
+    }
+
+    private function setNidData($data)
+    {
+        $nidSelfie = $this->information_for_bank_account['nid_selfie'];
+        $data['applicant_name'] = $nidSelfie->applicant_name_eng;
+        $data['birth_date'] =  Carbon::parse($nidSelfie->dob)->format('d-m-Y');
+        $data['father_name'] = $nidSelfie->father_name;
+        $data['mother_name'] = $nidSelfie->mother_name;
+        $data['nid_passport_birth_cer_number'] = $nidSelfie->nid_no;
+        return $data;
     }
 }
