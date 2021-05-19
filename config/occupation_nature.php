@@ -125,6 +125,10 @@ return [
         [
             'smanager_business_type' => 'ক্লিনিং ও পেস্ট কন্ট্রোল',
             'business_value' => 242
+        ],
+        [
+            'smanager_business_type' => 'অন্যান্য',
+            'business_value' => 255
         ]
     ]
 ];
