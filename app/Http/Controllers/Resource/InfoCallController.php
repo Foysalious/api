@@ -115,6 +115,14 @@ class InfoCallController extends Controller
             'offset' => 'numeric|min:0', 'limit' => 'numeric|min:1',
             'month' => 'sometimes|required|integer|between:1,12', 'year' => 'sometimes|required|integer'
         ]);
+        $reward_exists = 0;
+        $reward_action = RewardAction::where('event_name', 'info_call_completed')->latest('id')->first();
+        if ($reward_action != null) {
+            $info_call_reward = Reward::where('detail_id', $reward_action->id)
+                ->select('rewards.*')
+                ->get();
+            $reward_exists = $info_call_reward[0]->amount;
+        }
         $cancelled_order = 0;
         $completed_order = 0;
         /** @var AuthUser $auth_user */
@@ -128,7 +136,6 @@ class InfoCallController extends Controller
         $query = InfoCall::where('created_by', $created_by)->where('created_by_type', get_class($resource));
         $total_requests = $query->get()->count();
         $data = [
-            'total_rewards' => 40000, //dummy
             'total_service_requests' => ! ($total_requests) ? 0 : $total_requests,
         ];
         if (!($request->has('year')) && !($request->has('month'))) {
@@ -144,7 +151,9 @@ class InfoCallController extends Controller
             $partner_orders = PartnerOrder::select('id', 'cancelled_at', 'closed_and_paid_at')->whereIn('order_id',$order_ids)->get()->toArray();
             foreach ($partner_orders as $partner_order) {
                 if ($partner_order['cancelled_at'] != null) $cancelled_order++;
-                if ($partner_order['closed_and_paid_at'] != null) $completed_order++;
+                if ($partner_order['closed_and_paid_at'] != null) {
+                    $completed_order++;
+                }
             }
             $month_wise_service_requests = $filtered_info_calls->count();
             $total_orders = $filtered_info_calls->where('status', Statuses::CONVERTED)->count();
@@ -158,6 +167,7 @@ class InfoCallController extends Controller
         $cancelled_orders = $rejected_requests + $cancelled_order;
         $data['cancelled_order'] = $cancelled_orders;
         $data['completed_order'] = $completed_order;
+        $data['total_rewards'] = $reward_exists*$completed_order;
         return ['code' => 200, 'message'=>'Successful','service_request_dashboard' => $data];
     }
 
