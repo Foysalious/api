@@ -3,6 +3,7 @@
 use Exception;
 use App\Http\Controllers\Controller;
 use App\Sheba\AccountingEntry\Repository\HomepageRepository;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class HomepageController extends Controller
@@ -14,7 +15,11 @@ class HomepageController extends Controller
         $this->homepageRepo = $homepageRepo;
     }
 
-    public function getAssetAccountBalance(Request $request)
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getAssetAccountBalance(Request $request): JsonResponse
     {
         try {
             $response = $this->homepageRepo->getAssetBalance($request->partner->id);
@@ -29,7 +34,11 @@ class HomepageController extends Controller
         }
     }
 
-    public function getIncomeExpenseBalance(Request $request)
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getIncomeExpenseBalance(Request $request): JsonResponse
     {
         try {
             $response = $this->homepageRepo->getIncomeExpenseBalance($request->partner->id, $request->start_date, $request->end_date);
@@ -44,7 +53,12 @@ class HomepageController extends Controller
         }
     }
 
-    public function getIncomeExpenseEntries(Request $request){
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getIncomeExpenseEntries(Request $request): JsonResponse
+    {
         $limit = $request->limit ?? 10;
         try {
             $response = $this->homepageRepo->getIncomeExpenseEntries($request->partner->id, $limit);
@@ -59,7 +73,12 @@ class HomepageController extends Controller
         }
     }
 
-    public function getDueCollectionBalance(Request $request){
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getDueCollectionBalance(Request $request): JsonResponse
+    {
         $startDate = $request->start_date ?? strtotime('today midnight');
         $endDate = $request->end_date ?? strtotime('tomorrow midnight') - 1;
         if ($endDate < $startDate){
@@ -79,7 +98,12 @@ class HomepageController extends Controller
         }
     }
 
-    public function getAccountListBalance(Request $request){
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getAccountListBalance(Request $request): JsonResponse
+    {
         $startDate = $request->start_date ?? strtotime('today midnight');
         $endDate = $request->end_date ?? strtotime('tomorrow midnight') - 1;
         $limit = $request->limit ?? 10;
