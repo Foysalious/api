@@ -11,7 +11,6 @@ class PolicyRuleUpdater
     private $policyRuleRequester;
     /*** @var OfficePolicyRuleRepository */
     private $officePolicyRuleRepository;
-    private $rulesData = [];
     private $businessOfficeHourRepoository;
     private $business;
     private $policyType;
@@ -31,12 +30,12 @@ class PolicyRuleUpdater
     public function update()
     {
         $previous_policy = $this->policyRuleRequester->getPolicy();
-        $this->makeData();
-        DB::transaction(function () use ($previous_policy){
+        $rules_data = $this->makeData();
+        DB::transaction(function () use ($previous_policy, $rules_data){
             $office_hour_data = $this->makeOfficeHourData();
             if ($office_hour_data) $this->businessOfficeHourRepoository->update($this->business->officeHour, $office_hour_data);
             if ($previous_policy) $this->deletePreviousPolicy($previous_policy);
-            $this->officePolicyRuleRepository->insert($this->rulesData);
+            $this->officePolicyRuleRepository->insert($rules_data);
         });
         return true;
     }
@@ -47,8 +46,9 @@ class PolicyRuleUpdater
         $this->policyType = $this->policyRuleRequester->getPolicyType();
         $policy_rules = $this->policyRuleRequester->getRules();
         if ($policy_rules) {
+            $data = [];
             foreach ($policy_rules as $rules) {
-                array_push($this->rulesData, [
+                array_push($data, [
                     'business_id' => $this->business->id,
                     'policy_type' => $this->policyType,
                     'from_days' => $rules['from'],
@@ -59,6 +59,8 @@ class PolicyRuleUpdater
                 ]);
             }
         }
+
+        return $data;
     }
 
     private function deletePreviousPolicy($previous_policy)
