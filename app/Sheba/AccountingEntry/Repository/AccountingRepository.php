@@ -5,6 +5,7 @@ use App\Sheba\AccountingEntry\Constants\UserType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\AccountingEntry\Statics\IncomeExpenseStatics;
 use Sheba\RequestIdentification;
 
 class AccountingRepository extends BaseRepository
@@ -34,6 +35,17 @@ class AccountingRepository extends BaseRepository
         $url = "api/entries/";
         try {
             return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
+        } catch (AccountingEntryServerError $e) {
+            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+        }
+    }
+
+
+    public function getAccountsTotal(Request $request) {
+        $data = IncomeExpenseStatics::createDataForAccountsTotal($request->account_type, $request->start_date, $request->end_date);
+        $url  = "api/reports/account-list-with-sum";
+        try {
+            return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->get($url, $data);
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
@@ -74,12 +86,6 @@ class AccountingRepository extends BaseRepository
         $data['attachments']        = $this->uploadAttachments($request);
         $data['total_discount']     = (double)$request->total_discount;
         return $data;
-    }
-
-    private function isValidAmountClear($request): bool
-    {
-        if ($request->amount_cleared && $request->amount_cleared != 0 ) return true;
-        return false;
     }
 
     private function createJournalData(Request $request, $source_type, $source_id)
