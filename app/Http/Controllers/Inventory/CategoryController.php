@@ -72,4 +72,18 @@ class CategoryController extends Controller
         return http_response($request, null, 200, $categories);
     }
 
+    public function createCategoryWithSubCategory(Request $request)
+    {
+        $partner = $request->auth_user->getPartner();
+        $modifier = $request->auth_user->getResource()->profile->name;
+        $response = $this->categoryService
+            ->setModifier($modifier)
+            ->setPartner($partner->id)
+            ->setCategoryName($request->category_name)
+            ->setThumb($request->category_thumb)
+            ->setSubCategories($request->sub_category)
+            ->storeCategoryWithSubCategory();
+        return http_response($request, null, 201, $response);
+    }
+
 }
