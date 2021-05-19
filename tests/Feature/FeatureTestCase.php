@@ -14,6 +14,7 @@ use App\Models\Partner;
 use App\Models\PartnerOrder;
 use App\Models\PartnerResource;
 use App\Models\PartnerSubscriptionPackage;
+use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Models\Profile;
 use App\Models\Resource;
@@ -67,6 +68,11 @@ class FeatureTestCase extends TestCase
      * @var PosOrder
      */
     protected $PosOrder;
+
+    /**
+     * @var PosCustomer
+     */
+    protected $PosCustomer;
 
 
 
@@ -132,7 +138,9 @@ class FeatureTestCase extends TestCase
             Resource::class,
             Partner::class,
             Business::class,
-            BusinessMember::class
+            BusinessMember::class,
+            PosCustomer::class,
+            PosOrder::class
         ]);
 
 
@@ -148,6 +156,11 @@ class FeatureTestCase extends TestCase
         $this->PosOrder = factory(PosOrder::class)->create();
       //  dd($this->PosOrder);
 
+    }
+
+    protected function CreatePosCustomer()
+    {
+        $this->PosCustomer = factory(PosCustomer::class)->create();
     }
 
 

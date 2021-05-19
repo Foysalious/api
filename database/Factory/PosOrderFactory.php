@@ -25,4 +25,4 @@ class PosOrderFactory extends Factory
     }
 }
 
-  
+
