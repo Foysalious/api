@@ -85,6 +85,15 @@ class FormItemBuilder
      * @return array
      * @throws ReflectionException
      */
+    private function label()
+    {
+        return $this->initItem()->toArray();
+    }
+
+    /**
+     * @return array
+     * @throws ReflectionException
+     */
     private function date()
     {
         return $this->initItem()->toArray();
