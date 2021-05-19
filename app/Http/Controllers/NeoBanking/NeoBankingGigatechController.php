@@ -30,10 +30,10 @@ class NeoBankingGigatechController extends Controller
             /** @var NeoBanking $neoBanking */
             $neoBanking = app(NeoBanking::class);
             $info             = (array)$neoBanking->setBank($bank)->getNidInfo($data);
+            $neoBanking->storeThirdPartyLogs($request, ThirdPartyLog::GIGA_TECH,"ocr images", $info["data"]);
             if(!$info["data"]) {
                 throw new NeoBankingException('Nid ocr failed');
             }
-            $neoBanking->storeThirdPartyLogs($request, ThirdPartyLog::GIGA_TECH,"ocr images", $info["data"]);
             return api_response($request, $info, 200, ['data' => $info["data"]]);
         }catch (NeoBankingException $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
