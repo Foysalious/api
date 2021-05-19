@@ -12,9 +12,12 @@ use App\Sheba\Sms\FeatureType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
 use Sheba\Pos\Repositories\PosSettingRepository;
 use Sheba\Pos\Setting\Creator;
+use Sheba\Transactions\Types;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Throwable;
 
 class SettingController extends Controller
@@ -118,6 +121,9 @@ class SettingController extends Controller
             'partner_name' => $partner->name,
             'due_amount' => $request->due_amount
         ]);
+        $log = $sms_cost. " BDT has been deducted for sending due payment request sms";
+        (new WalletTransactionHandler())->setModel($request->partner)->setAmount($sms_cost)->setType(Types::debit())->setLog($log)->setTransactionDetails([])->setSource(TransactionSources::SMS)->store();
+
         return api_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
     }
 }
