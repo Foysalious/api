@@ -23,12 +23,13 @@ class AccountingEntryClient
 
     /**
      * @param $uri
+     * @param null $data
      * @return mixed
      * @throws AccountingEntryServerError
      */
-    public function get($uri)
+    public function get($uri, $data = null)
     {
-        return $this->call('get', $uri);
+        return $this->call('get', $uri, $data);
     }
 
     /**
