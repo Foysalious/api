@@ -10,6 +10,7 @@ use Sheba\Dal\PayrollComponent\Type;
 use Sheba\Dal\Salary\SalaryRepository;
 use Sheba\Dal\SalaryLog\SalaryLogRepository;
 use App\Sheba\Business\SalaryLog\Requester;
+use App\Sheba\Business\Salary\Requester as SalaryRequester;
 use App\Sheba\Business\SalaryLog\Creator;
 
 class Updater
@@ -49,8 +50,11 @@ class Updater
         $this->payrollComponentRepository = app(PayrollComponentRepository::class);
     }
 
-    /** @param $salary_request */
-    public function setSalaryRequester($salary_request)
+    /**
+     * @param SalaryRequester $salary_request
+     * @return $this
+     */
+    public function setSalaryRequester(SalaryRequester $salary_request)
     {
         $this->salaryRequest = $salary_request;
         return $this;
@@ -71,6 +75,7 @@ class Updater
                 $this->salaryRepository->update($this->salary, $this->salaryData);
                 $this->salaryLogCreate();
             }
+            $this->removeOverwrittenComponent();
             $this->createComponentPercentage();
         });
         return true;
@@ -91,6 +96,16 @@ class Updater
             ->setSalary($this->salary);
         $this->salaryLogCreator->setSalaryLogRequester($this->salaryLogRequester)->create();
     }
+
+    private function removeOverwrittenComponent()
+    {
+        $target_components = $this->salaryRequest->getRemoveOverwritten();
+        if (!$target_components) return;
+        foreach ($target_components as $component) {
+            $existing_target_component = $this->payrollComponentRepository->find($component);
+            if ($existing_target_component)  $this->payrollComponentRepository->delete($existing_target_component);
+        }
+    }
     private function createComponentPercentage()
     {
         $business_member = $this->salaryRequest->getBusinessMember();
@@ -104,6 +119,7 @@ class Updater
                     ->setOldSalaryAmount($this->oldSalary)
                     ->setPayrollComponent($existing_payroll_component)
                     ->setPayrollSetting($payroll_setting)
+                    ->setIsOverwritten($component['is_overwritten'])
                     ->updateCoWorkerGrossComponent();
             }else {
                 $existing_payroll_component = $this->payrollComponentRepository->where('name', $component['name'])->where('payroll_setting_id', $payroll_setting->id)->first();
@@ -112,6 +128,7 @@ class Updater
                     ->setOldSalaryAmount($business_member->salary->gross_salary)
                     ->setPayrollComponent($existing_payroll_component)
                     ->setPayrollSetting($payroll_setting)
+                    ->setIsOverwritten($component['is_overwritten'])
                     ->createCoWorkerGrossComponent();
             }
         }
