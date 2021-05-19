@@ -33,7 +33,7 @@ class GrossSalaryBreakdownCalculate
         $payroll_components = $payroll_setting->components()->where('type', Type::GROSS)->where('target_type', null)->orWhere('target_type', TargetType::GENERAL)->orderBy('name')->get();
         $payroll_component_by_target = $payroll_setting->components()->where('type', Type::GROSS)->where('target_id', $business_member->id)->orderBy('name')->get();
         if ($payroll_component_by_target) $gross_components = $this->makeGrossComponentCollection($payroll_components, $payroll_component_by_target);
-        $salary = $business_member->salary->gross_salary;
+        $salary = $business_member->salary ? $business_member->salary->gross_salary : 0;
         $data = [];
         foreach ($gross_components as $payroll_component) {
             $percentage = floatValFormat(json_decode($payroll_component->setting, 1)['percentage']);
