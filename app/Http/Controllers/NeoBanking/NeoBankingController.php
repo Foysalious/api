@@ -114,7 +114,7 @@ class NeoBankingController extends Controller
     {
         try {
             $data = config('occupation_nature.values');
-            return api_response($request, null, 200, ['occupation_natures' => $data]);
+            return api_response($request, null, 200, ['data' => $data]);
         } catch (\Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
@@ -125,11 +125,27 @@ class NeoBankingController extends Controller
     {
         try {
             $data = config('branch_code.data');
-            return api_response($request, null, 200, ['branch_codes' => $data]);
+            if (isset($request->district)) {
+                $this->filterByDistrict($request, $data);
+            }
+            return api_response($request, null, 200, ['data' => $data]);
         } catch (\Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function filterByDistrict($request, $values)
+    {
+        foreach ($values as $value) {
+            if ($value['district'] != $request->district) {
+                return false;
+            }
+
+            array_push($data, $value);
+        }
+
+        return api_response($request, null, 200, ['data' => $data]);
     }
 
     public function getCategoryWiseDetails(Request $request, NeoBanking $neoBanking)
