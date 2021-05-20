@@ -6,7 +6,9 @@ use Excel as MonthlyExcel;
 class Excel
 {
     private $monthlyData;
-    private $data=[];
+    private $data = [];
+    private $startDate;
+    private $endDate;
 
 
     public function setMonthlyData(array $monthly_data)
@@ -15,12 +17,26 @@ class Excel
         return $this;
     }
 
+    public function setStartDate($start_date)
+    {
+        $this->startDate = $start_date;
+        return $this;
+    }
+
+    public function setEndDate($end_date)
+    {
+        $this->endDate = $end_date;
+        return $this;
+    }
+
     public function get()
     {
         $this->makeData();
-        $file_name = 'Monthly_attendance_report';
-        MonthlyExcel::create($file_name, function ($excel) {
-            $excel->sheet('data', function ($sheet) {
+        $file_name = 'Custom_attendance_report';
+        $sheet_name = $this->startDate . ' - ' . $this->endDate;
+
+        MonthlyExcel::create($file_name, function ($excel) use ($sheet_name) {
+            $excel->sheet($sheet_name, function ($sheet) {
                 $sheet->fromArray($this->data, null, 'A1', true, false);
                 $sheet->prependRow($this->getHeaders());
                 $sheet->freezeFirstRow();
@@ -39,25 +55,24 @@ class Excel
     {
         foreach ($this->monthlyData as $employee) {
             array_push($this->data, [
-                'employee_id'   => $employee['employee_id'],
-                'name'          => $employee['member']['name'],
-                'dept'          => $employee['department']['name'],
-                'working_days'  => $employee['attendance']['working_days'],
-                'present'       => $employee['attendance']['present'],
-                'on_time'       => $employee['attendance']['on_time'],
-                'late'          => $employee['attendance']['late'],
-                'left_timely'   => $employee['attendance']['left_timely'],
-                'left_early'    => $employee['attendance']['left_early'],
-                'left_early_note' => $employee['attendance']['left_early_note'],
-                'on_leave'      => $employee['attendance']['on_leave'],
-                'absent'        => $employee['attendance']['absent'],
-                'total_hours'   => $employee['attendance']['total_hours'],
+                'employee_id' => $employee['employee_id'],
+                'name' => $employee['member']['name'],
+                'dept' => $employee['department']['name'],
+                'working_days' => $employee['attendance']['working_days'],
+                'present' => $employee['attendance']['present'],
+                'on_time' => $employee['attendance']['on_time'],
+                'late' => $employee['attendance']['late'],
+                'left_timely' => $employee['attendance']['left_timely'],
+                'left_early' => $employee['attendance']['left_early'],
+                'on_leave' => $employee['attendance']['on_leave'],
+                'absent' => $employee['attendance']['absent'],
+                'total_hours' => $employee['attendance']['total_hours'],
             ]);
         }
     }
 
     private function getHeaders()
     {
-        return ['Employee ID', 'Employee Name', 'Department', 'Working Days', 'Present', 'On time', 'Late', 'Left Timely', 'Left early', 'left_early_note', 'On leave','Absent', 'Total Hours'];
+        return ['Employee ID', 'Employee Name', 'Department', 'Working Days', 'Present', 'On time', 'Late', 'Left Timely', 'Left early', 'On leave', 'Absent', 'Total Hours'];
     }
 }
