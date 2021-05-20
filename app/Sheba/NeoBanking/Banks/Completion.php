@@ -50,6 +50,13 @@ class Completion
      */
     public function getAll(): BankCompletion
     {
+        $completion = $this->completionPercentage();
+        $this->setGigaTechData()->setApply($completion);
+        return (new BankCompletion())->setGigaTechStatusInfo($this->gigatech_data)->setCompletion($completion)->setCanApply($this->can_apply)->setBankDetailTitle(BankStatics::AccountDetailsTitle())->setBankDetailLink(BankStatics::AccountDetailsURL())->setPblTermsAndCondition(BankStatics::PblTermsAndCondition())->setPepIpDefinition(BankStatics::PepIpDefinition())->setMessage(BankStatics::completionMessage($this->can_apply))->setMessageType(BankStatics::completionType($this->can_apply));
+    }
+
+    public function completionPercentage()
+    {
         $list       = (new BankFormCategoryFactory())->setBank($this->bank)->setPartner($this->partner)->getAllCategory();
         $iterator   = $list->getIterator();
         $completion = [];
@@ -59,8 +66,7 @@ class Completion
             $completion[] = $current->getCompletionDetails()->toArray();
             $iterator->next();
         }
-        $this->setGigaTechData()->setApply($completion);
-        return (new BankCompletion())->setGigaTechStatusInfo($this->gigatech_data)->setCompletion($completion)->setCanApply($this->can_apply)->setBankDetailTitle(BankStatics::AccountDetailsTitle())->setBankDetailLink(BankStatics::AccountDetailsURL())->setPblTermsAndCondition(BankStatics::PblTermsAndCondition())->setPepIpDefinition(BankStatics::PepIpDefinition())->setMessage(BankStatics::completionMessage($this->can_apply))->setMessageType(BankStatics::completionType($this->can_apply));
+        return $completion;
     }
 
     private function setGigaTechData()
