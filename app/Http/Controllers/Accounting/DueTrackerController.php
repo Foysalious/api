@@ -92,4 +92,16 @@ class DueTrackerController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function dueList(Request $request) {
+        try {
+            $data = $this->dueTrackerRepo->setPartner($request->partner)->getDueList($request);
+            return api_response($request, null, 200, ['data' => $data]);
+        } catch (AccountingEntryServerError $e) {
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
+    }
 }
