@@ -132,8 +132,20 @@ class AccountCreate
         $account_title = null;
         $gender = null;
         $nominee_legal_doc_1 = null;
+        $pepIpStatus = null;
+        $pepIpRelation = null;
+        $fatcaInformation = null;
         foreach ($application['personal']['gender'] as $key => $data)
             if($data == 1) $gender = $key;
+        foreach ($application['personal']['pep_ip_status'] as $key => $data){
+            if ($data == 1) $pepIpStatus = explode('pep_ip_status_', $key)[1];
+        }
+        foreach ($application['personal']['pep_ip_relation'] as $key => $data){
+            if ($data == 1) $pepIpRelation = explode('pep_ip_relation_', $key)[1];
+        }
+        foreach ($application['personal']['fatca_information'] as $key => $data){
+            if ($data == 1) $fatcaInformation = explode('fatca_information_', $key)[1];
+        }
         foreach ($application['account']['type_of_account'] as $key => $data)
             if($data == 1) $account_title = $key;
         foreach ($application['nominee']['identification_number_type'] as $key => $data)
@@ -144,7 +156,6 @@ class AccountCreate
             "tid"           => PBLStatics::uniqueTransactionId(),
             "requester_id"  => $this->partner->id,
             "account_title" => $account_title,
-            "date_of_incorp"=> 19780730,
             "owner_title"   => $this->removeSpecialCharacters($application['personal']['applicant_name']),
             "gender"        => $gender,
             "dob"           => (isset($application['personal']['birth_date'])) ? Carbon::parse($application['personal']['birth_date'])->format('Ymd') : null,
@@ -154,8 +165,17 @@ class AccountCreate
             "nid"           => isset($application['nid_selfie']['nid_no']) ? $application['nid_selfie']['nid_no'] : null,
             'tin'           => isset($application['personal']["etin_number"]) ? $application['personal']["etin_number"] : null,
             "street"        => isset($application['personal']['present_address']["street_village_present_address"]) ? $application['personal']['present_address']["street_village_present_address"] : null,
-            "town"          => isset($application['personal']['present_address']["district_present_address"]) ? $application['personal']['present_address']["district_present_address"] : null,
+            "town"          => isset($application['personal']['present_address']["sub_district_present_address"]) ? $application['personal']['present_address']["sub_district_present_address"] : null,
             "post_code"     => isset($application['personal']['present_address']['postcode_present_address']) ? $application['personal']['present_address']['postcode_present_address'] : '',
+            "district"      => isset($application['personal']['present_address']["district_present_address"]) ? $application['personal']['present_address']["district_present_address"] : null,
+            "street_business" => isset($application['institution']['business_office_address']['street_village_office_address']) ? $application['institution']['business_office_address']['street_village_office_address'] : null,
+            "town_business" => isset($application['institution']['business_office_address']['sub_district_office_address']) ? $application['institution']['business_office_address']['sub_district_office_address'] : null,
+            "post_code_business" => isset($application['institution']['business_office_address']['postcode_office_address']) ? $application['institution']['business_office_address']['postcode_office_address'] : null,
+            "district_business" => isset($application['institution']['business_office_address']['district_office_address']) ? $application['institution']['business_office_address']['district_office_address'] : null,
+            "street_permanent" => isset($application['personal']['permanent_address']['street_village_permanent_address']) ? $application['personal']['permanent_address']['street_village_permanent_address'] : null,
+            "town_permanent" => isset($application['personal']['permanent_address']['sub_district_permanent_address']) ? $application['personal']['permanent_address']['sub_district_permanent_address'] : null,
+            "post_code_permanent" => isset($application['personal']['permanent_address']['postcode_permanent_address']) ? $application['personal']['permanent_address']['postcode_permanent_address'] : null,
+            "district_permanent" => isset($application['personal']['permanent_address']['district_permanent_address']) ? $application['personal']['permanent_address']['district_permanent_address'] : null,
             "mobile_no"     => $this->mobile,
             "phone_no_office" => $this->mobile,
             "email"         => isset($application['institution']["email"]) ? $application['institution']["email"] : null,
@@ -163,15 +183,22 @@ class AccountCreate
             "cheque_book"   => PBLStatics::CHEQUE_BOOK,
             "internet_banking" => PBLStatics::INTERNET_BANKING,
             "debit_card" => PBLStatics::DEBIT_CARD,
-            "monthly_income" => isset($application['institution']['monthly_earning']) ? ($application['institution']['monthly_earning']) : null,
-            "total_monthly_deposit" => isset($application['institution']['monthly_earning']) ? ($application['institution']['monthly_earning']) : null,
+            "monthly_income" => isset($application['institution']['monthly_income']) ? ($application['institution']['monthly_income']) : null,
+            "total_monthly_deposit" => isset($application['institution']['total_monthly_deposit']) ? ($application['institution']['total_monthly_deposit']) : null,
             "total_monthly_withdraw" => isset($application['institution']['expected_monthly_withdrew']) ? ($application['institution']['expected_monthly_withdrew']) : null,
             "legal_doc_name"  => PBLStatics::LEGAL_DOC_NAME,
             "legal_doc_no"   => isset($application['institution']['trade_licence_number']) ? $application['institution']['trade_licence_number'] : null,
             "issue_date"     => (isset($application['institution']['trade_licence_date'])) ? Carbon::parse($application['institution']['trade_licence_date'])->format('Ymd') : null,
             "issue_authority" => isset($application['institution']['issue_authority']) ? $application['institution']['issue_authority'] : null,
             "exp_date" => (isset($application['institution']['trade_license_expire_date'])) ? Carbon::parse($application['institution']['trade_license_expire_date'])->format('Ymd') : null,
-            "customer_business" => 39,
+            "risk_type" => 'REGULAR',
+            "onboarding_type" => 'Internet',
+            "nationality" => 'BD',
+            "country_residence" => 'BD',
+            'customer_pep_ip' => strtoupper($pepIpStatus),
+            'associate_pep_ip' => strtoupper($pepIpRelation),
+            "occupation_type" => 'BUSINESS',
+            "occupation_nature" => isset($application['institution']['business_type_list']) ? $application['institution']['business_type_list'] : null,
             "nominee_name_1" => isset($application['nominee']["nominee_name"]) ? $this->removeSpecialCharacters($application['nominee']["nominee_name"]) : null,
             "nominee_relation_1" => isset($application['nominee']["nominee_relation"]) ? $application['nominee']["nominee_relation"] : null,
             "nominee_share_percent_1" => 100,
@@ -184,7 +211,8 @@ class AccountCreate
             "minor_guardian_doc" => PBLStatics::NATIONAL_ID,
             "minor_guardian_doc_no" => isset($application['nominee']["nominee_guardian_nid"]) ? $application['nominee']["nominee_guardian_nid"] : null,
             "ekyc_verified" => PBLStatics::EKYC_VERIFIED,
-            'key'           => $this->key
+            'key'           => $this->key,
+            'fatca' => strtoupper($fatcaInformation),
         ];
 
         return $data;
