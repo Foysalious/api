@@ -280,7 +280,7 @@ class Creator
 
             /** @var Sms $sms */
             $sms = app(Sms::class);
-            $sms = $sms->setVendor('infobip')
+            $sms = $sms->setVendor('adareach')
                        ->to($mobile)
                        ->msg($message)
                        ->setFeatureType(FeatureType::PAYMENT_LINK)
