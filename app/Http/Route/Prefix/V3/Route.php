@@ -55,6 +55,7 @@ class Route
                 $api->get('/', 'CategoryGroup\CategoryGroupController@index');
             });
             $api->group(['prefix' => 'services'], function ($api) {
+                $api->get('suggestions', 'Service\ServiceController@getSuggestions');
                 $api->group(['prefix' => '{service}'], function ($api) {
                     $api->get('/', 'Service\ServiceController@show');
                 });
