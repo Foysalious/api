@@ -21,6 +21,7 @@ class CustomerOrderController extends Controller
     public function index($customer, Request $request)
     {
         try {
+            ini_set('memory_limit', '2048M');
             $this->validate($request, [
                 'filter' => 'sometimes|string|in:ongoing,history',
                 'for' => 'sometimes|required|string|in:eshop,business',
@@ -64,7 +65,7 @@ class CustomerOrderController extends Controller
                 $all_orders = $customer->orders;
                 if($status) {
                     $all_orders = $all_orders->filter(function ($order, $key) use ($status) {
-                        return $order->getStatus() === $status;
+                        return $order->lastPartnerOrder() ? $order->lastPartnerOrder()->lastJob()->status === $status : false;
                     });
                 }
                 $all_jobs = $this->getInformation($all_orders);

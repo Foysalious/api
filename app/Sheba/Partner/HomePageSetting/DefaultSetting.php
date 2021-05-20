@@ -59,8 +59,8 @@ class DefaultSetting
 
         $customer_list = [
             "key" => "customer_list",
-            "name_en" => "Customer List",
-            "name_bn" => "গ্রাহক তালিকা",
+            "name_en" => "Contact List",
+            "name_bn" => "কন্টাক্ট লিস্ট",
             "is_on_homepage" => 0
         ];
 

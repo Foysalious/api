@@ -28,6 +28,7 @@ use Sheba\TopUp\Bulk\Validator\SheetNameValidator;
 use Sheba\TopUp\ConnectionType;
 use Sheba\OAuth2\AuthUser;
 use Sheba\TopUp\History\RequestBuilder;
+use Sheba\TopUp\OTF\OtfAmount;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpDataFormat;
 use Sheba\TopUp\TopUpHistoryExcel;
@@ -41,7 +42,7 @@ use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\TopUp\Creator;
 use Sheba\TopUp\Jobs\TopUpExcelJob;
 use Sheba\TopUp\Jobs\TopUpJob;
-use Sheba\TopUp\TopUp;
+use Sheba\TopUp\TopUpRechargeManager;
 use Sheba\TopUp\TopUpExcel;
 use Sheba\TopUp\TopUpRequest;
 use Sheba\TopUp\Vendor\VendorFactory;
@@ -147,16 +148,14 @@ class TopUpController extends Controller
             ->setUserAgent($userAgentInformation->getUserAgent());
 
         if ($agent instanceof Business && $request->has('is_otf_allow') && !($request->is_otf_allow)) {
-            $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
-            $top_up_request->setBlockedAmount($blocked_amount_by_operator);
+            $top_up_request->setIsOtfAllow(!$request->is_otf_allow);
         }
 
         if ($top_up_request->hasError()) {
             return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
         }
-
+        
         $topup_order = $creator->setTopUpRequest($top_up_request)->create();
-
         if ($topup_order) {
             dispatch((new TopUpJob($topup_order)));
 
@@ -183,31 +182,6 @@ class TopUpController extends Controller
     }
 
     /**
-     * @param TopUpSpecialAmount $special_amount
-     * @return array
-     */
-    private function getBlockedAmountForTopup(TopUpSpecialAmount $special_amount)
-    {
-        $special_amount = $special_amount->get();
-        $blocked_amount = $special_amount->blockedAmount->list;
-        $trigger_amount = $special_amount->triggerAmount->list;
-
-        $blocked_amount_by_operator = [];
-
-        foreach ($blocked_amount as $data) {
-            if (isset($blocked_amount_by_operator[$data->operator_id])) array_push($blocked_amount_by_operator[$data->operator_id], $data->amount); else
-                $blocked_amount_by_operator[$data->operator_id] = [$data->amount];
-        }
-
-        foreach ($trigger_amount as $data) {
-            if (isset($blocked_amount_by_operator[$data->operator_id])) array_push($blocked_amount_by_operator[$data->operator_id], $data->amount); else
-                $blocked_amount_by_operator[$data->operator_id] = [$data->amount];
-        }
-
-        return $blocked_amount_by_operator;
-    }
-
-    /**
      * @param Request $request
      * @param VerifyPin $verifyPin
      * @param VendorFactory $vendor
@@ -231,9 +205,8 @@ class TopUpController extends Controller
             ->setRequest($request)
             ->verify();
 
-        $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
         $validator = (new ExtensionValidator())->setFile($request->file('file'));
-        $data_validator = (new DataFormatValidator())->setAgent($agent)->setBlockedAmountByOperator($blocked_amount_by_operator)->setRequest($request);
+        $data_validator = (new DataFormatValidator())->setAgent($agent)->setRequest($request);
         $validator->linkWith(new SheetNameValidator())->linkWith($data_validator);
         $validator->check();
 
@@ -308,11 +281,17 @@ class TopUpController extends Controller
     private function getFullAgentType($type)
     {
         switch ($type) {
-            case 'customer': return Customer::class;
-            case 'partner': return Partner::class;
-            case 'affiliate': return Affiliate::class;
-            case 'business': case 'Company': return Business::class;
-            default: return '';
+            case 'customer':
+                return Customer::class;
+            case 'partner':
+                return Partner::class;
+            case 'affiliate':
+                return Affiliate::class;
+            case 'business':
+            case 'Company':
+                return Business::class;
+            default:
+                return '';
         }
     }
 
@@ -370,7 +349,10 @@ class TopUpController extends Controller
         $user = $request->has('partner') ? $request->partner : $request->user;
 
         $is_excel_report = ($request->has('content_type') && $request->content_type == 'excel');
-        if ($is_excel_report) {$offset = 0; $limit = 10000;}
+        if ($is_excel_report) {
+            $offset = 0;
+            $limit = 10000;
+        }
 
         $request_builder->setOffset($offset)->setLimit($limit)->setAgent($user);
         if ($request->has('from') && $request->from !== "null") {
@@ -430,12 +412,9 @@ class TopUpController extends Controller
         $topup_order = $creator->setTopUpRequest($top_up_request)->create();
         if (!$topup_order) return api_response($request, null, 500);
 
-        $vendor_factory = app(VendorFactory::class);
-        $vendor = $vendor_factory->getById($request->vendor_id);
-
-        /** @var TopUp $topUp */
-        $topUp = app(TopUp::class);
-        $topUp->setAgent($agent)->setVendor($vendor)->recharge($topup_order);
+        /** @var TopUpRechargeManager $topUp */
+        $topUp = app(TopUpRechargeManager::class);
+        $topUp->setTopUpOrder($topup_order)->recharge();
         return api_response($request, null, 200, [
             'message' => "Recharge Request Successful",
             'id' => $topup_order->id
@@ -444,13 +423,14 @@ class TopUpController extends Controller
 
     /**
      * @param Request $request
-     * @param TopUpSpecialAmount $topUp_special_amount
+     * @param OtfAmount $otf_amount
      * @return JsonResponse
+     * @throws Exception
      */
-    public function specialAmount(Request $request, TopUpSpecialAmount $topUp_special_amount)
+    public function specialAmount(Request $request, OtfAmount $otf_amount)
     {
-        $special_amount = $topUp_special_amount->get();
-        return api_response($request, null, 200, ['data' => $special_amount]);
+        $special_amount = $otf_amount->get();
+        return api_response($request, null, 200, ['otf_lists' => $special_amount]);
     }
 
     public function generateJwt(Request $request, AccessTokenRequest $access_token_request, ShebaAccountKit $sheba_accountKit)

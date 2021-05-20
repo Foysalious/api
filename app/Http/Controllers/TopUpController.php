@@ -6,6 +6,9 @@ use App\Models\Partner;
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
+use App\Sheba\TopUp\Vendor\Internal\BdRechargeClient;
+use App\Sheba\TopUp\Vendor\Response\Ipn\BdRecharge\BdRechargeFailResponse;
+use App\Sheba\TopUp\Vendor\Response\Ipn\BdRecharge\BdRechargeSuccessResponse;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -15,14 +18,18 @@ use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\TopUp\Creator;
-use Sheba\TopUp\TopUp;
+use Sheba\TopUp\Exception\PaywellTopUpStillNotResolved;
+use Sheba\TopUp\Gateway\BdRecharge;
 use Sheba\TopUp\Jobs\TopUpExcelJob;
 use Sheba\TopUp\Jobs\TopUpJob;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpExcel;
+use Sheba\TopUp\TopUpLifecycleManager;
 use Sheba\TopUp\TopUpRequest;
+use Sheba\TopUp\Vendor\Response\Ipn\FailResponse;
+use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\Ssl\SslSuccessResponse;
-use Sheba\TopUp\Vendor\Response\Ssl\SslFailResponse;
+use Sheba\TopUp\Vendor\Response\Ipn\Ssl\SslFailResponse;
 use Sheba\TopUp\Vendor\VendorFactory;
 use Sheba\UserAgentInformation;
 use Storage;
@@ -33,9 +40,6 @@ use App\Models\Affiliate;
 use Sheba\ModificationFields;
 use Sheba\Dal\TopUpOTFSettings\Contract as TopUpOTFSettingsRepo;
 use Sheba\Dal\TopUpVendorOTF\Contract as TopUpVendorOTFRepo;
-use Sheba\TopUp\Vendor\Internal\PaywellClient;
-use Sheba\TopUp\Vendor\Response\Paywell\PaywellSuccessResponse;
-use Sheba\TopUp\Vendor\Response\Paywell\PaywellFailResponse;
 
 class TopUpController extends Controller
 {
@@ -56,7 +60,7 @@ class TopUpController extends Controller
             array_add($vendor, 'asset', $asset_name);
             array_add($vendor, 'agent_commission', $vendor_commission->agent_commission);
             array_add($vendor, 'is_prepaid_available', 1);
-            array_add($vendor, 'is_postpaid_available', ($vendor->id != 6) ? 1 : 0);
+            array_add($vendor, 'is_postpaid_available', ( ! in_array($vendor->id, [6,7]) ) ? 1 : 0);
             if ($vendor->is_published) $error_message .= ',' . $vendor->name;
         }
         $regular_expression = array(
@@ -105,11 +109,6 @@ class TopUpController extends Controller
 
         dispatch((new TopUpJob($topup_order)));
         return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $topup_order->id]);
-    }
-
-    private function affiliateLogout(Affiliate $affiliate)
-    {
-        $affiliate->update($this->withUpdateModificationField(['remember_token' => str_random(255)]));
     }
 
     /**
@@ -171,42 +170,25 @@ class TopUpController extends Controller
     /**
      * @param Request $request
      * @param SslFailResponse $error_response
-     * @param TopUp $top_up
      * @return JsonResponse
      * @throws Exception
      */
-    public function sslFail(Request $request, SslFailResponse $error_response, TopUp $top_up)
+    public function sslFail(Request $request, SslFailResponse $error_response)
     {
-        $data = $request->all();
-        $error_response->setResponse($data);
-        $topup_order = $error_response->getTopUpOrder();
-        $this->logSslIpn("fail", $topup_order, $data);
-        $top_up->processFailedTopUp($topup_order, $error_response);
+        $this->ipnHandle($error_response, $request);
         return api_response($request, 1, 200);
     }
 
     /**
      * @param Request $request
      * @param SslSuccessResponse $success_response
-     * @param TopUp $top_up
      * @return JsonResponse
      * @throws Exception
      */
-    public function sslSuccess(Request $request, SslSuccessResponse $success_response, TopUp $top_up)
+    public function sslSuccess(Request $request, SslSuccessResponse $success_response)
     {
-        $data = $request->all();
-        $success_response->setResponse($data);
-        $topup_order = $success_response->getTopUpOrder();
-        $this->logSslIpn("success", $topup_order, $data);
-        $top_up->processSuccessfulTopUp($topup_order, $success_response);
+        $this->ipnHandle($success_response, $request);
         return api_response($request, 1, 200);
-    }
-
-    private function logSslIpn($status, TopUpOrder $topup_order, $request_data)
-    {
-        $key = 'Topup::' . ($status == "fail" ? "Failed:failed": "Success:success") . "_";
-        $key .= Carbon::now()->timestamp . '_' . $topup_order->id;
-        Redis::set($key, json_encode($request_data));
     }
 
     private function getAgent(Request $request)
@@ -215,6 +197,7 @@ class TopUpController extends Controller
         elseif ($request->customer) return $request->customer;
         elseif ($request->partner) return $request->partner;
         elseif ($request->vendor) return $request->vendor;
+        elseif ($request->business) return $request->business;
     }
 
     private function getFullAgentType($type)
@@ -226,35 +209,6 @@ class TopUpController extends Controller
             case 'business': case 'Company': return Business::class;
             default: return '';
         }
-    }
-
-    /**
-     * TEST CONTROLLER FOR TOPUP TEST
-     * @param Request $request
-     * @param VendorFactory $vendor
-     * @param TopUp $top_up
-     * @param TopUpRequest $top_up_request
-     * @return JsonResponse
-     * @throws \Exception
-     */
-    public function topUpTest(Request $request, VendorFactory $vendor, TopUp $top_up, TopUpRequest $top_up_request)
-    {
-        $this->validate($request, [
-            'mobile' => 'required|string|mobile:bd',
-            'connection_type' => 'required|in:prepaid,postpaid',
-            'vendor_id' => 'required|exists:topup_vendors,id',
-            'amount' => 'required|min:10|max:1000|numeric'
-        ]);
-
-        $agent = $this->getAgent($request);
-        if ($agent->wallet < (double)$request->amount) return api_response($request, null, 403, ['message' => "You don't have sufficient balance to recharge."]);
-        $vendor = $vendor->getById($request->vendor_id);
-        $topUprequest = $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type);
-        $top_up->setAgent($agent)->setVendor($vendor)->recharge($topUprequest);
-
-        if (!$vendor->isPublished()) return api_response($request, null, 403, ['message' => 'Sorry, we don\'t support this operator at this moment']);
-
-        return api_response($request, null, 200, ['message' => "Recharge Request Successful"]);
     }
 
     public function restartQueue()
@@ -298,7 +252,7 @@ class TopUpController extends Controller
             ['topup_vendor_id', $request->vendor_id], ['type', $agent]
         ])->first();
 
-        if ($otf_settings->applicable_gateways != 'null' && in_array($vendor->gateway, json_decode($otf_settings->applicable_gateways)) == true) {
+        if ($otf_settings && $otf_settings->applicable_gateways != 'null' && in_array($vendor->gateway, json_decode($otf_settings->applicable_gateways)) == true) {
             $vendor_commission = TopUpVendorCommission::where([['topup_vendor_id', $request->vendor_id], ['type', $agent]])->first();
             $otf_list = $topup_vendor_otf->builder()->where('topup_vendor_id', $request->vendor_id)->where('sim_type', 'like', '%' . $request->sim_type . '%')->where('status', 'Active')->orderBy('cashback_amount', 'DESC')->get();
 
@@ -361,35 +315,61 @@ class TopUpController extends Controller
 
     /**
      * @param Request $request
-     * @param PaywellSuccessResponse $success_response
-     * @param PaywellFailResponse $fail_response
-     * @param TopUp $top_up
-     * @param PaywellClient $paywell_client
+     * @param TopUpLifecycleManager $lifecycle
+     * @return JsonResponse
+     * @throws \Throwable
+     */
+    public function statusUpdate(Request $request, TopUpLifecycleManager $lifecycle)
+    {
+        /** @var TopUpOrder $top_up_order */
+        $top_up_order = TopUpOrder::find($request->topup_order_id);
+        if (!$top_up_order->canRefresh()) {
+            $message = "Top up is already " . $top_up_order->status;
+            return api_response($request, $message, 404, [
+                'code' => 400,
+                'message' => $message
+            ]);
+        }
+
+        try {
+            $actual_response = $lifecycle->setTopUpOrder($top_up_order)->reload()->getResponse();
+        } catch (PaywellTopUpStillNotResolved $e) {
+            $actual_response = $e->getResponse();
+        }
+
+        return api_response($actual_response, json_encode($actual_response), 200);
+    }
+
+    /**
+     * @param Request $request
+     * @param BdRechargeSuccessResponse $success_response
+     * @param BdRechargeFailResponse $fail_response
      * @return JsonResponse
      * @throws Exception
      */
-    public function paywellStatusUpdate(Request $request, PaywellSuccessResponse $success_response, PaywellFailResponse $fail_response, TopUp $top_up, PaywellClient $paywell_client)
+    public function bdRechargeStatusUpdate(Request $request, BdRechargeSuccessResponse $success_response, BdRechargeFailResponse $fail_response)
     {
-        /** @var TopUpOrder $topup_order */
-        $topup_order = TopUpOrder::find($request->topup_order_id);
-
-        if($topup_order->isViaPaywell() && $topup_order->status == Statuses::PENDING) {
-            $response = $paywell_client->enquiry($request->topup_order_id);
-            if ($response->status_code == "200") {
-                $success_response->setResponse($response);
-                $top_up->processSuccessfulTopUp($success_response->getTopUpOrder(), $success_response);
-            } else if ($response->status_code != "100") {
-                $fail_response->setResponse($response);
-                $top_up->processFailedTopUp($fail_response->getTopUpOrder(), $fail_response);
-            }
-            return api_response($response, json_encode($response), 200);
+        $data = $request->all();
+        if( $data['status'] == BdRecharge::SUCCESS){
+            $this->ipnHandle($success_response, $request);
         }
+        elseif ($data['status'] == BdRecharge::FAILED){
+            $this->ipnHandle($fail_response, $request);
+        }
+        return api_response($request, 1, 200);
+    }
 
-        $response = [
-            'recipient_msisdn' => $topup_order->payee_mobile,
-            'status_name' => $topup_order->status,
-            'status_code' => '',
-        ];
-        return api_response(json_encode($response), json_encode($response), 200);
+    private function ipnHandle(IpnResponse $ipn_response, Request $request){
+        $data = $request->all();
+        $ipn_response->setResponse($data);
+        $ipn_response->handleTopUp();
+        $this->logIpn($ipn_response, $data);
+    }
+
+    private function logIpn(IpnResponse $ipn_response, $request_data)
+    {
+        $key = 'Topup::' . ($ipn_response instanceof FailResponse ? "Failed:failed" : "Success:success") . "_";
+        $key .= Carbon::now()->timestamp . '_' . $ipn_response->getTopUpOrder()->id;
+        Redis::set($key, json_encode($request_data));
     }
 }
