@@ -3659,10 +3659,6 @@
                 "png",
                 "png2webp"
             ],
-            "support": {
-                "issues": "https://github.com/rosell-dk/webp-convert/issues",
-                "source": "https://github.com/rosell-dk/webp-convert/tree/2.4.0"
-            },
             "time": "2020-11-10T11:24:50+00:00"
         },
         {
@@ -3843,7 +3839,7 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
-                "reference": "cb06888f78d7dc49422e91b95a2d8ec864cc8d2b"
+                "reference": "33257c8ba973e36b445d97b084a0d26c20878c44"
             },
             "require": {
                 "php": ">=5.4"
@@ -3870,7 +3866,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2021-05-18T10:19:02+00:00"
+            "time": "2021-05-20T08:08:22+00:00"
         },
         {
             "name": "sheba/elasticsearch",
