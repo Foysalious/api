@@ -17,6 +17,7 @@ use Sheba\NeoBanking\Traits\ProtectedGetterTrait;
     protected $message      = '';
     protected $message_type = 'info';
     protected $gigatech_status_info;
+    protected $pep_ip_definition_link;
 
 
     /**
@@ -56,6 +57,12 @@ use Sheba\NeoBanking\Traits\ProtectedGetterTrait;
      public function setPblTermsAndCondition($pbl_terms_and_condition_link)
      {
          $this->pbl_terms_and_condition_link = $pbl_terms_and_condition_link;
+         return $this;
+     }
+
+     public function setPepIpDefinition($pep_ip_definition_link)
+     {
+         $this->pep_ip_definition_link = $pep_ip_definition_link;
          return $this;
      }
 
