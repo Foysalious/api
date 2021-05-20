@@ -106,7 +106,8 @@ class AccountCreate
             $this->setModifier($this->partner);
             PartnerNeoBankingAccount::create($this->withBothModificationFields([
                 "partner_id" => $this->partner->id,
-                "bank_id"    => $this->bank->id
+                "bank_id"    => $this->bank->id,
+                "transaction_id" => $this->response['data']['data']['transactionId'],
             ]));
             $data["title"]      = "New bank account created";
             $data["message"]    = "Prime Bank account open request received and will be notified shortly.";
