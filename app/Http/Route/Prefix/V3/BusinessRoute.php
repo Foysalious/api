@@ -9,8 +9,10 @@ class BusinessRoute
         $api->post('business/email-verify', 'Profile\ProfileController@verifyEmailWithVerificationCode')->middleware('jwtAuth');
         $api->get('business/send-verification-code', 'Profile\ProfileController@sendEmailVerificationCode')->middleware('jwtAuth');
         $api->get('business/send-verification-link', 'Profile\ProfileController@sendEmailVerificationlink')->middleware('jwtAuth');
+        $api->post('business/token-verify', 'B2b\BusinessesController@tokenVerify');
         $api->group(['prefix' => 'businesses', 'middleware' => ['business.auth']], function ($api) {
             $api->group(['prefix' => '{business}'], function ($api) {
+                $api->get('/topup-portal', 'B2b\BusinessesController@getTopUpPortalToken');
                 $api->get('vendors', 'B2b\BusinessesController@getVendorsListV3');
                 $api->group(['prefix' => 'approval-settings'], function ($api) {
                     $api->get('/', 'B2b\ApprovalSettingsController@index');

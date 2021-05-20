@@ -115,6 +115,7 @@ class IndexRoute
                 $api->resources(['customers' => 'Pos\CustomerController']);
                 $api->group(['prefix' => 'settings'], function ($api) {
                     $api->get('/', 'Pos\SettingController@getSettings');
+                    $api->get('/printer', 'Pos\SettingController@getPrinterSettings');
                     $api->post('/', 'Pos\SettingController@storePosSetting');
                 });
                 $api->post('due-payment-request-sms', 'Pos\SettingController@duePaymentRequestSms');
@@ -150,7 +151,7 @@ class IndexRoute
             $api->post('add-categories', 'CategoryController@addCategories');
             $api->post('vat-registration-number', 'PartnerController@addVatRegistrationNumber');
             $api->group(['prefix'=>'top-up'],function($api){
-                $api->get('/history', 'TopUp\\TopUpController@topUpHistory');
+                $api->get('history', 'TopUp\TopUpController@topUpHistory');
             });
             $api->get('search', 'SearchController@search');
             $api->group(['prefix' => 'subscriptions'], function ($api) {

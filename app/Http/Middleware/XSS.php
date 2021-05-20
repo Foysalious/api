@@ -20,7 +20,31 @@ class XSS
         'v2/partners/*/pos/services',
         'v2/partners/*/pos/services/*',
         'v2/partners/*/webstore-settings',
-        'v2/partners/*/pos/products/orders'
+        'v2/partners/*/pos/products/orders',
+        'v2/businesses/*/departments',
+        'v2/businesses/*/departments/*',
+        'service',
+        'service/*',
+        'category/*',
+        '/v1/employee/attendances/action',
+        'v1/employee/leaves',
+        'v1/employee/approval-requests/status',
+        'v1/employee/leaves/*',
+        'v1/employee/approval-requests/*',
+        'v1/employee/expense',
+        'v1/employee/expense/*',
+        'v1/employee/supports',
+        'v1/employee/supports/*',
+        'v1/employee/me/basic',
+        'v1/employee/me',
+        'v2/businesses/*/employees/*',
+        'v2/businesses/*/employees/*/basic-info',
+        'v2/businesses/*/leaves/approval-requests/*',
+        'v2/businesses/*/leaves/approval-requests/change-status-by-super-admin',
+        'v2/businesses/*/leaves/approval-requests/status',
+        'v2/businesses/*/expense/filter-month',
+        'v2/businesses/*/supports',
+        'v2/businesses/*/supports/*'
     ];
 
     /**
@@ -33,11 +57,11 @@ class XSS
     public function handle($request, Closure $next)
     {
         if ($this->inExceptArray($request)) return $next($request);
-        if (!in_array(strtolower($request->method()), ['put', 'post'])) {
-            return $next($request);
-        }
+
+        if ($this->isMethodWhitelisted($request)) return $next($request);
 
         $input = $request->all();
+
         array_walk_recursive($input, function (&$input) {
             $input = htmlspecialchars($input, ENT_NOQUOTES | ENT_HTML5);
         });
@@ -66,5 +90,10 @@ class XSS
         }
 
         return false;
+    }
+
+    private function isMethodWhitelisted($request)
+    {
+        return !in_array(strtolower($request->method()), ['put', 'post', 'patch']);
     }
 }

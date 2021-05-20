@@ -13,7 +13,7 @@ return [
     'socket_url' => env('SHEBA_SOCKET_URL'),
     'socket_on' => env('SHEBA_SOCKET_ON', true),
     'send_push_notifications' => env('SHEBA_SEND_PUSH_NOTIFICATIONS', true),
-    'partners_url' => env('SHEBA_PARTNER_END_URL'),
+    'partners_url' => env('SHEBA_PARTNER_END_URL') . '/' . env('SHEBA_PARTNERS_URL_PREFIX'),
     'db_backup' => env('SHEBA_DB_BACKUP', false),
     'portal' => 'customer-portal',
     //'revision' => file_get_contents(base_path()."/revision"),

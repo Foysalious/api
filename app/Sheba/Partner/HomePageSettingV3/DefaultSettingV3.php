@@ -59,8 +59,8 @@ class DefaultSettingV3
 
         $customer_list = [
             "key" => "customer_list",
-            "name_en" => "Customer List",
-            "name_bn" => "গ্রাহক তালিকা",
+            "name_en" => "Contact List",
+            "name_bn" => "কন্টাক্ট লিস্ট",
             "is_on_homepage" => 0
         ];
 
@@ -129,6 +129,6 @@ class DefaultSettingV3
     }
     public static function getLastUpdatedAt()
     {
-        return '2020-12-13';
+        return '2021-04-21';
     }
 }

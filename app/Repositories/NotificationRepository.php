@@ -14,6 +14,9 @@ use App\Sheba\Affiliate\PushNotification\TransportTicketPurchaseFailed;
 use App\Sheba\Sms\BusinessType;
 use App\Sheba\Sms\FeatureType;
 use App\Sheba\Subscription\Partner\PartnerSubscriptionChange;
+use Carbon\Carbon;
+use LaravelFCM\Message\Exceptions\InvalidOptionsException;
+use Sheba\Dal\PushNotificationMonitoring\PushNotificationMonitoringItem;
 use Sheba\PartnerOrderRequest\Events\OrderRequestEvent;
 use Sheba\PushNotificationHandler;
 use Sheba\Subscription\Partner\BillingType;
@@ -29,6 +32,10 @@ class NotificationRepository
         $this->order = $order;
         $this->send();
     }*/
+    /**
+     * @param $order
+     * @throws InvalidOptionsException
+     */
     public function send($order)
     {
         $this->order = $order;
@@ -52,6 +59,10 @@ class NotificationRepository
             $this->sendNotificationToPartner($this->order->partner_orders);
     }
 
+    /**
+     * @param $partner_orders
+     * @throws InvalidOptionsException
+     */
     private function sendNotificationToPartner($partner_orders)
     {
         foreach ($partner_orders as $partner_order) {
@@ -74,9 +85,15 @@ class NotificationRepository
                 "event_id"   => $partner_order->id,
                 "link"       => "new_order",
                 "sound"      => "notification_sound",
-                "channel_id" => $channel
+                "channel_id" => $channel,
+                'create_time'=>Carbon::now()->format('Y-m-d H:i:s')
             ];
-            (new PushNotificationHandler())->send($payload, $topic, $channel, $sound);
+            $notification                          = (new PushNotificationMonitoringItem())->create(['partner_id' => $partner->id, 'sent_payload' => json_encode($payload)]);
+            $payload['notification_monitoring_id'] = $notification ? $notification->id : null;
+            $topic_response=(new PushNotificationHandler())->setPriority(true)->send($payload, $topic, $channel, $sound);
+            if ($topic_response) {
+                $notification->update(['sent_payload' => json_encode($payload), 'topic_message_id' => $topic_response->isSuccess()]);
+            }
 
             event(new OrderRequestEvent(['user_type' => 'partner', 'user_id' => $partner->id, 'payload' => $payload]));
         }
