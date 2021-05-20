@@ -69,9 +69,9 @@ class DetailsExcel
             $this->profile->name . '_' . $this->department->name . '_' . $this->businessMember->employee_id :
             $this->profile->name . '_' . $this->department->name;
 
-        $sheet_name = "$this->startDate ' - ' $this->endDate";
+        $sheet_name = $this->startDate . ' - ' . $this->endDate;
 
-        Excel::create($file_name, function ($excel) use ($sheet_name){
+        Excel::create($file_name, function ($excel) use ($sheet_name) {
             $excel->sheet($sheet_name, function ($sheet) {
                 $sheet->fromArray($this->data, null, 'A1', false, false);
                 $sheet->prependRow($this->getHeaders());
