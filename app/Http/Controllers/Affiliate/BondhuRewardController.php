@@ -86,7 +86,9 @@ class BondhuRewardController extends Controller
     public function getUnseenAchievedRewards($affiliate, RewardDetails $rewardDetails){
         $affiliateRewards = $this->rewardAffiliateRepo->getUnseenAchievedRewards($affiliate);
         $affiliateRewards = $rewardDetails->mergeDetailsWithRewards($affiliateRewards);
-
+        $affiliateRewards->each(function ($each_reward){
+           return $this->formatReward($each_reward);
+        });
         return ['code' => 200, 'data' => $affiliateRewards];
     }
 
