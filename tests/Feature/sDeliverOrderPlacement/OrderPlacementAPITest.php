@@ -31,7 +31,7 @@ class OrderPlacementAPITest extends FeatureTestCase
 
     public function testDummy()
     {
-    dd($this->PosOrderCreate);
+  //  dd($this->PosOrderCreate);
         $this->assertEquals(1,1);
     }
 
