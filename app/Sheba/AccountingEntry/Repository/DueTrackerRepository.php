@@ -85,21 +85,20 @@ class DueTrackerRepository extends BaseRepository
         }
     }
 
+    /**
+     * @param $request
+     * @param false $paginate
+     * @return array
+     * @throws AccountingEntryServerError
+     */
     public function getDueList($request, $paginate=false): array
     {
         try {
             $url = "api/due-list?";
             $url      = $this->updateRequestParam($request, $url);
+            $order_by = $request->order_by;
             $result = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
             $list = $this->attachProfile(collect($result['list']));
-
-            if ($request->has('balance_type') && in_array($request->balance_type, [
-                    'due',
-                    'received',
-                    'clear'
-                ])) {
-                $list = $list->where('balance_type', $request->balance_type)->values();
-            }
             if($request->has('filter_by_supplier') && $request->filter_by_supplier == 1)
             {
                 $list = $list->where('is_supplier', 1)->values();
@@ -138,7 +137,7 @@ class DueTrackerRepository extends BaseRepository
     private function attachProfile(Collection $list): Collection
     {
         $list = $list->map(function ($item) {
-            $customerId = $item['key'];
+            $customerId = $item['party_id'];
             /** @var PosCustomer $posCustomer */
             $posCustomer = PosCustomer::find($customerId);
             $profile_id = $posCustomer->profile_id;
