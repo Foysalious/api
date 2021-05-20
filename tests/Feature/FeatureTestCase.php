@@ -12,6 +12,7 @@ use App\Models\Member;
 use App\Models\Order;
 use App\Models\Partner;
 use App\Models\PartnerOrder;
+use App\Models\PartnerPosService;
 use App\Models\PartnerResource;
 use App\Models\PartnerSubscriptionPackage;
 use App\Models\PosCustomer;
@@ -28,6 +29,7 @@ use Sheba\Dal\Category\Category;
 use Sheba\Dal\CategoryLocation\CategoryLocation;
 use Sheba\Dal\JobService\JobService;
 use Sheba\Dal\LocationService\LocationService;
+use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\Dal\Service\Service;
 use Sheba\Services\Type as ServiceType;
 use Sheba\Subscription\Partner\Access\RulesDescriber\Pos;
@@ -79,6 +81,16 @@ class FeatureTestCase extends TestCase
      * @var PartnerDeliveryInfoFactory
      */
     protected $PartnerDeliveryInfoFactory;
+
+    /**
+     * @var PartnerPosService
+     */
+    protected $PartnerPosService;
+
+    /**
+     * @var PartnerPosCategory
+     */
+    protected $PartnerPosCategory;
 
 
 
