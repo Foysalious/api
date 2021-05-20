@@ -294,6 +294,11 @@ return [
                 'mandatory'  => false
             ],
             [
+                "field_type" => "label",
+                "title"      => "আপনি কি একজন PEP/ IP / বৈদেশিক সংস্থার নির্বাহী /ঊচ্চ  পদস্থ কর্মকর্তা? *",
+                'mandatory'  => false
+            ],
+            [
                 'field_type' => 'radioGroup',
                 'title'      => 'আপনি কি একজন PEP/ IP / বৈদেশিক সংস্থার নির্বাহী /ঊচ্চ  পদস্থ কর্মকর্তা? *',
                 'name'       => 'pep_ip_status',
@@ -318,6 +323,11 @@ return [
                         'value'      => 0
                     ]
                 ]
+            ],
+            [
+                "field_type" => "label",
+                "title"      => "আপনি কি একজন PEP/ IP  / বৈদেশিক সংস্থার নির্বাহী / ঊচ্চ পদস্থ কর্মকর্তার সাথে সংশ্লিষ্ট সহযোগী অথবা পারিবারিক সদস্য? *",
+                'mandatory'  => false
             ],
             [
                 'field_type' => 'radioGroup',
@@ -357,6 +367,11 @@ return [
             [
                 'field_type' => 'header',
                 'title'      => 'FATCA তথ্য',
+                'mandatory'  => false
+            ],
+            [
+                "field_type" => "label",
+                "title"      => "আপনি কি যুক্তরাষ্ট্রের সাথে সম্পৃক্ত (বসবাসকারী, নাগরিক, গ্রীন কার্ডধারী, যুক্তরাষ্ট্র / যুক্তরাষ্ট্রের মালিকানাধীন প্রতিষ্ঠান) *",
                 'mandatory'  => false
             ],
             [
