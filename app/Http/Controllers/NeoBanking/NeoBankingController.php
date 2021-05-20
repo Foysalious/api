@@ -195,7 +195,7 @@ class NeoBankingController extends Controller
             $type=$request->type?:'organization_type_list';
             $data = NeoBankingGeneralStatics::types($type);
             if ($type == 'branch_code' && isset($request->district)) {
-                $data = $this->filterByDistrict($request, $data);
+                $data = $this->filterByDistrict($request, $data['list']);
             }
             return api_response($request, $data, 200, ['data' => $data]);
         } catch (\Throwable $e) {
@@ -212,7 +212,7 @@ class NeoBankingController extends Controller
                 array_push($data, $value);
             }
         }
-        return $data;
+        return ['list' => $data,'title'=>'ব্রাঞ্চ কোড সিলেক্ট করুন'];
     }
 
     public function accountApply(Request $request, NeoBanking $neoBanking)
