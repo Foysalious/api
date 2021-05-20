@@ -14,8 +14,6 @@ class NeoBankingRoute
                     $api->get('/transaction-list', 'NeoBanking\\NeoBankingController@getTransactionList');
                     $api->post('/create-transaction', 'NeoBanking\\NeoBankingController@createTransaction');
                     $api->get('/account-information', 'NeoBanking\\NeoBankingController@getAccountInformation');
-                    $api->get('/occupation-natures', 'NeoBanking\\NeoBankingController@getOccupationNatures');
-                    $api->get('/branch-code', 'NeoBanking\\NeoBankingController@getBranchCode');
                     $api->get('/category', 'NeoBanking\\NeoBankingController@getCategoryWiseDetails');
                     $api->post('/category', 'NeoBanking\\NeoBankingController@submitCategoryWistDetails');
                     $api->post('/category/document-upload', 'NeoBanking\\NeoBankingController@uploadCategoryWiseDocument');
