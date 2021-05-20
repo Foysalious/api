@@ -110,6 +110,42 @@ class NeoBankingController extends Controller
         }
     }
 
+    public function getOccupationNatures(Request $request)
+    {
+        try {
+            $data = config('occupation_nature.values');
+            return api_response($request, null, 200, ['data' => $data]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getBranchCode(Request $request)
+    {
+        try {
+            $data = config('branch_code.data');
+            if (isset($request->district)) {
+                $data = $this->filterByDistrict($request, $data);
+            }
+            return api_response($request, null, 200, ['data' => $data]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    private function filterByDistrict($request, $values)
+    {
+        $data = [];
+        foreach ($values as $value) {
+            if ($value['district'] == $request->district) {
+                array_push($data, $value);
+            }
+        }
+        return $data;
+    }
+
     public function getCategoryWiseDetails(Request $request, NeoBanking $neoBanking)
     {
         try {
@@ -202,17 +238,6 @@ class NeoBankingController extends Controller
             logError($e);
             return api_response($request, null, 500);
         }
-    }
-
-    private function filterByDistrict($request, $values)
-    {
-        $data = [];
-        foreach ($values as $value) {
-            if ($value['district'] == $request->district) {
-                array_push($data, $value);
-            }
-        }
-        return $data;
     }
 
     public function accountApply(Request $request, NeoBanking $neoBanking)

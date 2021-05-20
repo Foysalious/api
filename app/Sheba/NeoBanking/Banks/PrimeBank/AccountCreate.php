@@ -106,7 +106,8 @@ class AccountCreate
             $this->setModifier($this->partner);
             PartnerNeoBankingAccount::create($this->withBothModificationFields([
                 "partner_id" => $this->partner->id,
-                "bank_id"    => $this->bank->id
+                "bank_id"    => $this->bank->id,
+                "transaction_id" => $this->response['data']['data']['transactionId'],
             ]));
             $data["title"]      = "New bank account created";
             $data["message"]    = "Prime Bank account open request received and will be notified shortly.";
@@ -191,6 +192,14 @@ class AccountCreate
             "issue_date"     => (isset($application['institution']['trade_licence_date'])) ? Carbon::parse($application['institution']['trade_licence_date'])->format('Ymd') : null,
             "issue_authority" => isset($application['institution']['issue_authority']) ? substr($application['institution']['issue_authority'],0,20) : null,
             "exp_date" => (isset($application['institution']['trade_license_expire_date'])) ? Carbon::parse($application['institution']['trade_license_expire_date'])->format('Ymd') : null,
+            "risk_type" => 'REGULAR',
+            "onboarding_type" => 'Internet',
+            "nationality" => 'BD',
+            "country_residence" => 'BD',
+            'customer_pep_ip' => strtoupper($pepIpStatus),
+            'associate_pep_ip' => strtoupper($pepIpRelation),
+            "occupation_type" => 'BUSINESS',
+            "occupation_nature" => isset($application['institution']['business_type_list']) ? $application['institution']['business_type_list'] : null,
             "customer_business" => 39,
             "nominee_name_1" => isset($application['nominee']["nominee_name"]) ? substr($this->removeSpecialCharacters($application['nominee']["nominee_name"]),0,35) : null,
             "nominee_relation_1" => isset($application['nominee']["nominee_relation"]) ? substr($application['nominee']["nominee_relation"],0,35) : null,
