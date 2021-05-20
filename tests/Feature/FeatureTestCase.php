@@ -151,18 +151,6 @@ class FeatureTestCase extends TestCase
         $this->createClientAccounts();
     }
 
-    protected function CreatePosOrder()
-    {
-        $this->PosOrder = factory(PosOrder::class)->create();
-      //  dd($this->PosOrder);
-
-    }
-
-    protected function CreatePosCustomer()
-    {
-        $this->PosCustomer = factory(PosCustomer::class)->create();
-    }
-
 
     protected function truncateTables(array $tables)
     {
