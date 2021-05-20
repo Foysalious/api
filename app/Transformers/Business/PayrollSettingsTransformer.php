@@ -25,7 +25,6 @@ class PayrollSettingsTransformer extends TransformerAbstract
      */
     public function transform(PayrollSetting $payroll_setting)
     {
-        dd($this->payComponents($payroll_setting));
         return [
             'id' => $payroll_setting->id,
             'business_id' => $payroll_setting->business_id,
