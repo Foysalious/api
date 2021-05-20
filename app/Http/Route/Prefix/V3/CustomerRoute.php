@@ -24,5 +24,11 @@ class CustomerRoute
                 });
             });
         });
+
+        $api->group(['prefix' => 'customers'], function ($api) {
+            $api->group(['prefix' => 'info-call'], function ($api) {
+                $api->post('/', 'InfoCall\InfoCallController@store');
+            });
+        });
     }
 }
