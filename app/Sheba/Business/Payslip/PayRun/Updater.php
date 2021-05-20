@@ -1,5 +1,6 @@
 <?php namespace Sheba\Business\Payslip\PayRun;
 
+use App\Jobs\Business\SendPayslipDisbursePushNotificationToEmployee;
 use App\Sheba\Business\Salary\Requester as SalaryRequester;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\Payslip\PayslipRepository;
@@ -82,6 +83,15 @@ class Updater
         DB::transaction(function () {
             $this->payslipRepository->getPaySlipByStatus($this->businessMemberIds, Status::PENDING)->where('schedule_date', 'like', '%' . $this->scheduleDate . '%')->update(['status' => Status::DISBURSED]);
         });
+        $this->sendNotifications();
         return true;
+    }
+
+    public function sendNotifications()
+    {
+        $business_members = $this->business->getAccessibleBusinessMember();
+        foreach ($business_members as $business_member) {
+            dispatch(new SendPayslipDisbursePushNotificationToEmployee($business_member));
+        }
     }
 }
