@@ -314,7 +314,8 @@ class AttendanceController extends Controller
         if ($request->file == 'excel') {
             return $details_excel->setBreakDownData($daily_breakdowns->toArray())
                 ->setBusinessMember($business_member)
-                ->setDepartment($business_member->role && $business_member->role->businessDepartment ? $business_member->role->businessDepartment->name : null)
+                ->setStartDate($request->start_date)
+                ->setEndDate($request->end_date)
                 ->download();
         }
 
