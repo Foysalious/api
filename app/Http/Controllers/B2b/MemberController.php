@@ -286,7 +286,7 @@ class MemberController extends Controller
         }
     }
 
-    public function updateMemberInfo($member, Request $request, MemberRepositoryInterface $member_repository, Updater $profile_updater)
+    public function updateMemberInfo($business, $member, Request $request, MemberRepositoryInterface $member_repository, Updater $profile_updater)
     {
         $validation_rules = [
             'name' => 'required|string',
