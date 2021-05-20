@@ -102,7 +102,8 @@ class NotificationController extends Controller
             'leave_id' => 'sometimes|required|numeric',
             'cancel_leave_id' => 'sometimes|required|numeric',
             'homepage' => 'sometimes|required',
-
+            'payslip_id' => 'sometimes|required|numeric',
+            'schedule_date' => 'sometimes|required',
         ]);
 
         $auth_info = $request->auth_info;
@@ -187,6 +188,18 @@ class NotificationController extends Controller
                 "message" => "Test canceled his leave",
                 "event_type" => 'leave',
                 "event_id" => $request->leave_id,
+                "sound" => "notification_sound",
+                "channel_id" => $channel,
+                "click_action" => "FLUTTER_NOTIFICATION_CLICK"
+            ], $topic, $channel, $sound);
+        }
+
+        if ($request->has('payslip')) {
+            $pushNotificationHandler->send([
+                "title" => "Payslip Disbursed",
+                "message" => "Payslip Disbursed of month ".$request->schedule_date->format('M Y'),
+                "event_type" => 'payslip',
+                "event_id" => $request->payslip_id,
                 "sound" => "notification_sound",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
