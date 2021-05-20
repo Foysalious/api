@@ -64,6 +64,7 @@ class Creator
                     'value' => $component['title'],
                     'type' => 'deduction',
                     'is_default' => 0,
+                    'is_active' => 1,
                     'setting' => json_encode([]),
                 ];
             }
@@ -80,6 +81,7 @@ class Creator
                     'value' => $component['title'],
                     'type' => 'deduction',
                     'is_default' => 0,
+                    'is_active' => 1,
                     'setting' => json_encode([]),
                 ];
                 $existing_component = $this->payrollComponentRepository->find($component['id']);
