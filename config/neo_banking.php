@@ -1,7 +1,5 @@
 <?php
 
-use Sheba\NeoBanking\Statics\BankStatics;
-
 if (!function_exists('addressViews')) {
     function addressViews($type, $defaultCountry='')
     {
@@ -366,7 +364,7 @@ return [
                 "title"         => "পেপ / আই পি এর <u>সংজ্ঞা</u> আমি পড়েছি এবং বুঝেছি",
                 'value'         => 0,
                 'mandatory'     => false,
-                'purpose'       => BankStatics::PblTermsAndCondition()
+                'purpose'       => env('SHEBA_PARTNER_END_URL') . '/' . env('SHEBA_PARTNERS_URL_PREFIX')."/pbl/pep-ip-definition"
             ],
             [
                 'field_type' => 'header',
