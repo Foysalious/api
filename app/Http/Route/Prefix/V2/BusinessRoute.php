@@ -61,6 +61,7 @@ class BusinessRoute
                 $api->group(['prefix' => 'members'], function ($api) {
                     $api->group(['prefix' => '{member}'], function ($api) {
                         $api->get('attendances', 'B2b\AttendanceController@showStat');
+                        $api->post('info', 'B2b\MemberController@updateMemberInfo');
                     });
                 });
                 $api->group(['prefix' => 'attendances'], function ($api) {
@@ -381,7 +382,6 @@ class BusinessRoute
         $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {
             $api->group(['prefix' => '{member}'], function ($api) {
                 $api->get('info', 'B2b\MemberController@getMemberInfo');
-                $api->post('info', 'B2b\MemberController@updateMemberInfo');
                 $api->get('get-business-info', 'B2b\MemberController@getBusinessInfo');
                 $api->post('update-business-info', 'B2b\MemberController@updateBusinessInfo');
                 $api->post('/attachments', 'B2b\MemberController@storeAttachment');

@@ -156,7 +156,8 @@ return [
                 'title'      => '',
                 'name'       => 'gender',
                 'id'         => 'gender',
-                'mandatory'  => false,
+                'mandatory'  => true,
+                'error_message' => 'gender is mandatory',
                 'views'      => [
                     [
                         'field_type' => 'radioButton',
@@ -304,7 +305,8 @@ return [
                 'name'       => 'pep_ip_status',
                 'id'         => 'pep_ip_status',
                 'value'      => 'অপারেশনের ধরণ ',
-                'mandatory'  => false,
+                'mandatory'  => true,
+                'error_message' => 'pep ip status required',
                 'views'      => [
                     [
                         'field_type' => 'radioButton',
@@ -335,7 +337,8 @@ return [
                 'name'       => 'pep_ip_relation',
                 'id'         => 'pep_ip_relation',
                 'value'      => 'অপারেশনের ধরণ ',
-                'mandatory'  => false,
+                'mandatory'  => true,
+                'error_message' => 'pep ip relation required',
                 'views'      => [
                     [
                         'field_type' => 'radioButton',
@@ -380,7 +383,8 @@ return [
                 'name'       => 'fatca_information',
                 'id'         => 'fatca_information',
                 'value'      => 'অপারেশনের ধরণ ',
-                'mandatory'  => false,
+                'mandatory'  => true,
+                'error_message' => 'fatca information is required',
                 'views'      => [
                     [
                         'field_type' => 'radioButton',
@@ -396,7 +400,7 @@ return [
                         'id'         => 'fatca_information_no',
                         'title'      => 'না',
                         'mandatory'  => false,
-                        'value'      => 0
+                        'value'      => 1
                     ]
                 ]
             ],
@@ -581,7 +585,7 @@ return [
                 'hint'          => '',
                 'list_type'     => 'dialog',
                 'error_message' => 'ব্যবসার ধরণ পূরণ আবশ্যক',
-                'mandatory'     => false,
+                'mandatory'     => true,
             ],
             [
                 'field_type'    => 'editText',
