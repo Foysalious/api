@@ -126,7 +126,7 @@ class NeoBankingController extends Controller
         try {
             $data = config('branch_code.data');
             if (isset($request->district)) {
-                $this->filterByDistrict($request, $data);
+                $data = $this->filterByDistrict($request, $data);
             }
             return api_response($request, null, 200, ['data' => $data]);
         } catch (\Throwable $e) {
@@ -137,15 +137,13 @@ class NeoBankingController extends Controller
 
     private function filterByDistrict($request, $values)
     {
+        $data = [];
         foreach ($values as $value) {
-            if ($value['district'] != $request->district) {
-                return false;
+            if ($value['district'] == $request->district) {
+                array_push($data, $value);
             }
-
-            array_push($data, $value);
         }
-
-        return api_response($request, null, 200, ['data' => $data]);
+        return $data;
     }
 
     public function getCategoryWiseDetails(Request $request, NeoBanking $neoBanking)
