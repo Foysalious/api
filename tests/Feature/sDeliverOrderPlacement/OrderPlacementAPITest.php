@@ -41,14 +41,13 @@ class OrderPlacementAPITest extends FeatureTestCase
      //  $this->posOrderCreate = factory(PosOrder::class)->create();
       //  $this->partnerDeliveryinfo = factory(Model::class)->create();
         $this->posCategory = factory(PosCategory::class)->create();
-      // $this->partnerPosCategory = factory(PartnerPosCategory::class)->create();
-
-       // $this->partnerPosService = factory(PartnerPosService::class)->create();
+       $this->partnerPosCategory = factory(PartnerPosCategory::class)->create();
+       $this->partnerPosService = factory(PartnerPosService::class)->create();
     }
 
     public function testDummy()
     {
-        dd($this->posCategory);
+        dd($this->partnerPosService);
         $this->assertEquals(1,1);
     }
 
