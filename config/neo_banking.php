@@ -165,7 +165,7 @@ return [
                 'name'       => 'gender',
                 'id'         => 'gender',
                 'mandatory'  => true,
-                'error_message' => 'gender is mandatory',
+                'error_message' => 'লিঙ্গ পূরণ আবশ্যক',
                 'views'      => [
                     [
                         'field_type' => 'radioButton',
@@ -257,7 +257,7 @@ return [
                 'name'       => 'present_address',
                 'id'         => 'present_address',
                 'views'      => addressViews('present'),
-                'mandatory'  => false
+                'mandatory'  => true
             ],
             [
 
@@ -280,7 +280,7 @@ return [
                 'title'      => '',
                 'name'       => 'permanent_address',
                 'id'         => 'permanent_address',
-                'mandatory'  => false,
+                'mandatory'  => true,
                 'views'      => addressViews('permanent')
             ],
             [
@@ -309,7 +309,7 @@ return [
                 'id'         => 'pep_ip_status',
                 'value'      => 'অপারেশনের ধরণ ',
                 'mandatory'  => true,
-                'error_message' => 'pep ip status required',
+                'error_message' => 'PEP/ IP কর্মকর্তা কিনা, পূরণ আবশ্যক',
                 'views'      => [
                     [
                         'field_type' => 'radioButton',
@@ -336,7 +336,7 @@ return [
                 'id'         => 'pep_ip_relation',
                 'value'      => 'অপারেশনের ধরণ ',
                 'mandatory'  => true,
-                'error_message' => 'pep ip relation required',
+                'error_message' => 'PEP/ IP কর্মকর্তার সাথে সংশ্লিষ্ট সহযোগী কিনা, পূরণ আবশ্যক',
                 'views'      => [
                     [
                         'field_type' => 'radioButton',
@@ -378,7 +378,7 @@ return [
                 'id'         => 'fatca_information',
                 'value'      => 'অপারেশনের ধরণ ',
                 'mandatory'  => true,
-                'error_message' => 'fatca information is required',
+                'error_message' => 'যুক্তরাষ্ট্রের সাথে সম্পৃক্ত কিনা, পূরণ আবশ্যক',
                 'views'      => [
                     [
                         'field_type' => 'radioButton',
@@ -538,7 +538,7 @@ return [
                 'name'       => 'business_office_address',
                 'id'         => 'business_office_address',
                 'views'      => addressViews('office'),
-                'mandatory'  => false
+                'mandatory'  => true
             ],
             [
                 'field_type'  => 'header',
