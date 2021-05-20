@@ -19,6 +19,7 @@ use App\Models\PosOrder;
 use App\Models\Profile;
 use App\Models\Resource;
 use Carbon\Carbon;
+use Factory\PartnerDeliveryInfoFactory;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\Schema;
 use Sheba\Dal\AuthorizationRequest\AuthorizationRequest;
@@ -73,6 +74,11 @@ class FeatureTestCase extends TestCase
      * @var PosCustomer
      */
     protected $PosCustomer;
+
+    /**
+     * @var PartnerDeliveryInfoFactory
+     */
+    protected $PartnerDeliveryInfoFactory;
 
 
 
