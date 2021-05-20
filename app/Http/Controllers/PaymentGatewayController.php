@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use Sheba\Dal\PaymentGateway\Contract as PaymentGatewayRepository;
 
@@ -23,18 +21,21 @@ class PaymentGatewayController extends Controller
      */
     public function getPaymentGateways($service_type)
     {
-        if ($service_type == "affiliate"){
+        if ($service_type == "affiliate") {
             $service = "App\\Models\\Affiliate";
-        } elseif ($service_type == "customer"){
+        } elseif ($service_type == "customer") {
             $service = "App\\Models\\Customer";
-        } elseif ($service_type == "partner"){
+        } elseif ($service_type == "partner") {
             $service = "App\\Models\\Partner";
-        } elseif($service_type == "business"){
+        } elseif ($service_type == "business") {
             $service = "App\\Models\\Business";
         }
 
-        $payment_gateways = $this->paymentGateway->builder()->where('service_type', $service)->orderBy('order', 'asc')->get();
+        $payment_gateways = $this->paymentGateway->builder()
+            ->where('service_type', $service)
+            ->orderBy('order', 'asc')
+            ->get();
+
         return api_response($service_type, $payment_gateways, 200, ['payment_gateways' => $payment_gateways]);
     }
-
 }
