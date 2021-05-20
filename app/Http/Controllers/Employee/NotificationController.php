@@ -69,7 +69,8 @@ class NotificationController extends Controller
             'Sheba\Dal\Announcement\Announcement',
             'Sheba\Dal\ApprovalRequest\Model',
             'Sheba\Dal\Leave\Model',
-            'Sheba\Dal\Support\Model'
+            'Sheba\Dal\Support\Model',
+            'Sheba\Dal\Payslip\Payslip',
         ])->where('created_at', '>=', $request->time)->where('is_seen', 0)->count();
 
         return api_response($request, null, 200, ['notifications' => $notifications_count]);

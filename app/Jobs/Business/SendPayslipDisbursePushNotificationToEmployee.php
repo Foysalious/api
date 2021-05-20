@@ -2,6 +2,7 @@
 
 use App\Models\BusinessMember;
 use App\Sheba\Business\BusinessQueue;
+use Sheba\Dal\Payslip\Payslip;
 use Sheba\PushNotificationHandler;
 
 class SendPayslipDisbursePushNotificationToEmployee extends BusinessQueue
@@ -14,10 +15,15 @@ class SendPayslipDisbursePushNotificationToEmployee extends BusinessQueue
      * @var BusinessMember
      */
     private $businessMember;
+    /**
+     * @var Payslip
+     */
+    private $payslip;
 
-    public function __construct(BusinessMember $business_member)
+    public function __construct(BusinessMember $business_member, Payslip $payslip)
     {
         $this->businessMember = $business_member;
+        $this->payslip = $payslip;
         $this->pushNotification = new PushNotificationHandler();
         parent::__construct();
     }
@@ -29,9 +35,10 @@ class SendPayslipDisbursePushNotificationToEmployee extends BusinessQueue
             $channel = config('sheba.push_notification_channel_name.employee');
             $sound  = config('sheba.push_notification_sound.employee');
             $notification_data = [
-                "title" => 'Payslip Disbursed',
-                "message" => "Payslip Has been Disbursed",
+                "title" => "Payslip Disbursed",
+                "message" => "Payslip Disbursed of month ".$this->payslip->schedule_date->format('M Y'),
                 "event_type" => 'payslip',
+                "event_id" => $this->payslip->id,
                 "sound" => "notification_sound",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
