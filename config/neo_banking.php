@@ -122,6 +122,14 @@ return [
 
     ],
     'category_form_items'                => [
+        'dynamic_banner' => [
+            [
+                "field_type" => "banner",
+                "title"      => "সকল সাধারন তথ্য দিতে NID দিয়ে আসা লাগবে। ",
+                'mandatory'  => false,
+                "purpose"    => "NID Submit"
+            ]
+        ],
         'personal'    => [
             [
                 'field_type' => 'header',
@@ -295,11 +303,6 @@ return [
                 'mandatory'  => false
             ],
             [
-                "field_type" => "label",
-                "title"      => "আপনি কি একজন PEP/ IP / বৈদেশিক সংস্থার নির্বাহী /ঊচ্চ  পদস্থ কর্মকর্তা? *",
-                'mandatory'  => false
-            ],
-            [
                 'field_type' => 'radioGroup',
                 'title'      => 'আপনি কি একজন PEP/ IP / বৈদেশিক সংস্থার নির্বাহী /ঊচ্চ  পদস্থ কর্মকর্তা? *',
                 'name'       => 'pep_ip_status',
@@ -325,11 +328,6 @@ return [
                         'value'      => 0
                     ]
                 ]
-            ],
-            [
-                "field_type" => "label",
-                "title"      => "আপনি কি একজন PEP/ IP  / বৈদেশিক সংস্থার নির্বাহী / ঊচ্চ পদস্থ কর্মকর্তার সাথে সংশ্লিষ্ট সহযোগী অথবা পারিবারিক সদস্য? *",
-                'mandatory'  => false
             ],
             [
                 'field_type' => 'radioGroup',
@@ -363,18 +361,14 @@ return [
                 'name'          => 'pep_ip_definition_read',
                 'id'            => 'pep_ip_definition_read',
                 "error_message" => "",
-                "title"         => 'পেপ / আই পি এর সংজ্ঞা আমি পড়েছি এবং বুঝেছি',
+                "title"         => "পেপ / আই পি এর <u>সংজ্ঞা</u> আমি পড়েছি এবং বুঝেছি",
                 'value'         => 0,
-                'mandatory'     => false
+                'mandatory'     => false,
+                'purpose'       => env('SHEBA_PARTNER_END_URL') . '/' . env('SHEBA_PARTNERS_URL_PREFIX')."/pbl/pep-ip-definition"
             ],
             [
                 'field_type' => 'header',
                 'title'      => 'FATCA তথ্য',
-                'mandatory'  => false
-            ],
-            [
-                "field_type" => "label",
-                "title"      => "আপনি কি যুক্তরাষ্ট্রের সাথে সম্পৃক্ত (বসবাসকারী, নাগরিক, গ্রীন কার্ডধারী, যুক্তরাষ্ট্র / যুক্তরাষ্ট্রের মালিকানাধীন প্রতিষ্ঠান) *",
                 'mandatory'  => false
             ],
             [
@@ -404,6 +398,12 @@ return [
                     ]
                 ]
             ],
+            [
+                "field_type" => "warning",
+                "title"      => "হ্যাঁ সিলেক্ট করলে, প্রাইম ব্যাংকের ব্রাঞ্চে গিয়ে, FATCA সম্পৃক্ত ডকুমেন্ট সহ যোগাযোগ করতে হবে।",
+                'mandatory'  => false
+            ],
+
         ],
         'institution' => [
             [

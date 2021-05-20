@@ -1,6 +1,8 @@
 <?php namespace Sheba\NeoBanking\Banks\Categories;
 
+use Sheba\NeoBanking\Banks\BankFormCategoryFactory;
 use Sheba\NeoBanking\Banks\CategoryGetter;
+use Sheba\NeoBanking\Banks\Completion;
 use Sheba\NeoBanking\Banks\CompletionCalculation;
 use Sheba\NeoBanking\DTO\BankFormCategory;
 use Sheba\NeoBanking\DTO\FormItemBuilder;
@@ -21,7 +23,18 @@ class Personal extends BankFormCategory
 
     public function get(): CategoryGetter
     {
+        $nid_done = 0;
         $formItems = FormStatics::personal();
+        $nid_class = app()->make(NIDSelfie::class);
+        $nid_class->setBank($this->bank);
+        $nid = (new CategoryGetter())->setCategory($nid_class)->toArray();
+
+        if(isset($nid) && $nid['completion']['en'] == 100) $nid_done = 1;
+
+        if(!$nid_done) {
+            $banner = FormStatics::dynamic_banner();
+            $formItems = array_merge($banner, $formItems);
+        }
         return $this->getFormData($formItems);
     }
 
