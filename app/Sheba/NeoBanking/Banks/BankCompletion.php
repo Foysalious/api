@@ -14,10 +14,10 @@ use Sheba\NeoBanking\Traits\ProtectedGetterTrait;
     protected $bank_detail_link;
     protected $bank_detail_title;
     protected $pbl_terms_and_condition_link;
+    protected $pep_ip_definition_link;
     protected $message      = '';
     protected $message_type = 'info';
     protected $gigatech_status_info;
-    protected $pep_ip_definition_link;
 
 
     /**
