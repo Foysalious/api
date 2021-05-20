@@ -196,7 +196,6 @@ class NotificationController extends Controller
         }
 
         if ($request->has('payslip')) {
-            dd(Carbon::parse($request->schedule_date)->format('M Y'));
             $pushNotificationHandler->send([
                 "title" => "Payslip Disbursed",
                 "message" => "Payslip Disbursed of month ".Carbon::parse($request->schedule_date)->format('M Y'),
