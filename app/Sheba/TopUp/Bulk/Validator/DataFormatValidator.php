@@ -1,6 +1,7 @@
 <?php namespace Sheba\TopUp\Bulk\Validator;
 
 use App\Helper\BangladeshiMobileValidator;
+use Exception;
 use Illuminate\Http\Request;
 use App\Models\Business;
 use App\Sheba\TopUp\TopUpExcelDataFormatError;
@@ -9,6 +10,7 @@ use Sheba\TopUp\Bulk\Exception\InvalidTopupData;
 use Sheba\TopUp\Bulk\Exception\InvalidTotalAmount;
 use Sheba\TopUp\Bulk\ReadExcelAndProcessData;
 use Sheba\TopUp\ConnectionType;
+use Sheba\TopUp\OTF\OtfAmountCheck;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpExcel;
 use Sheba\TopUp\TopUpSpecialAmount;
@@ -17,8 +19,6 @@ class DataFormatValidator extends Validator
 {
     /** @var TopUpAgent $agent */
     private $agent;
-    /** @var array $blockedAmountByOperator */
-    private $blockedAmountByOperator;
     /** @var TopUpExcelDataFormatError $excelDataFormatError */
     private $excelDataFormatError;
     /** @var ReadExcelAndProcessData $excel */
@@ -32,6 +32,10 @@ class DataFormatValidator extends Validator
     private $filePath;
     /** @var string $bulkExcelCdnFilePath */
     private $bulkExcelCdnFilePath;
+    /**
+     * @var OtfAmountCheck
+     */
+    private $otfAmountCheck;
 
     public function __construct()
     {
@@ -46,16 +50,6 @@ class DataFormatValidator extends Validator
     public function setAgent(TopUpAgent $agent): DataFormatValidator
     {
         $this->agent = $agent;
-        return $this;
-    }
-
-    /**
-     * @param array $blocked_amount_by_operator
-     * @return $this
-     */
-    public function setBlockedAmountByOperator(array $blocked_amount_by_operator): DataFormatValidator
-    {
-        $this->blockedAmountByOperator = $blocked_amount_by_operator;
         return $this;
     }
 
@@ -101,7 +95,7 @@ class DataFormatValidator extends Validator
             } elseif (!$this->isAmountInteger($value->$amount_field)) {
                 $halt_top_up = true;
                 $excel_error = 'Amount Should be Integer';
-            } elseif ($this->isOtfNumberBlockedForBusiness() && $this->isAmountBlocked($value->$operator_field, $value->$amount_field)) {
+            } elseif ($this->isOtfNumberBlockedForBusiness() && $this->isAmountBlocked($value->$operator_field, $value->$connection_type,$value->$amount_field)) {
                 $halt_top_up = true;
                 $excel_error = 'The recharge amount is blocked due to OTF activation issue';
             } elseif ($this->isPrepaidAmountLimitExceedForBusiness($amount_field, $value, $connection_type)) {
@@ -158,18 +152,20 @@ class DataFormatValidator extends Validator
 
     /**
      * @param $operator
+     * @param $connection_type
      * @param $amount
      * @return bool
+     * @throws Exception
      */
-    private function isAmountBlocked($operator, $amount): bool
+    public function isAmountBlocked($operator, $connection_type, $amount) : bool
     {
-        if ($operator == 'GP') return in_array($amount, $this->blockedAmountByOperator[TopUpSpecialAmount::GP]);
-        if ($operator == 'BANGLALINK') return in_array($amount, $this->blockedAmountByOperator[TopUpSpecialAmount::BANGLALINK]);
-        if ($operator == 'ROBI') return in_array($amount, $this->blockedAmountByOperator[TopUpSpecialAmount::ROBI]);
-        if ($operator == 'AIRTEL') return in_array($amount, $this->blockedAmountByOperator[TopUpSpecialAmount::AIRTEL]);
-        if ($operator == 'TELETALK') return in_array($amount, $this->blockedAmountByOperator[TopUpSpecialAmount::TELETALK]);
+        $this->otfAmountCheck = app(OtfAmountCheck::class);
+        $this->otfAmountCheck->setAmount($amount)
+            ->setVendor($operator)
+            ->setType($connection_type)
+            ->setAgent($this->agent);
 
-        return false;
+        return $this->otfAmountCheck->isAmountInOtf();
     }
 
     /**
