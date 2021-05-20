@@ -60,7 +60,7 @@ class SmsHandler {
     private function getSms($service_break_down) {
         if ($this->order->getDue() > 0) {
             $sms = (new SmsHandlerRepo('pos-due-order-bills'))
-                ->setVendor('infobip')
+                ->setVendor('adareach')
                 ->setMobile($this->order->customer->profile->mobile)
                 ->setFeatureType(FeatureType::POS)
                 ->setBusinessType(BusinessType::SMANAGER)
@@ -73,7 +73,7 @@ class SmsHandler {
             ]);
         } else {
             $sms = (new SmsHandlerRepo('pos-order-bills'))
-                ->setVendor('infobip')
+                ->setVendor('adareach')
                 ->setMobile($this->order->customer->profile->mobile)
                 ->setFeatureType(FeatureType::POS)
                 ->setBusinessType(BusinessType::SMANAGER)
