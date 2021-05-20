@@ -15,6 +15,7 @@ use App\Models\PartnerOrder;
 use App\Models\PartnerPosService;
 use App\Models\PartnerResource;
 use App\Models\PartnerSubscriptionPackage;
+use App\Models\PosCategory;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Models\Profile;
@@ -91,6 +92,12 @@ class FeatureTestCase extends TestCase
      * @var PartnerPosCategory
      */
     protected $PartnerPosCategory;
+
+
+    /**
+     * @var PosCategory
+     */
+    protected $PosCategory;
 
 
 

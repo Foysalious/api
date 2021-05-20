@@ -39,6 +39,7 @@ use \Factory\PosCustomerFactory;
 use \Factory\PartnerDeliveryInfoFactory;
 use \Factory\PartnerPosServiceFactory;
 use \Factory\PartnerPosCategoryFactory;
+use \Factory\PosCategoriesFactory;
 
 
 
@@ -82,7 +83,8 @@ $factory_classes = [
     PosCustomerFactory::class,
     PartnerDeliveryInfoFactory::class,
     PartnerPosServiceFactory::class,
-    PartnerPosCategoryFactory::class
+    PartnerPosCategoryFactory::class,
+    PosCategoriesFactory::class
 ];
 
 foreach ($factory_classes as $factory_class) {

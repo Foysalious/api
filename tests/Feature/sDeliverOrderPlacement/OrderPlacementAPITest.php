@@ -6,6 +6,7 @@ namespace Tests\Feature\sDeliverOrderPlacement;
 
 
 use App\Models\PartnerPosService;
+use App\Models\PosCategory;
 use App\Models\PosOrder;
 use PhpParser\Node\Expr\AssignOp\Mod;
 use Sheba\Dal\PartnerDeliveryInformation\Model;
@@ -20,6 +21,7 @@ class OrderPlacementAPITest extends FeatureTestCase
     private $partnerDeliveryinfo;
     private $partnerPosService;
     private $partnerPosCategory;
+    private $posCategory;
 
     public function setUp()
     {
@@ -30,20 +32,23 @@ class OrderPlacementAPITest extends FeatureTestCase
             Profile::class,
             Model::class,
             PartnerPosService::class,
-            PartnerPosCategory::class
+            PartnerPosCategory::class,
+            PosCategory::class
         ]);
         $this->logIn();
 
 
-   /*     $this->posOrderCreate = factory(PosOrder::class)->create();
-        $this->partnerDeliveryinfo = factory(Model::class)->create();
-        $this->partnerPosCategory = factory(PartnerPosCategory::class)->create();
-        $this->partnerPosService = factory(PartnerPosService::class)->create();*/
+     //  $this->posOrderCreate = factory(PosOrder::class)->create();
+      //  $this->partnerDeliveryinfo = factory(Model::class)->create();
+        $this->posCategory = factory(PosCategory::class)->create();
+      // $this->partnerPosCategory = factory(PartnerPosCategory::class)->create();
+
+       // $this->partnerPosService = factory(PartnerPosService::class)->create();
     }
 
     public function testDummy()
     {
-        dd($this->partnerDeliveryinfo);
+        dd($this->posCategory);
         $this->assertEquals(1,1);
     }
 
