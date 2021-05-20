@@ -63,7 +63,6 @@ class AccountCreate
         if (!isset($application['personal']) || !isset($application['institution']) || !isset($application['nid_selfie'])) throw new InvalidPartnerInformationException();
         $application['account'] = NeoBankingGeneralStatics::primeBankDefaultAccountData();
         $application_data = $this->makeApplicationData($application);
-        dd($application_data);
         $this->data = [
             "application_data" => json_encode($application_data),
             "user_type"        => get_class($this->partner),
