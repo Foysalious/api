@@ -26,8 +26,8 @@ abstract class ReturnPosItem extends RefundNature
     protected $paymentCreator;
     /** @var PosOrder */
     private $oldOrder;
-    private $refundAmount = 0;
-    private $request;
+    protected $refundAmount = 0;
+    protected $request;
 
     public function __construct(LogCreator $log_creator, Updater $updater, PaymentCreator $payment_creator, Request $request)
     {
@@ -51,7 +51,7 @@ abstract class ReturnPosItem extends RefundNature
 
             if ($this->order) {
                 $this->returnItem($this->order);
-                $this->updateEntry($this->order);
+                $this->updateEntry($this->order, 'refund');
             }
             $this->updateIncome($this->order);
         } catch (ExpenseTrackingServerError $e) {
@@ -138,27 +138,30 @@ abstract class ReturnPosItem extends RefundNature
 
     /**
      * @param PosOrder $order
+     * @param $refundType
      * @throws AccountingEntryServerError
      */
-    private function updateEntry(PosOrder $order)
+    protected function updateEntry(PosOrder $order, $refundType)
     {
-        $this->additionalAccountingData($order);
+        $this->additionalAccountingData($order, $refundType);
         /** @var AccountingRepository $accounting_repo */
         $accounting_repo = app()->make(AccountingRepository::class);
-        $this->request->merge([
-            "inventory_products" => $accounting_repo->getInventoryProducts($order->items, $this->data['services']),
-        ]);
+        if (empty($this->request->inventory_products)) {
+            $this->request->merge([
+                "inventory_products" => $accounting_repo->getInventoryProducts($order->items, $this->data['services']),
+            ]);
+        }
         $accounting_repo->updateEntryBySource($this->request, $order->id,EntryTypes::POS);
     }
 
-    private function additionalAccountingData(PosOrder $order)
+    private function additionalAccountingData(PosOrder $order, $refundType)
     {
         $this->request->merge(
             [
                 "from_account_key" => (new Accounts())->income->sales::SALES_FROM_POS,
                 "to_account_key" => (new Accounts())->income->sales::SALES_FROM_POS, // To account is not a default account for refund
                 "amount" => (double)$this->refundAmount,
-                "note" => 'refund',
+                "note" => $refundType,
                 "source_id" => $order->id,
                 "customer_id" => $order->customer->id,
                 "customer_name" => $order->customer->name
