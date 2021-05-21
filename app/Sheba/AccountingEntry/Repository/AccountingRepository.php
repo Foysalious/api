@@ -75,7 +75,7 @@ class AccountingRepository extends BaseRepository
         return json_encode($inventory_products);
     }
 
-    public function updateEntryBySource($request, $sourceType, $sourceId)
+    public function updateEntryBySource(Request $request, $sourceId, $sourceType)
     {
         $this->getCustomer($request);
         $this->setModifier($request->partner);

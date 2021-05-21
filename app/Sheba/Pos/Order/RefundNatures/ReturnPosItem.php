@@ -5,6 +5,7 @@ use Exception;
 use App\Models\PosOrder;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\AccountingRepository;
+use Illuminate\Http\Request;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\JournalCreateRepository;
@@ -26,11 +27,13 @@ abstract class ReturnPosItem extends RefundNature
     /** @var PosOrder */
     private $oldOrder;
     private $refundAmount = 0;
+    private $request;
 
-    public function __construct(LogCreator $log_creator, Updater $updater, PaymentCreator $payment_creator)
+    public function __construct(LogCreator $log_creator, Updater $updater, PaymentCreator $payment_creator, Request $request)
     {
         parent::__construct($log_creator, $updater);
         $this->paymentCreator = $payment_creator;
+        $this->request = $request;
     }
 
     public function update()
@@ -142,7 +145,10 @@ abstract class ReturnPosItem extends RefundNature
         $this->additionalAccountingData($order);
         /** @var AccountingRepository $accounting_repo */
         $accounting_repo = app()->make(AccountingRepository::class);
-        $accounting_repo->storeEntry($this->request, EntryTypes::POS);
+        $this->request->merge([
+            "inventory_products" => $accounting_repo->getInventoryProducts($order->items, $this->data['services']),
+        ]);
+        $accounting_repo->updateEntryBySource($this->request, $order->id,EntryTypes::POS);
     }
 
     private function additionalAccountingData(PosOrder $order)
@@ -152,10 +158,10 @@ abstract class ReturnPosItem extends RefundNature
                 "from_account_key" => (new Accounts())->income->sales::SALES_FROM_POS,
                 "to_account_key" => (new Accounts())->income->sales::SALES_FROM_POS, // To account is not a default account for refund
                 "amount" => (double)$this->refundAmount,
-                "inventory_products" => $order->items,
-                "requested_services"   => $this->data['services'],
                 "note" => 'refund',
-                "source_id" => $order->id
+                "source_id" => $order->id,
+                "customer_id" => $order->customer->id,
+                "customer_name" => $order->customer->name
             ]
         );
     }
