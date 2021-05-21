@@ -63,6 +63,8 @@ class AccountCreate
         if (!isset($application['personal']) || !isset($application['institution']) || !isset($application['nid_selfie'])) throw new InvalidPartnerInformationException();
         $application['account'] = NeoBankingGeneralStatics::primeBankDefaultAccountData();
         $application_data = $this->makeApplicationData($application);
+        $branch_code = $application['institution']['branch_code'] ?? null;
+        $branch = collect(config('branch_code.data'))->where('branch_code', (int)$branch_code)->first();
         $this->data = [
             "application_data" => json_encode($application_data),
             "user_type"        => get_class($this->partner),
@@ -70,6 +72,7 @@ class AccountCreate
             "name"             => $application['personal']['applicant_name'] ? : null,
             "mobile"           => $this->mobile,
             "company_name"     => $this->partner->name,
+            "branch_name"      => $branch['branch_name'] ?? null,
             "full_data"        => json_encode($application)
         ];
         return $this;
@@ -183,7 +186,7 @@ class AccountCreate
             "mobile_no"     => $this->mobile,
             "phone_no_office" => $this->mobile,
             "email"         => isset($application['institution']["email"]) ? substr($application['institution']["email"],0,35) : null,
-            "branch_code"   => $application['institution']["branch_code"] ?? null,
+            "branch_code"   => $application['personal']["branch_code"] ? 'BD0010' . $application['personal']['branch_code'] : null,
             "cheque_book"   => PBLStatics::CHEQUE_BOOK,
             "internet_banking" => PBLStatics::INTERNET_BANKING,
             "debit_card" => PBLStatics::DEBIT_CARD,
