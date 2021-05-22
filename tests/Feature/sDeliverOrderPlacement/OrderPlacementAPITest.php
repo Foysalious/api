@@ -1,13 +1,12 @@
 <?php
 
-
-namespace Tests\Feature\sDeliverOrderPlacement;
-
 /**
  * Khairun Nahar
- * 22May,2021
+ * 22 May,2021
  */
 
+
+namespace Tests\Feature\sDeliverOrderPlacement;
 
 
 use App\Models\Partner;
@@ -204,7 +203,7 @@ class OrderPlacementAPITest extends FeatureTestCase
     {
         $pos_order = Profile::find(1);;
         $pos_order->update(["sales_channel" => 'web store']);
-        
+
         $response = $this->post('/v2/pos/delivery/orders', [
             'logistic_partner_id' => 1,
             'weight' => '2.5',
