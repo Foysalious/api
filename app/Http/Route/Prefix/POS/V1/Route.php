@@ -8,6 +8,7 @@ class Route
         $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
             $api->get('/channels', "Inventory\ChannelController@index");
             $api->get('/units', "Inventory\UnitController@index");
+            $api->get('/partners/{sub_domain}', "Webstore\PartnerController@show");
         });
 
    $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers', 'middleware' => ['jwtAccessToken']], function ($api) {
@@ -44,6 +45,7 @@ class Route
                 $api->get('/', 'Inventory\CategoryController@index');
                 $api->get('/allCategory', 'Inventory\CategoryController@allCategory');
                 $api->post('/', 'Inventory\CategoryController@store');
+                $api->post('/category-with-sub-category', 'Inventory\CategoryController@createCategoryWithSubCategory');
                 $api->put('/{category_id}', 'Inventory\CategoryController@update');
                 $api->delete('/{category_id}', 'Inventory\CategoryController@delete');
             });

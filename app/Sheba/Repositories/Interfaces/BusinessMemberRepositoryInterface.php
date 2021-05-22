@@ -2,4 +2,5 @@
 
 interface BusinessMemberRepositoryInterface extends BaseRepositoryInterface
 {
+    public function checkExistingMobile($mobile);
 }

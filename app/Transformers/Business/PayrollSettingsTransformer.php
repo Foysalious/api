@@ -135,7 +135,7 @@ class PayrollSettingsTransformer extends TransformerAbstract
             if (!$deduction->is_default) {
                 $package_formatter = new Formatter();
                 $packages = $package_formatter->makePackageData($deduction);
-                $data['addition'][] = ['id' => $deduction->id, 'key' =>$deduction->name,  'value' => $deduction->value, 'is_default' => 0, 'package' => $packages];
+                $data['deduction'][] = ['id' => $deduction->id, 'key' =>$deduction->name,  'value' => $deduction->value, 'is_default' => 0, 'package' => $packages];
             }
             if ($deduction->is_default) $data['deduction'][] = ['id' => $deduction->id, 'key' =>$deduction->name, 'value' => Components::getComponents($deduction->name)['value'], 'is_default' => 1];
         }

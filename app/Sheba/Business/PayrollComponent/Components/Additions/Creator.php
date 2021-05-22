@@ -33,6 +33,18 @@ class Creator
         });
     }
 
+    public function delete()
+    {
+        $addition_component_delete = $this->payrollComponentRequester->getAdditionComponentDelete();
+        if (!$addition_component_delete) return;
+        foreach ($addition_component_delete as $component) {
+            $existing_component = $this->payrollComponentRepository->find($component);
+            if (!$existing_component) continue;
+            $this->payrollComponentRepository->delete($existing_component);
+        }
+        return true;
+    }
+
     private function makeData()
     {
         $payroll_settings = $this->payrollComponentRequester->getSetting();
@@ -51,6 +63,7 @@ class Creator
                     'value' => $component['title'],
                     'type' => 'addition',
                     'is_default' => 0,
+                    'is_active' => 1,
                     'setting' => json_encode([]),
                 ];
             }
@@ -67,6 +80,7 @@ class Creator
                     'value' => $component['title'],
                     'type' => 'addition',
                     'is_default' => 0,
+                    'is_active' => 1,
                     'setting' => json_encode([]),
                 ];
                 $existing_component = $this->payrollComponentRepository->find($component['id']);

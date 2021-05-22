@@ -12,11 +12,12 @@ class BusinessEmployeeDetailsTransformer extends TransformerAbstract
     public function transform(Member $member)
     {
         $profile = $member->profile;
-        $role = $member->businessMember->role;
+        $business_member = $member->businessMember;
+        $role = $business_member->role;
 
         return [
             'name'          => $profile->name ? : null,
-            'mobile'        => $profile->mobile,
+            'mobile'        => $business_member->mobile,
             'email'         => $profile->email,
             'image'         => $profile->pro_pic,
             'designation'   => $role ? $role->name : null,

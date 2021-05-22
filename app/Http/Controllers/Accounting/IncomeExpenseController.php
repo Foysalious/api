@@ -4,8 +4,11 @@
 use App\Http\Controllers\Controller;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\AccountingRepository;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\AccountingEntry\Statics\IncomeExpenseStatics;
 use Sheba\ModificationFields;
 
 class IncomeExpenseController extends Controller
@@ -19,16 +22,17 @@ class IncomeExpenseController extends Controller
         $this->accountingRepo = $accountingRepo;
     }
 
-    public function storeIncomeEntry(Request $request) {
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function storeIncomeEntry(Request $request): JsonResponse
+    {
         try {
-            $this->validate($request, [
-                'amount' => 'required|numeric',
-                'from_account_key' => 'required',
-                'to_account_key' => 'required',
-                'date' => 'required|date_format:Y-m-d H:i:s',
-                'amount_cleared' => 'sometimes|required|numeric',
-                'customer_id' => 'required_with:amount_cleared'
-            ]);
+            $this->validate($request, IncomeExpenseStatics::incomeExpenseEntryValidation());
+            if($request->amount_cleared && $request->amount > $request->amount_cleared) {
+                $this->validate($request, ['customer_id' => 'required']);
+            }
             $response = $this->accountingRepo->storeEntry($request, EntryTypes::INCOME);
             return api_response($request, $response, 200, ['data' => $response]);
         } catch (AccountingEntryServerError $e) {
@@ -36,22 +40,43 @@ class IncomeExpenseController extends Controller
         }
     }
 
-    public function storeExpenseEntry(Request $request) {
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function storeExpenseEntry(Request $request): JsonResponse
+    {
         try {
-            $this->validate($request, [
-                'amount' => 'required|numeric',
-                'from_account_key' => 'required',
-                'to_account_key' => 'required',
-                'date' => 'required|date_format:Y-m-d H:i:s',
-                'amount_cleared' => 'sometimes|required|numeric',
-                'customer_id' => 'required_with:amount_cleared'
-            ]);
+            $this->validate($request, IncomeExpenseStatics::incomeExpenseEntryValidation());
+            if($request->amount_cleared && $request->amount > $request->amount_cleared) {
+                $this->validate($request, ['customer_id' => 'required']);
+            }
 //            $product = (json_decode($request->inventory_products, true));
             $type = count(json_decode($request->inventory_products, true)) ? EntryTypes::INVENTORY : EntryTypes::EXPENSE;
             $response = $this->accountingRepo->storeEntry($request, $type);
             return api_response($request, $response, 200, ['data' => $response]);
         } catch (AccountingEntryServerError $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getTotalIncomeExpense(Request $request): JsonResponse
+    {
+        try {
+            $this->validate($request, IncomeExpenseStatics::totalIncomeExpenseValidation());
+            $response = $this->accountingRepo->getAccountsTotal($request);
+            return api_response($request, $response, 200, ['data' => $response]);
+        } catch (ValidationException $exception) {
+            return api_response($request, null, 400, ['message' => $exception->getMessage()]);
+        } catch (AccountingEntryServerError $e) {
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
         }
     }
 

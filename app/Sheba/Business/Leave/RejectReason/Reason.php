@@ -38,7 +38,6 @@ class Reason
     {
         return [
             'violation_of_leave_policy' => 'Violation of leave policy',
-            'reasonable_notice_obligation' => 'Reasonable notice obligation',
             'not_a_valid_leave_request' => 'Not a valid leave request',
             'very_frequent_leave_requests' => 'Very frequent leave requests',
             'other' => 'Other',

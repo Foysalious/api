@@ -355,6 +355,7 @@ class CoWorkerController extends Controller
         $this->coWorkerSalaryRequester->setMember($member_id)
             ->setGrossSalary($request->gross_salary)
             ->setBreakdownPercentage($request->breakdown_percentage)
+            ->setRemoveOverwritten($request->remove_overwritten)
             ->setManagerMember($manager_member)
             ->createOrUpdate();
         return api_response($request, null, 200);

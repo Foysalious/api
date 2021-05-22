@@ -13,12 +13,8 @@ use App\Models\Profile;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\AccountingRepository;
 use Illuminate\Http\Request;
-use ReflectionException;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
-use Sheba\AccountingEntry\Exceptions\InvalidSourceException;
-use Sheba\AccountingEntry\Exceptions\KeyNotFoundException;
-use Sheba\AccountingEntry\Repository\JournalCreateRepository;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Dal\POSOrder\SalesChannels;
@@ -198,7 +194,7 @@ class Creator
 
         $this->voucherCalculation($order);
         $this->resolvePaymentMethod();
-        $this->storeIncome($order);
+//        $this->storeIncome($order);
         $this->storeJournal($order);
         return $order;
     }
@@ -363,42 +359,23 @@ class Creator
         $this->additionalAccountingData($order);
         /** @var AccountingRepository $accounting_repo */
         $accounting_repo = app()->make(AccountingRepository::class);
+        $this->request->merge([
+            "inventory_products" => $accounting_repo->getInventoryProducts($order->items, $this->data['services']),
+        ]);
         $accounting_repo->storeEntry($this->request, EntryTypes::POS);
     }
 
     private function additionalAccountingData(PosOrder $order)
     {
-        $services = $order->items;
         $order_discount = $order->discounts()->sum('amount');
         $this->request->merge([
-            "from_account_key"   => (new Accounts())->asset->cash::CASH,
+            "from_account_key"   => $order->sales_channel == SalesChannels::WEBSTORE ? (new Accounts())->asset->sheba::SHEBA_ACCOUNT : (new Accounts())->asset->cash::CASH,
             "to_account_key"     => (new Accounts())->income->sales::SALES_FROM_POS,
             "amount"             => (double)$order->getNetBill(),
             "amount_cleared"     => $order->getPaid(),
-            "inventory_products" => $this->getInventoryProducts($services),
             "total_discount"     => $order_discount,
-            "note"               => $order->sales_channel == SalesChannels::WEBSTORE ?? SalesChannels::POS
+            "note"               => $order->sales_channel == SalesChannels::WEBSTORE ? SalesChannels::WEBSTORE : SalesChannels::POS,
+            "source_id"          => $order->id
         ]);
-    }
-
-    /**
-     * @param $services
-     * @return false|string
-     */
-    private function getInventoryProducts($services)
-    {
-        $requested_service = json_decode($this->data['services'], true);
-        $inventory_products = [];
-        foreach ($services as $key => $service) {
-            $original_service = ($service->service);
-            $inventory_products[] = [
-                "id"           => $original_service->id,
-                "name"         => $original_service->name,
-                "unit_price"   => $original_service->cost,
-                "selling_rice" => isset($requested_service[$key]['updated_price']) && $requested_service[$key]['updated_price'] ? $requested_service[$key]['updated_price'] : $original_service->price,
-                "quantity"     => isset($requested_service[$key]['quantity']) ? $requested_service[$key]['quantity'] : 1
-            ];
-        }
-        return json_encode($inventory_products);
     }
 }

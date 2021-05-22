@@ -3,10 +3,8 @@
 
 namespace Sheba\PaymentLink;
 
-use Exception;
 use App\Models\Payment;
 use App\Sheba\AccountingEntry\Repository\PaymentLinkRepository;
-use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
@@ -131,8 +129,9 @@ class PaymentLinkTransaction
     public function create()
     {
         $this->walletTransactionHandler->setModel($this->receiver);
-        $this->amountTransaction()->interestTransaction()->feeTransaction()->setEntryAmount();
+        $paymentLinkTransaction = $this->amountTransaction()->interestTransaction()->feeTransaction()->setEntryAmount();
         $this->storePaymentLinkEntry($this->amount, $this->fee, $this->interest);
+        return $paymentLinkTransaction;
 
     }
 

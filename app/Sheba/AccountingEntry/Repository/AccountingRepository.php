@@ -5,6 +5,7 @@ use App\Sheba\AccountingEntry\Constants\UserType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\AccountingEntry\Statics\IncomeExpenseStatics;
 use Sheba\RequestIdentification;
 
 class AccountingRepository extends BaseRepository
@@ -30,7 +31,7 @@ class AccountingRepository extends BaseRepository
     public function storeEntry(Request $request, $type) {
         $this->getCustomer($request);
         $this->setModifier($request->partner);
-        $data     = $this->createEntryData($request, $type);
+        $data     = $this->createEntryData($request, $type, $request->source_id);
         $url = "api/entries/";
         try {
             return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
@@ -39,13 +40,60 @@ class AccountingRepository extends BaseRepository
         }
     }
 
+
+    public function getAccountsTotal(Request $request) {
+        $data = IncomeExpenseStatics::createDataForAccountsTotal($request->account_type, $request->start_date, $request->end_date);
+        $url  = "api/reports/account-list-with-sum";
+        try {
+            return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->get($url, $data);
+        } catch (AccountingEntryServerError $e) {
+            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+        }
+    }
+
     /**
-     * @param Request $request
+     * @param $services
+     * @param $requestedService
+     * @return false|string
+     */
+    public function getInventoryProducts($services, $requestedService)
+    {
+        $requested_service = json_decode($requestedService, true);
+        $inventory_products = [];
+        foreach ($services as $key => $service) {
+            $original_service = ($service->service);
+            $sellingPrice = isset($requested_service[$key]['updated_price']) && $requested_service[$key]['updated_price'] ? $requested_service[$key]['updated_price'] : $original_service->price;
+            $unitPrice = $original_service->cost ?? $sellingPrice;
+            $inventory_products[] = [
+                "id"           => $original_service->id,
+                "name"         => $original_service->name,
+                "unit_price"   => $unitPrice,
+                "selling_price" => $sellingPrice,
+                "quantity"     => isset($requested_service[$key]['quantity']) ? $requested_service[$key]['quantity'] : 1
+            ];
+        }
+        return json_encode($inventory_products);
+    }
+
+    public function updateEntryBySource(Request $request, $sourceId, $sourceType)
+    {
+        $this->getCustomer($request);
+        $this->setModifier($request->partner);
+        $data     = $this->createEntryData($request, $sourceType, $sourceId);
+        $url = "api/entries/source/".$sourceType.'/'.$sourceId;
+        try {
+            return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
+        } catch (AccountingEntryServerError $e) {
+            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+        }
+    }
+    /**
+     * @param $request
      * @param $type
      * @param null $type_id
      * @return array
      */
-    private function createEntryData(Request $request, $type, $type_id = null)
+    private function createEntryData($request, $type, $type_id = null): array
     {
         $data['created_from']       = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
         $data['amount']             = (double)$request->amount;
@@ -60,6 +108,7 @@ class AccountingRepository extends BaseRepository
         $data['inventory_products'] = $request->inventory_products;
         $data['entry_at']           = $request->date ?: Carbon::now()->format('Y-m-d H:i:s');
         $data['attachments']        = $this->uploadAttachments($request);
+        $data['total_discount']     = (double)$request->total_discount;
         return $data;
     }
 

@@ -190,7 +190,8 @@ class AttendanceController extends Controller
         $total_members = $all_employee_attendance->count();
         if ($request->has('limit')) $all_employee_attendance = $all_employee_attendance->splice($offset, $limit);
         if ($all_employee_attendance->isEmpty()) return api_response($request, null, 404);
-        if ($request->file == 'excel') return $monthly_excel->setMonthlyData($all_employee_attendance->toArray())->get();
+        if ($request->file == 'excel') return $monthly_excel->setMonthlyData($all_employee_attendance->toArray())->setStartDate($request->start_date)
+            ->setEndDate($request->end_date)->get();
 
         return api_response($request, $all_employee_attendance, 200, ['all_employee_attendance' => $all_employee_attendance, 'total_members' => $total_members]);
     }
@@ -314,7 +315,8 @@ class AttendanceController extends Controller
         if ($request->file == 'excel') {
             return $details_excel->setBreakDownData($daily_breakdowns->toArray())
                 ->setBusinessMember($business_member)
-                ->setDepartment($business_member->role && $business_member->role->businessDepartment ? $business_member->role->businessDepartment->name : null)
+                ->setStartDate($request->start_date)
+                ->setEndDate($request->end_date)
                 ->download();
         }
 
@@ -776,8 +778,6 @@ class AttendanceController extends Controller
             'is_allow_end_time_grace' => $office_time->is_end_grace_time_enable,
             'ending_grace_time' => $office_time->end_grace_time,
             'is_half_day_enable' => $business->is_half_day_enable,
-            'half_day_leave_types_count' => $half_day_leave_types->count(),
-            'half_day_leave_types' => $half_day_leave_types->pluck('title'),
             'half_day_initial_timings' => $this->getHalfDayTimings($business),
             'is_grace_period_policy_enable' => $office_time->is_grace_period_policy_enable,
             'is_late_checkin_early_checkout_enable' => $office_time->is_late_checkin_early_checkout_policy_enable,
@@ -826,8 +826,7 @@ class AttendanceController extends Controller
              $requester->setBusiness($request->business)
                             ->setIsEnable($request->is_grace_policy_enable)
                             ->setPolicyType(Type::GRACE_PERIOD)
-                            ->setRules($request->grace_policy_rules)
-                            ->setDeleteRules($request->grace_delete_rules);
+                            ->setRules($request->grace_policy_rules);
             $grace_policy = $policy_updater->setPolicyRuleRequester($requester)->update();
         }
 
@@ -837,8 +836,7 @@ class AttendanceController extends Controller
                             ->setPolicyType(Type::LATE_CHECKIN_EARLY_CHECKOUT)
                             ->setForLateCheckIn($request->for_checkin)
                             ->setForEarlyCheckOut($request->for_checkout)
-                            ->setRules($request->checkin_checkout_policy_rules)
-                            ->setDeleteRules($request->checkin_checkout_delete_rules);
+                            ->setRules($request->checkin_checkout_policy_rules);
             $checkin_checkout_policy = $policy_updater->setPolicyRuleRequester($requester)->update();
         }
         if ($checkin_checkout_policy) return api_response($request, null, 200, ['msg' => "Update Successful"]);
@@ -870,25 +868,25 @@ class AttendanceController extends Controller
         $requester->setBusiness($business)
                         ->setIsEnable($request->is_enable)
                         ->setPolicyType($request->policy_type)
-                        ->setRules($request->rules)
-                        ->setDeleteRules($request->delete_rules);
+                        ->setRules($request->rules);
 
         $updater->setPolicyRuleRequester($requester)->update();
 
         return api_response($request, null, 200);
     }
 
-    public function getUnpaidLeavePolicy(Request $request)
+    public function getUnpaidLeavePolicy(Request $request, BusinessOfficeHoursRepoInterface $office_hours)
     {
         $business = $request->business;
         if (!$business) return api_response($request, null, 403, ['message' => 'You Are not authorized to show this settings']);
+        $office_time = $office_hours->getOfficeTime($business);
         $unpaid_leave_policy = $business->unpaidLeavePolicy;
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
         $resource = new Collection($unpaid_leave_policy, new PolicyTransformer());
         $unpaid_leave_policy_rules = $manager->createData($resource)->toArray()['data'];
 
-        return api_response($request, $unpaid_leave_policy_rules, 200, ['unpaid_leave_policy_rules' => $unpaid_leave_policy_rules]);
+        return api_response($request, $unpaid_leave_policy_rules, 200, ['is_unpaid_leave_policy_enable' => $office_time->is_unpaid_leave_policy_enable, 'unpaid_leave_policy_rules' => $unpaid_leave_policy_rules]);
     }
 
     public function getLateCheckinEarlyCheckoutPolicy(Request $request)

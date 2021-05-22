@@ -8,6 +8,7 @@ class AccountingRoute
             $api->post('/transfer', 'Accounting\\AccountingController@storeAccountsTransfer');
             $api->post('/expense', 'Accounting\\IncomeExpenseController@storeExpenseEntry');
             $api->post('/income', 'Accounting\\IncomeExpenseController@storeIncomeEntry');
+            $api->get('/income-expense-total', 'Accounting\\IncomeExpenseController@getTotalIncomeExpense');
             $api->get('/account-types', 'Accounting\\AccountController@getAccountTypeList');
             $api->get('/accounts', 'Accounting\\AccountController@getAccountList');
             $api->get('/cash-accounts', 'Accounting\\AccountController@getCashAccountList');
@@ -16,6 +17,7 @@ class AccountingRoute
             $api->delete('/accounts/{id}', 'Accounting\\AccountController@deleteAccount');
             $api->get('/icons', 'Accounting\\IconsController@getIcons');
             $api->group(['prefix' => 'due-tracker'], function ($api) {
+                $api->get('/due-list', 'Accounting\\DueTrackerController@dueList');
                 $api->post('/', 'Accounting\\DueTrackerController@store');
                 $api->post('/{entry_id}', 'Accounting\\DueTrackerController@update');
                 $api->delete('/{entry_id}', 'Accounting\\DueTrackerController@delete');
@@ -26,6 +28,9 @@ class AccountingRoute
                 $api->get('income-expense-entries', 'Accounting\\HomepageController@getIncomeExpenseEntries');
                 $api->get('due-collection-balance', 'Accounting\\HomepageController@getDueCollectionBalance');
                 $api->get('account-list-balance', 'Accounting\\HomepageController@getAccountListBalance');
+            });
+            $api->group(['prefix' => 'entries'], function ($api) {
+                $api->get('/{entry_id}', 'Accounting\\DueTrackerController@details');
             });
         });
     }

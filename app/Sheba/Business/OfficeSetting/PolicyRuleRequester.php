@@ -47,14 +47,6 @@ class PolicyRuleRequester
         return $this->policyType;
     }
 
-    public function getPolicy()
-    {
-        if ($this->policyType == Type::GRACE_PERIOD) $this->policy = $this->business->gracePolicy;
-        if ($this->policyType == Type::UNPAID_LEAVE) $this->policy = $this->business->unpaidLeavePolicy;
-        if ($this->policyType == Type::GRACE_PERIOD) $this->policy = $this->business->checkinCheckoutPolicy;
-        return $this->policy;
-    }
-
     public function setRules($rules)
     {
         $rules = json_decode($rules, 1);
@@ -67,15 +59,12 @@ class PolicyRuleRequester
         return $this->rules;
     }
 
-    public function setDeleteRules($delete_rules)
+    public function getPolicy()
     {
-        $this->deleteRules = json_decode($delete_rules, 1);
-        return $this;
-    }
-
-    public function getDeleteRules()
-    {
-        return $this->deleteRules;
+        if ($this->policyType == Type::GRACE_PERIOD) $this->policy = $this->business->gracePolicy;
+        if ($this->policyType == Type::UNPAID_LEAVE) $this->policy = $this->business->unpaidLeavePolicy;
+        if ($this->policyType == Type::LATE_CHECKIN_EARLY_CHECKOUT) $this->policy = $this->business->checkinCheckoutPolicy;
+        return $this->rules ? $this->policy : null;
     }
 
     public function setForLateCheckIn($for_late_checkin)

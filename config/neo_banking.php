@@ -122,6 +122,14 @@ return [
 
     ],
     'category_form_items'                => [
+        'dynamic_banner' => [
+            [
+                "field_type" => "banner",
+                "title"      => "সকল সাধারন তথ্য দিতে NID দিয়ে আসা লাগবে। ",
+                'mandatory'  => false,
+                "purpose"    => "NID Submit"
+            ]
+        ],
         'personal'    => [
             [
                 'field_type' => 'header',
@@ -135,7 +143,7 @@ return [
                 'name'          => 'applicant_name',
                 'id'            => 'applicant_name',
                 'error_message' => 'আবেদনকারীর নাম পূরণ আবশ্যক',
-                'is_editable'   => true
+                'is_editable'   => false
             ],
             [
                 'field_type'    => 'date',
@@ -144,6 +152,7 @@ return [
                 'id'            => 'birth_date',
                 'hint'          => 'উদাহরণ: 01/01/2000',
                 'error_message' => 'জন্ম তারিখ পূরণ আবশ্যক',
+                'is_editable'   => false
             ],
             [
                 'field_type' => 'header',
@@ -155,7 +164,8 @@ return [
                 'title'      => '',
                 'name'       => 'gender',
                 'id'         => 'gender',
-                'mandatory'  => false,
+                'mandatory'  => true,
+                'error_message' => 'লিঙ্গ পূরণ আবশ্যক',
                 'views'      => [
                     [
                         'field_type' => 'radioButton',
@@ -181,7 +191,8 @@ return [
                 'name'          => 'father_name',
                 'id'            => 'father_name',
                 'hint'          => 'উদাহরণ: Abdul Kader',
-                'error_message' => 'বাবার নাম পূরণ আবশ্যক'
+                'error_message' => 'বাবার নাম পূরণ আবশ্যক',
+                'is_editable'   => false
             ],
             [
                 'field_type'    => 'editText',
@@ -189,7 +200,8 @@ return [
                 'name'          => 'mother_name',
                 'id'            => 'mother_name',
                 'hint'          => 'উদাহরণ: Salma Begum',
-                'error_message' => 'মায়ের নাম পূরণ আবশ্যক'
+                'error_message' => 'মায়ের নাম পূরণ আবশ্যক',
+                'is_editable'   => false
             ],
             [
                 'field_type'    => 'editText',
@@ -231,7 +243,8 @@ return [
                 'name'          => 'nid_passport_birth_cer_number',
                 'id'            => 'nid_passport_birth_cer_number',
                 'hint'          => '654564544645464',
-                'error_message' => 'জাতীয় পরিচয়পত্র/পাসপোর্ট/জন্ম নিবন্ধন নাম্বার পূরণ আবশ্যক'
+                'error_message' => 'জাতীয় পরিচয়পত্র/পাসপোর্ট/জন্ম নিবন্ধন নাম্বার পূরণ আবশ্যক',
+                'is_editable'   => false
             ],
             [
                 'field_type' => 'header',
@@ -244,7 +257,7 @@ return [
                 'name'       => 'present_address',
                 'id'         => 'present_address',
                 'views'      => addressViews('present'),
-                'mandatory'  => false
+                'mandatory'  => true
             ],
             [
 
@@ -267,7 +280,7 @@ return [
                 'title'      => '',
                 'name'       => 'permanent_address',
                 'id'         => 'permanent_address',
-                'mandatory'  => false,
+                'mandatory'  => true,
                 'views'      => addressViews('permanent')
             ],
             [
@@ -295,7 +308,8 @@ return [
                 'name'       => 'pep_ip_status',
                 'id'         => 'pep_ip_status',
                 'value'      => 'অপারেশনের ধরণ ',
-                'mandatory'  => false,
+                'mandatory'  => true,
+                'error_message' => 'PEP/ IP কর্মকর্তা কিনা, পূরণ আবশ্যক',
                 'views'      => [
                     [
                         'field_type' => 'radioButton',
@@ -321,7 +335,8 @@ return [
                 'name'       => 'pep_ip_relation',
                 'id'         => 'pep_ip_relation',
                 'value'      => 'অপারেশনের ধরণ ',
-                'mandatory'  => false,
+                'mandatory'  => true,
+                'error_message' => 'PEP/ IP কর্মকর্তার সাথে সংশ্লিষ্ট সহযোগী কিনা, পূরণ আবশ্যক',
                 'views'      => [
                     [
                         'field_type' => 'radioButton',
@@ -346,9 +361,10 @@ return [
                 'name'          => 'pep_ip_definition_read',
                 'id'            => 'pep_ip_definition_read',
                 "error_message" => "",
-                "title"         => 'পেপ / আই পি এর সংজ্ঞা আমি পড়েছি এবং বুঝেছি',
+                "title"         => "পেপ / আই পি এর <u>সংজ্ঞা</u> আমি পড়েছি এবং বুঝেছি",
                 'value'         => 0,
-                'mandatory'     => false
+                'mandatory'     => false,
+                'purpose'       => env('SHEBA_PARTNER_END_URL') . '/' . env('SHEBA_PARTNERS_URL_PREFIX')."/pbl/pep-ip-definition"
             ],
             [
                 'field_type' => 'header',
@@ -361,7 +377,8 @@ return [
                 'name'       => 'fatca_information',
                 'id'         => 'fatca_information',
                 'value'      => 'অপারেশনের ধরণ ',
-                'mandatory'  => false,
+                'mandatory'  => true,
+                'error_message' => 'যুক্তরাষ্ট্রের সাথে সম্পৃক্ত কিনা, পূরণ আবশ্যক',
                 'views'      => [
                     [
                         'field_type' => 'radioButton',
@@ -377,10 +394,16 @@ return [
                         'id'         => 'fatca_information_no',
                         'title'      => 'না',
                         'mandatory'  => false,
-                        'value'      => 0
+                        'value'      => 1
                     ]
                 ]
             ],
+            [
+                "field_type" => "warning",
+                "title"      => "হ্যাঁ সিলেক্ট করলে, প্রাইম ব্যাংকের ব্রাঞ্চে গিয়ে, FATCA সম্পৃক্ত ডকুমেন্ট সহ যোগাযোগ করতে হবে।",
+                'mandatory'  => false
+            ],
+
         ],
         'institution' => [
             [
@@ -515,7 +538,7 @@ return [
                 'name'       => 'business_office_address',
                 'id'         => 'business_office_address',
                 'views'      => addressViews('office'),
-                'mandatory'  => false
+                'mandatory'  => true
             ],
             [
                 'field_type'  => 'header',
@@ -562,7 +585,7 @@ return [
                 'hint'          => '',
                 'list_type'     => 'dialog',
                 'error_message' => 'ব্যবসার ধরণ পূরণ আবশ্যক',
-                'mandatory'     => false,
+                'mandatory'     => true,
             ],
             [
                 'field_type'    => 'editText',

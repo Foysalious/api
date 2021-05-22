@@ -88,7 +88,7 @@ class UpdaterV2
     public function setMobile($mobile)
     {
         $this->mobile = $mobile;
-        $this->checkMobileUsedWithAnotherProfile();
+        $this->checkMobileUsedWithAnotherBusinessMember();
         return $this;
     }
 
@@ -116,6 +116,7 @@ class UpdaterV2
 
     private function getBusinessRole()
     {
+        if (!$this->department) $this->department = $this->businessMember->department()->id;
         $business_role = $this->businessRoleRepository
             ->where('name', $this->designation)
             ->where('business_department_id', $this->department)
@@ -148,11 +149,11 @@ class UpdaterV2
     /**
      * @return $this
      */
-    private function checkMobileUsedWithAnotherProfile()
+    private function checkMobileUsedWithAnotherBusinessMember()
     {
-        $profile = $this->profileRepository->checkExistingMobile($this->mobile);
-        if (!$profile) return $this;
-        if ($profile->id != $this->profile->id)
+        $business_member = $this->businessMemberRepository->checkExistingMobile($this->mobile);
+        if (!$business_member) return $this;
+        if ($business_member->id != $this->businessMember->id)
             $this->setError(400, 'This mobile number belongs to another member. Please contact with sheba');
 
         return $this;
@@ -170,12 +171,14 @@ class UpdaterV2
 
     public function update()
     {
-        $profile_data = ['name' => $this->name, 'mobile' => $this->mobile];
+        $profile_data = ['name' => $this->name];
         $this->profileRepository->updateRaw($this->profile, $profile_data);
+        if (!$this->manager) $this->manager = $this->businessMember->manager_id;
         $business_member_data = [
             'manager_id' => $this->manager,
             'business_role_id' => $this->businessRole->id,
-            'status' => $this->status ?: $this->businessMember->status
+            'status' => $this->status ?: $this->businessMember->status,
+            'mobile' => $this->mobile
         ];
         $this->businessMemberRepository->update($this->businessMember, $this->withUpdateModificationField($business_member_data));
     }

@@ -25,6 +25,16 @@ class BankStatics
         return config('neo_banking.account_details_title');
     }
 
+    public static function PblTermsAndCondition()
+    {
+        return config('sheba.partners_url') . "/pbl/terms-and-condition";
+    }
+
+    public static function PepIpDefinition()
+    {
+        return config('sheba.partners_url') . "/pbl/pep-ip-definition";
+    }
+
     /**
      * @param $bankCode
      * @return mixed
