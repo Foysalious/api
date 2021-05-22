@@ -4,6 +4,13 @@
 use App\Models\PosOrder;
 
 class PosOrderFactory extends Factory
+
+
+    /**
+     * Khairun Nahar
+     * pos order factory for sDelivery Automation
+     * May,2021
+     */
 {
 
     protected function getModelClass()

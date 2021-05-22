@@ -5,6 +5,7 @@ namespace Tests\Feature\sDeliverOrderPlacement;
 
 
 
+use App\Models\Partner;
 use App\Models\PartnerPosService;
 use App\Models\PosCategory;
 use App\Models\PosOrder;
@@ -22,6 +23,7 @@ class OrderPlacementAPITest extends FeatureTestCase
     private $partnerPosService;
     private $partnerPosCategory;
     private $posCategory;
+    private $Partner;
 
     public function setUp()
     {
@@ -30,25 +32,42 @@ class OrderPlacementAPITest extends FeatureTestCase
         $this->truncateTables([
             PosOrder::class,
             Profile::class,
-            Model::class,
-            PartnerPosService::class,
-            PartnerPosCategory::class,
-            PosCategory::class
+            Partner::class,
+            Model::class
         ]);
         $this->logIn();
 
+       $this->partnerDeliveryinfo = factory(Model::class)->create();
+       $this->posOrderCreate = factory(PosOrder::class)->create();
 
-     //  $this->posOrderCreate = factory(PosOrder::class)->create();
-      //  $this->partnerDeliveryinfo = factory(Model::class)->create();
-        $this->posCategory = factory(PosCategory::class)->create();
-       $this->partnerPosCategory = factory(PartnerPosCategory::class)->create();
-       $this->partnerPosService = factory(PartnerPosService::class)->create();
     }
 
-    public function testDummy()
+    public function testSuccessfulOrderPlaceForPos()
     {
-        dd($this->partnerPosService);
-        $this->assertEquals(1,1);
+        $response = $this->post('/v2/pos/delivery/orders', [
+            'logistic_partner_id' => 1,
+            'weight' => '2.5',
+            'cod_amount' => 500,
+            'partner_name' => 'Test',
+            'partner_phone' => '01956154440',
+            'pickup_address' => 'Dhanmondi',
+            'pickup_thana' => 'Dhanmondi',
+            "pickup_district"=> 'Dhanmondi',
+            'customer_name' => 'Nawshin',
+            'customer_phone' => '01620011019',
+            'delivery_address' => 'bangla motor',
+            'delivery_thana' => 'Ramna',
+            'delivery_district' => 'Dhaka',
+            'pos_order_id' => '1'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        dd($response->decodeResponseJson());
+
+        $this->assertEquals(200, $data['code']);
+        $this->assertEquals("Successful.", $data['message']);
     }
 
 }
