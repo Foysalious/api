@@ -10,10 +10,12 @@ class PosOrderResolver
     /**  @var PosOrderServerClient */
     private $client;
     private $order;
+    private $posOrderType;
 
     public function __construct(PosOrderServerClient $client)
     {
         $this->client = $client;
+        $this->posOrderType = PosOrderTypes::OLD_SYSTEM;
     }
 
     /**
@@ -23,14 +25,14 @@ class PosOrderResolver
     public function setOrderId($orderId)
     {
         $this->orderId = $orderId;
-        $oldPosOrder = PosOrder::where('id', $orderId)->select('id', 'sales_channel', 'partner_id')->first();
-        if ($oldPosOrder && !$oldPosOrder->partner->isMigrationCompleted()) {
+        $oldPosOrder = PosOrder::where('id', $orderId)->select('id', 'sales_channel')->first();
+        if ($oldPosOrder && !$oldPosOrder->is_migrated) {
             $this->order = $oldPosOrder;
-            $this->order->order_type = PosOrderTypes::OLD_POS_ORDER;
+            $this->posOrderType = PosOrderTypes::OLD_SYSTEM;
         } else {
             $response = $this->client->get('api/v1/order-channel/' . $this->orderId);
             $this->order = json_decode(json_encode($response['order']), FALSE);
-            $this->order->order_type = PosOrderTypes::NEW_POS_ORDER;
+            $this->posOrderType = PosOrderTypes::NEW_SYSTEM;
         }
         return $this;
     }
@@ -40,8 +42,8 @@ class PosOrderResolver
         return $this->order;
     }
 
-    public function isNewSystemPosOrder()
+    public function getPosOrderType()
     {
-        return $this->order->order_type == PosOrderTypes::OLD_POS_ORDER ? false : true;
+        return $this->posOrderType;
     }
 }

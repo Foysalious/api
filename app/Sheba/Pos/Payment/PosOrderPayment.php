@@ -9,7 +9,7 @@ class PosOrderPayment
     private $emi_month;
     private $interest;
     private $creator;
-    private $isNewSystemPosOrder;
+    private $posOrderType;
 
     /**
      * PosOrderPayment constructor.
@@ -71,12 +71,12 @@ class PosOrderPayment
     }
 
     /**
-     * @param mixed $isNewSystemPosOrder
+     * @param $posOrderType
      * @return PosOrderPayment
      */
-    public function setIsNewSystemPosOrder($isNewSystemPosOrder)
+    public function setPosOrderType($posOrderType)
     {
-        $this->isNewSystemPosOrder = $isNewSystemPosOrder;
+        $this->posOrderType = $posOrderType;
         return $this;
     }
 
@@ -93,7 +93,7 @@ class PosOrderPayment
 
     public function credit()
     {
-        $this->creator->credit($this->makeData(), $this->isNewSystemPosOrder);
+        $this->creator->credit($this->makeData(), $this->posOrderType);
     }
 
 }

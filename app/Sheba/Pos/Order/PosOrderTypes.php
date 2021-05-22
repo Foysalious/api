@@ -6,6 +6,6 @@ class PosOrderTypes
 {
     use ConstGetter;
 
-    const NEW_POS_ORDER = 'new_pos_order';
-    const OLD_POS_ORDER = 'old_pos_order';
+    const NEW_SYSTEM = 'new_system';
+    const OLD_SYSTEM = 'old_system';
 }

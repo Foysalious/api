@@ -191,7 +191,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
                 ->setMethod($this->payment->payable->type)
                 ->setEmiMonth($this->payment->payable->emi_month)
                 ->setInterest($this->paymentLink->getInterest())
-                ->setIsNewSystemPosOrder($this->target->isNewSystemPosOrder())
+                ->setPosOrderType($this->target->getPosOrderType())
                 ->credit();
         }
         if ($this->target instanceof ExternalPayment) {
