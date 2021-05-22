@@ -9,6 +9,7 @@ use DB;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
+use Illuminate\Support\Facades\Log;
 use LaravelFCM\Message\Exceptions\InvalidOptionsException;
 use Sheba\Dal\ExternalPayment\Model as ExternalPayment;
 use Sheba\Dal\POSOrder\SalesChannels;
@@ -71,6 +72,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             });
         } catch (QueryException $e) {
             $this->failPayment();
+            Log::info(["error while completing payment link", $e->getMessage(), $e->getCode()]);
             throw $e;
         }
         try {
@@ -81,6 +83,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $this->notify();
 
         } catch (\Throwable $e) {
+            Log::info(["error while storing payment link entry", $e->getMessage(), $e->getCode()]);
             logError($e);
         }
         return $this->payment;
