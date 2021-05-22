@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * Khairun Nahar
+ * pos Category factory for sDelivery Automation
+ * May,2021
+ */
+
+
 
 namespace Factory;
 

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Application Test Suite" tests="1" assertions="12" failures="0" errors="0" time="3.551519">
+    <testsuite name="Tests\Feature\sDeliverOrderPlacement\OrderPlacementAPITest" file="/var/www/tests/Feature/sDeliverOrderPlacement/OrderPlacementAPITest.php" tests="1" assertions="12" failures="0" errors="0" time="3.551519">
+      <testcase name="testPosOrderPlaceAPIForSuccessfullyDataInsertIntoDB" class="Tests\Feature\sDeliverOrderPlacement\OrderPlacementAPITest" file="/var/www/tests/Feature/sDeliverOrderPlacement/OrderPlacementAPITest.php" line="136" assertions="12" time="3.551519"/>
+    </testsuite>
+  </testsuite>
+</testsuites>
