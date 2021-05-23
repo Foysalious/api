@@ -89,6 +89,6 @@ $factory_classes = [
 
 foreach ($factory_classes as $factory_class) {
     /** @var Factory $f */
-    $f = (new $factory_class($factory));
+    $f = new $factory_class($factory);
     $f->handle();
 }
