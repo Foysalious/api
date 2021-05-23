@@ -315,7 +315,7 @@ class DeliveryService
     {
         return [
             'name' => $this->name,
-            'company_ref_id' => $this->companyRefId,
+            'company_ref_id' => $this->partner->id,
             'product_nature' => $this->productNature,
             'address' => $this->address,
             'district' => $this->district,
