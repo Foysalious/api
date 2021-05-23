@@ -29,20 +29,21 @@ class OrderPlaceDistrictAPITest extends FeatureTestCase
 
         $response = $this->get('/v2/pos/delivery/district');
         $data = $response->decodeResponseJson();
+        //dd($data);
 
         $this->assertEquals(200, $data['code']);
         $this->assertEquals("Successful", $data['message']);
 
     }
 
-    public function testGetDeliveryAddressDistrictList()
+    public function testFetchListGetDeliveryAddressDistrict()
     {
 
         $response = $this->get('/v2/pos/delivery/district');
         $data = $response->decodeResponseJson();
 
-        $this->assertEquals(200, $data['code']);
-        $this->assertEquals("Successful", $data['message']);
+        //$this->assertEquals(200, $data['code']);
+       // $this->assertEquals("Successful", $data['message']);
         $this->assertEquals('Bagerhat', $data['data'][0]['name']);
         $this->assertEquals('Bagerhat', $data['data'][0]['display_name']);
 

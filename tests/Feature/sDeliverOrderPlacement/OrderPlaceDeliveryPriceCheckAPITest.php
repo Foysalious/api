@@ -43,7 +43,7 @@ class OrderPlaceDeliveryPriceCheckAPITest extends FeatureTestCase
         $data = $response->decodeResponseJson();
 
         $this->assertEquals(200, $data['code']);
-        $this->assertEquals("Successful.", $data['message']);
+        $this->assertEquals("Successful", $data['message']);
     }
 
     public function testDataFailedToPassValidationResponseToFetchProductPriceAccordingtoWeight()
