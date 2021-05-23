@@ -1,15 +1,12 @@
-<?php namespace Tests\Feature\sDeliveryRegistration;
+<?php
 
-use App\Models\Partner;
-use App\Models\PosOrder;
-use App\Models\Profile;
-use Factory\PartnerDeliveryInfoFactory;
-use Sheba\Dal\PartnerDeliveryInformation\Contract;
+namespace Tests\Feature\sDeliveryRegistration;
+
+
 use Sheba\Dal\PartnerDeliveryInformation\Model;
-use Sheba\Dal\PartnerDeliveryInformation\EloquentImplementation;
 use Tests\Feature\FeatureTestCase;
 
-class RegisterTestCase extends FeatureTestCase
+class DeliveryRegisterAPITest extends FeatureTestCase
 {
     private $partnerDeliveryinfo;
 
@@ -17,15 +14,16 @@ class RegisterTestCase extends FeatureTestCase
     {
         parent::setUp();
         $this->logIn();
+
         $this->truncateTables([
             Model ::class
         ]);
-        //$this->partner=factory(Partner::class)->create();
         $this->partnerDeliveryinfo = factory(Model::class)->create();
     }
 
     public function testSuccessfulRegistration()
     {
+
         $response = $this-> post('v2/pos/delivery/register',[
             'name'=>'Sunerah Cardi',
             'company_ref_id'=>'IK0000987',
@@ -51,6 +49,6 @@ class RegisterTestCase extends FeatureTestCase
             'Authorization'=> "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-        dd($data);
+
     }
 }

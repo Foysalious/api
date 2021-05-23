@@ -1,2 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites/>
+<testsuites>
+  <testsuite name="Application Test Suite" tests="1" assertions="0" failures="0" errors="0" time="5.341875">
+    <testsuite name="Tests\Feature\sDeliveryRegistration\DeliveryRegisterAPITest" file="/var/www/tests/Feature/sDeliveryRegistration/DeliveryRegisterAPITest.php" tests="1" assertions="0" failures="0" errors="0" time="5.341875">
+      <testcase name="testSuccessfulRegistration" class="Tests\Feature\sDeliveryRegistration\DeliveryRegisterAPITest" file="/var/www/tests/Feature/sDeliveryRegistration/DeliveryRegisterAPITest.php" line="24" assertions="0" time="5.341875"/>
+    </testsuite>
+  </testsuite>
+</testsuites>
