@@ -471,5 +471,22 @@ class DeliveryService
         return true;
     }
 
+    public function getPaperflyDeliveryCharge()
+    {
+        return [
+            'inside_city' => [
+                'minimum' => 50,
+                'kg_wise' => 80
+            ],
+            'outside_city' => [
+                'minimum' => 50,
+                'kg_wise' => 80
+            ],
+            'note' => 'ক্যাশ অন ডেলিভারি চার্জঃ ১% চার্জ প্রযোজ্য হবে বিলের উপর'
+
+        ];
+    }
+
+
 
 }
