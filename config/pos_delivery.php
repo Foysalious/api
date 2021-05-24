@@ -4,7 +4,7 @@
 return [
     'mobile_banking_providers' => ['bkash', 'rocket'],
     'vendor_list' => [
-        'নিজস্ব পরিবহন ' => ['bn' => 'নিজস্ব পরিবহন ', 'en' => 'Own Delivery'], 'পেপারফ্লাই' => ['bn' => 'পেপারফ্লাই', 'en' => 'Paperfly']
+        'own_delivery' => ['bn' => 'নিজস্ব পরিবহন ', 'en' => 'Own Delivery'], 'paperfly' => ['bn' => 'পেপারফ্লাই', 'en' => 'Paperfly']
     ],
     'api_url' => env('S_DELIVERY_API_URL'),
 
