@@ -35,7 +35,10 @@ class ServiceController extends Controller
      */
     public function index(Request $request)
     {
+
         try {
+
+
             $partner    = $request->partner;
             $services   = [];
             $base_query = PartnerPosService::with('discounts')->published();
@@ -98,6 +101,7 @@ class ServiceController extends Controller
     public function show($partner, $service, Request $request)
     {
         try {
+
             $service = PartnerPosService::with('category', 'discounts')->find($service);
             if (!$service) return api_response($request, null, 404);
             $partner = $service->partner;
@@ -125,6 +129,7 @@ class ServiceController extends Controller
      */
     public function store(Request $request, ProductCreator $creator)
     {
+
             $sub_categories = PosCategory::child()->pluck('id')->toArray();
             $master_categories = PosCategory::parents()->pluck('id')->toArray();
             $this->validate($request, [
