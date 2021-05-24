@@ -420,9 +420,7 @@ class DeliveryService
         $data = [
             'delivery_vendor' => $this->vendorName
         ];
-
         $deliveryInfo = $this->partnerDeliveryInfoRepositoryInterface->where('partner_id', $this->partner->id)->first();
-
         return $this->partnerDeliveryInfoRepositoryInterface->update($deliveryInfo, $data);
     }
 
