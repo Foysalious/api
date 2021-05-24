@@ -252,6 +252,13 @@ class DeliveryController extends Controller
         return api_response($request, null, 200, ['messages' => 'ডেলিভারি অর্ডারটি বাতিল করা হয়েছে']);
     }
 
+    public function paperflyDeliveryCharge(Request $request, DeliveryService $delivery_service)
+    {
+        $data = $delivery_service->getPaperflyDeliveryCharge();
+        return api_response($request, null, 200, ['data' => $data]);
+
+    }
+
     private function bearerToken($request)
     {
         $header = $request->header('Authorization', '');
