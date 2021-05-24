@@ -116,10 +116,19 @@ class DeliveryService
     /**
      * @return mixed
      */
-    public function vendorList()
+    public function vendorlistWithSelectedDeliveryMethod()
     {
+        $data = [];
         $all_vendor_list = config('pos_delivery.vendor_list');
-        return array_values($all_vendor_list);
+        $data['delivery_vendors'] =  ($all_vendor_list);
+        $data['delivery_method'] = $this->getDeliveryMethod();
+        return $data;
+    }
+
+    private function getDeliveryMethod()
+    {
+        $partnerDeliveryInformation = $this->partnerDeliveryInfoRepositoryInterface->where('partner_id', $this->partner)->first();
+        return !empty($partnerDeliveryInformation) ? $partnerDeliveryInformation->delivery_vendor : Methods::OWN_DELIVERY;
     }
 
     public function getRegistrationInfo()
@@ -411,9 +420,7 @@ class DeliveryService
         $data = [
             'delivery_vendor' => $this->vendorName
         ];
-
         $deliveryInfo = $this->partnerDeliveryInfoRepositoryInterface->where('partner_id', $this->partner->id)->first();
-
         return $this->partnerDeliveryInfoRepositoryInterface->update($deliveryInfo, $data);
     }
 

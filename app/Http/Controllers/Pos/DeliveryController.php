@@ -4,6 +4,7 @@ use App\Exceptions\DoNotReportException;
 use App\Http\Controllers\Controller;
 use App\Sheba\Partner\Delivery\DeliveryService;
 use App\Sheba\Partner\Delivery\Exceptions\DeliveryCancelRequestError;
+use App\Sheba\Partner\Delivery\Methods;
 use App\Sheba\Partner\Delivery\OrderPlace;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -134,9 +135,8 @@ class DeliveryController extends Controller
      */
     public function vendorUpdate(Request $request, DeliveryService $delivery_service)
     {
-
         $this->validate($request, [
-            'vendor_name' => 'required'
+            'vendor_name' => 'required|in:' . implode(',', Methods::get())
         ]);
         $partner = $request->auth_user->getPartner();
         $delivery_service->setPartner($partner)->setVendorName($request->vendor_name)->updateVendorInformation();
@@ -152,8 +152,9 @@ class DeliveryController extends Controller
      */
     public function getVendorList(Request $request, DeliveryService $delivery_service)
     {
-        $vendor = $delivery_service->vendorlist();
-        return api_response($request, null, 200, ['delivery_vendors' => $vendor]);
+        $partner = $request->auth_user->getPartner();
+        $data = $delivery_service->setPartner($partner)->vendorlistWithSelectedDeliveryMethod();
+        return api_response($request, null, 200, ['data' => $data]);
     }
 
 
