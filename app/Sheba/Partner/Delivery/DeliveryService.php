@@ -120,7 +120,13 @@ class DeliveryService
     {
         $data = [];
         $all_vendor_list = config('pos_delivery.vendor_list');
-        $data['delivery_vendors'] =  ($all_vendor_list);
+        $temp = [];
+        foreach($all_vendor_list as $key => $vendor)
+        {
+             array_push($temp,array_merge($vendor,['key' => $key]));
+        }
+
+        $data['delivery_vendors'] =  $temp;
         $data['delivery_method'] = $this->getDeliveryMethod();
         return $data;
     }
