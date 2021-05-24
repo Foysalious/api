@@ -19,6 +19,7 @@ class IndexRoute
                     $api->post('decline', 'Partner\SubscriptionOrderRequestController@decline');
                 });
             });
+            $api->post('push-notification-monitoring', 'Partner\\PushNotificationMonitoringController@store');
         });
     }
 }

@@ -312,6 +312,8 @@ class Route
                 $api->get('validate', 'NagadController@validatePayment');
             });
             $api->get('profiles', 'Profile\ProfileController@getDetail')->middleware('jwtGlobalAuth');
+
+            $api->post('register-mobile', 'ShebaController@registerCustomer');
         });
         return $api;
     }
