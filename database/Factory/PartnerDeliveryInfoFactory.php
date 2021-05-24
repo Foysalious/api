@@ -17,7 +17,7 @@ class PartnerDeliveryInfoFactory extends Factory
     {
         return array_merge($this->commonSeeds,[
             'partner_id' => 1,
-            'name'=>'$this->faker->name',
+            'name'=>$this->faker->name,
             'mobile'=>'+8801678242967',
             'email'=>'test@gmail.com',
             'business_type'=>"Construction",

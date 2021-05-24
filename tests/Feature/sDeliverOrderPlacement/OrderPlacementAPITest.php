@@ -81,7 +81,6 @@ class OrderPlacementAPITest extends FeatureTestCase
 
     public function testSuccessfulOrderPlaceAPIForSalesChannel()
     {
-
         $response = $this->post('/v2/pos/delivery/orders', [
             'logistic_partner_id' => 1,
             'weight' => '2.5',
@@ -102,7 +101,7 @@ class OrderPlacementAPITest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-
+        dd($data);
         $this->assertEquals(200, $data['code']);
         $this->assertEquals("Successful.", $data['message']);
     }

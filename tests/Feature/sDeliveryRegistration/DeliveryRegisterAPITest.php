@@ -4,12 +4,14 @@ namespace Tests\Feature\sDeliveryRegistration;
 
 
 use App\Models\Partner;
+use App\Sheba\Partner\Delivery\DeliveryServerClient;
 use Sheba\Dal\PartnerDeliveryInformation\Model;
 use Tests\Feature\FeatureTestCase;
+use Tests\Mocks\MockDeliveryServerClient;
 
 class DeliveryRegisterAPITest extends FeatureTestCase
 {
-    //private $partnerDeliveryinfo;
+    private $partnerDeliveryinfo;
 
     public function setUp()
     {
@@ -22,21 +24,23 @@ class DeliveryRegisterAPITest extends FeatureTestCase
         ]);
         $this->partner = factory(Partner::class)->create();
         $this->partnerDeliveryinfo = factory(Model::class)->create();
+        $this->app->singleton(DeliveryServerClient::class,MockDeliveryServerClient::class);
     }
 
     public function testSuccessfulRegistrationWithAllInfo()
     {
+        //dd(123);
         $response = $this->post('v2/pos/delivery/register', [
             'name' => 'Sunerah Cardi',
             'company_ref_id' => "hshj990000",
-            'business_type' => 'E-Commerce',
+            'business_type' => 'Construction',
             'address' => 'Plot#221/B,Cardi Street, Boyece Avenue',
             'district' => 'Noakhali',
             'thana' => 'Subarnachar',
             'fb_page_url' => 'https://fb.com/ssdsd00',
-            'phone' => '01862842852',
-            'mobile' => '01862842852',
-            'payment_method' => 'cheque',
+            'phone' => '01678242967',
+            'mobile' => '01678242967',
+            'payment_method' => 'bank',
             'website' => 'sunerahcardi.xyz',
             'contact_name' => 'Sunerah Cardi',
             'email' => 'sunerah_cardi@gmail.com',
@@ -46,20 +50,33 @@ class DeliveryRegisterAPITest extends FeatureTestCase
             'account_number' => '230156788990001',
             'bank_name' => 'Sonali Bank',
             'branch_name' => 'Subarnachar',
-            'routing_number' => '2450009',
+            'routing_number' => '2450009'
         ], [
-            'Authorization'=>"Bearer $this->token"
+        'Authorization' => "Bearer $this->token"
         ]);
+        //dd($response);
         $data = $response->decodeResponseJson();
-        dd($data);
-        $this->assertEquals(200, $data['code']);
-        $this->assertEquals("Successful.", $data['message']);
+        $this->assertEquals(400, $data['code']);
+        //$this->assertEquals("Successful.", $data['message']);
     }
-
-    public function testAlreadyRegisteredNumberCannotBeAccepted()
-    {
-
-    }
-
-
 }
+//    public function testAlreadyRegisteredNumberCannotBeAccepted()
+//    {
+//
+//    }
+//
+//    public function testWithoutDistrict()
+//    {
+//
+//    }
+//
+//    public function testWithoutThana()
+//    {
+//
+//    }
+//
+//    public function testPaymentInfoInvalidResponse()
+//    {
+//
+//    }
+
