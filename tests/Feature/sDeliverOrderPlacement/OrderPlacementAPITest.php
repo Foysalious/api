@@ -14,11 +14,13 @@ use App\Models\PartnerPosService;
 use App\Models\PosCategory;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
+use App\Sheba\Partner\Delivery\DeliveryServerClient;
 use PhpParser\Node\Expr\AssignOp\Mod;
 use Sheba\Dal\PartnerDeliveryInformation\Model;
 use App\Models\Profile;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Tests\Feature\FeatureTestCase;
+use Tests\Mocks\MockDeliveryServerClient;
 
 class OrderPlacementAPITest extends FeatureTestCase
 {
@@ -37,22 +39,24 @@ class OrderPlacementAPITest extends FeatureTestCase
 
         $this->truncateTables([
             PosOrder::class,
-            PosCustomer::class
+            PosCustomer::class,
         ]);
         $this->logIn();
 
        $this->partnerPosCustomer = factory(PosCustomer::class)->create();
        $this->posOrderCreate = factory(PosOrder::class)->create();
+       $this->app->singleton(DeliveryServerClient::class,MockDeliveryServerClient::class);
 
     }
 
     public function testSuccessfulOrderPlaceAPIForPos()
     {
+       // dd($this->token);
         $response = $this->post('/v2/pos/delivery/orders', [
             'logistic_partner_id' => 1,
             'weight' => '2.5',
             'cod_amount' => 500,
-            'partner_name' => 'Test',
+            'partner_name' => 'test',
             'partner_phone' => '01956154440',
             'pickup_address' => 'Dhanmondi',
             'pickup_thana' => 'Dhanmondi',
@@ -67,7 +71,9 @@ class OrderPlacementAPITest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token"
         ]);
+
         $data = $response->decodeResponseJson();
+        dd($data );
         $this->assertEquals(200, $data['code']);
         $this->assertEquals("Successful.", $data['message']);
     }

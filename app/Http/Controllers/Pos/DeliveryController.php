@@ -121,7 +121,6 @@ class DeliveryController extends Controller
             ->setPickupDistrict($request->pickup_district)
             ->setPickupThana($request->pickup_thana)
             ->orderPlace();
-
         $orderPlace->setPartner($partner)->setPosOrder($request->pos_order_id)->storeDeliveryInformation($orderPlaceInfo['data']);
         return api_response($request, null, 200, ['messages' => 'ডেলিভারি রিকোয়েস্ট সম্পন্ন', 'data' => $orderPlaceInfo['data']]);
     }
