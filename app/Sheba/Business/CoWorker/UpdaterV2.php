@@ -109,7 +109,7 @@ class UpdaterV2
     public function setDesignation($designation)
     {
         $this->designation = $designation;
-        $this->businessRole = $this->getBusinessRole();
+        if ($this->designation) $this->businessRole = $this->getBusinessRole();
 
         return $this;
     }
@@ -184,10 +184,11 @@ class UpdaterV2
         if (!$this->manager) $this->manager = $this->businessMember->manager_id;
         $business_member_data = [
             'manager_id' => $this->manager,
-            'business_role_id' => $this->businessRole->id,
             'status' => $this->status ?: $this->businessMember->status,
             'mobile' => $this->mobile
         ];
+        if ($this->businessRole) $business_member_data = array_merge($business_member_data, ['business_role_id' => $this->businessRole->id]);
+
         $this->businessMemberRepository->update($this->businessMember, $this->withUpdateModificationField($business_member_data));
     }
 }
