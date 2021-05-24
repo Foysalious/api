@@ -116,7 +116,15 @@ class UpdaterV2
 
     private function getBusinessRole()
     {
-        if (!$this->department) $this->department = $this->businessMember->department()->id;
+        if (!$this->department)
+        {
+            $department = $this->businessMember->department();
+            if (!$department) {
+                $this->setError(404, 'Please update your department first.');
+                return $this;
+            }
+            $this->department = $department->id;
+        }
         $business_role = $this->businessRoleRepository
             ->where('name', $this->designation)
             ->where('business_department_id', $this->department)
