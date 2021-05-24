@@ -25,7 +25,7 @@ return [
         ],
         [
             'step'             => '৩য় ধাপ',
-            'amount'           => 30,
+            'amount'           => 0,
             'duration'         => 25,
             'nid_verification' => true,
             'details'          => 'আপনার রেফার করা বন্ধুকে sManager অ্যাপ ২৫ দিন ব্যবহার করতে হবে এবং আপনার ব্যবসায়ী বন্ধুর sManager অ্যাকাউন্টটি অবশ্যই NID ভেরিফাইড হতে হবে।',
