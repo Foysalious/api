@@ -209,6 +209,7 @@ class CustomerController extends Controller
             if ($decision && $data['is_completed'] == 0)  {
                 $data['reward_active'] = 1;
                 $data['not_complete_profile'] = "https://cdn-marketplacedev.s3.ap-south-1.amazonaws.com/sheba_xyz/images/png/sheba-credit-banner.png";
+                $data['reward_amount'] = $reward[0]->amount;
             }
         }
 
