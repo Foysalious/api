@@ -106,7 +106,7 @@ class SettingController extends Controller
         $partner = $request->partner;
         $this->setModifier($request->manager_resource);
         $customer = PosCustomer::find($request->customer_id);
-        $sms = (new SmsHandlerRepo('due-payment-collect-request'))->setVendor('adareach')
+        $sms = (new SmsHandlerRepo('due-payment-collect-request'))->setVendor('infobip')
             ->setBusinessType(BusinessType::SMANAGER)
             ->setFeatureType(FeatureType::POS)
             ->setMessage([
