@@ -26,12 +26,8 @@ class OrderPlacementAPITest extends FeatureTestCase
 {
 
     private $posOrderCreate;
-    private $partnerDeliveryinfo;
-    private $partnerPosService;
     private $partnerPosCustomer;
-    private $partnerPosCategory;
-    private $posCategory;
-    private $Partner;
+
 
     public function setUp()
     {
@@ -51,7 +47,6 @@ class OrderPlacementAPITest extends FeatureTestCase
 
     public function testSuccessfulOrderPlaceAPIForPos()
     {
-       // dd($this->token);
         $response = $this->post('/v2/pos/delivery/orders', [
             'logistic_partner_id' => 1,
             'weight' => '2.5',
@@ -73,9 +68,9 @@ class OrderPlacementAPITest extends FeatureTestCase
         ]);
 
         $data = $response->decodeResponseJson();
-        dd($data );
+        //dd($data );
         $this->assertEquals(200, $data['code']);
-        $this->assertEquals("Successful.", $data['message']);
+        $this->assertEquals("Successful", $data['message']);
     }
 
 
@@ -101,9 +96,9 @@ class OrderPlacementAPITest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-        dd($data);
+       // dd($data);
         $this->assertEquals(200, $data['code']);
-        $this->assertEquals("Successful.", $data['message']);
+        $this->assertEquals("Successful", $data['message']);
     }
 
     public function testPosOrderPlaceAPIForDataFailedToPassValidation()
@@ -127,6 +122,7 @@ class OrderPlacementAPITest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
+        //dd($data);
 
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The customer name field is required.
@@ -156,8 +152,6 @@ class OrderPlacementAPITest extends FeatureTestCase
             'delivery_district' => 'Dhaka',
             'pos_order_id' => '1'
 
-        ], [
-            'Authorization' => "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9."
         ]);
         $data = $response->decodeResponseJson();
 
@@ -165,7 +159,7 @@ class OrderPlacementAPITest extends FeatureTestCase
         $this->assertEquals("Your session has expired. Try Login", $data['message']);
     }
 
-    public function testPosOrderPlaceAPIForSuccessfullyDataInsertIntoDB()
+    public function testSuccessfullyDataInsertIntoDBForPosOrderPlaceAPI()
     {
         $response = $this->post('/v2/pos/delivery/orders', [
             'logistic_partner_id' => 1,
@@ -193,9 +187,9 @@ class OrderPlacementAPITest extends FeatureTestCase
         $this->assertEquals(1,$Pos_order->partner_id);
         $this->assertEquals(1,$Pos_order->customer_id);
         $this->assertEquals('Due',$Pos_order->payment_status);
-        $this->assertEquals(50,$Pos_order->delivery_charge);
+        $this->assertEquals('3580.00',$Pos_order->delivery_charge);
         $this->assertEquals(1,$Pos_order->delivery_vendor_name);
-        $this->assertEquals(1,$Pos_order->delivery_request_id);
+        $this->assertEquals('ORD-1616491561-0016',$Pos_order->delivery_request_id);
         $this->assertEquals('Ramna',$Pos_order->delivery_thana);
         $this->assertEquals('Dhaka',$Pos_order->delivery_district);
         $this->assertEquals('Created',$Pos_order->delivery_status);
@@ -234,9 +228,9 @@ class OrderPlacementAPITest extends FeatureTestCase
         $this->assertEquals(1,$Pos_order->partner_id);
         $this->assertEquals(1,$Pos_order->customer_id);
         $this->assertEquals('Due',$Pos_order->payment_status);
-        $this->assertEquals(50,$Pos_order->delivery_charge);
+        $this->assertEquals('3580.00',$Pos_order->delivery_charge);
         $this->assertEquals(1,$Pos_order->delivery_vendor_name);
-        $this->assertEquals(1,$Pos_order->delivery_request_id);
+        $this->assertEquals('ORD-1616491561-0016',$Pos_order->delivery_request_id);
         $this->assertEquals('Ramna',$Pos_order->delivery_thana);
         $this->assertEquals('Dhaka',$Pos_order->delivery_district);
         $this->assertEquals('Created',$Pos_order->delivery_status);

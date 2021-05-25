@@ -11,9 +11,10 @@ class MockDeliveryServerClient extends DeliveryServerClient
 
     public function post($uri, $data, $multipart = false)
     {
-        if($uri == 'orders') return $this->getOrderData();
 
         if($uri == 'merchants/register') return $this->getRegistrationData();
+        if($uri == 'orders') return $this->getOrderData();
+        if($uri == 'orders/track') return $this->getDeliveryOrderInformation();
 
     }
 
@@ -84,6 +85,47 @@ class MockDeliveryServerClient extends DeliveryServerClient
                     "designation": "Manager"
                 }
             }
+        }',true );
+    }
+
+    private function getDeliveryOrderInformation()
+    {
+        return json_decode ('{
+          "data": {
+                "id": 16,
+                "merchant_id": 1,
+                "logistic_partner_id": 1,
+                "cod_amount": 0,
+                "uid": "ORD-1616491561-0016",
+                "status": "Created",
+                "weight": 1.5,
+                "tracking_number": "230321-0014-A3-A2",
+                "delivery_option": "regular",
+                "product_description": "Dress",
+                "delivery_charge": 3580,
+                "payment_amount": 3580,
+                "payment_status": "PAID",
+                "delivery_address": {
+                      "address": "bangla motor",
+                      "thana": "Ramna",
+                      "district": "Dhaka",
+                      "person_name": "Rajib",
+                      "contact_phone": "01845963548"
+                },
+                "created_by": {
+                      "name": "Hasan Ahmed",
+                      "email": "test@gmail.com",
+                      "phone": null,
+                      "designation": "Manager"
+                },
+                "logistic_partner": {
+                      "id": 1,
+                      "name": "paperfly",
+                      "email": "user@paperfly.com",
+                      "phone": "01700112233"
+                },
+                "created_at": "2021-03-23T09:26:01.000000Z"
+          }
         }',true );
     }
 
