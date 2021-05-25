@@ -38,7 +38,6 @@ abstract class Response
 
     public function toArray()
     {
-
         return $this->output;
     }
 
@@ -47,7 +46,7 @@ abstract class Response
         return json_encode($this->data);
     }
 
-    public function setRefId($id)
+    public function setRefId($id): Response
     {
         $this->data['paymentRefId'] = $id;
         return $this;

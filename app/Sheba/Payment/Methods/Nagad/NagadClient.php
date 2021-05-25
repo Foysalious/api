@@ -71,8 +71,8 @@ class NagadClient
      */
     public function placeOrder($transaction_id, Initialize $resp, $amount, $call_back_url): CheckoutComplete
     {
-        $paymentRefId = $resp->getPaymentReferenceId();
-        $url = "$this->baseUrl/api/dfs/check-out/complete/$paymentRefId";
+        $payment_ref_id = $resp->getPaymentReferenceId();
+        $url = "$this->baseUrl/api/dfs/check-out/complete/$payment_ref_id";
         list($payment_data, $store_data) = Inputs::complete($transaction_id, $resp, $amount, $call_back_url, $this->store);
 
         $request = (new NagadRequest())
@@ -88,14 +88,14 @@ class NagadClient
     }
 
     /**
-     * @param $refId
+     * @param $ref_id
      * @return Validator
      * @throws Exception\InvalidOrderId
      * @throws TPProxyServerError
      */
-    public function validate($refId): Validator
+    public function validate($ref_id): Validator
     {
-        $url = "$this->baseUrl/api/dfs/verify/payment/$refId";
+        $url = "$this->baseUrl/api/dfs/verify/payment/$ref_id";
         $request = (new NagadRequest())
             ->setUrl($url)
             ->setMethod(NagadRequest::METHOD_GET)

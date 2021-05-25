@@ -51,7 +51,6 @@ class WalletController extends Controller
         }
     }
 
-
     /**
      * @param Request $request
      * @param PaymentManager $payment_manager

@@ -50,10 +50,16 @@ class Inputs
     {
         $merchant_additional_info = '{"Service Name": "Sheba.xyz"}';
         $payment_data = [
-            'merchantId' => $store->getMerchantId(), 'orderId' => $transaction_id, 'amount' => $amount, 'currencyCode' => '050', 'challenge' => $init->getChallenge()
+            'merchantId' => $store->getMerchantId(),
+            'orderId' => $transaction_id,
+            'amount' => $amount,
+            'currencyCode' => '050',
+            'challenge' => $init->getChallenge()
         ];
         $store_data = [
-            'storeType' => class_basename($store), 'merchantCallbackURL' => $call_back_url, 'additionalMerchantInfo' => json_decode($merchant_additional_info)
+            'storeType' => class_basename($store),
+            'merchantCallbackURL' => $call_back_url,
+            'additionalMerchantInfo' => json_decode($merchant_additional_info)
         ];
 
         return [$payment_data, $store_data];

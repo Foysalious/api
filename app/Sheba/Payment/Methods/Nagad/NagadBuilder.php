@@ -15,7 +15,7 @@ class NagadBuilder
      * @param Payable $payable
      * @return Nagad
      */
-    public static function get(Payable $payable)
+    public static function get(Payable $payable): Nagad
     {
         /** @var Nagad $nagad */
         $nagad = app(Nagad::class);
@@ -41,7 +41,7 @@ class NagadBuilder
      * @param $store_name
      * @return Nagad
      */
-    public static function getByStoreName($store_name)
+    public static function getByStoreName($store_name): Nagad
     {
         /** @var Nagad $nagad */
         $nagad = app(Nagad::class);

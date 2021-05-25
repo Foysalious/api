@@ -33,13 +33,13 @@ class Nagad extends PaymentMethod
      * @param mixed $refId
      * @return Nagad
      */
-    public function setRefId($refId)
+    public function setRefId($refId): Nagad
     {
         $this->refId = $refId;
         return $this;
     }
 
-    public function setStore(NagadStore $store)
+    public function setStore(NagadStore $store): Nagad
     {
         $this->store = $store;
         return $this;
@@ -76,11 +76,17 @@ class Nagad extends PaymentMethod
         }
     }
 
+    /**
+     * @param \App\Models\Payment $payment
+     * @param $error
+     */
     private function onInitFailed(Payment $payment, $error)
     {
         $this->paymentLogRepo->setPayment($payment);
         $this->paymentLogRepo->create([
-            'to' => Statuses::INITIATION_FAILED, 'from' => $payment->status, 'transaction_details' => $error
+            'to' => Statuses::INITIATION_FAILED,
+            'from' => $payment->status,
+            'transaction_details' => $error
         ]);
         $payment->status = Statuses::INITIATION_FAILED;
         $payment->transaction_details = $error;
