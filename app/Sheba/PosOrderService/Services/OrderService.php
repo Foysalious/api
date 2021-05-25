@@ -17,10 +17,21 @@ class OrderService
     private $orderId;
     private $skus;
     protected $emi_month, $interest, $bank_transaction_charge, $delivery_name, $delivery_mobile, $note, $voucher_id;
+    protected $filter_params;
 
     public function __construct(PosOrderServerClient $client)
     {
         $this->client = $client;
+    }
+
+    /**
+     * @param mixed $filter_params
+     * @return OrderService
+     */
+    public function setFilterParams($filter_params)
+    {
+        $this->filter_params = $filter_params;
+        return $this;
     }
 
     public function setPartnerId($partnerId)
@@ -143,7 +154,7 @@ class OrderService
 
     public function getOrderList()
     {
-        return $this->client->get('api/v1/partners/' . $this->partnerId . '/orders');
+        return $this->client->get('api/v1/partners/' . $this->partnerId . '/orders' . $this->filter_params);
     }
 
     public function getDetails()
@@ -191,19 +202,6 @@ class OrderService
             'delivery_charge' => $this->deliveryCharge,
             'sales_channel_id' => $this->salesChannelId,
             'skus' => $this->skus
-//            ['name' => 'partner_id', 'contents' => $this->partnerId],
-//            ['name' => 'customer_id', 'contents' => $this->customerId],
-//            ['name' => 'emi_month', 'contents' => $this->emi_month],
-//            ['name' => 'interest', 'contents' => $this->interest],
-//            ['name' => 'bank_transaction_charge', 'contents' => $this->bank_transaction_charge],
-//            ['name' => 'delivery_name', 'contents' => $this->delivery_name],
-//            ['name' => 'delivery_mobile', 'contents' => $this->delivery_mobile],
-//            ['name' => 'note', 'contents' => $this->note],
-//            ['name' => 'voucher_id', 'contents' => $this->voucher_id],
-//            ['name' => 'delivery_address', 'contents' => $this->deliveryAddress],
-//            ['name' => 'delivery_charge', 'contents' => $this->deliveryCharge],
-//            ['name' => 'sales_channel_id', 'contents' => $this->salesChannelId],
-//            ['name' => 'skus', 'contents' => $this->skus]
         ];
     }
 
