@@ -25,7 +25,7 @@ class DeliveryRegisterAPITest extends FeatureTestCase
         ]);
         $this->partner = factory(Partner::class)->create();
         $this->partnerDeliveryinfo = factory(Model::class)->create();
-        $this->app->singleton(DeliveryServerClient::class,MockDeliveryServerClientRegister::class);
+        $this->app->singleton(DeliveryServerClient::class,MockDeliveryServerClient::class);
     }
 
     public function testSuccessfulRegistrationWithAllInfo()
