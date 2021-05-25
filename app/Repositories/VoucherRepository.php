@@ -9,10 +9,10 @@ use Sheba\Repositories\BaseRepository;
 
 class VoucherRepository extends BaseRepository
 {
-    public function __construct(Voucher $voucher)
+    public function __construct(Voucher $voucher = null)
     {
         parent::__construct();
-        $this->setModel($voucher);
+        if($voucher) $this->setModel($voucher);
     }
 
     public function isValid($voucher, $service, $partner, $location, $customer, $price, $sales_channel)
