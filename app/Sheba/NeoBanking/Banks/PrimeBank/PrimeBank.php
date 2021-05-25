@@ -44,10 +44,10 @@ class PrimeBank extends Bank
     public function accountInfo()
     {
         $account = $this->getAccount();
-        if ($account) {
+        $transactionId = $this->getTransactionId();
+        if ($transactionId) {
             $headers = ['CLIENT-ID:'. config('neo_banking.sbs_client_id'), 'CLIENT-SECRET:'.  config('neo_banking.sbs_client_secret')];
-            $status = (new PrimeBankClient())->setPartner($this->partner)->get("api/v1/client/account/$account/status", $headers);
-            $transactionId = $this->getTransactionId();
+            $status = (new PrimeBankClient())->setPartner($this->partner)->get("api/v1/client/account/$transactionId/status", $headers);
             return $this->formatAccountData($status, $account, $transactionId);
         } else {
             if($this->hasAccountWithNullId()) {
