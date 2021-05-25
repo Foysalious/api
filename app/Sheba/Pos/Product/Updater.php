@@ -10,6 +10,7 @@ use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
 use Sheba\Pos\Repositories\Interfaces\PosServiceLogRepositoryInterface;
 use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
+use Sheba\Subscription\Partner\Access\AccessManager;
 
 class Updater
 {
@@ -80,7 +81,7 @@ class Updater
     {
         if ($this->hasFile('app_thumb')) $this->updatedData['app_thumb'] = $this->saveAppThumbImage();
         else if (array_key_exists('app_thumb',$this->data) && (is_null($this->data['app_thumb']) || $this->data['app_thumb'] == "null" )) $this->updatedData['app_thumb'] = config('sheba.s3_url').'images/pos/services/thumbs/default.jpg';
-        if (isset($this->data['image_gallery'])) $this->updatedData['image_gallery'] = $this->updateImageGallery();
+        if (isset($this->data['image_gallery']) || isset($this->data['deleted_image']) ) $this->updatedData['image_gallery'] = $this->updateImageGallery();
     }
 
     /**
@@ -89,23 +90,29 @@ class Updater
     private function updateImageGallery()
     {
         $image_gallery = [];
-        foreach ($this->data['image_gallery'] as $key => $file) {
-            list($file, $filename) = $this->makeImageGallery($file, '_' . getFileName($file) . '_product_image');
-            $image_gallery[] = $this->saveFileToCDN($file, getPosServiceImageGalleryFolder(), $filename);;
+        if(isset($this->data['image_gallery']))
+        {
+            foreach ($this->data['image_gallery'] as $key => $file) {
+                list($file, $filename) = $this->makeImageGallery($file, '_' . getFileName($file) . '_product_image');
+                $image_gallery[] = $this->saveFileToCDN($file, getPosServiceImageGalleryFolder(), $filename);;
+            }
         }
+
         if (isset($this->data['deleted_image'])) {
             $this->data['deleted_image_link'] = PartnerPosServiceImageGallery::whereIn('id',$this->data['deleted_image'])->pluck('image_link')->toArray();
             $this->deleteFromCDN($this->data['deleted_image_link']);
             $this->deleteFromDB($this->data['deleted_image']);
         }
-        return json_encode($image_gallery);
+        return !empty($image_gallery) ? json_encode($image_gallery) : null;
     }
 
     private function deleteFromCDN($files)
     {
         foreach ($files as $file) {
             $filename = substr($file, strlen(env('S3_URL')));
-            (new FileRepository())->deleteFileFromCDN($filename);
+            if (!preg_match('/default/', $filename)) {
+                (new FileRepository())->deleteFileFromCDN($filename);
+            }
         }
     }
 
@@ -199,7 +206,14 @@ class Updater
             $this->updatedData['color'] = $this->data['color'];
         }
         if ((isset($this->data['is_published_for_shop']) && $this->data['is_published_for_shop'] != $this->service->is_published_for_shop)) {
-            $this->updatedData['is_published_for_shop'] = $this->data['is_published_for_shop'];
+            if($this->data['is_published_for_shop'] == 1)
+            {     if(PartnerPosService::webstorePublishedServiceByPartner($this->service->partner->id)->count() >= config('pos.maximum_publishable_product_in_webstore_for_free_packages'))
+                    AccessManager::checkAccess(AccessManager::Rules()->POS->ECOM->PRODUCT_PUBLISH, $this->service->partner->subscription->getAccessRules());
+                $this->updatedData['is_published_for_shop'] = $this->data['is_published_for_shop'];
+            }else
+            {
+                $this->updatedData['is_published_for_shop'] = $this->data['is_published_for_shop'];
+            }
         }
 
 

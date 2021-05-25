@@ -58,6 +58,9 @@ class PromotionV3Controller extends Controller
 
         $this->validate($request, ['services' => 'string|required']);
         $service_requestObjects = $serviceRequest->setServices(json_decode($request->services, 1))->get();
+
+        if(empty($service_requestObjects)) return api_response($request, null, 400);
+
         $location = $request->location;
         $price_calculation = $this->resolvePriceCalculation($service_requestObjects[0]->getCategory());
         if ($request->has('lat') && $request->has('lng')) {

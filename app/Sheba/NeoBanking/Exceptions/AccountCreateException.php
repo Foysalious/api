@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Sheba\NeoBanking\Exceptions;
-
 
 use Throwable;
 
@@ -12,5 +10,4 @@ class AccountCreateException extends NeoBankingException
     {
         parent::__construct($message, $code, $previous);
     }
-
 }

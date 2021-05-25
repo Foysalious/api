@@ -1,11 +1,11 @@
 <?php namespace App\Models;
 
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\BaseModel;
 use Sheba\Payment\Statuses;
 use Sheba\Transactions\DTO\ShebaTransaction;
 
-class Payment extends Model
+class Payment extends BaseModel
 {
     protected $guarded = ['id'];
 
@@ -52,12 +52,18 @@ class Payment extends Model
         return $query->where('valid_till', '>', Carbon::now());
     }
 
+    public function scopeNotResolved($query)
+    {
+        return $query->whereIn('status', array(Statuses::INITIATED, Statuses::VALIDATED));
+    }
+
     /**
      *
      * Other functions
      */
     public function isComplete()
     {
+        $this->reload();
         return $this->status == Statuses::COMPLETED;
     }
 
@@ -83,11 +89,12 @@ class Payment extends Model
 
     public function isValid()
     {
-        return $this->status != Statuses::VALIDATION_FAILED || $this->status != Statuses::INITIATION_FAILED;
+        return $this->status != Statuses::VALIDATION_FAILED || $this->status != Statuses::INITIATION_FAILED || $this->status != Statuses::FAILED;
     }
 
     public function canComplete()
     {
+        $this->reload();
         return $this->status == Statuses::VALIDATED || $this->status == Statuses::FAILED;
     }
 

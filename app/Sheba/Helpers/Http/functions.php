@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Requests\ApiRequest;
+use App\Models\HyperLocal;
+use App\Models\Location;
+use GuzzleHttp\Exception\ConnectException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\Helpers\Http\ShebaRequestHeader;
@@ -17,7 +20,6 @@ if (!function_exists('api_response')) {
      */
     function api_response($request, $internal_response, $response_code, array $external_response = null)
     {
-
         $public_response = (new ShebaResponse)->$response_code;
         if ($external_response != null) {
             $public_response = array_merge($public_response, $external_response);
@@ -88,12 +90,17 @@ if (!function_exists('getValidationErrorMessage')) {
 if (!function_exists('decodeGuzzleResponse')) {
     /**
      * @param      $response
-     * @param bool $assoc
-     * @return array
+     * @param      bool $assoc
+     * @return     object|array|string|null
      */
     function decodeGuzzleResponse($response, $assoc = true)
     {
-        return json_decode($response->getBody()->getContents(), $assoc);
+        $string = $response->getBody()->getContents();
+        $result = json_decode($string, $assoc);
+        if (json_last_error() != JSON_ERROR_NONE && $string != "") {
+            $result = $string;
+        }
+        return $result;
     }
 }
 
@@ -119,7 +126,7 @@ if (!function_exists('getShebaRequestHeader')) {
         $header  = new ShebaRequestHeader();
 
         if ($request->hasHeader(ShebaRequestHeader::VERSION_CODE_KEY))
-            $header->setVersionCode(convertSemverToInt($request->header(ShebaRequestHeader::VERSION_CODE_KEY)));
+            $header->setVersionCode($request->header(ShebaRequestHeader::VERSION_CODE_KEY));
 
         if ($request->hasHeader(ShebaRequestHeader::PORTAL_NAME_KEY))
             $header->setPortalName($request->header(ShebaRequestHeader::PORTAL_NAME_KEY));
@@ -149,5 +156,34 @@ if (!function_exists('getIp')) {
             }
         }
         return request()->ip();
+    }
+}
+
+if (!function_exists('isTimeoutException')) {
+    /**
+     * @param ConnectException $exception
+     * @return bool
+     */
+    function isTimeoutException(ConnectException $exception)
+    {
+        return starts_with($exception->getMessage(), "cURL error 28: ");
+    }
+}
+
+if (!function_exists('getLocationFromRequest')) {
+    /**
+     * @param $request
+     * @return Location|null
+     */
+    function getLocationFromRequest($request)
+    {
+        if ($request->has('location')) return Location::find($request->location);
+
+        if ($request->has('lat')) {
+            $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+            if (!is_null($hyperLocation)) return $hyperLocation->location;
+        }
+
+        return null;
     }
 }
