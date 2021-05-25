@@ -305,7 +305,8 @@ class MemberController extends Controller
 
         $profile_updater->setBusinessMember($business_member)
             ->setName($request->name)
-            ->setMobile($request->mobile);
+            ->setMobile($request->mobile)
+            ->setEmail($request->email);
 
         if ($profile_updater->hasError()) return api_response($request, null, $profile_updater->getErrorCode(), ['message' => $profile_updater->getErrorMessage()]);
 
