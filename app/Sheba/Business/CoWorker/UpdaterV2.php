@@ -176,9 +176,15 @@ class UpdaterV2
 
     private function checkEmailUsedWithAnotherBusinessMember()
     {
-        $profile = $this->profileRepository->checkExistingProfile($this->mobile, $this->email);
+        $profile = $this->profileRepository->checkExistingProfile(null, $this->email);
         if (!$profile) return $this;
-        if ($profile->member->business_member->id != $this->businessMember->id)
+        $member = $profile->member;
+        if (!$member) {
+            $this->setError(400, 'No member has been created yet. Please contact with sheba');
+            return $this;
+        }
+
+        if ($member->business_member->id != $this->businessMember->id)
             $this->setError(400, 'This email belongs to another member. Please contact with sheba');
 
         return $this;
