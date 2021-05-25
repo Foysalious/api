@@ -24,6 +24,7 @@ class NeoBankingRoute
                     $api->get('/select-types', 'NeoBanking\\NeoBankingController@selectTypes');
                     $api->post('/account-apply', 'NeoBanking\\NeoBankingController@accountApply');
                     $api->post('/gigatech-liveliness-log', 'NeoBanking\\NeoBankingGigatechController@storeLivelinessLog');
+                    $api->get('/partner-acknowledgment', 'NeoBanking\\NeoBankingController@partnerAcknowledgment');
                 });
             });
         });

@@ -254,4 +254,24 @@ class NeoBankingController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    /**
+     * @param Request $request
+     * @param NeoBanking $neoBanking
+     * @return JsonResponse
+     */
+    public function partnerAcknowledgment(Request $request, NeoBanking $neoBanking)
+    {
+        try {
+            $this->validate($request, ['bank_code' => 'required|string']);
+            $mobile = ($request->manager_resource->profile->mobile);
+            $data = $neoBanking->setPartner($request->partner)->setResource($request->manager_resource)->setMobile($mobile)->setBank($request->bank_code)->getAcknowledgment();
+            return api_response($request, $data, 200, ['data' => $data]);
+        }catch (NeoBankingException $e){
+            return api_response($request,null,$e->getCode(),['message'=>$e->getMessage()]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
+    }
 }
