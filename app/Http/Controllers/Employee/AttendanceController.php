@@ -80,6 +80,7 @@ class AttendanceController extends Controller
         ];
 
         $business_member = $this->getBusinessMember($request);
+        /** @var Business $business */
         $business = $this->getBusiness($request);
         if (!$business_member) return api_response($request, null, 404);
 
@@ -89,7 +90,7 @@ class AttendanceController extends Controller
         if ($request->action == Actions::CHECKOUT && $checkout->isNoteRequired()) {
             $validation_data += ['note' => 'string|required_if:action,' . Actions::CHECKOUT];
         }
-        if ($business->isRemoteAttendanceEnable()) {
+        if ($business->isRemoteAttendanceEnable($business_member->id)) {
             $validation_data += ['lat' => 'required|numeric', 'lng' => 'required|numeric'];
         }
         $this->validate($request, $validation_data);
@@ -126,8 +127,9 @@ class AttendanceController extends Controller
         $attendance = $business_member->attendanceOfToday();
         /** @var ActionChecker $checkout */
         $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
+        /** @var Business $business */
         $business = $this->getBusiness($request);
-        $is_remote_enable = $business->isRemoteAttendanceEnable();
+        $is_remote_enable = $business->isRemoteAttendanceEnable($business_member->id);
         $data = [
             'can_checkin' => !$attendance ? 1 : ($attendance->canTakeThisAction(Actions::CHECKIN) ? 1 : 0),
             'can_checkout' => $attendance && $attendance->canTakeThisAction(Actions::CHECKOUT) ? 1 : 0,
@@ -145,8 +147,10 @@ class AttendanceController extends Controller
         /** @var Business $business */
         $business = $this->getBusiness($request);
         $attendance_common_info->setLat($request->lat)->setLng($request->lng);
+        $is_in_wifi_area = $attendance_common_info->isInWifiArea($business) ? 1 : 0;
         $data = [
-            'is_in_wifi_area' => $attendance_common_info->isInWifiArea($business) ? 1 : 0,
+            'is_in_wifi_area' => $is_in_wifi_area,
+            'which_office' => $is_in_wifi_area ? $attendance_common_info->whichOffice($business) : null,
             'address' => $attendance_common_info->getAddress()
         ];
 
