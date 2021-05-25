@@ -4,11 +4,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Transformers\Business\ExpenseTransformer;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use Sheba\Attachments\FilesAttachment;
+use Sheba\Business\Expense\ExpenseExcel;
 use Sheba\Employee\ExpensePdf;
 use Sheba\ModificationFields;
 use Sheba\Employee\ExpenseRepo;
@@ -34,7 +36,7 @@ class ExpenseController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function index(Request $request)
+    public function index(Request $request, ExpenseExcel $excel)
     {
         $this->validate($request, [
             'status' => 'string|in:open,closed',
@@ -57,7 +59,7 @@ class ExpenseController extends Controller
                 });
             });
         }
-        
+
         $members_ids = $business_members->pluck('member_id')->toArray();
 
         $expenses = $this->expense_repo->getExpenseByMember($members_ids);
@@ -83,6 +85,11 @@ class ExpenseController extends Controller
         $total_expense_count = count($expenses);
 
         if ($request->has('limit')) $expenses = collect($expenses)->splice($offset, $limit);
+
+        if ($request->file == 'excel') return $excel->setData(is_array($expenses) ? $expenses : $expenses->toArray())
+            ->setName('Expense Report')
+            ->get();
+
         return api_response($request, $expenses, 200, ['expenses' => $expenses, 'total_expenses_count' => $total_expense_count]);
     }
 
