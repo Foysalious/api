@@ -36,6 +36,7 @@ class DeliveryController extends Controller
      */
     public function register(Request $request, DeliveryService $delivery_service)
     {
+        //dd(123);
         $this->validate($request, [
             'name' => 'required',
             'address' => 'required',

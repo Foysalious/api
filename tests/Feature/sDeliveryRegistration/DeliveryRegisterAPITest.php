@@ -8,6 +8,7 @@ use App\Sheba\Partner\Delivery\DeliveryServerClient;
 use Sheba\Dal\PartnerDeliveryInformation\Model;
 use Tests\Feature\FeatureTestCase;
 use Tests\Mocks\MockDeliveryServerClient;
+use Tests\Mocks\MockDeliveryServerClientRegister;
 
 class DeliveryRegisterAPITest extends FeatureTestCase
 {
@@ -24,12 +25,12 @@ class DeliveryRegisterAPITest extends FeatureTestCase
         ]);
         $this->partner = factory(Partner::class)->create();
         $this->partnerDeliveryinfo = factory(Model::class)->create();
-        $this->app->singleton(DeliveryServerClient::class,MockDeliveryServerClient::class);
+        $this->app->singleton(DeliveryServerClient::class,MockDeliveryServerClientRegister::class);
     }
 
     public function testSuccessfulRegistrationWithAllInfo()
     {
-        //dd(123);
+        //dd($this->partnerDeliveryinfo);
         $response = $this->post('v2/pos/delivery/register', [
             'name' => 'Sunerah Cardi',
             'company_ref_id' => "hshj990000",
@@ -40,7 +41,7 @@ class DeliveryRegisterAPITest extends FeatureTestCase
             'fb_page_url' => 'https://fb.com/ssdsd00',
             'phone' => '01678242967',
             'mobile' => '01678242967',
-            'payment_method' => 'bank',
+            'payment_method' => 'cheque',
             'website' => 'sunerahcardi.xyz',
             'contact_name' => 'Sunerah Cardi',
             'email' => 'sunerah_cardi@gmail.com',
@@ -54,9 +55,9 @@ class DeliveryRegisterAPITest extends FeatureTestCase
         ], [
         'Authorization' => "Bearer $this->token"
         ]);
-        //dd($response);
         $data = $response->decodeResponseJson();
-        $this->assertEquals(400, $data['code']);
+        //dd($data);
+        $this->assertEquals(200, $data['code']);
         //$this->assertEquals("Successful.", $data['message']);
     }
 }
