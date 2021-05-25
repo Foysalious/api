@@ -44,14 +44,14 @@ class PrimeBank extends Bank
     public function accountInfo()
     {
         $account = $this->getAccount();
-        if ($account) {
+        $transactionId = $this->getTransactionId();
+        if ($transactionId) {
             $headers = ['CLIENT-ID:'. config('neo_banking.sbs_client_id'), 'CLIENT-SECRET:'.  config('neo_banking.sbs_client_secret')];
-            $status = (new PrimeBankClient())->setPartner($this->partner)->get("api/v1/client/account/$account/status", $headers);
-            $transactionId = $this->getTransactionId();
+            $status = (new PrimeBankClient())->setPartner($this->partner)->get("api/v1/client/account/$transactionId/status", $headers);
             return $this->formatAccountData($status, $account, $transactionId);
         } else {
             if($this->hasAccountWithNullId()) {
-                return $this->pendingAccountData($this->partner, $account);
+                return $this->pendingAccountData($this->partner, $account, $transaction_id);
             }
             return $this->formatEmptyData();
         }
@@ -236,6 +236,7 @@ class PrimeBank extends Bank
     {
         $data['has_account'] = 0;
         $data['account_no'] = null;
+        $data['transaction_id'] = null;
         $data['account_status'] = null;
         $data['status_message'] = null;
         $data['status_message_type'] = null;
@@ -243,10 +244,11 @@ class PrimeBank extends Bank
         return $data;
     }
 
-    public function pendingAccountData($status, $account) {
+    public function pendingAccountData($status, $account, $transaction_id) {
         $data['has_account'] = 1;
         $data['applicant_name'] = $status->name;
         $data['account_no'] = $account;
+        $data['transaction_id'] = $transaction_id;
         $data['account_status'] = BankStatics::mapAccountFullStatus(self::CPV_PENDING_UNSIGNED);
         $data['status_message'] = config('neo_banking.cpv_pending_account_null_message');
         $data['status_message_type'] = "pending";
