@@ -133,6 +133,7 @@ class EmployeeController extends Controller
     public function getDashboard(Request $request, ActionProcessor $action_processor,
                                  ProfileCompletionCalculator $completion_calculator)
     {
+        /** @var Business $business */
         $business = $this->getBusiness($request);
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
@@ -158,7 +159,7 @@ class EmployeeController extends Controller
                 'can_checkout' => $attendance && $attendance->canTakeThisAction(Actions::CHECKOUT) ? 1 : 0,
                 'is_note_required' => 0
             ],
-            'is_remote_enable' => $business->isRemoteAttendanceEnable(),
+            'is_remote_enable' => $business->isRemoteAttendanceEnable($business_member->id),
             'is_approval_request_required' => $approval_requests->count() > 0 ? 1 : 0,
             'approval_requests' => ['pending_request' => $pending_approval_requests->count()],
             'is_profile_complete' => $profile_completion_score ? 1 : 0,
