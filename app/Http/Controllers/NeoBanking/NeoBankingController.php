@@ -189,14 +189,18 @@ class NeoBankingController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function selectTypes(Request $request)
     {
         try {
             $type=$request->type?:'organization_type_list';
             $data = NeoBankingGeneralStatics::types($type);
-            if ($type == 'branch_code' && isset($request->district)) {
+            if ($type == 'branch_code' && isset($request->district))
                 $data = $this->filterByDistrict($request, $data['list']);
-            }
+
             return api_response($request, $data, 200, ['data' => $data]);
         } catch (\Throwable $e) {
             logError($e);

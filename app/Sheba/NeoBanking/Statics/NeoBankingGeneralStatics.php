@@ -69,8 +69,7 @@ class NeoBankingGeneralStatics
     {
         $data = [
             'organization_type_list' => ['list' => array_column(constants('PARTNER_OWNER_TYPES'), 'bn'), 'title' => 'প্রতিষ্ঠানের ধরণ সিলেক্ট করুন'],
-            'business_type_list' => ['list' => constants('PARTNER_BUSINESS_TYPE'),'title'=>'ব্যবসার ধরণ সিলেক্ট করুন'],
-            'occupation_nature'=> ['list' => config('occupation_nature.values'),'title'=>'ব্যবসার ধরণ সিলেক্ট করুন'],
+            'business_type_list'=> ['list' => (config('occupation_nature.data')),'title'=>'ব্যবসার ধরণ সিলেক্ট করুন'],
             'branch_code'=> ['list' => config('branch_code.data'),'title'=>'ব্রাঞ্চ কোড সিলেক্ট করুন']
         ];
         try {
