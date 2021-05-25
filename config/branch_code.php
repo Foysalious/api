@@ -3,708 +3,708 @@
 return [
     'data' => [
         [
-            'branch_code' => 'BD0010167',
-            'branch_name' => 'Adamjee Epz Branch',
+            'key' => 'BD0010167',
+            'value' => 'Adamjee Epz Branch',
             'district' => 'Naraynganj'
         ],
         [
-            'branch_code' => 'BD0010504',
-            'branch_name' => 'Aganagar Sme Centre',
+            'key' => 'BD0010504',
+            'value' => 'Aganagar Sme Centre',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010120',
-            'branch_name' => 'Agrabad Branch',
+            'key' => 'BD0010120',
+            'value' => 'Agrabad Branch',
             'district' => 'Chittagong'
         ],
         [
-            'branch_code' => 'BD0010138',
-            'branch_name' => 'Asad Gate Branch',
+            'key' => 'BD0010138',
+            'value' => 'Asad Gate Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010203',
-            'branch_name' => 'Ashuganj Branch',
+            'key' => 'BD0010203',
+            'value' => 'Ashuganj Branch',
             'district' => 'Brahmanbaria'
         ],
         [
-            'branch_code' => 'BD0010157',
-            'branch_name' => 'Ashulia Branch',
+            'key' => 'BD0010157',
+            'value' => 'Ashulia Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010132',
-            'branch_name' => 'Banani Branch',
+            'key' => 'BD0010132',
+            'value' => 'Banani Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010192',
-            'branch_name' => 'Banasree Branch',
+            'key' => 'BD0010192',
+            'value' => 'Banasree Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010201',
-            'branch_name' => 'Baneswar Branch',
+            'key' => 'BD0010201',
+            'value' => 'Baneswar Branch',
             'district' => 'Rajshahi'
         ],
         [
-            'branch_code' => 'BD0010122',
-            'branch_name' => 'Bangshal Branch',
+            'key' => 'BD0010122',
+            'value' => 'Bangshal Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010178',
-            'branch_name' => 'Banshkhali Branch',
+            'key' => 'BD0010178',
+            'value' => 'Banshkhali Branch',
             'district' => 'Chittagong'
         ],
         [
-            'branch_code' => 'BD0010172',
-            'branch_name' => 'Baralekha Branch',
+            'key' => 'BD0010172',
+            'value' => 'Baralekha Branch',
             'district' => 'Moulvibazar'
         ],
         [
-            'branch_code' => 'BD0010219',
-            'branch_name' => 'Baridhara Branch',
+            'key' => 'BD0010219',
+            'value' => 'Baridhara Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010111',
-            'branch_name' => 'Barisal Branch',
+            'key' => 'BD0010111',
+            'value' => 'Barisal Branch',
             'district' => 'Barisal'
         ],
         [
-            'branch_code' => 'BD0010198',
-            'branch_name' => 'Bashabo Branch',
+            'key' => 'BD0010198',
+            'value' => 'Bashabo Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010165',
-            'branch_name' => 'Bashundhara Branch',
+            'key' => 'BD0010165',
+            'value' => 'Bashundhara Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010144',
-            'branch_name' => 'Beani Bazar Branch',
+            'key' => 'BD0010144',
+            'value' => 'Beani Bazar Branch',
             'district' => 'Sylhet'
         ],
         [
-            'branch_code' => 'BD0010173',
-            'branch_name' => 'Bhairab Bazar Branch',
+            'key' => 'BD0010173',
+            'value' => 'Bhairab Bazar Branch',
             'district' => 'Kishoregonj'
         ],
         [
-            'branch_code' => 'BD0010506',
-            'branch_name' => 'Bhujpur Sme Branch',
+            'key' => 'BD0010506',
+            'value' => 'Bhujpur Sme Branch',
             'district' => 'Chittagong  '
         ],
         [
-            'branch_code' => 'BD0010159',
-            'branch_name' => 'Bijoy Nagar Branch',
+            'key' => 'BD0010159',
+            'value' => 'Bijoy Nagar Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010147',
-            'branch_name' => 'Biswanath Branch',
+            'key' => 'BD0010147',
+            'value' => 'Biswanath Branch',
             'district' => 'Sylhet'
         ],
         [
-            'branch_code' => 'BD0010208',
-            'branch_name' => 'Boalmari Branch',
+            'key' => 'BD0010208',
+            'value' => 'Boalmari Branch',
             'district' => 'Faridpur'
         ],
         [
-            'branch_code' => 'BD0010129',
-            'branch_name' => 'Bogra Branch',
+            'key' => 'BD0010129',
+            'value' => 'Bogra Branch',
             'district' => 'Bogra'
         ],
         [
-            'branch_code' => 'BD0010211',
-            'branch_name' => 'Brahmanbaria Branch',
+            'key' => 'BD0010211',
+            'value' => 'Brahmanbaria Branch',
             'district' => 'Brahmanbaria'
         ],
         [
-            'branch_code' => 'BD0010168',
-            'branch_name' => 'Chapai Nababgonj Branch',
+            'key' => 'BD0010168',
+            'value' => 'Chapai Nababgonj Branch',
             'district' => 'Chapai Nawabganj'
         ],
         [
-            'branch_code' => 'BD0010515',
-            'branch_name' => 'Chatkhil Sme Branch',
+            'key' => 'BD0010515',
+            'value' => 'Chatkhil Sme Branch',
             'district' => 'Noakhali'
         ],
         [
-            'branch_code' => 'BD0010185',
-            'branch_name' => 'Chowddgram Branch',
+            'key' => 'BD0010185',
+            'value' => 'Chowddgram Branch',
             'district' => 'Comilla'
         ],
         [
-            'branch_code' => 'BD0010182',
-            'branch_name' => 'Chowmohuni Branch',
+            'key' => 'BD0010182',
+            'value' => 'Chowmohuni Branch',
             'district' => 'Noakhali'
         ],
         [
-            'branch_code' => 'BD0010158',
-            'branch_name' => 'Comilla Branch',
+            'key' => 'BD0010158',
+            'value' => 'Comilla Branch',
             'district' => 'Comilla'
         ],
         [
-            'branch_code' => 'BD0010505',
-            'branch_name' => 'Companygonj Sme Centre',
+            'key' => 'BD0010505',
+            'value' => 'Companygonj Sme Centre',
             'district' => 'Comilla'
         ],
         [
-            'branch_code' => 'BD0010116',
-            'branch_name' => 'Court Road Branch',
+            'key' => 'BD0010116',
+            'value' => 'Court Road Branch',
             'district' => 'Moulvibazar'
         ],
         [
-            'branch_code' => 'BD0010154',
-            'branch_name' => 'Cox\'s Bazar Branch',
+            'key' => 'BD0010154',
+            'value' => 'Cox\'s Bazar Branch',
             'district' => 'Cox\'s Bazar'
         ],
         [
-            'branch_code' => 'BD0010195',
-            'branch_name' => 'Dagonbhuiyan Branch',
+            'key' => 'BD0010195',
+            'value' => 'Dagonbhuiyan Branch',
             'district' => 'Feni'
         ],
         [
-            'branch_code' => 'BD0010177',
-            'branch_name' => 'Damudya Branch',
+            'key' => 'BD0010177',
+            'value' => 'Damudya Branch',
             'district' => 'Shariatpur'
         ],
         [
-            'branch_code' => 'BD0010213',
-            'branch_name' => 'Daulatpur Branch',
+            'key' => 'BD0010213',
+            'value' => 'Daulatpur Branch',
             'district' => 'Khulna'
         ],
         [
-            'branch_code' => 'BD0010218',
-            'branch_name' => 'Dhaka Dakshin Branch',
+            'key' => 'BD0010218',
+            'value' => 'Dhaka Dakshin Branch',
             'district' => 'Sylhet'
         ],
         [
-            'branch_code' => 'BD0010146',
-            'branch_name' => 'Dhanmondi Branch',
+            'key' => 'BD0010146',
+            'value' => 'Dhanmondi Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010501',
-            'branch_name' => 'Dholaikhal Sme Centre',
+            'key' => 'BD0010501',
+            'value' => 'Dholaikhal Sme Centre',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010169',
-            'branch_name' => 'Dinajpur Branch',
+            'key' => 'BD0010169',
+            'value' => 'Dinajpur Branch',
             'district' => 'Dinajpur'
         ],
         [
-            'branch_code' => 'BD0010114',
-            'branch_name' => 'Elephant Road Branch',
+            'key' => 'BD0010114',
+            'value' => 'Elephant Road Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010175',
-            'branch_name' => 'Faridpur Branch',
+            'key' => 'BD0010175',
+            'value' => 'Faridpur Branch',
             'district' => 'Faridpur'
         ],
         [
-            'branch_code' => 'BD0010139',
-            'branch_name' => 'Fatikchari Branch',
+            'key' => 'BD0010139',
+            'value' => 'Fatikchari Branch',
             'district' => 'Chittagong'
         ],
         [
-            'branch_code' => 'BD0010226',
-            'branch_name' => 'Fenchuganj Branch',
+            'key' => 'BD0010226',
+            'value' => 'Fenchuganj Branch',
             'district' => 'Sylhet'
         ],
         [
-            'branch_code' => 'BD0010156',
-            'branch_name' => 'Feni Branch',
+            'key' => 'BD0010156',
+            'value' => 'Feni Branch',
             'district' => 'Feni'
         ],
         [
-            'branch_code' => 'BD0010126',
-            'branch_name' => 'Foreign  Exchange  Branch',
+            'key' => 'BD0010126',
+            'value' => 'Foreign  Exchange  Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010124',
-            'branch_name' => 'Ganakbari Branch',
+            'key' => 'BD0010124',
+            'value' => 'Ganakbari Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010170',
-            'branch_name' => 'Garib-E-Newaz Ave. Branch',
+            'key' => 'BD0010170',
+            'value' => 'Garib-E-Newaz Ave. Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010118',
-            'branch_name' => 'Gulshan Branch',
+            'key' => 'BD0010118',
+            'value' => 'Gulshan Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010176',
-            'branch_name' => 'Habiganj  Branch',
+            'key' => 'BD0010176',
+            'value' => 'Habiganj  Branch',
             'district' => 'Habiganj'
         ],
         [
-            'branch_code' => 'BD0010181',
-            'branch_name' => 'Hajigonj Branch',
+            'key' => 'BD0010181',
+            'value' => 'Hajigonj Branch',
             'district' => 'Chandpur'
         ],
         [
-            'branch_code' => 'BD0010191',
-            'branch_name' => 'Halishahor Branch',
+            'key' => 'BD0010191',
+            'value' => 'Halishahor Branch',
             'district' => 'Chittagong'
         ],
         [
-            'branch_code' => 'BD0010149',
-            'branch_name' => 'Hathazari Branch',
+            'key' => 'BD0010149',
+            'value' => 'Hathazari Branch',
             'district' => 'Chittagong'
         ],
         [
-            'branch_code' => 'BD0010230',
-            'branch_name' => 'Hatibandha Branch',
+            'key' => 'BD0010230',
+            'value' => 'Hatibandha Branch',
             'district' => 'Lalmonirhat'
         ],
         [
-            'branch_code' => 'BD0010518',
-            'branch_name' => 'Heako Sme Branch',
+            'key' => 'BD0010518',
+            'value' => 'Heako Sme Branch',
             'district' => 'Chittagong'
         ],
         [
-            'branch_code' => 'BD0010217',
-            'branch_name' => 'Hemayetpur Branch',
+            'key' => 'BD0010217',
+            'value' => 'Hemayetpur Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010205',
-            'branch_name' => 'Ibrahimpur Branch',
+            'key' => 'BD0010205',
+            'value' => 'Ibrahimpur Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010179',
-            'branch_name' => 'Ishwardi Branch',
+            'key' => 'BD0010179',
+            'value' => 'Ishwardi Branch',
             'district' => 'Pabna'
         ],
         [
-            'branch_code' => 'BD0010210',
-            'branch_name' => 'Islampur Branch',
+            'key' => 'BD0010210',
+            'value' => 'Islampur Branch',
             'district' => 'Sylhet'
         ],
         [
-            'branch_code' => 'BD0010200',
-            'branch_name' => 'Jamalpur Branch',
+            'key' => 'BD0010200',
+            'value' => 'Jamalpur Branch',
             'district' => 'Jamalpur'
         ],
         [
-            'branch_code' => 'BD0010186',
-            'branch_name' => 'Jatrabari Branch',
+            'key' => 'BD0010186',
+            'value' => 'Jatrabari Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010123',
-            'branch_name' => 'Jessore Branch',
+            'key' => 'BD0010123',
+            'value' => 'Jessore Branch',
             'district' => 'Jessore'
         ],
         [
-            'branch_code' => 'BD0010517',
-            'branch_name' => 'Jhikorgacha Sme Branch',
+            'key' => 'BD0010517',
+            'value' => 'Jhikorgacha Sme Branch',
             'district' => 'Jessore'
         ],
         [
-            'branch_code' => 'BD0010151',
-            'branch_name' => 'Joydevpur Chowrasta Branch',
+            'key' => 'BD0010151',
+            'value' => 'Joydevpur Chowrasta Branch',
             'district' => 'Gazipur'
         ],
         [
-            'branch_code' => 'BD0010166',
-            'branch_name' => 'Joypara Branch',
+            'key' => 'BD0010166',
+            'value' => 'Joypara Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010194',
-            'branch_name' => 'Joypurhat Branch',
+            'key' => 'BD0010194',
+            'value' => 'Joypurhat Branch',
             'district' => 'Joypurhat'
         ],
         [
-            'branch_code' => 'BD0010121',
-            'branch_name' => 'Jubilee Road Branch',
+            'key' => 'BD0010121',
+            'value' => 'Jubilee Road Branch',
             'district' => 'Chittagong'
         ],
         [
-            'branch_code' => 'BD0010204',
-            'branch_name' => 'Kadamtoli Branch',
+            'key' => 'BD0010204',
+            'value' => 'Kadamtoli Branch',
             'district' => 'Sylhet'
         ],
         [
-            'branch_code' => 'BD0010227',
-            'branch_name' => 'Kaliakoir Branch',
+            'key' => 'BD0010227',
+            'value' => 'Kaliakoir Branch',
             'district' => 'Gazipur'
         ],
         [
-            'branch_code' => 'BD0010209',
-            'branch_name' => 'Karnafuli Epz Branch',
+            'key' => 'BD0010209',
+            'value' => 'Karnafuli Epz Branch',
             'district' => 'Chittagong'
         ],
         [
-            'branch_code' => 'BD0010113',
-            'branch_name' => 'Kawran Bazar Branch',
+            'key' => 'BD0010113',
+            'value' => 'Kawran Bazar Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010225',
-            'branch_name' => 'Keranihat Branch',
+            'key' => 'BD0010225',
+            'value' => 'Keranihat Branch',
             'district' => 'Sylhet'
         ],
         [
-            'branch_code' => 'BD0010105',
-            'branch_name' => 'Khatunganj Branch',
+            'key' => 'BD0010105',
+            'value' => 'Khatunganj Branch',
             'district' => 'Chittagong'
         ],
         [
-            'branch_code' => 'BD0010107',
-            'branch_name' => 'Khulna Branch',
+            'key' => 'BD0010107',
+            'value' => 'Khulna Branch',
             'district' => 'Khulna'
         ],
         [
-            'branch_code' => 'BD0010196',
-            'branch_name' => 'Kishorgonj Branch',
+            'key' => 'BD0010196',
+            'value' => 'Kishorgonj Branch',
             'district' => 'Kishoregonj'
         ],
         [
-            'branch_code' => 'BD0010220',
-            'branch_name' => 'Kulaura Branch',
+            'key' => 'BD0010220',
+            'value' => 'Kulaura Branch',
             'district' => 'Moulvibazar'
         ],
         [
-            'branch_code' => 'BD0010197',
-            'branch_name' => 'Kushtia Branch',
+            'key' => 'BD0010197',
+            'value' => 'Kushtia Branch',
             'district' => 'Kushtia'
         ],
         [
-            'branch_code' => 'BD0010145',
-            'branch_name' => 'Laldighi East Branch',
+            'key' => 'BD0010145',
+            'value' => 'Laldighi East Branch',
             'district' => 'Chittagong'
         ],
         [
-            'branch_code' => 'BD0010131',
-            'branch_name' => 'Madhabdi Branch',
+            'key' => 'BD0010131',
+            'value' => 'Madhabdi Branch',
             'district' => 'Narsingdi'
         ],
         [
-            'branch_code' => 'BD0010507',
-            'branch_name' => 'Madhabpur Sme Center',
+            'key' => 'BD0010507',
+            'value' => 'Madhabpur Sme Center',
             'district' => 'Habiganj '
         ],
         [
-            'branch_code' => 'BD0010516',
-            'branch_name' => 'Madunaghat Sme Center',
+            'key' => 'BD0010516',
+            'value' => 'Madunaghat Sme Center',
             'district' => 'Chittagong'
         ],
         [
-            'branch_code' => 'BD0010222',
-            'branch_name' => 'Magura Branch',
+            'key' => 'BD0010222',
+            'value' => 'Magura Branch',
             'district' => 'Magura'
         ],
         [
-            'branch_code' => 'BD0010212',
-            'branch_name' => 'Mahadebpur Branch',
+            'key' => 'BD0010212',
+            'value' => 'Mahadebpur Branch',
             'district' => 'Naogaon'
         ],
         [
-            'branch_code' => 'BD0010152',
-            'branch_name' => 'Mirpur-1 Branch',
+            'key' => 'BD0010152',
+            'value' => 'Mirpur-1 Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010199',
-            'branch_name' => 'Mirzapur Branch',
+            'key' => 'BD0010199',
+            'value' => 'Mirzapur Branch',
             'district' => 'Tangail'
         ],
         [
-            'branch_code' => 'BD0010223',
-            'branch_name' => 'Modhukhali Branch',
+            'key' => 'BD0010223',
+            'value' => 'Modhukhali Branch',
             'district' => 'Faridpur'
         ],
         [
-            'branch_code' => 'BD0010110',
-            'branch_name' => 'Mohakhali Branch',
+            'key' => 'BD0010110',
+            'value' => 'Mohakhali Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010104',
-            'branch_name' => 'Motijheel Branch',
+            'key' => 'BD0010104',
+            'value' => 'Motijheel Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010117',
-            'branch_name' => 'Mouchak Branch',
+            'key' => 'BD0010117',
+            'value' => 'Mouchak Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010106',
-            'branch_name' => 'Moulvi Bazar Branch',
+            'key' => 'BD0010106',
+            'value' => 'Moulvi Bazar Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010206',
-            'branch_name' => 'Muradpur Branch',
+            'key' => 'BD0010206',
+            'value' => 'Muradpur Branch',
             'district' => 'Chittagong'
         ],
         [
-            'branch_code' => 'BD0010174',
-            'branch_name' => 'Mymensingh Branch',
+            'key' => 'BD0010174',
+            'value' => 'Mymensingh Branch',
             'district' => 'Mymensingh'
         ],
         [
-            'branch_code' => 'BD0010190',
-            'branch_name' => 'Nabiganj Branch',
+            'key' => 'BD0010190',
+            'value' => 'Nabiganj Branch',
             'district' => 'Habiganj'
         ],
         [
-            'branch_code' => 'BD0010153',
-            'branch_name' => 'Naogaon Branch',
+            'key' => 'BD0010153',
+            'value' => 'Naogaon Branch',
             'district' => 'Naogaon'
         ],
         [
-            'branch_code' => 'BD0010119',
-            'branch_name' => 'Narayanganj Branch',
+            'key' => 'BD0010119',
+            'value' => 'Narayanganj Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010502',
-            'branch_name' => 'Narsingdi Sme Centre',
+            'key' => 'BD0010502',
+            'value' => 'Narsingdi Sme Centre',
             'district' => 'Narsingdi'
         ],
         [
-            'branch_code' => 'BD0010180',
-            'branch_name' => 'Natore Branch',
+            'key' => 'BD0010180',
+            'value' => 'Natore Branch',
             'district' => 'Natore'
         ],
         [
-            'branch_code' => 'BD0010229',
-            'branch_name' => 'Nawabgonj Branch',
+            'key' => 'BD0010229',
+            'value' => 'Nawabgonj Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010128',
-            'branch_name' => 'New Eskaton Branch',
+            'key' => 'BD0010128',
+            'value' => 'New Eskaton Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010184',
-            'branch_name' => 'Oxygen More Branch',
+            'key' => 'BD0010184',
+            'value' => 'Oxygen More Branch',
             'district' => 'Chittagong'
         ],
         [
-            'branch_code' => 'BD0010189',
-            'branch_name' => 'Pabna Branch',
+            'key' => 'BD0010189',
+            'value' => 'Pabna Branch',
             'district' => 'Pabna'
         ],
         [
-            'branch_code' => 'BD0010164',
-            'branch_name' => 'Pallabi Branch',
+            'key' => 'BD0010164',
+            'value' => 'Pallabi Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010141',
-            'branch_name' => 'Panthapath Branch',
+            'key' => 'BD0010141',
+            'value' => 'Panthapath Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010221',
-            'branch_name' => 'Patuatuly Branch',
+            'key' => 'BD0010221',
+            'value' => 'Patuatuly Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010514',
-            'branch_name' => 'Poradaha Sme-Agri',
+            'key' => 'BD0010514',
+            'value' => 'Poradaha Sme-Agri',
             'district' => 'Kushtia'
         ],
         [
-            'branch_code' => 'BD0010503',
-            'branch_name' => 'Posta Sme Centre',
+            'key' => 'BD0010503',
+            'value' => 'Posta Sme Centre',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010135',
-            'branch_name' => 'Pragati Sarani Branch',
+            'key' => 'BD0010135',
+            'value' => 'Pragati Sarani Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010171',
-            'branch_name' => 'Probartak More Branch',
+            'key' => 'BD0010171',
+            'value' => 'Probartak More Branch',
             'district' => 'Chittagong'
         ],
         [
-            'branch_code' => 'BD0010228',
-            'branch_name' => 'Racecourse Branch',
+            'key' => 'BD0010228',
+            'value' => 'Racecourse Branch',
             'district' => 'Comilla'
         ],
         [
-            'branch_code' => 'BD0010513',
-            'branch_name' => 'Raipur Sme Branch',
+            'key' => 'BD0010513',
+            'value' => 'Raipur Sme Branch',
             'district' => 'Laxmipur '
         ],
         [
-            'branch_code' => 'BD0010112',
-            'branch_name' => 'Rajshahi Branch',
+            'key' => 'BD0010112',
+            'value' => 'Rajshahi Branch',
             'district' => 'Rajshahi'
         ],
         [
-            'branch_code' => 'BD0010232',
-            'branch_name' => 'Ramgarh Branch',
+            'key' => 'BD0010232',
+            'value' => 'Ramgarh Branch',
             'district' => 'Khagrachari'
         ],
         [
-            'branch_code' => 'BD0010161',
-            'branch_name' => 'Rangpur Branch',
+            'key' => 'BD0010161',
+            'value' => 'Rangpur Branch',
             'district' => 'Rangpur'
         ],
         [
-            'branch_code' => 'BD0010163',
-            'branch_name' => 'Raozan Branch',
+            'key' => 'BD0010163',
+            'value' => 'Raozan Branch',
             'district' => 'Chittagong'
         ],
         [
-            'branch_code' => 'BD0010162',
-            'branch_name' => 'Ringroad Branch',
+            'key' => 'BD0010162',
+            'value' => 'Ringroad Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010231',
-            'branch_name' => 'Saidpur Branch',
+            'key' => 'BD0010231',
+            'value' => 'Saidpur Branch',
             'district' => 'Nilphamari'
         ],
         [
-            'branch_code' => 'BD0010202',
-            'branch_name' => 'Satkhira Branch',
+            'key' => 'BD0010202',
+            'value' => 'Satkhira Branch',
             'district' => 'Satkhira'
         ],
         [
-            'branch_code' => 'BD0010127',
-            'branch_name' => 'Satmasjit Road Branch',
+            'key' => 'BD0010127',
+            'value' => 'Satmasjit Road Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010188',
-            'branch_name' => 'Savar Branch',
+            'key' => 'BD0010188',
+            'value' => 'Savar Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010148',
-            'branch_name' => 'Sbc Tower Branch',
+            'key' => 'BD0010148',
+            'value' => 'Sbc Tower Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010183',
-            'branch_name' => 'Serajdikhan Branch',
+            'key' => 'BD0010183',
+            'value' => 'Serajdikhan Branch',
             'district' => 'Munshigonj'
         ],
         [
-            'branch_code' => 'BD0010224',
-            'branch_name' => 'Sherpur Branch',
+            'key' => 'BD0010224',
+            'value' => 'Sherpur Branch',
             'district' => 'Bogra'
         ],
         [
-            'branch_code' => 'BD0010511',
-            'branch_name' => 'Sherpur Sme Center',
+            'key' => 'BD0010511',
+            'value' => 'Sherpur Sme Center',
             'district' => 'Sherpur'
         ],
         [
-            'branch_code' => 'BD0010214',
-            'branch_name' => 'Shibpur Branch',
+            'key' => 'BD0010214',
+            'value' => 'Shibpur Branch',
             'district' => 'Narsingdi'
         ],
         [
-            'branch_code' => 'BD0010137',
-            'branch_name' => 'Shimrail Branch',
+            'key' => 'BD0010137',
+            'value' => 'Shimrail Branch',
             'district' => 'Naraynganj'
         ],
         [
-            'branch_code' => 'BD0010508',
-            'branch_name' => 'Sonargaon Sme Center',
+            'key' => 'BD0010508',
+            'value' => 'Sonargaon Sme Center',
             'district' => 'Narayanganj'
         ],
         [
-            'branch_code' => 'BD0010150',
-            'branch_name' => 'Sreemangal Branch',
+            'key' => 'BD0010150',
+            'value' => 'Sreemangal Branch',
             'district' => 'Moulvibazar'
         ],
         [
-            'branch_code' => 'BD0010216',
-            'branch_name' => 'Sreenagar Branch',
+            'key' => 'BD0010216',
+            'value' => 'Sreenagar Branch',
             'district' => 'Munshigonj'
         ],
         [
-            'branch_code' => 'BD0010160',
-            'branch_name' => 'Subid Bazar Branch',
+            'key' => 'BD0010160',
+            'value' => 'Subid Bazar Branch',
             'district' => 'Sylhet'
         ],
         [
-            'branch_code' => 'BD0010193',
-            'branch_name' => 'Sunamgonj Branch',
+            'key' => 'BD0010193',
+            'value' => 'Sunamgonj Branch',
             'district' => 'Sunamganj'
         ],
         [
-            'branch_code' => 'BD0010510',
-            'branch_name' => 'Syedpur Sme Center',
+            'key' => 'BD0010510',
+            'value' => 'Syedpur Sme Center',
             'district' => 'Sunamganj (S)'
         ],
         [
-            'branch_code' => 'BD0010109',
-            'branch_name' => 'Sylhet Branch',
+            'key' => 'BD0010109',
+            'value' => 'Sylhet Branch',
             'district' => 'Sylhet'
         ],
         [
-            'branch_code' => 'BD0010142',
-            'branch_name' => 'Tajpur Branch',
+            'key' => 'BD0010142',
+            'value' => 'Tajpur Branch',
             'district' => 'Sylhet'
         ],
         [
-            'branch_code' => 'BD0010509',
-            'branch_name' => 'Takerhat Sme Center',
+            'key' => 'BD0010509',
+            'value' => 'Takerhat Sme Center',
             'district' => 'Madaripur'
         ],
         [
-            'branch_code' => 'BD0010155',
-            'branch_name' => 'Tangail Branch',
+            'key' => 'BD0010155',
+            'value' => 'Tangail Branch',
             'district' => 'Tangail'
         ],
         [
-            'branch_code' => 'BD0010207',
-            'branch_name' => 'Tejgaon Branch',
+            'key' => 'BD0010207',
+            'value' => 'Tejgaon Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010512',
-            'branch_name' => 'Thakurgaon Sme Center',
+            'key' => 'BD0010512',
+            'value' => 'Thakurgaon Sme Center',
             'district' => 'Thakurgaon'
         ],
         [
-            'branch_code' => 'BD0010140',
-            'branch_name' => 'Tongi Branch',
+            'key' => 'BD0010140',
+            'value' => 'Tongi Branch',
             'district' => 'Gazipur'
         ],
         [
-            'branch_code' => 'BD0010143',
-            'branch_name' => 'Upashahar Branch',
+            'key' => 'BD0010143',
+            'value' => 'Upashahar Branch',
             'district' => 'Sylhet'
         ],
         [
-            'branch_code' => 'BD0010125',
-            'branch_name' => 'Uttara Branch',
+            'key' => 'BD0010125',
+            'value' => 'Uttara Branch',
             'district' => 'Dhaka'
         ],
         [
-            'branch_code' => 'BD0010215',
-            'branch_name' => 'Vatiary Branch',
+            'key' => 'BD0010215',
+            'value' => 'Vatiary Branch',
             'district' => 'Chittagong'
         ],
         [
-            'branch_code' => 'BD0010187',
-            'branch_name' => 'Wari Branch',
+            'key' => 'BD0010187',
+            'value' => 'Wari Branch',
             'district' => 'Dhaka'
         ]
     ]
