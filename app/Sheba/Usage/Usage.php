@@ -86,8 +86,7 @@ class Usage
             $this->user->save();
             if ($amount > 0) {
                 $transaction = (new WalletTransactionHandler())->setModel($this->user->referredBy)->setSource(TransactionSources::SHEBA_WALLET)->setType(Types::credit())->setAmount($amount)->setLog("$amount BDT has been credited for partner referral from usage of name: " . $this->user->name . ', ID: ' . $this->user->id)->store();
-                $reference = (new \ReflectionClass($this->user->referredBy))->getShortName() ?? null;
-
+                $reference = (new \ReflectionClass($this->user->referredBy))->getShortName() ?? 'referral';
                 $this->storeJournal($this->user->id, $transaction, $amount, $reference);
             }
         }
