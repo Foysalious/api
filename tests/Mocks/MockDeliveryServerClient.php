@@ -11,9 +11,10 @@ class MockDeliveryServerClient extends DeliveryServerClient
 
     public function post($uri, $data, $multipart = false)
     {
+        //dd(123);
         if($uri == 'orders') return $this->getOrderData();
 
-        if($uri == 'merchants/register') return $this->getRegistrationData();
+        if($uri == 'register') return $this->getRegistrationData();
 
     }
 

@@ -73,7 +73,6 @@ class OrderPlacementAPITest extends FeatureTestCase
         ]);
 
         $data = $response->decodeResponseJson();
-        dd($data );
         $this->assertEquals(200, $data['code']);
         $this->assertEquals("Successful.", $data['message']);
     }
@@ -101,7 +100,6 @@ class OrderPlacementAPITest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-        dd($data);
         $this->assertEquals(200, $data['code']);
         $this->assertEquals("Successful.", $data['message']);
     }
