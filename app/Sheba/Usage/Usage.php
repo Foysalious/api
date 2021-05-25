@@ -84,15 +84,14 @@ class Usage
             $amount                      = ($this->config[$level - 1]['amount']);
             $this->user->referrer_income += $amount;
             $this->user->save();
-            if ($amount > 0) {
-                $transaction = (new WalletTransactionHandler())->setModel($this->user->referredBy)->setSource(TransactionSources::SHEBA_WALLET)->setType(Types::credit())->setAmount($amount)->setLog("$amount BDT has been credited for partner referral from usage of name: " . $this->user->name . ', ID: ' . $this->user->id)->store();
-                try {
-                    $reference = (new \ReflectionClass($this->user->referredBy))->getShortName() ?? 'referral';
-                } catch (\ReflectionException $e) {
-                    $reference = 'referral';
-                }
-                $this->storeJournal($this->user->id, $transaction, $amount, $reference);
+            $amount = $amount > 0 ? $amount : 1;
+            $transaction = (new WalletTransactionHandler())->setModel($this->user->referredBy)->setSource(TransactionSources::SHEBA_WALLET)->setType(Types::credit())->setAmount($amount)->setLog("$amount BDT has been credited for partner referral from usage of name: " . $this->user->name . ', ID: ' . $this->user->id)->store();
+            try {
+                $reference = (new \ReflectionClass($this->user->referredBy))->getShortName() ?? 'referral';
+            } catch (\ReflectionException $e) {
+                $reference = 'referral';
             }
+            $this->storeJournal($this->user->id, $transaction, $amount, $reference);
         }
     }
 
