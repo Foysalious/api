@@ -36,6 +36,7 @@ class UpdaterV2
     private $businessMemberUpdater;
     private $businessMemberRepository;
     private $status;
+    private $email;
 
     /**
      * UpdaterV2 constructor.
@@ -90,6 +91,12 @@ class UpdaterV2
         $this->mobile = $mobile;
         $this->checkMobileUsedWithAnotherBusinessMember();
         return $this;
+    }
+
+    public function setEmail($email)
+    {
+        $this->email = $email;
+        $this->checkEmailUsedWithAnotherBusinessMember();
     }
 
     /**
@@ -167,6 +174,16 @@ class UpdaterV2
         return $this;
     }
 
+    private function checkEmailUsedWithAnotherBusinessMember()
+    {
+        $profile = $this->profileRepository->checkExistingProfile($this->mobile, $this->email);
+        if (!$profile) return $this;
+        if ($profile->member->business_member->id != $this->businessMember->id)
+            $this->setError(400, 'This email belongs to another member. Please contact with sheba');
+
+        return $this;
+    }
+
     /**
      * @param mixed $status
      * @return UpdaterV2
@@ -180,6 +197,7 @@ class UpdaterV2
     public function update()
     {
         $profile_data = ['name' => $this->name];
+        if ($this->email) $profile_data = array_merge($profile_data, ['email' => $this->email]);
         $this->profileRepository->updateRaw($this->profile, $profile_data);
         if (!$this->manager) $this->manager = $this->businessMember->manager_id;
         $business_member_data = [
