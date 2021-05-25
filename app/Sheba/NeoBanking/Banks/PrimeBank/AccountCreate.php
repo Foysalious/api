@@ -63,7 +63,7 @@ class AccountCreate
         if (!isset($application['personal']) || !isset($application['institution']) || !isset($application['nid_selfie'])) throw new InvalidPartnerInformationException();
         $application['account'] = NeoBankingGeneralStatics::primeBankDefaultAccountData();
         $application_data = $this->makeApplicationData($application);
-        $branch_code = $application['institution']['branch_code'] ?? null;
+        $branch_code = $application['personal']['branch_code'] ?? null;
         $branch = collect(config('branch_code.data'))->where('branch_code', (int)$branch_code)->first();
         $this->data = [
             "application_data" => json_encode($application_data),
@@ -111,7 +111,7 @@ class AccountCreate
             PartnerNeoBankingAccount::create($this->withBothModificationFields([
                 "partner_id" => $this->partner->id,
                 "bank_id"    => $this->bank->id,
-                "transaction_id" => $this->response['data']['data']['transactionId'],
+                "transaction_id" => $this->response['data']->data->transactionId,
             ]));
             $data["title"]      = "New bank account created";
             $data["message"]    = "Prime Bank account open request received and will be notified shortly.";
@@ -184,7 +184,6 @@ class AccountCreate
             "post_code_permanent" => $application['personal']['permanent_address']['postcode_permanent_address'] ?? null,
             "district_permanent" => $application['personal']['permanent_address']['district_permanent_address'] ?? null,
             "mobile_no"     => $this->mobile,
-            "phone_no_office" => $this->mobile,
             "email"         => isset($application['institution']["email"]) ? substr($application['institution']["email"],0,35) : null,
             "branch_code"   => $application['personal']["branch_code"] ? 'BD0010' . $application['personal']['branch_code'] : null,
             "cheque_book"   => PBLStatics::CHEQUE_BOOK,

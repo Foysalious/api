@@ -290,7 +290,6 @@ class MemberController extends Controller
     {
         $validation_rules = [
             'name' => 'required|string',
-            'designation' => 'required|string',
             'email' => 'required|email|string'
         ];
         if ($request->has('mobile')) $validation_rules['mobile'] = 'string|mobile:bd';
@@ -307,7 +306,7 @@ class MemberController extends Controller
         $profile_updater->setBusinessMember($business_member)
             ->setName($request->name)
             ->setMobile($request->mobile)
-            ->setDesignation($request->designation);
+            ->setEmail($request->email);
 
         if ($profile_updater->hasError()) return api_response($request, null, $profile_updater->getErrorCode(), ['message' => $profile_updater->getErrorMessage()]);
 

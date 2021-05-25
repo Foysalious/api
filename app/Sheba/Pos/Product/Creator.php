@@ -118,6 +118,8 @@ class Creator
      */
     private function format()
     {
+
+
         $this->data['stock']            = (isset($this->data['stock']) && $this->data['stock'] > 0) ? (double)$this->data['stock'] : null;
         $this->data['vat_percentage']   = (isset($this->data['vat_percentage']) && $this->data['vat_percentage'] > 0) ? (double)$this->data['vat_percentage'] : 0.00;
         $this->data['warranty_unit']    = (isset($this->data['warranty_unit']) && in_array($this->data['warranty_unit'], array_keys(config('pos.warranty_unit')))) ? $this->data['warranty_unit'] : config('pos.warranty_unit.day.en');
@@ -125,7 +127,7 @@ class Creator
         $this->data['price']            = (isset($this->data['price']) && $this->data['price'] > 0) ? (double)$this->data['price'] : null;
         $this->data['publication_status']            = isset($this->data['publication_status'])  ?  $this->data['publication_status'] : 1;
         if (isset($this->data['is_published_for_shop']) && $this->data['is_published_for_shop'] == 1) {
-            if (PartnerPosService::webstorePublishedServiceByPartner($this->data['partner_id'])->count() >= config('pos.maximum_publishable_product_in_webstore_for_free_packages'))
+            if (PartnerPosService::webstorePublishedServiceByPartner($this->data['partner_id'])->count() >= $this->getPartner($this->data['partner_id'])->subscription->getAccessRules()['pos']['ecom']['product_publish_limit'])
                 AccessManager::checkAccess(AccessManager::Rules()->POS->ECOM->PRODUCT_PUBLISH, $this->getPartner($this->data['partner_id'])->subscription->getAccessRules());
         } else {
             $this->data['is_published_for_shop'] = 0;

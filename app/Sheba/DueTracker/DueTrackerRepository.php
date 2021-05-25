@@ -477,7 +477,7 @@ class DueTrackerRepository extends BaseRepository
     public function getSms($data)
     {
         if ($data['type'] == 'due') {
-            $sms = (new SmsHandlerRepo('inform-due'))->setVendor('adareach')->setMobile($data['mobile'])->setMessage([
+            $sms = (new SmsHandlerRepo('inform-due'))->setVendor('infobip')->setMobile($data['mobile'])->setMessage([
                 'customer_name' => $data['customer_name'],
                 'partner_name'  => $data['partner_name'],
                 'amount'        => $data['amount'],
@@ -485,7 +485,7 @@ class DueTrackerRepository extends BaseRepository
             ]);
             $log = " BDT has been deducted for sending due details";
         } else {
-            $sms = (new SmsHandlerRepo('inform-deposit'))->setVendor('adareach')->setMobile($data['mobile'])->setMessage([
+            $sms = (new SmsHandlerRepo('inform-deposit'))->setVendor('infobip')->setMobile($data['mobile'])->setMessage([
                 'customer_name' => $data['customer_name'],
                 'partner_name'  => $data['partner_name'],
                 'amount'        => $data['amount'],

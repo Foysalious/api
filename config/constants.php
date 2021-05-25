@@ -1304,7 +1304,7 @@ return [
         [
             'key' => 'limited',
             'en' => 'Limited',
-            'bn' => 'লিমিটেড'
+            'bn' => 'লিমিটেড-1'
         ],
         [
             'key' => 'partnership',
@@ -1337,10 +1337,9 @@ return [
         'G3'
     ],
     'PARTNER_BUSINESS_TYPE' => [
-
         'grocery_business' => [
           'en' =>  'Grocery Business',
-          'bn' =>  'মুদি ব্যবসা'
+          'bn' =>  'মুদি ব্যবসা',
         ],
         'clothing_business' => [
             'en' =>  'Clothing Business',

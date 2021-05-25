@@ -36,6 +36,7 @@ class UpdaterV2
     private $businessMemberUpdater;
     private $businessMemberRepository;
     private $status;
+    private $email;
 
     /**
      * UpdaterV2 constructor.
@@ -92,6 +93,12 @@ class UpdaterV2
         return $this;
     }
 
+    public function setEmail($email)
+    {
+        $this->email = $email;
+        $this->checkEmailUsedWithAnotherBusinessMember();
+    }
+
     /**
      * @param mixed $department
      * @return UpdaterV2
@@ -109,14 +116,22 @@ class UpdaterV2
     public function setDesignation($designation)
     {
         $this->designation = $designation;
-        $this->businessRole = $this->getBusinessRole();
+        if ($this->designation) $this->businessRole = $this->getBusinessRole();
 
         return $this;
     }
 
     private function getBusinessRole()
     {
-        if (!$this->department) $this->department = $this->businessMember->department()->id;
+        if (!$this->department)
+        {
+            $department = $this->businessMember->department();
+            if (!$department) {
+                $this->setError(404, 'Please update your department first.');
+                return $this;
+            }
+            $this->department = $department->id;
+        }
         $business_role = $this->businessRoleRepository
             ->where('name', $this->designation)
             ->where('business_department_id', $this->department)
@@ -159,6 +174,22 @@ class UpdaterV2
         return $this;
     }
 
+    private function checkEmailUsedWithAnotherBusinessMember()
+    {
+        $profile = $this->profileRepository->checkExistingProfile(null, $this->email);
+        if (!$profile) return $this;
+        $member = $profile->member;
+        if (!$member) {
+            $this->setError(400, 'No member has been created yet. Please contact with sheba');
+            return $this;
+        }
+
+        if ($member->business_member->id != $this->businessMember->id)
+            $this->setError(400, 'This email belongs to another member. Please contact with sheba');
+
+        return $this;
+    }
+
     /**
      * @param mixed $status
      * @return UpdaterV2
@@ -172,14 +203,16 @@ class UpdaterV2
     public function update()
     {
         $profile_data = ['name' => $this->name];
+        if ($this->email) $profile_data = array_merge($profile_data, ['email' => $this->email]);
         $this->profileRepository->updateRaw($this->profile, $profile_data);
         if (!$this->manager) $this->manager = $this->businessMember->manager_id;
         $business_member_data = [
             'manager_id' => $this->manager,
-            'business_role_id' => $this->businessRole->id,
             'status' => $this->status ?: $this->businessMember->status,
             'mobile' => $this->mobile
         ];
+        if ($this->businessRole) $business_member_data = array_merge($business_member_data, ['business_role_id' => $this->businessRole->id]);
+
         $this->businessMemberRepository->update($this->businessMember, $this->withUpdateModificationField($business_member_data));
     }
 }

@@ -116,10 +116,22 @@ class DeliveryService
     /**
      * @return mixed
      */
-    public function vendorList()
+    public function vendorlistWithSelectedDeliveryMethod()
     {
+        $data = [];
         $all_vendor_list = config('pos_delivery.vendor_list');
-        return array_values($all_vendor_list);
+        $temp = [];
+        foreach($all_vendor_list as $key => $vendor)
+            array_push($temp,array_merge($vendor,['key' => $key]));
+        $data['delivery_vendors'] =  $temp;
+        $data['delivery_method'] = $this->getDeliveryMethod();
+        return $data;
+    }
+
+    private function getDeliveryMethod()
+    {
+        $partnerDeliveryInformation = $this->partnerDeliveryInfoRepositoryInterface->where('partner_id', $this->partner)->first();
+        return !empty($partnerDeliveryInformation) ? $partnerDeliveryInformation->delivery_vendor : Methods::OWN_DELIVERY;
     }
 
     public function getRegistrationInfo()
@@ -315,7 +327,7 @@ class DeliveryService
     {
         return [
             'name' => $this->name,
-            'company_ref_id' => $this->companyRefId,
+            'company_ref_id' => $this->partner->id,
             'product_nature' => $this->productNature,
             'address' => $this->address,
             'district' => $this->district,
@@ -411,9 +423,7 @@ class DeliveryService
         $data = [
             'delivery_vendor' => $this->vendorName
         ];
-
         $deliveryInfo = $this->partnerDeliveryInfoRepositoryInterface->where('partner_id', $this->partner->id)->first();
-
         return $this->partnerDeliveryInfoRepositoryInterface->update($deliveryInfo, $data);
     }
 
@@ -463,6 +473,12 @@ class DeliveryService
         $this->client->setToken($this->token)->post('orders/cancel', $data);
         return true;
     }
+
+    public function getPaperflyDeliveryCharge()
+    {
+        return config('pos_delivery.paperfly_charge');
+    }
+
 
 
 }

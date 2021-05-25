@@ -8,6 +8,7 @@ class DeliveryRoute
             $api->post('/delivery-charge', 'Pos\\DeliveryController@getDeliveryCharge');
             $api->get('/district', 'Pos\\DeliveryController@getDistricts');
             $api->get('/upzillas/{district_name}/district', 'Pos\\DeliveryController@getUpzillas');
+            $api->get('/paperfly-delivery-charge', 'Pos\\DeliveryController@paperflyDeliveryCharge');
         });
         $api->group(['prefix' => 'pos/delivery', 'middleware' => ['accessToken']], function ($api) {
             $api->get('register', 'Pos\\DeliveryController@getInfoForRegistration');
@@ -17,6 +18,7 @@ class DeliveryRoute
             $api->post('cancel-order', 'Pos\\DeliveryController@cancelOrder');
             $api->post('orders', 'Pos\\DeliveryController@orderPlace');
             $api->post('partner-vendor', 'Pos\\DeliveryController@vendorUpdate');
+            $api->get('vendor-list', 'Pos\DeliveryController@getVendorList');
         });
     }
 }
