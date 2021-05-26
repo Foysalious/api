@@ -28,6 +28,9 @@ class DeliveryServerClient
         return $this->call('get', $uri);
     }
 
+    /**
+     * @throws DeliveryServiceServerError
+     */
     private function call($method, $uri, $data = null, $multipart = false)
     {
         try {
