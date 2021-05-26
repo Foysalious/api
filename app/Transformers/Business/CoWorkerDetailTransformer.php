@@ -185,9 +185,9 @@ class CoWorkerDetailTransformer extends TransformerAbstract
         $salary_completion = round((($count / 1) * self::THRESHOLD), 0);
         
         $gross_salary_breakdown['business_member_id'] = $business_member->id;
-        $gross_salary_breakdown ['breakdown'] = $payroll_percentage_breakdown;
+        $gross_salary_breakdown ['breakdown'] = $payroll_percentage_breakdown['breakdown'];
         $gross_salary_breakdown['gross_salary'] = $salary ? floatValFormat($salary->gross_salary) : null;
-        $gross_salary_breakdown['gross_salary_percentage'] = 100;
+        $gross_salary_breakdown['gross_salary_percentage'] = $payroll_percentage_breakdown['total_percentage'];
         $gross_salary_breakdown['global_gross_salary_component'] = $this->getGlobalGrossSalaryComponent($payroll_setting);
         $gross_salary_breakdown['gross_salary_log'] = $this->getSalaryLog($business_member);
         $gross_salary_breakdown['gross_salary_completion'] = $salary_completion;
@@ -250,7 +250,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
 
     private function getGlobalGrossSalaryComponent($payroll_setting)
     {
-        $global_gross_components = $payroll_setting->components()->where('type', Type::GROSS)->where('target_type', null)->orWhere('target_type', TargetType::GENERAL)->orderBy('name')->get();
+        $global_gross_components = $payroll_setting->components()->where('type', Type::GROSS)->where('target_type', null)->where('is_active', 1)->orWhere('target_type', TargetType::GENERAL)->orderBy('name')->get();
         $global_gross_component_data = [];
         foreach ($global_gross_components as $component) {
             $percentage = floatValFormat(json_decode($component->setting, 1)['percentage']);
