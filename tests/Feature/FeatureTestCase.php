@@ -18,6 +18,7 @@ use App\Models\PartnerSubscriptionPackage;
 use App\Models\PosCategory;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
+use App\Models\PosOrderPayment;
 use App\Models\Profile;
 use App\Models\Resource;
 use Carbon\Carbon;
@@ -98,6 +99,11 @@ class FeatureTestCase extends TestCase
      * @var PosCategory
      */
     protected $PosCategory;
+
+    /**
+     * @var PosOrderPayment
+     */
+    protected $PosOrderPayment;
 
 
 

@@ -1,8 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="Application Test Suite" tests="1" assertions="1" failures="0" errors="0" time="2.649914">
-    <testsuite name="Tests\Feature\sDeliveryOrderManagement\DeliveryOrderCancelAPITest" file="/var/www/tests/Feature/sDeliveryOrderManagement/DeliveryOrderCancelAPITest.php" tests="1" assertions="1" failures="0" errors="0" time="2.649914">
-      <testcase name="testCancelOrderDataUpdateIntoDB" class="Tests\Feature\sDeliveryOrderManagement\DeliveryOrderCancelAPITest" file="/var/www/tests/Feature/sDeliveryOrderManagement/DeliveryOrderCancelAPITest.php" line="83" assertions="1" time="2.649914"/>
+  <testsuite name="Application Test Suite" tests="1" assertions="0" failures="0" errors="1" time="2.454526">
+    <testsuite name="Tests\Feature\sDeliveryOrderManagement\DeliveryOrderInfoAPITest" file="/var/www/tests/Feature/sDeliveryOrderManagement/DeliveryOrderInfoAPITest.php" tests="1" assertions="0" failures="0" errors="1" time="2.454526">
+      <testcase name="testPosDeliveryOrderCODAmountcalculate" class="Tests\Feature\sDeliveryOrderManagement\DeliveryOrderInfoAPITest" file="/var/www/tests/Feature/sDeliveryOrderManagement/DeliveryOrderInfoAPITest.php" line="68" assertions="0" time="2.454526">
+        <error type="ErrorException">Tests\Feature\sDeliveryOrderManagement\DeliveryOrderInfoAPITest::testPosDeliveryOrderCODAmountcalculate
+ErrorException: Undefined index: cod_amount
+
+/var/www/vendor/sentry/sentry/lib/Raven/Breadcrumbs/ErrorHandler.php:34
+/var/www/tests/Feature/sDeliveryOrderManagement/DeliveryOrderInfoAPITest.php:75
+</error>
+      </testcase>
     </testsuite>
   </testsuite>
 </testsuites>
