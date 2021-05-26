@@ -1,5 +1,7 @@
 <?php namespace App\Sheba\Business\SalaryLog\ComponentBreakdownLog;
 
+use App\Models\BusinessMember;
+
 class Requester
 {
     private $businessMember;
@@ -8,12 +10,18 @@ class Requester
     private $componentAmount;
     private $salary;
     private $oldPercentage;
-    private $oldAmount;
     private $managerMember;
+    private $oldSalary;
 
-    public function setBusinessMember($business_member)
+    public function setBusinessMember(BusinessMember $business_member)
     {
         $this->businessMember = $business_member;
+        return $this;
+    }
+
+    public function setOldSalary($old_salary)
+    {
+        $this->oldSalary = $old_salary;
         return $this;
     }
 
@@ -61,15 +69,9 @@ class Requester
         return $this->oldPercentage;
     }
 
-    public function setOldAmount($old_amount)
-    {
-        $this->oldAmount = $old_amount;
-        return $this;
-    }
-
     public function getOldAmount()
     {
-        return $this->oldAmount;
+        return ($this->oldSalary * $this->oldPercentage) / 100;
     }
 
     public function setComponentAmount($component_amount)
@@ -88,7 +90,6 @@ class Requester
         $this->managerMember = $manager_member;
         return $this;
     }
-
     public function getManagerMember()
     {
         return $this->managerMember;

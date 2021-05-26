@@ -1,12 +1,8 @@
 <?php namespace App\Sheba\Business\Salary;
 
-use App\Models\BusinessMember;
-use App\Models\Member;
 use App\Sheba\Business\Salary\Component\Maker;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\PayrollComponent\PayrollComponentRepository;
-use Sheba\Dal\PayrollComponent\TargetType;
-use Sheba\Dal\PayrollComponent\Type;
 use Sheba\Dal\Salary\SalaryRepository;
 use Sheba\Dal\SalaryLog\SalaryLogRepository;
 use App\Sheba\Business\SalaryLog\Requester;
@@ -18,7 +14,6 @@ class Updater
     private $salaryRequest;
     /** @var SalaryRepository */
     private $salaryRepository;
-    private $businessMember;
     private $salaryData = [];
     private $salary;
     /** @var SalaryLogRepository */
@@ -29,7 +24,6 @@ class Updater
     private $salaryLogRequester;
     /** @var Creator */
     private $salaryLogCreator;
-    private $managerMember;
     private $oldSalary;
     /*** @var PayrollComponentRepository */
     private $payrollComponentRepository;
@@ -75,7 +69,6 @@ class Updater
                 $this->salaryRepository->update($this->salary, $this->salaryData);
                 $this->salaryLogCreate();
             }
-            $this->removeOverwrittenComponent();
             $this->createComponentPercentage();
         });
         return true;
@@ -96,41 +89,13 @@ class Updater
             ->setSalary($this->salary);
         $this->salaryLogCreator->setSalaryLogRequester($this->salaryLogRequester)->create();
     }
-
-    private function removeOverwrittenComponent()
-    {
-        $target_components = $this->salaryRequest->getRemoveOverwritten();
-        if (!$target_components) return;
-        foreach ($target_components as $component) {
-            $existing_target_component = $this->payrollComponentRepository->find($component);
-            if ($existing_target_component)  $this->payrollComponentRepository->delete($existing_target_component);
-        }
-    }
     private function createComponentPercentage()
     {
         $business_member = $this->salaryRequest->getBusinessMember();
-        $payroll_setting = $business_member->business->payrollSetting;
         foreach ($this->salaryRequest->getBreakdownPercentage() as $component) {
-            $gross_salary_breakdown_maker = new Maker($component);
-            if (!empty($component['id'])) {
-                $existing_payroll_component = $this->payrollComponentRepository->find($component['id']);
-                $gross_salary_breakdown_maker->setBusinessMember($business_member)
-                    ->setManagerMember($this->salaryRequest->getManagerMember())
-                    ->setOldSalaryAmount($this->oldSalary)
-                    ->setPayrollComponent($existing_payroll_component)
-                    ->setPayrollSetting($payroll_setting)
-                    ->setIsOverwritten($component['is_overwritten'])
-                    ->updateCoWorkerGrossComponent();
-            }else {
-                $existing_payroll_component = $this->payrollComponentRepository->where('name', $component['name'])->where('payroll_setting_id', $payroll_setting->id)->first();
-                $gross_salary_breakdown_maker->setBusinessMember($business_member)
-                    ->setManagerMember($this->salaryRequest->getManagerMember())
-                    ->setOldSalaryAmount($business_member->salary->gross_salary)
-                    ->setPayrollComponent($existing_payroll_component)
-                    ->setPayrollSetting($payroll_setting)
-                    ->setIsOverwritten($component['is_overwritten'])
-                    ->createCoWorkerGrossComponent();
-            }
+            $gross_salary_breakdown_maker = new Maker($component, $business_member, $this->salary, $this->oldSalary);
+            $gross_salary_breakdown_maker->setManager($this->salaryRequest->getManagerMember());
+            $gross_salary_breakdown_maker->runComponent();
         }
     }
 }

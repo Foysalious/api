@@ -61,18 +61,10 @@ class Creator
     private function createComponentPercentage()
     {
         $business_member = $this->salaryRequest->getBusinessMember();
-        $payroll_setting = $business_member->business->payrollSetting;
         foreach ($this->salaryRequest->getBreakdownPercentage() as $component) {
-            $gross_salary_breakdown_maker = new Maker($component);
-            $existing_payroll_component = $this->payrollComponentRepository->where('name', $component['name'])->where('payroll_setting_id', $payroll_setting->id)->first();
-            $gross_salary_breakdown_maker->setSalary($this->salary)
-                ->setBusinessMember($business_member)
-                ->setManagerMember($this->salaryRequest->getManagerMember())
-                ->setOldSalaryAmount($this->salaryRequest->getGrossSalary())
-                ->setPayrollSetting($payroll_setting)
-                ->setPayrollComponent($existing_payroll_component)
-                ->setIsOverwritten($component['is_overwritten']);
-            $gross_salary_breakdown_maker->createCoWorkerGrossComponent();
+            $gross_salary_breakdown_maker = new Maker($component, $business_member, $this->salary, null);
+            $gross_salary_breakdown_maker->setManager($this->salaryRequest->getManagerMember());
+            $gross_salary_breakdown_maker->runComponent();
         }
     }
 
