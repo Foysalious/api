@@ -18,8 +18,9 @@ class MockDeliveryServerClient extends DeliveryServerClient
     {
 
         if($uri == 'merchants/register') return $this->getRegistrationData();
+       // if($uri == 'merchants/register' && $this->get422Registrationersponse()['code']==422) return $this->get422Registrationersponse();
         if($uri == 'orders') return $this->getOrderData();
-        if($uri == 'orders/track') return $this->getDeliveryOrderInformation();
+        if($uri == 'orders/track' && $this->getDeliveryOrderCreatedStatus()['data']['status'] == "Created") return $this->getDeliveryOrderCreatedStatus();
 
     }
 
@@ -62,7 +63,8 @@ class MockDeliveryServerClient extends DeliveryServerClient
 
     private function getRegistrationData()
     {
-        return json_decode ('{
+
+         json_decode ('{
             "data": {
                 "uid": "M-2021-0001",
                 "paperfly_merchant_code": "M-1-6563",
@@ -93,7 +95,17 @@ class MockDeliveryServerClient extends DeliveryServerClient
         }',true );
     }
 
-    private function getDeliveryOrderInformation()
+/*    private function get422Registrationersponse()
+    {
+
+        return json_decode(json_encode([
+            'code'=>422,
+          //  'msg'=>'Successful'
+        ]));
+    }*/
+
+
+    private function getDeliveryOrderCreatedStatus()
     {
         return json_decode ('{
           "data": {
@@ -133,5 +145,8 @@ class MockDeliveryServerClient extends DeliveryServerClient
           }
         }',true );
     }
+
+
+
 
 }
