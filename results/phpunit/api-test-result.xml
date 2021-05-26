@@ -1,14 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="Application Test Suite" tests="1" assertions="1" failures="1" errors="0" time="2.102614">
-    <testsuite name="Tests\Feature\sDeliverOrderPlacement\OrderPlacementAPITest" file="/var/www/tests/Feature/sDeliverOrderPlacement/OrderPlacementAPITest.php" tests="1" assertions="1" failures="1" errors="0" time="2.102614">
-      <testcase name="testPosOrderPlaceAPIForDataFailedToPassValidation" class="Tests\Feature\sDeliverOrderPlacement\OrderPlacementAPITest" file="/var/www/tests/Feature/sDeliverOrderPlacement/OrderPlacementAPITest.php" line="104" assertions="1" time="2.102614">
-        <failure type="PHPUnit_Framework_ExpectationFailedException">Tests\Feature\sDeliverOrderPlacement\OrderPlacementAPITest::testPosOrderPlaceAPIForDataFailedToPassValidation
-Failed asserting that 200 matches expected 400.
-
-/var/www/tests/Feature/sDeliverOrderPlacement/OrderPlacementAPITest.php:127
-</failure>
-      </testcase>
+  <testsuite name="Application Test Suite" tests="1" assertions="1" failures="0" errors="0" time="2.649914">
+    <testsuite name="Tests\Feature\sDeliveryOrderManagement\DeliveryOrderCancelAPITest" file="/var/www/tests/Feature/sDeliveryOrderManagement/DeliveryOrderCancelAPITest.php" tests="1" assertions="1" failures="0" errors="0" time="2.649914">
+      <testcase name="testCancelOrderDataUpdateIntoDB" class="Tests\Feature\sDeliveryOrderManagement\DeliveryOrderCancelAPITest" file="/var/www/tests/Feature/sDeliveryOrderManagement/DeliveryOrderCancelAPITest.php" line="83" assertions="1" time="2.649914"/>
     </testsuite>
   </testsuite>
 </testsuites>
