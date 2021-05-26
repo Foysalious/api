@@ -250,7 +250,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
 
     private function getGlobalGrossSalaryComponent($payroll_setting)
     {
-        $global_gross_components = $payroll_setting->components()->where('type', Type::GROSS)->where('target_type', null)->where('is_active', 1)->orWhere('target_type', TargetType::GENERAL)->orderBy('name')->get();
+        $global_gross_components = $payroll_setting->components()->where('type', Type::GROSS)->where('is_active', 1)->where('target_type', TargetType::GENERAL)->orderBy('name')->get();
         $global_gross_component_data = [];
         foreach ($global_gross_components as $component) {
             $percentage = floatValFormat(json_decode($component->setting, 1)['percentage']);
