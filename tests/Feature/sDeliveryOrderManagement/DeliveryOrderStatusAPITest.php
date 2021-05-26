@@ -34,7 +34,7 @@ class DeliveryOrderStatusAPITest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-       // dd($data);
+        dd($data);
         $this->assertEquals(200, $data['code']);
         $this->assertEquals("Successful", $data['message']);
 

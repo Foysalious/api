@@ -109,7 +109,6 @@ class DeliveryService
 
     public function setToken($token)
     {
-        dd($this->token);
         $this->token = $token;
         return $this;
     }
