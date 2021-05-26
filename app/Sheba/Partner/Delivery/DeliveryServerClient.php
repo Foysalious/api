@@ -39,7 +39,7 @@ class DeliveryServerClient
             $res = $e->getResponse();
             $http_code = $res->getStatusCode();
             $message = $res->getBody()->getContents();
-            //dd(json_decode("{\"message\":\"The given data was invalid.\",\"errors\":{\"company_ref_id\":[\"The company ref id has already been taken.\"],\"contact_number\":[\"The contact number has already been taken.\"],\"email\":[\"The email has already been taken.\"]}}",true));
+            $message = array_values(json_decode($message,true)['errors'])[0][0];
             if ($http_code > 399 && $http_code < 500) throw new DeliveryServiceServerError($message, $http_code);
             throw new DeliveryServiceServerError($e->getMessage(), $http_code);
         }
