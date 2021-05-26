@@ -8,39 +8,49 @@ use App\Models\Partner;
 use App\Models\PartnerResource;
 use App\Models\Profile;
 use App\Models\Resource;
-use Sheba\Dal\PartnerDeliveryInformation\Model;
+use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInfo;
 use Tests\Feature\FeatureTestCase;
 
 class RegistrationInfoApiTest extends FeatureTestCase
 {
+    private $partnerDeliveryinfo;
     public function setUp()
     {
         parent::setUp();
         $this->logIn();
 
         $this->truncateTables([
-            Model ::class,
-            Profile::class,
-            Partner::class,
-            Resource::class,
-            PartnerResource::class
+            PartnerDeliveryInfo ::class,
         ]);
-//        $this->profile = factory(Profile::class)->create();
-//        $this->partner = factory(Partner::class)->create();
-//        $this->resource = factory(Resource::class)->create();
-//        $this->partner_resource = factory(PartnerResource::class)->create();
-        $this->partnerDeliveryinfo = factory(Model::class)->create();
+
+        $this->partner -> update(
+            [
+                'business_type' => 'Construction',
+                'address'=>'Dhaka 1229'
+            ]);
+        $this->partnerDeliveryinfo = factory(PartnerDeliveryInfo::class)->create([
+            'partner_id'=>$this->partner->id
+        ]);
 
     }
 
-    public function testIsDeliveryRegisteredKeyOnDashboardApi()
+    public function testSuccessfulRegistrationInfo()
     {
-        //dd($this->resource->remember_token);
-
-        $response = $this->get('v2/partners/'.$this->partner->id.'/dashboard?remember_token='.$this->resource->remember_token);
+        $response = $this->get('/v2/pos/delivery/register',[
+            'Authorization' => "Bearer $this->token"
+        ]);
         $data = $response->decodeResponseJson();
-        dd($data);
         $this->assertEquals(200, $data['code']);
         $this->assertEquals("Successful", $data['message']);
+    }
+
+    public function testWithWrongAuthorizationIsNotAccepted()
+    {
+        $response = $this->get('/v2/pos/delivery/register',[
+            'Authorization' => "Bearer $this->token"."hkhckjsd"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(401, $data['code']);
+        $this->assertEquals("Your session has expired. Try Login", $data['message']);
     }
 }
