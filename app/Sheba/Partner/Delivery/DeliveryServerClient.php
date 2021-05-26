@@ -39,6 +39,7 @@ class DeliveryServerClient
             $res = $e->getResponse();
             $http_code = $res->getStatusCode();
             $message = $res->getBody()->getContents();
+            $message = array_values(json_decode($message,true)['errors'])[0][0];
             if ($http_code > 399 && $http_code < 500) throw new DeliveryServiceServerError($message, $http_code);
             throw new DeliveryServiceServerError($e->getMessage(), $http_code);
         }
