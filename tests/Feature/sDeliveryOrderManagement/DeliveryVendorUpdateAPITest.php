@@ -37,7 +37,7 @@ class DeliveryVendorUpdateAPITest extends FeatureTestCase
 
     }
 
-    /*public function testsDeliveryUpdateVendor()
+    public function testsDeliveryUpdateVendor()
     {
         $response = $this->post('/v2/pos/delivery/partner-vendor', [
             'vendor_name' => 'paperfly',
@@ -127,7 +127,7 @@ class DeliveryVendorUpdateAPITest extends FeatureTestCase
         $Partner_delivery_information=Model::first();
 
         $this->assertEquals('own_delivery',$Partner_delivery_information->delivery_vendor);
-    }*/
+    }
 
 
 }

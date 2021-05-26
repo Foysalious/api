@@ -32,7 +32,7 @@ class DeliveryOrderStatusAPITest extends FeatureTestCase
     }
 
 
- /*   public function testGetDeliveryOrderStatusUpdate()
+    public function testGetDeliveryOrderStatusUpdate()
     {
 
         $response = $this->get('/v2/pos/delivery/delivery-status?pos_order_id=1',  [
@@ -66,7 +66,7 @@ class DeliveryOrderStatusAPITest extends FeatureTestCase
         $this->assertEquals("Successful", $data['message']);
         $this->assertEquals("Created", $data['status']);
 
-    }*/
+    }
     /**
      * Can't Mock those delivery Status
      * according to sDelivery API doc they only provide
