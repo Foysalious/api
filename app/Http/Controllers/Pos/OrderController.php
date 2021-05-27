@@ -15,6 +15,7 @@ use App\Transformers\PosOrderTransformer;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
@@ -235,7 +236,7 @@ class OrderController extends Controller
             'payment' => $link
         ]);
         } catch (\Throwable $e) {
-            logError($e);
+            Log::error(["error in pos order", $e->getCode(), $e->getMessage()]);
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         }
     }
