@@ -267,7 +267,7 @@ return [
                 'id'            => 'present_permanent_same_address_checked',
                 "error_message" => "",
                 "title"         => 'বর্তমান ঠিকানা এবং স্থায়ী ঠিকানা একই',
-                'value'         => 0,
+                'value'         => '',
                 'mandatory'     => false
             ],
             [
@@ -307,7 +307,7 @@ return [
                 'title'      => 'আপনি কি একজন PEP/ IP / বৈদেশিক সংস্থার নির্বাহী /ঊচ্চ  পদস্থ কর্মকর্তা? *',
                 'name'       => 'pep_ip_status',
                 'id'         => 'pep_ip_status',
-                'value'      => 'অপারেশনের ধরণ ',
+                'value'      => '',
                 'mandatory'  => true,
                 'error_message' => 'PEP/ IP কর্মকর্তা কিনা, পূরণ আবশ্যক',
                 'views'      => [
@@ -334,7 +334,7 @@ return [
                 'title'      => 'আপনি কি একজন PEP/ IP  / বৈদেশিক সংস্থার নির্বাহী / ঊচ্চ পদস্থ কর্মকর্তার সাথে সংশ্লিষ্ট সহযোগী অথবা পারিবারিক সদস্য? *',
                 'name'       => 'pep_ip_relation',
                 'id'         => 'pep_ip_relation',
-                'value'      => 'অপারেশনের ধরণ ',
+                'value'      => '',
                 'mandatory'  => true,
                 'error_message' => 'PEP/ IP কর্মকর্তার সাথে সংশ্লিষ্ট সহযোগী কিনা, পূরণ আবশ্যক',
                 'views'      => [
@@ -376,7 +376,7 @@ return [
                 'title'      => 'আপনি কি যুক্তরাষ্ট্রের সাথে সম্পৃক্ত (বসবাসকারী, নাগরিক, গ্রীন কার্ডধারী, যুক্তরাষ্ট্র / যুক্তরাষ্ট্রের মালিকানাধীন প্রতিষ্ঠান) *',
                 'name'       => 'fatca_information',
                 'id'         => 'fatca_information',
-                'value'      => 'অপারেশনের ধরণ ',
+                'value'      => '',
                 'mandatory'  => true,
                 'error_message' => 'যুক্তরাষ্ট্রের সাথে সম্পৃক্ত কিনা, পূরণ আবশ্যক',
                 'views'      => [

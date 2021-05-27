@@ -137,6 +137,7 @@ class AccountCreate
         $account_title = null;
         $gender = null;
         $nominee_legal_doc_1 = null;
+        $nominee_legal_doc_no_1 = null;
         $pepIpStatus = null;
         $pepIpRelation = null;
         $fatcaInformation = null;
@@ -155,8 +156,12 @@ class AccountCreate
 
         foreach ($application['account']['type_of_account'] as $key => $data)
             if($data == 1) $account_title = $key;
-        foreach ($application['nominee']['identification_number_type'] as $key => $data)
-            if($data == 1) $nominee_legal_doc_1 = $key;
+        foreach ($application['nominee']['identification_number_type'] as $key => $data){
+            if($data !== ''){
+                $nominee_legal_doc_1 = $key;
+                $nominee_legal_doc_no_1 = $data;
+            }
+        }
 
         $data = [
             "channel"       => PBLStatics::CHANNEL,
@@ -209,7 +214,7 @@ class AccountCreate
             "nominee_relation_1" => $application['nominee']["nominee_relation"] ?? null,
             "nominee_share_percent_1" => 100,
             "nominee_legal_doc_1" => PBLStatics::fromKey($nominee_legal_doc_1),
-            "nominee_legal_doc_no_1" => $application['nominee']["identification_number"] ?? null,
+            "nominee_legal_doc_no_1" => $nominee_legal_doc_no_1,
             "nominee_father_1" => isset($application['nominee']["nominee_father_name"]) ? $this->removeSpecialCharacters($application['nominee']["nominee_father_name"]) : null,
             "nominee_mother_1" => isset($application['nominee']["nominee_mother_name"]) ? $this->removeSpecialCharacters($application['nominee']["nominee_mother_name"]) : null,
             "nominee_dob_1" => (isset($application['nominee']['nominee_birth_date'])) ? Carbon::parse($application['nominee']['nominee_birth_date'])->format('Ymd') : null,
