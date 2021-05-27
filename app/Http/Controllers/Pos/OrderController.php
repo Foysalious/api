@@ -236,7 +236,7 @@ class OrderController extends Controller
         ]);
         } catch (\Throwable $e) {
             logError($e);
-            return api_response($request, null, 500);
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         }
     }
 
