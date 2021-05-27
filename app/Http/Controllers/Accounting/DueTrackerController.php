@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\ModificationFields;
 use Sheba\Usage\Usage;
+use Exception;
 
 class DueTrackerController extends Controller
 {
@@ -102,6 +103,16 @@ class DueTrackerController extends Controller
         } catch (\Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
+        }
+    }
+
+    public function dueListByCustomerId(Request $request, $customerId)
+    {
+        try {
+            $data = $this->dueTrackerRepo->setPartner($request->partner)->getDueListByCustomer($request, $customerId);
+            return api_response($request, null, 200, ['data' => $data]);
+        } catch (Exception $e) {
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         }
     }
 }
