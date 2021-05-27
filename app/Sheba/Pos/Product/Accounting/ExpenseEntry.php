@@ -19,11 +19,12 @@ class ExpenseEntry
 
 
 
-    public function __construct(AccountingRepository $accountingRepository)
-    {
-        $this->accountingRepository = $accountingRepository;
-    }
 
+    protected $partner;
+
+    public function __construct(AccountingRepository $accountingRepo) {
+        $this->accountingRepo = $accountingRepo;
+    }
     /**
      * @param mixed $stock
      * @return ExpenseEntry
@@ -41,6 +42,12 @@ class ExpenseEntry
     public function setCostPerUnit($costPerUnit)
     {
         $this->costPerUnit = $costPerUnit;
+        return $this;
+    }
+
+    public function setPartner($partner)
+    {
+        $this->partner = $partner;
         return $this;
     }
 
@@ -77,30 +84,23 @@ class ExpenseEntry
     public function create()
     {
         $data = $this->makeData();
-        $this->accountingRepository->storeEntry($data, EntryTypes::INVENTORY);
+        $response = $this->accountingRepo->storeEntry($data, EntryTypes::INVENTORY);
     }
 
     private function makeData()
     {
-        $data = [
-            'amount' => $this->stock * $this->costPerUnit,
-            'from_account_key' => $this->accountingInfo['from_account'],
-            'to_account_key' => $this->id,
-            'customer_id' => $this->accountingInfo['supplier_id'],
-            'inventory_products' => [
-                [
-                    'id' => $this->id,
-                    'unit_price' => $this->costPerUnit,
-                    'name' => $this->name,
-                    'quantity' => $this->stock
-                ]
-            ]
-        ];
-
-        if($this->accountingInfo['transaction_type'] == 'due')
-            $data['amount_cleared'] =  $this->accountingInfo['amount_cleared'];
-
+        $data = collect();
+        $data->partner = $this->partner;
+        $data->amount = $this->stock * $this->costPerUnit;
+        $data->from_account_key = $this->accountingInfo['from_account'];
+        $data->to_account_key = $this->id;
+        $data->customer_id = $this->accountingInfo['supplier_id'];
+        $data->inventory_products = [['id' => $this->id, 'unit_price' => $this->costPerUnit, 'name' => $this->name, 'quantity' => $this->stock]];
+        if ($this->accountingInfo['transaction_type'] == 'due')
+            $data->amount_cleared = $this->accountingInfo['amount_cleared'];
+        $data->source_id = null;
         return $data;
+
     }
 
 }
