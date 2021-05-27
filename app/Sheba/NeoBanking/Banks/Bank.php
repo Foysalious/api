@@ -118,6 +118,8 @@ abstract class Bank
 
     abstract public function storeGigatechKyc($data);
 
+    abstract public function getAcknowledgment();
+
         /**
      * @return Partner
      */

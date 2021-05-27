@@ -14,7 +14,6 @@ class GrossSalaryBreakdownCalculate
     private $componentPercentage;
     private $totalAmountPerComponent;
     private $grossSalaryBreakdownWithTotalAmount;
-    private $totalPercentage;
 
     public function __construct()
     {
@@ -30,13 +29,15 @@ class GrossSalaryBreakdownCalculate
     public function componentPercentageBreakdown($payroll_setting, $business_member)
     {
         /** @var PayrollComponent $payroll_components */
-        $payroll_components = $payroll_setting->components()->where('type', Type::GROSS)->where('target_type', null)->orWhere('target_type', TargetType::GENERAL)->orderBy('name')->get();
-        $payroll_component_by_target = $payroll_setting->components()->where('type', Type::GROSS)->where('target_id', $business_member->id)->orderBy('name')->get();
+        $payroll_components = $payroll_setting->components()->where('type', Type::GROSS)->where('is_active', 1)->where('target_type', TargetType::GENERAL)->orderBy('name')->get();
+        $payroll_component_by_target = $payroll_setting->components()->where('type', Type::GROSS)->where('target_id', $business_member->id)->where('is_active', 1)->orderBy('name')->get();
         if ($payroll_component_by_target) $gross_components = $this->makeGrossComponentCollection($payroll_components, $payroll_component_by_target);
         $salary = $business_member->salary ? $business_member->salary->gross_salary : 0;
         $data = [];
+        $total_percentage = 0;
         foreach ($gross_components as $payroll_component) {
             $percentage = floatValFormat(json_decode($payroll_component->setting, 1)['percentage']);
+            $total_percentage += $percentage;
             array_push($data, [
                 'id' => $payroll_component->id,
                 'payroll_setting_id' => $payroll_component->payroll_setting_id,
@@ -52,7 +53,10 @@ class GrossSalaryBreakdownCalculate
             ]);
         }
 
-        return $data;
+        $final_data['breakdown'] = $data;
+        $final_data['total_percentage'] = $total_percentage;
+
+        return $final_data;
     }
 
 
@@ -95,11 +99,6 @@ class GrossSalaryBreakdownCalculate
             });
         }
         return $payroll_components->merge($payroll_component_by_target);
-    }
-
-    public function getTotalPercentage()
-    {
-        return $this->totalPercentage;
     }
 
     private function percentageToAmountCalculation($gross_salary, $percentage)

@@ -37,25 +37,9 @@ class PayrollSettingsTransformer extends TransformerAbstract
         ];
     }
 
-    /*
-    private function grossSalaryBreakdown_($payroll_setting)
-    {
-        $payroll_percentage_breakdown = (new GrossSalaryBreakdownCalculate())->componentPercentageBreakdown($payroll_setting);
-        $count = 0;
-        if (($payroll_percentage_breakdown->basicSalary > 0) || ($payroll_percentage_breakdown->houseRent > 0) || ($payroll_percentage_breakdown->medicalAllowance > 0) || ($payroll_percentage_breakdown->conveyance > 0)) $count++;
-        $salary_breakdown_completion = round((($count / 1) * 50), 0);
-
-        $this->payrollComponentData[Components::BASIC_SALARY] = $payroll_percentage_breakdown->basicSalary;
-        $this->payrollComponentData[Components::HOUSE_RENT] = $payroll_percentage_breakdown->houseRent;
-        $this->payrollComponentData[Components::MEDICAL_ALLOWANCE] = $payroll_percentage_breakdown->medicalAllowance;
-        $this->payrollComponentData[Components::CONVEYANCE] = $payroll_percentage_breakdown->conveyance;
-        $this->payrollComponentData['salary_breakdown_completion'] = $salary_breakdown_completion;
-        return $this->payrollComponentData;
-    }*/
-
     private function grossSalaryBreakdown($payroll_setting)
     {
-        $payroll_components = $payroll_setting->components->where('type', Type::GROSS)->whereIn('target_type', [TargetType::GENERAL, null]);
+        $payroll_components = $payroll_setting->components->where('type', Type::GROSS)->where('target_type', TargetType::GENERAL);
         foreach ($payroll_components as $payroll_component) {
             $salary_percentage = json_decode($payroll_component->setting, 1);
             $percentage_value = $salary_percentage['percentage'];
@@ -121,9 +105,9 @@ class PayrollSettingsTransformer extends TransformerAbstract
             if (!$addition->is_default) {
                 $package_formatter = new Formatter();
                 $packages = $package_formatter->makePackageData($addition);
-                $data['addition'][] = ['id' => $addition->id, 'key' =>$addition->name,  'value' => $addition->value, 'is_default' => 0, 'package' => $packages];
+                $data['addition'][] = ['id' => $addition->id, 'key' =>$addition->name,  'value' => $addition->value, 'is_default' => 0, 'is_taxable' => $addition->is_taxable, 'package' => $packages];
             }
-            if ($addition->is_default) $data['addition'][] = ['id' => $addition->id, 'key' =>$addition->name, 'value' => Components::getComponents($addition->name)['value'], 'is_default' => 1];
+            if ($addition->is_default) $data['addition'][] = ['id' => $addition->id, 'key' =>$addition->name, 'value' => Components::getComponents($addition->name)['value'], 'is_default' => 1,  'is_taxable' => $addition->is_taxable];
         }
         return $data;
     }
