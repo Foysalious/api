@@ -19,7 +19,6 @@ class RechargeComplete extends PaymentComplete
 {
     private $transaction;
     private $paymentGateway;
-    private $commission = 0;
 
     public function complete()
     {
@@ -30,6 +29,7 @@ class RechargeComplete extends PaymentComplete
                 $this->completePayment();
                 $payable      = $this->payment->payable;
                 $payable_user = $payable->user;
+                $this->setPaymentGateWay();
                 if ($payable_user instanceof Partner) {
                     app(ActionRewardDispatcher::class)->run('partner_wallet_recharge', $payable_user, $payable_user, $payable);
                     $this->storeJournal();
@@ -70,15 +70,8 @@ class RechargeComplete extends PaymentComplete
         /** @var HasWalletTransaction $user */
         $user = $this->payment->payable->user;
 
-        $payment_gateways = app(PaymentGatewayRepo::class);
-        $this->paymentGateway = $payment_gateway = $payment_gateways->builder()
-                                             ->where('service_type', $this->payment->created_by_type)
-                                             ->where('method_name', $this->payment->paymentDetails->last()->method)
-                                             ->where('status', 'Published')
-                                             ->first();
-
-        if ($payment_gateway && $payment_gateway->cash_in_charge > 0) {
-            $this->commission = $amount = $this->calculateCommission($payment_gateway->cash_in_charge);
+        if ($this->paymentGateway && $this->paymentGateway->cash_in_charge > 0) {
+            $amount = $this->calculateCommission($this->paymentGateway->cash_in_charge);
             (new WalletTransactionHandler())->setModel($user)
                                             ->setAmount($amount)
                                             ->setType(Types::debit())
@@ -89,6 +82,16 @@ class RechargeComplete extends PaymentComplete
         }
     }
 
+    private function setPaymentGateWay()
+    {
+        $payment_gateways = app(PaymentGatewayRepo::class);
+        $this->paymentGateway = $payment_gateways->builder()
+            ->where('service_type', $this->payment->created_by_type)
+            ->where('method_name', $this->payment->paymentDetails->last()->method)
+            ->where('status', 'Published')
+            ->first();
+    }
+
     /**
      * @throws ReflectionException
      * @throws AccountingEntryServerError
@@ -97,12 +100,13 @@ class RechargeComplete extends PaymentComplete
     private function storeJournal()
     {
         $payable = $this->payment->payable;
+        $commission = $this->calculateCommission($this->paymentGateway->cash_in_charge);
         (new JournalCreateRepository())->setTypeId($payable->user->id)
             ->setSource($this->transaction)->setAmount($payable->amount)
             ->setDebitAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
             ->setCreditAccountKey($this->payment->paymentDetails->last()->method)
             ->setDetails("Entry For Wallet Transaction")
-            ->setCommission($this->commission)->setEndPoint("api/journals/wallet")
+            ->setCommission($commission)->setEndPoint("api/journals/wallet")
             ->setReference($this->payment->id)->store();
     }
 }
