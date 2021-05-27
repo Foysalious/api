@@ -104,6 +104,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
             $message = 'ইতিমধ্যে আপনার ১ টি বিকাশের মাধ্যমে টাকা উত্তোলনের আবেদন প্রক্রিয়াধীন রয়েছে, অনুগ্রহ করে আবেদনটি সম্পূর্ণ হওয়া পর্যন্ত অপেক্ষা করুন অথবা ব্যাংকের মাধ্যমে টাকা উত্তোলনের আবেদন করুন।';
             return api_response($request, null, 200,
                 ['data' => [
+                    'bkash_pending_status' => true,
                     'message' => $message,
                     'current_balance' => $partner->wallet
                 ]]);
