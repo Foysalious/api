@@ -105,9 +105,9 @@ class PayrollSettingsTransformer extends TransformerAbstract
             if (!$addition->is_default) {
                 $package_formatter = new Formatter();
                 $packages = $package_formatter->makePackageData($addition);
-                $data['addition'][] = ['id' => $addition->id, 'key' =>$addition->name,  'value' => $addition->value, 'is_default' => 0, 'package' => $packages];
+                $data['addition'][] = ['id' => $addition->id, 'key' =>$addition->name,  'value' => $addition->value, 'is_default' => 0, 'is_taxable' => $addition->is_taxable, 'package' => $packages];
             }
-            if ($addition->is_default) $data['addition'][] = ['id' => $addition->id, 'key' =>$addition->name, 'value' => Components::getComponents($addition->name)['value'], 'is_default' => 1];
+            if ($addition->is_default) $data['addition'][] = ['id' => $addition->id, 'key' =>$addition->name, 'value' => Components::getComponents($addition->name)['value'], 'is_default' => 1,  'is_taxable' => $addition->is_taxable];
         }
         return $data;
     }

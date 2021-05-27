@@ -47,7 +47,6 @@ class Creator
                     'key' => $package['key'],
                     'name' => $package['name'],
                     'is_active' => $package['is_active'],
-                    'is_taxable' => $package['is_taxable'],
                     'calculation_type' => $package['calculation_type'],
                     'is_percentage' => $package['is_percentage'],
                     'on_what' => $package['on_what'],

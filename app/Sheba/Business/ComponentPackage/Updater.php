@@ -52,7 +52,6 @@ class Updater
                 'key' => $packages['key'],
                 'name' => $packages['name'],
                 'is_active' => $packages['is_active'],
-                'is_taxable' => $packages['is_taxable'],
                 'calculation_type' => $packages['calculation_type'],
                 'is_percentage' => $packages['is_percentage'],
                 'on_what' => $packages['on_what'],
