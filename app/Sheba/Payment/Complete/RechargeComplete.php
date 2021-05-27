@@ -103,7 +103,7 @@ class RechargeComplete extends PaymentComplete
             ->setDebitAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
             ->setCreditAccountKey($this->payment->paymentDetails->last()->method)
             ->setDetails("Entry For Wallet Transaction")
-            ->setCommission($commission ?? 0)
+            ->setCommission($commission ?? 0)->setEndPoint("api/journals/wallet")
             ->setReference($this->payment->id)->store();
     }
 }
