@@ -267,7 +267,7 @@ return [
                 'id'            => 'present_permanent_same_address_checked',
                 "error_message" => "",
                 "title"         => 'বর্তমান ঠিকানা এবং স্থায়ী ঠিকানা একই',
-                'value'         => '',
+                'value'         => 0,
                 'mandatory'     => false
             ],
             [
