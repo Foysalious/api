@@ -13,30 +13,37 @@ abstract class Response
     protected $shouldDecode = true;
     protected $store;
 
+    /**
+     * Response constructor.
+     * @param $data
+     * @param \Sheba\Payment\Methods\Nagad\Stores\NagadStore $store
+     */
     public function __construct($data, NagadStore $store)
     {
         $this->store = $store;
         $this->data = (array)$data;
-        if (!array_key_exists($this->decode, $this->data) && !array_key_exists('callBackUrl', $this->data)) {
+        $this->output = $this->data;
+
+        /*if (!array_key_exists($this->decode, $this->data) && !array_key_exists('callBackUrl', $this->data)) {
             $this->error = $this->data[$this->msg];
         } else {
             if ($this->shouldDecode) {
                 $this->decodeOutput();
             }
-        }
+        }*/
     }
 
-    private function decodeOutput()
+    /*private function decodeOutput()
     {
         $this->output = Outputs::decode($this->data[$this->decode], $this->store);
-    }
+    }*/
 
-    public function hasError()
+    public function hasError(): bool
     {
         return !!$this->error;
     }
 
-    public function toArray()
+    public function toArray(): array
     {
         return $this->output;
     }
