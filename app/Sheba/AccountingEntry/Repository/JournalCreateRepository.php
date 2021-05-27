@@ -33,6 +33,7 @@ class JournalCreateRepository
     protected $debitAccountKey;
     protected $creditAccountKey;
     protected $entryAt;
+    protected $commission;
     private   $end_point = "api/journals/";
 
     public function __construct()
@@ -67,6 +68,16 @@ class JournalCreateRepository
     public function setTypeId($typeId)
     {
         $this->typeId = $typeId;
+        return $this;
+    }
+
+    /**
+     * @param $commission
+     * @return $this
+     */
+    public function setCommission($commission): JournalCreateRepository
+    {
+        $this->commission = $commission;
         return $this;
     }
 
@@ -154,6 +165,7 @@ class JournalCreateRepository
         $data['debit_account_key']  = $this->debitAccountKey;
         $data['credit_account_key'] = $this->creditAccountKey;
         $data['sourceType']  = class_basename($this->source);
+        $data['commission']  = $this->commission;
         $data['sourceId']    = $this->source->id;
         $data['createdFrom'] = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
         $data['details']     = $this->details . ", Auto Entry";
