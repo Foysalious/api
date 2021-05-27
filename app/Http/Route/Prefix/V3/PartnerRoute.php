@@ -12,6 +12,7 @@ class PartnerRoute
             $api->get('is-updated-home-setting', 'Partner\DashboardController@isUpdatedHomeSetting');
             $api->post('top-up-otf', 'TopUpController@topUpOTF');
             $api->post('top-up-otf-details', 'TopUpController@topUpOTFDetails');
+            $api->get('new-dashboard','Partner\DashboardController@getV3dashboard');
         });
     }
 }
