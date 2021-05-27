@@ -19,6 +19,7 @@ class RechargeComplete extends PaymentComplete
 {
     private $transaction;
     private $paymentGateway;
+    private $commission = 0;
 
     public function complete()
     {
@@ -77,7 +78,7 @@ class RechargeComplete extends PaymentComplete
                                              ->first();
 
         if ($payment_gateway && $payment_gateway->cash_in_charge > 0) {
-            $amount = $this->calculateCommission($payment_gateway->cash_in_charge);
+            $this->commission = $amount = $this->calculateCommission($payment_gateway->cash_in_charge);
             (new WalletTransactionHandler())->setModel($user)
                                             ->setAmount($amount)
                                             ->setType(Types::debit())
@@ -95,15 +96,13 @@ class RechargeComplete extends PaymentComplete
      */
     private function storeJournal()
     {
-        if ($this->paymentGateway && $this->paymentGateway->cash_in_charge > 0)
-            $commission = $this->calculateCommission($this->paymentGateway->cash_in_charge);
         $payable = $this->payment->payable;
         (new JournalCreateRepository())->setTypeId($payable->user->id)
             ->setSource($this->transaction)->setAmount($payable->amount)
             ->setDebitAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
             ->setCreditAccountKey($this->payment->paymentDetails->last()->method)
             ->setDetails("Entry For Wallet Transaction")
-            ->setCommission($commission ?? 0)->setEndPoint("api/journals/wallet")
+            ->setCommission($this->commission)->setEndPoint("api/journals/wallet")
             ->setReference($this->payment->id)->store();
     }
 }
