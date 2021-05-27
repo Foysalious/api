@@ -65,8 +65,8 @@ class AccountingRepository extends BaseRepository
             $sellingPrice = isset($requested_service[$key]['updated_price']) && $requested_service[$key]['updated_price'] ? $requested_service[$key]['updated_price'] : $original_service->price;
             $unitPrice = $original_service->cost ?? $sellingPrice;
             $inventory_products[] = [
-                "id"           => $original_service->id,
-                "name"         => $original_service->name,
+                "id"           => $original_service->id ?? $requested_service[$key]['id'],
+                "name"         => $original_service->name ?? $requested_service[$key]['name'],
                 "unit_price"   => $unitPrice,
                 "selling_price" => $sellingPrice,
                 "quantity"     => isset($requested_service[$key]['quantity']) ? $requested_service[$key]['quantity'] : 1
