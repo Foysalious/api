@@ -12,6 +12,7 @@ use App\Models\PosOrder;
 use App\Models\Profile;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\AccountingRepository;
+use Clockwork\Request\Log;
 use Illuminate\Http\Request;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
@@ -153,6 +154,7 @@ class Creator
         $order_data['status']                = $this->status;
         $order                               = $this->orderRepo->save($order_data);
         $services                            = json_decode($this->data['services'], true);
+        Log::info(["order data", $order_data]);
         foreach ($services as $service) {
             /** @var PartnerPosService $original_service */
             $original_service = isset($service['id']) && !empty($service['id']) ? $this->posServiceRepo->find($service['id']) : $this->posServiceRepo->defaultInstance($service);
