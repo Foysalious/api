@@ -130,5 +130,26 @@ return [
             'value' => 'অন্যান্য',
             'key' => 255
         ]
+    ],
+
+    'organization_type' => [
+        [
+            'key' => 'limited',
+            'en' => 'Limited',
+            'bn' => 'লিমিটেড',
+            'value' => 'লিমিটেড'
+        ],
+        [
+            'key' => 'partnership',
+            'en' => 'Partnership',
+            'bn' => 'পার্টনারশিপ',
+            'value' => 'পার্টনারশিপ'
+        ],
+        [
+            'key' => 'proprietorship',
+            'en' => 'Proprietorship',
+            'bn' => 'প্রোপ্রাইটরশিপ',
+            'value' => 'প্রোপ্রাইটরশিপ'
+        ]
     ]
 ];
