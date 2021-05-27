@@ -294,7 +294,7 @@ return [
                 'name'          => 'branch_code',
                 'id'            => 'branch_code',
                 'hint'          => 'এইখানে সিলেক্ট করুন',
-                'list_type'     => 'new_page_radio',
+                'list_type'     => 'dialog',
                 'error_message' => 'ব্রাঞ্চ কোড পূরণ আবশ্যক'
             ],
             [
