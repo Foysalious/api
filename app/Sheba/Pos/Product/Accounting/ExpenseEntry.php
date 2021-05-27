@@ -16,10 +16,6 @@ class ExpenseEntry
      * @var AccountingRepository
      */
     private $accountingRepository;
-
-
-
-
     protected $partner;
 
     public function __construct(AccountingRepository $accountingRepo) {
@@ -84,7 +80,7 @@ class ExpenseEntry
     public function create()
     {
         $data = $this->makeData();
-        $response = $this->accountingRepo->storeEntry($data, EntryTypes::INVENTORY);
+        $this->accountingRepo->storeEntry($data, EntryTypes::INVENTORY);
     }
 
     private function makeData()
@@ -100,7 +96,6 @@ class ExpenseEntry
             $data->amount_cleared = $this->accountingInfo['amount_cleared'];
         $data->source_id = null;
         return $data;
-
     }
 
 }
