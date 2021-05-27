@@ -206,24 +206,26 @@ class ShebaController extends Controller
         return api_response($request, $butcher_info, 200, ['info' => $butcher_info]);
     }
 
-    public function checkTransactionStatus(Request $request, $transaction_id)
+    /**
+     * @param \Illuminate\Http\Request $request
+     * @param $transaction_id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function checkTransactionStatus(Request $request, $transaction_id): JsonResponse
     {
         /** @var Payment $payment */
         $payment = Payment::where('transaction_id', $transaction_id)->first();
         if (!$payment) return api_response($request, null, 404, ['message' => 'No Payment found']);
         $external_payment = $payment->externalPayments;
+
         if (!$payment->isComplete() && !$payment->isPassed()) {
-            if ($error = $payment->getErrorMessage()) {
-                $message = 'Your payment has been failed due to ' . $error;
-            } else {
-                $message = 'Payment Failed.';
-            }
+            if ($error = $payment->getErrorMessage()) $message = 'Your payment has been failed due to ' . $error;
+            else $message = 'Payment Failed.';
+
             $fail_url = null;
-            if ($external_payment) {
-                $fail_url = $external_payment->fail_url;
-            }
-            return api_response($request, null, 404,
-                ['message' => $message, 'external_payment_redirection_url' => $fail_url]);
+            if ($external_payment) $fail_url = $external_payment->fail_url;
+
+            return api_response($request, null, 404, ['message' => $message, 'external_payment_redirection_url' => $fail_url]);
         }
 
         /** @var Payable $payable */
@@ -273,8 +275,9 @@ class ShebaController extends Controller
 
     /**
      * @param Request $request
+     * @param \Sheba\Dal\PaymentGateway\Contract $paymentGateWayRepository
      * @return JsonResponse
-     * @throws Exception
+     * @throws \Exception
      */
     public function getPayments(Request $request, PaymentGatewayRepository $paymentGateWayRepository)
     {
@@ -326,6 +329,7 @@ class ShebaController extends Controller
 
         return api_response($request, null, 200, ['price' => $amount, 'info' => $emi_data]);
     }
+
     public function getEmiInfoV3(Request $request, Calculator $emi_calculator)
     {
         $amount       = $request->amount;
