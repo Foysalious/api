@@ -133,7 +133,7 @@ class OrderController extends Controller
      */
     public function store($partner, Request $request, Creator $creator, ProfileCreator $profileCreator, PosCustomerCreator $posCustomerCreator, PartnerRepository $partnerRepository, PaymentLinkCreator $paymentLinkCreator)
     {
-
+        try {
         $this->validate($request, [
             'services' => 'required|string',
             'paid_amount' => 'sometimes|required|numeric',
@@ -188,13 +188,10 @@ class OrderController extends Controller
          *
          * if ($partner->wallet >= 1) $this->sendCustomerSms($order);
          */
-        try {
-            if ($order->sales_channel == SalesChannels::WEBSTORE) {
-                if ($partner->is_webstore_sms_active && $partner->wallet >= 1) $this->sendOrderPlaceSmsToCustomer($order);
-                $this->sendOrderPlacePushNotificationToPartner($order);
-            }
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+
+        if ($order->sales_channel == SalesChannels::WEBSTORE) {
+            if ($partner->is_webstore_sms_active && $partner->wallet >= 1) $this->sendOrderPlaceSmsToCustomer($order);
+            $this->sendOrderPlacePushNotificationToPartner($order);
         }
         $this->sendCustomerEmail($order);
         $order->payment_status = $order->getPaymentStatus();
@@ -237,6 +234,10 @@ class OrderController extends Controller
             'order' => $order,
             'payment' => $link
         ]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
     }
 
     private function sendCustomerEmail($order)
