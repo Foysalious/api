@@ -45,6 +45,7 @@ class Nagad extends PaymentMethod
         return $this;
     }
 
+
     /**
      * @param Payable $payable
      * @return Payment
@@ -53,7 +54,7 @@ class Nagad extends PaymentMethod
      */
     public function init(Payable $payable): Payment
     {
-        $payment = $this->createPayment($payable, $this->store->getName());
+        $payment                         = $this->createPayment($payable, $this->store->getName());
         $payment->gateway_transaction_id = Inputs::orderID();
         $payment->update();
         try {
@@ -105,8 +106,7 @@ class Nagad extends PaymentMethod
             if (empty($this->refId)) throw new InvalidPaymentRef();
             $res = $this->client->setStore($this->store)->validate($this->refId);
             if ($res->getStatus()) {
-                $this->statusChanger->setPayment($payment)->changeToValidated($res->toString());
-                return $payment;
+                return $this->statusChanger->setPayment($payment)->changeToValidated($res->toString());
             }
         } catch (Throwable $e) {
             app('sentry')->captureException($e);

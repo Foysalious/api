@@ -38,7 +38,7 @@ class SendToCustomerToInformDueDepositSMS extends Job implements ShouldQueue
     {
         try {
             if ($this->data['type'] == 'due') {
-                $sms = (new SmsHandler('inform-due'))->setVendor('adareach')
+                $sms = (new SmsHandler('inform-due'))->setVendor('infobip')
                     ->setBusinessType(BusinessType::SMANAGER)
                     ->setFeatureType(FeatureType::DUE_TRACKER)
                     ->send($this->data['mobile'], [
@@ -49,7 +49,7 @@ class SendToCustomerToInformDueDepositSMS extends Job implements ShouldQueue
                 ]);
                 $log = " BDT has been deducted for sending due details";
             } else {
-                $sms = (new SmsHandler('inform-deposit'))->setVendor('adareach')
+                $sms = (new SmsHandler('inform-deposit'))->setVendor('infobip')
                     ->setBusinessType(BusinessType::SMANAGER)
                     ->setFeatureType(FeatureType::DUE_TRACKER)
                     ->send($this->data['mobile'], [
