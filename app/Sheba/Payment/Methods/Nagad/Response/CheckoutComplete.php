@@ -13,6 +13,6 @@ class CheckoutComplete extends Response
 
     public function getCallbackUrl()
     {
-        return isset($this->data["callBackUrl"]) ? $this->data["callBackUrl"] : null;
+        return $this->data["callBackUrl"] ?? null;
     }
 }

@@ -45,7 +45,6 @@ class Nagad extends PaymentMethod
         return $this;
     }
 
-
     /**
      * @param Payable $payable
      * @return Payment
@@ -54,14 +53,17 @@ class Nagad extends PaymentMethod
      */
     public function init(Payable $payable): Payment
     {
-        $payment                         = $this->createPayment($payable, $this->store->getName());
+        $payment = $this->createPayment($payable, $this->store->getName());
         $payment->gateway_transaction_id = Inputs::orderID();
         $payment->update();
+
         try {
             $initResponse = $this->client->setStore($this->store)->init($payment->gateway_transaction_id);
             if ($initResponse->hasError()) throw  new Exception($initResponse->toString());
 
-            $resp = $this->client->setStore($this->store)->placeOrder($payment->gateway_transaction_id, $initResponse, $payable->amount, $this->VALIDATE_URL);
+            $resp = $this->client
+                ->setStore($this->store)
+                ->placeOrder($payment->gateway_transaction_id, $initResponse, $payable->amount, $this->VALIDATE_URL);
 
             if ($resp->hasError()) throw new Exception($resp->toString());
 
