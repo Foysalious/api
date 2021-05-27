@@ -30,7 +30,7 @@ class IncomeExpenseController extends Controller
     {
         try {
             $this->validate($request, IncomeExpenseStatics::incomeExpenseEntryValidation());
-            if($request->amount_cleared && $request->amount > $request->amount_cleared) {
+            if($request->has("amount_cleared") && $request->amount > $request->amount_cleared) {
                 $this->validate($request, ['customer_id' => 'required']);
             }
             $response = $this->accountingRepo->storeEntry($request, EntryTypes::INCOME);
@@ -48,7 +48,7 @@ class IncomeExpenseController extends Controller
     {
         try {
             $this->validate($request, IncomeExpenseStatics::incomeExpenseEntryValidation());
-            if($request->amount_cleared && $request->amount > $request->amount_cleared) {
+            if($request->has("amount_cleared") && $request->amount > $request->amount_cleared) {
                 $this->validate($request, ['customer_id' => 'required']);
             }
 //            $product = (json_decode($request->inventory_products, true));
