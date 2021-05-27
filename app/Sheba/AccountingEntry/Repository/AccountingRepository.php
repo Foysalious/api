@@ -37,6 +37,7 @@ class AccountingRepository extends BaseRepository
         try {
             return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
         } catch (AccountingEntryServerError $e) {
+            Log::info("Error from Accounting Server");
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
     }
@@ -63,7 +64,6 @@ class AccountingRepository extends BaseRepository
         $inventory_products = [];
         foreach ($services as $key => $service) {
             $original_service = ($service->service);
-            Log::info(["log from accounting repo", $original_service]);
             $sellingPrice = isset($requested_service[$key]['updated_price']) && $requested_service[$key]['updated_price'] ? $requested_service[$key]['updated_price'] : $original_service->price;
             $unitPrice = $original_service->cost ?? $sellingPrice;
             $inventory_products[] = [
