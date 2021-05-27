@@ -100,7 +100,7 @@ class RechargeComplete extends PaymentComplete
     private function storeJournal()
     {
         $payable = $this->payment->payable;
-        $commission = $this->calculateCommission($this->paymentGateway->cash_in_charge);
+        $commission = isset($this->paymentGateway) ? $this->calculateCommission($this->paymentGateway->cash_in_charge) : 0;
         (new JournalCreateRepository())->setTypeId($payable->user->id)
             ->setSource($this->transaction)->setAmount($payable->amount)
             ->setDebitAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
