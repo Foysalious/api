@@ -59,23 +59,23 @@ class Updater
         $image_gallery = [];
         if (isset($this->updatedData['image_gallery']))
             $image_gallery = json_decode($this->updatedData['image_gallery'],true);
-        $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'is_vat_percentage_off', 'is_stock_off','image_gallery']);
+        $cloned_data = $this->data;
+        $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'is_vat_percentage_off', 'is_stock_off','image_gallery','accounting_info']);
         if (!empty($this->updatedData)) $this->updatedData = array_except($this->updatedData, 'image_gallery');
         if (!empty($this->updatedData)) {
             $old_service = clone $this->service;
             $this->serviceRepo->update($this->service, $this->updatedData);
             $this->storeLogs($old_service, $this->updatedData);
         }
-
         $this->storeImageGallery($image_gallery);
-        //if(isset($data['accounting_info']) && !empty($data['accounting_info']))
-        //    $this->createExpenseEntry($this->service);
-
+        //if(isset($cloned_data['accounting_info']) && !empty($cloned_data['accounting_info']))
+           // $this->createExpenseEntry($this->service,$cloned_data);
     }
 
-    private function createExpenseEntry($partner_pos_service)
+    private function createExpenseEntry($partner_pos_service,$data)
     {
-        $this->stockExpenseEntry->setName($partner_pos_service->name)->setId($partner_pos_service->id)->setNewStock($this->data['new_stock'])->setCostPerUnit($partner_pos_service->cost)->setAccountingInfo($this->data['account_info'])->create();
+        $accounting_info = json_decode($data['accounting_info'],true);
+        $this->stockExpenseEntry->setPartner($partner_pos_service->partner)->setName($partner_pos_service->name)->setId($partner_pos_service->id)->setNewStock($accounting_info['new_stock'])->setCostPerUnit($partner_pos_service->cost)->setAccountingInfo($accounting_info)->create();
     }
 
 
