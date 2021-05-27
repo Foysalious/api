@@ -914,7 +914,7 @@ return [
             [
                 'field_type'    => 'dropdown',
                 'title'         => 'ব্রাঞ্চ ',
-                'list_type'     => 'same_page_radio',
+                'list_type'     => 'dialog',
                 'name'          => 'branch',
                 'id'            => 'branch',
                 'hint'          => 'ব্রাঞ্চ ',
