@@ -212,9 +212,8 @@ class NeoBankingController extends Controller
     {
         $data = [];
         foreach ($values as $value) {
-            if ($value['district'] == $request->district) {
+            if (strtolower($value['district']) == strtolower($request->district))
                 array_push($data, $value);
-            }
         }
         return ['list' => $data,'title'=>'ব্রাঞ্চ কোড সিলেক্ট করুন'];
     }
