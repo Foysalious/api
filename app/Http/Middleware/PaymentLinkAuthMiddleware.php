@@ -1,9 +1,5 @@
 <?php namespace App\Http\Middleware;
 
-use Closure;
-use Illuminate\Http\Request;
-use Sheba\Auth\Auth;
-use Sheba\Auth\JWTAuth;
 use Sheba\OAuth2\AuthUser;
 
 class PaymentLinkAuthMiddleware extends AccessTokenMiddleware

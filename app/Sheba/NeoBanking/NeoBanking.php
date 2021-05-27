@@ -169,6 +169,16 @@ class NeoBanking
     }
 
     /**
+     * @return mixed
+     * @throws Exceptions\InvalidBankCode
+     */
+    public function getAcknowledgment()
+    {
+        $bank = (new BankFactory())->setPartner($this->partner)->setMobile($this->mobile)->setBank($this->bank)->get();
+        return $bank->getAcknowledgment();
+    }
+
+    /**
      * @param $data
      * @return mixed
      * @throws Exceptions\InvalidBankCode
