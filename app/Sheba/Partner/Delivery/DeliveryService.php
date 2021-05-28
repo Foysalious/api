@@ -125,6 +125,8 @@ class DeliveryService
             array_push($temp,array_merge($vendor,['key' => $key]));
         $data['delivery_vendors'] =  $temp;
         $data['delivery_method'] = $this->getDeliveryMethod();
+        $data['is_registered_for_delivery'] = $this->partner->deliveryInformation ? 1 :0;
+        $data['delivery_charge'] = $this->partner->delivery_charge;
         return $data;
     }
 
