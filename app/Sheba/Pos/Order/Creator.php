@@ -13,6 +13,7 @@ use App\Models\Profile;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\AccountingRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\Discount\InvalidDiscountType;
@@ -151,8 +152,6 @@ class Creator
         $order_data['sales_channel']         = isset($this->data['sales_channel']) ? $this->data['sales_channel'] : SalesChannels::POS;
         $order_data['delivery_charge']       = isset($this->data['delivery_charge'])   ? $this->data['delivery_charge'] : 0;
         $order_data['status']                = $this->status;
-        $order_data['delivery_district']     = isset($this->data['sales_channel']) && $this->data['sales_channel'] == SalesChannels::WEBSTORE && isset($this->data['delivery_district']) ? $this->data['delivery_district'] : null;
-        $order_data['delivery_thana']        = isset($this->data['sales_channel']) && $this->data['sales_channel'] == SalesChannels::WEBSTORE && isset($this->data['delivery_thana']) ? $this->data['delivery_thana'] : null;
         $order                               = $this->orderRepo->save($order_data);
         $services                            = json_decode($this->data['services'], true);
         foreach ($services as $service) {
@@ -361,6 +360,7 @@ class Creator
         $this->additionalAccountingData($order);
         /** @var AccountingRepository $accounting_repo */
         $accounting_repo = app()->make(AccountingRepository::class);
+//        Log::info(["inventory products", $order->items, $this->data['services']]);
         $this->request->merge([
             "inventory_products" => $accounting_repo->getInventoryProducts($order->items, $this->data['services']),
         ]);
@@ -369,12 +369,12 @@ class Creator
 
     private function additionalAccountingData(PosOrder $order)
     {
-        $order_discount = $order->discounts()->sum('amount');
+        $order_discount = $order->discounts->count() > 0 ? $order->discounts()->sum('amount') : 0;
         $this->request->merge([
             "from_account_key"   => $order->sales_channel == SalesChannels::WEBSTORE ? (new Accounts())->asset->sheba::SHEBA_ACCOUNT : (new Accounts())->asset->cash::CASH,
             "to_account_key"     => (new Accounts())->income->sales::SALES_FROM_POS,
             "amount"             => (double)$order->getNetBill(),
-            "amount_cleared"     => $order->getPaid(),
+            "amount_cleared"     => (double)$order->getPaid(),
             "total_discount"     => $order_discount,
             "note"               => $order->sales_channel == SalesChannels::WEBSTORE ? SalesChannels::WEBSTORE : SalesChannels::POS,
             "source_id"          => $order->id

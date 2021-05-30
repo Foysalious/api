@@ -5,7 +5,6 @@ use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Constants\UserType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Statics\IncomeExpenseStatics;
 use Sheba\RequestIdentification;
@@ -26,27 +25,30 @@ class AccountingRepository extends BaseRepository
     }
 
     /**
-     * @param Request $request
+     * @param $request
      * @param $type
      * @return mixed
      * @throws AccountingEntryServerError
      */
-    public function storeEntry(Request $request, $type)
+    public function storeEntry($request, $type)
     {
         $this->getCustomer($request);
         $this->setModifier($request->partner);
         $data = $this->createEntryData($request, $type, $request->source_id);
         $url = "api/entries/";
         try {
-            Log::info(["Accounting Payload", $data, $request->partner->id]);
             return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
         } catch (AccountingEntryServerError $e) {
-            Log::info("Error from Accounting Server");
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
     }
 
 
+    /**
+     * @param Request $request
+     * @return mixed
+     * @throws AccountingEntryServerError
+     */
     public function getAccountsTotal(Request $request)
     {
         $data = IncomeExpenseStatics::createDataForAccountsTotal(
@@ -73,19 +75,41 @@ class AccountingRepository extends BaseRepository
         $inventory_products = [];
         foreach ($services as $key => $service) {
             $original_service = ($service->service);
-            $sellingPrice = isset($requested_service[$key]['updated_price']) && $requested_service[$key]['updated_price'] ? $requested_service[$key]['updated_price'] : $original_service->price;
-            $unitPrice = $original_service->cost ?? $sellingPrice;
-            $inventory_products[] = [
-                "id" => $original_service->id,
-                "name" => $original_service->name,
-                "unit_price" => $unitPrice,
-                "selling_price" => $sellingPrice,
-                "quantity" => isset($requested_service[$key]['quantity']) ? $requested_service[$key]['quantity'] : 1
-            ];
+            if ($original_service) {
+                $sellingPrice = isset($requested_service[$key]['updated_price']) && $requested_service[$key]['updated_price'] ? $requested_service[$key]['updated_price'] : $original_service->price;
+                $unitPrice = $original_service->cost ?: $sellingPrice;
+                $inventory_products[] = [
+                    "id" => $original_service->id ?? $requested_service[$key]['id'],
+                    "name" => $original_service->name ?? $requested_service[$key]['name'],
+                    "unit_price" => $unitPrice,
+                    "selling_price" => $sellingPrice,
+                    "quantity" => isset($requested_service[$key]['quantity']) ? $requested_service[$key]['quantity'] : 1
+                ];
+            } else {
+                $inventory_products[] = [
+                    "id" =>  $requested_service[$key]['id'],
+                    "name" => $requested_service[$key]['name'],
+                    "unit_price" => $requested_service[$key]['updated_price'],
+                    "selling_price" => $requested_service[$key]['updated_price'],
+                    "quantity" => isset($requested_service[$key]['quantity']) ? $requested_service[$key]['quantity'] : 1
+                ];
+            }
+
         }
-        return json_encode($inventory_products);
+        if (count($inventory_products) > 0) {
+            return json_encode($inventory_products);
+        }
+        return null;
     }
 
+
+    /**
+     * @param Request $request
+     * @param $sourceId
+     * @param $sourceType
+     * @return mixed
+     * @throws AccountingEntryServerError
+     */
     public function updateEntryBySource(Request $request, $sourceId, $sourceType)
     {
         $this->getCustomer($request);
@@ -111,20 +135,20 @@ class AccountingRepository extends BaseRepository
         $data['amount'] = (double)$request->amount;
         $data['source_type'] = $type;
         $data['source_id'] = $type_id;
-        $data['note'] = $request->note;
+        $data['note'] = $request->has("note") ? $request->note : null;
         $data['amount_cleared'] = $request->amount_cleared;
         $data['debit_account_key'] = $request->from_account_key;
         $data['credit_account_key'] = $request->to_account_key;
         $data['customer_id'] = $request->customer_id;
         $data['customer_name'] = $request->customer_name;
         $data['inventory_products'] = $request->inventory_products;
-        $data['entry_at'] = $request->date ?: Carbon::now()->format('Y-m-d H:i:s');
+        $data['entry_at'] = $request->has("date") ? $request->date : Carbon::now()->format('Y-m-d H:i:s');
         $data['attachments'] = $this->uploadAttachments($request);
-        $data['total_discount'] = (double)$request->total_discount;
+        $data['total_discount'] = $request->has("total_discount") ? (double)$request->total_discount : null;
         return $data;
     }
 
-    private function createJournalData(Request $request, $source_type, $source_id)
+    private function createJournalData(Request $request, $source_type, $source_id): array
     {
         $data['amount'] = (double)$request->amount;
         $data['source_type'] = $source_type;
