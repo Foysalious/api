@@ -184,7 +184,7 @@ class DeliveryService
                     'thana' => $this->posOrder->delivery_thana,
                     'zilla' => $this->posOrder->delivery_zilla
                 ],
-                'payment_method' => $this->paymentInfo($this->posOrder->id)->method,
+                'payment_method' => ($payment_info = $this->paymentInfo($this->posOrder->id)) ? $payment_info->method : null,
                 'cod_amount' => $this->getDueAmount(),
             ],
         ];
