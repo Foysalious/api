@@ -373,8 +373,8 @@ class Creator
         Log::info(['order check', $order]);
         Log::info(['order net bill',  $order->getNetBill()]);
         Log::info(['order get paid',  $order->getPaid()]);
-        Log::info(['order discount', $order->discounts]);
-        $order_discount = $order->discounts()->sum('amount');
+        Log::info(['order discount', $order->discounts, $order->discounts['items'], count($order->discounts['items'])]);
+        $order_discount = count($order->discounts['items']) > 0 ? $order->discounts()->sum('amount'): 0.00;
         $this->request->merge([
             "from_account_key"   => $order->sales_channel == SalesChannels::WEBSTORE ? (new Accounts())->asset->sheba::SHEBA_ACCOUNT : (new Accounts())->asset->cash::CASH,
             "to_account_key"     => (new Accounts())->income->sales::SALES_FROM_POS,
