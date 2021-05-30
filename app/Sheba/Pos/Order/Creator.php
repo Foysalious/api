@@ -195,6 +195,7 @@ class Creator
 
         $this->voucherCalculation($order);
         $this->resolvePaymentMethod();
+        Log::info(["Before entering store journal", $order]);
 //        $this->storeIncome($order);
         $this->storeJournal($order);
         return $order;
