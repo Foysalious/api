@@ -5,7 +5,6 @@ namespace Sheba\PaymentLink;
 
 use App\Models\Payment;
 use App\Sheba\AccountingEntry\Repository\PaymentLinkRepository;
-use Illuminate\Support\Facades\Log;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
@@ -132,7 +131,6 @@ class PaymentLinkTransaction
         $this->walletTransactionHandler->setModel($this->receiver);
         $paymentLinkTransaction = $this->amountTransaction()->interestTransaction()->feeTransaction()->setEntryAmount();
         $this->storePaymentLinkEntry($this->amount, $this->fee, $this->interest);
-        Log::info(["checking payment link-2", $paymentLinkTransaction]);
         return $paymentLinkTransaction;
 
     }
