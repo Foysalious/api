@@ -12,8 +12,8 @@ use App\Models\PosOrder;
 use App\Models\Profile;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\AccountingRepository;
-use Clockwork\Request\Log;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\Discount\InvalidDiscountType;
@@ -195,7 +195,6 @@ class Creator
 
         $this->voucherCalculation($order);
         $this->resolvePaymentMethod();
-        Log::info(["Before entering store journal", $order]);
 //        $this->storeIncome($order);
         $this->storeJournal($order);
         return $order;
