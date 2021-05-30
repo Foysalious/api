@@ -196,7 +196,7 @@ class Creator
         $this->voucherCalculation($order);
         $this->resolvePaymentMethod();
 //        $this->storeIncome($order);
-//        $this->storeJournal($order);
+        $this->storeJournal($order);
         return $order;
     }
 
@@ -357,6 +357,7 @@ class Creator
      */
     private function storeJournal(PosOrder $order)
     {
+        Log::info("store journal e aschi");
         $this->additionalAccountingData($order);
         /** @var AccountingRepository $accounting_repo */
         $accounting_repo = app()->make(AccountingRepository::class);
