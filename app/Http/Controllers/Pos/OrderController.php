@@ -236,7 +236,7 @@ class OrderController extends Controller
             'payment' => $link
         ]);
         } catch (\Throwable $e) {
-            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage(), 'trace' => $e->getTrace()]);
         }
     }
 
