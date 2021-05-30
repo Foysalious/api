@@ -4,12 +4,17 @@ use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\Dal\BusinessMemberLeaveType\Model as BusinessMemberLeaveType;
+use Sheba\Dal\Salary\Salary;
 use Sheba\Helpers\TimeFrame;
+use Sheba\Business\BusinessMember\Events\BusinessMemberCreated;
+use Sheba\Business\BusinessMember\Events\BusinessMemberUpdated;
+use Sheba\Business\BusinessMember\Events\BusinessMemberDeleted;
 
 class BusinessMember extends Model
 {
@@ -17,6 +22,12 @@ class BusinessMember extends Model
     protected $table = 'business_member';
     protected $dates = ['join_date'];
     protected $casts = ['is_super' => 'int'];
+
+    protected $dispatchesEvents = [
+        'created' => BusinessMemberCreated::class,
+        'updated' => BusinessMemberUpdated::class,
+        'deleted' => BusinessMemberDeleted::class,
+    ];
 
     public function member()
     {
@@ -36,6 +47,11 @@ class BusinessMember extends Model
     public function role()
     {
         return $this->belongsTo(BusinessRole::class, 'business_role_id');
+    }
+
+    public function salary()
+    {
+        return $this->hasOne(Salary::class);
     }
 
     public function department()
@@ -193,5 +209,24 @@ class BusinessMember extends Model
     {
         $date = $date->toDateString();
         return $this->leaves()->accepted()->whereRaw("('$date' BETWEEN start_date AND end_date)")->first();
+    }
+
+    public function getCurrentFiscalYearLeaves()
+    {
+        $time_frame = $this->getBusinessFiscalPeriod();
+
+        $leaves = $this->leaves()->between($time_frame)->with('leaveType')->whereHas('leaveType', function ($leave_type) {
+            return $leave_type->withTrashed();
+        })->get();
+        return $leaves;
+    }
+
+    public function profile()
+    {
+        return DB::table('business_member')
+            ->join('members', 'members.id', '=', 'business_member.member_id')
+            ->join('profiles', 'profiles.id', '=', 'members.profile_id')
+            ->where('business_member.id', '=', $this->id)
+            ->first();
     }
 }

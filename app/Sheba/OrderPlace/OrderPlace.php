@@ -9,6 +9,9 @@ use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
 use App\Models\Affiliation;
 use App\Models\CarRentalJobDetail;
+use App\Models\Voucher;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Sheba\Dal\Category\Category;
 use Sheba\Dal\CategoryPartner\CategoryPartner;
 use App\Models\Customer;
@@ -381,6 +384,7 @@ class OrderPlace
                 $job = $this->createJob($partner_order);
                 $this->createCarRentalDetail($job);
                 $job->jobServices()->saveMany($job_services);
+                Log::info('Creating Job Service JOB#'.$job.'.[ServiceDiscount: '.var_export($this->discountCalculation->getDiscountId(), true).']');
                 $this->updateVoucherInPromoList($order);
                 if (!$order->location_id) throw new LocationIdNullException("Order #" . $order->id . " has no location id");
                 $partner_order = $partner_order->fresh();
@@ -470,7 +474,6 @@ class OrderPlace
             $unit_price = $upsell_unit_price ? $upsell_unit_price : $this->priceCalculation->getUnitPrice();
             $total_original_price = $this->priceCalculation->getTotalOriginalPrice();
             $this->discountCalculation->setService($service)->setLocationService($location_service)->setOriginalPrice($total_original_price)->setQuantity($selected_service->getQuantity())->calculate();
-
             $service_data = [
                 'service_id' => $service->id,
                 'quantity' => $selected_service->getQuantity(),
@@ -485,6 +488,7 @@ class OrderPlace
                 'variable_type' => $service->variable_type,
                 'surcharge_percentage' => $this->priceCalculation->getSurcharge() ? $this->priceCalculation->getSurcharge()->amount : 0
             ];
+//            Log::info('Creating Job Service JOB# '.'.[Data: '.var_export($service_data, true).']');
             list($service_data['option'], $service_data['variables']) = $service->getVariableAndOption($selected_service->getOption());
             $job_services->push(new JobService($service_data));
         }
@@ -499,6 +503,9 @@ class OrderPlace
         if ($this->voucherId) {
             $result = voucher($this->voucherId)->check($this->category->id, null, $this->location->id, $this->customer->id, $this->orderAmountWithoutDeliveryCharge, $this->salesChannel)->reveal();
             $this->orderVoucherData->setVoucherRevealData($result);
+
+            $voucher = Voucher::find($this->voucherId);
+            if($voucher->max_order === 1 && $voucher->max_customer === 1) $voucher->update(['is_active' => 0]);
         }
     }
 
@@ -603,6 +610,7 @@ class OrderPlace
             $job_data['discount'] = $this->orderVoucherData->getDiscount();
             $job_data['sheba_contribution'] = $this->orderVoucherData->getShebaContribution();
             $job_data['partner_contribution'] = $this->orderVoucherData->getPartnerContribution();
+            $job_data['vendor_contribution'] = $this->orderVoucherData->getVendorContribution();
             $job_data['discount_percentage'] = $this->orderVoucherData->getDiscountPercentage();
             $job_data['original_discount_amount'] = $this->orderVoucherData->getOriginalDiscountAmount();
         }

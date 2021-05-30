@@ -13,7 +13,7 @@ return [
     'socket_url' => env('SHEBA_SOCKET_URL'),
     'socket_on' => env('SHEBA_SOCKET_ON', true),
     'send_push_notifications' => env('SHEBA_SEND_PUSH_NOTIFICATIONS', true),
-    'partners_url' => env('SHEBA_PARTNER_END_URL'),
+    'partners_url' => env('SHEBA_PARTNER_END_URL') . '/' . env('SHEBA_PARTNERS_URL_PREFIX'),
     'db_backup' => env('SHEBA_DB_BACKUP', false),
     'portal' => 'customer-portal',
     //'revision' => file_get_contents(base_path()."/revision"),
@@ -153,10 +153,12 @@ return [
     'tender_landing_categories_id' => explode(',', env('TENDER_LANDING_CATEGORIES_ID', '14,15,17,18,19,20,21,22')),
     'resource_max_withdraw_limit' => 1000,
     'tp_proxy_url' => env('TP_PROXY_URL'),
+    'sbs_proxy_url' => env('SBS_PROXY_URL','https://sbs-proxy.dev-sheba.xyz'),
     'address' => 'House #63 (1st Floor), Road #04, Block-C, Banani, Dhaka 1213',
     'email' => 'info@sheba.xyz',
     'lpg_service_id' => env('LPG_SERVICE_ID'),
     'mission_save_bangladesh_partner_id' => env('MISSION_SAVE_BANGLADESH_PARTNER_ID'),
     'topup_special_amount_get_url_by_ssl' => env('TOPUP_SPECIAL_AMOUNT_GET_URL_BY_SSL', 'http://vrapi.sslwireless.com/rest/specialAmount/v2/'),
-    'webstore_url' => env('SHEBA_WEBSTORE_URL')
+    'webstore_url' => env('SHEBA_WEBSTORE_URL'),
+    'last_job_before_commission' => env('LAST_JOB_BEFORE_PARTNER_COMMISSION_DEPLOY'),
 ];

@@ -5,15 +5,50 @@ class TopUpSuccessResponse
 {
     private $transactionId;
     private $transactionDetails;
-    private $topUpStatus;
+    private $isPending;
 
-    public function __get($name)
+    /**
+     * @param mixed $transactionId
+     * @return TopUpSuccessResponse
+     */
+    public function setTransactionId($transactionId)
     {
-        return $this->$name;
+        $this->transactionId = $transactionId;
+        return $this;
     }
 
-    public function __set($name, $value)
+    /**
+     * @param mixed $transactionDetails
+     * @return TopUpSuccessResponse
+     */
+    public function setTransactionDetails($transactionDetails)
     {
-        $this->$name = $value;
+        $this->transactionDetails = $transactionDetails;
+        return $this;
+    }
+
+    /**
+     * @param bool $isPending
+     * @return TopUpSuccessResponse
+     */
+    public function setIsPending($isPending)
+    {
+        $this->isPending = $isPending;
+        return $this;
+    }
+
+    public function getTransactionId()
+    {
+        return $this->transactionId;
+    }
+
+    public function getTransactionDetailsAsString()
+    {
+        return json_encode($this->transactionDetails);
+    }
+
+    public function isPending()
+    {
+        return $this->isPending;
     }
 }

@@ -1,14 +1,23 @@
 <?php namespace Sheba\TopUp\Vendor\Response;
 
 use Exception;
+use Sheba\Dal\TopupOrder\FailedReason;
 
 abstract class TopUpResponse
 {
     protected $response;
+    /** @var TopUpErrorResponse */
+    protected $errorResponse;
 
     public function setResponse($response)
     {
         $this->response = $response;
+        return $this;
+    }
+
+    public function setErrorResponse(TopUpErrorResponse $error)
+    {
+        $this->errorResponse = $error;
         return $this;
     }
 
@@ -41,11 +50,9 @@ abstract class TopUpResponse
     }
 
     /**
-     * Success status can be different for different vendor response.
-     *
-     * @return string
+     * @return bool
      */
-    abstract public function resolveTopUpSuccessStatus();
+    abstract public function isPending();
 
     /**
      * @return TopUpSuccessResponse
@@ -55,25 +62,27 @@ abstract class TopUpResponse
     {
         if (!$this->hasSuccess()) throw new Exception('Response does not have success.');
 
-        $topup_response = new TopUpSuccessResponse();
-        $topup_response->transactionId = $this->getTransactionId();
-        $topup_response->transactionDetails = $this->response;
-        $topup_response->topUpStatus = $this->resolveTopUpSuccessStatus();
-        return $topup_response;
+        return (new TopUpSuccessResponse())
+            ->setTransactionId($this->getTransactionId())
+            ->setTransactionDetails($this->response)
+            ->setIsPending($this->isPending());
     }
 
     /**
      * @return TopUpErrorResponse
      * @throws Exception
      */
-    public function getError(): TopUpErrorResponse
+    public function getErrorResponse(): TopUpErrorResponse
     {
+        if ($this->errorResponse) return $this->errorResponse;
+
         if ($this->hasSuccess()) throw new Exception('Response has success.');
 
         $topup_error = new TopUpErrorResponse();
         $topup_error->errorCode = isset($this->response->recharge_status) ? $this->response->recharge_status : 400;
         $topup_error->errorMessage = isset($this->response->Message) ? $this->response->Message : 'Vendor api call error';
         $topup_error->errorResponse = $this->response ? $this->response : '';
+        $topup_error->setFailedReason(FailedReason::GATEWAY_ERROR);
         return $topup_error;
     }
 }

@@ -8,6 +8,10 @@ class IndexRoute
     {
         $api->group(['prefix' => '{partner}', 'middleware' => ['manager.auth']], function ($api) {
             $api->get('dashboard', 'Partner\DashboardController@get');
+            $api->get('new-homepage', 'Partner\DashboardController@getNewHomePage');
+            $api->get('bkash', 'Partner\DashboardController@getBkashNo');
+            $api->get('geo-information', 'Partner\DashboardController@getGeoInformation');
+            $api->get('current-subscription-package', 'Partner\DashboardController@getCurrentPackage');
             $api->get('webstore-dashboard', 'Partner\Webstore\WebstoreDashboardController@getDashboard');
             $api->get('home-setting', 'Partner\DashboardController@getHomeSetting');
             $api->post('home-setting', 'Partner\DashboardController@updateHomeSetting');
@@ -18,9 +22,11 @@ class IndexRoute
             $api->get('slider-details-and-account-types', 'PartnerController@getSliderDetailsAndAccountTypes');
             $api->get('webstore-settings', 'Partner\Webstore\WebstoreSettingsController@index');
             $api->post('webstore-settings', 'Partner\Webstore\WebstoreSettingsController@update');
+            $api->post('toggle-webstore-sms-activation', 'PartnerController@toggleSmsActivation');
             $api->post('webstore/store-banner', 'Partner\Webstore\WebstoreSettingsController@storeBanner');
             $api->post('webstore/update-banner', 'Partner\Webstore\WebstoreSettingsController@updateBanner');
             $api->get('webstore/banner-list', 'Partner\Webstore\WebstoreSettingsController@bannerList');
+            $api->post('address', 'PartnerController@updateAddress');
             $api->group(['prefix' => 'e-shop'], function ($api) {
                 $api->group(['prefix' => 'order'], function ($api) {
                     $api->get('/', 'EShopOrderController@index');
@@ -113,6 +119,7 @@ class IndexRoute
                 $api->resources(['customers' => 'Pos\CustomerController']);
                 $api->group(['prefix' => 'settings'], function ($api) {
                     $api->get('/', 'Pos\SettingController@getSettings');
+                    $api->get('/printer', 'Pos\SettingController@getPrinterSettings');
                     $api->post('/', 'Pos\SettingController@storePosSetting');
                 });
                 $api->post('due-payment-request-sms', 'Pos\SettingController@duePaymentRequestSms');
@@ -148,7 +155,7 @@ class IndexRoute
             $api->post('add-categories', 'CategoryController@addCategories');
             $api->post('vat-registration-number', 'PartnerController@addVatRegistrationNumber');
             $api->group(['prefix'=>'top-up'],function($api){
-                $api->get('/history', 'TopUp\\TopUpController@topUpHistory');
+                $api->get('history', 'TopUp\TopUpController@topUpHistory');
             });
             $api->get('search', 'SearchController@search');
             $api->group(['prefix' => 'subscriptions'], function ($api) {

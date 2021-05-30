@@ -1,6 +1,7 @@
 <?php namespace Sheba\Partner\Webstore;
 
 
+use App\Exceptions\DoNotReportException;
 use App\Models\Partner;
 use App\Repositories\PartnerRepository;
 
@@ -17,6 +18,7 @@ class WebstoreSettingsUpdateRequest
     protected $partner;
     protected $data;
     protected $hasWebstore;
+    protected $address;
 
     /**
      * @param Partner $partner
@@ -59,12 +61,16 @@ class WebstoreSettingsUpdateRequest
     }
 
     /**
-     * @param $subDomain
+     * @param $sub_domain
      * @return WebstoreSettingsUpdateRequest
+     * @throws DoNotReportException
      */
-    public function setSubDomain($subDomain)
+    public function setSubDomain($sub_domain)
     {
-        $this->subDomain = $subDomain;
+        if (is_numeric($sub_domain)) throw new DoNotReportException('দুঃখিত, স্টোর লিংকে শুধুমাত্র নাম্বার ব্যবহার করা যাবে না !', 400);
+        $sub_domain = $this->removeRestrictedCharacters(strtolower($sub_domain));
+        if ($this->subDomainAlreadyExist($sub_domain)) throw new DoNotReportException('এই লিংক-টি ইতোমধ্যে ব্যবহৃত হয়েছে!', 400);
+        $this->subDomain = $sub_domain;
         return $this;
     }
 
@@ -78,13 +84,23 @@ class WebstoreSettingsUpdateRequest
         return $this;
     }
 
+    /**
+     * @param $address
+     * @return WebstoreSettingsUpdateRequest
+     */
+    public function setAddress($address)
+    {
+        $this->address = $address;
+        return $this;
+    }
+
     private function makeData()
     {
         $data = [];
         if (isset($this->isWebstorePublished)) $data['is_webstore_published'] = $this->isWebstorePublished;
         if (isset($this->name)) $data['name'] = $this->name;
         if (isset($this->subDomain)) $data['sub_domain'] = $this->subDomain;
-        if (isset($this->deliveryCharge)) $data['delivery_charge'] = (double) $this->deliveryCharge;
+        if (isset($this->deliveryCharge)) $data['delivery_charge'] = (double)$this->deliveryCharge;
         if (isset($this->hasWebstore)) $data['has_webstore'] = $this->hasWebstore;
         return $data;
     }
@@ -94,7 +110,16 @@ class WebstoreSettingsUpdateRequest
         $data = $this->makeData();
         $repo = new PartnerRepository($this->partner);
         $repo->updateWebstoreSettings($data);
-
     }
 
+    private function removeRestrictedCharacters($sub_domain)
+    {
+        return str_replace(['/', '$', '#', ' ', '?', '%'], '', $sub_domain);
+    }
+
+    private function subDomainAlreadyExist($sub_domain)
+    {
+        if (Partner::where('sub_domain', $sub_domain)->exists()) return true;
+        return false;
+    }
 }

@@ -114,12 +114,15 @@ class AttendanceController extends Controller
                                     TimeFrame $time_frame, BusinessHolidayRepoInterface $business_holiday_repo,
                                     BusinessWeekendRepoInterface $business_weekend_repo, Excel $monthly_excel)
     {
+        ini_set('memory_limit', '6096M');
+        ini_set('max_execution_time', 480);
+
         $this->validate($request, ['file' => 'string|in:excel']);
         list($offset, $limit) = calculatePagination($request);
         /** @var Business $business */
         $business = Business::where('id', (int)$business)->select('id', 'name', 'phone', 'email', 'type')->first();
-        /** @var Collection $business_members */
-        $business_members = $business->getAccessibleBusinessMember()->get();
+
+        $business_members = $business->getAccessibleBusinessMember();
 
         if ($request->has('department_id')) {
             $business_members = $business_members->whereHas('role', function ($q) use ($request) {
@@ -128,6 +131,7 @@ class AttendanceController extends Controller
                 });
             });
         }
+
         $all_employee_attendance = [];
         if ($request->has('start_date') && $request->has('end_date')) {
             $start_date = $request->start_date;
@@ -139,7 +143,7 @@ class AttendanceController extends Controller
 
         $business_holiday = $business_holiday_repo->getAllByBusiness($business);
         $business_weekend = $business_weekend_repo->getAllByBusiness($business);
-        foreach ($business_members as $business_member) {
+        foreach ($business_members->get() as $business_member) {
             $member_name = $business_member->member->profile->name;
             /** @var BusinessMember $business_member */
             $member_department = $business_member->role ? $business_member->role->businessDepartment : null;
@@ -173,6 +177,7 @@ class AttendanceController extends Controller
         if ($request->has('sort_on_absent')) $all_employee_attendance = $this->attendanceSortOnAbsent($all_employee_attendance, $request->sort_on_absent);
         if ($request->has('sort_on_present')) $all_employee_attendance = $this->attendanceSortOnPresent($all_employee_attendance, $request->sort_on_present);
         if ($request->has('sort_on_leave')) $all_employee_attendance = $this->attendanceSortOnLeave($all_employee_attendance, $request->sort_on_leave);
+        if ($request->has('sort_on_late')) $all_employee_attendance = $this->attendanceSortOnLate($all_employee_attendance, $request->sort_on_late);
 
         $total_members = $all_employee_attendance->count();
         if ($request->has('limit')) $all_employee_attendance = $all_employee_attendance->splice($offset, $limit);
@@ -230,6 +235,19 @@ class AttendanceController extends Controller
         $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
         return $employee_attendance->$sort_by(function ($attendance, $key) {
             return strtoupper($attendance['attendance']['on_leave']);
+        });
+    }
+
+    /**
+     * @param $employee_attendance
+     * @param string $sort
+     * @return mixed
+     */
+    private function attendanceSortOnLate($employee_attendance, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return $employee_attendance->$sort_by(function ($attendance, $key) {
+            return strtoupper($attendance['attendance']['late']);
         });
     }
 
@@ -323,8 +341,8 @@ class AttendanceController extends Controller
         $half_day_leave_types = $business->leaveTypes()->isHalfDayEnable();
         $data = [
             'office_hour_type' => 'Fixed Time',
-            'start_time' => $office_time->start_time ? Carbon::parse($office_time->start_time)->format('h:i a') : '09:00 am',
-            'end_time' => $office_time->end_time ? Carbon::parse($office_time->end_time)->format('h:i a') : '05:00 pm',
+            'start_time' => $office_time ? Carbon::parse($office_time->start_time)->format('h:i a') : '09:00 am',
+            'end_time' => $office_time ? Carbon::parse($office_time->end_time)->format('h:i a') : '05:00 pm',
             'weekends' => $weekend_days,
             'is_half_day_enable' => $business->is_half_day_enable,
             'half_day_leave_types_count' => $half_day_leave_types->count(),

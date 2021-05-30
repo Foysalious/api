@@ -165,9 +165,10 @@
 
 <table  class="tableHeadRegular header" style="width: 100%;  margin-bottom: 20px; padding: 0px; background-color: #fff;border: none " >
     <tr>
-        <td style="opacity: 0.8; font-family: Lato; font-size: 20px; font-weight: bold; color: #000000;">Employee Expense</td>
+        <td style=""><p style="margin-top: -3px; margin-bottom: 0px; opacity: 0.8; font-family: Lato; font-size: 20px; color: #000000;">Employee Expense</p></td>
         <td style="text-align: right">
-            <img src="https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/images/sheba_logo_blue.png" alt="" width="150px">
+            {{--<img src="https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/images/sheba_logo_blue.png" alt="" width="150px">--}}
+            <p style="margin-top: -3px; margin-bottom: 0px; opacity: 0.8; font-family: Lato; font-size: 24px; font-weight: 300; color: #000000;">{{$data['company']}}</p>
         </td>
     </tr>
     <tr>

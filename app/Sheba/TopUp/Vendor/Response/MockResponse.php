@@ -1,5 +1,6 @@
 <?php namespace Sheba\TopUp\Vendor\Response;
 
+
 class MockResponse extends TopUpResponse
 {
     /**
@@ -34,8 +35,8 @@ class MockResponse extends TopUpResponse
         return isset($this->response->MESSAGE) ? $this->response->MESSAGE : 'Error message not given.';
     }
 
-    public function resolveTopUpSuccessStatus()
+    public function isPending()
     {
-        return config('topup.status.successful.sheba');
+        return false;
     }
 }

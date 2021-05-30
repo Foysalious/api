@@ -2,8 +2,9 @@
 
 use App\Models\Partner;
 use App\Models\PosCustomer;
-use Sheba\Transactions\Wallet\HasWalletTransaction;
+use Carbon\Carbon;
 use Sheba\Dal\ExternalPayment\Model as ExternalPayment;
+use Sheba\Transactions\Wallet\HasWalletTransaction;
 use stdClass;
 
 class PaymentLinkTransformer
@@ -41,6 +42,11 @@ class PaymentLinkTransformer
         return $this->response->link;
     }
 
+    public function getType()
+    {
+        return $this->response->type;
+    }
+
     public function getLinkIdentifier()
     {
         return $this->response->linkIdentifier;
@@ -68,7 +74,8 @@ class PaymentLinkTransformer
 
     public function isEmi()
     {
-        return !is_null($this->getEmiMonth());
+        $month = $this->getEmiMonth();
+        return !is_null($month) && $month > 0;
     }
 
     public function getInterest()
@@ -98,6 +105,14 @@ class PaymentLinkTransformer
         $order = $this->getTarget();
         if ($order && $order instanceof ExternalPayment) return $this->getPaymentLinkPayer();
         return $order ? $order->customer->profile : $this->getPaymentLinkPayer();
+    }
+
+    /**
+     * @return Target
+     */
+    public function getUnresolvedTarget()
+    {
+        return new Target($this->response->targetType, $this->response->targetId);
     }
 
     /**
@@ -163,28 +178,107 @@ class PaymentLinkTransformer
         return $this->target->fail_url . '?transaction_id=' . $this->target->transaction_id;
     }
 
+    public function getCreatedAt()
+    {
+        return Carbon::createFromTimestampMs($this->response->createdAt);
+    }
+
+    public function getPaidBy()
+    {
+        return isset($this->response->paidBy) ? $this->response->paidBy : PaymentLinkStatics::paidByTypes()[($this->getEmiMonth() ? 1 : 0)];
+    }
+
+    public function getPartnerProfit()
+    {
+        return isset($this->response->partnerProfit) ? $this->response->partnerProfit : 0;
+    }
+
     public function toArray()
     {
         $user       = $this->getPaymentReceiver();
         $payer      = $this->getPayer();
         $isExternal = $this->isExternalPayment();
         return [
-                'id'                  => $this->getLinkID(),
-                'identifier'          => $this->getLinkIdentifier(),
-                'purpose'             => $this->getReason(),
-                'amount'              => $this->getAmount(),
-                'emi_month'           => $this->getEmiMonth(),
-                'payment_receiver'    => [
-                    'name'  => $user->name,
-                    'image' => $user->logo,
-                    'id'    => $user->id,
-                ],
-                'payer'               => $payer ? [
-                    'name'   => $payer->name,
-                    'mobile' => $payer->mobile
-                ] : null,
-                'is_external_payment' => $isExternal,
-            ] + ($isExternal ? ['success_url' => $this->getSuccessUrl(), 'fail_url' => $this->getFailUrl()] : []);
+                   'id'                   => $this->getLinkID(),
+                   'identifier'           => $this->getLinkIdentifier(),
+                   'purpose'              => $this->getReason(),
+                   'amount'               => $this->getAmount(),
+                   'emi_month'            => $this->getEmiMonth(),
+                   'paid_by'              => $this->getPaidBy(),
+                   'partner_profit'       => $this->getPartnerProfit(),
+                   'is_old'               => $this->isOld(),
+                   'interest'             => $this->getInterest(),
+                   'bank_transaction_fee' => $this->getBankTransactionCharge(),
+                   'payment_receiver'     => [
+                       'name'  => $user->name,
+                       'image' => $user->logo,
+                       'id'    => $user->id,
+                   ],
+                   'payer'                => $payer ? [
+                       'id'     => $payer->id,
+                       'name'   => $payer->name,
+                       'mobile' => $payer->mobile
+                   ] : null,
+                   'is_external_payment'  => $isExternal,
+               ] + ($isExternal ? ['success_url' => $this->getSuccessUrl(), 'fail_url' => $this->getFailUrl()] : []);
 
     }
+
+    public function partialInfo()
+    {
+        $user = $this->getPaymentReceiver();
+        return [
+            'name'   => $user->name,
+            'mobile' => $user->getContactNumber()
+        ];
+    }
+
+    public function getPaymentLinkData()
+    {
+        $payer     = null;
+        $payerInfo = $this->getPayerInfo();
+
+        return array_merge([
+            'link_id'                 => $this->getLinkID(),
+            'reason'                  => $this->getReason(),
+            'type'                    => $this->getType(),
+            'status'                  => $this->response->isActive == 1 ? 'active' : 'inactive',
+            'amount'                  => $this->getAmount(),
+            'link'                    => $this->response->link,
+            'emi_month'               => $this->response->emiMonth,
+            'interest'                => $this->response->interest,
+            'bank_transaction_charge' => $this->response->bankTransactionCharge
+        ], $payerInfo);
+    }
+
+    private function getPayerInfo()
+    {
+        $payerInfo = [];
+        if ($this->response->payerId) {
+            try {
+                /** @var PosCustomer $payer */
+                $payer   = app('App\\Models\\' . pamelCase($this->response->payerType))::find($this->response->payerId);
+                $details = $payer ? $payer->details() : null;
+                if ($details) {
+                    $payerInfo = [
+                        'payer' => [
+                            'id'     => $details['id'],
+                            'name'   => $details['name'],
+                            'mobile' => $details['phone']
+                        ]
+                    ];
+                }
+            } catch (\Throwable $e) {
+                app('sentry')->captureException($e);
+            }
+        }
+        return $payerInfo;
+    }
+
+    public function isOld()
+    {
+        return !isset($this->response->paidBy);
+    }
+
+
 }

@@ -1,7 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Models\Business;
-use App\Models\Department;
 use Exception;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
@@ -16,13 +15,14 @@ use Sheba\Business\CoWorker\Requests\FinancialRequest;
 use Sheba\Business\CoWorker\Requests\OfficialRequest;
 use Sheba\Business\CoWorker\Requests\PersonalRequest;
 use Sheba\Business\CoWorker\Requests\BasicRequest;
+use App\Sheba\Business\Salary\Requester as CoWorkerSalaryRequester;
+use Sheba\Dal\Salary\SalaryRepository;
 use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Reports\ExcelHandler;
 use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Repositories\ProfileRepository;
 use League\Fractal\Resource\Collection;
-use App\Jobs\SendBusinessRequestEmail;
 use Sheba\FileManagers\CdnFileManager;
 use App\Transformers\CustomSerializer;
 use Sheba\Business\CoWorker\Statuses;
@@ -65,6 +65,10 @@ class CoWorkerController extends Controller
     private $coWorkerUpdater;
     /** @var CoWorkerRequester $coWorkerRequester */
     private $coWorkerRequester;
+    /** @var CoWorkerSalaryRequester */
+    private $coWorkerSalaryRequester;
+    /** @var SalaryRepository */
+    private $salaryRepositry;
 
     /**
      * CoWorkerController constructor.
@@ -78,12 +82,14 @@ class CoWorkerController extends Controller
      * @param CoWorkerCreator $co_worker_creator
      * @param CoWorkerUpdater $co_worker_updater
      * @param CoWorkerRequester $coWorker_requester
+     * @param CoWorkerSalaryRequester $co_worker_salary_requester
+     * @param SalaryRepository $salary_repositry
      */
     public function __construct(FileRepository $file_repository, ProfileRepository $profile_repository, BasicRequest $basic_request,
                                 EmergencyRequest $emergency_request, FinancialRequest $financial_request,
                                 OfficialRequest $official_request, PersonalRequest $personal_request,
                                 CoWorkerCreator $co_worker_creator, CoWorkerUpdater $co_worker_updater,
-                                CoWorkerRequester $coWorker_requester)
+                                CoWorkerRequester $coWorker_requester, CoWorkerSalaryRequester $co_worker_salary_requester, SalaryRepository $salary_repositry)
     {
         $this->fileRepository = $file_repository;
         $this->profileRepository = $profile_repository;
@@ -95,6 +101,8 @@ class CoWorkerController extends Controller
         $this->coWorkerCreator = $co_worker_creator;
         $this->coWorkerUpdater = $co_worker_updater;
         $this->coWorkerRequester = $coWorker_requester;
+        $this->coWorkerSalaryRequester = $co_worker_salary_requester;
+        $this->salaryRepositry = $salary_repositry;
     }
 
     /**
@@ -336,6 +344,24 @@ class CoWorkerController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
+    public function salaryInfoEdit($business, $member_id, Request $request)
+    {
+        $manager_member = $request->manager_member;
+        $this->setModifier($manager_member);
+        $business = $request->business;
+        $this->coWorkerSalaryRequester->setMember($member_id)
+            ->setGrossSalary($request->gross_salary)
+            ->setManagerMember($manager_member)
+            ->createOrUpdate();
+        return api_response($request, null, 200);
+    }
+
+    /**
+     * @param $business
+     * @param $member_id
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function emergencyInfoEdit($business, $member_id, Request $request)
     {
         $validation_data = [
@@ -438,6 +464,7 @@ class CoWorkerController extends Controller
         if ($request->has('employee_type')) $employees = $this->filterByEmployeeType($employees, $request)->values();
 
         $total_employees = count($employees);
+        $limit = $this->getLimit($request, $limit, $total_employees);
         $employees = collect($employees)->splice($offset, $limit);
 
         if (count($employees) > 0) return api_response($request, $employees, 200, [
@@ -446,6 +473,8 @@ class CoWorkerController extends Controller
         ]);
         return api_response($request, null, 404);
     }
+
+
 
     /**
      * @param $business
@@ -456,6 +485,7 @@ class CoWorkerController extends Controller
      */
     public function show($business, $member_id, Request $request, BusinessMemberRepositoryInterface $business_member_repo)
     {
+        if (!is_numeric($member_id)) return api_response($request, null, 400);
         $member = Member::findOrFail($member_id);
         if (!$member) return api_response($request, null, 404);
         $business = $request->business;
@@ -483,7 +513,7 @@ class CoWorkerController extends Controller
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $member = new Item($member, new CoWorkerDetailTransformer($is_inactive_filter_applied));
+        $member = new Item($member, new CoWorkerDetailTransformer($business, $is_inactive_filter_applied));
         $employee = $manager->createData($member)->toArray()['data'];
 
         if (count($employee) > 0) return api_response($request, $employee, 200, ['employee' => $employee]);
@@ -499,13 +529,16 @@ class CoWorkerController extends Controller
     public function statusUpdate($business, $member_id, Request $request)
     {
         $this->validate($request, ['status' => 'required|string|in:' . implode(',', Statuses::get())]);
+        $logged_in_member_id = $request->business_member->member_id;
+        if ($logged_in_member_id == $member_id) return api_response($request, null, 404, ['message' => 'Sorry, You cannot deactivated yourself as Superadmin.']);
+
         $manager_member = $request->manager_member;
+
         $business = $request->business;
         $this->setModifier($manager_member);
 
         $coWorker_requester = $this->coWorkerRequester->setStatus($request->status);
         $business_member = $this->coWorkerUpdater->setCoWorkerRequest($coWorker_requester)->setBusiness($business)->setMember($member_id)->statusUpdate();
-
         if ($business_member) return api_response($request, 1, 200);
         return api_response($request, null, 404);
     }
@@ -523,9 +556,13 @@ class CoWorkerController extends Controller
         ]);
         $business = $request->business;
         $manager_member = $request->manager_member;
+        $logged_in_member_id = $request->business_member->member_id;
         $this->setModifier($manager_member);
+        $member_ids = json_decode($request->employee_ids);
 
-        foreach (json_decode($request->employee_ids) as $member_id) {
+        if (in_array($logged_in_member_id, $member_ids)) return api_response($request, null, 404, ['message' => 'One of the Ids contains superadmin ID, which cannot be deactivated, Please check again.']);
+
+        foreach ($member_ids as $member_id) {
             $business_member = BusinessMember::where([
                 ['member_id', $member_id], ['business_id', $business->id]
             ])->first();
@@ -780,7 +817,8 @@ class CoWorkerController extends Controller
         });
     }
 
-    private function filterByEmployeeType($employees, Request $request) {
+    private function filterByEmployeeType($employees, Request $request)
+    {
         $is_super = $request->employee_type === 'super_admin' ? 1 : 0;
         return collect($employees)->filter(function ($employee) use ($is_super) {
             return $employee['is_super'] == $is_super;
@@ -830,5 +868,17 @@ class CoWorkerController extends Controller
             ]);
         }
         return $department_info;
+    }
+
+    /**
+     * @param Request $request
+     * @param $limit
+     * @param $total_employees
+     * @return mixed
+     */
+    private function getLimit(Request $request, $limit, $total_employees)
+    {
+        if ($request->has('limit') && $request->limit == 'all') return $total_employees;
+        return $limit;
     }
 }

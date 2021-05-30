@@ -51,6 +51,20 @@ class CollectionServiceProvider extends ServiceProvider
             });
         });
 
+        Collection::macro('mapWithKeys', function (callable $callback) {
+            $result = [];
+
+            foreach ($this->items as $key => $value) {
+                $assoc = $callback($value, $key);
+
+                foreach ($assoc as $mapKey => $mapValue) {
+                    $result[$mapKey] = $mapValue;
+                }
+            }
+
+            return new static($result);
+        });
+
         /*
          * use Illuminate\Support\Collection;
          * use Illuminate\Pagination\LengthAwarePaginator;
@@ -75,6 +89,13 @@ class CollectionServiceProvider extends ServiceProvider
                     'pageName' => $pageName,
                 ]
             );
+        });
+
+        Collection::macro('forgetEach', function($key) {
+            return collect($this->items)->map(function ($item) use ($key) {
+                if (array_key_exists($key, $item)) unset($item[$key]);
+                return $item;
+            });
         });
     }
 

@@ -7,6 +7,7 @@ use Sheba\Business\CoWorker\Statuses;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\BusinessAttendanceTypes\AttendanceTypes;
 use Sheba\Dal\LeaveType\Model as LeaveTypeModel;
+use Sheba\Dal\PayrollSetting\PayrollSetting;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
@@ -56,6 +57,25 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
                 ]);
             }
         ])->wherePivot('status', '<>', Statuses::INACTIVE);
+    }
+
+    public function getActiveBusinessMember()
+    {
+        return BusinessMember::where('business_id', $this->id)->where('status', Statuses::ACTIVE)->with([
+            'member' => function ($q) {
+                $q->select('members.id', 'profile_id')->with([
+                    'profile' => function ($q) {
+                        $q->select('profiles.id', 'name', 'mobile', 'email', 'pro_pic');
+                    }
+                ]);
+            }, 'role' => function ($q) {
+                $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                    'businessDepartment' => function ($q) {
+                        $q->select('business_departments.id', 'business_id', 'name');
+                    }
+                ]);
+            }
+        ]);
     }
 
     public function getAccessibleBusinessMember()
@@ -108,6 +128,11 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
     public function officeHour()
     {
         return $this->hasOne(BusinessOfficeHour::class);
+    }
+
+    public function payrollSetting()
+    {
+        return $this->hasOne(PayrollSetting::class);
     }
 
     public function activePartners()
@@ -279,8 +304,11 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
         return $time_frame->forAFiscalYear(Carbon::now(), $business_fiscal_start_month);
     }
 
-    public function isRemoteAttendanceEnable()
+    public function isRemoteAttendanceEnable($business_member_id = null)
     {
+        $sheba_tech = [583, 585, 587, 588, 592, 593, 594, 596, 597, 600, 604, 611, 614, 615, 616, 634, 636, 641, 642, 687, 696, 731, 750, 841, 847, 907, 910, 911, 919, 922, 1091, 1093, 1826, 1838, 1856, 1858, 1859, 1860, 1861, 1862, 1961, 2030, 2032, 2033, 2034, 2108, 2109, 2794, 2795, 3122, 3128, 3130, 3171, 3368, 3369, 3370, 3371, 3660, 3661, 3662, 3666, 3667, 3668, 3669, 3674, 3936, 4487, 4488, 4489, 4808, 4809, 4810, 4913, 4931, 5089, 5125];
+
+        if (in_array($business_member_id, $sheba_tech)) return true;
         if (in_array(AttendanceTypes::REMOTE, $this->attendanceTypes->pluck('attendance_type')->toArray())) return true;
         return false;
     }
