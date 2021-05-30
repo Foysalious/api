@@ -40,7 +40,7 @@ class Creator
     {
         if(!$this->packageRequester) return;
         foreach ($this->packageRequester as $packages) {
-            $component = $this->payrollComponentRepository->where('name', $packages['component'])->first();
+            $component = $this->payrollComponentRepository->where('name', $packages['key'])->first();
             foreach ($packages['package'] as $package) {
                 $data = [
                     'payroll_component_id' => $component->id,
