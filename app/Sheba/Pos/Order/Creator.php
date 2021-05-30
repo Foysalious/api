@@ -196,7 +196,7 @@ class Creator
         $this->voucherCalculation($order);
         $this->resolvePaymentMethod();
 //        $this->storeIncome($order);
-        $this->storeJournal($order);
+//        $this->storeJournal($order);
         return $order;
     }
 
