@@ -152,8 +152,6 @@ class Creator
         $order_data['sales_channel']         = isset($this->data['sales_channel']) ? $this->data['sales_channel'] : SalesChannels::POS;
         $order_data['delivery_charge']       = isset($this->data['delivery_charge'])   ? $this->data['delivery_charge'] : 0;
         $order_data['status']                = $this->status;
-        $order_data['delivery_district']     = isset($this->data['sales_channel']) && $this->data['sales_channel'] == SalesChannels::WEBSTORE && isset($this->data['delivery_district']) ? $this->data['delivery_district'] : null;
-        $order_data['delivery_thana']        = isset($this->data['sales_channel']) && $this->data['sales_channel'] == SalesChannels::WEBSTORE && isset($this->data['delivery_thana']) ? $this->data['delivery_thana'] : null;
         $order                               = $this->orderRepo->save($order_data);
         $services                            = json_decode($this->data['services'], true);
         foreach ($services as $service) {
@@ -363,6 +361,7 @@ class Creator
         /** @var AccountingRepository $accounting_repo */
         $accounting_repo = app()->make(AccountingRepository::class);
         Log::info((string)["inventory products", $order->items, $this->data['services']]);
+        Log::info((string)["inventory products services", $accounting_repo->getInventoryProducts($order->items, $this->data['services'])]);
         $this->request->merge([
             "inventory_products" => $accounting_repo->getInventoryProducts($order->items, $this->data['services']),
         ]);
