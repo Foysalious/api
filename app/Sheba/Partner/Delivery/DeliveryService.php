@@ -147,6 +147,7 @@ class DeliveryService
     {
         return [
             'mobile_banking_providers' => config('pos_delivery.mobile_banking_providers'),
+            'payment_method_for_bank' => config('pos_delivery.payment_method_for_bank'),
             'merchant_name' => $this->partner->name,
             'contact_name' => $this->partner->getContactPerson(),
             'contact_number' => $this->partner->getContactNumber(),
