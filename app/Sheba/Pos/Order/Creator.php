@@ -371,6 +371,7 @@ class Creator
 
     private function additionalAccountingData(PosOrder $order)
     {
+        Log::info(['order discount', $order->discounts(), $order->getNetBill(), $order->getPaid()]);
         $order_discount = $order->discounts()->sum('amount');
         $this->request->merge([
             "from_account_key"   => $order->sales_channel == SalesChannels::WEBSTORE ? (new Accounts())->asset->sheba::SHEBA_ACCOUNT : (new Accounts())->asset->cash::CASH,
