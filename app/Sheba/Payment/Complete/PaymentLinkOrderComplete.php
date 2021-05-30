@@ -7,6 +7,7 @@ use App\Models\Payment;
 use App\Models\PosOrder;
 use App\Models\Profile;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
+use Carbon\Carbon;
 use DB;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
@@ -218,6 +219,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             'amount_cleared' => (double)$paymentData['amount'],
             'details' => 'Payment link for pos order',
             'note' => 'payment_link',
+            'entry_at' => request()->has("date") ? request()->date : Carbon::now()->format('Y-m-d H:i:s'),
             'created_from' => json_encode($this->withBothModificationFields((new RequestIdentification())->get()))
         ];
         /** @var \App\Sheba\AccountingEntry\Repository\PaymentLinkRepository $paymentLinkRepo */
