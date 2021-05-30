@@ -291,7 +291,6 @@ class ShebaController extends Controller
             ->whereNull('payment_method')
             ->where('status', 'Published')
             ->get();
-        return $dbGateways;
 
         $payments = array_map(function (PaymentMethodDetails $details) use ($dbGateways, $user_type){
             return (new PresentableDTOPresenter($details, $dbGateways))->mergeWithDbGateways($user_type);
