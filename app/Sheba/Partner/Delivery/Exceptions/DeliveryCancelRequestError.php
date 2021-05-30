@@ -1,10 +1,10 @@
 <?php namespace App\Sheba\Partner\Delivery\Exceptions;
 
 
-use App\Exceptions\HttpException;
+use App\Exceptions\DoNotReportException;
 use Throwable;
 
-class DeliveryCancelRequestError extends HttpException
+class DeliveryCancelRequestError extends DoNotReportException
 {
     public function __construct($message = "", $code = 402, Throwable $previous = null)
     {
