@@ -30,6 +30,7 @@ class GrossSalaryBreakdownCalculate
     {
         /** @var PayrollComponent $payroll_components */
         $payroll_components = $payroll_setting->components()->where('type', Type::GROSS)->where('is_active', 1)->where('target_type', TargetType::GENERAL)->orderBy('name')->get();
+        $gross_components = $payroll_components;
         $payroll_component_by_target = $payroll_setting->components()->where('type', Type::GROSS)->where('target_id', $business_member->id)->where('is_active', 1)->orderBy('name')->get();
         if ($payroll_component_by_target) $gross_components = $this->makeGrossComponentCollection($payroll_components, $payroll_component_by_target);
         $salary = $business_member->salary ? $business_member->salary->gross_salary : 0;
