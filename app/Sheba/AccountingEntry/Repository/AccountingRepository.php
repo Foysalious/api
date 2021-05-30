@@ -37,7 +37,7 @@ class AccountingRepository extends BaseRepository
         $this->setModifier($request->partner);
         $data = $this->createEntryData($request, $type, $request->source_id);
         $url = "api/entries/";
-        Log::info(['pos order entry payload', $data]);
+        Log::info(['pos order entry payload']);
         try {
             return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
         } catch (AccountingEntryServerError $e) {

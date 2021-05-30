@@ -235,13 +235,7 @@ class OrderController extends Controller
             'order' => $order,
             'payment' => $link
         ]);
-        }
-        catch (\Exception $e) {
-            Log::error(["error in pos order", $e->getCode(), $e->getMessage()]);
-            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
-        }
-        catch (\Throwable $e) {
-            Log::error(["error in pos order", $e->getCode(), $e->getMessage()]);
+        } catch (\Throwable $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         }
     }
