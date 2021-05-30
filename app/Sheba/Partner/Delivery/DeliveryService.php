@@ -418,7 +418,7 @@ class DeliveryService
             'branch_name' => $info['mfs_info']['branch_name'] ?? null,
             'account_number' => $info['mfs_info']['account_number'],
             'routing_number' => $info['mfs_info']['routing_number'] ?? null,
-            'delivery_vendor' => null,
+            'delivery_vendor' => Methods::PAPERFLY,
             'account_type' => $this->accountType
         ];
 
