@@ -370,6 +370,7 @@ class Creator
 
     private function additionalAccountingData(PosOrder $order)
     {
+        Log::info(['order check', $order]);
         Log::info(['order discount', $order->discounts(), $order->getNetBill(), $order->getPaid()]);
         $order_discount = $order->discounts()->sum('amount');
         $this->request->merge([
