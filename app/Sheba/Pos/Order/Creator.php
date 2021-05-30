@@ -360,8 +360,8 @@ class Creator
         $this->additionalAccountingData($order);
         /** @var AccountingRepository $accounting_repo */
         $accounting_repo = app()->make(AccountingRepository::class);
-        Log::info((string)["inventory products", $order->items, $this->data['services']]);
-        Log::info((string)["inventory products services", $accounting_repo->getInventoryProducts($order->items, $this->data['services'])]);
+        Log::info(["inventory products", $order->items, $this->data['services']]);
+        Log::info(["inventory products services", $accounting_repo->getInventoryProducts($order->items, $this->data['services'])]);
         $this->request->merge([
             "inventory_products" => $accounting_repo->getInventoryProducts($order->items, $this->data['services']),
         ]);
