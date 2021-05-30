@@ -140,11 +140,6 @@ class DeliveryService
     private function getDeliveryMethod()
     {
         $partnerDeliveryInformation = $this->partnerDeliveryInfoRepositoryInterface->where('partner_id', $this->partner->id)->first();
-
-        if (!$partnerDeliveryInformation->delivery_vendor) {
-            return Methods::OWN_DELIVERY;
-        }
-
         return !empty($partnerDeliveryInformation) ? $partnerDeliveryInformation->delivery_vendor : Methods::OWN_DELIVERY;
     }
 
