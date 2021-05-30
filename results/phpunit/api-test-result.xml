@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="Application Test Suite" tests="1" assertions="2" failures="0" errors="0" time="0.693652">
-    <testsuite name="Tests\Feature\sDeliveryRegistration\RegistrationInfoApiTest" file="/var/www/tests/Feature/sDeliveryRegistration/RegistrationInfoApiTest.php" tests="1" assertions="2" failures="0" errors="0" time="0.693652">
-      <testcase name="testWithWrongAuthorizationIsNotAccepted" class="Tests\Feature\sDeliveryRegistration\RegistrationInfoApiTest" file="/var/www/tests/Feature/sDeliveryRegistration/RegistrationInfoApiTest.php" line="47" assertions="2" time="0.693652"/>
+  <testsuite name="Application Test Suite" tests="1" assertions="3" failures="0" errors="0" time="0.632512">
+    <testsuite name="Tests\Feature\sDeliveryRegistration\WebstoreDashboardInfoApiTest" file="/var/www/tests/Feature/sDeliveryRegistration/WebstoreDashboardInfoApiTest.php" tests="1" assertions="3" failures="0" errors="0" time="0.632512">
+      <testcase name="testSuccessfulResponseWhenPartnerIsNotRegisteredForDelivery" class="Tests\Feature\sDeliveryRegistration\WebstoreDashboardInfoApiTest" file="/var/www/tests/Feature/sDeliveryRegistration/WebstoreDashboardInfoApiTest.php" line="41" assertions="3" time="0.632512"/>
     </testsuite>
   </testsuite>
 </testsuites>

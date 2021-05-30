@@ -4,6 +4,7 @@
 namespace Tests\Feature\sDeliveryRegistration;
 
 
+use App\Models\Partner;
 use App\Models\PartnerResource;
 use Tests\Feature\FeatureTestCase;
 use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInfo;
@@ -16,8 +17,12 @@ class PartnerDashboardAPITest extends FeatureTestCase
         parent::setUp();
         $this->logIn();
         $this->truncateTables([
+            Partner::class,
             PartnerResource::class,
             PartnerDeliveryInfo::class
+        ]);
+        $this->partner = factory(Partner::class)->create([
+            'sub_domain'=>'test786788.com'
         ]);
         $this->partner_resource = factory(PartnerResource::class)->create([
             'partner_id'=> $this->partner->id,
