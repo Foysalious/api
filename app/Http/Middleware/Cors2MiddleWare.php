@@ -115,7 +115,7 @@ class Cors2MiddleWare
             "https://partners.smanager.xyz",
             "https://smanager-webstore.dev-sheba.xyz",
             "https://smanager-webstore.stage.sheba.xyz",
-            "http://api-documentation.dev-sheba.xyz"
+            "http://api-documentation.dev-sheba.xyz",
             "http://paymentlink-web.stage.sheba.xyz",
             "https://payment.smanager.xyz"
         ];
