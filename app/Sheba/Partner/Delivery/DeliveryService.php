@@ -9,6 +9,8 @@ use App\Models\PosOrderPayment;
 use App\Sheba\Partner\Delivery\Exceptions\DeliveryCancelRequestError;
 use Illuminate\Support\Str;
 use Sheba\Dal\PartnerDeliveryInformation\Contract as PartnerDeliveryInformationRepositoryInterface;
+use Sheba\Dal\POSOrder\OrderStatuses;
+use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Transactions\Types;
 use Throwable;
 
@@ -51,12 +53,17 @@ class DeliveryService
     private $vendorName;
 
     private $deliveryInfo;
+    /**
+     * @var PosOrderRepository
+     */
+    private $posOrderRepository;
 
 
-    public function __construct(DeliveryServerClient $client, PartnerDeliveryInformationRepositoryInterface $partnerDeliveryInfoRepositoryInterface)
+    public function __construct(DeliveryServerClient $client, PartnerDeliveryInformationRepositoryInterface $partnerDeliveryInfoRepositoryInterface,PosOrderRepository $posOrderRepository)
     {
         $this->client = $client;
         $this->partnerDeliveryInfoRepositoryInterface = $partnerDeliveryInfoRepositoryInterface;
+        $this->posOrderRepository = $posOrderRepository;
     }
 
     public function setPartner($partner)
@@ -418,7 +425,7 @@ class DeliveryService
             'branch_name' => $info['mfs_info']['branch_name'] ?? null,
             'account_number' => $info['mfs_info']['account_number'],
             'routing_number' => $info['mfs_info']['routing_number'] ?? null,
-            'delivery_vendor' => null,
+            'delivery_vendor' => Methods::PAPERFLY,
             'account_type' => $this->accountType
         ];
 
@@ -481,7 +488,16 @@ class DeliveryService
         if ($status == Statuses::PICKED_UP)
             throw new DeliveryCancelRequestError();
         $this->client->setToken($this->token)->post('orders/cancel', $data);
+        $this->updatePosOrder();
         return true;
+    }
+
+    private function updatePosOrder()
+    {
+        $data = [
+          'status' => OrderStatuses::CANCELLED
+        ];
+        $this->posOrderRepository->update($this->posOrder, $data);
     }
 
     public function getPaperflyDeliveryCharge()
