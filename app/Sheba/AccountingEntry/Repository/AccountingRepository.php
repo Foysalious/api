@@ -1,4 +1,5 @@
-<?php namespace App\Sheba\AccountingEntry\Repository;
+<?php
+namespace App\Sheba\AccountingEntry\Repository;
 
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Constants\UserType;
@@ -10,10 +11,11 @@ use Sheba\RequestIdentification;
 
 class AccountingRepository extends BaseRepository
 {
-    public function accountTransfer(Request $request){
-        $source_id = rand(0000,9999).date('s').preg_replace("/^.*\./i","", microtime(true));
+    public function accountTransfer(Request $request)
+    {
+        $source_id = rand(0000, 9999) . date('s') . preg_replace("/^.*\./i", "", microtime(true));
         $this->setModifier($request->partner);
-        $data     = $this->createJournalData($request, EntryTypes::TRANSFER, $source_id);
+        $data = $this->createJournalData($request, EntryTypes::TRANSFER, $source_id);
         $url = "api/journals/";
         try {
             return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
@@ -28,10 +30,11 @@ class AccountingRepository extends BaseRepository
      * @return mixed
      * @throws AccountingEntryServerError
      */
-    public function storeEntry($request, $type) {
+    public function storeEntry($request, $type)
+    {
         $this->getCustomer($request);
         $this->setModifier($request->partner);
-        $data     = $this->createEntryData($request, $type, $request->source_id);
+        $data = $this->createEntryData($request, $type, $request->source_id);
         $url = "api/entries/";
         try {
             return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
@@ -46,9 +49,14 @@ class AccountingRepository extends BaseRepository
      * @return mixed
      * @throws AccountingEntryServerError
      */
-    public function getAccountsTotal(Request $request) {
-        $data = IncomeExpenseStatics::createDataForAccountsTotal($request->account_type, $request->start_date, $request->end_date);
-        $url  = "api/reports/account-list-with-sum";
+    public function getAccountsTotal(Request $request)
+    {
+        $data = IncomeExpenseStatics::createDataForAccountsTotal(
+            $request->account_type,
+            $request->start_date,
+            $request->end_date
+        );
+        $url = "api/reports/account-list-with-sum";
         try {
             return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->get($url, $data);
         } catch (AccountingEntryServerError $e) {
@@ -69,17 +77,26 @@ class AccountingRepository extends BaseRepository
             $original_service = ($service->service);
             if ($original_service) {
                 $sellingPrice = isset($requested_service[$key]['updated_price']) && $requested_service[$key]['updated_price'] ? $requested_service[$key]['updated_price'] : $original_service->price;
-                $unitPrice = $original_service->cost ? : $sellingPrice;
+                $unitPrice = $original_service->cost ?: $sellingPrice;
                 $inventory_products[] = [
-                    "id"           => $original_service->id ?? $requested_service[$key]['id'],
-                    "name"         => $original_service->name ?? $requested_service[$key]['name'],
-                    "unit_price"   => $unitPrice,
+                    "id" => $original_service->id ?? $requested_service[$key]['id'],
+                    "name" => $original_service->name ?? $requested_service[$key]['name'],
+                    "unit_price" => $unitPrice,
                     "selling_price" => $sellingPrice,
-                    "quantity"     => isset($requested_service[$key]['quantity']) ? $requested_service[$key]['quantity'] : 1
+                    "quantity" => isset($requested_service[$key]['quantity']) ? $requested_service[$key]['quantity'] : 1
+                ];
+            } else {
+                $inventory_products[] = [
+                    "id" =>  $requested_service[$key]['id'],
+                    "name" => $requested_service[$key]['name'],
+                    "unit_price" => $requested_service[$key]['updated_price'],
+                    "selling_price" => $requested_service[$key]['updated_price'],
+                    "quantity" => isset($requested_service[$key]['quantity']) ? $requested_service[$key]['quantity'] : 1
                 ];
             }
+
         }
-        if(count($inventory_products) > 0) {
+        if (count($inventory_products) > 0) {
             return json_encode($inventory_products);
         }
         return null;
@@ -97,14 +114,15 @@ class AccountingRepository extends BaseRepository
     {
         $this->getCustomer($request);
         $this->setModifier($request->partner);
-        $data     = $this->createEntryData($request, $sourceType, $sourceId);
-        $url = "api/entries/source/".$sourceType.'/'.$sourceId;
+        $data = $this->createEntryData($request, $sourceType, $sourceId);
+        $url = "api/entries/source/" . $sourceType . '/' . $sourceId;
         try {
             return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
     }
+
     /**
      * @param $request
      * @param $type
@@ -113,33 +131,33 @@ class AccountingRepository extends BaseRepository
      */
     private function createEntryData($request, $type, $type_id = null): array
     {
-        $data['created_from']       = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
-        $data['amount']             = (double)$request->amount;
-        $data['source_type']        = $type;
-        $data['source_id']          = $type_id;
-        $data['note']               = $request->has("note") ? $request->note : null;
-        $data['amount_cleared']     = $request->amount_cleared;
-        $data['debit_account_key']  = $request->from_account_key;
+        $data['created_from'] = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
+        $data['amount'] = (double)$request->amount;
+        $data['source_type'] = $type;
+        $data['source_id'] = $type_id;
+        $data['note'] = $request->has("note") ? $request->note : null;
+        $data['amount_cleared'] = $request->amount_cleared;
+        $data['debit_account_key'] = $request->from_account_key;
         $data['credit_account_key'] = $request->to_account_key;
-        $data['customer_id']        = $request->customer_id;
-        $data['customer_name']      = $request->customer_name;
+        $data['customer_id'] = $request->customer_id;
+        $data['customer_name'] = $request->customer_name;
         $data['inventory_products'] = $request->inventory_products;
-        $data['entry_at']           = $request->has("date") ? $request->date : Carbon::now()->format('Y-m-d H:i:s');
-        $data['attachments']        = $this->uploadAttachments($request);
-        $data['total_discount']     = $request->has("total_discount") ? (double)$request->total_discount : null;
+        $data['entry_at'] = $request->has("date") ? $request->date : Carbon::now()->format('Y-m-d H:i:s');
+        $data['attachments'] = $this->uploadAttachments($request);
+        $data['total_discount'] = $request->has("total_discount") ? (double)$request->total_discount : null;
         return $data;
     }
 
     private function createJournalData(Request $request, $source_type, $source_id): array
     {
-            $data['amount']             = (double)$request->amount;
-            $data['source_type']        = $source_type;
-            $data['source_id']          = $source_id;
-            $data['debit_account_key']  = $request->from_account_key;
-            $data['credit_account_key'] = $request->to_account_key;
-            $data['entry_at']           = $request->date;
-            $data['details']            = $request->note;
-            $data['created_from']       = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
-            return $data;
+        $data['amount'] = (double)$request->amount;
+        $data['source_type'] = $source_type;
+        $data['source_id'] = $source_id;
+        $data['debit_account_key'] = $request->from_account_key;
+        $data['credit_account_key'] = $request->to_account_key;
+        $data['entry_at'] = $request->date;
+        $data['details'] = $request->note;
+        $data['created_from'] = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
+        return $data;
     }
 }
