@@ -8,6 +8,9 @@ class Route
     public function set($api)
     {
         $api->group(['prefix' => 'v2', 'namespace' => 'App\Http\Controllers'], function ($api) {
+            // TODO: temp route as customer web was built with this route
+            $api->post('continue-with-kit', 'FacebookController@continueWithKit');
+
             (new UserRoute())->set($api);
             (new CategoryRoute())->set($api);
             (new PaymentLinkRoute())->set($api);
