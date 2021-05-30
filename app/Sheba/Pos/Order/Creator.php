@@ -12,6 +12,7 @@ use App\Models\PosOrder;
 use App\Models\Profile;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\AccountingRepository;
+use Clockwork\Request\Log;
 use Illuminate\Http\Request;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
@@ -359,6 +360,7 @@ class Creator
         $this->additionalAccountingData($order);
         /** @var AccountingRepository $accounting_repo */
         $accounting_repo = app()->make(AccountingRepository::class);
+        Log::info((string)["inventory products", $order->items, $this->data['services']]);
         $this->request->merge([
             "inventory_products" => $accounting_repo->getInventoryProducts($order->items, $this->data['services']),
         ]);
