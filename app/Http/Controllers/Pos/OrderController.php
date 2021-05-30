@@ -134,7 +134,6 @@ class OrderController extends Controller
      */
     public function store($partner, Request $request, Creator $creator, ProfileCreator $profileCreator, PosCustomerCreator $posCustomerCreator, PartnerRepository $partnerRepository, PaymentLinkCreator $paymentLinkCreator)
     {
-        try {
         $this->validate($request, [
             'services' => 'required|string',
             'paid_amount' => 'sometimes|required|numeric',
@@ -235,9 +234,6 @@ class OrderController extends Controller
             'order' => $order,
             'payment' => $link
         ]);
-        } catch (\Throwable $e) {
-            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage(), 'trace' => $e->getTrace()]);
-        }
     }
 
     private function sendCustomerEmail($order)
