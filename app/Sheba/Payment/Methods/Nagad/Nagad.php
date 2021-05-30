@@ -117,7 +117,7 @@ class Nagad extends PaymentMethod
         return $payment;
     }
 
-    public function getMethodName()
+    public function getMethodName(): string
     {
         return self::NAME;
     }
