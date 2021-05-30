@@ -33,8 +33,6 @@ class PosItemQuantityIncrease extends ReturnPosItem
             }
         } catch (ExpenseTrackingServerError $e) {
             app('sentry')->captureException($e);
-        } catch (Exception $e) {
-            Throw new Exception($e->getMessage(), $e->getCode());
         }
     }
 
@@ -50,10 +48,10 @@ class PosItemQuantityIncrease extends ReturnPosItem
                     $sellingPrice = isset($value['updated_price']) && $value['updated_price'] ? $value['updated_price'] : $originalSvc->price;
                     $unitPrice = $original_service->cost ?? $sellingPrice;
                     $inventory_products[] = [
-                        "id"           => $originalSvc->id,
-                        "name"         => $originalSvc->name,
-                        "unit_price"   => $unitPrice,
-                        "selling_price" => $sellingPrice,
+                        "id"           => $originalSvc ? $originalSvc->id : 0,
+                        "name"         => $originalSvc ? $originalSvc->name : 'Custom Amount',
+                        "unit_price"   => (double)$unitPrice,
+                        "selling_price" => (double)$sellingPrice,
                         "quantity"     => $value['quantity'] - $product->quantity
                     ];
                 }
