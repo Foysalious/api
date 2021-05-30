@@ -182,6 +182,7 @@ class OrderController extends Controller
          * if ($error = $creator->hasError())
          *     return $error;
          */
+        Log::info(["request payload", $request->all()]);
         $order = $creator->create();
         $order = $order->calculate();
         /**
