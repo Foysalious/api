@@ -5,6 +5,7 @@ use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Constants\UserType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Statics\IncomeExpenseStatics;
 use Sheba\RequestIdentification;
@@ -37,6 +38,7 @@ class AccountingRepository extends BaseRepository
         $data = $this->createEntryData($request, $type, $request->source_id);
         $url = "api/entries/";
         try {
+            Log::info(['data from entries', $data]);
             return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
