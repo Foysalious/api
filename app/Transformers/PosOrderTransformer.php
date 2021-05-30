@@ -46,7 +46,8 @@ class PosOrderTransformer extends TransformerAbstract
             'sales_channel' => $order->sales_channel,
             'delivery_charge' => $order->delivery_charge,
             'delivery_by_third_party' => $order->delivery_request_id ? 1 :0,
-            'selected_delivery_method' => $this->getDeliveryMethod($order->partner_id)
+            'selected_delivery_method' => $this->getDeliveryMethod($order->partner_id),
+            'total_weight' => $order->weight
         ];
 
         if ($data['due'] > 0) $data['payment_link_target'] = $order->getPaymentLinkTarget();
