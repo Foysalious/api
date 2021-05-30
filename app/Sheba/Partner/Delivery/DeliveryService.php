@@ -121,11 +121,11 @@ class DeliveryService
         $data = [];
         $all_vendor_list = config('pos_delivery.vendor_list');
         $temp = [];
-        foreach($all_vendor_list as $key => $vendor)
-            array_push($temp,array_merge($vendor,['key' => $key]));
-        $data['delivery_vendors'] =  $temp;
+        foreach ($all_vendor_list as $key => $vendor)
+            array_push($temp, array_merge($vendor, ['key' => $key]));
+        $data['delivery_vendors'] = $temp;
         $data['delivery_method'] = $this->getDeliveryMethod();
-        $data['is_registered_for_delivery'] = $this->partner->deliveryInformation ? 1 :0;
+        $data['is_registered_for_delivery'] = $this->partner->deliveryInformation ? 1 : 0;
         $data['delivery_charge'] = $this->partner->delivery_charge;
         return $data;
     }
@@ -133,6 +133,11 @@ class DeliveryService
     private function getDeliveryMethod()
     {
         $partnerDeliveryInformation = $this->partnerDeliveryInfoRepositoryInterface->where('partner_id', $this->partner->id)->first();
+
+        if (!$partnerDeliveryInformation->delivery_vendor) {
+            return Methods::OWN_DELIVERY;
+        }
+
         return !empty($partnerDeliveryInformation) ? $partnerDeliveryInformation->delivery_vendor : Methods::OWN_DELIVERY;
     }
 
@@ -483,7 +488,6 @@ class DeliveryService
     {
         return config('pos_delivery.paperfly_charge');
     }
-
 
 
 }
