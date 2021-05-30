@@ -74,7 +74,7 @@ class AccountingRepository extends BaseRepository
         foreach ($services as $key => $service) {
             $original_service = ($service->service);
             $sellingPrice = isset($requested_service[$key]['updated_price']) && $requested_service[$key]['updated_price'] ? $requested_service[$key]['updated_price'] : $original_service->price;
-            $unitPrice = $original_service->cost ?? $sellingPrice;
+            $unitPrice = $original_service->cost ? : $sellingPrice;
             $inventory_products[] = [
                 "id" => $original_service->id,
                 "name" => $original_service->name,
