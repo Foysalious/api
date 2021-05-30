@@ -68,14 +68,16 @@ class BdRecharge implements Gateway
         $response = $this->client->enquiry($topup_order);
         /** @var IpnResponse $ipn_response */
         $ipn_response = null;
-        if ($response->data->status == 'success' ) {
+        $data = property_exists($response, 'data') ? $response->data : $response;
+        $status = $data->status;
+        if ($status == 'success' ) {
             $ipn_response = app(BdRechargeSuccessResponse::class);
-        } else if ($response->data->status == 'failed') {
+        } else if ($status == 'failed' || $status == 400) {
             $ipn_response = app(BdRechargeFailResponse::class);
-        } else if ($response->data->status == 'processing') {
+        } else if ($status == 'processing') {
             Throw new BdRechargeTopUpStillProcessing($response);
         }
-        $ipn_response->setResponse($response->data);
+        $ipn_response->setResponse($data);
         return $ipn_response;
     }
 }
