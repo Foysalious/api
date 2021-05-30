@@ -458,8 +458,11 @@ class DeliveryService
      */
     public function getDeliveryStatus()
     {
+        $delivery_order_id = $this->posOrder->delivery_request_id;
+        if(!$delivery_order_id)
+            throw new DoNotReportException('Delivery tracking id not found',404);
         $data = [
-            'uid' => $this->posOrder->delivery_request_id
+            'uid' => $delivery_order_id
         ];
         return $this->client->setToken($this->token)->post('orders/track', $data);
     }
