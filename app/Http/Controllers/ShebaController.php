@@ -288,8 +288,10 @@ class ShebaController extends Controller
         $serviceType = 'App\\Models\\' . ucfirst($user_type);
         $dbGateways = $paymentGateWayRepository->builder()
             ->where('service_type', $serviceType)
+            ->whereNull('payment_method')
             ->where('status', 'Published')
             ->get();
+        return $dbGateways;
 
         $payments = array_map(function (PaymentMethodDetails $details) use ($dbGateways, $user_type){
             return (new PresentableDTOPresenter($details, $dbGateways))->mergeWithDbGateways($user_type);
