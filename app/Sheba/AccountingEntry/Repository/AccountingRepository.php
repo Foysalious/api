@@ -41,6 +41,7 @@ class AccountingRepository extends BaseRepository
             Log::info(['data from entries', $data]);
             return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
         } catch (AccountingEntryServerError $e) {
+            Log::info(['error from accounting']);
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
     }
