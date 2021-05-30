@@ -237,11 +237,11 @@ class OrderController extends Controller
         ]);
         }
         catch (\Exception $e) {
-            Log::error(["error in pos order", $e->getCode(), $e->getMessage(), $e->getTrace()]);
+            Log::error(["error in pos order", $e->getCode(), $e->getMessage()]);
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         }
         catch (\Throwable $e) {
-            Log::error(["error in pos order", $e->getCode(), $e->getMessage(), $e->getTrace()]);
+            Log::error(["error in pos order", $e->getCode(), $e->getMessage()]);
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         }
     }

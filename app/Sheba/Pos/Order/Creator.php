@@ -360,7 +360,7 @@ class Creator
         $this->additionalAccountingData($order);
         /** @var AccountingRepository $accounting_repo */
         $accounting_repo = app()->make(AccountingRepository::class);
-        Log::info(["inventory products", $order->items, $this->data['services']]);
+//        Log::info(["inventory products", $order->items, $this->data['services']]);
         $this->request->merge([
             "inventory_products" => $accounting_repo->getInventoryProducts($order->items, $this->data['services']),
         ]);
@@ -370,7 +370,6 @@ class Creator
     private function additionalAccountingData(PosOrder $order)
     {
         $order_discount = $order->discounts->count() > 0 ? $order->discounts()->sum('amount'): 0.00;
-        Log::info(["additional data", $order_discount, ]);
         $this->request->merge([
             "from_account_key"   => $order->sales_channel == SalesChannels::WEBSTORE ? (new Accounts())->asset->sheba::SHEBA_ACCOUNT : (new Accounts())->asset->cash::CASH,
             "to_account_key"     => (new Accounts())->income->sales::SALES_FROM_POS,
