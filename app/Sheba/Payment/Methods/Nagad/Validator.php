@@ -20,7 +20,7 @@ class Validator
      * @param bool $resp
      * @throws InvalidOrderId
      */
-    public function __construct($data, $resp = false)
+    public function __construct($data, bool $resp = false)
     {
         $this->setData($data);
         if (!$resp) {
@@ -34,7 +34,7 @@ class Validator
      * @param mixed $data
      * @return Validator
      */
-    public function setData($data)
+    public function setData($data): Validator
     {
         $this->data = (array)$data;
         return $this;
@@ -61,7 +61,7 @@ class Validator
         return $this->data['order_id'];
     }
 
-    public function getPayment()
+    public function getPayment(): Payment
     {
         return $this->payment;
     }
@@ -79,7 +79,7 @@ class Validator
         }
     }
 
-    public function getPayable()
+    public function getPayable(): Payable
     {
         return $this->payable;
     }
