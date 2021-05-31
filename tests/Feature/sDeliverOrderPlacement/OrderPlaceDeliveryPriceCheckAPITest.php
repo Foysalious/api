@@ -56,9 +56,7 @@ class OrderPlaceDeliveryPriceCheckAPITest extends FeatureTestCase
             'pickup_thana' => 'Dhaka',
             "pickup_district"=> 'Gulshan'
 
-        ]/*, [
-            'Authorization' => "Bearer $this->token"
-        ]*/);
+        ]);
         $data = $response->decodeResponseJson();
 
         $this->assertEquals(400, $data['code']);
@@ -75,9 +73,7 @@ class OrderPlaceDeliveryPriceCheckAPITest extends FeatureTestCase
             'pickup_thana' => 'Dhaka',
             "pickup_district"=> 'Gulshan'
 
-        ]/*, [
-            'Authorization' => "Bearer $this->token"
-        ]*/);
+        ]);
         $data = $response->decodeResponseJson();
 
         $this->assertEquals(400, $data['code']);
@@ -94,9 +90,7 @@ class OrderPlaceDeliveryPriceCheckAPITest extends FeatureTestCase
             'pickup_thana' => 'Dhaka',
             "pickup_district"=> 'Gulshan'
 
-        ]/*, [
-            'Authorization' => "Bearer $this->token"
-        ]*/);
+        ]);
         $data = $response->decodeResponseJson();
 
         $this->assertEquals(400, $data['code']);
@@ -112,9 +106,7 @@ class OrderPlaceDeliveryPriceCheckAPITest extends FeatureTestCase
             'pickup_thana' => 'Dhaka',
             "pickup_district"=> 'Gulshan'
 
-        ]/*, [
-            'Authorization' => "Bearer $this->token"
-        ]*/);
+        ]);
         $data = $response->decodeResponseJson();
 
         $this->assertEquals(400, $data['code']);
@@ -132,9 +124,7 @@ class OrderPlaceDeliveryPriceCheckAPITest extends FeatureTestCase
             'pickup_thana' => 'Dhaka',
             "pickup_district"=> 'Gulshan'
 
-        ]/*, [
-            'Authorization' => "Bearer $this->token"
-        ]*/);
+        ]);
         $data = $response->decodeResponseJson();
 
         $this->assertEquals(1, $data['data'][0]['id']);
@@ -156,9 +146,7 @@ class OrderPlaceDeliveryPriceCheckAPITest extends FeatureTestCase
             'pickup_thana' => 'Dhaka',
             "pickup_district"=> 'Gulshan'
 
-        ]/*, [
-            'Authorization' => "Bearer $this->token"
-        ]*/);
+        ]);
         $data = $response->decodeResponseJson();
 
         $this->assertEquals(1, $data['data'][0]['id']);
