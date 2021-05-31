@@ -440,7 +440,9 @@ class DeliveryService
     public function deliveryCharge()
     {
         $data = $this->makeDeliveryChargeData();
-        return $this->client->post('price-check', $data);
+        $response =  $this->client->post('price-check', $data);
+        return $response['data'][0]['package_price'] - (.01 *  $this->cashOnDelivery);
+
     }
 
 

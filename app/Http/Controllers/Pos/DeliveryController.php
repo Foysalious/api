@@ -192,7 +192,7 @@ class DeliveryController extends Controller
 
         $partner = $request->partner_id;
         $charge = $delivery_service->setPartner($partner)->setWeight($request->weight)->setpickupThana($request->pickup_thana)->setpickupDistrict($request->pickup_district)->setCashOnDelivery($request->cod_amount)->setDeliveryDistrict($request->delivery_district)->setDeliveryThana($request->delivery_thana)->deliveryCharge();
-        return api_response($request, null, 200, ['info' => $charge]);
+        return api_response($request, null, 200, ['delivery_charge' => $charge]);
     }
 
 
