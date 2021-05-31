@@ -71,4 +71,19 @@ class ReportsController extends Controller
             );
         }
     }
+
+    public function getDetailsLedgerReport(Request $request)
+    {
+        try {
+            $response = $this->posReportRepository->getDetailsLedgerReport($request->partner->id, $request->start_date, $request->end_date);
+            return api_response($request, $response, 200, ['data' => $response]);
+        } catch (Exception $e) {
+            return api_response(
+                $request,
+                null,
+                $e->getCode() == 0 ? 400 : $e->getCode(),
+                ['message' => $e->getMessage()]
+            );
+        }
+    }
 }

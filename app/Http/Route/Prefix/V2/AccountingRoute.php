@@ -38,6 +38,7 @@ class AccountingRoute
                 $api->get('/pos/customer-wise', 'Accounting\\ReportsController@getCustomerWiseReport');
                 $api->get('/journal-report', 'Accounting\\ReportsController@getJournalReport');
                 $api->get('/profit-loss-report', 'Accounting\\ReportsController@getProfitLossReport');
+                $api->get('/details-ledger-report', 'Accounting\\ReportsController@getDetailsLedgerReport');
             });
         });
     }

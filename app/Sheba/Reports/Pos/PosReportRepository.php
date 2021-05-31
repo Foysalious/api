@@ -63,4 +63,14 @@ class PosReportRepository extends BaseRepository
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
     }
+
+    public function getDetailsLedgerReport($userId, $startDate, $endDate, $userType = UserType::PARTNER)
+    {
+        try {
+            return $this->client->setUserType($userType)->setUserId($userId)
+                ->get($this->api . 'details_ledger_report?start_date=' . strtotime($startDate) . "&end_date=" . strtotime($endDate) );
+        } catch (AccountingEntryServerError $e) {
+            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+        }
+    }
 }
