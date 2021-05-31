@@ -30,7 +30,7 @@ class Apps
     const RESOURCE_APP_ANDROID_PACKAGE_NAME = 'xyz.sheba.resource';
     const RESOURCE_APP_IOS_PACKAGE_NAME = 'xyz.sheba.spro';
     const BONDHU_APP_ANDROID_PACKAGE_NAME = 'xyz.sheba.bondhu';
-    const BONDHU_APP_IOS_PACKAGE_NAME = 'xyz.sheba.bondhu';
+    const BONDHU_APP_IOS_PACKAGE_NAME = 'xyz.sheba.bondhu.ios';
     const RIDER_APP_ANDROID_PACKAGE_NAME = 'xyz.sheba.logistic';
     const EMPLOYEE_APP_ANDROID_PACKAGE_NAME = 'xyz.sheba.emanager';
     const EMPLOYEE_APP_IOS_PACKAGE_NAME = 'xyz.sheba.emanager.ios';
