@@ -155,6 +155,7 @@ trait FileManager
         $filename = $this->uniqueFileName($file, $name);
         return [$file, $filename];
     }
+
     protected function makePartnerProofOfBusiness($file, $name)
     {
         return [$file, $this->uniqueFileName($file, $name)];
@@ -163,5 +164,12 @@ trait FileManager
     protected function makeImageGallery($file, $name)
     {
         return [$file, $this->uniqueFileName($file, $name)];
+    }
+
+    protected function makeAppVersionImage($file, $name)
+    {
+        $filename = $this->uniqueFileName($file, $name);
+        $file = (new AppVersionImage($file))->make();
+        return [ $file, $filename ];
     }
 }
