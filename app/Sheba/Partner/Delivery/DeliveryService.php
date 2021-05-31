@@ -9,6 +9,8 @@ use App\Models\PosOrderPayment;
 use App\Sheba\Partner\Delivery\Exceptions\DeliveryCancelRequestError;
 use Illuminate\Support\Str;
 use Sheba\Dal\PartnerDeliveryInformation\Contract as PartnerDeliveryInformationRepositoryInterface;
+use Sheba\Dal\POSOrder\OrderStatuses;
+use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Transactions\Types;
 use Throwable;
 
@@ -51,12 +53,17 @@ class DeliveryService
     private $vendorName;
 
     private $deliveryInfo;
+    /**
+     * @var PosOrderRepository
+     */
+    private $posOrderRepository;
 
 
-    public function __construct(DeliveryServerClient $client, PartnerDeliveryInformationRepositoryInterface $partnerDeliveryInfoRepositoryInterface)
+    public function __construct(DeliveryServerClient $client, PartnerDeliveryInformationRepositoryInterface $partnerDeliveryInfoRepositoryInterface,PosOrderRepository $posOrderRepository)
     {
         $this->client = $client;
         $this->partnerDeliveryInfoRepositoryInterface = $partnerDeliveryInfoRepositoryInterface;
+        $this->posOrderRepository = $posOrderRepository;
     }
 
     public function setPartner($partner)
@@ -121,23 +128,26 @@ class DeliveryService
         $data = [];
         $all_vendor_list = config('pos_delivery.vendor_list');
         $temp = [];
-        foreach($all_vendor_list as $key => $vendor)
-            array_push($temp,array_merge($vendor,['key' => $key]));
-        $data['delivery_vendors'] =  $temp;
+        foreach ($all_vendor_list as $key => $vendor)
+            array_push($temp, array_merge($vendor, ['key' => $key]));
+        $data['delivery_vendors'] = $temp;
         $data['delivery_method'] = $this->getDeliveryMethod();
+        $data['is_registered_for_delivery'] = $this->partner->deliveryInformation ? 1 : 0;
+        $data['delivery_charge'] = $this->partner->delivery_charge;
         return $data;
     }
 
     private function getDeliveryMethod()
     {
-        $partnerDeliveryInformation = $this->partnerDeliveryInfoRepositoryInterface->where('partner_id', $this->partner)->first();
-        return !empty($partnerDeliveryInformation) ? $partnerDeliveryInformation->delivery_vendor : Methods::OWN_DELIVERY;
+        $partnerDeliveryInformation = $this->partnerDeliveryInfoRepositoryInterface->where('partner_id', $this->partner->id)->first();
+        return !empty($partnerDeliveryInformation) ? $partnerDeliveryInformation->delivery_vendor : NULL;
     }
 
     public function getRegistrationInfo()
     {
         return [
             'mobile_banking_providers' => config('pos_delivery.mobile_banking_providers'),
+            'payment_method_for_bank' => config('pos_delivery.payment_method_for_bank'),
             'merchant_name' => $this->partner->name,
             'contact_name' => $this->partner->getContactPerson(),
             'contact_number' => $this->partner->getContactNumber(),
@@ -174,7 +184,7 @@ class DeliveryService
                     'thana' => $this->posOrder->delivery_thana,
                     'zilla' => $this->posOrder->delivery_zilla
                 ],
-                'payment_method' => $this->paymentInfo($this->posOrder->id)->method,
+                'payment_method' => ($payment_info = $this->paymentInfo($this->posOrder->id)) ? $payment_info->method : null,
                 'cod_amount' => $this->getDueAmount(),
             ],
         ];
@@ -411,7 +421,7 @@ class DeliveryService
             'branch_name' => $info['mfs_info']['branch_name'] ?? null,
             'account_number' => $info['mfs_info']['account_number'],
             'routing_number' => $info['mfs_info']['routing_number'] ?? null,
-            'delivery_vendor' => null,
+            'delivery_vendor' => Methods::PAPERFLY,
             'account_type' => $this->accountType
         ];
 
@@ -456,8 +466,11 @@ class DeliveryService
      */
     public function getDeliveryStatus()
     {
+        $delivery_order_id = $this->posOrder->delivery_request_id;
+        if(!$delivery_order_id)
+            throw new DoNotReportException('Delivery tracking id not found',404);
         $data = [
-            'uid' => $this->posOrder->delivery_request_id
+            'uid' => $delivery_order_id
         ];
         return $this->client->setToken($this->token)->post('orders/track', $data);
     }
@@ -471,14 +484,22 @@ class DeliveryService
         if ($status == Statuses::PICKED_UP)
             throw new DeliveryCancelRequestError();
         $this->client->setToken($this->token)->post('orders/cancel', $data);
+        $this->updatePosOrder();
         return true;
+    }
+
+    private function updatePosOrder()
+    {
+        $data = [
+          'status' => OrderStatuses::CANCELLED
+        ];
+        $this->posOrderRepository->update($this->posOrder, $data);
     }
 
     public function getPaperflyDeliveryCharge()
     {
         return config('pos_delivery.paperfly_charge');
     }
-
 
 
 }

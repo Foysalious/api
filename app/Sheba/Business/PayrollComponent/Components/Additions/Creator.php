@@ -63,6 +63,7 @@ class Creator
                     'value' => $component['title'],
                     'type' => 'addition',
                     'is_default' => 0,
+                    'is_taxable' => $component['is_taxable'],
                     'is_active' => 1,
                     'setting' => json_encode([]),
                 ];
@@ -81,6 +82,7 @@ class Creator
                     'type' => 'addition',
                     'is_default' => 0,
                     'is_active' => 1,
+                    'is_taxable' => $component['is_taxable'],
                     'setting' => json_encode([]),
                 ];
                 $existing_component = $this->payrollComponentRepository->find($component['id']);

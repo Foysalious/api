@@ -125,6 +125,52 @@ class HomepageController extends Controller
         }
     }
 
+    public function getTimeFilters(Request $request)
+    {
+        Carbon::setWeekStartsAt(Carbon::SATURDAY);
+        Carbon::setWeekEndsAt(Carbon::FRIDAY);
+        $startOfWeek = Carbon::now()->startOfWeek();
+        $endOfWeek = Carbon::now()->endOfWeek();
+        $startOfMonth = Carbon::now()->startOfMonth();
+        $endOfMonth = Carbon::now()->endOfMonth();
+        $startOfQuarter = Carbon::now()->startOfQuarter();
+        $endOfQuarter = Carbon::now()->endOfQuarter();
+        $startOfYear = Carbon::now()->startOfYear();
+        $endOfYear = Carbon::now()->endOfYear();
+        $response = [
+            [
+                'title' => 'আজ (' . convertNumbersToBangla(Carbon::now()->day, false) . ' ' . banglaMonth(Carbon::now()->month) . ')',
+                'start_date' => Carbon::now()->format('Y-m-d'),
+                'end_date' => Carbon::now()->format('Y-m-d'),
+            ],
+            [
+                'title' => 'এই সপ্তাহ (' .
+                    convertNumbersToBangla($startOfWeek->day, false) .
+                    ($startOfWeek->month === $endOfWeek->month ?: ' '.banglaMonth($startOfWeek->month)). ' - ' .
+                    convertNumbersToBangla($endOfWeek->day, false) .' '.
+                    banglaMonth($endOfWeek->month) . ')',
+                'start_date' => $startOfWeek->format('Y-m-d'),
+                'end_date' => $endOfWeek->format('Y-m-d'),
+            ],
+            [
+                'title' => 'এই মাস (' . banglaMonth($startOfMonth->month) . ' মাস)',
+                'start_date' => $startOfMonth->format('Y-m-d'),
+                'end_date' => $endOfMonth->format('Y-m-d'),
+            ],
+            [
+                'title' => 'এই কোয়ার্টার (' . banglaMonth($startOfQuarter->month) .' - '. banglaMonth($endOfQuarter->month) .')',
+                'start_date' => $startOfQuarter->format('Y-m-d'),
+                'end_date' => $endOfQuarter->format('Y-m-d'),
+            ],
+            [
+                'title' => 'এই বছর (' . convertNumbersToBangla($startOfYear->year, false) . ' সাল)',
+                'start_date' => $startOfYear->format('Y-m-d'),
+                'end_date' => $endOfYear->format('Y-m-d'),
+            ],
+        ];
+        return api_response($request, null, 200, ['data' => $response]);
+    }
+
     private function convertStartDate($date) {
         return $date ?
             Carbon::createFromFormat('Y-m-d H:i:s', $date . ' 0:00:00')->timestamp :

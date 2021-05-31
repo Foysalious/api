@@ -1,8 +1,4 @@
-<?php
-
-
-namespace Sheba\Payment\Methods\Nagad;
-
+<?php namespace Sheba\Payment\Methods\Nagad;
 
 use App\Models\Payable;
 use App\Models\Payment;
@@ -24,7 +20,7 @@ class Validator
      * @param bool $resp
      * @throws InvalidOrderId
      */
-    public function __construct($data, $resp = false)
+    public function __construct($data, bool $resp = false)
     {
         $this->setData($data);
         if (!$resp) {
@@ -38,10 +34,15 @@ class Validator
      * @param mixed $data
      * @return Validator
      */
-    public function setData($data)
+    public function setData($data): Validator
     {
         $this->data = (array)$data;
         return $this;
+    }
+
+    private function setOthers()
+    {
+        $this->status = isset($this->data['status']) && $this->data['status'] == 'Success' ? 'paid' : false;
     }
 
     public function getPaymentRefId()
@@ -60,6 +61,11 @@ class Validator
         return $this->data['order_id'];
     }
 
+    public function getPayment(): Payment
+    {
+        return $this->payment;
+    }
+
     /**
      * @throws InvalidOrderId
      */
@@ -73,12 +79,7 @@ class Validator
         }
     }
 
-    public function getPayment()
-    {
-        return $this->payment;
-    }
-
-    public function getPayable()
+    public function getPayable(): Payable
     {
         return $this->payable;
     }
@@ -86,11 +87,6 @@ class Validator
     public function toString()
     {
         return json_encode($this->data);
-    }
-
-    private function setOthers()
-    {
-        $this->status = isset($this->data['status']) && $this->data['status'] == 'Success' ? 'paid' : false;
     }
 
     public function getStatus()

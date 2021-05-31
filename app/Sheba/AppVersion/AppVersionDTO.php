@@ -14,7 +14,7 @@ class AppVersionDTO extends PresentableDTO
      * @param AppVersion $version
      * @return AppVersionDTO
      */
-    public function setVersion(AppVersion $version)
+    public function setVersion(AppVersion $version): AppVersionDTO
     {
         $this->version = $version;
         return $this;
@@ -24,13 +24,13 @@ class AppVersionDTO extends PresentableDTO
      * @param bool $has_critical
      * @return AppVersionDTO
      */
-    public function setHasCritical($has_critical)
+    public function setHasCritical(bool $has_critical): AppVersionDTO
     {
         $this->hasCritical = $has_critical;
         return $this;
     }
 
-    public function toArray()
+    public function toArray(): array
     {
         return [
             'title'       => $this->version ? $this->version->title : null,

@@ -858,7 +858,7 @@ return [
                 'field_type' => 'radioGroup',
                 'title'      => 'অ্যাকাউন্টের ধরণ *',
                 'name'       => 'type_of_account',
-                'value'      => 'অ্যাকাউন্টের ধরণ *',
+                'value'      => '',
                 'id'         => 'type_of_account',
                 'views'      => [
                     [
@@ -926,7 +926,7 @@ return [
                 'title'      => 'মূদ্রা ',
                 'name'       => 'money_type',
                 'id'         => 'money_type',
-                'value'      => 'মূদ্রা ',
+                'value'      => '',
                 'mandatory'  => false,
                 'views'      => [
                     [

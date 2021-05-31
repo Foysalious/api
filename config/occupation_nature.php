@@ -134,19 +134,19 @@ return [
 
     'organization_type' => [
         [
-            'key' => 'limited',
+            'key' => 'Limited',
             'en' => 'Limited',
             'bn' => 'লিমিটেড',
             'value' => 'লিমিটেড'
         ],
         [
-            'key' => 'partnership',
+            'key' => 'Partnership',
             'en' => 'Partnership',
             'bn' => 'পার্টনারশিপ',
             'value' => 'পার্টনারশিপ'
         ],
         [
-            'key' => 'proprietorship',
+            'key' => 'Proprietorship',
             'en' => 'Proprietorship',
             'bn' => 'প্রোপ্রাইটরশিপ',
             'value' => 'প্রোপ্রাইটরশিপ'

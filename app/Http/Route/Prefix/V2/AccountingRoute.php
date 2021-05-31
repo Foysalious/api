@@ -18,6 +18,7 @@ class AccountingRoute
             $api->get('/icons', 'Accounting\\IconsController@getIcons');
             $api->group(['prefix' => 'due-tracker'], function ($api) {
                 $api->get('/due-list', 'Accounting\\DueTrackerController@dueList');
+                $api->get('/due-list/{customerId}', 'Accounting\\DueTrackerController@dueListByCustomerId');
                 $api->post('/', 'Accounting\\DueTrackerController@store');
                 $api->post('/{entry_id}', 'Accounting\\DueTrackerController@update');
                 $api->delete('/{entry_id}', 'Accounting\\DueTrackerController@delete');
@@ -28,9 +29,13 @@ class AccountingRoute
                 $api->get('income-expense-entries', 'Accounting\\HomepageController@getIncomeExpenseEntries');
                 $api->get('due-collection-balance', 'Accounting\\HomepageController@getDueCollectionBalance');
                 $api->get('account-list-balance', 'Accounting\\HomepageController@getAccountListBalance');
+                $api->get('time-filter', 'Accounting\\HomepageController@getTimeFilters');
             });
             $api->group(['prefix' => 'entries'], function ($api) {
                 $api->get('/{entry_id}', 'Accounting\\DueTrackerController@details');
+            });
+            $api->group(['prefix' => 'reports'], function ($api) {
+                $api->get('/pos/customer-wise', 'Accounting\\ReportsController@getCustomerWiseReport');
             });
         });
     }

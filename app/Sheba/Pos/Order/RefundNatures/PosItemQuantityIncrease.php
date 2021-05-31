@@ -22,19 +22,17 @@ class PosItemQuantityIncrease extends ReturnPosItem
                 'unit_price'
             ], 'service_id')->toArray();
 
-            $this->inventoryUpdate($this->order->items, $this->data['services']);
+//            $this->inventoryUpdate($this->order->items, $this->data['services']);
             $this->updater->setOrder($this->order)->setData($this->data)->setNew($this->new)->update();
             $this->refundPayment();
             $this->generateDetails($this->order);
             $this->saveLog();
             if ($this->order) {
-                $this->updateEntry($this->order, 'quantity_increase');
+//                $this->updateEntry($this->order, 'quantity_increase');
                 $this->updateIncome($this->order);
             }
         } catch (ExpenseTrackingServerError $e) {
             app('sentry')->captureException($e);
-        } catch (Exception $e) {
-            Throw new Exception($e->getMessage(), $e->getCode());
         }
     }
 
@@ -50,10 +48,10 @@ class PosItemQuantityIncrease extends ReturnPosItem
                     $sellingPrice = isset($value['updated_price']) && $value['updated_price'] ? $value['updated_price'] : $originalSvc->price;
                     $unitPrice = $original_service->cost ?? $sellingPrice;
                     $inventory_products[] = [
-                        "id"           => $originalSvc->id,
-                        "name"         => $originalSvc->name,
-                        "unit_price"   => $unitPrice,
-                        "selling_price" => $sellingPrice,
+                        "id"           => $originalSvc ? $originalSvc->id : 0,
+                        "name"         => $originalSvc ? $originalSvc->name : 'Custom Amount',
+                        "unit_price"   => (double)$unitPrice,
+                        "selling_price" => (double)$sellingPrice,
                         "quantity"     => $value['quantity'] - $product->quantity
                     ];
                 }

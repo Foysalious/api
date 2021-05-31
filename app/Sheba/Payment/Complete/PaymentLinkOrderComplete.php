@@ -1,16 +1,21 @@
 <?php namespace Sheba\Payment\Complete;
 
 use App\Jobs\Partner\PaymentLink\SendPaymentLinkSms;
+use App\Models\PartnerPosCustomer;
 use App\Models\Payable;
 use App\Models\Payment;
 use App\Models\PosOrder;
 use App\Models\Profile;
+use App\Sheba\AccountingEntry\Constants\EntryTypes;
+use Carbon\Carbon;
 use DB;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Support\Facades\Log;
 use LaravelFCM\Message\Exceptions\InvalidOptionsException;
+use Sheba\AccountingEntry\Accounts\Accounts;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\ExternalPayment\Model as ExternalPayment;
 use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\ExpenseTracker\AutomaticIncomes;
@@ -24,6 +29,7 @@ use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\PushNotificationHandler;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
+use Sheba\RequestIdentification;
 use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Usage\Usage;
@@ -186,6 +192,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $payment_creator->credit($payment_data);
             if ($this->transaction->isPaidByCustomer()) {
                 $this->target->update(['interest' => 0, 'bank_transaction_charge' => 0]);
+                $this->storeAccountingJournal($payment_data);
             }
         }
         if ($this->target instanceof ExternalPayment) {
@@ -193,6 +200,31 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $this->target->update();
             $this->paymentLinkRepository->statusUpdate($this->paymentLink->getLinkID(), 0);
         }
+    }
+
+    private function storeAccountingJournal($paymentData)
+    {
+        $partner_pos_customer = PartnerPosCustomer::byPartner($this->target->partner_id)
+            ->where('customer_id', $this->target->customer_id)
+            ->with(['customer'])
+            ->first();
+        $data = [
+            'customer_id' => $partner_pos_customer->customer_id,
+            'customer_name' => $partner_pos_customer->details()["name"],
+            'source_id' => $paymentData['pos_order_id'],
+            'source_type' => EntryTypes::POS,
+            'debit_account_key' => (new Accounts())->asset->sheba::SHEBA_ACCOUNT,
+            'credit_account_key' => (new Accounts())->income->sales::SALES_FROM_POS,
+            'amount' => (double)$paymentData['amount'],
+            'amount_cleared' => (double)$paymentData['amount'],
+            'details' => 'Payment link for pos order',
+            'note' => 'payment_link',
+            'entry_at' => request()->has("date") ? request()->date : Carbon::now()->format('Y-m-d H:i:s'),
+            'created_from' => json_encode($this->withBothModificationFields((new RequestIdentification())->get()))
+        ];
+        /** @var \App\Sheba\AccountingEntry\Repository\PaymentLinkRepository $paymentLinkRepo */
+        $paymentLinkRepo = app(\App\Sheba\AccountingEntry\Repository\PaymentLinkRepository::class);
+        $paymentLinkRepo->paymentLinkPosOrderJournal($data, $this->target->partner_id);
     }
 
     private function createUsage($payment_receiver, $modifier)

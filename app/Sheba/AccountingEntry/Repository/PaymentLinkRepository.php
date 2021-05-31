@@ -86,6 +86,17 @@ class PaymentLinkRepository extends BaseRepository
         }
     }
 
+    public function paymentLinkPosOrderJournal($payload, $userId, $userType = UserType::PARTNER)
+    {
+        $url = "api/entries/source/".$payload['source_type'].'/'.$payload['source_id'];
+        try {
+            return $this->client->setUserType($userType)->setUserId($userId)
+                ->post($url, $payload);
+        } catch (AccountingEntryServerError $e) {
+            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+        }
+    }
+
     private function makeData()
     {
         $this->setDebitAccountKey((new Accounts())->expense->paymentLinkServiceCharge::PAYMENT_LINK_SERVICE_CHARGE);

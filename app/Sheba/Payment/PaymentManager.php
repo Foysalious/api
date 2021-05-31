@@ -94,7 +94,7 @@ class PaymentManager
      * @return Payment
      * @throws InvalidPaymentMethod
      */
-    public function validate()
+    public function validate(): Payment
     {
         return $this->getMethod()->validate($this->payment);
     }
@@ -102,7 +102,7 @@ class PaymentManager
     /**
      * @return $this
      */
-    public function storeRequestPayload()
+    public function storeRequestPayload(): PaymentManager
     {
         $this->payment->request_payload = json_encode(request()->all());
         $this->payment->save();
@@ -113,7 +113,7 @@ class PaymentManager
      * @return Payment
      * @throws InvalidPaymentMethod|AlreadyCompletingPayment|Throwable
      */
-    public function complete()
+    public function complete(): Payment
     {
         $this->runningCompletionCheckAndSet();
         try {
@@ -127,9 +127,8 @@ class PaymentManager
             return $payment;
         } catch (Throwable $e) {
             $this->unsetRunningCompletion();
-            throw  $e;
+            throw $e;
         }
-
     }
 
     private function getKey()
@@ -142,7 +141,7 @@ class PaymentManager
      */
     private function runningCompletionCheckAndSet()
     {
-        $key     = $this->getKey();
+        $key = $this->getKey();
         $already = Redis::get($key);
         if ($already) {
             throw new AlreadyCompletingPayment();

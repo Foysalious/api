@@ -1,7 +1,6 @@
 <?php namespace App\Http\Controllers\Pos;
 
 use App\Exceptions\DoNotReportException;
-use App\Exceptions\Pos\Order\OrderNotFoundException;
 use App\Exceptions\Pos\Customer\PartnerPosCustomerNotFoundException;
 use App\Exceptions\Pos\Customer\PosCustomerNotFoundException;
 use App\Exceptions\Pos\Order\NotEnoughStockException;
@@ -102,15 +101,15 @@ class OrderController extends Controller
 
         $order['data']['payment_method'] = empty($order['data']['payments']) ? 'cod' : collect($order['data']['payments'])->where('transaction_type',Types::CREDIT)->sortByDesc('created_at')->first()['method'];
 
-       if (array_key_exists('payment_link_target', $order['data'])) {
+        if (array_key_exists('payment_link_target', $order['data'])) {
 
-           $payment_link_target = $order['data']['payment_link_target'];
-           $link = app(PaymentLinkRepositoryInterface::class)->getActivePaymentLinkByPosOrder($payment_link_target);
-           if($link)
-           {
-               (new PosOrderTransformer())->addPaymentLinkDataToOrder($order, $link);
-               unset($order['data']['payment_link_target']);
-           }
+            $payment_link_target = $order['data']['payment_link_target'];
+            $link = app(PaymentLinkRepositoryInterface::class)->getActivePaymentLinkByPosOrder($payment_link_target);
+            if($link)
+            {
+                (new PosOrderTransformer())->addPaymentLinkDataToOrder($order, $link);
+                unset($order['data']['payment_link_target']);
+            }
         }
         return api_response($request, null, 200, ['order' => $order]);
     }
@@ -288,33 +287,28 @@ class OrderController extends Controller
         ]);
     }
 
-
     /**
      * @param Request $request
      * @param Updater $updater
      * @return JsonResponse
-     * @throws OrderNotFoundException
      */
     public function update(Request $request, Updater $updater)
     {
         $this->setModifier($request->manager_resource);
-            /** @var PosOrder $order */
-            $new           = 1;
-            $order         = PosOrder::with('items')->find($request->order);
-            if(!$order)
-                throw new OrderNotFoundException('Order Not Found', 400);
-
-            $is_returned   = ($this->isReturned($order, $request, $new));
-            $refund_nature = $is_returned ? Natures::RETURNED : Natures::EXCHANGED;
-            $return_nature = $is_returned ? $this->getReturnType($request, $order) : null;
-            /** @var RefundNature $refund */
-            $refund = NatureFactory::getRefundNature($order, $request->all(), $refund_nature, $return_nature);
-            $refund->setNew($new)->update();
-            $order->payment_status = $order->calculate()->getPaymentStatus();
-            return api_response($request, null, 200, [
-                'msg'   => 'Order Updated Successfully',
-                'order' => $order
-            ]);
+        /** @var PosOrder $order */
+        $new           = 1;
+        $order         = PosOrder::with('items')->find($request->order);
+        $is_returned   = ($this->isReturned($order, $request, $new));
+        $refund_nature = $is_returned ? Natures::RETURNED : Natures::EXCHANGED;
+        $return_nature = $is_returned ? $this->getReturnType($request, $order) : null;
+        /** @var RefundNature $refund */
+        $refund = NatureFactory::getRefundNature($order, $request->all(), $refund_nature, $return_nature);
+        $refund->setNew($new)->update();
+        $order->payment_status = $order->calculate()->getPaymentStatus();
+        return api_response($request, null, 200, [
+            'msg'   => 'Order Updated Successfully',
+            'order' => $order
+        ]);
     }
 
     /**

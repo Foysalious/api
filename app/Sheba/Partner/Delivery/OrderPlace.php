@@ -3,6 +3,7 @@
 
 use App\Models\PosOrder;
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Pos\Repositories\PosOrderRepository;
 
 class OrderPlace
@@ -132,7 +133,6 @@ class OrderPlace
     {
         $data = $this->makeData();
         return $this->client->setToken($this->token)->post('orders', $data);
-
     }
 
     /**
@@ -148,7 +148,8 @@ class OrderPlace
             'delivery_district' => $info['delivery_address']['district'],
             'delivery_thana' => $info['delivery_address']['thana'],
             'delivery_status' => $info['status'],
-            'delivery_request_id' => $info['uid']
+            'delivery_request_id' => $info['uid'],
+            'status' => OrderStatuses::SHIPPED
         ];
 
         return $this->posOrderRepository->update($this->posOrder, $data);

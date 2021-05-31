@@ -73,7 +73,5 @@ class Route
 //            emi-info with static info
             $api->get('emi-info', 'ShebaController@getEmiInfoV3');
         });
-
-
     }
 }
