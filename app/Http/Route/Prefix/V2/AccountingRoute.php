@@ -34,6 +34,9 @@ class AccountingRoute
             $api->group(['prefix' => 'entries'], function ($api) {
                 $api->get('/{entry_id}', 'Accounting\\DueTrackerController@details');
             });
+            $api->group(['prefix' => 'reports'], function ($api) {
+                $api->get('/pos/customer-wise', 'Accounting\\ReportsController@getCustomerWiseReport');
+            });
         });
     }
 }

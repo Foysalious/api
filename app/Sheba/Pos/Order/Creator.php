@@ -427,11 +427,10 @@ class Creator
         $this->additionalAccountingData($order);
         /** @var AccountingRepository $accounting_repo */
         $accounting_repo = app()->make(AccountingRepository::class);
-        $this->request->merge(
-            [
-                "inventory_products" => $accounting_repo->getInventoryProducts($order->items, $this->data['services']),
-            ]
-        );
+        $this->request->merge([
+            "inventory_products" => $accounting_repo->getInventoryProducts($order->items, $this->data['services']),
+        ]);
+        $this->request["customer_id"] = $this->customer->id;
         $accounting_repo->storeEntry($this->request, EntryTypes::POS);
     }
 

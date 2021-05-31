@@ -1,6 +1,7 @@
 <?php
 namespace App\Sheba\AccountingEntry\Repository;
 
+use App\Models\Partner;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Constants\UserType;
 use Carbon\Carbon;
@@ -34,12 +35,12 @@ class AccountingRepository extends BaseRepository
     public function storeEntry($request, $type)
     {
         $this->getCustomer($request);
-        $this->setModifier($request->partner);
+        $partner = $this->getPartner($request);
+        $this->setModifier($partner);
         $data = $this->createEntryData($request, $type, $request->source_id);
         $url = "api/entries/";
         try {
-            Log::info(['data from entries', $data]);
-            return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
+            return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->post($url, $data);
         } catch (AccountingEntryServerError $e) {
             Log::info(['error from accounting']);
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
@@ -162,5 +163,15 @@ class AccountingRepository extends BaseRepository
         $data['details'] = $request->note;
         $data['created_from'] = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
         return $data;
+    }
+
+    private function getPartner($request)
+    {
+        if("webstore" === $request->sales_channel) {
+            $partner_id = (int) $request->partner;
+        } else {
+            $partner_id = $request->partner->id;
+        }
+        return Partner::find($partner_id);
     }
 }
