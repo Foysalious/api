@@ -51,7 +51,7 @@ abstract class ReturnPosItem extends RefundNature
 
             if ($this->order) {
                 $this->returnItem($this->order);
-                $this->updateEntry($this->order, 'refund');
+//                $this->updateEntry($this->order, 'refund');
             }
             $this->updateIncome($this->order);
         } catch (ExpenseTrackingServerError $e) {
