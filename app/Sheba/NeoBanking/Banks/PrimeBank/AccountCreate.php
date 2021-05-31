@@ -195,7 +195,7 @@ class AccountCreate
             "post_code_permanent" => $application['personal']['permanent_address']['postcode_permanent_address'] ?? null,
             "district_permanent" => $application['personal']['permanent_address']['district_permanent_address'] ?? null,
             "mobile_no"     => $this->mobile,
-            "email"         => $application['institution']["email"] ?? null,
+            "email"         => isset($application['institution']["email"]) ? substr($application['institution']["email"],0,35) : null,
             "branch_code"   => $this->branchCode,
             "cheque_book"   => PBLStatics::CHEQUE_BOOK,
             "internet_banking" => PBLStatics::INTERNET_BANKING,
