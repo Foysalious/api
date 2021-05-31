@@ -21,6 +21,6 @@ return [
             'kg_wise' => 80
         ],
         'note' => 'ক্যাশ অন ডেলিভারি চার্জঃ ১% চার্জ প্রযোজ্য হবে বিলের উপর'
-
-    ]
+    ],
+    'cash_on_delivery_charge_percentage' => 1
 ];
