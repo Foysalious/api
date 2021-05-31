@@ -53,4 +53,14 @@ class PosReportRepository extends BaseRepository
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
     }
+
+    public function getProfitLossReport($userId, $userType = UserType::PARTNER)
+    {
+        try {
+            return $this->client->setUserType($userType)->setUserId($userId)
+                ->get($this->api . 'profit_loss_report' );
+        } catch (AccountingEntryServerError $e) {
+            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+        }
+    }
 }

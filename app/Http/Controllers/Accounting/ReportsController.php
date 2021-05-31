@@ -56,4 +56,19 @@ class ReportsController extends Controller
             );
         }
     }
+
+    public function getProfitLossReport(Request $request)
+    {
+        try {
+            $response = $this->posReportRepository->getProfitLossReport($request->partner->id);
+            return api_response($request, $response, 200, ['data' => $response]);
+        } catch (Exception $e) {
+            return api_response(
+                $request,
+                null,
+                $e->getCode() == 0 ? 400 : $e->getCode(),
+                ['message' => $e->getMessage()]
+            );
+        }
+    }
 }
