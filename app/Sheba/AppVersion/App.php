@@ -69,9 +69,9 @@ class App
     }
 
     /**
-     * @return int
+     * @return int | null
      */
-    public function getVersionCode(): int
+    public function getVersionCode()
     {
         return $this->versionCode;
     }
@@ -87,7 +87,10 @@ class App
         return $this;
     }
 
-    public function getVersionName(): string
+    /**
+     * @return string | null
+     */
+    public function getVersionName()
     {
         return $this->versionName;
     }
