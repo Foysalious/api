@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="Application Test Suite" tests="1" assertions="3" failures="0" errors="0" time="0.632512">
-    <testsuite name="Tests\Feature\sDeliveryRegistration\WebstoreDashboardInfoApiTest" file="/var/www/tests/Feature/sDeliveryRegistration/WebstoreDashboardInfoApiTest.php" tests="1" assertions="3" failures="0" errors="0" time="0.632512">
-      <testcase name="testSuccessfulResponseWhenPartnerIsNotRegisteredForDelivery" class="Tests\Feature\sDeliveryRegistration\WebstoreDashboardInfoApiTest" file="/var/www/tests/Feature/sDeliveryRegistration/WebstoreDashboardInfoApiTest.php" line="41" assertions="3" time="0.632512"/>
+  <testsuite name="Application Test Suite" tests="1" assertions="3" failures="0" errors="0" time="0.996815">
+    <testsuite name="Tests\Feature\sDeliveryRegistration\WebstoreDashboardInfoApiTest" file="/var/www/tests/Feature/sDeliveryRegistration/WebstoreDashboardInfoApiTest.php" tests="1" assertions="3" failures="0" errors="0" time="0.996815">
+      <testcase name="testSuccessfulResponseWhenPartnerIsNotRegisteredForDelivery" class="Tests\Feature\sDeliveryRegistration\WebstoreDashboardInfoApiTest" file="/var/www/tests/Feature/sDeliveryRegistration/WebstoreDashboardInfoApiTest.php" line="46" assertions="3" time="0.996815"/>
     </testsuite>
   </testsuite>
 </testsuites>
