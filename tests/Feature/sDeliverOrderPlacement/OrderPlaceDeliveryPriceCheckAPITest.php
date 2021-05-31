@@ -126,12 +126,10 @@ class OrderPlaceDeliveryPriceCheckAPITest extends FeatureTestCase
 
         ]);
         $data = $response->decodeResponseJson();
-
-        $this->assertEquals(1, $data['data'][0]['id']);
-        $this->assertEquals('package_price', $data['data'][0]['name']);
-        $this->assertEquals('user@paperfly.com', $data['data'][0]['email']);
-        $this->assertEquals('01700112233', $data['data'][0]['phone']);
-        $this->assertEquals(122, $data['data'][0]['package_price']);
+        $this->assertEquals(1, $data['info']['data'][0]['id']);
+        $this->assertEquals(125, $data['info']['data'][0]['package_price']);
+        $this->assertEquals('user@paperfly.com', $data['info']['data'][0]['email']);
+        $this->assertEquals('01700112233', $data['info']['data'][0]['phone']);
 
     }
 
@@ -149,11 +147,11 @@ class OrderPlaceDeliveryPriceCheckAPITest extends FeatureTestCase
         ]);
         $data = $response->decodeResponseJson();
 
-        $this->assertEquals(1, $data['data'][0]['id']);
-        $this->assertEquals('package_price', $data['data'][0]['name']);
-        $this->assertEquals('user@paperfly.com', $data['data'][0]['email']);
-        $this->assertEquals('01700112233', $data['data'][0]['phone']);
-        $this->assertEquals(242, $data['data'][0]['package_price']);
+        $this->assertEquals(1, $data['info']['data'][0]['id']);
+        $this->assertEquals('paperfly', $data['info']['data'][0]['name']);
+        $this->assertEquals('user@paperfly.com', $data['info']['data'][0]['email']);
+        $this->assertEquals('01700112233', $data['info']['data'][0]['phone']);
+        $this->assertEquals(242, $data['info']['data'][0]['package_price']);
 
     }
 }

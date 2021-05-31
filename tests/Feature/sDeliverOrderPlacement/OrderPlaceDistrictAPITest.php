@@ -44,8 +44,8 @@ class OrderPlaceDistrictAPITest extends FeatureTestCase
 
         //$this->assertEquals(200, $data['code']);
        // $this->assertEquals("Successful", $data['message']);
-        $this->assertEquals('Bagerhat', $data['data'][0]['name']);
-        $this->assertEquals('Bagerhat', $data['data'][0]['display_name']);
+        $this->assertEquals('Bagerhat', $data['districts']['data'][0]['name']);
+        $this->assertEquals('Bagerhat', $data['districts']['data'][0]['display_name']);
 
 
 

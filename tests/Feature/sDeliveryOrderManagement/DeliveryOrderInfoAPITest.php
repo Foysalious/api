@@ -4,16 +4,12 @@
 namespace Tests\Feature\sDeliveryOrderManagement;
 
 
-use App\Models\Customer;
-use App\Models\Partner;
+
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Models\PosOrderPayment;
-use App\Models\Profile;
-use App\Sheba\Partner\Delivery\DeliveryServerClient;
-use Sheba\Dal\PartnerDeliveryInformation\Model;
+use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInformation;
 use Tests\Feature\FeatureTestCase;
-use Tests\Mocks\MockDeliveryServerClient;
 
 class DeliveryOrderInfoAPITest extends FeatureTestCase
 {
@@ -29,17 +25,21 @@ class DeliveryOrderInfoAPITest extends FeatureTestCase
         parent::setUp();
 
         $this->truncateTables([
-            Model::class,
+
             PosCustomer::class,
             PosOrder::class,
-            PosOrderPayment::class
+            PosOrderPayment::class,
+            PartnerDeliveryInformation::class
         ]);
         $this->logIn();
 
-        $this->partnerDeliveryinfo = factory(Model::class)->create();
+
         $this->partnerPosCustomer = factory(PosCustomer::class)->create();
         $this->posOrderCreate = factory(PosOrder::class)->create();
         $this->posOrderPayment = factory(PosOrderPayment::class)->create();
+        $this->partnerDeliveryinfo = factory(PartnerDeliveryInformation::class)->create([
+            'partner_id'=>$this->partner->id
+        ]);
 
     }
 

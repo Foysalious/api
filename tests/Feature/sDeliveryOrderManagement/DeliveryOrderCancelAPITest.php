@@ -7,6 +7,7 @@ namespace Tests\Feature\sDeliveryOrderManagement;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Sheba\Partner\Delivery\DeliveryServerClient;
+use Sheba\Dal\PartnerDeliveryInformation\Model;
 use Tests\Feature\FeatureTestCase;
 use Tests\Mocks\MockDeliveryServerClient;
 
@@ -24,6 +25,7 @@ class DeliveryOrderCancelAPITest extends FeatureTestCase
         $this->truncateTables([
             PosOrder::class,
             PosCustomer::class,
+
         ]);
         $this->logIn();
 

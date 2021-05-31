@@ -1,8 +1,101 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="Application Test Suite" tests="1" assertions="3" failures="0" errors="0" time="0.996815">
-    <testsuite name="Tests\Feature\sDeliveryRegistration\WebstoreDashboardInfoApiTest" file="/var/www/tests/Feature/sDeliveryRegistration/WebstoreDashboardInfoApiTest.php" tests="1" assertions="3" failures="0" errors="0" time="0.996815">
-      <testcase name="testSuccessfulResponseWhenPartnerIsNotRegisteredForDelivery" class="Tests\Feature\sDeliveryRegistration\WebstoreDashboardInfoApiTest" file="/var/www/tests/Feature/sDeliveryRegistration/WebstoreDashboardInfoApiTest.php" line="46" assertions="3" time="0.996815"/>
+  <testsuite name="Application Test Suite" tests="14" assertions="21" failures="1" errors="2" time="30.730291">
+    <testsuite name="Tests\Feature\sDeliveryRegistration\DeliveryRegisterAPITest" file="/var/www/tests/Feature/sDeliveryRegistration/DeliveryRegisterAPITest.php" tests="9" assertions="17" failures="1" errors="0" time="24.830815">
+      <testcase name="testSuccessfulRegistrationWithAllInfo" class="Tests\Feature\sDeliveryRegistration\DeliveryRegisterAPITest" file="/var/www/tests/Feature/sDeliveryRegistration/DeliveryRegisterAPITest.php" line="31" assertions="1" time="4.812544">
+        <failure type="PHPUnit_Framework_ExpectationFailedException">Tests\Feature\sDeliveryRegistration\DeliveryRegisterAPITest::testSuccessfulRegistrationWithAllInfo
+Failed asserting that 500 matches expected 200.
+
+/var/www/tests/Feature/sDeliveryRegistration/DeliveryRegisterAPITest.php:59
+</failure>
+      </testcase>
+      <testcase name="testWithoutNameCannotBeRegistered" class="Tests\Feature\sDeliveryRegistration\DeliveryRegisterAPITest" file="/var/www/tests/Feature/sDeliveryRegistration/DeliveryRegisterAPITest.php" line="63" assertions="2" time="2.700197"/>
+      <testcase name="testWithoutDistrictCannotBeRegistered" class="Tests\Feature\sDeliveryRegistration\DeliveryRegisterAPITest" file="/var/www/tests/Feature/sDeliveryRegistration/DeliveryRegisterAPITest.php" line="95" assertions="2" time="2.764914"/>
+      <testcase name="testWithoutThanaCannotBeRegistered" class="Tests\Feature\sDeliveryRegistration\DeliveryRegisterAPITest" file="/var/www/tests/Feature/sDeliveryRegistration/DeliveryRegisterAPITest.php" line="126" assertions="2" time="2.725558"/>
+      <testcase name="testEmptyMobileNoCannotBeAccepted" class="Tests\Feature\sDeliveryRegistration\DeliveryRegisterAPITest" file="/var/www/tests/Feature/sDeliveryRegistration/DeliveryRegisterAPITest.php" line="157" assertions="2" time="2.709859"/>
+      <testcase name="testEmptyPaymentMethodCannotBeAccepted" class="Tests\Feature\sDeliveryRegistration\DeliveryRegisterAPITest" file="/var/www/tests/Feature/sDeliveryRegistration/DeliveryRegisterAPITest.php" line="188" assertions="2" time="2.768987"/>
+      <testcase name="testWithoutContactNameCannotBeAccepted" class="Tests\Feature\sDeliveryRegistration\DeliveryRegisterAPITest" file="/var/www/tests/Feature/sDeliveryRegistration/DeliveryRegisterAPITest.php" line="219" assertions="2" time="2.735610"/>
+      <testcase name="testWithoutAccountTypeCannotBeAccepted" class="Tests\Feature\sDeliveryRegistration\DeliveryRegisterAPITest" file="/var/www/tests/Feature/sDeliveryRegistration/DeliveryRegisterAPITest.php" line="250" assertions="2" time="2.745202"/>
+      <testcase name="testWithWrongAuthorization" class="Tests\Feature\sDeliveryRegistration\DeliveryRegisterAPITest" file="/var/www/tests/Feature/sDeliveryRegistration/DeliveryRegisterAPITest.php" line="281" assertions="2" time="0.867944"/>
+    </testsuite>
+    <testsuite name="Tests\Feature\sDeliveryRegistration\PartnerDashboardAPITest" file="/var/www/tests/Feature/sDeliveryRegistration/PartnerDashboardAPITest.php" tests="1" assertions="0" failures="0" errors="0" time="2.940725">
+      <testcase name="testDashboardApiRespondsSuccessfully" class="Tests\Feature\sDeliveryRegistration\PartnerDashboardAPITest" file="/var/www/tests/Feature/sDeliveryRegistration/PartnerDashboardAPITest.php" line="37" assertions="0" time="2.940725"/>
+    </testsuite>
+    <testsuite name="Tests\Feature\sDeliveryRegistration\RegistrationInfoApiTest" file="/var/www/tests/Feature/sDeliveryRegistration/RegistrationInfoApiTest.php" tests="2" assertions="4" failures="0" errors="0" time="1.552365">
+      <testcase name="testSuccessfulRegistrationInfo" class="Tests\Feature\sDeliveryRegistration\RegistrationInfoApiTest" file="/var/www/tests/Feature/sDeliveryRegistration/RegistrationInfoApiTest.php" line="37" assertions="2" time="0.776026"/>
+      <testcase name="testWithWrongAuthorizationIsNotAccepted" class="Tests\Feature\sDeliveryRegistration\RegistrationInfoApiTest" file="/var/www/tests/Feature/sDeliveryRegistration/RegistrationInfoApiTest.php" line="47" assertions="2" time="0.776339"/>
+    </testsuite>
+    <testsuite name="Tests\Feature\sDeliveryRegistration\WebstoreDashboardInfoApiTest" file="/var/www/tests/Feature/sDeliveryRegistration/WebstoreDashboardInfoApiTest.php" tests="2" assertions="0" failures="0" errors="2" time="1.406386">
+      <testcase name="testSuccessfulResponseWhenPartnerIsRegisteredForDelivery" class="Tests\Feature\sDeliveryRegistration\WebstoreDashboardInfoApiTest" file="/var/www/tests/Feature/sDeliveryRegistration/WebstoreDashboardInfoApiTest.php" line="35" assertions="0" time="0.662254">
+        <error type="Illuminate\Database\QueryException">Tests\Feature\sDeliveryRegistration\WebstoreDashboardInfoApiTest::testSuccessfulResponseWhenPartnerIsRegisteredForDelivery
+Illuminate\Database\QueryException: SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`sheba_testing`.`partner_pos_services`, CONSTRAINT `partner_pos_services_pos_category_id_foreign` FOREIGN KEY (`pos_category_id`) REFERENCES `pos_categories` (`id`) ON DELETE CASCADE ON UPDATE) (SQL: insert into `partner_pos_services` (`created_by`, `created_by_name`, `updated_by`, `updated_by_name`, `created_at`, `updated_at`, `partner_id`, `pos_category_id`, `name`, `publication_status`, `is_published_for_shop`, `price`, `wholesale_price`, `stock`, `unit`, `weight`, `weight_unit`) values (1, IT - Shafiqul Islam, 1, IT - Shafiqul Islam, 2021-05-31 20:15:34, 2021-05-31 20:15:34, 1, 1, Food, 1, 1, 100, 80, 20, kg, 5, kg))
+
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Connection.php:729
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Connection.php:685
+/var/www/app/Sheba/Database/Connection.php:50
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Connection.php:414
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Query/Processors/Processor.php:32
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php:2107
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php:1423
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1628
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1597
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1488
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Eloquent/FactoryBuilder.php:87
+/var/www/tests/Feature/sDeliveryRegistration/WebstoreDashboardInfoApiTest.php:25
+
+Caused by
+PDOException: SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`sheba_testing`.`partner_pos_services`, CONSTRAINT `partner_pos_services_pos_category_id_foreign` FOREIGN KEY (`pos_category_id`) REFERENCES `pos_categories` (`id`) ON DELETE CASCADE ON UPDATE)
+
+/var/www/app/Sheba/Database/Connection.php:49
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Connection.php:722
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Connection.php:685
+/var/www/app/Sheba/Database/Connection.php:50
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Connection.php:414
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Query/Processors/Processor.php:32
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php:2107
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php:1423
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1628
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1597
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1488
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Eloquent/FactoryBuilder.php:87
+/var/www/tests/Feature/sDeliveryRegistration/WebstoreDashboardInfoApiTest.php:25
+</error>
+      </testcase>
+      <testcase name="testSuccessfulResponseWhenPartnerIsNotRegisteredForDelivery" class="Tests\Feature\sDeliveryRegistration\WebstoreDashboardInfoApiTest" file="/var/www/tests/Feature/sDeliveryRegistration/WebstoreDashboardInfoApiTest.php" line="44" assertions="0" time="0.744132">
+        <error type="Illuminate\Database\QueryException">Tests\Feature\sDeliveryRegistration\WebstoreDashboardInfoApiTest::testSuccessfulResponseWhenPartnerIsNotRegisteredForDelivery
+Illuminate\Database\QueryException: SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`sheba_testing`.`partner_pos_services`, CONSTRAINT `partner_pos_services_pos_category_id_foreign` FOREIGN KEY (`pos_category_id`) REFERENCES `pos_categories` (`id`) ON DELETE CASCADE ON UPDATE) (SQL: insert into `partner_pos_services` (`created_by`, `created_by_name`, `updated_by`, `updated_by_name`, `created_at`, `updated_at`, `partner_id`, `pos_category_id`, `name`, `publication_status`, `is_published_for_shop`, `price`, `wholesale_price`, `stock`, `unit`, `weight`, `weight_unit`) values (1, IT - Shafiqul Islam, 1, IT - Shafiqul Islam, 2021-05-31 20:15:34, 2021-05-31 20:15:34, 1, 1, Food, 1, 1, 100, 80, 20, kg, 5, kg))
+
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Connection.php:729
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Connection.php:685
+/var/www/app/Sheba/Database/Connection.php:50
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Connection.php:414
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Query/Processors/Processor.php:32
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php:2107
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php:1423
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1628
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1597
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1488
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Eloquent/FactoryBuilder.php:87
+/var/www/tests/Feature/sDeliveryRegistration/WebstoreDashboardInfoApiTest.php:25
+
+Caused by
+PDOException: SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails (`sheba_testing`.`partner_pos_services`, CONSTRAINT `partner_pos_services_pos_category_id_foreign` FOREIGN KEY (`pos_category_id`) REFERENCES `pos_categories` (`id`) ON DELETE CASCADE ON UPDATE)
+
+/var/www/app/Sheba/Database/Connection.php:49
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Connection.php:722
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Connection.php:685
+/var/www/app/Sheba/Database/Connection.php:50
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Connection.php:414
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Query/Processors/Processor.php:32
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Query/Builder.php:2107
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Builder.php:1423
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1628
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1597
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Model.php:1488
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Eloquent/FactoryBuilder.php:87
+/var/www/tests/Feature/sDeliveryRegistration/WebstoreDashboardInfoApiTest.php:25
+</error>
+      </testcase>
     </testsuite>
   </testsuite>
 </testsuites>

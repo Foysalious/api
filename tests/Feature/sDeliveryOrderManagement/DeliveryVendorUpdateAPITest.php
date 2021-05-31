@@ -31,7 +31,9 @@ class DeliveryVendorUpdateAPITest extends FeatureTestCase
             Model::class
         ]);
         $this->logIn();
-        $this->partnerDeliveryinfo = factory(Model::class)->create();
+        $this->partnerDeliveryinfo = factory(Model::class)->create([
+            'partner_id'=> $this->partner->id
+            ]);
         $this->app->singleton(DeliveryServerClient::class,MockDeliveryServerClient::class);
 
 
