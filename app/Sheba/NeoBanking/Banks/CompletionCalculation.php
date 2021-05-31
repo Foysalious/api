@@ -59,6 +59,7 @@ class CompletionCalculation
                 if(($data['field_type'] == 'radioGroup' && $view['value'] == 1) || ($data['field_type'] == 'conditionalSelect' && $view['value'] !== '')){
                     $this->filled++;
                     $this->filled_id[] = $data['id'];
+                    break;
                 }
             }
             $this->count++;
