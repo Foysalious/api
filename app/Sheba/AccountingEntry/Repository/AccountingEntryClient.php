@@ -13,6 +13,7 @@ class AccountingEntryClient
     protected $apiKey;
     protected $userType;
     protected $userId;
+    protected $reportType;
 
     public function __construct(Client $client)
     {
@@ -145,6 +146,12 @@ class AccountingEntryClient
     public function setUserId($userId)
     {
         $this->userId = $userId;
+        return $this;
+    }
+
+    public function setReportType($reportType)
+    {
+        $this->reportType = $reportType;
         return $this;
     }
 }

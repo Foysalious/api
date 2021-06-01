@@ -4,6 +4,7 @@
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Reports\Accounting\AccountingReportRepository;
 use Sheba\Reports\Pos\PosReportRepository;
 use Throwable;
 
@@ -13,10 +14,12 @@ class ReportsController extends Controller
      * @var PosReportRepository
      */
     private $posReportRepository;
+    private $accountingReportRepository;
 
-    public function __construct(PosReportRepository $posRepository)
+    public function __construct(PosReportRepository $posRepository, AccountingReportRepository $accountingReportRepository)
     {
         $this->posReportRepository = $posRepository;
+        $this->accountingReportRepository = $accountingReportRepository;
     }
 
     public function getCustomerWiseReport(Request $request) {
@@ -42,48 +45,23 @@ class ReportsController extends Controller
 
     }
 
-    public function getJournalReport(Request $request)
+    public function getAccountingReport(Request $request, $reportType)
     {
-        try {
-            $response = $this->posReportRepository->getJournalReport($request->partner->id, $request->start_date, $request->end_date);
-            return api_response($request, $response, 200, ['data' => $response]);
-        } catch (Exception $e) {
-            return api_response(
-                $request,
-                null,
-                $e->getCode() == 0 ? 400 : $e->getCode(),
-                ['message' => $e->getMessage()]
-            );
-        }
-    }
+        $report_types = [ "profit_loss_report", "journal_report", "balance_sheet_report", "general_ledger_report" ];
 
-    public function getProfitLossReport(Request $request)
-    {
-        try {
-            $response = $this->posReportRepository->getProfitLossReport($request->partner->id);
-            return api_response($request, $response, 200, ['data' => $response]);
-        } catch (Exception $e) {
-            return api_response(
-                $request,
-                null,
-                $e->getCode() == 0 ? 400 : $e->getCode(),
-                ['message' => $e->getMessage()]
-            );
+        if (in_array($reportType, $report_types)) {
+            try {
+                $response = $this->accountingReportRepository->getAccountingReport($reportType, $request->partner->id, $request->start_date, $request->end_date);
+                return api_response($request, $response, 200, ['data' => $response]);
+            } catch (Exception $e) {
+                return api_response(
+                    $request,
+                    null,
+                    $e->getCode() == 0 ? 400 : $e->getCode(),
+                    ['message' => $e->getMessage()]
+                );
+            }
         }
-    }
-
-    public function getDetailsLedgerReport(Request $request)
-    {
-        try {
-            $response = $this->posReportRepository->getDetailsLedgerReport($request->partner->id, $request->start_date, $request->end_date);
-            return api_response($request, $response, 200, ['data' => $response]);
-        } catch (Exception $e) {
-            return api_response(
-                $request,
-                null,
-                $e->getCode() == 0 ? 400 : $e->getCode(),
-                ['message' => $e->getMessage()]
-            );
-        }
+        return api_response($request, null, 402, ['message' => 'Please apply with correct report type.']);
     }
 }
