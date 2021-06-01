@@ -282,7 +282,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
         return api_response($request, null, 200,
             ['data' => [
                 'bkash_pending_status' => false,
-                'message' => '',
+                'message' => 'বিকাশের মাধ্যমে একই সাথে একের অধিক টাকা উত্তোলনের আবেদন করা যাবে না। একটি আবেদন সম্পন্ন হবার পর আপনি পরবর্তী আবেদন করতে পারবেন',
                 'current_balance' => $partner->wallet
             ]]);
     }
