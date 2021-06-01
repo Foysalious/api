@@ -3,13 +3,13 @@
 
 return [
     'mobile_banking_providers' => ['bkash', 'rocket'],
-    'payment_method_for_bank' => ['cheque','beftn','cash'],
+    'payment_method_for_bank' => ['beftn'],
     'vendor_list' => [
         'own_delivery' => ['bn' => 'নিজস্ব ডেলিভারি ', 'en' => 'Own Delivery'], 'paperfly' => ['bn' => 'পেপারফ্লাই', 'en' => 'Paperfly']
     ],
     'api_url' => env('S_DELIVERY_API_URL'),
 
-    'payment_method' => ['cheque','beftn','cash','bkash','rocket','nagad'],
+    'payment_method' => ['beftn','bkash','rocket','nagad'],
     'account_type'  => ['bank','mobile'],
     'paperfly_charge' => [
         'inside_city' => [
