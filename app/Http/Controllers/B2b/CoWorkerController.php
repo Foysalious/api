@@ -885,6 +885,14 @@ class CoWorkerController extends Controller
         return $limit;
     }
 
+    /**
+     * @param $business
+     * @param $member_id
+     * @param Request $request
+     * @param BusinessMemberRepositoryInterface $business_member_repo
+     * @param SalaryCertificateInfo $salaryCertificateInfo
+     * @return JsonResponse
+     */
     public function salaryCertificatePdf($business, $member_id, Request $request, BusinessMemberRepositoryInterface $business_member_repo, SalaryCertificateInfo $salaryCertificateInfo)
     {
         $is_inactive_filter_applied = false;

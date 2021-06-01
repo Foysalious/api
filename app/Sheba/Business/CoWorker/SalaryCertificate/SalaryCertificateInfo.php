@@ -42,6 +42,9 @@ class SalaryCertificateInfo
         return $this;
     }
 
+    /**
+     * @return array
+     */
     public function get()
     {
         return [
@@ -53,6 +56,11 @@ class SalaryCertificateInfo
         ];
     }
 
+    /**
+     * @param $member
+     * @param $business_member
+     * @return array
+     */
     private function getEmployeeInfo($member, $business_member)
     {
         $profile = $member->profile;
@@ -69,6 +77,10 @@ class SalaryCertificateInfo
         ];
     }
 
+    /**
+     * @param $business_member
+     * @return array
+     */
     private function getSalaryInfo($business_member)
     {
         $payroll_setting = $this->business->payrollSetting;
@@ -83,6 +95,10 @@ class SalaryCertificateInfo
 
     }
 
+    /**
+     * @param $amount
+     * @return string
+     */
     private function getAmountInWord($amount)
     {
         return ucwords(str_replace('-', ' ', (new NumberFormatter("en", NumberFormatter::SPELLOUT))->format($amount)));
