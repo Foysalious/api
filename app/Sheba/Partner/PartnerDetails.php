@@ -7,6 +7,7 @@ use App\Models\ReviewQuestionAnswer;
 use App\Repositories\ReviewRepository;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInformation;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
 use Sheba\Jobs\JobStatuses;
 
@@ -71,6 +72,7 @@ class PartnerDetails
         ]);
         $info->put('mobile', $partner->getContactNumber());
         $info->put('banner', $this->getWebStoreBanner());
+        $info->put('is_registered_in_delivery_system', $this->isRegisteredInDeliverySystem());
         // $this->calculateWorkingDaysInfo();
         // $info->put('working_days', $this->workingInfo);
         // $info->put('is_available', $this->isOpenToday() ? 1 : 0);
@@ -89,6 +91,12 @@ class PartnerDetails
         // $info->put('badge', $this->partner->resolveBadge());
         // $info->put('geo_informations', $this->getGeoInfo());
         return $info;
+    }
+
+    private function isRegisteredInDeliverySystem()
+    {
+        $partnerDeliveryInformation =  PartnerDeliveryInformation::where('partner_id', $this->partner->id)->first();
+        return !empty($partnerDeliveryInformation) ? 1 : 0;
     }
 
     private function loadPartnerRelations()
