@@ -104,6 +104,7 @@ class BusinessRoute
                         $api->get('/', 'B2b\CoWorkerController@show');
                         $api->post('/', 'B2b\CoWorkerController@update');
                         $api->get('/expense/pdf', 'B2b\CoWorkerController@show');
+                        $api->get('/salary-certificate/pdf', 'B2b\CoWorkerController@salaryCertificatePdf');
                     });
                 });
                 $api->group(['prefix' => 'leaves'], function ($api) {
