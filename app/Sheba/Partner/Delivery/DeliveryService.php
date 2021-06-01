@@ -183,7 +183,7 @@ class DeliveryService
                 'address' => [
                     'full_address' => $this->posOrder->address,
                     'thana' => $this->posOrder->delivery_thana,
-                    'zilla' => $this->posOrder->delivery_zilla
+                    'zilla' => $this->posOrder->delivery_district
                 ],
                 'payment_method' => ($payment_info = $this->paymentInfo($this->posOrder->id)) ? $payment_info->method : null,
                 'cod_amount' => $this->getDueAmount(),
