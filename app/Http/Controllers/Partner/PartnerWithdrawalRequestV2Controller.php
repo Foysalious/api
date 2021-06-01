@@ -99,7 +99,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
         if($partner->status === PartnerStatuses::BLACKLISTED || $partner->status === PartnerStatuses::PAUSED) {
             return api_response($request, null, 402, ['message' => 'ব্ল্যাক লিস্ট হওয়ার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে পারবেন না।']);
         }
-        $status_check = WithdrawalRequest::query()->where('status', 'pending')->where('requester_id', $partner->id)->first();
+        $status_check = WithdrawalRequest::query()->whereIn('status', ['pending', 'approval_pending'])->where('requester_id', $partner->id)->first();
         if ($status_check && $request->payment_method == 'bkash') {
             $message = 'ইতিমধ্যে আপনার ১ টি বিকাশের মাধ্যমে টাকা উত্তোলনের আবেদন প্রক্রিয়াধীন রয়েছে, অনুগ্রহ করে আবেদনটি সম্পূর্ণ হওয়া পর্যন্ত অপেক্ষা করুন অথবা ব্যাংকের মাধ্যমে টাকা উত্তোলনের আবেদন করুন।';
             return api_response($request, null, 402, ['message' => $message ]);
@@ -267,7 +267,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
     {
         $partner = $request->partner;
 
-        $status_check = WithdrawalRequest::query()->where('status', 'pending')->where('requester_id', $partner->id)->first();
+        $status_check = WithdrawalRequest::query()->whereIn('status', ['pending', 'approval_pending'])->where('requester_id', $partner->id)->first();
 
         if ($status_check  && $status_check->payment_method == 'bkash') {
             $message = 'ইতিমধ্যে আপনার ১ টি বিকাশের মাধ্যমে টাকা উত্তোলনের আবেদন প্রক্রিয়াধীন রয়েছে, অনুগ্রহ করে আবেদনটি সম্পূর্ণ হওয়া পর্যন্ত অপেক্ষা করুন অথবা ব্যাংকের মাধ্যমে টাকা উত্তোলনের আবেদন করুন।';
