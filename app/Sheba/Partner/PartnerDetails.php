@@ -5,6 +5,7 @@ use App\Models\Partner;
 use App\Models\PartnerResource;
 use App\Models\ReviewQuestionAnswer;
 use App\Repositories\ReviewRepository;
+use App\Sheba\Partner\Delivery\Methods;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInformation;
@@ -72,7 +73,7 @@ class PartnerDetails
         ]);
         $info->put('mobile', $partner->getContactNumber());
         $info->put('banner', $this->getWebStoreBanner());
-        $info->put('is_registered_in_delivery_system', $this->isRegisteredInDeliverySystem());
+        $info->put('delivery_method', $this->getDeliveryMethod());
         // $this->calculateWorkingDaysInfo();
         // $info->put('working_days', $this->workingInfo);
         // $info->put('is_available', $this->isOpenToday() ? 1 : 0);
@@ -93,10 +94,10 @@ class PartnerDetails
         return $info;
     }
 
-    private function isRegisteredInDeliverySystem()
+    private function getDeliveryMethod()
     {
         $partnerDeliveryInformation =  PartnerDeliveryInformation::where('partner_id', $this->partner->id)->first();
-        return !empty($partnerDeliveryInformation) ? 1 : 0;
+        return !empty($partnerDeliveryInformation) ? $partnerDeliveryInformation->delivery_vendor : Methods::OWN_DELIVERY;
     }
 
     private function loadPartnerRelations()
