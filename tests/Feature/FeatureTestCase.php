@@ -12,11 +12,17 @@ use App\Models\Member;
 use App\Models\Order;
 use App\Models\Partner;
 use App\Models\PartnerOrder;
+use App\Models\PartnerPosService;
 use App\Models\PartnerResource;
 use App\Models\PartnerSubscriptionPackage;
+use App\Models\PosCategory;
+use App\Models\PosCustomer;
+use App\Models\PosOrder;
+use App\Models\PosOrderPayment;
 use App\Models\Profile;
 use App\Models\Resource;
 use Carbon\Carbon;
+use Factory\PartnerDeliveryInfoFactory;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\Schema;
 use Sheba\Dal\AuthorizationRequest\AuthorizationRequest;
@@ -25,8 +31,10 @@ use Sheba\Dal\Category\Category;
 use Sheba\Dal\CategoryLocation\CategoryLocation;
 use Sheba\Dal\JobService\JobService;
 use Sheba\Dal\LocationService\LocationService;
+use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\Dal\Service\Service;
 use Sheba\Services\Type as ServiceType;
+use Sheba\Subscription\Partner\Access\RulesDescriber\Pos;
 use TestCase;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
@@ -54,13 +62,50 @@ class FeatureTestCase extends TestCase
 //    @var ParnerSubscriptionPackage
     protected $partner_package;
     /**
-     * @var $business
+     * @var business
      */
     protected $business;
     /**
-     * @var $business_member
+     * @var business_member
      */
     protected $business_member;
+    /**
+     * @var PosOrder
+     */
+    protected $PosOrder;
+
+    /**
+     * @var PosCustomer
+     */
+    protected $PosCustomer;
+
+    /**
+     * @var PartnerDeliveryInfoFactory
+     */
+    protected $PartnerDeliveryInfoFactory;
+
+    /**
+     * @var PartnerPosService
+     */
+    protected $PartnerPosService;
+
+    /**
+     * @var PartnerPosCategory
+     */
+    protected $PartnerPosCategory;
+
+
+    /**
+     * @var PosCategory
+     */
+    protected $PosCategory;
+
+    /**
+     * @var PosOrderPayment
+     */
+    protected $PosOrderPayment;
+
+
 
     public function setUp()
     {
@@ -95,7 +140,7 @@ class FeatureTestCase extends TestCase
     public function runDatabaseMigrations()
     {
         // \Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
-        // $this->artisan('migrate');
+         //  $this->artisan('migrate');
         // $this->beforeApplicationDestroyed(function () {
         //     \Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
         // });
@@ -124,7 +169,9 @@ class FeatureTestCase extends TestCase
             Resource::class,
             Partner::class,
             Business::class,
-            BusinessMember::class
+            BusinessMember::class,
+            PosCustomer::class,
+            PosOrder::class
         ]);
 
 
@@ -134,6 +181,7 @@ class FeatureTestCase extends TestCase
 
         $this->createClientAccounts();
     }
+
 
     protected function truncateTables(array $tables)
     {

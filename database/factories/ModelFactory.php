@@ -34,6 +34,13 @@ use Factory\BusinessFactory;
 use Factory\BusinessMemberFactory;
 use Factory\BusinessHolidayFactory;
 use Factory\CategoryLocationFactory;
+use Factory\PosOrderFactory;
+use \Factory\PosCustomerFactory;
+use \Factory\PartnerDeliveryInfoFactory;
+use \Factory\PartnerPosServiceFactory;
+use \Factory\PartnerPosCategoryFactory;
+use \Factory\PosCategoriesFactory;
+use \Factory\PosOrderPaymentFactory;
 
 
 
@@ -72,11 +79,18 @@ $factory_classes = [
     BusinessMemberFactory::class,
     BusinessHolidayFactory::class,
     PartnerBonus::class,
-    CategoryLocationFactory::class
+    CategoryLocationFactory::class,
+    PosOrderFactory::class,
+    PosCustomerFactory::class,
+    PartnerDeliveryInfoFactory::class,
+    PartnerPosServiceFactory::class,
+    PartnerPosCategoryFactory::class,
+    PosCategoriesFactory::class,
+    PosOrderPaymentFactory::class
 ];
 
 foreach ($factory_classes as $factory_class) {
     /** @var Factory $f */
-    $f = (new $factory_class($factory));
+    $f = new $factory_class($factory);
     $f->handle();
 }
