@@ -153,7 +153,8 @@ class DeliveryService
             'contact_number' => $this->partner->getContactNumber(),
             'email' => $this->partner->getContactEmail(),
             'business_type' => $this->partner->business_type,
-            'address' => $this->partner->address
+            'address' => $this->partner->address,
+            'website_url' => config('sheba.webstore_url') . '/' . $this->partner->sub_domain
         ];
     }
 
