@@ -157,7 +157,7 @@ class BusinessCommonInformationCreator
         $this->officeTimingCreateRequest = $this->officeTimingCreateRequest->setBusiness($this->business)
             ->setStartTime(OfficeTime::START_TIME)
             ->setEndTime(OfficeTime::END_TIME)
-            ->setTotalWorkingDaysType(Type::AS_PER_CALENDER);
+            ->setTotalWorkingDaysType(Type::AS_PER_CALENDAR);
         $this->officeHoursCreator->setOfficeTimingCreateRequest($this->officeTimingCreateRequest)->create();
     }
 
