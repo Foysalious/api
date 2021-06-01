@@ -1,6 +1,5 @@
 <?php namespace Sheba\AppVersion;
 
-
 use Illuminate\Support\Facades\Redis;
 use Intervention\Image\Image;
 use Sheba\Dal\AppVersion\AppVersionRepository;
@@ -24,7 +23,7 @@ class AppVersionManager
      * @param $version
      * @return AppVersionDTO
      */
-    public function getVersionForApp($app, $version)
+    public function getVersionForApp($app, $version): AppVersionDTO
     {
         $versions = $this->repo->getByAppAndVersion($app, $version);
 
@@ -39,7 +38,7 @@ class AppVersionManager
      * @param $version
      * @return bool
      */
-    public function hasCriticalUpdate($app, $version)
+    public function hasCriticalUpdate($app, $version): bool
     {
         return $this->repo->hasCriticalUpdate($app, $version);
     }
@@ -86,7 +85,7 @@ class AppVersionManager
      * @param string $semver
      * @return int
      */
-    public function convertSemverToInt($semver)
+    public function convertSemverToInt($semver): int
     {
         return (int)str_replace('.', '', $semver);
     }
@@ -95,18 +94,18 @@ class AppVersionManager
      * @param int $version_code
      * @return string
      */
-    public function convertIntToSemver($version_code)
+    public function convertIntToSemver($version_code): string
     {
         return implode(".", explode("", "" . $version_code));
     }
 
-    private function saveImages(App $app, Image $file)
+    private function saveImages(App $app, Image $file): string
     {
         list($image, $filename) = $this->makeAppVersionImage($file, $app->getName());
         return $this->saveImageToCDN($image, getAppVersionImageLinkFolder(), $filename);
     }
 
-    public function scrapeAppVersionsAndStoreInRedis()
+    public function scrapeAppVersionsAndStoreInRedis(): array
     {
         $version_string = 'itemprop="softwareVersion">';
         $apps           = Apps::getPackageNames();
