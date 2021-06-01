@@ -92,7 +92,9 @@ class Updater
     private function createComponentPercentage()
     {
         $business_member = $this->salaryRequest->getBusinessMember();
-        foreach ($this->salaryRequest->getBreakdownPercentage() as $component) {
+        $breakdown_percentage = $this->salaryRequest->getBreakdownPercentage();
+        if (empty($breakdown_percentage)) return true;
+        foreach ($breakdown_percentage as $component) {
             $gross_salary_breakdown_maker = new Maker($component, $business_member, $this->salary, $this->oldSalary);
             $gross_salary_breakdown_maker->setManager($this->salaryRequest->getManagerMember());
             $gross_salary_breakdown_maker->runComponent();

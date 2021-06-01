@@ -2,21 +2,8 @@
 
 class PayrollComponentCalculation
 {
-    private $payrollSetting;
-    /**
-     * @var mixed
-     */
     private $deduction;
-    /**
-     * @var mixed
-     */
     private $addition;
-
-    public function setPayrollSetting($payroll_setting)
-    {
-        $this->payrollSetting = $payroll_setting;
-        return $this;
-    }
 
     public function setAddition($addition)
     {
@@ -38,28 +25,22 @@ class PayrollComponentCalculation
         return ['payroll_component' => array_merge($addition, $deduction)];
     }
 
-    /**
-     * @return array
-     */
     private function getAdditionComponent()
     {
-        foreach ($this->addition as $component => $value) {
-            $data['addition'][$component] = $value;
+        $data = [];
+        foreach ($this->addition as $component_name => $component_value) {
+            $data['addition'][$component_name] = $component_value;
         }
-
         return $data;
     }
 
-    /**
-     * @return array
-     */
     private function getDeductionComponent()
     {
-        foreach ($this->deduction as $component => $value) {
-            $data['deduction'][$component] = $value;
+        $data = [];
+        foreach ($this->deduction as $component_name => $component_value) {
+            $data['deduction'][$component_name] = $component_value;
         }
 
         return $data;
     }
-
 }
