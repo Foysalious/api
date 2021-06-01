@@ -22,7 +22,7 @@ class PartnerService
         $partner = $this->partner;
         $data = collect($partner)->only([
             'id',
-            'name',
+            'business_name',
             'sub_domain',
             'email',
             'logo',
