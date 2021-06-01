@@ -19,7 +19,6 @@ use Sheba\Dal\Service\Service;
 use Sheba\Resource\InfoCalls\InfoCallList;
 use Sheba\ModificationFields;
 use Sheba\OAuth2\AuthUser;
-use Sheba\Dal\ResourceTransaction\Model as ResourceTransaction;
 
 class InfoCallController extends Controller
 {
@@ -55,10 +54,7 @@ class InfoCallController extends Controller
             $info_call_reward = Reward::where('detail_id', $reward_action->id)
                 ->select('rewards.*')
                 ->get();
-            $reward_exists = $info_call_reward? $info_call_reward[0]->amount : 0;
-            $reward_name = $info_call_reward? $info_call_reward[0]->name : null;
-//            $kk = str_contains($reward_name, 'Reward for sPro');
-//            dd($kk);
+            $reward_exists = $info_call_reward[0]->amount;
         }
         else $reward_exists = 0;
         if (!($request->has('year')) && !($request->has('month'))) {
@@ -78,7 +74,6 @@ class InfoCallController extends Controller
         }
         $info_call_list = $filtered_info_calls->get()->sortByDesc('id')->toArray();
         $list = [];
-        $completed_order = 0;
         foreach ($info_call_list as $info_call) {
             if ($info_call['status'] == Statuses::REJECTED) {
                 $order_status = 'বাতিল';
@@ -96,16 +91,6 @@ class InfoCallController extends Controller
                     $reward = 0;
                 }
                 elseif ($partner_order['closed_and_paid_at'] != null) {
-                    $completed_order++;
-                    if ($reward_action != null) {
-                        $info_call_reward = Reward::where('detail_id', $reward_action->id)
-                            ->select('rewards.*')
-                            ->get();
-                        $reward_name = $info_call_reward? $info_call_reward[0]->name : null;
-//            $kk = str_contains($reward_name, 'Reward for sPro');
-//            dd($kk);
-                    }
-                    $resource_transaction = ResourceTransaction::where('resource_id',$created_by)->get();
                     $order_status = 'শেষ';
                     $reward = $reward_exists;
                 }
@@ -121,7 +106,6 @@ class InfoCallController extends Controller
                 'reward' => $reward
             ]);
         }
-//        dd($completed_order);
         return api_response($request, $list, 200, ['service_request_list' => $list]);
     }
 
