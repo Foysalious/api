@@ -24,7 +24,7 @@ class PosCategoriesFactory extends Factory
     {
         return array_merge($this->commonSeeds,[
             'parent_id' => 1,
-            'name' => "test",
+            'name' => "test"
 
         ]);
     }

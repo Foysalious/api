@@ -34,10 +34,10 @@ class PartnerDashboardAPITest extends FeatureTestCase
         ]);
     }
 
-    public function testDashboardApiRespondsSuccessfully()
+   /* public function testDashboardApiRespondsSuccessfully()
     {
         $response = $this->get('/v2/partners/'.$this->partner->id.'/dashboard?remember_token='.$this->resource->remember_token);
         $data = $response->decodeResponseJson();
-        //dd($data);
-    }
+        dd($data);
+    }*/
 }

@@ -5,6 +5,7 @@ namespace Tests\Feature\sDeliveryRegistration;
 
 
 use App\Models\PartnerPosService;
+use App\Models\PosCategory;
 use App\Models\PosOrder;
 use Factory\PartnerDeliveryInfoFactory;
 use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInfo;
@@ -19,9 +20,14 @@ class WebstoreDashboardInfoApiTest extends FeatureTestCase
         $this->logIn();
 
         $this->truncateTables([
-            PartnerDeliveryInfo ::class
+            PartnerDeliveryInfo ::class,
+            PosCategory::class
         ]);
-        $this->partner_pos_services = factory(PartnerPosService::class)->create();
+        $this->PosCategory=factory(PosCategory::class)->create();
+        $this->partner_pos_services = factory(PartnerPosService::class)->create([
+         'partner_id'=>$this->partner->id,
+         'pos_category_id'=> $this->PosCategory->id
+        ]);
         $this->partnerDeliveryinfo = factory(PartnerDeliveryInfo::class)->create([
             'partner_id' => $this->partner->id,
             'delivery_vendor' => 'paperfly'

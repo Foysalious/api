@@ -146,6 +146,7 @@ class OrderPlaceDeliveryPriceCheckAPITest extends FeatureTestCase
 
         ]);
         $data = $response->decodeResponseJson();
+       // dd($data);
 
         $this->assertEquals(1, $data['info']['data'][0]['id']);
         $this->assertEquals('paperfly', $data['info']['data'][0]['name']);
