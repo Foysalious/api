@@ -1,10 +1,6 @@
 <?php namespace App\Sheba\Business\PayrollComponent\Components;
 
-use Sheba\Business\PayrollComponent\Components\MedicalAllowance;
-use Sheba\Business\PayrollComponent\Components\BasicSalary;
-use Sheba\Business\PayrollComponent\Components\Conveyance;
-use Sheba\Business\PayrollComponent\Components\HouseRent;
-use Sheba\Dal\PayrollComponent\PayrollComponent;
+use App\Models\BusinessMember;
 use Sheba\Dal\PayrollComponent\Components;
 use Sheba\Dal\PayrollComponent\TargetType;
 use Sheba\Dal\PayrollComponent\Type;
@@ -24,15 +20,12 @@ class GrossSalaryBreakdownCalculate
 
     /**
      * @param $payroll_setting
-     * @return GrossSalaryComponent
+     * @param $business_member
+     * @return mixed
      */
     public function componentPercentageBreakdown($payroll_setting, $business_member)
     {
-        /** @var PayrollComponent $payroll_components */
-        $payroll_components = $payroll_setting->components()->where('type', Type::GROSS)->where('is_active', 1)->where('target_type', TargetType::GENERAL)->orderBy('name')->get();
-        $gross_components = $payroll_components;
-        $payroll_component_by_target = $payroll_setting->components()->where('type', Type::GROSS)->where('target_id', $business_member->id)->where('is_active', 1)->orderBy('name')->get();
-        if ($payroll_component_by_target) $gross_components = $this->makeGrossComponentCollection($payroll_components, $payroll_component_by_target);
+        $gross_components = $this->getBusinessMemberGrossComponent($payroll_setting, $business_member);
         $salary = $business_member->salary ? $business_member->salary->gross_salary : 0;
         $data = [];
         $total_percentage = 0;
@@ -60,36 +53,30 @@ class GrossSalaryBreakdownCalculate
         return $final_data;
     }
 
-
     /**
-     * @param float $gross_salary
-     * @return GrossSalaryComponent
+     * @param BusinessMember $business_member
+     * @return array
      */
-    public function totalAmountPerComponent($gross_salary = 0.0)
+    public function payslipComponentPercentageBreakdown(BusinessMember $business_member)
     {
-        $this->totalAmountPerComponent->basicSalary = floatValFormat(($gross_salary * $this->componentPercentage->basicSalary) / 100);
-        $this->totalAmountPerComponent->houseRent = floatValFormat(($gross_salary * $this->componentPercentage->houseRent) / 100);
-        $this->totalAmountPerComponent->medicalAllowance = floatValFormat(($gross_salary * $this->componentPercentage->medicalAllowance) / 100);
-        $this->totalAmountPerComponent->conveyance = floatValFormat(($gross_salary * $this->componentPercentage->conveyance) / 100);
-        $this->totalAmountPerComponent->grossSalary = floatValFormat($gross_salary);
-        return $this->totalAmountPerComponent;
+        $payroll_setting = $business_member->business->payrollSetting;
+        $gross_components = $this->getBusinessMemberGrossComponent($payroll_setting, $business_member);
+        $data = [];
+        foreach ($gross_components as $payroll_component) {
+            $percentage = floatValFormat(json_decode($payroll_component->setting, 1)['percentage']);
+            $data[$payroll_component->name] = $percentage;
+        }
+        return $data;
     }
 
-    /**
-     * @return array[]
-     */
-    public function totalAmountPerComponentFormatted()
+
+    public function totalAmountPerComponent($gross_salary = 0.0, $gross_salary_breakdown_percentage)
     {
-        $this->grossSalaryBreakdownWithTotalAmount = [
-            'gross_salary_breakdown' => [
-                'basic_salary' => $this->totalAmountPerComponent->basicSalary,
-                'house_rent' => $this->totalAmountPerComponent->houseRent,
-                'medical_allowance' => $this->totalAmountPerComponent->medicalAllowance,
-                'conveyance' => $this->totalAmountPerComponent->conveyance,
-                'gross_salary' => $this->totalAmountPerComponent->grossSalary,
-            ]
-        ];
-        return $this->grossSalaryBreakdownWithTotalAmount;
+        $data = ['gross_salary' => $gross_salary];
+        foreach ($gross_salary_breakdown_percentage as $breakdown_name => $breakdown_value) {
+            $data[$breakdown_name] = floatValFormat(($gross_salary * $breakdown_value) / 100);
+        }
+        return $data;
     }
 
     public function makeGrossComponentCollection($payroll_components, $payroll_component_by_target)
@@ -105,5 +92,15 @@ class GrossSalaryBreakdownCalculate
     private function percentageToAmountCalculation($gross_salary, $percentage)
     {
         return floatValFormat(($gross_salary * $percentage) / 100);
+    }
+
+    private function getBusinessMemberGrossComponent($payroll_setting, $business_member)
+    {
+        $payroll_components = $payroll_setting->components()->where('type', Type::GROSS)->where('is_active', 1)->where('target_type', TargetType::GENERAL)->orderBy('name')->get();
+        $gross_components = $payroll_components;
+        $payroll_component_by_target = $payroll_setting->components()->where('type', Type::GROSS)->where('target_id', $business_member->id)->where('is_active', 1)->orderBy('name')->get();
+        if ($payroll_component_by_target) $gross_components = $this->makeGrossComponentCollection($payroll_components, $payroll_component_by_target);
+
+        return $gross_components;
     }
 }
