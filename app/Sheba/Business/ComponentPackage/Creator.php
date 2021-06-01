@@ -1,9 +1,12 @@
 <?php namespace App\Sheba\Business\ComponentPackage;
 
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\ComponentPackageTarget\ComponentPackageTargetRepository;
 use Sheba\Dal\PayrollComponent\PayrollComponentRepository;
 use Sheba\Dal\PayrollComponentPackage\PayrollComponentPackageRepository;
+use Sheba\Dal\PayrollComponentPackage\ScheduleType;
+use Sheba\Dal\PayrollSetting\PayrollSetting;
 
 class Creator
 {
@@ -15,12 +18,20 @@ class Creator
     private $manager;
     /** @var ComponentPackageTargetRepository*/
     private $componentPackageTargetRepository;
+    /*** @var PayrollSetting */
+    private $payrollSetting;
 
     public function __construct()
     {
         $this->payrollComponentRepository = app(PayrollComponentRepository::class);
         $this->payrollComponentPackageRepository = app(PayrollComponentPackageRepository::class);
         $this->componentPackageTargetRepository = app(ComponentPackageTargetRepository::class);
+    }
+
+    public function setPayrollSetting(PayrollSetting $payroll_setting)
+    {
+        $this->payrollSetting = $payroll_setting;
+        return $this;
     }
 
     public function setPackageRequester($package_requester)
@@ -55,6 +66,15 @@ class Creator
                     'periodic_schedule' => $package['periodic_schedule'],
                     'schedule_date' => $package['schedule_date'],
                 ];
+                if ($package['schedule_type'] == ScheduleType::PERIODICALLY) {
+                    $current_time = Carbon::now();
+                    $business_pay_day = $this->payrollSetting->pay_day;
+
+                    if ($current_time->day < $business_pay_day) $current_package_pay_generate_date = $current_time->format('Y m').'-'.$business_pay_day;
+                    else $current_package_pay_generate_date = $current_time->addMonth()->format('Y m').'-'.$business_pay_day;
+
+                    array_merge($data, ['periodic_schedule_created_at' => $current_time->format('Y-m-d H:i:s'), 'generated_at' => $current_package_pay_generate_date]);
+                }
                 $new_package = $this->payrollComponentPackageRepository->create($data);
                 $this->makeTargetData($new_package->id, $package['effective_for'], $package['target']);
             }
