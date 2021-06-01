@@ -227,7 +227,6 @@ class PartnerWithdrawalRequestV2Controller extends Controller
                 'account_no' => 'required',
                 'account_name' => 'required',
                 'branch_name' => 'required',
-                'routing_no' => 'required',
                 'cheque_book_receipt' => 'sometimes|required|file|mimes:jpg,jpeg,png',
 
             ]);
