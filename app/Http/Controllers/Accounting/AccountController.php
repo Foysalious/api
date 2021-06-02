@@ -4,10 +4,8 @@ namespace App\Http\Controllers\Accounting;
 
 use Exception;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Accounting\AccountRequest;
-use App\Sheba\AccountingEntry\Repository\UserAccountRepository;
+use Sheba\AccountingEntry\Repository\UserAccountRepository;
 use Illuminate\Http\Request;
-use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 
 class AccountController extends Controller
 {
