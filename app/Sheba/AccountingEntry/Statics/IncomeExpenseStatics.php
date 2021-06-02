@@ -31,16 +31,15 @@ class IncomeExpenseStatics
     }
 
     /**
-     * @param $account_type
      * @param $start_date
      * @param $end_date
      * @return array
      */
-    public static function createDataForAccountsTotal($account_type, $start_date, $end_date): array
+    public static function createDataForAccountsTotal($start_date, $end_date): array
     {
-        $data['account_type'] = $account_type;
-        $data['start_date']   = $start_date." 00:00:00";
-        $data['end_date']     = $end_date." 23:59:59";
-        return $data;
+        return [
+            $start_date." 00:00:00",
+            $end_date." 23:59:59"
+        ];
     }
 }

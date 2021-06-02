@@ -53,14 +53,10 @@ class AccountingRepository extends BaseRepository
      */
     public function getAccountsTotal(Request $request)
     {
-        $data = IncomeExpenseStatics::createDataForAccountsTotal(
-            $request->account_type,
-            $request->start_date,
-            $request->end_date
-        );
-        $url = "api/reports/account-list-with-sum";
+        list($start, $end) = IncomeExpenseStatics::createDataForAccountsTotal($request->start_date, $request->end_date);
+        $url = "api/reports/account-list-with-sum/{$request->account_type}?start_date=$start&end_date=$end";
         try {
-            return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->get($url, $data);
+            return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->get($url);
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
