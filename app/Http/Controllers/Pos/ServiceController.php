@@ -387,6 +387,27 @@ class ServiceController extends Controller
         return api_response($request, null, 200, ['message' => 'Service successfully ' . ($posService->is_published_for_shop ? 'published' : 'unpublished')]);
     }
 
+    public function getPosProductWeightUnit(Request $request)
+    {
+        try {
+            $weight_units = [];
+            $all_product_weight_unit = config('weight.weight_unit');
+            foreach ($all_product_weight_unit as $key => $unit) {
+                array_push($weight_units, $unit);
+            }
+            $default_unit = [
+                'key' => 'kg',
+                'en' => 'kg',
+                'bn' => 'কেজি'
+            ];
+            return api_response($request,$weight_units,200,['product_weight_units' => $weight_units,'default_unit' => $default_unit]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+
     /**
      * @param Request $request
      * @param $partner
