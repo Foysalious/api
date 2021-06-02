@@ -19,7 +19,9 @@
                     For Android click here: <a target="_blank" href="https://play.google.com/store/apps/details?id=xyz.sheba.emanager&hl=en">Play store</a><br>
                     For iOS click here: <a target="_blank" href="https://www.apple.com/us/search/digigo-office?src=globalnav">App store</a><br><br>
                     @if(!empty($password))
-                        2. Your short password: <strong>{{ $password }}</strong> (Please change the password after login to your account)<br>
+                        2. Login with your account credentials- <br>
+                        Email: {{ $email }} <br>
+                        Password: {{ $password }} (Please change the password after login into your account) <br>
                     @else
                         2. Use Your existing password
                     @endif
