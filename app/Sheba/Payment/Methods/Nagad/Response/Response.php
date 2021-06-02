@@ -1,7 +1,6 @@
 <?php namespace Sheba\Payment\Methods\Nagad\Response;
 
 use Illuminate\Support\Facades\Log;
-use Sheba\Payment\Methods\Nagad\Outputs;
 use Sheba\Payment\Methods\Nagad\Stores\NagadStore;
 
 abstract class Response
@@ -24,21 +23,11 @@ abstract class Response
         $this->store = $store;
         $this->data = (array)$data;
         $this->output = $this->data;
-        Log::info('CONSTRUCTOR', [$this->data]);
 
-        /*if (!array_key_exists($this->decode, $this->data) && !array_key_exists('callBackUrl', $this->data)) {
+        if (!array_key_exists('paymentReferenceId', $this->data) && !array_key_exists('callBackUrl', $this->data)) {
             $this->error = $this->data[$this->msg];
-        } else {
-            if ($this->shouldDecode) {
-                $this->decodeOutput();
-            }
-        }*/
+        }
     }
-
-    /*private function decodeOutput()
-    {
-        $this->output = Outputs::decode($this->data[$this->decode], $this->store);
-    }*/
 
     public function hasError(): bool
     {

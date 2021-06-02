@@ -9,7 +9,6 @@ class Initialize extends Response
 
     public function __construct($data, NagadStore $store)
     {
-        Log::info('INITIALIZE', [$data]);
         parent::__construct($data, $store);
     }
 
