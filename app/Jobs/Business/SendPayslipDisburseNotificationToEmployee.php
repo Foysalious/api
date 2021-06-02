@@ -31,7 +31,7 @@ class SendPayslipDisburseNotificationToEmployee extends BusinessQueue
     public function handle()
     {
         if ($this->attempts() < 2) {
-            $title = "Payslip Disbursed of month ".$this->payslip->schedule_date->format('M Y');
+            $title = "Your salary for ".$this->payslip->schedule_date->format('M Y')." has been disbursed";
             notify()->member($this->businessMember->member)->send([
                 'title' => $title,
                 'type' => 'Info',

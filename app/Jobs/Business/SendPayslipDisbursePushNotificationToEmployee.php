@@ -35,8 +35,8 @@ class SendPayslipDisbursePushNotificationToEmployee extends BusinessQueue
             $channel = config('sheba.push_notification_channel_name.employee');
             $sound  = config('sheba.push_notification_sound.employee');
             $notification_data = [
-                "title" => "Payslip Disbursed",
-                "message" => "Payslip Disbursed of month ".$this->payslip->schedule_date->format('M Y'),
+                "title" => "Payslip Disbursement",
+                "message" => "Your salary for ".$this->payslip->schedule_date->format('M Y')." has been disbursed. Find your payslip here",
                 "event_type" => 'payslip',
                 "event_id" => $this->payslip->id,
                 "sound" => "notification_sound",
