@@ -4,6 +4,7 @@ namespace App\Sheba\AccountingEntry\Repository;
 
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Constants\UserType;
+use Carbon\Carbon;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
@@ -108,6 +109,7 @@ class PaymentLinkRepository extends BaseRepository
         }
 
         $data['amount'] = $this->amount;
+        $data['entry_at'] = Carbon::now()->format('Y-m-d H:i:s');
         $data['bank_transaction_charge'] = $this->bank_transaction_charge;
         $data['interest'] = $this->interest;
         $data['source_type'] = $this->source_type;
