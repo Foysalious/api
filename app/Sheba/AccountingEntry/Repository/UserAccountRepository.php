@@ -5,7 +5,6 @@ namespace Sheba\AccountingEntry\Repository;
 use App\Sheba\AccountingEntry\Constants\UserType;
 use App\Sheba\AccountingEntry\Repository\BaseRepository;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
-use Sheba\AccountingEntry\Repository\AccountingEntryClient;
 
 class UserAccountRepository extends BaseRepository
 {
