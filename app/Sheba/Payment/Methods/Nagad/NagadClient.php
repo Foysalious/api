@@ -40,7 +40,6 @@ class NagadClient
     /**
      * @param $transaction_id
      * @return Initialize
-     * @throws Exception\EncryptionFailed
      * @throws TPProxyServerError
      */
     public function init($transaction_id): Initialize
