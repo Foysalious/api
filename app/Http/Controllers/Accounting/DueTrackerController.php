@@ -23,15 +23,17 @@ class DueTrackerController extends Controller
 
     /**
      * @param Request $request
-     * @param $customer_id
      * @return JsonResponse
      */
-    public function store(Request $request ) {
+    public function store(Request $request ): JsonResponse
+    {
         try {
             $this->validate($request, [
                 'amount' => 'required',
                 'entry_type' => 'required|in:due,deposit',
-                'account_key' => 'required'
+                'account_key' => 'required',
+                'customer_id' => 'required|integer',
+                'date' => 'required|date_format:Y-m-d H:i:s'
             ]);
             $request->merge(['customer_id' => $request->customer_id]);
             $response = $this->dueTrackerRepo->storeEntry($request, $request->entry_type);
@@ -42,12 +44,14 @@ class DueTrackerController extends Controller
         }
     }
 
+
     /**
      * @param Request $request
-     * @param $customer_id
+     * @param $entry_id
      * @return JsonResponse
      */
-    public function update(Request $request, $entry_id ) {
+    public function update(Request $request, $entry_id ): JsonResponse
+    {
         try {
             $this->validate($request, [
                 'amount' => 'required',
