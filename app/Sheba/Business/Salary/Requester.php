@@ -1,5 +1,6 @@
 <?php namespace App\Sheba\Business\Salary;
 
+use App\Models\BusinessMember;
 use App\Models\Member;
 use App\Sheba\Business\Salary\Creator as CoWorkerSalaryCreator;
 use App\Sheba\Business\Salary\Updater as CoWorkerSalaryUpdater;
@@ -47,9 +48,9 @@ class Requester
         return $this;
     }
 
-    public function setBusinessMember($business_member)
+    public function setBusinessMember(BusinessMember $business_member)
     {
-        $this->businessMember = $this->businessMemberRepository->find($business_member);
+        $this->businessMember = $business_member;
         $this->profile = $this->businessMember->profile();
         return $this;
     }

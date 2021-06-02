@@ -1,8 +1,11 @@
 <?php namespace App\Sheba\Business\ComponentPackage;
 
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\ComponentPackageTarget\ComponentPackageTargetRepository;
 use Sheba\Dal\PayrollComponentPackage\PayrollComponentPackageRepository;
+use Sheba\Dal\PayrollComponentPackage\ScheduleType;
+use Sheba\Dal\PayrollSetting\PayrollSetting;
 
 class Updater
 {
@@ -11,11 +14,19 @@ class Updater
     /**@var ComponentPackageTargetRepository */
     private $componentPackageTargetRepository;
     private $packageRequester;
+    /** @var PayrollSetting */
+    private $payrollSetting;
 
     public function __construct()
     {
         $this->payrollComponentPackageRepository = app(PayrollComponentPackageRepository::class);
         $this->componentPackageTargetRepository = app(ComponentPackageTargetRepository::class);
+    }
+
+    public function setPayrollSetting(PayrollSetting $payroll_setting)
+    {
+        $this->payrollSetting = $payroll_setting;
+        return $this;
     }
 
     public function setPackageRequester($package_requester)
@@ -60,8 +71,17 @@ class Updater
                 'periodic_schedule' => $packages['periodic_schedule'],
                 'schedule_date' => $packages['schedule_date'],
             ];
-             $this->payrollComponentPackageRepository->update($existing_package, $data);
-             if (!empty($packages['effective_for'])) $this->makeTargetData($existing_package, $packages['effective_for'], $packages['target']);
+            if (empty($existing_package->periodic_schedule_created_at) && empty($existing_package->generated_at)) {
+                if ($packages['schedule_type'] == ScheduleType::PERIODICALLY) {
+                    $current_time = Carbon::now();
+                    $business_pay_day = $this->payrollSetting->pay_day;
+                    if ($current_time->day < $business_pay_day) $current_package_pay_generate_date = $current_time->day($business_pay_day)->format('Y-m-d');
+                    else $current_package_pay_generate_date = $current_time->addMonth()->day($business_pay_day)->format('Y-m-d');
+                    $data = array_merge($data, ['periodic_schedule_created_at' => $current_time->format('Y-m-d H:i:s'), 'generated_at' => $current_package_pay_generate_date]);
+                }
+            }
+            $this->payrollComponentPackageRepository->update($existing_package, $data);
+            if (!empty($packages['effective_for'])) $this->makeTargetData($existing_package, $packages['effective_for'], $packages['target']);
         }
     }
 

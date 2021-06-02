@@ -154,8 +154,8 @@ class PayrollController extends Controller
         $deduction_creator->setPayrollComponentRequester($this->payrollComponentRequester)->delete();
 
         $package_requester->setPackage($request->packages)->setPackageDelete($request->package_delete_data);
-        $package_creator->setPackageRequester($package_requester->getPackagesForAdd())->create();
-        $package_updater->setPackageRequester($package_requester->getPackagesForUpdate())->update();
+        $package_creator->setPayrollSetting($payroll_setting)->setPackageRequester($package_requester->getPackagesForAdd())->create();
+        $package_updater->setPayrollSetting($payroll_setting)->setPackageRequester($package_requester->getPackagesForUpdate())->update();
         $package_updater->setPackageRequester($package_requester->getPackageDelete())->delete();
 
         return api_response($request, null, 200);
