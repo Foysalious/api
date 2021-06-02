@@ -148,7 +148,7 @@ class MemberController extends Controller
             "company_type" => $business->type,
             'company_logo' => $this->isDefaultImage($business->logo) ? null : $business->logo,
             "address" => $business->address,
-            "area" => $location->name,
+            "area" => $location ? $location->name : null,
             "geo_informations" => $geo_information,
             "wallet" => (double)$business->wallet,
             "employee_size" => $business->employee_size
