@@ -70,7 +70,7 @@ class SalaryCertificateInfo
         $designation = $role ? $role->name : null;
 
         return [
-            'name' => $profile->name,
+            'name' => trim($profile->name),
             'designation' => $designation,
             'department' => $department_name,
             'joining_date' => Carbon::parse($business_member->join_date)->format('jS F Y')
