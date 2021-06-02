@@ -136,6 +136,7 @@ class MemberController extends Controller
             "sub_domain" => $business->sub_domain,
             "tagline" => $business->tagline,
             "company_type" => $business->type,
+            'company_logo' => $business->logo,
             "address" => $business->address,
             "area" => $location->name,
             "geo_informations" => $geo_information,
