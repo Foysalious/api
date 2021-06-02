@@ -51,13 +51,14 @@ class ReportsController extends Controller
         $report_types = [ "profit_loss_report", "journal_report", "balance_sheet_report", "general_ledger_report", "details_ledger_report" ];
         $startDate = $this->convertStartDate($request->start_date);
         $endDate = $this->convertEndDate($request->end_date);
+
         if ($endDate < $startDate){
             return api_response($request,null, 400, ['message' => 'End date can not smaller than start date']);
         }
 
         if (in_array($reportType, $report_types)) {
             try {
-                $response = $this->accountingReportRepository->getAccountingReport($reportType, $request->partner->id, $startDate, $endDate);
+                $response = $this->accountingReportRepository->getAccountingReport($reportType, $request->partner->id, $startDate, $endDate, $request->account_id, $request->account_type);
                 return api_response($request, $response, 200, ['data' => $response]);
             } catch (Exception $e) {
                 return api_response(
