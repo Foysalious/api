@@ -908,7 +908,8 @@ class CoWorkerController extends Controller
                                                          ->get();
 
         if($request->file=='pdf') {
-            return App::make('dompdf.wrapper')->loadView('pdfs.payroll.salary_certificate', compact('salary_certificate_info'))->download("payroll_details.pdf");
+//            return view('pdfs.payroll.salary_certificate', compact('salary_certificate_info'));
+            return App::make('dompdf.wrapper')->loadView('pdfs.payroll.salary_certificate', compact('salary_certificate_info'))->download("salary_certificate.pdf");
         }
 
         return api_response($request, null, 200, ['salary_info_details' => $salary_certificate_info]);

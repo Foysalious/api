@@ -70,7 +70,7 @@ class SalaryCertificateInfo
         $designation = $role ? $role->name : null;
 
         return [
-            'name' => $profile->name,
+            'name' => trim($profile->name),
             'designation' => $designation,
             'department' => $department_name,
             'joining_date' => Carbon::parse($business_member->join_date)->format('jS F Y')
@@ -102,6 +102,19 @@ class SalaryCertificateInfo
     private function getAmountInWord($amount)
     {
         return ucwords(str_replace('-', ' ', (new NumberFormatter("en", NumberFormatter::SPELLOUT))->format($amount)));
+    }
+
+    private function getDummyComponents()
+    {
+        $dummy_components = [];
+
+        for($i=1; $i <= 8; $i++) {
+            $component['title'] = 'Gross Component '.$i;
+            $component['amount'] = 4000;
+            array_push($dummy_components, $component);
+        }
+
+        return $dummy_components;
     }
 
 }
