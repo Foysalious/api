@@ -92,8 +92,7 @@ class MemberController extends Controller
             }
             if ($request->hasFile('company_logo')) {
                 $file = $request->company_logo;
-                $name = implode('_', explode(' ',strtolower($request->name)));
-                $filename = $name.'.'.$this->getExtension($file);
+                $filename = $file->getClientOriginalName();
                 $url = $this->saveFileToCDN($file, getBusinessLogoFolder(), $filename);
                 $business_creator_request = $business_creator_request->setLogoUrl($url);
                 $business_updater->setBusiness($business)->setBusinessCreatorRequest($business_creator_request)->updateLogo();
