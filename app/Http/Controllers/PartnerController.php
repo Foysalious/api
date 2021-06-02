@@ -1107,6 +1107,8 @@ class PartnerController extends Controller
 
     public function changeLogo($partner, Request $request)
     {
+        ini_set('max_execution_time', 0);
+
         $this->validate($request, ['logo' => 'required|file|image']);
         $partner = Partner::find($partner);
         $repo = new PartnerRepository($partner);
