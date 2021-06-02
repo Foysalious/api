@@ -76,7 +76,7 @@ class AccountingEntryClient
     public function call($method, $uri, $data = null)
     {
         try {
-            if (!$this->userType || !$this->userId) {
+            if (!$this->userType || !$this->userId ) {
                 throw new AccountingEntryServerError('Set user type and user id', 0);
             }
             $res = decodeGuzzleResponse(
@@ -146,12 +146,6 @@ class AccountingEntryClient
     public function setUserId($userId)
     {
         $this->userId = $userId;
-        return $this;
-    }
-
-    public function setReportType($reportType)
-    {
-        $this->reportType = $reportType;
         return $this;
     }
 }

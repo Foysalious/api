@@ -21,9 +21,11 @@ class AccountingReportRepository extends BaseRepository
 
     public function getAccountingReport($reportType, $userId, $startDate, $endDate, $userType = UserType::PARTNER)
     {
+        $account_id = 12345;
+        $account_type = "savings";
         try {
-            return $this->client->setUserType($userType)->setUserId($userId)->setReportType($reportType)
-                ->get($this->api . 'details_ledger_report?start_date=' . strtotime($startDate) . "&end_date=" . strtotime($endDate) );
+            return $this->client->setUserType($userType)->setUserId($userId)
+                ->get($this->api . "accounting_report/$reportType?start_date=$startDate&end_date$endDate&account_id=$account_id&sccount_type=$account_type" );
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
