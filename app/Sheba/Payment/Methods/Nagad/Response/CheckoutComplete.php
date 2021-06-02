@@ -9,7 +9,6 @@ class CheckoutComplete extends Response
 
     public function __construct($data, NagadStore $store)
     {
-        Log::info('CheckoutComplete', [$data]);
         parent::__construct($data, $store);
     }
 
