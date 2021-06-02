@@ -111,8 +111,8 @@ class Updater
         $channel = config('sheba.push_notification_channel_name.employee');
         $sound  = config('sheba.push_notification_sound.employee');
         $notification_data = [
-            "title" => "Payslip Disbursed",
-            "message" => "Payslip Disbursed of month ".$payslip->schedule_date->format('M Y'),
+            "title" => "Payslip Disbursement",
+            "message" => "Your salary for ".$payslip->schedule_date->format('M Y')." has been disbursed. Find your payslip here",
             "event_type" => 'payslip',
             "event_id" => $payslip->id,
             "sound" => "notification_sound",
@@ -123,7 +123,7 @@ class Updater
     }
 
     private function sendNotification($payslip, $business_member){
-        $title = "Payslip Disbursed of month ".$payslip->schedule_date->format('M Y');
+        $title = "Your salary for ".$payslip->schedule_date->format('M Y')." has been disbursed";
         $sheba_notification_data = [
             'title' => $title,
             'type' => 'Info',
