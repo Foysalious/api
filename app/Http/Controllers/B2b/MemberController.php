@@ -136,7 +136,7 @@ class MemberController extends Controller
             "sub_domain" => $business->sub_domain,
             "tagline" => $business->tagline,
             "company_type" => $business->type,
-            'company_logo' => $business->logo,
+            'company_logo' => $this->isDefaultImage($business->logo) ? $business->logo : null,
             "address" => $business->address,
             "area" => $location->name,
             "geo_informations" => $geo_information,
@@ -314,5 +314,12 @@ class MemberController extends Controller
         $profile_updater->update();
 
         return api_response($request, null, 200);
+    }
+
+    public function isDefaultImage($logo_url)
+    {
+        $path_info = pathinfo($logo_url);
+        if (!in_array($path_info['extension'], ['png', 'jpg', 'jpeg', 'svg', 'gif']) || strtolower($path_info['filename']) == 'default') return 1;
+        return 0;
     }
 }
