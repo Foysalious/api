@@ -88,8 +88,13 @@ class SalaryCertificateInfo
         $salary = $business_member->salary;
 
         return [
-            'salary_breakdown' => $payroll_percentage_breakdown['breakdown'],
-            'gross_salary' => $salary ? floatValFormat($salary->gross_salary) : null,
+            'salary_breakdown' => array_map( function ($salary) {
+                return [
+                  'title' => $salary['title'],
+                  'amount' => $this->parseSalary($salary['amount'])
+                ];
+            }, $payroll_percentage_breakdown['breakdown']),
+            'gross_salary' => $salary ? $this->parseSalary($salary->gross_salary) : null,
             'gross_salary_in_word' => $salary ? $this->getAmountInWord(floatValFormat($salary->gross_salary)) : null
         ];
 
@@ -115,6 +120,14 @@ class SalaryCertificateInfo
         }
 
         return $dummy_components;
+    }
+
+    /**
+     * @param $value
+     * @return string
+     */
+    private function parseSalary($value) {
+        return number_format($value, 2, ".", ",");
     }
 
 }
