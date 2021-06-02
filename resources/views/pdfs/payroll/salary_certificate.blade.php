@@ -39,13 +39,6 @@
             border-collapse: collapse;
         }
 
-        .table1th{
-            /*font-family: 'Poppins', sans-serif;*/
-            font-weight: normal;
-            opacity: 0.8;
-            font-size: 12px;
-            text-align: left;
-        }
         .tableHeadRegular{
             opacity: 0.8;
             font-family: 'Poppins', sans-serif;
@@ -54,23 +47,6 @@
             padding: 9px 20px;
             text-align: left;
             background-color: #fff8f8fb;
-        }
-
-        .tQuestion{
-            font-size: 12px;
-            font-weight: bold;
-            font-family: 'Poppins', sans-serif;
-            opacity: 0.8;
-        }
-        .tAnswer{
-            font-size: 12px;
-            opacity: 0.6;
-            font-weight: normal;
-            font-family: 'Poppins', sans-serif;
-            padding-top: 5px;
-        }
-        .pageCounter:after {
-            content: counter(page);
         }
 
 
@@ -142,21 +118,6 @@
             font-size: 12px;
         }
 
-        .footer__row-title td {
-            font-size: 12px;
-            font-weight: bold;
-            text-align: center;
-            color: #000000;
-            height: 80px;
-
-        }
-
-        .footer__row-info td {
-            font-size: 12px;
-            text-align: center;
-            color: #000000;
-        }
-
         ​/*new styles end*/
     </style>
 
@@ -203,10 +164,10 @@
     <tr>
         <td>
             <span style="line-height: 1.2">
-                This is to certify that {{ $salary_certificate_info['employee_info']['name'] }},
+                This is to certify that <span style="font-weight: 600">{{ $salary_certificate_info['employee_info']['name'] }},</span>
             {{ $salary_certificate_info['employee_info']['designation'] }},
             {{ $salary_certificate_info['employee_info']['department'] }} Department is a
-            permanent employee of {{ $salary_certificate_info['business_name'] }}
+            permanent employee of <span style="font-weight: 600">{{ $salary_certificate_info['business_name'] }}</span>
             from {{ $salary_certificate_info['employee_info']['joining_date'] }}.
             </span>
         </td>
@@ -247,10 +208,10 @@
 
     <tfoot>
     <tr>
-        <td style="font-size: 12px; font-weight: bold; opacity: 0.8; font-weight: bold; font-family: 'Poppins', sans-serif; text-align: right; padding: 5px;border-right: solid 1px #d2d8e6;width: 100%">
+        <td style="font-size: 12px; font-weight: bold; opacity: 0.8; font-family: 'Poppins', sans-serif; text-align: right; padding: 5px;border-right: solid 1px #d2d8e6;width: 100%">
             Total
         </td>
-        <td style="font-size: 12px; font-weight: bold; opacity: 0.8; font-weight: bold; font-family: 'Poppins', sans-serif; text-align: right; padding: 5px;border-right: solid 1px #d2d8e6;width: 100%">
+        <td style="font-size: 12px; font-weight: bold; opacity: 0.8; font-family: 'Poppins', sans-serif; text-align: right; padding: 5px;border-right: solid 1px #d2d8e6;width: 100%">
             {{ $salary_certificate_info['salary_info']['gross_salary'] }}
         </td>
     </tr>
@@ -271,9 +232,9 @@
     <tr>
         <td>
             <span style="line-height: 1.2">
-                This system generated salary certificate has been issued on the request of
-            {{ $salary_certificate_info['employee_info']['name'] }}.
-            The {{ $salary_certificate_info['business_name'] }}
+                This is a system generated salary certificate which has been issued on the request of
+            <span style="font-weight: 600">{{ $salary_certificate_info['employee_info']['name'] }}</span>.
+            The <span style="font-weight: 600">{{ $salary_certificate_info['business_name'] }}</span>
             management is responsible for the content of this certificate only.
             </span>
         </td>

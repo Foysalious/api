@@ -104,4 +104,17 @@ class SalaryCertificateInfo
         return ucwords(str_replace('-', ' ', (new NumberFormatter("en", NumberFormatter::SPELLOUT))->format($amount)));
     }
 
+    private function getDummyComponents()
+    {
+        $dummy_components = [];
+
+        for($i=1; $i <= 8; $i++) {
+            $component['title'] = 'Gross Component '.$i;
+            $component['amount'] = 4000;
+            array_push($dummy_components, $component);
+        }
+
+        return $dummy_components;
+    }
+
 }
