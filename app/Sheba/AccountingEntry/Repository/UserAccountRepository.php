@@ -65,12 +65,17 @@ class UserAccountRepository extends BaseRepository
         return $this;
     }
 
+    /**
+     * @param mixed $openingBalance
+     */
     public function setOpeningBalance($openingBalance)
     {
         $this->openingBalance = $openingBalance;
         return $this;
     }
-
+    /**
+     * @param mixed $balanceType
+     */
     public function setBalanceType($balanceType)
     {
         $this->balanceType = $balanceType;
