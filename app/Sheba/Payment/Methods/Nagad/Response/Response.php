@@ -24,7 +24,7 @@ abstract class Response
         $this->store = $store;
         $this->data = (array)$data;
         $this->output = $this->data;
-        Log::info(json_encode($this->data));
+        Log::info('CONSTRUCTOR', [$this->data]);
 
         /*if (!array_key_exists($this->decode, $this->data) && !array_key_exists('callBackUrl', $this->data)) {
             $this->error = $this->data[$this->msg];
