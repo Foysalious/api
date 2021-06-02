@@ -11,6 +11,7 @@ use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessMember;
 use Sheba\Attachments\FilesAttachment;
+use Sheba\FileManagers\FileManager;
 use Sheba\Business\BusinessCommonInformationCreator;
 use Sheba\Business\BusinessCreator;
 use Sheba\Business\BusinessCreatorRequest;
@@ -29,7 +30,7 @@ use DB;
 
 class MemberController extends Controller
 {
-    use ModificationFields, FilesAttachment;
+    use ModificationFields, FilesAttachment, FileManager;
 
     /** BusinessMemberRequester $businessMemberRequester */
     private $businessMemberRequester;
@@ -68,8 +69,9 @@ class MemberController extends Controller
                 'no_employee' => 'sometimes|required|integer',
                 'lat' => 'sometimes|required|numeric',
                 'lng' => 'sometimes|required|numeric',
-                'address' => 'required|string',
+                'address' => 'string',
                 'mobile' => 'sometimes|required|string|mobile:bd',
+                'company_logo' => 'file',
             ]);
             $member = Member::find($member);
 
@@ -87,6 +89,14 @@ class MemberController extends Controller
                 $business = $business_creator->setBusinessCreatorRequest($business_creator_request)->create();
                 $common_info_creator->setBusiness($business)->setMember($member)->create();
                 $this->createBusinessMember($business, $member);
+            }
+            if ($request->hasFile('company_logo')) {
+                $file = $request->company_logo;
+                $name = implode('_', explode(' ',strtolower($request->name)));
+                $filename = $name.'.'.$this->getExtension($file);
+                $url = $this->saveFileToCDN($file, getBusinessLogoFolder(), $filename);
+                $business_creator_request = $business_creator_request->setLogoUrl($url);
+                $business_updater->setBusiness($business)->setBusinessCreatorRequest($business_creator_request)->updateLogo();
             }
             DB::commit();
             return api_response($request, null, 200, ['business_id' => $business->id]);
@@ -138,7 +148,7 @@ class MemberController extends Controller
             "company_type" => $business->type,
             'company_logo' => $this->isDefaultImage($business->logo) ? null : $business->logo,
             "address" => $business->address,
-            "area" => $location->name,
+            "area" => $location ? $location->name : null,
             "geo_informations" => $geo_information,
             "wallet" => (double)$business->wallet,
             "employee_size" => $business->employee_size

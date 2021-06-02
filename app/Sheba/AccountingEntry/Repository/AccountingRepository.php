@@ -1,5 +1,6 @@
 <?php
-namespace App\Sheba\AccountingEntry\Repository;
+
+namespace Sheba\AccountingEntry\Repository;
 
 use App\Models\Partner;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
