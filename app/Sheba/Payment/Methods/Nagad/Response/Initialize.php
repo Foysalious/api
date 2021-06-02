@@ -1,5 +1,6 @@
 <?php namespace Sheba\Payment\Methods\Nagad\Response;
 
+use Illuminate\Support\Facades\Log;
 use Sheba\Payment\Methods\Nagad\Stores\NagadStore;
 
 class Initialize extends Response
@@ -8,6 +9,7 @@ class Initialize extends Response
 
     public function __construct($data, NagadStore $store)
     {
+        Log::info(json_encode($data));
         parent::__construct($data, $store);
     }
 
