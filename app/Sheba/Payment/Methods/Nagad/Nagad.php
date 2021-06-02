@@ -59,7 +59,7 @@ class Nagad extends PaymentMethod
 
         try {
             $initResponse = $this->client->setStore($this->store)->init($payment->gateway_transaction_id);
-            if ($initResponse->hasError()) throw  new Exception($initResponse->toString());
+            if ($initResponse->hasError()) throw new Exception($initResponse->toString());
 
             $resp = $this->client
                 ->setStore($this->store)
