@@ -13,6 +13,7 @@ class AccountingEntryClient
     protected $apiKey;
     protected $userType;
     protected $userId;
+    protected $reportType;
 
     public function __construct(Client $client)
     {
@@ -75,7 +76,7 @@ class AccountingEntryClient
     public function call($method, $uri, $data = null)
     {
         try {
-            if (!$this->userType || !$this->userId) {
+            if (!$this->userType || !$this->userId ) {
                 throw new AccountingEntryServerError('Set user type and user id', 0);
             }
             $res = decodeGuzzleResponse(
