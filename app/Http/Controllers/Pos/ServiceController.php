@@ -50,8 +50,6 @@ class ServiceController extends Controller
                 ->each(function ($service) use (&$services) {
                     $services[] = [
                         'id' => $service->id,
-                        'weight' => $service->weight,
-                        'weight_unit' => $service->weight_unit,
                         'name' => $service->name,
                         'app_thumb' => $service->app_thumb,
                         'app_banner' => $service->app_banner,
@@ -69,7 +67,6 @@ class ServiceController extends Controller
                         'show_image' => $service->show_image,
                         'shape' => $service->shape,
                         'color' => $service->color,
-
                         'image_gallery' => $service->imageGallery ? $service->imageGallery->map(function ($image) {
                             return [
                                 'id' => $image->id,
@@ -108,13 +105,11 @@ class ServiceController extends Controller
             $manager->setSerializer(new ArraySerializer());
             $resource = new Item($service, new PosServiceTransformer());
             $service = $manager->createData($resource)->toArray();
-
             return api_response($request, $service, 200, ['service' => $service, 'partner' => [
                 'id' => $partner->id,
                 'name' => $partner->name,
                 'logo' => $partner->logo,
-                'is_webstore_published' => $partner->is_webstore_published ?: 0,
-
+                'is_webstore_published' => $partner->is_webstore_published ?: 0
             ]]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
@@ -147,10 +142,6 @@ class ServiceController extends Controller
             $request->request->remove('category_id');
             $request->merge($this->resolveSubcategory($request->master_category_id));
         }
-//        if (isset($request->is_published_for_shop) && $request->is_published_for_shop == 1 && (!isset($request->weight) || !($request->weight_unit))) {
-//            return api_response($request, null, 400, ['message' => 'Weight or Weight Unit is not provided']);
-//        }
-
 
         $partner_pos_service = $creator->setData($request->except('master_category_id'))->create();
 
@@ -177,7 +168,6 @@ class ServiceController extends Controller
         $partner_pos_service->master_category_id = $partner_pos_service_model->category->parent_id;
         $partner_pos_service->master_category_name = $partner_pos_service_model->category->parent->name;
         $partner_pos_service->sub_category_id = $partner_pos_service_model->category->id;
-        $partner_pos_service->weight_unit =$partner_pos_service_model->weight_unit? array_merge(config('weight.weight_unit')[$partner_pos_service_model->weight_unit], ['key' => $partner_pos_service_model->weight_unit]): null;
         $partner_pos_service->image_gallery = $partner_pos_service_model->imageGallery ? $partner_pos_service_model->imageGallery->map(function ($image) {
             return [
                 'id' => $image->id,
@@ -216,9 +206,7 @@ class ServiceController extends Controller
         $master_category->parent_id = $master_category->id;
         $master_category->name = 'Sub None Category';
         $master_category->slug = 'sub-none-category';
-
         $sub_category = collect($master_category)->all();
-
         return PosCategory::create($this->withCreateModificationField(array_except($sub_category, ['id', 'created_at', 'created_by', 'created_by_name', 'updated_at', 'updated_by', 'updated_by_name'])));
 
     }
@@ -269,9 +257,7 @@ class ServiceController extends Controller
                 $request->merge($this->resolveSubcategory($request->master_category_id));
             }
         }
-//        if (isset($request->is_published_for_shop) && $request->is_published_for_shop == 1 && (!isset($request->weight) || !($request->weight_unit))) {
-//            return api_response($request, null, 400, ['message' => 'Weight or Weight Unit is not provided']);
-//        }
+
         $updater->setService($partner_pos_service)->setData($request->except('master_category_id'))->update();
 
         if ($request->discount_id) {
@@ -301,8 +287,6 @@ class ServiceController extends Controller
         $partner_pos_service->warranty_unit = $partner_pos_service->warranty_unit ? config('pos.warranty_unit')[$partner_pos_service->warranty_unit] : null;
         $partner_pos_service->master_category_id = $partner_pos_service->category->parent_id;
         $partner_pos_service->sub_category_id = $partner_pos_service->category->id;
-        $partner_pos_service->weight_unit =$partner_pos_service->weight_unit? array_merge(config('weight.weight_unit')[$partner_pos_service->weight_unit], ['key' => $partner_pos_service->weight_unit]): null;
-
         $partner_pos_service_arr = $partner_pos_service->toArray();
         $partner_pos_service_arr['image_gallery'] = $partner_pos_service->imageGallery ? $partner_pos_service->imageGallery->map(function ($image) {
             return [
@@ -372,26 +356,6 @@ class ServiceController extends Controller
                 array_push($warranty_units, $unit);
             }
             return api_response($request, $warranty_units, 200, ['warranty_units' => $warranty_units]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
-    public function getPosProductWeightUnit(Request $request)
-    {
-        try {
-            $weight_units = [];
-            $all_product_weight_unit = config('weight.weight_unit');
-            foreach ($all_product_weight_unit as $key => $unit) {
-                array_push($weight_units, $unit);
-            }
-            $default_unit = [
-                'key' => 'kg',
-                'en' => 'kg',
-                'bn' => 'কেজি'
-            ];
-            return api_response($request,$weight_units,200,['product_weight_units' => $weight_units,'default_unit' => $default_unit]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
