@@ -1,11 +1,13 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Models\Business;
+use App\Transformers\Business\CoWorkerReportDetailsTransformer;
 use Exception;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
 use Sheba\Business\CoWorker\Designations;
 use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
+use Sheba\Business\CoWorker\Excel as EmployeeExcel;
 use App\Transformers\Business\CoWorkerDetailTransformer;
 use Sheba\Business\CoWorker\Creator as CoWorkerCreator;
 use Sheba\Business\CoWorker\Updater as CoWorkerUpdater;
@@ -881,4 +883,83 @@ class CoWorkerController extends Controller
         if ($request->has('limit') && $request->limit == 'all') return $total_employees;
         return $limit;
     }
+
+
+    /**
+     * @param $business
+     * @param Request $request
+     * @param BusinessMemberRepositoryInterface $business_member_repo
+     * @param EmployeeExcel $employee_report
+     */
+    public function downloadEmployeesReport($business, Request $request, BusinessMemberRepositoryInterface $business_member_repo, EmployeeExcel $employee_report) {
+        $business = $request->business;
+
+        $is_inactive_filter_applied = false;
+        list($offset, $limit) = calculatePagination($request);
+
+        if ($request->has('status') && $request->status == Statuses::INACTIVE) {
+            $is_inactive_filter_applied = true;
+            $members = $business->members()->select('members.id', 'profile_id',
+                'emergency_contract_person_name', 'emergency_contract_person_number', 'emergency_contract_person_relationship')->with([
+                'profile' => function ($q) {
+                    $q->select('profiles.id', 'name', 'mobile', 'email', 'dob', 'address', 'nationality', 'nid_no', 'tin_no')->with('banks');
+                }
+            ])->wherePivot('status', Statuses::INACTIVE)->get()->unique()
+                ->each(function ($member) use ($business_member_repo, $business) {
+                    $business_member = $business_member_repo->builder()
+                        ->where('business_id', $business->id)
+                        ->where('member_id', $member->id)
+                        ->where('status', Statuses::INACTIVE)
+                        ->first();
+
+                    $member->setRelation('businessMemberGenerated', $business_member->load([
+                        'role' => function ($q) {
+                            $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                                'businessDepartment' => function ($q) {
+                                    $q->select('business_departments.id', 'business_id', 'name');
+                                }
+                            ]);
+                        }
+                    ]));
+                    $member->push();
+                });
+
+            if ($request->has('department')) {
+                $members = $members->filter(function ($member) use ($request) {
+                    return $member->businessMemberGenerated->role && $member->businessMemberGenerated->role->businessDepartment->id == $request->department;
+                });
+            }
+        } else {
+            $members = $business->membersWithProfile();
+            if ($request->has('department')) {
+                $members = $members->whereHas('businessMember', function ($q) use ($request) {
+                    $q->whereHas('role', function ($q) use ($request) {
+                        $q->whereHas('businessDepartment', function ($q) use ($request) {
+                            $q->where('business_departments.id', $request->department);
+                        });
+                    });
+                });
+            }
+            $members = $members->get()->unique();
+        }
+
+        $manager = new Manager();
+        $manager->setSerializer(new ArraySerializer());
+        $employees = new Collection($members, new CoWorkerReportDetailsTransformer($is_inactive_filter_applied));
+        $employees = collect($manager->createData($employees)->toArray()['data']);
+
+        if ($request->has('status')) $employees = $this->findByStatus($employees, $request->status)->values();
+        if ($request->has('sort_by_name')) $employees = $this->sortByName($employees, $request->sort_by_name)->values();
+        if ($request->has('sort_by_department')) $employees = $this->sortByDepartment($employees, $request->sort_by_department)->values();
+        if ($request->has('sort_by_status')) $employees = $this->sortByStatus($employees, $request->sort_by_status)->values();
+        if ($request->has('search')) $employees = $this->searchEmployee($employees, $request);
+
+        $total_employees = count($employees);
+        $limit = $this->getLimit($request, $limit, $total_employees);
+        $employees = collect($employees)->splice($offset, $limit);
+
+        return $employee_report->setEmployee($employees->toArray())->get();
+
+    }
+
 }
