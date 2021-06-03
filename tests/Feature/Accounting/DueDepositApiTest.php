@@ -8,13 +8,11 @@ use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\Feature\FeatureTestCase;
 
-class DueDepositApiTest extends FeatureTestCase
+class DueDepositApiTest extends AccountingFeatureTest
 {
-    private $token;
-
     public function test_entry_type_due()
     {
-        $response = $this->post(url('/v2/accounting/due-tracker'), $this->getFormData('due'), [
+        $response = $this->post(config('sheba.api_url').'/v2/accounting/due-tracker', $this->getFormData('due'), [
             'Authorization' => $this->token ?? $this->generateToken()
         ]);
 
@@ -32,7 +30,7 @@ class DueDepositApiTest extends FeatureTestCase
 
     public function test_entry_type_deposit()
     {
-        $response = $this->post(url('/v2/accounting/due-tracker'), $this->getFormData('deposit'), [
+        $response = $this->post(config('sheba.api_url').'/v2/accounting/due-tracker', $this->getFormData('deposit'), [
             'Authorization' => $this->token ?? $this->generateToken()
         ]);
 
@@ -46,13 +44,6 @@ class DueDepositApiTest extends FeatureTestCase
                 "amount" => 4440
             ]
         ]);
-    }
-
-    private function generateToken(){
-        $client = new Client();
-        $response = $client->get('https://accounts.dev-sheba.xyz/api/v3/token/generate?type=resource&token=TemAMQbHo8NES7nlEielwNw1EGTOKcQTC6jImGLNP4MLbFCjtvbeziGwlMd7&type_id=45320');
-        $this->token = 'Bearer ' . \GuzzleHttp\json_decode($response->getBody())->token;
-        return $this->token;
     }
 
     private function getFormData(string $entryType) : array {

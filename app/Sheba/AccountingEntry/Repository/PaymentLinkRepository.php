@@ -23,7 +23,7 @@ class PaymentLinkRepository extends BaseRepository
     public function __construct(AccountingEntryClient $client)
     {
         parent::__construct($client);
-        $this->api = '/api/entries/';
+        $this->api = 'api/entries/';
     }
 
     /**
@@ -80,8 +80,7 @@ class PaymentLinkRepository extends BaseRepository
     {
         try {
             $payload = $this->makeData();
-            return $this->client->setUserType($userType)->setUserId($userId)
-                ->post($this->api, $payload);
+            return $this->client->setUserType($userType)->setUserId($userId)->post($this->api, $payload);
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
