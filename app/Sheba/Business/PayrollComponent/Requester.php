@@ -106,15 +106,14 @@ class Requester
 
     public function hasError($components)
     {
-        $new_components = [];
         foreach ($components as $components_type) {
             foreach ($components_type as $key => $components_value) {
-                if ($key == 'name') array_push($new_components, $components_value);
+                if ($key == 'name') {
+                    $existing_component = $this->setting->components->where('name', $components_value)->whereIn('type', [Type::ADDITION, Type::DEDUCTION])->first();
+                    if ($existing_component) return $this->error = true;
+                }
             }
         }
-        $existing_components = $this->setting->components->whereIn('type', [Type::ADDITION, Type::DEDUCTION])->pluck('name')->toArray();
-        if (count(array_intersect($new_components, $existing_components)) > 0) $this->error = true;
-
         return $this->error;
     }
 
