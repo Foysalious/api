@@ -14,7 +14,7 @@ class DueDepositApiTest extends FeatureTestCase
 
     public function test_entry_type_due()
     {
-        $response = $this->post(url('/v2/accounting/due-tracker'), $this->getFormData('due'), [
+        $response = $this->post(config('sheba.api_url').'/v2/accounting/due-tracker', $this->getFormData('due'), [
             'Authorization' => $this->token ?? $this->generateToken()
         ]);
 
@@ -32,7 +32,7 @@ class DueDepositApiTest extends FeatureTestCase
 
     public function test_entry_type_deposit()
     {
-        $response = $this->post(url('/v2/accounting/due-tracker'), $this->getFormData('deposit'), [
+        $response = $this->post(config('sheba.api_url').'/v2/accounting/due-tracker', $this->getFormData('deposit'), [
             'Authorization' => $this->token ?? $this->generateToken()
         ]);
 
