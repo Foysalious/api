@@ -78,15 +78,18 @@ class AccountingEntryClient
             if (!$this->userType || !$this->userId) {
                 throw new AccountingEntryServerError('Set user type and user id', 0);
             }
+            dd($this->makeUrl($uri), $this->getOptions($data));
             $res = decodeGuzzleResponse(
                 $this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data))
             );
+            dd($res);
             if ($res['code'] != 200) {
                 throw new AccountingEntryServerError($res['message']);
             }
             return isset($res['data']) ? $res['data'] : $res['message'];
 
         } catch (GuzzleException $e) {
+            dd($e->getMessage());
             $response = $e->getResponse() ? json_decode($e->getResponse()->getBody()->getContents(), true): null;
             $message = null;
             if (isset($response['message']) ) {
