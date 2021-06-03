@@ -23,7 +23,7 @@ class AccountingReportRepository extends BaseRepository
     {
         try {
             return $this->client->setUserType($userType)->setUserId($userId)
-                ->get($this->api . "accounting_report/$reportType?start_date=$startDate&end_date$endDate&account_id=$accountId&sccount_type=$accountType" );
+                ->get($this->api . "accounting_report/$reportType?start_date=$startDate&end_date=$endDate&account_id=$accountId&account_type=$accountType" );
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
