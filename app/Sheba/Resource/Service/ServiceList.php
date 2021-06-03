@@ -143,7 +143,6 @@ class ServiceList
 
         $services = $this->resource->firstPartner()->services()->select($this->getSelectColumnsOfService())->where(function ($q) {
             $q->where('publication_status', 1);
-            $q->where('is_published_for_backend', 1);
         })->whereHas('locations', function ($q) use ($location) {
             $q->where('locations.id', $location);
         });
