@@ -986,12 +986,9 @@ class CoWorkerController extends Controller
         if ($request->has('sort_by_status')) $employees = $this->sortByStatus($employees, $request->sort_by_status)->values();
         if ($request->has('search')) $employees = $this->searchEmployee($employees, $request);
 
-        $total_employees = count($employees);
-        $limit = $this->getLimit($request, $limit, $total_employees);
-        $employees = collect($employees)->splice($offset, $limit);
+        $employees = collect($employees);
 
         return $employee_report->setEmployee($employees->toArray())->get();
-
     }
 
 }
