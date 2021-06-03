@@ -66,7 +66,7 @@ class Creator
                     'periodic_schedule' => $package['periodic_schedule'],
                     'schedule_date' => $package['schedule_date'],
                 ];
-                if ($packages['schedule_type'] == ScheduleType::PERIODICALLY) {
+                if ($package['schedule_type'] == ScheduleType::PERIODICALLY) {
                     $current_time = Carbon::now();
                     $business_pay_day = $this->payrollSetting->pay_day;
                     if ($current_time->day < $business_pay_day) $current_package_pay_generate_date = $current_time->day($business_pay_day)->format('Y-m-d');
