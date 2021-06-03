@@ -361,7 +361,9 @@ class Creator
         $this->request->merge([
             "inventory_products" => $accounting_repo->getInventoryProducts($order->items, $this->data['services']),
         ]);
-        $this->request["customer_id"] = $this->customer->id;
+        if (isset($this->customer->id)) {
+            $this->request["customer_id"] = $this->customer->id;
+        }
         $accounting_repo->storeEntry($this->request, EntryTypes::POS);
     }
 
