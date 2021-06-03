@@ -94,6 +94,7 @@ class BusinessRoute
                     $api->get('/roles', 'B2b\CoWorkerController@getRoles');
                     $api->post('/change-status', 'B2b\CoWorkerController@bulkStatusUpdate');
                     $api->post('/invite', 'B2b\CoWorkerController@sendInvitation');
+                    $api->get('/report', 'B2b\CoWorkerController@downloadEmployeesReport');
                     $api->group(['prefix' => '{employee}'], function ($api) {
                         $api->post('/basic-info', 'B2b\CoWorkerController@basicInfoEdit');
                         $api->post('/official-info', 'B2b\CoWorkerController@officialInfoEdit');
