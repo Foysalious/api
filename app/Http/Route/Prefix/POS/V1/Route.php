@@ -122,6 +122,7 @@ class Route
                 $api->group(['prefix' => '{order}'], function ($api) {
                     $api->post('/update-status', 'PosOrder\OrderController@updateStatus');
                 });
+                $api->put('/{order}/update-customer', 'PosOrder\OrderController@updateCustomer');
                 $api->put('/{order}', 'PosOrder\OrderController@update');
                 $api->delete('/{order}', 'PosOrder\OrderController@destroy');
             });
