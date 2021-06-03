@@ -151,7 +151,7 @@
                 <tr>
                     <td style="vertical-align: top; font-family: 'Poppins', sans-serif; font-size: 12px; color: #000000; opacity: 0.8; padding-bottom: 13px">Employee Name</td>
                     <td style="vertical-align: top; font-family: 'Poppins', sans-serif; font-size: 12px; color: #000000; opacity: 0.8; padding-bottom: 13px">:</td>
-                    <td style="padding-left: 10px;  padding-bottom: 13px; font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: bold; color: #000000; opacity: 1">{{ $pay_report_detail['employee_info']['name'] }}</td>
+                    <td style="padding-left: 10px; padding-top: 7px; padding-bottom: 13px; font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: bold; color: #000000; opacity: 1">{{ $pay_report_detail['employee_info']['name'] }}</td>
                 </tr>
                 <tr>
                     <td style="font-family: 'Poppins', sans-serif; padding-bottom: 13px; font-size: 12px; color: #000000; opacity: 0.8">Department</td>
@@ -180,29 +180,30 @@
 
 <br>
 
-<table style="width: 100%; border: none; padding-bottom: 40px">
+<table style="width: 100%; border: none; padding-bottom: 14px;">
     <tr>
-        <td style="width: 100%; border : none; ">
-            <table style="width: 67%; border : none">
-                <tr>
-                    <td style="font-family: 'Poppins', sans-serif; padding-bottom: 13px; font-size: 12px; color: #000000; opacity: 0.8; width: 48%;">
-                        Net Payable
-                    </td>
-                    <td style="font-family: 'Poppins', sans-serif; padding-bottom: 13px; font-size: 12px; color: #000000; opacity: 1; width: 3%">
-                        :
-                    </td>
-                    <td style="padding-left: 10px; padding-bottom: 13px; font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: bold; color: #000000; opacity: 1;">
-                        {{ $pay_report_detail['salary_info']['net_payable'] }}
-                    </td>
-                </tr>
-                <tr >
-                    <td style="font-family: 'Poppins', sans-serif; padding-bottom: 13px; font-size: 12px; color: #000000; opacity: 0.8; width: 45%;">In Words</td>
-                    <td style="font-family: 'Poppins', sans-serif; padding-bottom: 13px; font-size: 12px; color: #000000; opacity: 0.8; width: 3%">:</td>
-                    <td style="padding-left: 10px; padding-bottom: 13px; font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: normal; color: #000000; opacity: 0.8;width:100%;">
-                        {{ $pay_report_detail['salary_info']['net_payable_in_word'] }} Taka Only
-                    </td>
-                </tr>
-            </table>
+        <td style="font-family: 'Poppins', sans-serif; font-size: 12px; color: #000000; opacity: 0.8; width: 17.5%">
+            Net Payable
+        </td>
+        <td style="padding-left: 2px; font-family: 'Poppins', sans-serif; font-size: 12px; color: #000000; opacity: 1; width: 2%">
+            :
+        </td>
+        <td style="padding-top: 8.5px; font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: bold; color: #000000; opacity: 1;">
+            {{ $pay_report_detail['salary_info']['net_payable'] }}
+        </td>
+    </tr>
+</table>
+
+<table style="width: 100%; border: none; padding-bottom: 30px;">
+    <tr>
+        <td style="font-family: 'Poppins', sans-serif; font-size: 12px; color: #000000; opacity: 0.8; width: 17.5%">
+            In Words
+        </td>
+        <td style="padding-left: 2px; font-family: 'Poppins', sans-serif; font-size: 12px; color: #000000; opacity: 1; width: 2%">
+            :
+        </td>
+        <td style="font-family: 'Poppins', sans-serif; font-size: 12px; color: #000000; opacity: 1;">
+            {{ $pay_report_detail['salary_info']['net_payable_in_word'] }} Taka Only
         </td>
     </tr>
 </table>
@@ -252,7 +253,7 @@
     <thead>
     <tr class="tableHeadRegular" style="background: #f8f8fb; width: 100%">
         <td style="width:80%;font-size: 12px; opacity: 0.8; font-weight: bold; font-family: 'Poppins', sans-serif; padding: 10px;border: solid 1px #d2d8e6;">
-            Deduction
+            Deductions
         </td>
         <td style="width:20%; font-size: 12px; text-align: right; opacity: 0.8; font-weight: bold; font-family: 'Poppins', sans-serif; padding: 10px;border: solid 1px #d2d8e6;">
             Amount
