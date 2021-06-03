@@ -41,6 +41,7 @@ class AccountingRepository extends BaseRepository
         $data = $this->createEntryData($request, $type, $request->source_id);
         $url = "api/entries/";
         try {
+            Log::info(['pos order data', $data]);
             return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->post($url, $data);
         } catch (AccountingEntryServerError $e) {
             Log::info(['error from accounting']);
@@ -169,10 +170,10 @@ class AccountingRepository extends BaseRepository
 
     private function getPartner($request)
     {
-        if("webstore" === $request->sales_channel) {
-            $partner_id = (int) $request->partner;
-        } else {
+        if(isset($request->partner->id)) {
             $partner_id = $request->partner->id;
+        } else {
+            $partner_id = (int) $request->partner;
         }
         return Partner::find($partner_id);
     }
