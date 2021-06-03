@@ -61,8 +61,8 @@ class PayReportDetailsTransformer extends TransformerAbstract
             'house_rent' => $salary_break_down['house_rent'],
             'medical_allowance' => $salary_break_down['medical_allowance'],
             'conveyance' => $salary_break_down['conveyance'],
-            'gross_salary' => $this->parseAmount($salary_break_down['gross_salary']),
-            'net_payable' => $this->parseAmount($salary_break_down['gross_salary']),
+            'gross_salary' => $salary_break_down['gross_salary'],
+            'net_payable' => $salary_break_down['gross_salary'],
             'net_payable_in_word' => $this->getAmountInWord($salary_break_down['gross_salary']),
         ];
     }
@@ -89,19 +89,12 @@ class PayReportDetailsTransformer extends TransformerAbstract
             if ($component_type == $type) {
                 foreach ($component_breakdown as $component => $component_value) {
                     $total += $component_value;
-                    $final_data['breakdown'][ucwords(implode(" ", explode("_", $component)))] = $this->parseAmount($component_value);
+                    $final_data['breakdown'][ucwords(implode(" ", explode("_", $component)))] = $component_value;
                 }
             }
         }
-        $final_data['total'] = $this->parseAmount($total);
+        $final_data['total'] = $total;
         return $final_data;
     }
 
-    /**
-     * @param $value
-     * @return string
-     */
-    private function parseAmount($value) {
-        return number_format($value, 2, ".", ",");
-    }
 }
