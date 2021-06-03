@@ -119,8 +119,10 @@ class AccountingRepository extends BaseRepository
         $data = $this->createEntryData($request, $sourceType, $sourceId, $default);
         $url = "api/entries/source/" . $sourceType . '/' . $sourceId;
         try {
+            Log::info(['pos order data', $data]);
             return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
         } catch (AccountingEntryServerError $e) {
+            Log::info(['error from accounting']);
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
     }
