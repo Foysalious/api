@@ -184,7 +184,7 @@ class PayrollController extends Controller
     {
         /** @var Business $business */
         $business = $request->business;
-        $payroll_components = $business->payrollSetting->components->whereIn('target_type', [TargetType::GENERAL, null])->sortBy('type');
+        $payroll_components = $business->payrollSetting->components->where('target_type', TargetType::GENERAL)->sortBy('type');
         $data [] = [
             'id' => null,
             'name' => Type::GROSS,
