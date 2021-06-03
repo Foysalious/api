@@ -134,6 +134,7 @@ class DeliveryService
         $data['delivery_method'] = $this->getDeliveryMethod();
         $data['is_registered_for_delivery'] = $this->partner->deliveryInformation ? 1 : 0;
         $data['delivery_charge'] = $this->partner->delivery_charge;
+        $data['has_weight'] = 0;
         return $data;
     }
 
