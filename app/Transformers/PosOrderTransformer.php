@@ -45,7 +45,7 @@ class PosOrderTransformer extends TransformerAbstract
             'partner_wise_previous_order_id' => $order->previousOrder ? $order->previousOrder->partner_wise_order_id : null,
             'sales_channel' => $order->sales_channel,
             'delivery_charge' => $order->delivery_charge,
-            'delivery_by_third_party' => $order->delivery_request_id ? 1 :0,
+            'delivery_by_third_party' => $order->delivery_thana && $order->delivery_district ? 1 : 0,
             'selected_delivery_method' => $this->getDeliveryMethod($order->partner_id),
             'total_weight' => $order->weight
         ];

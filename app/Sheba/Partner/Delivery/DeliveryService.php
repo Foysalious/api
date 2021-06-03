@@ -153,7 +153,8 @@ class DeliveryService
             'contact_number' => $this->partner->getContactNumber(),
             'email' => $this->partner->getContactEmail(),
             'business_type' => $this->partner->business_type,
-            'address' => $this->partner->address
+            'address' => $this->partner->address,
+            'website_url' => config('sheba.webstore_url') . '/' . $this->partner->sub_domain
         ];
     }
 
@@ -182,7 +183,7 @@ class DeliveryService
                 'address' => [
                     'full_address' => $this->posOrder->address,
                     'thana' => $this->posOrder->delivery_thana,
-                    'zilla' => $this->posOrder->delivery_zilla
+                    'zilla' => $this->posOrder->delivery_district
                 ],
                 'payment_method' => ($payment_info = $this->paymentInfo($this->posOrder->id)) ? $payment_info->method : null,
                 'cod_amount' => $this->getDueAmount(),
