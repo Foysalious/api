@@ -4,6 +4,7 @@
 use App\Exceptions\DoNotReportException;
 use App\Http\Requests\Request;
 use App\Models\Partner;
+use App\Models\PartnerPosService;
 use App\Models\PosOrder;
 use App\Models\PosOrderPayment;
 use App\Sheba\Partner\Delivery\Exceptions\DeliveryCancelRequestError;
@@ -138,13 +139,16 @@ class DeliveryService
         $data['delivery_method'] = $this->getDeliveryMethod();
         $data['is_registered_for_delivery'] = $this->partner->deliveryInformation ? 1 : 0;
         $data['delivery_charge'] = $this->partner->delivery_charge;
-        $data['has_weight_in_all_products'] = $this->checkWeightAddedInAllProducts();
+        $data['products_without_weight'] = $this->countProductWithoutWeight();
         return $data;
     }
 
-    private function checkWeightAddedInAllProducts()
+    /**
+     * @return int
+     */
+    private function countProductWithoutWeight(): int
     {
-        return empty($this->serviceRepositoryInterface->where('partner_id',$this->partner->id)->where('is_published_for_shop',1)->where('weight',null)->first()) ? 1 : 0;
+        return PartnerPosService::where('partner_id',$this->partner->id)->where('is_published_for_shop',1)->where('weight',null)->count();
     }
 
     private function getDeliveryMethod()
