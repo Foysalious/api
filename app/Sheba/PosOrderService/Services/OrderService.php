@@ -230,6 +230,11 @@ class OrderService
         return $this->client->post('api/v1/partners/'.$this->partnerId.'/orders/'.$this->orderId.'/update-status', $data, true);
     }
 
+    public function updateCustomer()
+    {
+        return $this->client->put('api/v1/partners/' . $this->partnerId. '/orders/' . $this->orderId . '/update-customer', $this->makeCustomerUpdateData(), false);
+    }
+
     public function update()
     {
         return $this->client->put('api/v1/partners/' . $this->partnerId. '/orders/' . $this->orderId, $this->makeUpdateData(), false);
@@ -240,26 +245,32 @@ class OrderService
         return $this->client->delete('api/v1/partners/' . $this->partnerId . '/orders/' . $this->orderId);
     }
 
-    private function makeUpdateData()
+    private function makeCustomerUpdateData() : array
+    {
+        return [
+            'customer_id' => $this->customerId
+        ];
+    }
+
+    private function makeUpdateData() : array
     {
         return [
             'partner_id'                => $this->partnerId,
-            'customer_id'               => $this->customerId,
             'emi_month'                 => $this->emi_month,
             'interest'                  => $this->interest,
             'bank_transaction_charge'   => $this->bank_transaction_charge,
             'delivery_name'             => $this->delivery_name,
-            'delivery_mobile' => $this->delivery_mobile,
-            'note' => $this->note,
-            'voucher_id' => $this->voucher_id,
-            'delivery_address' => $this->deliveryAddress,
-            'delivery_charge' => $this->deliveryCharge,
-            'sales_channel_id' => $this->salesChannelId,
-            'skus' => $this->skus
+            'delivery_mobile'           => $this->delivery_mobile,
+            'note'                      => $this->note,
+            'voucher_id'                => $this->voucher_id,
+            'delivery_address'          => $this->deliveryAddress,
+            'delivery_charge'           => $this->deliveryCharge,
+            'sales_channel_id'          => $this->salesChannelId,
+            'skus'                      => $this->skus
         ];
     }
 
-    private function makeCreateData()
+    private function makeCreateData() : array
     {
         $data = [];
         if ($this->partnerId) array_push($data, ['name' => 'partner_id', 'contents' => $this->partnerId]);
