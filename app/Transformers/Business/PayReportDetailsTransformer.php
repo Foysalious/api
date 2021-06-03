@@ -39,11 +39,11 @@ class PayReportDetailsTransformer extends TransformerAbstract
             'business_member_id' => $this->businessMember->id,
             'company_name' => $this->businessMember->business->name,
             'company_logo' => $this->businessMember->business->logo,
-            'employee_id' => $this->businessMember->employee_id,
+            'employee_id' => $this->businessMember->employee_id ? $this->businessMember->employee_id : 'N/A',
             'name' => $profile->name,
             'pro_pic' => $profile->pro_pic,
             'email' => $profile->email,
-            'mobile' => $profile->mobile,
+            'mobile' => $this->businessMember->mobile ? $this->businessMember->mobile : 'N/A',
             'join_date' => Carbon::parse($this->businessMember->join_date)->format('F Y'),
             'designation' => $this->role ? $this->role->name : null,
             'department' => $this->department ? $this->department->name : null,
@@ -55,14 +55,14 @@ class PayReportDetailsTransformer extends TransformerAbstract
         $salary_break_down = $payslip->salaryBreakdown()['gross_salary_breakdown'];
         $salary_month = $payslip->schedule_date;
         return [
-            'salary_month' => $salary_month->format('M Y'),
+            'salary_month' => $salary_month->format('F Y'),
             'schedule_date' => $salary_month->format('Y-m-d'),
             'basic_salary' => $salary_break_down['basic_salary'],
             'house_rent' => $salary_break_down['house_rent'],
             'medical_allowance' => $salary_break_down['medical_allowance'],
             'conveyance' => $salary_break_down['conveyance'],
-            'gross_salary' => $salary_break_down['gross_salary'],
-            'net_payable' => $salary_break_down['gross_salary'],
+            'gross_salary' => $this->parseAmount($salary_break_down['gross_salary']),
+            'net_payable' => $this->parseAmount($salary_break_down['gross_salary']),
             'net_payable_in_word' => $this->getAmountInWord($salary_break_down['gross_salary']),
         ];
     }
@@ -89,11 +89,19 @@ class PayReportDetailsTransformer extends TransformerAbstract
             if ($component_type == $type) {
                 foreach ($component_breakdown as $component => $component_value) {
                     $total += $component_value;
-                    $final_data['breakdown'][ucwords(implode(" ", explode("_", $component)))] = $component_value;
+                    $final_data['breakdown'][ucwords(implode(" ", explode("_", $component)))] = $this->parseAmount($component_value);
                 }
             }
         }
-        $final_data['total'] = $total;
+        $final_data['total'] = $this->parseAmount($total);
         return $final_data;
+    }
+
+    /**
+     * @param $value
+     * @return string
+     */
+    private function parseAmount($value) {
+        return number_format($value, 2, ".", ",");
     }
 }

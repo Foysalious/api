@@ -180,8 +180,8 @@ class Updater
             $this->updatedData['weight'] = $this->data['weight'];
         }
 
-        if ((isset($this->data['weight_unit']) && $this->data['weight_unit'] == 'true')) {
-            $this->updatedData['weight_unit'] = null;
+        if ((isset($this->data['weight_unit']) && $this->data['weight_unit'] != $this->service->weight_unit)) {
+            $this->updatedData['weight_unit'] = $this->data['weight_unit'];
         }
 
         if (isset($this->data['warranty_unit']) && $this->data['warranty_unit'] == "null") {
