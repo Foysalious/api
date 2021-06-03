@@ -121,8 +121,8 @@ class ExternalPayments
     {
         return [
             "amount"                      => $external_payment->amount,
-            "success_url"                 => html_entity_decode($external_payment->success_url),
-            "fail_url"                    => html_entity_decode($external_payment->fail_url),
+            "success_url"                 => $external_payment->success_url,
+            "fail_url"                    => $external_payment->fail_url,
             "customer_mobile"             => $external_payment->customer_mobile,
             "customer_name"               => $external_payment->customer_name,
             "emi_month"                   => $external_payment->emi_month,
