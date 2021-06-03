@@ -48,7 +48,7 @@ class ReportsController extends Controller
 
     public function getAccountingReport(Request $request, $reportType)
     {
-        $report_types = [ "profit_loss_report", "journal_report", "balance_sheet_report", "general_ledger_report", "details_ledger_report" ];
+        $report_types = [ "profit_loss_report", "journal_report", "balance_sheet_report", "general_ledger_report", "details_ledger_report", "general_accounting_report" ];
         $startDate = $this->convertStartDate($request->start_date);
         $endDate = $this->convertEndDate($request->end_date);
 
