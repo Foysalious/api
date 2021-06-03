@@ -26,10 +26,34 @@ class Excel
         $this->makeData();
         $file_name = 'Coworker Report';
         EmployeeExcel::create($file_name, function ($excel) {
-            $excel->sheet('data', function ($sheet) {
+            $excel->sheet('Sheet 1', function ($sheet) {
+                foreach ($this->data as $key => $data) {
+                    $x = 'A'.($key + 1).':D'.($key + 1);
+                    $y = 'F'.($key + 1).':V'.($key + 1);
+                    if ($data['status'] == 'Invited') {
+                        $sheet->cell($key + 1, function($row) { $row->setFontColor('#FF9900'); });
+                        //$sheet->getStyle($y)->getFont()->getColor()->setRGB('#FFFFFF');
+                        $sheet->cell($x, function ($cells) {
+                            $cells->setFontColor('#060101');
+                        });
+                        $sheet->cell($y, function ($cells) {
+                            $cells->setFontColor('#060101');
+                        });
+                    }
+                    if ($data['status'] == 'Inactive') {
+                        $sheet->cell($key + 1, function($row) { $row->setFontColor('#FF0000'); });
+                        //$sheet->getStyle($y)->getFont()->getColor()->setRGB('#FFFFFF');
+                        $sheet->cell($x, function ($cells) {
+                            $cells->setFontColor('#060101');
+                        });
+                        $sheet->cell($y, function ($cells) {
+                            $cells->setFontColor('#060101');
+                        });
+                    }
+                }
                 $sheet->fromArray($this->data, null, 'A1', false, false);
                 $sheet->prependRow($this->getHeaders());
-                $sheet->freezeFirstRowAndColumn();
+                $sheet->freezePane('C2');
                 $sheet->cell('A1:V1', function ($cells) {
                     $cells->setFontWeight('bold');
                 });
