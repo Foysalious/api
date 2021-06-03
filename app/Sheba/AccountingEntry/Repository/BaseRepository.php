@@ -62,10 +62,10 @@ class BaseRepository
 
     private function getPartner($request)
     {
-        if("webstore" === $request->sales_channel) {
-            $partner_id = (int) $request->partner;
-        } else {
+        if(isset($request->partner->id)) {
             $partner_id = $request->partner->id;
+        } else {
+            $partner_id = (int) $request->partner;
         }
         return Partner::find($partner_id);
     }

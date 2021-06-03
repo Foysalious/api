@@ -48,6 +48,11 @@ class OrderController extends Controller
             ->setDeliveryCharge($request->delivery_charge)
             ->setStatus($request->status)
             ->setSkus($request->skus)
+            ->setDiscount($request->discount)
+            ->setIsDiscountPercentage($request->is_discount_percentage)
+            ->setPaymentMethod($request->payment_method)
+            ->setPaymentLinkAmount($request->payment_link_amount)
+            ->setPaidAmount($request->paid_amount)
             ->store();
         return http_response($request, null, 200, $response);
 
@@ -69,7 +74,6 @@ class OrderController extends Controller
         $partner = $request->auth_user->getPartner();
         $response = $this->orderService
             ->setPartnerId($partner->id)
-            ->setCustomerId($request->customer_id)
             ->setOrderId($order_id)
             ->setSalesChannelId($request->sales_channel_id)
             ->setSkus($request->skus)
@@ -83,6 +87,17 @@ class OrderController extends Controller
             ->setNote($request->note)
             ->setVoucherId($request->voucher_id)
             ->update();
+        return http_response($request, null, 200, $response);
+    }
+
+    public function updateCustomer(Request $request, $order_id)
+    {
+        $partner = $request->auth_user->getPartner();
+        $response = $this->orderService
+            ->setPartnerId($partner->id)
+            ->setOrderId($order_id)
+            ->setCustomerId($request->customer_id)
+            ->updateCustomer();
         return http_response($request, null, 200, $response);
     }
 
