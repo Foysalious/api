@@ -16,7 +16,7 @@ class AccountingRepository extends BaseRepository
 {
     public function accountTransfer(Request $request)
     {
-        $source_id = rand(0000, 9999) . date('s') . preg_replace("/^.*\./i", "", microtime(true));
+        $source_id = rand(0, 9999) . date('s') . preg_replace("/^.*\./i", "", microtime(true));
         $this->setModifier($request->partner);
         $data = $this->createJournalData($request, EntryTypes::TRANSFER, $source_id);
         $url = "api/journals/";
@@ -111,11 +111,11 @@ class AccountingRepository extends BaseRepository
      * @return mixed
      * @throws AccountingEntryServerError
      */
-    public function updateEntryBySource(Request $request, $sourceId, $sourceType)
+    public function updateEntryBySource(Request $request, $sourceId, $sourceType, $default = true)
     {
         $this->getCustomer($request);
         $this->setModifier($request->partner);
-        $data = $this->createEntryData($request, $sourceType, $sourceId);
+        $data = $this->createEntryData($request, $sourceType, $sourceId, $default);
         $url = "api/entries/source/" . $sourceType . '/' . $sourceId;
         try {
             return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
@@ -130,7 +130,7 @@ class AccountingRepository extends BaseRepository
      * @param null $type_id
      * @return array
      */
-    private function createEntryData($request, $type, $type_id = null): array
+    private function createEntryData($request, $type, $type_id = null, $default = true): array
     {
         $data['created_from'] = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
         $data['amount'] = (double)$request->amount;
@@ -138,8 +138,13 @@ class AccountingRepository extends BaseRepository
         $data['source_id'] = $type_id;
         $data['note'] = $request->has("note") ? $request->note : null;
         $data['amount_cleared'] = $request->amount_cleared;
-        $data['debit_account_key'] = $request->from_account_key;
-        $data['credit_account_key'] = $request->to_account_key;
+        if(!$default) {
+            $data['debit_account_key'] = $request->from_account_key;
+            $data['credit_account_key'] = $request->to_account_key;
+        } else {
+            $data['debit_account_key'] = $request->to_account_key;
+            $data['credit_account_key'] = $request->from_account_key;
+        }
         $data['customer_id'] = $request->customer_id;
         $data['customer_name'] = $request->customer_name;
         $data['inventory_products'] = $request->inventory_products;

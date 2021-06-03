@@ -151,7 +151,7 @@ abstract class ReturnPosItem extends RefundNature
                 "inventory_products" => $accounting_repo->getInventoryProducts($order->items, $this->data['services']),
             ]);
         }
-        $accounting_repo->updateEntryBySource($this->request, $order->id,EntryTypes::POS);
+        $accounting_repo->updateEntryBySource($this->request, $order->id,EntryTypes::POS, false);
     }
 
     private function additionalAccountingData(PosOrder $order, $refundType)
