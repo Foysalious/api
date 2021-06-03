@@ -928,7 +928,6 @@ class CoWorkerController extends Controller
         $business = $request->business;
 
         $is_inactive_filter_applied = false;
-        list($offset, $limit) = calculatePagination($request);
 
         if ($request->has('status') && $request->status == Statuses::INACTIVE) {
             $is_inactive_filter_applied = true;
