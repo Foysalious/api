@@ -84,8 +84,8 @@ class SmsCampaign
     public function createOrder()
     {
         if (!$this->partnerHasEnoughBalance()) return false;
-
-        $response = (object)$this->smsHandler->sendBulkMessages($this->mobileNumbers, $this->message);
+        $response = (object)[];
+//        $response = (object)$this->smsHandler->sendBulkMessages($this->mobileNumbers, $this->message);
         $campaign_order = $this->orderRepo->create([
             'title' => $this->title,
             'message' => $this->message,
@@ -93,20 +93,20 @@ class SmsCampaign
             'rate_per_sms' => $this->ratePerSms,
             'bulk_id' => isset($response->bulkId) ? $response->bulkId : null
         ]);
-        $amount_to_be_deducted = 0.0;
+        $amount_to_be_deducted = 0.3;
 
-        foreach ($response->messages as $index => $message) {
-            $message = (object)$message;
-            $amount_to_be_deducted += $this->getSingleSmsCost();
-            $this->receiverRepo->create([
-                'sms_campaign_order_id' => $campaign_order->id,
-                'receiver_number' => $message->to,
-                'receiver_name' => $this->customers && $this->customers[$index] && $this->customers[$index]['name'] ? $this->customers[$index]['name'] : null,
-                'message_id' => $message->messageId,
-                'status' => Status::PENDING,
-                'sms_count' => $this->smsCount
-            ]);
-        }
+//        foreach ($response->messages as $index => $message) {
+//            $message = (object)$message;
+//            $amount_to_be_deducted += $this->getSingleSmsCost();
+//            $this->receiverRepo->create([
+//                'sms_campaign_order_id' => $campaign_order->id,
+//                'receiver_number' => $message->to,
+//                'receiver_name' => $this->customers && $this->customers[$index] && $this->customers[$index]['name'] ? $this->customers[$index]['name'] : null,
+//                'message_id' => $message->messageId,
+//                'status' => Status::PENDING,
+//                'sms_count' => $this->smsCount
+//            ]);
+//        }
 
         $this->createTransactions($campaign_order, $amount_to_be_deducted);
         $this->storeJournal($amount_to_be_deducted, $campaign_order->id);
