@@ -1,20 +1,16 @@
-<?php
+<?php namespace Tests\Feature\Accounting;
 
-namespace Tests\Feature\Accounting;
 
 use GuzzleHttp\Client;
-use Illuminate\Foundation\Testing\WithoutMiddleware;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\Feature\FeatureTestCase;
 
-class DueDepositApiTest extends FeatureTestCase
+class IncomeExpenseEntryApiTest extends FeatureTestCase
 {
     private $token;
 
-    public function test_entry_type_due()
+    public function test_income_entry_api()
     {
-        $response = $this->post(url('/v2/accounting/due-tracker'), $this->getFormData('due'), [
+        $response = $this->post(config('sheba.api_url').'/v2/accounting/income', $this->getFormData(), [
             'Authorization' => $this->token ?? $this->generateToken()
         ]);
 
@@ -25,14 +21,15 @@ class DueDepositApiTest extends FeatureTestCase
             "message" => "Successful",
             "data" => [
                 "id" => $id,
-                "amount" => 4440
+                "amount" => 1111
             ]
         ]);
     }
 
-    public function test_entry_type_deposit()
+
+    public function test_expense_type_deposit()
     {
-        $response = $this->post(url('/v2/accounting/due-tracker'), $this->getFormData('deposit'), [
+        $response = $this->post(config('sheba.api_url').'/v2/accounting/expense', $this->getFormData(), [
             'Authorization' => $this->token ?? $this->generateToken()
         ]);
 
@@ -43,27 +40,27 @@ class DueDepositApiTest extends FeatureTestCase
             "message" => "Successful",
             "data" => [
                 "id" => $id,
-                "amount" => 4440
+                "amount" => 1111
             ]
         ]);
     }
 
-    private function generateToken(){
+    private function generateToken(): string
+    {
         $client = new Client();
         $response = $client->get('https://accounts.dev-sheba.xyz/api/v3/token/generate?type=resource&token=TemAMQbHo8NES7nlEielwNw1EGTOKcQTC6jImGLNP4MLbFCjtvbeziGwlMd7&type_id=45320');
         $this->token = 'Bearer ' . \GuzzleHttp\json_decode($response->getBody())->token;
         return $this->token;
     }
 
-    private function getFormData(string $entryType) : array {
+    private function getFormData() : array {
         return [
-            'amount' => 4440,
-            'account_key' => 'cash',
+            'amount' => 1111,
+            'from_account_key' => 'cash',
+            'to_account_key' => 'sheba_account',
             'date' => '2020-12-25 15:49:59',
-            'note' => 'note',
-            'attachments' => '',
-            'entry_type' => $entryType,
-            'customer_id' => 568,
+            'note' => 'test case from api project',
         ];
     }
+
 }
