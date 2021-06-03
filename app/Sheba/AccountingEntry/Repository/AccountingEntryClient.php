@@ -88,7 +88,6 @@ class AccountingEntryClient
             return isset($res['data']) ? $res['data'] : $res['message'];
 
         } catch (GuzzleException $e) {
-            dd($e->getMessage());
             $response = $e->getResponse() ? json_decode($e->getResponse()->getBody()->getContents(), true): null;
             $message = null;
             if (isset($response['message']) ) {
