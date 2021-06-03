@@ -2,8 +2,10 @@
 
 
 use App\Http\Controllers\Controller;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Reports\Accounting\AccountingReportRepository;
 use Sheba\Reports\Pos\PosReportRepository;
 use Throwable;
 
@@ -13,10 +15,12 @@ class ReportsController extends Controller
      * @var PosReportRepository
      */
     private $posReportRepository;
+    private $accountingReportRepository;
 
-    public function __construct(PosReportRepository $posRepository)
+    public function __construct(PosReportRepository $posRepository, AccountingReportRepository $accountingReportRepository)
     {
         $this->posReportRepository = $posRepository;
+        $this->accountingReportRepository = $accountingReportRepository;
     }
 
     public function getCustomerWiseReport(Request $request) {
@@ -40,5 +44,43 @@ class ReportsController extends Controller
             return api_response($request, null, 500);
         }
 
+    }
+
+    public function getAccountingReport(Request $request, $reportType)
+    {
+        $report_types = [ "profit_loss_report", "journal_report", "balance_sheet_report", "general_ledger_report", "details_ledger_report", "general_accounting_report" ];
+        $startDate = $this->convertStartDate($request->start_date);
+        $endDate = $this->convertEndDate($request->end_date);
+
+        if ($endDate < $startDate){
+            return api_response($request,null, 400, ['message' => 'End date can not smaller than start date']);
+        }
+
+        if (in_array($reportType, $report_types)) {
+            try {
+                $response = $this->accountingReportRepository->getAccountingReport($reportType, $request->partner->id, $startDate, $endDate, $request->account_id, $request->account_type);
+                return api_response($request, $response, 200, ['data' => $response]);
+            } catch (Exception $e) {
+                return api_response(
+                    $request,
+                    null,
+                    $e->getCode() == 0 ? 400 : $e->getCode(),
+                    ['message' => $e->getMessage()]
+                );
+            }
+        }
+        return api_response($request, null, 402, ['message' => 'Please apply with correct report type.']);
+    }
+
+    private function convertStartDate($date) {
+        return $date ?
+            Carbon::createFromFormat('Y-m-d H:i:s', $date . ' 0:00:00')->timestamp :
+            strtotime('today midnight');
+    }
+
+    private function convertEndDate($date) {
+        return $date ?
+            Carbon::createFromFormat('Y-m-d H:i:s', $date . ' 23:59:59')->timestamp :
+            strtotime('tomorrow midnight') - 1;
     }
 }
