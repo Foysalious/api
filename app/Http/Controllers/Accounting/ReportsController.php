@@ -49,8 +49,8 @@ class ReportsController extends Controller
     public function getAccountingReport(Request $request, $reportType)
     {
         $report_types = [ "profit_loss_report", "journal_report", "balance_sheet_report", "general_ledger_report", "details_ledger_report", "general_accounting_report" ];
-        $startDate = $this->convertStartDate($request->start_date);
-        $endDate = $this->convertEndDate($request->end_date);
+        $startDate = $request->start_date ? $request->start_date . ' 0:00:00' : Carbon::now()->format('Y-m-d') . ' 0:00:00';
+        $endDate = $request->end_date ? $request->end_date . ' 23:59:59' : Carbon::now()->format('Y-m-d') . ' 23:59:59';
 
         if ($endDate < $startDate){
             return api_response($request,null, 400, ['message' => 'End date can not smaller than start date']);
@@ -70,17 +70,5 @@ class ReportsController extends Controller
             }
         }
         return api_response($request, null, 402, ['message' => 'Please apply with correct report type.']);
-    }
-
-    private function convertStartDate($date) {
-        return $date ?
-            Carbon::createFromFormat('Y-m-d H:i:s', $date . ' 0:00:00')->timestamp :
-            strtotime('today midnight');
-    }
-
-    private function convertEndDate($date) {
-        return $date ?
-            Carbon::createFromFormat('Y-m-d H:i:s', $date . ' 23:59:59')->timestamp :
-            strtotime('tomorrow midnight') - 1;
     }
 }
