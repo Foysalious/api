@@ -871,7 +871,7 @@ class AttendanceController extends Controller
                         ->setIsEnable($request->is_enable)
                         ->setPolicyType($request->policy_type)
                         ->setRules($request->rules);
-
+        if ($requester->getError()) return api_response($request, null, 400, ['message' => $requester->getError()]);
         $updater->setPolicyRuleRequester($requester)->update();
 
         return api_response($request, null, 200);
