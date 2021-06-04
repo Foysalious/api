@@ -33,9 +33,11 @@ class CoWorkerReportDetailsTransformer extends TransformerAbstract
         return [
             'id' => $member->id,
             'employee_id' => $business_member->employee_id,
-            'employee_name' => $profile->name,
-            'phone' => $profile->mobile,
-            'email' => $profile->email,
+            'profile' => [
+                'name' => $profile->name,
+                'mobile' => $profile->mobile,
+                'email' => $profile->email,
+            ],
             'status' => $business_member->status,
             'department' => $role ? $role->businessDepartment->name : '-',
             'designation' => $role ? $role->name : '-',
