@@ -855,7 +855,7 @@ class AttendanceController extends Controller
         return api_response($request, $grace_policy_rules, 200, ['grace_policy_rules' => $grace_policy_rules]);
     }
 
-    public function createUnpaidLeavePolicy(Request $request, PolicyRuleRequester $requester/*, PolicyRuleUpdater $updater*/)
+    public function createUnpaidLeavePolicy(Request $request, PolicyRuleRequester $requester, PolicyRuleUpdater $updater)
     {
         $this->validate($request, [
             'is_enable' => 'required',
@@ -870,7 +870,7 @@ class AttendanceController extends Controller
                         ->setPolicyType($request->policy_type)
                         ->setRules($request->rules);
         if ($requester->getError()) return api_response($request, null, 400, ['message' => $requester->getError()]);
-        //$updater->setPolicyRuleRequester($requester)->update();
+        $updater->setPolicyRuleRequester($requester)->update();
 
         return api_response($request, null, 200);
     }
