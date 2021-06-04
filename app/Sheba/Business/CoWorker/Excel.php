@@ -68,9 +68,9 @@ class Excel
         foreach ($this->employees as $employee) {
             array_push($this->data, [
                 'employee_id' => $employee['employee_id'] ?: 'N/A',
-                'employee_name' => $employee['employee_name'],
-                'phone' => $employee['phone'] ?: '-',
-                'email' => $employee['email'] ?: '-',
+                'employee_name' => $employee['profile']['name'],
+                'phone' => $employee['profile']['mobile'] ?: '-',
+                'email' => $employee['profile']['email'] ?: '-',
                 'status' => ucfirst($employee['status']) ?: '-',
                 'department' => $employee['department'] ?: '-',
                 'designation' => $employee['designation'] ?: '-',
