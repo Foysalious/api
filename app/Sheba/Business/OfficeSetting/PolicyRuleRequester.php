@@ -99,7 +99,7 @@ class PolicyRuleRequester
         foreach ($this->rules as $rule) {
             $from_days[] = $rule['from'];
             $to_days[] = $rule['to'];
-            if ($rule['from'] < $rule['to']) return $this->errorMessage = 'From days cannot be smaller than To days';
+            if ($rule['from'] > $rule['to']) return $this->errorMessage = 'To days cannot be smaller than From days';
             if ($rule['action'] == ActionType::CASH_PENALTY && empty($rule['penalty_amount'])) return $this->errorMessage = 'Penalty Amount Not Set';
             if ($rule['action'] == ActionType::LEAVE_ADJUSTMENT){
                 if (empty($rule['penalty_type'])) return $this->errorMessage = 'Please select, on what penalty should be applied.';
