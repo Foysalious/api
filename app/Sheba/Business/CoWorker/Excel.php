@@ -100,28 +100,11 @@ class Excel
     private function getHeaders()
     {
         return [
-            'Employee ID',
-            'Employee Name',
-            'Phone',
-            'Email',
-            'Status',
-            'Department',
-            'Designation',
-            'Manager',
-            'Employee Grade',
-            'Joining Date',
-            'Employee Type',
-            'Previous Institution',
-            'DOB',
-            'Address',
-            'Nationality',
-            'NID/Passport',
-            'TIN',
-            'Bank Name',
-            'Bank Account No.',
-            'Emergency Contact',
-            'Name Emergency Contact',
-            'Relationship Emergency Contact'
+            'Employee ID', 'Employee Name', 'Phone', 'Email', 'Status',
+            'Department', 'Designation', 'Manager', 'Employee Grade', 'Joining Date',
+            'Employee Type', 'Previous Institution', 'DOB', 'Address',
+            'Nationality', 'NID/Passport', 'TIN', 'Bank Name',
+            'Bank Account No.', 'Emergency Contact', 'Name Emergency Contact', 'Relationship Emergency Contact'
         ];
     }
 
