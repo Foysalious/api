@@ -1,9 +1,6 @@
 <?php namespace Tests\Feature\Accounting;
 
 
-use GuzzleHttp\Client;
-use Tests\Feature\FeatureTestCase;
-
 class IncomeExpenseEntryApiTest extends AccountingFeatureTest
 {
     public function test_income_entry_api()

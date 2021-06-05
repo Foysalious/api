@@ -5,8 +5,9 @@ namespace Tests\Feature\Accounting;
 
 
 use GuzzleHttp\Client;
+use Tests\Feature\FeatureTestCase;
 
-class AccountingFeatureTest extends \Tests\Feature\FeatureTestCase
+class AccountingFeatureTest extends FeatureTestCase
 {
     protected $token;
 
