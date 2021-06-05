@@ -52,6 +52,9 @@ class Excel
                     }
                 }
                 $sheet->fromArray($this->data, null, 'A1', false, false);
+                $sheet->setColumnFormat(array(
+                    'C' => '+#'
+                ));
                 $sheet->prependRow($this->getHeaders());
                 $sheet->freezePane('C2');
                 $sheet->cell('A1:V1', function ($cells) {
