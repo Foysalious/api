@@ -28,7 +28,7 @@ class Excel
         EmployeeExcel::create($file_name, function ($excel) {
             $excel->sheet('Sheet 1', function ($sheet) {
                 $sheet->setColumnFormat(array(
-                    'C' => '0'
+                    'C' => '+#'
                 ));
                 foreach ($this->data as $key => $data) {
                     $x = 'A'.($key + 1).':D'.($key + 1);
