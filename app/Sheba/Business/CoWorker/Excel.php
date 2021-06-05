@@ -54,9 +54,7 @@ class Excel
                             $cells->setFontColor('#060101');
                         });
                     }
-
-                    $i = $key + 2;
-                    $sheet->setCellValueExplicit('C' . $i, $data['phone'] );
+                    $sheet->setCellValueExplicit('C10', $data['phone'], \PHPExcel_Cell_DataType::TYPE_STRING);
                 }
                 $sheet->fromArray($this->data, null, 'A1', false, false);
                 $sheet->prependRow($this->getHeaders());
