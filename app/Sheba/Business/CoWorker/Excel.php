@@ -2,6 +2,7 @@
 
 use Excel as EmployeeExcel;
 use PHPExcel_Style_Fill;
+use PHPExcel_Style_NumberFormat;
 
 class Excel
 {
@@ -28,7 +29,7 @@ class Excel
         EmployeeExcel::create($file_name, function ($excel) {
             $excel->sheet('Sheet 1', function ($sheet) {
                 $sheet->setColumnFormat(array(
-                    'C' => '@'
+                    'C' => \PHPExcel_Style_NumberFormat::FORMAT_TEXT,
                 ));
                 foreach ($this->data as $key => $data) {
                     $x = 'A'.($key + 1).':D'.($key + 1);
@@ -53,6 +54,9 @@ class Excel
                             $cells->setFontColor('#060101');
                         });
                     }
+
+                    $i = $key + 2;
+                    $sheet->setCellValueExplicit('C' . $i, $data['profile']['mobile'] );
                 }
                 $sheet->fromArray($this->data, null, 'A1', false, false);
                 $sheet->prependRow($this->getHeaders());
