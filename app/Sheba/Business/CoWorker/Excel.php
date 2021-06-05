@@ -52,6 +52,9 @@ class Excel
                     }
                 }
                 $sheet->fromArray($this->data, null, 'A1', false, false);
+                $sheet->setColumnFormat(array(
+                    'C' => '+#'
+                ));
                 $sheet->prependRow($this->getHeaders());
                 $sheet->freezePane('C2');
                 $sheet->cell('A1:V1', function ($cells) {
@@ -69,7 +72,7 @@ class Excel
             array_push($this->data, [
                 'employee_id' => $employee['employee_id'] ?: 'N/A',
                 'employee_name' => $employee['profile']['name'],
-                'phone' => (float) $employee['profile']['mobile'] ?: '-',
+                'phone' => $employee['profile']['mobile'] ?: '-',
                 'email' => $employee['profile']['email'] ?: '-',
                 'status' => ucfirst($employee['status']) ?: '-',
                 'department' => $employee['department'] ?: '-',
