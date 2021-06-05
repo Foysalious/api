@@ -29,7 +29,9 @@ class Excel
         EmployeeExcel::create($file_name, function ($excel) {
             $excel->sheet('Sheet 1', function ($sheet) {
                 $sheet->setColumnFormat(array(
-                    'C' => '#0',
+                    'C' => '#0', 'P' => '#0',
+                    'Q' => '#0', 'S' => '#0',
+                    'T' => '#0',
                 ));
                 foreach ($this->data as $key => $data) {
                     $x = 'A'.($key + 1).':D'.($key + 1);
@@ -90,8 +92,8 @@ class Excel
                 "tin_no" => $employee['tin_no'] ?: '-',
                 "bank_name" => $employee['bank_name'] ?: '-',
                 "bank_account_no" => $employee['bank_account_no'] ?: '-',
-                "emergency_contract_person_name" => $employee['emergency_contract_person_name'] ?: '-',
                 "emergency_contract_person_number" => $employee['emergency_contract_person_number'] ?: '-',
+                "emergency_contract_person_name" => $employee['emergency_contract_person_name'] ?: '-',
                 "emergency_contract_person_relationship" => $employee['emergency_contract_person_relationship'] ?: '-',
             ]);
         }
@@ -108,7 +110,7 @@ class Excel
             'Department', 'Designation', 'Manager', 'Employee Grade', 'Joining Date',
             'Employee Type', 'Previous Institution', 'DOB', 'Address',
             'Nationality', 'NID/Passport', 'TIN', 'Bank Name',
-            'Bank Account No.', 'Emergency Contact', 'Name Emergency Contact', 'Relationship Emergency Contact'
+            'Bank Account No.','Emergency Contact', 'Name Emergency Contact', 'Relationship Emergency Contact'
         ];
     }
 
