@@ -27,6 +27,9 @@ class Excel
         $file_name = 'Coworker Report';
         EmployeeExcel::create($file_name, function ($excel) {
             $excel->sheet('Sheet 1', function ($sheet) {
+                $sheet->setColumnFormat(array(
+                    'C' => '0'
+                ));
                 foreach ($this->data as $key => $data) {
                     $x = 'A'.($key + 1).':D'.($key + 1);
                     $y = 'F'.($key + 1).':V'.($key + 1);
@@ -52,9 +55,6 @@ class Excel
                     }
                 }
                 $sheet->fromArray($this->data, null, 'A1', false, false);
-                $sheet->setColumnFormat(array(
-                    'C' => '+#'
-                ));
                 $sheet->prependRow($this->getHeaders());
                 $sheet->freezePane('C2');
                 $sheet->cell('A1:V1', function ($cells) {
