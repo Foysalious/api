@@ -69,7 +69,7 @@ class Excel
             array_push($this->data, [
                 'employee_id' => $employee['employee_id'] ?: 'N/A',
                 'employee_name' => $employee['profile']['name'],
-                'phone' => (float) $employee['profile']['mobile'] ?: '-',
+                'phone' => $employee['profile']['mobile'] ?: '-',
                 'email' => $employee['profile']['email'] ?: '-',
                 'status' => ucfirst($employee['status']) ?: '-',
                 'department' => $employee['department'] ?: '-',
