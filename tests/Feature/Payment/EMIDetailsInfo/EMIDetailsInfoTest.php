@@ -148,7 +148,7 @@ class EMIDetailsInfoTest extends FeatureTestCase
         $data = $response->decodeResponseJson();
 
         //assert
-        $this->assertEquals("404 Not Found",$data["message"]);
+        $this->assertEquals("404 Not Found", $data["message"]);
 
     }
 }
