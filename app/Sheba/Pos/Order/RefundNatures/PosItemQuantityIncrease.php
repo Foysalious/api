@@ -22,13 +22,13 @@ class PosItemQuantityIncrease extends ReturnPosItem
                 'unit_price'
             ], 'service_id')->toArray();
 
-//            $this->inventoryUpdate($this->order->items, $this->data['services']);
+            $this->inventoryUpdate($this->order->items, $this->data['services']);
             $this->updater->setOrder($this->order)->setData($this->data)->setNew($this->new)->update();
             $this->refundPayment();
             $this->generateDetails($this->order);
             $this->saveLog();
             if ($this->order) {
-//                $this->updateEntry($this->order, 'quantity_increase');
+                $this->updateEntry($this->order, 'quantity_increase');
                 $this->updateIncome($this->order);
             }
         } catch (ExpenseTrackingServerError $e) {
