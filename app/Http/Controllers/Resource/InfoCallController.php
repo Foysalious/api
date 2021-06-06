@@ -222,7 +222,6 @@ class InfoCallController extends Controller
                 $reward_exists = $info_call_reward[0]->name;
             }
             else $reward_exists = 0;
-            dd($reward_action);
             if ($log) $service_comment = $log->rejectReason->name;
             $info_call_details = [
                 'id' => $id,
