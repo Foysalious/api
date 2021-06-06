@@ -1,7 +1,7 @@
 <?php namespace Tests\Feature\Accounting;
 
 
-class IncomeExpenseAccountListWithTotalDebit extends AccountingFeatureTest
+class IncomeExpenseAccountListWithTotalDebitTest extends AccountingFeatureTest
 {
     private $start_date = "2021-01-29";
     private $end_date = "2021-12-29";
