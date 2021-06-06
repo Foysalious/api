@@ -1,96 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="Application Test Suite" tests="13" assertions="27" failures="7" errors="0" time="30.416751">
-    <testsuite name="Tests\Feature\sDeliveryRegistration\DeliveryRegisterAPITest" file="/var/www/tests/Feature/sDeliveryRegistration/DeliveryRegisterAPITest.php" tests="9" assertions="17" failures="7" errors="0" time="26.109197">
-      <testcase name="testSuccessfulRegistrationWithAllInfo" class="Tests\Feature\sDeliveryRegistration\DeliveryRegisterAPITest" file="/var/www/tests/Feature/sDeliveryRegistration/DeliveryRegisterAPITest.php" line="31" assertions="1" time="4.086209">
-        <failure type="PHPUnit_Framework_ExpectationFailedException">Tests\Feature\sDeliveryRegistration\DeliveryRegisterAPITest::testSuccessfulRegistrationWithAllInfo
-Failed asserting that 400 matches expected 200.
+  <testsuite name="Application Test Suite" tests="1" assertions="0" failures="0" errors="1" time="0.102906">
+    <testsuite name="Tests\Feature\Payment\EMIDetailsInfo\EMIDetailsInfoTest" file="/var/www/tests/Feature/Payment/EMIDetailsInfo/EMIDetailsInfoTest.php" tests="1" assertions="0" failures="0" errors="1" time="0.102906">
+      <testcase name="testEMIInfoByGivingNoParameterAmount" class="Tests\Feature\Payment\EMIDetailsInfo\EMIDetailsInfoTest" file="/var/www/tests/Feature/Payment/EMIDetailsInfo/EMIDetailsInfoTest.php" line="11" assertions="0" time="0.102906">
+        <error type="Error">Tests\Feature\Payment\EMIDetailsInfo\EMIDetailsInfoTest::testEMIInfoByGivingNoParameterAmount
+Error: Call to a member function decodeResponseJson() on array
 
-/var/www/tests/Feature/sDeliveryRegistration/DeliveryRegisterAPITest.php:59
-</failure>
+/var/www/tests/Feature/Payment/EMIDetailsInfo/EMIDetailsInfoTest.php:46
+</error>
       </testcase>
-      <testcase name="testWithoutNameCannotBeRegistered" class="Tests\Feature\sDeliveryRegistration\DeliveryRegisterAPITest" file="/var/www/tests/Feature/sDeliveryRegistration/DeliveryRegisterAPITest.php" line="63" assertions="2" time="3.238485">
-        <failure type="PHPUnit_Framework_ExpectationFailedException">Tests\Feature\sDeliveryRegistration\DeliveryRegisterAPITest::testWithoutNameCannotBeRegistered
-Failed asserting that two strings are equal.
---- Expected
-+++ Actual
-@@ @@
--'The name field is required.'
-+'The name field is required.The selected payment method is invalid.'
-
-/var/www/tests/Feature/sDeliveryRegistration/DeliveryRegisterAPITest.php:92
-</failure>
-      </testcase>
-      <testcase name="testWithoutDistrictCannotBeRegistered" class="Tests\Feature\sDeliveryRegistration\DeliveryRegisterAPITest" file="/var/www/tests/Feature/sDeliveryRegistration/DeliveryRegisterAPITest.php" line="95" assertions="2" time="2.749742">
-        <failure type="PHPUnit_Framework_ExpectationFailedException">Tests\Feature\sDeliveryRegistration\DeliveryRegisterAPITest::testWithoutDistrictCannotBeRegistered
-Failed asserting that two strings are equal.
---- Expected
-+++ Actual
-@@ @@
--'The district field is required.'
-+'The district field is required.The selected payment method is invalid.'
-
-/var/www/tests/Feature/sDeliveryRegistration/DeliveryRegisterAPITest.php:123
-</failure>
-      </testcase>
-      <testcase name="testWithoutThanaCannotBeRegistered" class="Tests\Feature\sDeliveryRegistration\DeliveryRegisterAPITest" file="/var/www/tests/Feature/sDeliveryRegistration/DeliveryRegisterAPITest.php" line="126" assertions="2" time="3.662977">
-        <failure type="PHPUnit_Framework_ExpectationFailedException">Tests\Feature\sDeliveryRegistration\DeliveryRegisterAPITest::testWithoutThanaCannotBeRegistered
-Failed asserting that two strings are equal.
---- Expected
-+++ Actual
-@@ @@
--'The thana field is required.'
-+'The thana field is required.The selected payment method is invalid.'
-
-/var/www/tests/Feature/sDeliveryRegistration/DeliveryRegisterAPITest.php:154
-</failure>
-      </testcase>
-      <testcase name="testEmptyMobileNoCannotBeAccepted" class="Tests\Feature\sDeliveryRegistration\DeliveryRegisterAPITest" file="/var/www/tests/Feature/sDeliveryRegistration/DeliveryRegisterAPITest.php" line="157" assertions="2" time="2.796667">
-        <failure type="PHPUnit_Framework_ExpectationFailedException">Tests\Feature\sDeliveryRegistration\DeliveryRegisterAPITest::testEmptyMobileNoCannotBeAccepted
-Failed asserting that two strings are equal.
---- Expected
-+++ Actual
-@@ @@
--'The mobile field is required.'
-+'The selected payment method is invalid.The mobile field is required.'
-
-/var/www/tests/Feature/sDeliveryRegistration/DeliveryRegisterAPITest.php:185
-</failure>
-      </testcase>
-      <testcase name="testEmptyPaymentMethodCannotBeAccepted" class="Tests\Feature\sDeliveryRegistration\DeliveryRegisterAPITest" file="/var/www/tests/Feature/sDeliveryRegistration/DeliveryRegisterAPITest.php" line="188" assertions="2" time="2.976416"/>
-      <testcase name="testWithoutContactNameCannotBeAccepted" class="Tests\Feature\sDeliveryRegistration\DeliveryRegisterAPITest" file="/var/www/tests/Feature/sDeliveryRegistration/DeliveryRegisterAPITest.php" line="219" assertions="2" time="2.864376">
-        <failure type="PHPUnit_Framework_ExpectationFailedException">Tests\Feature\sDeliveryRegistration\DeliveryRegisterAPITest::testWithoutContactNameCannotBeAccepted
-Failed asserting that two strings are equal.
---- Expected
-+++ Actual
-@@ @@
--'The contact name field is required.'
-+'The selected payment method is invalid.The contact name field is required.'
-
-/var/www/tests/Feature/sDeliveryRegistration/DeliveryRegisterAPITest.php:247
-</failure>
-      </testcase>
-      <testcase name="testWithoutAccountTypeCannotBeAccepted" class="Tests\Feature\sDeliveryRegistration\DeliveryRegisterAPITest" file="/var/www/tests/Feature/sDeliveryRegistration/DeliveryRegisterAPITest.php" line="250" assertions="2" time="2.771028">
-        <failure type="PHPUnit_Framework_ExpectationFailedException">Tests\Feature\sDeliveryRegistration\DeliveryRegisterAPITest::testWithoutAccountTypeCannotBeAccepted
-Failed asserting that two strings are equal.
---- Expected
-+++ Actual
-@@ @@
--'The account type field is required.'
-+'The selected payment method is invalid.The account type field is required.'
-
-/var/www/tests/Feature/sDeliveryRegistration/DeliveryRegisterAPITest.php:278
-</failure>
-      </testcase>
-      <testcase name="testWithWrongAuthorization" class="Tests\Feature\sDeliveryRegistration\DeliveryRegisterAPITest" file="/var/www/tests/Feature/sDeliveryRegistration/DeliveryRegisterAPITest.php" line="281" assertions="2" time="0.963297"/>
-    </testsuite>
-    <testsuite name="Tests\Feature\sDeliveryRegistration\RegistrationInfoApiTest" file="/var/www/tests/Feature/sDeliveryRegistration/RegistrationInfoApiTest.php" tests="2" assertions="4" failures="0" errors="0" time="2.425465">
-      <testcase name="testSuccessfulRegistrationInfo" class="Tests\Feature\sDeliveryRegistration\RegistrationInfoApiTest" file="/var/www/tests/Feature/sDeliveryRegistration/RegistrationInfoApiTest.php" line="37" assertions="2" time="1.197483"/>
-      <testcase name="testWithWrongAuthorizationIsNotAccepted" class="Tests\Feature\sDeliveryRegistration\RegistrationInfoApiTest" file="/var/www/tests/Feature/sDeliveryRegistration/RegistrationInfoApiTest.php" line="47" assertions="2" time="1.227982"/>
-    </testsuite>
-    <testsuite name="Tests\Feature\sDeliveryRegistration\WebstoreDashboardInfoApiTest" file="/var/www/tests/Feature/sDeliveryRegistration/WebstoreDashboardInfoApiTest.php" tests="2" assertions="6" failures="0" errors="0" time="1.882089">
-      <testcase name="testSuccessfulResponseWhenPartnerIsRegisteredForDelivery" class="Tests\Feature\sDeliveryRegistration\WebstoreDashboardInfoApiTest" file="/var/www/tests/Feature/sDeliveryRegistration/WebstoreDashboardInfoApiTest.php" line="38" assertions="3" time="0.967398"/>
-      <testcase name="testSuccessfulResponseWhenPartnerIsNotRegisteredForDelivery" class="Tests\Feature\sDeliveryRegistration\WebstoreDashboardInfoApiTest" file="/var/www/tests/Feature/sDeliveryRegistration/WebstoreDashboardInfoApiTest.php" line="47" assertions="3" time="0.914691"/>
     </testsuite>
   </testsuite>
 </testsuites>
