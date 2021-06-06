@@ -41,8 +41,15 @@ class HomepageController extends Controller
      */
     public function getIncomeExpenseBalance(Request $request): JsonResponse
     {
+        $startDate = $request->start_date ? $request->start_date . ' 0:00:00' : Carbon::now()->format('Y-m-d') . ' 0:00:00';
+        $endDate = $request->end_date ? $request->end_date . ' 23:59:59' : Carbon::now()->format('Y-m-d') . ' 23:59:59';
+
+        if ($endDate < $startDate){
+            return api_response($request,null, 400, ['message' => 'End date can not smaller than start date']);
+        }
+
         try {
-            $response = $this->homepageRepo->getIncomeExpenseBalance($request->partner->id, $request->start_date, $request->end_date);
+            $response = $this->homepageRepo->getIncomeExpenseBalance($request->partner->id, $startDate, $endDate);
             return api_response($request, $response, 200, ['data' => $response]);
         } catch (Exception $e) {
             return api_response(
