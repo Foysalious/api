@@ -175,23 +175,23 @@ class MemberController extends Controller
             });
             if (!$business_members->count()) return api_response($request, null, 420, ['message' => 'You account deactivated from this company']);
         }
-
+        $business_member = $member->businessMember;
         $profile = $member->profile;
-        $access_control->setBusinessMember($member->businessMember);
+        $access_control->setBusinessMember($business_member);
         $info = [
             'profile_id' => $profile->id,
             'name' => $profile->name,
-            'mobile' => $profile->mobile,
+            'mobile' => $business_member->mobile,
             'email' => $profile->email,
             'pro_pic' => $profile->pro_pic,
-            'designation' => ($member->businessMember && $member->businessMember->role) ? $member->businessMember->role->name : null,
+            'designation' => ($business_member && $business_member->role) ? $business_member->role->name : null,
             'gender' => $profile->gender,
             'date_of_birth' => $profile->dob ? Carbon::parse($profile->dob)->format('M-j, Y') : null,
             'nid_no' => $profile->nid_no,
             'address' => $profile->address,
             'business_id' => $business ? $business->id : null,
             'remember_token' => $member->remember_token,
-            'is_super' => $member->businessMember ? $member->businessMember->is_super : null,
+            'is_super' => $business_member ? $business_member->is_super : null,
             'is_payroll_enable' => $business->is_payroll_enable,
             'access' => [
                 'support' => $business ? (in_array($business->id, config('business.WHITELISTED_BUSINESS_IDS')) && $access_control->hasAccess('support.rw') ? 1 : 0) : 0,

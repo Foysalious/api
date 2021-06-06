@@ -62,6 +62,30 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
         ])->wherePivot('status', '<>', Statuses::INACTIVE);
     }
 
+    /**
+     * @return mixed
+     */
+    public function membersWithProfile()
+    {
+        return $this->members()->select('members.id', 'profile_id',
+            'emergency_contract_person_name', 'emergency_contract_person_number', 'emergency_contract_person_relationship')->with([
+            'profile' => function ($q) {
+                $q->select('profiles.id', 'name', 'mobile', 'email', 'dob', 'address', 'nationality', 'nid_no', 'tin_no')->with('banks');
+            },
+            'businessMember' => function ($q) {
+                $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id', 'status')->with([
+                    'role' => function ($q) {
+                        $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                            'businessDepartment' => function ($q) {
+                                $q->select('business_departments.id', 'business_id', 'name');
+                            }
+                        ]);
+                    }
+                ]);
+            }
+        ])->wherePivot('status', '<>', Statuses::INACTIVE);
+    }
+
     public function getActiveBusinessMember()
     {
         return BusinessMember::where('business_id', $this->id)->where('status', Statuses::ACTIVE)->with([

@@ -778,6 +778,8 @@ class AttendanceController extends Controller
             'is_allow_end_time_grace' => $office_time->is_end_grace_time_enable,
             'ending_grace_time' => $office_time->end_grace_time,
             'is_half_day_enable' => $business->is_half_day_enable,
+            'half_day_leave_types_count' => $half_day_leave_types->count(),
+            'half_day_leave_types' => $half_day_leave_types->pluck('title'),
             'half_day_initial_timings' => $this->getHalfDayTimings($business),
             'is_grace_period_policy_enable' => $office_time->is_grace_period_policy_enable,
             'is_late_checkin_early_checkout_enable' => $office_time->is_late_checkin_early_checkout_policy_enable,
@@ -869,7 +871,7 @@ class AttendanceController extends Controller
                         ->setIsEnable($request->is_enable)
                         ->setPolicyType($request->policy_type)
                         ->setRules($request->rules);
-
+        if ($requester->getError()) return api_response($request, null, 400, ['message' => $requester->getError()]);
         $updater->setPolicyRuleRequester($requester)->update();
 
         return api_response($request, null, 200);
