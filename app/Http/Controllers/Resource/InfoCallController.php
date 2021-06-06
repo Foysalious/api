@@ -214,14 +214,6 @@ class InfoCallController extends Controller
         if ($info_call_exixts > 0 && is_numeric($id)) {
             $info_call = InfoCall::findOrFail($id);
             $log = $this->infoCallStatusLogRepository->getLastRejectLogOfInfoCall($info_call);
-            $reward_action = RewardAction::where('event_name', 'info_call_completed')->latest('id')->first();
-            if ($reward_action != null) {
-                $info_call_reward = Reward::where('detail_id', $reward_action->id)
-                    ->select('rewards.*')
-                    ->get();
-                $reward_exists = $info_call_reward[0]->name;
-            }
-            else $reward_exists = 0;
             if ($log) $service_comment = $log->rejectReason->name;
             $info_call_details = [
                 'id' => $id,
@@ -235,9 +227,9 @@ class InfoCallController extends Controller
                 $info_call_details['order_id'] = $order[0]->id;
                 $info_call_details['order_created_at'] = $order[0]->created_at->toDateTimeString();
                 $partner_order = PartnerOrder::where('order_id', $order[0]->id)->get()->last()->toArray();
-                $job = Job::where('partner_order_id', $partner_order['id'])->get()->last()->toArray();
-                $resource_transaction = DB::table('resource_transactions')->where('job_id', $job['id'])->first();
-                if ($resource_transaction) $reward_amount = $resource_transaction->amount;
+                $job = $partner_order ? Job::where('partner_order_id', $partner_order['id'])->get()->last()->toArray() : null;
+                $resource_transaction = $job ? DB::table('resource_transactions')->where('job_id', $job['id'])->get() : null;
+                if ($resource_transaction!=null) $reward_amount = array_sum(array_column($resource_transaction, 'amount'));
                 else $reward_amount = 0;
                 if ($partner_order['closed_and_paid_at'] != null) {
                     $info_call_details['order_status'] = 'Completed';
