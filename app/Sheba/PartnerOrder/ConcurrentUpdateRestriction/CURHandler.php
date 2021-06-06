@@ -26,6 +26,11 @@ class CURHandler
         return $this->list->get();
     }
 
+    public function getCUObject(PartnerOrder $partner_order)
+    {
+        return $this->list->getCUObject($partner_order->id);
+    }
+
     public function remove(PartnerOrder $partner_order)
     {
         return $this->list->remove($partner_order->id);
