@@ -6,6 +6,7 @@ use App\Models\PosOrder;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\AccountingRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\JournalCreateRepository;
@@ -144,6 +145,7 @@ abstract class ReturnPosItem extends RefundNature
      */
     protected function updateEntry(PosOrder $order, $refundType)
     {
+        Log::info(['checking update data', $this->data['services'], $this->request->paid_amount, $this->request->payment_method, $this->request->refund_nature, $this->request->return_nature]);
         $this->additionalAccountingData($order, $refundType);
         /** @var AccountingRepository $accounting_repo */
         $accounting_repo = app()->make(AccountingRepository::class);
