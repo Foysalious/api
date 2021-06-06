@@ -3,9 +3,18 @@
 use App\Models\Customer;
 use App\Models\Profile;
 use App\Models\Voucher;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
+use Sheba\Repositories\BaseRepository;
 
-class VoucherRepository
+class VoucherRepository extends BaseRepository
 {
+    public function __construct(Voucher $voucher = null)
+    {
+        parent::__construct();
+        if($voucher) $this->setModel($voucher);
+    }
+
     public function isValid($voucher, $service, $partner, $location, $customer, $price, $sales_channel)
     {
         return voucher($voucher)
@@ -44,4 +53,6 @@ class VoucherRepository
         }
         return $customer;
     }
+
+
 }

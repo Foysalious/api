@@ -2,9 +2,12 @@
 
 use App\Models\TopUpOrder;
 use Exception;
-use GuzzleHttp\Client as HttpClient;
 use InvalidArgumentException;
 use Sheba\TopUp\Exception\GatewayTimeout;
+use Sheba\TopUp\Exception\PaywellTopUpStillNotResolved;
+use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
+use Sheba\TopUp\Vendor\Response\Ipn\Paywell\PaywellFailResponse;
+use Sheba\TopUp\Vendor\Response\Ipn\Paywell\PaywellSuccessResponse;
 use Sheba\TopUp\Vendor\Response\PaywellResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 use Sheba\TPProxy\TPProxyClient;
@@ -13,8 +16,8 @@ use Sheba\TPProxy\TPRequest;
 
 class PaywellClient
 {
-    /** @var HttpClient */
-    private $httpClient;
+    /** @var TPProxyClient */
+    private $tpClient;
     private $username;
     private $password;
     private $authPassword;
@@ -33,7 +36,7 @@ class PaywellClient
      */
     public function __construct(TPProxyClient $client, TPRequest $request)
     {
-        $this->httpClient = $client;
+        $this->tpClient = $client;
         $this->tpRequest = $request;
 
         $this->username = config('topup.paywell.username');
@@ -54,38 +57,30 @@ class PaywellClient
      */
     public function recharge(TopUpOrder $topup_order): TopUpResponse
     {
-        $security_token = $this->getToken();
         $request_data = [
             "username" => $this->username,
             "password" => $this->password,
-            "ref_id" => $topup_order->id,
+            "ref_id" => $this->getRefId($topup_order),
             "msisdn" => $topup_order->payee_mobile,
             "amount" => (int) $topup_order->amount,
             "con_type" => $topup_order->payee_mobile_type,
             "operator" => $this->getOperatorId($topup_order->vendor_id)
         ];
 
-        $hashed_data = hash_hmac('sha256', json_encode($request_data), $this->encryptionKey);
-        $bearer_token = base64_encode($security_token . ":" . $this->apiKey . ":" . $hashed_data);
-
-        $headers = [
-            "Authorization: Bearer " . $bearer_token,
-            "Content-Type:application/json"
-        ];
-
-        $this->tpRequest->setUrl($this->singleTopupUrl)
+        $tp_request = new TPRequest();
+        $tp_request->setUrl($this->singleTopupUrl)
             ->setMethod(TPRequest::METHOD_POST)
-            ->setHeaders($headers)
+            ->setHeaders($this->getHeaders($request_data))
             ->setInput($request_data);
 
         try {
-            $response = $this->httpClient->call($this->tpRequest);
+            $response = $this->tpClient->call($tp_request);
         } catch (TPProxyServerTimeout $e) {
             throw new GatewayTimeout($e->getMessage());
         }
 
         $topup_response = app(PaywellResponse::class);
-        $topup_response->setResponse($response->data);
+        $topup_response->setResponse(property_exists($response, "data") ? $response->data : $response);
         return $topup_response;
     }
 
@@ -100,8 +95,9 @@ class PaywellClient
             "Authorization: Basic " . $auth_code
         ];
 
-        $this->tpRequest->setUrl($this->getTokenUrl)->setMethod(TPRequest::METHOD_POST)->setHeaders($headers);
-        $response = $this->httpClient->call($this->tpRequest);
+        $tp_request = new TPRequest();
+        $tp_request->setUrl($this->getTokenUrl)->setMethod(TPRequest::METHOD_POST)->setHeaders($headers);
+        $response = $this->tpClient->call($tp_request);
 
         return $response->token->security_token;
     }
@@ -122,29 +118,49 @@ class PaywellClient
         throw new InvalidArgumentException('Invalid Mobile for paywell topup.');
     }
 
-    public function enquiry($topup_order_id)
+    /**
+     * @param TopUpOrder $topup_order
+     * @return mixed
+     * @throws \Sheba\TPProxy\TPProxyServerError
+     * @throws Exception
+     */
+    public function enquiry(TopUpOrder $topup_order)
     {
-        $security_token = $this->getToken();
         $request_data = [
             "username" => $this->username,
-            "trxId" => $topup_order_id
+            "trxId" => $this->getRefId($topup_order)
         ];
 
+        $tp_request = new TPRequest();
+        $tp_request->setUrl($this->topupEnquiryUrl)
+            ->setMethod(TPRequest::METHOD_POST)
+            ->setHeaders($this->getHeaders($request_data))
+            ->setInput($request_data);
+
+        $response = $this->tpClient->call($tp_request);
+
+        return property_exists($response, "enquiryData") ? $response->enquiryData : $response;
+    }
+
+    /**
+     * @param $request_data
+     * @return string[]
+     * @throws Exception
+     */
+    private function getHeaders($request_data)
+    {
+        $security_token = $this->getToken();
         $hashed_data = hash_hmac('sha256', json_encode($request_data), $this->encryptionKey);
         $bearer_token = base64_encode($security_token . ":" . $this->apiKey . ":" . $hashed_data);
 
-        $headers = [
+        return [
             "Authorization: Bearer " . $bearer_token,
             "Content-Type:application/json"
         ];
+    }
 
-        $this->tpRequest->setUrl($this->topupEnquiryUrl)
-            ->setMethod(TPRequest::METHOD_POST)
-            ->setHeaders($headers)
-            ->setInput($request_data);
-
-        $response = $this->httpClient->call($this->tpRequest);
-
-        return $response->enquiryData;
+    private function getRefId(TopUpOrder $topup_order)
+    {
+        return str_pad($topup_order->getGatewayRefId(), 15, '0', STR_PAD_LEFT);
     }
 }

@@ -21,6 +21,7 @@ class CustomerOrderController extends Controller
     public function index($customer, Request $request)
     {
         try {
+            ini_set('memory_limit', '2048M');
             $this->validate($request, [
                 'filter' => 'sometimes|string|in:ongoing,history',
                 'for' => 'sometimes|required|string|in:eshop,business',

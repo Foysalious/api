@@ -10,35 +10,37 @@ class Calculations
 
     public static function calculateEmiChargesForManager($amount)
     {
-        return self::_calculate($amount, self::breakdownsForManager(), self::getBankTransactionFeeForManager($amount));
+        return self::_calculate($amount, self::breakdownsForManager(), self::getBankTransactionFeeForManager($amount))[0];
     }
 
     private static function _calculate($amount, $breakdowns, $bank_trx_fee)
     {
-        $emi        = [];
+        $emi = [];
         foreach ($breakdowns as $item) {
             array_push($emi, self::calculateMonthWiseCharge($amount, $item['month'], $item['interest'], $bank_trx_fee));
         }
         return $emi;
     }
 
-    public static function calculateMonthWiseCharge($amount, $month, $interest, $bank_trx_fee = null, $format = true)
+    public static function calculateMonthWiseCharge($amount, $month, $interest, $bank_trx_fee = null, $format = true, $partner_profit = 0)
     {
-        $rate                 = ($interest / 100);
+        $rate = ($interest / 100);
         return $format ? [
             "number_of_months"     => $month,
             "interest"             => "$interest%",
             "total_interest"       => number_format(ceil(($amount * $rate))),
             "bank_transaction_fee" => number_format($bank_trx_fee),
             "amount"               => number_format(ceil((($amount + ($amount * $rate)) + $bank_trx_fee) / $month)),
-            "total_amount"         => number_format(($amount + ceil(($amount * $rate))) + $bank_trx_fee)
+            "total_amount"         => number_format(($amount + ceil(($amount * $rate))) + $bank_trx_fee),
+            "partner_profit"       => number_format(round($partner_profit, 2))
         ] : [
             "number_of_months"     => $month,
             "interest"             => $interest,
-            "total_interest"       => ceil(($amount * $rate)),
+            "total_interest"       => round(ceil(($amount * $rate)), 2),
             "bank_transaction_fee" => $bank_trx_fee,
-            "amount"               => ceil((($amount + ($amount * $rate)) + $bank_trx_fee) / $month),
-            "total_amount"         => ($amount + ceil(($amount * $rate))) + $bank_trx_fee
+            "amount"               => round(ceil((($amount + ($amount * $rate)) + $bank_trx_fee) / $month), 1),
+            "total_amount"         => round(($amount + ceil(($amount * $rate))) + $bank_trx_fee, 2),
+            "partner_profit"       => round($partner_profit, 2)
         ];
     }
 
@@ -57,18 +59,19 @@ class Calculations
         return self::_getBankTransactionFee($amount, config('emi.bank_fee_percentage'));
     }
 
-    public static function getBankTransactionFeeForManager($amount)
+    public static function getBankTransactionFeeForManager($amount, $percentage = null)
     {
-        return self::_getBankTransactionFee($amount, config('emi.manager.bank_fee_percentage'));
+        $fee            = self::_getBankTransactionFee($amount, $percentage ?: config('emi.manager.bank_fee_percentage'));
+        $partner_profit = $fee - self::_getBankTransactionFee($amount, config('emi.manager.bank_fee_percentage'));
+        return [$fee, $partner_profit];
     }
 
-    public static function getMonthData($amount, $month, $format=true)
+    public static function getMonthData($amount, $month, $format = true, $percentage = null)
     {
-        $data = self::getMonthInterest($month);
-        $rate = ($data['interest'] / 100);
-        $bank_trx_fee = self::getBankTransactionFeeForManager($amount + ceil(($amount * $rate)));
-
-        return empty($data) ? [] : self::calculateMonthWiseCharge($amount, $data['month'], $data['interest'], $bank_trx_fee, $format);
+        $data         = self::getMonthInterest($month);
+        $rate         = $data['interest'] / 100;
+        $bank_trx_fee = self::getBankTransactionFeeForManager($amount + ceil(($amount * $rate)), $percentage);
+        return empty($data) ? [] : self::calculateMonthWiseCharge($amount, $data['month'], $data['interest'], $bank_trx_fee[0], $format, $bank_trx_fee[1]);
     }
 
     public static function getMonthInterest($month)

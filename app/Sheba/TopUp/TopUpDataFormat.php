@@ -1,5 +1,6 @@
 <?php namespace Sheba\TopUp;
 
+use App\Models\TopUpOrder;
 use App\Sheba\TopUp\Vendor\Vendors;
 
 class TopUpDataFormat
@@ -13,12 +14,13 @@ class TopUpDataFormat
         $topup_data = [];
         $topup_data_for_excel = [];
         foreach ($topups as $topup) {
+            /** @var TopUpOrder $topup */
             $payee_mobile = $topup->payee_mobile;
             $payee_name = $topup->payee_name ? $topup->payee_name : 'N/A';
             $amount = $topup->amount;
             $operator = $topup->vendor->name;
             $payee_mobile_type = $topup->payee_mobile_type;
-            $status = $topup->status;
+            $status = $topup->getStatusForAgent();
             $failed_reason = (new TopUpFailedReason())->setTopup($topup)->getFailedReason();
             $created_at = $topup->created_at->format('jS M, Y h:i A');
             $created_date = $topup->created_at->format('jS M, Y');

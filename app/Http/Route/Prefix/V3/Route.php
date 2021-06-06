@@ -44,6 +44,7 @@ class Route
             });
             $api->group(['prefix' => 'categories'], function ($api) {
                 $api->get('tree', 'Category\CategoryController@getCategoryTree');
+                $api->get('suggestions', 'Category\CategoryController@getSuggestions');
                 $api->group(['prefix' => '{category}'], function ($api) {
                     $api->get('/', 'Category\CategoryController@show');
                     $api->get('secondaries', 'Category\CategoryController@getSecondaries');
@@ -68,6 +69,8 @@ class Route
                 $api->get('/{id}', 'SubscriptionController@details');
             });
             $api->get('payment-gateways/{service_type}', 'PaymentGatewayController@getPaymentGateways');
+//            emi-info with static info
+            $api->get('emi-info', 'ShebaController@getEmiInfoV3');
         });
 
 
