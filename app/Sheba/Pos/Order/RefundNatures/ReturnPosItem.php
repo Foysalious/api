@@ -42,6 +42,7 @@ abstract class ReturnPosItem extends RefundNature
             $this->oldOrder = clone $this->order;
             $this->old_services = $this->new ? $this->order->items->pluckMultiple(['quantity', 'unit_price'], 'id', true)->toArray()
                 : $this->old_services = $this->order->items->pluckMultiple(['quantity', 'unit_price'], 'service_id', true)->toArray();
+
             $this->updater->setOrder($this->order)->setData($this->data)->setNew($this->new)->update();
             if ($this->order->calculate()->getPaid()) {
                 $this->refundPayment();
