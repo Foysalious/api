@@ -41,8 +41,15 @@ class HomepageController extends Controller
      */
     public function getIncomeExpenseBalance(Request $request): JsonResponse
     {
+        $startDate = $this->convertStartDate($request->start_date);
+        $endDate = $this->convertEndDate($request->end_date);
+
+        if ($endDate < $startDate){
+            return api_response($request,null, 400, ['message' => 'End date can not smaller than start date']);
+        }
+
         try {
-            $response = $this->homepageRepo->getIncomeExpenseBalance($request->partner->id, $request->start_date, $request->end_date);
+            $response = $this->homepageRepo->getIncomeExpenseBalance($request->partner->id, $startDate, $endDate);
             return api_response($request, $response, 200, ['data' => $response]);
         } catch (Exception $e) {
             return api_response(
