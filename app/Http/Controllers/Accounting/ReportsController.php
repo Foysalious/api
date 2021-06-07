@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Reports\Accounting\AccountingReportRepository;
 use Sheba\Reports\Pos\PosReportRepository;
+use Sheba\Reports\Accounting\AccountingReportValidation;
 use Throwable;
 
 class ReportsController extends Controller
@@ -49,9 +50,14 @@ class ReportsController extends Controller
 
     public function getAccountingReport(Request $request, $reportType)
     {
+        if ($reportType == "details_ledger_report") {
+            $this->validate($request, ['account_id' => 'required']);
+        }
+
         $report_types = [ "profit_loss_report", "journal_report", "balance_sheet_report", "general_ledger_report", "details_ledger_report", "general_accounting_report" ];
         $startDate = $request->start_date ? $request->start_date . ' 0:00:00' : Carbon::now()->format('Y-m-d') . ' 0:00:00';
         $endDate = $request->end_date ? $request->end_date . ' 23:59:59' : Carbon::now()->format('Y-m-d') . ' 23:59:59';
+        $acc_id = (int) $request->account_id;
 
         if ($endDate < $startDate){
             return api_response($request,null, 400, ['message' => 'End date can not smaller than start date']);
@@ -59,7 +65,7 @@ class ReportsController extends Controller
 
         if (in_array($reportType, $report_types)) {
             try {
-                $response = $this->accountingReportRepository->getAccountingReport($reportType, $request->partner->id, $startDate, $endDate, $request->account_id, $request->account_type);
+                $response = $this->accountingReportRepository->getAccountingReport($reportType, $request->partner->id, $startDate, $endDate, $acc_id, $request->account_type);
                 return api_response($request, $response, 200, ['data' => $response]);
             } catch (Exception $e) {
                 return api_response(
