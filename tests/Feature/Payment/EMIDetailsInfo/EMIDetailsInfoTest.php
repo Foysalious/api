@@ -8,12 +8,8 @@ use Tests\Feature\FeatureTestCase;
 
 class EMIDetailsInfoTest extends FeatureTestCase
 {
-    public function testEMIInfoByGivingNoParameterAmount()
-    {
 
-        // arrange
-        $amount = 5000;
-
+    private function EMICalculationMethod($amount){
         $emi_data = [
             "emi"   => (new \Sheba\EMI\Calculator())->getCharges($amount),
             "banks" => (new \Sheba\EMI\Banks())->setAmount($amount)->get()->toJson(),
@@ -40,6 +36,15 @@ class EMIDetailsInfoTest extends FeatureTestCase
                 ]
             ]
         ];
+        return $emi_data;
+    }
+
+    public function testEMIInfoByGivingNoParameterAmount()
+    {
+
+        // arrange
+        $amount = 5000;
+        $emi_data = $this->EMICalculationMethod($amount);
 
         // act
         $response = $this->get("/v3/emi-info");
@@ -64,15 +69,20 @@ class EMIDetailsInfoTest extends FeatureTestCase
 
         //arrange
         $amount = 5000;
+        $emi_data = $this->EMICalculationMethod($amount);
 
         //act
         $response = $this->get("/v3/emi-info?amount=$amount");
         $data = $response->decodeResponseJson();
 
+        $data["info"]["banks"] = json_encode($data["info"]["banks"]);
+
         //assert
         $this->assertEquals(200, $data["code"]);
         $this->assertEquals("Successful", $data["message"]);
         $this->assertEquals(number_format($amount), $data["price"]);
+        $this->assertEquals($emi_data["emi"], $data["info"]["emi"]);
+        $this->assertEquals($emi_data["banks"], $data["info"]["banks"]);
 
     }
 
@@ -97,15 +107,20 @@ class EMIDetailsInfoTest extends FeatureTestCase
 
         //arrange
         $amount = 10000;
+        $emi_data = $this->EMICalculationMethod($amount);
 
         //act
         $response = $this->get("/v3/emi-info?amount=$amount");
         $data = $response->decodeResponseJson();
 
+        $data["info"]["banks"] = json_encode($data["info"]["banks"]);
+
         //assert
         $this->assertEquals(200, $data["code"]);
         $this->assertEquals("Successful", $data["message"]);
         $this->assertEquals(number_format($amount), $data["price"]);
+        $this->assertEquals($emi_data["emi"], $data["info"]["emi"]);
+        $this->assertEquals($emi_data["banks"], $data["info"]["banks"]);
 
     }
 
@@ -114,16 +129,21 @@ class EMIDetailsInfoTest extends FeatureTestCase
 
         //arrange
         $amount = 10000.26355;
+        $emi_data = $this->EMICalculationMethod($amount);
 
         //act
 
         $response = $this->get("/v3/emi-info?amount=$amount");
         $data = $response->decodeResponseJson();
 
+        $data["info"]["banks"] = json_encode($data["info"]["banks"]);
+
         //assert
         $this->assertEquals(200, $data["code"]);
         $this->assertEquals("Successful", $data["message"]);
         $this->assertEquals(number_format($amount), $data["price"]);
+        $this->assertEquals($emi_data["emi"], $data["info"]["emi"]);
+        $this->assertEquals($emi_data["banks"], $data["info"]["banks"]);
 
     }
 
@@ -132,16 +152,22 @@ class EMIDetailsInfoTest extends FeatureTestCase
 
         //arrange
         $amount = 0;
+        $min_amount = 5000;
+        $emi_data = $this->EMICalculationMethod($min_amount);
 
         //act
 
         $response = $this->get("/v3/emi-info?amount=$amount");
         $data = $response->decodeResponseJson();
 
+        $data["info"]["banks"] = json_encode($data["info"]["banks"]);
+
         //assert
         $this->assertEquals(200, $data["code"]);
         $this->assertEquals("Successful", $data["message"]);
-        $this->assertEquals("5,000", $data["price"]);
+        $this->assertEquals(number_format($min_amount), $data["price"]);
+        $this->assertEquals($emi_data["emi"], $data["info"]["emi"]);
+        $this->assertEquals($emi_data["banks"], $data["info"]["banks"]);
 
     }
 
