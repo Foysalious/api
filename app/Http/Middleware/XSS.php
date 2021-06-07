@@ -62,8 +62,11 @@ class XSS
 
         $input = $request->all();
 
-        array_walk_recursive($input, function (&$input) {
+        $turned = ['&amp;'];
+        $turn_back = ['&'];
+        array_walk_recursive($input, function (&$input) use (&$turned, &$turn_back) {
             $input = htmlspecialchars($input, ENT_NOQUOTES | ENT_HTML5);
+            $input = str_replace($turned, $turn_back, $input);
         });
 
         $request->merge($input);
@@ -77,7 +80,7 @@ class XSS
      * @param Request $request
      * @return bool
      */
-    protected function inExceptArray($request)
+    protected function inExceptArray($request): bool
     {
         foreach ($this->except as $except) {
             if ($except !== '/') {
@@ -92,7 +95,7 @@ class XSS
         return false;
     }
 
-    private function isMethodWhitelisted($request)
+    private function isMethodWhitelisted($request): bool
     {
         return !in_array(strtolower($request->method()), ['put', 'post', 'patch']);
     }
