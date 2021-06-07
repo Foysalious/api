@@ -137,11 +137,15 @@ class AccountController extends Controller
                 ]
             );
         } catch (Exception $e) {
+            $message = $e->getMessage();
+            if(is_numeric($e->getMessage())) {
+                $message = "উপরোক্ত অ্যাকাউন্টটি ". en2bnNumber($e->getMessage())."টি লেনদেনের সাথে জড়িত থাকায় ডিলিট করা সম্ভব নয়।";
+            }
             return api_response(
                 $request,
                 null,
                 $e->getCode() == 0 ? 400 : $e->getCode(),
-                ['message' => $e->getMessage()]
+                ['message' => $message]
             );
         }
     }
