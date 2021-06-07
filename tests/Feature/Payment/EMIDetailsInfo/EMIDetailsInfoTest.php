@@ -13,12 +13,10 @@ class EMIDetailsInfoTest extends FeatureTestCase
 
         // arrange
         $amount = 5000;
-        $emi_calculator = new \Sheba\EMI\Calculator();
-        $emi_banks = new \Sheba\EMI\Banks();
 
         $emi_data = [
-            "emi"   => $emi_calculator->getCharges($amount),
-            "banks" => $emi_banks->setAmount($amount)->get(),
+            "emi"   => (new \Sheba\EMI\Calculator())->getCharges($amount),
+            "banks" => (new \Sheba\EMI\Banks())->setAmount($amount)->get()->toJson(),
             "minimum_amount" => number_format(config('sheba.min_order_amount_for_emi')),
             "static_info" =>[
                 "how_emi_works"=>[
@@ -43,19 +41,21 @@ class EMIDetailsInfoTest extends FeatureTestCase
             ]
         ];
 
-        //dd($emi_data);
-
         // act
         $response = $this->get("/v3/emi-info");
         $data = $response->decodeResponseJson();
 
-        //dd($data["info"]);
+        $data["info"]["banks"] = json_encode($data["info"]["banks"]);
 
         // assert
         $this->assertEquals(200, $data["code"]);
         $this->assertEquals("Successful", $data["message"]);
         $this->assertEquals(number_format($amount), $data["price"]);
-        //$this->assertEquals($emi_data, $data["info"]);
+        $this->assertEquals($emi_data["emi"], $data["info"]["emi"]);
+        $this->assertEquals($emi_data["banks"], $data["info"]["banks"]);
+        $this->assertEquals($emi_data["minimum_amount"], $data["info"]["minimum_amount"]);
+        $this->assertEquals($emi_data["static_info"]["how_emi_works"], $data["info"]["static_info"]["how_emi_works"]);
+        $this->assertEquals($emi_data["static_info"]["terms_and_conditions"], $data["info"]["static_info"]["terms_and_conditions"]);
 
     }
 
