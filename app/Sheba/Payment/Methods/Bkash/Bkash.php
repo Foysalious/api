@@ -33,7 +33,6 @@ class Bkash extends PaymentMethod
     private $password;
     private $url;
     private $merchantNumber;
-
     /** @var Registrar $registrar */
     private $registrar;
 
@@ -51,6 +50,7 @@ class Bkash extends PaymentMethod
     public function init(Payable $payable): Payment
     {
         $this->setCredentials($payable->user,$payable->type);
+
         $invoice = "SHEBA_BKASH_" . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . randomString(10, 1, 1);
         $payment = new Payment();
         DB::transaction(function () use ($payment, $payable, $invoice) {

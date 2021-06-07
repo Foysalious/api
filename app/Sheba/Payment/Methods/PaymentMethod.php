@@ -16,6 +16,7 @@ abstract class PaymentMethod
     const VALIDITY_IN_MINUTES = 3;
 
     use ModificationFields;
+    protected $cardInformation;
 
     /** @var PaymentStatusChangeLogRepository */
     protected $paymentLogRepo;
@@ -56,7 +57,10 @@ abstract class PaymentMethod
     {
         return self::VALIDITY_IN_MINUTES;
     }
-
+    public function cardInformation(CardInformation $cardInformation){
+        $this->cardInformation=$cardInformation;
+        return $this;
+    }
     abstract public function getMethodName();
 
     /**

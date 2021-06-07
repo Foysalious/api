@@ -60,14 +60,14 @@ return [
     ],
     'nagad'       => [
         'stores' => [
-            'default'   => [
+            'default'     => [
                 'base_url'         => env('NAGAD_BASE_URL', 'http://sandbox.mynagad.com:10080/remote-payment-gateway-1.0'),
                 'merchant_id'      => env('NAGAD_MERCHANT_ID', '683002007104225'),
                 'private_key_path' => resource_path(env('NAGAD_MERCHANT_PRIVATE_KEY', 'assets/nagad/merchantPrivate.key')),
                 'public_key_path'  => resource_path(env('NAGAD_PUBLIC_KEY_PATH', 'assets/nagad/pgPublic.key')),
                 'context_path'     => 'remote-payment-gateway-1.0'
             ],
-            'affiliate' => [
+            'affiliate'   => [
                 'base_url'         => env('NAGAD_BASE_URL', 'http://sandbox.mynagad.com:10080/remote-payment-gateway-1.0'),
                 'merchant_id'      => env('NAGAD_AFFILIATE_MERCHANT_ID', '683002007104225'),
                 'private_key_path' => resource_path(env('NAGAD_AFFILIATE_MERCHANT_PRIVATE_KEY', 'assets/nagad/Bondhu.merchantPrivate.key')),
@@ -81,6 +81,20 @@ return [
                 'public_key_path'  => resource_path(env('NAGAD_MARKETPLACE_PUBLIC_KEY_PATH', 'assets/nagad/Marketplace.pgPublic.key')),
                 'context_path'     => 'remote-payment-gateway-1.0'
             ],
+        ]
+    ],
+    'ebl'         => [
+        'stores' => [
+            'default' => [
+                'base_url'     => env('EBL_BASE_URL', 'https://testsecureacceptance.cybersource.com'),
+                'access_key'   => env('EBL_ACCESS_KEY', '59f2e88276b23a609a41bbc855eaeaad'),
+                'profile_id'   => env('EBL_PROFILE_ID', '189C3320-583D-4148-984B-8193431BD3BB'),
+                'profile_name' => env('EBL_PROFILE_NAME', 'SHEBA XYZ'),
+                'signature'    => env('EBL_SIGNATURE', 'HMAC-SHA256'),
+                'merchant_id'  => env('EBL_MERCHANT_ID', '20010024'),
+                'account_id'   => env('EBL_ACCOUNT_ID', '20010024_acct'),
+                'secret_key'   => env('EBL_SECRET_KEY_PATH', resource_path('assets/ebl/keySecret.txt'))
+            ]
         ]
     ]
 ];

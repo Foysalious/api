@@ -117,7 +117,8 @@ class AvailableMethods
             PaymentStrategy::ONLINE,
             PaymentStrategy::BKASH,
             PaymentStrategy::OK_WALLET,
-            PaymentStrategy::NAGAD
+            PaymentStrategy::NAGAD,
+            PaymentStrategy::EBL
         ];
     }
 
