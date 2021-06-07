@@ -4,12 +4,14 @@
 use App\Exceptions\DoNotReportException;
 use App\Http\Requests\Request;
 use App\Models\Partner;
+use App\Models\PartnerPosService;
 use App\Models\PosOrder;
 use App\Models\PosOrderPayment;
 use App\Sheba\Partner\Delivery\Exceptions\DeliveryCancelRequestError;
 use Illuminate\Support\Str;
 use Sheba\Dal\PartnerDeliveryInformation\Contract as PartnerDeliveryInformationRepositoryInterface;
 use Sheba\Dal\POSOrder\OrderStatuses;
+use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
 use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Transactions\Types;
 use Throwable;
@@ -57,13 +59,16 @@ class DeliveryService
      * @var PosOrderRepository
      */
     private $posOrderRepository;
+    private $serviceRepositoryInterface;
 
 
-    public function __construct(DeliveryServerClient $client, PartnerDeliveryInformationRepositoryInterface $partnerDeliveryInfoRepositoryInterface,PosOrderRepository $posOrderRepository)
+    public function __construct(DeliveryServerClient $client, PartnerDeliveryInformationRepositoryInterface $partnerDeliveryInfoRepositoryInterface,
+                                PosOrderRepository $posOrderRepository,PosServiceRepositoryInterface $serviceRepositoryInterface)
     {
         $this->client = $client;
         $this->partnerDeliveryInfoRepositoryInterface = $partnerDeliveryInfoRepositoryInterface;
         $this->posOrderRepository = $posOrderRepository;
+        $this->serviceRepositoryInterface = $serviceRepositoryInterface;
     }
 
     public function setPartner($partner)
@@ -134,7 +139,16 @@ class DeliveryService
         $data['delivery_method'] = $this->getDeliveryMethod();
         $data['is_registered_for_delivery'] = $this->partner->deliveryInformation ? 1 : 0;
         $data['delivery_charge'] = $this->partner->delivery_charge;
+        $data['products_without_weight'] = $this->countProductWithoutWeight();
         return $data;
+    }
+
+    /**
+     * @return int
+     */
+    private function countProductWithoutWeight(): int
+    {
+        return PartnerPosService::where('partner_id',$this->partner->id)->where('is_published_for_shop',1)->where('weight',null)->count();
     }
 
     private function getDeliveryMethod()
