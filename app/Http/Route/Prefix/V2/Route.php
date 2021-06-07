@@ -45,7 +45,8 @@ class Route
             $api->post('events', 'EventController@store');
             $api->get('top-up/fail/ssl', 'TopUpController@sslFail');
             $api->get('top-up/success/ssl', 'TopUpController@sslSuccess');
-            $api->post('top-up/paywell/status-update', 'TopUpController@paywellStatusUpdate');
+            $api->post('top-up/status-update', 'TopUpController@statusUpdate');
+            $api->post('top-up/bdrecharge/status', 'TopUpController@bdRechargeStatusUpdate');
             $api->get('top-up/restart-queue', 'TopUpController@restartQueue');
             $api->group(['prefix' => 'wallet'], function ($api) {
                 $api->post('recharge', 'WalletController@recharge');
@@ -210,6 +211,9 @@ class Route
             $api->get('service-price-calculate', 'Service\ServicePricingController@getCalculatedPrice');
             $api->post('due-tracker/create-pos-order-payment', 'Pos\DueTrackerController@createPosOrderPayment');
             $api->delete('due-tracker/remove-pos-order-payment/{pos_order_id}', 'Pos\DueTrackerController@removePosOrderPayment');
+            $api->group(['prefix' => 'voucher', 'middleware' => ['vendor.auth']], function ($api) {
+                $api->post('/vendor', 'VoucherController@voucherAgainstVendor');
+            });
         });
         return $api;
     }

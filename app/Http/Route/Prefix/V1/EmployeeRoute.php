@@ -11,6 +11,10 @@ class EmployeeRoute
                 $api->post('/', 'Employee\EmployeeController@updateMe');
                 $api->post('basic', 'Employee\EmployeeController@updateBasicInformation');
             });
+            $api->group(['prefix' => 'payroll'], function ($api) {
+                $api->get('payslip', 'Employee\PayrollController@downloadPayslip');
+                $api->get('disbursed-month', 'Employee\PayrollController@disbursedMonth');
+            });
             //$api->post('password', 'Employee\EmployeeController@updateMyPassword');
             $api->get('dashboard', 'Employee\EmployeeController@getDashboard');
             $api->get('notifications', 'Employee\NotificationController@index');
@@ -54,6 +58,7 @@ class EmployeeRoute
                 $api->get('/types', 'Employee\LeaveController@getLeaveTypes');
                 $api->get('/settings', 'Employee\LeaveController@getLeaveSettings');
                 $api->post('/', 'Employee\LeaveController@store');
+                $api->get('/reject-reasons', 'Employee\LeaveController@rejectReasons');
                 $api->group(['prefix' => '{leave}'], function ($api) {
                     $api->get('/', 'Employee\LeaveController@show');
                     $api->post('/', 'Employee\LeaveController@updateStatus');
@@ -63,6 +68,7 @@ class EmployeeRoute
             });
             $api->group(['prefix' => 'approval-requests'], function ($api) {
                 $api->get('/', 'Employee\ApprovalRequestController@index');
+                $api->get('/leaves/{business_member}', 'Employee\ApprovalRequestController@leaveHistory');
                 $api->get('/{approval_request}', 'Employee\ApprovalRequestController@show');
                 $api->post('/status', 'Employee\ApprovalRequestController@updateStatus');
             });

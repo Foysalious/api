@@ -1,14 +1,13 @@
 <?php namespace Sheba\Payment\Complete;
 
 use App\Models\Partner;
-use Illuminate\Database\QueryException;
 use DB;
-use Sheba\FraudDetection\TransactionSources;
+use Illuminate\Database\QueryException;
+use Sheba\Dal\PaymentGateway\Contract as PaymentGatewayRepo;
 use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
-use Sheba\Dal\PaymentGateway\Contract as PaymentGatewayRepo;
 
 class RechargeComplete extends PaymentComplete
 {
@@ -45,26 +44,33 @@ class RechargeComplete extends PaymentComplete
         // TODO: Implement saveInvoice() method.
     }
 
+    private function calculateCommission($charge)
+    {
+        if ($this->payment->payable->user instanceof Partner) return round (($this->payment->payable->amount / (100 + $charge)) * $charge, 2);
+        return (double)round(($charge * $this->payment->payable->amount) / 100, 2);
+    }
+
     private function storeCommissionTransaction()
     {
         /** @var HasWalletTransaction $user */
         $user = $this->payment->payable->user;
 
         $payment_gateways = app(PaymentGatewayRepo::class);
-        $payment_gateway = $payment_gateways->builder()
-            ->where('service_type', $this->payment->created_by_type)
-            ->where('method_name', $this->payment->paymentDetails->last()->method)
-            ->where('status', 'Published')
-            ->first();
+        $payment_gateway  = $payment_gateways->builder()
+                                             ->where('service_type', $this->payment->created_by_type)
+                                             ->where('method_name', $this->payment->paymentDetails->last()->method)
+                                             ->where('status', 'Published')
+                                             ->first();
 
-        if($payment_gateway){
+        if ($payment_gateway && $payment_gateway->cash_in_charge > 0) {
+            $amount = $this->calculateCommission($payment_gateway->cash_in_charge);
             (new WalletTransactionHandler())->setModel($user)
-                ->setAmount((double)( ($payment_gateway->cash_in_charge * $this->payment->payable->amount) / 100))
-                ->setType(Types::debit())
-                ->setLog('Credit Purchase Gateway Charge')
-                ->setTransactionDetails($this->payment->getShebaTransaction()->toArray())
-                ->setSource($this->payment->paymentDetails->last()->method)
-                ->store();
+                                            ->setAmount($amount)
+                                            ->setType(Types::debit())
+                                            ->setLog($amount . ' BDT has been deducted as a gateway charge for SHEBA credit recharge')
+                                            ->setTransactionDetails($this->payment->getShebaTransaction()->toArray())
+                                            ->setSource($this->payment->paymentDetails->last()->method)
+                                            ->store();
         }
     }
 }

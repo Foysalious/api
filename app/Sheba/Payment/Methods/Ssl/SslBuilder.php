@@ -97,7 +97,6 @@ class SslBuilder
         $payment_link = $payable->getPaymentLink();
 
         if ($payment_link->isForMissionSaveBangladesh()) return new Donation();
-
         if ($payment_link->getEmiMonth()) return new DefaultStore();
 
         if (self::isPortWalletFailed($payable)) return new DefaultStore();

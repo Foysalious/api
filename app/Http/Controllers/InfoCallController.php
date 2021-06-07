@@ -4,6 +4,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
 use mysql_xdevapi\Exception;
+use Sheba\Dal\InfoCall\Statuses;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use Sheba\Dal\InfoCall\InfoCall;
@@ -68,6 +69,7 @@ class InfoCallController extends Controller
             'customer_mobile' => $profile->mobile,
             'customer_email' => !empty($profile->email) ? $profile->email : null,
             'customer_address' => !empty($profile->address) ? $profile->address : '',
+            'status'=> Statuses::OPEN,
             'follow_up_date' => Carbon::now()->addMinutes(30),
             'intended_closing_date' => Carbon::now()->addMinutes(30)
         ];

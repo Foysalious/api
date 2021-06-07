@@ -47,6 +47,7 @@ class Notification extends Model
         elseif (stripos($type, 'businesstriprequest')) return 'businesstriprequest';
         elseif (stripos($type, 'leave')) return 'leave';
         elseif (stripos($type, 'approvalRequest')) return 'approval_request';
+        elseif (stripos($type, 'Payslip')) return 'payslip';
     }
 
     public function scopeDateBetween($query, $field, TimeFrame $time_frame)

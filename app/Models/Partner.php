@@ -1017,11 +1017,11 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->id == config('sheba.mission_save_bangladesh_partner_id');
     }
 
-
     public function canTopup()
     {
         return $this->can_topup == 1;
     }
+
     public function posCategories()
     {
         return $this->hasMany(PartnerPosCategory::class);
@@ -1033,4 +1033,8 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->hasOne(PartnerWebstoreBanner::class);
     }
 
+    public function topupChangeLogs()
+    {
+        return $this->hasMany(CanTopUpUpdateLog::class);
+    }
 }

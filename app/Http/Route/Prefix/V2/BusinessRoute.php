@@ -61,6 +61,7 @@ class BusinessRoute
                 $api->group(['prefix' => 'members'], function ($api) {
                     $api->group(['prefix' => '{member}'], function ($api) {
                         $api->get('attendances', 'B2b\AttendanceController@showStat');
+                        $api->post('info', 'B2b\MemberController@updateMemberInfo');
                     });
                 });
                 $api->group(['prefix' => 'attendances'], function ($api) {
@@ -110,8 +111,10 @@ class BusinessRoute
                     $api->post('/adjustment', 'B2b\LeaveAdjustmentController@leaveAdjustment');
                     $api->post('/bulk-adjustment', 'B2b\LeaveAdjustmentController@bulkLeaveAdjustment');
                     $api->get('/generate-adjustment-excel', 'B2b\LeaveAdjustmentController@generateAdjustmentExcel');
+                    $api->get('/reject-reasons', 'B2b\LeaveController@rejectReasons');
                     $api->group(['prefix' => 'approval-requests'], function ($api) {
                         $api->get('/lists', 'B2b\LeaveController@index');
+                        $api->get('/leave-history/{business_member_id}', 'B2b\LeaveController@leaveHistory');
                         $api->group(['prefix' => '{approval_request}'], function ($api) {
                             $api->get('/', 'B2b\LeaveController@show');
                         });
@@ -122,6 +125,7 @@ class BusinessRoute
                     $api->group(['prefix' => 'balance'], function ($api) {
                         $api->get('/lists', 'B2b\LeaveController@allLeaveBalance');
                         $api->get('/{balance}', 'B2b\LeaveController@leaveBalanceDetails');
+                        $api->get('remaining/{balance}', 'B2b\LeaveController@leaveBalanceRemaining');
                     });
                     $api->group(['prefix' => 'super-admins'], function ($api) {
                         $api->get('/', 'B2b\LeaveController@getSuperAdmins');

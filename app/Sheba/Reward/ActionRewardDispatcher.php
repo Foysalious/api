@@ -4,6 +4,7 @@ use App\Models\Reward;
 use Carbon\Carbon;
 use Exception;
 use Sheba\Reward\Disburse\DisburseHandler;
+use Sheba\Reward\Event\Action;
 
 class ActionRewardDispatcher
 {
@@ -36,7 +37,10 @@ class ActionRewardDispatcher
             ->get();
 
         foreach ($published_rewards as $reward) {
-            /** @var Reward $reward */
+            /**
+             * @var Reward $reward
+             * @var Action $event
+             */
             $event = $reward->setActionEvent($params)->actionEvent;
 
             if ($event->isEligible()) {

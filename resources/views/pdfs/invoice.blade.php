@@ -295,7 +295,7 @@
             <h1 style="text-transform: uppercase">{{ $type }} {{ $partner_order->id }}</h1>
             <div class="date">Generated on: {{ \Carbon\Carbon::now()->format('d/m/Y') }}</div>
             <?php
-                $job = $partner_order->getActiveJob();
+                $job = $partner_order->lastJob();
             ?>
             @if($job->status === 'Served')
             <div class="date">Served Date: {{ $partner_order->closed_at->format('d/m/Y')  }}</div>

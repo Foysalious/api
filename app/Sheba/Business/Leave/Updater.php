@@ -9,6 +9,8 @@ use App\Sheba\Attachments\Attachments;
 use Exception;
 use Illuminate\Http\UploadedFile;
 use Sheba\Business\Leave\SuperAdmin\LeaveEditType as EditType;
+use Sheba\Business\LeaveRejection\Creator as LeaveRejectionCreator;
+use Sheba\Business\LeaveRejection\Requester as LeaveRejectionRequester;
 use Sheba\Dal\Leave\Contract as LeaveRepository;
 use Sheba\Dal\Leave\LeaveStatusPresenter as LeaveStatusPresenter;
 use Sheba\Dal\Leave\Model as Leave;
@@ -47,6 +49,9 @@ class Updater
     private $businessMemberRepo;
     private $approvalRequests;
     private $previousSubstituteName = 'n/s';
+    private $leaveRejectionCreator;
+    /** @var LeaveRejectionRequester $leaveRejectionRequester */
+    private $leaveRejectionRequester;
 
     /**
      * Updater constructor.
@@ -54,11 +59,14 @@ class Updater
      * @param LeaveStatusChangeLogCreator $leave_status_change_log_creator
      * @param BusinessMemberRepositoryInterface $business_member_repo
      * @param Attachments $attachment_manager
+     * @param LeaveLogRepo $leave_log_repo
+     * @param LeaveRejectionCreator $leave_rejection_creator
      */
     public function __construct(LeaveRepository $leave_repository,
                                 LeaveStatusChangeLogCreator $leave_status_change_log_creator,
                                 BusinessMemberRepositoryInterface $business_member_repo,
-                                Attachments $attachment_manager, LeaveLogRepo $leave_log_repo)
+                                Attachments $attachment_manager, LeaveLogRepo $leave_log_repo,
+                                LeaveRejectionCreator $leave_rejection_creator)
     {
         $this->leaveRepository = $leave_repository;
         $this->leaveStatusLogCreator = $leave_status_change_log_creator;
@@ -66,6 +74,7 @@ class Updater
         $this->pushNotification = new PushNotificationHandler();
         $this->attachmentManager = $attachment_manager;
         $this->leaveLogRepo = $leave_log_repo;
+        $this->leaveRejectionCreator = $leave_rejection_creator;
     }
 
     /**
@@ -154,6 +163,12 @@ class Updater
         return $this;
     }
 
+    public function setLeaveRejectionRequester(LeaveRejectionRequester $leave_rejection_requester)
+    {
+        $this->leaveRejectionRequester = $leave_rejection_requester;
+        return $this;
+    }
+
     /**
      * @param Leave $leave
      */
@@ -176,6 +191,7 @@ class Updater
             $this->leaveStatusLogCreator->setLeave($this->leave)->setPreviousStatus($previous_status)->setStatus($this->status)
                 ->setBusinessMember($this->businessMember)
                 ->create();
+            if ($this->status == Status::REJECTED && count($this->leaveRejectionRequester->getReasons()) > 0) $this->leaveRejectionCreator->setLeaveRejectionRequester($this->leaveRejectionRequester)->setLeave($this->leave)->create();
         });
 
         try {
@@ -204,7 +220,7 @@ class Updater
 
         $topic = config('sheba.push_notification_topic_name.employee') . $business_member->member->id;
         $channel = config('sheba.push_notification_channel_name.employee');
-        $sound  = config('sheba.push_notification_sound.employee');
+        $sound = config('sheba.push_notification_sound.employee');
         $push_notification_data = [
             "title" => 'Leave request update',
             "message" => "Your leave request has been $status",
@@ -234,7 +250,7 @@ class Updater
     {
         $this->makeData();
 
-       DB::transaction(function () {
+        DB::transaction(function () {
             $this->leaveRepository->update($this->leave, $this->withUpdateModificationField($this->data));
             if ($this->attachments) $this->createAttachments($this->leave);
             $this->createLog();
