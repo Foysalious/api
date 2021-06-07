@@ -12,6 +12,7 @@ class Apps
     const RESOURCE_APP_ANDROID = 'resource_app_android';
     const RESOURCE_APP_IOS = 'resource_app_ios';
     const BONDHU_APP_ANDROID = 'bondhu_app_android';
+    const BONDHU_APP_IOS = 'bondhu_app_ios';
     const RIDER_APP_ANDROID = 'rider_app_android';
     const EMPLOYEE_APP_ANDROID = 'employee_app_android';
     const EMPLOYEE_APP_IOS = 'employee_app_ios';
@@ -29,6 +30,7 @@ class Apps
     const RESOURCE_APP_ANDROID_PACKAGE_NAME = 'xyz.sheba.resource';
     const RESOURCE_APP_IOS_PACKAGE_NAME = 'xyz.sheba.spro';
     const BONDHU_APP_ANDROID_PACKAGE_NAME = 'xyz.sheba.bondhu';
+    const BONDHU_APP_IOS_PACKAGE_NAME = 'xyz.sheba.bondhu.ios';
     const RIDER_APP_ANDROID_PACKAGE_NAME = 'xyz.sheba.logistic';
     const EMPLOYEE_APP_ANDROID_PACKAGE_NAME = 'xyz.sheba.emanager';
     const EMPLOYEE_APP_IOS_PACKAGE_NAME = 'xyz.sheba.emanager.ios';
@@ -42,7 +44,7 @@ class Apps
      *
      * @return string[]
      */
-    public static function getWithKeys()
+    public static function getWithKeys(): array
     {
         return [
             'CUSTOMER_APP_ANDROID' => static::CUSTOMER_APP_ANDROID,
@@ -51,13 +53,14 @@ class Apps
             'RESOURCE_APP_ANDROID' => static::RESOURCE_APP_ANDROID,
             'RESOURCE_APP_IOS' => static::RESOURCE_APP_IOS,
             'BONDHU_APP_ANDROID' => static::BONDHU_APP_ANDROID,
+            'BONDHU_APP_IOS' => static::BONDHU_APP_IOS,
             'RIDER_APP_ANDROID' => static::RIDER_APP_ANDROID,
             'EMPLOYEE_APP_ANDROID' => static::EMPLOYEE_APP_ANDROID,
             'EMPLOYEE_APP_IOS' => static::EMPLOYEE_APP_IOS
         ];
     }
 
-    public static function getMarketNames()
+    public static function getMarketNames(): array
     {
         return [
             static::CUSTOMER_APP_ANDROID => static::CUSTOMER_MARKET_NAME,
@@ -66,13 +69,14 @@ class Apps
             static::RESOURCE_APP_ANDROID => static::RESOURCE_MARKET_NAME,
             static::RESOURCE_APP_IOS => static::RESOURCE_MARKET_NAME,
             static::BONDHU_APP_ANDROID => static::BONDHU_MARKET_NAME,
+            static::BONDHU_APP_IOS => static::BONDHU_MARKET_NAME,
             static::RIDER_APP_ANDROID => static::RIDER_MARKET_NAME,
             static::EMPLOYEE_APP_ANDROID => static::EMPLOYEE_MARKET_NAME,
             static::EMPLOYEE_APP_IOS => static::EMPLOYEE_MARKET_NAME,
         ];
     }
 
-    public static function getPackageNames()
+    public static function getPackageNames(): array
     {
         return [
             static::CUSTOMER_APP_ANDROID => static::CUSTOMER_APP_ANDROID_PACKAGE_NAME,
@@ -81,6 +85,7 @@ class Apps
             static::RESOURCE_APP_ANDROID => static::RESOURCE_APP_ANDROID_PACKAGE_NAME,
             static::RESOURCE_APP_IOS => static::RESOURCE_APP_IOS_PACKAGE_NAME,
             static::BONDHU_APP_ANDROID => static::BONDHU_APP_ANDROID_PACKAGE_NAME,
+            static::BONDHU_APP_IOS => static::BONDHU_APP_IOS_PACKAGE_NAME,
             static::RIDER_APP_ANDROID => static::RIDER_APP_ANDROID_PACKAGE_NAME,
             static::EMPLOYEE_APP_ANDROID => static::EMPLOYEE_APP_ANDROID_PACKAGE_NAME,
             static::EMPLOYEE_APP_IOS => static::EMPLOYEE_APP_IOS_PACKAGE_NAME,

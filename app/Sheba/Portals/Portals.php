@@ -46,7 +46,7 @@ class Portals
      * @param $portal
      * @return bool
      */
-    public static function isApp($portal)
+    public static function isApp($portal): bool
     {
         return in_array($portal, [
             Portals::CUSTOMER_APP,
@@ -61,7 +61,7 @@ class Portals
      * @param $portal
      * @return bool
      */
-    public static function isNotApp($portal)
+    public static function isNotApp($portal): bool
     {
         return !self::isApp($portal);
     }
