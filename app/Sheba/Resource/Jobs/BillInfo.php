@@ -51,6 +51,7 @@ class BillInfo
         $partnerOrder->calculate(true);
         $bill = collect();
         $bill['total'] = (double)$partnerOrder->totalPrice;
+        $bill['grand_total'] = (double)$partnerOrder->totalPrice;
         $bill['paid'] = (double)$partnerOrder->paid;
         $bill['due'] = (double)$partnerOrder->due;
         $bill['total_material_price'] = (double)$job->materialPrice;
