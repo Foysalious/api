@@ -26,7 +26,7 @@ class PayrollController extends Controller
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
         $time_period = $time_frame->forAMonth($request->month, $request->year);
-        $payslip = $this->payslipRepository->where('business_member_id', $business_member->id)->whereBetween('schedule_date', [$time_period->start, $time_period->end])->first();
+        $payslip = $this->payslipRepository->where('business_member_id', $business_member->id)->where('status', Status::DISBURSED)->whereBetween('schedule_date', [$time_period->start, $time_period->end])->first();
         if (!$payslip) return api_response($request, null, 404);
         $pay_report_detail = $pay_report_details->setPayslip($payslip)->get();
 
