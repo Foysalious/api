@@ -57,7 +57,7 @@ class PushNotificationHandler
         }
         $topicResponse = null;
         if (config('sheba.send_push_notifications')) {
-            if (strpos($str_topic, config('sheba.push_notification_topic_name.manager')) == 0) {
+            if (strpos($str_topic, config('sheba.push_notification_topic_name.manager')) === 0) {
                 $str_topic         = str_replace(config('sheba.push_notification_topic_name.manager'), config('sheba.push_notification_topic_name.manager_new'), $str_topic);
                 $topic->conditions = [];
                 $topic             = $topic->topic($str_topic);

@@ -355,7 +355,7 @@ class Updater
             }
 
             $profile_data = [];
-            $profile_data['mobile'] = ($this->personalRequest->getPhone() == 'null') ? null : $this->personalRequest->getPhone();
+            $business_member_data = [];
             $profile_data['address'] = ($this->personalRequest->getAddress() == 'null') ? null : $this->personalRequest->getAddress();
             $profile_data['nationality'] = ($this->personalRequest->getNationality() == 'null') ? null : $this->personalRequest->getNationality();
             $profile_data['nid_no'] = ($this->personalRequest->getNidNumber() == 'null') ? null : $this->personalRequest->getNidNumber();
@@ -364,6 +364,11 @@ class Updater
             $profile_data['dob'] = ($this->personalRequest->getDateOfBirth() == 'null') ? null : $this->personalRequest->getDateOfBirth();
 
             $this->profile = $this->profileRepository->update($this->profile, $profile_data);
+
+            $business_member_data['mobile'] = ($this->personalRequest->getPhone() == 'null') ? null : $this->personalRequest->getPhone();
+            $this->businessMember = $this->businessMemberUpdater
+                ->setBusinessMember($this->businessMember)
+                ->update($business_member_data);
             DB::commit();
             return [$this->profile, $nid_image_front_name, $nid_image_front, $nid_image_back_name, $nid_image_back];
         } catch (Throwable $e) {
