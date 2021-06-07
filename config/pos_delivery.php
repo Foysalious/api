@@ -14,11 +14,11 @@ return [
     'paperfly_charge' => [
         'inside_city' => [
             'minimum' => 50,
-            'kg_wise' => 80
+            'kg_wise' => 30
         ],
         'outside_city' => [
-            'minimum' => 100,
-            'kg_wise' => 80
+            'minimum' => 110,
+            'kg_wise' => 30
         ],
         'note' => 'ক্যাশ অন ডেলিভারি চার্জঃ ১% চার্জ প্রযোজ্য হবে বিলের উপর'
     ],
