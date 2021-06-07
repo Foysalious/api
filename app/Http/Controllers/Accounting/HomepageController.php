@@ -68,8 +68,9 @@ class HomepageController extends Controller
     public function getIncomeExpenseEntries(Request $request): JsonResponse
     {
         $limit = $request->limit ?? 10;
+        $nextCursor = $request->next_cursor ?? null;
         try {
-            $response = $this->homepageRepo->getIncomeExpenseEntries($request->partner->id, $limit);
+            $response = $this->homepageRepo->getIncomeExpenseEntries($request->partner->id, $limit, $nextCursor);
             return api_response($request, $response, 200, ['data' => $response]);
         } catch (Exception $e) {
             return api_response(
