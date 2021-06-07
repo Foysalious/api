@@ -114,10 +114,8 @@ class Updater
         foreach ($business_members as $business_member) {
             $payslip = $this->payslipRepository->where('business_member_id', $business_member->id)->where('status', Status::DISBURSED)->where('schedule_date', 'like', '%' . $this->scheduleDate . '%')->first();
             if ($payslip) {
-                $this->sendPush($payslip, $business_member);
-                $this->sendNotification($payslip, $business_member);
-                //dispatch(new SendPayslipDisburseNotificationToEmployee($business_member, $payslip));
-                //dispatch(new SendPayslipDisbursePushNotificationToEmployee($business_member, $payslip));
+                dispatch(new SendPayslipDisburseNotificationToEmployee($business_member, $payslip));
+                dispatch(new SendPayslipDisbursePushNotificationToEmployee($business_member, $payslip));
             }
         }
     }
