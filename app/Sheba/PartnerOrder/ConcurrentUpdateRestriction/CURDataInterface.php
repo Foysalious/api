@@ -6,6 +6,8 @@ interface CURDataInterface
 
     public function get();
 
+    public function getCUObject($value);
+
     public function check($value);
 
     public function remove($value);
