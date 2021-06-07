@@ -1509,3 +1509,18 @@ if (!function_exists('getStorageExportFolder')) {
         return storage_path('exports') . "/";
     }
 }
+
+if (!function_exists('getAppVersionImageLinkFolder')) {
+
+    /**
+     * @param bool $with_base_url
+     * @return string
+     */
+    function getAppVersionImageLinkFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url) $url = config('s3.url');
+
+        return $url . 'images/app_version_images/';
+    }
+}
