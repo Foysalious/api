@@ -57,10 +57,6 @@ abstract class PaymentMethod
     {
         return self::VALIDITY_IN_MINUTES;
     }
-    public function cardInformation(CardInformation $cardInformation){
-        $this->cardInformation=$cardInformation;
-        return $this;
-    }
     abstract public function getMethodName();
 
     /**
