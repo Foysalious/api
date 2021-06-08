@@ -29,7 +29,10 @@ abstract class PaymentMethod
     public function __construct()
     {
         $this->paymentLogRepo = new PaymentStatusChangeLogRepository();
-        $this->statusChanger = app(StatusChanger::class);
+
+        /** @var StatusChanger $s */
+        $s                   = app(StatusChanger::class);
+        $this->statusChanger = $s;
     }
 
     /**
