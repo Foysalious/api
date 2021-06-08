@@ -114,6 +114,9 @@ class AttendanceController extends Controller
                                     TimeFrame $time_frame, BusinessHolidayRepoInterface $business_holiday_repo,
                                     BusinessWeekendRepoInterface $business_weekend_repo, Excel $monthly_excel)
     {
+        ini_set('memory_limit', '6096M');
+        ini_set('max_execution_time', 480);
+
         $this->validate($request, ['file' => 'string|in:excel']);
         list($offset, $limit) = calculatePagination($request);
         /** @var Business $business */

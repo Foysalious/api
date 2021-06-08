@@ -16,6 +16,7 @@ use App\Repositories\ProfileRepository;
 use App\Repositories\ResourceJobRepository;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
+use App\Sheba\Partner\KYC\Statuses;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -44,8 +45,7 @@ class DashboardController extends Controller
 {
     use ModificationFields, LocationSetter;
 
-
-    public function get(Request $request, PartnerPerformance $performance, PartnerReward $partner_reward)
+    public function get(Request $request, PartnerPerformance $performance)
     {
         ini_set('memory_limit', '6096M');
         ini_set('max_execution_time', 660);
@@ -96,7 +96,6 @@ class DashboardController extends Controller
                 'show_status'                  => constants('PARTNER_STATUSES_SHOW')[$partner['status']]['partner'],
                 'balance'                      => $partner->totalWalletAmount(),
                 'credit'                       => $partner->wallet,
-                'bonus'                        => round($partner->bonusWallet(), 2),
                 'is_credit_limit_exceed'       => $partner->isCreditLimitExceed(),
                 'is_on_leave'                  => $partner->runningLeave() ? 1 : 0,
                 'bonus_credit'                 => $partner->bonusWallet(),
@@ -158,7 +157,6 @@ class DashboardController extends Controller
                     'package_badge'   => $upgradable_package->badge,
                     'package_usp_bn'  => json_decode($upgradable_package->usps, 1)['usp_bn']
                 ] : null,
-                'has_reward_campaign'          => count($partner_reward->upcoming()) > 0 ? 1 : 0,
                 'leave_info'                   => (new LeaveStatus($partner))->getCurrentStatus(),
                 'sheba_order'                  => $partner->orders->isEmpty() ? 0 : 1,
                 'manager_dashboard_banner'     => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner_assets/dashboard/manager_dashboard.png',
@@ -183,6 +181,63 @@ class DashboardController extends Controller
         }
     }
 
+    private function getSpLoanInformationCompletion($partner, $request)
+    {
+        try {
+            $sp_loan_information_completion = new SpLoanInformationCompletion();
+            $sp_information_completion      = $sp_loan_information_completion->getLoanInformationCompletion($partner, $request)->getData()->completion;
+            $personal                       = $sp_information_completion->personal->completion_percentage;
+            $business                       = $sp_information_completion->business->completion_percentage;
+            $finance                        = $sp_information_completion->finance->completion_percentage;
+            $nominee                        = $sp_information_completion->nominee->completion_percentage;
+            $documents                      = $sp_information_completion->documents->completion_percentage;
+            return ($personal == 100 && $business == 100 && $finance == 100 && $nominee == 100 && $documents == 100) ? 1 : 0;
+        } catch (Throwable $e) {
+            return 0;
+        }
+    }
+
+    public function getV3DashBoard(Request $request, PartnerPerformance $performance) {
+        ini_set('memory_limit', '6096M');
+        ini_set('max_execution_time', 660);
+        try {
+            /** @var Partner $partner */
+            $partner       = $request->partner;
+            $data     = (new PartnerRepository($partner))->getNewDashboard($request, $performance);
+            if (request()->hasHeader('Portal-Name'))
+                $this->setDailyUsageRecord($partner, request()->header('Portal-Name'));
+            return api_response($request, $data, 200, ['data' => $data]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getNewHomePage(Request $request) {
+        try {
+            /** @var Partner $partner */
+            $partner       = $request->partner;
+            /** @var Resource $resource */
+            $resource = $request->manager_resource;
+            $resource_status = $resource->status;
+            $data = [
+                'name'                         => $partner->name,
+                'logo'                         => $partner->logo,
+                'resource_kyc_status'          => $resource_status,
+                'is_nid_verified'              => (bool)((int)$request->manager_resource->profile->nid_verified),
+                'is_webstore_published'        =>$partner->is_webstore_published,
+                'new_notification_count'       => $partner->notifications()->where('is_seen', '0')->count()
+            ];
+            if ($resource_status === Statuses::VERIFIED){
+                $data['message_seen'] = (bool)((int)$resource->verification_message_seen);
+            }
+            return api_response($request, $data, 200, ['data' => $data]);
+        } catch (Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     private function newOrdersCount($partner, $request)
     {
         try {
@@ -202,22 +257,6 @@ class DashboardController extends Controller
         if ($rate > 100)
             return 100;
         return $rate;
-    }
-
-    private function getSpLoanInformationCompletion($partner, $request)
-    {
-        try {
-            $sp_loan_information_completion = new SpLoanInformationCompletion();
-            $sp_information_completion      = $sp_loan_information_completion->getLoanInformationCompletion($partner, $request)->getData()->completion;
-            $personal                       = $sp_information_completion->personal->completion_percentage;
-            $business                       = $sp_information_completion->business->completion_percentage;
-            $finance                        = $sp_information_completion->finance->completion_percentage;
-            $nominee                        = $sp_information_completion->nominee->completion_percentage;
-            $documents                      = $sp_information_completion->documents->completion_percentage;
-            return ($personal == 100 && $business == 100 && $finance == 100 && $nominee == 100 && $documents == 100) ? 1 : 0;
-        } catch (Throwable $e) {
-            return 0;
-        }
     }
 
     /**
@@ -383,6 +422,65 @@ class DashboardController extends Controller
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getBkashNo(Request $request) {
+        try {
+            /** @var Partner $partner */
+            $partner       = $request->partner;
+            $data = [
+                'bkash_no'                     => $partner->bkash_no,
+            ];
+            return api_response($request, $data, 200, ['data' => $data]);
+        } catch (Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getGeoInformation(Request $request) {
+        try {
+            /** @var Partner $partner */
+            $partner       = $request->partner;
+            $data = [
+                'geo_informations'  => json_decode($partner->geo_informations)
+            ];
+            return api_response($request, $data, 200, ['data' => $data]);
+        } catch (Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getCurrentPackage(Request $request) {
+        try {
+            /** @var Partner $partner */
+            $partner       = $request->partner;
+            $data = [
+                'current_subscription_package' => [
+                    'id'            => $partner->subscription->id,
+                    'name'          => $partner->subscription->name,
+                    'name_bn'       => $partner->subscription->show_name_bn,
+                    'remaining_day' => $partner->last_billed_date ? $partner->periodicBillingHandler()->remainingDay() : 0,
+                    'billing_type'  => $partner->billing_type,
+                    'rules'         => $partner->subscription->getAccessRules(),
+                    'is_light'      => $partner->subscription->id == (int)config('sheba.partner_lite_packages_id')
+                ],
+                "status" => $partner->getStatusToCalculateAccess()
+            ];
+            return api_response($request, $data, 200, ['data' => $data]);
+        } catch (Throwable $e) {
+            logError($e);
             return api_response($request, null, 500);
         }
     }

@@ -19,6 +19,7 @@ class VendorMiddleware
             $vendor = Vendor::where([
                 ['app_key', $request->header('app-key')],
                 ['app_secret', $request->header('app-secret')],
+                ['whitelisted_ip', getIp()],
                 ['is_active', 1]
             ])->first();
             $request->merge(['vendor' => $vendor]);
