@@ -4,7 +4,10 @@
     <title> Invoice </title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <style>
-
+        body {
+            font-family: 'kalpurush', sans-serif!important;
+            font-size: 14px !important;
+        }
         @font-face {
             font-family: "Shonar Bangla";
             src: {{storage_path("Shonar Bangla.ttf")}} format("truetype"); /* IE9*/
@@ -84,7 +87,7 @@
                         <td @if(isset($method))style="padding-left: 25px;" width="80" @else width="120" @endif><img style="max-width: 120px" src="{{$payment_receiver['image']}}" alt=""></td>
                         <td colspan="3">
                             <div style="text-align: left;padding: 10px 20px;">
-                                <span style="color: #383d46;letter-spacing: -0.05px;font-weight: 700;">{{ucfirst($payment_receiver['name'])}}</span><br>
+                                {{ucfirst($payment_receiver['name'])}}<br>
                                 <span style="color: #9b9b9b;">{{$payment_receiver['mobile']}}</span><br>
                                 <span style="color: #9b9b9b;">{{$payment_receiver['address']}}</span>
                             </div>
