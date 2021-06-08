@@ -269,11 +269,7 @@ class ServiceController extends Controller
                 $request->merge($this->resolveSubcategory($request->master_category_id));
             }
         }
-//        if (isset($request->is_published_for_shop) && $request->is_published_for_shop == 1 && (!isset($request->weight) || !($request->weight_unit))) {
-//            return api_response($request, null, 400, ['message' => 'Weight or Weight Unit is not provided']);
-//        }
         $updater->setService($partner_pos_service)->setData($request->except('master_category_id'))->update();
-
         if ($request->discount_id) {
             $discount_data = [];
             $discount = PartnerPosServiceDiscount::find($request->discount_id);
