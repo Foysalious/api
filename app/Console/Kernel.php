@@ -22,8 +22,6 @@ class Kernel extends ConsoleKernel
         TopUpTestCommand::class,
         Payslip::class,
     ];
-    /*** @var Schedule */
-    private $schedule;
 
     /**
      * Define the application's command schedule.
@@ -33,13 +31,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $this->schedule = $schedule;
-        $this->companyPayrollCommands();
-        $this->schedule->command('product-upload-csv')->dailyAt('00:00');
-    }
-
-    private function companyPayrollCommands()
-    {
-        $this->schedule->command('sheba:generate-payslips')->dailyAt('00:20');
+        $schedule->command('product-upload-csv')->dailyAt('00:00');
+        $schedule->command('sheba:generate-payslips')->dailyAt('00:20');
     }
 }
