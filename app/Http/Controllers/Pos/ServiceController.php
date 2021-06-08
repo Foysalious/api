@@ -147,17 +147,10 @@ class ServiceController extends Controller
             $request->request->remove('category_id');
             $request->merge($this->resolveSubcategory($request->master_category_id));
         }
-//        if (isset($request->is_published_for_shop) && $request->is_published_for_shop == 1 && (!isset($request->weight) || !($request->weight_unit))) {
-//            return api_response($request, null, 400, ['message' => 'Weight or Weight Unit is not provided']);
-//        }
-
-
         $partner_pos_service = $creator->setData($request->except('master_category_id'))->create();
-
         if ($request->has('discount_amount') && $request->discount_amount > 0) {
             $this->createServiceDiscount($request, $partner_pos_service);
         }
-
         $partner_pos_service->unit = $partner_pos_service->unit ? constants('POS_SERVICE_UNITS')[$partner_pos_service->unit] : null;
         $partner_pos_service->warranty_unit = $partner_pos_service->warranty_unit ? config('pos.warranty_unit')[$partner_pos_service->warranty_unit] : null;
 
@@ -298,7 +291,6 @@ class ServiceController extends Controller
         $partner_pos_service->master_category_id = $partner_pos_service->category->parent_id;
         $partner_pos_service->sub_category_id = $partner_pos_service->category->id;
         $partner_pos_service->weight_unit =$partner_pos_service->weight_unit? array_merge(config('weight.weight_unit')[$partner_pos_service->weight_unit], ['key' => $partner_pos_service->weight_unit]): null;
-
         $partner_pos_service_arr = $partner_pos_service->toArray();
         $partner_pos_service_arr['image_gallery'] = $partner_pos_service->imageGallery ? $partner_pos_service->imageGallery->map(function ($image) {
             return [
