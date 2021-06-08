@@ -1,11 +1,6 @@
 <?php
 
-
 namespace Tests\Feature\Accounting;
-
-
-use GuzzleHttp\Client;
-use Tests\Feature\FeatureTestCase;
 
 class DueTrackerListApiTest extends AccountingFeatureTest
 {
