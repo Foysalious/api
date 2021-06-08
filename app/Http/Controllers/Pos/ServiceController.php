@@ -142,13 +142,10 @@ class ServiceController extends Controller
             $request->request->remove('category_id');
             $request->merge($this->resolveSubcategory($request->master_category_id));
         }
-
         $partner_pos_service = $creator->setData($request->except('master_category_id'))->create();
-
         if ($request->has('discount_amount') && $request->discount_amount > 0) {
             $this->createServiceDiscount($request, $partner_pos_service);
         }
-
         $partner_pos_service->unit = $partner_pos_service->unit ? constants('POS_SERVICE_UNITS')[$partner_pos_service->unit] : null;
         $partner_pos_service->warranty_unit = $partner_pos_service->warranty_unit ? config('pos.warranty_unit')[$partner_pos_service->warranty_unit] : null;
 
@@ -258,9 +255,7 @@ class ServiceController extends Controller
                 $request->merge($this->resolveSubcategory($request->master_category_id));
             }
         }
-
         $updater->setService($partner_pos_service)->setData($request->except('master_category_id'))->update();
-
         if ($request->discount_id) {
             $discount_data = [];
             $discount = PartnerPosServiceDiscount::find($request->discount_id);
