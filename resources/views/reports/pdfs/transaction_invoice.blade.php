@@ -52,7 +52,7 @@
             color: #4A4A4A;
         }
         body {
-            font-family: DejaVu Sans, 'Shonar Bangla', 'Roboto', sans-serif;
+            font-family: DejaVu Sans, 'Shonar Bangla', 'Roboto','kalpurush','Siyamrupali', sans-serif;
         }
         @if(isset($method))
             footer {
