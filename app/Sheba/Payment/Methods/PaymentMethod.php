@@ -13,10 +13,8 @@ use Sheba\RequestIdentification;
 
 abstract class PaymentMethod
 {
-    const VALIDITY_IN_MINUTES = 3;
-
+    const VALIDITY_IN_MINUTES= 3;
     use ModificationFields;
-    protected $cardInformation;
 
     /** @var PaymentStatusChangeLogRepository */
     protected $paymentLogRepo;
@@ -53,10 +51,11 @@ abstract class PaymentMethod
         return Carbon::now()->addMinutes($this->getValidityInMinutes());
     }
 
-    public function getValidityInMinutes()
+    private function getValidityInMinutes()
     {
-        return self::VALIDITY_IN_MINUTES;
+        return $this::VALIDITY_IN_MINUTES;
     }
+
     abstract public function getMethodName();
 
     /**
@@ -71,7 +70,7 @@ abstract class PaymentMethod
         $user    = $payable->user;
 
         $invoice = "SHEBA_" . strtoupper($this->getMethodName()) . "_" .
-                   strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' .randomString(10, 1, 1);
+                   strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . randomString(10, 1, 1);
 
         DB::transaction(function () use (&$payment, $payable, $invoice, $user, $gateway_account_name) {
             $payment->payable_id             = $payable->id;
