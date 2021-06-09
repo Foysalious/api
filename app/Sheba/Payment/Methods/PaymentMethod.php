@@ -5,6 +5,7 @@ use App\Models\Payment;
 use App\Models\PaymentDetail;
 use App\Repositories\PaymentStatusChangeLogRepository;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Facades\DB;
 use Sheba\ModificationFields;
 use Sheba\Payment\StatusChanger;
@@ -53,7 +54,7 @@ abstract class PaymentMethod
 
     private function getValidityInMinutes()
     {
-        return $this::VALIDITY_IN_MINUTES;
+        return self::VALIDITY_IN_MINUTES;
     }
 
     abstract public function getMethodName();
@@ -62,7 +63,7 @@ abstract class PaymentMethod
      * @param Payable $payable
      * @param string  $gateway_account_name
      * @return Payment
-     * @throws \Exception
+     * @throws Exception
      */
     protected function createPayment(Payable $payable, $gateway_account_name = 'default'): Payment
     {
