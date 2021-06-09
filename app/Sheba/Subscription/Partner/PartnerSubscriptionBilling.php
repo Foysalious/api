@@ -225,9 +225,10 @@ class PartnerSubscriptionBilling
      */
     private function partnerTransactionForSubscriptionBilling($package_price)
     {
+        $package_details = $this->packageTo->name ." - ". $this->newBillingType;
         $package_price=round($package_price,2);
         $package_price = number_format($package_price, 2, '.', '');
-        $this->partnerBonusHandler->pay($package_price, '%d BDT has been deducted for subscription package', [$this->getSubscriptionTag()->id]);
+        $this->partnerBonusHandler->pay($package_price, "%d BDT has been deducted for subscription package ($package_details)", [$this->getSubscriptionTag()->id]);
     }
 
     /**
