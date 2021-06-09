@@ -131,6 +131,7 @@ class PartnerSubscriptionBilling
         }
         if(isset($this->notification) && $this->notification === 1)
             $this->sendSmsForSubscriptionUpgrade($old_package, $new_package, $old_billing_type, $new_billing_type, $grade);
+        $this->storeEntry();
         $this->storeJournal();
         return $this;
     }
@@ -242,9 +243,10 @@ class PartnerSubscriptionBilling
      */
     private function partnerTransactionForSubscriptionBilling($package_price)
     {
+        $package_details = $this->packageTo->name ." - ". $this->newBillingType;
         $package_price=round($package_price,2);
         $package_price = number_format($package_price, 2, '.', '');
-        return $this->partnerBonusHandler->pay($package_price, '%d BDT has been deducted for subscription package', [$this->getSubscriptionTag()->id]);
+        return $this->partnerBonusHandler->pay($package_price, "%d BDT has been deducted for subscription package ($package_details)", [$this->getSubscriptionTag()->id]);
     }
 
     /**
