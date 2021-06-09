@@ -1,7 +1,7 @@
 <?php namespace App\Console\Commands;
 
 use App\Sheba\Business\PayrollComponent\Components\GrossSalaryBreakdownCalculate;
-use App\Sheba\Business\PayrollComponent\Components\PayrollComponentCalculationForPayslip;
+use App\Sheba\Business\PayrollComponent\Components\PayrollComponentSchedulerCalculation;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepo;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepo;
 use Sheba\Dal\PayrollComponent\PayrollComponentRepository;
@@ -29,7 +29,7 @@ class Payslip extends Command
     private $payslipRepository;
     private $businessWeekRepo;
     private $businessHolidayRepo;
-    private $payrollComponentCalculationForPayslip;
+    private $payrollComponentSchedulerCalculation;
 
 
     /**
@@ -40,7 +40,7 @@ class Payslip extends Command
      * @param PayslipRepository $payslip_repository
      * @param BusinessWeekendRepo $business_weekend_repo
      * @param BusinessHolidayRepo $business_holiday_repo
-     * @param PayrollComponentCalculationForPayslip $payroll_component_calculation_for_payslip
+     * @param PayrollComponentSchedulerCalculation $payroll_component_scheduler_calculation
      */
     public function __construct(PayrollSettingRepository $payroll_setting_repository,
                                 PayrollComponentRepository $payroll_component_repository,
@@ -48,7 +48,7 @@ class Payslip extends Command
                                 PayslipRepository $payslip_repository,
                                 BusinessWeekendRepo $business_weekend_repo,
                                 BusinessHolidayRepo $business_holiday_repo,
-                                PayrollComponentCalculationForPayslip $payroll_component_calculation_for_payslip)
+                                PayrollComponentSchedulerCalculation $payroll_component_scheduler_calculation)
     {
         $this->payrollSettingRepository = $payroll_setting_repository;
         $this->payrollComponentRepository = $payroll_component_repository;
@@ -56,7 +56,7 @@ class Payslip extends Command
         $this->payslipRepository = $payslip_repository;
         $this->businessWeekRepo = $business_weekend_repo;
         $this->businessHolidayRepo = $business_holiday_repo;
-        $this->payrollComponentCalculationForPayslip = $payroll_component_calculation_for_payslip;
+        $this->payrollComponentSchedulerCalculation = $payroll_component_scheduler_calculation;
         parent::__construct();
     }
 
@@ -64,25 +64,26 @@ class Payslip extends Command
     {
         $payroll_settings = $this->payrollSettingRepository->where('is_enable', 1)->get();
         foreach ($payroll_settings as $payroll_setting) {
-            /** @var Business $business */
+            if ($payroll_setting->id != 139) continue;
             $business = $payroll_setting->business;
             if ($this->isPayDay($payroll_setting, $business)) {
-                $business_members = $business->getAccessibleBusinessMember()->select('id')->get();
-                $this->grossSalaryBreakdownCalculate->componentPercentageBreakdown($payroll_setting);
-                $payroll_component_calculation = $this->payrollComponentCalculationForPayslip->setBusiness($business)->getPayrollComponentCalculationBreakdown();
-                foreach ($business_members as $business_member) {
-                    $gross_salary = 0.0;
-                    $salary = $business_member->salary;
-                    if ($salary) $gross_salary = floatValFormat($salary->gross_salary);
-                    $this->grossSalaryBreakdownCalculate->totalAmountPerComponent($gross_salary);
-                    $payslip_data = [
-                        'business_member_id' => $business_member->id,
-                        'schedule_date' => Carbon::now(),
-                        'status' => 'pending',
-                        'salary_breakdown' => json_encode(array_merge($this->grossSalaryBreakdownCalculate->totalAmountPerComponentFormatted(), $payroll_component_calculation))
-                    ];
-                    $this->payslipRepository->create($payslip_data);
-                }
+            $business_members = $business->getAccessibleBusinessMember()->get();
+            $x = 0;
+            foreach ($business_members as $business_member) {
+                $gross_salary_breakdown_percentage = $this->grossSalaryBreakdownCalculate->payslipComponentPercentageBreakdown($business_member);
+                $payroll_component_calculation = $this->payrollComponentSchedulerCalculation->setBusiness($business)->setBusinessMember($business_member)->getPayrollComponentCalculationBreakdown();
+                $gross_salary = 0.0;
+                $salary = $business_member->salary;
+                if ($salary) $gross_salary = floatValFormat($salary->gross_salary);
+                $gross_salary_breakdown = $this->grossSalaryBreakdownCalculate->totalAmountPerComponent($gross_salary, $gross_salary_breakdown_percentage);
+                $payslip_data = [
+                    'business_member_id' => $business_member->id,
+                    'schedule_date' => Carbon::now(),
+                    'status' => 'pending',
+                    'salary_breakdown' => json_encode(array_merge(['gross_salary_breakdown' => $gross_salary_breakdown], $payroll_component_calculation))
+                ];
+                $this->payslipRepository->create($payslip_data);
+            }
             }
         }
     }

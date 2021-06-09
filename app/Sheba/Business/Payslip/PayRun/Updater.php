@@ -88,7 +88,8 @@ class Updater
             foreach ($this->payrunData as $data) {
                 $grossBreakdown = null;
                 $business_member = $this->businessMemberRepository->find($data['id']);
-                if ($business_member->salary->gross_salary != $data['amount']) $grossBreakdown = $this->createGrossBreakdown($business_member, $data['amount']);
+                $previous_salary = $business_member->salary ? $business_member->salary->gross_salary : 0;
+                if ($previous_salary != $data['amount']) $grossBreakdown = $this->createGrossBreakdown($business_member, $data['amount']);
                 $this->salaryRequester->setBusinessMember($business_member)->setGrossSalary($data['amount'])->setBreakdownPercentage($grossBreakdown)->setManagerMember($this->managerMember)->createOrUpdate();
                 $this->payslipUpdater->setBusinessMember($business_member)->setGrossSalary($data['amount'])->setScheduleDate($data['schedule_date'])->setAddition($data['addition'])->setDeduction($data['deduction'])->update();
             }
