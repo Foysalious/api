@@ -7,6 +7,7 @@ use App\Jobs\SendFaqEmail;
 use App\Models\PotentialCustomer;
 use App\Repositories\CustomerRepository;
 use App\Models\Customer;
+use App\Sheba\BankingInfo\EmiBanking;
 use Sheba\AppVersion\AppVersionManager;
 use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
 use Sheba\Dal\Category\Category;
@@ -460,5 +461,11 @@ class ShebaController extends Controller
             ->select('id', 'business_member_id', 'date', 'checkin_time', 'checkout_time', 'staying_time_in_minutes')
             ->get();
         return api_response($request, null, 200, ['data' => $attendances->groupBy('business_member_id')]);
+    }
+
+    public function getEmiBankList(Request $request)
+    {
+        $bank_list = EmiBanking::getPublishedBank();
+        return api_response($request, null, 200, ['data' => $bank_list]);
     }
 }
