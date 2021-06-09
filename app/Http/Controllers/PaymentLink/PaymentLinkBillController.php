@@ -3,6 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Sheba\Payment\Adapters\Payable\PaymentLinkOrderAdapter;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 use Sheba\Customer\Creator;
 use Illuminate\Http\Request;
 use Sheba\Payment\AvailableMethods;
@@ -27,6 +28,7 @@ class PaymentLinkBillController extends Controller
     public function clearBill(Request $request, PaymentManager $payment_manager, PaymentLinkOrderAdapter $payment_adapter,
                               Creator $customer_creator, PaymentLinkRepositoryInterface $repo)
     {
+        Log::info($request->all());
         $this->validate($request, [
             'payment_method' => 'required|in:' . implode(',', AvailableMethods::getPaymentLinkPayments($request->identifier)),
             'amount'         => 'numeric',
