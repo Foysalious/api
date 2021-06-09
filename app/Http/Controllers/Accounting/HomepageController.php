@@ -133,7 +133,7 @@ class HomepageController extends Controller
         }
     }
 
-    public function getTrainingVideoUrl(Request $request)
+    public function getTrainingVideo(Request $request)
     {
         try {
             $response = [
