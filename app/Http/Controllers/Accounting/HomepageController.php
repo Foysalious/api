@@ -133,6 +133,24 @@ class HomepageController extends Controller
         }
     }
 
+    public function getTrainingVideo(Request $request)
+    {
+        try {
+            $response = [
+                'video_key' => "accounting_dashboard",
+                'faq_url' => 'https://faq.sheba.xyz/dummy'
+            ];
+            return api_response($request, $response, 200, ['data' => $response]);
+        } catch (Exception $e) {
+            return api_response(
+                $request,
+                null,
+                $e->getCode() == 0 ? 400 : $e->getCode(),
+                ['message' => $e->getMessage()]
+            );
+        }
+    }
+
     public function getTimeFilters(Request $request)
     {
         Carbon::setWeekStartsAt(Carbon::SATURDAY);

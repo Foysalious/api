@@ -7,7 +7,9 @@ class AccountingRoute
         $api->group(['prefix' => 'accounting', 'middleware' => ['accounting.auth']], function ($api) {
             $api->post('/transfer', 'Accounting\\AccountingController@storeAccountsTransfer');
             $api->post('/expense', 'Accounting\\IncomeExpenseController@storeExpenseEntry');
+            $api->post('/expense/{expense_id}', 'Accounting\\IncomeExpenseController@updateExpenseEntry');
             $api->post('/income', 'Accounting\\IncomeExpenseController@storeIncomeEntry');
+            $api->post('/income/{income_id}', 'Accounting\\IncomeExpenseController@updateIncomeEntry');
             $api->get('/income-expense-total', 'Accounting\\IncomeExpenseController@getTotalIncomeExpense');
             $api->get('/account-types', 'Accounting\\AccountController@getAccountTypeList');
             $api->get('/accounts', 'Accounting\\AccountController@getAccountList');
@@ -30,6 +32,7 @@ class AccountingRoute
                 $api->get('due-collection-balance', 'Accounting\\HomepageController@getDueCollectionBalance');
                 $api->get('account-list-balance', 'Accounting\\HomepageController@getAccountListBalance');
                 $api->get('time-filter', 'Accounting\\HomepageController@getTimeFilters');
+                $api->get('training-video', 'Accounting\\HomepageController@getTrainingVideo');
             });
             $api->group(['prefix' => 'entries'], function ($api) {
                 $api->get('/{entry_id}', 'Accounting\\DueTrackerController@details');
@@ -37,6 +40,7 @@ class AccountingRoute
             $api->group(['prefix' => 'reports'], function ($api) {
                 $api->get('/pos/customer-wise', 'Accounting\\ReportsController@getCustomerWiseReport');
                 $api->get('/{reportType}', 'Accounting\\ReportsController@getAccountingReport');
+                $api->get('/', 'Accounting\\ReportsController@getAccountingReportsList');
             });
         });
     }

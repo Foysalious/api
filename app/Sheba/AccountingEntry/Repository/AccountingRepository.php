@@ -14,19 +14,6 @@ use Sheba\RequestIdentification;
 
 class AccountingRepository extends BaseRepository
 {
-    public function accountTransfer(Request $request)
-    {
-        $source_id = rand(0, 9999) . date('s') . preg_replace("/^.*\./i", "", microtime(true));
-        $this->setModifier($request->partner);
-        $data = $this->createJournalData($request, EntryTypes::TRANSFER, $source_id);
-        $url = "api/journals/";
-        try {
-            return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
-        } catch (AccountingEntryServerError $e) {
-            logError($e);
-        }
-    }
-
     /**
      * @param $request
      * @param $type
@@ -45,6 +32,28 @@ class AccountingRepository extends BaseRepository
             return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->post($url, $data);
         } catch (AccountingEntryServerError $e) {
             Log::info(['error from accounting']);
+            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+        }
+    }
+
+
+    /**
+     * @param $request
+     * @param $type
+     * @param $entry_id
+     * @return mixed
+     * @throws AccountingEntryServerError
+     */
+    public function updateEntry($request, $type, $entry_id)
+    {
+        $this->getCustomer($request);
+        $partner = $this->getPartner($request);
+        $this->setModifier($partner);
+        $data = $this->createEntryData($request, $type, $request->source_id);
+        $url = "api/entries/".$entry_id;
+        try {
+            return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->post($url, $data);
+        } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
     }
@@ -159,19 +168,6 @@ class AccountingRepository extends BaseRepository
         $data['entry_at'] = $request->has("date") ? $request->date : Carbon::now()->format('Y-m-d H:i:s');
         $data['attachments'] = $this->uploadAttachments($request);
         $data['total_discount'] = $request->has("total_discount") ? (double)$request->total_discount : null;
-        return $data;
-    }
-
-    private function createJournalData(Request $request, $source_type, $source_id): array
-    {
-        $data['amount'] = (double)$request->amount;
-        $data['source_type'] = $source_type;
-        $data['source_id'] = $source_id;
-        $data['debit_account_key'] = $request->from_account_key;
-        $data['credit_account_key'] = $request->to_account_key;
-        $data['entry_at'] = $request->date;
-        $data['details'] = $request->note;
-        $data['created_from'] = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
         return $data;
     }
 
