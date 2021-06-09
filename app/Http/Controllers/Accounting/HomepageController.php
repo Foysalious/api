@@ -137,8 +137,8 @@ class HomepageController extends Controller
     {
         try {
             $response = [
-                'video_url' => config('account.account_url') . '/v3/training-videos?key=accounting_dashboard',
-                'faq_url' => 'https://faq.sheba.xyz'
+                'video_key' => "accounting_dashboard",
+                'faq_url' => 'https://faq.sheba.xyz/dummy'
             ];
             return api_response($request, $response, 200, ['data' => $response]);
         } catch (Exception $e) {
