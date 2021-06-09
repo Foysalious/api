@@ -152,11 +152,15 @@ class AccountingRepository extends BaseRepository
         $data['note'] = $request->has("note") ? $request->note : null;
         $data['amount_cleared'] = $request->amount_cleared;
         if(!$default) {
+            $data['debit_account_key'] = $request->from_account_key; // to = debit = je account e jabe
+            $data['credit_account_key'] = $request->to_account_key; // from = credit = je account theke jabe
+//            $data['debit_account_key'] = $request->to_account_key;
+//            $data['credit_account_key'] = $request->from_account_key;
+        } else {
             $data['debit_account_key'] = $request->to_account_key;
             $data['credit_account_key'] = $request->from_account_key;
-        } else {
-            $data['debit_account_key'] = $request->from_account_key;
-            $data['credit_account_key'] = $request->to_account_key;
+//            $data['debit_account_key'] = $request->from_account_key; // to = debit = je account e jabe
+//            $data['credit_account_key'] = $request->to_account_key; // from = credit = je account theke jabe
         }
         $data['customer_id'] = $request->customer_id;
         $data['customer_name'] = $request->customer_name;

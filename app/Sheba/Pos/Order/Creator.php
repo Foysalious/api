@@ -386,17 +386,14 @@ class Creator
     private function additionalAccountingData(PosOrder $order)
     {
         $order_discount = $order->discounts->count() > 0 ? $order->discounts()->sum('amount') : 0;
-        $this->request->merge(
-            [
-                "from_account_key" => $order->sales_channel == SalesChannels::WEBSTORE ? (new Accounts(
-                ))->asset->sheba::SHEBA_ACCOUNT : (new Accounts())->asset->cash::CASH,
-                "to_account_key" => (new Accounts())->income->sales::SALES_FROM_POS,
-                "amount" => (double)$order->getNetBill(),
-                "amount_cleared" => $order->getPaid(),
-                "total_discount" => $order_discount,
-                "note" => $order->sales_channel == SalesChannels::WEBSTORE ? SalesChannels::WEBSTORE : SalesChannels::POS,
-                "source_id" => $order->id
-            ]
-        );
+        $this->request->merge([
+            "from_account_key"   => (new Accounts())->income->sales::SALES_FROM_POS,
+            "to_account_key"     => $order->sales_channel == SalesChannels::WEBSTORE ? (new Accounts())->asset->sheba::SHEBA_ACCOUNT : (new Accounts())->asset->cash::CASH,
+            "amount"             => (double)$order->getNetBill(),
+            "amount_cleared"     => $order->getPaid(),
+            "total_discount"     => $order_discount,
+            "note"               => $order->sales_channel == SalesChannels::WEBSTORE ? SalesChannels::WEBSTORE : SalesChannels::POS,
+            "source_id"          => $order->id
+        ]);
     }
 }
