@@ -2,8 +2,11 @@
 
 
 use App\Http\Controllers\Controller;
+use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\AccountingRepository;
 use Illuminate\Http\Request;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\AccountingEntry\Statics\IncomeExpenseStatics;
 use Sheba\ModificationFields;
 
 class AccountingController extends Controller
@@ -22,13 +25,12 @@ class AccountingController extends Controller
      * @return \Illuminate\Http\JsonResponse
      */
     public function storeAccountsTransfer(Request $request){
-        $this->validate($request, [
-            'amount' => 'required|numeric',
-            'from_account_key' => 'required',
-            'to_account_key' => 'required',
-            'date' => 'required|date_format:Y-m-d H:i:s'
-        ]);
-        $response = $this->accountingRepo->accountTransfer($request);
-        return api_response($request, $response, 200);
+        try {
+            $this->validate($request, IncomeExpenseStatics::transferEntryValidation());
+            $response = $this->accountingRepo->storeEntry($request, EntryTypes::TRANSFER);
+            return api_response($request, $response, 200, ['data' => $response]);
+        } catch (AccountingEntryServerError $e) {
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
+        }
     }
 }
