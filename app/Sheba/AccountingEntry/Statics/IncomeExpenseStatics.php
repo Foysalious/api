@@ -42,4 +42,14 @@ class IncomeExpenseStatics
             $end_date." 23:59:59"
         ];
     }
+
+    public static function transferEntryValidation(): array
+    {
+        return [
+            'amount' => 'required|numeric',
+            'from_account_key' => 'required',
+            'to_account_key' => 'required',
+            'date' => 'required|date_format:Y-m-d H:i:s'
+        ];
+    }
 }

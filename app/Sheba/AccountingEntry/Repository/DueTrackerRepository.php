@@ -3,6 +3,7 @@ namespace App\Sheba\AccountingEntry\Repository;
 
 use App\Models\PartnerPosCustomer;
 use App\Models\PosCustomer;
+use App\Models\PosOrder;
 use App\Models\Profile;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Constants\UserType;
@@ -10,6 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
 use Sheba\RequestIdentification;
 
@@ -84,6 +86,9 @@ class DueTrackerRepository extends BaseRepository
         try {
             $url = "api/entries/" . $this->entry_id;
             $data = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
+            if($data["attachments"]) {
+                $data["attachments"] = json_decode($data["attachments"]);
+            }
             if($data["customer_id"]) {
                 /** @var PartnerPosCustomer $partner_pos_customer */
                 $partner_pos_customer = PartnerPosCustomer::where('partner_id', $this->partner->id)->where('customer_id', $data["customer_id"])->first();
@@ -147,7 +152,14 @@ class DueTrackerRepository extends BaseRepository
         }
     }
 
-    public function getDueListByCustomer($request, $customerId)
+    /**
+     * @param $request
+     * @param $customerId
+     * @return array
+     * @throws AccountingEntryServerError
+     * @throws InvalidPartnerPosCustomer
+     */
+    public function getDueListByCustomer($request, $customerId): array
     {
         try {
             $partner_pos_customer = PartnerPosCustomer::byPartner($this->partner->id)->where('customer_id', $customerId)->with(['customer'])->first();
@@ -158,9 +170,24 @@ class DueTrackerRepository extends BaseRepository
             if (empty($customer)) throw new InvalidPartnerPosCustomer();
             $url = "api/due-list/".$customerId;
             $result = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
+            $total_debit = $request['other_info']['total_debit'];
+            $total_credit = $request['other_info']['total_credit'];
+            $result['balance']['color'] = $total_debit  > $total_credit ? '#219653' : '#DC1E1E';
+            $due_list = collect($result['list']);
+
+            $list   = $due_list->map(function ($item) {
+                if($item["attachments"]) {
+                    $item["attachments"] = json_decode($item["attachments"]);
+                }
+                $item['created_at'] = Carbon::parse($item['created_at'])->format('Y-m-d h:i A');
+                $item['entry_at']   = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
+                $pos_order = PosOrder::withTrashed()->find($item['source_id']);
+                $item['partner_wise_order_id'] = $item['source_type'] === 'POS' && $pos_order ? $pos_order->partner_wise_order_id: null;
+                return $item;
+            });
 
             return [
-                'list'       => $result['list'],
+                'list'       => $list,
                 'customer'   => [
                     'id'                => $customer->id,
                     'name'              => !empty($partner_pos_customer) && $partner_pos_customer->nick_name ? $partner_pos_customer->nick_name : $customer->profile->name,
