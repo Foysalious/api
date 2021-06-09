@@ -32,7 +32,7 @@ class TopUpTestCommand extends Command
                 ->setTopUpOrder($top_up_order)
                 ->recharge();*/
 
-            $lifecycle->setTopUpOrder($top_up_order)->reload();
+            dd($lifecycle->setTopUpOrder($top_up_order)->reload()->getResponse());
         } catch (\Exception $e) {
             dde($e);
         }

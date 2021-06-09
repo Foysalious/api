@@ -5,7 +5,7 @@ use App\Models\Affiliation;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\CustomOrder;
-use App\Models\InfoCall;
+use Sheba\Dal\InfoCall\InfoCall;
 use App\Models\Job;
 use App\Models\Order;
 use App\Models\PartnerOrder;
