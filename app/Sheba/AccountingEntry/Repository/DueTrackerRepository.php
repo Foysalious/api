@@ -168,7 +168,8 @@ class DueTrackerRepository extends BaseRepository
                 $customer = $partner_pos_customer->customer;
             }
             if (empty($customer)) throw new InvalidPartnerPosCustomer();
-            $url = "api/due-list/".$customerId;
+            $url = "api/due-list/".$customerId."?";
+            $url = $this->updateRequestParam($request, $url);
             $result = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
             $total_debit = $request['other_info']['total_debit'];
             $total_credit = $request['other_info']['total_credit'];
