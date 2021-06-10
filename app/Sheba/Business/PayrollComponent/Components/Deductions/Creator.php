@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\DB;
 use Sheba\Business\PayrollComponent\Requester as PayrollComponentRequester;
 use Sheba\Dal\PayrollComponent\PayrollComponentRepository;
+use Sheba\Dal\PayrollComponent\TargetType;
 
 class Creator
 {
@@ -63,6 +64,7 @@ class Creator
                     'name' => $component['name'],
                     'value' => $component['title'],
                     'type' => 'deduction',
+                    'target_type' => TargetType::GENERAL,
                     'is_default' => 0,
                     'is_active' => 1,
                     'setting' => json_encode([]),

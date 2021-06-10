@@ -73,11 +73,8 @@ class Updater
             ];
             if (empty($existing_package->periodic_schedule_created_at) && empty($existing_package->generated_at)) {
                 if ($packages['schedule_type'] == ScheduleType::PERIODICALLY) {
-                    $current_time = Carbon::now();
-                    $business_pay_day = $this->payrollSetting->pay_day;
-                    if ($current_time->day < $business_pay_day) $current_package_pay_generate_date = $current_time->day($business_pay_day)->format('Y-m-d');
-                    else $current_package_pay_generate_date = $current_time->addMonth()->day($business_pay_day)->format('Y-m-d');
-                    $data = array_merge($data, ['periodic_schedule_created_at' => $current_time->format('Y-m-d H:i:s'), 'generated_at' => $current_package_pay_generate_date]);
+                    $package_generate_data = (new Formatter)->packageGenerateData($this->payrollSetting);
+                    $data = array_merge($data, $package_generate_data);
                 }
             }
             $this->payrollComponentPackageRepository->update($existing_package, $data);

@@ -1,18 +1,26 @@
 <?php namespace App\Sheba\Business\ComponentPackage;
 
 use App\Models\BusinessMember;
+use Carbon\Carbon;
+use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepo;
+use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepo;
 use Sheba\Dal\PayrollComponentPackage\TargetType;
+use Sheba\Dal\PayrollSetting\PayrollSetting;
 use Sheba\Repositories\Interfaces\Business\DepartmentRepositoryInterface;
 
 class Formatter
 {
     private $businessMember;
     private $department;
+    private $businessWeekendRepo;
+    private $businessHolidayRepo;
 
     public function __construct()
     {
         $this->businessMember = app(BusinessMember::class);
         $this->department = app(DepartmentRepositoryInterface::class);
+        $this->businessWeekendRepo = app(BusinessWeekendRepo::class);
+        $this->businessHolidayRepo = app(BusinessHolidayRepo::class);
     }
 
     public function makePackageData($component)
@@ -63,5 +71,29 @@ class Formatter
         return [
             'name' => $target->name
         ];
+    }
+
+    public function packageGenerateData(PayrollSetting $payroll_setting)
+    {
+        $current_time = Carbon::now();
+        $business_pay_day = $payroll_setting->pay_day;
+        if ($current_time->day < $business_pay_day) $current_package_pay_generate_date = $this->nextPayDay($payroll_setting, $current_time);
+        else $current_package_pay_generate_date = $this->nextPayDay($payroll_setting, $current_time->addMonth()->day($business_pay_day));
+
+        return ['periodic_schedule_created_at' => $current_time->format('Y-m-d H:i:s'), 'generated_at' => $current_package_pay_generate_date];
+    }
+    private function nextPayDay(PayrollSetting $payroll_setting, Carbon $time)
+    {
+        $business = $payroll_setting->business;
+        $business_pay_day = $time->day($payroll_setting->pay_day);
+        if (!$this->businessWeekendRepo->isWeekendByBusiness($business, $business_pay_day) && !$this->businessHolidayRepo->isHolidayByBusiness($business, $business_pay_day)) return $business_pay_day->format('y-m-d');
+
+        $last_day_of_month = $time->lastOfMonth();
+        while ($last_day_of_month) {
+            if (!$this->businessWeekendRepo->isWeekendByBusiness($business, $last_day_of_month) &&
+                !$this->businessHolidayRepo->isHolidayByBusiness($business, $last_day_of_month)) break;
+            $last_day_of_month = $last_day_of_month->subDay(1);
+        }
+        return $last_day_of_month->format('y-m-d');
     }
 }
