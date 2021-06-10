@@ -8,6 +8,8 @@ use Sheba\Helpers\ConstGetter;
 
 class AccountingReportRepository extends BaseRepository
 {
+    use ConstGetter;
+
     private $api;
 
     const PROFIT_LOSS_REPORT = 'profit_loss_report';
