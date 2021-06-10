@@ -136,6 +136,8 @@ class JobController extends Controller
         $job_collection->put('category_id', $job->category ? $job->category->id : null);
         $job_collection->put('category_name', $job->category ? $job->category->name : null);
         $job_collection->put('category_image', $job->category ? $job->category->thumb : null);
+        $job_collection->put('master_category_id', $job->category && $job->category->parent? $job->category->parent->id : null);
+        $job_collection->put('master_category_name', $job->category && $job->category->parent? $job->category->parent->name : null);
         $job_collection->put('min_order_amount', $job->category ? $job->category->min_order_amount : null);
         $job_collection->put('partner_id', $job->partnerOrder->partner ? $job->partnerOrder->partner->id : null);
         $job_collection->put('partner_name', $job->partnerOrder->partner ? $job->partnerOrder->partner->name : null);
