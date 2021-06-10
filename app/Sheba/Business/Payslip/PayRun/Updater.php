@@ -99,6 +99,7 @@ class Updater
         DB::transaction(function () {
             $this->payslipRepository->getPaySlipByStatus($this->businessMemberIds, Status::PENDING)->where('schedule_date', 'like', '%' . $this->scheduleDate . '%')->update(['status' => Status::DISBURSED]);
         });
+        $this->sendNotifications();
         return true;
     }
 
