@@ -174,6 +174,7 @@ abstract class ReturnPosItem extends RefundNature
             if ($services->contains($value['id'])) {
                 $product = $services->find($value['id']);
                 $originalSvc = $services->find($value['id'])->service;
+<<<<<<< HEAD
                 $sellingPrice = isset($value['updated_price']) && $value['updated_price'] ? $value['updated_price'] : $originalSvc->price;
                 $unitPrice = $original_service->cost ?? $sellingPrice;
                 // Full return
@@ -215,6 +216,41 @@ abstract class ReturnPosItem extends RefundNature
                         $sellingPrice,
                         $qty
                     );
+=======
+                if ($originalSvc) {
+                    $sellingPrice = isset($value['updated_price']) && $value['updated_price'] ? $value['updated_price'] : $originalSvc->price;
+                    $unitPrice = $original_service->cost ?? $sellingPrice;
+                    // Full return
+                    if ($value['quantity'] == 0 && $product->quantity != 0) {
+                        Log::info(["full return", $product->quantity]);
+                        $inventory_products[] = $this->makeInventoryData(
+                            $originalSvc,
+                            $unitPrice,
+                            $sellingPrice,
+                            $product->quantity
+                        );
+                    }
+                    // Quantity Increase
+                    if ($value['quantity'] > $product->quantity) {
+                        $qty = $value['quantity'] - $product->quantity;
+                        $type = 'quantity_increase';
+                        $inventory_products[] = $this->makeInventoryData($originalSvc, $unitPrice, $sellingPrice, $qty, $type);
+                    }
+                    // Partial Return
+                    if ($value['quantity'] != 0 && $value['quantity'] < $product->quantity) {
+                        $inventory_products[] = $this->makeInventoryData(
+                            $originalSvc,
+                            $unitPrice,
+                            $sellingPrice,
+                            $value['quantity']
+                        );
+                    }
+                } else {
+                    $sellingPrice = $product->unit_price;
+                    $unitPrice = $product->unit_price;
+                    $qty = isset($requested_service[$key]['quantity']) && $requested_service[$key]['quantity'] > 0 ? $requested_service[$key]['quantity'] - $product->quantity : $product->quantity;
+                    $inventory_products[] = $this->makeInventoryData($originalSvc, $unitPrice, $sellingPrice, $qty);
+>>>>>>> 9866aa1664b4eec74eba75bb20a69c91068c13fa
                 }
             }
         }
