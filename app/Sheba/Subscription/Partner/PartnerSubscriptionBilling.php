@@ -133,6 +133,7 @@ class PartnerSubscriptionBilling
             $this->sendSmsForSubscriptionUpgrade($old_package, $new_package, $old_billing_type, $new_billing_type, $grade);
         $this->storeEntry();
         $this->storeJournal();
+        $this->storeEntry();
         return $this;
     }
 
