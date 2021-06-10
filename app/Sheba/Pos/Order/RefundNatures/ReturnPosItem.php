@@ -174,49 +174,6 @@ abstract class ReturnPosItem extends RefundNature
             if ($services->contains($value['id'])) {
                 $product = $services->find($value['id']);
                 $originalSvc = $services->find($value['id'])->service;
-<<<<<<< HEAD
-                $sellingPrice = isset($value['updated_price']) && $value['updated_price'] ? $value['updated_price'] : $originalSvc->price;
-                $unitPrice = $original_service->cost ?? $sellingPrice;
-                // Full return
-                if ($value['quantity'] == 0 && $product->quantity != 0) {
-                    Log::info(["full return", $product->quantity]);
-                    $inventory_products[] = $this->makeInventoryData(
-                        $originalSvc,
-                        $unitPrice,
-                        $sellingPrice,
-                        $product->quantity
-                    );
-                }
-                // Quantity Increase
-                if ($value['quantity'] > $product->quantity) {
-                    Log::info(["quantity increase", $product->quantity]);
-                    $qty = $value['quantity'] - $product->quantity;
-                    $type = 'quantity_increase';
-                    $inventory_products[] = $this->makeInventoryData($originalSvc, $unitPrice, $sellingPrice, $qty, $type);
-                }
-                // Partial Return
-                if ($value['quantity'] != 0 && $value['quantity'] < $product->quantity) {
-                    Log::info(["partial return", $product->quantity]);
-                    $inventory_products[] = $this->makeInventoryData(
-                        $originalSvc,
-                        $unitPrice,
-                        $sellingPrice,
-                        $value['quantity']
-                    );
-                }
-            } else {
-                $original_service = ($value->service);
-                if ($original_service) {
-                    $sellingPrice = isset($requested_service[$key]['updated_price']) ? $requested_service[$key]['updated_price'] : $original_service->price;
-                    $unitPrice = isset($original_service->cost) ? $original_service->cost : $sellingPrice;
-                    $qty = isset($requested_service[$key]['quantity']) ? $requested_service[$key]['quantity'] : 1;
-                    $inventory_products[] = $this->makeInventoryData(
-                        $original_service,
-                        $unitPrice,
-                        $sellingPrice,
-                        $qty
-                    );
-=======
                 if ($originalSvc) {
                     $sellingPrice = isset($value['updated_price']) && $value['updated_price'] ? $value['updated_price'] : $originalSvc->price;
                     $unitPrice = $original_service->cost ?? $sellingPrice;
@@ -250,7 +207,6 @@ abstract class ReturnPosItem extends RefundNature
                     $unitPrice = $product->unit_price;
                     $qty = isset($requested_service[$key]['quantity']) && $requested_service[$key]['quantity'] > 0 ? $requested_service[$key]['quantity'] - $product->quantity : $product->quantity;
                     $inventory_products[] = $this->makeInventoryData($originalSvc, $unitPrice, $sellingPrice, $qty);
->>>>>>> 9866aa1664b4eec74eba75bb20a69c91068c13fa
                 }
             }
         }
