@@ -168,7 +168,6 @@ abstract class ReturnPosItem extends RefundNature
 
     protected function makeInventoryProduct($services, $requestedServices)
     {
-        Log::info("checking refund 4");
         $requested_service = json_decode($requestedServices, true);
         $inventory_products = [];
         foreach ($requested_service as $key => $value) {
@@ -190,14 +189,12 @@ abstract class ReturnPosItem extends RefundNature
                     }
                     // Quantity Increase
                     if ($value['quantity'] > $product->quantity) {
-                        Log::info(["quantity increase", $product->quantity]);
                         $qty = $value['quantity'] - $product->quantity;
                         $type = 'quantity_increase';
                         $inventory_products[] = $this->makeInventoryData($originalSvc, $unitPrice, $sellingPrice, $qty, $type);
                     }
                     // Partial Return
                     if ($value['quantity'] != 0 && $value['quantity'] < $product->quantity) {
-                        Log::info(["partial return", $product->quantity]);
                         $inventory_products[] = $this->makeInventoryData(
                             $originalSvc,
                             $unitPrice,
@@ -208,7 +205,7 @@ abstract class ReturnPosItem extends RefundNature
                 } else {
                     $sellingPrice = $product->unit_price;
                     $unitPrice = $product->unit_price;
-                    $qty = isset($requested_service[$key]['quantity']) && $requested_service[$key]['quantity'] > 0 ? $requested_service[$key]['quantity'] : $product->quantity;
+                    $qty = isset($requested_service[$key]['quantity']) && $requested_service[$key]['quantity'] > 0 ? $requested_service[$key]['quantity'] - $product->quantity : $product->quantity;
                     $inventory_products[] = $this->makeInventoryData($originalSvc, $unitPrice, $sellingPrice, $qty);
                 }
             }
