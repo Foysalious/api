@@ -6,6 +6,10 @@ use App\Repositories\SmsHandler as SmsHandlerRepo;
 use App\Sheba\Sms\BusinessType;
 use App\Sheba\Sms\FeatureType;
 use Exception;
+use Sheba\AccountingEntry\Accounts\Accounts;
+use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Expense\SmsPurchase;
+use Sheba\AccountingEntry\Accounts\RootAccounts;
+use Sheba\AccountingEntry\Repository\JournalCreateRepository;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
@@ -47,9 +51,22 @@ class SmsHandler {
             {
             }
 
-            (new WalletTransactionHandler())->setModel($partner)->setAmount($sms_cost)->setType(Types::debit())->setLog($sms_cost . " BDT has been deducted for sending pos order details sms (order id: {$this->order->id})")->setTransactionDetails([])->setSource(TransactionSources::SMS)->store();
+            $transaction = (new WalletTransactionHandler())->setModel($partner)->setAmount($sms_cost)->setType(Types::debit())->setLog($sms_cost . " BDT has been deducted for sending pos order details sms (order id: {$this->order->id})")->setTransactionDetails([])->setSource(TransactionSources::SMS)->store();
+            $this->storeJournal($partner, $transaction);
         }
 
+    }
+
+
+    private function storeJournal($partner, $transaction) {
+        (new JournalCreateRepository())->setTypeId($partner->id)
+            ->setSource($transaction)
+            ->setAmount($transaction->amount)
+            ->setDebitAccountKey(SmsPurchase::SMS_PURCHASE_FROM_SHEBA)
+            ->setCreditAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
+            ->setDetails("Pos sms sent charge")
+            ->setReference("")
+            ->store();
     }
 
     /**
