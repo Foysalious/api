@@ -149,8 +149,11 @@ class Creator
         $order_data['partner_wise_order_id'] = $this->createPartnerWiseOrderId($this->partner);
         $order_data['emi_month']             = isset($this->data['emi_month']) ? $this->data['emi_month'] : null;
         $order_data['sales_channel']         = isset($this->data['sales_channel']) ? $this->data['sales_channel'] : SalesChannels::POS;
-        $order_data['delivery_charge']       = isset($this->data['sales_channel']) && $this->data['sales_channel'] == SalesChannels::WEBSTORE ? $this->partner->delivery_charge : 0;
+        $order_data['delivery_charge']       = isset($this->data['delivery_charge'])   ? $this->data['delivery_charge'] : 0;
         $order_data['status']                = $this->status;
+        $order_data['weight']                = isset($this->data['weight'])   ? $this->data['weight'] : 0;
+        $order_data['delivery_district']     = isset($this->data['sales_channel']) && $this->data['sales_channel'] == SalesChannels::WEBSTORE && isset($this->data['delivery_district']) ? $this->data['delivery_district'] : null;
+        $order_data['delivery_thana']        = isset($this->data['sales_channel']) && $this->data['sales_channel'] == SalesChannels::WEBSTORE && isset($this->data['delivery_thana']) ? $this->data['delivery_thana'] : null;
         $order                               = $this->orderRepo->save($order_data);
         $services                            = json_decode($this->data['services'], true);
         foreach ($services as $service) {

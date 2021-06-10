@@ -17,9 +17,10 @@ use Sheba\Dal\CategoryPartner\CategoryPartner;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;
-use App\Models\InfoCall;
+use Sheba\Dal\InfoCall\InfoCall;
 use App\Models\Job;
 use App\Models\Location;
+use Sheba\Dal\InfoCall\Statuses;
 use Sheba\Dal\LocationService\LocationService;
 use App\Models\Order;
 use App\Models\Partner;
@@ -33,6 +34,7 @@ use Sheba\Checkout\CommissionCalculator;
 use Sheba\AutoSpAssign\Job\InitiateAutoSpAssign;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Dal\JobService\JobService;
+use Sheba\InfoCall\StatusChanger;
 use Sheba\JobDiscount\JobDiscountHandler;
 use Sheba\Jobs\JobDeliveryChargeCalculator;
 use Sheba\Jobs\JobStatuses;
@@ -382,6 +384,7 @@ class OrderPlace
                 $order = $this->createOrder();
                 $partner_order = $this->createPartnerOrder($order);
                 $job = $this->createJob($partner_order);
+                if ($this->infoCallId) $this->changeInfoCallStatusToConverted();
                 $this->createCarRentalDetail($job);
                 $job->jobServices()->saveMany($job_services);
                 Log::info('Creating Job Service JOB#'.$job.'.[ServiceDiscount: '.var_export($this->discountCalculation->getDiscountId(), true).']');
@@ -683,5 +686,15 @@ class OrderPlace
         $priceCalculationFactory = new PriceCalculationFactory();
         $priceCalculationFactory->setCategory($category);
         return $priceCalculationFactory->get();
+    }
+
+    private function changeInfoCallStatusToConverted()
+    {
+        /** @var StatusChanger $status_changer */
+        $status_changer = app(StatusChanger::class);
+        $info_call = InfoCall::find($this->infoCallId);
+        $status_changer->setInfoCall($info_call)
+            ->setStatus(Statuses::CONVERTED)
+            ->change();
     }
 }
