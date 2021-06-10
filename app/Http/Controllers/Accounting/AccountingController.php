@@ -36,4 +36,16 @@ class AccountingController extends Controller
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         }
     }
+
+    public function updateAccountsTransfer(Request $request, $transfer_id) {
+        try {
+            $this->validate($request, IncomeExpenseStatics::transferEntryValidation());
+            $request["amount_cleared"] = $request->amount;
+            $response = $this->accountingRepo->updateEntry($request, EntryTypes::TRANSFER, $transfer_id);
+            return api_response($request, $response, 200, ['data' => $response]);
+        } catch (AccountingEntryServerError $e) {
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
+        }
+
+    }
 }
