@@ -43,6 +43,7 @@ abstract class ReturnPosItem extends RefundNature
             $this->oldOrder = clone $this->order;
             $this->old_services = $this->new ? $this->order->items->pluckMultiple(['quantity', 'unit_price'], 'id', true)->toArray()
                 : $this->old_services = $this->order->items->pluckMultiple(['quantity', 'unit_price'], 'service_id', true)->toArray();
+            Log::info(['checking update data', $this->data['services'], $this->request->paid_amount, $this->request->payment_method, $this->request->refund_nature, $this->request->return_nature]);
             $this->makeInventoryProduct($this->order->items, $this->data['services']);
             $this->updater->setOrder($this->order)->setData($this->data)->setNew($this->new)->update();
             if ($this->order->calculate()->getPaid()) {
@@ -143,7 +144,7 @@ abstract class ReturnPosItem extends RefundNature
      */
     protected function updateEntry(PosOrder $order, $refundType)
     {
-        Log::info(['checking update data', $this->data['services'], $this->request->paid_amount, $this->request->payment_method, $this->request->refund_nature, $this->request->return_nature]);
+
         $this->additionalAccountingData($order, $refundType);
         /** @var AccountingRepository $accounting_repo */
         $accounting_repo = app()->make(AccountingRepository::class);
