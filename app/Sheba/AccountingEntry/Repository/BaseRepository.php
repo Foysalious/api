@@ -4,6 +4,7 @@
 use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
 use App\Models\PosCustomer;
+use App\Repositories\FileRepository;
 use Illuminate\Http\Request;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
@@ -57,7 +58,26 @@ class BaseRepository
                 }
             }
         }
+
+        $old_attachments = $request->old_attachments ?: [];
+        if ($request->has('attachment_should_remove') && (!empty($request->attachment_should_remove))) {
+            $this->deleteFromCDN($request->attachment_should_remove);
+            $old_attachments = array_diff($old_attachments, $request->attachment_should_remove);
+        }
+
+        $attachments = array_filter(array_merge($attachments, $old_attachments));
         return json_encode($attachments);
+    }
+
+    /**
+     * @param $files
+     */
+    private function deleteFromCDN($files)
+    {
+        foreach ($files as $file) {
+            $filename = substr($file, strlen(env('S3_URL')));
+            (new FileRepository())->deleteFileFromCDN($filename);
+        }
     }
 
     private function getPartner($request)
