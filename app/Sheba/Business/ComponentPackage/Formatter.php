@@ -18,10 +18,10 @@ class Formatter
     public function makePackageData($component)
     {
         $component_packages = $component->componentPackages;
-        $data = [];
+        $package_data = [];
         foreach ($component_packages as $packages) {
             $targets = $packages->packageTargets;
-            array_push($data, [
+            array_push($package_data, [
                 'id' => $packages->id,
                 'package_key' => $packages->key,
                 'package_name' => $packages->name,
@@ -36,7 +36,7 @@ class Formatter
                 'target' => $this->getTarget($targets)
             ]);
         }
-        return $data;
+        return $package_data;
     }
 
     private function getTarget($targets)

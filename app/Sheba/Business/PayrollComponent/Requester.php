@@ -109,7 +109,7 @@ class Requester
         foreach ($components as $component) {
             $existing_component = $this->setting->components->where('name', $component['name'])->whereIn('type', [Type::ADDITION, Type::DEDUCTION])->first();
             if (!$existing_component) continue;
-            if ($existing_component->id != $component['id']) return $this->error = true;
+            return $this->error = true;
         }
         return $this->error;
     }
