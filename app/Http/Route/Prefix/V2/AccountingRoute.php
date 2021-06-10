@@ -32,6 +32,7 @@ class AccountingRoute
                 $api->get('due-collection-balance', 'Accounting\\HomepageController@getDueCollectionBalance');
                 $api->get('account-list-balance', 'Accounting\\HomepageController@getAccountListBalance');
                 $api->get('time-filter', 'Accounting\\HomepageController@getTimeFilters');
+                $api->get('training-video', 'Accounting\\HomepageController@getTrainingVideo');
             });
             $api->group(['prefix' => 'entries'], function ($api) {
                 $api->get('/{entry_id}', 'Accounting\\DueTrackerController@details');
@@ -39,6 +40,7 @@ class AccountingRoute
             $api->group(['prefix' => 'reports'], function ($api) {
                 $api->get('/pos/customer-wise', 'Accounting\\ReportsController@getCustomerWiseReport');
                 $api->get('/{reportType}', 'Accounting\\ReportsController@getAccountingReport');
+                $api->get('/', 'Accounting\\ReportsController@getAccountingReportsList');
             });
         });
     }

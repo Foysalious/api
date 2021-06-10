@@ -86,6 +86,9 @@ class DueTrackerRepository extends BaseRepository
         try {
             $url = "api/entries/" . $this->entry_id;
             $data = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
+            if($data["attachments"]) {
+                $data["attachments"] = json_decode($data["attachments"]);
+            }
             if($data["customer_id"]) {
                 /** @var PartnerPosCustomer $partner_pos_customer */
                 $partner_pos_customer = PartnerPosCustomer::where('partner_id', $this->partner->id)->where('customer_id', $data["customer_id"])->first();
@@ -173,6 +176,9 @@ class DueTrackerRepository extends BaseRepository
             $due_list = collect($result['list']);
 
             $list   = $due_list->map(function ($item) {
+                if($item["attachments"]) {
+                    $item["attachments"] = json_decode($item["attachments"]);
+                }
                 $item['created_at'] = Carbon::parse($item['created_at'])->format('Y-m-d h:i A');
                 $item['entry_at']   = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
                 $pos_order = PosOrder::withTrashed()->find($item['source_id']);

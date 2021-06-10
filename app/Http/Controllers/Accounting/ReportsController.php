@@ -78,4 +78,19 @@ class ReportsController extends Controller
         }
         return api_response($request, null, 402, ['message' => 'Please apply with correct report type.']);
     }
+
+    public function getAccountingReportsList(Request $request)
+    {
+        try {
+            $response = $this->accountingReportRepository->getAccountingReportsList();
+            return api_response($request, $response, 200, ['data' => $response]);
+        } catch (Exception $e) {
+            return api_response(
+                $request,
+                null,
+                $e->getCode() == 0 ? 400 : $e->getCode(),
+                ['message' => $e->getMessage()]
+            );
+        }
+    }
 }
