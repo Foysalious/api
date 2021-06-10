@@ -6,6 +6,7 @@ class Reason
 {
     use ConstGetter;
 
+    const VIOLATION_OF_LEAVE_POLICY = 'violation_of_leave_policy';
     const BREACH_OF_LEAVE_POLICY = 'breach_of_leave_policy';
     const REASONABLE_NOTICE_OBLIGATION = 'reasonable_notice_obligation';
     const NOT_A_VALID_LEAVE_REQUEST = 'not_a_valid_leave_request';
@@ -14,6 +15,7 @@ class Reason
 
     public static function getComponents($reason)
     {
+        if ($reason === self::VIOLATION_OF_LEAVE_POLICY) return self::getReasonsV2()[self::VIOLATION_OF_LEAVE_POLICY];
         if ($reason === self::BREACH_OF_LEAVE_POLICY) return self::getReasons()[self::BREACH_OF_LEAVE_POLICY];
         if ($reason === self::REASONABLE_NOTICE_OBLIGATION) return self::getReasons()[self::REASONABLE_NOTICE_OBLIGATION];
         if ($reason === self::NOT_A_VALID_LEAVE_REQUEST) return self::getReasons()[self::NOT_A_VALID_LEAVE_REQUEST];
@@ -35,11 +37,10 @@ class Reason
     public static function getReasonsV2()
     {
         return [
-            'breach_of_leave_policy' => ['breach_of_leave_policy' => 'Breach of leave policy'],
-            'reasonable_notice_obligation' => ['reasonable_notice_obligation' => 'Reasonable notice obligation'],
-            'not_a_valid_leave_request' => ['not_a_valid_leave_request' => 'Not a valid leave request'],
-            'very_frequent_leave_requests' => ['very_frequent_leave_requests' => 'Very frequent leave requests'],
-            'other' => ['other' => 'Other'],
+            'violation_of_leave_policy' => 'Violation of leave policy',
+            'not_a_valid_leave_request' => 'Not a valid leave request',
+            'very_frequent_leave_requests' => 'Very frequent leave requests',
+            'other' => 'Other',
         ];
     }
 }
