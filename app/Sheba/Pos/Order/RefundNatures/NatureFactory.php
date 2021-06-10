@@ -7,7 +7,6 @@ class NatureFactory
     public static function getRefundNature(PosOrder $order, array $data, $nature, $return_nature)
     {
         return ((function () use ($order, $nature, $return_nature) {
-
             if ($nature == Natures::RETURNED) {
                 if ($return_nature == ReturnNatures::PARTIAL_RETURN) {
                     return app(PartialReturnPosItem::class);
