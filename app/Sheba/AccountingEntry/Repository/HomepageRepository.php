@@ -66,10 +66,10 @@ class HomepageRepository extends BaseRepository
         }
     }
 
-    public function getAccountListBalance($userId, $startDate, $endDate, $limit, $userType = UserType::PARTNER) {
+    public function getAccountListBalance($userId, $startDate, $endDate, $limit, $offset, $userType = UserType::PARTNER) {
         try {
             return $this->client->setUserType($userType)->setUserId($userId)
-                ->get($this->api . "account-list-balance?" . ($limit ? "limit={$limit}" : "") . ($startDate ? "&start_date={$startDate}" : "") . ($endDate ? "&end_date={$endDate}" : ""));
+                ->get($this->api . "account-list-balance?" . ($limit ? "limit={$limit}" : "") . "&offset={$offset}" . ($startDate ? "&start_date={$startDate}" : "") . ($endDate ? "&end_date={$endDate}" : ""));
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
