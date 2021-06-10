@@ -27,17 +27,30 @@ class AccountingReportRepository extends BaseRepository
         $this->api = 'api/reports/';
     }
 
-    public function getAccountingReport($reportType, $userId, $startDate, $endDate, $accountId, $accountType, $userType = UserType::PARTNER)
+    /**
+     * @param $reportType
+     * @param $userId
+     * @param $startDate
+     * @param $endDate
+     * @param $accountId
+     * @param $accountType
+     * @param string $userType
+     * @return array
+     * @throws AccountingEntryServerError
+     */
+    public function getAccountingReport($reportType, $userId, $startDate, $endDate, $accountId, $accountType, $userType = UserType::PARTNER): array
     {
         try {
-            return $this->client->setUserType($userType)->setUserId($userId)
+            $data = $this->client->setUserType($userType)->setUserId($userId)
                 ->get($this->api . "accounting-report/$reportType?start_date=$startDate&end_date=$endDate&account_id=$accountId&account_type=$accountType" );
+            return $reportType === self::PROFIT_LOSS_REPORT ? (new ProfitLossReportData())->format_data($data): $data;
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
     }
 
-    public function getAccountingReportsList()
+
+    public function getAccountingReportsList(): array
     {
         return [
             [
