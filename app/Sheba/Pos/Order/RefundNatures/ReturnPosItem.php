@@ -208,7 +208,7 @@ abstract class ReturnPosItem extends RefundNature
             } else {
                 $original_service = ($value->service);
                 if ($original_service) {
-                    $sellingPrice = isset($requested_service[$key]['updated_price']) && $requested_service[$key]['updated_price'] ? $requested_service[$key]['updated_price'] : $original_service->price;
+                    $sellingPrice = isset($requested_service[$key]['updated_price']) ? $requested_service[$key]['updated_price'] : $original_service->price;
                     $unitPrice = isset($original_service->cost) ? $original_service->cost : $sellingPrice;
                     $qty = isset($requested_service[$key]['quantity']) ? $requested_service[$key]['quantity'] : 1;
                     $inventory_products[] = $this->makeInventoryData(
