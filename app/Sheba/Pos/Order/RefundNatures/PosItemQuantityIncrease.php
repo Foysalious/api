@@ -22,7 +22,7 @@ class PosItemQuantityIncrease extends ReturnPosItem
                 'quantity',
                 'unit_price'
             ], 'service_id')->toArray();
-
+            Log::info(['checking update data', $this->data['services'], $this->request->paid_amount, $this->request->payment_method, $this->request->refund_nature, $this->request->return_nature]);
             $this->makeInventoryProduct($this->order->items, $this->data['services']);
             $this->updater->setOrder($this->order)->setData($this->data)->setNew($this->new)->update();
             $this->refundPayment();
