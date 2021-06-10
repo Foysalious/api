@@ -29,6 +29,7 @@ class AccountingController extends Controller
     {
         try {
             $this->validate($request, IncomeExpenseStatics::transferEntryValidation());
+            $request["amount_cleared"] = $request->amount;
             $response = $this->accountingRepo->storeEntry($request, EntryTypes::TRANSFER);
             return api_response($request, $response, 200, ['data' => $response]);
         } catch (AccountingEntryServerError $e) {
