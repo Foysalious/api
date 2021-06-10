@@ -80,7 +80,7 @@ class Formatter
         if ($current_time->day < $business_pay_day) $current_package_pay_generate_date = $this->nextPayDay($payroll_setting, $current_time);
         else $current_package_pay_generate_date = $this->nextPayDay($payroll_setting, $current_time->addMonth()->day($business_pay_day));
 
-        return ['periodic_schedule_created_at' => $current_time->format('Y-m-d H:i:s'), 'generated_at' => $current_package_pay_generate_date];
+        return ['periodic_schedule_created_at' => Carbon::now(), 'generated_at' => $current_package_pay_generate_date];
     }
     private function nextPayDay(PayrollSetting $payroll_setting, Carbon $time)
     {
