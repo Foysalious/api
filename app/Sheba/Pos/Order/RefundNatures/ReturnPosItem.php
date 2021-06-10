@@ -144,7 +144,6 @@ abstract class ReturnPosItem extends RefundNature
      */
     protected function updateEntry(PosOrder $order, $refundType)
     {
-
         $this->additionalAccountingData($order, $refundType);
         /** @var AccountingRepository $accounting_repo */
         $accounting_repo = app()->make(AccountingRepository::class);
@@ -169,7 +168,6 @@ abstract class ReturnPosItem extends RefundNature
 
     protected function makeInventoryProduct($services, $requestedServices)
     {
-        Log::info("checking refund 4");
         $requested_service = json_decode($requestedServices, true);
         $inventory_products = [];
         foreach ($requested_service as $key => $value) {

@@ -1,9 +1,10 @@
 <?php namespace Sheba\Reports\Accounting;
 
 use App\Sheba\AccountingEntry\Constants\UserType;
-use App\Sheba\AccountingEntry\Repository\BaseRepository;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
+use App\Sheba\AccountingEntry\Repository\BaseRepository;
+use Sheba\Helpers\ConstGetter;
 
 class AccountingReportRepository extends BaseRepository
 {
