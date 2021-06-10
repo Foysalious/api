@@ -86,7 +86,11 @@ class AttendanceController extends Controller
 
         Log::info("Attendance for Employee#$business_member->id, Request#" . json_encode($request->except(['profile', 'auth_info', 'auth_user', 'access_token'])));
 
+        $checkin = $action_processor->setActionName(Actions::CHECKIN)->getAction();
         $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
+        if ($request->action == Actions::CHECKIN && $checkin->isLateNoteRequired()) {
+            $validation_data += ['note' => 'string|required_if:action,' . Actions::CHECKIN];
+        }
         if ($request->action == Actions::CHECKOUT && $checkout->isLeftEarlyNoteRequired()) {
             $validation_data += ['note' => 'string|required_if:action,' . Actions::CHECKOUT];
         }
