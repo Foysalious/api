@@ -59,8 +59,6 @@ abstract class ReturnPosItem extends RefundNature
             $this->updateIncome($this->order);
         } catch (ExpenseTrackingServerError $e) {
             app('sentry')->captureException($e);
-        } catch (Exception $e) {
-            throw new Exception($e->getMessage(), $e->getCode());
         }
     }
 
@@ -162,8 +160,8 @@ abstract class ReturnPosItem extends RefundNature
                 // might have negative value
                 "note" => $refundType,
                 "source_id" => $order->id,
-                "customer_id" => $order->customer->id,
-                "customer_name" => $order->customer->name
+                "customer_id" => isset($order->customer) ? $order->customer->id : null,
+                "customer_name" => isset($order->customer) ? $order->customer->name: null
             ]
         );
     }
