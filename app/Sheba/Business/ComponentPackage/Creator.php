@@ -1,6 +1,5 @@
 <?php namespace App\Sheba\Business\ComponentPackage;
 
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\ComponentPackageTarget\ComponentPackageTargetRepository;
 use Sheba\Dal\PayrollComponent\PayrollComponentRepository;
@@ -67,11 +66,8 @@ class Creator
                     'schedule_date' => $package['schedule_date'],
                 ];
                 if ($package['schedule_type'] == ScheduleType::PERIODICALLY) {
-                    $current_time = Carbon::now();
-                    $business_pay_day = $this->payrollSetting->pay_day;
-                    if ($current_time->day < $business_pay_day) $current_package_pay_generate_date = $current_time->day($business_pay_day)->format('Y-m-d');
-                    else $current_package_pay_generate_date = $current_time->addMonth()->day($business_pay_day)->format('Y-m-d');
-                    $data = array_merge($data, ['periodic_schedule_created_at' => $current_time->format('Y-m-d H:i:s'), 'generated_at' => $current_package_pay_generate_date]);
+                    $package_generate_data = (new Formatter)->packageGenerateData($this->payrollSetting);
+                    $data = array_merge($data, $package_generate_data);
                 }
                 $new_package = $this->payrollComponentPackageRepository->create($data);
                 $this->makeTargetData($new_package->id, $package['effective_for'], $package['target']);
