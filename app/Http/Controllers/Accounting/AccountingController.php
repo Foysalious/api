@@ -4,6 +4,7 @@
 use App\Http\Controllers\Controller;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\AccountingRepository;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Statics\IncomeExpenseStatics;
@@ -22,9 +23,10 @@ class AccountingController extends Controller
 
     /**
      * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
-    public function storeAccountsTransfer(Request $request){
+    public function storeAccountsTransfer(Request $request): JsonResponse
+    {
         try {
             $this->validate($request, IncomeExpenseStatics::transferEntryValidation());
             $response = $this->accountingRepo->storeEntry($request, EntryTypes::TRANSFER);
