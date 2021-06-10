@@ -50,8 +50,9 @@ abstract class ReturnPosItem extends RefundNature
             }
             $this->generateDetails();
             $this->saveLog();
-
+            Log::info("checking refund 1");
             if ($this->order) {
+                Log::info(["checking refund 2", $this->request->inventory_products]);
                 $this->returnItem($this->order);
                 $this->updateEntry($this->order, 'refund');
             }
@@ -169,6 +170,7 @@ abstract class ReturnPosItem extends RefundNature
 
     protected function makeInventoryProduct($services, $requestedServices)
     {
+        Log::info("checking refund 4");
         $requested_service = json_decode($requestedServices, true);
         $inventory_products = [];
         foreach ($requested_service as $key => $value) {

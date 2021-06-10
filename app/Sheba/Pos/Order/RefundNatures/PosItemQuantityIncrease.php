@@ -2,6 +2,7 @@
 
 use App\Models\PosOrder;
 use Exception;
+use Illuminate\Support\Facades\Log;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
@@ -28,6 +29,7 @@ class PosItemQuantityIncrease extends ReturnPosItem
             $this->generateDetails($this->order);
             $this->saveLog();
             if ($this->order) {
+                Log::info("checking refund 3");
                 $this->updateEntry($this->order, 'quantity_increase');
                 $this->updateIncome($this->order);
             }
