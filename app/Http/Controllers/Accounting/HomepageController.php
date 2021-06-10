@@ -111,11 +111,11 @@ class HomepageController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function getAccountListBalance(Request $request): JsonResponse
+    public function getAccountListBalance(Request $request)
     {
-        $startDate = $this->convertStartDate($request->start_date);
-        $endDate = $this->convertEndDate($request->end_date);
-        $limit = $request->limit ?? 10;
+        $startDate = $request->has('start_date') ? $this->convertStartDate($request->start_date) : null;
+        $endDate = $request->has('start_date') ? $this->convertEndDate($request->end_date) : null;
+        $limit = $request->has('limit') ? $request->limit : null;
         if ($endDate < $startDate){
             return api_response($request,null, 400, ['message' => 'End date can not smaller than start date']);
         }
