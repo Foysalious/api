@@ -216,7 +216,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             'debit_account_key' => (new Accounts())->asset->sheba::SHEBA_ACCOUNT,
             'credit_account_key' => (new Accounts())->income->sales::SALES_FROM_POS,
             'amount' => (double)$paymentData['amount'],
-            'amount_cleared' => (double)$paymentData['amount'],
+            'amount_cleared' => 0,
             'details' => 'Payment link for pos order',
             'note' => 'payment_link',
             'entry_at' => request()->has("date") ? request()->date : Carbon::now()->format('Y-m-d H:i:s'),
