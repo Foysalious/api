@@ -276,7 +276,6 @@ class DueTrackerController extends Controller
             }
             $dueTrackerRepository->sendSMS($request);
             return api_response($request, true, 200);
-
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
@@ -287,6 +286,7 @@ class DueTrackerController extends Controller
             $message = "Insufficient Balance";
             return api_response($request, $message, 402, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e->getMessage());
             logError($e);
             return api_response($request, null, 500);
         }

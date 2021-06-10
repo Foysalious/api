@@ -97,11 +97,12 @@ class AccountingRepository extends BaseRepository
                     "quantity" => isset($requested_service[$key]['quantity']) ? $requested_service[$key]['quantity'] : 1
                 ];
             } else {
+                $sellingPrice = isset($requested_service[$key]['updated_price']) && $requested_service[$key]['updated_price'] ? $requested_service[$key]['updated_price'] : $original_service->price;
                 $inventory_products[] = [
                     "id" =>  0,
                     "name" => 'Custom Amount',
-                    "unit_price" => (double)$requested_service[$key]['updated_price'],
-                    "selling_price" => (double)$requested_service[$key]['updated_price'],
+                    "unit_price" => $sellingPrice,
+                    "selling_price" => $original_service->cost ?: $sellingPrice,
                     "quantity" => isset($requested_service[$key]['quantity']) ? $requested_service[$key]['quantity'] : 1
                 ];
             }
@@ -121,11 +122,11 @@ class AccountingRepository extends BaseRepository
      * @return mixed
      * @throws AccountingEntryServerError
      */
-    public function updateEntryBySource(Request $request, $sourceId, $sourceType, $default = true)
+    public function updateEntryBySource(Request $request, $sourceId, $sourceType)
     {
         $this->getCustomer($request);
         $this->setModifier($request->partner);
-        $data = $this->createEntryData($request, $sourceType, $sourceId, $default);
+        $data = $this->createEntryData($request, $sourceType, $sourceId);
         $url = "api/entries/source/" . $sourceType . '/' . $sourceId;
         try {
             Log::info(['pos order update data', $data, $request->refund_nature, $request->return_nature]);
