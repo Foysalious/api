@@ -102,7 +102,7 @@ class AccountingRepository extends BaseRepository
                     "id" =>  0,
                     "name" => 'Custom Amount',
                     "unit_price" => $sellingPrice,
-                    "selling_price" => $original_service->cost ?: $sellingPrice,
+                    $unitPrice = isset($original_service->cost) ? $original_service->cost : $sellingPrice,
                     "quantity" => isset($requested_service[$key]['quantity']) ? $requested_service[$key]['quantity'] : 1
                 ];
             }
