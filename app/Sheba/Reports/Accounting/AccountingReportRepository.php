@@ -4,9 +4,12 @@ use App\Sheba\AccountingEntry\Constants\UserType;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
 use App\Sheba\AccountingEntry\Repository\BaseRepository;
+use Sheba\Helpers\ConstGetter;
 
 class AccountingReportRepository extends BaseRepository
 {
+    use ConstGetter;
+
     private $api;
 
     const PROFIT_LOSS_REPORT = 'profit_loss_report';
