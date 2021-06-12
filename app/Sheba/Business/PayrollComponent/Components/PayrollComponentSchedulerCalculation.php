@@ -100,7 +100,6 @@ class PayrollComponentSchedulerCalculation
             $this->additionData['addition'][$component->name] = $total_addition;
             $total_addition = 0;
         }
-        dd($this->additionData);
         return $this->additionData;
     }
     private function getDeductionComponent()
@@ -161,6 +160,8 @@ class PayrollComponentSchedulerCalculation
                 $final_amount = ( $component_amount * $amount ) / 100;
             }
         }
+        if ($schedule_type != ScheduleType::PERIODICALLY) return $final_amount;
+
         DB::transaction(function () use ($package, $current_time){
             $package_generate_data = (new Formatter)->packageGenerateData($this->payrollSetting, $current_time->format('Y-m-d'), $package->periodic_schedule);
             $this->payrollComponentPackageRepository->update($package, $package_generate_data);
