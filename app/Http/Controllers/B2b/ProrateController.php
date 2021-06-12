@@ -187,13 +187,15 @@ class ProrateController extends Controller
         $manager_member = $request->manager_member;
         $this->setModifier($manager_member);
         $not_found_counter = 0;
+        $total_prorate = count($request->business_member_leave_type_ids);
         foreach ($request->business_member_leave_type_ids as $id) {
             /**@var BusinessMemberLeaveType $business_member_leave_type */
             $business_member_leave_type = $this->businessMemberLeaveTypeRepo->find($id);
             if (!$business_member_leave_type) {$not_found_counter++; continue;}
             $this->businessMemberLeaveTypeRepo->delete($business_member_leave_type);
         }
-        $message = $not_found_counter > 0 ? 'One or more prorates have not found': null;
+        if($not_found_counter === $total_prorate) return api_response($request, null, 404, ['message' => 'No prorates found']);
+        $message = $not_found_counter > 0 ? 'One or more prorates not found.' : null;
         return api_response($request, null, 200, ['message' => $message]);
     }
 }
