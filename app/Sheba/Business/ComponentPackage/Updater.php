@@ -71,12 +71,19 @@ class Updater
                 'periodic_schedule' => $packages['periodic_schedule'],
                 'schedule_date' => $packages['schedule_date'],
             ];
-            if (empty($existing_package->periodic_schedule_created_at) && empty($existing_package->generated_at)) {
-                if ($packages['schedule_type'] == ScheduleType::PERIODICALLY) {
-                    $package_generate_data = (new Formatter)->packageGenerateData($this->payrollSetting);
-                    $data = array_merge($data, $package_generate_data);
+            if ($packages['schedule_type'] == ScheduleType::PERIODICALLY) {
+                $period = 0;
+                $last_generated_date = null;
+                if (!empty($existing_package->generated_at)) {
+                    $period = intval($existing_package->periodic_schedule);
+                    $last_generated_date = $existing_package->generated_at;
                 }
+                $package_generate_data = (new Formatter)->packageGenerateData($this->payrollSetting, $last_generated_date, $period);
+                if (empty($existing_package->periodic_schedule_created_at)) $package_generate_data = array_merge($package_generate_data, ['periodic_schedule_created_at' => Carbon::now()]);
+                $data = array_merge($data, $package_generate_data);
             }
+            if ($packages['schedule_type'] == ScheduleType::FIXED_DATE) $data = array_merge($data, ['generated_at' => null]);
+
             $this->payrollComponentPackageRepository->update($existing_package, $data);
             if (!empty($packages['effective_for'])) $this->makeTargetData($existing_package, $packages['effective_for'], $packages['target']);
         }

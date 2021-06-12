@@ -73,14 +73,15 @@ class Formatter
         ];
     }
 
-    public function packageGenerateData(PayrollSetting $payroll_setting)
+    public function packageGenerateData(PayrollSetting $payroll_setting, $last_generated_date, $period)
     {
         $current_time = Carbon::now();
         $business_pay_day = $payroll_setting->pay_day;
-        if ($current_time->day < $business_pay_day) $current_package_pay_generate_date = $this->nextPayDay($payroll_setting, $current_time);
+        if (!empty($last_generated_date)) $current_package_pay_generate_date = $this->nextPayDay($payroll_setting, Carbon::parse($last_generated_date)->addMonths($period));
+        else if ($current_time->day < $business_pay_day) $current_package_pay_generate_date = $this->nextPayDay($payroll_setting, $current_time->addMonths($period));
         else $current_package_pay_generate_date = $this->nextPayDay($payroll_setting, $current_time->addMonth()->day($business_pay_day));
 
-        return ['periodic_schedule_created_at' => Carbon::now(), 'generated_at' => $current_package_pay_generate_date];
+        return ['generated_at' => $current_package_pay_generate_date];
     }
     private function nextPayDay(PayrollSetting $payroll_setting, Carbon $time)
     {
