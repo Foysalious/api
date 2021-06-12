@@ -2,6 +2,7 @@
 
 use App\Models\Business;
 use App\Models\BusinessMember;
+use App\Sheba\Business\ComponentPackage\Formatter;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Facades\DB;
@@ -43,6 +44,8 @@ class PayrollComponentSchedulerCalculation
     private $prorateRequester;
     private $prorateUpdater;
     private $prorateCreator;
+    private $businessPayDay;
+    private $payrollSetting;
 
     /**
      * PayrollComponentSchedulerCalculation constructor.
@@ -66,6 +69,8 @@ class PayrollComponentSchedulerCalculation
     public function setBusiness(Business $business)
     {
         $this->business = $business;
+        $this->payrollSetting = $this->business->payrollSetting;
+        $this->businessPayDay = $this->payrollSetting->pay_day;
         return $this;
     }
 
@@ -88,18 +93,19 @@ class PayrollComponentSchedulerCalculation
     }
     private function getAdditionComponent()
     {
-        $components = $this->business->payrollSetting->components()->where('type', Type::ADDITION)->where('is_active', 1)->orderBy('name')->get();
+        $components = $this->payrollSetting->components()->where('type', Type::ADDITION)->where('is_active', 1)->orderBy('name')->get();
         $total_addition = 0;
         foreach ($components as $component) {
             if (!$component->is_default) $total_addition += $this->calculatePackage($component->componentPackages);
             $this->additionData['addition'][$component->name] = $total_addition;
             $total_addition = 0;
         }
+        dd($this->additionData);
         return $this->additionData;
     }
     private function getDeductionComponent()
     {
-        $components = $this->business->payrollSetting->components()->where('type', Type::DEDUCTION)->where('is_active', 1)->orderBy('name')->get();
+        $components = $this->payrollSetting->components()->where('type', Type::DEDUCTION)->where('is_active', 1)->orderBy('name')->get();
         $default_deduction_component_data = $this->calculateBusinessMemberPolicyRulesDeduction();
         $total_deduction = 0;
         foreach ($components as $component) {
@@ -138,23 +144,26 @@ class PayrollComponentSchedulerCalculation
 
         $current_time = Carbon::now();
         $final_amount = 0;
+        $business_member_salary = $this->businessMember->salary ? floatValFormat($this->businessMember->salary->gross_salary) : 0;
         if ($schedule_type == ScheduleType::FIXED_DATE && $current_time->month != $schedule_date) return $final_amount;
-        $next_generated_date = Carbon::parse($package->generated_at)->addMonths($periodic_schedule)->format('Y-m');
-        if ($schedule_type == ScheduleType::PERIODICALLY && $next_generated_date != $current_time->format('Y-m')) return $final_amount;
+        $business_pay_day = Carbon::now()->format('Y-m-d');
+        $next_generated_month = Carbon::parse($package->generated_at)->format('Y-m');
+        if ($schedule_type == ScheduleType::PERIODICALLY && $next_generated_month != $current_time->format('Y-m')) return $final_amount;
 
         if ($calculation_type == CalculationType::FIX_PAY_AMOUNT) {
             if ($on_what == self::FIXED_AMOUNT) $final_amount = $amount;
-            else if ($on_what == self::GROSS_SALARY) $final_amount = (($this->businessMember->salary->gross_salary * $amount) / 100);
+            else if ($on_what == self::GROSS_SALARY) $final_amount = (($business_member_salary * $amount) / 100);
             else {
                 $component = $package->payrollComponent->where('name', $package->on_what)->where('target_type', ComponentTargetType::EMPLOYEE)->where('target_id', $this->businessMember->id)->first();
                 if (!$component) $component = $package->payrollComponent->where('name', $package->on_what)->where('target_type', ComponentTargetType::GENERAL)->first();
                 $percentage = json_decode($component->setting, 1)['percentage'];
-                $component_amount = ($this->businessMember->salary->gross_salary * $percentage) / 100;
+                $component_amount = ($business_member_salary * $percentage) / 100;
                 $final_amount = ( $component_amount * $amount ) / 100;
             }
         }
         DB::transaction(function () use ($package, $current_time){
-            $this->payrollComponentPackageRepository->update($package, ['generated_at' => $current_time->format('Y-m-d')]);
+            $package_generate_data = (new Formatter)->packageGenerateData($this->payrollSetting, $current_time->format('Y-m-d'), $package->periodic_schedule);
+            $this->payrollComponentPackageRepository->update($package, $package_generate_data);
         });
         return $final_amount;
     }
@@ -174,9 +183,8 @@ class PayrollComponentSchedulerCalculation
         $is_unpaid_leave_policy_enable = $business_office->is_unpaid_leave_policy_enable;
 
         if (!$is_grace_period_policy_enable && !$is_late_checkin_early_checkout_policy_enable && !$is_unpaid_leave_policy_enable) return 0;
-        $business_pay_day = $this->business->payrollSetting->pay_day;
-        $start_date = Carbon::now()->day($business_pay_day)->subMonth()->format('Y-m-d');
-        $end_date = Carbon::now()->day($business_pay_day)->subDay()->format('Y-m-d');
+        $start_date = Carbon::now()->day($this->businessPayDay)->subMonth()->format('Y-m-d');
+        $end_date = Carbon::now()->day($this->businessPayDay)->subDay()->format('Y-m-d');
         $time_frame = $this->timeFrame->forDateRange($start_date, $end_date);
         $attendances = $this->attendanceRepositoryInterface->getAllAttendanceByBusinessMemberFilteredWithYearMonth($this->businessMember, $time_frame);
         $business_holiday = $this->businessHolidayRepo->getAllByBusiness($this->business);
@@ -307,15 +315,15 @@ class PayrollComponentSchedulerCalculation
         if ($action === ActionType::SALARY_ADJUSTMENT) {
             $penalty_type = $policy_rules->penalty_type;
             $penalty_amount = floatValFormat($policy_rules->penalty_amount);
-            $gross_component = $this->business->payrollSetting->components->where('name', $penalty_type)->where('type', 'gross')->where('target_type', 'employee')->where('target_id', $this->businessMember)->first();
-            if (!$gross_component) $gross_component = $this->business->payrollSetting->components->where('name', $penalty_type)->where('type', 'gross')->where('target_type', 'employee')->where('target_id', $this->businessMember)->first();
+            $gross_component = $this->payrollSetting->components->where('name', $penalty_type)->where('type', 'gross')->where('target_type', 'employee')->where('target_id', $this->businessMember)->first();
+            if (!$gross_component) $gross_component = $this->payrollSetting->components->where('name', $penalty_type)->where('type', 'gross')->where('target_type', 'employee')->where('target_id', $this->businessMember)->first();
             if ($gross_component) {
                 $percentage = floatValFormat(json_decode($gross_component->setting, 1)['percentage']);
                 $amount = ($business_member_salary * $percentage) / 100;
                 $one_working_day_amount = $this->oneWorkingDayAmount($amount,  floatValFormat($total_working_days));
                 return $this->totalPenaltyAmountByOneWorkingDay($one_working_day_amount, $penalty_amount);
             }
-            $addition_component = $this->business->payrollSetting->components->where('name', $penalty_type)->where('type', 'addition')->first();
+            $addition_component = $this->payrollSetting->components->where('name', $penalty_type)->where('type', 'addition')->first();
             if ($addition_component) {
                 $amount = $this->additionData['addition'][$penalty_type];
                 $one_working_day_amount = $this->oneWorkingDayAmount($amount,  floatValFormat($total_working_days));
