@@ -36,6 +36,7 @@ class CheckIn extends ActionChecker
 
         $which_half_day = (new HalfDayLeaveCheck())->setBusinessMember($this->businessMember)->checkHalfDayLeave();
         $today_last_checkin_time = $this->business->calculationTodayLastCheckInTime($which_half_day);
+        dd($today_last_checkin_time, 'checkin');
         if (is_null($today_last_checkin_time)) return;
 
         if (!$this->isSuccess()) return;

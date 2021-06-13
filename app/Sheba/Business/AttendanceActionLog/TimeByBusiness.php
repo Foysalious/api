@@ -4,6 +4,7 @@ use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Sheba\Business\Attendance\HalfDaySetting\HalfDayType;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Sheba\Dal\BusinessOfficeHours\Model as BusinessOfficeHour;
 use Sheba\Dal\Leave\Model as Leave;
 
@@ -14,6 +15,8 @@ class TimeByBusiness
         $now = Carbon::now();
         /** @var Business $business */
         $business = $this->getBusiness();
+        /** @var BusinessOfficeHour $office_hour */
+        $office_hour = $business->officeHour;
         /** @var BusinessMember $business_member */
         $business_member = $this->getBusinessMember();
 
@@ -31,9 +34,23 @@ class TimeByBusiness
             }
         }
 
-        $business_hour = BusinessOfficeHour::where('business_id', $this->getBusiness()->id)->first();
-        if (is_null($business_hour)) return null;
-        return $business_hour->start_time;
+        return $this->officeStartTime($office_hour);
+    }
+
+    private function officeStartTime($office_hour)
+    {
+        if (is_null($office_hour)) return null;
+        if ($office_hour->is_start_grace_time_enable) return $this->officeStartTimeWithGraceTime($office_hour);
+        return $office_hour->start_time;
+    }
+
+    /**
+     * @param BusinessOfficeHour $business_hour
+     * @return string
+     */
+    private function officeStartTimeWithGraceTime(BusinessOfficeHour $business_hour)
+    {
+        return Carbon::parse($business_hour->start_time)->addMinutes($business_hour->start_grace_time)->format('h:i:s');
     }
 
     public function getOfficeEndTimeByBusiness()
@@ -57,11 +74,25 @@ class TimeByBusiness
                 }
             }
         }
+        return $this->officeEndTime();
+    }
 
+    private function officeEndTime()
+    {
         $business_hour = BusinessOfficeHour::where('business_id', $this->getBusiness()->id)->first();
 
         if (is_null($business_hour)) return null;
+        if ($business_hour->is_end_grace_time_enable) return $this->officeEndTimeWithGraceTime($business_hour);
         return $business_hour->end_time;
+    }
+
+    /**
+     * @param BusinessOfficeHour $business_hour
+     * @return string
+     */
+    private function officeEndTimeWithGraceTime(BusinessOfficeHour $business_hour)
+    {
+        return Carbon::parse($business_hour->end_time)->subMinutes($business_hour->end_grace_time)->format('h:i:s');
     }
 
     private function getBusiness()

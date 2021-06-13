@@ -354,12 +354,18 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
 
     public function calculationTodayLastCheckInTime($which_half_day)
     {
+        #$which_half_day = 'first_half';
         if ($which_half_day) {
             if ($which_half_day == HalfDayType::FIRST_HALF) {
-                return Carbon::parse($this->halfDayStartTimeUsingWhichHalf(HalfDayType::SECOND_HALF));
+                # If A Employee Has Leave On First_Half, Office Start Time Will Be Second_Half Start_Time
+                $last_checkin_time = Carbon::parse($this->halfDayStartTimeUsingWhichHalf(HalfDayType::SECOND_HALF));
+                if ($this->officeHour->is_start_grace_time_enable) return $last_checkin_time->addMinutes($this->officeHour->start_grace_time);
+                return $last_checkin_time;
             }
             if ($which_half_day == HalfDayType::SECOND_HALF) {
-                return Carbon::parse($this->halfDayStartTimeUsingWhichHalf(HalfDayType::FIRST_HALF));
+                $last_checkin_time = Carbon::parse($this->halfDayStartTimeUsingWhichHalf(HalfDayType::FIRST_HALF));
+                if ($this->officeHour->is_start_grace_time_enable) return $last_checkin_time->addMinutes($this->officeHour->start_grace_time);
+                return $last_checkin_time;
             }
         } else {
             $last_checkin_time = (new TimeByBusiness())->getOfficeStartTimeByBusiness();
@@ -394,6 +400,7 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
     {
         return $this->hasMany(OfficePolicyRule::class);
     }
+
     public function gracePolicy()
     {
         return $this->policy()->where('policy_type', Type::GRACE_PERIOD)->orderBy('from_days');
@@ -403,6 +410,7 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
     {
         return $this->policy()->where('policy_type', Type::UNPAID_LEAVE)->orderBy('from_days');
     }
+
     public function checkinCheckoutPolicy()
     {
         return $this->policy()->where('policy_type', Type::LATE_CHECKIN_EARLY_CHECKOUT)->orderBy('from_days');
