@@ -9,7 +9,13 @@ use Tests\Feature\FeatureTestCase;
 class EMIDetailsInfoTest extends FeatureTestCase
 {
 
-    private function EMICalculationMethod($amount){
+    private function EMICalculationMethod($amount): array
+    {
+
+        if (!$amount) {
+            $amount = 5000;
+        }
+
         $emi_data = [
             "emi"   => (new \Sheba\EMI\Calculator())->getCharges($amount),
             "banks" => (new \Sheba\EMI\Banks())->setAmount($amount)->get()->toJson(),
@@ -149,11 +155,15 @@ class EMIDetailsInfoTest extends FeatureTestCase
 
     public function testEMIInfoByGivingParameterOfZeroAmount()
     {
-
+        /*
+         * Although the value 0 should give a 400 status code response but in this case it is giving 200 due to the
+         * reason that it takes 0 as no amount passed.
+         * The value 0.0 gives 400 status code response. The actual value that passes is 0.0 in case of 0 insertion.
+         */
         //arrange
         $amount = 0;
         $min_amount = 5000;
-        $emi_data = $this->EMICalculationMethod($min_amount);
+        $emi_data = $this->EMICalculationMethod($amount);
 
         //act
 
