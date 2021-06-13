@@ -68,8 +68,8 @@ class Updater
             $this->storeLogs($old_service, $this->updatedData);
         }
         $this->storeImageGallery($image_gallery);
-        if(isset($cloned_data['accounting_info']) && !empty($cloned_data['accounting_info']))
-            $this->createExpenseEntry($this->service,$cloned_data);
+      //  if(isset($cloned_data['accounting_info']) && !empty($cloned_data['accounting_info']))
+           // $this->createExpenseEntry($this->service,$cloned_data);
     }
 
     private function createExpenseEntry($partner_pos_service,$data)
