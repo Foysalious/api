@@ -86,6 +86,7 @@ class OrderController extends Controller
             ->setDeliveryAddress($request->delivery_address)
             ->setNote($request->note)
             ->setVoucherId($request->voucher_id)
+            ->setDiscount($request->discount)
             ->update();
         return http_response($request, null, 200, $response);
     }
