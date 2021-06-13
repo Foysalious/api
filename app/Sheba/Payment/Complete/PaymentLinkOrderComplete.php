@@ -192,7 +192,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
                 'emi_month'    => $this->transaction->getEmiMonth(),
                 'interest'     => $this->transaction->isPaidByPartner() ? $this->transaction->getInterest() : 0
             ];
-            /** @var $payment_creator PaymentCreator */
+            /** @var PaymentCreator $payment_creator */
             $payment_creator = app(PaymentCreator::class);
             $payment_creator->credit($payment_data);
             if ($this->transaction->isPaidByCustomer()) {
