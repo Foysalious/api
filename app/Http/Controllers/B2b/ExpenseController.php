@@ -98,6 +98,10 @@ class ExpenseController extends Controller
         return api_response($request, $expenses, 200, ['expenses' => $expenses, 'total_expenses_count' => $total_expense_count, 'total_calculation' => $total_calculation]);
     }
 
+    /**
+     * @param $date
+     * @return array
+     */
     private function getStartDateEndDate($date)
     {
         $splitDate = explode('-', $date);
@@ -107,6 +111,10 @@ class ExpenseController extends Controller
         ];
     }
 
+    /**
+     * @param $expenses
+     * @return array
+     */
     private function getTotalCalculation($expenses)
     {
         $total_employee = sizeof(array_unique(array_map(function ($expense) {
@@ -128,6 +136,11 @@ class ExpenseController extends Controller
         ];
     }
 
+    /**
+     * @param $expenses
+     * @param Request $request
+     * @return array
+     */
     private function searchExpenseList($expenses, Request $request)
     {
         $employee_ids = array_filter($expenses, function ($expense) use ($request) {
@@ -146,6 +159,11 @@ class ExpenseController extends Controller
         return $searched_expenses->values()->all();
     }
 
+    /**
+     * @param $expenses
+     * @param string $sort
+     * @return mixed
+     */
     private function sortByName($expenses, $sort = 'asc')
     {
         $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
@@ -154,6 +172,11 @@ class ExpenseController extends Controller
         });
     }
 
+    /**
+     * @param $expenses
+     * @param string $sort
+     * @return mixed
+     */
     private function sortByAmount($expenses, $sort = 'asc')
     {
         $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
