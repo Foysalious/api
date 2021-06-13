@@ -273,6 +273,9 @@
             text-align: left;
             padding: 0;
         }
+        .logo{
+            float:right;
+        }
 
     </style>
 </head>
@@ -295,14 +298,14 @@
                 Service Provider Order Statement
             </td>
             <td class="text-right" style="background: #FFFFFF;">
-                <div id="logo">
+                <div class="logo">
                     <img src="https://s3.ap-south-1.amazonaws.com/cdn-shebadev/admin_assets/assets/images/login-logo.png" class="img-responsive">
                 </div>
             </td>
         </tr>
     </table>
 </header>
-
+@include('pdfs._order_details')
 <main>
     <div id="details" class="clearfix">
 {{--        <div id="client">--}}
