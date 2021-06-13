@@ -128,7 +128,7 @@ class OrderController extends Controller
      * @throws PartnerPosCustomerNotFoundException
      * @throws PosCustomerNotFoundException
      * @throws NotEnoughStockException
-     * @throws AccountingEntryServerError
+     * @throws AccountingEntryServerError|ExpenseTrackingServerError
      */
     public function store($partner, Request $request, Creator $creator, ProfileCreator $profileCreator, PosCustomerCreator $posCustomerCreator, PartnerRepository $partnerRepository, PaymentLinkCreator $paymentLinkCreator)
     {

@@ -59,6 +59,7 @@ class Creator
     protected $status;
     /** @var Request */
     private $request;
+    private $vat = 0;
 
     public function __construct(
         PosOrderRepository $order_repo,
@@ -152,10 +153,12 @@ class Creator
      * @throws InvalidDiscountType
      * @throws NotEnoughStockException
      * @throws PartnerPosCustomerNotFoundException
-     * @throws PosCustomerNotFoundException
+     * @throws PosCustomerNotFoundException|ExpenseTrackingServerError
      */
     public function create()
     {
+        $default_instance = 0;
+
         $order_data['partner_id']            = $this->partner->id;
         $order_data['customer_id']           = $this->resolveCustomerId();
         $order_data['address']               = $this->address;
@@ -172,11 +175,16 @@ class Creator
         $services                            = json_decode($this->data['services'], true);
         foreach ($services as $service) {
             /** @var PartnerPosService $original_service */
-            $original_service = isset($service['id']) && !empty($service['id']) ? $this->posServiceRepo->find($service['id']) : $this->posServiceRepo->defaultInstance($service);
+            if(isset($service['id']) && !empty($service['id'])) $original_service = $this->posServiceRepo->find($service['id']);
+            else {
+                $original_service = $this->posServiceRepo->defaultInstance($service);
+                $this->vat = $original_service->price * $this->partner->posSetting->vat_percentage/100;
+            }
             if(!$original_service)
                 throw new DoNotReportException("Service not found with provided ID", 400);
             if($original_service->is_published_for_shop && isset($service['quantity']) && !empty($service['quantity']) && $service['quantity'] > $original_service->stock)
                 throw new NotEnoughStockException("Not enough stock", 403);
+
             // $is_service_discount_applied = $original_service->discount();
             $service_wholesale_applicable = $original_service->wholesale_price ? true : false;
 
@@ -387,6 +395,7 @@ class Creator
 
     private function additionalAccountingData(PosOrder $order)
     {
+        $this->vat += $order->getTotalVat();
         $order_discount = $order->discounts->count() > 0 ? $order->discounts()->sum('amount') : 0;
         $this->request->merge([
             "from_account_key"   => (new Accounts())->income->sales::SALES_FROM_POS,
@@ -395,7 +404,8 @@ class Creator
             "amount_cleared"     => $order->getPaid(),
             "total_discount"     => $order_discount,
             "note"               => $order->sales_channel == SalesChannels::WEBSTORE ? SalesChannels::WEBSTORE : SalesChannels::POS,
-            "source_id"          => $order->id
+            "source_id"          => $order->id,
+            "total_vat"          => $this->vat
         ]);
     }
 }
