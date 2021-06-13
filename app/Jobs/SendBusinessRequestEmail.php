@@ -31,7 +31,7 @@ class SendBusinessRequestEmail extends Job implements ShouldQueue
             $template = $this->template ?: 'emails.profile-creation';
             $subject = $this->subject ?: 'Profile Creation';
             $email = $this->email;
-            dd($template,$subject, $email);
+
             Mail::send($template, ['email' => $this->email, 'password' => $this->password], function ($m) use ($subject, $email) {
                 $m->from('noreply@sheba-business.com', 'Sheba Platform Limited');
                 $m->to($email)->subject($subject);
