@@ -29,7 +29,6 @@ use Sheba\PaymentLink\PaymentLinkTransformer;
 use Sheba\Pos\Order\PosOrderResolver;
 use Sheba\Pos\Order\PosOrderTypes;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
-use Sheba\Pos\Payment\PosOrderPayment;
 use Sheba\PushNotificationHandler;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
