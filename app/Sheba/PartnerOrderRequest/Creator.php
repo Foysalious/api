@@ -87,8 +87,8 @@ class Creator
             $data['partner_order_id']    = $this->partnerOrder->id;
             $data['partner_id']          = $partner_id;
             $this->partnerOrderRequestId = $this->partnerOrderRequestRepo->create($data);
-            $this->sendOrderRequestSmsToPartner($partner_id);
             $this->sendOrderRequestPushNotificationToPartner($partner_id);
+            $this->sendOrderRequestSmsToPartner($partner_id);
             $job = $this->partnerOrder->jobs->first();
             $this->impressionManager->setLocationId($this->partnerOrder->order->location_id)->setCategoryId($job->category_id)
                                     ->setCustomerId($this->partnerOrder->order->customer_id)->setPortalName(request()->header('portal-name'))
