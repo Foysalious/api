@@ -268,7 +268,7 @@
         .header-style {
             font-weight: bold;
             font-size: 30px;
-            width: 300px;
+            width: 500px;
             background: #FFFFFF;
             text-align: left;
             padding: 0;
