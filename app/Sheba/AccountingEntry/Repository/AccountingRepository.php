@@ -136,6 +136,23 @@ class AccountingRepository extends BaseRepository
     }
 
     /**
+     * @param Partner $partner
+     * @param $sourceType
+     * @param $sourceId
+     * @return mixed
+     * @throws AccountingEntryServerError
+     */
+    public function deleteEntryBySource(Partner $partner, $sourceType, $sourceId)
+    {
+        $url = "api/entries/source/" . $sourceType . '/' . $sourceId;
+        try {
+            return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->delete($url);
+        } catch (AccountingEntryServerError $e) {
+            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+        }
+    }
+
+    /**
      * @param $request
      * @param $type
      * @param null $type_id
