@@ -48,9 +48,9 @@ class PayrollSettingsTransformer extends TransformerAbstract
                 'id' => $payroll_component->id,
                 'key' => $payroll_component->name,
                 'title' => $payroll_component->is_default ? Components::getComponents($payroll_component->name)['value'] : $payroll_component->value,
-                'value' => (int)$salary_percentage['percentage'],
+                'value' => floatValFormat($salary_percentage['percentage']),
                 'is_default' => $payroll_component->is_default,
-                'is_active' => $payroll_component->is_active,
+                'is_active' => $payroll_component->is_default ? 1 : $payroll_component->is_active,
                 'taxable' => $payroll_component->is_taxable,
             ]);
         }
