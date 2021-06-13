@@ -25,7 +25,7 @@ class PosOrderResolver
     public function setOrderId($orderId)
     {
         $this->orderId = $orderId;
-        $oldPosOrder = PosOrder::where('id', $orderId)->select('id', 'sales_channel')->first();
+        $oldPosOrder = PosOrder::find($orderId);
         if ($oldPosOrder && !$oldPosOrder->is_migrated) {
             $this->order = $oldPosOrder;
             $this->posOrderType = PosOrderTypes::OLD_SYSTEM;
