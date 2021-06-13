@@ -124,9 +124,6 @@ class PaymentLinkTransformer
         if ($this->response->targetType) {
             $model_name = $this->resolveTargetClass();
             if ($model_name == 'due_tracker') return null;
-            /** @var $posOrderResolver PosOrderResolver */
-            $posOrderResolver = app(PosOrderResolver::class);
-            if ($model_name == 'PosOrder') return $posOrderResolver->setOrderId($this->response->targetId);
             $this->target = $model_name::find($this->response->targetId);
             return $this->target;
         } else
@@ -142,7 +139,7 @@ class PaymentLinkTransformer
     {
         $model_name = "App\\Models\\";
         if ($this->response->targetType == 'pos_order')
-            return 'PosOrder';
+            return $model_name . 'PosOrder';
         if ($this->response->targetType == 'external_payment')
             return "Sheba\\Dal\\ExternalPayment\\Model";
         if ($this->response->targetType == 'due_tracker') return 'due_tracker';

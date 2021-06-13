@@ -184,9 +184,9 @@ class PaymentLinkOrderComplete extends PaymentComplete
     private function clearTarget()
     {
         $this->target = $this->paymentLink->getTarget();
-        if ($this->target instanceof PosOrderResolver) {
+        if ($this->target instanceof PosOrder) {
             $payment_data    = [
-                'pos_order_id' => $this->target->get()->id,
+                'pos_order_id' => $this->target->id,
                 'amount'       => $this->transaction->getEntryAmount(),
                 'method'       => $this->payment->payable->type,
                 'emi_month'    => $this->transaction->getEmiMonth(),
@@ -194,7 +194,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             ];
             /** @var $payment_creator PaymentCreator */
             $payment_creator = app(PaymentCreator::class);
-            $payment_creator->credit($payment_data, $this->target->getPosOrderType());
+            $payment_creator->credit($payment_data);
             if ($this->transaction->isPaidByCustomer()) {
                 $this->target->update(['interest' => 0, 'bank_transaction_charge' => 0]);
                 $this->storeAccountingJournal($payment_data);
