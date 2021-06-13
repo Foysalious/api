@@ -5,6 +5,7 @@ use App\Models\Payment;
 use App\Models\PaymentDetail;
 use App\Repositories\PaymentStatusChangeLogRepository;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Facades\DB;
 use Sheba\ModificationFields;
 use Sheba\Payment\StatusChanger;
@@ -13,8 +14,7 @@ use Sheba\RequestIdentification;
 
 abstract class PaymentMethod
 {
-    const VALIDITY_IN_MINUTES = 3;
-
+    const VALIDITY_IN_MINUTES= 3;
     use ModificationFields;
 
     /** @var PaymentStatusChangeLogRepository */
@@ -58,7 +58,7 @@ abstract class PaymentMethod
     /**
      * @return int
      */
-    public function getValidityInMinutes()
+    private function getValidityInMinutes()
     {
         return self::VALIDITY_IN_MINUTES;
     }
@@ -72,7 +72,7 @@ abstract class PaymentMethod
      * @param Payable $payable
      * @param string  $gateway_account_name
      * @return Payment
-     * @throws \Exception
+     * @throws Exception
      */
     protected function createPayment(Payable $payable, $gateway_account_name = 'default'): Payment
     {

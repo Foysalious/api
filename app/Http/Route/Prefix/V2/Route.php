@@ -39,6 +39,7 @@ class Route
             $api->post('service-requests', 'ServiceRequestController@store');
             $api->get('validate-transaction-id', 'PartnerTransactionController@validateTransactionId');
             $api->post('transactions/{transactionID}', 'ShebaController@checkTransactionStatus');
+            $api->get('transactions/info/{transactionID}', 'ShebaController@paymentInitiatedInfo');
             $api->get('transactions/{transactionID}', 'ShebaController@checkTransactionStatus');
             $api->post('password/validate', 'Auth\PasswordController@validatePasswordResetCode');
             $api->post('events', 'EventController@store');
