@@ -74,6 +74,7 @@ class ExpenseController extends Controller
 
         $expenses->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
         $expenses = $expenses->get();
+        if ($request->has('search')) $expenses = $this->searchWithEmployeeName($expenses, $request)->values();
         $fractal = new Manager();
         $resource = new Collection($expenses, new ExpenseTransformer());
         $expenses = $fractal->createData($resource)->toArray()['data'];
@@ -119,6 +120,14 @@ class ExpenseController extends Controller
             'department' => $total_department,
             'amount' => $total_amount
         ];
+    }
+
+    private function searchWithEmployeeName($expenses, Request $request)
+    {
+        return $expenses->filter(function ($expense) use ($request) {
+            $profile = $expense->member->profile;
+            return str_contains(strtoupper($profile->name), strtoupper($request->search));
+        });
     }
 
 
