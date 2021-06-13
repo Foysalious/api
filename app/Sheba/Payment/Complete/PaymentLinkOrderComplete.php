@@ -183,16 +183,17 @@ class PaymentLinkOrderComplete extends PaymentComplete
     private function clearTarget()
     {
         $this->target = $this->paymentLink->getTarget();
-        if ($this->target instanceof PosOrderResolver) {
-            $pos_order_payment = app(PosOrderPayment::class);
-            /** @var $pos_order_payment PosOrderPayment */
-            $pos_order_payment->setPosOrderId($this->target->get()->id)
-                ->setAmount($this->payment->payable->amount)
-                ->setMethod($this->payment->payable->type)
-                ->setEmiMonth($this->payment->payable->emi_month)
-                ->setInterest($this->paymentLink->getInterest())
-                ->setPosOrderType($this->target->getPosOrderType())
-                ->credit();
+        if ($this->target instanceof PosOrder) {
+            $payment_data    = [
+                'pos_order_id' => $this->target->id,
+                'amount'       => $this->payment->payable->amount,
+                'method'       => $this->payment->payable->type,
+                'emi_month'    => $this->payment->payable->emi_month,
+                'interest'     => $this->paymentLink->getInterest(),
+            ];
+            /** @var PaymentCreator $payment_creator */
+            $payment_creator = app(PaymentCreator::class);
+            $payment_creator->credit($payment_data);
         }
         if ($this->target instanceof ExternalPayment) {
             $this->target->payment_id = $this->payment->id;
