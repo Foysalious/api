@@ -12,16 +12,6 @@ class PaymentLinkTransformer
 {
     private $response;
     private $target;
-    private $posOrderResolver;
-
-    /**
-     * PaymentLinkTransformer constructor.
-     * @param $posOrderResolver
-     */
-    public function __construct(PosOrderResolver $posOrderResolver)
-    {
-        $this->posOrderResolver = $posOrderResolver;
-    }
 
     public function getResponse()
     {
@@ -134,7 +124,9 @@ class PaymentLinkTransformer
         if ($this->response->targetType) {
             $model_name = $this->resolveTargetClass();
             if ($model_name == 'due_tracker') return null;
-            if ($model_name == 'PosOrder') return $this->posOrderResolver->setOrderId($this->response->targetId);
+            /** @var $posOrderResolver PosOrderResolver */
+            $posOrderResolver = app(PosOrderResolver::class);
+            if ($model_name == 'PosOrder') return $posOrderResolver->setOrderId($this->response->targetId);
             $this->target = $model_name::find($this->response->targetId);
             return $this->target;
         } else
