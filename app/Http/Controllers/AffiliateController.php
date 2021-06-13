@@ -489,7 +489,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         if (count($notifications) == 0) return api_response($request, null, 404);
         $notifications = $notifications->map(function ($notification) {
             $notification->event_type = str_replace('App\Models\\', "", $notification->event_type);
-            if ($notification->title[0] == '"' && substr($notification->title[0], -1) == '"')  $notification->title = json_decode($notification->title);
+            if ($notification->title[0] == '"' && substr($notification->title, -1) == '"')  $notification->title = json_decode($notification->title);
             array_add($notification, 'timestamp', $notification->created_at->timestamp);
             return $notification;
         });
