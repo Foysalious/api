@@ -26,6 +26,7 @@ use Sheba\Repositories\PaymentLinkRepository;
 use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Usage\Usage;
+use Throwable;
 
 class PaymentLinkOrderComplete extends PaymentComplete
 {
@@ -54,6 +55,10 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $this->paymentLinkTax        = PaymentLinkStatics::get_payment_link_tax();
     }
 
+    /**
+     * @return Payment
+     * @throws Throwable
+     */
     public function complete()
     {
         try {
@@ -69,7 +74,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
                 $this->processTransactions($this->payment_receiver);
                 $this->clearTarget();
             });
-        } catch (QueryException $e) {
+        } catch (Throwable $e) {
             $this->failPayment();
             throw $e;
         }
@@ -80,7 +85,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $this->createUsage($this->payment_receiver, $this->payment->payable->user);
             $this->notify();
 
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             logError($e);
         }
         return $this->payment;
@@ -204,7 +209,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $this->payment->update();
             return $this->payment;
         } catch (QueryException $e) {
-            return null;
+            return $this->payment;
         }
     }
 
