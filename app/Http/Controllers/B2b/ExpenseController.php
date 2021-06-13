@@ -74,16 +74,22 @@ class ExpenseController extends Controller
 
         $expenses->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
         $expenses = $expenses->get();
-        if ($request->has('search')) $expenses = $this->searchWithEmployeeName($expenses, $request)->values();
         $fractal = new Manager();
         $resource = new Collection($expenses, new ExpenseTransformer());
         $expenses = $fractal->createData($resource)->toArray()['data'];
-
+        if ($request->has('search')) $expenses = $this->searchExpenseList($expenses, $request);
         $total_calculation = $this->getTotalCalculation($expenses);
 
         $total_expense_count = count($expenses);
 
         if ($request->has('limit')) $expenses = collect($expenses)->splice($offset, $limit);
+
+        if ($request->has('sort_employee_name')) {
+            $expenses = $this->sortByName($expenses, $request->sort_employee_name)->values();
+        }
+        if ($request->has('sort_amount')) {
+            $expenses = $this->sortByAmount($expenses, $request->sort_amount)->values();
+        }
 
         if ($request->file == 'excel') return $excel->setData(is_array($expenses) ? $expenses : $expenses->toArray())
             ->setName('Expense Report')
@@ -122,11 +128,37 @@ class ExpenseController extends Controller
         ];
     }
 
-    private function searchWithEmployeeName($expenses, Request $request)
+    private function searchExpenseList($expenses, Request $request)
     {
-        return $expenses->filter(function ($expense) use ($request) {
-            $profile = $expense->member->profile;
-            return str_contains(strtoupper($profile->name), strtoupper($request->search));
+        $employee_ids = array_filter($expenses, function ($expense) use ($request) {
+            return str_contains($expense['employee_id'], $request->search);
+        });
+        $employee_names = array_filter($expenses, function ($expense) use ($request) {
+            return str_contains(strtoupper($expense['employee_name']), strtoupper($request->search));
+        });
+        $amounts = array_filter($expenses, function ($expense) use ($request) {
+            return str_contains($expense['amount'], strtoupper($request->search));
+        });
+        $searched_expenses = collect(array_merge($employee_ids, $employee_names, $amounts));
+        $searched_expenses = $searched_expenses->unique(function ($expense) {
+            return $expense['id'];
+        });
+        return $searched_expenses->values()->all();
+    }
+
+    private function sortByName($expenses, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($expenses)->$sort_by(function ($expense) {
+            return strtoupper($expense['employee_name']);
+        });
+    }
+
+    private function sortByAmount($expenses, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($expenses)->$sort_by(function ($expense) {
+            return strtoupper($expense['amount']);
         });
     }
 
