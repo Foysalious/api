@@ -3,6 +3,7 @@
 use App\Jobs\Partner\PaymentLink\SendPaymentLinkSms;
 use App\Models\PartnerPosCustomer;
 use App\Models\Payable;
+use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PosOrder;
 use App\Models\Profile;
@@ -25,7 +26,10 @@ use Sheba\PaymentLink\InvoiceCreator;
 use Sheba\PaymentLink\PaymentLinkStatics;
 use Sheba\PaymentLink\PaymentLinkTransaction;
 use Sheba\PaymentLink\PaymentLinkTransformer;
+use Sheba\Pos\Order\PosOrderResolver;
+use Sheba\Pos\Order\PosOrderTypes;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
+use Sheba\Pos\Payment\PosOrderPayment;
 use Sheba\PushNotificationHandler;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
@@ -180,16 +184,17 @@ class PaymentLinkOrderComplete extends PaymentComplete
     private function clearTarget()
     {
         $this->target = $this->paymentLink->getTarget();
-        if ($this->target instanceof PosOrder) {
+        if ($this->target instanceof PosOrderResolver) {
             $payment_data    = [
-                'pos_order_id' => $this->target->id,
+                'pos_order_id' => $this->target->get()->id,
                 'amount'       => $this->transaction->getEntryAmount(),
                 'method'       => $this->payment->payable->type,
                 'emi_month'    => $this->transaction->getEmiMonth(),
                 'interest'     => $this->transaction->isPaidByPartner() ? $this->transaction->getInterest() : 0
             ];
+            /** @var $payment_creator PaymentCreator */
             $payment_creator = app(PaymentCreator::class);
-            $payment_creator->credit($payment_data);
+            $payment_creator->credit($payment_data, $this->target->getPosOrderType());
             if ($this->transaction->isPaidByCustomer()) {
                 $this->target->update(['interest' => 0, 'bank_transaction_charge' => 0]);
                 $this->storeAccountingJournal($payment_data);
