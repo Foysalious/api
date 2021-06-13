@@ -149,7 +149,7 @@ class PaymentLinkTransformer
     {
         $model_name = "App\\Models\\";
         if ($this->response->targetType == 'pos_order')
-            return $model_name . 'PosOrder';
+            return 'PosOrder';
         if ($this->response->targetType == 'external_payment')
             return "Sheba\\Dal\\ExternalPayment\\Model";
         if ($this->response->targetType == 'due_tracker') return 'due_tracker';
