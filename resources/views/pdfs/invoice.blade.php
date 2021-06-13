@@ -101,8 +101,8 @@
         table th,
         table td {
             padding: 10px;
-            background: #EEEEEE;
-            text-align: center;
+            /*background: #EEEEEE;*/
+            /*text-align: center;*/
             border-bottom: 1px solid #FFFFFF;
         }
 
@@ -299,7 +299,7 @@
             </td>
             <td class="text-right" style="background: #FFFFFF;">
                 <div class="logo">
-                    <img width="150px" style="float:right;padding: 10px;" class="logo" src="https://s3.ap-south-1.amazonaws.com/cdn-shebadev/admin_assets/assets/images/login-logo.png" class="img-responsive">
+                    <img src="https://s3.ap-south-1.amazonaws.com/cdn-shebadev/admin_assets/assets/images/login-logo.png" class="img-responsive">
                 </div>
             </td>
         </tr>
