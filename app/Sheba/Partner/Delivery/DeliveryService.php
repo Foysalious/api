@@ -146,9 +146,14 @@ class DeliveryService
     /**
      * @return int
      */
-    private function countProductWithoutWeight(): int
+    private function countProductWithoutWeight()
     {
-        return PartnerPosService::where('partner_id',$this->partner->id)->where('is_published_for_shop',1)->where('weight',null)->count();
+        return PartnerPosService::where('partner_id', $this->partner->id)
+            ->where('is_published_for_shop', 1)
+            ->where(function ($q) {
+                $q->where('weight', 0)
+                    ->orWhere('weight', null);
+            })->count();
     }
 
     private function getDeliveryMethod()
