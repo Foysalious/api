@@ -720,32 +720,38 @@ class AttendanceController extends Controller
         if (!is_null($business_offices)) {
             $offices = collect($business_offices);
             $deleted_offices = $offices->where('action', ActionType::DELETE);
-            $deleted_offices->each(function ($deleted_office) use ($setting_deleter) {
-                $setting_deleter->setBusinessOfficeId($deleted_office->id);
-                $setting_deleter->delete();
-            });
+            if ($deleted_offices) {
+                $deleted_offices->each(function ($deleted_office) use ($setting_deleter) {
+                    $setting_deleter->setBusinessOfficeId($deleted_office->id);
+                    $setting_deleter->delete();
+                });
+            }
 
             $added_offices = $offices->where('action', ActionType::ADD);
-            $added_offices->each(function ($added_office) use ($setting_creator, $business, &$errors) {
-                $setting_creator->setBusiness($business)->setName($added_office->name)->setIp($added_office->ip);
-                if ($setting_creator->hasError()) {
-                    array_push($errors, $setting_creator->getErrorMessage());
-                    $setting_creator->resetError();
-                    return;
-                }
-                $setting_creator->create();
-            });
+            if ($added_offices) {
+                $added_offices->each(function ($added_office) use ($setting_creator, $business, &$errors) {
+                    $setting_creator->setBusiness($business)->setName($added_office->name)->setIp($added_office->ip);
+                    if ($setting_creator->hasError()) {
+                        array_push($errors, $setting_creator->getErrorMessage());
+                        $setting_creator->resetError();
+                        return;
+                    }
+                    $setting_creator->create();
+                });
+            }
 
             $edited_offices = $offices->where('action', ActionType::EDIT);
-            $edited_offices->each(function ($edited_office) use ($setting_updater, $business, &$errors) {
-                $setting_updater->setBusinessOfficeId($edited_office->id)->setName($edited_office->name)->setIp($edited_office->ip);
-                if ($setting_updater->hasError()) {
-                    array_push($errors, $setting_updater->getErrorMessage());
-                    $setting_updater->resetError();
-                    return;
-                }
-                $setting_updater->update();
-            });
+            if ($edited_offices) {
+                $edited_offices->each(function ($edited_office) use ($setting_updater, $business, &$errors) {
+                    $setting_updater->setBusinessOfficeId($edited_office->id)->setName($edited_office->name)->setIp($edited_office->ip);
+                    if ($setting_updater->hasError()) {
+                        array_push($errors, $setting_updater->getErrorMessage());
+                        $setting_updater->resetError();
+                        return;
+                    }
+                    $setting_updater->update();
+                });
+            }
         }
 
         if ($errors) {
