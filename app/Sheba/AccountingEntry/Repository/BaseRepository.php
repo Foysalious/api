@@ -59,13 +59,13 @@ class BaseRepository
             }
         }
 
-        $old_attachments = $request->old_attachments ?: [];
-        if ($request->has('attachment_should_remove') && (!empty($request->attachment_should_remove))) {
-            $this->deleteFromCDN($request->attachment_should_remove);
-            $old_attachments = array_diff($old_attachments, $request->attachment_should_remove);
-        }
-
-        $attachments = array_filter(array_merge($attachments, $old_attachments));
+//        $old_attachments = $request->old_attachments ?: [];
+//        if ($request->has('attachment_should_remove') && (!empty($request->attachment_should_remove))) {
+//            $this->deleteFromCDN($request->attachment_should_remove);
+//            $old_attachments = array_diff($old_attachments, $request->attachment_should_remove);
+//        }
+//
+//        $attachments = array_filter(array_merge($attachments, $old_attachments));
         return json_encode($attachments);
     }
 
