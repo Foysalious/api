@@ -25,7 +25,7 @@
         <td>: {{ \Carbon\Carbon::now()->format('d M, Y h:i A') }}</td>
         <td> </td>
         <td style="width:130px; text-align:left;">Service Provider Name</td>
-        <td style="width:200px; text-align:left;">: {{ $partner_order->partner->name }}</td>
+        <td style="width:200px; text-align:left;">: {{ $partner_order->partner ? $partner_order->partner->name : '' }}</td>
 
     </tr>
 </table>
