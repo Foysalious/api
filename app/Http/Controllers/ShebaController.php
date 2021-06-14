@@ -3,6 +3,13 @@
 use App\Http\Presenters\PresentableDTOPresenter;
 use App\Http\Requests\AppVersionRequest;
 use App\Jobs\SendFaqEmail;
+use App\Models\PotentialCustomer;
+use App\Repositories\CustomerRepository;
+use App\Models\Customer;
+use App\Sheba\BankingInfo\EmiBanking;
+use Sheba\AppVersion\AppVersionManager;
+use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
+use Sheba\Dal\Category\Category;
 use App\Models\HyperLocal;
 use App\Models\Job;
 use App\Models\OfferShowcase;
@@ -38,9 +45,12 @@ use Sheba\Payment\AvailableMethods;
 use Sheba\Payment\Presenter\PaymentMethodDetails;
 use Sheba\Payment\Statuses;
 use Sheba\Repositories\PaymentLinkRepository;
+use Sheba\RequestIdentification;
+use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Throwable;
 use Validator;
+use GuzzleHttp\Client;
 
 class ShebaController extends Controller
 {
@@ -246,6 +256,7 @@ class ShebaController extends Controller
             'transaction_id'                   => $payment->transaction_id,
             'external_payment_redirection_url' => $external_payment ? $external_payment->success_url : null
         ];
+
         if ($payable->isPaymentLink()) $this->mergePaymentLinkInfo($info, $payable);
         return $info;
     }
@@ -466,6 +477,12 @@ class ShebaController extends Controller
                                        ->select('id', 'business_member_id', 'date', 'checkin_time', 'checkout_time', 'staying_time_in_minutes')
                                        ->get();
         return api_response($request, null, 200, ['data' => $attendances->groupBy('business_member_id')]);
+    }
+
+    public function getEmiBankList(Request $request)
+    {
+        $bank_list = EmiBanking::getPublishedBank();
+        return api_response($request, null, 200, ['data' => $bank_list]);
     }
 
     public function paymentInitiatedInfo(Request $request, $transaction_id)
