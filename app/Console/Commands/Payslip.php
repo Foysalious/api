@@ -64,11 +64,9 @@ class Payslip extends Command
     {
         $payroll_settings = $this->payrollSettingRepository->where('is_enable', 1)->get();
         foreach ($payroll_settings as $payroll_setting) {
-            if ($payroll_setting->id != 139) continue;
             $business = $payroll_setting->business;
             if ($this->isPayDay($payroll_setting, $business)) {
             $business_members = $business->getAccessibleBusinessMember()->get();
-            $x = 0;
             foreach ($business_members as $business_member) {
                 $gross_salary_breakdown_percentage = $this->grossSalaryBreakdownCalculate->payslipComponentPercentageBreakdown($business_member);
                 $payroll_component_calculation = $this->payrollComponentSchedulerCalculation->setBusiness($business)->setBusinessMember($business_member)->getPayrollComponentCalculationBreakdown();
