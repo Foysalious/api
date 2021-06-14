@@ -117,12 +117,13 @@ class HomepageController extends Controller
         $endDate = $request->has('start_date') ? $this->convertEndDate($request->end_date) : null;
         $limit = $request->has('limit') ? $request->limit : null;
         $offset = $request->has('offset') ? $request->offset : 0;
+        $rootAccount = $request->has('root_account') ? $request->root_account : null;
         if ($endDate < $startDate){
             return api_response($request,null, 400, ['message' => 'End date can not smaller than start date']);
         }
 
         try {
-            $response = $this->homepageRepo->getAccountListBalance($request->partner->id, $startDate, $endDate, $limit, $offset);
+            $response = $this->homepageRepo->getAccountListBalance($request->partner->id, $startDate, $endDate, $limit, $offset, $rootAccount);
             return api_response($request, $response, 200, ['data' => $response]);
         } catch (Exception $e) {
             return api_response(
