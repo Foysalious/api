@@ -113,8 +113,8 @@
             <td class="text-left" colspan="1">DUE AMOUNT @if($type=="QUOTATION") *** @endif</td>
             <td class="s-price">{{ $partner_order->dueWithLogistic }}</td>
         @else
-            <td class="text-left" colspan="1">GRAND TOTAL @if($type=="QUOTATION") *** @endif</td>
-            <td class="s-price">{{ number_format($partner_order->grossAmountWithLogistic + $partner_order->vat, 2) }}</td>
+            <td class="text-left" colspan="1">GRAND TOTAL @if($type=="QUOTATION") @endif</td>
+            <td class="s-price">{{ number_format($partner_order->grossAmountWithLogistic, 2) }}</td>
         @endif
     </tr>
 </tfoot>
