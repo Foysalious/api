@@ -59,7 +59,6 @@ class Creator
     protected $status;
     /** @var Request */
     private $request;
-    private $vat = 0;
 
     public function __construct(
         PosOrderRepository $order_repo,
@@ -179,7 +178,6 @@ class Creator
             else {
                 $vat_percentage = $this->partner->posSetting->vat_percentage;
                 $original_service = $this->posServiceRepo->defaultInstance($service, $vat_percentage);
-                $this->vat = $original_service->price * $this->partner->posSetting->vat_percentage/100;
             }
             if(!$original_service)
                 throw new DoNotReportException("Service not found with provided ID", 400);
@@ -396,7 +394,6 @@ class Creator
 
     private function additionalAccountingData(PosOrder $order)
     {
-        $this->vat += $order->getTotalVat();
         $order_discount = $order->discounts->count() > 0 ? $order->discounts()->sum('amount') : 0;
         $this->request->merge([
             "from_account_key"   => (new Accounts())->income->sales::SALES_FROM_POS,
@@ -406,7 +403,7 @@ class Creator
             "total_discount"     => $order_discount,
             "note"               => $order->sales_channel == SalesChannels::WEBSTORE ? SalesChannels::WEBSTORE : SalesChannels::POS,
             "source_id"          => $order->id,
-            "total_vat"          => $this->vat
+            "total_vat"          => $order->getTotalVat()
         ]);
     }
 }
