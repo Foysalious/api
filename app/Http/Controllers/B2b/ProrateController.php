@@ -195,7 +195,7 @@ class ProrateController extends Controller
             $this->businessMemberLeaveTypeRepo->delete($business_member_leave_type);
         }
         if($not_found_counter === $total_prorate) return api_response($request, null, 404, ['message' => 'No prorates found']);
-        $message = $not_found_counter > 0 ? 'One or more prorates not found.' : null;
+        $message = $not_found_counter > 0 ? 'One or more prorates not found.' : 'Successful';
         return api_response($request, null, 200, ['message' => $message]);
     }
 }

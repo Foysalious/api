@@ -106,9 +106,8 @@ class AccountingRepository extends BaseRepository
             }
 
         }
-        if (count($inventory_products) > 0) {
-            return json_encode($inventory_products);
-        }
+        if (count($inventory_products) > 0) return json_encode($inventory_products);
+
         return null;
     }
 
