@@ -38,10 +38,15 @@ class Ebl extends PaymentMethod
      */
     public function init(Payable $payable): Payment
     {
-        $payment = $this->createPayment($payable);
-        $input   = (new EblInputs($this->store))->setPayment($payment)->generate();
+        return $this->setPayment($this->createPayment($payable,$this->store->getName()));
 
-        EblClient::get()->setStore($this->store)->init($input);
+    }
+
+    private function setPayment(Payment $payment)
+    {
+        $payment->gateway_transaction_id = uniqid('EBL_' . $payment->id . '_');
+        $payment->redirect_url           = config('sheba.ebl_url') . '/checkout?transaction_id=' . $payment->transaction_id;
+        $payment->update();
         return $payment;
     }
 

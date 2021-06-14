@@ -11,6 +11,7 @@ return [
     'payment_link_web_url' => env('SHEBA_PAYMENT_LINK_WEB_URL', 'https://payments.sheba.xyz'),
     's3_url' => env('S3_URL'),
     'socket_url' => env('SHEBA_SOCKET_URL'),
+    'ebl_url'=>env('EBL_URL'),
     'socket_on' => env('SHEBA_SOCKET_ON', true),
     'send_push_notifications' => env('SHEBA_SEND_PUSH_NOTIFICATIONS', true),
     'partners_url' => env('SHEBA_PARTNER_END_URL') . '/' . env('SHEBA_PARTNERS_URL_PREFIX'),
