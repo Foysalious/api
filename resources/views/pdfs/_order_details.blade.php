@@ -3,7 +3,7 @@
         <td style="width:130px;">Order Number</td>
         <td>: {{ $partner_order->code() }}</td>
         <td> </td>
-        <td style="width:130px; text-align:left;">Client Name</td>
+        <td style="width:130px; text-align:left;">Customer Name</td>
         <td>:  {{ $partner_order->order->delivery_name }}</td>
     </tr>
     <tr>
@@ -14,14 +14,14 @@
         <td>:  {{ $partner_order->order->delivery_mobile }}</td>
     </tr>
     <tr>
-        <td style="width:130px;">Bill No</td>
+        <td style="width:130px;">SP Order Statement No</td>
         <td>: {{ $partner_order->id }}</td>
         <td> </td>
         <td style="width:130px; text-align:left;">Customer Address</td>
         <td>:  {{ $partner_order->order->delivery_address }}</td>
     </tr>
     <tr>
-        <td>Bill Date</td>
+        <td>Date</td>
         <td>: {{ \Carbon\Carbon::now()->format('d M, Y h:i A') }}</td>
         <td> </td>
         <td style="width:130px; text-align:left;">Service Provider Name</td>
