@@ -1,5 +1,6 @@
 <?php namespace Sheba\Pos\Repositories;
 
+use App\Models\Partner;
 use App\Models\PartnerPosService;
 use Carbon\Carbon;
 use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
@@ -58,12 +59,12 @@ class PosServiceRepository extends BaseRepository implements PosServiceRepositor
         return PartnerPosService::create($this->withCreateModificationField($data));
     }
 
-    public function defaultInstance($service)
+    public function defaultInstance($service, $partner_vat_percentage = 0.0)
     {
         $new_service                  = new PartnerPosService();
         $new_service->warranty        = isset($service['warrany']) ? $service['warranty'] : 0;
         $new_service->warranty_unit   = isset($service['warranty_unit']) ? $service['warranty_unit'] : "day";
-        $new_service->vat_percentage  = isset($service['vat_percentage']) ? (double)$service['vat_percentage'] : 0.0;
+        $new_service->vat_percentage  = isset($service['vat_percentage']) ? (double)$service['vat_percentage'] : $partner_vat_percentage;
         $new_service->price           = isset($service['updated_price']) && $service['updated_price']? $service['updated_price'] : 0.0;
         $new_service->wholesale_price = $new_service->price;
         $new_service->name            = isset($service['name']) ? $service['name'] : "Custom Item";

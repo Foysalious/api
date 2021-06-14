@@ -177,7 +177,8 @@ class Creator
             /** @var PartnerPosService $original_service */
             if(isset($service['id']) && !empty($service['id'])) $original_service = $this->posServiceRepo->find($service['id']);
             else {
-                $original_service = $this->posServiceRepo->defaultInstance($service);
+                $vat_percentage = $this->partner->posSetting->vat_percentage;
+                $original_service = $this->posServiceRepo->defaultInstance($service, $vat_percentage);
                 $this->vat = $original_service->price * $this->partner->posSetting->vat_percentage/100;
             }
             if(!$original_service)
