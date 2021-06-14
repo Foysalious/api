@@ -38,11 +38,7 @@ class ExpenseController extends Controller
      */
     public function index(Request $request, ExpenseExcel $excel)
     {
-        $this->validate($request, [
-            'status' => 'string|in:open,closed',
-            'limit' => 'numeric', 'offset' => 'numeric',
-            'date' => 'string'
-        ]);
+        $this->validate($request, ['date' => 'string']);
         list($offset, $limit) = calculatePagination($request);
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
