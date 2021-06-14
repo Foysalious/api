@@ -110,7 +110,7 @@
     <tr>
         <td colspan="2"></td>
         @if($partner_order->due>0 && $type !== "QUOTATION")
-            <td class="text-left" colspan="1">DUE AMOUNT @if($type=="QUOTATION") *** @endif</td>
+            <td class="text-left" colspan="1">DUE AMOUNT @if($type=="QUOTATION") @endif</td>
             <td class="s-price">{{ $partner_order->dueWithLogistic }}</td>
         @else
             <td class="text-left" colspan="1">GRAND TOTAL @if($type=="QUOTATION") @endif</td>
