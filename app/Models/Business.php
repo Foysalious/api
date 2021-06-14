@@ -369,10 +369,10 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
     {
         if ($which_half_day) {
             if ($which_half_day == HalfDayType::FIRST_HALF) {
-                return $this->business->halfDayEndTimeUsingWhichHalf(HalfDayType::SECOND_HALF);
+                return $this->halfDayEndTimeUsingWhichHalf(HalfDayType::SECOND_HALF);
             }
             if ($which_half_day == HalfDayType::SECOND_HALF) {
-                return $this->business->halfDayEndTimeUsingWhichHalf(HalfDayType::FIRST_HALF);
+                return $this->halfDayEndTimeUsingWhichHalf(HalfDayType::FIRST_HALF);
             }
         } else {
             $checkout_time = (new TimeByBusiness())->getOfficeEndTimeByBusiness();
