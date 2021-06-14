@@ -74,4 +74,13 @@ class HomepageRepository extends BaseRepository
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
     }
+
+    public function getEntriesByAccountKey($accountKey, $userId, $limit,  $nextCursor=null, $userType = UserType::PARTNER) {
+        try {
+            return $this->client->setUserType($userType)->setUserId($userId)
+                ->get($this->api . 'cash-accounts-entries/'.$accountKey.'?limit='.$limit.($nextCursor?'&next_cursor='.$nextCursor : '') );
+        } catch (AccountingEntryServerError $e) {
+            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+        }
+    }
 }

@@ -32,6 +32,7 @@ class AccountingRoute
                 $api->get('income-expense-entries', 'Accounting\\HomepageController@getIncomeExpenseEntries');
                 $api->get('due-collection-balance', 'Accounting\\HomepageController@getDueCollectionBalance');
                 $api->get('account-list-balance', 'Accounting\\HomepageController@getAccountListBalance');
+                $api->get('cash-accounts-entries/{accountKey}', 'Accounting\\HomepageController@getEntriesByAccountKey');
                 $api->get('time-filter', 'Accounting\\HomepageController@getTimeFilters');
                 $api->get('training-video', 'Accounting\\HomepageController@getTrainingVideo');
             });
