@@ -15,6 +15,7 @@ use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\ModificationFields;
+use Sheba\Payment\Statuses;
 use Sheba\PaymentLink\InvoiceCreator;
 use Sheba\PaymentLink\PaymentLinkStatics;
 use Sheba\PaymentLink\PaymentLinkTransaction;
@@ -72,15 +73,15 @@ class PaymentLinkOrderComplete extends PaymentComplete
                 $this->setModifier($customer = $payable->user);
                 $this->completePayment();
                 $this->processTransactions($this->payment_receiver);
-                $this->clearTarget();
             });
         } catch (Throwable $e) {
             $this->failPayment();
             throw $e;
         }
         try {
+            $this->clearTarget();
             $this->storeEntry();
-            $this->payment = $this->saveInvoice();
+            $this->saveInvoice();
             $this->dispatchReward();
             $this->createUsage($this->payment_receiver, $this->payment->payable->user);
             $this->notify();
@@ -88,6 +89,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
         } catch (Throwable $e) {
             logError($e);
         }
+        $this->payment->reload();
         return $this->payment;
     }
 
@@ -117,9 +119,9 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $entry_repo->setParty($payer);
         }
         $entry_repo->setPaymentMethod($this->payment->paymentDetails->last()->readable_method)
-                   ->setPaymentId($this->payment->id)
-                   ->setIsPaymentLink(1)
-                   ->setIsDueTrackerPaymentLink($this->paymentLink->isDueTrackerPaymentLink());
+            ->setPaymentId($this->payment->id)
+            ->setIsPaymentLink(1)
+            ->setIsDueTrackerPaymentLink($this->paymentLink->isDueTrackerPaymentLink());
         if ($this->target instanceof PosOrder) {
             $entry_repo->setIsWebstoreOrder($this->target->sales_channel == SalesChannels::WEBSTORE ? 1 : 0);
             $entry_repo->updateFromSrc();
@@ -207,14 +209,14 @@ class PaymentLinkOrderComplete extends PaymentComplete
         try {
             $this->payment->invoice_link = $this->invoiceCreator->setPaymentLink($this->paymentLink)->setPayment($this->payment)->save();
             $this->payment->update();
-            return $this->payment;
-        } catch (QueryException $e) {
-            return $this->payment;
+        } catch (Throwable $e) {
+            logError($e);
         }
+        return $this->payment;
     }
 
     /**
-     * @param Payment                $payment
+     * @param Payment $payment
      * @param PaymentLinkTransformer $payment_link
      * @throws InvalidOptionsException
      */
