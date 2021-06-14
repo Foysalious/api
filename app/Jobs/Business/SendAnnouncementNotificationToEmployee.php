@@ -1,17 +1,12 @@
 <?php namespace App\Jobs\Business;
 
-use App\Jobs\Job;
 use App\Models\Member;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
+use App\Sheba\Business\BusinessQueue;
 use Sheba\Dal\Announcement\Announcement;
 use Sheba\PushNotificationHandler;
 
-class SendAnnouncementNotificationToEmployee extends Job implements ShouldQueue
+class SendAnnouncementNotificationToEmployee extends BusinessQueue
 {
-    use InteractsWithQueue, SerializesModels;
-
     /** @var Member[] */
     private $members;
     /** @var Announcement */
@@ -23,6 +18,7 @@ class SendAnnouncementNotificationToEmployee extends Job implements ShouldQueue
         $this->members = $members;
         $this->announcement = $announcement;
         $this->pushNotification = new PushNotificationHandler();
+        parent::__construct();
     }
 
     public function handle()

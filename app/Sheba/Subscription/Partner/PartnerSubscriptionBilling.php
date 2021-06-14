@@ -7,6 +7,8 @@ use App\Models\PartnerSubscriptionPackage;
 use App\Models\Tag;
 use App\Repositories\NotificationRepository;
 use App\Repositories\SmsHandler;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use App\Sheba\Subscription\Partner\PartnerSubscriptionChange;
 use App\Sheba\Subscription\Partner\PartnerSubscriptionCharges;
 use Carbon\Carbon;
@@ -362,7 +364,10 @@ class PartnerSubscriptionBilling
      */
     public static function sendSms(Partner $partner, $old_package, $new_package, $old_billing_type, $new_billing_type, $price, $template)
     {
-        (new SmsHandler($template))->send($partner->getContactNumber(), [
+        (new SmsHandler($template))
+            ->setBusinessType(BusinessType::SMANAGER)
+            ->setFeatureType(FeatureType::PARTNER_SUBSCRIPTION)
+            ->send($partner->getContactNumber(), [
             'old_package_name'       => $old_package->show_name_bn,
             'new_package_name'       => $new_package->show_name_bn,
             'subscription_amount'    => $price,

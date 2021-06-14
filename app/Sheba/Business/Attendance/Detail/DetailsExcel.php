@@ -21,6 +21,9 @@ class DetailsExcel
     private $leftEarlyNote;
     private $businessMember;
     private $department;
+    private $profile;
+    private $startDate;
+    private $endDate;
 
     public function __construct()
     {
@@ -35,6 +38,20 @@ class DetailsExcel
     public function setBusinessMember($business_member)
     {
         $this->businessMember = $business_member;
+        $this->profile = $this->businessMember->member->profile;
+        $this->department = $this->businessMember->department();
+        return $this;
+    }
+
+    public function setStartDate($start_date)
+    {
+        $this->startDate = $start_date;
+        return $this;
+    }
+
+    public function setEndDate($end_date)
+    {
+        $this->endDate = $end_date;
         return $this;
     }
 
@@ -47,11 +64,15 @@ class DetailsExcel
     public function download()
     {
         $this->makeData();
-        $employee_id = $this->businessMember->employee_id ? $this->businessMember->employee_id : $this->businessMember->id;
-        $department_name = $this->department;
-        $file_name = $employee_id . '_' . $department_name . '_' . 'Attendance';
-        Excel::create($file_name, function ($excel) {
-            $excel->sheet('data', function ($sheet) {
+
+        $file_name = $this->businessMember->employee_id ?
+            $this->profile->name . '_' . $this->department->name . '_' . $this->businessMember->employee_id :
+            $this->profile->name . '_' . $this->department->name;
+
+        $sheet_name = $this->startDate . ' - ' . $this->endDate;
+
+        Excel::create($file_name, function ($excel) use ($sheet_name) {
+            $excel->sheet($sheet_name, function ($sheet) {
                 $sheet->fromArray($this->data, null, 'A1', false, false);
                 $sheet->prependRow($this->getHeaders());
                 $sheet->freezeFirstRow();
@@ -102,7 +123,7 @@ class DetailsExcel
                 if ($attendance['weekend_or_holiday_tag'] === 'weekend') {
                     $this->status = 'Weekend';
                 } else if ($attendance['weekend_or_holiday_tag'] === 'holiday') {
-                   $this->status = 'Holiday';
+                    $this->status = 'Holiday';
                 } else if ($attendance['weekend_or_holiday_tag'] === 'full_day') {
                     $this->status = 'On leave: full day';
                 } else if ($attendance['weekend_or_holiday_tag'] === 'first_half' || $attendance['weekend_or_holiday_tag'] === 'second_half') {
@@ -153,7 +174,7 @@ class DetailsExcel
         } else {
             $this->checkInLocation = "Office IP";
         }
-        if($attendance_check_in['address']) {
+        if ($attendance_check_in['address']) {
             $this->checkInAddress = $attendance_check_in['address'];
         }
 

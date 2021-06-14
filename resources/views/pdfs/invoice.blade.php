@@ -101,8 +101,8 @@
         table th,
         table td {
             padding: 10px;
-            background: #EEEEEE;
-            text-align: center;
+            /*background: #EEEEEE;*/
+            /*text-align: center;*/
             border-bottom: 1px solid #FFFFFF;
         }
 
@@ -265,51 +265,74 @@
         #client .to{
             text-transform: uppercase;
         }
+        .header-style {
+            font-weight: bold;
+            font-size: 30px;
+            width: 300px;
+            background: #FFFFFF;
+            text-align: left;
+            padding: 0;
+        }
+        .logo{
+            float:right;
+        }
 
     </style>
 </head>
 
 <body>
 <header class="clearfix">
-    <div>
-    <div id="logo">
-        <img src="https://s3.ap-south-1.amazonaws.com/cdn-shebadev/admin_assets/assets/images/login-logo.png" class="img-responsive">
-    </div>
-    <div id="company">
-        <h2 class="name">Sheba.xyz</h2>
-        <div>16516</div>
-        <div><a href="mailto:info@sheba.xyz">info@sheba.xyz</a></div>
-    </div>
-    </div>
+{{--    <div>--}}
+{{--    <div id="logo">--}}
+{{--        <img src="https://s3.ap-south-1.amazonaws.com/cdn-shebadev/admin_assets/assets/images/login-logo.png" class="img-responsive">--}}
+{{--    </div>--}}
+{{--    <div id="company">--}}
+{{--        <h2 class="name">Sheba.xyz</h2>--}}
+{{--        <div>16516</div>--}}
+{{--        <div><a href="mailto:info@sheba.xyz">info@sheba.xyz</a></div>--}}
+{{--    </div>--}}
+{{--    </div>--}}
+    <table width="100%">
+        <tr>
+            <td class="header-style">
+                Service Provider Order Statement
+            </td>
+            <td class="text-right" style="background: #FFFFFF;">
+                <div class="logo">
+                    <img src="https://s3.ap-south-1.amazonaws.com/cdn-shebadev/admin_assets/assets/images/login-logo.png" class="img-responsive">
+                </div>
+            </td>
+        </tr>
+    </table>
 </header>
-
+@include('pdfs._order_details')
 <main>
     <div id="details" class="clearfix">
-        <div id="client">
-            <div class="to">{{ $type }} TO:</div>
-            <h2 class="name">{{ $partner_order->order->delivery_name }}</h2>
-            <div class="address">{{ $partner_order->order->delivery_address }}</div>
-            <div class="email">{{ $partner_order->order->delivery_mobile }}</div>
-        </div>
+{{--        <div id="client">--}}
+{{--            <div class="to">{{ $type }} TO:</div>--}}
+{{--            <h2 class="name">{{ $partner_order->order->delivery_name }}</h2>--}}
+{{--            <div class="address">{{ $partner_order->order->delivery_address }}</div>--}}
+{{--            <div class="email">{{ $partner_order->order->delivery_mobile }}</div>--}}
+{{--        </div>--}}
         <div id="invoice">
-            <h1 style="text-transform: uppercase">{{ $type }} {{ $partner_order->id }}</h1>
-            <div class="date">Generated on: {{ \Carbon\Carbon::now()->format('d/m/Y') }}</div>
+{{--            <h1 style="text-transform: uppercase">{{ $type }} {{ $partner_order->id }}</h1>--}}
+{{--            <div class="date">Generated on: {{ \Carbon\Carbon::now()->format('d/m/Y') }}</div>--}}
             <?php
-                $job = $partner_order->getActiveJob();
+                $job = $partner_order->lastJob();
             ?>
             @if($job->status === 'Served')
             <div class="date">Served Date: {{ $partner_order->closed_at->format('d/m/Y')  }}</div>
             @endif
         </div>
     </div>
-    <div id="order">
-        <div class="pull-left">
-            ORDER NUMBER : {{ $partner_order->order->code() }}
-        </div>
-        <div class="text-right">
-            RESOURCE :  {{ $job->resource?$job->resource->profile->name :"N\A"}}
-        </div>
-    </div>
+{{--    <div id="order">--}}
+{{--        <div class="pull-left">--}}
+{{--            ORDER NUMBER : {{ $partner_order->order->code() }}--}}
+{{--        </div>--}}
+{{--        <div class="text-right">--}}
+{{--            RESOURCE :  {{ $job->resource?$job->resource->profile->name :"N\A"}}--}}
+{{--        </div>--}}
+{{--    </div>--}}
     <table border="0" cellspacing="0" cellpadding="0">
         @if($partner_order->order_id > config('sheba.last_order_id_for_old_version'))
             @include('pdfs._invoice_v2')

@@ -12,6 +12,7 @@ class CategoryController extends Controller
 {
     public function index(Request $request)
     {
+        ini_set('memory_limit', '2048M');
         try {
             $partner = $request->partner;
             $total_items = 0.00;

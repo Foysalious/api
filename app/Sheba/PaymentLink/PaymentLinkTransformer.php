@@ -12,16 +12,6 @@ class PaymentLinkTransformer
 {
     private $response;
     private $target;
-    private $posOrderResolver;
-
-    /**
-     * PaymentLinkTransformer constructor.
-     * @param $posOrderResolver
-     */
-    public function __construct(PosOrderResolver $posOrderResolver)
-    {
-        $this->posOrderResolver = $posOrderResolver;
-    }
 
     public function getResponse()
     {
@@ -85,7 +75,8 @@ class PaymentLinkTransformer
 
     public function isEmi()
     {
-        return !is_null($this->getEmiMonth());
+        $month = $this->getEmiMonth();
+        return !is_null($month) && $month > 0;
     }
 
     public function getInterest()
@@ -193,30 +184,54 @@ class PaymentLinkTransformer
         return Carbon::createFromTimestampMs($this->response->createdAt);
     }
 
+    public function getPaidBy()
+    {
+        return isset($this->response->paidBy) ? $this->response->paidBy : PaymentLinkStatics::paidByTypes()[($this->getEmiMonth() ? 1 : 0)];
+    }
+
+    public function getPartnerProfit()
+    {
+        return isset($this->response->partnerProfit) ? $this->response->partnerProfit : 0;
+    }
+
     public function toArray()
     {
         $user       = $this->getPaymentReceiver();
         $payer      = $this->getPayer();
         $isExternal = $this->isExternalPayment();
         return [
-                'id'                  => $this->getLinkID(),
-                'identifier'          => $this->getLinkIdentifier(),
-                'purpose'             => $this->getReason(),
-                'amount'              => $this->getAmount(),
-                'emi_month'           => $this->getEmiMonth(),
-                'payment_receiver'    => [
-                    'name'  => $user->name,
-                    'image' => $user->logo,
-                    'id'    => $user->id,
-                ],
-                'payer'               => $payer ? [
-                    'id'     => $payer->id,
-                    'name'   => $payer->name,
-                    'mobile' => $payer->mobile
-                ] : null,
-                'is_external_payment' => $isExternal,
-            ] + ($isExternal ? ['success_url' => $this->getSuccessUrl(), 'fail_url' => $this->getFailUrl()] : []);
+                   'id'                   => $this->getLinkID(),
+                   'identifier'           => $this->getLinkIdentifier(),
+                   'purpose'              => $this->getReason(),
+                   'amount'               => $this->getAmount(),
+                   'emi_month'            => $this->getEmiMonth(),
+                   'paid_by'              => $this->getPaidBy(),
+                   'partner_profit'       => $this->getPartnerProfit(),
+                   'is_old'               => $this->isOld(),
+                   'interest'             => $this->getInterest(),
+                   'bank_transaction_fee' => $this->getBankTransactionCharge(),
+                   'payment_receiver'     => [
+                       'name'  => $user->name,
+                       'image' => $user->logo,
+                       'id'    => $user->id,
+                   ],
+                   'payer'                => $payer ? [
+                       'id'     => $payer->id,
+                       'name'   => $payer->name,
+                       'mobile' => $payer->mobile
+                   ] : null,
+                   'is_external_payment'  => $isExternal,
+               ] + ($isExternal ? ['success_url' => $this->getSuccessUrl(), 'fail_url' => $this->getFailUrl()] : []);
 
+    }
+
+    public function partialInfo()
+    {
+        $user = $this->getPaymentReceiver();
+        return [
+            'name'   => $user->name,
+            'mobile' => $user->getContactNumber()
+        ];
     }
 
     public function getPaymentLinkData()
@@ -259,6 +274,11 @@ class PaymentLinkTransformer
             }
         }
         return $payerInfo;
+    }
+
+    public function isOld()
+    {
+        return !isset($this->response->paidBy);
     }
 
 

@@ -6,6 +6,8 @@ abstract class BusTicketResponse
 
     abstract public function setResponse($response);
 
+    abstract public function getResponse();
+
     abstract public function hasSuccess(): bool;
 
     abstract public function getSuccess(): BusTicketSuccessResponse;

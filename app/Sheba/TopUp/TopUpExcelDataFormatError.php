@@ -17,30 +17,33 @@ class TopUpExcelDataFormatError
     /** @var LaravelExcelReader */
     private $excel = null;
 
-    public function setAgent($agent)
+    public function setAgent($agent): TopUpExcelDataFormatError
     {
         $this->agent = $agent;
         return $this;
     }
 
-    public function setFile($file)
+    public function setFile($file): TopUpExcelDataFormatError
     {
         $this->file = $file;
         return $this;
     }
 
-    public function setRow($row)
+    public function setRow($row): TopUpExcelDataFormatError
     {
         $this->row = $row;
         return $this;
     }
 
-    private function getExcel()
+    private function getExcel(): LaravelExcelReader
     {
         if (!$this->excel) $this->excel = Excel::selectSheets(TopUpExcel::SHEET, 'suggestion')->load($this->file);
         return $this->excel;
     }
 
+    /**
+     * @param null $message
+     */
     public function updateExcel($message = null)
     {
         if ($message) {
@@ -49,7 +52,7 @@ class TopUpExcelDataFormatError
         }
     }
 
-    public function takeCompletedAction()
+    public function takeCompletedAction(): string
     {
         $name = strtolower(class_basename($this->agent)) . '_' . dechex($this->agent->id);
         $file_name = $this->uniqueFileName($this->file, $name, $this->getExcel()->ext);

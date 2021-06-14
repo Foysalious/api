@@ -32,22 +32,24 @@ class BkashAuthBuilder
     {
         $bkash_auth = new BkashAuth();
         $bkash_auth->setKey(config("bkash.$bkash_number.app_key"))
-            ->setSecret(config("bkash.$bkash_number.app_secret"))
-            ->setUsername(config("bkash.$bkash_number.username"))
-            ->setPassword(config("bkash.$bkash_number.password"))
-            ->setUrl(config("bkash.$bkash_number.url"))
-            ->setMerchantNumber($bkash_number);
+                   ->setSecret(config("bkash.$bkash_number.app_secret"))
+                   ->setUsername(config("bkash.$bkash_number.username"))
+                   ->setPassword(config("bkash.$bkash_number.password"))
+                   ->setUrl(config("bkash.$bkash_number.url"))
+                   ->setMerchantNumber($bkash_number);
 
         return $bkash_auth;
     }
 
     /**
      * @param $user
+     * @param $type
      * @return BkashAuth
      * @throws Exception
      */
-    public static function getForUser($user)
+    public static function getForUserAndType($user, $type)
     {
+        if ($type == 'payment_link') return self::set017BkashAuth();
         if ($user instanceof Customer || $user instanceof Business) {
             return self::set018BkashAuth();
         } elseif ($user instanceof Affiliate) {

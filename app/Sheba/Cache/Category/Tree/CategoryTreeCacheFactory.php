@@ -19,7 +19,7 @@ class CategoryTreeCacheFactory implements CacheFactory
 
     public function getDataStoreObject(CacheRequest $cacheRequest): DataStoreObject
     {
-        $tree_data_store = new CategoryTreeDataStore();
+        $tree_data_store = app(CategoryTreeDataStore::class);
         $tree_data_store->setCacheRequest($cacheRequest);
         return $tree_data_store;
     }

@@ -20,7 +20,7 @@ class SettingsController extends Controller
                     ->with(['partner' => function ($q) {
                         $q->select('partners.id', 'partners.name');
                     }, 'jobs' => function ($q) {
-                        $q->select('jobs.id', 'partner_order_id', 'resource_id', 'category_id')->with(['review' => function ($q) {
+                        $q->select('jobs.id', 'partner_order_id', 'resource_id', 'category_id', 'status')->with(['review' => function ($q) {
                             $q->select('reviews.id', 'reviews.job_id', 'rating');
                         }, 'category' => function ($q) {
                             $q->select('categories.id', 'categories.name');
@@ -35,7 +35,7 @@ class SettingsController extends Controller
             }]);
             $info = null;
             $partner_order = $customer->partnerOrders->first();
-            $job = $partner_order ? $partner_order->jobs->first() : null;
+            $job = $partner_order ? $partner_order->getActiveJob() : null;
 
             if (!$this->canTakeReview($job, $partner_order)) {
                 $job = null;
@@ -88,7 +88,9 @@ class SettingsController extends Controller
                 'payments' => [
                     'is_bkash_saved' => $customer->profile->bkash_agreement_id ? 1 : 0
                 ],
-                'pending_order' => $customer->partnerOrders->where('closed_and_paid_at', null)->where('cancelled_at', null)->count(),
+                'pending_order' => $customer->partnerOrders()->where('closed_and_paid_at', null)->where('cancelled_at', null)->whereHas('jobs', function($q){
+                    $q->where('status', '<>', 'Cancelled');
+                })->count(),
                 'has_rated_customer_app' => ($customer->has_rated_customer_app == 1) ? 1 : (($reviews->count() >= 3) ? 0 : 1)
             ];
             return api_response($request, $settings, 200, ['settings' => $settings]);

@@ -1,17 +1,12 @@
 <?php namespace App\Jobs\Business;
 
-use App\Jobs\Job;
 use App\Models\Profile;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
+use App\Sheba\Business\BusinessQueue;
 use Sheba\PushNotificationHandler;
 use App\Models\Member;
 
-class SendCancelPushNotificationToApprovers extends Job implements ShouldQueue
+class SendCancelPushNotificationToApprovers extends BusinessQueue
 {
-    use InteractsWithQueue, SerializesModels;
-
     private $approver;
     private $leave;
     private $member;
@@ -35,6 +30,7 @@ class SendCancelPushNotificationToApprovers extends Job implements ShouldQueue
         $this->member = $this->approver->member;
         $this->profile = $profile;
         $this->pushNotification = new PushNotificationHandler();
+        parent::__construct();
     }
 
     public function handle()

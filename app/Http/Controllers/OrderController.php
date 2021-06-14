@@ -17,6 +17,8 @@ use App\Sheba\Bondhu\BondhuAutoOrder;
 use App\Sheba\Checkout\Checkout;
 use App\Sheba\Checkout\OnlinePayment;
 use App\Sheba\Checkout\Validation;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\QueryException;
@@ -202,7 +204,10 @@ class OrderController extends Controller
         $partner = $order->partnerOrders->first()->partner;
         $job = $order->lastJob();
 
-        (new SmsHandler('order-created-to-bondhu'))->send($agent_mobile, [
+        (new SmsHandler('order-created-to-bondhu'))
+            ->setBusinessType(BusinessType::BONDHU)
+            ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
+            ->send($agent_mobile, [
             'service_name' => $job->category->name,
             'order_code' => $order->code(),
             'partner_name' => $partner->name,
@@ -220,13 +225,19 @@ class OrderController extends Controller
             $partner = $order->partnerOrders->first()->partner;
             if ((bool)config('sheba.send_order_create_sms')) {
                 if ($this->isSendingServedConfirmationSms($order)) {
-                    (new SmsHandler('order-created'))->send($customer->profile->mobile, [
+                    (new SmsHandler('order-created'))
+                        ->setBusinessType(BusinessType::MARKETPLACE)
+                        ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
+                        ->send($customer->profile->mobile, [
                         'order_code' => $order->code()
                     ]);
                 }
 
                 if (!$order->jobs->first()->resource_id) {
-                    (new SmsHandler('order-created-to-partner'))->send($partner->getContactNumber(), [
+                    (new SmsHandler('order-created-to-partner'))
+                        ->setBusinessType(BusinessType::SMANAGER)
+                        ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
+                        ->send($partner->getContactNumber(), [
                         'order_code' => $order->code(), 'partner_name' => $partner->name
                     ]);
                 }

@@ -3,17 +3,22 @@
 use App\Helper\BangladeshiMobileValidator;
 use App\Http\Requests\TimeFrameReportRequest;
 use App\Models\BusinessJoinRequest;
+use App\Models\Member;
 use App\Models\Notification;
 use App\Models\Partner;
 use App\Models\Profile;
 use App\Models\Resource;
 use App\Sheba\BankingInfo\GeneralBanking;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use App\Transformers\Business\VendorDetailsTransformer;
 use App\Transformers\Business\VendorListTransformer;
 use App\Transformers\CustomSerializer;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use League\Fractal\Manager;
@@ -25,12 +30,17 @@ use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use App\Models\Business;
 use DB;
+use Sheba\OAuth2\AccountServer;
+use Sheba\OAuth2\AccountServerAuthenticationError;
+use Sheba\OAuth2\AccountServerNotWorking;
 use Sheba\Partner\PartnerStatuses;
 use Sheba\Reports\ExcelHandler;
 use Sheba\Reports\Exceptions\NotAssociativeArray;
+use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Sheba\Sms\Sms;
 use Throwable;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class BusinessesController extends Controller
 {
@@ -39,14 +49,20 @@ class BusinessesController extends Controller
     const DIGIGO_PORTAL = 'digigo-portal';
     private $digigo_management_emails = ['one' => 'b2b@sheba.xyz'];
     private $sms;
+    /**
+     * @var AccountServer
+     */
+    private $accountServer;
 
     /**
      * BusinessesController constructor.
      * @param Sms $sms
+     * @param AccountServer $account_server
      */
-    public function __construct(Sms $sms)
+    public function __construct(Sms $sms, AccountServer $account_server)
     {
         $this->sms = $sms;
+        $this->accountServer = $account_server;
     }
 
     /**
@@ -71,7 +87,10 @@ class BusinessesController extends Controller
                 $data = ['business_id' => $business->id, 'mobile' => $mobile];
                 BusinessJoinRequest::create($data);
                 $invited_vendor++;
-                $this->sms->shoot(
+                $this->sms
+                    ->setFeatureType(FeatureType::INVITE_VENDORS)
+                    ->setBusinessType(BusinessType::B2B)
+                    ->shoot(
                     $number,
                     "You have been invited to serve corporate client. Just click the link- http://bit.ly/ShebaManagerApp. 
                     sheba.xyz will help you to grow and manage your business. by $business->name"
@@ -396,5 +415,60 @@ class BusinessesController extends Controller
         if ($partner->status != PartnerStatuses::VERIFIED) return null;
 
         return $partner;
+    }
+
+    /**
+     * @param Request $request
+     * @param MemberRepositoryInterface $member_repository
+     * @return JsonResponse
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     */
+    public function getTopUpPortalToken(Request $request, MemberRepositoryInterface $member_repository)
+    {
+        /** @var Member $member */
+        $member = $this->getMember($member_repository);
+        $verification_token = randomString(30, 1, 1);
+        $top_up_jwt_token = ['jwt_token' => $this->fetchJWTToken($member)];
+        $redis_name_space = 'TopUpPortal::topup-portal_' . $verification_token;
+        Redis::set($redis_name_space, json_encode($top_up_jwt_token));
+        return api_response($request, null, 200, ['verification_token' => $verification_token]);
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function tokenVerify(Request $request)
+    {
+        $this->validate($request, ['verification_token' => 'required']);
+        $redis_name_space = 'TopUpPortal::topup-portal_' . $request->verification_token;
+        $verification_token = Redis::get($redis_name_space);
+        if (!$verification_token) return api_response($request, null,400, ['message' => 'Code do not match']);
+        $verification_token = json_decode($verification_token, 1);
+        Redis::del(Redis::keys($redis_name_space));
+        return api_response($request, null, 200,['token' => $verification_token['jwt_token']]);
+    }
+
+    /**
+     * @param MemberRepositoryInterface $member_repository
+     * @return mixed
+     */
+    private function getMember(MemberRepositoryInterface $member_repository)
+    {
+        $token = JWTAuth::getToken();
+        $payload = JWTAuth::getPayload($token)->toArray();
+        return $member_repository->find($payload['member']['id']);
+    }
+
+    /**
+     * @param Member $member
+     * @return mixed
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     */
+    public function fetchJWTToken(Member $member)
+    {
+        return $this->accountServer->getTokenByIdAndRememberToken($member->id, $member->remember_token, 'member');
     }
 }

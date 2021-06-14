@@ -1,8 +1,6 @@
 <?php namespace App\Sheba\Cache\Category\Tree;
 
-
 use Sheba\Dal\Category\Category;
-use App\Models\CategoryGroupCategory;
 use App\Models\Location;
 use Sheba\Cache\CacheRequest;
 use Sheba\Cache\Category\Tree\CategoryTreeCacheRequest;
@@ -13,6 +11,7 @@ class CategoryTreeDataStore implements DataStoreObject
 {
     /** @var CategoryTreeCacheRequest */
     private $categoryTreeRequest;
+    private $slugs;
 
     public function setCacheRequest(CacheRequest $request)
     {
@@ -22,38 +21,41 @@ class CategoryTreeDataStore implements DataStoreObject
 
     public function generate()
     {
+        if ($this->isInvalidLocation()) return null;
+
+        $categories = $this->getCategories();
+        $category_ids = $this->forgetMasterCategoryWithoutChildrenAndFlattenAllIds($categories);
+        $this->setSlugs($category_ids);
+
+        foreach ($categories as &$category) {
+            $this->mapCategory($category);
+            foreach ($category->children as &$child) {
+                $this->mapCategory($child);
+            }
+        }
+        return count($categories) > 0 ? ['categories' => $categories->values()->all()] : null;
+    }
+
+    private function isInvalidLocation()
+    {
         $location = Location::where('id', $this->categoryTreeRequest->getLocationId())->published()->hasGeoInformation()->first();
-        if (!$location || !$location->hyperLocal) return null;
-        /*$best_deal_category_group_id = explode(',', config('sheba.best_deal_ids'));
-        $best_deal_category_ids = CategoryGroupCategory::select('category_group_id', 'category_id')
-            ->whereIn('category_group_id', $best_deal_category_group_id)->pluck('category_id')->toArray();*/
-        $categories = Category::published()
-            ->whereHas('locations', function ($q) {
-                $q->select('locations.id')->where('locations.id', $this->categoryTreeRequest->getLocationId());
-            })
-            ->whereHas('children', function ($q) {
-                $q->select('id', 'parent_id')->published()/*->whereNotIn('id', $best_deal_category_ids)*/
-                    ->whereHas('locations', function ($q) {
-                        $q->select('locations.id')->where('locations.id', $this->categoryTreeRequest->getLocationId());
-                    })->whereHas('services', function ($q) {
-                        $q->select('services.id')->published()->whereHas('locations', function ($q) {
-                            $q->select('locations.id')->where('locations.id', $this->categoryTreeRequest->getLocationId());
-                        });
-                    });
-            })
+        return !$location || !$location->hyperLocal;
+    }
+
+    private function getCategories()
+    {
+        return Category::publishedParentWithChildrenOnLocation($this->categoryTreeRequest->getLocationId())
             ->with(['children' => function ($q) {
                 $q->select('id', 'name', 'thumb', 'parent_id', 'app_thumb', 'icon_png', 'icon_png_hover', 'icon_png_active', 'icon', 'icon_hover', 'is_auto_sp_enabled')
-                    ->whereHas('locations', function ($q) {
-                        $q->select('locations.id')->where('locations.id', $this->categoryTreeRequest->getLocationId());
-                    })->whereHas('services', function ($q) {
-                        $q->select('services.id')->published()->whereHas('locations', function ($q) {
-                            $q->select('locations.id')->where('locations.id', $this->categoryTreeRequest->getLocationId());
-                        });
-                    })/*->whereNotIn('id', $best_deal_category_ids)*/
-                    ->published()->orderBy('order');
+                    ->publishedWithServiceOnLocation($this->categoryTreeRequest->getLocationId())
+                    ->orderBy('order');
             }])
             ->select('id', 'name', 'parent_id', 'icon_png', 'icon_png_hover', 'icon_png_active', 'app_thumb', 'app_banner', 'is_auto_sp_enabled')
-            ->parent()->orderBy('order')->get();
+            ->orderBy('order')->get();
+    }
+
+    private function forgetMasterCategoryWithoutChildrenAndFlattenAllIds(&$categories)
+    {
         $ids = [];
         foreach ($categories as $key => $master_category) {
             if (count($master_category->children) == 0) {
@@ -65,16 +67,28 @@ class CategoryTreeDataStore implements DataStoreObject
                 array_push($ids, $category->id);
             }
         }
-        $slugs = UniversalSlugModel::where('sluggable_type', 'like', '%' . 'category')->select('slug', 'sluggable_id')->whereIn('sluggable_id', $ids)->get()
+        return $ids;
+    }
+
+    private function setSlugs($category_ids)
+    {
+        $this->slugs = UniversalSlugModel::where('sluggable_type', 'like', '%category')
+            ->select('slug', 'sluggable_id')->whereIn('sluggable_id', $category_ids)->get()
             ->pluck('slug', 'sluggable_id')->toArray();
-        foreach ($categories as &$category) {
-            $category['slug'] = isset($slugs[$category->id]) ? $slugs[$category->id] : null;
-            array_forget($category, 'parent_id');
-            foreach ($category->children as &$child) {
-                $child['slug'] = isset($slugs[$child->id]) ? $slugs[$child->id] : null;
-                array_forget($child, 'parent_id');
-            }
+    }
+
+    private function mapCategory(&$category)
+    {
+        $category['slug'] = isset($this->slugs[$category->id]) ? $this->slugs[$category->id] : null;
+
+        if ($category['icon_png']) {
+            $category['icon_png_sizes'] = getResizedUrls($category['icon_png'], 52, 52);
         }
-        return count($categories) > 0 ? ['categories' => $categories->values()->all()] : null;
+
+        if ($category['icon_png_hover']) {
+            $category['icon_png_hover_sizes'] = getResizedUrls($category['icon_png_hover'], 52, 52);
+        }
+
+        array_forget($category, 'parent_id');
     }
 }

@@ -53,4 +53,14 @@ class BankStatics
     {
         return $complete ? config('neo_banking.completion_success_message') : config('neo_banking.completion_info_message');
     }
+
+    public static function mapAccountFullStatus($key)
+    {
+        return (config('neo_banking_account_status')['status'][$key]);
+    }
+
+    public static function primeBankCode()
+    {
+        return "NEO_1";
+    }
 }

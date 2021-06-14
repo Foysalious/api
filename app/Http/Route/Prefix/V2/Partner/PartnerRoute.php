@@ -1,5 +1,6 @@
 <?php namespace App\Http\Route\Prefix\V2\Partner;
 
+use App\Http\Route\Prefix\V2\Partner\ID\Auth\DeliveryRoute;
 use App\Http\Route\Prefix\V2\Partner\ID\Auth\EmiRoute as EmiRoute;
 use App\Http\Route\Prefix\V2\Partner\ID\Auth\IndexRoute as IDAuthRoute;
 use App\Http\Route\Prefix\V2\Partner\ID\Auth\LoanRoute;
@@ -20,6 +21,7 @@ class PartnerRoute
             $api->get('business-types', 'PartnerController@getBusinessTypes');
             $api->get('subscriptions', 'Partner\PartnerSubscriptionController@getAllPackages');
             $api->post('notification-store', "NeoBanking\\NeoBankingController@sendNotification");
+            $api->post('{partner}/account-number-store', "NeoBanking\\NeoBankingController@accountNumberStore");
             (new IDNonAuthRoute())->set($api);
             (new IDAuthRoute())->set($api);
             (new PosRoute())->set($api);
@@ -28,5 +30,7 @@ class PartnerRoute
         });
         (new LoanRoute())->set($api);
         (new NeoBankingRoute())->set($api);
+        (new DeliveryRoute())->set($api);
+
     }
 }

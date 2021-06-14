@@ -36,6 +36,7 @@ class UpdaterV2
     private $businessMemberUpdater;
     private $businessMemberRepository;
     private $status;
+    private $email;
 
     /**
      * UpdaterV2 constructor.
@@ -88,8 +89,14 @@ class UpdaterV2
     public function setMobile($mobile)
     {
         $this->mobile = $mobile;
-        $this->checkMobileUsedWithAnotherProfile();
+        $this->checkMobileUsedWithAnotherBusinessMember();
         return $this;
+    }
+
+    public function setEmail($email)
+    {
+        $this->email = $email;
+        $this->checkEmailUsedWithAnotherBusinessMember();
     }
 
     /**
@@ -108,14 +115,23 @@ class UpdaterV2
      */
     public function setDesignation($designation)
     {
-        $this->designation = strtolower($designation);
-        $this->businessRole = $this->getBusinessRole();
+        $this->designation = $designation;
+        if ($this->designation) $this->businessRole = $this->getBusinessRole();
 
         return $this;
     }
 
     private function getBusinessRole()
     {
+        if (!$this->department)
+        {
+            $department = $this->businessMember->department();
+            if (!$department) {
+                $this->setError(404, 'Please update your department first.');
+                return $this;
+            }
+            $this->department = $department->id;
+        }
         $business_role = $this->businessRoleRepository
             ->where('name', $this->designation)
             ->where('business_department_id', $this->department)
@@ -148,12 +164,28 @@ class UpdaterV2
     /**
      * @return $this
      */
-    private function checkMobileUsedWithAnotherProfile()
+    private function checkMobileUsedWithAnotherBusinessMember()
     {
-        $profile = $this->profileRepository->checkExistingMobile($this->mobile);
-        if (!$profile) return $this;
-        if ($profile->id != $this->profile->id)
+        $business_member = $this->businessMemberRepository->checkExistingMobile($this->mobile);
+        if (!$business_member) return $this;
+        if ($business_member->id != $this->businessMember->id)
             $this->setError(400, 'This mobile number belongs to another member. Please contact with sheba');
+
+        return $this;
+    }
+
+    private function checkEmailUsedWithAnotherBusinessMember()
+    {
+        $profile = $this->profileRepository->checkExistingProfile(null, $this->email);
+        if (!$profile) return $this;
+        $member = $profile->member;
+        if (!$member) {
+            $this->setError(400, 'No member has been created yet. Please contact with sheba');
+            return $this;
+        }
+
+        if ($member->business_member->id != $this->businessMember->id)
+            $this->setError(400, 'This email belongs to another member. Please contact with sheba');
 
         return $this;
     }
@@ -170,13 +202,17 @@ class UpdaterV2
 
     public function update()
     {
-        $profile_data = ['name' => $this->name, 'mobile' => $this->mobile];
+        $profile_data = ['name' => $this->name];
+        if ($this->email) $profile_data = array_merge($profile_data, ['email' => $this->email]);
         $this->profileRepository->updateRaw($this->profile, $profile_data);
+        if (!$this->manager) $this->manager = $this->businessMember->manager_id;
         $business_member_data = [
             'manager_id' => $this->manager,
-            'business_role_id' => $this->businessRole->id,
-            'status' => $this->status ?: $this->businessMember->status
+            'status' => $this->status ?: $this->businessMember->status,
+            'mobile' => $this->mobile
         ];
+        if ($this->businessRole) $business_member_data = array_merge($business_member_data, ['business_role_id' => $this->businessRole->id]);
+
         $this->businessMemberRepository->update($this->businessMember, $this->withUpdateModificationField($business_member_data));
     }
 }

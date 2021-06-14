@@ -3,6 +3,8 @@
 use App\Models\Business;
 use App\Models\BusinessTrip;
 use App\Repositories\SmsHandler;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Carbon\Carbon;
 use Sheba\Business\BusinessSmsHandler;
 use Sheba\FraudDetection\TransactionSources;
@@ -51,7 +53,10 @@ class BusinessTripSms
                 ->dispatch(['tag' => 'sms']);
         }
         if ($this->businessTrip->driver) {
-            (new SmsHandler('trip-accept-req-to-driver'))->send($this->businessTrip->driver->profile->mobile, [
+            (new SmsHandler('trip-accept-req-to-driver'))
+                ->setBusinessType(BusinessType::B2B)
+                ->setFeatureType(FeatureType::TRIP_REQUEST_ACCEPT)
+                ->send($this->businessTrip->driver->profile->mobile, [
                 'name' => $this->businessTrip->driver->profile->name,
                 'mobile' => $this->businessTrip->driver->profile->mobile,
                 'pickup_address' => $this->businessTrip->pickup_address,

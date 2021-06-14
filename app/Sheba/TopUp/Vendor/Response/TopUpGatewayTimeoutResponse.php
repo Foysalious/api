@@ -1,6 +1,5 @@
 <?php namespace Sheba\TopUp\Vendor\Response;
 
-
 use Sheba\Dal\TopupOrder\FailedReason;
 
 class TopUpGatewayTimeoutResponse extends TopUpErrorResponse

@@ -103,7 +103,7 @@ class LeaveAdjustmentController extends Controller
             ->setIsHalfDay($request->is_half_day)
             ->setHalfDayConfigure($request->half_day_configuration)
             ->setNote($request->note)
-            ->setApprover($request->approver_id);
+            ->setApprover([$request->approver_id]);
 
         if ($leave_creator->hasError())
             return api_response($request, null, $leave_creator->getErrorCode(), ['message' => $leave_creator->getErrorMessage()]);
@@ -161,43 +161,47 @@ class LeaveAdjustmentController extends Controller
             $half_day_configuration = AdjustmentExcel::HALF_DAY_CONFIGURATION_COLUMN_TITLE;
             $approver_id = AdjustmentExcel::APPROVER_ID_COLUMN_TITLE;
 
-
             $excel_error = null;
             $halt_execution = false;
             $data->each(function ($value, $key) use ($business, $file_path, $total, $excel_error, &$halt_execution, $users_email, $leave_creator, $leave_type_id, $start_date, $end_date, $approver_id, $is_half_day, $half_day_configuration, $leave_adjustment_excel_error, $business_member_ids, $super_business_member_ids, $business_leave_type_ids) {
-
-                $leave_start_date = Carbon::parse($value->$start_date);
-                $leave_end_date = Carbon::parse($value->$end_date)->endOfDay();
-                $total_leave_days = $leave_end_date->diffInDays($leave_start_date) + 1;
-
+                try {
+                    $leave_start_date = Carbon::parse($value->$start_date);
+                    $leave_end_date = Carbon::parse($value->$end_date)->endOfDay();
+                    $total_leave_days = $leave_end_date->diffInDays($leave_start_date) + 1;
+                } catch (Throwable $e) {
+                    $halt_execution = true;
+                    $excel_error = 'Please use the date format as given in the excel.';
+                }
                 $profile = $this->profileRepository->checkExistingEmail($value->$users_email);
-
-                if (!isEmailValid($value->$users_email)) {
-                    $halt_execution = true;
-                    $excel_error = 'Email is invalid';
-                } elseif (!$profile) {
-                    $halt_execution = true;
-                    $excel_error = 'Profile not found';
-                } elseif (!$profile->member) {
-                    $halt_execution = true;
-                    $excel_error = 'Member not found';
-                } elseif (!$profile->member->businessMember) {
-                    $halt_execution = true;
-                    $excel_error = 'Business Member not found';
-                } elseif (!in_array($profile->member->businessMember->id, $business_member_ids)) {
-                    $halt_execution = true;
-                    $excel_error = 'This profile is not belongs to this business';
-                } elseif (!in_array($value->$leave_type_id, $business_leave_type_ids)) {
-                    $halt_execution = true;
-                    $excel_error = 'This leave type is not belongs to this business';
-                } elseif (!in_array($value->$approver_id, $super_business_member_ids)) {
-                    $halt_execution = true;
-                    $excel_error = 'This approver is not your super admin';
-                } elseif ((int)$value->$is_half_day == 1 && $total_leave_days > 1) {
-                    $halt_execution = true;
-                    $excel_error = 'Half Day leave cannot be more than 1 day';
-                } else {
-                    $excel_error = null;
+                if (!$halt_execution)
+                {
+                    if (!isEmailValid($value->$users_email)) {
+                        $halt_execution = true;
+                        $excel_error = 'Email is invalid';
+                    } elseif (!$profile) {
+                        $halt_execution = true;
+                        $excel_error = 'Profile not found';
+                    } elseif (!$profile->member) {
+                        $halt_execution = true;
+                        $excel_error = 'Member not found';
+                    } elseif (!$profile->member->businessMember) {
+                        $halt_execution = true;
+                        $excel_error = 'Business Member not found';
+                    } elseif (!in_array($profile->member->businessMember->id, $business_member_ids)) {
+                        $halt_execution = true;
+                        $excel_error = 'This profile is not belongs to this business';
+                    } elseif (!in_array($value->$leave_type_id, $business_leave_type_ids)) {
+                        $halt_execution = true;
+                        $excel_error = 'This leave type is not belongs to this business';
+                    } elseif (!in_array($value->$approver_id, $super_business_member_ids)) {
+                        $halt_execution = true;
+                        $excel_error = 'This approver is not your super admin';
+                    } elseif ((int)$value->$is_half_day == 1 && $total_leave_days > 1) {
+                        $halt_execution = true;
+                        $excel_error = 'Half Day leave cannot be more than 1 day';
+                    } else {
+                        $excel_error = null;
+                    }
                 }
 
                 $leave_adjustment_excel_error->setAgent($business)->setFile($file_path)->setRow($key + 2)->setTotalRow($total)->updateExcel($excel_error);
@@ -211,6 +215,7 @@ class LeaveAdjustmentController extends Controller
             $data->each(function ($value) use (
                 $users_email, $leave_creator, $leave_type_id, $start_date, $end_date, $note, $is_half_day, $half_day_configuration, $approver_id
             ) {
+
                 if (!($value->$users_email && $value->$leave_type_id && $value->$start_date && $value->$end_date && $value->$approver_id)) {
                     return;
                 }
@@ -230,7 +235,7 @@ class LeaveAdjustmentController extends Controller
                     ->setIsHalfDay($value->$is_half_day)
                     ->setHalfDayConfigure($value->$half_day_configuration)
                     ->setNote($value->$note)
-                    ->setApprover($value->$approver_id);
+                    ->setApprover([$value->approver_id]);
 
                 $leave = $leave->create();
                 $leave = $leave->fresh();

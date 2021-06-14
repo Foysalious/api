@@ -1,5 +1,7 @@
 <?php namespace App\Http\Controllers;
 
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\Sms\Sms;
@@ -33,12 +35,21 @@ class SmsController extends Controller
             return api_response($request, null, 500, ['error' => $msg]);
         }
 
-        if ($request->action == self::FROM_BONDHU)
-            $sms_text = "Download Sheba Bondhu App https://play.google.com/store/apps/details?id=xyz.sheba.bondhu&hl=en";
-        elseif ($request->action == self::FROM_MARKETPLACE)
-            $sms_text = "Download Sheba MarketPlace App https://play.google.com/store/apps/details?id=xyz.sheba.customersapp&hl=en";
+        $business_type = null;
 
-        $this->sms->shoot($request->mobile, $sms_text);
+        if ($request->action == self::FROM_BONDHU) {
+            $business_type = BusinessType::BONDHU;
+            $sms_text = "Download Sheba Bondhu App https://play.google.com/store/apps/details?id=xyz.sheba.bondhu&hl=en";
+        }
+        elseif ($request->action == self::FROM_MARKETPLACE) {
+            $business_type = BusinessType::MARKETPLACE;
+            $sms_text = "Download Sheba MarketPlace App https://play.google.com/store/apps/details?id=xyz.sheba.customersapp&hl=en";
+        }
+
+        $this->sms
+            ->setFeatureType(FeatureType::MARKETING)
+            ->setBusinessType($business_type)
+            ->shoot($request->mobile, $sms_text);
         return api_response($request, null, 200);
     }
 
