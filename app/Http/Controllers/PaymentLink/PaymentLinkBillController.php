@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Sheba\Payment\AvailableMethods;
 use Sheba\Payment\Exceptions\InitiateFailedException;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
+use Sheba\Payment\Factory\PaymentStrategy;
 use Sheba\Payment\PaymentManager;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Dal\ExternalPayment\Model as ExternalPayment;
@@ -44,10 +45,10 @@ class PaymentLinkBillController extends Controller
 
         if ($payment_link->getEmiMonth()){
             $bank = $payment_manager->getEmibank($request->bank_id);
-            $payment_method = $bank->paymentGateway->method_name ?? null;
+            $payment_method = $bank->paymentGateway->method_name ?? PaymentStrategy::SSL;
         } elseif($request->payment_method == 'online') {
             $cardType = $payment_manager->getCardType($request->card_number);
-            $payment_method = $cardType->paymentGateway->method_name ?? null;
+            $payment_method = $cardType->paymentGateway->method_name ?? PaymentStrategy::SSL;
         }
 
         $payment = $payment_manager->setMethodName($payment_method)->setPayable($payable)->init();
