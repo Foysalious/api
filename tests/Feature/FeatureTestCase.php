@@ -249,7 +249,7 @@ class FeatureTestCase extends TestCase
             'publication_status' => 1
         ]);
         $this->secondaryCategory->locations()->attach($this->location->id);
-        $this->service = factory(Service::class)->create([
+        $service = factory(Service::class)->create([
             'category_id' => $this->secondaryCategory->id,
             'variable_type' => ServiceType::FIXED,
             'variables' => '{"price":"1700","min_price":"1000","max_price":"2500","description":""}',
@@ -274,9 +274,9 @@ class FeatureTestCase extends TestCase
         $this->job = factory(Job::class)->create([
             'partner_order_id'=>$this->partner_order->id,
             'category_id'=>$this->secondaryCategory->id,
-            'service_id'=>$this->service->id,
-            'service_variable_type'=>$this->service->variable_type,
-            'service_variables'=>$this->service->variables,
+            'service_id'=>$service->id,
+            'service_variable_type'=>$service->variable_type,
+            'service_variables'=>$service->variables,
             'resource_id'=>$this->resource->id,
             'schedule_date'=>"2021-02-16",
             'preferred_time'=>"19:48:04-20:48:04",
