@@ -146,7 +146,8 @@ class ExchangePosItem extends RefundNature
                 "note" => $refundType,
                 "source_id" => $order->id,
                 "customer_id" => isset($order->customer) ? $order->customer->id : null,
-                "customer_name" => isset($order->customer) ? $order->customer->name: null
+                "customer_name" => isset($order->customer) ? $order->customer->name: null,
+                "total_vat" => $order->getTotalVat()
             ]
         );
     }
