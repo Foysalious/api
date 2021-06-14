@@ -298,9 +298,8 @@
                 Service Provider Order Statement
             </td>
             <td class="text-right" style="background: #FFFFFF;">
-                <div class="logo">
-                    <img src="https://s3.ap-south-1.amazonaws.com/cdn-shebadev/admin_assets/assets/images/login-logo.png" class="img-responsive">
-                </div>
+                <img width="150px" style="float:right;padding: 10px;" class="logo"
+                     src="{{asset('assets/images/logo_coloured.png')}}" alt="Logo"/>
             </td>
         </tr>
     </table>
