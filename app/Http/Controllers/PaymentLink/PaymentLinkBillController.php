@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\PaymentLink;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\PaymentLinkBillRequest;
 use App\Sheba\Payment\Adapters\Payable\PaymentLinkOrderAdapter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
@@ -9,6 +10,7 @@ use Illuminate\Http\Request;
 use Sheba\Payment\AvailableMethods;
 use Sheba\Payment\Exceptions\InitiateFailedException;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
+use Sheba\Payment\Factory\PaymentStrategy;
 use Sheba\Payment\PaymentManager;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Dal\ExternalPayment\Model as ExternalPayment;
@@ -16,7 +18,7 @@ use Sheba\Dal\ExternalPayment\Model as ExternalPayment;
 class PaymentLinkBillController extends Controller
 {
     /**
-     * @param Request                        $request
+     * @param PaymentLinkBillRequest                        $request
      * @param PaymentManager                 $payment_manager
      * @param PaymentLinkOrderAdapter        $payment_adapter
      * @param Creator                        $customer_creator
@@ -25,21 +27,13 @@ class PaymentLinkBillController extends Controller
      * @throws InitiateFailedException
      * @throws InvalidPaymentMethod
      */
-    public function clearBill(Request $request, PaymentManager $payment_manager, PaymentLinkOrderAdapter $payment_adapter,
+    public function clearBill(PaymentLinkBillRequest $request, PaymentManager $payment_manager, PaymentLinkOrderAdapter $payment_adapter,
                               Creator $customer_creator, PaymentLinkRepositoryInterface $repo)
     {
-        Log::info($request->all());
-        $this->validate($request, [
-            'payment_method' => 'required|in:' . implode(',', AvailableMethods::getPaymentLinkPayments($request->identifier)),
-            'amount'         => 'numeric',
-            'purpose'        => 'string',
-            'identifier'     => 'required',
-            'name'           => 'required',
-            'mobile'         => 'required|string'
-        ]);
         $payment_method = $request->payment_method;
         $user           = $customer_creator->setMobile($request->mobile)->setName($request->name)->create();
         $payment_link   = $repo->findByIdentifier($request->identifier);
+
         if (!empty($payment_link->getEmiMonth()) && (double)$payment_link->getAmount() < config('emi.manager.minimum_emi_amount'))
             return api_response($request, null, 400, ['message' => 'Amount must be greater then or equal BDT ' . config('emi.manager.minimum_emi_amount')]);
 
@@ -48,6 +42,14 @@ class PaymentLinkBillController extends Controller
                                    ->getPayable();
         if ($payment_method == 'wallet' && $user->shebaCredit() < $payable->amount)
             return api_response($request, null, 403, ['message' => "You don't have sufficient balance"]);
+
+        if ($payment_link->getEmiMonth()){
+            $bank = $payment_manager->getEmibank($request->bank_id);
+            $payment_method = $bank->paymentGateway->method_name ?? PaymentStrategy::SSL;
+        } elseif($request->payment_method == 'online') {
+            $cardType = $payment_manager->getCardType($request->card_number);
+            $payment_method = $cardType->paymentGateway->method_name ?? PaymentStrategy::SSL;
+        }
 
         $payment = $payment_manager->setMethodName($payment_method)->setPayable($payable)->init();
         $target  = $payment_link->getTarget();
