@@ -15,12 +15,52 @@ class OrderService
     private $deliveryCharge;
     private $status;
     private $orderId;
-    private $skus;
+    private $skus, $discount, $paymentMethod, $paymentLinkAmount, $paidAmount;
     protected $emi_month, $interest, $bank_transaction_charge, $delivery_name, $delivery_mobile, $note, $voucher_id;
 
     public function __construct(PosOrderServerClient $client)
     {
         $this->client = $client;
+    }
+
+    /**
+     * @param mixed $payment_link_amount
+     * @return OrderService
+     */
+    public function setPaymentLinkAmount($payment_link_amount)
+    {
+        $this->paymentLinkAmount = $payment_link_amount;
+        return $this;
+    }
+
+    /**
+     * @param mixed $paid_amount
+     * @return OrderService
+     */
+    public function setPaidAmount($paid_amount)
+    {
+        $this->paidAmount = $paid_amount;
+        return $this;
+    }
+
+    /**
+     * @param mixed $payment_method
+     * @return OrderService
+     */
+    public function setPaymentMethod($payment_method)
+    {
+        $this->paymentMethod = $payment_method;
+        return $this;
+    }
+
+    /**
+     * @param mixed $discount
+     * @return OrderService
+     */
+    public function setDiscount($discount)
+    {
+        $this->discount = $discount;
+        return $this;
     }
 
     public function setPartnerId($partnerId)
@@ -178,34 +218,36 @@ class OrderService
     private function makeUpdateData()
     {
         return [
-            ['name' => 'partner_id', 'contents' => $this->partnerId],
-            ['name' => 'customer_id', 'contents' => $this->customerId],
-            ['name' => 'emi_month', 'contents' => $this->emi_month],
-            ['name' => 'interest', 'contents' => $this->interest],
-            ['name' => 'bank_transaction_charge', 'contents' => $this->bank_transaction_charge],
-            ['name' => 'delivery_name', 'contents' => $this->delivery_name],
-            ['name' => 'delivery_mobile', 'contents' => $this->delivery_mobile],
-            ['name' => 'note', 'contents' => $this->note],
-            ['name' => 'voucher_id', 'contents' => $this->voucher_id],
-            ['name' => 'delivery_address', 'contents' => $this->deliveryAddress],
-            ['name' => 'delivery_charge', 'contents' => $this->deliveryCharge],
-            ['name' => 'sales_channel_id', 'contents' => $this->salesChannelId],
-            ['name' => 'status', 'contents' => $this->status],
-            ['name' => 'skus', 'contents' => $this->skus]
+            'partner_id'                => $this->partnerId,
+            'emi_month'                 => $this->emi_month,
+            'interest'                  => $this->interest,
+            'bank_transaction_charge'   => $this->bank_transaction_charge,
+            'delivery_name'             => $this->delivery_name,
+            'delivery_mobile'           => $this->delivery_mobile,
+            'note'                      => $this->note,
+            'voucher_id'                => $this->voucher_id,
+            'delivery_address'          => $this->deliveryAddress,
+            'delivery_charge'           => $this->deliveryCharge,
+            'sales_channel_id'          => $this->salesChannelId,
+            'skus'                      => $this->skus,
+            'discount'                  => $this->discount
         ];
     }
 
     private function makeCreateData()
     {
-       return [
-            ['name' => 'partner_id', 'contents' => $this->partnerId],
-            ['name' => 'customer_id', 'contents' => $this->customerId],
-            ['name' => 'delivery_address','contents' => $this->deliveryAddress],
-            ['name' => 'delivery_charge','contents' => $this->deliveryCharge],
-            ['name' => 'sales_channel_id','contents' => $this->salesChannelId ?: 0],
-            ['name' => 'status','contents' => $this->status ?: 'completed'],
-            ['name' => 'skus','contents' => $this->skus]
-        ];
+        $data = [];
+        if ($this->partnerId) array_push($data, ['name' => 'partner_id', 'contents' => $this->partnerId]);
+        if ($this->customerId) array_push($data, ['name' => 'customer_id', 'contents' => $this->customerId]);
+        if ($this->deliveryAddress) array_push($data, ['name' => 'delivery_address','contents' => $this->deliveryAddress]);
+        if ($this->deliveryCharge) array_push($data, ['name' => 'delivery_charge','contents' => $this->deliveryCharge]);
+        if ($this->salesChannelId) array_push($data, ['name' => 'sales_channel_id','contents' => $this->salesChannelId ?: 0]);
+        if ($this->skus) array_push($data, ['name' => 'skus','contents' => $this->skus]);
+        if ($this->discount) array_push($data, ['name' => 'discount','contents' => $this->discount]);
+        if ($this->paymentMethod) array_push($data, ['name' => 'payment_method','contents' => $this->paymentMethod]);
+        if ($this->paymentLinkAmount) array_push($data, ['name' => 'payment_link_amount','contents' => $this->paymentLinkAmount]);
+        if ($this->paidAmount) array_push($data, ['name' => 'paid_amount','contents' => $this->paidAmount]);
+        return $data;
     }
 
 
