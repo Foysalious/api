@@ -7,7 +7,6 @@ use App\Jobs\SendFaqEmail;
 use App\Models\PotentialCustomer;
 use App\Repositories\CustomerRepository;
 use App\Models\Customer;
-use App\Sheba\BankingInfo\EmiBanking;
 use Sheba\AppVersion\AppVersionManager;
 use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
 use Sheba\Dal\Category\Category;
@@ -18,6 +17,7 @@ use App\Models\Payable;
 use App\Models\Payment;
 use App\Models\Profile;
 use App\Models\Resource;
+use Sheba\Dal\EmiBank\Repository\EmiBankContract;
 use Sheba\Dal\PaymentGateway\Contract as PaymentGatewayRepository;
 use Sheba\Dal\Service\Service;
 use App\Models\Slider;
@@ -463,9 +463,10 @@ class ShebaController extends Controller
         return api_response($request, null, 200, ['data' => $attendances->groupBy('business_member_id')]);
     }
 
-    public function getEmiBankList(Request $request)
+    public function getEmiBankList(Request $request, EmiBankContract $emiBankContract)
     {
-        $bank_list = EmiBanking::getPublishedBank();
-        return api_response($request, null, 200, ['data' => $bank_list]);
+        $bank_lists = $emiBankContract->builder()->get();
+
+        return api_response($request, null, 200, ['data' => $bank_lists]);
     }
 }
