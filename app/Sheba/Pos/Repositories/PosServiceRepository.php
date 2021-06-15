@@ -1,9 +1,7 @@
 <?php namespace Sheba\Pos\Repositories;
 
-use App\Models\Partner;
 use App\Models\PartnerPosService;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Model;
 use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
 use Sheba\Repositories\BaseRepository;
 

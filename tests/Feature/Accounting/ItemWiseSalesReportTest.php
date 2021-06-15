@@ -4,14 +4,14 @@
 namespace Tests\Feature\Accounting;
 
 
-class JournalReportTest extends AccountingFeatureTest
+class ItemWiseSalesReportTest extends AccountingFeatureTest
 {
-    public function test_response()
+    public function test_report_response()
     {
         $response = $this->get(
             config(
                 'sheba.api_url'
-            ) . '/v2/accounting/reports/journal_report?start_date=2021-05-10&end_date=2021-07-15',
+            ) . '/v2/accounting/reports/pos/product-wise?start_date=2021-05-10&end_date=2021-07-15&range=custom',
             [
                 'Authorization' => $this->token ?? $this->generateToken()
             ]
@@ -21,7 +21,9 @@ class JournalReportTest extends AccountingFeatureTest
             [
                 'code',
                 'message',
-                'data'
+                'result' => [
+                    "data"
+                ]
             ]
         );
     }
