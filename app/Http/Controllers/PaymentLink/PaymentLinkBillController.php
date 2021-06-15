@@ -1,7 +1,6 @@
 <?php namespace App\Http\Controllers\PaymentLink;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\PaymentLinkBillRequest;
 use App\Sheba\Payment\Adapters\Payable\PaymentLinkOrderAdapter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
@@ -18,7 +17,7 @@ use Sheba\Dal\ExternalPayment\Model as ExternalPayment;
 class PaymentLinkBillController extends Controller
 {
     /**
-     * @param PaymentLinkBillRequest                        $request
+     * @param Request                        $request
      * @param PaymentManager                 $payment_manager
      * @param PaymentLinkOrderAdapter        $payment_adapter
      * @param Creator                        $customer_creator
@@ -27,9 +26,24 @@ class PaymentLinkBillController extends Controller
      * @throws InitiateFailedException
      * @throws InvalidPaymentMethod
      */
-    public function clearBill(PaymentLinkBillRequest $request, PaymentManager $payment_manager, PaymentLinkOrderAdapter $payment_adapter,
+    public function clearBill(Request $request, PaymentManager $payment_manager, PaymentLinkOrderAdapter $payment_adapter,
                               Creator $customer_creator, PaymentLinkRepositoryInterface $repo)
     {
+        $rules = [
+            'amount'         => 'numeric',
+            'purpose'        => 'string',
+            'identifier'     => 'required',
+            'name'           => 'required',
+            'mobile'         => 'required|string',
+        ];
+
+        if ($request->has('emi_month')){
+            $rules['bank_id'] = 'required|integer';
+        } else {
+            $rules['payment_method'] = 'required|in:' . implode(',', AvailableMethods::getPaymentLinkPayments($request->identifier));
+        }
+        $this->validate($request, $rules);
+
         $payment_method = $request->payment_method;
         $user           = $customer_creator->setMobile($request->mobile)->setName($request->name)->create();
         $payment_link   = $repo->findByIdentifier($request->identifier);
