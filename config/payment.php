@@ -84,17 +84,6 @@ return [
         ]
     ],
     'ebl'         => [
-        'stores' => [
-            'default' => [
-                'base_url'     => env('EBL_BASE_URL', 'https://testsecureacceptance.cybersource.com'),
-                'access_key'   => env('EBL_ACCESS_KEY', '59f2e88276b23a609a41bbc855eaeaad'),
-                'profile_id'   => env('EBL_PROFILE_ID', '189C3320-583D-4148-984B-8193431BD3BB'),
-                'profile_name' => env('EBL_PROFILE_NAME', 'SHEBA XYZ'),
-                'signature'    => env('EBL_SIGNATURE', 'HMAC-SHA256'),
-                'merchant_id'  => env('EBL_MERCHANT_ID', '20010024'),
-                'account_id'   => env('EBL_ACCOUNT_ID', '20010024_acct'),
-                'secret_key'   => env('EBL_SECRET_KEY_PATH', resource_path('assets/ebl/keySecret.txt'))
-            ]
-        ]
+        'auth_token' => env('EBL_APP_AUTH_TOKEN')
     ]
 ];
