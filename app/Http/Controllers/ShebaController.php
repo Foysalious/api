@@ -28,6 +28,7 @@ use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Dal\EmiBank\Repository\EmiBankContract;
 use Sheba\Dal\MetaTag\MetaTagRepositoryInterface;
 use Sheba\Dal\PaymentGateway\Contract as PaymentGatewayRepository;
 use Sheba\Dal\RedirectUrl\RedirectUrl;
@@ -475,10 +476,11 @@ class ShebaController extends Controller
         return api_response($request, null, 200, ['data' => $attendances->groupBy('business_member_id')]);
     }
 
-    public function getEmiBankList(Request $request)
+    public function getEmiBankList(Request $request, EmiBankContract $emiBankContract)
     {
-        $bank_list = EmiBanking::getPublishedBank();
-        return api_response($request, null, 200, ['data' => $bank_list]);
+        $bank_lists = $emiBankContract->builder()->get();
+
+        return api_response($request, null, 200, ['data' => $bank_lists]);
     }
 
     public function paymentInitiatedInfo(Request $request, $transaction_id)
