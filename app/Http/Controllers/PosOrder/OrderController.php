@@ -45,6 +45,10 @@ class OrderController extends Controller
             ->setDeliveryCharge($request->delivery_charge)
             ->setStatus($request->status)
             ->setSkus($request->skus)
+            ->setDiscount($request->discount)
+            ->setPaymentMethod($request->payment_method)
+            ->setPaymentLinkAmount($request->payment_link_amount)
+            ->setPaidAmount($request->paid_amount)
             ->store();
         return http_response($request, null, 200, $response);
 
