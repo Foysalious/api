@@ -45,12 +45,14 @@ class PaymentLinkBillController extends Controller
 
         if ($payment_link->getEmiMonth()){
             $bank = $payment_manager->getEmibank($request->bank_id);
+            if (!$bank) return response()->json(['code' => 404, 'message' => 'Bank not found']);
             $payment_method = $bank->paymentGateway->method_name ?? PaymentStrategy::SSL;
-        } elseif($request->payment_method == 'online') {
-            $cardType = $payment_manager->getCardType($request->card_number);
-            $payment_method = $cardType->paymentGateway->method_name ?? PaymentStrategy::SSL;
         }
 
+//        elseif($request->payment_method == 'online') {
+//            $cardType = $payment_manager->getCardType($request->card_number);
+//            $payment_method = $cardType->paymentGateway->method_name ?? PaymentStrategy::SSL;
+//        }
         $payment = $payment_manager->setMethodName($payment_method)->setPayable($payable)->init();
         $target  = $payment_link->getTarget();
         if ($target instanceof ExternalPayment) {

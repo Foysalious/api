@@ -38,14 +38,14 @@ class PaymentLinkBillRequest extends Request
             $rules['payment_method'] = 'required|in:' . implode(',', AvailableMethods::getPaymentLinkPayments($this->identifier));
         }
 
-        if ($this->payment_method === 'online') {
-            $rules = array_merge($rules, [
-                'card_number' => 'required|numeric',
-                'card_owner_name' => 'required',
-                'expiration' => 'required|date_format:m/y',
-                'cvv' => 'integer'
-            ]);
-        }
+//        if ($this->payment_method === 'online') {
+//            $rules = array_merge($rules, [
+//                'card_number' => 'required|numeric',
+//                'card_owner_name' => 'required',
+//                'expiration' => 'required|date_format:m/y',
+//                'cvv' => 'integer'
+//            ]);
+//        }
         return $rules;
     }
 }
