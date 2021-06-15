@@ -190,9 +190,10 @@ class DeliveryService
     public function getOrderInfo()
     {
 
-        if ($this->partner->id != $this->posOrder->partner_id) {
+        if ($this->posOrder && $this->partner->id != $this->posOrder->partner_id) {
             throw new DoNotReportException("Order does not belongs to this partner", 400);
         }
+        $customer_delivery_info = $this->resolveDeliveryInfo();
         return [
             'partner_pickup_information' => [
                 'merchant_name' => $this->partner->name,
@@ -207,15 +208,15 @@ class DeliveryService
                 ],
             ],
             'customer-delivery_information' => [
-                'name' => $this->posOrder->customer->profile->name,
-                'number' => $this->posOrder->customer->profile->mobile,
+                'name' => $customer_delivery_info['name'],
+                'number' => $customer_delivery_info['number'],
                 'address' => [
-                    'full_address' => $this->posOrder->address,
-                    'thana' => $this->posOrder->delivery_thana,
-                    'zilla' => $this->posOrder->delivery_district
+                    'full_address' => $customer_delivery_info['address'],
+                    'thana' => $customer_delivery_info['delivery_thana'],
+                    'zilla' => $customer_delivery_info['delivery_zilla']
                 ],
-                'payment_method' => ($payment_info = $this->paymentInfo($this->posOrder->id)) ? $payment_info->method : null,
-                'cod_amount' => $this->getDueAmount(),
+                'payment_method' => $customer_delivery_info['payment_method'] ,
+                'cod_amount' => $customer_delivery_info['cod_amount'],
             ],
         ];
     }
@@ -539,6 +540,31 @@ class DeliveryService
         if (!$this->isOrderMigrated()) return $this->posOrder->delivery_request_id;
         $deliveryDetails = $this->posOrderClient->get('api/v1/partners/' . $this->partner->id . '/orders/' . $this->posOrderId . '/delivery-info');
         return $deliveryDetails['order']['delivery_request_id'];
+    }
+
+    private function resolveDeliveryInfo()
+    {
+        if (!$this->isOrderMigrated()) {
+            return [
+                'name' => $this->posOrder->customer->profile->name,
+                'number' => $this->posOrder->customer->profile->mobile,
+                'address' => $this->posOrder->address,
+                'delivery_thana' => $this->posOrder->delivery_thana,
+                'delivery_zilla' => $this->posOrder->delivery_district,
+                'payment_method' => ($payment_info = $this->paymentInfo($this->posOrder->id)) ? $payment_info->method : null,
+                'cod_amount' => $this->getDueAmount(),
+            ];
+        }
+        $deliveryDetails = $this->posOrderClient->get('api/v1/partners/' . $this->partner->id . '/orders/' . $this->posOrderId . '/delivery-info');
+        return [
+            'name' => $deliveryDetails['order']['delivery_name'],
+            'number' => $deliveryDetails['order']['delivery_mobile'],
+            'address' => $deliveryDetails['order']['delivery_address'],
+            'delivery_thana' => $deliveryDetails['order']['delivery_thana'],
+            'delivery_zilla' => $deliveryDetails['order']['delivery_district'],
+            'payment_method' => $deliveryDetails['order']['payment_method'],
+            'cod_amount' => $deliveryDetails['order']['due'],
+        ];
     }
 
     private function isOrderMigrated()
