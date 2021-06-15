@@ -82,7 +82,7 @@ class AcceptNewOrderTest extends FeatureTestCase
             'remember_token' => $this->resource->remember_token,
             'resource_id' => $this->resource->id,
         ]);
-        //dd($response);
+     //   //dd($response);
         $data = $response->decodeResponseJson();
 
         $this->assertEquals(403, $data['code']);
@@ -96,7 +96,7 @@ class AcceptNewOrderTest extends FeatureTestCase
             'remember_token' => $this->resource->remember_token,
             'resource_id' => $this->resource->id,
         ]);
-        dd($response);
+        //dd($response);
         $data = $response->decodeResponseJson();
         $this->assertEquals(200, $data['code']);
     }
@@ -366,7 +366,7 @@ class AcceptNewOrderTest extends FeatureTestCase
             'remember_token' => $this->resource->remember_token
         ]);
         $data = $response->decodeResponseJson();
-        dd($data);
+        //dd($data);
         $this->assertEquals(403, $data['code']);
     }
 

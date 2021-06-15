@@ -100,12 +100,11 @@ class FeatureTestCase extends TestCase
      */
     public function runDatabaseMigrations()
     {
-        /**
-         * NO NEED TO RUN
-         *
-         * \Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
-         * $this->artisan('migrate');
-         * $this->beforeApplicationDestroyed(function () {
+         /* NO NEED TO RUN
+
+        \Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));*/
+         //$this->artisan('migrate');
+      /*   * $this->beforeApplicationDestroyed(function () {
          * \Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
          * });*/
     }
