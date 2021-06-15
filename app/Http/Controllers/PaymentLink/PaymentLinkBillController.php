@@ -57,6 +57,11 @@ class PaymentLinkBillController extends Controller
             $target->payment_id = $payment->id;
             $target->update();
         }
-        return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
+        return response()->json([
+            'code' => 200,
+            'message' => 'Successful',
+            'payment' => $payment->getFormattedPayment()
+        ]);
+//        return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
     }
 }
