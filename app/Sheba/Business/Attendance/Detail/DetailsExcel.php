@@ -77,7 +77,7 @@ class DetailsExcel
                 $sheet->fromArray($this->data, null, 'A1', false, false);
                 $sheet->prependRow($this->getHeaders());
                 $sheet->freezeFirstRow();
-                $sheet->cell('A1:L1', function ($cells) {
+                $sheet->cell('A1:M1', function ($cells) {
                     $cells->setFontWeight('bold');
                 });
                 $sheet->setAutoSize(true);
