@@ -418,19 +418,18 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
 
     public function calculationTodayLastCheckOutTime($which_half_day)
     {
-        $which_half_day = 'first_half';
         if ($which_half_day) {
             if ($which_half_day == HalfDayType::FIRST_HALF) {
                 $checkout_time = $this->halfDayEndTimeUsingWhichHalf(HalfDayType::SECOND_HALF);
                 if ($this->officeHour->is_end_grace_time_enable) {
-                    return Carbon::parse($checkout_time)->subMinutes($this->officeHour->end_grace_time)->format('h:i:s');
+                    return Carbon::parse($checkout_time)->subMinutes($this->officeHour->end_grace_time)->format('H:i:s');
                 }
                 return $checkout_time;
             }
             if ($which_half_day == HalfDayType::SECOND_HALF) {
                 $checkout_time = $this->halfDayEndTimeUsingWhichHalf(HalfDayType::FIRST_HALF);
                 if ($this->officeHour->is_end_grace_time_enable) {
-                    return Carbon::parse($checkout_time)->subMinutes($this->officeHour->end_grace_time)->format('h:i:s');
+                    return Carbon::parse($checkout_time)->subMinutes($this->officeHour->end_grace_time)->format('H:i:s');
                 }
                 return $checkout_time;
             }

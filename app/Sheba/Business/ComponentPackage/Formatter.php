@@ -5,6 +5,7 @@ use Carbon\Carbon;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepo;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepo;
 use Sheba\Dal\PayrollComponentPackage\TargetType;
+use Sheba\Dal\PayrollSetting\PayDayType;
 use Sheba\Dal\PayrollSetting\PayrollSetting;
 use Sheba\Repositories\Interfaces\Business\DepartmentRepositoryInterface;
 
@@ -77,18 +78,16 @@ class Formatter
     {
         $current_time = Carbon::now();
         $business_pay_day = $payroll_setting->pay_day;
-        if (!empty($last_generated_date)) $current_package_pay_generate_date = $this->nextPayDay($payroll_setting, Carbon::parse($last_generated_date)->addMonths($period));
-        else if ($current_time->day < $business_pay_day) $current_package_pay_generate_date = $this->nextPayDay($payroll_setting, $current_time->addMonths($period));
-        else $current_package_pay_generate_date = $this->nextPayDay($payroll_setting, $current_time->addMonth()->day($business_pay_day));
+        if (!empty($last_generated_date)) $current_package_pay_generate_date = Carbon::parse($last_generated_date)->addMonths($period)->format('y-m-d');
+        else if ($payroll_setting->pay_day_type == PayDayType::FIXED_DATE && $current_time->day < $business_pay_day) $current_package_pay_generate_date = $current_time->day($business_pay_day)->format('y-m-d');
+        else if ($payroll_setting->pay_day_type == PayDayType::FIXED_DATE && $current_time->day > $business_pay_day) $current_package_pay_generate_date = $this->nextPayDay($payroll_setting, $current_time->addMonth()->day($business_pay_day));
+        else if ($payroll_setting->pay_day_type == PayDayType::LAST_WORKING_DAY) $current_package_pay_generate_date = $this->nextPayDay($payroll_setting, Carbon::now());
 
         return ['generated_at' => $current_package_pay_generate_date];
     }
     private function nextPayDay(PayrollSetting $payroll_setting, Carbon $time)
     {
         $business = $payroll_setting->business;
-        $business_pay_day = $time->day($payroll_setting->pay_day);
-        if (!$this->businessWeekendRepo->isWeekendByBusiness($business, $business_pay_day) && !$this->businessHolidayRepo->isHolidayByBusiness($business, $business_pay_day)) return $business_pay_day->format('y-m-d');
-
         $last_day_of_month = $time->lastOfMonth();
         while ($last_day_of_month) {
             if (!$this->businessWeekendRepo->isWeekendByBusiness($business, $last_day_of_month) &&

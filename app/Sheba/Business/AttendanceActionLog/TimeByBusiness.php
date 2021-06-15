@@ -28,13 +28,13 @@ class TimeByBusiness
                 if ($leave->half_day_configuration == HalfDayType::FIRST_HALF) {
                     $start_time = $business->halfDayStartTimeUsingWhichHalf(HalfDayType::SECOND_HALF);
                     if ($office_hour && $office_hour->is_start_grace_time_enable) {
-                        return Carbon::parse($start_time)->addMinutes($office_hour->start_grace_time)->format('h:i:s');
+                        return Carbon::parse($start_time)->addMinutes($office_hour->start_grace_time)->format('H:i:s');
                     }
                     return $start_time;
                 } else {
                     $start_time = $business->halfDayStartTimeUsingWhichHalf(HalfDayType::FIRST_HALF);
                     if ($office_hour && $office_hour->is_start_grace_time_enable) {
-                        return Carbon::parse($start_time)->addMinutes($office_hour->start_grace_time)->format('h:i:s');
+                        return Carbon::parse($start_time)->addMinutes($office_hour->start_grace_time)->format('H:i:s');
                     }
                     return $start_time;
                 }
@@ -57,7 +57,7 @@ class TimeByBusiness
      */
     private function officeStartTimeWithGraceTime(BusinessOfficeHour $business_hour)
     {
-        return Carbon::parse($business_hour->start_time)->addMinutes($business_hour->start_grace_time)->format('h:i:s');
+        return Carbon::parse($business_hour->start_time)->addMinutes($business_hour->start_grace_time)->format('H:i:s');
     }
 
     public function getOfficeEndTimeByBusiness()
@@ -99,7 +99,7 @@ class TimeByBusiness
      */
     private function officeEndTimeWithGraceTime(BusinessOfficeHour $business_hour)
     {
-        return Carbon::parse($business_hour->end_time)->subMinutes($business_hour->end_grace_time)->format('h:i:s');
+        return Carbon::parse($business_hour->end_time)->subMinutes($business_hour->end_grace_time)->format('H:i:s');
     }
 
     private function getBusiness()
