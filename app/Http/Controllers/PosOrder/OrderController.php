@@ -66,9 +66,7 @@ class OrderController extends Controller
         $partner = $request->auth_user->getPartner();
         $response = $this->orderService
             ->setPartnerId($partner->id)
-            ->setCustomerId($request->customer_id)
             ->setOrderId($order_id)
-            ->setStatus($request->status)
             ->setSalesChannelId($request->sales_channel_id)
             ->setSkus($request->skus)
             ->setEmiMonth($request->emi_month)
@@ -80,6 +78,7 @@ class OrderController extends Controller
             ->setDeliveryAddress($request->delivery_address)
             ->setNote($request->note)
             ->setVoucherId($request->voucher_id)
+            ->setDiscount($request->discount)
             ->update();
         return http_response($request, null, 200, $response);
     }
