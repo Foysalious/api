@@ -46,82 +46,75 @@ class OrderController extends Controller
     private $jobServiceRepository;
     private $sms;
 
-    public function __construct(Sms $sms)
+    public function __construct(Sms $sms, OrderRepository $order_repo, JobServiceRepository $job_service_repo)
     {
-        $this->orderRepository = new OrderRepository();
-        $this->jobServiceRepository = new JobServiceRepository();
+        $this->orderRepository = $order_repo;
+        $this->jobServiceRepository = $job_service_repo;
         $this->sms = $sms;
     }
 
     public function checkOrderValidity(Request $request)
     {
-        try {
-            $key = Redis::get($request->s_token);
-            if ($key != null) {
-                Redis::del($request->s_token);
-                return api_response($request, null, 200);
-            } else {
-                return api_response($request, null, 404);
-            }
-        } catch (Throwable $e) {
-            logError($e);
-            return api_response($request, null, 500);
-        }
+        $key = Redis::get($request->s_token);
+        if ($key == null) return api_response($request, null, 404);
+
+        Redis::del($request->s_token);
+        return api_response($request, null, 200);
     }
 
     public function store($customer, Request $request, OrderAdapter $order_adapter)
     {
-        try {
-            $request->merge(['mobile' => formatMobile($request->mobile)]);
-            $this->validate($request, [
-                'location' => 'sometimes|numeric',
-                'services' => 'required|string',
-                'sales_channel' => 'required|string',
-                'partner' => 'required',
-                'remember_token' => 'required|string',
-                'mobile' => 'required|string|mobile:bd',
-                'email' => 'sometimes|email',
-                'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
-                'time' => 'required|string',
-                'payment_method' => 'required|string|in:cod,online,wallet,bkash,cbl,partner_wallet,bondhu_balance',
-                'address' => 'required_without:address_id',
-                'address_id' => 'required_without:address',
-                'resource' => 'sometimes|numeric',
-                'is_on_premise' => 'sometimes|numeric',
-                'partner_id' => 'sometimes|required|numeric',
-                'emi_month' => 'numeric'
-            ], ['mobile' => 'Invalid mobile number!']);
-            $customer = $request->customer;
-            $validation = new Validation($request);
-            if (!$validation->isValid()) {
-                $sentry = app('sentry');
-                $sentry->user_context(['request' => $request->all(), 'message' => $validation->message]);
-                $sentry->captureException(new Exception($validation->message));
-                return api_response($request, $validation->message, 400, ['message' => $validation->message]);
-            }
-            $order = new Checkout($customer);
-            $order = $order->placeOrder($request);
-            if ($order) {
-                if (!empty($customer->profile->name) && empty($customer->profile->gender)) dispatch(new AddCustomerGender($customer->profile));
-                if ($order->voucher_id) $this->updateVouchers($order, $customer);
-                $payment = $link = null;
-                if ($request->payment_method !== 'cod') {
-                    /** @var Payment $payment */
-                    $payment = $this->getPayment($request->payment_method, $order, $order_adapter);
-                    if ($payment) {
-                        $link = $payment->redirect_url;
-                        $payment = $payment->getFormattedPayment();
-                    }
-                }
-                $this->sendNotifications($customer, $order);
-                $partner = $order->partnerOrders()->first()->partner;
-                return api_response($request, $order, 200, ['link' => $link, 'job_id' => $order->jobs->first()->id, 'provider_mobile' => $partner->getContactNumber(),
-                    'order_code' => $order->code(), 'payment' => $payment]);
-            }
-            return api_response($request, $order, 500);
-        } catch (HyperLocationNotFoundException $e) {
-            return api_response($request, null, 400, ['message' => "You're out of service area"]);
+        $request->merge(['mobile' => formatMobile($request->mobile)]);
+        $this->validate($request, [
+            'location' => 'sometimes|numeric',
+            'services' => 'required|string',
+            'sales_channel' => 'required|string',
+            'partner' => 'required',
+            'remember_token' => 'required|string',
+            'mobile' => 'required|string|mobile:bd',
+            'email' => 'sometimes|email',
+            'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
+            'time' => 'required|string',
+            'payment_method' => 'required|string|in:cod,online,wallet,bkash,cbl,partner_wallet,bondhu_balance',
+            'address' => 'required_without:address_id',
+            'address_id' => 'required_without:address',
+            'resource' => 'sometimes|numeric',
+            'is_on_premise' => 'sometimes|numeric',
+            'partner_id' => 'sometimes|required|numeric',
+            'emi_month' => 'numeric'
+        ], ['mobile' => 'Invalid mobile number!']);
+        $customer = $request->customer;
+        $validation = new Validation($request);
+        if (!$validation->isValid()) {
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $validation->message]);
+            $sentry->captureException(new Exception($validation->message));
+            return api_response($request, $validation->message, 400, ['message' => $validation->message]);
         }
+        $order = new Checkout($customer);
+        $order = $order->placeOrder($request);
+        if (!$order) return api_response($request, $order, 500);
+
+        if (!empty($customer->profile->name) && empty($customer->profile->gender)) dispatch(new AddCustomerGender($customer->profile));
+        if ($order->voucher_id) $this->updateVouchers($order, $customer);
+        $payment = $link = null;
+        if ($request->payment_method !== 'cod') {
+            /** @var Payment $payment */
+            $payment = $this->getPayment($request->payment_method, $order, $order_adapter);
+            if ($payment) {
+                $link = $payment->redirect_url;
+                $payment = $payment->getFormattedPayment();
+            }
+        }
+        $this->sendNotifications($customer, $order);
+        $partner = $order->partnerOrders()->first()->partner;
+        return api_response($request, $order, 200, [
+            'link' => $link,
+            'job_id' => $order->jobs->first()->id,
+            'provider_mobile' => $partner->getContactNumber(),
+            'order_code' => $order->code(),
+            'payment' => $payment
+        ]);
     }
 
     public function placeOrderFromBondhu(BondhuOrderRequest $request, $affiliate, BondhuAutoOrder $bondhu_auto_order, OrderPlace $order_place, OrderAdapter $order_adapter)
@@ -208,13 +201,13 @@ class OrderController extends Controller
             ->setBusinessType(BusinessType::BONDHU)
             ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
             ->send($agent_mobile, [
-            'service_name' => $job->category->name,
-            'order_code' => $order->code(),
-            'partner_name' => $partner->name,
-            'partner_number' => $partner->getContactNumber(),
-            'preferred_time' => $job->preferred_time,
-            'preferred_date' => $job->schedule_date,
-        ]);
+                'service_name' => $job->category->name,
+                'order_code' => $order->code(),
+                'partner_name' => $partner->name,
+                'partner_number' => $partner->getContactNumber(),
+                'preferred_time' => $job->preferred_time,
+                'preferred_date' => $job->schedule_date,
+            ]);
     }
 
     private function sendNotifications($customer, $order)
@@ -229,8 +222,8 @@ class OrderController extends Controller
                         ->setBusinessType(BusinessType::MARKETPLACE)
                         ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
                         ->send($customer->profile->mobile, [
-                        'order_code' => $order->code()
-                    ]);
+                            'order_code' => $order->code()
+                        ]);
                 }
 
                 if (!$order->jobs->first()->resource_id) {
@@ -238,8 +231,8 @@ class OrderController extends Controller
                         ->setBusinessType(BusinessType::SMANAGER)
                         ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
                         ->send($partner->getContactNumber(), [
-                        'order_code' => $order->code(), 'partner_name' => $partner->name
-                    ]);
+                            'order_code' => $order->code(), 'partner_name' => $partner->name
+                        ]);
                 }
             }
             (new NotificationRepository())->send($order);
@@ -258,9 +251,9 @@ class OrderController extends Controller
                 return;
             }
         }
+
         if ($voucher->usage($customer->profile) == $voucher->max_order) {
             $customer->promotions()->where('voucher_id', $order->voucher_id)->update(['is_valid' => 0]);
-            return;
         }
     }
 

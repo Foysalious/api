@@ -303,10 +303,10 @@ class NotificationRepository
                 ->setBusinessType(BusinessType::SMANAGER)
                 ->setFeatureType(FeatureType::PARTNER_SUBSCRIPTION)
                 ->send($partner->getContactNumber(), [
-                'package_type_bn' => $type,
-                'package_name'    => $package->show_name_bn,
-                'grade_text'      => $gradeType
-            ]);
+                    'package_type_bn' => $type,
+                    'package_name'    => $package->show_name_bn,
+                    'grade_text'      => $gradeType
+                ]);
         }
     }
 
