@@ -168,6 +168,7 @@ class Route
                     $api->get('history', 'TopUp\TopUpController@topUpHistory');
                     $api->get('active-bulk', 'TopUp\TopUpController@activeBulkTopUps');
                     $api->get('bulk-list', 'TopUp\TopUpController@bulkList');
+                    $api->get('all-top-up', 'TopUp\TopUpController@allTopUps');
                 });
                 /**
                  * FOR TEST
