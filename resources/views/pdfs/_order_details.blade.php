@@ -21,7 +21,7 @@
         <td style="width:200px;">:  {{ $partner_order->order->delivery_address }}</td>
     </tr>
     <tr>
-        <td>Date</td>
+        <td> Statement Date</td>
         <td>: {{ \Carbon\Carbon::now()->format('d M, Y h:i A') }}</td>
         <td> </td>
         <td style="width:140px; text-align:left;">Service Provider Name</td>
