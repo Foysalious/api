@@ -65,16 +65,19 @@ class Partner extends Referrer implements ReferrerInterface
      * @param $mobile
      * @throws \Exception
      */
-    private function sendSms($mobile){
+    private function sendSms($mobile)
+    {
         $partner = $this->referrer->getContactPerson() ;
         (new SmsHandler('partner-referral-create'))
             ->setBusinessType(BusinessType::SMANAGER)
             ->setFeatureType(FeatureType::PARTNER_REFERRAL)
             ->send($mobile, [
-            'partner' => $partner
-        ]);
+                'partner' => $partner
+            ]);
     }
-    private function notify($ref){
+
+    private function notify($ref)
+    {
         notify()->department(7)->send([
             'title' => 'New SP Referral Arrived from ' . $this->referrer->getContactNumber(),
             'link' => config('sheba.admin_url') . '/partner-referrals/' . $ref->id,
@@ -91,14 +94,11 @@ class Partner extends Referrer implements ReferrerInterface
      */
     private function validateStore($mobile)
     {
-
         $profile = Resource::query()->leftJoin('profiles', 'resources.profile_id', '=', 'profiles.id')->where('profiles.mobile', $mobile)->first();
-        if (!empty($profile)) {
-            throw new AlreadyExistProfile();
-        }
+        if (!empty($profile)) throw new AlreadyExistProfile();
+
         $request = PartnerReferral::query()->where('resource_mobile', $mobile)->first();
-        if ($request)
-            throw new AlreadyReferred();
+        if ($request) throw new AlreadyReferred();
         return true;
     }
 
