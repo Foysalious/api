@@ -39,7 +39,7 @@ class PdfHandler extends Handler
     public function download($mPdf = false)
     {
         if ($mPdf) {
-
+            $mPDF=$this->getMpdf();
             $mPDF->simpleTables = true;
             $mPDF->packTableData = true;
             $mPDF->shrink_tables_to_fit = 1;
@@ -62,6 +62,7 @@ class PdfHandler extends Handler
         $defaultFontConfig = (new FontVariables())->getDefaults();
         $fontData = $defaultFontConfig['fontdata'];
         return new Mpdf([
+            'mode' => 'utf-8',
             'tempDir' => public_path('/tmp'),
             'fontDir' => array_merge($fontDirs, [
                 storage_path('/fonts'),
