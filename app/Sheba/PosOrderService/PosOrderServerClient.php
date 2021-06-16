@@ -9,7 +9,7 @@ use GuzzleHttp\Exception\GuzzleException;
 class PosOrderServerClient
 {
     protected $client;
-    protected $baseUrl;
+    public $baseUrl;
 
     public function __construct(Client $client)
     {

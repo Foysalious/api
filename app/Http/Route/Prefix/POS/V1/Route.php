@@ -118,6 +118,7 @@ class Route
             $api->group(['prefix' => 'orders'], function ($api) {
                 $api->get('/', 'PosOrder\OrderController@index');
                 $api->get('/{order}', 'PosOrder\OrderController@show');
+                $api->post('/validate-promo', 'PosOrder\OrderController@validatePromo');
                 $api->post('/', 'PosOrder\OrderController@store');
                 $api->group(['prefix' => '{order}'], function ($api) {
                     $api->post('/update-status', 'PosOrder\OrderController@updateStatus');

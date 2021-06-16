@@ -4,8 +4,8 @@ use App\Models\Partner;
 use App\Models\PosCustomer;
 use Carbon\Carbon;
 use Sheba\Pos\Order\PosOrderResolver;
-use Sheba\Dal\ExternalPayment\Model as ExternalPayment;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
+use Sheba\Dal\ExternalPayment\Model as ExternalPayment;
 use stdClass;
 
 class PaymentLinkTransformer
