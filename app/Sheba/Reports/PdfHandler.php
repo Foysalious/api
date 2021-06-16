@@ -40,9 +40,9 @@ class PdfHandler extends Handler
     public function download($mPdf = false)
     {
         if ($mPdf) {
-            $mPDF                       = $this->getMpdf();
-            $mPDF->simpleTables         = true;
-            $mPDF->packTableData        = true;
+            $mPDF=$this->getMpdf();
+            $mPDF->simpleTables = true;
+            $mPDF->packTableData = true;
             $mPDF->shrink_tables_to_fit = 1;
             $keep_table_proportions     = TRUE;
             $data                       = view($this->viewFileName, $this->data)->render();
@@ -64,8 +64,9 @@ class PdfHandler extends Handler
         $defaultFontConfig = (new FontVariables())->getDefaults();
         $fontData          = $defaultFontConfig['fontdata'];
         return new Mpdf([
-            'tempDir'             => public_path('/tmp'),
-            'fontDir'             => array_merge($fontDirs, [
+            'mode' => 'utf-8',
+            'tempDir' => public_path('/tmp'),
+            'fontDir' => array_merge($fontDirs, [
                 storage_path('/fonts'),
             ]), 'fontdata'        => $fontData + [
                     'kalpurush' => [
