@@ -2,6 +2,7 @@
 
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\VoucherController;
 use App\Sheba\PosOrderService\Services\OrderService;
 use Illuminate\Http\Request;
 
@@ -49,7 +50,6 @@ class OrderController extends Controller
             ->setStatus($request->status)
             ->setSkus($request->skus)
             ->setDiscount($request->discount)
-            ->setIsDiscountPercentage($request->is_discount_percentage)
             ->setPaymentMethod($request->payment_method)
             ->setPaymentLinkAmount($request->payment_link_amount)
             ->setPaidAmount($request->paid_amount)
@@ -107,6 +107,16 @@ class OrderController extends Controller
         $partner = $request->auth_user->getPartner();
         $response = $this->orderService->setPartnerId($partner->id)->setOrderId($order_id)->delete();
         return http_response($request, null, 200, $response);
+    }
+
+    public function validatePromo(Request $request)
+    {
+        $this->validate($request, [
+            'code' => 'required|string',
+        ]);
+        /** @var VoucherController $promoValidator */
+        $promoValidator = app(VoucherController::class);
+        return $promoValidator->validateVoucher($request);
     }
 
 }

@@ -20,7 +20,6 @@ use App\Sheba\Sms\BusinessType;
 use App\Sheba\Sms\FeatureType;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -30,6 +29,8 @@ use Sheba\Payment\Adapters\Payable\OrderAdapter;
 use Sheba\Payment\Exceptions\InitiateFailedException;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
 use Sheba\Payment\PaymentManager;
+use Sheba\Portals\Portals;
+use Sheba\UserAgentInformation;
 use Throwable;
 
 class OrderController extends Controller
@@ -120,12 +121,14 @@ class OrderController extends Controller
     private function sendSmsToCustomer($customer, $order)
     {
         $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
-        if ($this->isSendingServedConfirmationSms($order)) (new SmsHandler('order-created'))
+        if (!$this->isSendingServedConfirmationSms($order)) return;
+
+        (new SmsHandler('order-created'))
             ->setBusinessType(BusinessType::MARKETPLACE)
             ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
             ->send($customer->profile->mobile, [
-            'order_code' => $order->code()
-        ]);
+                'order_code' => $order->code()
+            ]);
     }
 
     public function storeFromBondhu(OrderCreateFromBondhuRequest $request, $affiliate, BondhuAutoOrderV3 $bondhu_auto_order, OrderPlace $order_place, OrderAdapter $order_adapter)
@@ -197,7 +200,6 @@ class OrderController extends Controller
         }
         if ($voucher->usage($customer->profile) == $voucher->max_order) {
             $customer->promotions()->where('voucher_id', $order->voucher_id)->update(['is_valid' => 0]);
-            return;
         }
     }
 
@@ -230,8 +232,8 @@ class OrderController extends Controller
                         ->setBusinessType(BusinessType::MARKETPLACE)
                         ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
                         ->send($customer->profile->mobile, [
-                        'order_code' => $order->code()
-                    ]);
+                            'order_code' => $order->code()
+                        ]);
                 }
             }
         } catch (Throwable $e) {
@@ -247,7 +249,7 @@ class OrderController extends Controller
     {
         return (
             !in_array($order->portal_name, config('sheba.stopped_sms_portal_for_customer')) &&
-            !($order->portal_name == 'admin-portal' && $order->sales_channel == 'Bondhu')
+            !($order->portal_name == Portals::ADMIN && $order->sales_channel == 'Bondhu')
         );
     }
 
@@ -261,10 +263,10 @@ class OrderController extends Controller
             ->setBusinessType(BusinessType::BONDHU)
             ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
             ->send($agent_mobile, [
-            'service_name' => $job->category->name,
-            'order_code' => $order->code(),
-            'preferred_time' => $job->preferred_time,
-            'preferred_date' => $job->schedule_date,
-        ]);
+                'service_name' => $job->category->name,
+                'order_code' => $order->code(),
+                'preferred_time' => $job->preferred_time,
+                'preferred_date' => $job->schedule_date,
+            ]);
     }
 }

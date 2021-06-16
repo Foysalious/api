@@ -383,8 +383,8 @@ class ProfileRepository
             ->setBusinessType(BusinessType::BONDHU)
             ->setFeatureType(FeatureType::AFFILIATE_BONUS)
             ->send($affiliate->profile->mobile, [
-            'bonus_amount' => $affiliate_bonus_amount
-        ]);
+                'bonus_amount' => $affiliate_bonus_amount
+            ]);
     }
 
     public function registerAvatarByEmail($avatar, $request, $user)
