@@ -4206,8 +4206,8 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://bitbucket.org/startern/sheba_voucher.git",
-                "reference": "935f243725f82caf0e5d717627ead59c076f581f"
+                "url": "https://mac_pasha@bitbucket.org/startern/sheba_voucher.git",
+                "reference": "8852979a2711abc5dded95a6367dbb93bb2793d4"
             },
             "require": {
                 "php": ">=5.4"
@@ -4231,7 +4231,7 @@
                 }
             ],
             "description": "Voucher for Sheba.",
-            "time": "2020-10-13T12:19:30+00:00"
+            "time": "2021-06-16T11:46:47+00:00"
         },
         {
             "name": "spomky-labs/aes-key-wrap",
@@ -7425,7 +7425,6 @@
         "ext-calendar": "*",
         "ext-simplexml": "*",
         "ext-openssl": "^7.0",
-        "ext-mcrypt": "^7.0",
         "ext-redis": "*",
         "ext-mysql_xdevapi": "*",
         "ext-intl": "*"
