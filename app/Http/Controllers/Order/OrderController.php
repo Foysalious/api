@@ -19,17 +19,16 @@ use App\Sheba\Sms\FeatureType;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Sheba\ModificationFields;
-use Sheba\OrderPlace\Exceptions\LocationIdNullException;
 use Sheba\OrderPlace\OrderPlace;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
 use Sheba\Payment\Exceptions\InitiateFailedException;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
 use Sheba\Payment\PaymentManager;
+use Sheba\Portals\Portals;
 use Sheba\UserAgentInformation;
 use Throwable;
 
@@ -40,91 +39,85 @@ class OrderController extends Controller
 
     public function store(Request $request, OrderPlace $order_place, OrderAdapter $order_adapter, UserAgentInformation $userAgentInformation)
     {
-        try {
-            $request->merge(['mobile' => formatMobile(preg_replace('/\b \b|-/', '', $request->mobile))]);
+        $request->merge(['mobile' => formatMobile(preg_replace('/\b \b|-/', '', $request->mobile))]);
 
-            $this->validate($request, [
-                'name' => 'required|string',
-                'services' => 'required|string',
-                'sales_channel' => 'required|string',
-                'remember_token' => 'required|string',
-                'mobile' => 'required|string|mobile:bd',
-                'email' => 'sometimes|email',
-                'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
-                'time' => 'required|string',
-                'payment_method' => 'required|string|in:cod,online,wallet,bkash,cbl,partner_wallet,bondhu_balance',
-                'address' => 'required_without:address_id',
-                'address_id' => 'required_without:address|numeric',
-                'partner' => 'sometimes|required',
-                'partner_id' => 'sometimes|required|numeric',
-                'affiliate_id' => 'sometimes|required|numeric',
-                'info_call_id' => 'sometimes|required|numeric',
-                'affiliation_id' => 'sometimes|required|numeric',
-                'vendor_id' => 'sometimes|required|numeric',
-                'crm_id' => 'sometimes|required|numeric',
-                'business_id' => 'sometimes|required|numeric',
-                'voucher' => 'sometimes|required|numeric',
-                'emi_month' => 'numeric',
-                'created_by' => 'numeric',
-                'created_by_name' => 'string',
-            ], ['mobile' => 'Invalid mobile number!']);
-            $this->setModifierFromRequest($request);
-            $userAgentInformation->setRequest($request);
-            $order = $order_place
-                ->setCustomer($request->customer)
-                ->setDeliveryName($request->name)
-                ->setDeliveryAddressId($request->address_id)
-                ->setDeliveryAddress($request->address)
-                ->setPaymentMethod($request->payment_method)
-                ->setDeliveryMobile($request->mobile)
-                ->setSalesChannel($request->sales_channel)
-                ->setPartnerId($request->partner_id)
-                ->setSelectedPartnerId($request->partner)
-                ->setAdditionalInformation($request->additional_information)
-                ->setAffiliationId($request->affiliation_id)
-                ->setInfoCallId($request->info_call_id)
-                ->setBusinessId($request->business_id)
-                ->setCrmId($request->crm_id)
-                ->setVoucherId($request->voucher)
-                ->setServices($request->services)
-                ->setScheduleDate($request->date)
-                ->setScheduleTime($request->time)
-                ->setVendorId($request->vendor_id)
-                ->setUserAgentInformation($userAgentInformation)
-                ->create();
-            if (!$order) return api_response($request, null, 500);
-            $order = Order::find($order->id);
-            $customer = $request->customer;
-            if (!empty($customer->profile->name) && empty($customer->profile->gender)) dispatch(new AddCustomerGender($customer->profile));
-            $payment_method = $request->payment_method;
-            /** @var Payment $payment */
-            $payment = $this->getPayment($payment_method, $order, $order_adapter);
-            if ($payment) $payment = $payment->getFormattedPayment();
-            $job = $order->jobs->first();
-            $partner_order = $job->partnerOrder;
-            $order_with_response_data = [
-                'job_id' => $job->id,
-                'order_code' => $order->code(),
-                'payment' => $payment,
-                'order' => [
-                    'id' => $order->id,
-                    'code' => $order->code(),
-                    'job' => ['id' => $job->id]
-                ]
-            ];
-            if ($partner_order->partner_id) {
-                $order_with_response_data['provider_mobile'] = $partner_order->partner->getContactNumber();
-                $this->sendNotifications($customer, $order);
-            }
-
-            $this->sendSmsToCustomer($customer, $order);
-
-            return api_response($request, null, 200, $order_with_response_data);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            logError($e, $request, $message);
-            return api_response($request, $message, 400, ['message' => $message]);
+        $this->validate($request, [
+            'name' => 'required|string',
+            'services' => 'required|string',
+            'sales_channel' => 'required|string',
+            'remember_token' => 'required|string',
+            'mobile' => 'required|string|mobile:bd',
+            'email' => 'sometimes|email',
+            'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
+            'time' => 'required|string',
+            'payment_method' => 'required|string|in:cod,online,wallet,bkash,cbl,partner_wallet,bondhu_balance',
+            'address' => 'required_without:address_id',
+            'address_id' => 'required_without:address|numeric',
+            'partner' => 'sometimes|required',
+            'partner_id' => 'sometimes|required|numeric',
+            'affiliate_id' => 'sometimes|required|numeric',
+            'info_call_id' => 'sometimes|required|numeric',
+            'affiliation_id' => 'sometimes|required|numeric',
+            'vendor_id' => 'sometimes|required|numeric',
+            'crm_id' => 'sometimes|required|numeric',
+            'business_id' => 'sometimes|required|numeric',
+            'voucher' => 'sometimes|required|numeric',
+            'emi_month' => 'numeric',
+            'created_by' => 'numeric',
+            'created_by_name' => 'string',
+        ], ['mobile' => 'Invalid mobile number!']);
+        $this->setModifierFromRequest($request);
+        $userAgentInformation->setRequest($request);
+        $order = $order_place
+            ->setCustomer($request->customer)
+            ->setDeliveryName($request->name)
+            ->setDeliveryAddressId($request->address_id)
+            ->setDeliveryAddress($request->address)
+            ->setPaymentMethod($request->payment_method)
+            ->setDeliveryMobile($request->mobile)
+            ->setSalesChannel($request->sales_channel)
+            ->setPartnerId($request->partner_id)
+            ->setSelectedPartnerId($request->partner)
+            ->setAdditionalInformation($request->additional_information)
+            ->setAffiliationId($request->affiliation_id)
+            ->setInfoCallId($request->info_call_id)
+            ->setBusinessId($request->business_id)
+            ->setCrmId($request->crm_id)
+            ->setVoucherId($request->voucher)
+            ->setServices($request->services)
+            ->setScheduleDate($request->date)
+            ->setScheduleTime($request->time)
+            ->setVendorId($request->vendor_id)
+            ->setUserAgentInformation($userAgentInformation)
+            ->create();
+        if (!$order) return api_response($request, null, 500);
+        $order = Order::find($order->id);
+        $customer = $request->customer;
+        if (!empty($customer->profile->name) && empty($customer->profile->gender)) dispatch(new AddCustomerGender($customer->profile));
+        $payment_method = $request->payment_method;
+        /** @var Payment $payment */
+        $payment = $this->getPayment($payment_method, $order, $order_adapter);
+        if ($payment) $payment = $payment->getFormattedPayment();
+        $job = $order->jobs->first();
+        $partner_order = $job->partnerOrder;
+        $order_with_response_data = [
+            'job_id' => $job->id,
+            'order_code' => $order->code(),
+            'payment' => $payment,
+            'order' => [
+                'id' => $order->id,
+                'code' => $order->code(),
+                'job' => ['id' => $job->id]
+            ]
+        ];
+        if ($partner_order->partner_id) {
+            $order_with_response_data['provider_mobile'] = $partner_order->partner->getContactNumber();
+            $this->sendNotifications($customer, $order);
         }
+
+        $this->sendSmsToCustomer($customer, $order);
+
+        return api_response($request, null, 200, $order_with_response_data);
     }
 
     private function setModifierFromRequest(Request $request)
@@ -135,8 +128,6 @@ class OrderController extends Controller
                 return;
             };
         }
-
-
 
         if ($request->has('created_by')) $this->setModifier(User::find((int)$request->created_by));
         else $this->setModifier($request->customer);
@@ -168,14 +159,17 @@ class OrderController extends Controller
         }
     }
 
-    private function sendSmsToCustomer($customer, $order) {
+    private function sendSmsToCustomer($customer, $order)
+    {
         $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
-        if ($this->isSendingServedConfirmationSms($order)) (new SmsHandler('order-created'))
+        if (!$this->isSendingServedConfirmationSms($order)) return;
+
+        (new SmsHandler('order-created'))
             ->setBusinessType(BusinessType::MARKETPLACE)
             ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
             ->send($customer->profile->mobile, [
-            'order_code' => $order->code()
-        ]);
+                'order_code' => $order->code()
+            ]);
     }
 
     public function storeFromBondhu(OrderCreateFromBondhuRequest $request, $affiliate, BondhuAutoOrderV3 $bondhu_auto_order, OrderPlace $order_place, OrderAdapter $order_adapter)
@@ -247,7 +241,6 @@ class OrderController extends Controller
         }
         if ($voucher->usage($customer->profile) == $voucher->max_order) {
             $customer->promotions()->where('voucher_id', $order->voucher_id)->update(['is_valid' => 0]);
-            return;
         }
     }
 
@@ -280,8 +273,8 @@ class OrderController extends Controller
                         ->setBusinessType(BusinessType::MARKETPLACE)
                         ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
                         ->send($customer->profile->mobile, [
-                        'order_code' => $order->code()
-                    ]);
+                            'order_code' => $order->code()
+                        ]);
                 }
             }
         } catch (Throwable $e) {
@@ -297,7 +290,7 @@ class OrderController extends Controller
     {
         return (
             !in_array($order->portal_name, config('sheba.stopped_sms_portal_for_customer')) &&
-            !($order->portal_name == 'admin-portal' && $order->sales_channel == 'Bondhu')
+            !($order->portal_name == Portals::ADMIN && $order->sales_channel == 'Bondhu')
         );
     }
 
@@ -311,10 +304,10 @@ class OrderController extends Controller
             ->setBusinessType(BusinessType::BONDHU)
             ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
             ->send($agent_mobile, [
-            'service_name' => $job->category->name,
-            'order_code' => $order->code(),
-            'preferred_time' => $job->preferred_time,
-            'preferred_date' => $job->schedule_date,
-        ]);
+                'service_name' => $job->category->name,
+                'order_code' => $order->code(),
+                'preferred_time' => $job->preferred_time,
+                'preferred_date' => $job->schedule_date,
+            ]);
     }
 }

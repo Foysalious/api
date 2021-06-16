@@ -16,17 +16,6 @@ class TestJob extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
 
-    private $sms; /** @var Sms */
-
-    /**
-     * Create a new job instance.
-     *
-     */
-    public function __construct()
-    {
-        $this->sms = new Sms();//app(Sms::class);
-    }
-
     /**
      * Execute the job.
      *
@@ -39,7 +28,7 @@ class TestJob extends Job implements ShouldQueue
             $m->to('arnabrahman@hotmail.com', 'Arnab')->subject('Server!');
         });*/
 
-        $this->sms
+        (new Sms())
             ->setFeatureType(FeatureType::COMMON)
             ->setBusinessType(BusinessType::COMMON)
             ->shoot('+8801678242973', 'Test job from queue with supervisor at ' . \Carbon\Carbon::now()->toDateTimeString());

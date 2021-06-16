@@ -78,8 +78,8 @@ class TopUpBalanceUpdateAndNotifyJob extends Job implements ShouldQueue
                 ->setBusinessType(BusinessType::BONDHU)
                 ->setFeatureType(FeatureType::TOP_UP)
                 ->send($sms_receiver->phone, [
-                'message' => $message
-            ]);
+                    'message' => $message
+                ]);
         });
     }
 
