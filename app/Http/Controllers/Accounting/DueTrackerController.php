@@ -118,7 +118,7 @@ class DueTrackerController extends Controller
                 $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
                 $data['end_date'] = $request->has("end_date") ? $request->end_date : null;
                 $balanceData = $this->dueTrackerRepo->setPartner($request->partner)->getDuelistBalance($request);
-                array_merge($data, $balanceData);
+                $data = array_merge($data, $balanceData);
                 $pdf_link = (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile('due_tracker_due_list')->save(true);
                 return api_response($request, null, 200, ['message' => 'PDF download successful','pdf_link' => $pdf_link]);
             }
@@ -127,7 +127,7 @@ class DueTrackerController extends Controller
                 $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
                 $data['end_date'] = $request->has("end_date") ? $request->end_date : null;
                 $balanceData = $this->dueTrackerRepo->setPartner($request->partner)->getDuelistBalance($request);
-                array_merge($data, $balanceData);
+                $data = array_merge($data, $balanceData);
                 $data['pdf_link'] = (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile('due_tracker_due_list')->save(true);
             }
             return api_response($request, null, 200, ['data' => $data]);
@@ -165,7 +165,7 @@ class DueTrackerController extends Controller
                 $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
                 $data['end_date'] = $request->has("end_date") ? $request->end_date : null;
                 $balanceData = $this->dueTrackerRepo->setPartner($request->partner)->dueListBalanceByCustomer($request, $customerId);
-                array_merge($data, $balanceData);
+                $data = array_merge($data, $balanceData);
                 $pdf_link = (new PdfHandler())->setName("due tracker by customer")->setData($data)->setViewFile('due_tracker_due_list_by_customer')->save(true);
                 return api_response($request, null, 200, ['message' => 'PDF download successful','link'  => $pdf_link]);
             }
@@ -173,7 +173,7 @@ class DueTrackerController extends Controller
                 $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
                 $data['end_date'] = $request->has("end_date") ? $request->end_date : null;
                 $balanceData = $this->dueTrackerRepo->setPartner($request->partner)->dueListBalanceByCustomer($request, $customerId);
-                array_merge($data, $balanceData);
+                $data = array_merge($data, $balanceData);
                 $data['pdf_link'] = (new PdfHandler())->setName("due tracker by customer")->setData($data)->setViewFile('due_tracker_due_list_by_customer')->save(true);
             }
             return api_response($request, null, 200, ['data' => $data]);
