@@ -1,13 +1,14 @@
 <?php namespace App\Sheba\PosOrderService\Services;
 
 use App\Sheba\PosOrderService\PosOrderServerClient;
+use App\Sheba\SmanagerUserService\SmanagerUserServerClient;
 
 class OrderService
 {
     /**
      * @var PosOrderServerClient
      */
-    private $client;
+    private $client, $smanagerUserClient;
     private $partnerId;
     private $customerId;
     private $deliveryAddress;
@@ -17,10 +18,22 @@ class OrderService
     private $orderId;
     private $skus, $discount, $paymentMethod, $paymentLinkAmount, $paidAmount;
     protected $emi_month, $interest, $bank_transaction_charge, $delivery_name, $delivery_mobile, $note, $voucher_id;
+    protected $userId;
 
-    public function __construct(PosOrderServerClient $client)
+    public function __construct(PosOrderServerClient $client, SmanagerUserServerClient $smanagerUserClient)
     {
         $this->client = $client;
+        $this->smanagerUserClient = $smanagerUserClient;
+    }
+
+    /**
+     * @param mixed $user_id
+     * @return OrderService
+     */
+    public function setUserId($user_id)
+    {
+        $this->userId = $user_id;
+        return $this;
     }
 
     /**
@@ -189,6 +202,11 @@ class OrderService
     public function getDetails()
     {
         return $this->client->get('api/v1/partners/' . $this->partnerId . '/orders/' . $this->orderId);
+    }
+
+    public function getUser()
+    {
+        return $this->smanagerUserClient->get('api/v1/partners/' . $this->partnerId . '/users/' . $this->userId);
     }
 
     public function store()
