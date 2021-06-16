@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="Application Test Suite" tests="1" assertions="2" failures="0" errors="0" time="0.212285">
-    <testsuite name="Tests\Feature\CustomerInfoCall\InfoCallCreateTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallCreateTest.php" tests="1" assertions="2" failures="0" errors="0" time="0.212285">
-      <testcase name="testInfoCallCreateForResponseWithServiceNameMobileLocationIdInParameter" class="Tests\Feature\CustomerInfoCall\InfoCallCreateTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallCreateTest.php" line="245" assertions="2" time="0.212285"/>
+  <testsuite name="Application Test Suite" tests="1" assertions="2" failures="0" errors="0" time="1.041112">
+    <testsuite name="Tests\Feature\CustomerInfoCall\InfoCallCreateTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallCreateTest.php" tests="1" assertions="2" failures="0" errors="0" time="1.041112">
+      <testcase name="testInfoCallCreateCustomerForResponse200" class="Tests\Feature\CustomerInfoCall\InfoCallCreateTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallCreateTest.php" line="8" assertions="2" time="1.041112"/>
     </testsuite>
   </testsuite>
 </testsuites>
