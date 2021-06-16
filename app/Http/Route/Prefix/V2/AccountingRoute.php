@@ -23,6 +23,7 @@ class AccountingRoute
                 $api->get('/due-list', 'Accounting\\DueTrackerController@dueList');
                 $api->get('/due-list-balance', 'Accounting\\DueTrackerController@dueListBalance');
                 $api->get('/due-list/{customerId}', 'Accounting\\DueTrackerController@dueListByCustomerId');
+                $api->get('/due-list/{customerId}/balance', 'Accounting\\DueTrackerController@dueListBalanceByCustomer');
                 $api->post('/', 'Accounting\\DueTrackerController@store');
                 $api->post('/{entry_id}', 'Accounting\\DueTrackerController@update');
                 $api->delete('/{entry_id}', 'Accounting\\DueTrackerController@delete');
