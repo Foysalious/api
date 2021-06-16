@@ -36,12 +36,12 @@ class DefaultSettingV3
             "is_on_homepage" => 0
         ];
 
-        $loan = [
-            "key" => "loan",
-            "name_en" => "Loan",
-            "name_bn" => "ডিজিটাল লোন",
-            "is_on_homepage" => 1
-        ];
+//        $loan = [
+//            "key" => "loan",
+//            "name_en" => "Loan",
+//            "name_bn" => "ডিজিটাল লোন",
+//            "is_on_homepage" => 1
+//        ];
 
         $earnings = [
             "key" => "earnings",
@@ -126,10 +126,10 @@ class DefaultSettingV3
             "name_bn" => "টপ-আপ",
             "is_on_homepage" => 1
         ];
-        return [$pos, $pos_due, $payment_link, $online_sheba, $extra_income, $loan, $earnings, $pos_history, $customer_list, $marketing, $report, $stock, $e_shop, $expense, $emi,$topup, $digital_banking];
+        return [$pos, $pos_due, $payment_link, $online_sheba, $extra_income, $earnings, $pos_history, $customer_list, $marketing, $report, $stock, $e_shop, $expense, $emi,$topup, $digital_banking];
     }
     public static function getLastUpdatedAt()
     {
-        return '2021-06-06';
+        return '2021-06-16';
     }
 }
