@@ -30,8 +30,9 @@ class SubscriptionWisePaymentLinkCharges
     {
         $payment_configuration = SubscriptionWisePaymentGateway::find($this->getPaymentGatewayConfigurationId());
         $gateway_charges = isset($payment_configuration) ? json_decode(json_decode($payment_configuration)->gateway_charges) : null;
-        foreach ($gateway_charges as $charge)
-            if($charge->key == $payment_method) $this->gateway_charge = $charge;
+        if(isset($gateway_charges))
+            foreach ($gateway_charges as $charge)
+                if($charge->key == $payment_method) $this->gateway_charge = $charge;
 
         return $this;
     }
