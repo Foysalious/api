@@ -183,6 +183,7 @@ class DeliveryService
         if ($this->partner->id != $this->posOrder->partner_id) {
             throw new DoNotReportException("Order does not belongs to this partner", 400);
         }
+        $payment_info = $this->paymentInfo($this->posOrder->id);
         return [
             'partner_pickup_information' => [
                 'merchant_name' => $this->partner->name,
@@ -204,7 +205,7 @@ class DeliveryService
                     'thana' => $this->posOrder->delivery_thana,
                     'zilla' => $this->posOrder->delivery_district
                 ],
-                'payment_method' => ($payment_info = $this->paymentInfo($this->posOrder->id)) ? $payment_info->method : 'COD',
+                'payment_method' => $payment_info ? ($payment_info->method == 'cod' ? 'COD' : 'Pre-paid') : 'COD',
                 'cod_amount' => $this->getDueAmount(),
             ],
         ];
