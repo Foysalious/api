@@ -388,15 +388,15 @@ class PartnerSubscriptionBilling
             ->setBusinessType(BusinessType::SMANAGER)
             ->setFeatureType(FeatureType::PARTNER_SUBSCRIPTION)
             ->send($partner->getContactNumber(), [
-            'old_package_name'       => $old_package->show_name_bn,
-            'new_package_name'       => $new_package->show_name_bn,
-            'subscription_amount'    => $price,
-            'old_package_type'       => $old_billing_type,
-            'new_package_type'       => $new_billing_type,
-            'package_name'           => $new_package->show_name_bn,
-            'formatted_package_type' => $new_package->titleTypeBn($new_billing_type),
-            'package_type'           => $new_billing_type
-        ]);
+                'old_package_name'       => $old_package->show_name_bn,
+                'new_package_name'       => $new_package->show_name_bn,
+                'subscription_amount'    => $price,
+                'old_package_type'       => $old_billing_type,
+                'new_package_type'       => $new_billing_type,
+                'package_name'           => $new_package->show_name_bn,
+                'formatted_package_type' => $new_package->titleTypeBn($new_billing_type),
+                'package_type'           => $new_billing_type
+            ]);
     }
 
     /**

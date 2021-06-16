@@ -467,8 +467,8 @@ class CheckoutRepository
                 ->setBusinessType(BusinessType::MARKETPLACE)
                 ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
                 ->send($customer->profile->mobile, [
-                'order_code' => $order->code()
-            ]);
+                    'order_code' => $order->code()
+                ]);
         }
         (new NotificationRepository())->send($order);
     }
