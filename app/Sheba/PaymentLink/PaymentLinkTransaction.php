@@ -43,6 +43,9 @@ class PaymentLinkTransaction
      */
     private $entryAmount = 0;
 
+    /*** @var SubscriptionWisePaymentLinkCharges */
+    private $paymentLinkCharge;
+
     /**
      * @param Payment                $payment
      * @param PaymentLinkTransformer $linkTransformer
@@ -58,6 +61,7 @@ class PaymentLinkTransaction
         $this->paidByTypes              = PaymentLinkStatics::paidByTypes();
         $this->partnerProfit            = $this->paymentLink->getPartnerProfit();
         $this->interest                 = $this->paymentLink->getInterest();
+        $this->paymentLinkCharge        = (new SubscriptionWisePaymentLinkCharges());
     }
 
     public function isOld()
@@ -129,7 +133,7 @@ class PaymentLinkTransaction
     public function create()
     {
         $this->walletTransactionHandler->setModel($this->receiver);
-        $paymentLinkTransaction = $this->amountTransaction()->interestTransaction()->feeTransaction()->setEntryAmount();
+        $paymentLinkTransaction = $this->amountTransaction()->interestTransaction()->configurePaymentLinkCharge()->feeTransaction()->setEntryAmount();
         $this->storePaymentLinkEntry($this->amount, $this->fee, $this->interest);
         return $paymentLinkTransaction;
 
@@ -150,6 +154,16 @@ class PaymentLinkTransaction
             $formatted_interest = number_format($this->interest, 2);
             $log                = "$formatted_interest TK has been charged as emi interest fees against of Transc ID {$this->rechargeTransaction->id}, and Transc amount $this->formattedRechargeAmount";
             $this->walletTransactionHandler->setLog($log)->setType(Types::debit())->setAmount($this->interest)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
+        }
+        return $this;
+    }
+
+    private function configurePaymentLinkCharge(): PaymentLinkTransaction
+    {
+        if($this->paymentLinkCharge->isPartner($this->receiver)) {
+            $this->paymentLinkCharge->setPartner($this->receiver)->setPaymentConfigurations($this->paymentLink->getType());
+            $this->tax = $this->paymentLinkCharge->getFixedTaxAmount();
+            $this->linkCommission = $this->paymentLinkCharge->getGatewayChargePercentage();
         }
         return $this;
     }
