@@ -141,11 +141,7 @@ class DueTrackerRepository extends BaseRepository
                 $list = $list->slice($offset)->take($limit)->values();
             }
             return [
-                'list' => $list,
-                'total_transactions' => $result['total_transactions'],
-                'total' => $result['total'],
-                'stats' => $result['stats'],
-                'partner' => $this->getPartnerInfo($request->partner),
+                'list' => $list
             ];
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
