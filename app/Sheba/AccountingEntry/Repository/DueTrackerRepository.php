@@ -152,6 +152,22 @@ class DueTrackerRepository extends BaseRepository
         }
     }
 
+    public function getDuelistBalance($request)
+    {
+        try {
+            $url = "api/due-list/balance";
+            $result = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
+            return [
+                'total_transactions' => $result['total_transactions'],
+                'total' => $result['total'],
+                'stats' => $result['stats'],
+                'partner' => $this->getPartnerInfo($request->partner),
+            ];
+        } catch (AccountingEntryServerError $e) {
+            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+        }
+    }
+
     /**
      * @param $request
      * @param $customerId
