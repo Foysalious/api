@@ -11,4 +11,5 @@ class Names
     const BANGLALINK = 'banglalink';
     const AIRTEL = 'airtel';
     const PAYWELL = 'paywell';
+    const BD_RECHARGE = 'bdrecharge';
 }

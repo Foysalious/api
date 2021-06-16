@@ -61,6 +61,7 @@ class BusinessRoute
                 $api->group(['prefix' => 'members'], function ($api) {
                     $api->group(['prefix' => '{member}'], function ($api) {
                         $api->get('attendances', 'B2b\AttendanceController@showStat');
+                        $api->post('info', 'B2b\MemberController@updateMemberInfo');
                     });
                 });
                 $api->group(['prefix' => 'attendances'], function ($api) {
@@ -99,6 +100,7 @@ class BusinessRoute
                         $api->post('/personal-info', 'B2b\CoWorkerController@personalInfoEdit');
                         $api->post('/financial-info', 'B2b\CoWorkerController@financialInfoEdit');
                         $api->post('/emergency-info', 'B2b\CoWorkerController@emergencyInfoEdit');
+                        $api->post('/salary-info', 'B2b\CoWorkerController@salaryInfoEdit');
                         $api->post('/status', 'B2b\CoWorkerController@statusUpdate');
                         $api->get('/', 'B2b\CoWorkerController@show');
                         $api->post('/', 'B2b\CoWorkerController@update');
@@ -109,8 +111,10 @@ class BusinessRoute
                     $api->post('/adjustment', 'B2b\LeaveAdjustmentController@leaveAdjustment');
                     $api->post('/bulk-adjustment', 'B2b\LeaveAdjustmentController@bulkLeaveAdjustment');
                     $api->get('/generate-adjustment-excel', 'B2b\LeaveAdjustmentController@generateAdjustmentExcel');
+                    $api->get('/reject-reasons', 'B2b\LeaveController@rejectReasons');
                     $api->group(['prefix' => 'approval-requests'], function ($api) {
                         $api->get('/lists', 'B2b\LeaveController@index');
+                        $api->get('/leave-history/{business_member_id}', 'B2b\LeaveController@leaveHistory');
                         $api->group(['prefix' => '{approval_request}'], function ($api) {
                             $api->get('/', 'B2b\LeaveController@show');
                         });
@@ -121,6 +125,7 @@ class BusinessRoute
                     $api->group(['prefix' => 'balance'], function ($api) {
                         $api->get('/lists', 'B2b\LeaveController@allLeaveBalance');
                         $api->get('/{balance}', 'B2b\LeaveController@leaveBalanceDetails');
+                        $api->get('remaining/{balance}', 'B2b\LeaveController@leaveBalanceRemaining');
                     });
                     $api->group(['prefix' => 'super-admins'], function ($api) {
                         $api->get('/', 'B2b\LeaveController@getSuperAdmins');
@@ -351,6 +356,24 @@ class BusinessRoute
                     $api->get('/types', 'B2b\ApprovalFlowController@getTypes');
                     $api->get('{approval_flow}', 'B2b\ApprovalFlowController@show');
                     $api->post('{approval_flow}', 'B2b\ApprovalFlowController@update');
+                });
+                $api->group(['prefix' => 'pay-run'], function ($api) {
+                    $api->get('/', 'B2b\PayRunController@index');
+                    $api->post('/update', 'B2b\PayRunController@bulkUpdate');
+                    $api->post('/disburse', 'B2b\PayRunController@disburse');
+                    $api->get('/pending-months','B2b\PayRunController@pendingMonths');
+                });
+                $api->group(['prefix' => 'pay-report'], function ($api) {
+                    $api->get('/', 'B2b\PayReportController@index');
+                    $api->get('/last-disbursed-month', 'B2b\PayReportController@lastDisbursedMonth');
+                    $api->get('/{id}', 'B2b\PayReportController@show');
+
+                });
+                $api->group(['prefix' => 'payroll'], function ($api) {
+                    $api->get('/settings', 'B2b\PayrollController@getPayrollSettings');
+                    $api->post('/pay-schedule/{id}', 'B2b\PayrollController@updatePaySchedule');
+                    $api->post('/salary-breakdown/{id}', 'B2b\PayrollController@updateSalaryBreakdown');
+                    $api->post('/component/{payroll_settings}', 'B2b\PayrollController@addComponent');
                 });
             });
         });

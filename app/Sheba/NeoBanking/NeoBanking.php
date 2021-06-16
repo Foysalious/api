@@ -1,6 +1,8 @@
 <?php namespace Sheba\NeoBanking;
 
 use App\Sheba\NeoBanking\Banks\BankAccountInfoWithTransaction;
+use App\Sheba\NeoBanking\Constants\ThirdPartyLog;
+use App\Sheba\NeoBanking\Repositories\NeoBankingThirdPartyLogRepository;
 use Sheba\Dal\NeoBank\Model as NeoBank;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
@@ -217,6 +219,17 @@ class NeoBanking
             return $bank->loadInfo()->postCategoryDetail($category, $this->post_data);
 
         return $bank->loadInfo()->validateCategoryDetail($category, $this->post_data)->postCategoryDetail($category, $this->post_data);
+    }
+
+    public function storeThirdPartyLogs($request, $from=null, $req=null, $res=null, $others=null) {
+        /** @var NeoBankingThirdPartyLogRepository $thirdPartyLog */
+        $thirdPartyLog = app(NeoBankingThirdPartyLogRepository::class);
+        $thirdPartyLog->setFrom($from)
+            ->setRequest(json_encode($req))
+            ->setResponse(json_encode($res))
+            ->setPartnerId($request->partner->id)
+            ->setOthers(json_encode($others))
+            ->store();
     }
 
 }

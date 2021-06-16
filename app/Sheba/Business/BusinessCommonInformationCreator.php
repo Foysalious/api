@@ -10,12 +10,15 @@ use App\Sheba\Business\Weekend\Creator as InitialWeekendBusinessCommonInformatio
 use Sheba\Business\AttendanceType\AttendanceType;
 use Sheba\Business\LeaveType\DefaultType;
 use Sheba\Business\OfficeTiming\OfficeTime;
+use Sheba\Business\PayrollSetting\ Requester as PayrollSettingRequester;
+use Sheba\Business\PayrollSetting\Creator as PayrollSettingCreator;
+use Sheba\Dal\PayrollSetting\PaymentSchedule;
 use Sheba\ModificationFields;
 use App\Models\Business;
 use App\Models\Member;
 
 use Sheba\Business\OfficeTiming\CreateRequest as OfficeTimingCreateRequest;
-Use Sheba\Business\Weekend\CreateRequest as WeekendCreateRequest;
+use Sheba\Business\Weekend\CreateRequest as WeekendCreateRequest;
 use Sheba\Business\AttendanceType\CreateRequest as AttendanceTypeCreateRequest;
 use Sheba\Business\Holiday\CreateRequest as BusinessGovtHolidayCreatorRequest;
 
@@ -47,6 +50,14 @@ class BusinessCommonInformationCreator
     public $business;
     /** @var Member $member */
     public $member;
+    /**
+     * @var OfficeTimingCreateRequest
+     */
+    private $payrollSettingRequester;
+    /**
+     * @var PayrollSettingCreator
+     */
+    private $payrollSettingCreator;
 
     /**
      * BusinessCommonInformationCreator constructor.
@@ -59,6 +70,8 @@ class BusinessCommonInformationCreator
      * @param AttendanceTypeCreateRequest $attendance_type_create_request
      * @param BusinessGovtHolidayCreatorRequest $business_govt_holiday_creator_request
      * @param LeaveTypeCreator $leave_type_creator
+     * @param PayrollSettingRequester $payroll_setting_requester
+     * @param PayrollSettingCreator $payroll_setting_creator
      */
     public function __construct(InitialOfficeTimeBusinessCommonInformationCreator $initialize_office_hour,
                                 InitialWeekendBusinessCommonInformationCreator $initialize_weekend,
@@ -68,7 +81,9 @@ class BusinessCommonInformationCreator
                                 WeekendCreateRequest $weekend_create_request,
                                 AttendanceTypeCreateRequest $attendance_type_create_request,
                                 BusinessGovtHolidayCreatorRequest $business_govt_holiday_creator_request,
-                                LeaveTypeCreator $leave_type_creator)
+                                LeaveTypeCreator $leave_type_creator,
+                                PayrollSettingRequester $payroll_setting_requester,
+                                PayrollSettingCreator $payroll_setting_creator)
     {
         $this->officeHoursCreator = $initialize_office_hour;
         $this->weekendCreator = $initialize_weekend;
@@ -76,11 +91,13 @@ class BusinessCommonInformationCreator
         $this->businessGovtHolidayCreator = $initialize_holiday;
 
         $this->officeTimingCreateRequest = $office_timing_create_request;
+        $this->payrollSettingRequester = $payroll_setting_requester;
         $this->weekendCreateRequest = $weekend_create_request;
         $this->attendanceTypeCreateRequest = $attendance_type_create_request;
         $this->businessGovtHolidayCreatorRequest = $business_govt_holiday_creator_request;
 
         $this->leaveTypeCreator = $leave_type_creator;
+        $this->payrollSettingCreator = $payroll_setting_creator;
     }
 
     /**
@@ -105,7 +122,25 @@ class BusinessCommonInformationCreator
 
     public function create()
     {
-        /** Business Leave Types */
+        $this->tagPayrollSettingAndComponents();
+        $this->tagLeaveTypes();
+        $this->tagOfficeHours();
+        $this->tagWeekend();
+        $this->tagAttendanceType();
+        $this->tagGovtHoliday();
+        $this->tagDepartment();
+        $this->tagRole();
+        $this->saveSmsTemplate();
+    }
+
+    private function tagPayrollSettingAndComponents()
+    {
+        $this->payrollSettingRequester->setBusiness($this->business)->setPaymentSchedule(PaymentSchedule::ONCE_A_MONTH);
+        $this->payrollSettingCreator->setPayrollSettingRequest($this->payrollSettingRequester)->create();
+    }
+
+    private function tagLeaveTypes()
+    {
         foreach (DefaultType::getWithKeys() as $key => $value) {
             $this->leaveTypeCreator->setBusiness($this->business)
                 ->setMember($this->member)
@@ -114,32 +149,36 @@ class BusinessCommonInformationCreator
                 ->setIsLeaveHalfDayEnable(0)
                 ->create();
         }
+    }
 
-        /** Business Office Hours */
+    private function tagOfficeHours()
+    {
         $this->officeTimingCreateRequest = $this->officeTimingCreateRequest->setBusiness($this->business)
             ->setStartTime(OfficeTime::START_TIME)
             ->setEndTime(OfficeTime::END_TIME);
         $this->officeHoursCreator->setOfficeTimingCreateRequest($this->officeTimingCreateRequest)->create();
+    }
 
-        /**  Business Weekend */
+    private function tagWeekend()
+    {
         $weekdays = ['friday', 'saturday'];
         foreach ($weekdays as $weekday) {
             $this->weekendCreateRequest = $this->weekendCreateRequest->setBusiness($this->business)->setWeekday($weekday);
             $this->weekendCreator->setWeekendCreateRequest($this->weekendCreateRequest)->create();
         }
+    }
 
-        /** Business Attendance Type */
+    public function tagAttendanceType()
+    {
         $this->attendanceTypeCreateRequest = $this->attendanceTypeCreateRequest->setBusiness($this->business)
             ->setAttendanceType(AttendanceType::ATTENDANCE_TYPE);
         $this->attendanceTypesCreator->setAttendanceTypeCreateRequest($this->attendanceTypeCreateRequest)->create();
+    }
 
-        /** Business Government Holiday */
+    public function tagGovtHoliday()
+    {
         $this->businessGovtHolidayCreatorRequest = $this->businessGovtHolidayCreatorRequest->setBusiness($this->business);
         $this->businessGovtHolidayCreator->setBusinessGovtHolidayCreatorRequest($this->businessGovtHolidayCreatorRequest)->create();
-
-        $this->tagDepartment();
-        $this->tagRole();
-        $this->saveSmsTemplate();
     }
 
     private function tagDepartment()

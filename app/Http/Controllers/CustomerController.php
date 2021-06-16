@@ -18,6 +18,7 @@ use Cache;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Redis;
 use Sheba\Dal\Profile\Events\ProfilePasswordUpdated;
+use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Voucher\Creator\Referral;
 use Validator;
 use DB;
@@ -41,160 +42,153 @@ class CustomerController extends Controller
 
     public function index($customer, Request $request)
     {
-        try {
-            $customer = $request->customer->load(['profile' => function ($q) {
-                $q->select('id', 'name', 'password', 'address', DB::raw('pro_pic as picture'), 'gender', DB::raw('dob as birthday'), 'email', 'mobile');
-            }]);
-            $profile = $customer->profile;
-            $profile->password = ($profile->password) ? 1 : 0;
-            $customer->profile['credit'] = $customer->shebaCredit();
-            return api_response($request, $customer->profile, 200, ['profile' => $customer->profile]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $customer = $request->customer->load(['profile' => function ($q) {
+            $q->select('id', 'name', 'password', 'address', DB::raw('pro_pic as picture'), 'gender', DB::raw('dob as birthday'), 'email', 'mobile');
+        }]);
+        $profile = $customer->profile;
+        $profile->password = ($profile->password) ? 1 : 0;
+        $customer->profile['credit'] = $customer->shebaCredit();
+        return api_response($request, $customer->profile, 200, ['profile' => $customer->profile]);
     }
 
     public function update($customer, Request $request)
     {
-        try {
+        $this->validate($request, [
+            'field' => 'required|string|in:name,birthday,gender,address',
+            'value' => 'required|string'
+        ]);
+        $customer = $request->customer;
+        $field = $request->field;
+        $profile = $customer->profile;
+        if ($field == 'birthday') {
             $this->validate($request, [
-                'field' => 'required|string|in:name,birthday,gender,address',
+                'value' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
+            ]);
+            $profile->dob = $request->value;
+        } elseif ($field == 'gender') {
+            $this->validate($request, [
+                'value' => 'required|string|in:Male,Female,Other',
+            ]);
+            $profile->gender = $request->value;
+        } else {
+            $this->validate($request, [
                 'value' => 'required|string'
             ]);
-            $customer = $request->customer;
-            $field = $request->field;
-            $profile = $customer->profile;
-            if ($field == 'birthday') {
-                $this->validate($request, [
-                    'value' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
-                ]);
-                $profile->dob = $request->value;
-            } elseif ($field == 'gender') {
-                $this->validate($request, [
-                    'value' => 'required|string|in:Male,Female,Other',
-                ]);
-                $profile->gender = $request->value;
-            } else {
-                $this->validate($request, [
-                    'value' => 'required|string'
-                ]);
-                $value = $field == 'name' ? ucwords($request->value) : $request->value;
-                $profile->$field = trim($value);
-            }
-            $profile->update();
-            return api_response($request, 1, 200);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+            $value = $field == 'name' ? ucwords($request->value) : $request->value;
+            $profile->$field = trim($value);
         }
+        $profile->update();
+        $customer->reload();
+        if ($customer->isCompleted() && !$customer->is_completed) {
+            app()->make(ActionRewardDispatcher::class)->run('profile_complete', $customer);
+            $customer->is_completed = 1;
+            $customer->update();
+        }
+        return api_response($request, 1, 200);
+    }
+
+    public function updateV3($customer, Request $request)
+    {
+        /** @var Customer $customer */
+        $customer = $request->customer;
+        $profile = $customer->profile;
+        $this->validate($request, [
+            'name' => 'string',
+            'gender'=>'string|in:Male,Female,Other',
+            'address'=>'string',
+            'dob' => 'date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
+            'email' => 'email|unique:profiles,email,' . $profile->id,
+            'is_old_user' => 'required'
+        ]);
+        if ($request->has('name')) $profile->name = ucwords($request->name);
+        if ($request->has('gender')) $profile->gender = $request->gender;
+        if ($request->has('address')) $profile->address = $request->address;
+        if ($request->has('dob')) $profile->dob = $request->dob;
+        if ($request->has('email')) $profile->email = $request->email;
+        $profile->update();
+        $customer->reload();
+        if ($request->is_old_user == "1" && $customer->isCompleted() && !$customer->is_completed) {
+            app()->make(ActionRewardDispatcher::class)->run('profile_complete', $customer);
+            $customer->is_completed = 1;
+            $customer->update();
+        }
+        elseif ($customer->isCompleted() && !$customer->is_completed) {
+            $customer->is_completed = 1;
+            $customer->update();
+        }
+        return api_response($request, 1, 200);
     }
 
     public function updateEmail($customer, Request $request)
     {
-        try {
-            $profile = $request->customer->profile;
-            $this->validate($request, [
-                'email' => 'required|email|unique:profiles,email,' . $profile->id
-            ]);
-            $profile->email = $request->email;
-            $profile->update();
-            return api_response($request, 1, 200);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $profile = $request->customer->profile;
+        $this->validate($request, [
+            'email' => 'required|email|unique:profiles,email,' . $profile->id
+        ]);
+        $profile->email = $request->email;
+        $profile->update();
+        return api_response($request, 1, 200);
     }
 
     public function updatePassword($customer, Request $request)
     {
-        try {
-            $this->validate($request, [
-                'new_password' => 'required|string|min:6',
-                'old_password' => 'sometimes|string',
-            ]);
-            $profile = $request->customer->profile;
-            if ($profile->password) {
-                if (!Hash::check($request->old_password, $profile->password)) {
-                    return api_response($request, null, 403, ['message' => "Old password doesn't match"]);
-                }
+        $this->validate($request, [
+            'new_password' => 'required|string|min:6',
+            'old_password' => 'sometimes|string',
+        ]);
+        $profile = $request->customer->profile;
+        if ($profile->password) {
+            if (!Hash::check($request->old_password, $profile->password)) {
+                return api_response($request, null, 403, ['message' => "Old password doesn't match"]);
             }
-            $profile->password = bcrypt($request->new_password);
-            $profile->update();
-            event(new ProfilePasswordUpdated($profile));
-            return api_response($request, 1, 200);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
         }
+        $profile->password = bcrypt($request->new_password);
+        $profile->update();
+        event(new ProfilePasswordUpdated($profile));
+        return api_response($request, 1, 200);
     }
 
     public function updatePicture($customer, Request $request)
     {
-        try {
-            $this->validate($request, [
-                'picture' => 'required|mimes:jpeg,png'
-            ]);
-            $profile = $request->customer->profile;
-            $photo = $request->file('picture');
-            if (basename($profile->pro_pic) != 'default.jpg') {
-                $filename = substr($profile->pro_pic, strlen(env('S3_URL')));
-                $this->fileRepository->deleteFileFromCDN($filename);
-            }
-            $filename = Carbon::now()->timestamp . '_profile_image_' . $profile->id . '.' . $photo->extension();
-            $picture_link = $this->fileRepository->uploadToCDN($filename, $photo, 'images/profiles/');
-            if ($picture_link != false) {
-                $profile->pro_pic = $picture_link;
-                $profile->update();
-                return api_response($request, $profile, 200, ['picture' => $profile->pro_pic]);
-            } else {
-                return api_response($request, null, 500);
-            }
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+        $this->validate($request, [
+            'picture' => 'required|mimes:jpeg,png'
+        ]);
+        $profile = $request->customer->profile;
+        $photo = $request->file('picture');
+        if (basename($profile->pro_pic) != 'default.jpg') {
+            $filename = substr($profile->pro_pic, strlen(env('S3_URL')));
+            $this->fileRepository->deleteFileFromCDN($filename);
+        }
+        $filename = Carbon::now()->timestamp . '_profile_image_' . $profile->id . '.' . $photo->extension();
+        $picture_link = $this->fileRepository->uploadToCDN($filename, $photo, 'images/profiles/');
+        if ($picture_link != false) {
+            $profile->pro_pic = $picture_link;
+            $profile->update();
+            return api_response($request, $profile, 200, ['picture' => $profile->pro_pic]);
+        } else {
             return api_response($request, null, 500);
         }
     }
 
     public function updateMobile($customer, Request $request)
     {
-        try {
-            $this->validate($request, [
-                'code' => 'required|string'
-            ]);
-            $code_data = $this->fbKit->authenticateKit($request->code);
-            if ($code_data) {
-                $mobile = formatMobile($code_data['mobile']);
-                $mobile_profile = Profile::where('mobile', $mobile)->first();
-                if ($mobile_profile == null) {
-                    $profile = $request->customer->profile;
-                    $profile->mobile = $mobile;
-                    $profile->mobile_verified = 1;
-                    $profile->update();
-                } else {
-                    return api_response($request, null, 403, ['message' => 'Mobile already exits!']);
-                }
+        $this->validate($request, [
+            'code' => 'required|string'
+        ]);
+        $code_data = $this->fbKit->authenticateKit($request->code);
+        if ($code_data) {
+            $mobile = formatMobile($code_data['mobile']);
+            $mobile_profile = Profile::where('mobile', $mobile)->first();
+            if ($mobile_profile == null) {
+                $profile = $request->customer->profile;
+                $profile->mobile = $mobile;
+                $profile->mobile_verified = 1;
+                $profile->update();
+            } else {
+                return api_response($request, null, 403, ['message' => 'Mobile already exits!']);
             }
-            return api_response($request, null, 409);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
         }
+        return api_response($request, null, 409);
     }
 
     public function emailVerification(Customer $customer, $code)
@@ -308,19 +302,14 @@ class CustomerController extends Controller
 
     public function getDeliveryInfo($customer, Request $request)
     {
-        try {
-            $customer = $request->customer;
-            $customer_order_addresses = $customer->orders()->selectRaw('delivery_address,count(*) as c')->groupBy('delivery_address')->orderBy('c', 'desc')->get();
-            $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'address')->get()->map(function ($customer_delivery_address) use ($customer_order_addresses) {
-                $customer_delivery_address['count'] = $this->getOrderCount($customer_order_addresses, $customer_delivery_address);
-                return $customer_delivery_address;
-            })->sortByDesc('count')->values()->all();
-            return api_response($request, $customer_delivery_addresses, 200, ['addresses' => $customer_delivery_addresses,
-                'name' => $customer->profile->name, 'mobile' => $customer->profile->mobile]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $customer = $request->customer;
+        $customer_order_addresses = $customer->orders()->selectRaw('delivery_address,count(*) as c')->groupBy('delivery_address')->orderBy('c', 'desc')->get();
+        $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'address')->get()->map(function ($customer_delivery_address) use ($customer_order_addresses) {
+            $customer_delivery_address['count'] = $this->getOrderCount($customer_order_addresses, $customer_delivery_address);
+            return $customer_delivery_address;
+        })->sortByDesc('count')->values()->all();
+        return api_response($request, $customer_delivery_addresses, 200, ['addresses' => $customer_delivery_addresses,
+            'name' => $customer->profile->name, 'mobile' => $customer->profile->mobile]);
     }
 
     private function getOrderCount($customer_order_addresses, $customer_delivery_address)
@@ -467,74 +456,62 @@ class CustomerController extends Controller
 
     public function getNotifications($customer, Request $request)
     {
-        try {
-            $customer = $request->customer;
-            $notifications = ($customer->notifications()->select('id', 'title', 'event_type', 'event_id', 'type', 'is_seen', 'created_at')->orderBy('id', 'desc')->limit(20)->get());
-            $notifications->map(function ($notification) {
-                $notification->event_type = str_replace('App\Models\\', "", $notification->event_type);
-                array_add($notification, 'time', $notification->created_at->format('j M \\a\\t h:i A'));
-                array_forget($notification, 'created_at');
-                if ($notification->event_type == 'Job') {
-                    $code = null;
-                    if ($notification->event_id) {
-                        $job = Job::find($notification->event_id);
-                        if ($job) {
-                            $code = $job->fullCode();
-                        }
+        $customer = $request->customer;
+        $notifications = ($customer->notifications()->select('id', 'title', 'event_type', 'event_id', 'type', 'is_seen', 'created_at')->orderBy('id', 'desc')->limit(20)->get());
+        $notifications->map(function ($notification) {
+            $notification->event_type = str_replace('App\Models\\', "", $notification->event_type);
+            array_add($notification, 'time', $notification->created_at->format('j M \\a\\t h:i A'));
+            array_forget($notification, 'created_at');
+            if ($notification->event_type == 'Job') {
+                $code = null;
+                if ($notification->event_id) {
+                    $job = Job::find($notification->event_id);
+                    if ($job) {
+                        $code = $job->fullCode();
                     }
-                    array_add($notification, 'event_code', $code);
-                } elseif ($notification->event_type == 'Order') {
-                    $notification->event_type = "Job";
-                    $code = null;
-                    if ($notification->event_id) {
-                        $order = Order::find($notification->event_id);
-                        $notification->event_id = $order->partnerOrders[0]->jobs[0]->id;
-                        if ($order) {
-                            $code = $order->code();
-                        }
-                    }
-                    array_add($notification, 'event_code', $code);
                 }
-                return $notification;
-            });
-            if (count($notifications) != 0) {
-                return api_response($request, $notifications, 200, ['notifications' => $notifications->values()->all()]);
-            } else {
-                return api_response($request, null, 404);
+                array_add($notification, 'event_code', $code);
+            } elseif ($notification->event_type == 'Order') {
+                $notification->event_type = "Job";
+                $code = null;
+                if ($notification->event_id) {
+                    $order = Order::find($notification->event_id);
+                    $notification->event_id = $order->partnerOrders[0]->jobs[0]->id;
+                    if ($order) {
+                        $code = $order->code();
+                    }
+                }
+                array_add($notification, 'event_code', $code);
             }
-        } catch (\Throwable $e) {
-            return api_response($request, null, 500);
+            return $notification;
+        });
+        if (count($notifications) != 0) {
+            return api_response($request, $notifications, 200, ['notifications' => $notifications->values()->all()]);
+        } else {
+            return api_response($request, null, 404);
         }
     }
 
     public function store(Request $request)
     {
-        try {
-            $request->merge(['mobile' => formatMobile($request->mobile)]);
-            $this->validate($request, [
-                'mobile' => 'required|string|mobile:bd',
-                'name' => 'required|string'
-            ], ['mobile' => 'Invalid mobile number!']);
+        $request->merge(['mobile' => formatMobile($request->mobile)]);
+        $this->validate($request, [
+            'mobile' => 'required|string|mobile:bd',
+            'name' => 'required|string'
+        ], ['mobile' => 'Invalid mobile number!']);
 
-            $profile = $this->profileRepository->getIfExist($request->mobile, 'mobile');
-            if(!$profile) {
-                $profile = $this->profileRepository->store(['mobile' => $request->mobile, 'name' => $request->name]);
-            } else {
-                if($profile->customer)
-                    return api_response($request, null, 400, ['message' => "User already exists."]);
-            }
-
-            $customer = new Customer();
-            $customer->remember_token = str_random(255);
-            $customer->profile_id = $profile->id;
-            $customer->save();
-            return api_response($request, $customer, 200, ['customer' => array('id' => $customer->id, 'remember_token' => $customer->remember_token)]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        $profile = $this->profileRepository->getIfExist($request->mobile, 'mobile');
+        if(!$profile) {
+            $profile = $this->profileRepository->store(['mobile' => $request->mobile, 'name' => $request->name]);
+        } else {
+            if($profile->customer)
+                return api_response($request, null, 400, ['message' => "User already exists."]);
         }
+
+        $customer = new Customer();
+        $customer->remember_token = str_random(255);
+        $customer->profile_id = $profile->id;
+        $customer->save();
+        return api_response($request, $customer, 200, ['customer' => array('id' => $customer->id, 'remember_token' => $customer->remember_token)]);
     }
 }

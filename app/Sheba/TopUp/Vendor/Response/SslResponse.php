@@ -1,6 +1,5 @@
 <?php namespace Sheba\TopUp\Vendor\Response;
 
-use Sheba\TopUp\Gateway\Ssl;
 
 class SslResponse extends TopUpResponse
 {
@@ -33,8 +32,8 @@ class SslResponse extends TopUpResponse
         return $this->response->Message;
     }
 
-    public function resolveTopUpSuccessStatus()
+    public function isPending()
     {
-        return Ssl::getInitialStatusStatically();
+        return $this->hasSuccess();
     }
 }

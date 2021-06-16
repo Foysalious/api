@@ -1,8 +1,9 @@
 <?php namespace Sheba\TopUp;
 
-
 use App\Models\TopUpOrder;
 use App\Models\User;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Illuminate\Database\Eloquent\Collection;
 use Sheba\Dal\TopUpGateway\TopUpGatewayRepository;
 use Sheba\Dal\TopupOrder\TopUpOrderRepository;
@@ -12,7 +13,7 @@ use Sheba\TopUp\Gateway\Gateway;
 
 class GatewayTimeoutHandler
 {
-    const TIMEOUT_THRESHOLD_COUNT = 3;
+    const TIMEOUT_THRESHOLD_COUNT = 5;
 
     /** @var TopUpOrderRepository */
     private $topUpOrderRepo;
@@ -28,8 +29,15 @@ class GatewayTimeoutHandler
     /** @var TopUpOrder */
     private $topUpOrder;
 
-    public function __construct(TopUpOrderRepository $top_up_repo, TopUpVendorRepository $vendor_repo,
-                                TopUpGatewayRepository $gateway_repo, Sms $sms)
+    /**
+     * GatewayTimeoutHandler constructor.
+     *
+     * @param TopUpOrderRepository $top_up_repo
+     * @param TopUpVendorRepository $vendor_repo
+     * @param TopUpGatewayRepository $gateway_repo
+     * @param Sms $sms
+     */
+    public function __construct(TopUpOrderRepository $top_up_repo, TopUpVendorRepository $vendor_repo, TopUpGatewayRepository $gateway_repo, Sms $sms)
     {
         $this->topUpOrderRepo = $top_up_repo;
         $this->vendorRepo = $vendor_repo;
@@ -90,7 +98,12 @@ class GatewayTimeoutHandler
         $gateway = $this->gateway->getName();
         $message = "All top up operators using $gateway gateway has been unpublished due to connection timeout. Please take necessary actions.";
         $this->gatewayRepo->findByName($gateway)->smsReceivers->each(function (User $user) use ($message) {
-            $this->sms->msg($message)->to($user->phone)->shoot();
+            $this->sms
+                ->setBusinessType(BusinessType::BONDHU)
+                ->setFeatureType(FeatureType::TOP_UP)
+                ->msg($message)
+                ->to($user->phone)
+                ->shoot();
         });
     }
 }

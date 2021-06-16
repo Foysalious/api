@@ -1,7 +1,8 @@
 <?php namespace Tests\Unit\Sheba\TopUp;
 
 use App\Models\TopUpOrder;
-use Sheba\TopUp\TopUp;
+use Sheba\TopUp\StatusChanger;
+use Sheba\TopUp\TopUpRechargeManager;
 use Sheba\TopUp\TopUpValidator;
 use Sheba\TopUp\Vendor\Response\TopUpErrorResponse;
 use Tests\Unit\UnitTestCase;
@@ -47,13 +48,14 @@ class TopUpTest extends UnitTestCase
     }
 
     /**
-     * @return TopUp
+     * @return TopUpRechargeManager
      */
     private function tryToRechargeInvalidOrder()
     {
-        $top_up = new TopUp($this->getValidationWithError());
+        $top_up = new TopUpRechargeManager($this->getValidationWithError(), app(StatusChanger::class));
+        $top_up->setTopUpOrder($this->topUpOrder);
         $this->shouldNotThrowException(function () use ($top_up) {
-            $top_up->recharge($this->topUpOrder);
+            $top_up->recharge();
         });
         return $top_up;
     }

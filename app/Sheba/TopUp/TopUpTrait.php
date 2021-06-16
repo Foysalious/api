@@ -10,22 +10,6 @@ use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 trait TopUpTrait
 {
-    /**
-     * @param $vendor_id
-     * @param $mobile_number
-     * @param $amount
-     * @param $type
-     * @throws \Exception
-     */
-    public function doRecharge($vendor_id, $mobile_number, $amount, $type)
-    {
-        $vendor = (new VendorFactory())->getById($vendor_id);
-        /** @var $this TopUpAgent */
-
-        $request = (new TopUpRequest())->setMobile($mobile_number)->setAmount($amount)->setType($type);
-        (new TopUp())->setAgent($this)->setVendor($vendor)->recharge($request);
-    }
-
     public function refund($amount, $log)
     {
         /*

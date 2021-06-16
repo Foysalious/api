@@ -13,8 +13,13 @@ class Section
     /** @var  Carbon */
     protected $updatedAt;
     protected $ratio;
+    /** @var bool */
+    protected $showTimer = false;
+    /** @var Carbon */
+    protected $timerEndTime;
     /** @var  array */
     protected $items = [];
+    protected $isFlash;
 
     /**
      * @param string $type
@@ -67,9 +72,44 @@ class Section
         return $this;
     }
 
+    /**
+     * @param $ratio
+     * @return Section
+     */
     public function setRatio($ratio)
     {
         $this->ratio = $ratio;
+        return $this;
+    }
+
+
+    /**
+     * @param bool $show_timer
+     * @return Section
+     */
+    public function setShowTimer($show_timer)
+    {
+        $this->showTimer = $show_timer;
+        return $this;
+    }
+
+    /**
+     * @param Carbon $time
+     * @return Section
+     */
+    public function setTimerEndTime(Carbon $time)
+    {
+        $this->timerEndTime = $time;
+        return $this;
+    }
+
+    /**
+     * @param $is_flash
+     * @return Section
+     */
+    public function setIsFlash($is_flash)
+    {
+        $this->isFlash = $is_flash;
         return $this;
     }
 
@@ -79,7 +119,7 @@ class Section
      */
     public function pushItem(Item $item)
     {
-        $this->items[] = $item;
+        $this->items[] = $item->setSectionType($this->type);
         return $this;
     }
 
@@ -95,6 +135,10 @@ class Section
             'updated_at_timestamp' => $this->updatedAt ? $this->updatedAt->timestamp : null,
             'height' => $this->height,
             'ratio' => $this->ratio,
+            'show_timer' => $this->showTimer ?: false,
+            'timer_end' => $this->timerEndTime ? $this->timerEndTime->toDateTimeString() : null,
+            'timer_end_timestamp' => $this->timerEndTime ? $this->timerEndTime->timestamp : null,
+            'is_flash' => $this->isFlash ? $this->isFlash : 0
         ];
     }
 

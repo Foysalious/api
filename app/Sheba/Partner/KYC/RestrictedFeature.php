@@ -16,7 +16,9 @@ class RestrictedFeature
             'HomeLandingActivity',
             'MyCompanyActivity',
             'CurrentPackageActivity',
-            'DueCreateLinkActivity'
+            'DueCreateLinkActivity',
+            'DCShareOptionsActivity',
+            'CreateCustomLinkActivity'
         ];
     }
 

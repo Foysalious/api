@@ -31,6 +31,7 @@ class MinMaxPrice
     {
         if ($this->service->isFixed()) return (double)$this->locationService->prices;
         $prices = (array)json_decode($this->locationService->prices);
+        if(empty($prices)) return null;
         return $condition == 'min' ? (double)min($prices) : (double)max($prices);
     }
 

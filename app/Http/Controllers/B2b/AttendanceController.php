@@ -114,6 +114,9 @@ class AttendanceController extends Controller
                                     TimeFrame $time_frame, BusinessHolidayRepoInterface $business_holiday_repo,
                                     BusinessWeekendRepoInterface $business_weekend_repo, Excel $monthly_excel)
     {
+        ini_set('memory_limit', '6096M');
+        ini_set('max_execution_time', 480);
+
         $this->validate($request, ['file' => 'string|in:excel']);
         list($offset, $limit) = calculatePagination($request);
         /** @var Business $business */
@@ -174,11 +177,13 @@ class AttendanceController extends Controller
         if ($request->has('sort_on_absent')) $all_employee_attendance = $this->attendanceSortOnAbsent($all_employee_attendance, $request->sort_on_absent);
         if ($request->has('sort_on_present')) $all_employee_attendance = $this->attendanceSortOnPresent($all_employee_attendance, $request->sort_on_present);
         if ($request->has('sort_on_leave')) $all_employee_attendance = $this->attendanceSortOnLeave($all_employee_attendance, $request->sort_on_leave);
+        if ($request->has('sort_on_late')) $all_employee_attendance = $this->attendanceSortOnLate($all_employee_attendance, $request->sort_on_late);
 
         $total_members = $all_employee_attendance->count();
         if ($request->has('limit')) $all_employee_attendance = $all_employee_attendance->splice($offset, $limit);
         if ($all_employee_attendance->isEmpty()) return api_response($request, null, 404);
-        if ($request->file == 'excel') return $monthly_excel->setMonthlyData($all_employee_attendance->toArray())->get();
+        if ($request->file == 'excel') return $monthly_excel->setMonthlyData($all_employee_attendance->toArray())->setStartDate($request->start_date)
+            ->setEndDate($request->end_date)->get();
 
         return api_response($request, $all_employee_attendance, 200, ['all_employee_attendance' => $all_employee_attendance, 'total_members' => $total_members]);
     }
@@ -231,6 +236,19 @@ class AttendanceController extends Controller
         $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
         return $employee_attendance->$sort_by(function ($attendance, $key) {
             return strtoupper($attendance['attendance']['on_leave']);
+        });
+    }
+
+    /**
+     * @param $employee_attendance
+     * @param string $sort
+     * @return mixed
+     */
+    private function attendanceSortOnLate($employee_attendance, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return $employee_attendance->$sort_by(function ($attendance, $key) {
+            return strtoupper($attendance['attendance']['late']);
         });
     }
 
@@ -289,7 +307,8 @@ class AttendanceController extends Controller
         if ($request->file == 'excel') {
             return $details_excel->setBreakDownData($daily_breakdowns->toArray())
                 ->setBusinessMember($business_member)
-                ->setDepartment($business_member->role && $business_member->role->businessDepartment ? $business_member->role->businessDepartment->name : null)
+                ->setStartDate($request->start_date)
+                ->setEndDate($request->end_date)
                 ->download();
         }
 

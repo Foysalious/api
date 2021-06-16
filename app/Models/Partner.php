@@ -12,6 +12,7 @@ use Sheba\Checkout\CommissionCalculator;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\Complain\Model as Complain;
 use Sheba\Dal\PartnerBankInformation\Purposes;
+use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInformation;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
@@ -1017,20 +1018,30 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->id == config('sheba.mission_save_bangladesh_partner_id');
     }
 
-
     public function canTopup()
     {
         return $this->can_topup == 1;
     }
+
     public function posCategories()
     {
         return $this->hasMany(PartnerPosCategory::class);
 
     }
 
+
     public function webstoreBanner()
     {
         return $this->hasOne(PartnerWebstoreBanner::class);
     }
 
+    public function topupChangeLogs()
+    {
+        return $this->hasMany(CanTopUpUpdateLog::class);
+    }
+
+    public function deliveryInformation()
+    {
+        return $this->hasOne(PartnerDeliveryInformation::class);
+    }
 }

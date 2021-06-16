@@ -20,6 +20,7 @@ use Sheba\NeoBanking\Exceptions\AccountNumberAlreadyExistException;
 use Sheba\NeoBanking\Exceptions\InvalidBankCode;
 use Sheba\NeoBanking\Exceptions\InvalidListInsertion;
 use Sheba\NeoBanking\Statics\BankStatics;
+use Sheba\NeoBanking\Statics\NeoBankingGeneralStatics;
 use Sheba\TPProxy\TPProxyServerError;
 
 class PrimeBank extends Bank
@@ -93,6 +94,7 @@ class PrimeBank extends Bank
         $neoBankAccount->updated_by = 0;
         $neoBankAccount->updated_by_name = "SBS - Prime Bank";
         $neoBankAccount->save();
+        $this->sendNotification($account_no);
     }
 
     /**
@@ -178,31 +180,17 @@ class PrimeBank extends Bank
         $data['account_no'] = $account;
         $accountStatus = $status->data->account_status;
         $data['account_status'] = $accountStatus;
-        $formattedStatus = $this->formatStatus($accountStatus);
+        $formattedStatus = NeoBankingGeneralStatics::formatStatus($accountStatus);
         $data['status_message'] = $formattedStatus['message'];
         $data['status_message_type'] = $formattedStatus['type'];
 
         return $data;
     }
 
-    public function formatStatus($status) {
-        $data = [];
-        if($status->cpv === 'cpv_pending') {
-            $data['message'] = config('neo_banking.cpv_pending_message');
-            $data['type'] = config('neo_banking.message_type.cpv_pending');
-        } else if($status->cpv === 'cpv_unverified') {
-            $data['message'] = config('neo_banking.cpv_unverified_message');
-            $data['type'] = config('neo_banking.message_type.cpv_unverified');
-        } else if($status->cpv === 'cpv_verified') {
-            if($status->sign === 'signed') {
-                $data['message'] = config('neo_banking.signed_verified_message');
-                $data['type'] = config('neo_banking.message_type.cpv_verified');;
-            } else {
-                $data['message'] = config('neo_banking.unsigned_message');
-                $data['type'] = config('neo_banking.message_type.cpv_unsigned');
-            }
-        }
-        return $data;
+    private function sendNotification($account_number)
+    {
+        $data = NeoBankingGeneralStatics::accountNumberUpdateData($account_number);
+        NeoBankingGeneralStatics::sendPushNotification($this->partner, $data);
     }
 
     public function formatEmptyData()
