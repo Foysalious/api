@@ -28,19 +28,24 @@ class EblValidator
 
     /**
      * @param Payment $payment
+     * @param bool $changeStatus
+     * @return mixed
      * @throws EblServerException
      */
-    public function validate(Payment $payment)
+    public function validate(Payment $payment, $changeStatus = true)
     {
         try {
-            $resp     = $this->client->post(config('sheba.ebl_url') . '/validate', json_decode($payment->request_payload, true))->getBody()->getContents();
-            dd($resp);
+            $payload=json_decode($payment->request_payload, true);
+            $resp     = $this->client->post(config('sheba.ebl_url') . '/validate', ['form_params' => $payload])->getBody()->getContents();
             $response = json_decode($resp, true);
-            if ($response['data']['status']) {
-                $this->statusChanger->setPayment($payment)->changeToValidated($payment->request_payload);
-            } else {
-                $this->statusChanger->setPayment($payment)->changeToValidationFailed($resp);
+            if ($changeStatus) {
+                if ($response['data']['success'] && $payload['decision']=='ACCEPT') {
+                    $this->statusChanger->setPayment($payment)->changeToValidated($resp);
+                } else {
+                    $this->statusChanger->setPayment($payment)->changeToValidationFailed($resp);
+                }
             }
+            return $response;
         } catch (\Throwable $e) {
             $this->statusChanger->setPayment($payment)->changeToValidationFailed($e->getMessage());
             logError($e);

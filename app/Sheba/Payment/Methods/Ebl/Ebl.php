@@ -46,7 +46,7 @@ class Ebl extends PaymentMethod
 
     private function setPayment(Payment $payment)
     {
-        $payment->gateway_transaction_id = uniqid('EBL' . $payment->id);
+        $payment->gateway_transaction_id = uniqid('EBLx' . $payment->id.'x');
         $payment->redirect_url           = config('sheba.ebl_url') . '/checkout?transaction_id=' . $payment->transaction_id;
         $payment->update();
         return $payment;
