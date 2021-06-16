@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d811e8e01a260def3dfd3e6c3f01f3f3",
+    "content-hash": "5d6ddfa35017587ca3ec737b443dbba9",
     "packages": [
         {
             "name": "algolia/algoliasearch-client-php",
@@ -3602,10 +3602,6 @@
                 "png",
                 "png2webp"
             ],
-            "support": {
-                "issues": "https://github.com/rosell-dk/webp-convert/issues",
-                "source": "https://github.com/rosell-dk/webp-convert/tree/2.4.0"
-            },
             "time": "2020-11-10T11:24:50+00:00"
         },
         {
@@ -3958,7 +3954,7 @@
             "source": {
                 "type": "git",
                 "url": "https://mac_pasha@bitbucket.org/startern/sheba_voucher.git",
-                "reference": "935f243725f82caf0e5d717627ead59c076f581f"
+                "reference": "8852979a2711abc5dded95a6367dbb93bb2793d4"
             },
             "require": {
                 "php": ">=5.4"
@@ -3982,7 +3978,7 @@
                 }
             ],
             "description": "Voucher for Sheba.",
-            "time": "2020-10-13T12:19:30+00:00"
+            "time": "2021-06-16T11:46:47+00:00"
         },
         {
             "name": "spomky-labs/aes-key-wrap",
@@ -7162,7 +7158,6 @@
         "ext-calendar": "*",
         "ext-simplexml": "*",
         "ext-openssl": "^7.0",
-        "ext-mcrypt": "^7.0",
         "ext-redis": "*",
         "ext-mysql_xdevapi": "*",
         "ext-intl": "*"
