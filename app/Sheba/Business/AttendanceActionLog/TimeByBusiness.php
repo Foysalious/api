@@ -77,9 +77,17 @@ class TimeByBusiness
 
             if ($leave->is_half_day) {
                 if ($leave->half_day_configuration == HalfDayType::FIRST_HALF) {
-                    return $business->halfDayEndTimeUsingWhichHalf(HalfDayType::SECOND_HALF);
+                    $end_time = $business->halfDayEndTimeUsingWhichHalf(HalfDayType::SECOND_HALF);
+                    if ($office_hour->is_end_grace_time_enable) {
+                        return Carbon::parse($end_time)->subMinutes($office_hour->end_grace_time)->format('H:i:s');
+                    }
+                    return $end_time;
                 } else {
-                    return $business->halfDayEndTimeUsingWhichHalf(HalfDayType::FIRST_HALF);
+                    $end_time = $business->halfDayEndTimeUsingWhichHalf(HalfDayType::FIRST_HALF);
+                    if ($office_hour->is_end_grace_time_enable) {
+                        return Carbon::parse($end_time)->subMinutes($office_hour->end_grace_time)->format('H:i:s');
+                    }
+                    return $end_time;
                 }
             }
         }
