@@ -1,6 +1,7 @@
 <?php namespace Sheba\TopUp\FailedReason;
 
 use App\Models\TopUpOrder;
+use App\Sheba\TopUp\FailedReason\BdRechargeFailedReason;
 use Sheba\TopUp\Gateway\Names;
 
 class FailedReasonFactory
@@ -12,5 +13,6 @@ class FailedReasonFactory
         if ($top_up_order->gateway == Names::BANGLALINK) return new BanglalinkFailedReason();
         if ($top_up_order->gateway == Names::AIRTEL) return new AirtelFailedReason();
         if ($top_up_order->gateway == Names::PAYWELL) return new PaywellFailedReason();
+        if ($top_up_order->gateway == Names::BD_RECHARGE) return new BdRechargeFailedReason();
     }
 }

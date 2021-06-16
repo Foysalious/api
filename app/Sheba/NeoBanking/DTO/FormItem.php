@@ -20,6 +20,7 @@ class FormItem implements Arrayable
     protected $error_message = '';
     protected $mandatory     = true;
     protected $is_editable   = true;
+    protected $future_date   = false;
     protected $list_type;
     protected $views         = [];
     protected $list          = [];

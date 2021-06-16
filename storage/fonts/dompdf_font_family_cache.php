@@ -122,4 +122,7 @@
   'charukolaultralight' => array(
     'normal' => $fontDir . '/f32f08cecd09f0893ee388b8f9bf3edc',
   ),
+  'poppins' => array(
+    'normal' => $fontDir . '/fdf63d9f742346a5ee6b70f5a8af6c01',
+  ),
 ) ?>

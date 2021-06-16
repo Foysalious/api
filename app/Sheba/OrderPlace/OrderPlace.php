@@ -9,6 +9,7 @@ use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
 use App\Models\Affiliation;
 use App\Models\CarRentalJobDetail;
+use App\Models\Voucher;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Sheba\Dal\Category\Category;
@@ -16,9 +17,10 @@ use Sheba\Dal\CategoryPartner\CategoryPartner;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;
-use App\Models\InfoCall;
+use Sheba\Dal\InfoCall\InfoCall;
 use App\Models\Job;
 use App\Models\Location;
+use Sheba\Dal\InfoCall\Statuses;
 use Sheba\Dal\LocationService\LocationService;
 use App\Models\Order;
 use App\Models\Partner;
@@ -32,6 +34,7 @@ use Sheba\Checkout\CommissionCalculator;
 use Sheba\AutoSpAssign\Job\InitiateAutoSpAssign;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Dal\JobService\JobService;
+use Sheba\InfoCall\StatusChanger;
 use Sheba\JobDiscount\JobDiscountHandler;
 use Sheba\Jobs\JobDeliveryChargeCalculator;
 use Sheba\Jobs\JobStatuses;
@@ -381,6 +384,7 @@ class OrderPlace
                 $order = $this->createOrder();
                 $partner_order = $this->createPartnerOrder($order);
                 $job = $this->createJob($partner_order);
+                if ($this->infoCallId) $this->changeInfoCallStatusToConverted();
                 $this->createCarRentalDetail($job);
                 $job->jobServices()->saveMany($job_services);
                 Log::info('Creating Job Service JOB#'.$job.'.[ServiceDiscount: '.var_export($this->discountCalculation->getDiscountId(), true).']');
@@ -487,7 +491,7 @@ class OrderPlace
                 'variable_type' => $service->variable_type,
                 'surcharge_percentage' => $this->priceCalculation->getSurcharge() ? $this->priceCalculation->getSurcharge()->amount : 0
             ];
-            Log::info('Creating Job Service JOB# '.'.[Data: '.var_export($service_data, true).']');
+//            Log::info('Creating Job Service JOB# '.'.[Data: '.var_export($service_data, true).']');
             list($service_data['option'], $service_data['variables']) = $service->getVariableAndOption($selected_service->getOption());
             $job_services->push(new JobService($service_data));
         }
@@ -502,6 +506,9 @@ class OrderPlace
         if ($this->voucherId) {
             $result = voucher($this->voucherId)->check($this->category->id, null, $this->location->id, $this->customer->id, $this->orderAmountWithoutDeliveryCharge, $this->salesChannel)->reveal();
             $this->orderVoucherData->setVoucherRevealData($result);
+
+            $voucher = Voucher::find($this->voucherId);
+            if($voucher->max_order === 1 && $voucher->max_customer === 1) $voucher->update(['is_active' => 0]);
         }
     }
 
@@ -606,6 +613,7 @@ class OrderPlace
             $job_data['discount'] = $this->orderVoucherData->getDiscount();
             $job_data['sheba_contribution'] = $this->orderVoucherData->getShebaContribution();
             $job_data['partner_contribution'] = $this->orderVoucherData->getPartnerContribution();
+            $job_data['vendor_contribution'] = $this->orderVoucherData->getVendorContribution();
             $job_data['discount_percentage'] = $this->orderVoucherData->getDiscountPercentage();
             $job_data['original_discount_amount'] = $this->orderVoucherData->getOriginalDiscountAmount();
         }
@@ -678,5 +686,15 @@ class OrderPlace
         $priceCalculationFactory = new PriceCalculationFactory();
         $priceCalculationFactory->setCategory($category);
         return $priceCalculationFactory->get();
+    }
+
+    private function changeInfoCallStatusToConverted()
+    {
+        /** @var StatusChanger $status_changer */
+        $status_changer = app(StatusChanger::class);
+        $info_call = InfoCall::find($this->infoCallId);
+        $status_changer->setInfoCall($info_call)
+            ->setStatus(Statuses::CONVERTED)
+            ->change();
     }
 }

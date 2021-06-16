@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 use App\Repositories\SmsHandler;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -36,7 +38,10 @@ class SendToCustomerToInformDueDepositSMS extends Job implements ShouldQueue
     {
         try {
             if ($this->data['type'] == 'due') {
-                $sms = (new SmsHandler('inform-due'))->setVendor('infobip')->send($this->data['mobile'], [
+                $sms = (new SmsHandler('inform-due'))->setVendor('infobip')
+                    ->setBusinessType(BusinessType::SMANAGER)
+                    ->setFeatureType(FeatureType::DUE_TRACKER)
+                    ->send($this->data['mobile'], [
                     'customer_name' => $this->data['customer_name'],
                     'partner_name' => $this->data['partner_name'],
                     'amount' => $this->data['amount'],
@@ -44,7 +49,10 @@ class SendToCustomerToInformDueDepositSMS extends Job implements ShouldQueue
                 ]);
                 $log = " BDT has been deducted for sending due details";
             } else {
-                $sms = (new SmsHandler('inform-deposit'))->setVendor('infobip')->send($this->data['mobile'], [
+                $sms = (new SmsHandler('inform-deposit'))->setVendor('infobip')
+                    ->setBusinessType(BusinessType::SMANAGER)
+                    ->setFeatureType(FeatureType::DUE_TRACKER)
+                    ->send($this->data['mobile'], [
                     'customer_name' => $this->data['customer_name'],
                     'partner_name' => $this->data['partner_name'],
                     'amount' => $this->data['amount'],

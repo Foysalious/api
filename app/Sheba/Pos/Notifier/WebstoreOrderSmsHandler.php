@@ -3,6 +3,8 @@
 use App\Models\Partner;
 use App\Models\PosOrder;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Transactions\Types;
@@ -33,7 +35,7 @@ class WebstoreOrderSmsHandler
         $sms_cost = $sms->getCost();
         if ((double)$partner->wallet > (double)$sms_cost) {
             /** @var WalletTransactionHandler $walletTransactionHandler */
-            $sms->shoot();
+            $sms->setFeatureType(FeatureType::WEB_STORE)->setBusinessType(BusinessType::SMANAGER)->shoot();
             (new WalletTransactionHandler())->setModel($partner)->setAmount($sms_cost)->setType(Types::debit())->setLog($sms_cost . " BDT has been deducted for sending pos order update sms to customer(order id: {$this->order->id})")->setTransactionDetails([])->setSource(TransactionSources::SMS)->store();
         }
 

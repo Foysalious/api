@@ -16,8 +16,10 @@ class BkashController extends Controller
             $this->validate($request, ['paymentID' => 'required']);
             /** @var Payment $payment */
             $payment = Payment::where('gateway_transaction_id', $request->paymentID)->valid()->first();
-
             if (!$payment) return api_response($request, null, 404, ['message' => 'Valid Payment not found.']);
+            if (!$payment->isValid()||$payment->isComplete()){
+                return api_response($request, null, 402,['message'=>"Invalid or completed payment"]);
+            }
             $payment = $payment_manager->setPayment($payment)->setMethodName(PaymentStrategy::BKASH)->complete();
 
             $redirect_url = $payment->payable->success_url . '?invoice_id=' . $payment->transaction_id;

@@ -1,17 +1,12 @@
 <?php namespace App\Jobs\Business;
 
-use App\Jobs\Job;
 use App\Models\BusinessMember;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
+use App\Sheba\Business\BusinessQueue;
 use Sheba\Dal\Support\Model as Support;
 use Sheba\PushNotificationHandler;
 
-class SendSupportPushNotificationToSuperAdminEmployee extends Job implements ShouldQueue
+class SendSupportPushNotificationToSuperAdminEmployee extends BusinessQueue
 {
-    use InteractsWithQueue, SerializesModels;
-
     /** @var PushNotificationHandler $pushNotification */
     private $pushNotification;
     /** @var BusinessMember $businessMember */
@@ -31,6 +26,7 @@ class SendSupportPushNotificationToSuperAdminEmployee extends Job implements Sho
         $this->title = $title;
         $this->support = $support;
         $this->pushNotification = new PushNotificationHandler();
+        parent::__construct();
     }
 
     public function handle()

@@ -2,6 +2,7 @@
 
 use App\Sheba\NeoBanking\Banks\BankAccountInfoWithTransaction;
 use App\Sheba\NeoBanking\Banks\PrimeBank\PrimeBankClient;
+use Carbon\Carbon;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use ReflectionException;
@@ -13,14 +14,20 @@ use Sheba\NeoBanking\Banks\CategoryGetter;
 use Sheba\NeoBanking\Banks\Completion;
 use Sheba\NeoBanking\DTO\BankFormCategory;
 use Sheba\NeoBanking\DTO\BankFormCategoryList;
+use Sheba\NeoBanking\Exceptions\AccountCreateException;
+use Sheba\NeoBanking\Exceptions\AccountNotFoundException;
+use Sheba\NeoBanking\Exceptions\AccountNumberAlreadyExistException;
 use Sheba\NeoBanking\Exceptions\InvalidBankCode;
 use Sheba\NeoBanking\Exceptions\InvalidListInsertion;
+use Sheba\NeoBanking\Statics\BankStatics;
+use Sheba\NeoBanking\Statics\NeoBankingGeneralStatics;
 use Sheba\TPProxy\TPProxyServerError;
 
 class PrimeBank extends Bank
 {
 
     private $apiClient;
+    const CPV_PENDING_UNSIGNED    = "cpv_pending_unsigned";
 
     public function __construct()
     {
@@ -37,9 +44,13 @@ class PrimeBank extends Bank
     {
         $account = $this->getAccount();
         if ($account) {
-            $status = (new PrimeBankClient())->setPartner($this->partner)->get('api/v1/status/'.$account);
+            $headers = ['CLIENT-ID:'. config('neo_banking.sbs_client_id'), 'CLIENT-SECRET:'.  config('neo_banking.sbs_client_secret')];
+            $status = (new PrimeBankClient())->setPartner($this->partner)->get("api/v1/client/account/$account/status", $headers);
             return $this->formatAccountData($status, $account);
         } else {
+            if($this->hasAccountWithNullId()) {
+                return $this->pendingAccountData($this->partner, $account);
+            }
             return $this->formatEmptyData();
         }
 
@@ -69,6 +80,24 @@ class PrimeBank extends Bank
     }
 
     /**
+     * @param $account_no
+     * @throws AccountNotFoundException
+     * @throws AccountNumberAlreadyExistException
+     */
+    public function storeAccountNumber($account_no)
+    {
+        $neoBankAccount = $this->partner->neoBankAccount()->first();
+        if(!isset($neoBankAccount)) throw new AccountNotFoundException();
+        if($neoBankAccount->account_no !== null) throw new AccountNumberAlreadyExistException();
+        $neoBankAccount->account_no = $account_no;
+        $neoBankAccount->updated_at = Carbon::now();
+        $neoBankAccount->updated_by = 0;
+        $neoBankAccount->updated_by_name = "SBS - Prime Bank";
+        $neoBankAccount->save();
+        $this->sendNotification($account_no);
+    }
+
+    /**
      * @return BankCompletion
      * @throws InvalidBankCode
      * @throws InvalidListInsertion
@@ -81,8 +110,19 @@ class PrimeBank extends Bank
 
     private function getAccount()
     {
-        $account = $this->partner->neoBankAccount()->where('bank_id',$this->id)->first();
-        return !empty($account) ?$account->account_no:null;
+        $account = $this->partner->neoBankAccount()->where('bank_id', $this->id)->first();
+        return !empty($account) ? $account->account_no : null;
+    }
+
+    private function hasAccountWithNullId()
+    {
+        $account = $this->partner->neoBankAccount()->where('bank_id', $this->id)->first();
+        return ($account && $account->account_no == null);
+    }
+
+    private function getAccountDetails()
+    {
+        return $this->partner->neoBankAccount()->where('bank_id', $this->id)->first();
     }
 
     public function accountDetailInfo()
@@ -140,31 +180,17 @@ class PrimeBank extends Bank
         $data['account_no'] = $account;
         $accountStatus = $status->data->account_status;
         $data['account_status'] = $accountStatus;
-        $formattedStatus = $this->formatStatus($accountStatus);
+        $formattedStatus = NeoBankingGeneralStatics::formatStatus($accountStatus);
         $data['status_message'] = $formattedStatus['message'];
         $data['status_message_type'] = $formattedStatus['type'];
 
         return $data;
     }
 
-    public function formatStatus($status) {
-        $data = [];
-        if($status->cpv === 'cpv_pending') {
-            $data['message'] = config('neo_banking.cpv_pending_message');
-            $data['type'] = config('neo_banking.message_type.cpv_pending');
-        } else if($status->cpv === 'cpv_unverified') {
-            $data['message'] = config('neo_banking.cpv_unverified_message');
-            $data['type'] = config('neo_banking.message_type.cpv_unverified');
-        } else if($status->cpv === 'cpv_verified') {
-            if($status->sign === 'signed') {
-                $data['message'] = config('neo_banking.signed_verified_message');
-                $data['type'] = config('neo_banking.message_type.cpv_verified');;
-            } else {
-                $data['message'] = config('neo_banking.unsigned_message');
-                $data['type'] = config('neo_banking.message_type.cpv_unsigned');
-            }
-        }
-        return $data;
+    private function sendNotification($account_number)
+    {
+        $data = NeoBankingGeneralStatics::accountNumberUpdateData($account_number);
+        NeoBankingGeneralStatics::sendPushNotification($this->partner, $data);
     }
 
     public function formatEmptyData()
@@ -178,4 +204,13 @@ class PrimeBank extends Bank
         return $data;
     }
 
+    public function pendingAccountData($status, $account) {
+        $data['has_account'] = 1;
+        $data['applicant_name'] = $status->name;
+        $data['account_no'] = $account;
+        $data['account_status'] = BankStatics::mapAccountFullStatus(self::CPV_PENDING_UNSIGNED);
+        $data['status_message'] = config('neo_banking.cpv_pending_account_null_message');
+        $data['status_message_type'] = "pending";
+        return $data;
+    }
 }

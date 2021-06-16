@@ -8,11 +8,11 @@ use Illuminate\Http\Request;
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
 use Illuminate\Validation\ValidationException;
-use Sheba\Loan\Statics\GeneralStatics;
 use Sheba\NeoBanking\Exceptions\NeoBankingException;
 use Sheba\NeoBanking\Exceptions\UnauthorizedRequestFromSBSException;
 use Sheba\NeoBanking\Home;
 use Sheba\NeoBanking\NeoBanking;
+use Sheba\NeoBanking\Statics\BankStatics;
 use Sheba\NeoBanking\Statics\NeoBankingGeneralStatics;
 use Sheba\PushNotificationHandler;
 
@@ -210,6 +210,31 @@ class NeoBankingController extends Controller
             return api_response($request, $data, 200, ['data' => ["message" => "Account has been created."]]);
         }catch (NeoBankingException $e){
             return api_response($request,null,$e->getCode(),['message'=>$e->getMessage()]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @param Partner $partner
+     * @param NeoBanking $neoBanking
+     * @return JsonResponse
+     */
+    public function accountNumberStore(Request $request, Partner $partner, NeoBanking $neoBanking)
+    {
+        try {
+            if (($request->header('access-key')) !== config('neo_banking.sbs_access_token'))
+                throw new UnauthorizedRequestFromSBSException();
+            $account_no = $request->account_no;
+            $neoBanking->setPartner($partner)->setBank(BankStatics::primeBankCode())->storeAccountNumber($account_no);
+            return api_response($request, null, 200);
+        } catch (UnauthorizedRequestFromSBSException $exception) {
+            return api_response($request, null, 403);
+        } catch (NeoBankingException $exception) {
+            logError($exception);
+            return api_response($request, null, $exception->getCode());
         } catch (\Throwable $e) {
             logError($e);
             return api_response($request, null, 500);

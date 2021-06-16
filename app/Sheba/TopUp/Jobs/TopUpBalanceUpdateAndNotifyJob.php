@@ -3,6 +3,8 @@
 use App\Jobs\Job;
 use App\Models\TopUpOrder;
 use App\Repositories\SmsHandler;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
@@ -72,7 +74,10 @@ class TopUpBalanceUpdateAndNotifyJob extends Job implements ShouldQueue
         $sms_receivers = $gateway->topupGatewaySmsReceivers;
         $message = "gateway balance ".$balance." which is less than threshold";
         $sms_receivers->each(function ($sms_receiver, $key) use ($message) {
-            (new SmsHandler('top_up_threshold_notify'))->send($sms_receiver->phone, [
+            (new SmsHandler('top_up_threshold_notify'))
+                ->setBusinessType(BusinessType::BONDHU)
+                ->setFeatureType(FeatureType::TOP_UP)
+                ->send($sms_receiver->phone, [
                 'message' => $message
             ]);
         });

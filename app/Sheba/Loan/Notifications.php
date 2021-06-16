@@ -5,6 +5,8 @@ namespace Sheba\Loan;
 
 use App\Models\BankUser;
 use App\Sheba\Loan\DLSV2\Notification\SMS\SMSHandler;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Exception;
 use Sheba\Dal\PartnerBankLoan\LoanTypes;
 use Sheba\Dal\PartnerBankLoan\Statuses;
@@ -85,7 +87,15 @@ class Notifications
             $message = 'প্রিয় ' . $partner_bank_loan->partner->getContactPerson() . ', আপনার সেবা '.$loan_name.' আবেদনটি ' . $reason . ' কারণে মনোনীত হয়নি। প্রয়োজনে কল করুন ১৬৫১৬-এ।';
             $type    = 'Loan Declined';
         }
-        (new SMSHandler())->setMsg($message)->setMobile($partner_bank_loan->partner->getContactNumber())->setMsgType($type)->setLoanId($partner_bank_loan->id)->setUser($user)->shoot();
+        (new SMSHandler())
+            ->setMsg($message)
+            ->setMobile($partner_bank_loan->partner->getContactNumber())
+            ->setMsgType($type)
+            ->setLoanId($partner_bank_loan->id)
+            ->setUser($user)
+            ->setFeatureType(FeatureType::LOAN)
+            ->setBusinessType(BusinessType::SMANAGER)
+            ->shoot();
     }
 
     /**

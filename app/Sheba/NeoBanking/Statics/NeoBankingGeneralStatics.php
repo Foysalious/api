@@ -75,6 +75,16 @@ class NeoBankingGeneralStatics
         }
     }
 
+    public static function accountNumberUpdateData($account_no)
+    {
+        $data = new \stdClass();
+        $data->title = "Account number has been generated";
+        $data->description = "Welcome to PBL. Your A/c no. $account_no has been generated. Upon Verification of docs and KYC, your A/c will be activated. You will be duly notified.";
+        $data->event_type = "NeoBanking";
+        $data->event_id = 1;
+        return $data;
+    }
+
     public static function sendCreatePushNotification($partner, $data)
     {
         $topic = config('sheba.push_notification_topic_name.manager') . $partner->id;
@@ -88,5 +98,25 @@ class NeoBankingGeneralStatics
         ];
 
         (new PushNotificationHandler())->send($notification_data, $topic, $channel, $sound);
+    }
+
+    public static function formatStatus($status) {
+        $data = [];
+        if($status->cpv === 'cpv_pending') {
+            $data['message'] = config('neo_banking.cpv_pending_message');
+            $data['type'] = config('neo_banking.message_type.cpv_pending');
+        } else if($status->cpv === 'cpv_unverified') {
+            $data['message'] = config('neo_banking.cpv_unverified_message');
+            $data['type'] = config('neo_banking.message_type.cpv_unverified');
+        } else if($status->cpv === 'cpv_verified') {
+            if($status->sign === 'signed') {
+                $data['message'] = config('neo_banking.signed_verified_message');
+                $data['type'] = config('neo_banking.message_type.cpv_verified');;
+            } else {
+                $data['message'] = config('neo_banking.unsigned_message');
+                $data['type'] = config('neo_banking.message_type.cpv_unsigned');
+            }
+        }
+        return $data;
     }
 }

@@ -133,6 +133,7 @@ class EmployeeController extends Controller
     public function getDashboard(Request $request, ActionProcessor $action_processor,
                                  ProfileCompletionCalculator $completion_calculator)
     {
+        /** @var Business $business */
         $business = $this->getBusiness($request);
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
@@ -158,12 +159,15 @@ class EmployeeController extends Controller
                 'can_checkout' => $attendance && $attendance->canTakeThisAction(Actions::CHECKOUT) ? 1 : 0,
                 'is_note_required' => 0
             ],
+            'is_remote_enable' => $business->isRemoteAttendanceEnable($business_member->id),
             'is_approval_request_required' => $approval_requests->count() > 0 ? 1 : 0,
             'approval_requests' => ['pending_request' => $pending_approval_requests->count()],
             'is_profile_complete' => $profile_completion_score ? 1 : 0,
             'is_eligible_for_lunch' => in_array($business->id, config('b2b.BUSINESSES_IDS_FOR_LUNCH')) ? [
                 'link' => config('b2b.BUSINESSES_LUNCH_LINK'),
-            ] : null
+            ] : null,
+            'is_sheba_platform' => in_array($business->id, config('b2b.BUSINESSES_IDS_FOR_REFERRAL') ) ? 1 : 0,
+            'is_payroll_enable' => $business->payrollSetting->is_enable
         ];
 
         if ($data['attendance']['can_checkout']) {
@@ -181,14 +185,13 @@ class EmployeeController extends Controller
     {
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
-
         /** @var Business $business */
-        $business = Business::where('id', (int)$business_member['business_id'])->select('id', 'name', 'phone', 'email', 'type')->first();
-        $business_members = $business->getAccessibleBusinessMember()->get();
+        $business = $this->getBusiness($request);
+        $business_members = $this->accessibleBusinessMembers($business, $request);
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($business_members, new BusinessEmployeesTransformer());
+        $resource = new Item($business_members->get(), new BusinessEmployeesTransformer());
         $employees_with_dept_data = $manager->createData($resource)->toArray()['data'];
 
         return api_response($request, null, 200, [
@@ -309,15 +312,41 @@ class EmployeeController extends Controller
 
         $token = $this->accounts->getTokenByEmailAndPasswordV2($request->email, $request->password);
         $auth_user = AuthUser::createFromToken($token);
+        $business = $this->business($auth_user);
+
         $info = [
             'token' => $token,
             'user' => [
                 'name' => $auth_user->getName(),
                 'mobile' => $profile->mobile,
-                'image' => $profile->pro_pic
+                'image' => $profile->pro_pic,
+                'business_id' => $business ? $business->id : null,
+                'business_name' => $business ? $business->name : null,
+                'is_remote_attendance_enable' => $business->isRemoteAttendanceEnable()
             ]
         ];
 
         return api_response($request, null, 200, $info);
+    }
+
+    /**
+     * @param $auth_user
+     * @return null
+     */
+    private function business($auth_user)
+    {
+        $business_id = $auth_user->getMemberAssociatedBusinessId();
+        return $business_id ? Business::find($business_id) : null;
+    }
+
+    /**
+     * @param Business $business
+     * @param Request $request
+     * @return mixed
+     */
+    private function accessibleBusinessMembers(Business $business, Request $request)
+    {
+        if ($request->has('for') && $request->for == 'phone_book') return $business->getActiveBusinessMember();
+        return $business->getAccessibleBusinessMember();
     }
 }

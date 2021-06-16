@@ -19,7 +19,11 @@ class Creator
     /** @var TopUpRequest */
     private $topUpRequest;
 
-    public function setTopUpRequest(TopUpRequest $top_up_request)
+    /**
+     * @param TopUpRequest $top_up_request
+     * @return $this
+     */
+    public function setTopUpRequest(TopUpRequest $top_up_request): Creator
     {
         $this->topUpRequest = $top_up_request;
         return $this;
@@ -27,6 +31,7 @@ class Creator
 
     /**
      * @return TopUpOrder
+     * @throws Exception
      */
     public function create()
     {
@@ -59,15 +64,21 @@ class Creator
         $this->setModifier($agent);
         $this->withCreateModificationField($top_up_order);
         $top_up_order->save();
+
         return $top_up_order;
     }
 
-    private function checkIfAgentDidTopup(TopUpAgent $agent)
+    /**
+     * @param TopUpAgent $agent
+     * @return bool
+     */
+    private function checkIfAgentDidTopup(TopUpAgent $agent): bool
     {
         if (!($agent instanceof Partner || $agent instanceof Affiliate)) return false;
         if ($agent instanceof Partner && !in_array($agent->id, [233])) return false;
         if ($agent instanceof Affiliate && !in_array($agent->id, [41])) return false;
         if (TopUpOrder::where([["agent_type", get_class($agent)], ['agent_id', $agent->id], ['created_at', '>=', Carbon::now()->subDay()->toDateTimeString()]])->count() == 0) return false;
+
         return true;
     }
 }

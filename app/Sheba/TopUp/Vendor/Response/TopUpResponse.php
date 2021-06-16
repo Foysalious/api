@@ -50,11 +50,9 @@ abstract class TopUpResponse
     }
 
     /**
-     * Success status can be different for different vendor response.
-     *
-     * @return string
+     * @return bool
      */
-    abstract public function resolveTopUpSuccessStatus();
+    abstract public function isPending();
 
     /**
      * @return TopUpSuccessResponse
@@ -64,11 +62,10 @@ abstract class TopUpResponse
     {
         if (!$this->hasSuccess()) throw new Exception('Response does not have success.');
 
-        $topup_response = new TopUpSuccessResponse();
-        $topup_response->transactionId = $this->getTransactionId();
-        $topup_response->transactionDetails = $this->response;
-        $topup_response->topUpStatus = $this->resolveTopUpSuccessStatus();
-        return $topup_response;
+        return (new TopUpSuccessResponse())
+            ->setTransactionId($this->getTransactionId())
+            ->setTransactionDetails($this->response)
+            ->setIsPending($this->isPending());
     }
 
     /**

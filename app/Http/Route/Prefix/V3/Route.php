@@ -8,7 +8,10 @@ class Route
             (new CustomerRoute())->set($api);
             (new AffiliateRoute())->set($api);
             (new PartnerRoute())->set($api);
-            (new BusinessRoute())->set($api);
+
+            $api->group(['middleware' => 'terminate'], function ($api) {
+                (new BusinessRoute())->set($api);
+            });
 
             $api->group(['prefix' => 'bank-user', 'middleware' => 'jwtGlobalAuth'], function ($api) {
                 $api->get('/information', 'BankUser\BankUserController@getBankUserInfo');
@@ -41,6 +44,7 @@ class Route
             });
             $api->group(['prefix' => 'categories'], function ($api) {
                 $api->get('tree', 'Category\CategoryController@getCategoryTree');
+                $api->get('suggestions', 'Category\CategoryController@getSuggestions');
                 $api->group(['prefix' => '{category}'], function ($api) {
                     $api->get('/', 'Category\CategoryController@show');
                     $api->get('secondaries', 'Category\CategoryController@getSecondaries');
@@ -64,6 +68,9 @@ class Route
             $api->group(['prefix' => 'subscriptions'], function ($api) {
                 $api->get('/{id}', 'SubscriptionController@details');
             });
+            $api->get('payment-gateways/{service_type}', 'PaymentGatewayController@getPaymentGateways');
+//            emi-info with static info
+            $api->get('emi-info', 'ShebaController@getEmiInfoV3');
         });
 
 

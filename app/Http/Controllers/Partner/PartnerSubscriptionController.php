@@ -291,7 +291,7 @@ class PartnerSubscriptionController extends Controller
                 return api_response($request, null, 403, ['message' => 'আপনার অনুরধক্রিত প্যকেজটি পাওয়া যায় নাই']);
             }
             $handler = (new PurchaseHandler($partner))->setConsumer($request->manager_resource)->setNewBillingType($request->billing_type)->setNewPackage($requestedPackage);
-            $handler->checkIfRunningAndAlreadyCollected();
+            $handler->checkIfAlreadyCollected();
             DB::beginTransaction();
             $upgradeRequest = $handler->getSubscriptionRequest();
             if (!empty($upgradeRequest)) {
@@ -322,8 +322,6 @@ class PartnerSubscriptionController extends Controller
                 return api_response($request, null, 403, ['message' => "$requestedPackage->show_name_bn প্যাকেজে যেতে অনুগ্রহ করে সেবার সাথে যোগাযোগ করুন"]);
             }
 
-        } catch (AlreadyRunningSubscriptionRequestException $e) {
-            return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (HasAlreadyCollectedFeeException $e) {
             return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (ValidationException $e) {
@@ -368,7 +366,7 @@ class PartnerSubscriptionController extends Controller
             $partner_subscription_packages = $partner_subscription_packages ->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'badge', 'features')->where('id', $package)->first();
             (new PartnerSubscription())->dataFormat($partner_subscription_packages, $partner, true);
         } else {
-            $partner_subscription_packages = $partner_subscription_packages ->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'rules', 'usps', 'badge', 'features')->where('status', Status::PUBLISHED)->get();
+            $partner_subscription_packages = $partner_subscription_packages ->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'rules', 'usps', 'badge', 'features')->where('status', Status::PUBLISHED)->orderBy('sort_order')->get();
             foreach ($partner_subscription_packages as $package)
                 (new PartnerSubscription())->dataFormat($package, $partner);
 

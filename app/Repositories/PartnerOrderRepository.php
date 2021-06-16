@@ -142,6 +142,7 @@ class PartnerOrderRepository
                 "subscription_period" => Carbon::parse($subscription_order->billing_cycle_start)->format('M j') . ' - ' . Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
                 "preferred_time" => $schedules->first()->time,
                 'category_name' => $subscription_order->category->name,
+                'category_id' => $subscription_order->category->id,
                 'service_name' => [
                     'bn' => $subscription_order->category->bn_name,
                     'en' => $subscription_order->category->name
@@ -201,6 +202,7 @@ class PartnerOrderRepository
                     'total_price' => (double)$jobs[0]->partner_order->totalPrice,
                     'discount' => (double)$jobs[0]->partner_order->totalDiscount,
                     'category_name' => $jobs[0]->category ? $jobs[0]->category->name : null,
+                    'category_id' => $jobs[0]->category ? $jobs[0]->category->id : null,
                     'service_name' => [
                         'bn' => $jobs[0]->category ? $jobs[0]->category->bn_name : null,
                         'en' => $jobs[0]->category ? $jobs[0]->category->name : null,

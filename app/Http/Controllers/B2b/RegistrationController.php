@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use App\Repositories\ProfileRepository;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
 use Sheba\Business\BusinessCommonInformationCreator;
 use Sheba\Business\BusinessCreator;
 use Sheba\Business\BusinessCreatorRequest;
@@ -18,16 +19,14 @@ use Illuminate\Http\Request;
 use JWTAuth;
 use JWTFactory;
 use Session;
-use DB;
 use Sheba\OAuth2\AccountServer;
-use Sheba\OAuth2\AuthUser;
-use Sheba\OAuth2\SomethingWrongWithToken;
 use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
 use Throwable;
 
 class RegistrationController extends Controller
 {
     use ModificationFields;
+
     /** @var ProfileRepository $profileRepository */
     private $profileRepository;
     /**@var MemberRepositoryInterface $memberRepository */
@@ -73,36 +72,43 @@ class RegistrationController extends Controller
                                BusinessUpdater $business_updater,
                                BusinessCommonInformationCreator $common_info_creator)
     {
-        $this->validate($request, [
-            'company_name' => 'required|string',
-            'lat' => 'required|numeric',
-            'lng' => 'required|numeric'
-        ]);
-        /** @var Profile $profile */
-        $profile = $request->profile;
+        try {
+            $this->validate($request, [
+                'company_name' => 'required|string',
+                'lat' => 'required|numeric',
+                'lng' => 'required|numeric'
+            ]);
+            /** @var Profile $profile */
+            $profile = $request->profile;
 
-        /** @var Member $member */
-        $profile->member ? $member = $profile->member : $member = $this->createMember($profile);
-        $this->setModifier($member);
+            DB::beginTransaction();
 
-        $business_creator_request = $business_creator_request
-            ->setName($request->company_name)
-            ->setGeoInformation(json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]));
+            /** @var Member $member */
+            $profile->member ? $member = $profile->member : $member = $this->createMember($profile);
+            $this->setModifier($member);
 
-        if ($member->businessMember) return api_response($request, null, 409, ['message' => "This business is already added"]);
+            $business_creator_request = $business_creator_request
+                ->setName($request->company_name)
+                ->setGeoInformation(json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]));
 
-        $business = $business_creator->setBusinessCreatorRequest($business_creator_request)->create();
-        $common_info_creator->setBusiness($business)->setMember($member)->create();
-        $business_member = $this->createBusinessMember($business, $member);
+            if ($member->businessMember) return api_response($request, null, 409, ['message' => "This business is already added"]);
 
-        $info = [
-            'email_verified' => $profile->email_verified,
-            'member_id' => $member->id,
-            'business_id' => $business->id,
-            'is_super' => $business_member->is_super
-        ];
-
-        return api_response($request, $info, 200, ['info' => $info]);
+            $business = $business_creator->setBusinessCreatorRequest($business_creator_request)->create();
+            $common_info_creator->setBusiness($business)->setMember($member)->create();
+            $business_member = $this->createBusinessMember($business, $member);
+            DB::commit();
+            $info = [
+                'email_verified' => $profile->email_verified,
+                'member_id' => $member->id,
+                'business_id' => $business->id,
+                'is_super' => $business_member->is_super
+            ];
+            return api_response($request, $info, 200, ['info' => $info]);
+        } catch (Throwable $e) {
+            DB::rollback();
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 
     /**

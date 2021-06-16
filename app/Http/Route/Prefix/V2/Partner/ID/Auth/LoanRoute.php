@@ -3,12 +3,11 @@
 
 class LoanRoute
 {
+
     public function set($api)
     {
-        $api->group(['prefix' => 'loans'], function ($api) {
-            $api->get('/{loan_id}/generate-pdf', 'Loan\\LoanController@generateApplication');
-            $api->get('/{loan_id}/download-documents', 'Loan\\LoanController@downloadDocuments');
-            $api->post('/{loan_id}/upload-documents', 'Loan\\LoanController@uploadDocuments');
+        $api->group(['prefix' => 'loans', 'middleware' => 'shebaServer'], function ($api) {
+            $api->get('/{loan_id}/admin/generate-pdf', 'Loan\\LoanController@generateApplication');
         });
 
         $api->group(['prefix' => 'bank', 'middleware' => 'jwtGlobalAuth'], function ($api) {
@@ -43,6 +42,9 @@ class LoanRoute
             $api->get('loan-due-report', 'Loan\\LoanReportController@loanDueReport');
             $api->get('loan-status-report', 'Loan\\LoanReportController@loanStatusReport');
             $api->get('retailer-registration-report', 'Loan\\LoanReportController@retailerRegistrationReport');
+            $api->get('/{loan_id}/generate-pdf', 'Loan\\LoanController@generateApplication');
+            $api->get('/{loan_id}/download-documents', 'Loan\\LoanController@downloadDocuments');
+            $api->post('/{loan_id}/upload-documents', 'Loan\\LoanController@uploadDocuments');
 
         });
     }
@@ -79,23 +81,6 @@ class LoanRoute
             $api->get('/{loan_id}/repayment-list', 'Loan\\RepaymentController@repaymentList');
             $api->post('/{loan_id}/repayment-from-wallet', 'Loan\\RepaymentController@repaymentFromWallet');
             $api->post('/{loan_id}/pay', 'Loan\\RepaymentController@init');
-            $api->post('/', 'SpLoanController@store');
-            $api->get('/personal-info', 'SpLoanController@getPersonalInformation');
-            $api->post('/personal-info', 'SpLoanController@updatePersonalInformation');
-            $api->get('/business-info', 'SpLoanController@getBusinessInformation');
-            $api->post('/business-info', 'SpLoanController@updateBusinessInformation');
-            $api->get('/finance-info', 'SpLoanController@getFinanceInformation');
-            $api->post('/finance-info', 'SpLoanController@updateFinanceInformation');
-            $api->get('/nominee-info', 'SpLoanController@getNomineeInformation');
-            $api->post('/nominee-grantor-info', 'SpLoanController@updateNomineeGrantorInformation');
-            $api->get('/documents', 'SpLoanController@getDocuments');
-            $api->post('/documents', 'SpLoanController@updateDocuments');
-            $api->post('pictures', 'SpLoanController@updateProfilePictures');
-            $api->post('bank-statement', 'SpLoanController@updateBankStatement');
-            $api->post('trade-license', 'SpLoanController@updateTradeLicense');
-            $api->get('/information-completion', 'SpLoanInformationCompletion@getLoanInformationCompletion');
-            $api->get('/homepage', 'SpLoanController@getHomepage');
-            $api->get('/bank-interest', 'SpLoanController@getBankInterest');
         });
     }
 }

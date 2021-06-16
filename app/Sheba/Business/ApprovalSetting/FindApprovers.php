@@ -3,6 +3,7 @@
 use App\Models\BusinessDepartment;
 use App\Models\BusinessMember;
 use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\DB;
 use Sheba\Dal\ApprovalSettingApprover\Types;
 use Sheba\Helpers\HasErrorCodeAndMessage;
 
@@ -105,7 +106,7 @@ class FindApprovers
             $business_member_department = $business_member->department();
             /** @var BusinessDepartment $manager_department */
             $manager_department = $manager->department();
-            if ($business_member_department->id == $manager_department->id) {
+            if ($manager_department && ($business_member_department->id == $manager_department->id)) {
                 $this->headOfDepartment = $manager;
             }
             array_push($this->managers, $manager->id);
@@ -125,8 +126,9 @@ class FindApprovers
             $business_member = BusinessMember::find($approver);
             $member = $business_member->member;
             $profile = $member->profile;
+
             array_push($default_approvers, [
-                'name' => $profile->name,
+                'name' => $profile->name ? $profile->name : 'n/s',
                 'status' => null
             ]);
         }

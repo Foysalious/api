@@ -1,11 +1,13 @@
 <?php namespace Sheba\PaymentLink;
 
 use App\Models\PosCustomer;
+use App\Sheba\Bitly\BitlyLinkShort;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Sheba\EMI\Calculations;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
 use Sheba\Sms\Sms;
-use App\Sheba\Bitly\BitlyLinkShort;
 
 class Creator
 {
@@ -29,6 +31,48 @@ class Creator
     private $bankTransactionCharge;
     /** @var BitlyLinkShort */
     private $bitlyLink;
+    private $paidBy;
+    /** @var double */
+    private $transactionFeePercentage;
+    private $partnerProfit;
+    /**
+     * @var int
+     */
+    private $tax;
+    /**
+     * @var double
+     */
+    private $transactionFeePercentageConfig;
+
+    /**
+     * @param mixed $partnerProfit
+     * @return Creator
+     */
+    public function setPartnerProfit($partnerProfit)
+    {
+        $this->partnerProfit = $partnerProfit;
+        return $this;
+    }
+
+    /**
+     * @param mixed $paidBy
+     * @return Creator
+     */
+    public function setPaidBy($paidBy)
+    {
+        $this->paidBy = $paidBy;
+        return $this;
+    }
+
+    /**
+     * @param mixed $transactionFeePercentage
+     * @return Creator
+     */
+    public function setTransactionFeePercentage($transactionFeePercentage)
+    {
+        $this->transactionFeePercentage = $transactionFeePercentage ?: PaymentLinkStatics::get_payment_link_commission();
+        return $this;
+    }
 
 
     /**
@@ -38,15 +82,19 @@ class Creator
      */
     public function __construct(PaymentLinkRepositoryInterface $payment_link_repository)
     {
-        $this->paymentLinkRepo = $payment_link_repository;
-        $this->isDefault       = 0;
-        $this->amount          = null;
-        $this->bitlyLink = new BitlyLinkShort();
+        $this->paymentLinkRepo                = $payment_link_repository;
+        $this->isDefault                      = 0;
+        $this->amount                         = null;
+        $this->bitlyLink                      = new BitlyLinkShort();
+        $this->partnerProfit                  = 0;
+        $this->transactionFeePercentage       = PaymentLinkStatics::get_payment_link_commission();
+        $this->transactionFeePercentageConfig = PaymentLinkStatics::get_payment_link_commission();
+        $this->tax                            = PaymentLinkStatics::get_payment_link_tax();
     }
 
     public function setAmount($amount)
     {
-        $this->amount = $amount;
+        $this->amount = round($amount, 2);
         return $this;
     }
 
@@ -64,7 +112,7 @@ class Creator
 
     public function setUserName($user_name)
     {
-        $this->userName = $user_name;
+        $this->userName = (empty($user_name)) ? "Unknown Name" : $user_name;
         return $this;
     }
 
@@ -120,7 +168,7 @@ class Creator
      */
     public function setInterest($interest)
     {
-        $this->interest = $interest;
+        $this->interest = round($interest, 2);
         return $this;
     }
 
@@ -130,7 +178,7 @@ class Creator
      */
     public function setBankTransactionCharge($bankTransactionCharge)
     {
-        $this->bankTransactionCharge = $bankTransactionCharge;
+        $this->bankTransactionCharge = round($bankTransactionCharge, 2);
         return $this;
     }
 
@@ -189,7 +237,9 @@ class Creator
             'payerType'             => $this->payerType,
             'emiMonth'              => $this->emiMonth,
             'interest'              => $this->interest,
-            'bankTransactionCharge' => $this->bankTransactionCharge
+            'bankTransactionCharge' => $this->bankTransactionCharge,
+            'paidBy'                => $this->paidBy,
+            'partnerProfit'         => $this->partnerProfit
         ];
         if ($this->isDefault) unset($this->data['reason']);
         if (!$this->targetId) unset($this->data['targetId'], $this->data['targetType']);
@@ -208,27 +258,33 @@ class Creator
             'link'                    => $this->paymentLinkCreated->link,
             'emi_month'               => $this->paymentLinkCreated->emiMonth,
             'interest'                => $this->paymentLinkCreated->interest,
-            'bank_transaction_charge' => $this->paymentLinkCreated->bankTransactionCharge
+            'bank_transaction_charge' => $this->paymentLinkCreated->bankTransactionCharge,
+            'paid_by'                 => $this->paymentLinkCreated->paidBy,
+            'partner_profit'          => $this->paymentLinkCreated->partnerProfit
         ], $payerInfo);
     }
 
     public function sentSms()
     {
-        if ($this->getPayerInfo()) {
+        if ($this->getPayerInfo() && config('sms.is_on')) {
             /** @var PaymentLinkClient $paymentLinkClient */
             $paymentLinkClient = app(PaymentLinkClient::class);
-            $paymentLink = $paymentLinkClient->createShortUrl($this->paymentLinkCreated->link);
-            $link = null;
+            $paymentLink       = $paymentLinkClient->createShortUrl($this->paymentLinkCreated->link);
+            $link              = null;
             if ($paymentLink) {
                 $link = $paymentLink->url->shortUrl;
             }
             $extra_message = $this->targetType == 'pos_order' ? 'করুন। ' : 'করে বাকি পরিশোধ করুন। ';
-            $message = 'প্রিয় গ্রাহক, দয়া করে পেমেন্ট লিংকের মাধ্যমে ' . $this->userName . ' কে ' . $this->amount . ' টাকা পে ' . $extra_message . $link . ' Powered by sManager.';
-            $mobile = $this->getPayerInfo()['payer']['mobile'];
+            $message       = 'প্রিয় গ্রাহক, দয়া করে পেমেন্ট লিংকের মাধ্যমে ' . $this->userName . ' কে ' . $this->amount . ' টাকা পে ' . $extra_message . $link . ' Powered by sManager.';
+            $mobile        = $this->getPayerInfo()['payer']['mobile'];
 
             /** @var Sms $sms */
             $sms = app(Sms::class);
-            $sms = $sms->setVendor('infobip')->to($mobile)->msg($message);
+            $sms = $sms->setVendor('infobip')
+                       ->to($mobile)
+                       ->msg($message)
+                       ->setFeatureType(FeatureType::PAYMENT_LINK)
+                       ->setBusinessType(BusinessType::SMANAGER);
             $sms->shoot();
         }
     }
@@ -263,16 +319,71 @@ class Creator
         return false;
     }
 
-    public function setEmiCalculations()
+
+    public function getErrorMessage($status = false)
     {
-        if ($this->emiMonth) {
-            $data = Calculations::getMonthData($this->amount, $this->emiMonth, false);
-            $this->setInterest($data['total_interest'])->setBankTransactionCharge($data['bank_transaction_fee'])->setAmount($data['total_amount']);
+        if ($status) {
+            $type    = $status === "active" ? "সক্রিয়" : "নিষ্ক্রিয়";
+            $message = 'দুঃখিত! কিছু একটা সমস্যা হয়েছে, লিঙ্ক ' . $type . ' করা সম্ভব হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।';
+            $title   = 'লিংকটি ' . $type . ' করা সম্ভব হয়নি';
+            return ["message" => $message, "title" => $title];
         }
-        return $this;
+        $message = 'দুঃখিত! কিছু একটা সমস্যা হয়েছে, লিঙ্ক তৈরি করা সম্ভব হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।';
+        $title   = 'লিঙ্ক তৈরি হয়নি';
+        return ["message" => $message, "title" => $title];
     }
 
-    public function getPaymentLink() {
+    public function getSuccessMessage($status = false)
+    {
+        if ($status) {
+            $message = $status === "active" ? 'অভিনন্দন! লিঙ্কটি আবার সক্রিয় হয়ে গিয়েছে। লিঙ্কটি শেয়ার করার মাধ্যমে টাকা গ্রহণ করুন।'
+                : "এই লিঙ্ক দিয়ে আপনি বর্তমানে কোন টাকা গ্রহণ করতে পারবেন না, তবে আপনি যেকোনো মুহূর্তে লিঙ্কটি আবার সক্রিয় করতে পারবেন।";
+            $title   = $status === "active" ? "লিঙ্কটি সক্রিয় হয়েছে" : "লিঙ্কটি নিষ্ক্রিয় হয়েছে";
+            return ["message" => $message, "title" => $title];
+        }
+        $message = "অভিনন্দন! আপনি সফলভাবে একটি কাস্টম লিঙ্ক তৈরি করেছেন। লিঙ্কটি শেয়ার করার মাধ্যমে টাকা গ্রহণ করুন।";
+        $title   = "লিঙ্ক তৈরি সফল হয়েছে";
+        return ["message" => $message, "title" => $title];
+    }
+
+    public function getInterest()
+    {
+        return $this->interest;
+    }
+
+    public function getPaidBy()
+    {
+        return $this->paidBy;
+    }
+
+    public function getBankTransactionCharge()
+    {
+        return $this->bankTransactionCharge;
+    }
+
+    public function getPaymentLink()
+    {
         return $this->paymentLinkCreated->link;
+    }
+
+    public function calculate()
+    {
+        $amount = $this->amount;
+        if ($this->paidBy != 'partner') {
+            if ($this->emiMonth) {
+                $data = Calculations::getMonthData($amount, $this->emiMonth, false, $this->transactionFeePercentage);
+                $this->setInterest($data['total_interest'])->setBankTransactionCharge($data['bank_transaction_fee'] + $this->tax)->setAmount($data['total_amount'] + $this->tax)->setPartnerProfit($data['partner_profit']);
+            } else {
+                $this->setAmount($amount + round($amount * $this->transactionFeePercentage / 100, 2) + $this->tax)->setPartnerProfit($this->amount - ($amount + round($amount * $this->transactionFeePercentageConfig / 100, 2) + $this->tax));
+            }
+        } else {
+            if ($this->emiMonth) {
+                $data = Calculations::getMonthData($amount, $this->emiMonth, false);
+                $this->setInterest($data['total_interest'])
+                     ->setBankTransactionCharge($data['bank_transaction_fee'])
+                     ->setAmount($amount);
+            }
+        }
+        return $this;
     }
 }

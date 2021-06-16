@@ -5,6 +5,9 @@ use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\TopUp\Exception\GatewayTimeout;
 use Sheba\TopUp\TopUpRequest;
 use Sheba\TopUp\Vendor\Response\GenericGatewayErrorResponse;
+use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
+use Sheba\TopUp\Vendor\Response\Ipn\Mock\MockFailResponse;
+use Sheba\TopUp\Vendor\Response\Ipn\Mock\MockSuccessResponse;
 use Sheba\TopUp\Vendor\Response\MockResponse;
 use Sheba\TopUp\Vendor\Response\TopUpGatewayTimeoutResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
@@ -26,8 +29,13 @@ class Mock extends Vendor
         ])));
     }
 
-    public function getTopUpInitialStatus()
+    public function enquire(TopUpOrder $topup_order): IpnResponse
     {
-        return Statuses::SUCCESSFUL;
+        return $this->isFailed($topup_order) ? app(MockFailResponse::class) : app(MockSuccessResponse::class);
+    }
+
+    private function isFailed(TopUpOrder $topup_order)
+    {
+        return in_array($topup_order->payee_mobile, ["+8801700888888", "+8801700999999"]);
     }
 }
