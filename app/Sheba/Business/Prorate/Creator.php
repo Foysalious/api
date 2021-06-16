@@ -37,12 +37,13 @@ class Creator
     {
         $this->oldBusinessMemberLeaveTypes = $this->businessMemberLeaveTypeRepo->builder()
             ->whereIn('business_member_id', $this->requester->getBusinessMemberIds())
-            ->where('leave_type_id', $this->requester->getLeaveTypeId())->get();
+            ->where('leave_type_id', $this->requester->getLeaveTypeId());
     }
 
     public function create()
     {
         $this->getOldBusinessMemberLeaveType();
+
         foreach ($this->requester->getBusinessMemberIds() as $business_member_id) {
             if ($old_business_member_type = $this->oldBusinessMemberLeaveTypes->where('business_member_id', $business_member_id)->first()) $this->businessMemberLeaveTypeRepo->delete($old_business_member_type);
             $this->data[] = [
