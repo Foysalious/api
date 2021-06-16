@@ -157,7 +157,7 @@ class EmployeeController extends Controller
             'attendance' => [
                 'can_checkin' => !$attendance ? 1 : ($attendance->canTakeThisAction(Actions::CHECKIN) ? 1 : 0),
                 'can_checkout' => $attendance && $attendance->canTakeThisAction(Actions::CHECKOUT) ? 1 : 0,
-                'is_note_required' => 0
+                'is_left_early_note_required' => 0
             ],
             'is_remote_enable' => $business->isRemoteAttendanceEnable($business_member->id),
             'is_approval_request_required' => $approval_requests->count() > 0 ? 1 : 0,
@@ -171,7 +171,7 @@ class EmployeeController extends Controller
         ];
 
         if ($data['attendance']['can_checkout']) {
-            $data['attendance']['is_note_required'] = $checkout->isNoteRequired();
+            $data['attendance']['is_left_early_note_required'] = $checkout->isLeftEarlyNoteRequired();
         }
 
         return api_response($request, $business_member, 200, ['info' => $data]);
