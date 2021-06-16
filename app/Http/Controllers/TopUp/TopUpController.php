@@ -533,4 +533,22 @@ class TopUpController extends Controller
         }
         return false;
     }
+
+    /**
+     * @param Request $request
+     * @param TopUpDataFormat $topUp_data_format
+     * @param TopUpOrderRepository $top_up_order_repo
+     * @return JsonResponse
+     */
+    public function allTopUps(Request $request, TopUpDataFormat $topUp_data_format, TopUpOrderRepository $top_up_order_repo)
+    {
+        $user = $request->has('partner') ? $request->partner : $request->user;
+        $all_topups = $top_up_order_repo->getAllTopUps($user);
+        $top_up_data = $topUp_data_format->allTopUpDataFormat($all_topups);
+
+        return response()->json([
+            'code' => 200,
+            'data' => $top_up_data,
+        ]);
+    }
 }

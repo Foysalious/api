@@ -163,10 +163,10 @@ class ShebaController extends Controller
     public function getSimilarOffer($offer)
     {
         $offer = OfferShowcase::select('id', 'thumb', 'title', 'banner', 'short_description', 'detail_description', 'target_link')
-                              ->where([
-                                  ['id', '<>', $offer],
-                                  ['is_active', 1]
-                              ])->get();
+            ->where([
+                ['id', '<>', $offer],
+                ['is_active', 1]
+            ])->get();
         return count($offer) >= 3 ? response()->json(['offer' => $offer, 'code' => 200]) : response()->json(['code' => 404]);
     }
 
@@ -251,11 +251,13 @@ class ShebaController extends Controller
             'created_at'                       => $payment->created_at->format('jS M, Y, h:i A'),
             'invoice_link'                     => $payment->invoice_link,
             'transaction_id'                   => $payment->transaction_id,
-            'external_payment_redirection_url' => $external_payment ? $external_payment->success_url : null
+            'external_payment_redirection_url' => $external_payment ? $external_payment->success_url : null,
+            'store'                            => $payment->gateway_account_name
         ];
 
         if ($payable->isPaymentLink()) $this->mergePaymentLinkInfo($info, $payable);
-        return $info;
+        else
+            return $info;
     }
 
     private function mergePaymentLinkInfo(&$info, Payable $payable)
@@ -300,10 +302,10 @@ class ShebaController extends Controller
 
         $serviceType = 'App\\Models\\' . ucfirst($user_type);
         $dbGateways  = $paymentGateWayRepository->builder()
-                                                ->where('service_type', $serviceType)
-                                                ->whereNull('payment_method')
+            ->where('service_type', $serviceType)
+            ->whereNull('payment_method')
             ->where('status', 'Published')
-                                                ->get();
+            ->get();
 
         $payments = array_map(function (PaymentMethodDetails $details) use ($dbGateways, $user_type) {
             return (new PresentableDTOPresenter($details, $dbGateways))->mergeWithDbGateways($user_type);
@@ -410,9 +412,9 @@ class ShebaController extends Controller
             $nidValidation = new NidValidation();
             if ($request->has('manager_resource')) {
                 $exists = Profile::query()
-                                 ->where('nid_no', $request->nid)
-                                 ->whereNotIn('id', [$request->manager_resource->profile->id])
-                                 ->first();
+                    ->where('nid_no', $request->nid)
+                    ->whereNotIn('id', [$request->manager_resource->profile->id])
+                    ->first();
                 if (!empty($exists)) return api_response($request, null, 400, ['message' => 'Nid Number is used by another user']);
                 if ($request->manager_resource->profile->nid_verified == 1) return api_response($request, null, 400, ['message' => 'NID is already verified']);
                 $nidValidation->setProfile($request->manager_resource->profile);
@@ -470,9 +472,9 @@ class ShebaController extends Controller
         $this->validate($request, ['start_date' => 'required|date_format:Y-m-d', 'end_date' => 'required|date_format:Y-m-d']);
         $ids         = json_decode($request->id);
         $attendances = $attendance_repo->builder()
-                                       ->whereIn('business_member_id', $ids)->where([['date', ">=", $request->start_date], ['date', '<=', $request->end_date]])
-                                       ->select('id', 'business_member_id', 'date', 'checkin_time', 'checkout_time', 'staying_time_in_minutes')
-                                       ->get();
+            ->whereIn('business_member_id', $ids)->where([['date', ">=", $request->start_date], ['date', '<=', $request->end_date]])
+            ->select('id', 'business_member_id', 'date', 'checkin_time', 'checkout_time', 'staying_time_in_minutes')
+            ->get();
         return api_response($request, null, 200, ['data' => $attendances->groupBy('business_member_id')]);
     }
 
@@ -489,8 +491,14 @@ class ShebaController extends Controller
         $payment = Payment::where('transaction_id', $transaction_id)->first();
         if (!$payment) return api_response($request, null, 404, ['message' => 'No Payment found']);
         if ($payment->status != Statuses::INITIATED) return api_response($request, null, 400, ['message' => 'Payment already processed please contact with the the seller or call sheba platform limited']);
-
-        $info = $this->getPaymentInfo($payment);
+        $info                           = $this->getPaymentInfo($payment);
+        $info['gateway_transaction_id'] = $payment->gateway_transaction_id;
+        $info['gateway_account_name']   = $payment->gateway_account_name;
+        if (!isset($info['payer'])) {
+            /** @var Payable $payer */
+            $payer = $payment->payable;
+            $info  = array_merge($info, ['payer' => ['name' => $payer->getName(), 'id' => $payer->user->id, 'mobile' => $payer->getMobile()]]);
+        }
         return api_response($request, $info, 200, ['data' => $info]);
     }
 }
