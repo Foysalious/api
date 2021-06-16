@@ -88,7 +88,7 @@ class UpdaterV2
      */
     public function setMobile($mobile)
     {
-        $this->mobile = $mobile;
+        $this->mobile = formatMobile($mobile);
         $this->checkMobileUsedWithAnotherBusinessMember();
         return $this;
     }
@@ -211,6 +211,7 @@ class UpdaterV2
             'status' => $this->status ?: $this->businessMember->status,
             'mobile' => $this->mobile
         ];
+
         if ($this->businessRole) $business_member_data = array_merge($business_member_data, ['business_role_id' => $this->businessRole->id]);
 
         $this->businessMemberRepository->update($this->businessMember, $this->withUpdateModificationField($business_member_data));
