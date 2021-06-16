@@ -56,7 +56,7 @@ class Creator
         $this->storeImageGallery($partner_pos_service, json_decode($image_gallery,true));
         if (isset($cloned_data['accounting_info']) && !empty($cloned_data['accounting_info']))
             $this->createExpenseEntry($partner_pos_service, json_decode($cloned_data['accounting_info'], true));
-        return $partner_pos_service;
+        return json_decode($partner_pos_service);
     }
 
     private function createExpenseEntry($partner_pos_service, $accounting_info)
