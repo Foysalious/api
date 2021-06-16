@@ -138,7 +138,7 @@ class HomepageController extends Controller
         $startDate = $request->has('start_date') ? $this->convertStartDate($request->start_date) : null;
         $endDate = $request->has('start_date') ? $this->convertEndDate($request->end_date) : null;
         $limit = $request->has('limit') ? $request->limit : null;
-        $offset = $request->has('offset') ? $request->offset : 0;
+        $offset = $request->has('offset') ? $request->offset : null;
         $rootAccount = $request->has('root_account') ? $request->root_account : null;
         if ($endDate < $startDate){
             return api_response($request,null, 400, ['message' => 'End date can not smaller than start date']);
