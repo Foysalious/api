@@ -141,7 +141,19 @@ class DueTrackerRepository extends BaseRepository
                 $list = $list->slice($offset)->take($limit)->values();
             }
             return [
-                'list' => $list,
+                'list' => $list
+            ];
+        } catch (AccountingEntryServerError $e) {
+            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+        }
+    }
+
+    public function getDuelistBalance($request)
+    {
+        try {
+            $url = "api/due-list/balance";
+            $result = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
+            return [
                 'total_transactions' => $result['total_transactions'],
                 'total' => $result['total'],
                 'stats' => $result['stats'],
@@ -157,23 +169,13 @@ class DueTrackerRepository extends BaseRepository
      * @param $customerId
      * @return array
      * @throws AccountingEntryServerError
-     * @throws InvalidPartnerPosCustomer
      */
     public function getDueListByCustomer($request, $customerId): array
     {
         try {
-            $partner_pos_customer = PartnerPosCustomer::byPartner($this->partner->id)->where('customer_id', $customerId)->with(['customer'])->first();
-            $customer             = PosCustomer::find($customerId);
-            if (!empty($partner_pos_customer)) {
-                $customer = $partner_pos_customer->customer;
-            }
-            if (empty($customer)) throw new InvalidPartnerPosCustomer();
             $url = "api/due-list/".$customerId."?";
             $url = $this->updateRequestParam($request, $url);
             $result = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
-            $total_debit = $request['other_info']['total_debit'];
-            $total_credit = $request['other_info']['total_credit'];
-            $result['balance']['color'] = $total_debit  > $total_credit ? '#219653' : '#DC1E1E';
             $due_list = collect($result['list']);
 
             $list   = $due_list->map(function ($item) {
@@ -188,22 +190,43 @@ class DueTrackerRepository extends BaseRepository
             });
 
             return [
-                'list'       => $list,
-                'customer'   => [
-                    'id'                => $customer->id,
-                    'name'              => !empty($partner_pos_customer) && $partner_pos_customer->nick_name ? $partner_pos_customer->nick_name : $customer->profile->name,
-                    'mobile'            => $customer->profile->mobile,
-                    'avatar'            => $customer->profile->pro_pic,
-                    'due_date_reminder' => !empty($partner_pos_customer) ? $partner_pos_customer->due_date_reminder : null,
-                    'is_supplier' => !empty($partner_pos_customer) ? $partner_pos_customer->is_supplier : 0
-                ],
-                'partner'    => $this->getPartnerInfo($this->partner),
-                'stats'      => $result['stats'],
-                'other_info' => $result['other_info'],
-                'balance' => $result['balance']
+                'list' => $list
             ];
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+        }
+    }
+
+    public function dueListBalanceByCustomer($request, $customerId)
+    {
+        try {
+        $partner_pos_customer = PartnerPosCustomer::byPartner($this->partner->id)->where('customer_id', $customerId)->with(['customer'])->first();
+        $customer             = PosCustomer::find($customerId);
+        if (!empty($partner_pos_customer)) {
+            $customer = $partner_pos_customer->customer;
+        }
+        if (empty($customer)) throw new InvalidPartnerPosCustomer();
+        $url = "api/due-list/".$customerId."/balance";
+        $result = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
+        $total_debit = $request['other_info']['total_debit'];
+        $total_credit = $request['other_info']['total_credit'];
+        $result['balance']['color'] = $total_debit  > $total_credit ? '#219653' : '#DC1E1E';
+        return [
+            'customer'   => [
+                'id'                => $customer->id,
+                'name'              => !empty($partner_pos_customer) && $partner_pos_customer->nick_name ? $partner_pos_customer->nick_name : $customer->profile->name,
+                'mobile'            => $customer->profile->mobile,
+                'avatar'            => $customer->profile->pro_pic,
+                'due_date_reminder' => !empty($partner_pos_customer) ? $partner_pos_customer->due_date_reminder : null,
+                'is_supplier' => !empty($partner_pos_customer) ? $partner_pos_customer->is_supplier : 0
+            ],
+            'partner'    => $this->getPartnerInfo($this->partner),
+            'stats'      => $result['stats'],
+            'other_info' => $result['other_info'],
+            'balance' => $result['balance']
+        ];
+            } catch (AccountingEntryServerError $e) {
+        throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
     }
 
@@ -234,8 +257,6 @@ class DueTrackerRepository extends BaseRepository
                 } else {
                     $item['customer_name'] = $profile ? $profile->name : "Unknown";
                 }
-
-
                 $item['customer_mobile'] = $profile ? $profile->mobile : null;
                 $item['avatar'] = $profile ? $profile->pro_pic : null;
                 $item['customer_id'] = $customerId;
