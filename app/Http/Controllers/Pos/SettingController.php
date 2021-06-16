@@ -106,17 +106,16 @@ class SettingController extends Controller
         $partner = $request->partner;
         $this->setModifier($request->manager_resource);
         $customer = PosCustomer::find($request->customer_id);
-        $sms = (new SmsHandlerRepo('due-payment-collect-request'))->setVendor('infobip')
+        $sms = (new SmsHandlerRepo('due-payment-collect-request'))
             ->setBusinessType(BusinessType::SMANAGER)
             ->setFeatureType(FeatureType::POS)
             ->setMessage([
                 'partner_name' => $partner->name,
                 'due_amount' => $request->due_amount
             ]);
-        $sms_cost = $sms->getCost();
-        if ((double)$partner->wallet < (double)$sms_cost) {
-            throw new InsufficientBalanceException();
-        }
+        $sms_cost = $sms->estimateCharge();
+        if ((double)$partner->wallet < $sms_cost) throw new InsufficientBalanceException();
+
         $sms->send($customer->profile->mobile, [
             'partner_name' => $partner->name,
             'due_amount' => $request->due_amount

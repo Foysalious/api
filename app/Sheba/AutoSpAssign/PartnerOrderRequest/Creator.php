@@ -102,8 +102,8 @@ class Creator
             ->setBusinessType(BusinessType::SMANAGER)
             ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
             ->send($partner->getContactNumber(), [
-            'partner_name' => $partner->name
-        ]);
+                'partner_name' => $partner->name
+            ]);
     }
 
     private function getServices(Job $job)

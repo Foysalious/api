@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d811e8e01a260def3dfd3e6c3f01f3f3",
+    "content-hash": "3b08b4e7043d8692bccf43b83d0407c9",
     "packages": [
         {
             "name": "algolia/algoliasearch-client-php",
@@ -1807,7 +1807,7 @@
             "time": "2017-03-12T09:23:10+00:00"
         },
         {
-            "name": "jeremeamia/SuperClosure",
+            "name": "jeremeamia/superclosure",
             "version": "2.3.0",
             "source": {
                 "type": "git",
@@ -3526,6 +3526,10 @@
                 "mime",
                 "mime type"
             ],
+            "support": {
+                "issues": "https://github.com/rosell-dk/image-mime-type-guesser/issues",
+                "source": "https://github.com/rosell-dk/image-mime-type-guesser/tree/0.3"
+            },
             "time": "2019-03-29T09:33:28+00:00"
         },
         {
@@ -3926,11 +3930,11 @@
         },
         {
             "name": "sheba/sms",
-            "version": "dev-master",
+            "version": "dev-feature/sms-service",
             "source": {
                 "type": "git",
                 "url": "https://mac_pasha@bitbucket.org/startern/sheba_sms.git",
-                "reference": "9fb24dbaa97e43d61140d74d7f9638e7a3eeeeb8"
+                "reference": "e1776f154f2f6ba8d3de0a07a2fa52f4ad5c5a69"
             },
             "require": {
                 "ext-curl": "*"
@@ -3951,7 +3955,7 @@
                 }
             ],
             "description": "Sms for Sheba",
-            "time": "2021-05-18T09:09:47+00:00"
+            "time": "2021-06-16T10:01:26+00:00"
         },
         {
             "name": "sheba/voucher",
