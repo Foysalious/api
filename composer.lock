@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f4907e8b9d1a90b4eaaa0261cd333cfe",
+    "content-hash": "b6ec5f93a8fe237449bb416f8331dafc",
     "packages": [
         {
             "name": "algolia/algoliasearch-client-php",
@@ -2570,54 +2570,6 @@
             "time": "2016-12-03T22:08:25+00:00"
         },
         {
-            "name": "myclabs/deep-copy",
-            "version": "1.8.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/myclabs/DeepCopy.git",
-                "reference": "478465659fd987669df0bd8a9bf22a8710e5f1b6"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/myclabs/DeepCopy/zipball/478465659fd987669df0bd8a9bf22a8710e5f1b6",
-                "reference": "478465659fd987669df0bd8a9bf22a8710e5f1b6",
-                "shasum": ""
-            },
-            "require": {
-                "php": "^7.1"
-            },
-            "replace": {
-                "myclabs/deep-copy": "self.version"
-            },
-            "require-dev": {
-                "doctrine/collections": "^1.0",
-                "doctrine/common": "^2.6",
-                "phpunit/phpunit": "^7.1"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "DeepCopy\\": "src/DeepCopy/"
-                },
-                "files": [
-                    "src/DeepCopy/deep_copy.php"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "description": "Create deep copies (clones) of your objects",
-            "keywords": [
-                "clone",
-                "copy",
-                "duplicate",
-                "object",
-                "object graph"
-            ],
-            "time": "2018-05-29T17:25:09+00:00"
-        },
-        {
             "name": "namshi/jose",
             "version": "7.2.3",
             "source": {
@@ -3834,16 +3786,16 @@
         },
         {
             "name": "setasign/fpdi",
-            "version": "v2.1.1",
+            "version": "v2.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Setasign/FPDI.git",
-                "reference": "356de9cb6b6a826ac952c86aee6599463ea87362"
+                "reference": "99a3181db556020fafa8f4d416120d8d14dee2ee"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Setasign/FPDI/zipball/356de9cb6b6a826ac952c86aee6599463ea87362",
-                "reference": "356de9cb6b6a826ac952c86aee6599463ea87362",
+                "url": "https://api.github.com/repos/Setasign/FPDI/zipball/99a3181db556020fafa8f4d416120d8d14dee2ee",
+                "reference": "99a3181db556020fafa8f4d416120d8d14dee2ee",
                 "shasum": ""
             },
             "require": {
@@ -3891,7 +3843,7 @@
                 "fpdi",
                 "pdf"
             ],
-            "time": "2018-11-06T10:02:00+00:00"
+            "time": "2018-09-13T14:55:17+00:00"
         },
         {
             "name": "sheba/dal",
@@ -6075,6 +6027,54 @@
                 }
             ],
             "time": "2020-07-15T09:48:00+00:00"
+        },
+        {
+            "name": "myclabs/deep-copy",
+            "version": "1.8.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/myclabs/DeepCopy.git",
+                "reference": "478465659fd987669df0bd8a9bf22a8710e5f1b6"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/myclabs/DeepCopy/zipball/478465659fd987669df0bd8a9bf22a8710e5f1b6",
+                "reference": "478465659fd987669df0bd8a9bf22a8710e5f1b6",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.1"
+            },
+            "replace": {
+                "myclabs/deep-copy": "self.version"
+            },
+            "require-dev": {
+                "doctrine/collections": "^1.0",
+                "doctrine/common": "^2.6",
+                "phpunit/phpunit": "^7.1"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "DeepCopy\\": "src/DeepCopy/"
+                },
+                "files": [
+                    "src/DeepCopy/deep_copy.php"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Create deep copies (clones) of your objects",
+            "keywords": [
+                "clone",
+                "copy",
+                "duplicate",
+                "object",
+                "object graph"
+            ],
+            "time": "2018-05-29T17:25:09+00:00"
         },
         {
             "name": "phpspec/prophecy",
