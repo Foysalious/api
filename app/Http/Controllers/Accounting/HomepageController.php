@@ -83,6 +83,28 @@ class HomepageController extends Controller
     }
 
     /**
+     * @param $accountKey
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getEntriesByAccountKey($accountKey, Request $request): JsonResponse
+    {
+        $limit = $request->limit ?? 15;
+        $nextCursor = $request->next_cursor ?? null;
+        try {
+            $response = $this->homepageRepo->getEntriesByAccountKey($accountKey, $request->partner->id, $limit, $nextCursor);
+            return api_response($request, $response, 200, ['data' => $response]);
+        } catch (Exception $e) {
+            return api_response(
+                $request,
+                null,
+                $e->getCode() == 0 ? 400 : $e->getCode(),
+                ['message' => $e->getMessage()]
+            );
+        }
+    }
+
+    /**
      * @param Request $request
      * @return JsonResponse
      */
@@ -111,17 +133,19 @@ class HomepageController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function getAccountListBalance(Request $request): JsonResponse
+    public function getAccountListBalance(Request $request)
     {
-        $startDate = $this->convertStartDate($request->start_date);
-        $endDate = $this->convertEndDate($request->end_date);
-        $limit = $request->limit ?? 10;
+        $startDate = $request->has('start_date') ? $this->convertStartDate($request->start_date) : null;
+        $endDate = $request->has('start_date') ? $this->convertEndDate($request->end_date) : null;
+        $limit = $request->has('limit') ? $request->limit : null;
+        $offset = $request->has('offset') ? $request->offset : null;
+        $rootAccount = $request->has('root_account') ? $request->root_account : null;
         if ($endDate < $startDate){
             return api_response($request,null, 400, ['message' => 'End date can not smaller than start date']);
         }
 
         try {
-            $response = $this->homepageRepo->getAccountListBalance($request->partner->id, $startDate, $endDate, $limit);
+            $response = $this->homepageRepo->getAccountListBalance($request->partner->id, $startDate, $endDate, $limit, $offset, $rootAccount);
             return api_response($request, $response, 200, ['data' => $response]);
         } catch (Exception $e) {
             return api_response(

@@ -66,10 +66,19 @@ class HomepageRepository extends BaseRepository
         }
     }
 
-    public function getAccountListBalance($userId, $startDate, $endDate, $limit, $userType = UserType::PARTNER) {
+    public function getAccountListBalance($userId, $startDate, $endDate, $limit, $offset, $rootAccount, $userType = UserType::PARTNER) {
         try {
             return $this->client->setUserType($userType)->setUserId($userId)
-                ->get($this->api . "account-list-balance?start_date=$startDate&end_date=$endDate&limit=$limit");
+                ->get($this->api . "account-list-balance?" . ($limit ? "limit={$limit}" : "") . ($offset ? "&offset={$offset}" : "") . ($startDate ? "&start_date={$startDate}" : "") . ($endDate ? "&end_date={$endDate}" : ""). ($rootAccount ? "&root_account={$rootAccount}" : ""));
+        } catch (AccountingEntryServerError $e) {
+            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+        }
+    }
+
+    public function getEntriesByAccountKey($accountKey, $userId, $limit,  $nextCursor=null, $userType = UserType::PARTNER) {
+        try {
+            return $this->client->setUserType($userType)->setUserId($userId)
+                ->get($this->api . 'cash-accounts-entries/'.$accountKey.'?limit='.$limit.($nextCursor?'&next_cursor='.$nextCursor : '') );
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }

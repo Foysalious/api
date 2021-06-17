@@ -6,6 +6,7 @@ class AccountingRoute
     {
         $api->group(['prefix' => 'accounting', 'middleware' => ['accounting.auth']], function ($api) {
             $api->post('/transfer', 'Accounting\\AccountingController@storeAccountsTransfer');
+            $api->post('/transfer/{transfer_id}', 'Accounting\\AccountingController@updateAccountsTransfer');
             $api->post('/expense', 'Accounting\\IncomeExpenseController@storeExpenseEntry');
             $api->post('/expense/{expense_id}', 'Accounting\\IncomeExpenseController@updateExpenseEntry');
             $api->post('/income', 'Accounting\\IncomeExpenseController@storeIncomeEntry');
@@ -20,7 +21,9 @@ class AccountingRoute
             $api->get('/icons', 'Accounting\\IconsController@getIcons');
             $api->group(['prefix' => 'due-tracker'], function ($api) {
                 $api->get('/due-list', 'Accounting\\DueTrackerController@dueList');
+                $api->get('/due-list-balance', 'Accounting\\DueTrackerController@dueListBalance');
                 $api->get('/due-list/{customerId}', 'Accounting\\DueTrackerController@dueListByCustomerId');
+                $api->get('/due-list/{customerId}/balance', 'Accounting\\DueTrackerController@dueListBalanceByCustomer');
                 $api->post('/', 'Accounting\\DueTrackerController@store');
                 $api->post('/{entry_id}', 'Accounting\\DueTrackerController@update');
                 $api->delete('/{entry_id}', 'Accounting\\DueTrackerController@delete');
@@ -31,6 +34,7 @@ class AccountingRoute
                 $api->get('income-expense-entries', 'Accounting\\HomepageController@getIncomeExpenseEntries');
                 $api->get('due-collection-balance', 'Accounting\\HomepageController@getDueCollectionBalance');
                 $api->get('account-list-balance', 'Accounting\\HomepageController@getAccountListBalance');
+                $api->get('cash-accounts-entries/{accountKey}', 'Accounting\\HomepageController@getEntriesByAccountKey');
                 $api->get('time-filter', 'Accounting\\HomepageController@getTimeFilters');
                 $api->get('training-video', 'Accounting\\HomepageController@getTrainingVideo');
             });
@@ -39,6 +43,7 @@ class AccountingRoute
             });
             $api->group(['prefix' => 'reports'], function ($api) {
                 $api->get('/pos/customer-wise', 'Accounting\\ReportsController@getCustomerWiseReport');
+                $api->get('/pos/product-wise', 'Accounting\\ReportsController@getProductWiseReport');
                 $api->get('/{reportType}', 'Accounting\\ReportsController@getAccountingReport');
                 $api->get('/', 'Accounting\\ReportsController@getAccountingReportsList');
             });

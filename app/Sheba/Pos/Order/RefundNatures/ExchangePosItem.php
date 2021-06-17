@@ -2,6 +2,12 @@
 
 use App\Models\PartnerPosService;
 use App\Models\PosOrder;
+use App\Sheba\AccountingEntry\Constants\EntryTypes;
+use App\Sheba\AccountingEntry\Repository\AccountingRepository;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Sheba\AccountingEntry\Accounts\Accounts;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
@@ -26,13 +32,15 @@ class ExchangePosItem extends RefundNature
     private $serviceRepo;
     /** @var PaymentTransfer $paymentTransfer */
     private $paymentTransfer;
+    private $request;
 
-    public function __construct(LogCreator $log_creator, Updater $updater, PosServiceRepositoryInterface $service_repo, StockManager $stock_manager, PaymentTransfer $transfer)
+    public function __construct(LogCreator $log_creator, Updater $updater, PosServiceRepositoryInterface $service_repo, StockManager $stock_manager, PaymentTransfer $transfer, Request $request)
     {
         parent::__construct($log_creator, $updater);
         $this->stockManager    = $stock_manager;
         $this->serviceRepo     = $service_repo;
         $this->paymentTransfer = $transfer;
+        $this->request         = $request;
     }
 
     /**
@@ -48,6 +56,7 @@ class ExchangePosItem extends RefundNature
         $this->newOrder = $creator->setPartner($this->order->partner)->setData($this->prepareCreateData())->setStatus(OrderStatuses::COMPLETED)->create();
         $this->generateDetails();
         $this->saveLog();
+        $this->updateEntry($this->newOrder->id, 'exchange');
         $this->transferPaidAmount();
     }
 
@@ -109,6 +118,38 @@ class ExchangePosItem extends RefundNature
         $log                        = "Transfer to " . $this->newOrder->id . " from " . $this->order->id . ", as per exchange.";
         $previous_order_paid_amount = $this->order->getPaid();
         $this->paymentTransfer->setOrder($this->newOrder)->setLog($log)->setAmount($previous_order_paid_amount)->process();
+    }
+
+    /**
+     * @param PosOrder $order
+     * @param $refundType
+     * @throws AccountingEntryServerError
+     */
+    protected function updateEntry(PosOrder $order, $refundType)
+    {
+        $this->additionalAccountingData($order, $refundType);
+        /** @var AccountingRepository $accounting_repo */
+        $accounting_repo = app()->make(AccountingRepository::class);
+        $this->request->merge([
+            "inventory_products" => $accounting_repo->getInventoryProducts($order->items, $this->data['services']),
+        ]);
+        $accounting_repo->updateEntryBySource($this->request, $order->id, EntryTypes::POS);
+    }
+
+    private function additionalAccountingData(PosOrder $order, $refundType)
+    {
+        $this->request->merge(
+            [
+                "from_account_key" => (new Accounts())->asset->cash::CASH,
+                "to_account_key" => (new Accounts())->income->sales::SALES_FROM_POS,
+                "amount" => (double)$this->order->getNetBill(),
+                "note" => $refundType,
+                "source_id" => $order->id,
+                "customer_id" => isset($order->customer) ? $order->customer->id : null,
+                "customer_name" => isset($order->customer) ? $order->customer->name: null,
+                "total_vat" => $order->getTotalVat()
+            ]
+        );
     }
 
 }

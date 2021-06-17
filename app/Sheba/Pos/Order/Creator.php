@@ -152,10 +152,12 @@ class Creator
      * @throws InvalidDiscountType
      * @throws NotEnoughStockException
      * @throws PartnerPosCustomerNotFoundException
-     * @throws PosCustomerNotFoundException
+     * @throws PosCustomerNotFoundException|ExpenseTrackingServerError
      */
     public function create()
     {
+        $default_instance = 0;
+
         $order_data['partner_id']            = $this->partner->id;
         $order_data['customer_id']           = $this->resolveCustomerId();
         $order_data['address']               = $this->address;
@@ -172,11 +174,16 @@ class Creator
         $services                            = json_decode($this->data['services'], true);
         foreach ($services as $service) {
             /** @var PartnerPosService $original_service */
-            $original_service = isset($service['id']) && !empty($service['id']) ? $this->posServiceRepo->find($service['id']) : $this->posServiceRepo->defaultInstance($service);
+            if(isset($service['id']) && !empty($service['id'])) $original_service = $this->posServiceRepo->find($service['id']);
+            else {
+                $vat_percentage = $this->partner->posSetting->vat_percentage;
+                $original_service = $this->posServiceRepo->defaultInstance($service, $this->partner);
+            }
             if(!$original_service)
                 throw new DoNotReportException("Service not found with provided ID", 400);
             if($original_service->is_published_for_shop && isset($service['quantity']) && !empty($service['quantity']) && $service['quantity'] > $original_service->stock)
                 throw new NotEnoughStockException("Not enough stock", 403);
+
             // $is_service_discount_applied = $original_service->discount();
             $service_wholesale_applicable = $original_service->wholesale_price ? true : false;
 
@@ -331,8 +338,8 @@ class Creator
         $services                = json_decode($this->data['services'], true);
         foreach ($services as $service) {
             /** @var PartnerPosService $original_service */
-            $original_service = isset($service['id']) && !empty($service['id']) ? $this->posServiceRepo->find($service['id']) : $this->posServiceRepo->defaultInstance($service);
-            if (is_null($original_service)) $original_service = $this->posServiceRepo->defaultInstance($service);
+            $original_service = isset($service['id']) && !empty($service['id']) ? $this->posServiceRepo->find($service['id']) : $this->posServiceRepo->defaultInstance($service, $this->partner);
+            if (is_null($original_service)) $original_service = $this->posServiceRepo->defaultInstance($service, $this->partner);
             $service_id[]                 = isset($service['id']) && !empty($service['id']) ? $service['id'] : 0;
             $service_wholesale_applicable = $original_service->wholesale_price ? true : false;
             $service['unit_price']        = (isset($service['updated_price']) && $service['updated_price']) ? $service['updated_price'] : ($this->isWholesalePriceApplicable($service_wholesale_applicable) ? $original_service->wholesale_price : $original_service->price);
@@ -395,7 +402,8 @@ class Creator
             "amount_cleared"     => $order->getPaid(),
             "total_discount"     => $order_discount,
             "note"               => $order->sales_channel == SalesChannels::WEBSTORE ? SalesChannels::WEBSTORE : SalesChannels::POS,
-            "source_id"          => $order->id
+            "source_id"          => $order->id,
+            "total_vat"          => $order->getTotalVat()
         ]);
     }
 }

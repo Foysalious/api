@@ -106,9 +106,8 @@ class AccountingRepository extends BaseRepository
             }
 
         }
-        if (count($inventory_products) > 0) {
-            return json_encode($inventory_products);
-        }
+        if (count($inventory_products) > 0) return json_encode($inventory_products);
+
         return null;
     }
 
@@ -131,6 +130,23 @@ class AccountingRepository extends BaseRepository
             return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
         } catch (AccountingEntryServerError $e) {
             Log::info(['error from accounting']);
+            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+        }
+    }
+
+    /**
+     * @param Partner $partner
+     * @param $sourceType
+     * @param $sourceId
+     * @return mixed
+     * @throws AccountingEntryServerError
+     */
+    public function deleteEntryBySource(Partner $partner, $sourceType, $sourceId)
+    {
+        $url = "api/entries/source/" . $sourceType . '/' . $sourceId;
+        try {
+            return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->delete($url);
+        } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
     }
@@ -167,6 +183,7 @@ class AccountingRepository extends BaseRepository
         $data['entry_at'] = $request->has("date") ? $request->date : Carbon::now()->format('Y-m-d H:i:s');
         $data['attachments'] = $this->uploadAttachments($request);
         $data['total_discount'] = $request->has("total_discount") ? (double)$request->total_discount : null;
+        $data['total_vat'] = (double)$request->total_vat;
         return $data;
     }
 

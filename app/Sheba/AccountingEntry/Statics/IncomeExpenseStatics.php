@@ -26,7 +26,7 @@ class IncomeExpenseStatics
             'from_account_key' => 'required',
             'to_account_key' => 'required',
             'date' => 'required|date_format:Y-m-d H:i:s',
-            'amount_cleared' => 'sometimes|required|numeric'
+            'amount_cleared' => 'required|numeric'
         ];
     }
 
