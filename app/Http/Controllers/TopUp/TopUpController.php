@@ -156,7 +156,7 @@ class TopUpController extends Controller
 
         $waiting_time = $this->hasLastTopupWithinIntervalTime($top_up_request, $request);
         if($waiting_time !== false)
-            return api_response($request, null, 400, ['message' => 'এই নাম্বারে কিছুক্ষনের মধ্যে টপ-আপ করা হয়েছে । অনুগ্রহপূর্বক '.$waiting_time.' মিনিট অপেক্ষা করুন পুনরায় এই নাম্বারে টপ-আপ করার আগে ।']);
+            return api_response($request, null, 400, ['message' => 'এই নাম্বারে কিছুক্ষন আগে টপ-আপ করা হয়েছে । পুনরায় এই নাম্বারে টপ-আপ করার জন্য অনুগ্রহপূর্বক ' .$waiting_time. ' মিনিট অপেক্ষা করুন ।']);
 
 
         $topup_order = $creator->setTopUpRequest($top_up_request)->create();
