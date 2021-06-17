@@ -35,6 +35,7 @@ class ExpensePdf
 
         $data = [
             'company' => $business->name,
+            'logo' => $business->logo,
             'employee_id' => $business_member->id,
             'employee_name' => $business_member->member->profile->name,
             'employee_mobile' => $business_member->member->profile->mobile,
