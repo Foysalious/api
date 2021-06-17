@@ -39,6 +39,7 @@ class OrderController extends Controller
     {
         $partner = $request->auth_user->getPartner();
         $response = $this->orderService
+            ->setToken(bearerToken($request))
             ->setPartnerId($partner->id)
             ->setCustomerId($request->customer_id)
             ->setDeliveryAddress($request->delivery_address)

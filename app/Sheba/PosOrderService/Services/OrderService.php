@@ -16,6 +16,7 @@ class OrderService
     private $deliveryCharge;
     private $status;
     private $orderId;
+    private $token;
     private $skus, $discount, $paymentMethod, $paymentLinkAmount, $paidAmount;
     protected $emi_month, $interest, $bank_transaction_charge, $delivery_name, $delivery_mobile, $note, $voucher_id;
     protected $userId;
@@ -33,6 +34,16 @@ class OrderService
     public function setUserId($user_id)
     {
         $this->userId = $user_id;
+        return $this;
+    }
+
+    /**
+     * @param mixed $token
+     * @return OrderService
+     */
+    public function setToken($token)
+    {
+        $this->token = $token;
         return $this;
     }
 
@@ -212,7 +223,7 @@ class OrderService
     public function store()
     {
         $data = $this->makeCreateData();
-        return $this->client->post('api/v1/partners/'.$this->partnerId.'/orders', $data, true);
+        return $this->client->setToken($this->token)->post('api/v1/partners/'.$this->partnerId.'/orders', $data, true);
     }
 
     public function updateStatus()
