@@ -1,8 +1,6 @@
 <?php namespace Tests\Feature\CustomerInfoCall;
 
-use Sheba\Dal\Category\Category;
 use Sheba\Dal\InfoCall\InfoCall;
-use Sheba\Dal\Service\Service;
 use Tests\Feature\FeatureTestCase;
 
 class InfoCallListTest extends FeatureTestCase
@@ -122,7 +120,7 @@ class InfoCallListTest extends FeatureTestCase
 
     }
 
-    public function testInfoCallListCustomerForRespond200WithInvalidBearerToken()
+    public function testInfoCallListCustomerWithInvalidBearerToken()
     {
 
         //arrange
