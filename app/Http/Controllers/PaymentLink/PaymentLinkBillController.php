@@ -8,6 +8,7 @@ use Illuminate\Validation\ValidationException;
 use Sheba\Customer\Creator;
 use Illuminate\Http\Request;
 use Sheba\Payment\AvailableMethods;
+use Sheba\Payment\Exceptions\FailedToInitiate;
 use Sheba\Payment\Exceptions\InitiateFailedException;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
 use Sheba\Payment\Factory\PaymentStrategy;
@@ -66,9 +67,9 @@ class PaymentLinkBillController extends Controller
             }
             try {
                 $payment = $payment_manager->setMethodName($payment_method)->setPayable($payable)->init();
-            } catch (InitiateFailedException $e) {
+            } catch (FailedToInitiate $e) {
                 if ($payment_link->isEmi()) {
-                    $payment = $payment_manager->setMethodName(PaymentStrategy::SSL)->setPayable($payable)->init();
+                    $payment = $payment_manager->setMethodName(PaymentStrategy::SSL)->setPayable($payable)->init(true);
                 }
             }
 

@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Redis;
 use Sheba\Dal\CardType\Contract as CardTypeRepo;
 use Sheba\Dal\EmiBank\Repository\EmiBankContract;
 use Sheba\Payment\Exceptions\AlreadyCompletingPayment;
+use Sheba\Payment\Exceptions\FailedToInitiate;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
 use Sheba\Payment\Factory\PaymentStrategy;
 use Sheba\Payment\Policy\PaymentInitiate;
@@ -82,13 +83,13 @@ class PaymentManager
     /**
      * @return Payment
      * @throws InitiateFailedException
-     * @throws InvalidPaymentMethod
+     * @throws InvalidPaymentMethod|FailedToInitiate
      */
-    public function init()
+    public function init($fallback = false)
     {
-        $this->canInit();
+        if (!$fallback) $this->canInit();
         $payment = $this->getMethod()->init($this->payable);
-        if (!$payment->isInitiated()) throw new InitiateFailedException();
+        if (!$payment->isInitiated()) throw new FailedToInitiate();
         return $payment;
     }
 
@@ -137,7 +138,7 @@ class PaymentManager
     public function getCardType($cardNumber)
     {
         $cardTypes = app(CardTypeRepo::class)->builder()->with('paymentGateway')->where('regular_expression', '!=', '')->get();
-        foreach ($cardTypes as $cardType){
+        foreach ($cardTypes as $cardType) {
             if (preg_match('/' . $cardType->regular_expression . '/', $cardNumber)) return $cardType;
         }
         return null;
