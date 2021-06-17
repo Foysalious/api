@@ -166,7 +166,7 @@ class ServiceController extends Controller
             $partner_pos_service->master_category_name = $partner_pos_service_model->category->parent->name;
             $partner_pos_service->sub_category_id = $partner_pos_service_model->category->id;
             $partner_pos_service->weight_unit = $partner_pos_service_model->weight_unit? array_merge(config('weight.weight_unit')[$partner_pos_service_model->weight_unit], ['key' => $partner_pos_service_model->weight_unit]): null;
-            $partner_pos_service->accounting_info = $partner_pos_service_model->accounting_info ? json_decode($partner_pos_service_model->accounting_info) : $partner_pos_service_model->accounting_info;
+            $partner_pos_service->accounting_info = $partner_pos_service_model->accounting_info ? json_decode($partner_pos_service_model->accounting_info) : null;
             $partner_pos_service->image_gallery = $partner_pos_service_model->imageGallery ? $partner_pos_service_model->imageGallery->map(function($image){
                return [
                  'id' =>   $image->id,
@@ -285,7 +285,7 @@ class ServiceController extends Controller
         $partner_pos_service->master_category_id = $partner_pos_service->category->parent_id;
         $partner_pos_service->sub_category_id = $partner_pos_service->category->id;
         $partner_pos_service->weight_unit = $partner_pos_service->weight_unit? array_merge(config('weight.weight_unit')[$partner_pos_service->weight_unit], ['key' => $partner_pos_service->weight_unit]): null;
-        $partner_pos_service->accounting_info = $partner_pos_service->accounting_info ? json_decode($partner_pos_service->accounting_info):$partner_pos_service->accounting_info;
+        $partner_pos_service->accounting_info = $partner_pos_service->accounting_info ? json_decode($partner_pos_service->accounting_info):null;
         $partner_pos_service_arr = $partner_pos_service->toArray();
         $partner_pos_service_arr['image_gallery'] = $partner_pos_service->imageGallery ? $partner_pos_service->imageGallery->map(function ($image) {
             return [
