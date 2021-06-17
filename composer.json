@@ -51,6 +51,7 @@
     "spomky-labs/jose": "6.1.7",
     "fgrosse/phpasn1": "1.5",
     "mpdf/mpdf": "8.0.7"
+    "setasign/fpdi": "^2.3",
   },
   "require-dev": {
     "fzaninotto/faker": "~1.4",
