@@ -21,7 +21,7 @@ class ExpensePdf
 
     public function generate($business_member, $month, $year)
     {
-        $business = $this->business->where('id', $business_member->business_id)->select('name')->first();
+        $business = $this->business->where('id', $business_member->business_id)->select('name', 'logo')->first();
         $role = $business_member->role;
         $time_frame = (new TimeFrame())->forAMonth($month, $year);
 
