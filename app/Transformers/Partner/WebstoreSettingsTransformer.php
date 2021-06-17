@@ -2,8 +2,9 @@
 
 
 use League\Fractal\TransformerAbstract;
-use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
+use Sheba\Sms\AdaReach;
 use Sheba\Sms\Infobip;
+use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
 
 class WebstoreSettingsTransformer extends TransformerAbstract
 {
@@ -18,7 +19,11 @@ class WebstoreSettingsTransformer extends TransformerAbstract
             'logo' => $partner->logo,
             'delivery_charge' => $partner->delivery_charge,
             'is_inventory_empty' => !$partner->posServices()->count() ? 1 : 0,
-            'banner' => $banner_settings ? [
+            'address' => $partner->address,
+            'wallet' => $partner->wallet,
+            'single_sms_cost' => AdaReach::SINGLE_SMS_COST,
+            'is_webstore_sms_active' => $partner->is_webstore_sms_active,
+              'banner' => $banner_settings ? [
                 'id'       => $banner_settings->id,
                 'banner_id' => $banner_settings->banner_id,
                 'image_link' => $banner_settings->banner->image_link,
@@ -26,10 +31,6 @@ class WebstoreSettingsTransformer extends TransformerAbstract
                 'description' => $banner_settings->description,
                 'is_published' => $banner_settings->is_published
             ] : null,
-            'address' => $partner->address,
-            'wallet' => $partner->wallet,
-            'single_sms_cost' => Infobip::SINGLE_SMS_COST,
-            'is_webstore_sms_active' => $partner->is_webstore_sms_active
         ];
     }
 }
