@@ -79,10 +79,32 @@
         .header{
             top: 0;
             left: 0;
-            position: fixed;
             width: 100%;
-            margin-top: 110px;
-            background-color: #f8f8fb;
+            position: fixed;
+            padding: 0;
+            margin: 100px 0 0 0;
+            background-color: #fff;
+            border: none;
+        }
+
+        .company-name {
+            margin: 0;
+            padding-top: 27px;
+            font-family: 'Poppins', sans-serif;
+            opacity: 0.8;
+            font-size: 18px;
+            font-weight: 500;
+            color: #000000;
+        }
+
+        .pdf-title {
+            margin: -20px 0 0 0;
+            padding: 0 0 20px 0;
+            opacity: 0.8;
+            font-family: 'Poppins', sans-serif;
+            font-size: 24px;
+            font-weight: 300;
+            color: #000000;
         }
 
         .expense-table {
@@ -163,17 +185,28 @@
 
 {{--<body style="margin: 50px 30px; font-family: Lato; ">--}}
 
-<table  class="tableHeadRegular header" style="width: 100%;  margin-bottom: 20px; padding: 0px; background-color: #fff;border: none " >
+
+
+<table class="header">
     <tr>
-        <td style=""><p style="margin-top: -3px; margin-bottom: 0px; opacity: 0.8; font-family: Lato; font-size: 20px; color: #000000;">Employee Expense</p></td>
-        <td style="text-align: right">
-            {{--<img src="https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/images/sheba_logo_blue.png" alt="" width="150px">--}}
-            <p style="margin-top: -3px; margin-bottom: 0px; opacity: 0.8; font-family: Lato; font-size: 24px; font-weight: 300; color: #000000;">{{$data['company']}}</p>
-        </td>
+        @if($data['logo'])
+            <td class="text-left"><img src="{{ $data['logo'] }}" height="65"/></td>
+        @endif
+        @if($data['company'])
+            <td class="text-right"><p class="company-name">{{$data['company']}}</p>
+            </td>
+        @endif
     </tr>
     <tr>
         <td><hr style=" color: #d1d7e6; width: 720px"></td>
-        {{--        <td><hr style=" color: #d1d7e6; width: 100%;"></td>--}}
+    </tr>
+</table>
+
+<table style="border: none">
+    <tr>
+        <td>
+            <p class="pdf-title">Employee Expense</p>
+        </td>
     </tr>
 </table>
 
