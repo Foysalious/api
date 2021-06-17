@@ -21,7 +21,7 @@ class WebstoreSettingsTransformer extends TransformerAbstract
             'is_inventory_empty' => !$partner->posServices()->count() ? 1 : 0,
             'address' => $partner->address,
             'wallet' => $partner->wallet,
-            'single_sms_cost' => AdaReach::SINGLE_SMS_COST,
+            'single_sms_cost' => 0.30, //TODO: have to remove value
             'is_webstore_sms_active' => $partner->is_webstore_sms_active,
               'banner' => $banner_settings ? [
                 'id'       => $banner_settings->id,
