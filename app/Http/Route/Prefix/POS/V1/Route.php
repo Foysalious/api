@@ -24,6 +24,7 @@ class Route
             });
 
             $api->get('warranty-units', 'Inventory\WarrantyUnitController@getWarrantyList');
+            $api->get('voucher-details/{voucher_id}', 'VoucherController@getVoucherDetails');
 
             $api->get('/category-tree', 'Inventory\CategoryController@allCategory');
             $api->group(['prefix' => 'products'], function ($api) {
