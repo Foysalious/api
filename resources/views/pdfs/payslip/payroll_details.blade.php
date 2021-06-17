@@ -80,10 +80,32 @@
         .header{
             top: 0;
             left: 0;
-            position: fixed;
             width: 100%;
-            margin-top: 110px;
-            background-color: #f8f8fb;
+            position: fixed;
+            padding: 0;
+            margin: 100px 0 0 0;
+            background-color: #fff;
+            border: none;
+        }
+
+        .company-name {
+            margin: 0;
+            padding-top: 27px;
+            font-family: 'Poppins', sans-serif;
+            opacity: 0.8;
+            font-size: 18px;
+            font-weight: 500;
+            color: #000000;
+        }
+
+        .pdf-title {
+            margin: -20px 0 0 0;
+            padding: 0 0 25px 0;
+            opacity: 0.8;
+            font-family: 'Poppins', sans-serif;
+            font-size: 24px;
+            font-weight: 300;
+            color: #000000;
         }
         /* Footer */
         .footer {
@@ -120,17 +142,26 @@
 
 {{--<body style="margin: 50px 30px; font-family: 'Poppins', sans-serif; ">--}}
 
-<table  class="tableHeadRegular header" style="width: 100%;  margin-bottom: 20px; padding: 0px; background-color: #fff;border: none " >
+<table class="header">
     <tr>
-        <td style="padding-top: 27px"><p style="padding-left:17px; margin-top: -3px; margin-bottom: 0px; opacity: 0.8; font-family: 'Poppins', sans-serif; font-size: 20px; color: #000000;">Employee Salary</p></td>
         @if($pay_report_detail['employee_info']['company_logo'])
-            <td style="text-align: right"><img src="{{ $pay_report_detail['employee_info']['company_logo'] }}" height="65"/></td>
-        @else
-            <td style="text-align: right; padding-top: 27px"><p style="margin-top: -3px; margin-bottom: 0px; opacity: 0.8; font-family: 'Poppins', sans-serif; font-size: 24px; font-weight: 300; color: #000000;">{{$pay_report_detail['employee_info']['company_name']}}</p></td>
+            <td class="text-left"><img src="{{ $pay_report_detail['employee_info']['company_logo'] }}" height="65"/></td>
+        @endif
+        @if($pay_report_detail['employee_info']['company_name'])
+            <td class="text-right"><p class="company-name">{{$pay_report_detail['employee_info']['company_name']}}</p>
+            </td>
         @endif
     </tr>
     <tr>
         <td><hr style=" color: #d1d7e6; width: 720px"></td>
+    </tr>
+</table>
+
+<table style="border: none">
+    <tr>
+        <td>
+            <p class="pdf-title">Employee Salary</p>
+        </td>
     </tr>
 </table>
 
