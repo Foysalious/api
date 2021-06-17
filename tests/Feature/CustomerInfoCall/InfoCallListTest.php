@@ -9,6 +9,7 @@ class InfoCallListTest extends FeatureTestCase
 {
 
     private $infocall;
+    private $infocall2;
 
     public function setUp()
     {
@@ -88,7 +89,7 @@ class InfoCallListTest extends FeatureTestCase
 
         //act
 
-        $response = $this->get("/v2/customersdsfdsfefs/19050148413548641353546/info-call", [
+        $response = $this->get("/v2/customersdsfdsfefs/" . $this->customer->id . "/info-call", [
             'Authorization' => "Bearer $this->token"
         ]);
 
@@ -121,35 +122,32 @@ class InfoCallListTest extends FeatureTestCase
 
     }
 
-//    public function testInfoCallListCustomerForRespondfsdfsse200()
-//    {
-//
-//        //arrange
-//
-//        //act
-//        $usf = "yhjgsufkhsfkj";
-//
-//        $response = $this->get("/v2/customers/" . $this->customer->id . "/info-call", [
-//            'Authorization' => "Bearer $usf"
-//        ]);
-//
-//        $data = $response->decodeResponseJson();
-//        dd($data);
-//
-//        //assert
-//        $this->assertEquals(200, $data["code"]);
-//        $this->assertEquals("Successful", $data["message"]);
-//        $this->assertEquals('Ac service', $data["info_call_lists"][0]["service_name"]);
-//        $this->assertEquals('Open', $data["info_call_lists"][0]["status"]);
-//
-//    }
+    public function testInfoCallListCustomerForRespond200WithInvalidBearerToken()
+    {
+
+        //arrange
+        $usf = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJuYW1lIjoiS2F6aSBGYWhkIFpha3dhbiIsImltYWdlIjoiaHR0cHM6Ly9zMy5hcC1zb3V0aC0xLmFtYXpvbmF3cy5jb20vY2RuLXNoZWJhZGV2L2ltYWdlcy9yZXNvdXJjZXMvYXZhdGFyLzE2MjI1MjA3NDNfa2F6aWZhaGR6YWt3YW4uanBnIiwicHJvZmlsZSI6eyJpZCI6MjYyNTM1LCJuYW1lIjoiS2F6aSBGYWhkIFpha3dhbiIsImVtYWlsX3ZlcmlmaWVkIjowfSwiY3VzdG9tZXIiOnsiaWQiOjE5MDUwMX0sInJlc291cmNlIjp7ImlkIjo0NjMzMSwicGFydG5lciI6eyJpZCI6MjE2NzA0LCJuYW1lIjoiIiwic3ViX2RvbWFpbiI6InNlcnZpY2luZy1iZCIsImxvZ28iOiJodHRwczovL3MzLmFwLXNvdXRoLTEuYW1hem9uYXdzLmNvbS9jZG4tc2hlYmFkZXYvaW1hZ2VzL3BhcnRuZXJzL2xvZ29zLzE2MjI0NDM4ODBfc2VydmljaW5nYmQucG5nIiwiaXNfbWFuYWdlciI6dHJ1ZX19LCJwYXJ0bmVyIjpudWxsLCJtZW1iZXIiOm51bGwsImJ1c2luZXNzX21lbWJlciI6bnVsbCwiYWZmaWxpYXRlIjpudWxsLCJsb2dpc3RpY191c2VyIjpudWxsLCJiYW5rX3VzZXIiOm51bGwsInN0cmF0ZWdpY19wYXJ0bmVyX21lbWJlciI6bnVsbCwiYXZhdGFyIjp7InR5cGUiOiJjdXN0b21lciIsInR5cGVfaWQiOjE5MDUwMX0sImV4cCI6MTYyNDM0ODg2OSwic3ViIjoyNjI1MzUsImlzcyI6Imh0dHA6Ly9hY2NvdW50cy5kZXYtc2hlYmEueHl6L2FwaS92My90b2tlbi9nZW5lcmF0ZSIsImlhdCI6MTYyMzc0NDA3MCwibmJmIjoxNjIzNzQ0MDcwLCJqdGkiOiJGcEJvT0V2NGNnekhweThWIn0.gWbCfYkrSfdIdv8GMRz4gFZXDRdIYR5XA_hR3CRMdn8";
+
+        //act
+
+        $response = $this->get("/v2/customers/" . $this->customer->id . "/info-call", [
+            'Authorization' => "Bearer $usf"
+        ]);
+
+        $data = $response->decodeResponseJson();
+
+        //assert
+        $this->assertEquals(401, $data["code"]);
+        $this->assertEquals("Your session has expired. Try Login", $data["message"]);
+
+    }
 
     public function testInfoCallListCustomerWithMultipleInfoCall()
     {
 
         //arrange
 
-        $infoCall2 = factory(InfoCall::class)->create([
+        $this->infoCall2 = factory(InfoCall::class)->create([
             'customer_id' => $this->customer->id,
             'portal_name' => 'customer-app'
         ]);
