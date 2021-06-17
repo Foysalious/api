@@ -2,6 +2,7 @@
 
 
 use League\Fractal\TransformerAbstract;
+use Sheba\Sms\AdaReach;
 use Sheba\Sms\Infobip;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
 
@@ -20,7 +21,7 @@ class WebstoreSettingsTransformer extends TransformerAbstract
             'is_inventory_empty' => !$partner->posServices()->count() ? 1 : 0,
             'address' => $partner->address,
             'wallet' => $partner->wallet,
-            'single_sms_cost' => Infobip::SINGLE_SMS_COST,
+            'single_sms_cost' => AdaReach::SINGLE_SMS_COST,
             'is_webstore_sms_active' => $partner->is_webstore_sms_active,
               'banner' => $banner_settings ? [
                 'id'       => $banner_settings->id,
