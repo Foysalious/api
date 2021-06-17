@@ -256,8 +256,8 @@ class ShebaController extends Controller
         ];
 
         if ($payable->isPaymentLink()) $this->mergePaymentLinkInfo($info, $payable);
-        else
-            return $info;
+
+        return $info;
     }
 
     private function mergePaymentLinkInfo(&$info, Payable $payable)
