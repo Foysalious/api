@@ -171,7 +171,7 @@ class PaymentLinkTransaction
     private function getPaymentMethod()
     {
         $payment_details = $this->payment->paymentDetails()->orderBy('id', 'DESC')->first();
-        return $payment_details ?? $payment_details->method;
+        return isset($payment_details) ? $payment_details->method : null;
     }
 
     public function isPaidByPartner()
