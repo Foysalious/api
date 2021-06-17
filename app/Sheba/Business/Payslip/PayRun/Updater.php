@@ -114,7 +114,10 @@ class Updater
         $data = [];
         foreach ($gross_salary_breakdown_percentage as $component_name => $component_value) {
             $component = $this->payrollComponentRepository->where('name', $component_name)->where('type', Type::GROSS)->where('is_active', 1)->where('target_type', TargetType::EMPLOYEE)->where('target_id', $business_member->id)->first();
-            if (!$component) $component = $this->payrollComponentRepository->where('name', $component_name)->where('type', Type::GROSS)->where('is_active', 1)->where('target_type', TargetType::GENERAL)->first();
+            if (!$component) $component = $this->payrollComponentRepository->where('name', $component_name)->where('type', Type::GROSS)->where('target_type', TargetType::GENERAL)->where(function($query) {
+                return $query->where('is_default', 1)->orWhere('is_active',1);
+            })->first();
+
             $percentage = floatval(json_decode($component->setting, 1)['percentage']);
             array_push($data, [
                 'id' => $component->id,
