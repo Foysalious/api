@@ -93,10 +93,12 @@ class PayrollComponentSchedulerCalculation
     }
     private function getAdditionComponent()
     {
-        $components = $this->payrollSetting->components()->where('type', Type::ADDITION)->where('is_active', 1)->orderBy('name')->get();
+        $components = $this->payrollSetting->components()->where('type', Type::ADDITION)->where(function($query) {
+            return $query->where('is_default', 1)->orWhere('is_active',1);
+        })->orderBy('type')->get();
         $total_addition = 0;
         foreach ($components as $component) {
-            if (!$component->is_default) $total_addition += $this->calculatePackage($component->componentPackages);
+            if (!$component->is_default) $total_addition += $this->calculatePackage($component->componentPackages->where('is_active', 1));
             $this->additionData['addition'][$component->name] = $total_addition;
             $total_addition = 0;
         }
@@ -104,12 +106,14 @@ class PayrollComponentSchedulerCalculation
     }
     private function getDeductionComponent()
     {
-        $components = $this->payrollSetting->components()->where('type', Type::DEDUCTION)->where('is_active', 1)->orderBy('name')->get();
+        $components = $this->payrollSetting->components()->where('type', Type::DEDUCTION)->where(function($query) {
+            return $query->where('is_default', 1)->orWhere('is_active',1);
+        })->orderBy('type')->get();
         $default_deduction_component_data = $this->calculateBusinessMemberPolicyRulesDeduction();
         $total_deduction = 0;
         foreach ($components as $component) {
             if (!$component->is_default) {
-                $total_deduction += $this->calculatePackage($component->componentPackages);
+                $total_deduction += $this->calculatePackage($component->componentPackages->where('is_active', 1));
                 $this->deductionData['deduction'][$component->name] = $total_deduction;
                 $total_deduction = 0;
                 continue;
@@ -134,19 +138,18 @@ class PayrollComponentSchedulerCalculation
     }
     private function calculateBusinessMemberPackage($package)
     {
-        $calculation_type = $package->calculation_type;
-        $on_what = $package->on_what;
-        $amount = floatValFormat($package->amount);
-        $schedule_type = $package->schedule_type;
-        $periodic_schedule = $package->periodic_schedule;
-        $schedule_date = $package->schedule_date;
+        $calculation_type = $package->calculation_type; // Package Calculation Type -> FIX PAY or VARIABLE AMOUNT
+        $on_what = $package->on_what; // Package Calculation on which Gross Salary Component
+        $amount = floatValFormat($package->amount); // Package Amount Percentage or Fixed Amount of tk
+        $schedule_type = $package->schedule_type; // Package Schedule Type Periodically or Fixed Month
+        $schedule_date = $package->schedule_date; // On which month Package should be availed
 
-        $current_time = Carbon::now();
         $final_amount = 0;
+        if ($calculation_type == CalculationType::VARIABLE_AMOUNT) return $final_amount;
+        $current_time = Carbon::now();
         $business_member_salary = $this->businessMember->salary ? floatValFormat($this->businessMember->salary->gross_salary) : 0;
         if ($schedule_type == ScheduleType::FIXED_DATE && $current_time->month != $schedule_date) return $final_amount;
-        $business_pay_day = Carbon::now()->format('Y-m-d');
-        $next_generated_month = Carbon::parse($package->generated_at)->format('Y-m');
+        $next_generated_month = Carbon::parse($package->generated_at)->format('Y-m'); // Calculate Package Generation Day Based on Last Generated Day
         if ($schedule_type == ScheduleType::PERIODICALLY && $next_generated_month != $current_time->format('Y-m')) return $final_amount;
 
         if ($calculation_type == CalculationType::FIX_PAY_AMOUNT) {

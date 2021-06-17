@@ -250,7 +250,9 @@ class CoWorkerDetailTransformer extends TransformerAbstract
 
     private function getGlobalGrossSalaryComponent($payroll_setting)
     {
-        $global_gross_components = $payroll_setting->components()->where('type', Type::GROSS)->where('is_active', 1)->where('target_type', TargetType::GENERAL)->orderBy('name')->get();
+        $global_gross_components = $payroll_setting->components()->where('type', Type::GROSS)->where('target_type', TargetType::GENERAL)->where(function($query) {
+            return $query->where('is_default', 1)->orWhere('is_active',1);
+        })->orderBy('type')->get();
         $global_gross_component_data = [];
         foreach ($global_gross_components as $component) {
             $percentage = floatValFormat(json_decode($component->setting, 1)['percentage']);
@@ -258,7 +260,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
                 'id' => $component->id,
                 'payroll_setting_id' => $component->payroll_setting_id,
                 'name' => $component->name,
-                'title' => $component->is_default ? Components::getComponents($component->name)['value'] : $component->value,
+                'title' => $component->is_default ? Components::getComponents($component->name)['value'] : $component->value, // If it is Default Component Title will come from Class otherwise from DB
                 'percentage' => $percentage,
                 'type' => $component->type,
                 'is_default' => $component->is_default,

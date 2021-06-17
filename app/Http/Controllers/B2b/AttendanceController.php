@@ -809,7 +809,7 @@ class AttendanceController extends Controller
         ]);
 
         $start_time = Carbon::parse($request->start_time)->format('H:i') . ':59';
-        $end_time = Carbon::parse($request->end_time)->format('H:i') . ':59';
+        $end_time = Carbon::parse($request->end_time)->format('H:i') . ':00';
 
         $business_member = $request->business_member;
         $office_timing = $updater->setBusiness($request->business)
