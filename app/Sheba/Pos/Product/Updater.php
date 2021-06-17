@@ -230,9 +230,8 @@ class Updater
                 $this->updatedData['is_published_for_shop'] = $this->data['is_published_for_shop'];
             }
         }
-
-
-
+        if(isset($this->data['accounting_info']))
+            $this->updatedData['accounting_info'] = $this->data['accounting_info'];
     }
 
     /**
