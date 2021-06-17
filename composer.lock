@@ -4156,8 +4156,8 @@
             "version": "dev-feature/sms-service",
             "source": {
                 "type": "git",
+                "reference": "482888e13e05eb5874be2e5c220d4332d0c49d6e"
                 "url": "https://bitbucket.org/startern/sheba_sms.git",
-                "reference": "e1776f154f2f6ba8d3de0a07a2fa52f4ad5c5a69"
             },
             "require": {
                 "ext-curl": "*"
@@ -4178,7 +4178,7 @@
                 }
             ],
             "description": "Sms for Sheba",
-            "time": "2021-06-16T10:01:26+00:00"
+            "time": "2021-06-17T08:02:49+00:00"
         },
         {
             "name": "sheba/voucher",
