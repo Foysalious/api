@@ -4167,8 +4167,8 @@
             "version": "dev-feature/sms-service",
             "source": {
                 "type": "git",
-                "reference": "482888e13e05eb5874be2e5c220d4332d0c49d6e"
-                "url": "https://bitbucket.org/startern/sheba_sms.git",
+                "reference": "482888e13e05eb5874be2e5c220d4332d0c49d6e",
+                "url": "https://bitbucket.org/startern/sheba_sms.git"
             },
             "require": {
                 "ext-curl": "*"
