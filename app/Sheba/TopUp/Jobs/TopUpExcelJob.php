@@ -23,8 +23,6 @@ class TopUpExcelJob extends TopUpJob
     private $file;
     private $row;
     private $totalRow;
-    /** @var Sms */
-    private $sms;
     /** @var LaravelExcelReader */
     private $excel = null;
     /** @var TopUpBulkRequest */
@@ -45,7 +43,6 @@ class TopUpExcelJob extends TopUpJob
 
         $this->row = $row;
         $this->totalRow = $total_row;
-        $this->sms = new Sms();
         $this->bulk = $bulk;
     }
 
@@ -95,7 +92,8 @@ class TopUpExcelJob extends TopUpJob
 
             $msg = "Your top up request has been processed. You can find the results here: " . $file_path;
 
-            $this->sms->setFeatureType(FeatureType::TOP_UP)
+            (new Sms())
+                ->setFeatureType(FeatureType::TOP_UP)
                 ->setBusinessType(BusinessType::BONDHU)
                 ->shoot($this->agent->getMobile(), $msg);
         }

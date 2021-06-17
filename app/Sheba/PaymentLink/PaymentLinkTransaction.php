@@ -43,6 +43,9 @@ class PaymentLinkTransaction
      */
     private $entryAmount = 0;
 
+    /*** @var SubscriptionWisePaymentLinkCharges */
+    private $paymentLinkCharge;
+
     /**
      * @param Payment                $payment
      * @param PaymentLinkTransformer $linkTransformer
@@ -58,6 +61,7 @@ class PaymentLinkTransaction
         $this->paidByTypes              = PaymentLinkStatics::paidByTypes();
         $this->partnerProfit            = $this->paymentLink->getPartnerProfit();
         $this->interest                 = $this->paymentLink->getInterest();
+        $this->paymentLinkCharge        = (new SubscriptionWisePaymentLinkCharges());
     }
 
     public function isOld()
@@ -129,7 +133,7 @@ class PaymentLinkTransaction
     public function create()
     {
         $this->walletTransactionHandler->setModel($this->receiver);
-        $paymentLinkTransaction = $this->amountTransaction()->interestTransaction()->feeTransaction()->setEntryAmount();
+        $paymentLinkTransaction = $this->amountTransaction()->interestTransaction()->configurePaymentLinkCharge()->feeTransaction()->setEntryAmount();
         $this->storePaymentLinkEntry($this->amount, $this->fee, $this->interest);
         return $paymentLinkTransaction;
 
@@ -152,6 +156,22 @@ class PaymentLinkTransaction
             $this->walletTransactionHandler->setLog($log)->setType(Types::debit())->setAmount($this->interest)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
         }
         return $this;
+    }
+
+    private function configurePaymentLinkCharge(): PaymentLinkTransaction
+    {
+        if($this->paymentLinkCharge->isPartner($this->receiver)) {
+            $this->paymentLinkCharge->setPartner($this->receiver)->setPaymentConfigurations($this->getPaymentMethod());
+            $this->tax = $this->paymentLinkCharge->getFixedTaxAmount();
+            $this->linkCommission = $this->paymentLinkCharge->getGatewayChargePercentage();
+        }
+        return $this;
+    }
+
+    private function getPaymentMethod()
+    {
+        $payment_details = $this->payment->paymentDetails()->orderBy('id', 'DESC')->first();
+        return isset($payment_details) ? $payment_details->method : null;
     }
 
     public function isPaidByPartner()

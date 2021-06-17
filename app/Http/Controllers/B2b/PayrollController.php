@@ -184,22 +184,38 @@ class PayrollController extends Controller
     {
         /** @var Business $business */
         $business = $request->business;
-        $payroll_components = $business->payrollSetting->components->where('target_type', TargetType::GENERAL)->sortBy('type');
-        $data [] = [
+        $payroll_components = $business->payrollSetting->components()->where('target_type', TargetType::GENERAL)->where(function($query) {
+             return $query->where('is_default', 1)->orWhere('is_active',1);
+        })->orderBy('type')->get();
+
+        $gross [] = [
             'id' => null,
             'name' => Type::GROSS,
             'title' => 'Gross Salary',
             'type' => null
         ];
+        $addition = $deduction = [];
         foreach ($payroll_components as $payroll_component) {
-                array_push($data, [
-                    'id' => $payroll_component->id,
-                    'name' => $payroll_component->name,
-                    'title' => $payroll_component->is_default ? Components::getComponents($payroll_component->name)['value'] : $payroll_component->value,
-                    'type' => $payroll_component->type
-                ]);
+            if ($payroll_component->type == Type::GROSS) array_push($gross, [
+                'id' => $payroll_component->id,
+                'name' => $payroll_component->name,
+                'title' => $payroll_component->is_default ? Components::getComponents($payroll_component->name)['value'] : $payroll_component->value,
+                'type' => $payroll_component->type
+            ]);
+            if ($payroll_component->type == Type::ADDITION) array_push($addition, [
+                'id' => $payroll_component->id,
+                'name' => $payroll_component->name,
+                'title' => $payroll_component->is_default ? Components::getComponents($payroll_component->name)['value'] : $payroll_component->value,
+                'type' => $payroll_component->type
+            ]);
+            if ($payroll_component->type == Type::DEDUCTION) array_push($deduction, [
+                'id' => $payroll_component->id,
+                'name' => $payroll_component->name,
+                'title' => $payroll_component->is_default ? Components::getComponents($payroll_component->name)['value'] : $payroll_component->value,
+                'type' => $payroll_component->type
+            ]);
         }
-        return api_response($request, null, 200, ['payroll_components' => $data]);
+        return api_response($request, null, 200, ['payroll_components' => ['gross_component' => $gross, 'addition_component' => $addition, 'deduction_component' => $deduction]]);
     }
 
 }

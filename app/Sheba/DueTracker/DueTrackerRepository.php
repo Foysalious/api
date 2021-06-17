@@ -466,13 +466,19 @@ class DueTrackerRepository extends BaseRepository
         }
         /** @var SmsHandlerRepo $sms */
         list($sms, $log) = $this->getSms($data);
-        $sms_cost = $sms->getCost();
-        if ((double)$request->partner->wallet < (double)$sms_cost) {
-            throw new InsufficientBalance();
-        }
+        $sms_cost = $sms->estimateCharge();
+        if ((double)$request->partner->wallet < $sms_cost) throw new InsufficientBalance();
+
         $sms->setBusinessType(BusinessType::SMANAGER)->setFeatureType(FeatureType::DUE_TRACKER);
         if(config('sms.is_on')) $sms->shoot();
-        $transaction = (new WalletTransactionHandler())->setModel($request->partner)->setAmount($sms_cost)->setType(Types::debit())->setLog($sms_cost . $log)->setTransactionDetails([])->setSource(TransactionSources::SMS)->store();
+        $transaction = (new WalletTransactionHandler())
+            ->setModel($request->partner)
+            ->setAmount($sms_cost)
+            ->setType(Types::debit())
+            ->setLog($sms_cost . $log)
+            ->setTransactionDetails([])
+            ->setSource(TransactionSources::SMS)
+            ->store();
         $this->storeJournal($request->partner, $transaction);
         return true;
     }
@@ -491,19 +497,23 @@ class DueTrackerRepository extends BaseRepository
     public function getSms($data)
     {
         if ($data['type'] == 'due') {
-            $sms = (new SmsHandlerRepo('inform-due'))->setVendor('infobip')->setMobile($data['mobile'])->setMessage([
-                'customer_name' => $data['customer_name'],
-                'partner_name'  => $data['partner_name'],
-                'amount'        => $data['amount'],
-                'payment_link'  => $data['payment_link']
-            ]);
+            $sms = (new SmsHandlerRepo('inform-due'))
+                ->setMobile($data['mobile'])
+                ->setMessage([
+                    'customer_name' => $data['customer_name'],
+                    'partner_name'  => $data['partner_name'],
+                    'amount'        => $data['amount'],
+                    'payment_link'  => $data['payment_link']
+                ]);
             $log = " BDT has been deducted for sending due details";
         } else {
-            $sms = (new SmsHandlerRepo('inform-deposit'))->setVendor('infobip')->setMobile($data['mobile'])->setMessage([
-                'customer_name' => $data['customer_name'],
-                'partner_name'  => $data['partner_name'],
-                'amount'        => $data['amount'],
-            ]);
+            $sms = (new SmsHandlerRepo('inform-deposit'))
+                ->setMobile($data['mobile'])
+                ->setMessage([
+                    'customer_name' => $data['customer_name'],
+                    'partner_name'  => $data['partner_name'],
+                    'amount'        => $data['amount'],
+                ]);
             $log = " BDT has been deducted for sending deposit details";
         }
 

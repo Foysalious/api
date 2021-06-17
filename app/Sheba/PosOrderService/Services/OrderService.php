@@ -1,13 +1,14 @@
 <?php namespace App\Sheba\PosOrderService\Services;
 
 use App\Sheba\PosOrderService\PosOrderServerClient;
+use App\Sheba\SmanagerUserService\SmanagerUserServerClient;
 
 class OrderService
 {
     /**
      * @var PosOrderServerClient
      */
-    private $client;
+    private $client, $smanagerUserClient;
     private $partnerId;
     private $customerId;
     private $deliveryAddress;
@@ -26,10 +27,62 @@ class OrderService
     private $paymentMethod;
     private $paymentLinkAmount;
     private $paidAmount;
+    protected $userId;
 
-    public function __construct(PosOrderServerClient $client)
+    public function __construct(PosOrderServerClient $client, SmanagerUserServerClient $smanagerUserClient)
     {
         $this->client = $client;
+        $this->smanagerUserClient = $smanagerUserClient;
+    }
+
+    /**
+     * @param mixed $user_id
+     * @return OrderService
+     */
+    public function setUserId($user_id)
+    {
+        $this->userId = $user_id;
+        return $this;
+    }
+
+    /**
+     * @param mixed $payment_link_amount
+     * @return OrderService
+     */
+    public function setPaymentLinkAmount($payment_link_amount)
+    {
+        $this->paymentLinkAmount = $payment_link_amount;
+        return $this;
+    }
+
+    /**
+     * @param mixed $paid_amount
+     * @return OrderService
+     */
+    public function setPaidAmount($paid_amount)
+    {
+        $this->paidAmount = $paid_amount;
+        return $this;
+    }
+
+    /**
+     * @param mixed $payment_method
+     * @return OrderService
+     */
+    public function setPaymentMethod($payment_method)
+    {
+        $this->paymentMethod = $payment_method;
+        return $this;
+    }
+
+    /**
+     * @param mixed $discount
+     * @return OrderService
+     */
+    public function setDiscount($discount)
+    {
+        $this->discount = $discount;
+        return $this;
     }
 
     /**
@@ -151,48 +204,12 @@ class OrderService
     }
 
     /**
-     * @param mixed $discount
-     * @return OrderService
-     */
-    public function setDiscount($discount)
-    {
-        $this->discount = $discount;
-        return $this;
-    }
-    /**
      * @param mixed $isDiscountPercentage
      * @return OrderService
      */
     public function setIsDiscountPercentage($isDiscountPercentage)
     {
         $this->isDiscountPercentage = $isDiscountPercentage;
-        return $this;
-    }
-    /**
-     * @param mixed $paymentMethod
-     * @return OrderService
-     */
-    public function setPaymentMethod($paymentMethod)
-    {
-        $this->paymentMethod = $paymentMethod;
-        return $this;
-    }
-    /**
-     * @param mixed $paymentLinkAmount
-     * @return OrderService
-     */
-    public function setPaymentLinkAmount($paymentLinkAmount)
-    {
-        $this->paymentLinkAmount = $paymentLinkAmount;
-        return $this;
-    }
-    /**
-     * @param mixed $paidAmount
-     * @return OrderService
-     */
-    public function setPaidAmount($paidAmount)
-    {
-        $this->paidAmount = $paidAmount;
         return $this;
     }
 
@@ -214,6 +231,11 @@ class OrderService
     public function getDetails()
     {
         return $this->client->get('api/v1/partners/' . $this->partnerId . '/orders/' . $this->orderId);
+    }
+
+    public function getUser()
+    {
+        return $this->smanagerUserClient->get('api/v1/partners/' . $this->partnerId . '/users/' . $this->userId);
     }
 
     public function store()

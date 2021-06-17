@@ -68,7 +68,7 @@ class Updater
             $this->storeLogs($old_service, $this->updatedData);
         }
         $this->storeImageGallery($image_gallery);
-        //if(isset($cloned_data['accounting_info']) && !empty($cloned_data['accounting_info']))
+      //  if(isset($cloned_data['accounting_info']) && !empty($cloned_data['accounting_info']))
            // $this->createExpenseEntry($this->service,$cloned_data);
     }
 
@@ -238,9 +238,8 @@ class Updater
                 $this->updatedData['is_published_for_shop'] = $this->data['is_published_for_shop'];
             }
         }
-
-
-
+        if(isset($this->data['accounting_info']))
+            $this->updatedData['accounting_info'] = $this->data['accounting_info'];
     }
 
     /**

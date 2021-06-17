@@ -5,6 +5,7 @@ use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Models\PosOrderDiscount;
 use App\Models\Voucher;
+use App\Sheba\PosOrderService\Services\OrderService;
 use App\Repositories\VoucherRepository;
 use App\Transformers\CustomSerializer;
 use App\Transformers\VoucherDetailTransformer;
@@ -25,6 +26,13 @@ use Illuminate\Validation\Rule;
 class VoucherController extends Controller
 {
     use ModificationFields;
+
+    protected $orderService;
+
+    public function __construct(OrderService $orderService)
+    {
+        $this->orderService = $orderService;
+    }
 
     /**
      * @param Request $request
@@ -295,10 +303,17 @@ class VoucherController extends Controller
     public function validateVoucher(Request $request)
     {
         try {
-            $pos_customer = $request->pos_customer ? PosCustomer::find($request->pos_customer) : new PosCustomer();
+            $partner = $request->auth_user->getPartner();
+            $real_pos_customer = PosCustomer::find($request->pos_customer);
+            $pos_customer = $real_pos_customer ? $real_pos_customer : $this->getUser($partner->id, $request->pos_customer);
+
             $pos_order_params = (new CheckParamsForPosOrder());
-            $pos_order_params->setOrderAmount($request->amount)->setApplicant($pos_customer)->setPartnerPosService($request->pos_services);
-            $result = voucher($request->code)->checkForPosOrder($pos_order_params)->reveal();
+            $pos_order_params->setOrderAmount($request->amount);
+            $pos_order_params = $real_pos_customer ? $pos_order_params->setApplicant($pos_customer) : $pos_order_params->setApplicant(new PosCustomer());
+            $pos_order_params = $pos_order_params->setPartnerPosService($request->pos_services);
+
+            $result = voucher($request->code)->checkForPosOrder($pos_order_params);
+            $result = $real_pos_customer ? $result->reveal() : $result->checkMobile($pos_customer['mobile'])->reveal();
 
             if ($result['is_valid']) {
                 $voucher = $result['voucher'];
@@ -317,6 +332,11 @@ class VoucherController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function getUser($partner_id, $user_id)
+    {
+        return $this->orderService->setPartnerId($partner_id)->setUserId($user_id)->getUser();
     }
 
     /**

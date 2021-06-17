@@ -38,12 +38,7 @@ class ExpenseController extends Controller
      */
     public function index(Request $request, ExpenseExcel $excel)
     {
-        $this->validate($request, [
-            'status' => 'string|in:open,closed',
-            'limit' => 'numeric', 'offset' => 'numeric',
-            'start_date' => 'string',
-            'end_date' => 'string'
-        ]);
+        $this->validate($request, ['date' => 'string']);
         list($offset, $limit) = calculatePagination($request);
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
@@ -64,33 +59,126 @@ class ExpenseController extends Controller
 
         $expenses = $this->expense_repo->getExpenseByMember($members_ids);
 
-        if ($request->has('employee_id') && in_array($request->employee_id, $members_ids)) {
-            $expenses->where('member_id', $request->employee_id);
-        }
-
         $start_date = date('Y-m-01');
         $end_date = date('Y-m-t');
 
-        if ($request->has('start_date') && $request->has('end_date')) {
-            $start_date = $request->has('start_date') ? $request->start_date : null;
-            $end_date = $request->has('end_date') ? $request->end_date : null;
+        if ($request->has('date')) {
+            $dates = $this->getStartDateEndDate($request->date);
+            $start_date = $dates['start_date'];
+            $end_date = $dates['end_date'];
         }
-        if (($start_date && $end_date) && !$request->has('key')) {
-            $expenses->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
-        }
+
+        $expenses->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
+        $expenses = $expenses->get();
         $fractal = new Manager();
-        $resource = new Collection($expenses->get(), new ExpenseTransformer());
+        $resource = new Collection($expenses, new ExpenseTransformer());
         $expenses = $fractal->createData($resource)->toArray()['data'];
+        if ($request->has('search')) $expenses = $this->searchExpenseList($expenses, $request);
+        $total_calculation = $this->getTotalCalculation($expenses);
 
         $total_expense_count = count($expenses);
 
         if ($request->has('limit')) $expenses = collect($expenses)->splice($offset, $limit);
 
+        if ($request->has('sort_employee_name')) {
+            $expenses = $this->sortByName($expenses, $request->sort_employee_name)->values();
+        }
+        if ($request->has('sort_amount')) {
+            $expenses = $this->sortByAmount($expenses, $request->sort_amount)->values();
+        }
+
         if ($request->file == 'excel') return $excel->setData(is_array($expenses) ? $expenses : $expenses->toArray())
             ->setName('Expense Report')
             ->get();
 
-        return api_response($request, $expenses, 200, ['expenses' => $expenses, 'total_expenses_count' => $total_expense_count]);
+        return api_response($request, $expenses, 200, ['expenses' => $expenses, 'total_expenses_count' => $total_expense_count, 'total_calculation' => $total_calculation]);
+    }
+
+    /**
+     * @param $date
+     * @return array
+     */
+    private function getStartDateEndDate($date)
+    {
+        $splitDate = explode('-', $date);
+        return [
+            'start_date' => Carbon::createFromDate($splitDate[0], $splitDate[1])->startOfMonth()->format('Y-m-d'),
+            'end_date' => Carbon::createFromDate($splitDate[0], $splitDate[1])->endOfMonth()->format('Y-m-d')
+        ];
+    }
+
+    /**
+     * @param $expenses
+     * @return array
+     */
+    private function getTotalCalculation($expenses)
+    {
+        $total_employee = sizeof(array_unique(array_map(function ($expense) {
+            return $expense['member_id'];
+        }, $expenses)));
+
+        $total_department = sizeof(array_unique(array_map(function ($expense) {
+            return $expense['employee_department'];
+        }, $expenses)));
+
+        $total_amount = array_reduce($expenses, function($sum, $item) {
+            return $sum += $item['amount'];
+        });
+
+        return [
+            'employee' => $total_employee,
+            'department' => $total_department,
+            'amount' => $total_amount
+        ];
+    }
+
+    /**
+     * @param $expenses
+     * @param Request $request
+     * @return array
+     */
+    private function searchExpenseList($expenses, Request $request)
+    {
+        $employee_ids = array_filter($expenses, function ($expense) use ($request) {
+            return str_contains($expense['employee_id'], $request->search);
+        });
+        $employee_names = array_filter($expenses, function ($expense) use ($request) {
+            return str_contains(strtoupper($expense['employee_name']), strtoupper($request->search));
+        });
+        $amounts = array_filter($expenses, function ($expense) use ($request) {
+            return str_contains($expense['amount'], strtoupper($request->search));
+        });
+        $searched_expenses = collect(array_merge($employee_ids, $employee_names, $amounts));
+        $searched_expenses = $searched_expenses->unique(function ($expense) {
+            return $expense['id'];
+        });
+        return $searched_expenses->values()->all();
+    }
+
+    /**
+     * @param $expenses
+     * @param string $sort
+     * @return mixed
+     */
+    private function sortByName($expenses, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($expenses)->$sort_by(function ($expense) {
+            return strtoupper($expense['employee_name']);
+        });
+    }
+
+    /**
+     * @param $expenses
+     * @param string $sort
+     * @return mixed
+     */
+    private function sortByAmount($expenses, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($expenses)->$sort_by(function ($expense) {
+            return strtoupper($expense['amount']);
+        });
     }
 
 

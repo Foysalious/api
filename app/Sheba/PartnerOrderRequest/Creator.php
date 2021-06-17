@@ -87,8 +87,8 @@ class Creator
             $data['partner_order_id']    = $this->partnerOrder->id;
             $data['partner_id']          = $partner_id;
             $this->partnerOrderRequestId = $this->partnerOrderRequestRepo->create($data);
-            $this->sendOrderRequestSmsToPartner($partner_id);
             $this->sendOrderRequestPushNotificationToPartner($partner_id);
+            $this->sendOrderRequestSmsToPartner($partner_id);
             $job = $this->partnerOrder->jobs->first();
             $this->impressionManager->setLocationId($this->partnerOrder->order->location_id)->setCategoryId($job->category_id)
                                     ->setCustomerId($this->partnerOrder->order->customer_id)->setPortalName(request()->header('portal-name'))
@@ -152,12 +152,12 @@ class Creator
         try {
             /** @var Partner $partner */
             $partner = $this->partners->keyBy('id')->get($partner_id);
-            (new SmsHandlerRepo('partner-order-request'))->setVendor('sslwireless')
-                                                         ->setBusinessType(BusinessType::SMANAGER)
-                                                         ->setFeatureType(FeatureType::PARTNER_SUBSCRIPTION_ORDER_REQUEST)
-                                                         ->send($partner->getContactNumber(), [
-                                                             'partner_name' => $partner->name
-                                                         ]);
+            (new SmsHandlerRepo('partner-order-request'))
+                ->setBusinessType(BusinessType::SMANAGER)
+                ->setFeatureType(FeatureType::PARTNER_SUBSCRIPTION_ORDER_REQUEST)
+                ->send($partner->getContactNumber(), [
+                    'partner_name' => $partner->name
+                ]);
         } catch (Throwable $e) {
             logError($e);
         }

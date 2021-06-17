@@ -71,7 +71,7 @@ class PartnerAffiliationCreator
             ->setBusinessType(BusinessType::SMANAGER)
             ->setFeatureType(FeatureType::PARTNER_AFFILIATION)
             ->send($this->data['resource_mobile'], [
-            'affiliate' => $affiliate
-        ]);
+                'affiliate' => $affiliate
+            ]);
     }
 }

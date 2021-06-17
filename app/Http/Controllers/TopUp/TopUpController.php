@@ -153,7 +153,12 @@ class TopUpController extends Controller
         if ($top_up_request->hasError()) {
             return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
         }
-        
+
+        $waiting_time = $this->hasLastTopupWithinIntervalTime($top_up_request, $request);
+        if($waiting_time !== false)
+            return api_response($request, null, 400, ['message' => 'এই নাম্বারে কিছুক্ষনের মধ্যে টপ-আপ করা হয়েছে । অনুগ্রহপূর্বক '.$waiting_time.' মিনিট অপেক্ষা করুন পুনরায় এই নাম্বারে টপ-আপ করার আগে ।']);
+
+
         $topup_order = $creator->setTopUpRequest($top_up_request)->create();
         if ($topup_order) {
             dispatch((new TopUpJob($topup_order)));
@@ -510,5 +515,41 @@ class TopUpController extends Controller
         elseif ($user == 'partner') $agent = $auth_user->getPartner();
 
         return $agent;
+    }
+    
+    private function hasLastTopupWithinIntervalTime(TopUpRequest $topUpRequest, Request $request)
+    {
+        $agent = $topUpRequest->getAgent();
+        $last_topup = $agent->topups()->select('id', 'payee_mobile as mobile', 'created_at')->where('payee_mobile', '=', $topUpRequest->getMobile())->orderBy('id', 'desc')->first();
+        if (!$last_topup) return false;
+        $vendor = TopUpVendor::where('id', $request->vendor_id)->first();
+        if ($topUpRequest->getMobile() == $last_topup->mobile) {
+            $passed_time = $last_topup->created_at->diffInSeconds(Carbon::now());
+            $waiting_time = $vendor->waiting_time * 60;
+            if($passed_time < $waiting_time) {
+                $try_after = (int) ceil(($waiting_time - $passed_time)/60);
+                return $try_after;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @param Request $request
+     * @param TopUpDataFormat $topUp_data_format
+     * @param TopUpOrderRepository $top_up_order_repo
+     * @return JsonResponse
+     */
+    public function allTopUps(Request $request, $user, TopUpDataFormat $topUp_data_format, TopUpOrderRepository $top_up_order_repo)
+    {
+        /** @var AuthUser $user */
+        $user = $this->getAgent($request, $user);
+        $all_topups = $top_up_order_repo->getAllTopUps($user);
+        $top_up_data = $topUp_data_format->allTopUpDataFormat($all_topups);
+
+        return response()->json([
+            'code' => 200,
+            'data' => $top_up_data,
+        ]);
     }
 }

@@ -727,7 +727,7 @@ class AttendanceController extends Controller
 
             $added_offices = $offices->where('action', ActionType::ADD);
             $added_offices->each(function ($added_office) use ($setting_creator, $business, &$errors) {
-                $setting_creator->setBusiness($business)->setName($added_office->name)->setIp($added_office->ip);
+                $setting_creator->setBusiness($business)->setName($added_office->office_name)->setIp($added_office->ip);
                 if ($setting_creator->hasError()) {
                     array_push($errors, $setting_creator->getErrorMessage());
                     $setting_creator->resetError();

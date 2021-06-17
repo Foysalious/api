@@ -41,7 +41,7 @@ class GrossSalaryBreakdownCalculate
                 'amount' => $this->percentageToAmountCalculation($salary, $percentage),
                 'type' => $payroll_component->type,
                 'is_default' => $payroll_component->is_default,
-                'is_active' => $payroll_component->is_active,
+                'is_active' => $payroll_component->is_default ? 1 : $payroll_component->is_active,
                 'is_taxable' => $payroll_component->is_taxable,
                 'is_overwritten' => $payroll_component->target_id == $business_member->id ? 1 : 0
             ]);

@@ -51,7 +51,7 @@ class Creator
     {
         if(!$this->packageRequester) return;
         foreach ($this->packageRequester as $packages) {
-            $component = $this->payrollComponentRepository->where('name', $packages['component'])->first();
+            $component = $this->payrollComponentRepository->where('name', $packages['component'])->where('payroll_setting_id', $this->payrollSetting->id)->first();
             foreach ($packages['package'] as $package) {
                 $data = [
                     'payroll_component_id' => $component->id,
@@ -67,11 +67,9 @@ class Creator
                     'schedule_date' => $package['schedule_date'],
                 ];
                 if ($package['schedule_type'] == ScheduleType::PERIODICALLY) {
-                    $current_time = Carbon::now();
-                    $business_pay_day = $this->payrollSetting->pay_day;
-                    if ($current_time->day < $business_pay_day) $current_package_pay_generate_date = $current_time->day($business_pay_day)->format('Y-m-d');
-                    else $current_package_pay_generate_date = $current_time->addMonth()->day($business_pay_day)->format('Y-m-d');
-                    $data = array_merge($data, ['periodic_schedule_created_at' => $current_time->format('Y-m-d H:i:s'), 'generated_at' => $current_package_pay_generate_date]);
+                    $package_generate_data = (new Formatter)->packageGenerateData($this->payrollSetting, null, 0);
+                    $package_generate_data = array_merge($package_generate_data, ['periodic_schedule_created_at' => Carbon::now()]);
+                    $data = array_merge($data, $package_generate_data);
                 }
                 $new_package = $this->payrollComponentPackageRepository->create($data);
                 $this->makeTargetData($new_package->id, $package['effective_for'], $package['target']);
