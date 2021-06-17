@@ -84,13 +84,35 @@
             margin-top: 20px;
         }
 
-        .header {
+        .header{
             top: 0;
             left: 0;
-            position: fixed;
             width: 100%;
-            margin-top: 110px;
-            background-color: #f8f8fb;
+            position: fixed;
+            padding: 0;
+            margin: 155px 0 0 0;
+            background-color: #fff;
+            border: none;
+        }
+
+        .company-name {
+            margin: 0;
+            padding-top: 27px;
+            font-family: 'Poppins', sans-serif;
+            opacity: 0.8;
+            font-size: 18px;
+            font-weight: 500;
+            color: #000000;
+        }
+
+        .pdf-title {
+            margin: 0;
+            padding: 0;
+            opacity: 0.8;
+            font-family: 'Poppins', sans-serif;
+            font-size: 24px;
+            font-weight: 300;
+            color: #000000;
         }
 
         /* Footer */
@@ -122,18 +144,22 @@
 
 <body style="margin-top: 20px; font-family: Lato;">
 
-<table class="tableHeadRegular header" style="width: 100%; margin-bottom: 20px; padding: 0px; background-color: #fff; border: none">
+<table class="header">
     <tr>
-        <td style="opacity: 0.8; font-family: Lato; font-size: 20px; font-weight: bold; color: #000000; padding-top: 20px">
-            Employee Leave Balance
-        </td>
-        <td style="text-align: right;">
-            <p style="margin-bottom:-2px; opacity: 0.8; font-family: Lato; font-size: 24px; font-weight: 300; color: #000000;">{{$leave_balance['company']}}</p>
-        </td>
+        @if($leave_balance['logo'])
+            <td class="text-left"><img src="{{ $leave_balance['logo'] }}" height="65"/></td>
+        @endif
+        @if($leave_balance['company'])
+            <td class="text-right"><p class="company-name">{{$leave_balance['company']}}</p>
+            </td>
+        @endif
     </tr>
     <tr>
-        <td colspan="2">
-            <hr style=" color: #d1d7e6; width: 720px">
+        <td><hr style=" color: #d1d7e6; width: 720px"></td>
+    </tr>
+    <tr>
+        <td>
+            <p class="pdf-title">Employee Leave Balance</p>
         </td>
     </tr>
 </table>
