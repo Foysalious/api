@@ -89,7 +89,7 @@ class HomepageController extends Controller
      */
     public function getEntriesByAccountKey($accountKey, Request $request): JsonResponse
     {
-        $limit = $request->limit ?? 10;
+        $limit = $request->limit ?? 15;
         $nextCursor = $request->next_cursor ?? null;
         try {
             $response = $this->homepageRepo->getEntriesByAccountKey($accountKey, $request->partner->id, $limit, $nextCursor);
