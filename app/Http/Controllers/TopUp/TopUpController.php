@@ -540,9 +540,10 @@ class TopUpController extends Controller
      * @param TopUpOrderRepository $top_up_order_repo
      * @return JsonResponse
      */
-    public function allTopUps(Request $request, TopUpDataFormat $topUp_data_format, TopUpOrderRepository $top_up_order_repo)
+    public function allTopUps(Request $request, $user, TopUpDataFormat $topUp_data_format, TopUpOrderRepository $top_up_order_repo)
     {
-        $user = $request->has('partner') ? $request->partner : $request->user;
+        /** @var AuthUser $user */
+        $user = $this->getAgent($request, $user);
         $all_topups = $top_up_order_repo->getAllTopUps($user);
         $top_up_data = $topUp_data_format->allTopUpDataFormat($all_topups);
 
