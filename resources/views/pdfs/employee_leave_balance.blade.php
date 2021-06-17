@@ -90,7 +90,7 @@
             width: 100%;
             position: fixed;
             padding: 0;
-            margin: 155px 0 0 0;
+            margin: 100px 0 0 0;
             background-color: #fff;
             border: none;
         }
@@ -106,8 +106,8 @@
         }
 
         .pdf-title {
-            margin: 0;
-            padding: 0;
+            margin: -20px 0 0 0;
+            padding: 0 0 20px 0;
             opacity: 0.8;
             font-family: 'Poppins', sans-serif;
             font-size: 24px;
@@ -157,6 +157,9 @@
     <tr>
         <td><hr style=" color: #d1d7e6; width: 720px"></td>
     </tr>
+</table>
+
+<table style="border: none">
     <tr>
         <td>
             <p class="pdf-title">Employee Leave Balance</p>
