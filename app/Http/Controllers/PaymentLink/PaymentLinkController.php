@@ -14,6 +14,7 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use Sheba\ModificationFields;
 use Sheba\PaymentLink\Creator;
+use Sheba\PaymentLink\Exceptions\InvalidGatewayChargesException;
 use Sheba\PaymentLink\PaymentLink;
 use Sheba\PaymentLink\PaymentLinkClient;
 use Sheba\PaymentLink\PaymentLinkStatics;
@@ -72,8 +73,18 @@ class PaymentLinkController extends Controller
     public function customLinkCreateData(Request $request)
     {
         try {
+            $partner = $request->partner;
+            if (isset($partner->subscription->validPaymentGateway))
+                $gateway_charges = json_decode($partner->subscription->validPaymentGateway->gateway_charges,1);
+            else throw new InvalidGatewayChargesException();
             $data = PaymentLinkStatics::customPaymentLinkData();
+            $gateway_charges_collection = collect($gateway_charges);
+            $gateway_charges = $gateway_charges_collection->groupBy('key')->toArray();
+            $data = array_merge($gateway_charges, $data);
             return api_response($request, $data, 200, ["data" => $data]);
+        } catch (InvalidGatewayChargesException $exception) {
+            logError($exception);
+            return api_response($request, null, $exception->getCode(), ["message" => $exception->getMessage()]);
         } catch (\Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
