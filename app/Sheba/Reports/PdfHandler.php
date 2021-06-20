@@ -63,9 +63,9 @@ class PdfHandler extends Handler
         $fontData = $defaultFontConfig['fontdata'];
         return new Mpdf([
             'mode' => 'utf-8',
-            'tempDir' => public_path('/tmp'),
+            'tempDir' => public_path('tmp'),
             'fontDir' => array_merge($fontDirs, [
-                storage_path('/fonts'),
+                storage_path('fonts'),
             ]), 'fontdata' => $fontData + [
                     'kalpurush' => [
                         'R' => 'Siyamrupali.ttf', 'I' => 'Siyamrupali.ttf', 'useOTL' => 0xFF, 'useKashida' => 75,
