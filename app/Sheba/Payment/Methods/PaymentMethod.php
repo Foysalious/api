@@ -52,7 +52,7 @@ abstract class PaymentMethod
         return Carbon::now()->addMinutes($this->getValidityInMinutes());
     }
 
-    private function getValidityInMinutes()
+    public function getValidityInMinutes()
     {
         return self::VALIDITY_IN_MINUTES;
     }
