@@ -3,8 +3,8 @@
 use App\Models\PartnerReferral;
 use App\Models\Resource;
 use App\Repositories\SmsHandler;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Sheba\FraudDetection\TransactionSources;

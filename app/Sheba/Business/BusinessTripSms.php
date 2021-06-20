@@ -3,8 +3,8 @@
 use App\Models\Business;
 use App\Models\BusinessTrip;
 use App\Repositories\SmsHandler;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use Carbon\Carbon;
 use Sheba\Business\BusinessSmsHandler;
 use Sheba\FraudDetection\TransactionSources;

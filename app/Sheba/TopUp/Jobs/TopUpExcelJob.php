@@ -1,8 +1,8 @@
 <?php namespace Sheba\TopUp\Jobs;
 
 use App\Models\TopUpOrder;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use Excel;
 use Exception;
 use Illuminate\Support\Facades\File;
