@@ -61,6 +61,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
     public function complete()
     {
         try {
+            $this->payment->reload();
             if ($this->payment->isComplete())
                 return $this->payment;
             $this->paymentLink      = $this->getPaymentLink();
