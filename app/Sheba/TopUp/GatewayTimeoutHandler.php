@@ -2,8 +2,8 @@
 
 use App\Models\TopUpOrder;
 use App\Models\User;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use Illuminate\Database\Eloquent\Collection;
 use Sheba\Dal\TopUpGateway\TopUpGatewayRepository;
 use Sheba\Dal\TopupOrder\TopUpOrderRepository;

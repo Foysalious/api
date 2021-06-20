@@ -3,8 +3,8 @@
 use App\Models\Partner;
 use App\Models\PosOrder;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Transactions\Types;
