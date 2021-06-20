@@ -3,8 +3,8 @@
 use App\Models\Affiliate;
 use App\Models\Partner;
 use App\Repositories\SmsHandler;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use GuzzleHttp\Exception\RequestException;
 use Sheba\Dal\TopUpTransactionBlockNotificationReceiver\TopUpTransactionBlockNotificationReceiver;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
