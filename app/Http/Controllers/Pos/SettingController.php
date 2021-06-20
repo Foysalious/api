@@ -7,7 +7,7 @@ use App\Models\PartnerPosSetting;
 use App\Models\PosCustomer;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
 use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
-use App\Sheba\Sms\BusinessType;
+use Sheba\Sms\BusinessType;
 use App\Sheba\Sms\FeatureType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

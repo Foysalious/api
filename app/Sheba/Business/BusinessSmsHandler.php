@@ -1,6 +1,6 @@
 <?php namespace Sheba\Business;
 
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\FeatureType;
 use Exception;
 use Sheba\Sms\Sms;
 use App\Models\BusinessSmsTemplate;

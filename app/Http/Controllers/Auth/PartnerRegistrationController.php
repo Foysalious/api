@@ -12,8 +12,8 @@ use App\Models\Profile;
 use App\Models\Resource;
 use App\Repositories\PartnerRepository;
 use App\Repositories\ProfileRepository;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\QueryException;
@@ -38,8 +38,6 @@ class PartnerRegistrationController extends Controller
     private $fbKit;
     /** @var ProfileRepository $profileRepository */
     private $profileRepository;
-    /** @var Sms */
-    private $sms;
     /** @var EntryRepository $entryRepo */
     private $entryRepo;
     /** @var PartnerRepositoryInterface $partnerRepo */
@@ -55,7 +53,6 @@ class PartnerRegistrationController extends Controller
     {
         $this->fbKit = new FacebookAccountKit();
         $this->profileRepository = new ProfileRepository();
-        $this->sms = ;
         $this->entryRepo = $entry_repo;
         $this->partnerRepo = $partner_repo;
         $this->referrals = $referrals;
