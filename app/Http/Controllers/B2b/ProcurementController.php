@@ -3,8 +3,8 @@
 use App\Http\Controllers\Controller;
 use App\Models\Bid;
 use App\Models\Business;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use Sheba\Dal\Category\Category;
 use App\Models\Partner;
 use App\Models\Procurement;
