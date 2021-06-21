@@ -220,10 +220,10 @@
 
 </table>
 
-<table class="salary-amount_in_words" style="width: 40%; border: none">
+<table class="salary-amount_in_words" style="width: 100%; border: none">
     <tr>
-        <td>In words</td>
-        <td>:</td>
+        <td style="width: 12%">In words</td>
+        <td style="width: 2%">:</td>
         <td>{{ $salary_certificate_info['salary_info']['gross_salary_in_word'] }} Taka Only</td>
     </tr>
 </table>
