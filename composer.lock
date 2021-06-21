@@ -2589,17 +2589,6 @@
                 "php",
                 "utf-8"
             ],
-            "support": {
-                "docs": "http://mpdf.github.io",
-                "issues": "https://github.com/mpdf/mpdf/issues",
-                "source": "https://github.com/mpdf/mpdf"
-            },
-            "funding": [
-                {
-                    "url": "https://www.paypal.me/mpdf",
-                    "type": "custom"
-                }
-            ],
             "time": "2021-05-12T14:18:06+00:00"
         },
         {
@@ -4024,8 +4013,8 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://bitbucket.org/startern/sheba_dal.git",
-                "reference": "f03ef3f9ccc3591c968ca2083410c44db2d291f4"
+                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
+                "reference": "de203e9c37cbe5484725d5a13db2573e9312c66b"
             },
             "require": {
                 "php": ">=5.4"
@@ -4052,7 +4041,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2021-06-16T10:39:09+00:00"
+            "time": "2021-06-21T09:25:46+00:00"
         },
         {
             "name": "sheba/elasticsearch",
