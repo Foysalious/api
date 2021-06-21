@@ -213,10 +213,10 @@
 
 <table style="width: 100%; border: none; padding-bottom: 14px;">
     <tr>
-        <td style="font-family: 'Poppins', sans-serif; font-size: 12px; color: #000000; opacity: 0.8; width: 17.5%">
+        <td style="font-family: 'Poppins', sans-serif; font-size: 12px; color: #000000; opacity: 0.8; width: 19.5%">
             Net Payable
         </td>
-        <td style="padding-left: 2px; font-family: 'Poppins', sans-serif; font-size: 12px; color: #000000; opacity: 1; width: 2%">
+        <td style="padding-left: 2px; font-family: 'Poppins', sans-serif; font-size: 12px; color: #000000; opacity: 1; width: 2.5%">
             :
         </td>
         <td style="padding-top: 8.5px; font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: bold; color: #000000; opacity: 1;">
@@ -227,10 +227,10 @@
 
 <table style="width: 100%; border: none; padding-bottom: 30px;">
     <tr>
-        <td style="font-family: 'Poppins', sans-serif; font-size: 12px; color: #000000; opacity: 0.8; width: 17.5%">
+        <td style="font-family: 'Poppins', sans-serif; font-size: 12px; color: #000000; opacity: 0.8; width: 19.5%">
             In Words
         </td>
-        <td style="padding-left: 2px; font-family: 'Poppins', sans-serif; font-size: 12px; color: #000000; opacity: 1; width: 2%">
+        <td style="padding-left: 2px; font-family: 'Poppins', sans-serif; font-size: 12px; color: #000000; opacity: 1; width: 2.5%">
             :
         </td>
         <td style="font-family: 'Poppins', sans-serif; font-size: 12px; color: #000000; opacity: 1;">
