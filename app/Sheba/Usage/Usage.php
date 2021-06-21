@@ -2,7 +2,6 @@
 
 namespace Sheba\Usage;
 
-use Illuminate\Support\Facades\Log;
 use ReflectionClass;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Repository\JournalCreateRepository;
@@ -49,21 +48,18 @@ class Usage
     {
         if (empty($this->type))
             return 0;
-        Log::info(["create usage"]);
         $data = ['type' => $this->type];
         if (!empty($modifier))
-        $this->setModifier($modifier);
+            $this->setModifier($modifier);
         $history = $this->user->usage()->create($this->withCreateModificationField($data));
-        Log::info(["create usage 2"]);
         if (!empty($this->user->referredBy))
-        $this->updateUserLevel();
+            $this->updateUserLevel();
         return $history;
     }
 
     private function updateUserLevel()
     {
         $usage = $this->user->usage()->selectRaw('COUNT(DISTINCT(DATE(`partner_usages_history`.`created_at`))) as usages')->first();
-        Log::info(["updateUserLevel", $usage, $usage->usages]);
         $usage = $usage ? $usage->usages : 0;
         $this->findAndUpgradeLevel($usage);
 
@@ -75,13 +71,8 @@ class Usage
         foreach ($this->config as $index => $level) {
             $duration      += $level['duration'];
             $duration_pass = $usage >= $duration;
-//            $nid_pass=$level['nid_verification']?$this->user->isNIDVerified():true;
-            $nid_pass = true;
-            Log::info(["findAndUpgradeLevel", $duration, $duration_pass, $nid_pass]);
-            if ($nid_pass&&$duration_pass) {
-                Log::info(["moving into upgrade level"]);
-                $this->upgradeLevel($index+1,true);
-            }
+            $nid_pass=$level['nid_verification']?$this->user->isNIDVerified():true;
+            if ($nid_pass&&$duration_pass) $this->upgradeLevel($index+1,true);
         }
         return -1;
     }
@@ -100,10 +91,8 @@ class Usage
                 } catch (\ReflectionException $e) {
                     $reference = 'referral';
                 }
-                Log::info(["checking refer", $amount, $level, $reference, $transaction]);
                 $this->storeJournal($this->user->id, $transaction, $amount, $reference);
             }
-            Log::info(["checking refer", $amount, $level, "amount is 0"]);
         }
     }
 

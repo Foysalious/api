@@ -5,7 +5,6 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Sheba\FraudDetection\Exceptions\FraudDetectionServerError;
 use Sheba\FraudDetection\Repository\TransactionRepository;
 use Sheba\ModificationFields;
@@ -36,7 +35,6 @@ class WalletTransactionHandler extends WalletTransaction
         try {
             if (empty($this->type) || empty($this->amount) || empty($this->model))
                 throw new InvalidWalletTransaction();
-
             if (!$isJob)
                 $extras = $this->withCreateModificationField((new RequestIdentification())->set($extras));
             $transaction = $this->storeTransaction($extras);
@@ -45,7 +43,6 @@ class WalletTransactionHandler extends WalletTransaction
             } catch (\Throwable $e) {
                 WalletTransaction::throwException($e);
             }
-            Log::info(['checking transaction', $isJob, $transaction]);
             return $transaction;
         } catch (\Throwable $e) {
             WalletTransaction::throwException($e);
