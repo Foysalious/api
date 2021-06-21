@@ -49,12 +49,14 @@ class Usage
     {
         if (empty($this->type))
             return 0;
+        Log::info(["create usage", $this->type]);
         $data = ['type' => $this->type];
         if (!empty($modifier))
-            $this->setModifier($modifier);
+        $this->setModifier($modifier);
         $history = $this->user->usage()->create($this->withCreateModificationField($data));
+        Log::info(["create usage 2", $history, $this->user->referredBy]);
         if (!empty($this->user->referredBy))
-            $this->updateUserLevel();
+        $this->updateUserLevel();
         return $history;
     }
 
