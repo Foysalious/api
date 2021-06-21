@@ -146,9 +146,14 @@ class DeliveryService
     /**
      * @return int
      */
-    private function countProductWithoutWeight(): int
+    private function countProductWithoutWeight()
     {
-        return PartnerPosService::where('partner_id',$this->partner->id)->where('is_published_for_shop',1)->where('weight',null)->count();
+        return PartnerPosService::where('partner_id', $this->partner->id)
+            ->where('is_published_for_shop', 1)
+            ->where(function ($q) {
+                $q->where('weight', 0)
+                    ->orWhere('weight', null);
+            })->count();
     }
 
     private function getDeliveryMethod()
@@ -178,6 +183,7 @@ class DeliveryService
         if ($this->partner->id != $this->posOrder->partner_id) {
             throw new DoNotReportException("Order does not belongs to this partner", 400);
         }
+        $payment_info = $this->paymentInfo($this->posOrder->id);
         return [
             'partner_pickup_information' => [
                 'merchant_name' => $this->partner->name,
@@ -199,7 +205,7 @@ class DeliveryService
                     'thana' => $this->posOrder->delivery_thana,
                     'zilla' => $this->posOrder->delivery_district
                 ],
-                'payment_method' => ($payment_info = $this->paymentInfo($this->posOrder->id)) ? $payment_info->method : null,
+                'payment_method' => $payment_info ? ($payment_info->method == 'cod' ? 'COD' : 'Pre-paid') : 'COD',
                 'cod_amount' => $this->getDueAmount(),
             ],
         ];
