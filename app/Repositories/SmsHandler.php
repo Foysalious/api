@@ -12,8 +12,6 @@ class SmsHandler
     private $template;
     /** @var Sms  */
     private $sms;
-    /** @var bool */
-    private $isOff;
 
     /** @var Sms */
     public function __construct($event_name)
@@ -22,7 +20,6 @@ class SmsHandler
         $sms_templates  = app(SmsTemplateRepo::class);
         $this->template = $sms_templates->findByEventName($event_name);
         $this->sms      = app(Sms::class);
-        $this->isOff    = !config('sms.is_on');
     }
 
     /**
@@ -42,7 +39,7 @@ class SmsHandler
 
     private function isOff()
     {
-        return $this->isOff || !$this->template->is_on;
+        return !$this->template->is_on;
     }
 
     /**
@@ -81,7 +78,7 @@ class SmsHandler
      */
     public function shoot()
     {
-        if ($this->isOff) return;
+        if ($this->isOff()) return;
 
         return $this->sms->shoot();
     }
