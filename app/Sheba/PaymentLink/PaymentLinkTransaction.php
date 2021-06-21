@@ -161,11 +161,17 @@ class PaymentLinkTransaction
     private function configurePaymentLinkCharge(): PaymentLinkTransaction
     {
         if($this->paymentLinkCharge->isPartner($this->receiver)) {
-            $this->paymentLinkCharge->setPartner($this->receiver)->setPaymentConfigurations($this->paymentLink->getType());
+            $this->paymentLinkCharge->setPartner($this->receiver)->setPaymentConfigurations($this->getPaymentMethod());
             $this->tax = $this->paymentLinkCharge->getFixedTaxAmount();
             $this->linkCommission = $this->paymentLinkCharge->getGatewayChargePercentage();
         }
         return $this;
+    }
+
+    private function getPaymentMethod()
+    {
+        $payment_details = $this->payment->paymentDetails()->orderBy('id', 'DESC')->first();
+        return isset($payment_details) ? $payment_details->method : null;
     }
 
     public function isPaidByPartner()

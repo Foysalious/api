@@ -3,8 +3,8 @@
 use App\Models\PartnerAffiliation;
 use App\Repositories\NotificationRepository;
 use App\Repositories\SmsHandler;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use Illuminate\Http\Request;
 use Sheba\ModificationFields;
 

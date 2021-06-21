@@ -3,8 +3,8 @@
 use App\Models\Partner;
 use App\Models\PosOrder;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Expense\SmsPurchase;
 use Sheba\AccountingEntry\Accounts\RootAccounts;

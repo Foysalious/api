@@ -3,8 +3,8 @@
 use App\Models\Partner;
 use App\Models\PosOrder;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use Exception;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Expense\SmsPurchase;
@@ -46,8 +46,11 @@ class SmsHandler
         if ((double)$partner->wallet < $sms_cost) return;
 
         try {
-            $sms->shoot();
-        } catch (\Exception $e) {}
+            $sms->setBusinessType(BusinessType::SMANAGER)
+                ->setFeatureType(FeatureType::POS)
+                ->shoot();
+        } catch(\Throwable $e) {
+        }
 
         $transaction = (new WalletTransactionHandler())
             ->setModel($partner)

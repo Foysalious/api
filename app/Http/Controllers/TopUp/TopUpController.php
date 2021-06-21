@@ -156,7 +156,7 @@ class TopUpController extends Controller
 
         $waiting_time = $this->hasLastTopupWithinIntervalTime($top_up_request, $request);
         if($waiting_time !== false)
-            return api_response($request, null, 400, ['message' => 'এই নাম্বারে কিছুক্ষনের মধ্যে টপ-আপ করা হয়েছে । অনুগ্রহপূর্বক '.$waiting_time.' মিনিট অপেক্ষা করুন পুনরায় এই নাম্বারে টপ-আপ করার আগে ।']);
+            return api_response($request, null, 400, ['message' => 'এই নাম্বারে কিছুক্ষন আগে টপ-আপ করা হয়েছে । পুনরায় এই নাম্বারে টপ-আপ করার জন্য অনুগ্রহপূর্বক ' .$waiting_time. ' মিনিট অপেক্ষা করুন ।']);
 
 
         $topup_order = $creator->setTopUpRequest($top_up_request)->create();
@@ -540,9 +540,10 @@ class TopUpController extends Controller
      * @param TopUpOrderRepository $top_up_order_repo
      * @return JsonResponse
      */
-    public function allTopUps(Request $request, TopUpDataFormat $topUp_data_format, TopUpOrderRepository $top_up_order_repo)
+    public function allTopUps(Request $request, $user, TopUpDataFormat $topUp_data_format, TopUpOrderRepository $top_up_order_repo)
     {
-        $user = $request->has('partner') ? $request->partner : $request->user;
+        /** @var AuthUser $user */
+        $user = $this->getAgent($request, $user);
         $all_topups = $top_up_order_repo->getAllTopUps($user);
         $top_up_data = $topUp_data_format->allTopUpDataFormat($all_topups);
 

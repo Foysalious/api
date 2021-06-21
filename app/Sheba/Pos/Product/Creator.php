@@ -46,7 +46,7 @@ class Creator
         $this->saveImages();
         $this->data['partner_id'] = $this->data['partner']['id'];
         $this->data['pos_category_id'] = $this->data['category_id'];
-        $this->data['cost'] = (double)$this->data['cost'];
+        if(isset($this->data['cost'])) $this->data['cost'] = (double)$this->data['cost'];
         $this->format();
         $image_gallery = null;
         if (isset($this->data['image_gallery']))

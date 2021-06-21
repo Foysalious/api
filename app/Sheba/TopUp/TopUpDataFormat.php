@@ -100,7 +100,7 @@ class TopUpDataFormat
             $operator = $topup->vendor->name;
             $operator_waiting_time = $topup->vendor->waiting_time;
             $payee_mobile_type = $topup->payee_mobile_type;
-            $created_at_raw = $topup->created_at->format('Y-m-d h:i:s');
+            $created_at_raw = $topup->created_at->format('Y-m-d H:i:s');
 
             array_push($topup_data, $this->allTopUpData($payee_mobile, $operator, $operator_waiting_time, $payee_mobile_type, $created_at_raw));
         }

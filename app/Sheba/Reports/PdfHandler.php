@@ -65,7 +65,7 @@ class PdfHandler extends Handler
         $fontData          = $defaultFontConfig['fontdata'];
         return new Mpdf([
             'mode' => 'utf-8',
-            'tempDir' => public_path('/tmp'),
+            'tempDir' => storage_path('app/temp'),
             'fontDir' => array_merge($fontDirs, [
                 storage_path('/fonts'),
             ]), 'fontdata'        => $fontData + [

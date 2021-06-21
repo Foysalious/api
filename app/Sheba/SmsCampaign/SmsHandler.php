@@ -9,26 +9,21 @@ use Sheba\Sms\SmsService\SmsService;
 
 class SmsHandler
 {
-    /** @var bool */
-    private $isOff;
     /** @var SmsService $smsService */
     private $smsService;
 
     public function __construct(SmsService $sms)
     {
-        $this->isOff = !config('sms.is_on');
         $this->smsService = $sms;
     }
 
     /**
      * @param $to
      * @param $message
-     * @return BulkSmsResponse | void
+     * @return BulkSmsResponse
      */
     public function sendBulkMessages($to, $message)
     {
-        if ($this->isOff) return;
-
         $sms = (new Sms())
             ->setBusinessType(BusinessType::SMANAGER)
             ->setFeatureType(FeatureType::SMS_CAMPAIGN)

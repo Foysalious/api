@@ -54,7 +54,7 @@ class PosServiceTransformer extends TransformerAbstract
                     'image_link' => $image->image_link
                 ];
             }) : [],
-            'accounting_info' => json_decode($service->accounting_info ? : null)
+            'accounting_info' => $service->accounting_info ?json_decode($service->accounting_info ):null
         ];
     }
 }
