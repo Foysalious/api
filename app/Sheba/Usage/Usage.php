@@ -49,12 +49,12 @@ class Usage
     {
         if (empty($this->type))
             return 0;
-        Log::info(["create usage", $this->type]);
+        Log::info(["create usage"]);
         $data = ['type' => $this->type];
         if (!empty($modifier))
         $this->setModifier($modifier);
         $history = $this->user->usage()->create($this->withCreateModificationField($data));
-        Log::info(["create usage 2", $history, $this->user->referredBy]);
+        Log::info(["create usage 2"]);
         if (!empty($this->user->referredBy))
         $this->updateUserLevel();
         return $history;
@@ -63,6 +63,7 @@ class Usage
     private function updateUserLevel()
     {
         $usage = $this->user->usage()->selectRaw('COUNT(DISTINCT(DATE(`partner_usages_history`.`created_at`))) as usages')->first();
+        Log::info(["updateUserLevel", $usage, $usage->usages]);
         $usage = $usage ? $usage->usages : 0;
         $this->findAndUpgradeLevel($usage);
 
@@ -75,7 +76,11 @@ class Usage
             $duration      += $level['duration'];
             $duration_pass = $usage >= $duration;
             $nid_pass=$level['nid_verification']?$this->user->isNIDVerified():true;
-            if ($nid_pass&&$duration_pass) $this->upgradeLevel($index+1,true);
+            Log::info(["findAndUpgradeLevel", $duration, $duration_pass, $nid_pass]);
+            if ($nid_pass&&$duration_pass) {
+                Log::info(["moving into upgrade level"]);
+                $this->upgradeLevel($index+1,true);
+            }
         }
         return -1;
     }
