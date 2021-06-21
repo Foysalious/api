@@ -2,6 +2,7 @@
 
 namespace Sheba\Usage;
 
+use Illuminate\Support\Facades\Log;
 use ReflectionClass;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Repository\JournalCreateRepository;
@@ -91,6 +92,7 @@ class Usage
                 } catch (\ReflectionException $e) {
                     $reference = 'referral';
                 }
+                Log::info(["checking refer", $amount, $level, $reference]);
                 $this->storeJournal($this->user->id, $transaction, $amount, $reference);
             }
         }
