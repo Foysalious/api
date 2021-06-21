@@ -184,9 +184,12 @@ class PayrollController extends Controller
     {
         /** @var Business $business */
         $business = $request->business;
-        $payroll_components = $business->payrollSetting->components()->where('target_type', TargetType::GENERAL)->where(function($query) {
+        $gross_payroll_components = $business->payrollSetting->components()->where('type', Type::GROSS)->where('target_type', TargetType::GENERAL)->where(function($query) {
              return $query->where('is_default', 1)->orWhere('is_active',1);
         })->orderBy('type')->get();
+
+        $payroll_components = $business->payrollSetting->components()->where('type','<>',Type::GROSS)->orderBy('type')->get();
+
 
         $gross [] = [
             'id' => null,
@@ -194,14 +197,16 @@ class PayrollController extends Controller
             'title' => 'Gross Salary',
             'type' => null
         ];
+        foreach ($gross_payroll_components as $gross_component) {
+            if ($gross_component->type == Type::GROSS) array_push($gross, [
+                'id' => $gross_component->id,
+                'name' => $gross_component->name,
+                'title' => $gross_component->is_default ? Components::getComponents($gross_component->name)['value'] : $gross_component->value,
+                'type' => $gross_component->type
+            ]);
+        }
         $addition = $deduction = [];
         foreach ($payroll_components as $payroll_component) {
-            if ($payroll_component->type == Type::GROSS) array_push($gross, [
-                'id' => $payroll_component->id,
-                'name' => $payroll_component->name,
-                'title' => $payroll_component->is_default ? Components::getComponents($payroll_component->name)['value'] : $payroll_component->value,
-                'type' => $payroll_component->type
-            ]);
             if ($payroll_component->type == Type::ADDITION) array_push($addition, [
                 'id' => $payroll_component->id,
                 'name' => $payroll_component->name,
