@@ -266,7 +266,7 @@ class Creator
 
     public function sentSms()
     {
-        if (!($this->getPayerInfo() && config('sms.is_on'))) return;
+        if (!$this->getPayerInfo()) return;
 
         /** @var PaymentLinkClient $paymentLinkClient */
         $paymentLinkClient = app(PaymentLinkClient::class);
