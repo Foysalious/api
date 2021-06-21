@@ -92,7 +92,7 @@ class Usage
                 } catch (\ReflectionException $e) {
                     $reference = 'referral';
                 }
-                Log::info(["checking refer", $amount, $level, $reference]);
+                Log::info(["checking refer", $amount, $level, $reference, $transaction]);
                 $this->storeJournal($this->user->id, $transaction, $amount, $reference);
             }
             Log::info(["checking refer", $amount, $level, "amount is 0"]);
