@@ -93,9 +93,7 @@ class PayrollComponentSchedulerCalculation
     }
     private function getAdditionComponent()
     {
-        $components = $this->payrollSetting->components()->where('type', Type::ADDITION)->where(function($query) {
-            return $query->where('is_default', 1)->orWhere('is_active',1);
-        })->orderBy('type')->get();
+        $components = $this->payrollSetting->components()->where('type', Type::ADDITION)->orderBy('type')->get();
         $total_addition = 0;
         foreach ($components as $component) {
             if (!$component->is_default) $total_addition += $this->calculatePackage($component->componentPackages->where('is_active', 1));
@@ -106,9 +104,7 @@ class PayrollComponentSchedulerCalculation
     }
     private function getDeductionComponent()
     {
-        $components = $this->payrollSetting->components()->where('type', Type::DEDUCTION)->where(function($query) {
-            return $query->where('is_default', 1)->orWhere('is_active',1);
-        })->orderBy('type')->get();
+        $components = $this->payrollSetting->components()->where('type', Type::DEDUCTION)->orderBy('type')->get();
         $default_deduction_component_data = $this->calculateBusinessMemberPolicyRulesDeduction();
         $total_deduction = 0;
         foreach ($components as $component) {
@@ -306,7 +302,7 @@ class PayrollComponentSchedulerCalculation
                 $one_working_day_amount = $this->oneWorkingDayAmount($business_member_salary,  floatValFormat($total_working_days));
                 return $this->totalPenaltyAmountByOneWorkingDay($one_working_day_amount, $penalty_amount);
             }
-            $note = 'Punishment';
+            $note = 'Leave deducted as per payroll policies';
             $total_leave_type_days_after_penalty = $total_leave_type_days - $penalty_amount;
             $this->prorateRequester->setLeaveTypeId($penalty_type)
                 ->setTotalDays($total_leave_type_days_after_penalty)
