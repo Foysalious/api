@@ -95,6 +95,7 @@ class Usage
                 Log::info(["checking refer", $amount, $level, $reference]);
                 $this->storeJournal($this->user->id, $transaction, $amount, $reference);
             }
+            Log::info(["checking refer", $amount, $level, "amount is 0"]);
         }
     }
 
