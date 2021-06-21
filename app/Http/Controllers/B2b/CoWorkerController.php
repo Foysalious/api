@@ -3,6 +3,7 @@
 use App\Models\Business;
 use Exception;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\App;
 use Intervention\Image\Image;
 use Sheba\Business\CoWorker\Designations;
 use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
@@ -39,6 +40,7 @@ use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use App\Models\Member;
 use Carbon\Carbon;
+use Sheba\Business\CoWorker\SalaryCertificate\SalaryCertificateInfo;
 use DB;
 
 class CoWorkerController extends Controller
@@ -351,6 +353,7 @@ class CoWorkerController extends Controller
         $business = $request->business;
         $this->coWorkerSalaryRequester->setMember($member_id)
             ->setGrossSalary($request->gross_salary)
+            ->setBreakdownPercentage($request->breakdown_percentage)
             ->setManagerMember($manager_member)
             ->createOrUpdate();
         return api_response($request, null, 200);
@@ -880,5 +883,56 @@ class CoWorkerController extends Controller
     {
         if ($request->has('limit') && $request->limit == 'all') return $total_employees;
         return $limit;
+    }
+
+    /**
+     * @param $business
+     * @param $member_id
+     * @param Request $request
+     * @param BusinessMemberRepositoryInterface $business_member_repo
+     * @param SalaryCertificateInfo $salaryCertificateInfo
+     * @return JsonResponse
+     */
+    public function salaryCertificatePdf($business, $member_id, Request $request, BusinessMemberRepositoryInterface $business_member_repo, SalaryCertificateInfo $salaryCertificateInfo)
+    {
+        $is_inactive_filter_applied = false;
+        if (!is_numeric($member_id)) return api_response($request, null, 400);
+        $member = Member::findOrFail($member_id);
+        if (!$member) return api_response($request, null, 404);
+        $business = $request->business;
+
+        if (!$member->businessMember) {
+            $business_member = $business_member_repo->builder()
+                ->where('business_id', $business->id)
+                ->where('member_id', $member->id)
+                ->where('status', Statuses::INACTIVE)
+                ->first();
+            if (!$business_member) return api_response($request, null, 404);
+            $is_inactive_filter_applied = true;
+            $member->setRelation('businessMemberGenerated', $business_member->load([
+                'role' => function ($q) {
+                    $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                        'businessDepartment' => function ($q) {
+                            $q->select('business_departments.id', 'business_id', 'name');
+                        }
+                    ]);
+                }
+            ]));
+            $member->push();
+        }
+
+        $business_member = $is_inactive_filter_applied ? $member->businessMemberGenerated : $member->businessMember;
+
+        $salary_certificate_info = $salaryCertificateInfo->setBusiness($business)
+                                                         ->setMember($member)
+                                                         ->setBusinessMember($business_member)
+                                                         ->get();
+
+        if($request->file=='pdf') {
+//            return view('pdfs.payroll.salary_certificate', compact('salary_certificate_info'));
+            return App::make('dompdf.wrapper')->loadView('pdfs.payroll.salary_certificate', compact('salary_certificate_info'))->download("salary_certificate.pdf");
+        }
+
+        return api_response($request, null, 200, ['salary_info_details' => $salary_certificate_info]);
     }
 }

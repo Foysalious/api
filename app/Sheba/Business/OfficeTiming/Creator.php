@@ -38,6 +38,7 @@ class Creator
             'business_id' => $this->officeTimingCreateRequest->getBusiness()->id,
             'start_time' => $this->officeTimingCreateRequest->getStartTime(),
             'end_time' => $this->officeTimingCreateRequest->getEndTime(),
+            'type' => $this->officeTimingCreateRequest->getTotalWorkingDaysType()
         ]));
     }
 }

@@ -12,6 +12,7 @@ use Sheba\Business\LeaveType\DefaultType;
 use Sheba\Business\OfficeTiming\OfficeTime;
 use Sheba\Business\PayrollSetting\ Requester as PayrollSettingRequester;
 use Sheba\Business\PayrollSetting\Creator as PayrollSettingCreator;
+use Sheba\Dal\BusinessOffice\Type;
 use Sheba\Dal\PayrollSetting\PaymentSchedule;
 use Sheba\ModificationFields;
 use App\Models\Business;
@@ -155,7 +156,8 @@ class BusinessCommonInformationCreator
     {
         $this->officeTimingCreateRequest = $this->officeTimingCreateRequest->setBusiness($this->business)
             ->setStartTime(OfficeTime::START_TIME)
-            ->setEndTime(OfficeTime::END_TIME);
+            ->setEndTime(OfficeTime::END_TIME)
+            ->setTotalWorkingDaysType(Type::AS_PER_CALENDAR);
         $this->officeHoursCreator->setOfficeTimingCreateRequest($this->officeTimingCreateRequest)->create();
     }
 
