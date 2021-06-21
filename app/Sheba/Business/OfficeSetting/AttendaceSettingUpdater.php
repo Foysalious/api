@@ -1,14 +1,15 @@
-<?php namespace Sheba\Business\OfficeTiming;
+<?php namespace Sheba\Business\OfficeSetting;
 
 use App\Models\Business;
 use App\Models\Member;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\BusinessOfficeHours\Contract as BusinessOfficeHoursRepoInterface;
 use Sheba\ModificationFields;
 use Sheba\Dal\LeaveType\Model as LeaveType;
 
-class Updater
+class AttendaceSettingUpdater
 {
     use ModificationFields;
 
@@ -22,6 +23,10 @@ class Updater
     private $office_hour_repo;
     private $halfDay;
     private $halfDayConfiguration;
+    private $isStartGracePeriodAllowed;
+    private $isEndGracePeriodAllowed;
+    private $startingGracePeriodTime;
+    private $endingGracePeriodTime;
 
     /**
      * Updater constructor.
@@ -59,15 +64,33 @@ class Updater
        return $this;
     }
 
+    public function setStartGracePeriod($is_start_grace_period_allowed)
+    {
+        $this->isStartGracePeriodAllowed = $is_start_grace_period_allowed;
+        return $this;
+    }
+
+    public function setStartGracePeriodTime($starting_grace_period_time)
+    {
+        $this->startingGracePeriodTime = $starting_grace_period_time;
+        return $this;
+    }
+
+    public function setEndGracePeriodTime($ending_grace_period_time)
+    {
+        $this->endingGracePeriodTime = $ending_grace_period_time;
+        return $this;
+    }
+
+    public function setEndGracePeriod($is_end_grace_period_allowed)
+    {
+        $this->isEndGracePeriodAllowed = $is_end_grace_period_allowed;
+        return $this;
+    }
+
     public function setEndTime($end_time)
     {
        $this->end_time = $end_time;
-       return $this;
-    }
-
-    public function setWeekends($weekends)
-    {
-       $this->weekends = $weekends;
        return $this;
     }
 
@@ -99,42 +122,29 @@ class Updater
     {
         $this->setModifier($this->member);
 
-        $update_weekends = $this->updateWeekends();
         $update_office_hours = $this->updateOfficeHours();
         if ($this->halfDay) {
             $this->updateHalfDaySettingsForActivated();
         } else {
             $this->updateHalfDaySettingsForDeactivated();
         }
-
         return true;
-    }
-
-    private function updateWeekends()
-    {
-        $weekends = $this->weekend_repo->getAllByBusiness($this->business);
-        if (is_null($weekends)) return "No Weekends";
-        $weekends->each(function ($weekend) {
-            $weekend->delete();
-        });
-        foreach ($this->weekends as $weekend) {
-            $this->createWeekend($this->business->id, $weekend);
-        }
-
-        return true;
-    }
-
-    private function createWeekend($business_id , $weekend)
-    {
-        $data = [ 'business_id' => $business_id, 'weekday_name' => $weekend ];
-        $this->weekend_repo->create($this->withCreateModificationField($data));
     }
 
     private function updateOfficeHours()
     {
         $office_time = $this->office_hour_repo->getOfficeTime($this->business);
-        $data = ['start_time' => $this->start_time, 'end_time' => $this->end_time];
-        $this->office_hour_repo->update($office_time, $this->withUpdateModificationField($data));
+        $data = [
+            'start_time' => $this->start_time,
+            'end_time' => $this->end_time,
+            'is_start_grace_time_enable' => $this->isStartGracePeriodAllowed,
+            'is_end_grace_time_enable' => $this->isEndGracePeriodAllowed,
+            'start_grace_time' => $this->startingGracePeriodTime,
+            'end_grace_time' => $this->endingGracePeriodTime,
+        ];
+        DB::transaction(function () use ($office_time, $data){
+            $this->office_hour_repo->update($office_time, $this->withUpdateModificationField($data));
+        });
 
         return true;
     }

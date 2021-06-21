@@ -6,6 +6,7 @@ class CreateRequest
     private $business;
     private $startTime;
     private $endTime;
+    private $workingDaysType;
 
     /**
      * @return mixed
@@ -59,5 +60,16 @@ class CreateRequest
     {
         $this->endTime = $end_time;
         return $this;
+    }
+
+    public function setTotalWorkingDaysType($working_days_type)
+    {
+        $this->workingDaysType = $working_days_type;
+        return $this;
+    }
+
+    public function getTotalWorkingDaysType()
+    {
+        return $this->workingDaysType;
     }
 }
