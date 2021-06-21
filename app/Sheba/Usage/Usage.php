@@ -75,7 +75,8 @@ class Usage
         foreach ($this->config as $index => $level) {
             $duration      += $level['duration'];
             $duration_pass = $usage >= $duration;
-            $nid_pass=$level['nid_verification']?$this->user->isNIDVerified():true;
+//            $nid_pass=$level['nid_verification']?$this->user->isNIDVerified():true;
+            $nid_pass = true;
             Log::info(["findAndUpgradeLevel", $duration, $duration_pass, $nid_pass]);
             if ($nid_pass&&$duration_pass) {
                 Log::info(["moving into upgrade level"]);
