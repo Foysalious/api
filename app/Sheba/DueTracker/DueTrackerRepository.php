@@ -1,9 +1,5 @@
-<?php
+<?php namespace Sheba\DueTracker;
 
-namespace Sheba\DueTracker;
-
-use App\Jobs\PartnerRenewalSMS;
-use App\Jobs\SendToCustomerToInformDueDepositSMS;
 use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
 use App\Models\PosCustomer;
@@ -205,7 +201,6 @@ class DueTrackerRepository extends BaseRepository
         ];
     }
 
-
     /**
      * @param Partner $partner
      * @param Request $request
@@ -214,7 +209,6 @@ class DueTrackerRepository extends BaseRepository
      */
     public function store(Partner $partner, Request $request)
     {
-
         $partner_pos_customer = PartnerPosCustomer::byPartner($partner->id)->where('customer_id', $request->customer_id)->with(['customer'])->first();
         if (empty($partner_pos_customer))
             $partner_pos_customer = PartnerPosCustomer::create(['partner_id' => $partner->id, 'customer_id' => $request->customer_id]);
@@ -376,7 +370,6 @@ class DueTrackerRepository extends BaseRepository
                     array_push($response['next'], $temp);
                 }
             }
-
         }
         return $response;
     }
@@ -442,7 +435,6 @@ class DueTrackerRepository extends BaseRepository
 
     }
 
-
     /**
      * @param Request $request
      * @return mixed
@@ -451,8 +443,7 @@ class DueTrackerRepository extends BaseRepository
     public function sendSMS(Request $request)
     {
         $partner_pos_customer = PartnerPosCustomer::byPartner($request->partner->id)->where('customer_id', $request->customer_id)->with(['customer'])->first();
-        if (empty($partner_pos_customer))
-            throw new InvalidPartnerPosCustomer();
+        if (empty($partner_pos_customer)) throw new InvalidPartnerPosCustomer();
         /** @var PosCustomer $customer */
         $customer = $partner_pos_customer->customer;
         $data     = [
@@ -487,30 +478,29 @@ class DueTrackerRepository extends BaseRepository
 
     public function getSms($data)
     {
+        $log = " BDT has been deducted for sending ";
+        $message_data = [
+            'customer_name' => $data['customer_name'],
+            'partner_name'  => $data['partner_name'],
+            'amount'        => $data['amount']
+        ];
+
         if ($data['type'] == 'due') {
-            $sms = (new SmsHandlerRepo('inform-due'))
-                ->setMobile($data['mobile'])
-                ->setMessage([
-                    'customer_name' => $data['customer_name'],
-                    'partner_name'  => $data['partner_name'],
-                    'amount'        => $data['amount'],
-                    'payment_link'  => $data['payment_link']
-                ]);
-            $log = " BDT has been deducted for sending due details";
+            $sms = (new SmsHandlerRepo('inform-due'));
+            $message_data['payment_link']  = $data['payment_link'];
+            $log = "due details";
         } else {
-            $sms = (new SmsHandlerRepo('inform-deposit'))
-                ->setMobile($data['mobile'])
-                ->setMessage([
-                    'customer_name' => $data['customer_name'],
-                    'partner_name'  => $data['partner_name'],
-                    'amount'        => $data['amount'],
-                ]);
-            $log = " BDT has been deducted for sending deposit details";
+            $sms = (new SmsHandlerRepo('inform-deposit'));
+            $log .= "deposit details";
         }
 
+        $sms = $sms
+            ->setMobile($data['mobile'])
+            ->setMessage($message_data)
+            ->setFeatureType(FeatureType::DUE_TRACKER)
+            ->setBusinessType(BusinessType::SMANAGER);
         return [$sms, $log];
     }
-
 
     /**
      * @return array
@@ -542,7 +532,6 @@ class DueTrackerRepository extends BaseRepository
                 'question' => 'POS থেকে বাকিতে সেল করলে সেটা বাকির খাতায় আসবে কি?',
                 'answer'   => 'হ্যাঁ আসবে।'
             ]
-
         ];
     }
 
@@ -552,7 +541,8 @@ class DueTrackerRepository extends BaseRepository
      * @return mixed
      * @throws \Exception
      */
-    public function createPaymentLink(Request $request, $paymentLinkCreator ) {
+    public function createPaymentLink(Request $request, $paymentLinkCreator )
+    {
         $purpose = 'Due Collection';
         $customer = PosCustomer::find($request->customer_id);
         $payment_link_store = $paymentLinkCreator->setAmount($request->amount)
