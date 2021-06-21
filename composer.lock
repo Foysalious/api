@@ -1807,7 +1807,7 @@
             "time": "2017-03-12T09:23:10+00:00"
         },
         {
-            "name": "jeremeamia/superclosure",
+            "name": "jeremeamia/SuperClosure",
             "version": "2.3.0",
             "source": {
                 "type": "git",
@@ -2531,17 +2531,6 @@
                 "php",
                 "utf-8"
             ],
-            "support": {
-                "docs": "http://mpdf.github.io",
-                "issues": "https://github.com/mpdf/mpdf/issues",
-                "source": "https://github.com/mpdf/mpdf"
-            },
-            "funding": [
-                {
-                    "url": "https://www.paypal.me/mpdf",
-                    "type": "custom"
-                }
-            ],
             "time": "2021-05-12T14:18:06+00:00"
         },
         {
@@ -2689,12 +2678,6 @@
                 "duplicate",
                 "object",
                 "object graph"
-            ],
-            "funding": [
-                {
-                    "url": "https://tidelift.com/funding/github/packagist/myclabs/deep-copy",
-                    "type": "tidelift"
-                }
             ],
             "time": "2020-11-13T09:40:50+00:00"
         },
@@ -3655,10 +3638,6 @@
                 "mime",
                 "mime type"
             ],
-            "support": {
-                "issues": "https://github.com/rosell-dk/image-mime-type-guesser/issues",
-                "source": "https://github.com/rosell-dk/image-mime-type-guesser/tree/0.3"
-            },
             "time": "2019-03-29T09:33:28+00:00"
         },
         {
@@ -3969,16 +3948,6 @@
                 "fpdi",
                 "pdf"
             ],
-            "support": {
-                "issues": "https://github.com/Setasign/FPDI/issues",
-                "source": "https://github.com/Setasign/FPDI/tree/v2.3.6"
-            },
-            "funding": [
-                {
-                    "url": "https://tidelift.com/funding/github/packagist/setasign/fpdi",
-                    "type": "tidelift"
-                }
-            ],
             "time": "2021-02-11T11:37:01+00:00"
         },
         {
@@ -3987,7 +3956,7 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
-                "reference": "489a8376a6f617a87178fcce0617eb080f8aa097"
+                "reference": "de203e9c37cbe5484725d5a13db2573e9312c66b"
             },
             "require": {
                 "php": ">=5.4"
@@ -4014,7 +3983,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2021-06-10T05:49:34+00:00"
+            "time": "2021-06-21T09:25:46+00:00"
         },
         {
             "name": "sheba/elasticsearch",
@@ -5124,20 +5093,6 @@
                 "polyfill",
                 "portable",
                 "shim"
-            ],
-            "funding": [
-                {
-                    "url": "https://symfony.com/sponsor",
-                    "type": "custom"
-                },
-                {
-                    "url": "https://github.com/fabpot",
-                    "type": "github"
-                },
-                {
-                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
-                    "type": "tidelift"
-                }
             ],
             "time": "2020-10-23T14:02:19+00:00"
         },
@@ -7040,6 +6995,5 @@
         "ext-mysql_xdevapi": "*",
         "ext-intl": "*"
     },
-    "platform-dev": [],
-    "plugin-api-version": "2.0.0"
+    "platform-dev": []
 }
