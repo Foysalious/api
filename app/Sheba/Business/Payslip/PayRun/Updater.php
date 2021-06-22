@@ -1,5 +1,7 @@
 <?php namespace Sheba\Business\Payslip\PayRun;
 
+use App\Jobs\Business\SendPayslipDisburseNotificationToEmployee;
+use App\Jobs\Business\SendPayslipDisbursePushNotificationToEmployee;
 use App\Sheba\Business\PayrollComponent\Components\GrossSalaryBreakdownCalculate;
 use App\Sheba\Business\Salary\Requester as SalaryRequester;
 use Illuminate\Support\Facades\DB;
@@ -128,5 +130,17 @@ class Updater
             ]);
         }
         return json_encode($data);
+    }
+
+    public function sendNotifications()
+    {
+        $business_members = $this->business->getAccessibleBusinessMember()->get();
+        foreach ($business_members as $business_member) {
+            $payslip = $this->payslipRepository->where('business_member_id', $business_member->id)->where('status', Status::DISBURSED)->where('schedule_date', 'like', '%' . $this->scheduleDate . '%')->first();
+            if ($payslip) {
+                dispatch(new SendPayslipDisburseNotificationToEmployee($business_member, $payslip));
+                dispatch(new SendPayslipDisbursePushNotificationToEmployee($business_member, $payslip));
+            }
+        }
     }
 }
