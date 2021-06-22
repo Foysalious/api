@@ -30,7 +30,7 @@ class ExpenseExcel
                 $sheet->fromArray($this->data, null, 'A1', true, false);
                 $sheet->prependRow($this->getHeaders());
                 $sheet->freezeFirstRow();
-                $sheet->cell('A1:E1', function ($cells) {
+                $sheet->cell('A1:H1', function ($cells) {
                     $cells->setFontWeight('bold');
                 });
                 $sheet->getDefaultStyle()->getAlignment()->applyFromArray(
@@ -48,6 +48,9 @@ class ExpenseExcel
                 'month' => Carbon::parse(date('Y-m-0'.$expense['month']))->format('F'),
                 'employee_name' => $expense['employee_name'],
                 'employee_department' => $expense['employee_department'],
+                'transport' => $expense['transport'],
+                'food' => $expense['food'],
+                'other' => $expense['other'],
                 'amount' => (double)$expense['amount']
             ]);
         }
@@ -55,6 +58,6 @@ class ExpenseExcel
 
     private function getHeaders()
     {
-        return ['Month', 'Employee Name', 'Department', 'Amount'];
+        return ['Month', 'Employee Name', 'Department', 'Transport', 'Food', 'Other', 'Amount'];
     }
 }
