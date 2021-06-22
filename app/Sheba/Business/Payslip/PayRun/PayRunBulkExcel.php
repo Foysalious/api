@@ -66,14 +66,14 @@ class PayRunBulkExcel
         $x = 1;
         foreach ($this->payslip as $payslip) {
             $business_member_data = [
-                'serial_no' => sprintf("%03d", $x++),
-                'business_member_id' => $payslip['business_member_id'],
-                'employee_name' => $payslip['employee_name'],
-                'employee_id' => $payslip['employee_id'],
-                'department' => $payslip['department'] ? $payslip['department'] : 'N/A',
-                'schedule_date' => $payslip['schedule_date'],
-                'gross_salary' => $payslip['gross_salary'],
-            ] + $this->getComponents();
+                    'serial_no' => sprintf("%03d", $x++),
+                    'business_member_id' => $payslip['business_member_id'],
+                    'employee_name' => $payslip['employee_name'],
+                    'employee_id' => $payslip['employee_id'],
+                    'department' => $payslip['department'] ? $payslip['department'] : 'N/A',
+                    'schedule_date' => $payslip['schedule_date'],
+                    'gross_salary' => $payslip['gross_salary'],
+                ] + $this->getComponents($payslip);
             array_push($this->data, $business_member_data);
         }
     }
@@ -92,11 +92,22 @@ class PayRunBulkExcel
         return $header;
     }
 
-    private function getComponents()
+    private function getComponents($payslip)
     {
+        $additional_business_components = $this->payrollComponents->where('type', 'addition')->pluck('name')->toArray();
+        $deductional_business_components = $this->payrollComponents->where('type', 'deduction')->pluck('name')->toArray();
         $data = [];
-        foreach ($this->payrollComponents as $component) {
-            $data[$component->name] = 0;
+        foreach ($additional_business_components as $components) {
+            foreach ($payslip['addition_breakdown'] as $addition_breakdown) {
+                if (!in_array($addition_breakdown['key'], $additional_business_components)) $data[$components] = 0;
+                else $data[$addition_breakdown['key']] = $addition_breakdown['value'];
+            }
+        }
+        foreach ($deductional_business_components as $components) {
+            foreach ($payslip['deduction_breakdown'] as $deduction_breakdown) {
+                if (!in_array($deduction_breakdown['key'], $deductional_business_components)) $data[$components] = 0;
+                else $data[$deduction_breakdown['key']] = $deduction_breakdown['value'];
+            }
         }
         return $data;
     }
