@@ -7,6 +7,7 @@ namespace Sheba\AccountingEntry\Accounts\AccountTypes;
 use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Expense\EmiInterest;
 use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Expense\PaymentLinkServiceCharge;
 use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Expense\Purchase;
+use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Expense\SmsPurchase;
 use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Expense\SubscriptionPurchase;
 
 class Expense extends AccountTypes
@@ -25,5 +26,6 @@ class Expense extends AccountTypes
     /** @var Purchase */
     public $purchase;
     public $loan_service;
+    /** @var SmsPurchase $sms_purchase */
     public $sms_purchase;
 }
