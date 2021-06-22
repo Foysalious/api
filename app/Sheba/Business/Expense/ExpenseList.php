@@ -55,7 +55,7 @@ class ExpenseList
                     $expense_summary['year'] = $expense_breakdown->year;
                 }
                 if (!$expense_summary['month']) {
-                    $expense_summary['month'] = $expense_breakdown->month;
+                    $expense_summary['month'] = $expense_breakdown->created_at->format('F');
                 }
                 if (!$expense_summary['employee_name']) {
                     $member = $expense_breakdown->member;
