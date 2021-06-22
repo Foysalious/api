@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Sheba\Business\BusinessBasicInformation;
+use App\Sheba\Business\CoWorker\Information\Financial\GetFinancialInfo;
 use App\Transformers\Business\CoWorkerMinimumTransformer;
 use App\Transformers\BusinessEmployeeDetailsTransformer;
 use App\Transformers\BusinessEmployeesTransformer;
@@ -44,6 +45,8 @@ class EmployeeController extends Controller
     private $approvalRequestRepo;
     /** @var AccountServer $accounts */
     private $accounts;
+    /*** @var BusinessMember */
+    private $businessMember;
 
     /**
      * EmployeeController constructor.
@@ -58,6 +61,7 @@ class EmployeeController extends Controller
         $this->repo = $member_repository;
         $this->approvalRequestRepo = $approval_request_repository;
         $this->accounts = $accounts;
+        $this->businessMember = app(BusinessMember::class);
     }
 
     public function me(Request $request)
@@ -366,5 +370,15 @@ class EmployeeController extends Controller
             }
         }
         return $pending_leave_count;
+    }
+
+    public function getFinancialInfo($business_member_id, Request $request)
+    {
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $employee = $this->businessMember->find($business_member_id);
+        if (!$employee) return api_response($request, null, 404);
+        $financial_info = (new GetFinancialInfo($employee))->get();
+        return api_response($request, null, 200, ['financial_info' => $financial_info]);
     }
 }
