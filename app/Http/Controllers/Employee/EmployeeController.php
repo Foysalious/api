@@ -385,4 +385,16 @@ class EmployeeController extends Controller
         $employee_official_details = $manager->createData($resource)->toArray()['data'];
         return api_response($request, null, 200, ['official_info' => $employee_official_details]);
     }
+
+    public function updateMeV2(Request $request)
+    {
+        $this->validate($request, [
+            'name' => 'required|string',
+            'email' => 'required|string',
+            'department' => 'required|string',
+            'designation' => 'required|string',
+            'joining_date' => 'required|date',
+            'gender' => 'required|string'
+        ]);
+    }
 }
