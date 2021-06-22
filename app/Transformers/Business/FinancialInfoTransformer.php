@@ -1,21 +1,15 @@
-<?php namespace App\Sheba\Business\CoWorker\Information\Financial;
+<?php namespace App\Transformers\Business;
 
 
 use App\Models\BusinessMember;
+use League\Fractal\TransformerAbstract;
 
-class GetFinancialInfo
+class FinancialInfoTransformer extends TransformerAbstract
 {
-    /*** @var BusinessMember */
-    private $businessMember;
 
-    public function __construct(BusinessMember $business_member)
+    public function transform(BusinessMember $business_member)
     {
-        $this->businessMember = $business_member;
-    }
-
-    public function get()
-    {
-        $member = $this->businessMember->member;
+        $member = $business_member->member;
         $profile = $member->profile;
         $bank = $profile->banks->last();
 
