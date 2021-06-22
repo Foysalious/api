@@ -29,6 +29,8 @@ class BusinessCommonInformationCreator
 {
     use ModificationFields;
 
+    const ENABLE = 1;
+
     /** @var InitialOfficeTimeBusinessCommonInformationCreator $officeHoursRepository */
     private $officeHoursCreator;
     /** @var InitialWeekendBusinessCommonInformationCreator $weekendCreator */
@@ -157,7 +159,9 @@ class BusinessCommonInformationCreator
         $this->officeTimingCreateRequest = $this->officeTimingCreateRequest->setBusiness($this->business)
             ->setStartTime(OfficeTime::START_TIME)
             ->setEndTime(OfficeTime::END_TIME)
-            ->setTotalWorkingDaysType(Type::AS_PER_CALENDAR);
+            ->setTotalWorkingDaysType(Type::AS_PER_CALENDAR)
+            ->setIsForLateCheckinPolicy(self::ENABLE)
+            ->setIsForEarlyCheckoutPolicy(self::ENABLE);
         $this->officeHoursCreator->setOfficeTimingCreateRequest($this->officeTimingCreateRequest)->create();
     }
 
