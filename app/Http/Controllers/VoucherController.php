@@ -433,7 +433,7 @@ class VoucherController extends Controller
         $voucher = [
             'code' => strtoupper(($request->channel ? $request->channel : 'PROMO')
                 .($customer ? explode(' ',trim($customer->getName()))[0] : $request->mobile)
-                .$request->amount.$this->generateRandomString(2)
+                .$request->amount.$this->generateRandomString(4)
             ),
             'start_date' => Carbon::parse($request->start_date)->format('Y-m-d h:i:s'),
             'end_date' => Carbon::parse($request->end_date)->format('Y-m-d h:i:s'),
@@ -455,7 +455,7 @@ class VoucherController extends Controller
     }
 
     private function generateRandomString($length = 10) {
-        $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
         $charactersLength = strlen($characters);
         $randomString = '';
         for ($i = 0; $i < $length; $i++) {
