@@ -51,6 +51,7 @@ class OrderController extends Controller
             ->setPaymentMethod($request->payment_method)
             ->setPaymentLinkAmount($request->payment_link_amount)
             ->setPaidAmount($request->paid_amount)
+            ->setVoucherId($request->voucher_id)
             ->store();
         return http_response($request, null, 200, $response);
 

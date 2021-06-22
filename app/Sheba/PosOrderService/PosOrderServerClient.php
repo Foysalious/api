@@ -47,7 +47,7 @@ class PosOrderServerClient
     private function call($method, $uri, $data = null, $multipart = false)
     {
         try {
-            dd(json_decode($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data, $multipart))->getBody()->getContents(), true));
+            return json_decode($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data, $multipart))->getBody()->getContents(), true);
         } catch (GuzzleException $e) {
             $res = $e->getResponse();
             $http_code = $res->getStatusCode();
