@@ -14,6 +14,7 @@ use Sheba\Business\Expense\ExpenseExcel;
 use Sheba\Employee\ExpensePdf;
 use Sheba\ModificationFields;
 use Sheba\Employee\ExpenseRepo;
+use Sheba\Business\Expense\ExpenseList as ExpenseList;
 use Throwable;
 use DB;
 
@@ -36,7 +37,7 @@ class ExpenseController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function index(Request $request, ExpenseExcel $excel)
+    public function index(Request $request, ExpenseExcel $excel, ExpenseList $expenseList)
     {
         $this->validate($request, ['date' => 'string']);
         list($offset, $limit) = calculatePagination($request);
@@ -69,10 +70,8 @@ class ExpenseController extends Controller
         }
 
         $expenses->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
-        $expenses = $expenses->get();
-        $fractal = new Manager();
-        $resource = new Collection($expenses, new ExpenseTransformer());
-        $expenses = $fractal->createData($resource)->toArray()['data'];
+        $expenses = $expenses->get()->groupBy('member_id');
+        $expenses = $expenseList->setData($expenses)->get();
         if ($request->has('search')) $expenses = $this->searchExpenseList($expenses, $request);
         $total_calculation = $this->getTotalCalculation($expenses);
 
@@ -121,13 +120,17 @@ class ExpenseController extends Controller
             return $expense['employee_department'];
         }, $expenses)));
 
-        $total_amount = array_reduce($expenses, function($sum, $item) {
-            return $sum += $item['amount'];
-        });
+        $total_amount = array_sum(array_column($expenses,'amount'));
+        $total_transport = array_sum(array_column($expenses,'transport'));
+        $total_food = array_sum(array_column($expenses,'food'));
+        $total_other = array_sum(array_column($expenses,'other'));
 
         return [
             'employee' => $total_employee,
             'department' => $total_department,
+            'transport' => $total_transport,
+            'food' => $total_food,
+            'other' => $total_other,
             'amount' => $total_amount
         ];
     }
