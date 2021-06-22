@@ -52,12 +52,18 @@ class Creator
         if (isset($this->data['image_gallery']))
             $image_gallery = $this->data['image_gallery'];
         $cloned_data = $this->data;
-        $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'image_gallery']);
+        $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'image_gallery','accounting_info']);
         $partner_pos_service = $this->serviceRepo->save($this->data + (new RequestIdentification())->get());
         $this->storeImageGallery($partner_pos_service, json_decode($image_gallery,true));
+        if (isset($cloned_data['accounting_info']) && !empty($cloned_data['accounting_info']))
+            $this->createExpenseEntry($partner_pos_service, json_decode($cloned_data['accounting_info'], true));
         return $partner_pos_service;
     }
 
+    private function createExpenseEntry($partner_pos_service, $accounting_info)
+    {
+        $this->stockExpenseEntry->setPartner($partner_pos_service->partner)->setName($partner_pos_service->name)->setId($partner_pos_service->id)->setNewStock($this->data['stock'])->setCostPerUnit($partner_pos_service->cost)->setAccountingInfo($accounting_info)->create();
+    }
 
     private function saveImages()
     {
