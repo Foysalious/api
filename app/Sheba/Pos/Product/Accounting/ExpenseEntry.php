@@ -88,7 +88,7 @@ class ExpenseEntry
         $data = collect();
         $data->partner = $this->partner;
         $data->amount = $this->stock * $this->costPerUnit;
-        $data->from_account_key = $this->accountingInfo['from_account'];
+        $data->from_account_key = $this->accountingInfo['from_account']?$this->accountingInfo['from_account']:null;
         $data->to_account_key = $this->id;
         $data->customer_id = $this->accountingInfo['supplier_id']?$this->accountingInfo['supplier_id']:null;
         $data->inventory_products = [['id' => $this->id, 'unit_price' => $this->costPerUnit, 'name' => $this->name, 'quantity' => $this->stock]];
