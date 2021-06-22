@@ -59,7 +59,7 @@ $nagad          = [
     'cash_in_charge' => 0,
 ];
 $ebl            = [
-    'name'           => 'Eastern Bank Limited',
+    'name'           => 'Eastern Bank Ltd',
     'name_bn'        => null,
     'asset'          => 'ebl',
     'method_name'    => 'ebl',
