@@ -192,8 +192,8 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $payment_creator->credit($payment_data);
             if ($this->transaction->isPaidByCustomer()) {
                 $this->target->update(['interest' => 0, 'bank_transaction_charge' => 0]);
-                $this->storeAccountingJournal($payment_data);
             }
+            $this->storeAccountingJournal($payment_data);
         }
         if ($this->target instanceof ExternalPayment) {
             $this->target->payment_id = $this->payment->id;
