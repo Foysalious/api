@@ -2,9 +2,11 @@
 
 use App\Sheba\Business\PayrollComponent\Components\GrossSalaryBreakdownCalculate;
 use App\Sheba\Business\PayrollComponent\Components\PayrollComponentSchedulerCalculation;
+use Illuminate\Support\Facades\DB;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepo;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepo;
 use Sheba\Dal\PayrollComponent\PayrollComponentRepository;
+use Sheba\Dal\PayrollComponentPackage\PayrollComponentPackageRepository;
 use Sheba\Dal\PayrollSetting\PayrollSettingRepository;
 use Sheba\Dal\PayrollSetting\PayrollSetting;
 use Sheba\Dal\PayrollSetting\PayDayType;
@@ -30,6 +32,7 @@ class Payslip extends Command
     private $businessWeekRepo;
     private $businessHolidayRepo;
     private $payrollComponentSchedulerCalculation;
+    private $payrollComponentPackageRepository;
 
 
     /**
@@ -57,6 +60,7 @@ class Payslip extends Command
         $this->businessWeekRepo = $business_weekend_repo;
         $this->businessHolidayRepo = $business_holiday_repo;
         $this->payrollComponentSchedulerCalculation = $payroll_component_scheduler_calculation;
+        $this->payrollComponentPackageRepository = app(PayrollComponentPackageRepository::class);
         parent::__construct();
     }
 
@@ -66,23 +70,36 @@ class Payslip extends Command
         foreach ($payroll_settings as $payroll_setting) {
             $business = $payroll_setting->business;
             if ($this->isPayDay($payroll_setting, $business)) {
-            $business_members = $business->getAccessibleBusinessMember()->get();
-            foreach ($business_members as $business_member) {
-                $gross_salary_breakdown_percentage = $this->grossSalaryBreakdownCalculate->payslipComponentPercentageBreakdown($business_member);
-                $payroll_component_calculation = $this->payrollComponentSchedulerCalculation->setBusiness($business)->setBusinessMember($business_member)->getPayrollComponentCalculationBreakdown();
-                $gross_salary = 0.0;
-                $salary = $business_member->salary;
-                if ($salary) $gross_salary = floatValFormat($salary->gross_salary);
-                $gross_salary_breakdown = $this->grossSalaryBreakdownCalculate->totalAmountPerComponent($gross_salary, $gross_salary_breakdown_percentage);
-                $payslip_data = [
-                    'business_member_id' => $business_member->id,
-                    'schedule_date' => Carbon::now(),
-                    'status' => 'pending',
-                    'salary_breakdown' => json_encode(array_merge(['gross_salary_breakdown' => $gross_salary_breakdown], $payroll_component_calculation))
-                ];
-                $this->payslipRepository->create($payslip_data);
+                $business_members = $business->getAccessibleBusinessMember()->get();
+                foreach ($business_members as $business_member) {
+                    $gross_salary_breakdown_percentage = $this->grossSalaryBreakdownCalculate->payslipComponentPercentageBreakdown($business_member);
+                    $payroll_component_calculation = $this->payrollComponentSchedulerCalculation->setBusiness($business)->setBusinessMember($business_member)->getPayrollComponentCalculationBreakdown();
+                    $gross_salary = 0.0;
+                    $salary = $business_member->salary;
+                    if ($salary) $gross_salary = floatValFormat($salary->gross_salary);
+                    $gross_salary_breakdown = $this->grossSalaryBreakdownCalculate->totalAmountPerComponent($gross_salary, $gross_salary_breakdown_percentage);
+                    $payslip_data = [
+                        'business_member_id' => $business_member->id,
+                        'schedule_date' => Carbon::now(),
+                        'status' => 'pending',
+                        'salary_breakdown' => json_encode(array_merge(['gross_salary_breakdown' => $gross_salary_breakdown], $payroll_component_calculation))
+                    ];
+                    $this->payslipRepository->create($payslip_data);
+
+                }
+                $package_generate_information = $this->payrollComponentSchedulerCalculation->getPackageGenerateData();
+                if ($package_generate_information) $this->updatePackageGenerateDate($package_generate_information);
             }
-            }
+        }
+    }
+
+    private function updatePackageGenerateDate($package_generate_information)
+    {
+        foreach ($package_generate_information as $package_id => $package_generate_data){
+            $package = $this->payrollComponentPackageRepository->find($package_id);
+            DB::transaction(function () use ($package, $package_generate_data) {
+                $this->payrollComponentPackageRepository->update($package, $package_generate_data);
+            });
         }
     }
 
