@@ -85,6 +85,7 @@ class Formatter
 
         return ['generated_at' => $current_package_pay_generate_date];
     }
+
     private function nextPayDay(PayrollSetting $payroll_setting, Carbon $time)
     {
         $business = $payroll_setting->business;
