@@ -4,6 +4,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Sheba\Business\BusinessBasicInformation;
+use App\Sheba\Business\CoWorker\ProfileInformation\ProfileRequester;
+use App\Sheba\Business\CoWorker\ProfileInformation\ProfileUpdater;
 use App\Transformers\Business\CoWorkerMinimumTransformer;
 use App\Transformers\Business\FinancialInfoTransformer;
 use App\Transformers\Business\OfficialInfoTransformer;
@@ -402,5 +404,38 @@ class EmployeeController extends Controller
         $resource = new Item($employee, new OfficialInfoTransformer());
         $employee_official_details = $manager->createData($resource)->toArray()['data'];
         return api_response($request, null, 200, ['official_info' => $employee_official_details]);
+    }
+
+    public function updateEmployee($business_member_id, Request $request, ProfileRequester $profile_requester, ProfileUpdater $profile_updater)
+    {
+        $this->validate($request, [
+            'name' => 'required|string',
+            'email' => 'required|string',
+            'department' => 'required|string',
+            'designation' => 'required|string',
+            'joining_date' => 'required|date',
+            'gender' => 'required|string'
+        ]);
+
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $employee = $this->businessMember->find($business_member_id);
+        if (!$employee) return api_response($request, null, 404);
+        $member = $this->repo->find($business_member['member_id']);
+        $this->setModifier($member);
+
+        $profile_requester
+            ->setBusinessMember($employee)
+            ->setName($request->name)
+            ->setEmail($request->email)
+            ->setDepartment($request->department)
+            ->setDesignation($request->designation)
+            ->setJoiningDate($request->joining_date)
+            ->setGender($request->gender);
+
+        if ($profile_requester->hasError()) return api_response($request, null, $profile_requester->getErrorCode(), ['message' => $profile_requester->getErrorMessage()]);
+
+        $profile_updater->setProfileRequester($profile_requester)->update();
+
     }
 }
