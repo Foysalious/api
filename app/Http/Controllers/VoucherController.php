@@ -4,6 +4,7 @@ use App\Models\Customer;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Models\PosOrderDiscount;
+use App\Models\Tag;
 use App\Models\Voucher;
 use App\Repositories\VoucherRepository;
 use App\Transformers\CustomSerializer;
@@ -399,6 +400,16 @@ class VoucherController extends Controller
             'end_date.after_or_equal' => 'The end date should be after start date'
         ]);
 
+
+        $voucher = $this->buildVendorVoucherData($request);
+        $voucher = $voucherRepository->create($voucher);
+        $voucher->tags()->sync([config('vendor.xtra_vendor_tag_id')]);
+
+        return api_response($request, null, 200, ['code' => $voucher->code]);
+    }
+
+    private function buildVendorVoucherData(Request $request)
+    {
         $vendor_contribution_in_percentage = 96;
 
         $customer = Customer::whereHas('profile', function ($query) use ($request) {
@@ -407,10 +418,11 @@ class VoucherController extends Controller
 
 
         $rules = [
-          'mobile'=> '+88' . $request->mobile
+            'mobile'=> '+88' . $request->mobile,
+            'sales_channels'=> config('vendor.vendor_promo_applicable_sales_channels')
         ];
 
-        $voucher = [
+        return [
             'code' => strtoupper(($request->channel ? $request->channel : 'PROMO')
                 .($customer ? explode(' ',trim($customer->getName()))[0] : $request->mobile)
                 .$request->amount.$this->generateRandomString(4)
@@ -421,17 +433,16 @@ class VoucherController extends Controller
             'is_amount_percentage' => $request->is_percentage,
             'cap' => $request->cap,
             'rules' => json_encode($rules),
-            'title' => $request->title ? $request->title : '',
+            'title' => $request->title ? $request->title : 'Xtra voucher',
             'max_order' => 1,
             'max_customer' => 1,
             'is_created_by_sheba' => 1,
             'sheba_contribution' => 100 - $vendor_contribution_in_percentage,
             'vendor_contribution' => $vendor_contribution_in_percentage,
+            'owner_type' => 'App\Models\Vendor',
+            'owner_id' => config('vendor.xtra_vendor_id'),
+            'created_by' => $request->channel ? ucwords($request->channel) : ''
         ];
-
-        $voucher = $voucherRepository->create($voucher);
-
-        return api_response($request, null, 200, ['code' => $voucher->code]);
     }
 
     private function generateRandomString($length = 10) {
