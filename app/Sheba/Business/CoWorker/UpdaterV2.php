@@ -88,7 +88,7 @@ class UpdaterV2
      */
     public function setMobile($mobile)
     {
-        $this->mobile = formatMobile($mobile);
+        $this->mobile = $mobile ? formatMobile($mobile) : null;
         $this->checkMobileUsedWithAnotherBusinessMember();
         return $this;
     }
@@ -123,8 +123,7 @@ class UpdaterV2
 
     private function getBusinessRole()
     {
-        if (!$this->department)
-        {
+        if (!$this->department) {
             $department = $this->businessMember->department();
             if (!$department) {
                 $this->setError(404, 'Please update your department first.');
@@ -209,10 +208,9 @@ class UpdaterV2
         $business_member_data = [
             'manager_id' => $this->manager,
             'status' => $this->status ?: $this->businessMember->status,
-            'mobile' => $this->mobile
         ];
-
-        if ($this->businessRole) $business_member_data = array_merge($business_member_data, ['business_role_id' => $this->businessRole->id]);
+        if ($this->mobile) $business_member_data['mobile'] = $this->mobile;
+        if ($this->businessRole) $business_member_data['business_role_id'] = $this->businessRole->id;
 
         $this->businessMemberRepository->update($this->businessMember, $this->withUpdateModificationField($business_member_data));
     }
