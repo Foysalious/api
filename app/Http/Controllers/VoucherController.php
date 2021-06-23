@@ -19,6 +19,7 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\ModificationFields;
 use Sheba\Voucher\DTO\Params\CheckParamsForPosOrder;
+use Sheba\Voucher\VoucherDiscount;
 use Sheba\Voucher\VoucherRule;
 use Throwable;
 use Illuminate\Validation\Rule;
@@ -334,6 +335,16 @@ class VoucherController extends Controller
         }
     }
 
+    public function getVoucherDetails(Request $request)
+    {
+        $voucher_id = $request->voucher_id;
+        $voucher =  Voucher::findOrFail($voucher_id);
+//        dd($voucher);
+//        app(VoucherDiscount::class)->setVoucher($voucher)->
+//        $voucher_id = $request->voucher_id;
+        return $voucher;
+    }
+
     public function getUser($partner_id, $user_id)
     {
         return $this->orderService->setPartnerId($partner_id)->setUserId($user_id)->getUser();
@@ -433,7 +444,7 @@ class VoucherController extends Controller
         $voucher = [
             'code' => strtoupper(($request->channel ? $request->channel : 'PROMO')
                 .($customer ? explode(' ',trim($customer->getName()))[0] : $request->mobile)
-                .$request->amount.$this->generateRandomString(2)
+                .$request->amount.$this->generateRandomString(4)
             ),
             'start_date' => Carbon::parse($request->start_date)->format('Y-m-d h:i:s'),
             'end_date' => Carbon::parse($request->end_date)->format('Y-m-d h:i:s'),
@@ -455,7 +466,7 @@ class VoucherController extends Controller
     }
 
     private function generateRandomString($length = 10) {
-        $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
         $charactersLength = strlen($characters);
         $randomString = '';
         for ($i = 0; $i < $length; $i++) {

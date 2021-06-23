@@ -17,6 +17,7 @@ class OrderService
     private $status;
     private $orderId;
     private $skus;
+    private $token;
     protected $emi_month, $interest, $bank_transaction_charge, $delivery_name, $delivery_mobile, $note, $voucher_id;
     protected $filter_params;
     /**
@@ -42,6 +43,16 @@ class OrderService
     public function setUserId($user_id)
     {
         $this->userId = $user_id;
+        return $this;
+    }
+
+    /**
+     * @param mixed $token
+     * @return OrderService
+     */
+    public function setToken($token)
+    {
+        $this->token = $token;
         return $this;
     }
 
@@ -241,7 +252,7 @@ class OrderService
     public function store()
     {
         $data = $this->makeCreateData();
-        return $this->client->post('api/v1/partners/'.$this->partnerId.'/orders', $data, true);
+        return $this->client->setToken($this->token)->post('api/v1/partners/'.$this->partnerId.'/orders', $data, true);
     }
 
     public function updateStatus()
@@ -306,6 +317,7 @@ class OrderService
         if ($this->paymentMethod) array_push($data, ['name' => 'payment_method','contents' => $this->paymentMethod]);
         if ($this->paymentLinkAmount) array_push($data, ['name' => 'payment_link_amount','contents' => $this->paymentLinkAmount]);
         if ($this->paidAmount) array_push($data, ['name' => 'paid_amount','contents' => $this->paidAmount]);
+        if($this->voucher_id) array_push($data, ['name' => 'voucher_id', 'contents' => $this->voucher_id]);
         return $data;
     }
 

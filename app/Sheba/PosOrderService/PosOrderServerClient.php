@@ -10,12 +10,24 @@ class PosOrderServerClient
 {
     protected $client;
     public $baseUrl;
+    public $token;
 
     public function __construct(Client $client)
     {
         $this->client = $client;
         $this->baseUrl = rtrim(config('pos_order_service.api_url'), '/');
     }
+
+    /**
+     * @param mixed $token
+     * @return PosOrderServerClient
+     */
+    public function setToken($token)
+    {
+        $this->token = $token;
+        return $this;
+    }
+
 
     public function get($uri)
     {
@@ -55,6 +67,7 @@ class PosOrderServerClient
         $options['headers'] = [
             'Accept' => 'application/json'
         ];
+        if ($this->token)  $options['headers'] += ['Authorization' => 'Bearer ' . $this->token];
         if (!$data) return $options;
         if ($multipart) {
             $options['multipart'] = $data;

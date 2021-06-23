@@ -162,7 +162,7 @@ class Updater
             "click_action" => "FLUTTER_NOTIFICATION_CLICK"
         ];
         $this->pushNotification->send($notification_data, $topic, $channel, $sound);
-    }
+    }//For Testing
 
     private function sendNotification($payslip, $business_member){
         $title = "Your salary for ".$payslip->schedule_date->format('M Y')." has been disbursed";
@@ -173,5 +173,5 @@ class Updater
             'event_id' => $payslip->id,
         ];
         notify()->member($business_member->member)->send($sheba_notification_data);
-    }
+    }//For Testing
 }

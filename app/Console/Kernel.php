@@ -33,7 +33,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('product-upload-csv')->dailyAt('00:00');
+        #$schedule->command('product-upload-csv')->dailyAt('00:00');
         $schedule->command('sheba:generate-payslips')->dailyAt('00:20');
     }
 }

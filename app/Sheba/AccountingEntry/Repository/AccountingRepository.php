@@ -178,12 +178,12 @@ class AccountingRepository extends BaseRepository
 //            $data['credit_account_key'] = $request->to_account_key; // from = credit = je account theke jabe
         }
         $data['customer_id'] = $request->customer_id;
-        $data['customer_name'] = $request->customer_name;
+        $data['customer_name'] = $request->customer_name ?? null;
         $data['inventory_products'] = $request->inventory_products;
         $data['entry_at'] = $request->has("date") ? $request->date : Carbon::now()->format('Y-m-d H:i:s');
         $data['attachments'] = $this->uploadAttachments($request);
         $data['total_discount'] = $request->has("total_discount") ? (double)$request->total_discount : null;
-        $data['total_vat'] = (double)$request->total_vat;
+        $data['total_vat'] = isset($request->total_vat) ? (double)$request->total_vat : null;
         return $data;
     }
 

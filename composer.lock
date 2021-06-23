@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "624621116592e282505c3743bc764cab",
+    "content-hash": "ab9dad5cb3d9254a3c941982b747adf7",
     "packages": [
         {
             "name": "algolia/algoliasearch-client-php",
@@ -1865,7 +1865,7 @@
             "time": "2017-03-12T09:23:10+00:00"
         },
         {
-            "name": "jeremeamia/SuperClosure",
+            "name": "jeremeamia/superclosure",
             "version": "2.3.0",
             "source": {
                 "type": "git",
@@ -2588,17 +2588,6 @@
                 "pdf",
                 "php",
                 "utf-8"
-            ],
-            "support": {
-                "docs": "http://mpdf.github.io",
-                "issues": "https://github.com/mpdf/mpdf/issues",
-                "source": "https://github.com/mpdf/mpdf"
-            },
-            "funding": [
-                {
-                    "url": "https://www.paypal.me/mpdf",
-                    "type": "custom"
-                }
             ],
             "time": "2021-05-12T14:18:06+00:00"
         },
@@ -3707,6 +3696,10 @@
                 "mime",
                 "mime type"
             ],
+            "support": {
+                "issues": "https://github.com/rosell-dk/image-mime-type-guesser/issues",
+                "source": "https://github.com/rosell-dk/image-mime-type-guesser/tree/0.3"
+            },
             "time": "2019-03-29T09:33:28+00:00"
         },
         {
@@ -3783,6 +3776,10 @@
                 "png",
                 "png2webp"
             ],
+            "support": {
+                "issues": "https://github.com/rosell-dk/webp-convert/issues",
+                "source": "https://github.com/rosell-dk/webp-convert/tree/2.4.0"
+            },
             "time": "2020-11-10T11:24:50+00:00"
         },
         {
@@ -4025,7 +4022,7 @@
             "source": {
                 "type": "git",
                 "url": "https://bitbucket.org/startern/sheba_dal.git",
-                "reference": "f03ef3f9ccc3591c968ca2083410c44db2d291f4"
+                "reference": "408502013b6fe1aa9b8db623655cfa3499bda552"
             },
             "require": {
                 "php": ">=5.4"
@@ -4052,7 +4049,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2021-06-16T10:39:09+00:00"
+            "time": "2021-06-23T05:39:44+00:00"
         },
         {
             "name": "sheba/elasticsearch",
@@ -4167,8 +4164,8 @@
             "version": "dev-feature/sms-service",
             "source": {
                 "type": "git",
-                "reference": "482888e13e05eb5874be2e5c220d4332d0c49d6e",
-                "url": "https://bitbucket.org/startern/sheba_sms.git"
+                "url": "https://bitbucket.org/startern/sheba_sms.git",
+                "reference": "074f6a0534e982ce08a7cb768b3d9decf42c8ca4"
             },
             "require": {
                 "ext-curl": "*"
@@ -4189,7 +4186,7 @@
                 }
             ],
             "description": "Sms for Sheba",
-            "time": "2021-06-17T08:02:49+00:00"
+            "time": "2021-06-22T08:18:14+00:00"
         },
         {
             "name": "sheba/voucher",

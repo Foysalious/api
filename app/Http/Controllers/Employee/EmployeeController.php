@@ -5,6 +5,8 @@ use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Sheba\Business\BusinessBasicInformation;
 use App\Transformers\Business\CoWorkerMinimumTransformer;
+use App\Transformers\Business\FinancialInfoTransformer;
+use App\Transformers\Business\OfficialInfoTransformer;
 use App\Transformers\BusinessEmployeeDetailsTransformer;
 use App\Transformers\BusinessEmployeesTransformer;
 use App\Transformers\CustomSerializer;
@@ -44,6 +46,8 @@ class EmployeeController extends Controller
     private $approvalRequestRepo;
     /** @var AccountServer $accounts */
     private $accounts;
+    /*** @var BusinessMember */
+    private $businessMember;
 
     /**
      * EmployeeController constructor.
@@ -58,6 +62,7 @@ class EmployeeController extends Controller
         $this->repo = $member_repository;
         $this->approvalRequestRepo = $approval_request_repository;
         $this->accounts = $accounts;
+        $this->businessMember = app(BusinessMember::class);
     }
 
     public function me(Request $request)
@@ -366,5 +371,36 @@ class EmployeeController extends Controller
             }
         }
         return $pending_leave_count;
+    }
+
+    /**
+     * @param $business_member_id
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getFinancialInfo($business_member_id, Request $request)
+    {
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $employee = $this->businessMember->find($business_member_id);
+        if (!$employee) return api_response($request, null, 404);
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Item($employee, new FinancialInfoTransformer());
+        $employee_financial_details = $manager->createData($resource)->toArray()['data'];
+        return api_response($request, null, 200, ['financial_info' => $employee_financial_details]);
+    }
+
+    public function getOfficialInfo($business_member_id, Request $request)
+    {
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $employee = $this->businessMember->find($business_member_id);
+        if (!$employee) return api_response($request, null, 404);
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Item($employee, new OfficialInfoTransformer());
+        $employee_official_details = $manager->createData($resource)->toArray()['data'];
+        return api_response($request, null, 200, ['official_info' => $employee_official_details]);
     }
 }

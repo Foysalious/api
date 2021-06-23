@@ -1,13 +1,16 @@
 <?php namespace Sheba\SmsCampaign;
 
 use App\Models\Partner;
+use ReflectionException;
 use Sheba\AccountingEntry\Accounts\Accounts;
-use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Expense\SmsPurchase;
+
 use Sheba\AccountingEntry\Accounts\RootAccounts;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\AccountingEntry\Exceptions\InvalidSourceException;
+use Sheba\AccountingEntry\Exceptions\KeyNotFoundException;
 use Sheba\AccountingEntry\Repository\JournalCreateRepository;
 use Sheba\Dal\SmsCampaignOrder\SmsCampaignOrder;
 use Sheba\Dal\SmsCampaignOrder\SmsCampaignOrderRepository;
-use Sheba\Dal\SmsCampaignOrderReceiver\SmsCampaignOrderReceiver;
 use App\Models\Tag;
 use Sheba\Dal\SmsCampaignOrderReceiver\SmsCampaignOrderReceiverRepository;
 use Sheba\Dal\SmsCampaignOrderReceiver\Status;
@@ -77,6 +80,12 @@ class SmsCampaign
         return $this;
     }
 
+    /**
+     * @throws AccountingEntryServerError
+     * @throws InvalidSourceException
+     * @throws ReflectionException
+     * @throws KeyNotFoundException
+     */
     public function createOrder()
     {
         if (!$this->partnerHasEnoughBalance()) return false;
@@ -135,15 +144,25 @@ class SmsCampaign
         $this->transaction = $partner_transactions;
     }
 
+    /**
+     * @param $cost
+     * @param $campaignOrderId
+     * @throws ReflectionException
+     * @throws AccountingEntryServerError
+     * @throws InvalidSourceException
+     * @throws KeyNotFoundException
+     */
     public function storeJournal($cost, $campaignOrderId){
-        (new JournalCreateRepository())->setTypeId($this->partner->id)
-            ->setSource($this->transaction)
-            ->setAmount($cost)
-            ->setDebitAccountKey(SmsPurchase::SMS_PURCHASE_FROM_SHEBA)
-            ->setCreditAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
-            ->setDetails("SMS marketing")
-            ->setReference($campaignOrderId)
-            ->store();
+        if ($this->transaction){
+            (new JournalCreateRepository())->setTypeId($this->partner->id)
+                ->setSource($this->transaction)
+                ->setAmount($cost)
+                ->setDebitAccountKey((new Accounts())->expense->sms_purchase::SMS_PURCHASE_FROM_SHEBA)
+                ->setCreditAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
+                ->setDetails("SMS marketing")
+                ->setReference($campaignOrderId)
+                ->store();
+        }
     }
 
     private function createExpenseTrackerEntry(SmsCampaignOrder $campaign_order, $amount_to_be_deducted)

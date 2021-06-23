@@ -35,11 +35,11 @@ $cbl            = [
     'cash_in_charge' => 0,
 ];
 $online         = [
-    'name'           => 'Other Debit/Credit',
-    'name_bn'        => null,
-    'asset'          => 'ssl',
-    'method_name'    => 'online',
-    'icon'           => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/payments/Visa+Master.png',
+    'name'        => 'Other Debit/Credit',
+    'name_bn'     =>  "ভিসা / মাস্টার ও অন্যান্য",
+    'asset'       => 'ssl',
+    'method_name' => 'online',
+    'icon'        => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/payments/Visa+Master.png',
     'cash_in_charge' => 0,
 ];
 $ok_wallet      = [
@@ -59,7 +59,7 @@ $nagad          = [
     'cash_in_charge' => 0,
 ];
 $ebl            = [
-    'name'           => 'Eastern Bank Limited',
+    'name'           => 'Eastern Bank Ltd',
     'name_bn'        => null,
     'asset'          => 'ebl',
     'method_name'    => 'ebl',
