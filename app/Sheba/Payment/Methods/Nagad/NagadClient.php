@@ -59,6 +59,7 @@ class NagadClient
      */
     public function placeOrder($transactionId, Initialize $resp, $amount, $callbackUrl)
     {
+        ini_set('max_execution_time', self::TIMEOUT + self::TIMEOUT);
         $paymentRefId = $resp->getPaymentReferenceId();
         $url          = "$this->baseUrl/api/dfs/check-out/complete/$paymentRefId";
         $data         = Inputs::complete($transactionId, $resp, $amount, $callbackUrl, $this->store);
@@ -75,6 +76,7 @@ class NagadClient
      */
     public function validate($refId)
     {
+        ini_set('max_execution_time', self::TIMEOUT + self::TIMEOUT);
         $url     = "$this->baseUrl/api/dfs/verify/payment/$refId";
         $request = (new TPRequest())->setUrl($url)->setMethod(TPRequest::METHOD_GET)->setHeaders(Inputs::headers())->setTimeout(self::TIMEOUT);
         $resp    = $this->client->call($request);
