@@ -116,6 +116,6 @@ class DefaultSettingV3
     }
     public static function getLastUpdatedAt()
     {
-        return '2021-06-23';
+        return '2021-06-24';
     }
 }
