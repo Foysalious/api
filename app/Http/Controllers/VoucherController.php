@@ -19,6 +19,7 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\ModificationFields;
 use Sheba\Voucher\DTO\Params\CheckParamsForPosOrder;
+use Sheba\Voucher\VoucherDiscount;
 use Sheba\Voucher\VoucherRule;
 use Throwable;
 use Illuminate\Validation\Rule;
@@ -332,6 +333,16 @@ class VoucherController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function getVoucherDetails(Request $request)
+    {
+        $voucher_id = $request->voucher_id;
+        $voucher =  Voucher::findOrFail($voucher_id);
+//        dd($voucher);
+//        app(VoucherDiscount::class)->setVoucher($voucher)->
+//        $voucher_id = $request->voucher_id;
+        return $voucher;
     }
 
     public function getUser($partner_id, $user_id)

@@ -42,6 +42,7 @@ class OrderController extends Controller
     {
         $partner = $request->auth_user->getPartner();
         $response = $this->orderService
+            ->setToken(bearerToken($request))
             ->setPartnerId($partner->id)
             ->setCustomerId($request->customer_id)
             ->setDeliveryAddress($request->delivery_address)
@@ -53,6 +54,7 @@ class OrderController extends Controller
             ->setPaymentMethod($request->payment_method)
             ->setPaymentLinkAmount($request->payment_link_amount)
             ->setPaidAmount($request->paid_amount)
+            ->setVoucherId($request->voucher_id)
             ->store();
         return http_response($request, null, 200, $response);
 
