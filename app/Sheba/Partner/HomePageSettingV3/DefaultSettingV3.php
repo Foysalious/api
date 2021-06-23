@@ -33,15 +33,15 @@ class DefaultSettingV3
             "key" => "extra_income",
             "name_en" => "Extra Income",
             "name_bn" => "বাড়তি আয়",
-            "is_on_homepage" => 1
+            "is_on_homepage" => 0
         ];
 
-        $loan = [
-            "key" => "loan",
-            "name_en" => "Loan",
-            "name_bn" => "ডিজিটাল লোন",
-            "is_on_homepage" => 1
-        ];
+//        $loan = [
+//            "key" => "loan",
+//            "name_en" => "Loan",
+//            "name_bn" => "ডিজিটাল লোন",
+//            "is_on_homepage" => 1
+//        ];
 
         $earnings = [
             "key" => "earnings",
@@ -112,6 +112,7 @@ class DefaultSettingV3
             "name_bn" => "কিস্তি",
             "is_on_homepage" => 0
         ];
+
         $digital_banking= [
             "key" => "digital_banking",
             "name_en" => "Digital Banking",
@@ -123,12 +124,12 @@ class DefaultSettingV3
             "key" => "topup",
             "name_en" => "Top Up",
             "name_bn" => "টপ-আপ",
-            "is_on_homepage" => 0
+            "is_on_homepage" => 1
         ];
-        return [$pos, $pos_due, $payment_link, $online_sheba, $extra_income, $loan, $earnings, $pos_history, $customer_list, $marketing, $report, $stock, $e_shop, $expense, $emi,$topup, $digital_banking];
+        return [$pos, $pos_due, $payment_link, $online_sheba, $extra_income, $earnings, $pos_history, $customer_list, $marketing, $report, $stock, $e_shop, $expense, $emi,$topup, $digital_banking];
     }
     public static function getLastUpdatedAt()
     {
-        return '2021-06-06';
+        return '2021-06-23';
     }
 }
