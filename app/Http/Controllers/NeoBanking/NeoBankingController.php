@@ -91,6 +91,8 @@ class NeoBankingController extends Controller
 
     public function getAccountInformationCompletion($partner, Request $request, NeoBanking $neoBanking)
     {
+        ini_set('max_execution_time', 360);
+
         try {
             $this->validate($request, [
                 'bank_code' => 'required|string'
