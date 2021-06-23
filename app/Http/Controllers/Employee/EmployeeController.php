@@ -419,5 +419,7 @@ class EmployeeController extends Controller
 
         $profile_updater->setProfileRequester($profile_requester)->update();
 
+        return api_response($request, null, 200);
+
     }
 }
