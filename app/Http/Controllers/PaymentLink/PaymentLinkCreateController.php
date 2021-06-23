@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Sheba\Payment\Methods\Bkash\Bkash;
 use Sheba\Payment\Methods\Nagad\Nagad;
 use Sheba\Payment\Presenter\PaymentMethodDetails;
+use Sheba\PaymentLink\Creator;
 use Sheba\PaymentLink\Exceptions\InvalidGatewayChargesException;
 use Sheba\PaymentLink\PaymentLinkStatics;
 
@@ -30,9 +31,10 @@ class PaymentLinkCreateController extends Controller
 
     /**
      * @param Request $request
+     * @param Creator $creator
      * @return JsonResponse
      */
-    public function subscriptionWiseCharges(Request $request): JsonResponse
+    public function subscriptionWiseCharges(Request $request, Creator $creator): JsonResponse
     {
         try {
             $data = array();
@@ -46,16 +48,11 @@ class PaymentLinkCreateController extends Controller
                 if($charge['key'] === Bkash::NAME || $charge['key'] === Nagad::NAME)
                     $data[] = array_merge($charge, (new PaymentMethodDetails($charge['key']))->toArray());
                 else
-                    $others[] = array_merge($charge, (new PaymentMethodDetails($charge['key']))->toArray());
+                    $others[] = $charge;
             }
-            $biggest = $others[0];
-            foreach ($others as $charge) {
-                if(($charge['gateway_charge'] + $charge['fixed_charge']) > ($biggest['gateway_charge'] + $biggest['fixed_charge']))
-                    $biggest = $charge;
-            }
-            $biggest['key'] = 'online';
-            $data[] = array_merge($biggest, (new PaymentMethodDetails($biggest['key']))->toArray());
 
+            $other = $creator->getOnlineGateway($others);
+            $data[] = array_merge($other, (new PaymentMethodDetails($other['key']))->toArray());
             return api_response($request, $gateway_charges, 200, ["data" => $data]);
         } catch (InvalidGatewayChargesException $exception) {
             logError($exception);

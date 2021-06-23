@@ -401,4 +401,15 @@ class Creator
         }
         return $this;
     }
+
+    public function getOnlineGateway($data)
+    {
+        $biggest = $data[0];
+        foreach ($data as $charge)
+            if(($charge['gateway_charge'] + $charge['fixed_charge']) > ($biggest['gateway_charge'] + $biggest['fixed_charge']))
+                $biggest = $charge;
+
+        $biggest['key'] = 'online';
+        return $biggest;
+    }
 }
