@@ -191,7 +191,6 @@ class TopUpController extends Controller
         return api_response($request, 1, 200);
     }
 
-
     private function getAgent(Request $request)
     {
         if ($request->affiliate) return $request->affiliate;
@@ -253,7 +252,7 @@ class TopUpController extends Controller
             ['topup_vendor_id', $request->vendor_id], ['type', $agent]
         ])->first();
 
-        if ($otf_settings->applicable_gateways != 'null' && in_array($vendor->gateway, json_decode($otf_settings->applicable_gateways)) == true) {
+        if ($otf_settings && $otf_settings->applicable_gateways != 'null' && in_array($vendor->gateway, json_decode($otf_settings->applicable_gateways)) == true) {
             $vendor_commission = TopUpVendorCommission::where([['topup_vendor_id', $request->vendor_id], ['type', $agent]])->first();
             $otf_list = $topup_vendor_otf->builder()->where('topup_vendor_id', $request->vendor_id)->where('sim_type', 'like', '%' . $request->sim_type . '%')->where('status', 'Active')->orderBy('cashback_amount', 'DESC')->get();
 

@@ -1,6 +1,5 @@
 <?php namespace Sheba\AppVersion;
 
-
 use Exception;
 use Throwable;
 

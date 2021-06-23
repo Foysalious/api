@@ -19,15 +19,16 @@
                     For Android click here: <a target="_blank" href="https://play.google.com/store/apps/details?id=xyz.sheba.emanager&hl=en">Play store</a><br>
                     For iOS click here: <a target="_blank" href="https://www.apple.com/us/search/digigo-office?src=globalnav">App store</a><br><br>
                     @if(!empty($password))
-                        2. Your short password: <strong>{{ $password }}</strong> (Please change the password after login to your account)<br>
+                        2. Login with your account credentials- <br>
+                        Email: <strong>{{ $email }}</strong> <br>
+                        Password: <strong>{{ $password }}</strong> (Please change the password after login into your account) <br>
                     @else
                         2. Use Your existing password
                     @endif
                     <br><br>
-                    You are ready to use digiGO app now. Please get guidance from your HR on how to use it.
-                    Moreover, to know it's features you can read this: <a target="_blank" href="https://www.sheba.xyz/blog/en/hr-work-is-now-hassle-free/">Article </a>
+                    We have the video tutorials ready for you to get started, check them out here: <a target="_blank" href="https://www.youtube.com/watch?v=i_w8iN2Q-uk&list=PLN1V1IQjMKZ0XiPJRUuhWlEFXtRCpl3r1">Tutorial </a>
                     <br><br>
-                    <strong>Regards,<br>sBusiness Team</strong>
+                    <strong>Regards,<br>Team sBusiness.xyz</strong>
                 </p>
             </td>
         </tr>
