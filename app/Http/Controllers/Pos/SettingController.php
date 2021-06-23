@@ -1,18 +1,23 @@
 <?php namespace App\Http\Controllers\Pos;
 
+use App\Exceptions\Pos\SMS\InsufficientBalanceException;
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Models\PartnerPosSetting;
 use App\Models\PosCustomer;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
-use App\Sheba\Sms\BusinessType;
+use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
+use Sheba\Sms\BusinessType;
 use App\Sheba\Sms\FeatureType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
 use Sheba\Pos\Repositories\PosSettingRepository;
 use Sheba\Pos\Setting\Creator;
+use Sheba\Transactions\Types;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Throwable;
 
 class SettingController extends Controller
@@ -37,6 +42,7 @@ class SettingController extends Controller
                 $settings = PartnerPosSetting::byPartner($partner->id)->select('id', 'partner_id', 'vat_percentage', 'auto_printing', 'sms_invoice')->first();
             }
             $settings->vat_registration_number = $partner->basicInformations->vat_registration_number;
+            $settings['has_qr_code'] = ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0;
             removeRelationsAndFields($settings);
             return api_response($request, $settings,200, ['settings' => $settings]);
         } catch (Throwable $e) {
@@ -88,33 +94,35 @@ class SettingController extends Controller
         }
     }
 
+
     /**
      * @param Request $request
      * @return JsonResponse
+     * @throws InsufficientBalanceException
      */
     public function duePaymentRequestSms(Request $request)
     {
-        try {
-            $this->validate($request, ['customer_id' => 'required|numeric', 'due_amount' => 'required']);
-            $partner = $request->partner;
-            $this->setModifier($request->manager_resource);
+        $this->validate($request, ['customer_id' => 'required|numeric', 'due_amount' => 'required']);
+        $partner = $request->partner;
+        $this->setModifier($request->manager_resource);
+        $customer = PosCustomer::find($request->customer_id);
+        $sms = (new SmsHandlerRepo('due-payment-collect-request'))
+            ->setBusinessType(BusinessType::SMANAGER)
+            ->setFeatureType(FeatureType::POS)
+            ->setMessage([
+                'partner_name' => $partner->name,
+                'due_amount' => $request->due_amount
+            ]);
+        $sms_cost = $sms->estimateCharge();
+        if ((double)$partner->wallet < $sms_cost) throw new InsufficientBalanceException();
 
-            $customer = PosCustomer::find($request->customer_id);
-            (new SmsHandlerRepo('due-payment-collect-request'))->setVendor('infobip')
-                ->setBusinessType(BusinessType::SMANAGER)
-                ->setFeatureType(FeatureType::POS)
-                ->send($customer->profile->mobile, [
-                    'partner_name' => $partner->name,
-                    'due_amount' => $request->due_amount
-                ]);
+        $sms->send($customer->profile->mobile, [
+            'partner_name' => $partner->name,
+            'due_amount' => $request->due_amount
+        ]);
+        $log = $sms_cost. " BDT has been deducted for sending due payment request sms";
+        (new WalletTransactionHandler())->setModel($request->partner)->setAmount($sms_cost)->setType(Types::debit())->setLog($log)->setTransactionDetails([])->setSource(TransactionSources::SMS)->store();
 
-            return api_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        return api_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
     }
 }

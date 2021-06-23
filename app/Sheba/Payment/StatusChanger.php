@@ -30,13 +30,13 @@ class StatusChanger
     public function changeToInitiationFailed($error_details)
     {
         $this->logRepo->create([
-            'to' => Statuses::INITIATION_FAILED,
-            'from' => $this->payment->status,
+            'to'                  => Statuses::INITIATION_FAILED,
+            'from'                => $this->payment->status,
             'transaction_details' => $error_details
         ]);
-        $this->payment->status = Statuses::INITIATION_FAILED;
+        $this->payment->status              = Statuses::INITIATION_FAILED;
         $this->payment->transaction_details = $error_details;
-        $this->payment->request_payload = json_encode(request()->all());
+        $this->payment->request_payload     = json_encode(request()->all());
         $this->payment->update();
         return $this->payment;
     }
@@ -47,14 +47,16 @@ class StatusChanger
      */
     public function changeToValidated($success_details)
     {
+        $this->payment->reload();
+        if ($this->payment->status == Statuses::VALIDATED) return $this->payment;
         $this->logRepo->create([
-            'to' => Statuses::VALIDATED,
-            'from' => $this->payment->status,
+            'to'                  => Statuses::VALIDATED,
+            'from'                => $this->payment->status,
             'transaction_details' => $this->payment->transaction_details
         ]);
-        $this->payment->status = Statuses::VALIDATED;
+        $this->payment->status              = Statuses::VALIDATED;
         $this->payment->transaction_details = $success_details;
-        $this->payment->request_payload = json_encode(request()->all());
+        $this->payment->request_payload     = json_encode(request()->all());
         $this->payment->update();
         return $this->payment;
     }
@@ -66,13 +68,13 @@ class StatusChanger
     public function changeToValidationFailed($error_details)
     {
         $this->logRepo->create([
-            'to' => Statuses::VALIDATION_FAILED,
-            'from' => $this->payment->status,
+            'to'                  => Statuses::VALIDATION_FAILED,
+            'from'                => $this->payment->status,
             'transaction_details' => $this->payment->transaction_details
         ]);
-        $this->payment->status = Statuses::VALIDATION_FAILED;
+        $this->payment->status              = Statuses::VALIDATION_FAILED;
         $this->payment->transaction_details = $error_details;
-        $this->payment->request_payload = json_encode(request()->all());
+        $this->payment->request_payload     = json_encode(request()->all());
         $this->payment->update();
         return $this->payment;
     }

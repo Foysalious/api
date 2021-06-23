@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\DB;
 use Sheba\Business\PayrollComponent\Requester as PayrollComponentRequester;
 use Sheba\Dal\PayrollComponent\PayrollComponentRepository;
+use Sheba\Dal\PayrollComponent\TargetType;
 
 class Creator
 {
@@ -34,6 +35,18 @@ class Creator
         });
     }
 
+    public function delete()
+    {
+        $deduction_component_delete = $this->payrollComponentRequester->getDeductionComponentDelete();
+        if (!$deduction_component_delete) return;
+        foreach ($deduction_component_delete as $component) {
+            $existing_component = $this->payrollComponentRepository->find($component);
+            if (!$existing_component) continue;
+            $this->payrollComponentRepository->delete($existing_component);
+        }
+        return true;
+    }
+
     private function makeData()
     {
         $payroll_settings = $this->payrollComponentRequester->getSetting();
@@ -49,8 +62,11 @@ class Creator
                 $this->payrollComponentData[] = [
                     'payroll_setting_id' => $payroll_settings->id,
                     'name' => $component['name'],
+                    'value' => $component['title'],
                     'type' => 'deduction',
+                    'target_type' => TargetType::GENERAL,
                     'is_default' => 0,
+                    'is_active' => 1,
                     'setting' => json_encode([]),
                 ];
             }
@@ -64,8 +80,10 @@ class Creator
                 $data = [
                     'payroll_setting_id' => $payroll_settings->id,
                     'name' => $component['name'],
+                    'value' => $component['title'],
                     'type' => 'deduction',
                     'is_default' => 0,
+                    'is_active' => 1,
                     'setting' => json_encode([]),
                 ];
                 $existing_component = $this->payrollComponentRepository->find($component['id']);

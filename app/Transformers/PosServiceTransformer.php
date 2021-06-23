@@ -15,6 +15,8 @@ class PosServiceTransformer extends TransformerAbstract
             'app_banner' => $service->app_banner,
             'thumb' => $service->thumb,
             'banner' => $service->banner,
+            'weight' => $service->weight,
+            'weight_unit' => $service->weight_unit ? array_merge(config('weight.weight_unit')[$service->weight_unit], ['key' => $service->weight_unit]) : null,
             'is_published_for_shop' => (int)$service->is_published_for_shop,
             'price' => $service->price,
             'wholesale_price' => $service->wholesale_price,

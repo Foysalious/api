@@ -21,6 +21,7 @@ class ShebaResponse
             303 => 'Partial Updates Successful',
             400 => 'Bad request',
             401 => 'Unauthorized',
+            402 => 'Inappropriate Request',
             403 => 'Forbidden',
             404 => 'Not found',
             409 => 'Conflict',
