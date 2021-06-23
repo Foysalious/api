@@ -148,18 +148,6 @@ class Updater
         return json_encode($data);
     }
 
-    public function sendNotifications()
-    {
-        $business_members = $this->business->getAccessibleBusinessMember()->get();
-        foreach ($business_members as $business_member) {
-            $payslip = $this->payslipRepository->where('business_member_id', $business_member->id)->where('status', Status::DISBURSED)->where('schedule_date', 'like', '%' . $this->scheduleDate . '%')->first();
-            if ($payslip) {
-                dispatch(new SendPayslipDisburseNotificationToEmployee($business_member, $payslip));
-                dispatch(new SendPayslipDisbursePushNotificationToEmployee($business_member, $payslip));
-            }
-        }
-    }
-
     private function sendPush($payslip, $business_member){
         $topic = config('sheba.push_notification_topic_name.employee') . (int)$business_member->member->id;
         $channel = config('sheba.push_notification_channel_name.employee');
