@@ -53,7 +53,7 @@ class PaymentLinkCreateController extends Controller
                 if(($charge['gateway_charge'] + $charge['fixed_charge']) > ($biggest['gateway_charge'] + $biggest['fixed_charge']))
                     $biggest = $charge;
             }
-
+            $biggest['key'] = 'online';
             $data[] = array_merge($biggest, (new PaymentMethodDetails($biggest['key']))->toArray());
 
             return api_response($request, $gateway_charges, 200, ["data" => $data]);
