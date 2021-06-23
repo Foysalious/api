@@ -96,7 +96,7 @@ class DefaultSettingV3
             "key" => "emi",
             "name_en" => "EMI",
             "name_bn" => "কিস্তি",
-            "is_on_homepage" => 0
+            "is_on_homepage" => 1
         ];
 
         $digital_banking= [
