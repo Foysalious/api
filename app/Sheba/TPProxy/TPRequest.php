@@ -7,8 +7,11 @@ class TPRequest
 
     private $url;
     private $method;
-    private $input   = [];
-    private $headers = [];
+    private $input           = [];
+    private $headers         = [];
+    private $read_timeout    = 60;
+    private $connect_timeout = 60;
+    private $timeout         = 60;
 
     /**
      * @return mixed
@@ -86,13 +89,54 @@ class TPRequest
         return $this;
     }
 
+    /**
+     * @return array
+     */
     public function toArray()
     {
         return [
-            'url' => $this->getUrl(),
+            'url'     => $this->getUrl(),
             'headers' => $this->getHeaders(),
-            'input' => $this->getInput(),
-            'method' => $this->getMethod()
+            'input'   => $this->getInput(),
+            'method'  => $this->getMethod()
         ];
     }
+
+    /**
+     * @return int
+     */
+    public function getReadTimeout()
+    {
+        return $this->read_timeout;
+    }
+
+    /**
+     * @return int
+     */
+    public function getConnectTimeout()
+    {
+        return $this->connect_timeout;
+    }
+
+    /**
+     * @return int
+     */
+    public function getTimeout()
+    {
+        return $this->timeout;
+    }
+
+    /**
+     * @param int $timeout
+     * @return TPRequest
+     */
+    public function setTimeout($timeout)
+    {
+        $this->timeout         = $timeout;
+        $this->read_timeout    = $timeout;
+        $this->connect_timeout = $timeout;
+        return $this;
+    }
+
+
 }
