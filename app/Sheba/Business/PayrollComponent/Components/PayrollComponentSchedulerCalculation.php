@@ -5,7 +5,6 @@ use App\Models\BusinessMember;
 use App\Sheba\Business\ComponentPackage\Formatter;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
-use Illuminate\Support\Facades\DB;
 use Sheba\Business\Prorate\Creator as ProrateCreator;
 use Sheba\Business\Prorate\Requester as ProrateRequester;
 use Sheba\Business\Prorate\Updater as ProrateUpdater;
@@ -17,7 +16,6 @@ use Sheba\Dal\OfficePolicyRule\ActionType;
 use Sheba\Dal\PayrollComponent\TargetType as ComponentTargetType;
 use Sheba\Dal\PayrollComponent\Type;
 use Sheba\Dal\PayrollComponentPackage\CalculationType;
-use Sheba\Dal\PayrollComponentPackage\PayrollComponentPackageRepository;
 use Sheba\Dal\PayrollComponentPackage\ScheduleType;
 use Sheba\Dal\PayrollComponentPackage\TargetType as PackageTargetType;
 use Sheba\Helpers\TimeFrame;
@@ -30,8 +28,6 @@ class PayrollComponentSchedulerCalculation
     private $business;
     private $businessMember;
     private $department;
-    /*** @var PayrollComponentPackageRepository $payrollComponentPackageRepository */
-    private $payrollComponentPackageRepository;
     private $timeFrame;
     private $attendanceRepositoryInterface;
     /*** @var BusinessHolidayRepoInterface $businessHolidayRepo*/
@@ -41,6 +37,7 @@ class PayrollComponentSchedulerCalculation
     private $businessMemberLeaveTypeRepo;
     private $additionData = [];
     private $deductionData = [];
+    private $packageGenerateData = [];
     private $prorateRequester;
     private $prorateUpdater;
     private $prorateCreator;
@@ -52,7 +49,6 @@ class PayrollComponentSchedulerCalculation
      */
     public function __construct()
     {
-        $this->payrollComponentPackageRepository = app(PayrollComponentPackageRepository::class);
         $this->timeFrame = app(TimeFrame::class);
         $this->attendanceRepositoryInterface = app(AttendanceRepositoryInterface::class);
         $this->businessHolidayRepo = app(BusinessHolidayRepoInterface::class);
@@ -83,6 +79,8 @@ class PayrollComponentSchedulerCalculation
         $this->businessMember = $business_member;
         $role = $this->businessMember->role;
         $this->department = $role? $role->businessDepartment : null;
+        $this->additionData = [];
+        $this->deductionData = [];
         return $this;
     }
     public function getPayrollComponentCalculationBreakdown()
@@ -91,12 +89,15 @@ class PayrollComponentSchedulerCalculation
         $deduction = $this->getDeductionComponent();
         return ['payroll_component' => array_merge($addition, $deduction)];
     }
+    public function getPackageGenerateData() {
+        return $this->packageGenerateData;
+    }
     private function getAdditionComponent()
     {
         $components = $this->payrollSetting->components()->where('type', Type::ADDITION)->orderBy('type')->get();
         $total_addition = 0;
         foreach ($components as $component) {
-            if (!$component->is_default) $total_addition += $this->calculatePackage($component->componentPackages->where('is_active', 1));
+            if (!$component->is_default) $total_addition += $this->calculatePackage($component->componentPackages->where('is_active', 1), Type::ADDITION);
             $this->additionData['addition'][$component->name] = $total_addition;
             $total_addition = 0;
         }
@@ -109,7 +110,7 @@ class PayrollComponentSchedulerCalculation
         $total_deduction = 0;
         foreach ($components as $component) {
             if (!$component->is_default) {
-                $total_deduction += $this->calculatePackage($component->componentPackages->where('is_active', 1));
+                $total_deduction += $this->calculatePackage($component->componentPackages->where('is_active', 1), Type::DEDUCTION);
                 $this->deductionData['deduction'][$component->name] = $total_deduction;
                 $total_deduction = 0;
                 continue;
@@ -118,7 +119,7 @@ class PayrollComponentSchedulerCalculation
         }
         return $this->deductionData;
     }
-    private function calculatePackage($packages)
+    private function calculatePackage($packages, $type)
     {
         $total_package_amount = 0;
         foreach ($packages as $package) {
@@ -126,13 +127,13 @@ class PayrollComponentSchedulerCalculation
             $department_target = $this->department ? $package->packageTargets->where('effective_for', PackageTargetType::DEPARTMENT)->where('target_id', $this->department->id) : null;
             $global_target =  $package->packageTargets->where('effective_for', PackageTargetType::GENERAL);
             $target_amount = 0;
-            if ($employee_target || $department_target || $global_target) $target_amount = $this->calculateBusinessMemberPackage($package);
+            if ($employee_target || $department_target || $global_target) $target_amount = $this->calculateBusinessMemberPackage($package, $type);
             $total_package_amount += $target_amount;
         }
 
         return $total_package_amount;
     }
-    private function calculateBusinessMemberPackage($package)
+    private function calculateBusinessMemberPackage($package, $type)
     {
         $calculation_type = $package->calculation_type; // Package Calculation Type -> FIX PAY or VARIABLE AMOUNT
         $on_what = $package->on_what; // Package Calculation on which Gross Salary Component
@@ -161,10 +162,9 @@ class PayrollComponentSchedulerCalculation
         }
         if ($schedule_type != ScheduleType::PERIODICALLY) return $final_amount;
 
-        DB::transaction(function () use ($package, $current_time){
-            $package_generate_data = (new Formatter)->packageGenerateData($this->payrollSetting, $current_time->format('Y-m-d'), $package->periodic_schedule);
-            $this->payrollComponentPackageRepository->update($package, $package_generate_data);
-        });
+        if (!array_key_exists($package->id, $this->packageGenerateData)) {
+            $this->packageGenerateData[$package->id] = (new Formatter)->packageGenerateData($this->payrollSetting, $current_time->format('Y-m-d'), $package->periodic_schedule);
+        }
         return $final_amount;
     }
     private function calculateBusinessMemberPolicyRulesDeduction()
