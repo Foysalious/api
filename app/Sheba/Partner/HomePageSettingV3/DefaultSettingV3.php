@@ -36,13 +36,6 @@ class DefaultSettingV3
             "is_on_homepage" => 0
         ];
 
-//        $loan = [
-//            "key" => "loan",
-//            "name_en" => "Loan",
-//            "name_bn" => "ডিজিটাল লোন",
-//            "is_on_homepage" => 1
-//        ];
-
         $earnings = [
             "key" => "earnings",
             "name_en" => "Earnings",
@@ -98,13 +91,6 @@ class DefaultSettingV3
             "name_bn" => "হিসাব খাতা",
             "is_on_homepage" => 0
         ];
-
-//        $gift_shop = [
-//            "key" => "gift_shop",
-//            "name_en" => "Gift Shop",
-//            "name_bn" => "গিফট শপ",
-//            "is_on_homepage" => 0
-//        ];
 
         $emi= [
             "key" => "emi",
