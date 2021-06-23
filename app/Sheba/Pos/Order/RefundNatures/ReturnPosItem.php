@@ -81,7 +81,7 @@ abstract class ReturnPosItem extends RefundNature
 
     private function returnItem(PosOrder $order)
     {
-        $amount = isset($this->data['is_refunded']) && $this->data['is_refunded'] ? (double)$this->data['paid_amount'] : 0;
+        $amount = abs(isset($this->data['is_refunded']) && $this->data['is_refunded'] ? (double)$this->data['paid_amount'] : 0);
         (new JournalCreateRepository())
             ->setTypeId($order->partner->id)
             ->setSource($order)
