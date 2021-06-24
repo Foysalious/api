@@ -7,6 +7,7 @@ use App\Models\Payment;
 use App\Models\PosOrder;
 use App\Models\Profile;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
+use App\Sheba\AccountingEntry\Repository\PaymentLinkAccountingRepository;
 use Carbon\Carbon;
 use DB;
 use GuzzleHttp\Exception\RequestException;
@@ -210,8 +211,8 @@ class PaymentLinkOrderComplete extends PaymentComplete
             ->with(['customer'])
             ->first();
 
-        /** @var \App\Sheba\AccountingEntry\Repository\PaymentLinkRepository $paymentLinkRepo */
-        $paymentLinkRepo = app(\App\Sheba\AccountingEntry\Repository\PaymentLinkRepository::class);
+        /** @var PaymentLinkAccountingRepository $paymentLinkRepo */
+        $paymentLinkRepo = app(PaymentLinkAccountingRepository::class);
         return $paymentLinkRepo->setCustomerId($partner_pos_customer->customer_id)
             ->setCustomerName($partner_pos_customer->details()["name"])
             ->setSourceId($paymentData['pos_order_id'])

@@ -4,7 +4,9 @@
 namespace Sheba\PaymentLink;
 
 use App\Models\Payment;
+use App\Sheba\AccountingEntry\Repository\PaymentLinkAccountingRepository;
 use App\Sheba\AccountingEntry\Repository\PaymentLinkRepository;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
@@ -195,9 +197,16 @@ class PaymentLinkTransaction
         return $this;
     }
 
+
+    /**
+     * @param $amount
+     * @param $feeTransaction
+     * @param $interest
+     * @throws AccountingEntryServerError
+     */
     private function storePaymentLinkEntry($amount, $feeTransaction, $interest) {
-        /** @var PaymentLinkRepository $paymentLinkRepo */
-        $paymentLinkRepo =  app(PaymentLinkRepository::class);
+        /** @var PaymentLinkAccountingRepository $paymentLinkRepo */
+        $paymentLinkRepo =  app(PaymentLinkAccountingRepository::class);
         $paymentLinkRepo->setAmount($amount)
             ->setBankTransactionCharge($feeTransaction)
             ->setInterest($interest)

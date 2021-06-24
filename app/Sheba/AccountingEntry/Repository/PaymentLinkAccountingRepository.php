@@ -10,7 +10,7 @@ use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
 use Sheba\RequestIdentification;
 
-class PaymentLinkRepository extends AccountingRepository
+class PaymentLinkAccountingRepository extends AccountingRepository
 {
     private $api;
     private $amount;
