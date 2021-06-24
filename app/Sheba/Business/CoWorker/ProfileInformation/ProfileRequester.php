@@ -21,6 +21,10 @@ class ProfileRequester
     private $gender;
     /*** @var ProfileRepositoryInterface $profileRepository**/
     private $profileRepository;
+    private $manager;
+    private $employeeType;
+    private $grade;
+    private $employeeId;
 
     public function __construct()
     {
@@ -103,6 +107,50 @@ class ProfileRequester
     public function getGender()
     {
         return $this->gender;
+    }
+
+    public function setManager($manager)
+    {
+        $this->manager = $manager;
+        return $this;
+    }
+
+    public function getManager()
+    {
+        return $this->manager;
+    }
+
+    public function setEmployeeType($employee_type)
+    {
+        $this->employeeType = $employee_type;
+        return $this;
+    }
+
+    public function getEmployeeType()
+    {
+        return $this->employeeType;
+    }
+
+    public function setEmployeeId($employee_id)
+    {
+        $this->employeeId = $employee_id;
+        return $this;
+    }
+
+    public function getEmployeeId()
+    {
+        return $this->employeeId;
+    }
+
+    public function setGrade($grade)
+    {
+        $this->grade = $grade;
+        return $this;
+    }
+
+    public function getGrade()
+    {
+        return $this->grade;
     }
 
     private function checkEmailUsedWithAnotherBusinessMember()
