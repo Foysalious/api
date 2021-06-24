@@ -165,8 +165,8 @@ class AccountingRepository extends BaseRepository
         $data['amount_cleared'] = $request->amount_cleared;
         $data['debit_account_key'] = $request->to_account_key; // to = debit = je account e jabe
         $data['credit_account_key'] = $request->from_account_key; // from = credit = je account theke jabe
-        $data['customer_id'] = $request->customer_id;
-        $data['customer_name'] = $request->customer_name;
+        $data['customer_id'] = $request->has('customer_id') ? $request->customer_id : null;
+        $data['customer_name'] = $request->has('customer_id') ? $request->customer_name : null;
         $data['inventory_products'] = $request->has("inventory_products") ? $request->inventory_products : null;
         $data['entry_at'] = $request->has("date") ? $request->date : Carbon::now()->format('Y-m-d H:i:s');
         $data['attachments'] = $this->uploadAttachments($request);
