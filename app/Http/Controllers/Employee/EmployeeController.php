@@ -10,6 +10,7 @@ use App\Sheba\Business\CoWorker\ProfileInformation\OfficialInfoUpdater;
 use App\Sheba\Business\CoWorker\ProfileInformation\ProfileRequester;
 use App\Sheba\Business\CoWorker\ProfileInformation\ProfileUpdater;
 use App\Transformers\Business\CoWorkerMinimumTransformer;
+use App\Transformers\Business\EmergencyContactInfoTransformer;
 use App\Transformers\Business\FinancialInfoTransformer;
 use App\Transformers\Business\OfficialInfoTransformer;
 use App\Transformers\BusinessEmployeeDetailsTransformer;
@@ -484,5 +485,18 @@ class EmployeeController extends Controller
 
         return api_response($request, null, 200);
 
+    }
+
+    public function getEmergencyContactInfo($business_member_id, Request $request)
+    {
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $employee = $this->businessMember->find($business_member_id);
+        if (!$employee) return api_response($request, null, 404);
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Item($employee, new EmergencyContactInfoTransformer());
+        $employee_emergency_details = $manager->createData($resource)->toArray()['data'];
+        return api_response($request, null, 200, ['emergency_contact_info' => $employee_emergency_details]);
     }
 }
