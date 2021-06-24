@@ -49,15 +49,4 @@ class AccountingController extends Controller
         }
 
     }
-
-    public function testRepo()
-    {
-        /** @var PaymentLinkAccountingRepository $paymentLinkRepo */
-        $paymentLinkRepo =  app(PaymentLinkAccountingRepository::class);
-        return $paymentLinkRepo->setAmount(15)
-            ->setBankTransactionCharge(3.2999998)
-            ->setInterest(0)
-            ->setAmountCleared(15)
-            ->store(38420);
-    }
 }
