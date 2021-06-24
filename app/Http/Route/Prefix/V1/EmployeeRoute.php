@@ -19,6 +19,7 @@ class EmployeeRoute
                 $api->group(['prefix' => '{business_member}'], function ($api) {
                     $api->get('financial', 'Employee\EmployeeController@getFinancialInfo');
                     $api->get('official', 'Employee\EmployeeController@getOfficialInfo');
+                    $api->post('official', 'Employee\EmployeeController@updateOfficialInfo');
                     $api->post('update', 'Employee\EmployeeController@updateEmployee');
                 });
             });

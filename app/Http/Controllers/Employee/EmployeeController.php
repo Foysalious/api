@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Sheba\Business\BusinessBasicInformation;
+use App\Sheba\Business\CoWorker\ProfileInformation\OfficialInfoUpdater;
 use App\Sheba\Business\CoWorker\ProfileInformation\ProfileRequester;
 use App\Sheba\Business\CoWorker\ProfileInformation\ProfileUpdater;
 use App\Transformers\Business\CoWorkerMinimumTransformer;
@@ -419,6 +420,35 @@ class EmployeeController extends Controller
         if ($profile_requester->hasError()) return api_response($request, null, $profile_requester->getErrorCode(), ['message' => $profile_requester->getErrorMessage()]);
 
         $profile_updater->setProfileRequester($profile_requester)->update();
+
+        return api_response($request, null, 200);
+
+    }
+
+    public function updateOfficialInfo($business_member_id, Request $request, ProfileRequester $profile_requester, OfficialInfoUpdater $official_info_updater)
+    {
+        $this->validate($request, [
+            'manager' => 'required|numeric',
+            'employee_type' => 'required|string',
+            'employee_id' => 'required',
+            'grade' => 'required'
+        ]);
+
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $employee = $this->businessMember->find($business_member_id);
+        if (!$employee) return api_response($request, null, 404);
+        $member = $this->repo->find($business_member['member_id']);
+        $this->setModifier($member);
+
+        $profile_requester
+            ->setBusinessMember($employee)
+            ->setManager($request->manager)
+            ->setEmployeeType($request->employee_type)
+            ->setEmployeeId($request->employee_id)
+            ->setGrade($request->grade);
+
+        $official_info_updater->setProfileRequester($profile_requester)->update();
 
         return api_response($request, null, 200);
 
