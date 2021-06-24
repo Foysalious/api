@@ -19,7 +19,6 @@ use Sheba\Business\BusinessMember\Events\BusinessMemberDeleted;
 class BusinessMember extends Model
 {
     protected $guarded = ['id',];
-    protected $table = 'business_member';
     protected $dates = ['join_date'];
     protected $casts = ['is_super' => 'int'];
 
@@ -28,6 +27,18 @@ class BusinessMember extends Model
         'updated' => BusinessMemberUpdated::class,
         'deleted' => BusinessMemberDeleted::class,
     ];
+
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $table = config('database.connections.mysql.database') . '.business_member';
+        $this->setTable($table);
+    }
+    
+    public function setTable($table)
+    {
+        $this->table = $table;
+    }
 
     public function member()
     {
