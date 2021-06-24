@@ -64,7 +64,6 @@ class AccountingRepository extends BaseRepository
     public function updateEntryBySource($request, $sourceId, $sourceType)
     {
         $this->getCustomer($request);
-        Log::info(["checking request", $request]);
         $partner = $this->getPartner($request);
         $this->setModifier($partner);
         $data = $this->createEntryData($request, $sourceType, $sourceId);
