@@ -8,8 +8,9 @@ use Carbon\Carbon;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
+use Sheba\RequestIdentification;
 
-class PaymentLinkRepository extends BaseRepository
+class PaymentLinkRepository extends AccountingRepository
 {
     private $api;
     private $amount;
@@ -18,6 +19,12 @@ class PaymentLinkRepository extends BaseRepository
     private $source_type = EntryTypes::PAYMENT_LINK;
     private $debit_account_key;
     private $credit_account_key;
+    private $amount_cleared;
+    private $source_id;
+    private $customer_id;
+    private $customer_name;
+    private $note;
+    private $details;
 
 
     public function __construct(AccountingEntryClient $client)
@@ -35,6 +42,88 @@ class PaymentLinkRepository extends BaseRepository
         $this->amount = $amount;
         return $this;
     }
+
+    /**
+     * @param AccountingEntryClient $client
+     * @return PaymentLinkRepository
+     */
+    public function setClient(AccountingEntryClient $client): PaymentLinkRepository
+    {
+        $this->client = $client;
+        return $this;
+    }
+
+    /**
+     * @param mixed $customer_id
+     * @return PaymentLinkRepository
+     */
+    public function setCustomerId($customer_id)
+    {
+        $this->customer_id = $customer_id;
+        return $this;
+    }
+
+    /**
+     * @param mixed $customer_name
+     * @return PaymentLinkRepository
+     */
+    public function setCustomerName($customer_name)
+    {
+        $this->customer_name = $customer_name;
+        return $this;
+    }
+
+    /**
+     * @param mixed $note
+     * @return PaymentLinkRepository
+     */
+    public function setNote($note)
+    {
+        $this->note = $note;
+        return $this;
+    }
+
+    /**
+     * @param mixed $details
+     * @return PaymentLinkRepository
+     */
+    public function setDetails($details)
+    {
+        $this->details = $details;
+        return $this;
+    }
+
+    /**
+     * @param string $source_type
+     * @return PaymentLinkRepository
+     */
+    public function setSourceType(string $source_type): PaymentLinkRepository
+    {
+        $this->source_type = $source_type;
+        return $this;
+    }
+
+    /**
+     * @param mixed $source_id
+     * @return PaymentLinkRepository
+     */
+    public function setSourceId($source_id)
+    {
+        $this->source_id = $source_id;
+        return $this;
+    }
+
+
+    /**
+     * @param mixed $amount_cleared
+     * @return PaymentLinkRepository
+     */
+    public function setAmountCleared($amount_cleared)
+    {
+        $this->amount_cleared = $amount_cleared;
+        return $this;
+    }
+
 
     /**
      * @param mixed $bank_transaction_charge
@@ -76,22 +165,23 @@ class PaymentLinkRepository extends BaseRepository
         return $this;
     }
 
-    public function store($userId, $userType = UserType::PARTNER)
+    public function store($userId)
     {
         try {
-            $payload = $this->makeData();
-            return $this->client->setUserType($userType)->setUserId($userId)->post($this->api, $payload);
+            $payload = collect($this->makeData());
+            $payload->put('partner', $userId);
+            return $this->storeEntry($payload, EntryTypes::PAYMENT_LINK);
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
     }
 
-    public function paymentLinkPosOrderJournal($payload, $userId, $userType = UserType::PARTNER)
+    public function updatePaymentLinkEntry($userId)
     {
-        $url = "api/entries/source/".$payload['source_type'].'/'.$payload['source_id'];
         try {
-            return $this->client->setUserType($userType)->setUserId($userId)
-                ->post($url, $payload);
+            $data = collect($this->makeData());
+            $data->put('partner', $userId);
+            return $this->updateEntryBySource($data, $this->source_id, $this->source_type);
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
@@ -99,22 +189,30 @@ class PaymentLinkRepository extends BaseRepository
 
     private function makeData()
     {
-        $this->setDebitAccountKey((new Accounts())->expense->paymentLinkServiceCharge::PAYMENT_LINK_SERVICE_CHARGE);
+        if ($this->debit_account_key == null && $this->credit_account_key == null) {
+            $this->setDebitAccountKey((new Accounts())->expense->paymentLinkServiceCharge::PAYMENT_LINK_SERVICE_CHARGE);
 
-        if ($this->interest > 0) {
-            $this->setCreditAccountKey((new Accounts())->income->incomeFromEmi::INCOME_FROM_EMI);
-        } else {
-            $this->setCreditAccountKey((new Accounts())->income->incomeFromPaymentLink::INCOME_FROM_PAYMENT_LINK);
+            if ($this->interest > 0) {
+                $this->setCreditAccountKey((new Accounts())->income->incomeFromEmi::INCOME_FROM_EMI);
+            } else {
+                $this->setCreditAccountKey((new Accounts())->income->incomeFromPaymentLink::INCOME_FROM_PAYMENT_LINK);
+            }
         }
 
+        $data['customer_id'] = $this->customer_id;
+        $data['customer_name'] = $this->customer_name;
         $data['amount'] = $this->amount;
+        $data['amount_cleared'] = $this->amount_cleared;
         $data['entry_at'] = Carbon::now()->format('Y-m-d H:i:s');
         $data['bank_transaction_charge'] = $this->bank_transaction_charge;
         $data['interest'] = $this->interest;
+        $data['source_id'] = $this->source_id;
         $data['source_type'] = $this->source_type;
         $data['debit_account_key'] = $this->debit_account_key;
         $data['credit_account_key'] = $this->credit_account_key;
         $data['reference'] = 'Entry using Payment Link';
+        $data['note'] = $this->note;
+        $data['details'] = $this->details;
 
         return $data;
     }

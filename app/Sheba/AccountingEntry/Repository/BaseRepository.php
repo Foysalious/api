@@ -28,6 +28,8 @@ class BaseRepository
     }
 
     /**
+     * @param $request
+     * @return mixed
      * @throws AccountingEntryServerError
      */
     public function getCustomer($request)
@@ -60,7 +62,7 @@ class BaseRepository
         return json_encode($attachments);
     }
 
-    private function getPartner($request)
+    protected function getPartner($request)
     {
         if(isset($request->partner->id)) {
             $partner_id = $request->partner->id;

@@ -201,6 +201,7 @@ class PaymentLinkTransaction
         $paymentLinkRepo->setAmount($amount)
             ->setBankTransactionCharge($feeTransaction)
             ->setInterest($interest)
+            ->setAmountCleared($amount)
             ->store($this->receiver->id);
     }
 

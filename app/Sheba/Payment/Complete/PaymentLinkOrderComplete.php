@@ -209,30 +209,20 @@ class PaymentLinkOrderComplete extends PaymentComplete
             ->where('customer_id', $this->target->customer_id)
             ->with(['customer'])
             ->first();
-//        (new JournalCreateRepository())->setTypeId($payable->user->id)
-//            ->setSource($this->transaction)->setAmount($payable->amount)
-//            ->setDebitAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
-//            ->setCreditAccountKey((new Accounts())->income->sales::SALES_FROM_POS)
-//            ->setDetails("Entry For Wallet Transaction")
-//            ->setCommission($commission)->setEndPoint("api/journals/wallet")
-//            ->setReference($this->payment->id)->store();
-        $data = [
-            'customer_id' => $partner_pos_customer->customer_id,
-            'customer_name' => $partner_pos_customer->details()["name"],
-            'source_id' => $paymentData['pos_order_id'],
-            'source_type' => EntryTypes::POS,
-            'debit_account_key' => (new Accounts())->asset->sheba::SHEBA_ACCOUNT,
-            'credit_account_key' => (new Accounts())->income->sales::SALES_FROM_POS,
-            'amount' => (double)$paymentData['amount'],
-            'amount_cleared' => (double)$paymentData['amount'],
-            'details' => 'Payment link for pos order',
-            'note' => 'payment_link',
-            'entry_at' => request()->has("date") ? request()->date : Carbon::now()->format('Y-m-d H:i:s'),
-            'created_from' => json_encode($this->withBothModificationFields((new RequestIdentification())->get()))
-        ];
+
         /** @var \App\Sheba\AccountingEntry\Repository\PaymentLinkRepository $paymentLinkRepo */
         $paymentLinkRepo = app(\App\Sheba\AccountingEntry\Repository\PaymentLinkRepository::class);
-        $paymentLinkRepo->paymentLinkPosOrderJournal($data, $this->target->partner_id);
+        return $paymentLinkRepo->setCustomerId($partner_pos_customer->customer_id)
+            ->setCustomerName($partner_pos_customer->details()["name"])
+            ->setSourceId($paymentData['pos_order_id'])
+            ->setSourceType(EntryTypes::POS)
+            ->setDebitAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
+            ->setCreditAccountKey((new Accounts())->income->sales::SALES_FROM_POS)
+            ->setAmount((double)$paymentData['amount'])
+            ->setAmountCleared((double)$paymentData['amount'])
+            ->setDetails('Payment link for pos order')
+            ->setNote('payment_link')
+            ->updatePaymentLinkEntry($this->target->partner_id);
     }
 
     private function createUsage($payment_receiver, $modifier)

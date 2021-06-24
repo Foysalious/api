@@ -13,6 +13,7 @@ use App\Models\Profile;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\AccountingRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\Discount\InvalidDiscountType;
@@ -56,17 +57,22 @@ class Creator
     private $paymentMethod;
     /** @var OrderStatuses $status */
     protected $status;
-    /** @var Request*/
+    /** @var Request */
     private $request;
 
-    public function __construct(PosOrderRepository $order_repo, PosOrderItemRepository $item_repo,
-                                PaymentCreator $payment_creator, StockManager $stock_manager,
-                                OrderCreateValidator $create_validator, DiscountHandler $discount_handler, PosServiceRepositoryInterface $posServiceRepo)
-    {
-        $this->orderRepo       = $order_repo;
-        $this->itemRepo        = $item_repo;
-        $this->paymentCreator  = $payment_creator;
-        $this->stockManager    = $stock_manager;
+    public function __construct(
+        PosOrderRepository $order_repo,
+        PosOrderItemRepository $item_repo,
+        PaymentCreator $payment_creator,
+        StockManager $stock_manager,
+        OrderCreateValidator $create_validator,
+        DiscountHandler $discount_handler,
+        PosServiceRepositoryInterface $posServiceRepo
+    ) {
+        $this->orderRepo = $order_repo;
+        $this->itemRepo = $item_repo;
+        $this->paymentCreator = $payment_creator;
+        $this->stockManager = $stock_manager;
         $this->createValidator = $create_validator;
         $this->discountHandler = $discount_handler;
         $this->posServiceRepo  = $posServiceRepo;
@@ -82,8 +88,12 @@ class Creator
 
     public function hasDueError()
     {
-        if ($this->resolveCustomerId() !== null) return false;
-        if ($this->data['paid_amount'] - $this->getNetPrice() >= 0) return false;
+        if ($this->resolveCustomerId() !== null) {
+            return false;
+        }
+        if ($this->data['paid_amount'] - $this->getNetPrice() >= 0) {
+            return false;
+        }
         return ['code' => 421, 'msg' => 'Can not make due order with out customer'];
     }
 
@@ -95,8 +105,12 @@ class Creator
     {
         $this->data = $data;
         $this->createValidator->setServices(json_decode($this->data['services'], true));
-        if (!isset($this->data['payment_method'])) $this->data['payment_method'] = 'cod';
-        if (isset($this->data['customer_address'])) $this->setAddress($this->data['customer_address']);
+        if (!isset($this->data['payment_method'])) {
+            $this->data['payment_method'] = 'cod';
+        }
+        if (isset($this->data['customer_address'])) {
+            $this->setAddress($this->data['customer_address']);
+        }
         return $this;
     }
 
@@ -169,7 +183,6 @@ class Creator
                 throw new DoNotReportException("Service not found with provided ID", 400);
             if($original_service->is_published_for_shop && isset($service['quantity']) && !empty($service['quantity']) && $service['quantity'] > $original_service->stock)
                 throw new NotEnoughStockException("Not enough stock", 403);
-
             // $is_service_discount_applied = $original_service->discount();
             $service_wholesale_applicable = $original_service->wholesale_price ? true : false;
 
