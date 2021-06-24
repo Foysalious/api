@@ -4,8 +4,8 @@ use App\Models\Affiliate;
 use App\Models\Profile;
 use App\Repositories\FileRepository;
 use App\Repositories\ProfileRepository;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use App\Transformers\Affiliate\ProfileDetailPersonalInfoTransformer;
 use App\Transformers\CustomSerializer;
 use App\Transformers\NidInfoTransformer;
@@ -13,13 +13,11 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 use JWTAuth;
 use JWTFactory;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Affiliate\VerificationStatus;
-use Sheba\Auth\Auth;
 use Sheba\Dal\Profile\Events\ProfilePasswordUpdated;
 use Sheba\Dal\ProfileNIDSubmissionLog\Contact as ProfileNIDSubmissionRepo;
 use Sheba\Dal\ResourceStatusChangeLog\Model as ResourceStatusChangeLogModel;
@@ -54,31 +52,21 @@ class ProfileController extends Controller
      */
     public function changePicture(Request $request)
     {
-        try {
-            $this->validate($request, ['photo' => 'required|mimes:jpeg,png']);
-            $profile = $request->profile;
-            $photo = $request->file('photo');
-            if (basename($profile->pro_pic) != 'default.jpg') {
-                $filename = substr($profile->pro_pic, strlen(env('S3_URL')));
-                $this->fileRepo->deleteFileFromCDN($filename);
-            }
-
-            $filename = Carbon::now()->timestamp . '_profile_image_' . $profile->id . '.' . $photo->extension();
-            $picture_link = $this->fileRepo->uploadToCDN($filename, $request->file('photo'), 'images/profiles/');
-            if ($picture_link != false) {
-                $profile->pro_pic = $picture_link;
-                $profile->update();
-                return response()->json(['code' => 200, 'message' => 'success', 'picture' => $profile->pro_pic]);
-            } else {
-                return response()->json(['code' => 404, 'message' => 'fail', 'picture' => null]);
-            }
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, null, 500, ['message' => $message, 'picture' => null]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        $this->validate($request, ['photo' => 'required|mimes:jpeg,png']);
+        $profile = $request->profile;
+        $photo = $request->file('photo');
+        if (basename($profile->pro_pic) != 'default.jpg') {
+            $filename = substr($profile->pro_pic, strlen(env('S3_URL')));
+            $this->fileRepo->deleteFileFromCDN($filename);
         }
+
+        $filename = Carbon::now()->timestamp . '_profile_image_' . $profile->id . '.' . $photo->extension();
+        $picture_link = $this->fileRepo->uploadToCDN($filename, $request->file('photo'), 'images/profiles/');
+        if ($picture_link == false) return response()->json(['code' => 404, 'message' => 'fail', 'picture' => null]);
+
+        $profile->pro_pic = $picture_link;
+        $profile->update();
+        return response()->json(['code' => 200, 'message' => 'success', 'picture' => $profile->pro_pic]);
     }
 
     public function getProfile(Request $request)
@@ -136,35 +124,27 @@ class ProfileController extends Controller
      */
     public function updateProfileDocument(Request $request, $id, ShebaProfileRepository $repository)
     {
-        try {
-            $profile = $request->profile;
-            if (!$profile) return api_response($request, null, 404, ['message' => 'Profile no found']);
-            $rules = ['pro_pic' => 'sometimes|string', 'nid_image_back' => 'sometimes', 'nid_image_front' => 'sometimes'];
-            $this->validate($request, $rules);
-            $data = $request->only(['email', 'name', 'pro_pic', 'nid_image_front', 'email', 'gender', 'dob', 'mobile', 'nid_no', 'address']);
-            $data = array_filter($data, function ($item) {
-                return $item != null;
-            });
-            if (!empty($data)) {
-                $validation = $repository->validate($data, $profile);
-                if ($validation === true) {
-                    $repository->update($profile, $data);
-                } elseif ($validation === 'phone') {
-                    return api_response($request, null, 500, ['message' => 'Mobile number used by another user']);
-                } elseif ($validation === 'email') {
-                    return api_response($request, null, 500, ['message' => 'Email used by another user']);
-                }
-            } else {
-                return api_response($request, null, 404, ['message' => 'No data provided']);
+        $profile = $request->profile;
+        if (!$profile) return api_response($request, null, 404, ['message' => 'Profile no found']);
+        $rules = ['pro_pic' => 'sometimes|string', 'nid_image_back' => 'sometimes', 'nid_image_front' => 'sometimes'];
+        $this->validate($request, $rules);
+        $data = $request->only(['email', 'name', 'pro_pic', 'nid_image_front', 'email', 'gender', 'dob', 'mobile', 'nid_no', 'address']);
+        $data = array_filter($data, function ($item) {
+            return $item != null;
+        });
+        if (!empty($data)) {
+            $validation = $repository->validate($data, $profile);
+            if ($validation === true) {
+                $repository->update($profile, $data);
+            } elseif ($validation === 'phone') {
+                return api_response($request, null, 500, ['message' => 'Mobile number used by another user']);
+            } elseif ($validation === 'email') {
+                return api_response($request, null, 500, ['message' => 'Email used by another user']);
             }
-            return api_response($request, null, 200, ['message' => 'Profile Updated']);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->errors());
-            return api_response($request, null, 401, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500, ['message' => $e->getMessage(), 'trace' => $e->getTrace()]);
+        } else {
+            return api_response($request, null, 404, ['message' => 'No data provided']);
         }
+        return api_response($request, null, 200, ['message' => 'Profile Updated']);
     }
 
     /**
@@ -174,33 +154,25 @@ class ProfileController extends Controller
      */
     public function update(Request $request, ShebaProfileRepository $repository)
     {
-        try {
-            $this->validate($request, [
-                'gender' => 'required|string|in:male,female,other',
-            ]);
-            $data = [
-                'gender' => $request->gender
-            ];
-            $repository->update($request->profile, $data);
-            return api_response($request, null, 200, ['message' => 'Profile Updated']);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500, ['message' => $e->getMessage(), 'trace' => $e->getTrace()]);
-        }
-
+        $this->validate($request, [
+            'gender' => 'required|string|in:male,female,other',
+        ]);
+        $data = [
+            'gender' => $request->gender
+        ];
+        $repository->update($request->profile, $data);
+        return api_response($request, null, 200, ['message' => 'Profile Updated']);
     }
 
-    public function forgetPassword(Request $request, Sms $sms)
+    public function forgetPassword(Request $request)
     {
         $this->validate($request, ['mobile' => 'required|mobile:bd']);
         $mobile = BDMobileFormatter::format($request->mobile);
         $profile = Profile::where('mobile', $mobile)->first();
         if (!$profile) return api_response($request, null, 404, ['message' => 'Profile not found with this number']);
         $password = str_random(6);
-        $sms->setFeatureType(FeatureType::COMMON)
+        (new Sms())
+            ->setFeatureType(FeatureType::COMMON)
             ->setBusinessType(BusinessType::COMMON)
             ->shoot($mobile, "আপনার পাসওয়ার্ডটি পরিবর্তিত হয়েছে $password ,দয়া করে লগইন করতে এই পাসওয়ার্ডটি ব্যবহার করুন");
         $profile->update(['password' => bcrypt($password)]);
@@ -211,28 +183,16 @@ class ProfileController extends Controller
 
     public function getProfileInfoByMobile(Request $request)
     {
-        try {
-            $mobile = BDMobileFormatter::format($request->mobile);
-            $profile = $this->profileRepo->getIfExist($mobile, 'mobile');
-            if (!$profile) return api_response($request, null, 404, ['message' => 'Profile not found with this number']);
-            return api_response($request, true, 200, ['message' => 'Profile found', 'profile' => $profile]);
-        } catch (ValidationException $e) {
-            return api_response($request, null, 401, ['message' => 'Invalid mobile number']);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-
+        $mobile = BDMobileFormatter::format($request->mobile);
+        $profile = $this->profileRepo->getIfExist($mobile, 'mobile');
+        if (!$profile) return api_response($request, null, 404, ['message' => 'Profile not found with this number']);
+        return api_response($request, true, 200, ['message' => 'Profile found', 'profile' => $profile]);
     }
 
     public function getJWT(Request $request)
     {
-        try {
-            $token = $this->generateUtilityToken($request->profile);
-            return api_response($request, $token, 200, ['token' => $token]);
-        } catch (Throwable $e) {
-            return api_response($request, null, 500, ['message' => $e->getMessage()]);
-        }
+        $token = $this->generateUtilityToken($request->profile);
+        return api_response($request, $token, 200, ['token' => $token]);
     }
 
     /**
@@ -283,53 +243,38 @@ class ProfileController extends Controller
      */
     public function storeNid(Request $request, OcrRepository $ocr_repo, ProfileRepositoryInterface $profile_repo, ProfileNIDSubmissionRepo $profileNIDSubmissionLogRepo)
     {
-        try {
-            $this->validate($request, ['nid_image' => 'required|file|mimes:jpeg,png,jpg', 'side' => 'required']);
-            $profile = $request->profile;
-            $input = $request->except('profile', 'remember_token');
-            $data = [];
-            $nid_image_key = "nid_image_" . $input["side"];
-            $data[$nid_image_key] = $input['nid_image'];
-            $profile_repo->update($profile, $data);
-            $manager = new Manager();
-            $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($profile, new NidInfoTransformer());
-            $details = $manager->createData($resource)->toArray()['data'];
-            $details['name'] = "  ";
-            $submitted_by = null;
-            $log = "NID submitted by the user";
-            $affiliate = $profile->affiliate ?: null;
-            if (!empty($affiliate)) {
-                $this->updateVerificationStatus($affiliate);
-                if (isset($profile->resource))
-                    $this->setToPendingStatus($profile->resource);
+        $this->validate($request, ['nid_image' => 'required|file|mimes:jpeg,png,jpg', 'side' => 'required']);
+        $profile = $request->profile;
+        $input = $request->except('profile', 'remember_token');
+        $data = [];
+        $nid_image_key = "nid_image_" . $input["side"];
+        $data[$nid_image_key] = $input['nid_image'];
+        $profile_repo->update($profile, $data);
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Item($profile, new NidInfoTransformer());
+        $details = $manager->createData($resource)->toArray()['data'];
+        $details['name'] = "  ";
+        $submitted_by = null;
+        $log = "NID submitted by the user";
+        $affiliate = $profile->affiliate ?: null;
+        if (!empty($affiliate)) {
+            $this->updateVerificationStatus($affiliate);
+            if (isset($profile->resource))
+                $this->setToPendingStatus($profile->resource);
 
-                $submitted_by = get_class($affiliate);
-                $nidLogData = $profileNIDSubmissionLogRepo->processData($profile->id, $submitted_by, $log);
-                $profileNIDSubmissionLogRepo->create($nidLogData);
-            }
-
-            return api_response($request, null, 200, ['data' => $details]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+            $submitted_by = get_class($affiliate);
+            $nidLogData = $profileNIDSubmissionLogRepo->processData($profile->id, $submitted_by, $log);
+            $profileNIDSubmissionLogRepo->create($nidLogData);
         }
+
+        return api_response($request, null, 200, ['data' => $details]);
     }
 
     public function storeNidTest(Request $request)
     {
-        try {
-            $this->validate($request, ['nid_image' => 'required|file|mimes:jpeg,png,jpg', 'side' => 'required']);
-            return api_response($request, null, 200, ['message' => "we found the image successfully"]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            return api_response($request, null, 500);
-        }
+        $this->validate($request, ['nid_image' => 'required|file|mimes:jpeg,png,jpg', 'side' => 'required']);
+        return api_response($request, null, 200, ['message' => "we found the image successfully"]);
     }
 
     /**
@@ -339,23 +284,18 @@ class ProfileController extends Controller
      */
     public function updateProfileInfo(Request $request, ProfileRepositoryInterface $profile_repo)
     {
-        try {
-            $this->validate($request, []);
-            $profile = $request->profile;
-            if (!$profile) return api_response($request, null, 404, ['data' => null]);
+        $this->validate($request, []);
+        $profile = $request->profile;
+        if (!$profile) return api_response($request, null, 404, ['data' => null]);
 
-            $input = $request->only(['name', 'bn_name', 'dob', 'nid_no']);
-            $profile_repo->update($profile, $input);
-            $manager = new Manager();
-            $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($profile, new ProfileDetailPersonalInfoTransformer());
-            $details = $manager->createData($resource)->toArray()['data'];
+        $input = $request->only(['name', 'bn_name', 'dob', 'nid_no']);
+        $profile_repo->update($profile, $input);
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Item($profile, new ProfileDetailPersonalInfoTransformer());
+        $details = $manager->createData($resource)->toArray()['data'];
 
-            return api_response($request, null, 200, ['data' => $details]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        return api_response($request, null, 200, ['data' => $details]);
     }
 
     /**
@@ -370,8 +310,7 @@ class ProfileController extends Controller
             (!$nid_details['bn_name'] || !$nid_details['name'] || !$nid_details['dob'] || !$nid_details['nid_no'])
         ) return true;
 
-        if ($input["side"] == ImageSide::BACK && !$nid_details['address'])
-            return true;
+        if ($input["side"] == ImageSide::BACK && !$nid_details['address']) return true;
 
         return false;
     }
