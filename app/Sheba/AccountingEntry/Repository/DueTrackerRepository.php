@@ -121,8 +121,8 @@ class DueTrackerRepository extends BaseRepository
             $order_by = $request->order_by;
             $result = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
             $list = $this->attachProfile(collect($result['list']));
-            $list = $list->filter(function($item) {
-                return $item !== null;
+            $list = $list->reject(function ($value) {
+                return $value == null;
             });
             if ($request->has('filter_by_supplier') && $request->filter_by_supplier == 1) {
                 $list = $list->where('is_supplier', 1)->values();
@@ -147,15 +147,15 @@ class DueTrackerRepository extends BaseRepository
                 list($offset, $limit) = calculatePagination($request);
                 $list = $list->slice($offset)->take($limit)->values();
             }
+            $new_data = array();
+            foreach ($list as $l)
+                $new_data[] = $l;
             return [
-                'list' => $list
+                'list' => $new_data
             ];
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
-//        catch (\Exception $e) {
-//            dd($e->getTrace());
-//        }
     }
 
     public function getDuelistBalance($request)
@@ -281,6 +281,7 @@ class DueTrackerRepository extends BaseRepository
                     $item['is_supplier'] = isset($posProfile) ? $posProfile->is_supplier : 0;
                     return $item;
                 }
+                return false;
             }
         );
         return $list;

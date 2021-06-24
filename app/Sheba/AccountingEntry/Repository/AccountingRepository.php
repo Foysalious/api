@@ -3,11 +3,8 @@
 namespace App\Sheba\AccountingEntry\Repository;
 
 use App\Models\Partner;
-use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Constants\UserType;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Statics\IncomeExpenseStatics;
 use Sheba\RequestIdentification;
@@ -48,7 +45,7 @@ class AccountingRepository extends BaseRepository
         $partner = $this->getPartner($request);
         $this->setModifier($partner);
         $data = $this->createEntryData($request, $type, $request->source_id);
-        $url = "api/entries/".$entry_id;
+        $url = "api/entries/" . $entry_id;
         try {
             return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->post($url, $data);
         } catch (AccountingEntryServerError $e) {
@@ -56,13 +53,49 @@ class AccountingRepository extends BaseRepository
         }
     }
 
-
     /**
-     * @param Request $request
+     * @param $request
+     * @param $sourceId
+     * @param $sourceType
      * @return mixed
      * @throws AccountingEntryServerError
      */
-    public function getAccountsTotal(Request $request)
+    public function updateEntryBySource($request, $sourceId, $sourceType)
+    {
+        $this->getCustomer($request);
+        $this->setModifier($request->partner);
+        $data = $this->createEntryData($request, $sourceType, $sourceId);
+        $url = "api/entries/source/" . $sourceType . '/' . $sourceId;
+        try {
+            return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
+        } catch (AccountingEntryServerError $e) {
+            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+        }
+    }
+
+    /**
+     * @param Partner $partner
+     * @param $sourceType
+     * @param $sourceId
+     * @return mixed
+     * @throws AccountingEntryServerError
+     */
+    public function deleteEntryBySource(Partner $partner, $sourceType, $sourceId)
+    {
+        $url = "api/entries/source/" . $sourceType . '/' . $sourceId;
+        try {
+            return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->delete($url);
+        } catch (AccountingEntryServerError $e) {
+            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+        }
+    }
+    
+    /**
+     * @param $request
+     * @return mixed
+     * @throws AccountingEntryServerError
+     */
+    public function getAccountsTotal($request)
     {
         list($start, $end) = IncomeExpenseStatics::createDataForAccountsTotal($request->start_date, $request->end_date);
         $url = "api/reports/account-list-with-sum/{$request->account_type}?start_date=$start&end_date=$end";
@@ -97,58 +130,19 @@ class AccountingRepository extends BaseRepository
             } else {
                 $sellingPrice = isset($requested_service[$key]['updated_price']) ? $requested_service[$key]['updated_price'] : $original_service->price;
                 $inventory_products[] = [
-                    "id" =>  0,
+                    "id" => 0,
                     "name" => 'Custom Amount',
                     "unit_price" => $sellingPrice,
                     "selling_price" => isset($original_service->cost) ? $original_service->cost : $sellingPrice,
                     "quantity" => isset($requested_service[$key]['quantity']) ? $requested_service[$key]['quantity'] : 1
                 ];
             }
-
         }
-        if (count($inventory_products) > 0) return json_encode($inventory_products);
+        if (count($inventory_products) > 0) {
+            return json_encode($inventory_products);
+        }
 
         return null;
-    }
-
-
-    /**
-     * @param Request $request
-     * @param $sourceId
-     * @param $sourceType
-     * @return mixed
-     * @throws AccountingEntryServerError
-     */
-    public function updateEntryBySource(Request $request, $sourceId, $sourceType)
-    {
-        $this->getCustomer($request);
-        $this->setModifier($request->partner);
-        $data = $this->createEntryData($request, $sourceType, $sourceId);
-        $url = "api/entries/source/" . $sourceType . '/' . $sourceId;
-        try {
-            Log::info(['pos order update data', $data, $request->refund_nature, $request->return_nature]);
-            return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
-        } catch (AccountingEntryServerError $e) {
-            Log::info(['error from accounting']);
-            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
-        }
-    }
-
-    /**
-     * @param Partner $partner
-     * @param $sourceType
-     * @param $sourceId
-     * @return mixed
-     * @throws AccountingEntryServerError
-     */
-    public function deleteEntryBySource(Partner $partner, $sourceType, $sourceId)
-    {
-        $url = "api/entries/source/" . $sourceType . '/' . $sourceId;
-        try {
-            return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->delete($url);
-        } catch (AccountingEntryServerError $e) {
-            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
-        }
     }
 
     /**
@@ -166,34 +160,24 @@ class AccountingRepository extends BaseRepository
         $data['source_id'] = $type_id;
         $data['note'] = $request->has("note") ? $request->note : null;
         $data['amount_cleared'] = $request->amount_cleared;
-        if(!$default) {
+        if (!$default) {
             $data['debit_account_key'] = $request->from_account_key; // to = debit = je account e jabe
             $data['credit_account_key'] = $request->to_account_key; // from = credit = je account theke jabe
-//            $data['debit_account_key'] = $request->to_account_key;
-//            $data['credit_account_key'] = $request->from_account_key;
         } else {
             $data['debit_account_key'] = $request->to_account_key;
             $data['credit_account_key'] = $request->from_account_key;
-//            $data['debit_account_key'] = $request->from_account_key; // to = debit = je account e jabe
-//            $data['credit_account_key'] = $request->to_account_key; // from = credit = je account theke jabe
         }
         $data['customer_id'] = $request->customer_id;
-        $data['customer_name'] = $request->customer_name ?? null;
-        $data['inventory_products'] = $request->inventory_products;
+        $data['customer_name'] = $request->customer_name;
+        $data['inventory_products'] = $request->has("inventory_products") ? $request->inventory_products : null;
         $data['entry_at'] = $request->has("date") ? $request->date : Carbon::now()->format('Y-m-d H:i:s');
         $data['attachments'] = $this->uploadAttachments($request);
         $data['total_discount'] = $request->has("total_discount") ? (double)$request->total_discount : null;
-        $data['total_vat'] = isset($request->total_vat) ? (double)$request->total_vat : null;
+        $data['total_vat'] = $request->total_vat ? (double)$request->total_vat : null;
+        $data['bank_transaction_charge'] = $request->has("bank_transaction_charge") ? $request->bank_transaction_charge : null;
+        $data['interest'] = $request->has("interest") ? $request->interest : null;
+        $data['details'] = $request->has("details") ? $request->details : null;
+        $data['reference'] = $request->has("reference") ? $request->reference : null;
         return $data;
-    }
-
-    private function getPartner($request)
-    {
-        if(isset($request->partner->id)) {
-            $partner_id = $request->partner->id;
-        } else {
-            $partner_id = (int) $request->partner;
-        }
-        return Partner::find($partner_id);
     }
 }

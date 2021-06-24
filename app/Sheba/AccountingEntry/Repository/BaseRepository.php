@@ -1,5 +1,5 @@
-<?php namespace App\Sheba\AccountingEntry\Repository;
-
+<?php
+namespace App\Sheba\AccountingEntry\Repository;
 
 use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
@@ -29,16 +29,25 @@ class BaseRepository
     }
 
     /**
+     * @param $request
+     * @return mixed
      * @throws AccountingEntryServerError
      */
     public function getCustomer($request)
     {
         $partner = $this->getPartner($request);
-        $partner_pos_customer = PartnerPosCustomer::byPartner($partner->id)->where('customer_id', $request->customer_id)->with(['customer'])->first();
-        if ( $request->has('customer_id') && empty($partner_pos_customer)){
+        $partner_pos_customer = PartnerPosCustomer::byPartner($partner->id)->where(
+            'customer_id',
+            $request->customer_id
+        )->with(['customer'])->first();
+        if ($request->has('customer_id') && empty($partner_pos_customer)) {
             $customer = PosCustomer::find($request->customer_id);
-            if(!$customer) throw new AccountingEntryServerError('pos customer not available', 404);
-            $partner_pos_customer = PartnerPosCustomer::create(['partner_id' => $partner->id, 'customer_id' => $request->customer_id]);
+            if (!$customer) {
+                throw new AccountingEntryServerError('pos customer not available', 404);
+            }
+            $partner_pos_customer = PartnerPosCustomer::create(
+                ['partner_id' => $partner->id, 'customer_id' => $request->customer_id]
+            );
         }
         if ($partner_pos_customer) {
             $request->customer_id = $partner_pos_customer->customer_id;
@@ -80,12 +89,12 @@ class BaseRepository
         }
     }
 
-    private function getPartner($request)
+    protected function getPartner($request)
     {
-        if(isset($request->partner->id)) {
+        if (isset($request->partner->id)) {
             $partner_id = $request->partner->id;
         } else {
-            $partner_id = (int) $request->partner;
+            $partner_id = (int)$request->partner;
         }
         return Partner::find($partner_id);
     }
