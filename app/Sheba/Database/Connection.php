@@ -5,11 +5,29 @@ use Illuminate\Database\Connection as BaseConnection;
 class Connection extends BaseConnection
 {
     /**
+     * The connection resolvers.
+     *
+     * @var array
+     */
+    protected static $resolvers = [];
+
+    /**
      * Indicates if changes have been made to the database.
      *
      * @var int
      */
     protected $recordsModified = false;
+
+    /**
+     * Get the connection resolver for the given driver.
+     *
+     * @param string $driver
+     * @return mixed
+     */
+    public static function getResolver($driver)
+    {
+        return static::$resolvers[$driver] ?? null;
+    }
 
     /**
      * Get the current PDO connection used for reading.
@@ -93,7 +111,7 @@ class Connection extends BaseConnection
     /**
      * Run a raw, unprepared query against the PDO connection.
      *
-     * @param  string  $query
+     * @param string $query
      * @return bool
      */
     public function unprepared($query)
