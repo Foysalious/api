@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ab9dad5cb3d9254a3c941982b747adf7",
+    "content-hash": "efa9af200e87c638a611efb96b7e51a5",
     "packages": [
         {
             "name": "algolia/algoliasearch-client-php",
@@ -4161,7 +4161,7 @@
         },
         {
             "name": "sheba/sms",
-            "version": "dev-feature/sms-service",
+            "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "https://bitbucket.org/startern/sheba_sms.git",
