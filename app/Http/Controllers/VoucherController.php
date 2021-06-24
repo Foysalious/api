@@ -13,12 +13,14 @@ use App\Transformers\VoucherDetailTransformer;
 use App\Transformers\VoucherTransformer;
 use Carbon\Carbon;
 use Exception;
+use App\Http\Requests\VendorVoucherRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\ModificationFields;
+use Sheba\Vendor\Voucher\VendorVoucherDataGenerator;
 use Sheba\Voucher\DTO\Params\CheckParamsForPosOrder;
 use Sheba\Voucher\VoucherRule;
 use Throwable;
@@ -385,9 +387,11 @@ class VoucherController extends Controller
         return $total_sale;
     }
 
-    public function voucherAgainstVendor(Request $request, VoucherRepository $voucherRepository)
+    public function voucherAgainstVendor(Request $request, VoucherRepository $voucherRepository, VendorVoucherDataGenerator $voucher_generator)
     {
+        // need to handle this in a Request Class
         if(!isset($request['start_date'])) return api_response($request, null, 403, ['message' => 'Start Date field is required']);
+        if(!isset($request['channel']) || !in_array($request->channel, ['xtra'])  ) return api_response($request, null, 403, ['message' => 'invalid channel']);
         $this->validate($request, [
             'mobile' => 'mobile:bd',
             'amount' => 'required|numeric',
@@ -400,58 +404,8 @@ class VoucherController extends Controller
             'required' => 'The :attribute field is required.',
             'end_date.after_or_equal' => 'The end date should be after start date'
         ]);
-        $voucher = $this->buildVendorVoucherData($request);
-        $voucher = $voucherRepository->create($voucher);
-        $vendor_tag = Tag::find(config('vendor.xtra_vendor_tag_id'));
-        $voucher->tags()->save($vendor_tag);
+
+        $voucher = $voucher_generator->setChannel($request->channel)->setData($request)->setRepository($voucherRepository)->generate();
         return api_response($request, null, 200, ['code' => $voucher->code]);
-    }
-
-    private function buildVendorVoucherData(Request $request)
-    {
-        $vendor_contribution_in_percentage = 96;
-
-        $customer = Customer::whereHas('profile', function ($query) use ($request) {
-            return $query->where('mobile', '+88' . $request->mobile);
-        })->first();
-
-
-        $rules = [
-            'mobile' => '+88' . $request->mobile,
-            'sales_channels' => config('vendor.vendor_promo_applicable_sales_channels'),
-            "applicant_types" => ["customer"]
-        ];
-
-        return [
-            'code' => strtoupper(($request->channel ? $request->channel : 'PROMO')
-                .($customer ? explode(' ',trim($customer->getName()))[0] : $request->mobile)
-                .$request->amount.$this->generateRandomString(4)
-            ),
-            'start_date' => Carbon::parse($request->start_date)->format('Y-m-d h:i:s'),
-            'end_date' => Carbon::parse($request->end_date)->format('Y-m-d h:i:s'),
-            'amount' => $request->amount,
-            'is_amount_percentage' => $request->is_percentage,
-            'cap' => $request->cap,
-            'rules' => json_encode($rules),
-            'title' => $request->title ? $request->title : 'Xtra voucher',
-            'max_order' => 1,
-            'max_customer' => 1,
-            'is_created_by_sheba' => 1,
-            'sheba_contribution' => 100 - $vendor_contribution_in_percentage,
-            'vendor_contribution' => $vendor_contribution_in_percentage,
-            'owner_type' => 'App\Models\Vendor',
-            'owner_id' => config('vendor.xtra_vendor_id'),
-            'created_by' => $request->channel ? ucwords($request->channel) : ''
-        ];
-    }
-
-    private function generateRandomString($length = 10) {
-        $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
-        $charactersLength = strlen($characters);
-        $randomString = '';
-        for ($i = 0; $i < $length; $i++) {
-            $randomString .= $characters[rand(0, $charactersLength - 1)];
-        }
-        return $randomString;
     }
 }
