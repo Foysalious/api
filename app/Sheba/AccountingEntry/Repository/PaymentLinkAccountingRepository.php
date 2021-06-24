@@ -4,6 +4,7 @@ namespace App\Sheba\AccountingEntry\Repository;
 
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
@@ -168,6 +169,7 @@ class PaymentLinkAccountingRepository extends AccountingRepository
         try {
             $payload = collect($this->makeData());
             $payload->put('partner', $userId);
+            Log::info(["store payment link", $payload]);
             return $this->storeEntry($payload, EntryTypes::PAYMENT_LINK);
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
@@ -179,6 +181,7 @@ class PaymentLinkAccountingRepository extends AccountingRepository
         try {
             $data = collect($this->makeData());
             $data->put('partner', $userId);
+            Log::info(["updatePaymentLinkEntry", $data]);
             return $this->updateEntryBySource($data, $this->source_id, $this->source_type);
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());

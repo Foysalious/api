@@ -5,6 +5,7 @@ namespace App\Sheba\AccountingEntry\Repository;
 use App\Models\Partner;
 use App\Sheba\AccountingEntry\Constants\UserType;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Statics\IncomeExpenseStatics;
 use Sheba\RequestIdentification;
@@ -63,6 +64,7 @@ class AccountingRepository extends BaseRepository
     public function updateEntryBySource($request, $sourceId, $sourceType)
     {
         $this->getCustomer($request);
+        Log::info(["checking request", $request]);
         $partner = $this->getPartner($request);
         $this->setModifier($partner);
         $data = $this->createEntryData($request, $sourceType, $sourceId);
