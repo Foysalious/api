@@ -43,6 +43,7 @@ class Creator
      * @var double
      */
     private $transactionFeePercentageConfig;
+    private $realAmount;
 
     /**
      * @param mixed $partnerProfit
@@ -239,7 +240,8 @@ class Creator
             'interest'              => $this->interest,
             'bankTransactionCharge' => $this->bankTransactionCharge,
             'paidBy'                => $this->paidBy,
-            'partnerProfit'         => $this->partnerProfit
+            'partnerProfit'         => $this->partnerProfit,
+            'realAmount'            => $this->realAmount
         ];
         if ($this->isDefault) unset($this->data['reason']);
         if (!$this->targetId) unset($this->data['targetId'], $this->data['targetType']);
@@ -374,7 +376,7 @@ class Creator
                 $data = Calculations::getMonthData($amount, $this->emiMonth, false, $this->transactionFeePercentage);
                 $this->setInterest($data['total_interest'])->setBankTransactionCharge($data['bank_transaction_fee'] + $this->tax)->setAmount($data['total_amount'] + $this->tax)->setPartnerProfit($data['partner_profit']);
             } else {
-                $this->setAmount($amount + round($amount * $this->transactionFeePercentage / 100, 2) + $this->tax)->setPartnerProfit($this->amount - ($amount + round($amount * $this->transactionFeePercentageConfig / 100, 2) + $this->tax));
+                $this->setAmount($amount + round($amount * $this->transactionFeePercentage / 100, 2) + $this->tax)->setPartnerProfit($this->amount - ($amount + round($amount * $this->transactionFeePercentageConfig / 100, 2) + $this->tax))->setRealAmount($this->amount);
             }
         } else {
             if ($this->emiMonth) {
@@ -396,5 +398,15 @@ class Creator
 
         $biggest['key'] = 'online';
         return $biggest;
+    }
+
+    /**
+     * @param mixed $realAmount
+     * @return Creator
+     */
+    public function setRealAmount($realAmount)
+    {
+        $this->realAmount = $realAmount;
+        return $this;
     }
 }
