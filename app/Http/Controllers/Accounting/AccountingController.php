@@ -4,6 +4,7 @@
 use App\Http\Controllers\Controller;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\AccountingRepository;
+use App\Sheba\AccountingEntry\Repository\PaymentLinkAccountingRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
@@ -47,5 +48,16 @@ class AccountingController extends Controller
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         }
 
+    }
+
+    public function testRepo()
+    {
+        /** @var PaymentLinkAccountingRepository $paymentLinkRepo */
+        $paymentLinkRepo =  app(PaymentLinkAccountingRepository::class);
+        return $paymentLinkRepo->setAmount(15)
+            ->setBankTransactionCharge(3.2999998)
+            ->setInterest(0)
+            ->setAmountCleared(15)
+            ->store(38420);
     }
 }

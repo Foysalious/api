@@ -36,7 +36,7 @@ class BaseRepository
     {
         $partner = $this->getPartner($request);
         $partner_pos_customer = PartnerPosCustomer::byPartner($partner->id)->where('customer_id', $request->customer_id)->with(['customer'])->first();
-        if ( $request->has('customer_id') && empty($partner_pos_customer)){
+        if ( isset($request->customer_id) && empty($partner_pos_customer)){
             $customer = PosCustomer::find($request->customer_id);
             if(!$customer) throw new AccountingEntryServerError('pos customer not available', 404);
             $partner_pos_customer = PartnerPosCustomer::create(['partner_id' => $partner->id, 'customer_id' => $request->customer_id]);
@@ -51,7 +51,8 @@ class BaseRepository
     public function uploadAttachments($request)
     {
         $attachments = [];
-        if ($request->has("attachments") && $request->hasFile('attachments')) {
+//        todo: have to refactor the attachment
+        if (isset($request->attachments) && $request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $key => $file) {
                 if (!empty($file)) {
                     list($file, $filename) = $this->makeAttachment($file, '_' . getFileName($file) . '_attachments');
