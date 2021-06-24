@@ -5,6 +5,7 @@ use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Models\PosOrderDiscount;
 use App\Models\Tag;
+use App\Models\Taggable;
 use App\Models\Voucher;
 use App\Sheba\PosOrderService\Services\OrderService;
 use App\Repositories\VoucherRepository;
@@ -430,12 +431,10 @@ class VoucherController extends Controller
             'required' => 'The :attribute field is required.',
             'end_date.after_or_equal' => 'The end date should be after start date'
         ]);
-
-
         $voucher = $this->buildVendorVoucherData($request);
         $voucher = $voucherRepository->create($voucher);
-        $voucher->tags()->sync([config('vendor.xtra_vendor_tag_id')]);
-
+        $vendor_tag = Tag::find(config('vendor.xtra_vendor_tag_id'));
+        $voucher->tags()->save($vendor_tag);
         return api_response($request, null, 200, ['code' => $voucher->code]);
     }
 
@@ -449,8 +448,9 @@ class VoucherController extends Controller
 
 
         $rules = [
-            'mobile'=> '+88' . $request->mobile,
-            'sales_channels'=> config('vendor.vendor_promo_applicable_sales_channels')
+            'mobile' => '+88' . $request->mobile,
+            'sales_channels' => config('vendor.vendor_promo_applicable_sales_channels'),
+            "applicant_types" => ["customer"]
         ];
 
         return [
