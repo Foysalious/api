@@ -12,7 +12,7 @@ class EmergencyContactInfoTransformer extends TransformerAbstract
         $profile = $member->profile;
 
         return [
-            'pro_pic' => $profile->pro_pic,
+            'profile_picture' => $profile->pro_pic,
             'emergency_name' => $member->emergency_contract_person_name,
             'emergency_number' => $member->emergency_contract_person_number,
             'emergency_person_relationship' => $member->emergency_contract_person_relationship,

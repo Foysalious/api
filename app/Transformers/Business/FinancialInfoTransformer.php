@@ -19,6 +19,7 @@ class FinancialInfoTransformer extends TransformerAbstract
             'tin_no' => $profile->tin_no,
             'tin_certificate_name' => $profile->tin_certificate ? array_last(explode('/', $profile->tin_certificate)) : null,
             'tin_certificate' => $profile->tin_certificate,
+            'profile_picture' => $profile->pro_pic,
         ];
     }
 
