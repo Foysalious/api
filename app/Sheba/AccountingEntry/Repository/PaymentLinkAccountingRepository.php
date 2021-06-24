@@ -3,12 +3,12 @@
 namespace App\Sheba\AccountingEntry\Repository;
 
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
-use App\Sheba\AccountingEntry\Constants\UserType;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
-use Sheba\RequestIdentification;
 
 class PaymentLinkAccountingRepository extends AccountingRepository
 {
@@ -35,7 +35,7 @@ class PaymentLinkAccountingRepository extends AccountingRepository
 
     /**
      * @param mixed $amount
-     * @return PaymentLinkRepository
+     * @return PaymentLinkAccountingRepository
      */
     public function setAmount($amount)
     {
@@ -45,9 +45,9 @@ class PaymentLinkAccountingRepository extends AccountingRepository
 
     /**
      * @param AccountingEntryClient $client
-     * @return PaymentLinkRepository
+     * @return PaymentLinkAccountingRepository
      */
-    public function setClient(AccountingEntryClient $client): PaymentLinkRepository
+    public function setClient(AccountingEntryClient $client): PaymentLinkAccountingRepository
     {
         $this->client = $client;
         return $this;
@@ -55,7 +55,7 @@ class PaymentLinkAccountingRepository extends AccountingRepository
 
     /**
      * @param mixed $customer_id
-     * @return PaymentLinkRepository
+     * @return PaymentLinkAccountingRepository
      */
     public function setCustomerId($customer_id)
     {
@@ -65,7 +65,7 @@ class PaymentLinkAccountingRepository extends AccountingRepository
 
     /**
      * @param mixed $customer_name
-     * @return PaymentLinkRepository
+     * @return PaymentLinkAccountingRepository
      */
     public function setCustomerName($customer_name)
     {
@@ -75,7 +75,7 @@ class PaymentLinkAccountingRepository extends AccountingRepository
 
     /**
      * @param mixed $note
-     * @return PaymentLinkRepository
+     * @return PaymentLinkAccountingRepository
      */
     public function setNote($note)
     {
@@ -85,7 +85,7 @@ class PaymentLinkAccountingRepository extends AccountingRepository
 
     /**
      * @param mixed $details
-     * @return PaymentLinkRepository
+     * @return PaymentLinkAccountingRepository
      */
     public function setDetails($details)
     {
@@ -95,9 +95,9 @@ class PaymentLinkAccountingRepository extends AccountingRepository
 
     /**
      * @param string $source_type
-     * @return PaymentLinkRepository
+     * @return PaymentLinkAccountingRepository
      */
-    public function setSourceType(string $source_type): PaymentLinkRepository
+    public function setSourceType(string $source_type): PaymentLinkAccountingRepository
     {
         $this->source_type = $source_type;
         return $this;
@@ -105,7 +105,7 @@ class PaymentLinkAccountingRepository extends AccountingRepository
 
     /**
      * @param mixed $source_id
-     * @return PaymentLinkRepository
+     * @return PaymentLinkAccountingRepository
      */
     public function setSourceId($source_id)
     {
@@ -116,7 +116,7 @@ class PaymentLinkAccountingRepository extends AccountingRepository
 
     /**
      * @param mixed $amount_cleared
-     * @return PaymentLinkRepository
+     * @return PaymentLinkAccountingRepository
      */
     public function setAmountCleared($amount_cleared)
     {
@@ -127,7 +127,7 @@ class PaymentLinkAccountingRepository extends AccountingRepository
 
     /**
      * @param mixed $bank_transaction_charge
-     * @return PaymentLinkRepository
+     * @return PaymentLinkAccountingRepository
      */
     public function setBankTransactionCharge($bank_transaction_charge)
     {
@@ -137,7 +137,7 @@ class PaymentLinkAccountingRepository extends AccountingRepository
 
     /**
      * @param mixed $interest
-     * @return PaymentLinkRepository
+     * @return PaymentLinkAccountingRepository
      */
     public function setInterest($interest)
     {
@@ -147,7 +147,7 @@ class PaymentLinkAccountingRepository extends AccountingRepository
 
     /**
      * @param mixed $debit_account_key
-     * @return PaymentLinkRepository
+     * @return PaymentLinkAccountingRepository
      */
     public function setDebitAccountKey($debit_account_key)
     {
@@ -157,7 +157,7 @@ class PaymentLinkAccountingRepository extends AccountingRepository
 
     /**
      * @param mixed $credit_account_key
-     * @return PaymentLinkRepository
+     * @return PaymentLinkAccountingRepository
      */
     public function setCreditAccountKey($credit_account_key)
     {
@@ -168,8 +168,7 @@ class PaymentLinkAccountingRepository extends AccountingRepository
     public function store($userId)
     {
         try {
-            $payload = collect($this->makeData());
-            $payload->put('partner', $userId);
+            $payload = $this->makeData($userId);
             return $this->storeEntry($payload, EntryTypes::PAYMENT_LINK);
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
@@ -179,15 +178,14 @@ class PaymentLinkAccountingRepository extends AccountingRepository
     public function updatePaymentLinkEntry($userId)
     {
         try {
-            $data = collect($this->makeData());
-            $data->put('partner', $userId);
-            return $this->updateEntryBySource($data, $this->source_id, $this->source_type);
+            $payload = $this->makeData($userId);
+            return $this->updateEntryBySource($payload, $this->source_id, $this->source_type);
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
     }
 
-    private function makeData()
+    private function makeData($userId)
     {
         if ($this->debit_account_key == null && $this->credit_account_key == null) {
             $this->setDebitAccountKey((new Accounts())->expense->paymentLinkServiceCharge::PAYMENT_LINK_SERVICE_CHARGE);
@@ -198,22 +196,22 @@ class PaymentLinkAccountingRepository extends AccountingRepository
                 $this->setCreditAccountKey((new Accounts())->income->incomeFromPaymentLink::INCOME_FROM_PAYMENT_LINK);
             }
         }
-
-        $data['customer_id'] = $this->customer_id;
-        $data['customer_name'] = $this->customer_name;
-        $data['amount'] = $this->amount;
-        $data['amount_cleared'] = $this->amount_cleared;
-        $data['entry_at'] = Carbon::now()->format('Y-m-d H:i:s');
-        $data['bank_transaction_charge'] = $this->bank_transaction_charge;
-        $data['interest'] = $this->interest;
-        $data['source_id'] = $this->source_id;
-        $data['source_type'] = $this->source_type;
-        $data['debit_account_key'] = $this->debit_account_key;
-        $data['credit_account_key'] = $this->credit_account_key;
-        $data['reference'] = 'Entry using Payment Link';
-        $data['note'] = $this->note;
-        $data['details'] = $this->details;
-
+        $data = collect();
+        $data->customer_id = $this->customer_id;
+        $data->customer_name = $this->customer_name;
+        $data->amount = $this->amount;
+        $data->amount_cleared = $this->amount_cleared;
+        $data->entry_at = Carbon::now()->format('Y-m-d H:i:s');
+        $data->bank_transaction_charge = $this->bank_transaction_charge;
+        $data->interest = $this->interest;
+        $data->source_id = $this->source_id;
+        $data->source_type = $this->source_type;
+        $data->to_account_key = $this->debit_account_key;
+        $data->from_account_key = $this->credit_account_key;
+        $data->reference = 'Entry using Payment Link';
+        $data->note = $this->note;
+        $data->details = $this->details;
+        $data->partner = $userId;
         return $data;
     }
 
