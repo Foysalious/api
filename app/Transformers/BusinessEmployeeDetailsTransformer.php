@@ -1,6 +1,7 @@
 <?php namespace App\Transformers;
 
 use App\Models\Member;
+use App\Sheba\Business\CoWorker\ProfileInformation\SocialLink;
 use Carbon\Carbon;
 use League\Fractal\TransformerAbstract;
 
@@ -25,21 +26,7 @@ class BusinessEmployeeDetailsTransformer extends TransformerAbstract
             'department'    => $role ? $role->businessDepartment->name : null,
             'blood_group'   => $profile->blood_group,
             'dob'           => Carbon::parse($profile->dob)->format('jS F'),
-            'social_link'   => $this->getSocialLinks($member)
+            'social_link'   => (new SocialLink($member))->get()
         ];
-    }
-
-    private function getSocialLinks($member)
-    {
-        $social_links = json_decode($member->social_links, 1);
-        if (!$social_links) return null;
-        $data = [];
-        foreach ($social_links as $type => $link){
-            array_push($data, [
-               'link' =>  $link,
-               'type' => $type
-            ]);
-        }
-        return $data;
     }
 }
