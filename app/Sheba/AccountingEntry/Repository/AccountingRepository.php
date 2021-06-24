@@ -23,10 +23,8 @@ class AccountingRepository extends BaseRepository
         $this->getCustomer($request);
         $partner = $this->getPartner($request);
         $this->setModifier($partner);
-        Log::info(["checking request", $request]);
         $data = $this->createEntryData($request, $type, $request->source_id);
         $url = "api/entries/";
-        Log::info(["checking data before store", $data]);
         try {
             return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->post($url, $data);
         } catch (AccountingEntryServerError $e) {
@@ -66,12 +64,10 @@ class AccountingRepository extends BaseRepository
     public function updateEntryBySource($request, $sourceId, $sourceType)
     {
         $this->getCustomer($request);
-        Log::info(["checking request", $request]);
         $partner = $this->getPartner($request);
         $this->setModifier($partner);
         $data = $this->createEntryData($request, $sourceType, $sourceId);
         $url = "api/entries/source/" . $sourceType . '/' . $sourceId;
-        Log::info(["checking data before update by source", $data]);
         try {
             return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->post($url, $data);
         } catch (AccountingEntryServerError $e) {
@@ -155,7 +151,6 @@ class AccountingRepository extends BaseRepository
      * @param $request
      * @param $type
      * @param null $type_id
-     * @param bool $default
      * @return array
      */
     private function createEntryData($request, $type, $type_id = null): array
@@ -164,21 +159,21 @@ class AccountingRepository extends BaseRepository
         $data['amount'] = (double)$request->amount;
         $data['source_type'] = $type;
         $data['source_id'] = $type_id;
-        $data['note'] = $request->has("note") ? $request->note : null;
+        $data['note'] = isset($request->note) ? $request->note : null;
         $data['amount_cleared'] = $request->amount_cleared;
         $data['debit_account_key'] = $request->to_account_key; // to = debit = je account e jabe
         $data['credit_account_key'] = $request->from_account_key; // from = credit = je account theke jabe
-        $data['customer_id'] = $request->has('customer_id') ? $request->customer_id : null;
-        $data['customer_name'] = $request->has('customer_id') ? $request->customer_name : null;
-        $data['inventory_products'] = $request->has("inventory_products") ? $request->inventory_products : null;
-        $data['entry_at'] = $request->has("date") ? $request->date : Carbon::now()->format('Y-m-d H:i:s');
+        $data['customer_id'] = isset($request->customer_id) ? $request->customer_id : null;
+        $data['customer_name'] = isset($request->customer_id) ? $request->customer_name : null;
+        $data['inventory_products'] = isset($request->inventory_products) ? $request->inventory_products : null;
+        $data['entry_at'] = isset($request->date) ? $request->date : Carbon::now()->format('Y-m-d H:i:s');
         $data['attachments'] = $this->uploadAttachments($request);
-        $data['total_discount'] = $request->has("total_discount") ? (double)$request->total_discount : null;
-        $data['total_vat'] = $request->has('total_vat') ? (double)$request->total_vat : null;
-        $data['bank_transaction_charge'] = $request->has("bank_transaction_charge") ? $request->bank_transaction_charge : null;
-        $data['interest'] = $request->has("interest") ? $request->interest : null;
-        $data['details'] = $request->has("details") ? $request->details : null;
-        $data['reference'] = $request->has("reference") ? $request->reference : null;
+        $data['total_discount'] = isset($request->total_discount) ? (double)$request->total_discount : null;
+        $data['total_vat'] = isset($request->total_vat) ? (double)$request->total_vat : null;
+        $data['bank_transaction_charge'] = isset($request->bank_transaction_charge) ? $request->bank_transaction_charge : null;
+        $data['interest'] = isset($request->interest) ? $request->interest : null;
+        $data['details'] = isset($request->details) ? $request->details : null;
+        $data['reference'] = isset($request->reference) ? $request->reference : null;
         return $data;
     }
 }
