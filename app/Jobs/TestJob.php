@@ -3,8 +3,8 @@
 use App\Http\Requests\Request;
 use App\Jobs\Job;
 
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -15,17 +15,6 @@ use Sheba\Sms\Sms;
 class TestJob extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
-
-    private $sms; /** @var Sms */
-
-    /**
-     * Create a new job instance.
-     *
-     */
-    public function __construct()
-    {
-        $this->sms = new Sms();//app(Sms::class);
-    }
 
     /**
      * Execute the job.
@@ -39,7 +28,7 @@ class TestJob extends Job implements ShouldQueue
             $m->to('arnabrahman@hotmail.com', 'Arnab')->subject('Server!');
         });*/
 
-        $this->sms
+        (new Sms())
             ->setFeatureType(FeatureType::COMMON)
             ->setBusinessType(BusinessType::COMMON)
             ->shoot('+8801678242973', 'Test job from queue with supervisor at ' . \Carbon\Carbon::now()->toDateTimeString());

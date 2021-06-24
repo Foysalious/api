@@ -2,8 +2,8 @@
 
 use App\Models\PosCustomer;
 use App\Sheba\Bitly\BitlyLinkShort;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use Sheba\EMI\Calculations;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
@@ -266,27 +266,25 @@ class Creator
 
     public function sentSms()
     {
-        if ($this->getPayerInfo() && config('sms.is_on')) {
-            /** @var PaymentLinkClient $paymentLinkClient */
-            $paymentLinkClient = app(PaymentLinkClient::class);
-            $paymentLink       = $paymentLinkClient->createShortUrl($this->paymentLinkCreated->link);
-            $link              = null;
-            if ($paymentLink) {
-                $link = $paymentLink->url->shortUrl;
-            }
-            $extra_message = $this->targetType == 'pos_order' ? 'করুন। ' : 'করে বাকি পরিশোধ করুন। ';
-            $message       = 'প্রিয় গ্রাহক, দয়া করে পেমেন্ট লিংকের মাধ্যমে ' . $this->userName . ' কে ' . $this->amount . ' টাকা পে ' . $extra_message . $link . ' Powered by sManager.';
-            $mobile        = $this->getPayerInfo()['payer']['mobile'];
+        if (!$this->getPayerInfo()) return;
 
-            /** @var Sms $sms */
-            $sms = app(Sms::class);
-            $sms = $sms->setVendor('infobip')
-                       ->to($mobile)
-                       ->msg($message)
-                       ->setFeatureType(FeatureType::PAYMENT_LINK)
-                       ->setBusinessType(BusinessType::SMANAGER);
-            $sms->shoot();
+        /** @var PaymentLinkClient $paymentLinkClient */
+        $paymentLinkClient = app(PaymentLinkClient::class);
+        $paymentLink       = $paymentLinkClient->createShortUrl($this->paymentLinkCreated->link);
+        $link              = null;
+        if ($paymentLink) {
+            $link = $paymentLink->url->shortUrl;
         }
+        $extra_message = $this->targetType == 'pos_order' ? 'করুন। ' : 'করে বাকি পরিশোধ করুন। ';
+        $message       = 'প্রিয় গ্রাহক, দয়া করে পেমেন্ট লিংকের মাধ্যমে ' . $this->userName . ' কে ' . $this->amount . ' টাকা পে ' . $extra_message . $link . ' Powered by sManager.';
+        $mobile        = $this->getPayerInfo()['payer']['mobile'];
+
+        (new Sms())
+            ->to($mobile)
+            ->msg($message)
+            ->setFeatureType(FeatureType::PAYMENT_LINK)
+            ->setBusinessType(BusinessType::SMANAGER)
+            ->shoot();
     }
 
     private function getPayerInfo()

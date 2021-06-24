@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "efa9af200e87c638a611efb96b7e51a5",
+    "content-hash": "ab9dad5cb3d9254a3c941982b747adf7",
     "packages": [
         {
             "name": "algolia/algoliasearch-client-php",
@@ -1807,7 +1807,7 @@
             "time": "2017-03-12T09:23:10+00:00"
         },
         {
-            "name": "jeremeamia/SuperClosure",
+            "name": "jeremeamia/superclosure",
             "version": "2.3.0",
             "source": {
                 "type": "git",
@@ -3638,6 +3638,10 @@
                 "mime",
                 "mime type"
             ],
+            "support": {
+                "issues": "https://github.com/rosell-dk/image-mime-type-guesser/issues",
+                "source": "https://github.com/rosell-dk/image-mime-type-guesser/tree/0.3"
+            },
             "time": "2019-03-29T09:33:28+00:00"
         },
         {
@@ -3714,6 +3718,10 @@
                 "png",
                 "png2webp"
             ],
+            "support": {
+                "issues": "https://github.com/rosell-dk/webp-convert/issues",
+                "source": "https://github.com/rosell-dk/webp-convert/tree/2.4.0"
+            },
             "time": "2020-11-10T11:24:50+00:00"
         },
         {
@@ -4095,11 +4103,11 @@
         },
         {
             "name": "sheba/sms",
-            "version": "dev-master",
+            "version": "dev-feature/sms-service",
             "source": {
                 "type": "git",
                 "url": "https://mac_pasha@bitbucket.org/startern/sheba_sms.git",
-                "reference": "9fb24dbaa97e43d61140d74d7f9638e7a3eeeeb8"
+                "reference": "074f6a0534e982ce08a7cb768b3d9decf42c8ca4"
             },
             "require": {
                 "ext-curl": "*"
@@ -4120,7 +4128,7 @@
                 }
             ],
             "description": "Sms for Sheba",
-            "time": "2021-05-18T09:09:47+00:00"
+            "time": "2021-06-22T08:18:14+00:00"
         },
         {
             "name": "sheba/voucher",
