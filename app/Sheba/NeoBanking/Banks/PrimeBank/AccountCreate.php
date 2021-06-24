@@ -21,6 +21,7 @@ class AccountCreate
     private $partner, $neoBankingData, $bank;
     private $data, $mobile, $response, $account_no;
     private $key;
+    private $branchCode;
 
     public function __construct()
     {
@@ -62,9 +63,14 @@ class AccountCreate
         $application = json_decode($this->neoBankingData->information_for_bank_account, 1);
         if (!isset($application['personal']) || !isset($application['institution']) || !isset($application['nid_selfie'])) throw new InvalidPartnerInformationException();
         $application['account'] = NeoBankingGeneralStatics::primeBankDefaultAccountData();
+        $branchCode = $application['personal']['branch_code'] ?? null;
+        if (!$branchCode) {
+            throw new NeoBankingException('Branch code was not found');
+        }
+        $branchCode = explode(',', $branchCode);
+        $this->branchCode = $branchCode[0];
+        $branch = $branchCode[1] ?? null;
         $application_data = $this->makeApplicationData($application);
-        $branch_code = $application['personal']['branch_code'] ?? null;
-        $branch = collect(config('branch_code.data'))->where('branch_code', (int)$branch_code)->first();
         $this->data = [
             "application_data" => json_encode($application_data),
             "user_type"        => get_class($this->partner),
@@ -72,7 +78,7 @@ class AccountCreate
             "name"             => $application['personal']['applicant_name'] ? : null,
             "mobile"           => $this->mobile,
             "company_name"     => $this->partner->name,
-            "branch_name"      => $branch['branch_name'] ?? null,
+            "branch_name"      => $branch,
             "full_data"        => json_encode($application)
         ];
         return $this;
@@ -137,6 +143,7 @@ class AccountCreate
         $account_title = null;
         $gender = null;
         $nominee_legal_doc_1 = null;
+        $nominee_legal_doc_no_1 = null;
         $pepIpStatus = null;
         $pepIpRelation = null;
         $fatcaInformation = null;
@@ -155,8 +162,12 @@ class AccountCreate
 
         foreach ($application['account']['type_of_account'] as $key => $data)
             if($data == 1) $account_title = $key;
-        foreach ($application['nominee']['identification_number_type'] as $key => $data)
-            if($data == 1) $nominee_legal_doc_1 = $key;
+        foreach ($application['nominee']['identification_number_type'] as $key => $data){
+            if($data !== ''){
+                $nominee_legal_doc_1 = $key;
+                $nominee_legal_doc_no_1 = $data;
+            }
+        }
 
         $data = [
             "channel"       => PBLStatics::CHANNEL,
@@ -184,8 +195,8 @@ class AccountCreate
             "post_code_permanent" => $application['personal']['permanent_address']['postcode_permanent_address'] ?? null,
             "district_permanent" => $application['personal']['permanent_address']['district_permanent_address'] ?? null,
             "mobile_no"     => $this->mobile,
-            "email"         => $application['institution']["email"] ?? null,
-            "branch_code"   => $application['personal']["branch_code"] ? 'BD0010' . $application['personal']['branch_code'] : null,
+            "email"         => isset($application['institution']["email"]) ? substr($application['institution']["email"],0,35) : null,
+            "branch_code"   => $this->branchCode,
             "cheque_book"   => PBLStatics::CHEQUE_BOOK,
             "internet_banking" => PBLStatics::INTERNET_BANKING,
             "debit_card" => PBLStatics::DEBIT_CARD,
@@ -204,12 +215,12 @@ class AccountCreate
             'customer_pep_ip' => strtoupper($pepIpStatus),
             'associate_pep_ip' => strtoupper($pepIpRelation),
             "occupation_type" => 'BUSINESS',
-            "occupation_nature" => $application['institution']['business_type_list'] ?? null,
+            "occupation_nature" => explode(',', $application['institution']['business_type_list'])[0] ?? null,
             "nominee_name_1" => isset($application['nominee']["nominee_name"]) ? $this->removeSpecialCharacters($application['nominee']["nominee_name"]) : null,
             "nominee_relation_1" => $application['nominee']["nominee_relation"] ?? null,
             "nominee_share_percent_1" => 100,
             "nominee_legal_doc_1" => PBLStatics::fromKey($nominee_legal_doc_1),
-            "nominee_legal_doc_no_1" => $application['nominee']["identification_number"] ?? null,
+            "nominee_legal_doc_no_1" => $nominee_legal_doc_no_1,
             "nominee_father_1" => isset($application['nominee']["nominee_father_name"]) ? $this->removeSpecialCharacters($application['nominee']["nominee_father_name"]) : null,
             "nominee_mother_1" => isset($application['nominee']["nominee_mother_name"]) ? $this->removeSpecialCharacters($application['nominee']["nominee_mother_name"]) : null,
             "nominee_dob_1" => (isset($application['nominee']['nominee_birth_date'])) ? Carbon::parse($application['nominee']['nominee_birth_date'])->format('Ymd') : null,

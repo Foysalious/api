@@ -91,6 +91,8 @@ class NeoBankingController extends Controller
 
     public function getAccountInformationCompletion($partner, Request $request, NeoBanking $neoBanking)
     {
+        ini_set('max_execution_time', 360);
+
         try {
             $this->validate($request, [
                 'bank_code' => 'required|string'
@@ -198,9 +200,12 @@ class NeoBankingController extends Controller
         try {
             $type=$request->type?:'organization_type_list';
             $data = NeoBankingGeneralStatics::types($type);
-            if ($type == 'branch_code' && isset($request->district))
+            if ($type == 'branch_code' && isset($request->district)){
                 $data = $this->filterByDistrict($request, $data['list']);
-
+                if (count($data['list']) === 0) {
+                    return response()->json(['code' => 404, 'message' => 'প্রিয় গ্রাহক, আপনার নির্ধারিত জেলায় প্রাইম ব্যাংকের কোন সার্ভিস নেই। আমরা যত দ্রুত সম্ভব সার্ভিসটি চালু করার চেষ্টা করব। বিস্তারিত জানতে ইনবক্স করুন অথবা কল করুন ১৬৫১৬ নম্বরে।']);
+                }
+            }
             return api_response($request, $data, 200, ['data' => $data]);
         } catch (\Throwable $e) {
             logError($e);
@@ -212,9 +217,8 @@ class NeoBankingController extends Controller
     {
         $data = [];
         foreach ($values as $value) {
-            if ($value['district'] == $request->district) {
+            if (strtolower($value['district']) == strtolower($request->district))
                 array_push($data, $value);
-            }
         }
         return ['list' => $data,'title'=>'ব্রাঞ্চ কোড সিলেক্ট করুন'];
     }

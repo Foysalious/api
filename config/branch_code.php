@@ -90,7 +90,7 @@ return [
         [
             'key' => 'BD0010173',
             'value' => 'Bhairab Bazar Branch',
-            'district' => 'Kishoregonj'
+            'district' => 'Kishoreganj'
         ],
         [
             'key' => 'BD0010506',
@@ -135,7 +135,7 @@ return [
         [
             'key' => 'BD0010185',
             'value' => 'Chowddgram Branch',
-            'district' => 'Comilla'
+            'district' => 'Cumillah'
         ],
         [
             'key' => 'BD0010182',
@@ -144,13 +144,13 @@ return [
         ],
         [
             'key' => 'BD0010158',
-            'value' => 'Comilla Branch',
-            'district' => 'Comilla'
+            'value' => 'Cumillah Branch',
+            'district' => 'Cumillah'
         ],
         [
             'key' => 'BD0010505',
             'value' => 'Companygonj Sme Centre',
-            'district' => 'Comilla'
+            'district' => 'Cumillah'
         ],
         [
             'key' => 'BD0010116',
@@ -370,7 +370,7 @@ return [
         [
             'key' => 'BD0010196',
             'value' => 'Kishorgonj Branch',
-            'district' => 'Kishoregonj'
+            'district' => 'Kishoreganj'
         ],
         [
             'key' => 'BD0010220',
@@ -540,7 +540,7 @@ return [
         [
             'key' => 'BD0010228',
             'value' => 'Racecourse Branch',
-            'district' => 'Comilla'
+            'district' => 'Cumillah'
         ],
         [
             'key' => 'BD0010513',

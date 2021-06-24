@@ -307,7 +307,7 @@ return [
                 'title'      => 'আপনি কি একজন PEP/ IP / বৈদেশিক সংস্থার নির্বাহী /ঊচ্চ  পদস্থ কর্মকর্তা? *',
                 'name'       => 'pep_ip_status',
                 'id'         => 'pep_ip_status',
-                'value'      => 'অপারেশনের ধরণ ',
+                'value'      => '',
                 'mandatory'  => true,
                 'error_message' => 'PEP/ IP কর্মকর্তা কিনা, পূরণ আবশ্যক',
                 'views'      => [
@@ -334,7 +334,7 @@ return [
                 'title'      => 'আপনি কি একজন PEP/ IP  / বৈদেশিক সংস্থার নির্বাহী / ঊচ্চ পদস্থ কর্মকর্তার সাথে সংশ্লিষ্ট সহযোগী অথবা পারিবারিক সদস্য? *',
                 'name'       => 'pep_ip_relation',
                 'id'         => 'pep_ip_relation',
-                'value'      => 'অপারেশনের ধরণ ',
+                'value'      => '',
                 'mandatory'  => true,
                 'error_message' => 'PEP/ IP কর্মকর্তার সাথে সংশ্লিষ্ট সহযোগী কিনা, পূরণ আবশ্যক',
                 'views'      => [
@@ -376,7 +376,7 @@ return [
                 'title'      => 'আপনি কি যুক্তরাষ্ট্রের সাথে সম্পৃক্ত (বসবাসকারী, নাগরিক, গ্রীন কার্ডধারী, যুক্তরাষ্ট্র / যুক্তরাষ্ট্রের মালিকানাধীন প্রতিষ্ঠান) *',
                 'name'       => 'fatca_information',
                 'id'         => 'fatca_information',
-                'value'      => 'অপারেশনের ধরণ ',
+                'value'      => '',
                 'mandatory'  => true,
                 'error_message' => 'যুক্তরাষ্ট্রের সাথে সম্পৃক্ত কিনা, পূরণ আবশ্যক',
                 'views'      => [
@@ -858,7 +858,7 @@ return [
                 'field_type' => 'radioGroup',
                 'title'      => 'অ্যাকাউন্টের ধরণ *',
                 'name'       => 'type_of_account',
-                'value'      => 'অ্যাকাউন্টের ধরণ *',
+                'value'      => '',
                 'id'         => 'type_of_account',
                 'views'      => [
                     [
@@ -926,7 +926,7 @@ return [
                 'title'      => 'মূদ্রা ',
                 'name'       => 'money_type',
                 'id'         => 'money_type',
-                'value'      => 'মূদ্রা ',
+                'value'      => '',
                 'mandatory'  => false,
                 'views'      => [
                     [

@@ -72,19 +72,19 @@ class Completion
     private function setGigaTechData()
     {
         $this->mobile = str_replace('+88', '', $this->mobile);
-//        $this->gigatech_data = $this->bank->getGigatechKycStatus(["mobile" => $this->mobile]);
-        $this->gigatech_data = [
-            "code" => 200,
-            "data" => [
-                "status" => 'success',
-                "data" => [
-                    "status" => "passed",
-                ],
-                "detail" => [
-                    "nid_no" => 123122324243131
-                ]
-            ]
-        ];
+        $this->gigatech_data = $this->bank->getGigatechKycStatus(["mobile" => $this->mobile]);
+//        $this->gigatech_data = [
+//            "code" => 200,
+//            "data" => [
+//                "status" => 'success',
+//                "data" => [
+//                    "status" => "passed",
+//                ],
+//                "detail" => [
+//                    "nid_no" => 123122324243131
+//                ]
+//            ]
+//        ];
         return $this;
     }
 
@@ -94,8 +94,9 @@ class Completion
             if ($single['completion_percentage']['en'] != 100) $this->can_apply = 0;
         if ($this->can_apply === 1) {
             $bank_data = $this->bank->getBankInfo()->getData();
-            if (!$bank_data->is_gigatech_verified && isset($this->gigatech_data->data->data->status) && $this->gigatech_data->data->data->status !== "passed") $this->can_apply = 0;
-            if (!isset($this->gigatech_data->data->data->status) && !$bank_data->is_gigatech_verified) $this->can_apply = 0;
+            if (json_decode($bank_data['information_for_bank_account'])->personal->fatca_information->fatca_information_yes) $this->can_apply = 0;
+            elseif (!$bank_data->is_gigatech_verified && isset($this->gigatech_data->data->data->status) && $this->gigatech_data->data->data->status !== "passed") $this->can_apply = 0;
+            elseif (!isset($this->gigatech_data->data->data->status) && !$bank_data->is_gigatech_verified) $this->can_apply = 0;
         }
     }
 
