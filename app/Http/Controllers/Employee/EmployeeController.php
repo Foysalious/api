@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Sheba\Business\BusinessBasicInformation;
+use App\Sheba\Business\CoWorker\ProfileInformation\EmergencyInfoUpdater;
 use App\Sheba\Business\CoWorker\ProfileInformation\EmployeeType;
 use App\Sheba\Business\CoWorker\ProfileInformation\OfficialInfoUpdater;
 use App\Sheba\Business\CoWorker\ProfileInformation\ProfileRequester;
@@ -399,7 +400,7 @@ class EmployeeController extends Controller
             'department' => 'required|string',
             'designation' => 'required|string',
             'joining_date' => 'required|date',
-            'gender' => 'required|string'
+            'gender' => 'required|string|in::Female,Male,Other'
         ]);
 
         $business_member = $this->getBusinessMember($request);
@@ -450,6 +451,33 @@ class EmployeeController extends Controller
             ->setGrade($request->grade);
 
         $official_info_updater->setProfileRequester($profile_requester)->update();
+
+        return api_response($request, null, 200);
+
+    }
+
+    public function updateEmergencyInfo($business_member_id, Request $request, ProfileRequester $profile_requester, EmergencyInfoUpdater $emergency_info_updater)
+    {
+        $this->validate($request, [
+            'name' => 'sometimes|required|string',
+            'mobile' => 'sometimes|required|mobile:bd',
+            'relationship' => 'sometimes|required|string',
+        ]);
+
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $employee = $this->businessMember->find($business_member_id);
+        if (!$employee) return api_response($request, null, 404);
+        $member = $this->repo->find($business_member['member_id']);
+        $this->setModifier($member);
+
+        $profile_requester
+            ->setBusinessMember($employee)
+            ->setEmergencyContactName($request->name)
+            ->setEmergencyContactMobile($request->mobile)
+            ->setEmergencyContactRelation($request->relationship);
+
+        $emergency_info_updater->setProfileRequester($profile_requester)->update();
 
         return api_response($request, null, 200);
 
