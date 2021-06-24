@@ -1,6 +1,6 @@
 <?php namespace App\Models;
 
-use AlgoliaSearch\Laravel\AlgoliaEloquentTrait;
+use Sheba\Dal\PartnerPosServiceBatch\Model as PartnerPosServiceBatch;
 use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceCreated;
 use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceSaved;
 use Carbon\Carbon;
@@ -221,5 +221,10 @@ class PartnerPosService extends BaseModel
     public function isWebstorePublished(): bool
     {
         return $this->is_published_for_shop == 1;
+    }
+
+    public function stock()
+    {
+        return $this->hasMany(PartnerPosServiceBatch::class);
     }
 }

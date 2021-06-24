@@ -236,7 +236,7 @@ class OrderService
 
     public function update()
     {
-        return $this->client->put('api/v1/partners/' . $this->partnerId. '/orders/' . $this->orderId, $this->makeUpdateData());
+        return $this->client->setToken($this->token)->put('api/v1/partners/' . $this->partnerId. '/orders/' . $this->orderId, $this->makeUpdateData());
     }
 
     public function delete()
@@ -246,21 +246,21 @@ class OrderService
 
     private function makeUpdateData()
     {
-        return [
-            'partner_id'                => $this->partnerId,
-            'emi_month'                 => $this->emi_month,
-            'interest'                  => $this->interest,
-            'bank_transaction_charge'   => $this->bank_transaction_charge,
-            'delivery_name'             => $this->delivery_name,
-            'delivery_mobile'           => $this->delivery_mobile,
-            'note'                      => $this->note,
-            'voucher_id'                => $this->voucher_id,
-            'delivery_address'          => $this->deliveryAddress,
-            'delivery_charge'           => $this->deliveryCharge,
-            'sales_channel_id'          => $this->salesChannelId,
-            'skus'                      => $this->skus,
-            'discount'                  => $this->discount
-        ];
+        $data = [];
+        if (isset($this->partnerId)) $data['partner_id']                                = $this->partnerId;
+        if (isset($this->emi_month)) $data['emi_month']                                 = $this->emi_month;
+        if (isset($this->interest)) $data['interest']                                   = $this->interest;
+        if (isset($this->bank_transaction_charge)) $data['bank_transaction_charge']     = $this->bank_transaction_charge;
+        if (isset($this->delivery_name)) $data['delivery_name']                         = $this->delivery_name;
+        if (isset($this->delivery_mobile)) $data['delivery_mobile']                     = $this->delivery_mobile;
+        if (isset($this->note)) $data['note']                                           = $this->note;
+        if (isset($this->voucher_id)) $data['voucher_id']                               = $this->voucher_id;
+        if (isset($this->deliveryAddress)) $data['delivery_address']                    = $this->deliveryAddress;
+        if (isset($this->deliveryCharge)) $data['delivery_charge']                      = $this->deliveryCharge;
+        if (isset($this->salesChannelId)) $data['sales_channel_id']                     = $this->salesChannelId;
+        if (isset($this->skus)) $data['skus']                                           = $this->skus;
+        if (isset($this->discount)) $data['discount']                                   = $this->discount;
+        return $data;
     }
 
     private function makeCreateData()
