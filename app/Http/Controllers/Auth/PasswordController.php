@@ -3,8 +3,8 @@
 use App\Exceptions\MailgunClientException;
 use App\Http\Controllers\Controller;
 use App\Models\Profile;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use Cache;
 use Exception;
 use Illuminate\Http\JsonResponse;
