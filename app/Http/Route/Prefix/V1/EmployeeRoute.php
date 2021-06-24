@@ -23,6 +23,7 @@ class EmployeeRoute
                     $api->post('update', 'Employee\EmployeeController@updateEmployee');
                     $api->post('emergency', 'Employee\EmployeeController@updateEmergencyInfo');
                     $api->get('emergency', 'Employee\EmployeeController@getEmergencyContactInfo');
+                    $api->get('personal', 'Employee\EmployeeController@getPersonalInfo');
                 });
             });
             //$api->post('password', 'Employee\EmployeeController@updateMyPassword');
