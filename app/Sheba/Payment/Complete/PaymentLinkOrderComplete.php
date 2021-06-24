@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Log;
 use LaravelFCM\Message\Exceptions\InvalidOptionsException;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\AccountingEntry\Repository\JournalCreateRepository;
 use Sheba\Dal\ExternalPayment\Model as ExternalPayment;
 use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\ExpenseTracker\AutomaticIncomes;
@@ -192,8 +193,8 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $payment_creator->credit($payment_data);
             if ($this->transaction->isPaidByCustomer()) {
                 $this->target->update(['interest' => 0, 'bank_transaction_charge' => 0]);
-                $this->storeAccountingJournal($payment_data);
             }
+            $this->storeAccountingJournal($payment_data);
         }
         if ($this->target instanceof ExternalPayment) {
             $this->target->payment_id = $this->payment->id;
@@ -208,6 +209,13 @@ class PaymentLinkOrderComplete extends PaymentComplete
             ->where('customer_id', $this->target->customer_id)
             ->with(['customer'])
             ->first();
+//        (new JournalCreateRepository())->setTypeId($payable->user->id)
+//            ->setSource($this->transaction)->setAmount($payable->amount)
+//            ->setDebitAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
+//            ->setCreditAccountKey((new Accounts())->income->sales::SALES_FROM_POS)
+//            ->setDetails("Entry For Wallet Transaction")
+//            ->setCommission($commission)->setEndPoint("api/journals/wallet")
+//            ->setReference($this->payment->id)->store();
         $data = [
             'customer_id' => $partner_pos_customer->customer_id,
             'customer_name' => $partner_pos_customer->details()["name"],

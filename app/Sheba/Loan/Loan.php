@@ -1071,7 +1071,7 @@ class Loan
         (new JournalCreateRepository())->setTypeId($this->partner->id)
             ->setSource($this->transaction)
             ->setAmount($fee)
-            ->setDebitAccountKey(LoanService::LOAN_SERVICE_CHARGE)
+            ->setDebitAccountKey((new Accounts())->expense->loan_service::LOAN_SERVICE_CHARGE)
             ->setCreditAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
             ->setDetails("Loan fee charge")
             ->setReference($loanId)
