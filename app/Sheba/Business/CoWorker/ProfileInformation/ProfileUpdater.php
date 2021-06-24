@@ -10,6 +10,7 @@ class ProfileUpdater
 {
     /** @var ProfileRequester $profile_requester*/
     private $profileRequester;
+    /** @var ProfileRepositoryInterface $profileRepository*/
     private $profileRepository;
     /*** @var BusinessMemberRepositoryInterface */
     private $businessMemberRepository;
