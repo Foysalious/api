@@ -6,12 +6,10 @@ use App\Models\Partner;
 use App\Models\PartnerPosSetting;
 use App\Models\PosCustomer;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
-use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
 use Sheba\Pos\Repositories\PosSettingRepository;
@@ -42,6 +40,7 @@ class SettingController extends Controller
                 $settings = PartnerPosSetting::byPartner($partner->id)->select('id', 'partner_id', 'vat_percentage', 'auto_printing', 'sms_invoice')->first();
             }
             $settings->vat_registration_number = $partner->basicInformations->vat_registration_number;
+            $settings['has_qr_code'] = ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0;
             removeRelationsAndFields($settings);
             return api_response($request, $settings,200, ['settings' => $settings]);
         } catch (Throwable $e) {
@@ -105,17 +104,16 @@ class SettingController extends Controller
         $partner = $request->partner;
         $this->setModifier($request->manager_resource);
         $customer = PosCustomer::find($request->customer_id);
-        $sms = (new SmsHandlerRepo('due-payment-collect-request'))->setVendor('infobip')
+        $sms = (new SmsHandlerRepo('due-payment-collect-request'))
             ->setBusinessType(BusinessType::SMANAGER)
             ->setFeatureType(FeatureType::POS)
             ->setMessage([
                 'partner_name' => $partner->name,
                 'due_amount' => $request->due_amount
             ]);
-        $sms_cost = $sms->getCost();
-        if ((double)$partner->wallet < (double)$sms_cost) {
-            throw new InsufficientBalanceException();
-        }
+        $sms_cost = $sms->estimateCharge();
+        if ((double)$partner->wallet < $sms_cost) throw new InsufficientBalanceException();
+
         $sms->send($customer->profile->mobile, [
             'partner_name' => $partner->name,
             'due_amount' => $request->due_amount

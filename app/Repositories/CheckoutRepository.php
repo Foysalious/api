@@ -5,12 +5,12 @@ use App\Models\Affiliation;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\CustomOrder;
-use App\Models\InfoCall;
+use Sheba\Dal\InfoCall\InfoCall;
 use App\Models\Job;
 use App\Models\Order;
 use App\Models\PartnerOrder;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use App\Models\PartnerServiceDiscount;
 use Sheba\Dal\Service\Service;
@@ -467,8 +467,8 @@ class CheckoutRepository
                 ->setBusinessType(BusinessType::MARKETPLACE)
                 ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
                 ->send($customer->profile->mobile, [
-                'order_code' => $order->code()
-            ]);
+                    'order_code' => $order->code()
+                ]);
         }
         (new NotificationRepository())->send($order);
     }
