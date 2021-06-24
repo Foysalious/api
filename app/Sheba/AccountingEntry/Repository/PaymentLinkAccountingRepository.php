@@ -168,8 +168,7 @@ class PaymentLinkAccountingRepository extends AccountingRepository
     public function store($userId)
     {
         try {
-            $payload = $this->makeData();
-            $payload->put('partner', $userId);
+            $payload = $this->makeData($userId);
             return $this->storeEntry($payload, EntryTypes::PAYMENT_LINK);
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
@@ -179,15 +178,14 @@ class PaymentLinkAccountingRepository extends AccountingRepository
     public function updatePaymentLinkEntry($userId)
     {
         try {
-            $payload = $this->makeData();
-            $payload->put('partner', $userId);
+            $payload = $this->makeData($userId);
             return $this->updateEntryBySource($payload, $this->source_id, $this->source_type);
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
     }
 
-    private function makeData()
+    private function makeData($userId)
     {
         if ($this->debit_account_key == null && $this->credit_account_key == null) {
             $this->setDebitAccountKey((new Accounts())->expense->paymentLinkServiceCharge::PAYMENT_LINK_SERVICE_CHARGE);
@@ -213,6 +211,7 @@ class PaymentLinkAccountingRepository extends AccountingRepository
         $data->reference = 'Entry using Payment Link';
         $data->note = $this->note;
         $data->details = $this->details;
+        $data->partner = $userId;
 
         return $data;
     }
