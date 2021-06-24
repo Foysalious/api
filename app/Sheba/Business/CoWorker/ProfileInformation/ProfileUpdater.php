@@ -35,26 +35,36 @@ class ProfileUpdater
 
     private function makeData()
     {
-        $profile_data = [
-            'name' => $this->profileRequester->getName(),
-            'gender' => $this->profileRequester->getGender()
-        ];
         $business_member = $this->profileRequester->getBusinessMember();
         $profile = $business_member->member->profile;
+        $profile_data = $this->updateProfile();
+        $business_member_data = $this->updateBusinessMember();
         $this->profileRepository->updateRaw($profile, $profile_data);
-        $designation = $this->profileRequester->getDesignation();
-        $department = $this->profileRequester->getDepartment();
-        $business_role = $this->getBusinessRole($department, $designation);
-        $business_member_data = [
-            'business_role_id' => $business_role->id,
-            'join_date' => $this->profileRequester->getJoiningDate()
-        ];
         $this->businessMemberRepository->update($business_member, $business_member_data);
     }
 
     private function getBusinessRole($department, $designation)
     {
         return (new GetBusinessRole($department, $designation))->get();
+    }
+
+    private function updateProfile()
+    {
+        return [
+            'name' => $this->profileRequester->getName(),
+            'gender' => $this->profileRequester->getGender()
+        ];
+    }
+
+    private function updateBusinessMember()
+    {
+        $designation = $this->profileRequester->getDesignation();
+        $department = $this->profileRequester->getDepartment();
+        $business_role = $this->getBusinessRole($department, $designation);
+        return [
+            'business_role_id' => $business_role->id,
+            'join_date' => $this->profileRequester->getJoiningDate()
+        ];
     }
 
 }
