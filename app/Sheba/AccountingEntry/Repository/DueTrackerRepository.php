@@ -121,6 +121,9 @@ class DueTrackerRepository extends BaseRepository
             $order_by = $request->order_by;
             $result = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
             $list = $this->attachProfile(collect($result['list']));
+            $list = $list->filter(function($item) {
+                return $item !== null;
+            });
             if ($request->has('filter_by_supplier') && $request->filter_by_supplier == 1) {
                 $list = $list->where('is_supplier', 1)->values();
             }
