@@ -187,7 +187,7 @@ class PaymentLinkTransaction
         if ($this->paymentLink->isEmi()) {
             $this->fee = $this->paymentLink->isOld() || $this->isPaidByPartner() ? $this->paymentLink->getBankTransactionCharge() + $this->tax : $this->paymentLink->getBankTransactionCharge() - $this->paymentLink->getPartnerProfit();
         } else {
-            $realAmount = ($this->amount - $this->tax - $this->getPartnerProfit()) / (100 + $this->linkCommission) * 100;
+            $realAmount = $this->paymentLink->getRealAmount() !== null ? $this->paymentLink->getRealAmount() : $this->calculateRealAmount();
             $this->fee  = $this->paymentLink->isOld() || $this->isPaidByPartner() ? round(($this->amount * $this->linkCommission / 100) + $this->tax, 2) : round(($realAmount * $this->linkCommission / 100) + $this->tax, 2);
 
         }
@@ -211,6 +211,16 @@ class PaymentLinkTransaction
             }
         }
         return $this;
+    }
+
+    /**
+     * @return float
+     */
+    private function calculateRealAmount(): float
+    {
+        $amount_after_tax_profit = $this->amount - $this->getPartnerProfit() - 3;
+        $real_amount = ( 100 * $amount_after_tax_profit) / 102;
+        return round($real_amount, 2);
     }
 
 }
