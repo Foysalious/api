@@ -162,6 +162,7 @@ class EmployeeController extends Controller
         $data = [
             'id' => $member->id,
             'business_id' => $business->id,
+            'business_member_id' => $business_member->id,
             'notification_count' => $member->notifications()->unSeen()->count(),
             'attendance' => [
                 'can_checkin' => !$attendance ? 1 : ($attendance->canTakeThisAction(Actions::CHECKIN) ? 1 : 0),
@@ -436,6 +437,8 @@ class EmployeeController extends Controller
         if ($profile_requester->hasError()) return api_response($request, null, $profile_requester->getErrorCode(), ['message' => $profile_requester->getErrorMessage()]);
 
         $profile_updater->setProfileRequester($profile_requester)->update();
+
+        return api_response($request, null, 200);
 
     }
 }
