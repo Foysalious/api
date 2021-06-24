@@ -4,6 +4,7 @@ namespace App\Sheba\AccountingEntry\Repository;
 
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
@@ -167,10 +168,14 @@ class PaymentLinkAccountingRepository extends AccountingRepository
     public function store($userId)
     {
         try {
-            $payload = collect($this->makeData());
-            $payload->put('partner', $userId);
-            Log::info(["store payment link", $payload]);
-            return $this->storeEntry($payload, EntryTypes::PAYMENT_LINK);
+            $payload = $this->makeData();
+            $payload['partner'] = $userId;
+            $collection = new Collection();
+            foreach ($payload as $item) {
+                $collection->push($item);
+            }
+            Log::info(["store payment link", $collection]);
+            return $this->storeEntry($collection, EntryTypes::PAYMENT_LINK);
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
@@ -179,10 +184,14 @@ class PaymentLinkAccountingRepository extends AccountingRepository
     public function updatePaymentLinkEntry($userId)
     {
         try {
-            $data = collect($this->makeData());
-            $data->put('partner', $userId);
-            Log::info(["updatePaymentLinkEntry", $data]);
-            return $this->updateEntryBySource($data, $this->source_id, $this->source_type);
+            $payload = $this->makeData();
+            $payload['partner'] = $userId;
+            $collection = new Collection();
+            foreach ($payload as $item) {
+                $collection->push($item);
+            }
+            Log::info(["updatePaymentLinkEntry", $collection]);
+            return $this->updateEntryBySource($collection, $this->source_id, $this->source_type);
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
