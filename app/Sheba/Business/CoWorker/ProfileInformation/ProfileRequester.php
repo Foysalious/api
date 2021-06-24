@@ -25,6 +25,9 @@ class ProfileRequester
     private $employeeType;
     private $grade;
     private $employeeId;
+    private $emergencyContactName;
+    private $emergencyContactMobile;
+    private $emergencyContactRelation;
 
     public function __construct()
     {
@@ -151,6 +154,39 @@ class ProfileRequester
     public function getGrade()
     {
         return $this->grade;
+    }
+
+    public function setEmergencyContactName($emergency_contact_name)
+    {
+        $this->emergencyContactName = $emergency_contact_name;
+        return $this;
+    }
+
+    public function getEmergencyContactName()
+    {
+        return $this->emergencyContactName;
+    }
+
+    public function setEmergencyContactMobile($emergency_contact_name)
+    {
+        $this->emergencyContactMobile = $emergency_contact_name ? formatMobile($emergency_contact_name) : null;
+        return $this;
+    }
+
+    public function getEmergencyContactMobile()
+    {
+        return $this->emergencyContactMobile;
+    }
+
+    public function setEmergencyContactRelation($emergency_contact_mobile)
+    {
+        $this->emergencyContactRelation = $emergency_contact_mobile;
+        return $this;
+    }
+
+    public function getEmergencyContactRelation()
+    {
+        return $this->emergencyContactRelation;
     }
 
     private function checkEmailUsedWithAnotherBusinessMember()

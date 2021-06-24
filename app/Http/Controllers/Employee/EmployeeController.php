@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Sheba\Business\BusinessBasicInformation;
+use App\Sheba\Business\CoWorker\ProfileInformation\EmergencyInfoUpdater;
 use App\Sheba\Business\CoWorker\ProfileInformation\EmployeeType;
 use App\Sheba\Business\CoWorker\ProfileInformation\OfficialInfoUpdater;
 use App\Sheba\Business\CoWorker\ProfileInformation\ProfileRequester;
@@ -52,6 +53,8 @@ class EmployeeController extends Controller
     private $accounts;
     /*** @var BusinessMember */
     private $businessMember;
+    /*** @var ProfileRequester $profileRequester*/
+    private $profileRequester;
 
     /**
      * EmployeeController constructor.
@@ -67,6 +70,7 @@ class EmployeeController extends Controller
         $this->approvalRequestRepo = $approval_request_repository;
         $this->accounts = $accounts;
         $this->businessMember = app(BusinessMember::class);
+        $this->profileRequester = app(ProfileRequester::class);
     }
 
     public function me(Request $request)
@@ -409,7 +413,7 @@ class EmployeeController extends Controller
         return api_response($request, null, 200, ['official_info' => $employee_official_details]);
     }
 
-    public function updateEmployee($business_member_id, Request $request, ProfileRequester $profile_requester, ProfileUpdater $profile_updater)
+    public function updateEmployee($business_member_id, Request $request, ProfileUpdater $profile_updater)
     {
         $this->validate($request, [
             'name' => 'required|string',
@@ -417,7 +421,7 @@ class EmployeeController extends Controller
             'department' => 'required|string',
             'designation' => 'required|string',
             'joining_date' => 'required|date',
-            'gender' => 'required|string'
+            'gender' => 'required|string|in::Female,Male,Other'
         ]);
 
         $business_member = $this->getBusinessMember($request);
@@ -427,7 +431,7 @@ class EmployeeController extends Controller
         $member = $this->repo->find($business_member['member_id']);
         $this->setModifier($member);
 
-        $profile_requester
+        $this->profileRequester
             ->setBusinessMember($employee)
             ->setName($request->name)
             ->setEmail($request->email)
@@ -436,15 +440,15 @@ class EmployeeController extends Controller
             ->setJoiningDate($request->joining_date)
             ->setGender($request->gender);
 
-        if ($profile_requester->hasError()) return api_response($request, null, $profile_requester->getErrorCode(), ['message' => $profile_requester->getErrorMessage()]);
+        if ($this->profileRequester->hasError()) return api_response($request, null, $this->profileRequester->getErrorCode(), ['message' => $this->profileRequester->getErrorMessage()]);
 
-        $profile_updater->setProfileRequester($profile_requester)->update();
+        $profile_updater->setProfileRequester($this->profileRequester)->update();
 
         return api_response($request, null, 200);
 
     }
 
-    public function updateOfficialInfo($business_member_id, Request $request, ProfileRequester $profile_requester, OfficialInfoUpdater $official_info_updater)
+    public function updateOfficialInfo($business_member_id, Request $request, OfficialInfoUpdater $official_info_updater)
     {
         $this->validate($request, [
             'manager' => 'required|numeric',
@@ -460,14 +464,41 @@ class EmployeeController extends Controller
         $member = $this->repo->find($business_member['member_id']);
         $this->setModifier($member);
 
-        $profile_requester
+        $this->profileRequester
             ->setBusinessMember($employee)
             ->setManager($request->manager)
             ->setEmployeeType($request->employee_type)
             ->setEmployeeId($request->employee_id)
             ->setGrade($request->grade);
 
-        $official_info_updater->setProfileRequester($profile_requester)->update();
+        $official_info_updater->setProfileRequester($this->profileRequester)->update();
+
+        return api_response($request, null, 200);
+
+    }
+
+    public function updateEmergencyInfo($business_member_id, Request $request, EmergencyInfoUpdater $emergency_info_updater)
+    {
+        $this->validate($request, [
+            'name' => 'sometimes|required|string',
+            'mobile' => 'sometimes|required|mobile:bd',
+            'relationship' => 'sometimes|required|string',
+        ]);
+
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $employee = $this->businessMember->find($business_member_id);
+        if (!$employee) return api_response($request, null, 404);
+        $member = $this->repo->find($business_member['member_id']);
+        $this->setModifier($member);
+
+        $this->profileRequester
+            ->setBusinessMember($employee)
+            ->setEmergencyContactName($request->name)
+            ->setEmergencyContactMobile($request->mobile)
+            ->setEmergencyContactRelation($request->relationship);
+
+        $emergency_info_updater->setProfileRequester($this->profileRequester)->update();
 
         return api_response($request, null, 200);
 
