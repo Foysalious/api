@@ -63,11 +63,12 @@ class AccountingRepository extends BaseRepository
     public function updateEntryBySource($request, $sourceId, $sourceType)
     {
         $this->getCustomer($request);
-        $this->setModifier($request->partner);
+        $partner = $this->getPartner($request);
+        $this->setModifier($partner);
         $data = $this->createEntryData($request, $sourceType, $sourceId);
         $url = "api/entries/source/" . $sourceType . '/' . $sourceId;
         try {
-            return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
+            return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->post($url, $data);
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
@@ -89,7 +90,7 @@ class AccountingRepository extends BaseRepository
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
     }
-    
+
     /**
      * @param $request
      * @return mixed
