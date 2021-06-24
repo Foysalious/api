@@ -5,6 +5,7 @@ namespace App\Sheba\AccountingEntry\Repository;
 use App\Models\Partner;
 use App\Sheba\AccountingEntry\Constants\UserType;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Statics\IncomeExpenseStatics;
 use Sheba\RequestIdentification;
@@ -63,6 +64,7 @@ class AccountingRepository extends BaseRepository
     public function updateEntryBySource($request, $sourceId, $sourceType)
     {
         $this->getCustomer($request);
+        Log::info(["checking request", $request]);
         $partner = $this->getPartner($request);
         $this->setModifier($partner);
         $data = $this->createEntryData($request, $sourceType, $sourceId);
@@ -150,7 +152,6 @@ class AccountingRepository extends BaseRepository
      * @param $request
      * @param $type
      * @param null $type_id
-     * @param bool $default
      * @return array
      */
     private function createEntryData($request, $type, $type_id = null): array
@@ -163,13 +164,13 @@ class AccountingRepository extends BaseRepository
         $data['amount_cleared'] = $request->amount_cleared;
         $data['debit_account_key'] = $request->to_account_key; // to = debit = je account e jabe
         $data['credit_account_key'] = $request->from_account_key; // from = credit = je account theke jabe
-        $data['customer_id'] = $request->customer_id;
-        $data['customer_name'] = $request->customer_name;
+        $data['customer_id'] = $request->has('customer_id') ? $request->customer_id : null;
+        $data['customer_name'] = $request->has('customer_id') ? $request->customer_name : null;
         $data['inventory_products'] = $request->has("inventory_products") ? $request->inventory_products : null;
         $data['entry_at'] = $request->has("date") ? $request->date : Carbon::now()->format('Y-m-d H:i:s');
         $data['attachments'] = $this->uploadAttachments($request);
         $data['total_discount'] = $request->has("total_discount") ? (double)$request->total_discount : null;
-        $data['total_vat'] = $request->total_vat ? (double)$request->total_vat : null;
+        $data['total_vat'] = $request->has('total_vat') ? (double)$request->total_vat : null;
         $data['bank_transaction_charge'] = $request->has("bank_transaction_charge") ? $request->bank_transaction_charge : null;
         $data['interest'] = $request->has("interest") ? $request->interest : null;
         $data['details'] = $request->has("details") ? $request->details : null;
