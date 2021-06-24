@@ -1,6 +1,5 @@
 <?php namespace App\Transformers\Partner;
 
-
 use League\Fractal\TransformerAbstract;
 use Sheba\Sms\AdaReach;
 use Sheba\Sms\Infobip;
@@ -11,6 +10,7 @@ class WebstoreSettingsTransformer extends TransformerAbstract
     public function transform($partner)
     {
         $banner_settings = PartnerWebstoreBanner::where('partner_id', $partner->id)->first();
+        
         return [
             'name' => $partner->name,
             'sub_domain' => $partner->sub_domain,
@@ -23,11 +23,11 @@ class WebstoreSettingsTransformer extends TransformerAbstract
             'wallet' => $partner->wallet,
             'single_sms_cost' => 0.30, //TODO: have to remove value
             'is_webstore_sms_active' => $partner->is_webstore_sms_active,
-              'banner' => $banner_settings ? [
-                'id'       => $banner_settings->id,
+            'banner' => $banner_settings ? [
+                'id' => $banner_settings->id,
                 'banner_id' => $banner_settings->banner_id,
                 'image_link' => $banner_settings->banner->image_link,
-                'title'    => $banner_settings->title,
+                'title' => $banner_settings->title,
                 'description' => $banner_settings->description,
                 'is_published' => $banner_settings->is_published
             ] : null,
