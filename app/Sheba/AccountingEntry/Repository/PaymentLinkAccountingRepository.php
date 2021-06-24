@@ -171,8 +171,8 @@ class PaymentLinkAccountingRepository extends AccountingRepository
             $payload = $this->makeData();
             $payload['partner'] = $userId;
             $collection = new Collection();
-            foreach ($payload as $item) {
-                $collection->push($item);
+            foreach ($payload as $key => $item) {
+                $collection->put($key, $item);
             }
             Log::info(["store payment link", $collection]);
             return $this->storeEntry($collection, EntryTypes::PAYMENT_LINK);
@@ -187,8 +187,8 @@ class PaymentLinkAccountingRepository extends AccountingRepository
             $payload = $this->makeData();
             $payload['partner'] = $userId;
             $collection = new Collection();
-            foreach ($payload as $item) {
-                $collection->push($item);
+            foreach ($payload as $key => $item) {
+                $collection->put($key, $item);
             }
             Log::info(["updatePaymentLinkEntry", $collection]);
             return $this->updateEntryBySource($collection, $this->source_id, $this->source_type);
