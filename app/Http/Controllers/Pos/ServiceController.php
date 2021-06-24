@@ -8,7 +8,6 @@ use App\Transformers\PosServiceTransformer;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use League\Fractal\Serializer\ArraySerializer;
@@ -38,7 +37,7 @@ class ServiceController extends Controller
         try {
             $partner = $request->partner;
             $services = [];
-            $base_query = PartnerPosService::with('discounts')->published();
+            $base_query = PartnerPosService::with('discounts', 'stock')->published();
 
             if ($request->has('category_id') && !empty($request->category_id)) {
                 $category_ids = explode(',', $request->category_id);
@@ -56,7 +55,7 @@ class ServiceController extends Controller
                         'price' => $service->price,
                         'wholesale_applicable' => $service->wholesale_price > 0 ? 1 : 0,
                         'wholesale_price' => $service->wholesale_price,
-                        'stock' => $service->stock,
+                        'stock' => $service->stock()->get()->sum('stock'),
                         'unit' => $service->unit,
                         'discount_applicable' => $service->discount() ? true : false,
                         'discounted_price' => $service->discount() ? $service->getDiscountedAmount() : 0,
@@ -98,7 +97,7 @@ class ServiceController extends Controller
     public function show($partner, $service, Request $request)
     {
         try {
-            $service = PartnerPosService::with('category', 'discounts')->find($service);
+            $service = PartnerPosService::with('category', 'discounts', 'stock')->find($service);
             if (!$service) return api_response($request, null, 404);
             $partner = $service->partner;
             $manager = new Manager();
