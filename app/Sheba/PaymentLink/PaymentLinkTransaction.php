@@ -6,6 +6,7 @@ namespace Sheba\PaymentLink;
 use App\Models\Payment;
 use App\Sheba\AccountingEntry\Repository\PaymentLinkAccountingRepository;
 use App\Sheba\AccountingEntry\Repository\PaymentLinkRepository;
+use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Transactions\Types;
@@ -227,6 +228,7 @@ class PaymentLinkTransaction
     private function storePaymentLinkEntry($amount, $feeTransaction, $interest) {
         /** @var PaymentLinkAccountingRepository $paymentLinkRepo */
         $paymentLinkRepo =  app(PaymentLinkAccountingRepository::class);
+        Log::info(["payment link charges", $amount, $feeTransaction, $interest]);
         $paymentLinkRepo->setAmount($amount)
             ->setBankTransactionCharge($feeTransaction)
             ->setInterest($interest)

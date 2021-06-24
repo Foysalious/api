@@ -23,8 +23,10 @@ class AccountingRepository extends BaseRepository
         $this->getCustomer($request);
         $partner = $this->getPartner($request);
         $this->setModifier($partner);
+        Log::info(["checking request", $request]);
         $data = $this->createEntryData($request, $type, $request->source_id);
         $url = "api/entries/";
+        Log::info(["checking data before store", $data]);
         try {
             return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->post($url, $data);
         } catch (AccountingEntryServerError $e) {
@@ -69,6 +71,7 @@ class AccountingRepository extends BaseRepository
         $this->setModifier($partner);
         $data = $this->createEntryData($request, $sourceType, $sourceId);
         $url = "api/entries/source/" . $sourceType . '/' . $sourceId;
+        Log::info(["checking data before update by source", $data]);
         try {
             return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->post($url, $data);
         } catch (AccountingEntryServerError $e) {
