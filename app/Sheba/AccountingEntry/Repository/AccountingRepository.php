@@ -171,7 +171,7 @@ class AccountingRepository extends BaseRepository
         $data['entry_at'] = $request->has("date") ? $request->date : Carbon::now()->format('Y-m-d H:i:s');
         $data['attachments'] = $this->uploadAttachments($request);
         $data['total_discount'] = $request->has("total_discount") ? (double)$request->total_discount : null;
-        $data['total_vat'] = $request->total_vat ? (double)$request->total_vat : null;
+        $data['total_vat'] = $request->has('total_vat') ? (double)$request->total_vat : null;
         $data['bank_transaction_charge'] = $request->has("bank_transaction_charge") ? $request->bank_transaction_charge : null;
         $data['interest'] = $request->has("interest") ? $request->interest : null;
         $data['details'] = $request->has("details") ? $request->details : null;
