@@ -53,7 +53,7 @@ class PolicyRuleRequester
     {
         $rules = json_decode($rules, 1);
         $this->rules = $rules;
-        $this->checkValidation();
+        if ($this->isEnable) $this->checkValidation();
         return $this;
     }
 

@@ -1,7 +1,7 @@
 <?php namespace App\Http\Controllers;
 
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\Sms\Sms;
@@ -11,12 +11,6 @@ class SmsController extends Controller
 {
     const FROM_BONDHU = 'bondhu';
     const FROM_MARKETPLACE = 'marketplace';
-    private $sms;
-
-    public function __construct(Sms $sms)
-    {
-        $this->sms = $sms;
-    }
 
     /**
      * @param Request $request
@@ -46,7 +40,7 @@ class SmsController extends Controller
             $sms_text = "Download Sheba MarketPlace App https://play.google.com/store/apps/details?id=xyz.sheba.customersapp&hl=en";
         }
 
-        $this->sms
+        (new Sms())
             ->setFeatureType(FeatureType::MARKETING)
             ->setBusinessType($business_type)
             ->shoot($request->mobile, $sms_text);
