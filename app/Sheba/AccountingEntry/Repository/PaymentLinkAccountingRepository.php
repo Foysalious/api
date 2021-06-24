@@ -169,13 +169,8 @@ class PaymentLinkAccountingRepository extends AccountingRepository
     {
         try {
             $payload = $this->makeData();
-            $payload['partner'] = $userId;
-            $collection = new Collection();
-            foreach ($payload as $key => $item) {
-                $collection->put($key, $item);
-            }
-            Log::info(["store payment link", $collection]);
-            return $this->storeEntry($collection, EntryTypes::PAYMENT_LINK);
+            $payload->put('partner', $userId);
+            return $this->storeEntry($payload, EntryTypes::PAYMENT_LINK);
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
@@ -185,13 +180,8 @@ class PaymentLinkAccountingRepository extends AccountingRepository
     {
         try {
             $payload = $this->makeData();
-            $payload['partner'] = $userId;
-            $collection = new Collection();
-            foreach ($payload as $key => $item) {
-                $collection->put($key, $item);
-            }
-            Log::info(["updatePaymentLinkEntry", $collection]);
-            return $this->updateEntryBySource($collection, $this->source_id, $this->source_type);
+            $payload->put('partner', $userId);
+            return $this->updateEntryBySource($payload, $this->source_id, $this->source_type);
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
@@ -208,21 +198,21 @@ class PaymentLinkAccountingRepository extends AccountingRepository
                 $this->setCreditAccountKey((new Accounts())->income->incomeFromPaymentLink::INCOME_FROM_PAYMENT_LINK);
             }
         }
-
-        $data['customer_id'] = $this->customer_id;
-        $data['customer_name'] = $this->customer_name;
-        $data['amount'] = $this->amount;
-        $data['amount_cleared'] = $this->amount_cleared;
-        $data['entry_at'] = Carbon::now()->format('Y-m-d H:i:s');
-        $data['bank_transaction_charge'] = $this->bank_transaction_charge;
-        $data['interest'] = $this->interest;
-        $data['source_id'] = $this->source_id;
-        $data['source_type'] = $this->source_type;
-        $data['debit_account_key'] = $this->debit_account_key;
-        $data['credit_account_key'] = $this->credit_account_key;
-        $data['reference'] = 'Entry using Payment Link';
-        $data['note'] = $this->note;
-        $data['details'] = $this->details;
+        $data = collect();
+        $data->customer_id = $this->customer_id;
+        $data->customer_name = $this->customer_name;
+        $data->amount = $this->amount;
+        $data->amount_cleared = $this->amount_cleared;
+        $data->entry_at = Carbon::now()->format('Y-m-d H:i:s');
+        $data->bank_transaction_charge = $this->bank_transaction_charge;
+        $data->interest = $this->interest;
+        $data->source_id = $this->source_id;
+        $data->source_type = $this->source_type;
+        $data->debit_account_key = $this->debit_account_key;
+        $data->credit_account_key = $this->credit_account_key;
+        $data->reference = 'Entry using Payment Link';
+        $data->note = $this->note;
+        $data->details = $this->details;
 
         return $data;
     }
