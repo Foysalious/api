@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Sheba\Business\BusinessBasicInformation;
+use App\Sheba\Business\CoWorker\ProfileInformation\EmployeeType;
 use App\Sheba\Business\CoWorker\ProfileInformation\OfficialInfoUpdater;
 use App\Sheba\Business\CoWorker\ProfileInformation\ProfileRequester;
 use App\Sheba\Business\CoWorker\ProfileInformation\ProfileUpdater;
@@ -447,7 +448,7 @@ class EmployeeController extends Controller
     {
         $this->validate($request, [
             'manager' => 'required|numeric',
-            'employee_type' => 'required|string',
+            'employee_type' => 'required|string|in:'.implode(',', EmployeeType::get()),
             'employee_id' => 'required',
             'grade' => 'required'
         ]);
