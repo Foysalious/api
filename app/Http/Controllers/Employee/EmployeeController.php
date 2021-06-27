@@ -4,9 +4,16 @@ use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Sheba\Business\BusinessBasicInformation;
+use App\Sheba\Business\CoWorker\ProfileInformation\EmergencyInfoUpdater;
+use App\Sheba\Business\CoWorker\ProfileInformation\EmployeeType;
+use App\Sheba\Business\CoWorker\ProfileInformation\OfficialInfoUpdater;
+use App\Sheba\Business\CoWorker\ProfileInformation\ProfileRequester;
+use App\Sheba\Business\CoWorker\ProfileInformation\ProfileUpdater;
 use App\Transformers\Business\CoWorkerMinimumTransformer;
+use App\Transformers\Business\EmergencyContactInfoTransformer;
 use App\Transformers\Business\FinancialInfoTransformer;
 use App\Transformers\Business\OfficialInfoTransformer;
+use App\Transformers\Business\PersonalInfoTransformer;
 use App\Transformers\BusinessEmployeeDetailsTransformer;
 use App\Transformers\BusinessEmployeesTransformer;
 use App\Transformers\CustomSerializer;
@@ -48,6 +55,8 @@ class EmployeeController extends Controller
     private $accounts;
     /*** @var BusinessMember */
     private $businessMember;
+    /*** @var ProfileRequester $profileRequester*/
+    private $profileRequester;
 
     /**
      * EmployeeController constructor.
@@ -63,6 +72,7 @@ class EmployeeController extends Controller
         $this->approvalRequestRepo = $approval_request_repository;
         $this->accounts = $accounts;
         $this->businessMember = app(BusinessMember::class);
+        $this->profileRequester = app(ProfileRequester::class);
     }
 
     public function me(Request $request)
@@ -160,6 +170,7 @@ class EmployeeController extends Controller
         $data = [
             'id' => $member->id,
             'business_id' => $business->id,
+            'business_member_id' => $business_member->id,
             'notification_count' => $member->notifications()->unSeen()->count(),
             'attendance' => [
                 'can_checkin' => !$attendance ? 1 : ($attendance->canTakeThisAction(Actions::CHECKIN) ? 1 : 0),
@@ -402,5 +413,122 @@ class EmployeeController extends Controller
         $resource = new Item($employee, new OfficialInfoTransformer());
         $employee_official_details = $manager->createData($resource)->toArray()['data'];
         return api_response($request, null, 200, ['official_info' => $employee_official_details]);
+    }
+
+    public function updateEmployee($business_member_id, Request $request, ProfileUpdater $profile_updater)
+    {
+        $this->validate($request, [
+            'name' => 'required|string',
+            'email' => 'required|string',
+            'department' => 'required|string',
+            'designation' => 'required|string',
+            'joining_date' => 'required|date',
+            'gender' => 'required|string|in::Female,Male,Other'
+        ]);
+
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $employee = $this->businessMember->find($business_member_id);
+        if (!$employee) return api_response($request, null, 404);
+        $member = $this->repo->find($business_member['member_id']);
+        $this->setModifier($member);
+
+        $this->profileRequester
+            ->setBusinessMember($employee)
+            ->setName($request->name)
+            ->setEmail($request->email)
+            ->setDepartment($request->department)
+            ->setDesignation($request->designation)
+            ->setJoiningDate($request->joining_date)
+            ->setGender($request->gender);
+
+        if ($this->profileRequester->hasError()) return api_response($request, null, $this->profileRequester->getErrorCode(), ['message' => $this->profileRequester->getErrorMessage()]);
+
+        $profile_updater->setProfileRequester($this->profileRequester)->update();
+
+        return api_response($request, null, 200);
+
+    }
+
+    public function updateOfficialInfo($business_member_id, Request $request, OfficialInfoUpdater $official_info_updater)
+    {
+        $this->validate($request, [
+            'manager' => 'required|numeric',
+            'employee_type' => 'required|string|in:'.implode(',', EmployeeType::get()),
+            'employee_id' => 'required',
+            'grade' => 'required'
+        ]);
+
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $employee = $this->businessMember->find($business_member_id);
+        if (!$employee) return api_response($request, null, 404);
+        $member = $this->repo->find($business_member['member_id']);
+        $this->setModifier($member);
+
+        $this->profileRequester
+            ->setBusinessMember($employee)
+            ->setManager($request->manager)
+            ->setEmployeeType($request->employee_type)
+            ->setEmployeeId($request->employee_id)
+            ->setGrade($request->grade);
+
+        $official_info_updater->setProfileRequester($this->profileRequester)->update();
+
+        return api_response($request, null, 200);
+
+    }
+
+    public function updateEmergencyInfo($business_member_id, Request $request, EmergencyInfoUpdater $emergency_info_updater)
+    {
+        $this->validate($request, [
+            'name' => 'sometimes|required|string',
+            'mobile' => 'sometimes|required|mobile:bd',
+            'relationship' => 'sometimes|required|string',
+        ]);
+
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $employee = $this->businessMember->find($business_member_id);
+        if (!$employee) return api_response($request, null, 404);
+        $member = $this->repo->find($business_member['member_id']);
+        $this->setModifier($member);
+
+        $this->profileRequester
+            ->setBusinessMember($employee)
+            ->setEmergencyContactName($request->name)
+            ->setEmergencyContactMobile($request->mobile)
+            ->setEmergencyContactRelation($request->relationship);
+
+        $emergency_info_updater->setProfileRequester($this->profileRequester)->update();
+
+        return api_response($request, null, 200);
+
+    }
+
+    public function getEmergencyContactInfo($business_member_id, Request $request)
+    {
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $employee = $this->businessMember->find($business_member_id);
+        if (!$employee) return api_response($request, null, 404);
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Item($employee, new EmergencyContactInfoTransformer());
+        $employee_emergency_details = $manager->createData($resource)->toArray()['data'];
+        return api_response($request, null, 200, ['emergency_contact_info' => $employee_emergency_details]);
+    }
+
+    public function getPersonalInfo($business_member_id, Request $request)
+    {
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $employee = $this->businessMember->find($business_member_id);
+        if (!$employee) return api_response($request, null, 404);
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Item($employee, new PersonalInfoTransformer());
+        $employee_emergency_details = $manager->createData($resource)->toArray()['data'];
+        return api_response($request, null, 200, ['emergency_contact_info' => $employee_emergency_details]);
     }
 }

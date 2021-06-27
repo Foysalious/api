@@ -4,6 +4,7 @@
 use App\Http\Controllers\Controller;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\AccountingRepository;
+use App\Sheba\AccountingEntry\Repository\PaymentLinkAccountingRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;

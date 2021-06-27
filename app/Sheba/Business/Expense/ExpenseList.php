@@ -32,6 +32,7 @@ class ExpenseList
               'food' => 0,
               'other' => 0,
               'amount' => 0,
+              'created_at' => null,
               'year' => null,
               'month' => null,
               'employee_name' => null,
@@ -51,11 +52,14 @@ class ExpenseList
                 if ($expense_breakdown->type === 'other') {
                     $expense_summary['other'] = $expense_breakdown->amount;
                 }
+                if (!$expense_summary['created_at']) {
+                    $expense_summary['created_at'] = $expense_breakdown->created_at->format('F');;
+                }
                 if (!$expense_summary['year']) {
                     $expense_summary['year'] = $expense_breakdown->year;
                 }
                 if (!$expense_summary['month']) {
-                    $expense_summary['month'] = $expense_breakdown->created_at->format('F');
+                    $expense_summary['month'] = $expense_breakdown->month;
                 }
                 if (!$expense_summary['employee_name']) {
                     $member = $expense_breakdown->member;

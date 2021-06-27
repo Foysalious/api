@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Sheba\AccountingEntry\Repository;
 
 use App\Models\PartnerPosCustomer;
@@ -86,12 +87,15 @@ class DueTrackerRepository extends BaseRepository
         try {
             $url = "api/entries/" . $this->entry_id;
             $data = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
-            if($data["attachments"]) {
+            if ($data["attachments"]) {
                 $data["attachments"] = json_decode($data["attachments"]);
             }
-            if($data["customer_id"]) {
+            if ($data["customer_id"]) {
                 /** @var PartnerPosCustomer $partner_pos_customer */
-                $partner_pos_customer = PartnerPosCustomer::where('partner_id', $this->partner->id)->where('customer_id', $data["customer_id"])->first();
+                $partner_pos_customer = PartnerPosCustomer::where('partner_id', $this->partner->id)->where(
+                    'customer_id',
+                    $data["customer_id"]
+                )->first();
                 $customer_details = $partner_pos_customer->details();
                 $data["customer_details"] = $customer_details;
             } else {
@@ -117,6 +121,9 @@ class DueTrackerRepository extends BaseRepository
             $order_by = $request->order_by;
             $result = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
             $list = $this->attachProfile(collect($result['list']));
+            $list = $list->reject(function ($value) {
+                return $value == null;
+            });
             if ($request->has('filter_by_supplier') && $request->filter_by_supplier == 1) {
                 $list = $list->where('is_supplier', 1)->values();
             }
@@ -140,8 +147,11 @@ class DueTrackerRepository extends BaseRepository
                 list($offset, $limit) = calculatePagination($request);
                 $list = $list->slice($offset)->take($limit)->values();
             }
+            $new_data = array();
+            foreach ($list as $l)
+                $new_data[] = $l;
             return [
-                'list' => $list
+                'list' => $new_data
             ];
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
@@ -173,21 +183,23 @@ class DueTrackerRepository extends BaseRepository
     public function getDueListByCustomer($request, $customerId): array
     {
         try {
-            $url = "api/due-list/".$customerId."?";
+            $url = "api/due-list/" . $customerId . "?";
             $url = $this->updateRequestParam($request, $url);
             $result = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
             $due_list = collect($result['list']);
 
-            $list   = $due_list->map(function ($item) {
-                if($item["attachments"]) {
-                    $item["attachments"] = json_decode($item["attachments"]);
+            $list = $due_list->map(
+                function ($item) {
+                    if ($item["attachments"]) {
+                        $item["attachments"] = json_decode($item["attachments"]);
+                    }
+                    $item['created_at'] = Carbon::parse($item['created_at'])->format('Y-m-d h:i A');
+                    $item['entry_at'] = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
+                    $pos_order = PosOrder::withTrashed()->find($item['source_id']);
+                    $item['partner_wise_order_id'] = $item['source_type'] === 'POS' && $pos_order ? $pos_order->partner_wise_order_id : null;
+                    return $item;
                 }
-                $item['created_at'] = Carbon::parse($item['created_at'])->format('Y-m-d h:i A');
-                $item['entry_at']   = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
-                $pos_order = PosOrder::withTrashed()->find($item['source_id']);
-                $item['partner_wise_order_id'] = $item['source_type'] === 'POS' && $pos_order ? $pos_order->partner_wise_order_id: null;
-                return $item;
-            });
+            );
 
             return [
                 'list' => $list
@@ -200,33 +212,38 @@ class DueTrackerRepository extends BaseRepository
     public function dueListBalanceByCustomer($request, $customerId)
     {
         try {
-        $partner_pos_customer = PartnerPosCustomer::byPartner($this->partner->id)->where('customer_id', $customerId)->with(['customer'])->first();
-        $customer             = PosCustomer::find($customerId);
-        if (!empty($partner_pos_customer)) {
-            $customer = $partner_pos_customer->customer;
-        }
-        if (empty($customer)) throw new InvalidPartnerPosCustomer();
-        $url = "api/due-list/".$customerId."/balance";
-        $result = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
-        $total_debit = $request['other_info']['total_debit'];
-        $total_credit = $request['other_info']['total_credit'];
-        $result['balance']['color'] = $total_debit  > $total_credit ? '#219653' : '#DC1E1E';
-        return [
-            'customer'   => [
-                'id'                => $customer->id,
-                'name'              => !empty($partner_pos_customer) && $partner_pos_customer->nick_name ? $partner_pos_customer->nick_name : $customer->profile->name,
-                'mobile'            => $customer->profile->mobile,
-                'avatar'            => $customer->profile->pro_pic,
-                'due_date_reminder' => !empty($partner_pos_customer) ? $partner_pos_customer->due_date_reminder : null,
-                'is_supplier' => !empty($partner_pos_customer) ? $partner_pos_customer->is_supplier : 0
-            ],
-            'partner'    => $this->getPartnerInfo($this->partner),
-            'stats'      => $result['stats'],
-            'other_info' => $result['other_info'],
-            'balance' => $result['balance']
-        ];
-            } catch (AccountingEntryServerError $e) {
-        throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+            $partner_pos_customer = PartnerPosCustomer::byPartner($this->partner->id)->where(
+                'customer_id',
+                $customerId
+            )->with(['customer'])->first();
+            $customer = PosCustomer::find($customerId);
+            if (!empty($partner_pos_customer)) {
+                $customer = $partner_pos_customer->customer;
+            }
+            if (empty($customer)) {
+                throw new InvalidPartnerPosCustomer();
+            }
+            $url = "api/due-list/" . $customerId . "/balance";
+            $result = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
+            $total_debit = $request['other_info']['total_debit'];
+            $total_credit = $request['other_info']['total_credit'];
+            $result['balance']['color'] = $total_debit > $total_credit ? '#219653' : '#DC1E1E';
+            return [
+                'customer' => [
+                    'id' => $customer->id,
+                    'name' => !empty($partner_pos_customer) && $partner_pos_customer->nick_name ? $partner_pos_customer->nick_name : $customer->profile->name,
+                    'mobile' => $customer->profile->mobile,
+                    'avatar' => $customer->profile->pro_pic,
+                    'due_date_reminder' => !empty($partner_pos_customer) ? $partner_pos_customer->due_date_reminder : null,
+                    'is_supplier' => !empty($partner_pos_customer) ? $partner_pos_customer->is_supplier : 0
+                ],
+                'partner' => $this->getPartnerInfo($this->partner),
+                'stats' => $result['stats'],
+                'other_info' => $result['other_info'],
+                'balance' => $result['balance']
+            ];
+        } catch (AccountingEntryServerError $e) {
+            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
     }
 
@@ -241,27 +258,30 @@ class DueTrackerRepository extends BaseRepository
                 $customerId = $item['party_id'];
                 /** @var PosCustomer $posCustomer */
                 $posCustomer = PosCustomer::find($customerId);
-                $profile_id = $posCustomer->profile_id;
-                /** @var Profile $profile */
-                $profile = Profile::select('name', 'mobile', 'id', 'pro_pic')->find($profile_id);
-                $customerId = $profile && isset($profile->posCustomer) ? $profile->posCustomer->id : null;
-                if (isset($customerId)) {
-                    $posProfile = PartnerPosCustomer::byPartner($this->partner->id)->where(
-                        'customer_id',
-                        $customerId
-                    )->first();
-                }
+                if ($posCustomer) {
+                    $profile_id = $posCustomer->profile_id;
+                    /** @var Profile $profile */
+                    $profile = Profile::select('name', 'mobile', 'id', 'pro_pic')->find($profile_id);
+                    $customerId = $profile && isset($profile->posCustomer) ? $profile->posCustomer->id : null;
+                    if (isset($customerId)) {
+                        $posProfile = PartnerPosCustomer::byPartner($this->partner->id)->where(
+                            'customer_id',
+                            $customerId
+                        )->first();
+                    }
 
-                if (isset($posProfile) && isset($posProfile->nick_name)) {
-                    $item['customer_name'] = $posProfile->nick_name;
-                } else {
-                    $item['customer_name'] = $profile ? $profile->name : "Unknown";
+                    if (isset($posProfile) && isset($posProfile->nick_name)) {
+                        $item['customer_name'] = $posProfile->nick_name;
+                    } else {
+                        $item['customer_name'] = $profile ? $profile->name : "Unknown";
+                    }
+                    $item['customer_mobile'] = $profile ? $profile->mobile : null;
+                    $item['avatar'] = $profile ? $profile->pro_pic : null;
+                    $item['customer_id'] = $customerId;
+                    $item['is_supplier'] = isset($posProfile) ? $posProfile->is_supplier : 0;
+                    return $item;
                 }
-                $item['customer_mobile'] = $profile ? $profile->mobile : null;
-                $item['avatar'] = $profile ? $profile->pro_pic : null;
-                $item['customer_id'] = $customerId;
-                $item['is_supplier'] = isset($posProfile) ? $posProfile->is_supplier : 0;
-                return $item;
+                return false;
             }
         );
         return $list;

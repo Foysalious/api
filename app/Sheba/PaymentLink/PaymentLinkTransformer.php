@@ -89,6 +89,11 @@ class PaymentLinkTransformer
         return isset($this->response->bankTransactionCharge) ? $this->response->bankTransactionCharge : null;
     }
 
+    public function getRealAmount()
+    {
+        return $this->response->realAmount ?? null;
+    }
+
     /**
      * @return HasWalletTransaction
      */
