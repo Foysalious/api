@@ -9,6 +9,7 @@ class Route
             $api->get('/channels', "Inventory\ChannelController@index");
             $api->get('/units', "Inventory\UnitController@index");
             $api->get('/partners/{sub_domain}', "Webstore\PartnerController@show");
+            $api->get('voucher-details/{voucher_id}', 'VoucherController@getVoucherDetails');
         });
 
    $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers', 'middleware' => ['jwtAccessToken']], function ($api) {
@@ -22,7 +23,7 @@ class Route
             });
 
             $api->get('warranty-units', 'Inventory\WarrantyUnitController@getWarrantyList');
-            $api->get('voucher-details/{voucher_id}', 'VoucherController@getVoucherDetails');
+
 
             $api->get('/category-tree', 'Inventory\CategoryController@allCategory');
             $api->group(['prefix' => 'products'], function ($api) {
