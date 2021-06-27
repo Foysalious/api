@@ -19,6 +19,8 @@ use App\Transformers\BusinessEmployeeDetailsTransformer;
 use App\Transformers\BusinessEmployeesTransformer;
 use App\Transformers\CustomSerializer;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\UploadedFile;
+use Intervention\Image\Image;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
@@ -517,12 +519,18 @@ class EmployeeController extends Controller
 
     public function updatePersonalInfo($business_member_id, Request $request, PersonalInfoUpdater $personal_info_updater)
     {
-        $this->validate($request, [
+        $validation_data = [
             'mobile' => 'mobile:bd',
             'dob' => 'date',
-        ]);
+        ];
 
-        $business_member = $this->getBusinessMember($request);
+        $validation_data['nid_front'] = $this->isFile($request->nid_front) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
+        $validation_data['nid_back'] = $this->isFile($request->nid_back) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
+        $validation_data['passport_image'] = $this->isFile($request->passport_image) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
+
+        $this->validate($request,$validation_data);
+
+            $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
         $employee = $this->businessMember->find($business_member_id);
         if (!$employee) return api_response($request, null, 404);
@@ -538,12 +546,21 @@ class EmployeeController extends Controller
             ->setNidNo($request->nid_no)
             ->setPassportNo($request->passport_no)
             ->setBloodGroup($request->blood_group)
-            ->setSocialLinks($request->social_links);
+            ->setSocialLinks($request->social_links)
+            ->setNidFrontImage($request->nid_front)
+            ->setNidBackImage($request->nid_back)
+            ->setPassportImage($request->passport_image);
 
         if ($this->profileRequester->hasError()) return api_response($request, null, $this->profileRequester->getErrorCode(), ['message' => $this->profileRequester->getErrorMessage()]);
 
         $personal_info_updater->setProfileRequester($this->profileRequester)->update();
 
         return api_response($request, null, 200);
+    }
+
+    private function isFile($file)
+    {
+        if ($file instanceof Image || $file instanceof UploadedFile) return true;
+        return false;
     }
 }

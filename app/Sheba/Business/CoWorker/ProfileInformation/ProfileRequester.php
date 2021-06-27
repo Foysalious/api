@@ -2,6 +2,8 @@
 
 
 use App\Models\BusinessMember;
+use Illuminate\Http\UploadedFile;
+use Intervention\Image\Image;
 use Sheba\Helpers\HasErrorCodeAndMessage;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
@@ -39,6 +41,9 @@ class ProfileRequester
     private $socialLinks;
     /*** @var BusinessMemberRepositoryInterface */
     private $businessMemberRepository;
+    private $nidFrontImage;
+    private $nidBackImage;
+    private $passportImage;
 
     public function __construct()
     {
@@ -204,7 +209,7 @@ class ProfileRequester
     public function setMobile($mobile)
     {
         $this->mobile = $mobile ? formatMobile($mobile) : null;
-        $this->checkMobileUsedWithAnotherBusinessMember();
+        if ($this->mobile) $this->checkMobileUsedWithAnotherBusinessMember();
         return $this;
     }
 
@@ -288,6 +293,39 @@ class ProfileRequester
     public function getSocialLinks()
     {
         return $this->socialLinks;
+    }
+
+    public function setNidFrontImage($nid_front_image)
+    {
+        $this->nidFrontImage = $nid_front_image;
+        return $this;
+    }
+
+    public function getNidFrontImage()
+    {
+        return $this->nidFrontImage;
+    }
+
+    public function setNidBackImage($nid_back_image)
+    {
+        $this->nidBackImage = $nid_back_image;
+        return $this;
+    }
+
+    public function getNidBackImage()
+    {
+        return $this->nidBackImage;
+    }
+
+    public function setPassportImage($passport_image)
+    {
+        $this->passportImage = $passport_image;
+        return $this;
+    }
+
+    public function getPassportImage()
+    {
+        return $this->passportImage;
     }
 
     private function checkEmailUsedWithAnotherBusinessMember()
