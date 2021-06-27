@@ -1,36 +1,34 @@
 <?php namespace App\Jobs;
 
-use App\Http\Requests\Request;
-use App\Jobs\Job;
-
-use Sheba\Sms\BusinessType;
-use Sheba\Sms\FeatureType;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Support\Facades\Mail;
+use Sheba\QueueMonitor\MonitoredJob;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
-use Sheba\Sms\Sms;
-
-class TestJob extends Job implements ShouldQueue
+class TestJob extends MonitoredJob implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->queue = "test";
+        $this->connection = "test";
+    }
 
     /**
      * Execute the job.
      *
      * @return void
      */
-    public function handle()
+    public function handle(ConsoleOutput $out)
     {
-        /*Mail::raw('Text to e-mail', function ($m) {
-            $m->from('hello@app.com', 'Your Application');
-            $m->to('arnabrahman@hotmail.com', 'Arnab')->subject('Server!');
-        });*/
+        $out->writeln("Test job.");
+    }
 
-        (new Sms())
-            ->setFeatureType(FeatureType::COMMON)
-            ->setBusinessType(BusinessType::COMMON)
-            ->shoot('+8801678242973', 'Test job from queue with supervisor at ' . \Carbon\Carbon::now()->toDateTimeString());
+    protected function getTitle()
+    {
+        return "Test Job.";
     }
 }

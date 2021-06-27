@@ -9,6 +9,11 @@ class FormStatics
         return config('neo_banking.category_form_items.personal');
     }
 
+    public static function dynamic_banner()
+    {
+        return config('neo_banking.category_form_items.dynamic_banner');
+    }
+
     public static function institution()
     {
         return config('neo_banking.category_form_items.institution');
