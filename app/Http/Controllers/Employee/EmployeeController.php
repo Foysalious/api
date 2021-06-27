@@ -7,6 +7,7 @@ use App\Sheba\Business\BusinessBasicInformation;
 use App\Sheba\Business\CoWorker\ProfileInformation\EmergencyInfoUpdater;
 use App\Sheba\Business\CoWorker\ProfileInformation\EmployeeType;
 use App\Sheba\Business\CoWorker\ProfileInformation\OfficialInfoUpdater;
+use App\Sheba\Business\CoWorker\ProfileInformation\PersonalInfoUpdater;
 use App\Sheba\Business\CoWorker\ProfileInformation\ProfileRequester;
 use App\Sheba\Business\CoWorker\ProfileInformation\ProfileUpdater;
 use App\Transformers\Business\CoWorkerMinimumTransformer;
@@ -18,6 +19,8 @@ use App\Transformers\BusinessEmployeeDetailsTransformer;
 use App\Transformers\BusinessEmployeesTransformer;
 use App\Transformers\CustomSerializer;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\UploadedFile;
+use Intervention\Image\Image;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
@@ -530,5 +533,52 @@ class EmployeeController extends Controller
         $resource = new Item($employee, new PersonalInfoTransformer());
         $employee_emergency_details = $manager->createData($resource)->toArray()['data'];
         return api_response($request, null, 200, ['emergency_contact_info' => $employee_emergency_details]);
+    }
+
+    public function updatePersonalInfo($business_member_id, Request $request, PersonalInfoUpdater $personal_info_updater)
+    {
+        $validation_data = [
+            'mobile' => 'mobile:bd',
+            'dob' => 'date',
+        ];
+
+        $validation_data['nid_front'] = $this->isFile($request->nid_front) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
+        $validation_data['nid_back'] = $this->isFile($request->nid_back) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
+        $validation_data['passport_image'] = $this->isFile($request->passport_image) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
+
+        $this->validate($request,$validation_data);
+
+            $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $employee = $this->businessMember->find($business_member_id);
+        if (!$employee) return api_response($request, null, 404);
+        $member = $this->repo->find($business_member['member_id']);
+        $this->setModifier($member);
+
+        $this->profileRequester
+            ->setBusinessMember($employee)
+            ->setMobile($request->mobile)
+            ->setDateOfBirth($request->dob)
+            ->setAddress($request->address)
+            ->setNationality($request->nationality)
+            ->setNidNo($request->nid_no)
+            ->setPassportNo($request->passport_no)
+            ->setBloodGroup($request->blood_group)
+            ->setSocialLinks($request->social_links)
+            ->setNidFrontImage($request->nid_front)
+            ->setNidBackImage($request->nid_back)
+            ->setPassportImage($request->passport_image);
+
+        if ($this->profileRequester->hasError()) return api_response($request, null, $this->profileRequester->getErrorCode(), ['message' => $this->profileRequester->getErrorMessage()]);
+
+        $personal_info_updater->setProfileRequester($this->profileRequester)->update();
+
+        return api_response($request, null, 200);
+    }
+
+    private function isFile($file)
+    {
+        if ($file instanceof Image || $file instanceof UploadedFile) return true;
+        return false;
     }
 }
