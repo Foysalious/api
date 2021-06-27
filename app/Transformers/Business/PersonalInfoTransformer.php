@@ -3,6 +3,7 @@
 
 use App\Models\BusinessMember;
 use App\Sheba\Business\CoWorker\ProfileInformation\SocialLink;
+use Carbon\Carbon;
 use League\Fractal\TransformerAbstract;
 
 class PersonalInfoTransformer extends TransformerAbstract
@@ -17,7 +18,7 @@ class PersonalInfoTransformer extends TransformerAbstract
             'gender' => $profile->gender,
             'mobile' => $business_member->mobile,
             'profile_picture' => $profile->pro_pic,
-            'dob' => $profile->dob,
+            'dob' => Carbon::parse($profile->dob)->format('d F, Y'),
             'address' => $profile->address,
             'nationality' => $profile->nationality,
             'nid_no' => $profile->nid_no,
