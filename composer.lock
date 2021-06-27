@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d811e8e01a260def3dfd3e6c3f01f3f3",
+    "content-hash": "95afc0e7c356da2be1f6f0477dfd07a4",
     "packages": [
         {
             "name": "algolia/algoliasearch-client-php",
@@ -3526,6 +3526,10 @@
                 "mime",
                 "mime type"
             ],
+            "support": {
+                "issues": "https://github.com/rosell-dk/image-mime-type-guesser/issues",
+                "source": "https://github.com/rosell-dk/image-mime-type-guesser/tree/0.3"
+            },
             "time": "2019-03-29T09:33:28+00:00"
         },
         {
@@ -3786,7 +3790,7 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
-                "reference": "a934df65874695656bdfcd76a876e2e545711de6"
+                "reference": "cb7436f9566486e0d00aeba1591ed18d96b68eb6"
             },
             "require": {
                 "php": ">=5.4"
@@ -3813,7 +3817,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2021-06-07T11:30:23+00:00"
+            "time": "2021-06-24T14:34:34+00:00"
         },
         {
             "name": "sheba/elasticsearch",
@@ -7155,7 +7159,7 @@
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
-        "php": ">=5.5.9",
+        "php": ">=7.0",
         "ext-json": "*",
         "ext-curl": "*",
         "ext-soap": "*",
