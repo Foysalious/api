@@ -7,6 +7,7 @@ use App\Sheba\Business\BusinessBasicInformation;
 use App\Sheba\Business\CoWorker\ProfileInformation\EmergencyInfoUpdater;
 use App\Sheba\Business\CoWorker\ProfileInformation\EmployeeType;
 use App\Sheba\Business\CoWorker\ProfileInformation\OfficialInfoUpdater;
+use App\Sheba\Business\CoWorker\ProfileInformation\PersonalInfoUpdater;
 use App\Sheba\Business\CoWorker\ProfileInformation\ProfileRequester;
 use App\Sheba\Business\CoWorker\ProfileInformation\ProfileUpdater;
 use App\Transformers\Business\CoWorkerMinimumTransformer;
@@ -512,5 +513,37 @@ class EmployeeController extends Controller
         $resource = new Item($employee, new PersonalInfoTransformer());
         $employee_emergency_details = $manager->createData($resource)->toArray()['data'];
         return api_response($request, null, 200, ['emergency_contact_info' => $employee_emergency_details]);
+    }
+
+    public function updatePersonalInfo($business_member_id, Request $request, PersonalInfoUpdater $personal_info_updater)
+    {
+        $this->validate($request, [
+            'mobile' => 'mobile:bd',
+            'dob' => 'date',
+        ]);
+
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $employee = $this->businessMember->find($business_member_id);
+        if (!$employee) return api_response($request, null, 404);
+        $member = $this->repo->find($business_member['member_id']);
+        $this->setModifier($member);
+
+        $this->profileRequester
+            ->setBusinessMember($employee)
+            ->setMobile($request->mobile)
+            ->setDateOfBirth($request->dob)
+            ->setAddress($request->address)
+            ->setNationality($request->nationality)
+            ->setNidNo($request->nid_no)
+            ->setPassportNo($request->passport_no)
+            ->setBloodGroup($request->blood_group)
+            ->setSocialLinks($request->social_links);
+
+        if ($this->profileRequester->hasError()) return api_response($request, null, $this->profileRequester->getErrorCode(), ['message' => $this->profileRequester->getErrorMessage()]);
+
+        $personal_info_updater->setProfileRequester($this->profileRequester)->update();
+
+        return api_response($request, null, 200);
     }
 }
