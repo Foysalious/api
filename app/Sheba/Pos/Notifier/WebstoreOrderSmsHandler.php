@@ -3,8 +3,8 @@
 use App\Models\Partner;
 use App\Models\PosOrder;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Transactions\Types;
@@ -26,41 +26,58 @@ class WebstoreOrderSmsHandler
     /**
      * @throws Exception
      */
-    public function handle() {
+    public function handle()
+    {
         /** @var Partner $partner */
         $partner = $this->order->partner;
         $partner->reload();
         if (empty($this->order->customer)) return;
-        $sms = $this->getSms();
-        $sms_cost = $sms->getCost();
-        if ((double)$partner->wallet > (double)$sms_cost) {
-            /** @var WalletTransactionHandler $walletTransactionHandler */
-            $sms->setFeatureType(FeatureType::WEB_STORE)->setBusinessType(BusinessType::SMANAGER)->shoot();
-            (new WalletTransactionHandler())->setModel($partner)->setAmount($sms_cost)->setType(Types::debit())->setLog($sms_cost . " BDT has been deducted for sending pos order update sms to customer(order id: {$this->order->id})")->setTransactionDetails([])->setSource(TransactionSources::SMS)->store();
-        }
 
+        $sms_handler = $this->buildSmsHandler();
+        $sms_cost = $sms_handler->estimateCharge();
+        if ((double)$partner->wallet < $sms_cost) return;
+
+        $sms_handler->shoot();
+
+        (new WalletTransactionHandler())
+            ->setModel($partner)
+            ->setAmount($sms_cost)
+            ->setType(Types::debit())
+            ->setLog($sms_cost . " BDT has been deducted for sending pos order update sms to customer(order id: {$this->order->id})")
+            ->setTransactionDetails([])
+            ->setSource(TransactionSources::SMS)
+            ->store();
     }
 
     /**
      * @return SmsHandlerRepo
      * @throws Exception
      */
-    private function getSms() {
+    private function buildSmsHandler()
+    {
+        $message_data = [
+            'order_id' => $this->order->partner_wise_order_id
+        ];
+
         if ($this->order->status == OrderStatuses::PROCESSING) {
-            $sms = (new SmsHandlerRepo('pos-order-accept-customer'))->setVendor('infobip')->setMobile($this->order->customer->profile->mobile)->setMessage(['order_id' => $this->order->partner_wise_order_id]);
+            $sms_handler = (new SmsHandlerRepo('pos-order-accept-customer'));
         } elseif ($this->order->status == OrderStatuses::CANCELLED || $this->order->status == OrderStatuses::DECLINED) {
-            $sms = (new SmsHandlerRepo('pos-order-cancelled-customer'))->setVendor('infobip')->setMobile($this->order->customer->profile->mobile)->setMessage(['order_id' => $this->order->partner_wise_order_id]);
+            $sms_handler = (new SmsHandlerRepo('pos-order-cancelled-customer'));
         } elseif ($this->order->status == OrderStatuses::SHIPPED) {
-            $sms = (new SmsHandlerRepo('pos-order-shipped-customer'))->setVendor('infobip')->setMobile($this->order->customer->profile->mobile)->setMessage(['order_id' => $this->order->partner_wise_order_id]);
+            $sms_handler = (new SmsHandlerRepo('pos-order-shipped-customer'));
         } elseif ($this->order->status == OrderStatuses::COMPLETED) {
-            $sms = (new SmsHandlerRepo('pos-order-delivered-customer'))->setVendor('infobip')->setMobile($this->order->customer->profile->mobile)->setMessage(['order_id' => $this->order->partner_wise_order_id]);
+            $sms_handler = (new SmsHandlerRepo('pos-order-delivered-customer'));
         } else {
-            $sms = (new SmsHandlerRepo('pos-order-place-customer'))->setVendor('infobip')->setMobile($this->order->customer->profile->mobile)->setMessage([
-                'order_id' => $this->order->partner_wise_order_id,
+            $sms_handler = (new SmsHandlerRepo('pos-order-place-customer'));
+            $message_data += [
                 'net_bill' => $this->order->getNetBill(),
                 'payment_status' => $this->order->getPaid() ? 'প্রদত্ত' : 'বকেয়া'
-            ]);
+            ];
         }
-        return $sms;
+        return $sms_handler
+            ->setMobile($this->order->customer->profile->mobile)
+            ->setFeatureType(FeatureType::WEB_STORE)
+            ->setBusinessType(BusinessType::SMANAGER)
+            ->setMessage($message_data);
     }
 }

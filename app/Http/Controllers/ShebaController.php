@@ -246,8 +246,8 @@ class ShebaController extends Controller
             'store'                            => $payment->gateway_account_name
         ];
         if ($payable->isPaymentLink()) $this->mergePaymentLinkInfo($info, $payable);
-        else
-            return $info;
+
+        return $info;
     }
 
     private function mergePaymentLinkInfo(&$info, Payable $payable)
