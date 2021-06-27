@@ -7,10 +7,12 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\App;
 use Intervention\Image\Image;
 use Sheba\Business\CoWorker\Designations;
+use Sheba\Business\CoWorker\Filter\CoWorkerInfoFilter;
 use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
 use Sheba\Business\CoWorker\Excel as EmployeeExcel;
 use App\Transformers\Business\CoWorkerDetailTransformer;
 use Sheba\Business\CoWorker\Creator as CoWorkerCreator;
+use Sheba\Business\CoWorker\Sorting\CoWorkerInfoSort;
 use Sheba\Business\CoWorker\Updater as CoWorkerUpdater;
 use App\Transformers\Business\CoWorkerListTransformer;
 use Sheba\Business\CoWorker\Requests\EmergencyRequest;
@@ -461,12 +463,8 @@ class CoWorkerController extends Controller
         $employees = new Collection($members, new CoWorkerListTransformer($is_inactive_filter_applied));
         $employees = collect($manager->createData($employees)->toArray()['data']);
 
-        if ($request->has('status')) $employees = $this->findByStatus($employees, $request->status)->values();
-        if ($request->has('sort_by_name')) $employees = $this->sortByName($employees, $request->sort_by_name)->values();
-        if ($request->has('sort_by_department')) $employees = $this->sortByDepartment($employees, $request->sort_by_department)->values();
-        if ($request->has('sort_by_status')) $employees = $this->sortByStatus($employees, $request->sort_by_status)->values();
-        if ($request->has('search')) $employees = $this->searchEmployee($employees, $request);
-        if ($request->has('employee_type')) $employees = $this->filterByEmployeeType($employees, $request)->values();
+        $employees = (new CoWorkerInfoSort())->sortCoworker($employees, $request);
+        $employees = (new CoWorkerInfoFilter())->filterCoworker($employees, $request);
 
         $total_employees = count($employees);
         $limit = $this->getLimit($request, $limit, $total_employees);
@@ -478,8 +476,6 @@ class CoWorkerController extends Controller
         ]);
         return api_response($request, null, 404);
     }
-
-
 
     /**
      * @param $business
@@ -749,88 +745,6 @@ class CoWorkerController extends Controller
     }
 
     /**
-     * @param $employees
-     * @param string $sort
-     * @return mixed
-     */
-    private function sortByName($employees, $sort = 'asc')
-    {
-        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
-        return collect($employees)->$sort_by(function ($employee, $key) {
-            return strtoupper($employee['profile']['name']);
-        });
-    }
-
-    /**
-     * @param $employees
-     * @param string $sort
-     * @return mixed
-     */
-    private function sortByDepartment($employees, $sort = 'asc')
-    {
-        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
-        return collect($employees)->$sort_by(function ($employee, $key) {
-            return strtoupper($employee['department']);
-        });
-    }
-
-    /**
-     * @param $employees
-     * @param string $sort
-     * @return mixed
-     */
-    private function sortByStatus($employees, $sort = 'asc')
-    {
-        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
-        return collect($employees)->$sort_by(function ($employee, $key) {
-            return strtoupper($employee['status']);
-        });
-    }
-
-    /**
-     * @param $employees
-     * @param Request $request
-     * @return mixed
-     */
-    private function searchEmployee($employees, Request $request)
-    {
-        $employees = $employees->toArray();
-        $employee_ids = array_filter($employees, function ($employee) use ($request) {
-            return str_contains($employee['employee_id'], $request->search);
-        });
-        $employee_names = array_filter($employees, function ($employee) use ($request) {
-            return str_contains(strtoupper($employee['profile']['name']), strtoupper($request->search));
-        });
-        $employee_emails = array_filter($employees, function ($employee) use ($request) {
-            return str_contains(strtoupper($employee['profile']['email']), strtoupper($request->search));
-        });
-        $employee_mobiles = array_filter($employees, function ($employee) use ($request) {
-            return str_contains($employee['profile']['mobile'], formatMobile($request->search));
-        });
-
-        $searched_employees = collect(array_merge($employee_ids, $employee_names, $employee_emails, $employee_mobiles));
-        $searched_employees = $searched_employees->unique(function ($employee) {
-            return $employee['id'];
-        });
-        return $searched_employees->values()->all();
-    }
-
-    private function findByStatus($employees, $status)
-    {
-        return collect($employees)->filter(function ($employee) use ($status) {
-            return $employee['status'] == $status;
-        });
-    }
-
-    private function filterByEmployeeType($employees, Request $request)
-    {
-        $is_super = $request->employee_type === 'super_admin' ? 1 : 0;
-        return collect($employees)->filter(function ($employee) use ($is_super) {
-            return $employee['is_super'] == $is_super;
-        });
-    }
-
-    /**
      * @param $business
      * @return array
      */
@@ -950,11 +864,8 @@ class CoWorkerController extends Controller
         $employees = new Collection($members, new CoWorkerReportDetailsTransformer($is_inactive_filter_applied));
         $employees = collect($manager->createData($employees)->toArray()['data']);
 
-        if ($request->has('status')) $employees = $this->findByStatus($employees, $request->status)->values();
-        if ($request->has('sort_by_name')) $employees = $this->sortByName($employees, $request->sort_by_name)->values();
-        if ($request->has('sort_by_department')) $employees = $this->sortByDepartment($employees, $request->sort_by_department)->values();
-        if ($request->has('sort_by_status')) $employees = $this->sortByStatus($employees, $request->sort_by_status)->values();
-        if ($request->has('search')) $employees = $this->searchEmployee($employees, $request);
+        $employees = (new CoWorkerInfoSort())->sortCoworker($employees, $request);
+        $employees = (new CoWorkerInfoFilter())->filterCoworker($employees, $request);
 
         $employees = collect($employees);
 
