@@ -141,8 +141,10 @@ class AttendaceSettingUpdater
             'is_end_grace_time_enable' => $this->isEndGracePeriodAllowed,
         ];
         
-        if ($this->isStartGracePeriodAllowed === 1) $data['start_grace_time'] = $this->startingGracePeriodTime;
-        if ($this->isEndGracePeriodAllowed === 1) $data['end_grace_time'] = $this->endingGracePeriodTime;
+        if ($this->isStartGracePeriodAllowed == 1) $data['start_grace_time'] = $this->startingGracePeriodTime;
+        if ($this->isEndGracePeriodAllowed == 1) $data['end_grace_time'] = $this->endingGracePeriodTime;
+
+        dd($data);
 
         DB::transaction(function () use ($office_time, $data){
             $this->office_hour_repo->update($office_time, $this->withUpdateModificationField($data));
