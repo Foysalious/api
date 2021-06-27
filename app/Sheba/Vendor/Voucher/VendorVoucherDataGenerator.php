@@ -97,7 +97,7 @@ class VendorVoucherDataGenerator
     public function generate()
     {
         $voucher = $this->voucherRepository->create($this->buildVendorVoucherData());
-        $voucher->tags()->save($this->vendor->default_tag);
+        if($this->vendor->default_tag) $voucher->tags()->save($this->vendor->default_tag);
         return $voucher;
     }
 }
