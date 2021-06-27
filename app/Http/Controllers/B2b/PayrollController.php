@@ -28,6 +28,7 @@ use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use App\Models\Business;
+use DB;
 
 class PayrollController extends Controller
 {
@@ -147,6 +148,7 @@ class PayrollController extends Controller
         $this->payrollComponentRequester->setSetting($payroll_setting)->setAddition($request->addition)->setDeduction($request->deduction)->setComponentDelete($request->component_delete_data);
         if ($this->payrollComponentRequester->checkError()) return api_response($request, null, 404, ['message' => 'Duplicate components found!']);
 
+        DB::beginTransaction();
         $addition_creator->setPayrollComponentRequester($this->payrollComponentRequester)->createOrUpdate();
         $addition_creator->setPayrollComponentRequester($this->payrollComponentRequester)->delete();
 
@@ -157,7 +159,7 @@ class PayrollController extends Controller
         $package_creator->setPayrollSetting($payroll_setting)->setPackageRequester($package_requester->getPackagesForAdd())->create();
         $package_updater->setPayrollSetting($payroll_setting)->setPackageRequester($package_requester->getPackagesForUpdate())->update();
         $package_updater->setPackageRequester($package_requester->getPackageDelete())->delete();
-
+        DB::commit();
         return api_response($request, null, 200);
     }
 

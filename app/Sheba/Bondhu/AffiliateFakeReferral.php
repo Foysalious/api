@@ -1,7 +1,7 @@
 <?php namespace Sheba\Bondhu;
 
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use Sheba\Sms\Sms;
 use App\Models\Affiliate;
 use Carbon\Carbon;
@@ -15,14 +15,12 @@ class AffiliateFakeReferral
     private $warnLimit;
 
     private $notificationData;
-    private $sms;
 
-    public function __construct(DataHandler $notification_data, Sms $sms)
+    public function __construct(DataHandler $notification_data)
     {
         $this->notificationData = $notification_data;
         $this->suspensionLimit = constants('AFFILIATE_SUSPENSION_FOR_NO_OF_FAKE');
         $this->warnLimit = constants('AFFILIATE_WARN_FOR_NO_OF_FAKE');
-        $this->sms = $sms;
     }
 
     public function setAffiliate(Affiliate $affiliate)
@@ -60,7 +58,7 @@ class AffiliateFakeReferral
     private function warn()
     {
         $sms = "You are referencing too many false numbers. Stop doing that, or your account will be suspended.";
-        $this->sms
+        (new Sms())
             ->setFeatureType(FeatureType::AFFILIATE_FAKE_REFERRAL)
             ->setBusinessType(BusinessType::BONDHU)
             ->shoot($this->affiliate->profile->mobile, $sms);

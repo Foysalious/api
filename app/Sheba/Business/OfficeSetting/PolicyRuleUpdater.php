@@ -45,8 +45,8 @@ class PolicyRuleUpdater
         $this->business = $this->policyRuleRequester->getBusiness();
         $this->policyType = $this->policyRuleRequester->getPolicyType();
         $policy_rules = $this->policyRuleRequester->getRules();
+        $data = [];
         if ($policy_rules) {
-            $data = [];
             foreach ($policy_rules as $rules) {
                 array_push($data, [
                     'business_id' => $this->business->id,
