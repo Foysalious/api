@@ -32,6 +32,8 @@ class Profile extends Model {
         'nid_no',
         'nid_verified',
         'nid_verification_date',
+        'passport_no',
+        'passport_image',
         'last_nid_verification_request_date',
         'nid_verification_request_count',
         'nid_image_front',
