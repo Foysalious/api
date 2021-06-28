@@ -186,6 +186,11 @@ class ServiceController extends Controller
         return api_response($request, null, 200, ['msg' => 'Product Created Successfully', 'service' => $partner_pos_service]);
     }
 
+    public function addNewStock(Request $request)
+    {
+
+    }
+
     /**
      * @param $master_category
      * @return array
