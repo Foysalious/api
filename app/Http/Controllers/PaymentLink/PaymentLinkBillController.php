@@ -60,6 +60,8 @@ class PaymentLinkBillController extends Controller
             if ($payment_method == 'wallet' && $user->shebaCredit() < $payable->amount)
                 return api_response($request, null, 403, ['message' => "You don't have sufficient balance"]);
 
+            if ($payment_method === 'online') $payment_method = PaymentStrategy::SSL;
+
             if ($payment_link->isEmi()) {
                 $bank = $payment_manager->getEmibank($request->bank_id);
                 if (!$bank) return response()->json(['code' => 404, 'message' => 'Bank not found']);

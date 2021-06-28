@@ -67,15 +67,6 @@ $ebl            = [
     'cash_in_charge' => 0
 ];
 
-$ssl            = [
-    'name'           => 'Other Cards',
-    'name_bn'        => null,
-    'asset'          => 'ssl',
-    'method_name'    => 'ssl',
-    'icon'           => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/payments/online.png',
-    'cash_in_charge' => 0
-];
-
 return [
     PaymentStrategy::WALLET         => $wallet,
     PaymentStrategy::PARTNER_WALLET => $partner_wallet,
@@ -87,6 +78,5 @@ return [
     PaymentStrategy::PORT_WALLET    => $online,
     PaymentStrategy::OK_WALLET      => $ok_wallet,
     PaymentStrategy::NAGAD          => $nagad,
-    PaymentStrategy::EBL            => $ebl,
-    PaymentStrategy::DIGITAL_COLLECTION_SSL => $ssl,
+    PaymentStrategy::EBL            => $ebl
 ];
