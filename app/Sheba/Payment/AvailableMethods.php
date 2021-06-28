@@ -175,7 +175,7 @@ class AvailableMethods
             PaymentStrategy::NAGAD,
             PaymentStrategy::CBL,
             PaymentStrategy::EBL,
-            PaymentStrategy::DIGITAL_COLLECTION_SSL,
+            PaymentStrategy::SSL,
             PaymentStrategy::SSL_DONATION,
         ];
     }
