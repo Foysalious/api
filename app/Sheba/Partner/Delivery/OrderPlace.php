@@ -142,7 +142,6 @@ class OrderPlace
     public function storeDeliveryInformation($info)
     {
         $data = [
-            'delivery_charge' => $info['delivery_charge'],
             'delivery_vendor_name' => $info['logistic_partner_id'],
             'address' => $info['delivery_address']['address'],
             'delivery_district' => $info['delivery_address']['district'],
