@@ -1,12 +1,13 @@
 <?php namespace App\Models;
 
-use Sheba\Dal\PartnerPosServiceBatch\Model as PartnerPosServiceBatch;
 use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceCreated;
 use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceSaved;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Sheba\Dal\BaseModel;
+use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceUpdated;
+use Sheba\Dal\PartnerPosServiceBatch\Model as PartnerPosServiceBatch;
 use Sheba\Dal\PartnerPosServiceImageGallery\Model as PartnerPosServiceImageGallery;
 use Sheba\Elasticsearch\ElasticsearchTrait;
 
@@ -53,7 +54,7 @@ class PartnerPosService extends BaseModel
             'pos_category_id' => $this->pos_category_id,
             'name' => $this->name,
             'description' => $this->description,
-            'stock' => (double)$this->stock,
+            'stock' => (double)$this->stock()->get()->sum('stock'),
             'is_published_for_shop' => +$this->is_published_for_shop,
             'created_at' => $this->created_at->toDateTimeString(),
             'updated_at' => $this->updated_at->toDateTimeString(),
@@ -199,7 +200,7 @@ class PartnerPosService extends BaseModel
             'category_id' => (int)$this->pos_category_id,
             'category_name' => $this->category->name,
             'name' => $this->name,
-            'stock' => (double)$this->stock,
+            'stock' => (double)$this->stock()->get()->sum('stock'),
             'description' => $this->description,
             'publication_status' => (int)$this->publication_status,
             'is_published_for_shop' => (int)$this->is_published_for_shop,

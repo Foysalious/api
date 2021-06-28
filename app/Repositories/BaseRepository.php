@@ -1,6 +1,6 @@
 <?php namespace App\Repositories;
 
-use App\Repositories\Interfaces\BaseRepositoryInterface;
+use Sheba\Repositories\Interfaces\BaseRepositoryInterface;
 use Illuminate\Database\Eloquent\Model;
 
 use Illuminate\Support\Collection;

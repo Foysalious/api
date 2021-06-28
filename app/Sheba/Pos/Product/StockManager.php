@@ -1,6 +1,8 @@
 <?php namespace Sheba\Pos\Product;
 
 use App\Models\PartnerPosService;
+use App\Sheba\Pos\Repositories\Interfaces\PosServiceBatchRepositoryInterface;
+use Sheba\Dal\PartnerPosServiceBatch\Model as PosServiceBatch;
 use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
 use Sheba\Pos\Repositories\PosServiceRepository;
 
@@ -10,9 +12,12 @@ class StockManager
     private $serviceRepo;
     /**  @var PartnerPosService $service */
     private $service;
+    /** @var PosServiceBatchRepositoryInterface $partnerPosServiceBatchRepo */
+    protected $partnerPosServiceBatchRepo;
 
-    public function __construct(PosServiceRepositoryInterface $service_repo)
+    public function __construct(PosServiceRepositoryInterface $service_repo, PosServiceBatchRepositoryInterface $partnerPosServiceBatchRepo)
     {
+        $this->partnerPosServiceBatchRepo = $partnerPosServiceBatchRepo;
         $this->serviceRepo = $service_repo;
     }
 
@@ -24,7 +29,7 @@ class StockManager
 
     public function isStockMaintainable()
     {
-        return !is_null($this->service->stock);
+        return !is_null($this->service->stock()->get()->sum('stock'));
     }
 
     /**
