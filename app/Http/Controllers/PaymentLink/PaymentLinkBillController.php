@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Sheba\Payment\AvailableMethods;
 use Sheba\Payment\Exceptions\InitiateFailedException;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
+use Sheba\Payment\Factory\PaymentStrategy;
 use Sheba\Payment\PaymentManager;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Dal\ExternalPayment\Model as ExternalPayment;
@@ -46,7 +47,7 @@ class PaymentLinkBillController extends Controller
                                    ->getPayable();
         if ($payment_method == 'wallet' && $user->shebaCredit() < $payable->amount)
             return api_response($request, null, 403, ['message' => "You don't have sufficient balance"]);
-
+        if ($payment_method === 'online') $payment_method = PaymentStrategy::SSL;
         $payment = $payment_manager->setMethodName($payment_method)->setPayable($payable)->init();
         $target  = $payment_link->getTarget();
         if ($target instanceof ExternalPayment) {
