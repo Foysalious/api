@@ -159,6 +159,20 @@ class ServiceController extends Controller
                 $discounts_query->runningDiscounts()->select(['id', 'partner_pos_service_id', 'amount', 'is_amount_percentage', 'cap', 'start_date', 'end_date']);
             }
         ])->find($partner_pos_service->id);
+        if (json_decode($partner_pos_service->name) == null) {
+            $name = $partner_pos_service->name;
+        } else {
+            $name = json_decode($partner_pos_service->name);
+        }
+        if (json_decode($partner_pos_service->description) == null) {
+            $description = $partner_pos_service->description;
+        } else {
+            $description = json_decode($partner_pos_service->description);
+        }
+
+//        json_decode($partner_pos_service->name) == null ? $name = $partner_pos_service->name : json_decode($partner_pos_service->name);
+        $partner_pos_service->description=$description;
+        $partner_pos_service->name=$name;
         $partner_pos_service->partner_id = $partner_pos_service_model->partner_id;
         $partner_pos_service->thumb = $partner_pos_service_model->thumb;
         $partner_pos_service->banner = $partner_pos_service_model->banner;

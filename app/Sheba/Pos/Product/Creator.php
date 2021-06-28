@@ -40,6 +40,7 @@ class Creator
         $this->data['partner_id'] = $this->data['partner']['id'];
         $this->data['pos_category_id'] = $this->data['category_id'];
         $this->data['cost'] = (double)$this->data['cost'];
+        $this->data['name']= json_encode( $this->data['name']);
         $this->format();
         $image_gallery = null;
         if (isset($this->data['image_gallery']))

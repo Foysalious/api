@@ -24,6 +24,24 @@ class PartnerPosService extends BaseModel
     public static $updatedEventClass = PartnerPosServiceUpdated::class;
     public static $createdEventClass = PartnerPosServiceCreated::class;
 
+//    public function setNameAttribute($name)
+//    {
+//        $this->attributes['name']=json_encode($name);
+//    }
+//    public function getNameAttribute($name)
+//    {
+//        return json_decode($name);
+//    }
+
+//    public function setDescriptionAttribute($description)
+//    {
+//        $this->attributes['description']=json_encode($description);
+//    }
+
+//    public function getDescriptionAttribute($description){
+//
+//        return json_decode($description);
+//    }
     public static $autoIndex = false;
     protected $indexSettings = [
         'analysis' => [
