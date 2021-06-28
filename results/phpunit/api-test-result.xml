@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Application Test Suite" tests="27" assertions="64" failures="0" errors="0" time="59.824904">
+    <testsuite name="Tests\Feature\CustomerInfoCall\InfoCallCreateTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallCreateTest.php" tests="13" assertions="25" failures="0" errors="0" time="1.432461">
+      <testcase name="testInfoCallCreateCustomerForResponse200" class="Tests\Feature\CustomerInfoCall\InfoCallCreateTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallCreateTest.php" line="8" assertions="2" time="0.227031"/>
+      <testcase name="testInfoCallCreateResponseWithoutLocationId" class="Tests\Feature\CustomerInfoCall\InfoCallCreateTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallCreateTest.php" line="27" assertions="2" time="0.080482"/>
+      <testcase name="testInfoCallCreateResponseWithoutMobile" class="Tests\Feature\CustomerInfoCall\InfoCallCreateTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallCreateTest.php" line="47" assertions="2" time="0.071646"/>
+      <testcase name="testInfoCallCreateResponseWithoutServiceName" class="Tests\Feature\CustomerInfoCall\InfoCallCreateTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallCreateTest.php" line="67" assertions="2" time="0.074987"/>
+      <testcase name="testInfoCallCreateResponseWithWrongMobileNumber" class="Tests\Feature\CustomerInfoCall\InfoCallCreateTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallCreateTest.php" line="87" assertions="2" time="0.068523"/>
+      <testcase name="testInfoCallCreateForResponse200WithCountryCodeMobile" class="Tests\Feature\CustomerInfoCall\InfoCallCreateTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallCreateTest.php" line="107" assertions="2" time="0.122036"/>
+      <testcase name="testInfoCallCreateResponseWithWrongLocationId" class="Tests\Feature\CustomerInfoCall\InfoCallCreateTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallCreateTest.php" line="127" assertions="2" time="0.099904"/>
+      <testcase name="testInfoCallCreateResponseWithCharactersInMobileNumber" class="Tests\Feature\CustomerInfoCall\InfoCallCreateTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallCreateTest.php" line="147" assertions="2" time="0.069852"/>
+      <testcase name="testInfoCallCreateResponseWithSpecialCharactersInServiceName" class="Tests\Feature\CustomerInfoCall\InfoCallCreateTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallCreateTest.php" line="167" assertions="2" time="0.135530"/>
+      <testcase name="testInfoCallCreateResponseWithWrongServiceNameMobileLocationId" class="Tests\Feature\CustomerInfoCall\InfoCallCreateTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallCreateTest.php" line="187" assertions="2" time="0.091721"/>
+      <testcase name="testInfoCallCreateForResponseWithGetMethod" class="Tests\Feature\CustomerInfoCall\InfoCallCreateTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallCreateTest.php" line="207" assertions="1" time="0.116220"/>
+      <testcase name="testInfoCallCreateForResponseWithMobileInParameterAndServiceNameLocationIdInBody" class="Tests\Feature\CustomerInfoCall\InfoCallCreateTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallCreateTest.php" line="226" assertions="2" time="0.116492"/>
+      <testcase name="testInfoCallCreateForResponseWithServiceNameMobileLocationIdInParameter" class="Tests\Feature\CustomerInfoCall\InfoCallCreateTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallCreateTest.php" line="245" assertions="2" time="0.158036"/>
+    </testsuite>
+    <testsuite name="Tests\Feature\CustomerInfoCall\InfoCallDetailsTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallDetailsTest.php" tests="7" assertions="19" failures="0" errors="0" time="26.888909">
+      <testcase name="testInfoCallDetailsCustomerForResponse200" class="Tests\Feature\CustomerInfoCall\InfoCallDetailsTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallDetailsTest.php" line="25" assertions="5" time="3.244684"/>
+      <testcase name="testInfoCallDetailsCustomerWithoutBearerToken" class="Tests\Feature\CustomerInfoCall\InfoCallDetailsTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallDetailsTest.php" line="48" assertions="2" time="3.519808"/>
+      <testcase name="testInfoCallDetailsCustomerWithInvalidCustomerId" class="Tests\Feature\CustomerInfoCall\InfoCallDetailsTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallDetailsTest.php" line="65" assertions="2" time="4.562068"/>
+      <testcase name="testInfoCallDetailsCustomerWithInvalidInfoCallId" class="Tests\Feature\CustomerInfoCall\InfoCallDetailsTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallDetailsTest.php" line="84" assertions="2" time="4.868023"/>
+      <testcase name="testInfoCallDetailsCustomerWithInvalidURL" class="Tests\Feature\CustomerInfoCall\InfoCallDetailsTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallDetailsTest.php" line="103" assertions="1" time="3.435862"/>
+      <testcase name="testInfoCallDetailsCustomerAfterRejectedStatus" class="Tests\Feature\CustomerInfoCall\InfoCallDetailsTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallDetailsTest.php" line="121" assertions="5" time="3.539885"/>
+      <testcase name="testInfoCallDetailsCustomerWithInvalidBearerToken" class="Tests\Feature\CustomerInfoCall\InfoCallDetailsTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallDetailsTest.php" line="145" assertions="2" time="3.718580"/>
+    </testsuite>
+    <testsuite name="Tests\Feature\CustomerInfoCall\InfoCallListTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallListTest.php" tests="7" assertions="20" failures="0" errors="0" time="31.503534">
+      <testcase name="testInfoCallListCustomerForResponse200" class="Tests\Feature\CustomerInfoCall\InfoCallListTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallListTest.php" line="26" assertions="4" time="4.121670"/>
+      <testcase name="testInfoCallListCustomerWithoutValidBearerToken" class="Tests\Feature\CustomerInfoCall\InfoCallListTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallListTest.php" line="47" assertions="2" time="4.315291"/>
+      <testcase name="testInfoCallListCustomerWithInvalidCustomerId" class="Tests\Feature\CustomerInfoCall\InfoCallListTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallListTest.php" line="64" assertions="2" time="4.665563"/>
+      <testcase name="testInfoCallListCustomerWithInvalidURL" class="Tests\Feature\CustomerInfoCall\InfoCallListTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallListTest.php" line="83" assertions="1" time="6.130154"/>
+      <testcase name="testInfoCallListCustomerAfterRejectedStatus" class="Tests\Feature\CustomerInfoCall\InfoCallListTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallListTest.php" line="101" assertions="3" time="3.991826"/>
+      <testcase name="testInfoCallListCustomerWithInvalidBearerToken" class="Tests\Feature\CustomerInfoCall\InfoCallListTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallListTest.php" line="123" assertions="2" time="3.930283"/>
+      <testcase name="testInfoCallListCustomerWithMultipleInfoCall" class="Tests\Feature\CustomerInfoCall\InfoCallListTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallListTest.php" line="143" assertions="6" time="4.348747"/>
+    </testsuite>
+  </testsuite>
+</testsuites>

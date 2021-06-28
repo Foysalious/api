@@ -81,31 +81,6 @@ class InfoCallDetailsTest extends FeatureTestCase
 
     }
 
-//    public function testInfoCallDetailsCustomerWithInfoCallOrderIdOfOtherCustomer()
-//    {
-//
-//        //arrange
-//
-//        $oldCustomerId = $this->infocall->id;
-//        $this->logInWithMobileNEmail("+8801715559988");
-//        dd($this->customer->id);
-//
-//        //act
-//
-//
-//
-//        $response = $this->get("/v2/customers/" . $this->customer->id . "/info-call/details/" . $this->infocall->id . "", [
-//            'Authorization' => "Bearer $this->token"
-//        ]);
-//
-//        $data = $response->decodeResponseJson();
-//
-//        //assert
-//        $this->assertEquals(403, $data["code"]);
-//        $this->assertEquals("You're not authorized to access this user.", $data["message"]);
-//
-//    }
-
     public function testInfoCallDetailsCustomerWithInvalidInfoCallId()
     {
 
