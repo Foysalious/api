@@ -489,8 +489,9 @@ class Updater
         DB::beginTransaction();
         try {
             $business_member_data = ['status' => $this->coWorkerRequester->getStatus()];
-            $this->businessMemberUpdater->setBusinessMember($this->businessMember)->update($business_member_data);
+            $this->businessMember = $this->businessMemberUpdater->setBusinessMember($this->businessMember)->update($business_member_data);
             DB::commit();
+            return $this->businessMember;
         } catch (Throwable $e) {
             DB::rollback();
             app('sentry')->captureException($e);

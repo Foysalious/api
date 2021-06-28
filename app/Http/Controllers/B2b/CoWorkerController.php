@@ -21,6 +21,7 @@ use Sheba\Business\CoWorker\Requests\OfficialRequest;
 use Sheba\Business\CoWorker\Requests\PersonalRequest;
 use Sheba\Business\CoWorker\Requests\BasicRequest;
 use App\Sheba\Business\Salary\Requester as CoWorkerSalaryRequester;
+use Sheba\Business\CoWorker\Validation\CoWorkerExistenceCheck;
 use Sheba\Dal\Salary\SalaryRepository;
 use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Reports\ExcelHandler;
@@ -79,6 +80,11 @@ class CoWorkerController extends Controller
     private $coWorkerInfoFilter;
     /** @var CoWorkerInfoSort $coWorkerInfoSort */
     private $coWorkerInfoSort;
+    /** @var BusinessMemberRepositoryInterface $businessMemberRepository */
+    private $businessMemberRepository;
+    /** @var CoWorkerExistenceCheck $coWorkerExistenceCheck */
+    private $coWorkerExistenceCheck;
+
 
     /**
      * CoWorkerController constructor.
@@ -94,14 +100,18 @@ class CoWorkerController extends Controller
      * @param CoWorkerRequester $coWorker_requester
      * @param CoWorkerSalaryRequester $co_worker_salary_requester
      * @param SalaryRepository $salary_repository
+     * @param BusinessMemberRepositoryInterface $business_member_repo
+     * @param CoWorkerInfoFilter $co_worker_info_filter
+     * @param CoWorkerInfoSort $co_worker_info_sort
      */
     public function __construct(FileRepository $file_repository, ProfileRepository $profile_repository, BasicRequest $basic_request,
                                 EmergencyRequest $emergency_request, FinancialRequest $financial_request,
                                 OfficialRequest $official_request, PersonalRequest $personal_request,
                                 CoWorkerCreator $co_worker_creator, CoWorkerUpdater $co_worker_updater,
                                 CoWorkerRequester $coWorker_requester, CoWorkerSalaryRequester $co_worker_salary_requester,
-                                SalaryRepository $salary_repository,
-                                CoWorkerInfoFilter $co_worker_info_filter, CoWorkerInfoSort $co_worker_info_sort)
+                                SalaryRepository $salary_repository, BusinessMemberRepositoryInterface $business_member_repo,
+                                CoWorkerInfoFilter $co_worker_info_filter, CoWorkerInfoSort $co_worker_info_sort,
+                                CoWorkerExistenceCheck $co_worker_existence_check)
     {
         $this->fileRepository = $file_repository;
         $this->profileRepository = $profile_repository;
@@ -117,6 +127,8 @@ class CoWorkerController extends Controller
         $this->salaryRepository = $salary_repository;
         $this->coWorkerInfoFilter = $co_worker_info_filter;
         $this->coWorkerInfoSort = $co_worker_info_sort;
+        $this->businessMemberRepository = $business_member_repo;
+        $this->coWorkerExistenceCheck = $co_worker_existence_check;
     }
 
     /**
@@ -443,10 +455,9 @@ class CoWorkerController extends Controller
      * @param $business
      * @param $member_id
      * @param Request $request
-     * @param BusinessMemberRepositoryInterface $business_member_repo
      * @return JsonResponse
      */
-    public function show($business, $member_id, Request $request, BusinessMemberRepositoryInterface $business_member_repo)
+    public function show($business, $member_id, Request $request)
     {
         if (!is_numeric($member_id)) return api_response($request, null, 400);
         $member = Member::findOrFail($member_id);
@@ -456,7 +467,7 @@ class CoWorkerController extends Controller
 
         if (!$member->businessMember) {
             $is_inactive_filter_applied = true;
-            $business_member = $business_member_repo->builder()
+            $business_member = $this->businessMemberRepository->builder()
                 ->where('business_id', $business->id)
                 ->where('member_id', $member->id)
                 ->where('status', Statuses::INACTIVE)
@@ -485,24 +496,42 @@ class CoWorkerController extends Controller
 
     /**
      * @param $business
-     * @param $member_id
+     * @param $business_member_id
      * @param Request $request
      * @return JsonResponse
+     * @throws Exception
      */
-    public function statusUpdate($business, $member_id, Request $request)
+    public function statusUpdate($business, $business_member_id, Request $request)
     {
         $this->validate($request, ['status' => 'required|string|in:' . implode(',', Statuses::get())]);
-        $logged_in_member_id = $request->business_member->member_id;
-        if ($logged_in_member_id == $member_id) return api_response($request, null, 404, ['message' => 'Sorry, You cannot deactivated yourself as Superadmin.']);
-
-        $manager_member = $request->manager_member;
+        $requester_business_member = $request->business_member;
+        if ($requester_business_member == $business_member_id) return api_response($request, null, 404, ['message' => 'Sorry, You cannot deactivated yourself as super admin.']);
 
         $business = $request->business;
+        $manager_member = $request->manager_member;
         $this->setModifier($manager_member);
 
+        $business_member = $this->businessMemberRepository->find($business_member_id);
         $coWorker_requester = $this->coWorkerRequester->setStatus($request->status);
-        $business_member = $this->coWorkerUpdater->setCoWorkerRequest($coWorker_requester)->setBusiness($business)->setMember($member_id)->statusUpdate();
+        $this->coWorkerUpdater->setCoWorkerRequest($coWorker_requester)->setBusiness($business)->setBusinessMember($business_member);
+
+        if ($this->isReInviteFeasible($business_member->status, $request->status)) {
+            $this->coWorkerUpdater->reInvite();
+            return api_response($request, 1, 200);
+        }
+        if ($this->isDeleteFeasible($business_member->status, $request->status)) {
+            $this->coWorkerUpdater->delete();
+            return api_response($request, 1, 200);
+        }
+        if ($this->isActive($request->status)) {
+            $this->coWorkerExistenceCheck->setBusiness($business)->setBusinessMember($business_member);
+            if ($this->coWorkerExistenceCheck->hasError()) {
+                return api_response($request, null, $this->coWorkerExistenceCheck->getErrorCode(), ['message' => $this->coWorkerExistenceCheck->getErrorMessage()]);
+            }
+        }
+        $business_member = $this->coWorkerUpdater->statusUpdate();
         if ($business_member) return api_response($request, 1, 200);
+
         return api_response($request, null, 404);
     }
 
@@ -510,6 +539,7 @@ class CoWorkerController extends Controller
      * @param $business
      * @param Request $request
      * @return JsonResponse
+     * @throws Exception
      */
     public function bulkStatusUpdate($business, Request $request)
     {
@@ -543,16 +573,31 @@ class CoWorkerController extends Controller
      * @param $requested_status
      * @return bool
      */
-    public function isReInviteFeasible($business_member_current_status, $requested_status)
+    private function isReInviteFeasible($business_member_current_status, $requested_status)
     {
         if ($business_member_current_status == Statuses::INVITED && $requested_status == Statuses::INVITED)
             return true;
     }
 
-    public function isDeleteFeasible($business_member_current_status, $requested_status)
+    /**
+     * @param $business_member_current_status
+     * @param $requested_status
+     * @return bool
+     */
+    private function isDeleteFeasible($business_member_current_status, $requested_status)
     {
         if ($business_member_current_status == Statuses::INVITED && $requested_status == Statuses::DELETE)
             return true;
+    }
+
+    /**
+     * @param $requested_status
+     * @return bool
+     */
+    private function isActive($requested_status)
+    {
+        if ($requested_status == Statuses::ACTIVE) return true;
+        return false;
     }
 
     /**
