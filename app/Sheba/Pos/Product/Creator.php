@@ -39,6 +39,8 @@ class Creator
         $this->saveImages();
         $this->data['partner_id'] = $this->data['partner']['id'];
         $this->data['pos_category_id'] = $this->data['category_id'];
+        $cost = $this->data['cost'];
+        $stock = $this->data['stock'];
         $this->data['cost'] = 0.0;
         $this->data['stock'] = null;
         $this->format();
@@ -47,7 +49,7 @@ class Creator
             $image_gallery = $this->data['image_gallery'];
         $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'image_gallery']);
         $partner_pos_service = $this->serviceRepo->save($this->data + (new RequestIdentification())->get());
-        $this->savePartnerPosServiceBatch($partner_pos_service->id);
+        $this->savePartnerPosServiceBatch($partner_pos_service->id, $stock, $cost);
         $this->storeImageGallery($partner_pos_service, json_decode($image_gallery,true));
         return $partner_pos_service;
     }
