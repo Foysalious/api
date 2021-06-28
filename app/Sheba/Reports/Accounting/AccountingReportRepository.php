@@ -46,7 +46,8 @@ class AccountingReportRepository extends BaseRepository
         try {
             $data = $this->client->setUserType($userType)->setUserId($userId)
                 ->get($this->api . "accounting-report/$reportType?start_date=$startDate&end_date=$endDate&account_id=$accountId&account_type=$accountType");
-            return ($reportType === self::JOURNAL_REPORT) ? (new JournalReportData())->format_data($data): $data;
+            if($reportType === self::JOURNAL_REPORT) return (new JournalReportData())->format_data($data);
+            return $reportType === self::PROFIT_LOSS_REPORT ? (new ProfitLossReportData())->format_data($data): $data;
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
