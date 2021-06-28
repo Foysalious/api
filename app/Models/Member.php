@@ -18,6 +18,11 @@ class Member extends Model
         return $this->belongsToMany(Business::class)->whereIn('status', Statuses::getAccessible())->withTimestamps();
     }
 
+    public function allBusinesses()
+    {
+        return $this->belongsToMany(Business::class)->withTimestamps();
+    }
+
     public function inspections()
     {
         return $this->hasMany(Inspection::class);
