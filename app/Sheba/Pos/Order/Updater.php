@@ -98,7 +98,7 @@ class Updater
             return;
         $is_stock_maintainable = $this->stockManager->setPosService($partner_pos_service)->isStockMaintainable();
         if ($is_stock_maintainable) {
-            if ($item->service->is_published_for_shop  && $service_quantity > $item->service->stock()->get()->sum('stock'))
+            if ($item->service->is_published_for_shop  && $service_quantity > $item->service->getStock())
                 throw new NotEnoughStockException("Not enough stock", 403);
             $changed_quantity = abs($service_quantity - $item->quantity);
             if ($item->quantity > $service_quantity)

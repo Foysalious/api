@@ -58,7 +58,7 @@ class ServiceController extends Controller
                         'price' => $service->price,
                         'wholesale_applicable' => $service->wholesale_price > 0 ? 1 : 0,
                         'wholesale_price' => $service->wholesale_price,
-                        'stock' => $service->stock()->get()->sum('stock'),
+                        'stock' => $service->getStock(),
                         'unit' => $service->unit,
                         'discount_applicable' => $service->discount() ? true : false,
                         'discounted_price' => $service->discount() ? $service->getDiscountedAmount() : 0,
@@ -405,7 +405,7 @@ class ServiceController extends Controller
         if (!$posService->is_published_for_shop) {
             if (PartnerPosService::webstorePublishedServiceByPartner($request->partner->id)->count() >= config('pos.maximum_publishable_product_in_webstore_for_free_packages'))
                 AccessManager::checkAccess(AccessManager::Rules()->POS->ECOM->PRODUCT_PUBLISH, $request->partner->subscription->getAccessRules());
-            if ($posService->stock()->get()->sum('stock') == null || $posService->stock()->get()->sum('stock') < 0) return api_response($request, null, 403, ['message' => 'পন্যের স্টক আপডেট করে ওয়েবস্টোরে পাবলিশ করুন']);
+            if ($posService->getStock() == null || $posService->getStock() < 0) return api_response($request, null, 403, ['message' => 'পন্যের স্টক আপডেট করে ওয়েবস্টোরে পাবলিশ করুন']);
         }
         $posService->is_published_for_shop = !(int)$posService->is_published_for_shop;
         $posService->save();

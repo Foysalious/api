@@ -31,7 +31,7 @@ class OrderCreateValidator extends Validator
             $original_service      = isset($service['id'])&&!empty($service['id']) ? $this->posServiceRepo->find($service['id']) : $this->posServiceRepo->defaultInstance($service);
             $is_stock_maintainable = $this->stockManager->setPosService($original_service)->isStockMaintainable();
             if ($is_stock_maintainable) {
-                $is_out_of_stock = $service['quantity'] > $original_service->stock()->get()->sum('stock');
+                $is_out_of_stock = $service['quantity'] > $original_service->getStock();
                 if ($is_out_of_stock) return true;
             }
         }

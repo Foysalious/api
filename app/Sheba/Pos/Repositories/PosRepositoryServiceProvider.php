@@ -1,7 +1,5 @@
 <?php namespace Sheba\Pos\Repositories;
 
-use App\Sheba\Pos\Repositories\Interfaces\PosServiceBatchRepositoryInterface;
-use App\Sheba\Pos\Repositories\PosServiceBatchRepository;
 use Illuminate\Support\ServiceProvider;
 use Sheba\Pos\Repositories\Interfaces\PosCategoryRepositoryInterface;
 use Sheba\Pos\Repositories\Interfaces\PosDiscountRepositoryInterface;
@@ -21,6 +19,5 @@ class PosRepositoryServiceProvider extends ServiceProvider
         $this->app->bind(PosServiceLogRepositoryInterface::class, PosServiceLogRepository::class);
         $this->app->bind(PosCategoryRepositoryInterface::class, PosCategoryRepository::class);
         $this->app->bind(PosDiscountRepositoryInterface::class, PosDiscountRepository::class);
-        $this->app->bind(PosServiceBatchRepositoryInterface::class, PosServiceBatchRepository::class);
     }
 }
