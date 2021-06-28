@@ -2,6 +2,7 @@
 
 use App\Models\BusinessMember;
 use App\Models\BusinessRole;
+use App\Models\Member;
 use App\Models\Profile;
 use League\Fractal\TransformerAbstract;
 
