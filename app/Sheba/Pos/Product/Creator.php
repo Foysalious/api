@@ -39,6 +39,8 @@ class Creator
         $this->saveImages();
         $this->data['partner_id'] = $this->data['partner']['id'];
         $this->data['pos_category_id'] = $this->data['category_id'];
+        $this->data['cost'] = 0.0;
+        $this->data['stock'] = null;
         $this->format();
         $image_gallery = null;
         if (isset($this->data['image_gallery']))
@@ -155,12 +157,12 @@ class Creator
             PartnerPosCategory::insert($data);
     }
 
-    private function savePartnerPosServiceBatch($service_id)
+    public function savePartnerPosServiceBatch($service_id, $stock = null, $cost = null)
     {
         $batchData = [];
         $batchData['partner_pos_service_id'] = $service_id;
-        $batchData['stock'] = (isset($this->data['stock']) && $this->data['stock'] > 0) ? (double)$this->data['stock'] : null;
-        $batchData['cost']  = (double)$this->data['cost'];
+        $batchData['stock'] = (isset($this->data['stock']) && $this->data['stock'] > 0) ? (double)$this->data['stock'] : $stock;
+        $batchData['cost']  = isset($this->data['stock']) ? (double)$this->data['cost'] : $cost;
 
         return PartnerPosServiceBatch::create($batchData);
     }
