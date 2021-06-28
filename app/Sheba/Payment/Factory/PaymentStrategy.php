@@ -36,6 +36,7 @@ class PaymentStrategy
     const PORT_WALLET    = "port_wallet";
     const NAGAD          = 'nagad';
     const EBL            = 'ebl';
+    const DIGITAL_COLLECTION_SSL = 'digital_collection_ssl';
 
     public static function getDefaultOnlineMethod()
     {
