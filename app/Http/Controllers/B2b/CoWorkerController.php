@@ -402,8 +402,8 @@ class CoWorkerController extends Controller
     {
         /** @var Business $business */
         $business = $request->business;
-        $manager_member = $request->manager_member;
-        $this->setModifier($manager_member);
+        $business_members = $business->getAllBusinessMember();
+        list($offset, $limit) = calculatePagination($request);
 
         if ($request->has('for') && $request->for == 'prorate') {
             $department_info = $this->getEmployeeGroupByDepartment($business);
@@ -411,7 +411,7 @@ class CoWorkerController extends Controller
         }
 
         $is_inactive_filter_applied = false;
-        list($offset, $limit) = calculatePagination($request);
+
 
         if ($request->has('status') && $request->status == Statuses::INACTIVE) {
             $is_inactive_filter_applied = true;
@@ -557,22 +557,39 @@ class CoWorkerController extends Controller
         ]);
         $business = $request->business;
         $manager_member = $request->manager_member;
-        $logged_in_member_id = $request->business_member->member_id;
+        $requester_business_member = $request->business_member;
         $this->setModifier($manager_member);
-        $member_ids = json_decode($request->employee_ids);
+        $business_member_ids = json_decode($request->employee_ids);
 
-        if (in_array($logged_in_member_id, $member_ids)) return api_response($request, null, 404, ['message' => 'One of the Ids contains superadmin ID, which cannot be deactivated, Please check again.']);
+        if (in_array($requester_business_member->id, $business_member_ids)) return api_response($request, null, 404, ['message' => 'One of the Ids contains superadmin ID, which cannot be deactivated, Please check again.']);
 
-        foreach ($member_ids as $member_id) {
-            $business_member = BusinessMember::where([
-                ['member_id', $member_id], ['business_id', $business->id]
-            ])->first();
-            if ($business_member->status == $request->status) continue;
+        foreach ($business_member_ids as $business_member_id) {
+            $business_member = BusinessMember::where('id', $business_member_id)->first();
             $coWorker_requester = $this->coWorkerRequester->setStatus($request->status);
-            $this->coWorkerUpdater->setCoWorkerRequest($coWorker_requester)->setBusiness($business)->setMember($business_member->member->id)->statusUpdate();
+            $this->coWorkerUpdater->setCoWorkerRequest($coWorker_requester)->setBusiness($business)->setBusinessMember($business_member);
+            if ($this->isReInviteFeasible($business_member->status, $request->status)) $this->coWorkerUpdater->reInvite();
+            if ($this->isDeleteFeasible($business_member->status, $request->status)) $this->coWorkerUpdater->delete();
+            if ($business_member->status == $request->status) continue;
+            $this->coWorkerUpdater->statusUpdate();
         }
-
         return api_response($request, null, 200);
+    }
+
+    /**
+     * @param $business_member_current_status
+     * @param $requested_status
+     * @return bool
+     */
+    public function isReInviteFeasible($business_member_current_status, $requested_status)
+    {
+        if ($business_member_current_status == Statuses::INVITED && $requested_status == Statuses::INVITED)
+            return true;
+    }
+
+    public function isDeleteFeasible($business_member_current_status, $requested_status)
+    {
+        if ($business_member_current_status == Statuses::INVITED && $requested_status == Statuses::DELETE)
+            return true;
     }
 
     /**
@@ -801,14 +818,14 @@ class CoWorkerController extends Controller
         return $limit;
     }
 
-
     /**
      * @param $business
      * @param Request $request
      * @param BusinessMemberRepositoryInterface $business_member_repo
      * @param EmployeeExcel $employee_report
      */
-    public function downloadEmployeesReport($business, Request $request, BusinessMemberRepositoryInterface $business_member_repo, EmployeeExcel $employee_report) {
+    public function downloadEmployeesReport($business, Request $request, BusinessMemberRepositoryInterface $business_member_repo, EmployeeExcel $employee_report)
+    {
         $business = $request->business;
 
         $is_inactive_filter_applied = false;
@@ -872,7 +889,6 @@ class CoWorkerController extends Controller
         return $employee_report->setEmployee($employees->toArray())->get();
     }
 
-
     /**
      * @param $business
      * @param $member_id
@@ -912,11 +928,11 @@ class CoWorkerController extends Controller
         $business_member = $is_inactive_filter_applied ? $member->businessMemberGenerated : $member->businessMember;
 
         $salary_certificate_info = $salaryCertificateInfo->setBusiness($business)
-                                                         ->setMember($member)
-                                                         ->setBusinessMember($business_member)
-                                                         ->get();
+            ->setMember($member)
+            ->setBusinessMember($business_member)
+            ->get();
 
-        if($request->file=='pdf') {
+        if ($request->file == 'pdf') {
 //            return view('pdfs.payroll.salary_certificate', compact('salary_certificate_info'));
             return App::make('dompdf.wrapper')->loadView('pdfs.payroll.salary_certificate', compact('salary_certificate_info'))->download("salary_certificate.pdf");
         }

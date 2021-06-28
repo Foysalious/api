@@ -57,6 +57,11 @@ class Updater
         return $this->businessMemberRepository->update($this->businessMember, $this->withUpdateModificationField($data));
     }
 
+    public function delete()
+    {
+        $this->businessMember->delete();
+    }
+
     private function formatData($data)
     {
         if (isset($data['business_role_id'])) $this->businessMemberData['business_role_id'] = $data['business_role_id'];
