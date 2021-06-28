@@ -3,6 +3,7 @@
 use App\Helper\BangladeshiMobileValidator;
 use App\Models\Business;
 use Sheba\Business\BusinessMember\Requester as BusinessMemberRequester;
+use Sheba\Business\CoWorker\Email\Invite;
 use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Business\BusinessMember\Creator as BusinessMemberCreator;
@@ -185,6 +186,18 @@ class Updater
     }
 
     /**
+     * @param BusinessMember $business_member
+     * @return $this
+     */
+    public function setBusinessMember(BusinessMember $business_member)
+    {
+        $this->businessMember = $business_member;
+        $this->member = $this->businessMember->member;
+        $this->profile = $this->member->profile;
+        return $this;
+    }
+
+    /**
      * @param $member
      * @return $this
      */
@@ -245,7 +258,7 @@ class Updater
             ->where(DB::raw('BINARY `name`'), $this->basicRequest->getRole())
             ->where('business_department_id', $this->basicRequest->getDepartment())
             ->first();
-        
+
         if ($business_role) return $business_role;
         return $this->businessRoleCreate();
     }
@@ -477,14 +490,26 @@ class Updater
         DB::beginTransaction();
         try {
             $business_member_data = ['status' => $this->coWorkerRequester->getStatus()];
-            $this->businessMember = $this->businessMemberUpdater->setBusinessMember($this->businessMember)->update($business_member_data);
+            $this->businessMemberUpdater->setBusinessMember($this->businessMember)->update($business_member_data);
             DB::commit();
-            return $this->businessMember;
         } catch (Throwable $e) {
             DB::rollback();
             app('sentry')->captureException($e);
             return null;
         }
+    }
+
+    public function reInvite()
+    {
+        (new Invite($this->profile))->sendExistingUserMail();
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function delete()
+    {
+        $this->businessMember->delete();
     }
 
     /**

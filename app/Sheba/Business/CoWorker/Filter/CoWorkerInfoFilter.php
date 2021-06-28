@@ -1,18 +1,40 @@
 <?php namespace Sheba\Business\CoWorker\Filter;
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Http\Request;
 
 class CoWorkerInfoFilter
 {
-    public function filterCoworker($employees, Request  $request)
+    /**
+     * @param $business_members
+     * @param Request $request
+     * @return mixed
+     */
+    public function filterByDepartment($business_members, Request $request)
     {
-        if ($request->has('status')) $employees = $this->findByStatus($employees, $request->status)->values();
+        return $business_members->whereHas('role', function ($q) use ($request) {
+            $q->whereHas('businessDepartment', function ($q) use ($request) {
+                $q->where('business_departments.id', $request->department);
+            });
+        });
+    }
+
+    /**
+     * @param $business_members
+     * @param Request $request
+     * @return mixed
+     */
+    public function filterByStatus($business_members, Request $request)
+    {
+        return $business_members->where('status', $request->status);
+    }
+
+    public function filterCoworkerInList($employees, Request $request)
+    {
         if ($request->has('search')) $employees = $this->searchEmployee($employees, $request);
         if ($request->has('employee_type')) $employees = $this->filterByEmployeeType($employees, $request)->values();
         return $employees;
     }
-
 
     /**
      * @param $employees
@@ -40,18 +62,6 @@ class CoWorkerInfoFilter
             return $employee['id'];
         });
         return $searched_employees->values()->all();
-    }
-
-    /**
-     * @param $employees
-     * @param $status
-     * @return Collection
-     */
-    private function findByStatus($employees, $status)
-    {
-        return collect($employees)->filter(function ($employee) use ($status) {
-            return $employee['status'] == $status;
-        });
     }
 
     /**

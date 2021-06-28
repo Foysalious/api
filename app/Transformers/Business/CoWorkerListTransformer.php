@@ -1,20 +1,21 @@
 <?php namespace App\Transformers\Business;
 
 use App\Models\BusinessMember;
+use App\Models\BusinessRole;
+use App\Models\Profile;
 use League\Fractal\TransformerAbstract;
 
 class CoWorkerListTransformer extends TransformerAbstract
 {
-    /**
-     * @param BusinessMember $business_member
-     * @return array
-     */
     public function transform(BusinessMember $business_member)
     {
+        /** @var Member $member */
         $member = $business_member->member;
+        /** @var Profile $profile */
         $profile = $member->profile;
-
+        /** @var BusinessRole $role */
         $role = $business_member->role;
+
         return [
             'id' => $member->id,
             'employee_id' => $business_member->employee_id,

@@ -4,6 +4,7 @@ use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
@@ -18,8 +19,10 @@ use Sheba\Business\BusinessMember\Events\BusinessMemberDeleted;
 
 class BusinessMember extends Model
 {
+    use SoftDeletes;
+
     protected $guarded = ['id',];
-    protected $dates = ['join_date'];
+    protected $dates = ['join_date', 'deleted_at'];
     protected $casts = ['is_super' => 'int'];
 
     protected $dispatchesEvents = [

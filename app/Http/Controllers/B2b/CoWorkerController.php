@@ -77,7 +77,11 @@ class CoWorkerController extends Controller
     /** @var CoWorkerSalaryRequester */
     private $coWorkerSalaryRequester;
     /** @var SalaryRepository */
-    private $salaryRepositry;
+    private $salaryRepository;
+    /**  @var CoWorkerInfoFilter $coWorkerInfoFilter */
+    private $coWorkerInfoFilter;
+    /** @var CoWorkerInfoSort $coWorkerInfoSort */
+    private $coWorkerInfoSort;
 
     /**
      * CoWorkerController constructor.
@@ -92,13 +96,15 @@ class CoWorkerController extends Controller
      * @param CoWorkerUpdater $co_worker_updater
      * @param CoWorkerRequester $coWorker_requester
      * @param CoWorkerSalaryRequester $co_worker_salary_requester
-     * @param SalaryRepository $salary_repositry
+     * @param SalaryRepository $salary_repository
      */
     public function __construct(FileRepository $file_repository, ProfileRepository $profile_repository, BasicRequest $basic_request,
                                 EmergencyRequest $emergency_request, FinancialRequest $financial_request,
                                 OfficialRequest $official_request, PersonalRequest $personal_request,
                                 CoWorkerCreator $co_worker_creator, CoWorkerUpdater $co_worker_updater,
-                                CoWorkerRequester $coWorker_requester, CoWorkerSalaryRequester $co_worker_salary_requester, SalaryRepository $salary_repositry)
+                                CoWorkerRequester $coWorker_requester, CoWorkerSalaryRequester $co_worker_salary_requester,
+                                SalaryRepository $salary_repository,
+                                CoWorkerInfoFilter $co_worker_info_filter, CoWorkerInfoSort $co_worker_info_sort)
     {
         $this->fileRepository = $file_repository;
         $this->profileRepository = $profile_repository;
@@ -111,7 +117,9 @@ class CoWorkerController extends Controller
         $this->coWorkerUpdater = $co_worker_updater;
         $this->coWorkerRequester = $coWorker_requester;
         $this->coWorkerSalaryRequester = $co_worker_salary_requester;
-        $this->salaryRepositry = $salary_repositry;
+        $this->salaryRepository = $salary_repository;
+        $this->coWorkerInfoFilter = $co_worker_info_filter;
+        $this->coWorkerInfoSort = $co_worker_info_sort;
     }
 
     /**
@@ -398,52 +406,30 @@ class CoWorkerController extends Controller
     /**
      * @param $business
      * @param Request $request
-     * @param BusinessMemberRepositoryInterface $business_member_repo
      * @return JsonResponse
      */
     public function index($business, Request $request)
     {
         /** @var Business $business */
         $business = $request->business;
-        $manager_member = $request->manager_member;
-        $this->setModifier($manager_member);
+        $business_members = $business->getAllBusinessMember();
+        list($offset, $limit) = calculatePagination($request);
 
         if ($request->has('for') && $request->for == 'prorate') {
             $department_info = $this->getEmployeeGroupByDepartment($business);
             return api_response($request, $department_info, 200, ['department_info' => $department_info]);
         }
 
-        list($offset, $limit) = calculatePagination($request);
-
-        if ($request->has('status') && $request->status == Statuses::INACTIVE) {
-
-            $business_members = $business->getAccessibleInactiveBusinessMember();
-
-            if ($request->has('department')) {
-                $business_members = $business_members->whereHas('role', function ($q) use ($request){
-                    $q->whereHas('businessDepartment', function ($q) use ($request){
-                        $q->where('id', $request->department);
-                    });
-                });
-            }
-        } else {
-            $business_members = $business->getAccessibleBusinessMember();
-            if ($request->has('department')) {
-                $business_members = $business_members->whereHas('role', function ($q) use ($request){
-                    $q->whereHas('businessDepartment', function ($q) use ($request){
-                        $q->where('id', $request->department);
-                    });
-                });
-            }
-        }
+        if ($request->has('department')) $business_members = $this->coWorkerInfoFilter->filterByDepartment($business_members, $request);
+        if ($request->has('status')) $business_members = $this->coWorkerInfoFilter->filterByStatus($business_members, $request);
 
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
         $employees = new Collection($business_members->get(), new CoWorkerListTransformer());
         $employees = collect($manager->createData($employees)->toArray()['data']);
 
-        $employees = (new CoWorkerInfoSort())->sortCoworker($employees, $request);
-        $employees = (new CoWorkerInfoFilter())->filterCoworker($employees, $request);
+        $employees = $this->coWorkerInfoSort->sortCoworkerInList($employees, $request);
+        $employees = $this->coWorkerInfoFilter->filterCoworkerInList($employees, $request);
 
         $total_employees = count($employees);
         $limit = $this->getLimit($request, $limit, $total_employees);
@@ -536,22 +522,40 @@ class CoWorkerController extends Controller
         ]);
         $business = $request->business;
         $manager_member = $request->manager_member;
-        $logged_in_member_id = $request->business_member->member_id;
+        $requester_business_member = $request->business_member;
         $this->setModifier($manager_member);
-        $member_ids = json_decode($request->employee_ids);
+        $business_member_ids = json_decode($request->employee_ids);
 
-        if (in_array($logged_in_member_id, $member_ids)) return api_response($request, null, 404, ['message' => 'One of the Ids contains superadmin ID, which cannot be deactivated, Please check again.']);
+        if (in_array($requester_business_member->id, $business_member_ids)) return api_response($request, null, 404, ['message' => 'One of the Ids contains superadmin ID, which cannot be deactivated, Please check again.']);
 
-        foreach ($member_ids as $member_id) {
-            $business_member = BusinessMember::where([
-                ['member_id', $member_id], ['business_id', $business->id]
-            ])->first();
-            if ($business_member->status == $request->status) continue;
+        foreach ($business_member_ids as $business_member_id) {
+            $business_member = BusinessMember::where('id', $business_member_id)->first();
             $coWorker_requester = $this->coWorkerRequester->setStatus($request->status);
-            $this->coWorkerUpdater->setCoWorkerRequest($coWorker_requester)->setBusiness($business)->setMember($business_member->member->id)->statusUpdate();
+            $this->coWorkerUpdater->setCoWorkerRequest($coWorker_requester)->setBusiness($business)->setBusinessMember($business_member);
+            if ($this->isReInviteFeasible($business_member->status, $request->status)) $this->coWorkerUpdater->reInvite();
+            if ($this->isDeleteFeasible($business_member->status, $request->status)) $this->coWorkerUpdater->delete();
+            if ($business_member->status == $request->status) continue;
+            if ($request->status == Statuses::DELETE) continue;
+            $this->coWorkerUpdater->statusUpdate();
         }
-
         return api_response($request, null, 200);
+    }
+
+    /**
+     * @param $business_member_current_status
+     * @param $requested_status
+     * @return bool
+     */
+    public function isReInviteFeasible($business_member_current_status, $requested_status)
+    {
+        if ($business_member_current_status == Statuses::INVITED && $requested_status == Statuses::INVITED)
+            return true;
+    }
+
+    public function isDeleteFeasible($business_member_current_status, $requested_status)
+    {
+        if ($business_member_current_status == Statuses::INVITED && $requested_status == Statuses::DELETE)
+            return true;
     }
 
     /**
@@ -782,6 +786,33 @@ class CoWorkerController extends Controller
 
     /**
      * @param $business
+     * @param Request $request
+     * @param EmployeeExcel $employee_report
+     */
+    public function downloadEmployeesReport($business, Request $request, EmployeeExcel $employee_report)
+    {
+        /** @var Business $business */
+        $business = $request->business;
+        $business_members = $business->getAllBusinessMember();
+
+        if ($request->has('department')) $business_members = $this->coWorkerInfoFilter->filterByDepartment($business_members, $request);
+        if ($request->has('status')) $business_members = $this->coWorkerInfoFilter->filterByStatus($business_members, $request);
+
+        $manager = new Manager();
+        $manager->setSerializer(new ArraySerializer());
+        $employees = new Collection($business_members->get(), new CoWorkerReportDetailsTransformer());
+        $employees = collect($manager->createData($employees)->toArray()['data']);
+
+        $employees = $this->coWorkerInfoSort->sortCoworkerInList($employees, $request);
+        $employees = $this->coWorkerInfoFilter->filterCoworkerInList($employees, $request);
+
+        $employees = collect($employees);
+
+        return $employee_report->setEmployee($employees->toArray())->get();
+    }
+
+    /**
+     * @param $business
      * @param $member_id
      * @param Request $request
      * @param BusinessMemberRepositoryInterface $business_member_repo
@@ -819,87 +850,14 @@ class CoWorkerController extends Controller
         $business_member = $is_inactive_filter_applied ? $member->businessMemberGenerated : $member->businessMember;
 
         $salary_certificate_info = $salaryCertificateInfo->setBusiness($business)
-                                                         ->setMember($member)
-                                                         ->setBusinessMember($business_member)
-                                                         ->get();
+            ->setMember($member)
+            ->setBusinessMember($business_member)
+            ->get();
 
-        if($request->file=='pdf') {
-//            return view('pdfs.payroll.salary_certificate', compact('salary_certificate_info'));
+        if ($request->file == 'pdf') {
             return App::make('dompdf.wrapper')->loadView('pdfs.payroll.salary_certificate', compact('salary_certificate_info'))->download("salary_certificate.pdf");
         }
 
         return api_response($request, null, 200, ['salary_info_details' => $salary_certificate_info]);
     }
-
-
-    /**
-     * @param $business
-     * @param Request $request
-     * @param BusinessMemberRepositoryInterface $business_member_repo
-     * @param EmployeeExcel $employee_report
-     */
-    public function downloadEmployeesReport($business, Request $request, BusinessMemberRepositoryInterface $business_member_repo, EmployeeExcel $employee_report) {
-        $business = $request->business;
-
-        $is_inactive_filter_applied = false;
-
-        if ($request->has('status') && $request->status == Statuses::INACTIVE) {
-            $is_inactive_filter_applied = true;
-            $members = $business->members()->select('members.id', 'profile_id',
-                'emergency_contract_person_name', 'emergency_contract_person_number', 'emergency_contract_person_relationship')->with([
-                'profile' => function ($q) {
-                    $q->select('profiles.id', 'name', 'mobile', 'email', 'dob', 'address', 'nationality', 'nid_no', 'tin_no')->with('banks');
-                }
-            ])->wherePivot('status', Statuses::INACTIVE)->get()->unique()
-                ->each(function ($member) use ($business_member_repo, $business) {
-                    $business_member = $business_member_repo->builder()
-                        ->where('business_id', $business->id)
-                        ->where('member_id', $member->id)
-                        ->where('status', Statuses::INACTIVE)
-                        ->first();
-
-                    $member->setRelation('businessMemberGenerated', $business_member->load([
-                        'role' => function ($q) {
-                            $q->select('business_roles.id', 'business_department_id', 'name')->with([
-                                'businessDepartment' => function ($q) {
-                                    $q->select('business_departments.id', 'business_id', 'name');
-                                }
-                            ]);
-                        }
-                    ]));
-                    $member->push();
-                });
-
-            if ($request->has('department')) {
-                $members = $members->filter(function ($member) use ($request) {
-                    return $member->businessMemberGenerated->role && $member->businessMemberGenerated->role->businessDepartment->id == $request->department;
-                });
-            }
-        } else {
-            $members = $business->membersWithProfile();
-            if ($request->has('department')) {
-                $members = $members->whereHas('businessMember', function ($q) use ($request) {
-                    $q->whereHas('role', function ($q) use ($request) {
-                        $q->whereHas('businessDepartment', function ($q) use ($request) {
-                            $q->where('business_departments.id', $request->department);
-                        });
-                    });
-                });
-            }
-            $members = $members->get()->unique();
-        }
-
-        $manager = new Manager();
-        $manager->setSerializer(new ArraySerializer());
-        $employees = new Collection($members, new CoWorkerReportDetailsTransformer($is_inactive_filter_applied));
-        $employees = collect($manager->createData($employees)->toArray()['data']);
-
-        $employees = (new CoWorkerInfoSort())->sortCoworker($employees, $request);
-        $employees = (new CoWorkerInfoFilter())->filterCoworker($employees, $request);
-
-        $employees = collect($employees);
-
-        return $employee_report->setEmployee($employees->toArray())->get();
-    }
-
 }

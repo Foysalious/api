@@ -4,7 +4,7 @@ use Illuminate\Http\Request;
 
 class CoWorkerInfoSort
 {
-    public function sortCoworker($employees, Request $request)
+    public function sortCoworkerInList($employees, Request $request)
     {
         if ($request->has('sort_by_employee_id')) $employees = $this->sortByEmployeeId($employees, $request->sort_by_employee_id)->values();
         if ($request->has('sort_by_name')) $employees = $this->sortByName($employees, $request->sort_by_name)->values();
