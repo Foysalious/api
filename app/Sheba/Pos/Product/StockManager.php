@@ -29,7 +29,7 @@ class StockManager
 
     public function isStockMaintainable()
     {
-        return !is_null($this->service->stock()->get()->sum('stock'));
+        return !is_null($this->service->getStock());
     }
 
     /**

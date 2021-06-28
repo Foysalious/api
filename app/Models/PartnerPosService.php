@@ -54,7 +54,7 @@ class PartnerPosService extends BaseModel
             'pos_category_id' => $this->pos_category_id,
             'name' => $this->name,
             'description' => $this->description,
-            'stock' => (double)$this->stock()->get()->sum('stock'),
+            'stock' => (double)$this->getStock(),
             'is_published_for_shop' => +$this->is_published_for_shop,
             'created_at' => $this->created_at->toDateTimeString(),
             'updated_at' => $this->updated_at->toDateTimeString(),
@@ -200,7 +200,7 @@ class PartnerPosService extends BaseModel
             'category_id' => (int)$this->pos_category_id,
             'category_name' => $this->category->name,
             'name' => $this->name,
-            'stock' => (double)$this->stock()->get()->sum('stock'),
+            'stock' => (double)$this->getStock(),
             'description' => $this->description,
             'publication_status' => (int)$this->publication_status,
             'is_published_for_shop' => (int)$this->is_published_for_shop,
@@ -224,5 +224,10 @@ class PartnerPosService extends BaseModel
     public function stock()
     {
         return $this->hasMany(PartnerPosServiceBatch::class);
+    }
+
+    public function getStock()
+    {
+        return $this->stock()->get()->sum('stock');
     }
 }

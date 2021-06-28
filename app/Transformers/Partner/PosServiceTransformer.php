@@ -16,7 +16,7 @@ class PosServiceTransformer extends TransformerAbstract
             'vat_included_price' => $pos_service->price + ($pos_service->price * $pos_service->vat_percentage) / 100,
             'vat_percentage' => (double)$pos_service->vat_percentage,
             'unit' => $pos_service->unit,
-            'stock' => $pos_service->stock()->get()->sum('stock'),
+            'stock' => $pos_service->getStock(),
             'category_id' => $pos_service->subCategory->parent->id,
             'category_name' => $pos_service->subCategory->parent->name,
             'weight' => $pos_service->weight,

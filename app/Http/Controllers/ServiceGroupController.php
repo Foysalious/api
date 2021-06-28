@@ -177,7 +177,7 @@ class ServiceGroupController extends Controller
             'app_thumb_sizes' => getResizedUrls($service->app_thumb, 100, 100),
             'thumb' => $service->thumb,
             'thumb_sizes' => getResizedUrls($service->thumb, 180, 270),
-            'total_stock' => (int)$service->stock()->get()->sum('stock'),
+            'total_stock' => (int)$service->stock,
             'stock_left' => (int)$service->stock_left,
             'slug' => $service->getSlug()
         ];
