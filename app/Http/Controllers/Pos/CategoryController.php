@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use App\Sheba\Pos\Category\Category;
+use Sheba\Dal\PartnerPosServiceBatch\Model as PosServiceBatch;
 
 
 class CategoryController extends Controller
@@ -103,7 +104,7 @@ class CategoryController extends Controller
                     }) : [];
                     $total_items++;
                     if ($service->cost) $items_with_buying_price++;
-                    $total_buying_price += $service->cost * $service->stock;
+                    $total_buying_price += $this->getBuyingPriceOfService($service->id);
                 });
             });
 
@@ -261,5 +262,20 @@ class CategoryController extends Controller
             return api_response($request, null, 403, ['message' => 'Not allowed to update this category']);
         $category->update($modifier, $pos_category, $request->name);
         return api_response($request, null, 200, ['message' => 'Category Updated Successfully']);
+    }
+
+    public function getBuyingPriceOfService($service_id)
+    {
+        $all_batches_of_service = $this->getAllBatchesOfService($service_id);
+        $total_batch_price = 0.0;
+        foreach ($all_batches_of_service as $batch) {
+            $total_batch_price += $batch->cost * $batch->stock;
+        }
+        return $total_batch_price;
+    }
+
+    public function getAllBatchesOfService($service_id)
+    {
+        return PosServiceBatch::where('partner_pos_service_id', $service_id)->get();
     }
 }

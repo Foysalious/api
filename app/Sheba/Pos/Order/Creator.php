@@ -144,7 +144,7 @@ class Creator
             $original_service = isset($service['id']) && !empty($service['id']) ? $this->posServiceRepo->find($service['id']) : $this->posServiceRepo->defaultInstance($service);
             if(!$original_service)
                 throw new DoNotReportException("Service not found with provided ID", 400);
-            if($original_service->is_published_for_shop && isset($service['quantity']) && !empty($service['quantity']) && $service['quantity'] > $original_service->stock)
+            if($original_service->is_published_for_shop && isset($service['quantity']) && !empty($service['quantity']) && $service['quantity'] > $original_service->stock()->get()->sum('stock'))
                 throw new NotEnoughStockException("Not enough stock", 403);
             // $is_service_discount_applied = $original_service->discount();
             $service_wholesale_applicable = $original_service->wholesale_price ? true : false;
