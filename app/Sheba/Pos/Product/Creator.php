@@ -46,6 +46,10 @@ class Creator
         $this->saveImages();
         $this->data['partner_id'] = $this->data['partner']['id'];
         $this->data['pos_category_id'] = $this->data['category_id'];
+        $cost = $this->data['cost'];
+        $stock = $this->data['stock'];
+        $this->data['cost'] = 0.0;
+        $this->data['stock'] = null;
         $this->format();
         $image_gallery = null;
         if (isset($this->data['image_gallery']))
@@ -53,7 +57,7 @@ class Creator
         $cloned_data = $this->data;
         $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'image_gallery','accounting_info']);
         $partner_pos_service = $this->serviceRepo->save($this->data + (new RequestIdentification())->get());
-        $this->savePartnerPosServiceBatch($partner_pos_service->id);
+        $this->savePartnerPosServiceBatch($partner_pos_service->id, $stock, $cost);
         $this->storeImageGallery($partner_pos_service, json_decode($image_gallery,true));
         if (isset($cloned_data['accounting_info']) && !empty($cloned_data['accounting_info']))
             $this->createExpenseEntry($partner_pos_service, json_decode($cloned_data['accounting_info'], true));
@@ -170,12 +174,12 @@ class Creator
             PartnerPosCategory::insert($data);
     }
 
-    private function savePartnerPosServiceBatch($service_id)
+    public function savePartnerPosServiceBatch($service_id, $stock = null, $cost = null)
     {
         $batchData = [];
         $batchData['partner_pos_service_id'] = $service_id;
-        $batchData['stock'] = (isset($this->data['stock']) && $this->data['stock'] > 0) ? (double)$this->data['stock'] : null;
-        $batchData['cost']  = (double)$this->data['cost'];
+        $batchData['stock'] = (isset($this->data['stock']) && $this->data['stock'] > 0) ? (double)$this->data['stock'] : $stock;
+        $batchData['cost']  = isset($this->data['stock']) ? (double)$this->data['cost'] : $cost;
 
         return PartnerPosServiceBatch::create($batchData);
     }

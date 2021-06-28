@@ -11,7 +11,9 @@ use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use League\Fractal\Serializer\ArraySerializer;
+use Sheba\Dal\PartnerPosServiceBatch\Model as PartnerPosServiceBatch;
 use Sheba\ModificationFields;
+use Sheba\Pos\Product\Creator;
 use Sheba\Pos\Product\Creator as ProductCreator;
 use Sheba\Pos\Product\Deleter;
 use Sheba\Pos\Product\Log\FieldType;
@@ -180,9 +182,19 @@ class ServiceController extends Controller
             return api_response($request, null, 200, ['msg' => 'Product Created Successfully', 'service' => $partner_pos_service]);
     }
 
-    public function addNewStock(Request $request)
+    public function addNewStock(Request $request, $partnter_id, $service_id)
     {
+        $service = PartnerPosService::where('partner_id', $partnter_id)->find($service_id);
+        if(!$service) return api_response($request, null, 404, ['message' => 'Service not found']);
 
+        $this->validate($request, [
+            'stock' => 'sometimes|required',
+            'cost' => 'sometimes|required'
+        ]);
+
+        /** @var Creator $creator */
+        $creator = app(Creator::class);
+        return $creator->savePartnerPosServiceBatch($service_id, $request->stock, $request->cost);
     }
 
     /**
