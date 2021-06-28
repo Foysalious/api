@@ -47,7 +47,8 @@ class VendorVoucherDataGenerator
         return [
             'mobile' => '+88' . $this->data->mobile,
             'sales_channels' => config('vendor.vendor_promo_applicable_sales_channels'),
-            "applicant_types" => ["customer"]
+            "applicant_types" => ["customer"],
+            "modules" => ["order"]
         ];
     }
 
