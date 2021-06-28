@@ -102,6 +102,8 @@ class CategoryGroupController extends Controller
 
         $categories = $category_group->categories->each(function ($category) use ($location) {
             $category->thumb_sizes = getResizedUrls($category->thumb, 180, 270);
+            $category->slug = $category->getSlug();
+//            dump($category->slug);
             removeRelationsAndFields($category);
         });
 
