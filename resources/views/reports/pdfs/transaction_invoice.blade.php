@@ -111,7 +111,8 @@
                                 <div style="padding: 10px 20px">
                                     <span style="color: #B0BEC5;">Bill to</span><br>
                                     <span style="color: #383d46;letter-spacing: -0.05px;font-weight: 700;">{{ucfirst($user['name'])}}</span><br>
-                                    <span style="color: #9b9b9b">{{$user['mobile']}}</span>
+                                    <span style="color: #9b9b9b">{{$user['mobile']}}</span><br>
+                                    <span style="color: #9b9b9b">{{$user['address']}}</span>
                                 </div>
                             @endif
                         </td>
