@@ -4,7 +4,7 @@ use App\Sheba\AccountingEntry\Constants\UserType;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
 use App\Sheba\AccountingEntry\Repository\BaseRepository;
-use Sheba\Helpers\ConstGetter;
+use App\Sheba\AccountingEntry\Constants\AccountingReport;
 
 class AccountingReportRepository extends BaseRepository
 {
