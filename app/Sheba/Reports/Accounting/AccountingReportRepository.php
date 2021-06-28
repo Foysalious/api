@@ -4,21 +4,11 @@ use App\Sheba\AccountingEntry\Constants\UserType;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
 use App\Sheba\AccountingEntry\Repository\BaseRepository;
-use Sheba\Helpers\ConstGetter;
+use App\Sheba\AccountingEntry\Constants\AccountingReport;
 
 class AccountingReportRepository extends BaseRepository
 {
-    use ConstGetter;
-
     private $api;
-
-    const PROFIT_LOSS_REPORT = 'profit_loss_report';
-    const JOURNAL_REPORT = 'journal_report';
-    const BALANCE_SHEET_REPORT = 'balance_sheet_report';
-    const GENERAL_LEDGER_REPORT = 'general_ledger_report';
-    const DETAILS_LEDGER_REPORT = 'details_ledger_report';
-    const GENERAL_ACCOUNTING_REPORT = 'general_accounting_report';
-
 
     /**
      * AccountingReportRepository constructor.
@@ -46,8 +36,8 @@ class AccountingReportRepository extends BaseRepository
         try {
             $data = $this->client->setUserType($userType)->setUserId($userId)
                 ->get($this->api . "accounting-report/$reportType?start_date=$startDate&end_date=$endDate&account_id=$accountId&account_type=$accountType");
-            if($reportType === self::JOURNAL_REPORT) return (new JournalReportData())->format_data($data);
-            return $reportType === self::PROFIT_LOSS_REPORT ? (new ProfitLossReportData())->format_data($data): $data;
+            if($reportType === AccountingReport::JOURNAL_REPORT) return (new JournalReportData())->format_data($data);
+            return $reportType === AccountingReport::PROFIT_LOSS_REPORT ? (new ProfitLossReportData())->format_data($data): $data;
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
@@ -58,28 +48,34 @@ class AccountingReportRepository extends BaseRepository
     {
         return [
             [
-                'key' => self::PROFIT_LOSS_REPORT,
-                'report_bangla_name' => 'লাভ-ক্ষতি রিপোর্ট'
+                'key' => AccountingReport::PROFIT_LOSS_REPORT,
+                'report_bangla_name' => 'লাভ-ক্ষতি রিপোর্ট',
+                'url' => url('/v2/accounting/reports/profit_loss_report'),
+                'icon' => config('accounting_entry.icon_url').'/'.'loss_profit_report.png'
             ],
             [
-                'key' => self::JOURNAL_REPORT,
-                'report_bangla_name' => 'জার্নাল রিপোর্ট'
+                'key' => AccountingReport::JOURNAL_REPORT,
+                'report_bangla_name' => 'জার্নাল রিপোর্ট',
+                'url' => url('/v2/accounting/reports/journal_report'),
+                'icon' => config('accounting_entry.icon_url').'/'.'journal_report.png'
             ],
             [
-                'key' => self::BALANCE_SHEET_REPORT,
-                'report_bangla_name' => 'ব্যাল্যান্স শিট রিপোর্ট'
+                'key' => AccountingReport::GENERAL_LEDGER_REPORT,
+                'report_bangla_name' => 'জেনারেল লেজার রিপোর্ট',
+                'url' => url('/v2/accounting/reports/general_ledger_report'),
+                'icon' => config('accounting_entry.icon_url').'/'.'general_ledger_report.png'
             ],
             [
-                'key' => self::GENERAL_LEDGER_REPORT,
-                'report_bangla_name' => 'জেনারেল লেজার রিপোর্ট'
+                'key' => AccountingReport::CUSTOMER_WISE_SALES_REPORT,
+                'report_bangla_name' => 'কাস্টমার আনুযায়ী বিক্রির রিপোর্ট',
+                'url' => url('/v2/accounting/reports/pos/customer-wise'),
+                'icon' => config('accounting_entry.icon_url').'/'.'customer_wise_sales_report.png'
             ],
             [
-                'key' => self::DETAILS_LEDGER_REPORT,
-                'report_bangla_name' => 'বিস্তারিত লেজার রিপোর্ট'
-            ],
-            [
-                'key' => self::GENERAL_ACCOUNTING_REPORT,
-                'report_bangla_name' => 'সাধারণ হিসাব রিপোর্ট'
+                'key' => AccountingReport::PRODUCT_WISE_SALES_REPORT,
+                'report_bangla_name' => 'পণ্য অনুযায়ী বিক্রয় রিপোর্ট',
+                'url' => url('/v2/accounting/reports/pos/product-wise'),
+                'icon' => config('accounting_entry.icon_url').'/'.'item_wise_sales_report.png'
             ]
         ];
     }
