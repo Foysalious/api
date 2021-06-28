@@ -1,26 +1,22 @@
 <?php namespace App\Transformers\Business;
 
+use App\Models\BusinessMember;
+use App\Models\BusinessRole;
+use App\Models\Profile;
 use League\Fractal\TransformerAbstract;
 use App\Models\Member;
 
 class CoWorkerListTransformer extends TransformerAbstract
 {
-    private $isInactiveFilterApplied;
-
-    public function __construct($is_inactive_filter_applied)
+    public function transform(BusinessMember $business_member)
     {
-        $this->isInactiveFilterApplied = $is_inactive_filter_applied;
-    }
-
-    public function transform(Member $member)
-    {
+        /** @var Member $member */
+        $member = $business_member->member;
+        /** @var Profile $profile */
         $profile = $member->profile;
-        if ($this->isInactiveFilterApplied)
-            $business_member = $member->businessMemberGenerated;
-        else
-            $business_member = $member->businessMember;
-
+        /** @var BusinessRole $role */
         $role = $business_member->role;
+
         return [
             'id' => $member->id,
             'employee_id' => $business_member->employee_id,
