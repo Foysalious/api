@@ -47,10 +47,16 @@ class AccountingReportRepository extends BaseRepository
     {
         return [
             [
-                'key' => AccountingReport::PROFIT_LOSS_REPORT,
-                'report_bangla_name' => 'লাভ-ক্ষতি রিপোর্ট',
-                'url' => url('/v2/accounting/reports/profit_loss_report'),
-                'icon' => config('accounting_entry.icon_url').'/'.'loss_profit_report.png'
+                'key' => AccountingReport::PRODUCT_WISE_SALES_REPORT,
+                'report_bangla_name' => 'পণ্য অনুযায়ী বিক্রয় রিপোর্ট',
+                'url' => url('/v2/accounting/reports/pos/product-wise'),
+                'icon' => config('accounting_entry.icon_url').'/'.'item_wise_sales_report.png'
+            ],
+            [
+                'key' => AccountingReport::CUSTOMER_WISE_SALES_REPORT,
+                'report_bangla_name' => 'কাস্টমার আনুযায়ী বিক্রির রিপোর্ট',
+                'url' => url('/v2/accounting/reports/pos/customer-wise'),
+                'icon' => config('accounting_entry.icon_url').'/'.'customer_wise_sales_report.png'
             ],
             [
                 'key' => AccountingReport::JOURNAL_REPORT,
@@ -65,17 +71,11 @@ class AccountingReportRepository extends BaseRepository
                 'icon' => config('accounting_entry.icon_url').'/'.'general_ledger_report.png'
             ],
             [
-                'key' => AccountingReport::CUSTOMER_WISE_SALES_REPORT,
-                'report_bangla_name' => 'কাস্টমার আনুযায়ী বিক্রির রিপোর্ট',
-                'url' => url('/v2/accounting/reports/pos/customer-wise'),
-                'icon' => config('accounting_entry.icon_url').'/'.'customer_wise_sales_report.png'
+                'key' => AccountingReport::PROFIT_LOSS_REPORT,
+                'report_bangla_name' => 'লাভ-ক্ষতি রিপোর্ট',
+                'url' => url('/v2/accounting/reports/profit_loss_report'),
+                'icon' => config('accounting_entry.icon_url').'/'.'loss_profit_report.png'
             ],
-            [
-                'key' => AccountingReport::PRODUCT_WISE_SALES_REPORT,
-                'report_bangla_name' => 'পণ্য অনুযায়ী বিক্রয় রিপোর্ট',
-                'url' => url('/v2/accounting/reports/pos/product-wise'),
-                'icon' => config('accounting_entry.icon_url').'/'.'item_wise_sales_report.png'
-            ]
         ];
     }
 }
