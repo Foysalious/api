@@ -462,7 +462,7 @@ class DeliveryService
     {
         $data = $this->makeDeliveryChargeData();
         $response =  $this->client->post('price-check', $data);
-        return $response['data'][0]['package_price'] - ((config('pos_delivery.cash_on_delivery_charge_percentage')/100) *  $this->cashOnDelivery);
+        return $response['data'][0]['package_price'];
 
     }
 
