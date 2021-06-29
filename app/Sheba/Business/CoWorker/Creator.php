@@ -144,7 +144,7 @@ class Creator
     public function setEmail($email)
     {
         $this->email = $email;
-        $this->checkEmailUsedWithAnotherProfile();
+        #$this->checkEmailUsedWithAnotherProfile();
         return $this;
     }
 
@@ -179,6 +179,10 @@ class Creator
             $member = $profile->member;
             if (!$member) {
                 $member = $this->createMember($profile);
+                $this->businessMember = $this->createBusinessMember($this->business, $member);
+            }
+
+            if ($member) {
                 $this->businessMember = $this->createBusinessMember($this->business, $member);
             }
         }
