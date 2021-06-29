@@ -170,7 +170,6 @@ class ServiceController extends Controller
             $description = json_decode($partner_pos_service->description);
         }
 
-//        json_decode($partner_pos_service->name) == null ? $name = $partner_pos_service->name : json_decode($partner_pos_service->name);
         $partner_pos_service->description=$description;
         $partner_pos_service->name=$name;
         $partner_pos_service->partner_id = $partner_pos_service_model->partner_id;
@@ -299,7 +298,18 @@ class ServiceController extends Controller
         if ($request->is_discount_off == 'false' && !$request->discount_id) {
             $this->createServiceDiscount($request, $partner_pos_service);
         }
-
+        if (json_decode($partner_pos_service->name) == null) {
+            $name = $partner_pos_service->name;
+        } else {
+            $name = json_decode($partner_pos_service->name);
+        }
+        if (json_decode($partner_pos_service->description) == null) {
+            $description = $partner_pos_service->description;
+        } else {
+            $description = json_decode($partner_pos_service->description);
+        }
+        $partner_pos_service->name = $name;
+        $partner_pos_service->description = $description;
         $partner_pos_service->unit = $partner_pos_service->unit ? constants('POS_SERVICE_UNITS')[$partner_pos_service->unit] : null;
         $partner_pos_service->warranty_unit = $partner_pos_service->warranty_unit ? config('pos.warranty_unit')[$partner_pos_service->warranty_unit] : null;
         $partner_pos_service->master_category_id = $partner_pos_service->category->parent_id;
