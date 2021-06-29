@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Models\Business;
+use App\Sheba\Business\CoWorker\IncompleteInvitedCoWorkerExcel;
 use App\Transformers\Business\CoWorkerReportDetailsTransformer;
 use Exception;
 use Illuminate\Http\UploadedFile;
@@ -789,5 +790,11 @@ class CoWorkerController extends Controller
         }
 
         return api_response($request, null, 200, ['salary_info_details' => $salary_certificate_info]);
+    }
+
+    public function downloadInvitedCoworker(Request $request, IncompleteInvitedCoWorkerExcel $incomplete_coworker_excel)
+    {
+        $incomplete_coworker_excel->get();
+        return api_response($request, null, 200);
     }
 }
