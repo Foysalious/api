@@ -23,7 +23,7 @@ class Member extends Model
         return $this->belongsToMany(Business::class)->whereIn('status', Statuses::getAccessible())->withTimestamps();
     }
 
-    public function inActiveBusinesses()
+    public function inactiveBusinesses()
     {
         return $this->belongsToMany(Business::class)->where('status', Statuses::INACTIVE)->withTimestamps();
     }

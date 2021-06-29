@@ -501,7 +501,7 @@ class Updater
 
     public function reInvite()
     {
-        (new Invite($this->profile))->sendExistingUserMail();
+        (new Invite($this->profile))->sendReInviteMail();
     }
 
     /**

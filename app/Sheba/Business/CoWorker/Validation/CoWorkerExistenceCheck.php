@@ -72,7 +72,7 @@ class CoWorkerExistenceCheck
     /**
      * @return $this
      */
-    public function checkEmailUsedWithAnotherProfile()
+    public function checkEmailUsability()
     {
         if (!$this->email) return $this;
 
@@ -80,17 +80,32 @@ class CoWorkerExistenceCheck
         if (!$profile) return $this;
         if (!$profile->member) return $this;
 
+        $this->isTheEmployeeAlreadyInMyActiveOrInvitedList($profile);
+        $this->isTheEmployeeAlreadyInMyInactiveList($profile);
+        $this->isTheEmployeeAlreadyOthersActiveOrInvitedList($profile);
+
+        return $this;
+    }
+
+    private function isTheEmployeeAlreadyInMyActiveOrInvitedList($profile)
+    {
         if ($profile->member->businesses()->where('businesses.id', $this->business->id)->count() > 0) {
             $this->setError(421, "This employee is already added to your business");
         }
-        if ($profile->member->allBusinesses()->where('businesses.id', $this->business->id)->count() > 0) {
+    }
+
+    private function isTheEmployeeAlreadyInMyInactiveList($profile)
+    {
+        if ($profile->member->inactiveBusinesses()->where('businesses.id', $this->business->id)->count() > 0) {
             $this->setError(409, "This employee exists in your inactive list. Do you want to activate again?");
         }
+    }
+
+    private function isTheEmployeeAlreadyOthersActiveOrInvitedList($profile)
+    {
         if ($profile->member->businesses()->where('businesses.id', '<>', $this->business->id)->count() > 0) {
             $this->setError(422, "This employee is already added in another business");
         }
-
-        return $this;
     }
 
 }

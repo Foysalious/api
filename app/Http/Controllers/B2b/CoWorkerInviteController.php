@@ -134,11 +134,12 @@ class CoWorkerInviteController extends Controller
             return api_response($request, null, 420, ['email' => $email, 'message' => 'Invalid email address']);
         }
         $this->basicRequest->setEmail($email);
-        $this->coWorkerExistenceCheck->setBusiness($business)->setEmail($email)->checkEmailUsedWithAnotherProfile();
+        $this->coWorkerExistenceCheck->setBusiness($business)->setEmail($email)->checkEmailUsability();
 
         if ($this->coWorkerExistenceCheck->hasError()) {
             return api_response($request, null, $this->coWorkerExistenceCheck->getErrorCode(), ['message' => $this->coWorkerExistenceCheck->getErrorMessage()]);
         }
+
         $this->coWorkerCreator->setBasicRequest($this->basicRequest)->setBusiness($business)->setStatus(Statuses::INVITED)->setEmail($email);
         $this->coWorkerCreator->basicInfoStore();
         return api_response($request, null, 200);
