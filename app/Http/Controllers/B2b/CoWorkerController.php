@@ -149,7 +149,7 @@ class CoWorkerController extends Controller
             'department' => 'required|integer',
             'role' => 'required|string',
             'gender' => 'required|string',
-            'join_date' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->addDays(1)->format('Y-m-d')
+            'join_date' => 'required|date|date_format:Y-m-d'
         ]);
 
         $business = $request->business;
