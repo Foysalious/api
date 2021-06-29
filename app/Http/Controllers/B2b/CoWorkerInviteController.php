@@ -86,7 +86,7 @@ class CoWorkerInviteController extends Controller
                 continue;
             }
 
-            $this->coWorkerCreator->basicInfoStore();
+            #$this->coWorkerCreator->basicInfoStore();
         }
 
         if ($errors) {
@@ -137,7 +137,7 @@ class CoWorkerInviteController extends Controller
         $this->coWorkerExistenceCheck->setBusiness($business)->setEmail($email)->checkEmailUsability();
 
         if ($this->coWorkerExistenceCheck->hasError()) {
-            return api_response($request, null, $this->coWorkerExistenceCheck->getErrorCode(), ['message' => $this->coWorkerExistenceCheck->getErrorMessage()]);
+            return api_response($request, null, $this->coWorkerExistenceCheck->getErrorCode(), ['message' => $this->coWorkerExistenceCheck->getErrorMessage(), 'business_member_id' => $this->coWorkerExistenceCheck->getBusinessMemberId()]);
         }
 
         $this->coWorkerCreator->setBasicRequest($this->basicRequest)->setBusiness($business)->setStatus(Statuses::INVITED)->setEmail($email);

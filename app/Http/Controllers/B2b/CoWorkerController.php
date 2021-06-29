@@ -2,6 +2,7 @@
 
 use App\Jobs\Business\SendEmailForPublishTenderToBusiness;
 use App\Models\Business;
+use App\Sheba\Business\CoWorker\IncompleteInvitedCoWorkerExcel;
 use App\Models\Department;
 use App\Models\Procurement;
 use App\Transformers\Business\CoWorkerReportDetailsTransformer;
@@ -162,7 +163,7 @@ class CoWorkerController extends Controller
 
         $this->coWorkerExistenceCheck->setBusiness($business)->setEmail($email)->checkEmailUsability();
         if ($this->coWorkerExistenceCheck->hasError()) {
-            return api_response($request, null, $this->coWorkerExistenceCheck->getErrorCode(), ['message' => $this->coWorkerExistenceCheck->getErrorMessage()]);
+            return api_response($request, null, $this->coWorkerExistenceCheck->getErrorCode(), ['message' => $this->coWorkerExistenceCheck->getErrorMessage(), 'business_member_id' => $this->coWorkerExistenceCheck->getBusinessMemberId()]);
         }
 
         $this->basicRequest->setFirstName($request->first_name)
@@ -792,5 +793,11 @@ class CoWorkerController extends Controller
         }
 
         return api_response($request, null, 200, ['salary_info_details' => $salary_certificate_info]);
+    }
+
+    public function downloadInvitedCoworker(Request $request, IncompleteInvitedCoWorkerExcel $incomplete_coworker_excel)
+    {
+        $incomplete_coworker_excel->get();
+        return api_response($request, null, 200);
     }
 }
