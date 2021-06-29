@@ -13,14 +13,19 @@ class Member extends Model
         return $this->belongsTo(Profile::class);
     }
 
+    public function allBusinesses()
+    {
+        return $this->belongsToMany(Business::class)->withTimestamps();
+    }
+
     public function businesses()
     {
         return $this->belongsToMany(Business::class)->whereIn('status', Statuses::getAccessible())->withTimestamps();
     }
 
-    public function allBusinesses()
+    public function inActiveBusinesses()
     {
-        return $this->belongsToMany(Business::class)->withTimestamps();
+        return $this->belongsToMany(Business::class)->where('status', Statuses::INACTIVE)->withTimestamps();
     }
 
     public function inspections()
