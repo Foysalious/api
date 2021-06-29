@@ -4,53 +4,43 @@ use App\Sheba\Business\PayrollComponent\Components\GrossSalaryBreakdownCalculate
 use App\Sheba\Business\SalaryLog\Formatter as SalaryLogFormatter;
 use Sheba\Dal\PayrollComponent\TargetType;
 use Sheba\Dal\PayrollComponent\Type;
-use Sheba\Dal\SalaryLog\SalaryLogRepository;
 use Sheba\Dal\PayrollComponent\Components;
 use League\Fractal\TransformerAbstract;
-use Sheba\Dal\Salary\SalaryRepository;
 use App\Models\BusinessMember;
 use App\Models\Business;
+use App\Models\Profile;
 use App\Models\Member;
 
 class CoWorkerDetailTransformer extends TransformerAbstract
 {
     const THRESHOLD = 17;
 
+    /** @var Business $business */
     private $business;
-    private $isInactiveFilterApplied;
-    private $SalaryRepository;
-    private $SalaryLogRepository;
+    /** @var Member $member */
+    private $member;
+    /** @var Profile $profile */
+    private $profile;
 
-    public function __construct(Business $business, $is_inactive_filter_applied)
+
+    public function transform(BusinessMember $business_member)
     {
-        $this->business = $business;
-        $this->isInactiveFilterApplied = $is_inactive_filter_applied;
-        $this->SalaryRepository = app(SalaryRepository::class);
-        $this->SalaryLogRepository = app(SalaryLogRepository::class);
-    }
-
-    /**
-     * @param Member $member
-     * @return array
-     */
-    public function transform(Member $member)
-    {
-        $business_member = ($this->isInactiveFilterApplied) ? $member->businessMemberGenerated : $member->businessMember;
-
+        $this->business = $business_member->business;
+        $this->member = $business_member->member;
+        $this->profile = $this->member->profile;
         return [
-            'basic_info' => $this->getBasicInfo($member, $business_member),
+            'basic_info' => $this->getBasicInfo($business_member),
             'official_info' => $this->getOfficialInfo($business_member),
-            'personal_info' => $this->getPersonalInfo($member, $business_member),
-            'financial_info' => $this->getFinancialInfo($member),
-            'emergency_info' => $this->getEmergencyInfo($member),
+            'personal_info' => $this->getPersonalInfo($business_member),
+            'financial_info' => $this->getFinancialInfo(),
+            'emergency_info' => $this->getEmergencyInfo(),
             'salary_info' => $this->getSalaryInfo($business_member),
-            'profile_completion' => $this->profileCompletion($member, $business_member),
+            'profile_completion' => $this->profileCompletion($business_member),
         ];
     }
 
-    private function getBasicInfo($member, $business_member)
+    private function getBasicInfo($business_member)
     {
-        $profile = $member->profile;
         $role = $business_member ? $business_member->role : null;
         $department = $role ? $role->businessDepartment : null;
         $department_name = $department ? $department->name : null;
@@ -58,20 +48,20 @@ class CoWorkerDetailTransformer extends TransformerAbstract
         $designation = $role ? $role->name : null;
 
         $count = 0;
-        if ($profile->name) $count++;
-        if ($profile->email) $count++;
+        if ($this->profile->name) $count++;
+        if ($this->profile->email) $count++;
         if ($department) $count++;
         if ($designation) $count++;
         $basic_info_completion = round((($count / 4) * self::THRESHOLD), 0);
         return [
-            'id' => $member->id,
+            'id' => $this->member->id,
             'status' => $business_member->status,
             'profile' => [
-                'id' => $profile->id,
-                'name' => $profile->name,
-                'profile_picture_name' => $profile->pro_pic ? array_last(explode('/', $profile->pro_pic)) : null,
-                'profile_picture' => $profile->pro_pic,
-                'email' => $profile->email,
+                'id' => $this->profile->id,
+                'name' => $this->profile->name,
+                'profile_picture_name' => $this->profile->pro_pic ? array_last(explode('/', $this->profile->pro_pic)) : null,
+                'profile_picture' => $this->profile->pro_pic,
+                'email' => $this->profile->email,
             ],
             'department' => $department_name,
             'department_id' => $department_id,
@@ -101,75 +91,73 @@ class CoWorkerDetailTransformer extends TransformerAbstract
         ];
     }
 
-    private function getPersonalInfo($member, $business_member)
+    private function getPersonalInfo($business_member)
     {
-        $profile = $business_member->member->profile;
         $count = 0;
         if ($business_member->mobile ||
-            $profile->dob ||
-            $profile->address ||
-            $profile->nationality ||
-            $profile->nid_no ||
-            $profile->nationality ||
-            $profile->nid_image_front ||
-            $profile->nid_image_back) $count++;
+            $this->profile->dob ||
+            $this->profile->address ||
+            $this->profile->nationality ||
+            $this->profile->nid_no ||
+            $this->profile->nationality ||
+            $this->profile->nid_image_front ||
+            $this->profile->nid_image_back) $count++;
 
         $personal_info_completion = round((($count / 1) * self::THRESHOLD), 0);
 
         return [
             'mobile' => $business_member->mobile,
-            'date_of_birth' => $profile->dob,
-            'address' => $profile->address,
-            'nationality' => $profile->nationality,
-            'nid_no' => $profile->nid_no,
-            'profile_id' => $profile->id,
-            'nid_image_front_name' => $profile->nid_image_front ? array_last(explode('/', $profile->nid_image_front)) : null,
-            'nid_image_front' => $profile->nid_image_front,
-            'nid_image_back_name' => $profile->nid_image_back ? array_last(explode('/', $profile->nid_image_back)) : null,
-            'nid_image_back' => $profile->nid_image_back,
+            'date_of_birth' => $this->profile->dob,
+            'address' => $this->profile->address,
+            'nationality' => $this->profile->nationality,
+            'nid_no' => $this->profile->nid_no,
+            'profile_id' => $this->profile->id,
+            'nid_image_front_name' => $this->profile->nid_image_front ? array_last(explode('/', $this->profile->nid_image_front)) : null,
+            'nid_image_front' => $this->profile->nid_image_front,
+            'nid_image_back_name' => $this->profile->nid_image_back ? array_last(explode('/', $this->profile->nid_image_back)) : null,
+            'nid_image_back' => $this->profile->nid_image_back,
             'personal_info_completion' => $personal_info_completion
         ];
     }
 
-    private function getFinancialInfo($member)
+    private function getFinancialInfo()
     {
-        $profile = $member->profile;
-        $profile_bank_info = $profile->banks->last();
+        $profile_bank_info = $this->profile->banks->last();
 
         $bank_name = $profile_bank_info ? ucwords(str_replace('_', ' ', $profile_bank_info->bank_name)) : null;
         $account_no = $profile_bank_info ? $profile_bank_info->account_no : null;
 
         $count = 0;
-        if ($profile->tin_no ||
-            $profile->tin_certificate ||
+        if ($this->profile->tin_no ||
+            $this->profile->tin_certificate ||
             $bank_name ||
             $account_no) $count++;
 
         $financial_info_completion = round((($count / 1) * self::THRESHOLD), 0);
 
         return [
-            'tin_no' => $profile->tin_no,
-            'tin_certificate_name' => $profile->tin_certificate ? array_last(explode('/', $profile->tin_certificate)) : null,
-            'tin_certificate' => $profile->tin_certificate,
+            'tin_no' => $this->profile->tin_no,
+            'tin_certificate_name' => $this->profile->tin_certificate ? array_last(explode('/', $this->profile->tin_certificate)) : null,
+            'tin_certificate' => $this->profile->tin_certificate,
             'bank_name' => $bank_name,
             'account_no' => $account_no,
             'financial_info_completion' => $financial_info_completion
         ];
     }
 
-    private function getEmergencyInfo($member)
+    private function getEmergencyInfo()
     {
         $count = 0;
-        if ($member->emergency_contract_person_name ||
-            $member->emergency_contract_person_number ||
-            $member->emergency_contract_person_relationship) $count++;
+        if ($this->member->emergency_contract_person_name ||
+            $this->member->emergency_contract_person_number ||
+            $this->member->emergency_contract_person_relationship) $count++;
 
         $emergency_info_completion = round((($count / 1) * self::THRESHOLD), 0);
 
         return [
-            'emergency_contract_person_name' => $member->emergency_contract_person_name,
-            'emergency_contract_person_number' => $member->emergency_contract_person_number,
-            'emergency_contract_person_relationship' => $member->emergency_contract_person_relationship,
+            'emergency_contract_person_name' => $this->member->emergency_contract_person_name,
+            'emergency_contract_person_number' => $this->member->emergency_contract_person_number,
+            'emergency_contract_person_relationship' => $this->member->emergency_contract_person_relationship,
             'emergency_info_completion' => $emergency_info_completion
         ];
     }
@@ -183,7 +171,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
         $salary = $business_member->salary;
         if ($salary && $salary->gross_salary) $count++;
         $salary_completion = round((($count / 1) * self::THRESHOLD), 0);
-        
+
         $gross_salary_breakdown['business_member_id'] = $business_member->id;
         $gross_salary_breakdown ['breakdown'] = $payroll_percentage_breakdown['breakdown'];
         $gross_salary_breakdown['gross_salary'] = $salary ? floatValFormat($salary->gross_salary) : null;
@@ -194,14 +182,14 @@ class CoWorkerDetailTransformer extends TransformerAbstract
         return $gross_salary_breakdown;
     }
 
-    private function profileCompletion($member, $business_member)
+    private function profileCompletion($business_member)
     {
         $count = 0;
-        $basic_info_completion = $this->getBasicInfo($member, $business_member)['basic_info_completion'];
+        $basic_info_completion = $this->getBasicInfo($business_member)['basic_info_completion'];
         $official_info_completion = $this->getOfficialInfo($business_member)['official_info_completion'];
-        $personal_info_completion = $this->getPersonalInfo($member, $business_member)['personal_info_completion'];
-        $financial_info_completion = $this->getFinancialInfo($member)['financial_info_completion'];
-        $emergency_info_completion = $this->getEmergencyInfo($member)['emergency_info_completion'];
+        $personal_info_completion = $this->getPersonalInfo($business_member)['personal_info_completion'];
+        $financial_info_completion = $this->getFinancialInfo()['financial_info_completion'];
+        $emergency_info_completion = $this->getEmergencyInfo()['emergency_info_completion'];
         $gross_salary_info_completion = $this->getSalaryInfo($business_member)['gross_salary_completion'];
 
         if ($basic_info_completion) $count++;
@@ -250,8 +238,8 @@ class CoWorkerDetailTransformer extends TransformerAbstract
 
     private function getGlobalGrossSalaryComponent($payroll_setting)
     {
-        $global_gross_components = $payroll_setting->components()->where('type', Type::GROSS)->where('target_type', TargetType::GENERAL)->where(function($query) {
-            return $query->where('is_default', 1)->orWhere('is_active',1);
+        $global_gross_components = $payroll_setting->components()->where('type', Type::GROSS)->where('target_type', TargetType::GENERAL)->where(function ($query) {
+            return $query->where('is_default', 1)->orWhere('is_active', 1);
         })->orderBy('type')->get();
         $global_gross_component_data = [];
         foreach ($global_gross_components as $component) {

@@ -6,11 +6,23 @@ class PosServiceTransformer extends TransformerAbstract
 {
     public function transform($service)
     {
+        if (json_decode($service->name) == null) {
+            $name = $service->name;
+        } else {
+            $name = json_decode($service->name);
+        }
+
+        if (json_decode($service->description) == null) {
+            $description = $service->description;
+        } else {
+            $description = json_decode($service->description);
+        }
         $service_discount = $service->discount();
+
 
         return [
             'id' => $service->id,
-            'name' => $service->name,
+            'name' => $name,
             'app_thumb' => $service->app_thumb,
             'app_banner' => $service->app_banner,
             'thumb' => $service->thumb,
@@ -31,7 +43,7 @@ class PosServiceTransformer extends TransformerAbstract
             'vat_applicable' => $service->vat_percentage ? true : false,
             'vat' => $service->vat_percentage,
             'unit' => $service->unit ? array_merge(constants('POS_SERVICE_UNITS')[$service->unit], ['key' => $service->unit]) : null,
-            'description' => $service->description,
+            'description' => $description,
             'description_applicable' => $service->description ? true : false,
             'warranty_applicable' => $service->warranty ? true : false,
             'warranty' => (double)$service->warranty,

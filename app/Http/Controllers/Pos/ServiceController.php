@@ -150,36 +150,49 @@ class ServiceController extends Controller
         $partner_pos_service->unit = $partner_pos_service->unit ? constants('POS_SERVICE_UNITS')[$partner_pos_service->unit] : null;
         $partner_pos_service->warranty_unit = $partner_pos_service->warranty_unit ? config('pos.warranty_unit')[$partner_pos_service->warranty_unit] : null;
 
-            $partner_pos_service_model = PartnerPosService::with([
-                    'discounts' => function ($discounts_query) {
-                        $discounts_query->runningDiscounts()->select(['id', 'partner_pos_service_id', 'amount', 'is_amount_percentage', 'cap', 'start_date', 'end_date']);
-                    }
-                ])->find($partner_pos_service->id);
-            $partner_pos_service->partner_id = $partner_pos_service_model->partner_id;
-            $partner_pos_service->thumb = $partner_pos_service_model->thumb;
-            $partner_pos_service->banner = $partner_pos_service_model->banner;
-            $partner_pos_service->app_thumb = $partner_pos_service_model->app_thumb;
-            $partner_pos_service->app_banner = $partner_pos_service_model->app_banner;
-            $partner_pos_service->publication_status = $partner_pos_service_model->publication_status;
-            $partner_pos_service->is_published_for_shop = $partner_pos_service_model->is_published_for_shop;
-            $partner_pos_service->discounts = $partner_pos_service_model->discounts;
-            $partner_pos_service->master_category_id = $partner_pos_service_model->category->parent_id;
-            $partner_pos_service->master_category_name = $partner_pos_service_model->category->parent->name;
-            $partner_pos_service->sub_category_id = $partner_pos_service_model->category->id;
-            $partner_pos_service->weight_unit = $partner_pos_service_model->weight_unit? array_merge(config('weight.weight_unit')[$partner_pos_service_model->weight_unit], ['key' => $partner_pos_service_model->weight_unit]): null;
-            $partner_pos_service->image_gallery = $partner_pos_service_model->imageGallery ? $partner_pos_service_model->imageGallery->map(function($image){
-               return [
-                 'id' =>   $image->id,
-                   'image_link' => $image->image_link
-               ];
-            }) : [];
-            $creator->syncPartnerPosCategory($partner_pos_service);
-            app()->make(ActionRewardDispatcher::class)->run('pos_inventory_create', $request->partner, $request->partner, $partner_pos_service);
-            /**
-             * USAGE LOG
-             */
-            (new Usage())->setUser($request->partner)->setType(Usage::Partner()::INVENTORY_CREATE)->create($request->manager_resource);
-            return api_response($request, null, 200, ['msg' => 'Product Created Successfully', 'service' => $partner_pos_service]);
+        $partner_pos_service_model = PartnerPosService::with([
+            'discounts' => function ($discounts_query) {
+                $discounts_query->runningDiscounts()->select(['id', 'partner_pos_service_id', 'amount', 'is_amount_percentage', 'cap', 'start_date', 'end_date']);
+            }
+        ])->find($partner_pos_service->id);
+        if (json_decode($partner_pos_service->name) == null) {
+            $name = $partner_pos_service->name;
+        } else {
+            $name = json_decode($partner_pos_service->name);
+        }
+        if (json_decode($partner_pos_service->description) == null) {
+            $description = $partner_pos_service->description;
+        } else {
+            $description = json_decode($partner_pos_service->description);
+        }
+
+        $partner_pos_service->description = $description;
+        $partner_pos_service->name = $name;
+        $partner_pos_service->partner_id = $partner_pos_service_model->partner_id;
+        $partner_pos_service->thumb = $partner_pos_service_model->thumb;
+        $partner_pos_service->banner = $partner_pos_service_model->banner;
+        $partner_pos_service->app_thumb = $partner_pos_service_model->app_thumb;
+        $partner_pos_service->app_banner = $partner_pos_service_model->app_banner;
+        $partner_pos_service->publication_status = $partner_pos_service_model->publication_status;
+        $partner_pos_service->is_published_for_shop = $partner_pos_service_model->is_published_for_shop;
+        $partner_pos_service->discounts = $partner_pos_service_model->discounts;
+        $partner_pos_service->master_category_id = $partner_pos_service_model->category->parent_id;
+        $partner_pos_service->master_category_name = $partner_pos_service_model->category->parent->name;
+        $partner_pos_service->sub_category_id = $partner_pos_service_model->category->id;
+        $partner_pos_service->weight_unit = $partner_pos_service_model->weight_unit ? array_merge(config('weight.weight_unit')[$partner_pos_service_model->weight_unit], ['key' => $partner_pos_service_model->weight_unit]) : null;
+        $partner_pos_service->image_gallery = $partner_pos_service_model->imageGallery ? $partner_pos_service_model->imageGallery->map(function ($image) {
+            return [
+                'id' => $image->id,
+                'image_link' => $image->image_link
+            ];
+        }) : [];
+        $creator->syncPartnerPosCategory($partner_pos_service);
+        app()->make(ActionRewardDispatcher::class)->run('pos_inventory_create', $request->partner, $request->partner, $partner_pos_service);
+        /**
+         * USAGE LOG
+         */
+        (new Usage())->setUser($request->partner)->setType(Usage::Partner()::INVENTORY_CREATE)->create($request->manager_resource);
+        return api_response($request, null, 200, ['msg' => 'Product Created Successfully', 'service' => $partner_pos_service]);
     }
 
     public function addNewStock(Request $request, $partnter_id, $service_id)
@@ -294,7 +307,18 @@ class ServiceController extends Controller
         if ($request->is_discount_off == 'false' && !$request->discount_id) {
             $this->createServiceDiscount($request, $partner_pos_service);
         }
-
+        if (json_decode($partner_pos_service->name) == null) {
+            $name = $partner_pos_service->name;
+        } else {
+            $name = json_decode($partner_pos_service->name);
+        }
+        if (json_decode($partner_pos_service->description) == null) {
+            $description = $partner_pos_service->description;
+        } else {
+            $description = json_decode($partner_pos_service->description);
+        }
+        $partner_pos_service->name = $name;
+        $partner_pos_service->description = $description;
         $partner_pos_service->unit = $partner_pos_service->unit ? constants('POS_SERVICE_UNITS')[$partner_pos_service->unit] : null;
         $partner_pos_service->warranty_unit = $partner_pos_service->warranty_unit ? config('pos.warranty_unit')[$partner_pos_service->warranty_unit] : null;
         $partner_pos_service->master_category_id = $partner_pos_service->category->parent_id;
