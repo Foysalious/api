@@ -158,7 +158,7 @@ class PaymentLinkTransaction
 
     private function configurePaymentLinkCharge(): PaymentLinkTransaction
     {
-        if($this->paymentLinkCharge->isPartner($this->receiver)) {
+        if($this->paymentLinkCharge->isPartner($this->receiver) && !$this->paymentLink->isEmi()) {
             $this->paymentLinkCharge->setPartner($this->receiver)->setPaymentConfigurations($this->getPaymentMethod());
             $this->tax = $this->paymentLinkCharge->getFixedTaxAmount();
             $this->linkCommission = $this->paymentLinkCharge->getGatewayChargePercentage();
