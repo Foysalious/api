@@ -163,8 +163,8 @@ class Creator
     {
         $batchData = [];
         $batchData['partner_pos_service_id'] = $service_id;
-        $batchData['stock'] = (isset($this->data['stock']) && $this->data['stock'] > 0) ? (double)$this->data['stock'] : $stock;
-        $batchData['cost']  = isset($this->data['stock']) ? (double)$this->data['cost'] : $cost;
+        $batchData['stock'] = $stock;
+        $batchData['cost']  = $cost;
 
         return PartnerPosServiceBatch::create($batchData);
     }

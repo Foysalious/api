@@ -232,4 +232,14 @@ class PartnerPosService extends BaseModel
     {
         return $this->stock()->get()->sum('stock');
     }
+
+    public function cost()
+    {
+        return $this->hasMany(PartnerPosServiceBatch::class);
+    }
+
+    public function getLastCost()
+    {
+        return $this->cost()->latest()->first()->cost ? $this->cost()->latest()->first()->cost : 0.0;
+    }
 }
