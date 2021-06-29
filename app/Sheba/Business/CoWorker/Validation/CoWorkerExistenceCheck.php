@@ -1,6 +1,5 @@
 <?php namespace Sheba\Business\CoWorker\Validation;
 
-use Sheba\Business\CoWorker\Creator;
 use Sheba\Helpers\HasErrorCodeAndMessage;
 use App\Models\BusinessMember;
 use App\Models\Business;
@@ -80,31 +79,33 @@ class CoWorkerExistenceCheck
         if (!$profile) return $this;
         if (!$profile->member) return $this;
 
-        $this->isTheEmployeeAlreadyInMyActiveOrInvitedList($profile);
-        $this->isTheEmployeeAlreadyOthersActiveOrInvitedList($profile);
-        $this->isTheEmployeeAlreadyInMyInactiveList($profile);
+        if ($profile->member->businesses()->where('businesses.id', $this->business->id)->count() > 0) {
+            $this->setError(421, "This employee is already added to your business");
+            return $this;
+        }
+        if ($profile->member->businesses()->where('businesses.id', '<>', $this->business->id)->count() > 0) {
+            $this->setError(422, "This employee is already added in another business");
+            return $this;
+        }
+        if ($profile->member->inactiveBusinesses()->where('businesses.id', $this->business->id)->count() > 0) {
+            $this->setError(409, "This employee exists in your inactive list. Do you want to activate again?");
+            $business_member = $profile->member->inactiveBusinessMember()->where('business_id', $this->business->id)->first();
+            $this->setBusinessMemberId($business_member->id);
+            return $this;
+        }
 
         return $this;
     }
 
-    private function isTheEmployeeAlreadyInMyActiveOrInvitedList($profile)
+    private function setBusinessMemberId($business_member)
     {
-        if ($profile->member->businesses()->where('businesses.id', $this->business->id)->count() > 0) {
-            $this->setError(421, "This employee is already added to your business");
-        }
+        $this->businessMember = $business_member;
+        return $this;
     }
 
-    private function isTheEmployeeAlreadyOthersActiveOrInvitedList($profile)
+    public function getBusinessMemberId()
     {
-        if ($profile->member->businesses()->where('businesses.id', '<>', $this->business->id)->count() > 0) {
-            $this->setError(422, "This employee is already added in another business");
-        }
+        return $this->businessMember;
     }
 
-    private function isTheEmployeeAlreadyInMyInactiveList($profile)
-    {
-        if ($profile->member->inactiveBusinesses()->where('businesses.id', $this->business->id)->count() > 0) {
-            $this->setError(409, "This employee exists in your inactive list. Do you want to activate again?");
-        }
-    }
 }

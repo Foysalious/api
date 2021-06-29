@@ -38,6 +38,11 @@ class Member extends Model
         return $this->businessMembers()->whereIn('status', Statuses::getAccessible());
     }
 
+    public function inactiveBusinessMember()
+    {
+        return $this->businessMembers()->where('status', Statuses::INACTIVE);
+    }
+
     public function businessMemberWithoutStatusCheck()
     {
         return $this->businessMembers()->first();

@@ -159,7 +159,7 @@ class CoWorkerController extends Controller
 
         $this->coWorkerExistenceCheck->setBusiness($business)->setEmail($email)->checkEmailUsability();
         if ($this->coWorkerExistenceCheck->hasError()) {
-            return api_response($request, null, $this->coWorkerExistenceCheck->getErrorCode(), ['message' => $this->coWorkerExistenceCheck->getErrorMessage()]);
+            return api_response($request, null, $this->coWorkerExistenceCheck->getErrorCode(), ['message' => $this->coWorkerExistenceCheck->getErrorMessage(), 'business_member_id' => $this->coWorkerExistenceCheck->getBusinessMemberId()]);
         }
 
         $this->basicRequest->setFirstName($request->first_name)
