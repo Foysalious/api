@@ -308,7 +308,7 @@ class DueTrackerRepository extends BaseRepository
         }
 
         if ($request->has('start_date') && $request->has('end_date')) {
-            $url .= "&start=$request->start_date&end=$request->end_date";
+            $url .= "&start_date=$request->start_date&end_date=$request->end_date";
         }
         return $url;
     }
