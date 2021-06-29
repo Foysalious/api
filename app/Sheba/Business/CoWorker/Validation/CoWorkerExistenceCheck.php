@@ -81,8 +81,8 @@ class CoWorkerExistenceCheck
         if (!$profile->member) return $this;
 
         $this->isTheEmployeeAlreadyInMyActiveOrInvitedList($profile);
-        $this->isTheEmployeeAlreadyInMyInactiveList($profile);
         $this->isTheEmployeeAlreadyOthersActiveOrInvitedList($profile);
+        $this->isTheEmployeeAlreadyInMyInactiveList($profile);
 
         return $this;
     }
@@ -94,13 +94,6 @@ class CoWorkerExistenceCheck
         }
     }
 
-    private function isTheEmployeeAlreadyInMyInactiveList($profile)
-    {
-        if ($profile->member->inactiveBusinesses()->where('businesses.id', $this->business->id)->count() > 0) {
-            $this->setError(409, "This employee exists in your inactive list. Do you want to activate again?");
-        }
-    }
-
     private function isTheEmployeeAlreadyOthersActiveOrInvitedList($profile)
     {
         if ($profile->member->businesses()->where('businesses.id', '<>', $this->business->id)->count() > 0) {
@@ -108,4 +101,10 @@ class CoWorkerExistenceCheck
         }
     }
 
+    private function isTheEmployeeAlreadyInMyInactiveList($profile)
+    {
+        if ($profile->member->inactiveBusinesses()->where('businesses.id', $this->business->id)->count() > 0) {
+            $this->setError(409, "This employee exists in your inactive list. Do you want to activate again?");
+        }
+    }
 }
