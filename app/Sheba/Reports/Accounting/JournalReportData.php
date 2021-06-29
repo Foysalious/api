@@ -28,13 +28,17 @@ class JournalReportData
     private function make_single_journal_data($data): array
     {
         $journal_single_data = [
+            "total_debit" => 0,
+            "total_credit" => 0,
             "key" => $data[0]['identifier'],
             "date" => Carbon::parse($data[0]['entry_at'])->format('d M Y'),
             "source_type" => $data[0]['source_type']
         ];
-        foreach ($data as $d)
+        foreach ($data as $d) {
+            $journal_single_data['total_debit'] += $d['debit'];
+            $journal_single_data['total_credit'] += $d['credit'];
             $journal_single_data['entries'][] = $d;
-
+        }
         return $journal_single_data;
     }
 }
