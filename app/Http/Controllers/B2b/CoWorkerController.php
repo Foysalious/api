@@ -143,37 +143,43 @@ class CoWorkerController extends Controller
     public function basicInfoStore($business, Request $request)
     {
         $this->validate($request, [
-            'pro_pic' => 'sometimes|required|mimes:jpg,jpeg,png,pdf',
             'first_name' => 'required|string',
-            'last_name' => 'sometimes|required|string',
             'email' => 'required|email',
             'department' => 'required|integer',
             'role' => 'required|string',
-            'manager_employee' => 'sometimes|required|integer'
+            'gender' => 'required|string',
+            'join_date' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->addDays(1)->format('Y-m-d')
         ]);
+
         $business = $request->business;
         $manager_member = $request->manager_member;
         $this->setModifier($manager_member);
-        $basic_request = $this->basicRequest->setProPic($request->file('pro_pic'))
-            ->setFirstName($request->first_name)
-            ->setLastName($request->last_name)
-            ->setEmail($request->email)
+
+        $email = $request->email;
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return api_response($request, null, 420, ['email' => $email, 'message' => 'Invalid email address']);
+        }
+
+        $this->coWorkerExistenceCheck->setBusiness($business)->setEmail($email)->checkEmailUsability();
+        if ($this->coWorkerExistenceCheck->hasError()) {
+            return api_response($request, null, $this->coWorkerExistenceCheck->getErrorCode(), ['message' => $this->coWorkerExistenceCheck->getErrorMessage()]);
+        }
+
+        $this->basicRequest->setFirstName($request->first_name)
+            ->setEmail($email)
             ->setDepartment($request->department)
             ->setRole($request->role)
-            ->setManagerEmployee($request->manager_employee);
+            ->setGender($request->gender)
+            ->setJoinDate($request->join_date);
 
-        $this->coWorkerCreator->setBusiness($business)
-            ->setEmail($request->email)
+        $this->coWorkerCreator->setBasicRequest($this->basicRequest)
+            ->setBusiness($business)
             ->setStatus(Statuses::ACTIVE)
-            ->setBasicRequest($basic_request)
             ->setManagerMember($manager_member);
 
-        if ($this->coWorkerCreator->hasError()) {
-            return api_response($request, null, $this->coWorkerCreator->getErrorCode(), ['message' => $this->coWorkerCreator->getErrorMessage()]);
-        }
-        $member = $this->coWorkerCreator->basicInfoStore();
+        $business_member = $this->coWorkerCreator->basicInfoStore();
 
-        if ($member) return api_response($request, null, 200, ['member_id' => $member->id, 'pro_pic' => $member->profile->pro_pic]);
+        if ($business_member) return api_response($request, null, 200, ['business_member_id' => $business_member->id]);
         return api_response($request, null, 404);
     }
 

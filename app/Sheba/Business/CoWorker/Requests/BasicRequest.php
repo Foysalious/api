@@ -14,6 +14,8 @@ class BasicRequest
     private $role;
     /** @var $managerEmployee | Manager | Business Member */
     private $managerEmployee;
+    private $joinDate;
+    private $gender;
 
     /**
      * @param $business_member
@@ -142,6 +144,24 @@ class BasicRequest
     }
 
     /**
+     * @param $gender
+     * @return $this
+     */
+    public function setGender($gender)
+    {
+        $this->gender = ucfirst($gender);
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getGender()
+    {
+        return $this->gender;
+    }
+
+    /**
      * @param $manager_employee
      * @return $this
      */
@@ -157,6 +177,24 @@ class BasicRequest
     public function getManagerEmployee()
     {
         return $this->managerEmployee;
+    }
+
+    /**
+     * @param $join_date
+     * @return $this
+     */
+    public function setJoinDate($join_date)
+    {
+        $this->joinDate = $join_date;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getJoinDate()
+    {
+        return $this->joinDate;
     }
 
     /**
