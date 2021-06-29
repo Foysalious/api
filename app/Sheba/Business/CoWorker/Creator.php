@@ -1,6 +1,7 @@
 <?php namespace Sheba\Business\CoWorker;
 
 use Sheba\Business\BusinessMember\Requester as BusinessMemberRequester;
+use Sheba\Business\CoWorker\Email\Invite;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
 use Sheba\Business\BusinessMember\Creator as BusinessMemberCreator;
@@ -144,7 +145,7 @@ class Creator
     public function setEmail($email)
     {
         $this->email = $email;
-        $this->checkEmailUsedWithAnotherProfile();
+        #$this->checkEmailUsedWithAnotherProfile();
         return $this;
     }
 
@@ -170,20 +171,24 @@ class Creator
     {
         $profile = $this->profileRepository->checkExistingEmail($this->basicRequest->getEmail());
         if ($this->basicRequest->getRole()) $this->businessRole = $this->getBusinessRole();
-        $member = null;
-        if (!$profile) {
-            $profile = $this->createProfile();
-            $member = $this->createMember($profile);
-            $this->businessMember = $this->createBusinessMember($this->business, $member);
-        } else {
+
+        if ($profile) {
             $member = $profile->member;
+            if ($member) $this->businessMember = $this->createBusinessMember($this->business, $member);
             if (!$member) {
                 $member = $this->createMember($profile);
                 $this->businessMember = $this->createBusinessMember($this->business, $member);
             }
         }
-        $this->sendExistingUserMail($profile);
-        return $member;
+        if (!$profile) {
+            $profile = $this->createProfile();
+            $member = $this->createMember($profile);
+            $this->businessMember = $this->createBusinessMember($this->business, $member);
+        }
+
+        (new Invite($profile->fresh()))->sendMailToAddUser();
+
+        return $this->businessMember;
     }
 
     /**
@@ -199,6 +204,7 @@ class Creator
             ->setMemberId($member->id)
             ->setRole($business_role_id)
             ->setStatus($status)
+            ->setJoinDate($this->basicRequest->getJoinDate())
             ->setManagerEmployee($this->basicRequest->getManagerEmployee());
 
         return $this->businessMemberCreator->setRequester($business_member_requester)->create();
@@ -217,6 +223,7 @@ class Creator
             'email' => $this->basicRequest->getEmail(),
             'password' => $this->password,
             'pro_pic' => $this->basicRequest->getProPic() ? $this->profileRepository->saveProPic($this->basicRequest->getProPic(), $this->basicRequest->getProPic()->getClientOriginalName()) : $default_image,
+            'gender' => $this->basicRequest->getGender(),
         ];
 
         return $this->profileRepository->store($data);
@@ -266,29 +273,7 @@ class Creator
         $this->status = $status;
         return $this;
     }
-
-    /**
-     * @param $profile
-     */
-    private function sendExistingUserMail($profile)
-    {
-        try {
-            config()->set('services.mailgun.domain', config('services.mailgun.business_domain'));
-            $coworker_invite_email = new SendBusinessRequestEmail($profile->email);
-            if ($this->password) $coworker_invite_email->setPassword($this->password);
-            if (empty($profile->password)) {
-                $password = str_random(6);
-                $this->profileRepository->updateRaw($profile, ['password' => bcrypt($password)]);
-                $coworker_invite_email->setPassword($password);
-            }
-
-            $coworker_invite_email->setSubject("Invitation from your co-worker to join digiGO")->setTemplate('emails.co-worker-invitation-v3');
-            dispatch($coworker_invite_email);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-        }
-    }
-
+    
     public function resetError()
     {
         return $this->errorCode = null;

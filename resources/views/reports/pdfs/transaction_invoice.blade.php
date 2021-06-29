@@ -32,6 +32,22 @@
 
                                 </td>
 
+<<<<<<< HEAD
+=======
+    @if(isset($pos_order))
+        <tr>
+            <td>
+                <table style="width: 100%;border-bottom: 1px solid #ddd;padding-bottom: 4px">
+                    <tr>
+                        <td colspan="3" style="border-left: 4px solid #1b4280">
+                            @if(isset($user))
+                                <div style="padding: 10px 20px">
+                                    <span style="color: #B0BEC5;">Bill to</span><br>
+                                    <span style="color: #383d46;letter-spacing: -0.05px;font-weight: 700;">{{ucfirst($user['name'])}}</span><br>
+                                    <span style="color: #9b9b9b">{{$user['mobile']}}</span><br>
+                                    <span style="color: #9b9b9b">{{$user['address']}}</span>
+                                </div>
+>>>>>>> feature/invoice-address
                             @endif
                         </tr>
                     @endif
@@ -48,7 +64,8 @@
                                     <div style="padding: 10px 20px;">
                                         <span style="">Bill to</span><br>
                                         <span style="">{{ucfirst($user['name'])}}</span><br>
-                                        <span style="">{{$user['mobile']}}</span>
+                                        <span style="">{{$user['mobile']}}</span><br>
+                                        <span style="">{{$user['address']}}</span><br>
                                     </div>
                                 @endif
                             </td>
