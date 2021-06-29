@@ -106,6 +106,7 @@ class CoWorkerController extends Controller
      * @param BusinessMemberRepositoryInterface $business_member_repo
      * @param CoWorkerInfoFilter $co_worker_info_filter
      * @param CoWorkerInfoSort $co_worker_info_sort
+     * @param CoWorkerExistenceCheck $co_worker_existence_check
      */
     public function __construct(FileRepository $file_repository, ProfileRepository $profile_repository, BasicRequest $basic_request,
                                 EmergencyRequest $emergency_request, FinancialRequest $financial_request,
@@ -679,75 +680,6 @@ class CoWorkerController extends Controller
         BusinessRole::create($this->withCreateModificationField($data));
 
         return api_response($request, null, 200);
-    }
-
-    /**
-     * @param $business
-     * @param Request $request
-     * @param ExcelHandler $excel_handler
-     * @return JsonResponse
-     * @throws NotAssociativeArray
-     * @throws Exception
-     */
-    public function sendInvitation($business, Request $request, ExcelHandler $excel_handler)
-    {
-        $this->validate($request, ['emails' => "required"]);
-
-        $business = $request->business;
-        $member = $request->manager_member;
-        $this->setModifier($member);
-        $errors = [];
-
-        $emails = json_decode($request->emails);
-        foreach ($emails as $email) {
-            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                array_push($errors, ['email' => $email, 'message' => 'Invalid email address']);
-                continue;
-            }
-            $this->basicRequest->setEmail($email);
-            $this->coWorkerCreator->setBusiness($business)->setEmail($email)->setStatus(Statuses::INVITED)->setBasicRequest($this->basicRequest);
-
-            if ($this->coWorkerCreator->hasError()) {
-                array_push($errors, ['email' => $email, 'message' => $this->coWorkerCreator->getErrorMessage()]);
-                $this->coWorkerCreator->resetError();
-                continue;
-            }
-
-            $this->coWorkerCreator->basicInfoStore();
-        }
-
-        if ($errors) {
-            $file_name = Carbon::now()->timestamp . "_co_worker_invite_error_$business->id.xlsx";
-            $file = $excel_handler->setName('Co worker Invite')->setFilename($file_name)->setDownloadFormat('xlsx')->createReport($errors)->save();
-            $file_path = $this->saveFileToCDN($file, getCoWorkerInviteErrorFolder(), $file_name);
-            unlink($file);
-
-            if ($this->isFailedToCreateAllCoworker($errors, $emails)) {
-                return api_response($request, null, 422, [
-                    'message' => 'Alert! Invitations failed',
-                    'description' => "Invited co-worker/s already exist in the co-worker list. Download the excel file to see details",
-                    'link' => $file_path
-                ]);
-            }
-
-            return api_response($request, null, 303, [
-                'message' => 'Alert! Some invitations failed',
-                'description' => "Invited co-worker/s already exist in the co-worker list. Download the excel file to see details",
-                'link' => $file_path
-            ]);
-        }
-
-        return api_response($request, null, 200);
-    }
-
-    /**
-     * @param array $errors
-     * @param $emails
-     * @return bool
-     */
-    private function isFailedToCreateAllCoworker(array $errors, $emails)
-    {
-        return count($errors) == count($emails);
     }
 
     /**
