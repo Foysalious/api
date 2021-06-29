@@ -462,8 +462,7 @@ class DeliveryService
     {
         $data = $this->makeDeliveryChargeData();
         $response =  $this->client->post('price-check', $data);
-        return $response['data'][0]['package_price'];
-
+        return ceil($response['data'][0]['package_price']);
     }
 
 
