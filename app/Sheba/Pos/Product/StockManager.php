@@ -33,7 +33,7 @@ class StockManager
      */
     public function increase($quantity)
     {
-        return $this->serviceRepo->update($this->service, ['stock' => $this->service->stock + $quantity]);
+        return $this->serviceRepo->update($this->service, ['stock' => 10]);
     }
 
     /**
@@ -42,6 +42,6 @@ class StockManager
      */
     public function decrease($quantity)
     {
-        return $this->serviceRepo->update($this->service, ['stock' => $this->service->stock - $quantity]);
+        return $this->serviceRepo->update($this->service, ['stock' => 10]);
     }
 }
