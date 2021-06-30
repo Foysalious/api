@@ -330,7 +330,6 @@ class EventDataConverter
                 'action' => [
                     ]
             ],
-                ],
             'affiliate' =>[
                 'campaign' => [
                     'topup' => [
