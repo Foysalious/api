@@ -181,7 +181,7 @@ class EventDataConverter
                             ]
                         ]
                     ]
-                ,
+                    ],
                 'campaign' => [
                     'order_serve' => [
                         'name' => 'Order Serve',
@@ -410,7 +410,6 @@ class EventDataConverter
                     ],
                 ],
             ]
-
         ]);
     }
 
