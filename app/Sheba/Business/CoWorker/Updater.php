@@ -87,6 +87,10 @@ class Updater
     private $email;
     /** @var Business $business */
     private $business;
+    /**
+     * @var array
+     */
+    private $businessMemberData = [];
 
     /**
      * Updater constructor.
@@ -269,7 +273,6 @@ class Updater
     {
         DB::beginTransaction();
         try {
-            $this->getProfile();
             $profile_data = [];
             $profile_pic_name = $profile_pic = null;
             $profile_image = $this->basicRequest->getProPic();
@@ -285,11 +288,8 @@ class Updater
             $this->profileRepository->update($this->profile, $profile_data);
 
             $this->businessRole = $this->getBusinessRole();
-            $business_member_data = [
-                'business_role_id' => $this->businessRole->id,
-                'manager_id' => $this->basicRequest->getManagerEmployee(),
-            ];
-            $this->businessMember = $this->businessMemberUpdater->setBusinessMember($this->businessMember)->update($business_member_data);
+            $this->formatBusinessMemberDataForBasicInfo();
+            $this->businessMember = $this->businessMemberUpdater->setBusinessMember($this->businessMember)->update($this->businessMemberData);
 
             DB::commit();
             return [$this->businessMember, $profile_pic_name, $profile_pic];
@@ -300,50 +300,36 @@ class Updater
         }
     }
 
-    /**
-     * @return BusinessMember|Model|null
-     */
-    public function officialInfoUpdate()
+    private function formatBusinessMemberDataForBasicInfo()
     {
-        DB::beginTransaction();
-        try {
-            $business_member_data = [];
-            if ($this->officialRequest->getEmployeeId() == 'null') {
-                $business_member_data['employee_id'] = null;
-            } else {
-                $business_member_data['employee_id'] = $this->officialRequest->getEmployeeId();
-            }
-            if ($this->officialRequest->getJoinDate() == 'null') {
-                $business_member_data['join_date'] = null;
-            } else {
-                $business_member_data['join_date'] = $this->officialRequest->getJoinDate();
-            }
+        $this->businessMemberData['business_role_id'] = $this->businessRole->id;
 
-            if ($this->officialRequest->getGrade() == 'null') {
-                $business_member_data['grade'] = null;
-            } else {
-                $business_member_data['grade'] = $this->officialRequest->getGrade();
-            }
-            if ($this->officialRequest->getEmployeeType() == 'null') {
-                $business_member_data['employee_type'] = null;
-            } else {
-                $business_member_data['employee_type'] = $this->officialRequest->getEmployeeType();
-            }
-            if ($this->officialRequest->getPreviousInstitution() == 'null') {
-                $business_member_data['previous_institution'] = null;
-            } else {
-                $business_member_data['previous_institution'] = $this->officialRequest->getPreviousInstitution();
-            }
-            $this->businessMember = $this->businessMemberUpdater
-                ->setBusinessMember($this->businessMember)
-                ->update($business_member_data);
-            DB::commit();
-            return $this->businessMember;
-        } catch (Throwable $e) {
-            DB::rollback();
-            app('sentry')->captureException($e);
-            return null;
+        if ($this->basicRequest->getManagerEmployee() == 'null') {
+            $this->businessMemberData['manager_id'] = null;
+        } else {
+            $this->businessMemberData['manager_id'] = $this->basicRequest->getManagerEmployee();
         }
+        if ($this->basicRequest->getEmployeeId() == 'null') {
+            $this->businessMemberData['employee_id'] = null;
+        } else {
+            $this->businessMemberData['employee_id'] = $this->basicRequest->getEmployeeId();
+        }
+        if ($this->basicRequest->getJoinDate() == 'null') {
+            $this->businessMemberData['join_date'] = null;
+        } else {
+            $this->businessMemberData['join_date'] = $this->basicRequest->getJoinDate();
+        }
+        if ($this->basicRequest->getGrade() == 'null') {
+            $this->businessMemberData['grade'] = null;
+        } else {
+            $this->businessMemberData['grade'] = $this->basicRequest->getGrade();
+        }
+        if ($this->basicRequest->getEmployeeType() == 'null') {
+            $this->businessMemberData['employee_type'] = null;
+        } else {
+            $this->businessMemberData['employee_type'] = $this->basicRequest->getEmployeeType();
+        }
+        return $this->businessMemberData;
     }
 
     /**
