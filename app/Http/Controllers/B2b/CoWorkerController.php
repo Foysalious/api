@@ -137,6 +137,7 @@ class CoWorkerController extends Controller
     }
 
     /**
+     * basicInfoStore work as add new CoWorker
      * @param $business
      * @param Request $request
      * @return JsonResponse
@@ -185,113 +186,59 @@ class CoWorkerController extends Controller
     }
 
     /**
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function getRoles(Request $request)
-    {
-        $business_department_ids = BusinessDepartment::query()->where('business_id', $request->business->id)->pluck('id')->toArray();
-        $roles = BusinessRole::query()->whereIn('business_department_id', $business_department_ids)->pluck('name')->toArray();
-        $designations_list = Designations::getDesignations();
-        $all_roles = collect(array_merge($roles, $designations_list))->unique();
-        if ($request->has('search')) {
-            $all_roles = array_filter($all_roles->toArray(), function ($role) use ($request) {
-                return str_contains(strtoupper($role), strtoupper($request->search));
-            });
-        }
-        return api_response($request, $all_roles, 200, ['roles' => collect($all_roles)->values()]);
-    }
-
-    /**
+     * basicInfoEdit work as update official info
      * @param $business
-     * @param $member_id
+     * @param $business_member_id
      * @param Request $request
      * @return JsonResponse
      */
-    public function basicInfoEdit($business, $member_id, Request $request)
+    public function basicInfoEdit($business, $business_member_id, Request $request)
     {
         $validation_data = [
             'first_name' => 'required|string',
-            'last_name' => 'sometimes|required|string',
-            'email' => 'required|email',
             'department' => 'required|integer',
             'role' => 'required|string',
-            'manager_employee' => 'sometimes|required'
+            'manager_employee' => 'sometimes|required',
+            'join_date' => 'required|date|date_format:Y-m-d'
         ];
         $validation_data['pro_pic'] = $this->isFile($request->pro_pic) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
+        if (!$this->isNull($request->employee_type)) $validation_data['employee_type'] = 'sometimes|required|in:permanent,on_probation,contractual,intern';
+
+        $email = $request->email;
+        if (!$this->isNull($email)) {
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                return api_response($request, null, 420, ['email' => $email, 'message' => 'Invalid email address']);
+            }
+            $validation_data['email'] = 'required|email|unique:profiles';
+        }
         $this->validate($request, $validation_data);
 
         $business = $request->business;
         $manager_member = $request->manager_member;
         $this->setModifier($manager_member);
 
+        $this->coWorkerExistenceCheck->setBusiness($business)->setEmail($email)->checkEmailUsability();
+        if ($this->coWorkerExistenceCheck->hasError()) {
+            return api_response($request, null, $this->coWorkerExistenceCheck->getErrorCode(), ['message' => $this->coWorkerExistenceCheck->getErrorMessage(), 'business_member_id' => $this->coWorkerExistenceCheck->getBusinessMemberId()]);
+        }
+
         $basic_request = $this->basicRequest->setProPic($request->pro_pic)
             ->setFirstName($request->first_name)
-            ->setLastName($request->last_name)
-            ->setEmail($request->email)
+            ->setEmail($email)
             ->setDepartment($request->department)
             ->setRole($request->role)
-            ->setManagerEmployee($request->manager_employee);
+            ->setJoinDate($request->join_date)
+            ->setManagerEmployee($request->manager_employee)
+            ->setEmployeeId($request->employee_id)
+            ->setGrade($request->grade)
+            ->setEmployeeType($request->employee_type);
 
-        $this->coWorkerUpdater->setBasicRequest($basic_request)->setBusiness($business)->setMember($member_id)->setEmail($request->email);
-
-        if ($this->coWorkerUpdater->hasError()) {
-            return api_response($request, null, $this->coWorkerUpdater->getErrorCode(), ['message' => $this->coWorkerUpdater->getErrorMessage()]);
-        }
+        $this->coWorkerUpdater->setBasicRequest($basic_request)->setBusiness($business)->setBusinessMember($business_member_id);
         list($business_member, $profile_pic_name, $profile_pic) = $this->coWorkerUpdater->basicInfoUpdate();
 
         if ($business_member)
             return api_response($request, null, 200, ['profile_pic_name' => $profile_pic_name, 'profile_pic' => $profile_pic]);
 
-        return api_response($request, null, 404);
-    }
-
-    /**
-     * @param $file
-     * @return bool
-     */
-    private function isFile($file)
-    {
-        if ($file instanceof Image || $file instanceof UploadedFile) return true;
-        return false;
-    }
-
-    /**
-     * @param $data
-     * @return bool
-     */
-    private function isNull($data)
-    {
-        if ($data == 'null') return true;
-        if ($data == null) return true;
-        return false;
-    }
-
-    /**
-     * @param $business
-     * @param $member_id
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function officialInfoEdit($business, $member_id, Request $request)
-    {
-        $validation_data = ['employee_id' => 'sometimes|required|string', 'grade' => 'sometimes|required', 'previous_institution' => 'sometimes|required'];
-        if (!$this->isNull($request->employee_type)) $validation_data += ['employee_type' => 'sometimes|required|in:permanent,on_probation,contractual,intern'];
-        if (!$this->isNull($request->join_date)) $validation_data += ['join_date' => 'sometimes|required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d')];
-        $this->validate($request, $validation_data);
-
-        $manager_member = $request->manager_member;
-        $this->setModifier($manager_member);
-        $business = $request->business;
-
-        $official_request = $this->officialRequest->setEmployeeId($request->employee_id)
-            ->setJoinDate($request->join_date)
-            ->setGrade($request->grade)
-            ->setEmployeeType($request->employee_type)
-            ->setPreviousInstitution($request->previous_institution);
-        $business_member = $this->coWorkerUpdater->setOfficialRequest($official_request)->setBusiness($business)->setMember($member_id)->officialInfoUpdate();
-
-        if ($business_member) return api_response($request, 1, 200);
         return api_response($request, null, 404);
     }
 
@@ -313,6 +260,7 @@ class CoWorkerController extends Controller
 
         $validation_data['nid_front'] = $this->isFile($request->nid_front) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
         $validation_data['nid_back'] = $this->isFile($request->nid_back) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
+        $validation_data['passport'] = $this->isFile($request->passport) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
         $this->validate($request, $validation_data);
 
         $member = $request->manager_member;
@@ -590,6 +538,24 @@ class CoWorkerController extends Controller
     }
 
     /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getRoles(Request $request)
+    {
+        $business_department_ids = BusinessDepartment::query()->where('business_id', $request->business->id)->pluck('id')->toArray();
+        $roles = BusinessRole::query()->whereIn('business_department_id', $business_department_ids)->pluck('name')->toArray();
+        $designations_list = Designations::getDesignations();
+        $all_roles = collect(array_merge($roles, $designations_list))->unique();
+        if ($request->has('search')) {
+            $all_roles = array_filter($all_roles->toArray(), function ($role) use ($request) {
+                return str_contains(strtoupper($role), strtoupper($request->search));
+            });
+        }
+        return api_response($request, $all_roles, 200, ['roles' => collect($all_roles)->values()]);
+    }
+
+    /**
      * @param $business
      * @param Request $request
      * @return JsonResponse
@@ -799,5 +765,26 @@ class CoWorkerController extends Controller
     {
         $incomplete_coworker_excel->get();
         return api_response($request, null, 200);
+    }
+
+    /**
+     * @param $file
+     * @return bool
+     */
+    private function isFile($file)
+    {
+        if ($file instanceof Image || $file instanceof UploadedFile) return true;
+        return false;
+    }
+
+    /**
+     * @param $data
+     * @return bool
+     */
+    private function isNull($data)
+    {
+        if ($data == 'null') return true;
+        if ($data == null) return true;
+        return false;
     }
 }

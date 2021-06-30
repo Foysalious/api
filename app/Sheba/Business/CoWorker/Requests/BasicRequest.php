@@ -16,6 +16,9 @@ class BasicRequest
     private $managerEmployee;
     private $joinDate;
     private $gender;
+    private $grade;
+    private $employeeType;
+    private $employeeId;
 
     /**
      * @param $business_member
@@ -195,6 +198,55 @@ class BasicRequest
     public function getJoinDate()
     {
         return $this->joinDate;
+    }
+
+    /**
+     * @param $grade
+     * @return $this
+     */
+    public function setGrade($grade)
+    {
+        $this->grade = $grade;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getGrade()
+    {
+        return $this->grade;
+    }
+
+
+    /**
+     * @param $employee_type
+     * @return $this
+     */
+    public function setEmployeeType($employee_type)
+    {
+        $this->employeeType = $employee_type;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getEmployeeType()
+    {
+        return $this->employeeType;
+    }
+
+
+    public function setEmployeeId($employee_id)
+    {
+        $this->employeeId = $employee_id;
+        return $this;
+    }
+
+    public function getEmployeeId()
+    {
+        return $this->employeeId;
     }
 
     /**

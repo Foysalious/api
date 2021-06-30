@@ -73,11 +73,10 @@ class CoWorkerExistenceCheck
      */
     public function checkEmailUsability()
     {
-        if (!$this->email) return $this;
+        if (!$this->isNull($this->email)) return $this;
 
         $profile = $this->profileRepository->checkExistingEmail($this->email);
-        if (!$profile) return $this;
-        if (!$profile->member) return $this;
+        if (!$profile && !$profile->member) return $this;
 
         if ($profile->member->businesses()->where('businesses.id', $this->business->id)->count() > 0) {
             $this->setError(421, "This employee is already added to your business");
@@ -108,4 +107,14 @@ class CoWorkerExistenceCheck
         return $this->businessMember;
     }
 
+    /**
+     * @param $data
+     * @return bool
+     */
+    private function isNull($data)
+    {
+        if ($data == 'null') return true;
+        if ($data == null) return true;
+        return false;
+    }
 }
