@@ -46,6 +46,7 @@ class ExpenseExcel
         foreach ($this->expenseData as $expense) {
             array_push($this->data, [
                 'month' => Carbon::parse(date('Y-m-0'.$expense['month']))->format('F'),
+                'employee_id' => $expense['employee_id'] ?: 'N/A',
                 'employee_name' => $expense['employee_name'],
                 'employee_department' => $expense['employee_department'],
                 'transport' => $expense['transport'],
@@ -58,6 +59,6 @@ class ExpenseExcel
 
     private function getHeaders()
     {
-        return ['Month', 'Employee Name', 'Department', 'Transport', 'Food', 'Other', 'Amount'];
+        return ['Month', 'Employee ID', 'Employee Name', 'Department', 'Transport', 'Food', 'Other', 'Amount'];
     }
 }
