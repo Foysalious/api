@@ -146,7 +146,7 @@ class CoWorkerController extends Controller
             'email' => 'required|email',
             'department' => 'required|integer',
             'role' => 'required|string',
-            'gender' => 'required|string',
+            'gender' => 'required|string|in:Female,Male,Other',
             'join_date' => 'required|date|date_format:Y-m-d'
         ]);
 
@@ -210,6 +210,7 @@ class CoWorkerController extends Controller
         }
         $this->validate($request, $validation_data);
 
+        $business_member = $this->businessMemberRepository->find($business_member_id);
         $business = $request->business;
         $manager_member = $request->manager_member;
         $this->setModifier($manager_member);
@@ -230,7 +231,7 @@ class CoWorkerController extends Controller
             ->setGrade($request->grade)
             ->setEmployeeType($request->employee_type);
 
-        $this->coWorkerUpdater->setBasicRequest($basic_request)->setBusiness($business)->setBusinessMember($business_member_id);
+        $this->coWorkerUpdater->setBasicRequest($basic_request)->setBusiness($business)->setBusinessMember($business_member);
         list($business_member, $profile_pic_name, $profile_pic) = $this->coWorkerUpdater->basicInfoUpdate();
 
         if ($business_member)
@@ -241,49 +242,64 @@ class CoWorkerController extends Controller
 
     /**
      * @param $business
-     * @param $member_id
+     * @param $business_member_id
      * @param Request $request
      * @return JsonResponse
      */
-    public function personalInfoEdit($business, $member_id, Request $request)
+    public function personalInfoEdit($business, $business_member_id, Request $request)
     {
         $validation_data = [
-            'gender' => 'required|in:Female,Male,Other',
+            'gender' => 'required|string|in:Female,Male,Other',
             'mobile' => 'sometimes|required',
             'date_of_birth' => 'sometimes|required|date|date_format:Y-m-d',
             'address' => 'sometimes|required',
             'nationality' => 'sometimes|required',
             'nid_number' => 'sometimes|required',
-            'passport_no' => 'sometimes|required'
+            'passport_no' => 'sometimes|required',
+            'blood_group' => 'sometimes|required',
+            'social_links' => 'sometimes|required',
         ];
 
         $validation_data['nid_front'] = $this->isFile($request->nid_front) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
         $validation_data['nid_back'] = $this->isFile($request->nid_back) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
-        $validation_data['passport_image'] = $this->isFile($request->passport) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
+        $validation_data['passport_image'] = $this->isFile($request->passport_image) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
         $this->validate($request, $validation_data);
 
-        $member = $request->manager_member;
+        $business_member = $this->businessMemberRepository->find($business_member_id);
         $business = $request->business;
-        $this->setModifier($member);
+        $manager_member = $request->manager_member;
+        $this->setModifier($manager_member);
         if ($request->has('mobile') && $request->mobile != 'null') $request->mobile = formatMobile($request->mobile);
 
-        $personal_request = $this->personalRequest
-            ->setPhone($request->mobile)
-            ->setDateOfBirth($request->date_of_birth)
-            ->setAddress($request->address)
-            ->setNationality($request->nationality)
-            ->setNidNumber($request->nid_number)
-            ->setNidFront($request->nid_front)
-            ->setNidBack($request->nid_back);
+        $this->coWorkerExistenceCheck->setBusiness($business)->setBusinessMember($business_member)->setMobile($request->mobile)->isMobileNumberAlreadyTaken();
+        if ($this->coWorkerExistenceCheck->hasError()) {
+            return api_response($request, null, $this->coWorkerExistenceCheck->getErrorCode(), ['message' => $this->coWorkerExistenceCheck->getErrorMessage()]);
+        }
 
-        $this->coWorkerUpdater->setPersonalRequest($personal_request)->setBusiness($business)->setMember($member_id)->setMobile($request->mobile);
-        if ($this->coWorkerUpdater->hasError())
-            return api_response($request, null, $this->coWorkerUpdater->getErrorCode(), ['message' => $this->coWorkerUpdater->getErrorMessage()]);
+        $personal_request = $this->personalRequest->setPhone($request->mobile)->setDateOfBirth($request->date_of_birth)
+            ->setAddress($request->address)->setNationality($request->nationality)->setNidNumber($request->nid_number)
+            ->setNidFront($request->nid_front)->setNidBack($request->nid_back)->setPassportNo($request->passport_no)
+            ->setPassportImage($request->passport_image)->setGender($request->gender)->setSocialLinks($request->social_links)
+            ->setBloodGroup($request->blood_group);
 
-        list($profile, $nid_image_front_name, $nid_image_front, $nid_image_back_name, $nid_image_back) = $this->coWorkerUpdater->personalInfoUpdate();
+        $this->coWorkerUpdater->setPersonalRequest($personal_request)->setBusiness($business)->setBusinessMember($business_member);
+        list($profile,
+            $nid_image_front_name,
+            $nid_image_front,
+            $nid_image_back_name,
+            $nid_image_back,
+            $passport_image_name,
+            $passport_image_link) = $this->coWorkerUpdater->personalInfoUpdate();
 
         if ($profile)
-            return api_response($request, NULL, 200, ['nid_image_front_name' => $nid_image_front_name, 'nid_image_front' => $nid_image_front, 'nid_image_back_name' => $nid_image_back_name, 'nid_image_back' => $nid_image_back]);
+            return api_response($request, NULL, 200, [
+                'nid_image_front_name' => $nid_image_front_name,
+                'nid_image_front' => $nid_image_front,
+                'nid_image_back_name' => $nid_image_back_name,
+                'nid_image_back' => $nid_image_back,
+                'passport_image_name' => $passport_image_name,
+                'passport_image_link' => $passport_image_link
+            ]);
 
         return api_response($request, null, 404);
     }
@@ -463,7 +479,7 @@ class CoWorkerController extends Controller
             return api_response($request, 1, 200);
         }
         if ($this->isActive($request->status)) {
-            $this->coWorkerExistenceCheck->setBusiness($business)->setBusinessMember($business_member);
+            $this->coWorkerExistenceCheck->setBusiness($business)->setBusinessMember($business_member)->isActiveOrInvitedInAnotherBusiness();
             if ($this->coWorkerExistenceCheck->hasError()) {
                 return api_response($request, null, $this->coWorkerExistenceCheck->getErrorCode(), ['message' => $this->coWorkerExistenceCheck->getErrorMessage()]);
             }
