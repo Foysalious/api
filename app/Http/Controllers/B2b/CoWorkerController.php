@@ -248,16 +248,18 @@ class CoWorkerController extends Controller
     public function personalInfoEdit($business, $member_id, Request $request)
     {
         $validation_data = [
+            'gender' => 'required|in:Female,Male,Other',
             'mobile' => 'sometimes|required',
-            'date_of_birth' => 'sometimes|required',
+            'date_of_birth' => 'sometimes|required|date|date_format:Y-m-d',
             'address' => 'sometimes|required',
             'nationality' => 'sometimes|required',
-            'nid_number' => 'sometimes|required'
+            'nid_number' => 'sometimes|required',
+            'passport_no' => 'sometimes|required'
         ];
 
         $validation_data['nid_front'] = $this->isFile($request->nid_front) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
         $validation_data['nid_back'] = $this->isFile($request->nid_back) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
-        $validation_data['passport'] = $this->isFile($request->passport) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
+        $validation_data['passport_image'] = $this->isFile($request->passport) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
         $this->validate($request, $validation_data);
 
         $member = $request->manager_member;
@@ -424,7 +426,10 @@ class CoWorkerController extends Controller
         $member = new Item($business_member, new CoWorkerDetailTransformer());
         $employee = $manager->createData($member)->toArray()['data'];
 
-        if (count($employee) > 0) return api_response($request, $employee, 200, ['employee' => $employee]);
+        if (count($employee) > 0) return api_response($request, $employee, 200, [
+            'employee' => $employee,
+            'business_member_id' => $business_member->id
+        ]);
         return api_response($request, null, 404);
     }
 
