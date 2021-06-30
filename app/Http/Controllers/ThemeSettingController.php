@@ -27,14 +27,14 @@ class ThemeSettingController extends Controller
           }
         },
         {
-          "url": "https://cdn-shebadev.s3.ap-south-1.amazonaws.com/image%2049.png",
+          "url": "https://cdn-shebadev.s3.ap-south-1.amazonaws.com/1019.jpg",
           "target": {
             "type": "category",
             "type_id": null
           }
         },
         {
-          "url": "https://cdn-shebadev.s3.ap-south-1.amazonaws.com/image%2049.png",
+          "url": "https://cdn-shebadev.s3.ap-south-1.amazonaws.com/theme_slide.jpg",
           "target": null
         }
       ]
