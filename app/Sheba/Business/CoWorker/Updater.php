@@ -368,6 +368,7 @@ class Updater
             $profile_data['passport_image'] = ($passport_image == 'null') ? null : $passport_image_link;
             $profile_data['dob'] = ($this->personalRequest->getDateOfBirth() == 'null') ? null : $this->personalRequest->getDateOfBirth();
             $profile_data['blood_group'] = ($this->personalRequest->getBloodGroup() == 'null') ? null : $this->personalRequest->getBloodGroup();
+            $profile_data['gender'] = ($this->personalRequest->getGender() == 'null') ? null : $this->personalRequest->getGender();
 
             $this->profile = $this->profileRepository->update($this->profile, $profile_data);
 
