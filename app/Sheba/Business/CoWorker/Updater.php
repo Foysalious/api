@@ -282,7 +282,8 @@ class Updater
                 $profile_pic_name = $this->isFile($profile_image) ? $profile_image->getClientOriginalName() : array_last(explode('/', $profile_image));
                 $profile_pic = $this->isFile($profile_image) ? $this->getPicture($this->profile, $profile_image) : $profile_image;
             }
-            $profile_data['email'] = ($this->basicRequest->getEmail() == 'null') ? null : $this->basicRequest->getEmail();
+
+            if ($this->basicRequest->getEmail()) $profile_data['email'] = $this->basicRequest->getEmail();
             $profile_data['name'] = ($this->basicRequest->getFirstName() == 'null') ? null : $this->basicRequest->getFirstName();
             $profile_data['pro_pic'] = ($profile_image == 'null') ? null : $profile_pic;
 
@@ -340,11 +341,10 @@ class Updater
     {
         DB::beginTransaction();
         try {
-            $this->getProfile();
-
-            $nid_image_front_name = $nid_image_front = $nid_image_back_name = $nid_image_back = null;
+            $nid_image_front_name = $nid_image_front = $nid_image_back_name = $nid_image_back = $passport_image_name = $passport_image_link = null;
             $nid_front = $this->personalRequest->getNidFront();
             $nid_back = $this->personalRequest->getNidBack();
+            $passport_image = $this->personalRequest->getPassportImage();
             if ($nid_front != 'null') {
                 $nid_image_front_name = $this->isFile($nid_front) ? $nid_front->getClientOriginalName() : array_last(explode('/', $nid_front));
                 $nid_image_front = $this->isFile($nid_front) ? $this->getPicture($this->profile, $nid_front, 'nid_image_front') : $nid_front;
@@ -352,6 +352,10 @@ class Updater
             if ($nid_back != 'null') {
                 $nid_image_back_name = $this->isFile($nid_back) ? $nid_back->getClientOriginalName() : array_last(explode('/', $nid_back));
                 $nid_image_back = $this->isFile($nid_back) ? $this->getPicture($this->profile, $nid_back, 'nid_image_back') : $nid_back;
+            }
+            if ($passport_image != 'null') {
+                $passport_image_name = $this->isFile($passport_image) ? $passport_image->getClientOriginalName() : array_last(explode('/', $passport_image));
+                $passport_image_link = $this->isFile($passport_image) ? $this->getPicture($this->profile, $passport_image, 'passport_image') : $passport_image;
             }
 
             $profile_data = [];
@@ -361,16 +365,26 @@ class Updater
             $profile_data['nid_no'] = ($this->personalRequest->getNidNumber() == 'null') ? null : $this->personalRequest->getNidNumber();
             $profile_data['nid_image_front'] = ($nid_front == 'null') ? null : $nid_image_front;
             $profile_data['nid_image_back'] = ($nid_back == 'null') ? null : $nid_image_back;
+            $profile_data['passport_no'] = ($this->personalRequest->getPassportNo() == 'null') ? null : $this->personalRequest->getPassportNo();
+            $profile_data['passport_image'] = ($passport_image == 'null') ? null : $passport_image_link;
             $profile_data['dob'] = ($this->personalRequest->getDateOfBirth() == 'null') ? null : $this->personalRequest->getDateOfBirth();
+            $profile_data['blood_group'] = ($this->personalRequest->getBloodGroup() == 'null') ? null : $this->personalRequest->getBloodGroup();
+            $profile_data['gender'] = ($this->personalRequest->getGender() == 'null') ? null : $this->personalRequest->getGender();
 
             $this->profile = $this->profileRepository->update($this->profile, $profile_data);
 
             $business_member_data['mobile'] = ($this->personalRequest->getPhone() == 'null') ? null : $this->personalRequest->getPhone();
-            $this->businessMember = $this->businessMemberUpdater
-                ->setBusinessMember($this->businessMember)
-                ->update($business_member_data);
+            $this->businessMemberUpdater->setBusinessMember($this->businessMember)->update($business_member_data);
+
+            if ($this->personalRequest->getSocialLinks() == 'null') {
+                $member_data['social_links'] = null;
+            } else {
+                $member_data['social_links'] = $this->personalRequest->getSocialLinks();
+            }
+            $this->memberRepository->update($this->member, $member_data);
+
             DB::commit();
-            return [$this->profile, $nid_image_front_name, $nid_image_front, $nid_image_back_name, $nid_image_back];
+            return [$this->profile, $nid_image_front_name, $nid_image_front, $nid_image_back_name, $nid_image_back, $passport_image_name, $passport_image_link];
         } catch (Throwable $e) {
             DB::rollback();
             app('sentry')->captureException($e);
@@ -440,7 +454,6 @@ class Updater
     {
         DB::beginTransaction();
         try {
-            $this->getMember();
             $member_data = [];
             if ($this->emergencyRequest->getEmergencyContractPersonName() == 'null') {
                 $member_data['emergency_contract_person_name'] = null;
@@ -545,7 +558,7 @@ class Updater
      */
     private function makePicName($profile, $photo, $image_for = 'profile')
     {
-        return $filename = Carbon::now()->timestamp . '_' . $image_for . '_image_' . $profile->id . '.' . $photo->extension();
+        return Carbon::now()->timestamp . '_' . $image_for . '_image_' . $profile->id . '.' . $photo->extension();
     }
 
     /**

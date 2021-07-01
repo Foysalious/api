@@ -10,7 +10,6 @@ class BusinessRoute
         $api->get('business/test-push-notification', 'PushSubscriptionController@send');
         $api->get('business/test-email', 'B2b\ProcurementPaymentRequestController@testEmail');
         $api->post('business/register', 'B2b\RegistrationController@registerV2');
-        $api->get('business/incomplete-coworker', 'B2b\CoWorkerController@downloadInvitedCoworker');
         $api->group(['prefix' => 'businesses/tenders'], function ($api) {
             $api->get('/', 'B2b\ProcurementController@tenders');
             $api->get('filter-options', 'B2b\ProcurementController@filterOptions');

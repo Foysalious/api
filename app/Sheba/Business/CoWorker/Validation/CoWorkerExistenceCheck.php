@@ -1,15 +1,18 @@
 <?php namespace Sheba\Business\CoWorker\Validation;
 
+use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
+use Sheba\Repositories\ProfileRepository;
 use Sheba\Helpers\HasErrorCodeAndMessage;
 use App\Models\BusinessMember;
 use App\Models\Business;
 use App\Models\Member;
-use Sheba\Repositories\ProfileRepository;
 
 class CoWorkerExistenceCheck
 {
     use HasErrorCodeAndMessage;
 
+    /**  @var BusinessMemberRepositoryInterface $businessMemberRepository */
+    private $businessMemberRepository;
     /** @var ProfileRepository $profileRepository */
     private $profileRepository;
     /**  @var BusinessMember $businessMember */
@@ -19,10 +22,13 @@ class CoWorkerExistenceCheck
     /** @var Member $member */
     private $member;
     private $email;
+    private $mobile;
 
-    public function __construct(ProfileRepository $profile_repository)
+
+    public function __construct(ProfileRepository $profile_repository, BusinessMemberRepositoryInterface $business_member_repository)
     {
         $this->profileRepository = $profile_repository;
+        $this->businessMemberRepository = $business_member_repository;
     }
 
     /**
@@ -43,7 +49,6 @@ class CoWorkerExistenceCheck
     {
         $this->businessMember = $business_member;
         $this->member = $this->businessMember->member;
-        $this->isActiveOrInvitedInAnotherBusiness();
         return $this;
     }
 
@@ -58,9 +63,28 @@ class CoWorkerExistenceCheck
     }
 
     /**
+     * @param $mobile
      * @return $this
      */
-    private function isActiveOrInvitedInAnotherBusiness()
+    public function setMobile($mobile)
+    {
+        $this->mobile = !$this->isNull($mobile) ? formatMobile($mobile) : null;
+        return $this;
+    }
+
+    public function isMobileNumberAlreadyTaken()
+    {
+        $business_member = $this->businessMemberRepository->checkExistingMobile($this->mobile);
+        if (!$business_member) return $this;
+        if ($business_member->id != $this->businessMember->id)
+            $this->setError(400, 'This mobile number belongs to another member. Please contact with sheba');
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function isActiveOrInvitedInAnotherBusiness()
     {
         if ($this->member->businesses()->where('businesses.id', '<>', $this->business->id)->count() > 0) {
             $this->setError(422, "This person is already active or invited in another business");
@@ -73,10 +97,11 @@ class CoWorkerExistenceCheck
      */
     public function checkEmailUsability()
     {
-        if (!$this->isNull($this->email)) return $this;
+        if ($this->isNull($this->email)) return $this;
 
         $profile = $this->profileRepository->checkExistingEmail($this->email);
-        if (!$profile && !$profile->member) return $this;
+        if (!$profile) return $this;
+        if (!$profile->member) return $this;
 
         if ($profile->member->businesses()->where('businesses.id', $this->business->id)->count() > 0) {
             $this->setError(421, "This employee is already added to your business");
