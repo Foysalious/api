@@ -281,7 +281,8 @@ class Updater
                 $profile_pic_name = $this->isFile($profile_image) ? $profile_image->getClientOriginalName() : array_last(explode('/', $profile_image));
                 $profile_pic = $this->isFile($profile_image) ? $this->getPicture($this->profile, $profile_image) : $profile_image;
             }
-            $profile_data['email'] = ($this->basicRequest->getEmail() == 'null') ? null : $this->basicRequest->getEmail();
+
+            if ($this->basicRequest->getEmail()) $profile_data['email'] = $this->basicRequest->getEmail();
             $profile_data['name'] = ($this->basicRequest->getFirstName() == 'null') ? null : $this->basicRequest->getFirstName();
             $profile_data['pro_pic'] = ($profile_image == 'null') ? null : $profile_pic;
 
