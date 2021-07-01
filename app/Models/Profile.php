@@ -41,6 +41,7 @@ class Profile extends Model {
         'tin_no',
         'tin_certificate',
         'gender',
+        'nationality',
         'dob',
         'pro_pic',
         'birth_place',
