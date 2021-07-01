@@ -265,6 +265,7 @@ class CoWorkerController extends Controller
         $this->validate($request, $validation_data);
 
         $business_member = $this->businessMemberRepository->find($business_member_id);
+
         $business = $request->business;
         $manager_member = $request->manager_member;
         $this->setModifier($manager_member);

@@ -1,5 +1,6 @@
 <?php namespace App\Transformers\Business;
 
+use App\Sheba\Business\CoWorker\ProfileInformation\SocialLink;
 use App\Sheba\Business\PayrollComponent\Components\GrossSalaryBreakdownCalculate;
 use App\Sheba\Business\SalaryLog\Formatter as SalaryLogFormatter;
 use Sheba\Dal\PayrollComponent\TargetType;
@@ -116,6 +117,12 @@ class CoWorkerDetailTransformer extends TransformerAbstract
             'nid_image_front' => $this->profile->nid_image_front,
             'nid_image_back_name' => $this->profile->nid_image_back ? array_last(explode('/', $this->profile->nid_image_back)) : null,
             'nid_image_back' => $this->profile->nid_image_back,
+            'gender' => $this->profile->gender,
+            'blood_group' => $this->profile->blood_group,
+            'passport_no' => $this->profile->passport_no,
+            'passport_image' => $this->profile->passport_image,
+            'social_links' => (new SocialLink($this->member))->get(),
+
             'personal_info_completion' => $personal_info_completion
         ];
     }
