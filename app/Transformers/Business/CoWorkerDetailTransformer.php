@@ -120,6 +120,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
             'gender' => $this->profile->gender,
             'blood_group' => $this->profile->blood_group,
             'passport_no' => $this->profile->passport_no,
+            'passport_image_name' => $this->profile->passport_image ? array_last(explode('/', $this->profile->passport_image)) : null,
             'passport_image' => $this->profile->passport_image,
             'social_links' => (new SocialLink($this->member))->get(),
 
