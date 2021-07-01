@@ -13,6 +13,12 @@ class Requester
     private $updateDeductionComponent;
     private $addDeductionComponent;
     private $error =  false;
+    private $grossComponentAdd;
+    private $grossComponentUpdate;
+    private $grossComponentDelete;
+    private $componentDeleteData;
+    private $additionDelete;
+    private $deductionDelete;
 
     public function setName($name)
     {
@@ -80,23 +86,68 @@ class Requester
         return $this->updateDeductionComponent;
     }
 
+    public function setComponentDelete($component_delete_data)
+    {
+        $this->componentDeleteData = json_decode($component_delete_data,1);
+        $this->additionDelete = $this->componentDeleteData['addition'];
+        $this->deductionDelete = $this->componentDeleteData['deduction'];
+        return $this;
+    }
+
+    public function getAdditionComponentDelete()
+    {
+        return $this->additionDelete;
+    }
+
+    public function getDeductionComponentDelete()
+    {
+        return $this->deductionDelete;
+    }
+
     public function hasError($components)
     {
-        $new_components = [];
-        foreach ($components as $components_type) {
-            foreach ($components_type as $components_value) {
-                array_push($new_components, $components_value);
-            }
+        foreach ($components as $component) {
+            $existing_component = $this->setting->components->where('name', $component['name'])->whereIn('type', [Type::ADDITION, Type::DEDUCTION])->first();
+            if (!$existing_component) continue;
+            return $this->error = true;
         }
-        $existing_components = $this->setting->components->whereIn('type', [Type::ADDITION, Type::DEDUCTION])->pluck('name')->toArray();
-
-        if (count(array_intersect($new_components, $existing_components)) > 0) $this->error = true;
-
         return $this->error;
     }
 
     public function checkError()
     {
         return $this->error;
+    }
+
+    public function setGrossComponentAdd($gross_component_add)
+    {
+        $this->grossComponentAdd = json_decode($gross_component_add, 1);
+        return $this;
+    }
+    public function getGrossComponentAdd()
+    {
+        return $this->grossComponentAdd;
+    }
+
+    public function setGrossComponentUpdate($gross_component_update)
+    {
+        $this->grossComponentUpdate = json_decode($gross_component_update, 1);
+        return $this;
+    }
+
+    public function getGrossComponentUpdate()
+    {
+        return $this->grossComponentUpdate;
+    }
+
+    public function setGrossComponentDelete($gross_component_delete)
+    {
+        $this->grossComponentDelete = json_decode($gross_component_delete, 1);
+        return $this;
+    }
+
+    public function getGrossComponentDelete()
+    {
+        return $this->grossComponentDelete;
     }
 }

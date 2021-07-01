@@ -1,7 +1,5 @@
 <?php namespace Sheba\AppVersion;
 
-
-use Sheba\Helpers\Http\ShebaRequestHeader;
 use Sheba\Portals\Portals;
 
 class App
@@ -27,7 +25,7 @@ class App
      * @param string $portal_name
      * @return $this
      */
-    public function setPortalName($portal_name)
+    public function setPortalName(string $portal_name): App
     {
         $this->portalName = $portal_name;
         return $this;
@@ -36,7 +34,7 @@ class App
     /**
      * @return string
      */
-    public function getPortalName()
+    public function getPortalName(): string
     {
         return $this->portalName;
     }
@@ -45,7 +43,7 @@ class App
      * @param string $platform_name
      * @return $this
      */
-    public function setPlatformName($platform_name)
+    public function setPlatformName(string $platform_name): App
     {
         $this->platformName = $platform_name;
         return $this;
@@ -54,7 +52,7 @@ class App
     /**
      * @return string
      */
-    public function getPlatformName()
+    public function getPlatformName(): string
     {
         return $this->platformName;
     }
@@ -63,7 +61,7 @@ class App
      * @param int $version_code
      * @return $this
      */
-    public function setVersionCode($version_code)
+    public function setVersionCode(int $version_code): App
     {
         $this->versionCode = $version_code;
         if (!$this->versionName) $this->setVersionName($this->versionManager->convertIntToSemver($version_code));
@@ -71,7 +69,7 @@ class App
     }
 
     /**
-     * @return int
+     * @return int | null
      */
     public function getVersionCode()
     {
@@ -82,13 +80,16 @@ class App
      * @param string $version_name
      * @return $this
      */
-    public function setVersionName($version_name)
+    public function setVersionName(string $version_name): App
     {
         $this->versionName = $version_name;
         if (!$this->versionCode) $this->setVersionCode($this->versionManager->convertSemverToInt($version_name));
         return $this;
     }
 
+    /**
+     * @return string | null
+     */
     public function getVersionName()
     {
         return $this->versionName;
@@ -97,7 +98,7 @@ class App
     /**
      * @return bool
      */
-    public function isIos()
+    public function isIos(): bool
     {
         return $this->getPlatformName() == Apps::IOS_PLATFORM;
     }
@@ -121,18 +122,19 @@ class App
         return Apps::getPackageNames()[$name];
     }
 
-    public function isUsingShebaAccountKit()
+    public function isUsingShebaAccountKit(): bool
     {
         $version = $this->getVersionCode();
         $portal_name = $this->getPortalName();
 
-        return ($version > 30211 && $portal_name == Portals::CUSTOMER_APP) ||
+        return ($portal_name == Portals::BONDHU_APP && $this->isIos()) ||
+            ($version > 30211 && $portal_name == Portals::CUSTOMER_APP) ||
             ($version > 12003 && $portal_name == Portals::BONDHU_APP) ||
             ($version > 2145 && $portal_name == Portals::RESOURCE_APP) ||
             ($version > 126 && $portal_name == Portals::CUSTOMER_APP && $this->isIos());
     }
 
-    public function hasCriticalUpdate()
+    public function hasCriticalUpdate(): bool
     {
         $app_name = $this->getName();
         if (!$app_name) return false;

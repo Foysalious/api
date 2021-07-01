@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\InfoCall\InfoCall;
 
 use Carbon\Carbon;
 
@@ -97,7 +98,7 @@ class Complain extends Model
      */
     public function scopeInfocallComplainableType($query)
     {
-        $query->where('complainable_type', 'App\Models\InfoCall');
+        $query->where('complainable_type', InfoCall::class);
     }
 
     public function mentions()

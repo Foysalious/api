@@ -6,6 +6,7 @@ class PosServiceTransformer extends TransformerAbstract
 {
     public function transform($pos_service)
     {
+
         return [
             'id' => $pos_service->id,
             'name' => $pos_service->name,
@@ -15,8 +16,10 @@ class PosServiceTransformer extends TransformerAbstract
             'vat_included_price' => $pos_service->price + ($pos_service->price * $pos_service->vat_percentage) / 100,
             'vat_percentage' => (double)$pos_service->vat_percentage,
             'unit' => $pos_service->unit,
-            'stock' => $pos_service->stock,
+            'stock' => $pos_service->getStock(),
             'category_id' => $pos_service->subCategory->parent->id,
+            'weight' => $pos_service->weight,
+            'weight_unit'=>$pos_service->weight_unit,
             'discount_applicable' => $pos_service->discount() ? 1 : 0,
             'discounted_amount' => $pos_service->discount() ? $pos_service->getDiscountedAmount() : 0,
             'discount_percentage' => $pos_service->discount() ? $pos_service->getDiscountPercentage() : 0,

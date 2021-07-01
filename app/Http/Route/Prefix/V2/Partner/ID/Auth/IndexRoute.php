@@ -8,6 +8,10 @@ class IndexRoute
     {
         $api->group(['prefix' => '{partner}', 'middleware' => ['manager.auth']], function ($api) {
             $api->get('dashboard', 'Partner\DashboardController@get');
+            $api->get('new-homepage', 'Partner\DashboardController@getNewHomePage');
+            $api->get('bkash', 'Partner\DashboardController@getBkashNo');
+            $api->get('geo-information', 'Partner\DashboardController@getGeoInformation');
+            $api->get('current-subscription-package', 'Partner\DashboardController@getCurrentPackage');
             $api->get('webstore-dashboard', 'Partner\Webstore\WebstoreDashboardController@getDashboard');
             $api->get('home-setting', 'Partner\DashboardController@getHomeSetting');
             $api->post('home-setting', 'Partner\DashboardController@updateHomeSetting');
@@ -83,6 +87,7 @@ class IndexRoute
                         $api->delete('/', 'Pos\ServiceController@destroy');
                         $api->post('/toggle-publish-for-shop', 'Pos\ServiceController@togglePublishForShopStatus');
                         $api->post('/copy', 'Pos\ServiceController@copy');
+                        $api->post('/add-new-stock', 'Pos\ServiceController@addNewStock');
                     });
                 });
                 $api->group(['prefix' => 'categories'], function ($api) {
@@ -284,6 +289,7 @@ class IndexRoute
                 $api->put('{withdrawals}', 'Partner\\PartnerWithdrawalRequestV2Controller@update');
                 $api->get('{withdrawals}/cancel', 'Partner\\PartnerWithdrawalRequestV2Controller@cancel');
                 $api->post('bank-info', 'Partner\\PartnerWithdrawalRequestV2Controller@storeBankInfo');
+                $api->get('/check-pending-status', 'Partner\\PartnerWithdrawalRequestV2Controller@checkWithdrawRequestPendingStatus');
             });
             (new LoanRoute())->indexed($api);
             (new IncomeExpenseRoute())->set($api);

@@ -47,6 +47,7 @@ class PaymentLinkController extends Controller
     public function getDashboard(Request $request, PaymentLink $link)
     {
         try {
+            if (!$request->user) return api_response($request, null, 404, ['message' => 'User not found']);
             $default_payment_link = $this->paymentLinkClient->defaultPaymentLink($request);
             if ($default_payment_link) {
                 $link->defaultPaymentLinkData($default_payment_link);
