@@ -97,7 +97,7 @@ class CoWorkerExistenceCheck
      */
     public function checkEmailUsability()
     {
-        if (!$this->isNull($this->email)) return $this;
+        if ($this->isNull($this->email)) return $this;
 
         $profile = $this->profileRepository->checkExistingEmail($this->email);
         if (!$profile && !$profile->member) return $this;
