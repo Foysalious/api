@@ -43,6 +43,7 @@ class Profile extends BaseModel
         'tin_no',
         'tin_certificate',
         'gender',
+        'nationality',
         'dob',
         'pro_pic',
         'birth_place',
