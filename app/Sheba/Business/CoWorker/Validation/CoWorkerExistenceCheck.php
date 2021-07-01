@@ -100,7 +100,8 @@ class CoWorkerExistenceCheck
         if ($this->isNull($this->email)) return $this;
 
         $profile = $this->profileRepository->checkExistingEmail($this->email);
-        if (!$profile && !$profile->member) return $this;
+        if (!$profile) return $this;
+        if (!$profile->member) return $this;
 
         if ($profile->member->businesses()->where('businesses.id', $this->business->id)->count() > 0) {
             $this->setError(421, "This employee is already added to your business");
