@@ -29,7 +29,7 @@ class JournalReportData
     {
         $journal_single_data = [
             "key" => $data[0]['identifier'],
-            "date" => Carbon::parse($data[0]['entry_at'])->format('d M Y'),
+            "date" => Carbon::parse($data[0]['entry_at'])->format('Y-m-d'),
             "source_type" => $data[0]['source_type'],
             "total_debit" => 0,
             "total_credit" => 0,
