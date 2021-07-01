@@ -103,7 +103,7 @@
             padding: 0 0 25px 0;
             opacity: 0.8;
             font-family: 'Poppins', sans-serif;
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 300;
             color: #000000;
         }
@@ -140,9 +140,9 @@
 
 <body style="margin-top: 20px; font-family: 'Poppins', sans-serif;">
 
-{{--<body style="margin: 50px 30px; font-family: 'Poppins', sans-serif; ">--}}
+<body style="margin: 50px 30px; font-family: 'Poppins', sans-serif; ">
 
-{{--<table class="header">
+<table class="header">
     <tr>
         @if($pay_report_detail['employee_info']['company_logo'])
             <td class="text-left"><img src="{{ $pay_report_detail['employee_info']['company_logo'] }}" height="65"/></td>
@@ -155,7 +155,7 @@
     <tr>
         <td><hr style=" color: #d1d7e6; width: 720px"></td>
     </tr>
-</table>--}}
+</table>
 
 <table style="border: none">
     <tr>
@@ -204,41 +204,22 @@
                     <td style="font-family: 'Poppins', sans-serif; padding-bottom: 5px; font-size: 12px; color: #000000; opacity: 0.8">:</td>
                     <td style="padding-left: 10px; padding-bottom: 5px; font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: normal; color: #000000; opacity: 0.8">{{ $pay_report_detail['employee_info']['mobile'] }}</td>
                 </tr>
+                <tr>
+                    <td style="font-family: 'Poppins', sans-serif; padding-bottom: 5px; font-size: 12px; color: #000000; opacity: 0.8">Net Payable</td>
+                    <td style="font-family: 'Poppins', sans-serif; padding-bottom: 5px; font-size: 12px; color: #000000; opacity: 0.8">:</td>
+                    <td style="padding-left: 10px; padding-bottom: 5px; font-family: 'Poppins', sans-serif; font-size: 12px; font-weight:bold; color: #000000; opacity: 0.8">{{ number_format($pay_report_detail['salary_info']['net_payable'],2) }}</td>
+                </tr>
+                <tr>
+                    <td style="font-family: 'Poppins', sans-serif; padding-bottom: 5px; font-size: 12px; color: #000000; opacity: 0.8">In Words</td>
+                    <td style="font-family: 'Poppins', sans-serif; padding-bottom: 5px; font-size: 12px; color: #000000; opacity: 0.8">:</td>
+                    <td style="padding-left: 10px; padding-bottom: 5px; font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: normal; color: #000000; opacity: 0.8">{{ $pay_report_detail['salary_info']['net_payable_in_word'] }} Taka Only</td>
+                </tr>
             </table>
         </td>
     </tr>
 </table>
 
-<table style="width: 100%; border: none; padding-bottom: 14px;">
-    <tr>
-        <td style="font-family: 'Poppins', sans-serif; font-size: 12px; color: #000000; opacity: 0.8; width: 19.5%">
-            Net Payable
-        </td>
-        <td style="padding-left: 2px; font-family: 'Poppins', sans-serif; font-size: 12px; color: #000000; opacity: 1; width: 20px">
-            :
-        </td>
-        <td style="padding-top: 8.5px; font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: bold; color: #000000; opacity: 1;">
-            {{ number_format($pay_report_detail['salary_info']['net_payable'],2) }}
-        </td>
-    </tr>
-</table>
-
-<table style="width: 100%; border: none; padding-bottom: 30px;">
-    <tr>
-        <td style="font-family: 'Poppins', sans-serif; font-size: 12px; color: #000000; opacity: 0.8; width: 19.5%">
-            In Words
-        </td>
-        <td style="padding-left: 2px; font-family: 'Poppins', sans-serif; font-size: 12px; color: #000000; opacity: 1; width: 20px">
-            :
-        </td>
-        <td style="font-family: 'Poppins', sans-serif; font-size: 12px; color: #000000; opacity: 1;">
-            {{ $pay_report_detail['salary_info']['net_payable_in_word'] }} Taka Only
-        </td>
-    </tr>
-</table>
-
-<table class="tableHead" style="width: 100%; margin-bottom: 20px; position: relative">
-
+<table class="tableHead" style="width: 100%; position: relative">
     <thead>
     <tr class="tableHeadRegular" style="background: #f8f8fb; width: 100%">
         <td style="width:80%;font-size: 12px; opacity: 0.8; font-weight: bold; font-family: 'Poppins', sans-serif; padding: 10px;border: solid 1px #d2d8e6;">
@@ -277,7 +258,7 @@
 
 </table>
 <br>
-<table class="tableHead" style="width: 100%; margin-bottom: 20px; position: relative">
+<table class="tableHead" style="width: 100%; position: relative">
 
     <thead>
     <tr class="tableHeadRegular" style="background: #f8f8fb; width: 100%">
@@ -317,7 +298,7 @@
 
 </table>
 <br>
-<table class="tableHead" style="width: 100%; margin-bottom: 20px; position: relative;border: 0">
+<table class="tableHead" style="width: 100%; position: relative;border: 0">
 
     <tbody>
     <tr style="width: 100%">
