@@ -43,39 +43,48 @@ class DueTrackerRepository extends BaseRepository
     {
         $url      = "accounts/$this->accountId/entries/due-list?";
         $url      = $this->updateRequestParam($request, $url);
-        $order_by = $request->order_by;
-        $result   = $this->client->get($url);
-        /** @var Collection $list */
-        $list = $this->attachProfile(collect($result['data']['list']));
-        if ($request->has('balance_type') && in_array($request->balance_type, [
-                'due',
-                'received',
-                'clear'
-            ])) {
-            $list = $list->where('balance_type', $request->balance_type)->values();
+        $customerProfiles = null;
+        if($request->has('q') && !empty($request->q)) {
+            $profiles = PartnerPosCustomer::with([
+                 'customer' => function($q) {
+                     $q->select('id', 'profile_id');
+                 },
+                 'customer.profile' => function($q) {
+                     $q->select('name', 'mobile', 'id', 'pro_pic');
+                 }])->where('partner_id', $this->partnerId);
+
+            if (is_numeric($request->q)) {
+                $profiles->whereHas('customer.profile', function ($query) use ($request) {
+                    $query->where('mobile', 'like', '%'.$request->q.'%');
+                });
+            }
+            else {
+                $profiles->whereHas('customer.profile', function ($query) use ($request) {
+                    $query->where('name', 'like', '%'.$request->q.'%');
+                });
+            }
+            $customerProfiles = $profiles->get();
+            $ids = $profiles->get()->pluck('customer.profile.id');
+            $ids = implode(",", $ids->toArray());
+            $url .= "&q=$ids";
         }
+        $result = $this->client->get($url);
+
+        if ($customerProfiles) {
+            $list = $this->attachCustomerProfile(collect($result['data']['list']), $customerProfiles);
+        } else {
+            /** @var Collection $list */
+            $list = $this->attachProfile(collect($result['data']['list']));
+        }
+
         if($request->has('filter_by_supplier') && $request->filter_by_supplier == 1)
         {
             $list = $list->where('is_supplier', 1)->values();
         }
-        if ($request->has('q') && !empty($request->q)) {
-            $query = trim($request->q);
-            $list  = $list->filter(function ($item) use ($query) {
-                return strpos(strtolower($item['customer_name']), "$query") !== false || strpos(strtolower($item['customer_mobile']), "$query") !== false;
-            })->values();
-        }
-        if (!empty($order_by) && $order_by == "name") {
-            $order = ($request->order == 'desc') ? 'sortByDesc' : 'sortBy';
-            $list  = $list->$order('customer_name', SORT_NATURAL | SORT_FLAG_CASE)->values();
-        }
         $total = $list->count();
-        if ($paginate && isset($request['offset']) && isset($request['limit'])) {
-            list($offset, $limit) = calculatePagination($request);
-            $list = $list->slice($offset)->take($limit)->values();
-        }
         return [
             'list'               => $list,
-            'total_transactions' => count($list),
+            'total_transactions' => $total,
             'total'              => $total,
             'stats'              => $result['data']['totals'],
             'partner'            => $this->getPartnerInfo($request->partner),
@@ -92,6 +101,14 @@ class DueTrackerRepository extends BaseRepository
         if ($request->has('start_date') && $request->has('end_date')) {
             $url .= "&start=$request->start_date&end=$request->end_date";
         }
+        if (($request->has('download_pdf')) && ($request->download_pdf == 1) || ($request->has('share_pdf')) && ($request->share_pdf == 1)) {
+            return $url;
+        }
+        if ($request->has('balance_type') && in_array($request->balance_type, ['due', 'received', 'clear'])) {
+            $url .= "&balance_type=$request->balance_type";
+        }
+        $request->has('limit') ? $url .= "&limit=$request->limit" : $url .= "&limit=20";
+        $request->has('offset') ? $url .= "&offset=$request->offset" : $url .= "&offset=0";
         return $url;
     }
 
@@ -118,6 +135,25 @@ class DueTrackerRepository extends BaseRepository
             $item['customer_id']     = $customerId;
             $item['is_supplier'] = isset($posProfile) ? $posProfile->is_supplier : 0;
             return $item;
+        });
+        return $list;
+    }
+
+    private function attachCustomerProfile(Collection $list, $customerProfile)
+    {
+        $list = $list->map(function ($item) use ($customerProfile) {
+            $profile = $customerProfile->where('customer.profile.id', $item['profile_id']);
+             $cus = $profile->map(
+                function($items) use ($item) {
+                    $item['customer_name'] = isset($items->nick_name) ? $items->nick_name : $items->customer->profile->name ;
+                    $item['customer_mobile'] =  $items->customer->profile->mobile;
+                    $item['avatar'] = $items->customer->profile->pro_pic;
+                    $item['customer_id'] = $items->customer_id;
+                    $item['is_supplier'] = $items->is_supplier;
+                    return $item;
+                }
+            );
+            return call_user_func_array('array_merge', $cus->toArray());
         });
         return $list;
     }

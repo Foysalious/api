@@ -38,7 +38,6 @@ class DueTrackerController extends Controller
     {
         ini_set('memory_limit', '4096M');
         ini_set('max_execution_time', 420);
-        try {
             if (!$request->partner->expense_account_id) {
                 $account = $this->entryRepo->createExpenseUser($request->partner);
                 $this->setModifier($request->partner);
@@ -59,13 +58,6 @@ class DueTrackerController extends Controller
                 $data['pdf_link'] = (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile('due_tracker_due_list')->save(true);
             }
             return api_response($request, $data, 200, ['data' => $data]);
-        } catch (InvalidPartnerPosCustomer $e) {
-            $message = "Invalid pos customer for this partner";
-            return api_response($request, $message, 403, ['message' => $message]);
-        } catch (\Throwable $e) {
-            logError($e);
-            return api_response($request, null, 500);
-        }
     }
 
     /**
