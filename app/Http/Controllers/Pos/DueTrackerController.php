@@ -42,7 +42,6 @@ class DueTrackerController extends Controller
     {
         ini_set('memory_limit', '4096M');
         ini_set('max_execution_time', 420);
-
         if (!$request->partner->expense_account_id) {
             $account = $this->entryRepo->createExpenseUser($request->partner);
             $this->setModifier($request->partner);
