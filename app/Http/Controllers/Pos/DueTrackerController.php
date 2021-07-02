@@ -38,26 +38,26 @@ class DueTrackerController extends Controller
     {
         ini_set('memory_limit', '4096M');
         ini_set('max_execution_time', 420);
-            if (!$request->partner->expense_account_id) {
-                $account = $this->entryRepo->createExpenseUser($request->partner);
-                $this->setModifier($request->partner);
-                $data = ['expense_account_id' => $account['id']];
-                $partner_repo->update($request->partner, $data);
-            }
-            $data = $dueTrackerRepository->setPartner($request->partner)->getDueList($request);
-            if (($request->has('download_pdf')) && ($request->download_pdf == 1)){
-                $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
-                $data['end_date'] = $request->has("end_date") ? $request->end_date : null;
-                $pdf_link = (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile('due_tracker_due_list')->save(true);
-                return api_response($request, null, 200, ['message' => 'PDF download successful','pdf_link' => $pdf_link]);
-            }
+        if (!$request->partner->expense_account_id) {
+            $account = $this->entryRepo->createExpenseUser($request->partner);
+            $this->setModifier($request->partner);
+            $data = ['expense_account_id' => $account['id']];
+            $partner_repo->update($request->partner, $data);
+        }
+        $data = $dueTrackerRepository->setPartner($request->partner)->getDueList($request);
+        if (($request->has('download_pdf')) && ($request->download_pdf == 1)){
+            $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
+            $data['end_date'] = $request->has("end_date") ? $request->end_date : null;
+            $pdf_link = (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile('due_tracker_due_list')->save(true);
+            return api_response($request, null, 200, ['message' => 'PDF download successful','pdf_link' => $pdf_link]);
+        }
 
-            if (($request->has('share_pdf')) && ($request->share_pdf == 1)){
-                $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
-                $data['end_date'] = $request->has("end_date") ? $request->end_date : null;
-                $data['pdf_link'] = (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile('due_tracker_due_list')->save(true);
-            }
-            return api_response($request, $data, 200, ['data' => $data]);
+        if (($request->has('share_pdf')) && ($request->share_pdf == 1)){
+            $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
+            $data['end_date'] = $request->has("end_date") ? $request->end_date : null;
+            $data['pdf_link'] = (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile('due_tracker_due_list')->save(true);
+        }
+        return api_response($request, $data, 200, ['data' => $data]);
     }
 
     /**
