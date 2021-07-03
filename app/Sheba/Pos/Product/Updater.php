@@ -86,11 +86,13 @@ class Updater
         $cloned_data = $this->data;
         $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'is_vat_percentage_off', 'is_stock_off', 'image_gallery','accounting_info']);
         if (!empty($this->updatedData)) $this->updatedData = array_except($this->updatedData, 'image_gallery');
+
+        $lastBatchData = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->latest()->first();
+        $this->setOldCost($lastBatchData->cost);
+        $this->setOldStock($lastBatchData->stock);
+
         if (!empty($this->updatedData)) {
             $old_service = clone $this->service;
-            $lastBatchData = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->latest()->first();
-            $this->setOldCost($lastBatchData->cost);
-            $this->setOldStock($lastBatchData->stock);
             $this->serviceRepo->update($this->service, $this->updatedData);
             $this->storeLogs($old_service, $this->updatedData);
         }
@@ -292,6 +294,10 @@ class Updater
         if(count($countBatch) > 0 && isset($this->data['cost'])) {
             if ((isset($this->data['cost']) && $this->data['cost'] != $this->service->getLastCost())) {
                 $this->batchData['cost'] = $this->data['cost'];
+            }
+            else
+            {
+                $this->batchData['cost'] = $this->service->getLastCost();
             }
         }
         else
