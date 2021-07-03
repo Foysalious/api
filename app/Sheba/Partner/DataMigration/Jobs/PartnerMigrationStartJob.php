@@ -1,13 +1,13 @@
 <?php namespace Sheba\Partner\DataMigration\Jobs;
 
-
-use Carbon\Carbon;
+use App\Jobs\Job;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
-use Sheba\Repositories\PartnerRepository;
+use Sheba\Dal\PartnerDataMigration\PartnerDataMigration;
+use Sheba\Dal\PartnerDataMigration\Statuses;
 
-class PartnerMigrationStartJob
+class PartnerMigrationStartJob extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
 
@@ -16,10 +16,14 @@ class PartnerMigrationStartJob
     public function __construct($partner)
     {
         $this->partner = $partner;
+        $this->connection = 'data_migration';
+        $this->queue = 'data_migration';
     }
 
     public function handle()
     {
-        Log::info('Starting Migration of Partner: #'.$this->partner->id. ' at '.Carbon::now());
+        $partnerDataMigration = PartnerDataMigration::where('partner_id', $this->partner->id)->first();
+        $partnerDataMigration ? $partnerDataMigration->update(['status' => Statuses::INITIATED]) :
+            PartnerDataMigration::create(['partner_id' => $this->partner->id, 'status' => Statuses::INITIATED]);
     }
 }

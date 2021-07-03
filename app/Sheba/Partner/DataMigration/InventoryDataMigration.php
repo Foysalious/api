@@ -2,21 +2,18 @@
 
 
 use App\Models\Partner;
-use App\Sheba\InventoryService\InventoryServerClient;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Redis;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategoryRepository;
 use Sheba\Dal\PartnerPosService\PartnerPosServiceRepository;
 use Sheba\Dal\PosCategory\PosCategoryRepository;
 use Sheba\Partner\DataMigration\Jobs\PartnerDataMigrationToInventoryJob;
-use Sheba\Pos\Repositories\PosServiceDiscountRepository;
-use Sheba\Pos\Repositories\PosServiceLogRepository;
-use Sheba\Repositories\PartnerRepository;
 use DB;
 
 class InventoryDataMigration
 {
     const CHUNK_SIZE = 10;
-
+    private $currentQueue = 1;
     /** @var Partner */
     private $partner;
     /** @var PosCategoryRepository */
@@ -24,135 +21,113 @@ class InventoryDataMigration
     /** @var PartnerPosCategoryRepository */
     private $partnerPosCategoryRepository;
     /** @var Collection */
-    private $categories;
+    private $categoriesData;
     /** @var void */
-    private $posCategories;
-    /**  @var InventoryServerClient */
-    private $client;
+    private $posCategoriesData;
     /** @var PartnerPosServiceRepository */
     private $partnerPosServiceRepository;
     private $partnerPosServiceIds;
-    /** @var PosServiceLogRepository */
-    private $posServiceLogRepository;
-    /** @var PosServiceDiscountRepository */
-    private $posServiceDiscountRepository;
-    /** @var PartnerRepository */
-    private $partnerRepository;
+    private $partnerPosServiceImages;
+    private $partnerPosServiceLogs;
+    private $partnerPosServiceDiscounts;
+    private $partnerInfo;
+    private $partnerPosCategories;
+    private $partnerPosServices;
+    private $posCategories;
 
-    public function __construct(PosCategoryRepository $posCategoryRepository,
-                                PartnerPosCategoryRepository $partnerPosCategoryRepository,
-                                InventoryServerClient $client,
-                                PartnerPosServiceRepository $partnerPosServiceRepository,
-                                PosServiceLogRepository $posServiceLogRepository,
-                                PosServiceDiscountRepository $posServiceDiscountRepository,
-                                PartnerRepository $partnerRepository)
+
+    public function __construct(PosCategoryRepository $posCategoryRepository, PartnerPosCategoryRepository $partnerPosCategoryRepository, PartnerPosServiceRepository $partnerPosServiceRepository)
     {
         $this->posCategoryRepository = $posCategoryRepository;
         $this->partnerPosCategoryRepository = $partnerPosCategoryRepository;
         $this->partnerPosServiceRepository = $partnerPosServiceRepository;
-        $this->posServiceLogRepository = $posServiceLogRepository;
-        $this->posServiceDiscountRepository = $posServiceDiscountRepository;
-        $this->partnerRepository = $partnerRepository;
-        $this->client = $client;
-        $this->categories = collect();
+        $this->categoriesData = collect();
     }
 
     /**
      * @param mixed $partner
      * @return InventoryDataMigration
      */
-    public function setPartner(Partner $partner)
+    public function setPartner(Partner $partner): InventoryDataMigration
     {
         $this->partner = $partner;
         return $this;
     }
 
-    /**
-     * @param void $posCategories
-     * @return InventoryDataMigration
-     */
-    private function setPosCategories($posCategories)
-    {
-        $this->posCategories = $posCategories;
-        return $this;
-    }
-
     private function generatePosCategoriesData($pos_category)
     {
-        if ($pos_category->parent_id && !$this->categories->contains('id', $pos_category->parent_id)) {
-            $parent_category = $this->posCategories->find($pos_category->parent_id);
+        if ($pos_category->parent_id && !$this->categoriesData->contains('id', $pos_category->parent_id)) {
+            $parent_category = $this->posCategoriesData->find($pos_category->parent_id);
             $this->generatePosCategoriesData($parent_category);
-            $this->categories->push($pos_category);
-        } else {
-            $this->categories->push($pos_category);
         }
+        $this->categoriesData->push($pos_category);
     }
 
     public function migrate()
     {
-        $this->migratePartner();
-        $this->migrateCategories();
-        $this->migrateCategoryPartner();
-        $this->migrateProducts();
-        $this->migrateProductsImages();
-        $this->migrateProductUpdateLogs();
-        $this->migrateDiscounts();
+        $this->generateMigrationData();
+        $this->migratePartner($this->partnerInfo);
+        $this->migrateCategories($this->posCategories);
+        $this->migrateCategoryPartner($this->partnerPosCategories);
+        $this->migrateProducts($this->partnerPosServices);
     }
 
-    private function migratePartner()
+    private function generateMigrationData()
     {
-        dispatch(new PartnerDataMigrationToInventoryJob($this->partner, ['partner_info' => $this->generatePartnerMigrationData()]));
+        $this->partnerInfo = $this->generatePartnerMigrationData();
+        $this->posCategories  = $this->generatePosCategoriesMigrationData();
+        $this->partnerPosCategories = $this->generatePartnerPosCategoriesMigrationData();
+        $this->partnerPosServices = $this->generatePartnerPosServicesMigrationData();
+        $this->partnerPosServiceImages = collect($this->generatePartnerPosServiceImageGalleryData());
+        $this->partnerPosServiceLogs = collect($this->generatePartnerPosServiceLogsMigrationData());
+        $this->partnerPosServiceDiscounts = collect($this->generatePartnerPosServiceDiscountsMigrationData());
     }
 
-    private function migrateCategories()
+    private function migratePartner($data)
     {
-        $chunks = array_chunk($this->generatePosCategoriesMigrationData(), self::CHUNK_SIZE);
+        $this->setRedisKey();
+        dispatch(new PartnerDataMigrationToInventoryJob($this->partner, ['partner_info' => $data], $this->currentQueue));
+        $this->increaseCurrentQueueValue();
+    }
+
+    private function migrateCategories($data)
+    {
+        $chunks = array_chunk($data, self::CHUNK_SIZE);
         foreach ($chunks as $chunk) {
-            dispatch(new PartnerDataMigrationToInventoryJob($this->partner, ['pos_categories' => $chunk]));
+            $this->setRedisKey();
+            dispatch(new PartnerDataMigrationToInventoryJob($this->partner, ['pos_categories' => $chunk], $this->currentQueue));
+            $this->increaseCurrentQueueValue();
         }
     }
 
-    private function migrateCategoryPartner()
+    private function migrateCategoryPartner($data)
     {
-        $chunks = array_chunk($this->generatePartnerPosCategoriesMigrationData(), self::CHUNK_SIZE);
+        $chunks = array_chunk($data, self::CHUNK_SIZE);
         foreach ($chunks as $chunk) {
-            dispatch(new PartnerDataMigrationToInventoryJob($this->partner, ['partner_pos_categories' => $chunk]));
+            $this->setRedisKey();
+            dispatch(new PartnerDataMigrationToInventoryJob($this->partner, ['partner_pos_categories' => $chunk], $this->currentQueue));
+            $this->increaseCurrentQueueValue();
         }
     }
 
-    private function migrateProducts()
+    private function migrateProducts($data)
     {
-        $chunks = array_chunk($this->generatePartnerPosServicesMigrationData(), self::CHUNK_SIZE);
+        $chunks = array_chunk($data, self::CHUNK_SIZE);
         foreach ($chunks as $chunk) {
-            dispatch(new PartnerDataMigrationToInventoryJob($this->partner, ['products' => $chunk]));
+            $productIds = array_column($chunk, 'id');
+            list($images, $logs, $discounts) = $this->getProductsRelatedData($productIds);
+            $this->setRedisKey();
+            dispatch(new PartnerDataMigrationToInventoryJob($this->partner, [
+                'products' => $chunk,
+                'partner_pos_service_image_gallery' => $images,
+                'partner_pos_services_logs' => $logs,
+                'partner_pos_service_discounts' => $discounts,
+            ], $this->currentQueue));
+            $this->increaseCurrentQueueValue();
         }
     }
 
-    private function migrateProductsImages()
-    {
-        $chunks = array_chunk($this->generatePartnerPosServiceImageGalleryData(), self::CHUNK_SIZE);
-        foreach ($chunks as $chunk) {
-            dispatch(new PartnerDataMigrationToInventoryJob($this->partner, ['partner_pos_service_image_gallery' => $chunk]));
-        }
-    }
-
-    private function migrateProductUpdateLogs()
-    {
-        $chunks = array_chunk($this->generatePartnerPosServiceLogsMigrationData(), self::CHUNK_SIZE);
-        foreach ($chunks as $chunk) {
-            dispatch(new PartnerDataMigrationToInventoryJob($this->partner, ['partner_pos_services_logs' => $chunk]));
-        }
-    }
-
-    private function migrateDiscounts()
-    {
-        $chunks = array_chunk($this->generatePartnerPosServiceDiscountsMigrationData(), self::CHUNK_SIZE);
-        foreach ($chunks as $chunk) {
-            dispatch(new PartnerDataMigrationToInventoryJob($this->partner, ['partner_pos_service_discounts' => $chunk]));
-        }
-    }
-
-    private function generatePartnerMigrationData()
+    private function generatePartnerMigrationData(): array
     {
         return [
             'id' => $this->partner->id,
@@ -161,15 +136,15 @@ class InventoryDataMigration
         ];
     }
 
-    private function generatePosCategoriesMigrationData()
+    private function generatePosCategoriesMigrationData(): array
     {
         $partner_pos_categories = $this->partnerPosCategoryRepository->getPartnerPosCategoriesForMigration($this->partner->id)->toArray();
         $pos_categories_ids = array_unique(array_column($partner_pos_categories, 'category_id'));
-        $this->setPosCategories($this->posCategoryRepository->getPosCategoriesForMigration($pos_categories_ids));
-        $this->posCategories->each(function ($pos_category) {
-            if (!$this->categories->contains('id', $pos_category->id)) $this->generatePosCategoriesData($pos_category);
+        $this->posCategoriesData = $this->posCategoryRepository->getPosCategoriesForMigration($pos_categories_ids);
+        $this->posCategoriesData->each(function ($pos_category) {
+            if (!$this->categoriesData->contains('id', $pos_category->id)) $this->generatePosCategoriesData($pos_category);
         });
-        return $this->categories->toArray();
+        return $this->categoriesData->toArray();
     }
 
     private function generatePartnerPosCategoriesMigrationData()
@@ -207,10 +182,28 @@ class InventoryDataMigration
 
     private function generatePartnerPosServiceDiscountsMigrationData()
     {
-        return $this->posServiceDiscountRepository
+        return DB::table('partner_pos_service_discounts')
             ->whereIn('partner_pos_service_id', $this->partnerPosServiceIds)
             ->select('partner_pos_service_id AS type_id', DB::raw("'product' AS type"), 'amount',
                 'is_amount_percentage', 'cap', 'start_date', 'end_date', 'created_by_name', 'updated_by_name',
-                'created_at', 'updated_at')->get()->toArray();
+                'created_at', 'updated_at')->get();
+    }
+
+    private function getProductsRelatedData($productIds): array
+    {
+        $images = $this->partnerPosServiceImages->whereIn('product_id', $productIds)->toArray();
+        $logs = $this->partnerPosServiceLogs->whereIn('product_id', $productIds)->toArray();
+        $discounts = $this->partnerPosServiceDiscounts->whereIn('type_id', $productIds)->toArray();
+        return [$images, $logs, $discounts];
+    }
+
+    private function setRedisKey()
+    {
+        Redis::set('DataMigration::Partner::' . $this->partner->id . '::Inventory::Queue::' . $this->currentQueue, 'initiated');
+    }
+
+    private function increaseCurrentQueueValue()
+    {
+        $this->currentQueue += 1;
     }
 }

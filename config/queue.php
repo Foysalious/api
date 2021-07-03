@@ -80,6 +80,12 @@ return [
             'connection' => 'default',
             'queue' => 'business_notification',
             'expire' => 60
+        ],
+        'data_migration' => [
+            'driver' => 'redis',
+            'connection' => 'default',
+            'queue' => 'data_migration',
+            'expire' => 60
         ]
         ] + $top_up_queues,
 

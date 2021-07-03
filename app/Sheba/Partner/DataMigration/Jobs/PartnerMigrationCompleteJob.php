@@ -1,12 +1,12 @@
 <?php namespace Sheba\Partner\DataMigration\Jobs;
 
 use App\Jobs\Job;
-use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
-use Sheba\Repositories\PartnerRepository;
+use Illuminate\Support\Facades\Redis;
+use Sheba\Dal\PartnerDataMigration\PartnerDataMigration;
+use Sheba\Dal\PartnerDataMigration\Statuses;
 
 class PartnerMigrationCompleteJob extends Job implements ShouldQueue
 {
@@ -16,13 +16,25 @@ class PartnerMigrationCompleteJob extends Job implements ShouldQueue
 
     public function __construct($partner)
     {
+        $this->connection = 'data_migration';
+        $this->queue = 'data_migration';
         $this->partner = $partner;
     }
 
     public function handle()
     {
-        $partnerRepository = app(PartnerRepository::class);
-        $partnerRepository->update($this->partner, ['is_migration_completed' => 1]);
-        Log::info('Ended Migration of Partner: #'.$this->partner->id. ' at '.Carbon::now());
+        if ($this->isQueuesProcessed()) $this->storeSuccessLog();
+    }
+
+    private function isQueuesProcessed(): bool
+    {
+        return empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::Inventory::Queue::*')) &&
+            empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::PosOrder::Queue::*'));
+    }
+
+    private function storeSuccessLog()
+    {
+        $partnerDataMigration = PartnerDataMigration::where('partner_id', $this->partner->id)->first();
+        $partnerDataMigration->update(['status' => Statuses::SUCCESSFUL]);
     }
 }
