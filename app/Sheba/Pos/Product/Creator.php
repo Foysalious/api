@@ -48,8 +48,8 @@ class Creator
         $this->data['pos_category_id'] = $this->data['category_id'];
         $cost = $this->data['cost'];
         $stock = $this->data['stock'];
-        $this->data['cost'] = 0.0;
-        $this->data['stock'] = null;
+//        $this->data['cost'] = 0.0;
+//        $this->data['stock'] = null;
         $this->format();
         $image_gallery = null;
         if (isset($this->data['image_gallery']))
@@ -66,7 +66,13 @@ class Creator
 
     private function createExpenseEntry($partner_pos_service, $accounting_info)
     {
-        $this->stockExpenseEntry->setPartner($partner_pos_service->partner)->setName($partner_pos_service->name)->setId($partner_pos_service->id)->setNewStock($this->data['stock'])->setCostPerUnit($partner_pos_service->cost)->setAccountingInfo($accounting_info)->create();
+        $this->stockExpenseEntry->setPartner($partner_pos_service->partner)
+            ->setName($partner_pos_service->name)
+            ->setId($partner_pos_service->id)
+            ->setNewStock($this->data['stock'])
+            ->setCostPerUnit($this->data['cost'])
+            ->setAccountingInfo($accounting_info)
+            ->create();
     }
 
     private function saveImages()

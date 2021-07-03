@@ -24,6 +24,8 @@ class Updater
     /** @var PosServiceRepositoryInterface */
     private $serviceRepo;
     private $service;
+    private $oldStock;
+    private $oldCost;
     private $posServiceLogRepo;
     /**
      * @var ExpenseEntry
@@ -54,19 +56,41 @@ class Updater
         return $this;
     }
 
+    /**
+     * @param mixed $oldStock
+     * @return Updater
+     */
+    public function setOldStock($oldStock)
+    {
+        $this->oldStock = $oldStock;
+        return $this;
+    }
+
+    /**
+     * @param mixed $oldCost
+     * @return Updater
+     */
+    public function setOldCost($oldCost)
+    {
+        $this->oldCost = $oldCost;
+        return $this;
+    }
+
     public function update()
     {
         $this->saveImages();
         $this->format();
         $this->formatBatchData();
         $image_gallery = [];
-        if (isset($this->updatedData['image_gallery']))
-            $image_gallery = json_decode($this->updatedData['image_gallery'], true);
+        if (isset($this->updatedData['image_gallery'])) $image_gallery = json_decode($this->updatedData['image_gallery'], true);
         $cloned_data = $this->data;
         $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'is_vat_percentage_off', 'is_stock_off', 'image_gallery','accounting_info']);
         if (!empty($this->updatedData)) $this->updatedData = array_except($this->updatedData, 'image_gallery');
         if (!empty($this->updatedData)) {
             $old_service = clone $this->service;
+            $lastBatchData = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->latest()->first();
+            $this->setOldCost($lastBatchData->cost);
+            $this->setOldStock($lastBatchData->stock);
             $this->serviceRepo->update($this->service, $this->updatedData);
             $this->storeLogs($old_service, $this->updatedData);
         }
@@ -90,7 +114,16 @@ class Updater
     private function createExpenseEntry($partner_pos_service,$data)
     {
         $accounting_info = json_decode($data['accounting_info'],true);
-        $this->stockExpenseEntry->setPartner($partner_pos_service->partner)->setName($partner_pos_service->name)->setId($partner_pos_service->id)->setNewStock($accounting_info['new_stock'])->setCostPerUnit($partner_pos_service->cost)->setAccountingInfo($accounting_info)->create();
+        $this->stockExpenseEntry->setPartner($partner_pos_service->partner)
+            ->setName($partner_pos_service->name)
+            ->setId($partner_pos_service->id)
+            ->setOldStock($this->oldStock)
+            ->setOldCost($this->oldCost)
+            ->setIsUpdate(true)
+            ->setNewStock($partner_pos_service->getLastStock())
+            ->setCostPerUnit($partner_pos_service->getLastCost())
+            ->setAccountingInfo($accounting_info)
+            ->create();
     }
 
     private function storeImageGallery($image_gallery)
