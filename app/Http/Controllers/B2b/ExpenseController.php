@@ -153,7 +153,7 @@ class ExpenseController extends Controller
         });
         $searched_expenses = collect(array_merge($employee_ids, $employee_names, $amounts));
         $searched_expenses = $searched_expenses->unique(function ($expense) {
-            return $expense['id'];
+            return $expense['member_id'];
         });
         return $searched_expenses->values()->all();
     }
