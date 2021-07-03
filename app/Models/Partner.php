@@ -12,6 +12,7 @@ use Sheba\Checkout\CommissionCalculator;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\Complain\Model as Complain;
 use Sheba\Dal\PartnerBankInformation\Purposes;
+use Sheba\Dal\PartnerDataMigration\PartnerDataMigration;
 use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInformation;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
@@ -1035,9 +1036,19 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->hasOne(PartnerWebstoreBanner::class);
     }
 
+    public function dataMigration()
+    {
+        return $this->hasOne(PartnerDataMigration::class);
+    }
+
     public function isMigrationCompleted()
     {
         return $this->is_migration_completed == 1;
+    }
+
+    public function isMigrationRunningOrCompleted()
+    {
+        return $this->dataMigration && $this->dataMigration->isRunningOrCompleted();
     }
 
     public function topupChangeLogs()
