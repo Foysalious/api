@@ -22,6 +22,8 @@ class PartnerDataMigrationToPosOrderJob extends Job implements ShouldQueue
 
     public function __construct($partner, $data, $queueNo)
     {
+        $this->connection = 'data_migration';
+        $this->queue = 'data_migration';
         $this->partner = $partner;
         $this->data = $data;
         $this->queueNo = $queueNo;

@@ -16,6 +16,8 @@ class PartnerMigrationStartJob extends Job implements ShouldQueue
     public function __construct($partner)
     {
         $this->partner = $partner;
+        $this->connection = 'data_migration';
+        $this->queue = 'data_migration';
     }
 
     public function handle()
