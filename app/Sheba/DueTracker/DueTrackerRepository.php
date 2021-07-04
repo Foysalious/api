@@ -97,14 +97,14 @@ class DueTrackerRepository extends BaseRepository
         if ($request->has('start_date') && $request->has('end_date')) {
             $url .= "&start=$request->start_date&end=$request->end_date";
         }
-        if (($request->has('download_pdf')) && ($request->download_pdf == 1) || ($request->has('share_pdf')) && ($request->share_pdf == 1)) {
-            return $url;
-        }
         if ($request->has('balance_type') && in_array($request->balance_type, ['due', 'received', 'clear'])) {
             $url .= "&balance_type=$request->balance_type";
         }
-        $request->has('limit') ? $url .= "&limit=$request->limit" : $url .= "&limit=20";
-        $request->has('offset') ? $url .= "&offset=$request->offset" : $url .= "&offset=0";
+//        if (($request->has('download_pdf')) && ($request->download_pdf == 1) || ($request->has('share_pdf')) && ($request->share_pdf == 1)) {
+//            return $url;
+//        }
+//        $request->has('limit') ? $url .= "&limit=$request->limit" : $url .= "&limit=20";
+//        $request->has('offset') ? $url .= "&offset=$request->offset" : $url .= "&offset=0";
         return $url;
     }
 
