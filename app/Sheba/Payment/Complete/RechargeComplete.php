@@ -8,6 +8,7 @@ use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
+use Sheba\Dal\PaymentGateway\Contract as PaymentGatewayRepo;
 
 class RechargeComplete extends PaymentComplete
 {
