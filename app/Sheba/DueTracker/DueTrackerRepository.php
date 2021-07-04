@@ -81,6 +81,10 @@ class DueTrackerRepository extends BaseRepository
         {
             $list = $list->where('is_supplier', 1)->values();
         }
+        if ($paginate && isset($request['offset']) && isset($request['limit'])) {
+            list($offset, $limit) = calculatePagination($request);
+            $list = $list->slice($offset)->take($limit)->values();
+        }
         $total = $list->count();
         return [
             'list'               => $list,
