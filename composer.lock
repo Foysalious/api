@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "616a443343bcce5fd0010ca3ee0bff2d",
+    "content-hash": "efa9af200e87c638a611efb96b7e51a5",
     "packages": [
         {
             "name": "algolia/algoliasearch-client-php",
@@ -1807,7 +1807,7 @@
             "time": "2017-03-12T09:23:10+00:00"
         },
         {
-            "name": "jeremeamia/SuperClosure",
+            "name": "jeremeamia/superclosure",
             "version": "2.3.0",
             "source": {
                 "type": "git",
@@ -2531,17 +2531,6 @@
                 "php",
                 "utf-8"
             ],
-            "support": {
-                "docs": "http://mpdf.github.io",
-                "issues": "https://github.com/mpdf/mpdf/issues",
-                "source": "https://github.com/mpdf/mpdf"
-            },
-            "funding": [
-                {
-                    "url": "https://www.paypal.me/mpdf",
-                    "type": "custom"
-                }
-            ],
             "time": "2021-05-12T14:18:06+00:00"
         },
         {
@@ -2646,7 +2635,7 @@
         },
         {
             "name": "myclabs/deep-copy",
-            "version": "1.10.2",
+            "version": "1.7.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/myclabs/DeepCopy.git",
@@ -2659,7 +2648,7 @@
                 "shasum": ""
             },
             "require": {
-                "php": "^7.1 || ^8.0"
+                "php": "^7.0 || ^8.0"
             },
             "replace": {
                 "myclabs/deep-copy": "self.version"
@@ -2667,7 +2656,7 @@
             "require-dev": {
                 "doctrine/collections": "^1.0",
                 "doctrine/common": "^2.6",
-                "phpunit/phpunit": "^7.1"
+                "phpunit/phpunit": "^7.0"
             },
             "type": "library",
             "autoload": {
@@ -2689,16 +2678,6 @@
                 "duplicate",
                 "object",
                 "object graph"
-            ],
-            "support": {
-                "issues": "https://github.com/myclabs/DeepCopy/issues",
-                "source": "https://github.com/myclabs/DeepCopy/tree/1.10.2"
-            },
-            "funding": [
-                {
-                    "url": "https://tidelift.com/funding/github/packagist/myclabs/deep-copy",
-                    "type": "tidelift"
-                }
             ],
             "time": "2020-11-13T09:40:50+00:00"
         },
@@ -3659,6 +3638,10 @@
                 "mime",
                 "mime type"
             ],
+            "support": {
+                "issues": "https://github.com/rosell-dk/image-mime-type-guesser/issues",
+                "source": "https://github.com/rosell-dk/image-mime-type-guesser/tree/0.3"
+            },
             "time": "2019-03-29T09:33:28+00:00"
         },
         {
@@ -3735,6 +3718,10 @@
                 "png",
                 "png2webp"
             ],
+            "support": {
+                "issues": "https://github.com/rosell-dk/webp-convert/issues",
+                "source": "https://github.com/rosell-dk/webp-convert/tree/2.4.0"
+            },
             "time": "2020-11-10T11:24:50+00:00"
         },
         {
@@ -3969,16 +3956,6 @@
                 "fpdi",
                 "pdf"
             ],
-            "support": {
-                "issues": "https://github.com/Setasign/FPDI/issues",
-                "source": "https://github.com/Setasign/FPDI/tree/v2.3.6"
-            },
-            "funding": [
-                {
-                    "url": "https://tidelift.com/funding/github/packagist/setasign/fpdi",
-                    "type": "tidelift"
-                }
-            ],
             "time": "2021-02-11T11:37:01+00:00"
         },
         {
@@ -3987,7 +3964,7 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
-                "reference": "88cda55e437d81794c87b69adfa388339ef0d5aa"
+                "reference": "de203e9c37cbe5484725d5a13db2573e9312c66b"
             },
             "require": {
                 "php": ">=5.4"
@@ -4015,7 +3992,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2021-06-10T09:26:26+00:00"
+            "time": "2021-06-21T09:25:46+00:00"
         },
         {
             "name": "sheba/elasticsearch",
@@ -4131,7 +4108,7 @@
             "source": {
                 "type": "git",
                 "url": "https://mac_pasha@bitbucket.org/startern/sheba_sms.git",
-                "reference": "9fb24dbaa97e43d61140d74d7f9638e7a3eeeeb8"
+                "reference": "074f6a0534e982ce08a7cb768b3d9decf42c8ca4"
             },
             "require": {
                 "ext-curl": "*"
@@ -4152,7 +4129,7 @@
                 }
             ],
             "description": "Sms for Sheba",
-            "time": "2021-05-18T09:09:47+00:00"
+            "time": "2021-06-22T08:18:14+00:00"
         },
         {
             "name": "sheba/voucher",
@@ -7027,6 +7004,5 @@
         "ext-mysql_xdevapi": "*",
         "ext-intl": "*"
     },
-    "platform-dev": [],
-    "plugin-api-version": "2.0.0"
+    "platform-dev": []
 }

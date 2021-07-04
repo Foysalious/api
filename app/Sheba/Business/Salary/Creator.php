@@ -1,7 +1,9 @@
 <?php namespace App\Sheba\Business\Salary;
 
 use App\Models\BusinessMember;
+use App\Sheba\Business\Salary\Component\Maker;
 use Illuminate\Support\Facades\DB;
+use Sheba\Dal\PayrollComponent\PayrollComponentRepository;
 use Sheba\Dal\Salary\SalaryRepository;
 
 class Creator
@@ -12,6 +14,9 @@ class Creator
     private $businessMember;
     /** @var SalaryRepository */
     private $salaryRepository;
+    /*** @var PayrollComponentRepository*/
+    private $payrollComponentRepository;
+    private $salary;
 
     /**
      * Updater constructor.
@@ -20,6 +25,7 @@ class Creator
     public function __construct(SalaryRepository $salary_repository)
     {
         $this->salaryRepository = $salary_repository;
+        $this->payrollComponentRepository = app(PayrollComponentRepository::class);
     }
 
     /** @param $salary_request */
@@ -39,8 +45,10 @@ class Creator
     {
         $this->makeData();
         DB::transaction(function () {
-            $this->salaryRepository->create($this->salaryData);
+            $this->salary = $this->salaryRepository->create($this->salaryData);
+            $this->createComponentPercentage();
         });
+
         return true;
     }
 
@@ -48,6 +56,18 @@ class Creator
     {
         $this->salaryData['business_member_id'] = $this->salaryRequest->getBusinessMember()->id;
         $this->salaryData['gross_salary'] = $this->salaryRequest->getGrossSalary();
+    }
+
+    private function createComponentPercentage()
+    {
+        $business_member = $this->salaryRequest->getBusinessMember();
+        $breakdown_percentage = $this->salaryRequest->getBreakdownPercentage();
+        if (empty($breakdown_percentage)) return true;
+        foreach ( $breakdown_percentage as $component) {
+            $gross_salary_breakdown_maker = new Maker($component, $business_member, $this->salary, null);
+            $gross_salary_breakdown_maker->setManager($this->salaryRequest->getManagerMember());
+            $gross_salary_breakdown_maker->runComponent();
+        }
     }
 
 }

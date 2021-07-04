@@ -16,6 +16,7 @@ class NagadClient
      * @var NagadStore
      */
     private $store;
+    const TIMEOUT = 120;
 
     public function __construct(TPProxyClient $client)
     {
@@ -38,10 +39,11 @@ class NagadClient
      */
     public function init($transactionId)
     {
+        ini_set('max_execution_time', self::TIMEOUT + self::TIMEOUT);
         $merchantId = $this->store->getMerchantId();
         $url        = "$this->baseUrl/api/dfs/check-out/initialize/$merchantId/$transactionId";
         $data       = Inputs::init($transactionId, $this->store);
-        $request    = (new TPRequest())->setMethod(TPRequest::METHOD_POST)->setHeaders(Inputs::headers())->setInput($data)->setUrl($url);
+        $request    = (new TPRequest())->setMethod(TPRequest::METHOD_POST)->setHeaders(Inputs::headers())->setInput($data)->setUrl($url)->setTimeout(self::TIMEOUT);
         $resp       = $this->client->call($request);
         return new Initialize($resp, $this->store);
     }
@@ -57,10 +59,11 @@ class NagadClient
      */
     public function placeOrder($transactionId, Initialize $resp, $amount, $callbackUrl)
     {
+        ini_set('max_execution_time', self::TIMEOUT + self::TIMEOUT);
         $paymentRefId = $resp->getPaymentReferenceId();
         $url          = "$this->baseUrl/api/dfs/check-out/complete/$paymentRefId";
         $data         = Inputs::complete($transactionId, $resp, $amount, $callbackUrl, $this->store);
-        $request      = (new TPRequest())->setUrl($url)->setMethod(TPRequest::METHOD_POST)->setHeaders(Inputs::headers())->setInput($data);
+        $request      = (new TPRequest())->setUrl($url)->setMethod(TPRequest::METHOD_POST)->setHeaders(Inputs::headers())->setInput($data)->setTimeout(self::TIMEOUT);
         $resp         = $this->client->call($request);
         return new CheckoutComplete($resp, $this->store);
     }
@@ -73,8 +76,9 @@ class NagadClient
      */
     public function validate($refId)
     {
+        ini_set('max_execution_time', self::TIMEOUT + self::TIMEOUT);
         $url     = "$this->baseUrl/api/dfs/verify/payment/$refId";
-        $request = (new TPRequest())->setUrl($url)->setMethod(TPRequest::METHOD_GET)->setHeaders(Inputs::headers());
+        $request = (new TPRequest())->setUrl($url)->setMethod(TPRequest::METHOD_GET)->setHeaders(Inputs::headers())->setTimeout(self::TIMEOUT);
         $resp    = $this->client->call($request);
         return new Validator($resp, true);
 

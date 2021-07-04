@@ -1,5 +1,6 @@
 <?php namespace Sheba\Business\Payslip;
 
+use App\Models\BusinessMember;
 use App\Sheba\Business\PayrollComponent\Components\GrossSalaryBreakdownCalculate;
 use App\Sheba\Business\PayrollComponent\Components\PayrollComponentCalculation;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
@@ -41,13 +42,10 @@ class Updater
      * @param $business_member
      * @return $this
      */
-    public function setBusinessMember($business_member)
+    public function setBusinessMember(BusinessMember $business_member)
     {
-        $this->businessMember = $this->businessMemberRepository->find($business_member);
+        $this->businessMember = $business_member;
         $this->business = $this->businessMember->business;
-        $payroll_setting = $this->business->payrollSetting;
-        $this->grossSalaryBreakdownCalculate->componentPercentageBreakdown($payroll_setting);
-        $this->payrollComponentCalculation->setPayrollSetting($payroll_setting);
         return $this;
     }
 
@@ -97,10 +95,12 @@ class Updater
      */
     private function formatPaySlipData()
     {
-        $this->grossSalaryBreakdownCalculate->totalAmountPerComponent($this->grossSalary);
+        $gross_salary_breakdown_percentage = $this->grossSalaryBreakdownCalculate->payslipComponentPercentageBreakdown($this->businessMember);
+        $gross_salary_breakdown = $this->grossSalaryBreakdownCalculate->totalAmountPerComponent($this->grossSalary, $gross_salary_breakdown_percentage);
         $payroll_component_calculation = $this->payrollComponentCalculation->setAddition($this->addition)->setDeduction($this->deduction)->getCalculationBreakdown();
+
         return [
-            'salary_breakdown' => json_encode(array_merge($this->grossSalaryBreakdownCalculate->totalAmountPerComponentFormatted(), $payroll_component_calculation))
+            'salary_breakdown' => json_encode(array_merge(['gross_salary_breakdown' => $gross_salary_breakdown], $payroll_component_calculation))
         ];
     }
 }

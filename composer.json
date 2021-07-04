@@ -50,6 +50,7 @@
     "spomky-labs/jose": "6.1.7",
     "symfony/polyfill-mbstring": "1.5.0",
     "fgrosse/phpasn1": "1.5",
+    "setasign/fpdi": "^2.3",
     "mpdf/mpdf": "^8.0"
   },
   "require-dev": {
