@@ -1,6 +1,7 @@
 <?php namespace Sheba\Employee;
 
 use App\Models\Business;
+use App\Sheba\Business\BusinessBasicInformation;
 use Illuminate\Support\Facades\App;
 use NumberFormatter;
 use Sheba\Dal\Expense\Expense;
@@ -8,6 +9,8 @@ use Sheba\Helpers\TimeFrame;
 
 class ExpensePdf
 {
+    use BusinessBasicInformation;
+
     private $business;
 
     /**
@@ -16,7 +19,7 @@ class ExpensePdf
      */
     public function __construct(Business $business)
     {
-        $this->business = \app(Business::class);
+        $this->business = app(Business::class);
     }
 
     public function generate($business_member, $month, $year)
@@ -35,7 +38,7 @@ class ExpensePdf
 
         $data = [
             'company' => $business->name,
-            'logo' => $business->logo,
+            'logo' => $this->isDefaultImageByUrl($business->logo) ? null : $business->logo,
             'employee_id' => $business_member->id,
             'employee_name' => $business_member->member->profile->name,
             'employee_mobile' => $business_member->member->profile->mobile,
@@ -47,7 +50,6 @@ class ExpensePdf
             'month_name' =>  getMonthName($month, "M") . ", $year"
         ];
 
-        // return view('pdfs.employee_expense', compact('data'));
         return App::make('dompdf.wrapper')
             ->loadView('pdfs.employee_expense', compact('data'))
             ->download("employee_expense.pdf");
