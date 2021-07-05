@@ -2,12 +2,15 @@
 
 use App\Models\Business;
 use App\Models\Member;
+use App\Sheba\Business\BusinessBasicInformation;
 use App\Sheba\Business\PayrollComponent\Components\GrossSalaryBreakdownCalculate;
 use Carbon\Carbon;
 use NumberFormatter;
 
 class SalaryCertificateInfo
 {
+    use BusinessBasicInformation;
+
     private $business;
     private $member;
     private $businessMember;
@@ -50,7 +53,7 @@ class SalaryCertificateInfo
         return [
             'created_date' => Carbon::parse(Carbon::now())->format('F d, Y'),
             'business_name' => $this->business->name,
-            'business_logo' => $this->business->logo,
+            'business_logo' => $this->isDefaultImageByUrl($this->business->logo) ? null : $this->business->logo,
             'employee_info' => $this->getEmployeeInfo($this->member, $this->businessMember),
             'salary_info' => $this->getSalaryInfo($this->businessMember),
         ];
