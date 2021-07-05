@@ -7,6 +7,9 @@ use Sheba\Business\CoWorker\Statuses;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\BusinessAttendanceTypes\AttendanceTypes;
 use Sheba\Dal\LeaveType\Model as LeaveTypeModel;
+use Sheba\Dal\OfficePolicy\OfficePolicy;
+use Sheba\Dal\OfficePolicy\Type;
+use Sheba\Dal\OfficePolicyRule\OfficePolicyRule;
 use Sheba\Dal\PayrollSetting\PayrollSetting;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Helpers\TimeFrame;
@@ -46,6 +49,30 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
             'profile' => function ($q) {
                 $q->select('profiles.id', 'name', 'mobile', 'email', 'pro_pic');
             }, 'businessMember' => function ($q) {
+                $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id', 'status')->with([
+                    'role' => function ($q) {
+                        $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                            'businessDepartment' => function ($q) {
+                                $q->select('business_departments.id', 'business_id', 'name');
+                            }
+                        ]);
+                    }
+                ]);
+            }
+        ])->wherePivot('status', '<>', Statuses::INACTIVE);
+    }
+
+    /**
+     * @return mixed
+     */
+    public function membersWithProfile()
+    {
+        return $this->members()->select('members.id', 'profile_id',
+            'emergency_contract_person_name', 'emergency_contract_person_number', 'emergency_contract_person_relationship')->with([
+            'profile' => function ($q) {
+                $q->select('profiles.id', 'name', 'mobile', 'email', 'dob', 'address', 'nationality', 'nid_no', 'tin_no')->with('banks');
+            },
+            'businessMember' => function ($q) {
                 $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id', 'status')->with([
                     'role' => function ($q) {
                         $q->select('business_roles.id', 'business_department_id', 'name')->with([
@@ -353,10 +380,15 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
     {
         if ($which_half_day) {
             if ($which_half_day == HalfDayType::FIRST_HALF) {
-                return Carbon::parse($this->halfDayStartTimeUsingWhichHalf(HalfDayType::SECOND_HALF));
+                # If A Employee Has Leave On First_Half, Office Start Time Will Be Second_Half Start_Time
+                $last_checkin_time = Carbon::parse($this->halfDayStartTimeUsingWhichHalf(HalfDayType::SECOND_HALF));
+                if ($this->officeHour->is_start_grace_time_enable) return $last_checkin_time->addMinutes($this->officeHour->start_grace_time);
+                return $last_checkin_time;
             }
             if ($which_half_day == HalfDayType::SECOND_HALF) {
-                return Carbon::parse($this->halfDayStartTimeUsingWhichHalf(HalfDayType::FIRST_HALF));
+                $last_checkin_time = Carbon::parse($this->halfDayStartTimeUsingWhichHalf(HalfDayType::FIRST_HALF));
+                if ($this->officeHour->is_start_grace_time_enable) return $last_checkin_time->addMinutes($this->officeHour->start_grace_time);
+                return $last_checkin_time;
             }
         } else {
             $last_checkin_time = (new TimeByBusiness())->getOfficeStartTimeByBusiness();
@@ -369,10 +401,18 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
     {
         if ($which_half_day) {
             if ($which_half_day == HalfDayType::FIRST_HALF) {
-                return $this->halfDayEndTimeUsingWhichHalf(HalfDayType::SECOND_HALF);
+                $checkout_time = $this->halfDayEndTimeUsingWhichHalf(HalfDayType::SECOND_HALF);
+                if ($this->officeHour->is_end_grace_time_enable) {
+                    return Carbon::parse($checkout_time)->subMinutes($this->officeHour->end_grace_time)->format('H:i:s');
+                }
+                return $checkout_time;
             }
             if ($which_half_day == HalfDayType::SECOND_HALF) {
-                return $this->halfDayEndTimeUsingWhichHalf(HalfDayType::FIRST_HALF);
+                $checkout_time = $this->halfDayEndTimeUsingWhichHalf(HalfDayType::FIRST_HALF);
+                if ($this->officeHour->is_end_grace_time_enable) {
+                    return Carbon::parse($checkout_time)->subMinutes($this->officeHour->end_grace_time)->format('H:i:s');
+                }
+                return $checkout_time;
             }
         } else {
             $checkout_time = (new TimeByBusiness())->getOfficeEndTimeByBusiness();
@@ -386,4 +426,25 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
         if (in_array(AttendanceTypes::IP_BASED, $this->attendanceTypes->pluck('attendance_type')->toArray())) return true;
         return false;
     }
+
+    public function policy()
+    {
+        return $this->hasMany(OfficePolicyRule::class);
+    }
+
+    public function gracePolicy()
+    {
+        return $this->policy()->where('policy_type', Type::GRACE_PERIOD)->orderBy('from_days');
+    }
+
+    public function unpaidLeavePolicy()
+    {
+        return $this->policy()->where('policy_type', Type::UNPAID_LEAVE)->orderBy('from_days');
+    }
+
+    public function checkinCheckoutPolicy()
+    {
+        return $this->policy()->where('policy_type', Type::LATE_CHECKIN_EARLY_CHECKOUT)->orderBy('from_days');
+    }
+
 }

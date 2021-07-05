@@ -90,8 +90,10 @@ class StatusUpdater
        DB::transaction(function () {
             $left_leave_days = $this->calculateDays($this->status);
             $this->leaveRepository->update($this->leave, $this->withUpdateModificationField(['status' => $this->status, 'left_days' => $left_leave_days]));
-            $this->makeLeaveRejectionData();
-            $this->leaveRejectionRepository->create($this->leaveRejectionData);
+            if (!$this->isLeaveAdjustment && $this->status !== Status::ACCEPTED) {
+                $this->makeLeaveRejectionData();
+                $this->leaveRejectionRepository->create($this->leaveRejectionData);
+            }
             $this->createLog();
         });
         try {

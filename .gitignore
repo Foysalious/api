@@ -8,3 +8,4 @@ npm-debug.log
 build/config.gypi
 resources/assets/ok-wallet/*
 resources/assets/nagad/*
+resources/assets/ebl/*

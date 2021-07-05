@@ -3,8 +3,8 @@
 use App\Models\Business;
 use App\Models\BusinessTrip;
 use App\Repositories\SmsHandler;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use Carbon\Carbon;
 use Sheba\Business\BusinessSmsHandler;
 use Sheba\FraudDetection\TransactionSources;
@@ -57,12 +57,12 @@ class BusinessTripSms
                 ->setBusinessType(BusinessType::B2B)
                 ->setFeatureType(FeatureType::TRIP_REQUEST_ACCEPT)
                 ->send($this->businessTrip->driver->profile->mobile, [
-                'name' => $this->businessTrip->driver->profile->name,
-                'mobile' => $this->businessTrip->driver->profile->mobile,
-                'pickup_address' => $this->businessTrip->pickup_address,
-                'destination_address' => $this->businessTrip->dropoff_address,
-                'start_time' => $this->businessTrip->start_date ? Carbon::parse($this->businessTrip->start_date)->format('Y-m-d g:i:A') : ''
-            ]);
+                    'name' => $this->businessTrip->driver->profile->name,
+                    'mobile' => $this->businessTrip->driver->profile->mobile,
+                    'pickup_address' => $this->businessTrip->pickup_address,
+                    'destination_address' => $this->businessTrip->dropoff_address,
+                    'start_time' => $this->businessTrip->start_date ? Carbon::parse($this->businessTrip->start_date)->format('Y-m-d g:i:A') : ''
+                ]);
         }
     }
 

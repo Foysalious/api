@@ -1,5 +1,6 @@
 <?php namespace App\Sheba\Business\Salary;
 
+use App\Models\BusinessMember;
 use App\Models\Member;
 use App\Sheba\Business\Salary\Creator as CoWorkerSalaryCreator;
 use App\Sheba\Business\Salary\Updater as CoWorkerSalaryUpdater;
@@ -18,6 +19,8 @@ class Requester
     private $creator;
     private $updater;
     private $managerMember;
+    private $breakdownPercentage;
+    private $removeOverwritten;
 
     public function __construct(BusinessMemberRepositoryInterface $business_member_repository,
                                 CoWorkerSalaryCreator $salary_creator,
@@ -45,9 +48,9 @@ class Requester
         return $this;
     }
 
-    public function setBusinessMember($business_member)
+    public function setBusinessMember(BusinessMember $business_member)
     {
-        $this->businessMember = $this->businessMemberRepository->find($business_member);
+        $this->businessMember = $business_member;
         $this->profile = $this->businessMember->profile();
         return $this;
     }
@@ -76,6 +79,28 @@ class Requester
         $this->grossSalary = $gross_salary;
         if (!$this->grossSalary) $this->grossSalary = 0;
         return $this;
+    }
+
+    public function setBreakdownPercentage($breakdown_percentage)
+    {
+        $this->breakdownPercentage = json_decode($breakdown_percentage, 1);
+        return $this;
+    }
+
+    public function getBreakdownPercentage()
+    {
+        return $this->breakdownPercentage;
+    }
+
+    public function setRemoveOverwritten($remove_overwritten)
+    {
+        $this->removeOverwritten = json_decode($remove_overwritten, 1);
+        return $this;
+    }
+
+    public function getRemoveOverwritten()
+    {
+        return $this->removeOverwritten;
     }
 
     public function getGrossSalary()
