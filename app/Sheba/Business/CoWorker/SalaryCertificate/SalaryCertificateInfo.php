@@ -54,8 +54,8 @@ class SalaryCertificateInfo
             'created_date' => Carbon::parse(Carbon::now())->format('F d, Y'),
             'business_name' => $this->business->name,
             'business_logo' => $this->isDefaultImageByUrl($this->business->logo) ? null : $this->business->logo,
-            'employee_info' => $this->getEmployeeInfo($this->member, $this->businessMember),
-            'salary_info' => $this->getSalaryInfo($this->businessMember),
+            'employee_info' => $this->getEmployeeInfo(),
+            'salary_info' => $this->getSalaryInfo(),
         ];
     }
 
@@ -64,10 +64,10 @@ class SalaryCertificateInfo
      * @param $business_member
      * @return array
      */
-    private function getEmployeeInfo($member, $business_member)
+    private function getEmployeeInfo()
     {
-        $profile = $member->profile;
-        $role = $business_member ? $business_member->role : null;
+        $profile = $this->member->profile;
+        $role = $this->businessMember ? $this->businessMember->role : null;
         $department = $role ? $role->businessDepartment : null;
         $department_name = $department ? $department->name : null;
         $designation = $role ? $role->name : null;
@@ -76,7 +76,7 @@ class SalaryCertificateInfo
             'name' => trim($profile->name),
             'designation' => $designation,
             'department' => $department_name,
-            'joining_date' => Carbon::parse($business_member->join_date)->format('jS F Y')
+            'joining_date' => Carbon::parse($this->businessMember->join_date)->format('jS F Y')
         ];
     }
 
@@ -84,11 +84,11 @@ class SalaryCertificateInfo
      * @param $business_member
      * @return array
      */
-    private function getSalaryInfo($business_member)
+    private function getSalaryInfo()
     {
         $payroll_setting = $this->business->payrollSetting;
-        $payroll_percentage_breakdown = (new GrossSalaryBreakdownCalculate())->componentPercentageBreakdown($payroll_setting, $business_member);
-        $salary = $business_member->salary;
+        $payroll_percentage_breakdown = (new GrossSalaryBreakdownCalculate())->componentPercentageBreakdown($payroll_setting, $this->businessMember);
+        $salary = $this->businessMember->salary;
 
         return [
             'salary_breakdown' => array_map( function ($salary) {
