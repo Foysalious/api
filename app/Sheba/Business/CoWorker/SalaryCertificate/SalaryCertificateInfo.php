@@ -44,8 +44,8 @@ class SalaryCertificateInfo
             'created_date' => Carbon::parse(Carbon::now())->format('F d, Y'),
             'business_name' => $this->business->name,
             'business_logo' => $this->isDefaultImageByUrl($this->business->logo) ? null : $this->business->logo,
-            'employee_info' => $this->getEmployeeInfo($this->member, $this->businessMember),
-            'salary_info' => $this->getSalaryInfo($this->businessMember),
+            'employee_info' => $this->getEmployeeInfo(),
+            'salary_info' => $this->getSalaryInfo(),
         ];
     }
 
