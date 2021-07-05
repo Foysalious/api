@@ -3965,7 +3965,6 @@
             "require": {
                 "php": ">=5.4"
             },
-            "default-branch": true,
             "type": "library",
             "autoload": {
                 "files": [
