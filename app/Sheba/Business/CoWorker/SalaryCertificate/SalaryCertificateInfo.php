@@ -17,22 +17,13 @@ class SalaryCertificateInfo
     private $profile;
 
     /**
-     * @param Business $business
-     * @return $this
-     */
-    public function setBusiness(Business $business)
-    {
-       $this->business = $business;
-       return $this;
-    }
-
-    /**
      * @param $business_member
      * @return $this
      */
     public function setBusinessMember($business_member)
     {
         $this->businessMember = $business_member;
+        $this->business = $this->businessMember->business;
         $this->member = $business_member->member;
         $this->profile = $this->member->profile;
         return $this;
