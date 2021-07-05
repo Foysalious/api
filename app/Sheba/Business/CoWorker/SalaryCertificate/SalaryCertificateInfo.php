@@ -1,7 +1,5 @@
 <?php namespace Sheba\Business\CoWorker\SalaryCertificate;
 
-use App\Models\Business;
-use App\Models\Member;
 use App\Sheba\Business\BusinessBasicInformation;
 use App\Sheba\Business\PayrollComponent\Components\GrossSalaryBreakdownCalculate;
 use Carbon\Carbon;
@@ -43,11 +41,6 @@ class SalaryCertificateInfo
         ];
     }
 
-    /**
-     * @param $member
-     * @param $business_member
-     * @return array
-     */
     private function getEmployeeInfo()
     {
         $role = $this->businessMember ? $this->businessMember->role : null;
@@ -63,10 +56,6 @@ class SalaryCertificateInfo
         ];
     }
 
-    /**
-     * @param $business_member
-     * @return array
-     */
     private function getSalaryInfo()
     {
         $payroll_setting = $this->business->payrollSetting;
