@@ -5,8 +5,8 @@ namespace Sheba\Loan;
 
 use App\Models\BankUser;
 use App\Sheba\Loan\DLSV2\Notification\SMS\SMSHandler;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use Exception;
 use Sheba\Dal\PartnerBankLoan\LoanTypes;
 use Sheba\Dal\PartnerBankLoan\Statuses;

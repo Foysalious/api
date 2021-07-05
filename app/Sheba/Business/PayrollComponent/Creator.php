@@ -64,7 +64,7 @@ class Creator
 
     private function getDefaultAdditionComponents()
     {
-        foreach (Components::getDefaultAdditionComponents() as $key => $component) {
+        foreach (Components::getDefaultAdditionComponentsV2() as $key => $component) {
             $this->payrollComponentData[] = [
                 'payroll_setting_id' => $this->payrollSetting->id,
                 'name' => $component['key'],

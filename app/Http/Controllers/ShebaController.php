@@ -17,6 +17,7 @@ use App\Models\Payable;
 use App\Models\Payment;
 use App\Models\Profile;
 use App\Models\Resource;
+use Sheba\Dal\EmiBank\Repository\EmiBankContract;
 use Sheba\Dal\PaymentGateway\Contract as PaymentGatewayRepository;
 use Sheba\Dal\Service\Service;
 use App\Models\Slider;
@@ -288,6 +289,7 @@ class ShebaController extends Controller
         $serviceType = 'App\\Models\\' . ucfirst($user_type);
         $dbGateways = $paymentGateWayRepository->builder()
             ->where('service_type', $serviceType)
+            ->whereNull('payment_method')
             ->where('status', 'Published')
             ->get();
 
@@ -459,5 +461,12 @@ class ShebaController extends Controller
             ->select('id', 'business_member_id', 'date', 'checkin_time', 'checkout_time', 'staying_time_in_minutes')
             ->get();
         return api_response($request, null, 200, ['data' => $attendances->groupBy('business_member_id')]);
+    }
+
+    public function getEmiBankList(Request $request, EmiBankContract $emiBankContract)
+    {
+        $bank_lists = $emiBankContract->builder()->get();
+
+        return api_response($request, null, 200, ['data' => $bank_lists]);
     }
 }

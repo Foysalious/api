@@ -4,6 +4,7 @@ use Exception;
 use Sheba\Dal\SmsTemplate\Contract as SmsTemplateRepo;
 use Sheba\Dal\SmsTemplate\Model as SmsTemplate;
 use Sheba\Sms\Sms;
+use Sheba\Sms\SmsService\SingleSmsResponse;
 
 class SmsHandler
 {
@@ -11,8 +12,6 @@ class SmsHandler
     private $template;
     /** @var Sms  */
     private $sms;
-    /** @var bool */
-    private $isOff;
 
     /** @var Sms */
     public function __construct($event_name)
@@ -21,36 +20,26 @@ class SmsHandler
         $sms_templates  = app(SmsTemplateRepo::class);
         $this->template = $sms_templates->findByEventName($event_name);
         $this->sms      = app(Sms::class);
-        $this->isOff = !config('sms.is_on');
-    }
-
-    public function setVendor($vendor)
-    {
-        $this->sms->setVendor($vendor);
-        return $this;
     }
 
     /**
      * @param $mobile
      * @param $variables
-     * @return Sms
+     * @return SingleSmsResponse | void
      * @throws Exception
      */
     public function send($mobile, $variables)
     {
-        if ($this->isOff) return;
-        if (!$this->template->is_on) return $this->sms;
+        if ($this->isOff()) return;
 
-        $this->checkVariables($variables);
+        $this->setMessage($variables);
+        $this->setMobile($mobile);
+        return $this->shoot();
+    }
 
-        $message = $this->template->template;
-        foreach ($variables as $variable => $value) {
-            $message = str_replace("{{" . $variable . "}}", $value, $message);
-        }
-        $sms = $this->sms->to($mobile)->msg($message);
-        $sms->shoot();
-
-        return $sms;
+    private function isOff()
+    {
+        return !$this->template->is_on;
     }
 
     /**
@@ -70,9 +59,12 @@ class SmsHandler
         return $this;
     }
 
-    public function getCost()
+    /**
+     * @return double
+     */
+    public function estimateCharge()
     {
-        return $this->sms->getCost();
+        return $this->sms->estimateCharge()->getTotalCharge();
     }
 
     public function setMobile($mobile)
@@ -81,11 +73,14 @@ class SmsHandler
         return $this;
     }
 
+    /**
+     * @return SingleSmsResponse | void
+     */
     public function shoot()
     {
-        if ($this->isOff) return;
-        $this->sms->shoot();
-        return $this->sms;
+        if ($this->isOff()) return;
+
+        return $this->sms->shoot();
     }
 
     private function checkVariables($variables)
@@ -94,11 +89,6 @@ class SmsHandler
 
         throw new Exception("Variable doesn't match");
     }
-
-    public function getMsg() {
-        return $this->sms->getMsg();
-    }
-
 
     /**
      * @param $businessType
@@ -109,7 +99,6 @@ class SmsHandler
         $this->sms->setBusinessType($businessType);
         return $this;
     }
-
 
     /**
      * @param $featureType
