@@ -6,8 +6,8 @@ use App\Models\BidItemField;
 use App\Models\Partner;
 use App\Sheba\Bitly\BitlyLinkShort;
 use App\Sheba\Repositories\Business\BidRepository;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use Exception;
 use Illuminate\Database\QueryException;
 use Sheba\Business\BidStatusChangeLog\Creator;
@@ -36,8 +36,6 @@ class Updater
     private $proposal;
     /** @var BitlyLinkShort */
     private $bitlyLink;
-    /** @var Sms */
-    private $sms;
 
     /**
      * Updater constructor.
@@ -45,19 +43,17 @@ class Updater
      * @param BidItemFieldRepositoryInterface $bid_item_field_repository
      * @param Creator $creator
      * @param ProcurementUpdater $procurement_updater
-     * @param Sms $sms
      * @param BitlyLinkShort $bitly_link
      */
     public function __construct(BidRepository $bid_repository,
                                 BidItemFieldRepositoryInterface $bid_item_field_repository,
                                 Creator $creator, ProcurementUpdater $procurement_updater,
-                                Sms $sms, BitlyLinkShort $bitly_link)
+                                BitlyLinkShort $bitly_link)
     {
         $this->bidRepository = $bid_repository;
         $this->bidItemFieldRepository = $bid_item_field_repository;
         $this->statusLogCreator = $creator;
         $this->procurementUpdater = $procurement_updater;
-        $this->sms = $sms;
         $this->bitlyLink = $bitly_link;
     }
 
@@ -232,10 +228,12 @@ class Updater
         $procurement_id = $this->bid->procurement->id;
         $bid_id = $this->bid->id;
         $url = config('sheba.business_url') . "/tender/$procurement_id/hire/$bid_id";
-        $this->sms
+        (new Sms())
             ->setFeatureType(FeatureType::BID)
             ->setBusinessType(BusinessType::B2B)
-            ->shoot($partner->getManagerMobile(), "$message. Now go to this link-" . $this->bitlyLink->shortUrl($url));
+            ->to($partner->getManagerMobile())
+            ->message("$message. Now go to this link-" . $this->bitlyLink->shortUrl($url))
+            ->shoot();
     }
 
     public function updateStatus()
