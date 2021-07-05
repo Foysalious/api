@@ -161,8 +161,8 @@ class AccountingRepository extends BaseRepository
         $data['source_id']                  = $type_id;
         $data['note']                       = isset($request->note) ? $request->note : null;
         $data['amount_cleared']             = $request->amount_cleared;
-        $data['debit_account_key']          = $request->to_account_key; // to = debit = je account e jabe
-        $data['credit_account_key']         = $request->from_account_key; // from = credit = je account theke jabe
+        $data['debit_account_key']          = (string)$request->to_account_key; // to = debit = je account e jabe
+        $data['credit_account_key']         = (string)$request->from_account_key; // from = credit = je account theke jabe
         $data['customer_id']                = isset($request->customer_id) ? $request->customer_id : null;
         $data['customer_name']              = isset($request->customer_id) ? $request->customer_name : null;
         $data['inventory_products']         = isset($request->inventory_products) ? $request->inventory_products : null;

@@ -69,8 +69,8 @@ class Creator
         $this->stockExpenseEntry->setPartner($partner_pos_service->partner)
             ->setName($partner_pos_service->name)
             ->setId($partner_pos_service->id)
-            ->setNewStock($this->data['stock'])
-            ->setCostPerUnit($this->data['cost'])
+            ->setNewStock($partner_pos_service->stock)
+            ->setCostPerUnit($partner_pos_service->cost)
             ->setAccountingInfo($accounting_info)
             ->create();
     }

@@ -117,7 +117,7 @@ class ExpenseEntry
     {
         if($this->isUpdate) {
             $negativeEntryData = $this->makeNegativeEntryData();
-            $this->accountingRepo->storeEntry($negativeEntryData, EntryTypes::INVENTORY);
+            $this->accountingRepo->storeEntry($negativeEntryData, EntryTypes::DEPOSIT);
         }
         $data = $this->makeData();
         $this->accountingRepo->storeEntry($data, EntryTypes::INVENTORY);
