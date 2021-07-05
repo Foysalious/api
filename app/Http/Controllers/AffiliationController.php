@@ -1,18 +1,15 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Models\Affiliate;
 use App\Models\AffiliateTransaction;
 use App\Models\Affiliation;
 use App\Repositories\NotificationRepository;
 use App\Repositories\SmsHandler;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 use Validator;
 use DB;
 
@@ -51,20 +48,18 @@ class AffiliationController extends Controller
             $affiliation_counts = $q->count();
             $q->skip($offset)->take($limit);
         }])->select('id')->where('id', $affiliate)->first();
-        if (count($affiliate->affiliations) != 0) {
-            $affiliations = $affiliate->affiliations;
-            foreach ($affiliate->affiliations as $affiliation) {
-                if ($affiliation->transactions != null) {
-                    array_add($affiliation, 'earning_amount', $affiliation->transactions->sum('amount'));
-                } else {
-                    array_add($affiliation, 'earning_amount', 0);
-                }
-                array_forget($affiliation, 'transactions');
+        if (count($affiliate->affiliations) == 0) return api_response($request, null, 404);
+
+        $affiliations = $affiliate->affiliations;
+        foreach ($affiliate->affiliations as $affiliation) {
+            if ($affiliation->transactions != null) {
+                array_add($affiliation, 'earning_amount', $affiliation->transactions->sum('amount'));
+            } else {
+                array_add($affiliation, 'earning_amount', 0);
             }
-            return api_response($request, $affiliate->affiliations, 200, ['affiliations' => $affiliations,  'offset' => (int) $offset, 'total_refers'=>$affiliation_counts]);
-        } else {
-            return api_response($request, null, 404);
+            array_forget($affiliation, 'transactions');
         }
+        return api_response($request, $affiliate->affiliations, 200, ['affiliations' => $affiliations,  'offset' => (int) $offset, 'total_refers'=>$affiliation_counts]);
     }
 
     public function index($affiliate, Request $request)
@@ -81,56 +76,48 @@ class AffiliationController extends Controller
                 }])->orderBy('id', 'desc')
                 ->skip($offset)->take(12);
         }])->select('id')->where('id', $affiliate)->first();
-        if (count($affiliate->affiliations) != 0) {
-            $affiliations = $affiliate->affiliations;
-            foreach ($affiliate->affiliations as $affiliation) {
-                if ($affiliation->transactions != null) {
-                    array_add($affiliation, 'earning_amount', $affiliation->transactions->sum('amount'));
-                } else {
-                    array_add($affiliation, 'earning_amount', 0);
-                }
-                array_forget($affiliation, 'transactions');
+        if (count($affiliate->affiliations) == 0)  return api_response($request, null, 404);
+
+        $affiliations = $affiliate->affiliations;
+        foreach ($affiliate->affiliations as $affiliation) {
+            if ($affiliation->transactions != null) {
+                array_add($affiliation, 'earning_amount', $affiliation->transactions->sum('amount'));
+            } else {
+                array_add($affiliation, 'earning_amount', 0);
             }
-            return api_response($request, $affiliate->affiliations, 200, ['affiliations' => $affiliations]);
-        } else {
-            return api_response($request, null, 404);
+            array_forget($affiliation, 'transactions');
         }
+        return api_response($request, $affiliate->affiliations, 200, ['affiliations' => $affiliations]);
     }
 
     public function create($affiliate, Request $request)
     {
-        try {
-            $request->merge(['mobile' => formatMobile($request->mobile)]);
-            $this->validate($request, ['mobile' => 'required|string|mobile:bd'], ['mobile' => 'Invalid mobile number!']);
-            $affiliate = $request->affiliate;
-            if ($affiliate->verification_status != 'verified') return api_response($request, null, 403, ['massage' => ["en" => "Sorry, you're not verified.", "bd" => "দুঃখিত, আপনি ভেরিফাইড ইউজার নন"]]);
-            if ($affiliate->is_suspended) return api_response($request, null, 403, ['massage' => ["en" => "Sorry, you're suspended.", "bd" => "দুঃখিত, আপনার একাউন্টটি সাময়িকভাবে স্থগিত করা হয়েছে"]]);
-            //if ($affiliate->profile->mobile == $request->mobile) return response()->json(['code' => 501, 'msg' => "You can't refer to yourself!"]);
-            $affiliation_counter = Affiliation::where([['affiliate_id', $affiliate->id], ['created_at', '>=', Carbon::today()]])->count();
-            if ($affiliation_counter < 20) {
-                $affiliation = $this->affiliationDatabaseTransaction($affiliate, $request);
-                if (!$affiliation) return api_response($request, null, 500);
-                (new SmsHandler('affiliation-create-customer-notify'))
-                    ->setFeatureType(FeatureType::REGISTRATION)
-                    ->setBusinessType(BusinessType::BONDHU)
-                    ->send($affiliation->customer_mobile, [
-                    'affiliate_name' => $affiliate->profile->name
-                ]);
-                (new NotificationRepository())->forAffiliation($affiliate, $affiliation);
-                // $message = ['en' => 'Your refer have been submitted. You received 2TK bonus add in your wallet.', 'bd' => 'আপনার রেফারেন্সটি গ্রহন করা হয়েছে । আপনার ওয়ালেটে ২ টাকা বোনাস যোগ করা হয়েছে।'];
-                $message = ['en' => 'Your refer have been submitted. Thank you.', 'bd' => 'আপনার রেফারেন্সটি গ্রহন করা হয়েছে । ধন্যবাদ।'];
-                return api_response($request, 1, 200, ['massage' => $message]);
-            } else {
-                $message = ['en' => 'Your referral limit already exceeded please try again tomorrow.', 'bd' => 'দুঃখিত! আপনার সর্বোচ্চ রেফার সংখ্যা অতিক্রম করেছে। অনুগ্রহ করে আগামিকাল চেষ্টা করুন।'];
-                return api_response($request, null, 403, ['massage' => $message]);
-            }
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        $request->merge(['mobile' => formatMobile($request->mobile)]);
+        $this->validate($request, ['mobile' => 'required|string|mobile:bd'], ['mobile' => 'Invalid mobile number!']);
+        $affiliate = $request->affiliate;
+        if ($affiliate->verification_status != 'verified') return api_response($request, null, 403, ['massage' => ["en" => "Sorry, you're not verified.", "bd" => "দুঃখিত, আপনি ভেরিফাইড ইউজার নন"]]);
+        if ($affiliate->is_suspended) return api_response($request, null, 403, ['massage' => ["en" => "Sorry, you're suspended.", "bd" => "দুঃখিত, আপনার একাউন্টটি সাময়িকভাবে স্থগিত করা হয়েছে"]]);
+
+        $affiliation_counter = Affiliation::where([['affiliate_id', $affiliate->id], ['created_at', '>=', Carbon::today()]])->count();
+        if ($affiliation_counter >= 20) {
+            $message = ['en' => 'Your referral limit already exceeded please try again tomorrow.', 'bd' => 'দুঃখিত! আপনার সর্বোচ্চ রেফার সংখ্যা অতিক্রম করেছে। অনুগ্রহ করে আগামিকাল চেষ্টা করুন।'];
+            return api_response($request, null, 403, ['massage' => $message]);
+
         }
+
+        $affiliation = $this->affiliationDatabaseTransaction($affiliate, $request);
+        if (!$affiliation) return api_response($request, null, 500);
+
+        (new SmsHandler('affiliation-create-customer-notify'))
+            ->setFeatureType(FeatureType::REGISTRATION)
+            ->setBusinessType(BusinessType::BONDHU)
+            ->send($affiliation->customer_mobile, [
+                'affiliate_name' => $affiliate->profile->name
+            ]);
+        (new NotificationRepository())->forAffiliation($affiliate, $affiliation);
+        // $message = ['en' => 'Your refer have been submitted. You received 2TK bonus add in your wallet.', 'bd' => 'আপনার রেফারেন্সটি গ্রহন করা হয়েছে । আপনার ওয়ালেটে ২ টাকা বোনাস যোগ করা হয়েছে।'];
+        $message = ['en' => 'Your refer have been submitted. Thank you.', 'bd' => 'আপনার রেফারেন্সটি গ্রহন করা হয়েছে । ধন্যবাদ।'];
+        return api_response($request, 1, 200, ['massage' => $message]);
     }
 
     private function affiliationDatabaseTransaction(Affiliate $affiliate, Request $request)
@@ -143,7 +130,7 @@ class AffiliationController extends Controller
                 // $this->affiliateTransaction($affiliate, $affiliation);
             });
         } catch (QueryException $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return null;
         }
         return $affiliation;

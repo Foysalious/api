@@ -3,8 +3,8 @@
 use App\Jobs\Job;
 use App\Models\TopUpOrder;
 use App\Repositories\SmsHandler;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
@@ -78,8 +78,8 @@ class TopUpBalanceUpdateAndNotifyJob extends Job implements ShouldQueue
                 ->setBusinessType(BusinessType::BONDHU)
                 ->setFeatureType(FeatureType::TOP_UP)
                 ->send($sms_receiver->phone, [
-                'message' => $message
-            ]);
+                    'message' => $message
+                ]);
         });
     }
 
