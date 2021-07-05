@@ -14,6 +14,7 @@ class SalaryCertificateInfo
     private $business;
     private $member;
     private $businessMember;
+    private $profile;
 
     /**
      * @param Business $business
@@ -26,22 +27,14 @@ class SalaryCertificateInfo
     }
 
     /**
-     * @param Member $member
-     * @return $this
-     */
-    public function setMember(Member $member)
-    {
-       $this->member = $member;
-       return $this;
-    }
-
-    /**
      * @param $business_member
      * @return $this
      */
     public function setBusinessMember($business_member)
     {
         $this->businessMember = $business_member;
+        $this->member = $business_member->member;
+        $this->profile = $this->member->profile;
         return $this;
     }
 
@@ -66,14 +59,13 @@ class SalaryCertificateInfo
      */
     private function getEmployeeInfo()
     {
-        $profile = $this->member->profile;
         $role = $this->businessMember ? $this->businessMember->role : null;
         $department = $role ? $role->businessDepartment : null;
         $department_name = $department ? $department->name : null;
         $designation = $role ? $role->name : null;
 
         return [
-            'name' => trim($profile->name),
+            'name' => trim($this->profile->name),
             'designation' => $designation,
             'department' => $department_name,
             'joining_date' => Carbon::parse($this->businessMember->join_date)->format('jS F Y')
@@ -110,19 +102,6 @@ class SalaryCertificateInfo
     private function getAmountInWord($amount)
     {
         return ucwords(str_replace('-', ' ', (new NumberFormatter("en", NumberFormatter::SPELLOUT))->format($amount)));
-    }
-
-    private function getDummyComponents()
-    {
-        $dummy_components = [];
-
-        for($i=1; $i <= 8; $i++) {
-            $component['title'] = 'Gross Component '.$i;
-            $component['amount'] = 4000;
-            array_push($dummy_components, $component);
-        }
-
-        return $dummy_components;
     }
 
     /**

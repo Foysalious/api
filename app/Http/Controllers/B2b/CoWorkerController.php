@@ -1001,7 +1001,6 @@ class CoWorkerController extends Controller
         $business_member = $is_inactive_filter_applied ? $member->businessMemberGenerated : $member->businessMember;
 
         $salary_certificate_info = $salaryCertificateInfo->setBusiness($business)
-                                                         ->setMember($member)
                                                          ->setBusinessMember($business_member)
                                                          ->get();
 
