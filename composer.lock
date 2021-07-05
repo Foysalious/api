@@ -2531,17 +2531,6 @@
                 "php",
                 "utf-8"
             ],
-            "support": {
-                "docs": "http://mpdf.github.io",
-                "issues": "https://github.com/mpdf/mpdf/issues",
-                "source": "https://github.com/mpdf/mpdf"
-            },
-            "funding": [
-                {
-                    "url": "https://www.paypal.me/mpdf",
-                    "type": "custom"
-                }
-            ],
             "time": "2021-05-12T14:18:06+00:00"
         },
         {
@@ -2689,12 +2678,6 @@
                 "duplicate",
                 "object",
                 "object graph"
-            ],
-            "funding": [
-                {
-                    "url": "https://tidelift.com/funding/github/packagist/myclabs/deep-copy",
-                    "type": "tidelift"
-                }
             ],
             "time": "2020-11-13T09:40:50+00:00"
         },
@@ -3969,16 +3952,6 @@
                 "fpdi",
                 "pdf"
             ],
-            "support": {
-                "issues": "https://github.com/Setasign/FPDI/issues",
-                "source": "https://github.com/Setasign/FPDI/tree/v2.3.6"
-            },
-            "funding": [
-                {
-                    "url": "https://tidelift.com/funding/github/packagist/setasign/fpdi",
-                    "type": "tidelift"
-                }
-            ],
             "time": "2021-02-11T11:37:01+00:00"
         },
         {
@@ -3987,11 +3960,12 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
-                "reference": "c8e35984f2993e2974b8f74e9f04a51238f88684"
+                "reference": "de203e9c37cbe5484725d5a13db2573e9312c66b"
             },
             "require": {
                 "php": ">=5.4"
             },
+            "default-branch": true,
             "type": "library",
             "autoload": {
                 "files": [
@@ -4014,7 +3988,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2021-06-14T07:26:54+00:00"
+            "time": "2021-06-21T09:25:46+00:00"
         },
         {
             "name": "sheba/elasticsearch",
@@ -4130,7 +4104,7 @@
             "source": {
                 "type": "git",
                 "url": "https://mac_pasha@bitbucket.org/startern/sheba_sms.git",
-                "reference": "9fb24dbaa97e43d61140d74d7f9638e7a3eeeeb8"
+                "reference": "074f6a0534e982ce08a7cb768b3d9decf42c8ca4"
             },
             "require": {
                 "ext-curl": "*"
@@ -4151,7 +4125,7 @@
                 }
             ],
             "description": "Sms for Sheba",
-            "time": "2021-05-18T09:09:47+00:00"
+            "time": "2021-06-22T08:18:14+00:00"
         },
         {
             "name": "sheba/voucher",
@@ -5124,20 +5098,6 @@
                 "polyfill",
                 "portable",
                 "shim"
-            ],
-            "funding": [
-                {
-                    "url": "https://symfony.com/sponsor",
-                    "type": "custom"
-                },
-                {
-                    "url": "https://github.com/fabpot",
-                    "type": "github"
-                },
-                {
-                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
-                    "type": "tidelift"
-                }
             ],
             "time": "2020-10-23T14:02:19+00:00"
         },
@@ -7040,6 +7000,5 @@
         "ext-mysql_xdevapi": "*",
         "ext-intl": "*"
     },
-    "platform-dev": [],
-    "plugin-api-version": "2.0.0"
+    "platform-dev": []
 }

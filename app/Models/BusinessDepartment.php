@@ -7,7 +7,18 @@ use Sheba\Dal\TripRequestApprovalFlow\Model as TripRequestApprovalFlow;
 class BusinessDepartment extends Model
 {
     protected $guarded = ['id',];
-    protected $table = 'business_departments';
+
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $table = config('database.connections.mysql.database') . '.business_departments';
+        $this->setTable($table);
+    }
+
+    public function setTable($table)
+    {
+        $this->table = $table;
+    }
 
     public function businessRoles()
     {
