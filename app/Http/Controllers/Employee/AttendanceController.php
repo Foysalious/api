@@ -89,8 +89,8 @@ class AttendanceController extends Controller
         $checkin = $action_processor->setActionName(Actions::CHECKIN)->getAction();
         $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
         if ($request->action == Actions::CHECKIN && $checkin->isLateNoteRequired()) {
-            //$validation_data += ['note' => 'string|required_if:action,' . Actions::CHECKIN];
-            $validation_data += ['note' => 'string'];
+            $validation_data += ['note' => 'string|required_if:action,' . Actions::CHECKIN];
+            //$validation_data += ['note' => 'string'];
         }
         if ($request->action == Actions::CHECKOUT && $checkout->isLeftEarlyNoteRequired()) {
             $validation_data += ['note' => 'string|required_if:action,' . Actions::CHECKOUT];
