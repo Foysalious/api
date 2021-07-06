@@ -86,4 +86,44 @@ class TopUpDataFormat
             'created_date' => $created_at_raw
         ];
     }
+
+    /**
+     * @param $topups
+     * @return array
+     */
+    public function allTopUpDataFormat($topups)
+    {
+        $topup_data = [];
+        foreach ($topups as $topup) {
+            /** @var TopUpOrder $topup */
+            $payee_mobile = $topup->payee_mobile;
+            $operator = $topup->vendor->name;
+            $operator_waiting_time = $topup->vendor->waiting_time;
+            $payee_mobile_type = $topup->payee_mobile_type;
+            $created_at_raw = $topup->created_at->format('Y-m-d H:i:s');
+
+            array_push($topup_data, $this->allTopUpData($payee_mobile, $operator, $operator_waiting_time, $payee_mobile_type, $created_at_raw));
+        }
+
+        return $topup_data;
+    }
+
+    /**
+     * @param $payee_mobile
+     * @param $operator
+     * @param $operator_waiting_time
+     * @param $payee_mobile_type
+     * @param $created_at_raw
+     * @return array
+     */
+    private function allTopUpData($payee_mobile, $operator, $operator_waiting_time, $payee_mobile_type, $created_at_raw)
+    {
+        return [
+            'payee_mobile' => $payee_mobile,
+            'operator' => $operator,
+            'waiting_time' => $operator_waiting_time,
+            'payee_mobile_type' => $payee_mobile_type,
+            'created_at_raw' => $created_at_raw
+        ];
+    }
 }
