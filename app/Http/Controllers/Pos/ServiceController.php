@@ -207,7 +207,8 @@ class ServiceController extends Controller
 
         /** @var Creator $creator */
         $creator = app(Creator::class);
-        return $creator->savePartnerPosServiceBatch($service_id, $request->stock, $request->cost);
+        $partner_pos_service = $creator->setData($service)->setAccountingInfo($request->accounting_info)->savePartnerPosServiceBatch($service_id, $request->stock, $request->cost);
+        return api_response($request, null, 200, ['service' => $partner_pos_service]);
     }
 
     /**

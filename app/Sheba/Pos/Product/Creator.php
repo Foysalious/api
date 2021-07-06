@@ -11,7 +11,6 @@ use Sheba\Dal\PartnerPosServiceImageGallery\Model as PartnerPosServiceImageGalle
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
-use Sheba\Pos\Repositories\Interfaces\PosServiceImageGalleyRepositoryInterface;
 use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
 use Sheba\RequestIdentification;
 use Sheba\Subscription\Partner\Access\AccessManager;
@@ -20,7 +19,7 @@ class Creator
 {
     use FileManager, CdnFileManager, ModificationFields;
 
-    private $data;
+    private $data, $accounting_info;
     private $serviceRepo;
     private $imageGalleryRepo;
     /**
@@ -41,6 +40,16 @@ class Creator
         return $this;
     }
 
+    /**
+     * @param mixed $accounting_info
+     * @return Creator
+     */
+    public function setAccountingInfo($accounting_info)
+    {
+        $this->accounting_info = $accounting_info;
+        return $this;
+    }
+
     public function create()
     {
         $this->saveImages();
@@ -48,8 +57,6 @@ class Creator
         $this->data['pos_category_id'] = $this->data['category_id'];
         $cost = $this->data['cost'];
         $stock = $this->data['stock'];
-//        $this->data['cost'] = 0.0;
-//        $this->data['stock'] = null;
         $this->format();
         $image_gallery = null;
         if (isset($this->data['image_gallery']))
@@ -74,6 +81,7 @@ class Creator
             ->setAccountingInfo($accounting_info)
             ->create();
     }
+
 
     private function saveImages()
     {
@@ -187,6 +195,11 @@ class Creator
         $batchData['stock'] = $stock;
         $batchData['cost']  = $cost;
 
-        return PartnerPosServiceBatch::create($batchData);
+        $partner_pos_service_batch = PartnerPosServiceBatch::create($batchData);
+        $this->data->stock = $batchData['stock'];
+        $this->data->cost = $batchData['cost'];
+
+        $this->createExpenseEntry($this->data, (array) (json_decode($this->accounting_info)));
+        return $partner_pos_service_batch;
     }
 }
