@@ -59,25 +59,24 @@ class Creator
         $stock = $this->data['stock'];
         $this->format();
         $image_gallery = null;
-        if (isset($this->data['image_gallery']))
-            $image_gallery = $this->data['image_gallery'];
+        if (isset($this->data['image_gallery'])) $image_gallery = $this->data['image_gallery'];
         $cloned_data = $this->data;
         $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'image_gallery','accounting_info']);
         $partner_pos_service = $this->serviceRepo->save($this->data + (new RequestIdentification())->get());
-        $this->savePartnerPosServiceBatch($partner_pos_service->id, $stock, $cost);
+        $this->savePartnerPosServiceBatch($partner_pos_service, $stock, $cost);
         $this->storeImageGallery($partner_pos_service, json_decode($image_gallery,true));
-        if (isset($cloned_data['accounting_info']) && !empty($cloned_data['accounting_info']))
-            $this->createExpenseEntry($partner_pos_service, json_decode($cloned_data['accounting_info'], true));
+//        if (isset($cloned_data['accounting_info']) && !empty($cloned_data['accounting_info']))
+//            $this->createExpenseEntry($partner_pos_service, json_decode($cloned_data['accounting_info'], true));
         return $partner_pos_service;
     }
 
     private function createExpenseEntry($partner_pos_service, $accounting_info)
     {
-        $this->stockExpenseEntry->setPartner($partner_pos_service->partner)
-            ->setName($partner_pos_service->name)
-            ->setId($partner_pos_service->id)
-            ->setNewStock($partner_pos_service->stock)
-            ->setCostPerUnit($partner_pos_service->cost)
+        $this->stockExpenseEntry->setPartner($partner_pos_service['partner_id'])
+            ->setName($partner_pos_service['name'])
+            ->setId($partner_pos_service['id'])
+            ->setNewStock($partner_pos_service['stock'])
+            ->setCostPerUnit($partner_pos_service['cost'])
             ->setAccountingInfo($accounting_info)
             ->create();
     }
@@ -188,11 +187,11 @@ class Creator
             PartnerPosCategory::insert($data);
     }
 
-    public function savePartnerPosServiceBatch($service_id, $stock = null, $cost = null)
+    public function savePartnerPosServiceBatch($service, $stock = null, $cost = null)
     {
         $batchData = [];
         $accounting_data = [];
-        $batchData['partner_pos_service_id'] = $service_id;
+        $batchData['partner_pos_service_id'] = $service->id;
         $batchData['stock'] = $stock;
         $batchData['cost']  = $cost ?? 0.0;
         if(isset($this->accounting_info)) {
@@ -205,7 +204,7 @@ class Creator
         $this->data['stock'] = $batchData['stock'];
         $this->data['cost'] = $batchData['cost'];
 
-        if(isset($this->accounting_info)) $this->createExpenseEntry($this->data, $accounting_data);
+        if(isset($this->accounting_info)) $this->createExpenseEntry($service, $accounting_data);
         return $partner_pos_service_batch;
     }
 }

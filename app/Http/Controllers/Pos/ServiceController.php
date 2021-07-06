@@ -143,7 +143,10 @@ class ServiceController extends Controller
             $request->request->remove('category_id');
             $request->merge($this->resolveSubcategory($request->master_category_id));
         }
-        $partner_pos_service = $creator->setData($request->except('master_category_id'))->setAccountingInfo($request->accounting_info)->create();
+        $partner_pos_service = $creator->setData($request->except('master_category_id'))
+            ->setAccountingInfo($request->accounting_info)
+            ->create();
+
         if ($request->has('discount_amount') && $request->discount_amount > 0) {
             $this->createServiceDiscount($request, $partner_pos_service);
         }
@@ -207,7 +210,7 @@ class ServiceController extends Controller
 
         /** @var Creator $creator */
         $creator = app(Creator::class);
-        $partner_pos_service = $creator->setData($service)->setAccountingInfo($request->accounting_info)->savePartnerPosServiceBatch($service_id, $request->stock, $request->cost);
+        $partner_pos_service = $creator->setData($service)->setAccountingInfo($request->accounting_info)->savePartnerPosServiceBatch($service, $request->stock, $request->cost);
         return api_response($request, null, 200, ['service' => $partner_pos_service]);
     }
 
