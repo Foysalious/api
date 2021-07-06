@@ -142,4 +142,13 @@ class CoWorkerExistenceCheck
         if ($data == null) return true;
         return false;
     }
+
+    /**
+     * @return null
+     */
+    public function resetError()
+    {
+        return $this->errorCode = null;
+    }
+
 }

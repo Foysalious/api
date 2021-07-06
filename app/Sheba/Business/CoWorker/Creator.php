@@ -142,31 +142,6 @@ class Creator
         return $this;
     }
 
-    public function setEmail($email)
-    {
-        $this->email = $email;
-        #$this->checkEmailUsedWithAnotherProfile();
-        return $this;
-    }
-
-    /**
-     * @return $this
-     */
-    private function checkEmailUsedWithAnotherProfile()
-    {
-        $profile = $this->profileRepository->checkExistingEmail($this->email);
-        if (!$profile) return $this;
-        if (!$profile->member) return $this;
-        if ($profile->member->businesses()->where('businesses.id', $this->business->id)->count() > 0) {
-            $this->setError(409, "This person is already added");
-        }
-        if ($profile->member->businesses()->where('businesses.id', '<>', $this->business->id)->count() > 0) {
-            $this->setError(422, "This person is already added with another business");
-        }
-
-        return $this;
-    }
-
     public function basicInfoStore()
     {
         $profile = $this->profileRepository->checkExistingEmail($this->basicRequest->getEmail());
@@ -273,7 +248,7 @@ class Creator
         $this->status = $status;
         return $this;
     }
-    
+
     public function resetError()
     {
         return $this->errorCode = null;
