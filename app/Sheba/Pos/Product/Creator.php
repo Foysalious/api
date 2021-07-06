@@ -191,15 +191,21 @@ class Creator
     public function savePartnerPosServiceBatch($service_id, $stock = null, $cost = null)
     {
         $batchData = [];
+        $accounting_data = [];
         $batchData['partner_pos_service_id'] = $service_id;
         $batchData['stock'] = $stock;
         $batchData['cost']  = $cost ?? 0.0;
+        if(isset($this->accounting_info)) {
+            $accounting_data = (array) (json_decode($this->accounting_info));
+            $batchData['from_account'] = $accounting_data['from_account'];
+            $batchData['supplier_id'] = $accounting_data['supplier_id'];
+        }
 
         $partner_pos_service_batch = PartnerPosServiceBatch::create($batchData);
         $this->data->stock = $batchData['stock'];
         $this->data->cost = $batchData['cost'];
 
-        if(isset($this->accounting_info)) $this->createExpenseEntry($this->data, (array) (json_decode($this->accounting_info)));
+        if(isset($this->accounting_info)) $this->createExpenseEntry($this->data, $accounting_data);
         return $partner_pos_service_batch;
     }
 }
