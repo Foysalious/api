@@ -202,8 +202,8 @@ class Creator
         }
 
         $partner_pos_service_batch = PartnerPosServiceBatch::create($batchData);
-        $this->data->stock = $batchData['stock'];
-        $this->data->cost = $batchData['cost'];
+        $this->data['stock'] = $batchData['stock'];
+        $this->data['cost'] = $batchData['cost'];
 
         if(isset($this->accounting_info)) $this->createExpenseEntry($this->data, $accounting_data);
         return $partner_pos_service_batch;

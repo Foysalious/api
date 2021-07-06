@@ -143,7 +143,7 @@ class ServiceController extends Controller
             $request->request->remove('category_id');
             $request->merge($this->resolveSubcategory($request->master_category_id));
         }
-        $partner_pos_service = $creator->setData($request->except('master_category_id'))->create();
+        $partner_pos_service = $creator->setData($request->except('master_category_id'))->setAccountingInfo($request->accounting_info)->create();
         if ($request->has('discount_amount') && $request->discount_amount > 0) {
             $this->createServiceDiscount($request, $partner_pos_service);
         }
