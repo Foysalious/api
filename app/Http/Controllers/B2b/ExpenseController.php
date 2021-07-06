@@ -233,7 +233,7 @@ class ExpenseController extends Controller
         return $pdf->generate($business_member, $request->month, $request->year);
     }
 
-    public function filterMonth(Request $request)
+    public function filterMonth($member_id, Request $request)
     {
         try {
             $this->validate($request, [

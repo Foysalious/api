@@ -22,26 +22,29 @@ class ExpenseList
     public function get()
     {
         $expense_data = [];
-
         foreach ($this->expenseData as $expense) {
             $total_amount = 0;
             $expense_summary = [
-              'employee_id' => null,
-              'member_id' => null,
-              'transport' => 0,
-              'food' => 0,
-              'other' => 0,
-              'amount' => 0,
-              'created_at' => null,
-              'year' => null,
-              'month' => null,
-              'employee_name' => null,
-              'employee_department' => null
+                'employee_id' => null,
+                'member_id' => null,
+                'business_member_id' => null,
+                'transport' => 0,
+                'food' => 0,
+                'other' => 0,
+                'amount' => 0,
+                'created_at' => null,
+                'year' => null,
+                'month' => null,
+                'employee_name' => null,
+                'employee_department' => null
             ];
             foreach ($expense as $expense_breakdown) {
                 $expense_breakdown->amount = floatval($expense_breakdown->amount);
                 if (!$expense_summary['member_id']) {
                     $expense_summary['member_id'] = $expense_breakdown->member_id;
+                }
+                if (!$expense_summary['business_member_id']) {
+                    $expense_summary['business_member_id'] = $expense_breakdown->business_member_id;
                 }
                 if ($expense_breakdown->type === 'transport') {
                     $expense_summary['transport'] = $expense_breakdown->amount;
