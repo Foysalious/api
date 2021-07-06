@@ -504,6 +504,28 @@ class Updater
         (new Invite($this->profile))->sendReInviteMail();
     }
 
+    public function activeFormInvite()
+    {
+        DB::beginTransaction();
+        try {
+            $profile_data['name'] =  $this->basicRequest->getFirstName();
+            $profile_data['gender'] = $this->personalRequest->getGender();
+            $this->profile = $this->profileRepository->update($this->profile, $profile_data);
+
+            $this->businessRole = $this->getBusinessRole();
+            $business_member_data['business_role_id'] = $this->businessRole->id;
+            $business_member_data['join_date'] = $this->basicRequest->getJoinDate();
+            $business_member_data['status'] = $this->basicRequest->getStatus();
+            $this->businessMemberUpdater->setBusinessMember($this->businessMember)->update($business_member_data);
+            DB::commit();
+            return $this->businessMember;
+        } catch (Throwable $e) {
+            DB::rollback();
+            app('sentry')->captureException($e);
+            return null;
+        }
+    }
+
     /**
      * @throws \Exception
      */

@@ -7,6 +7,7 @@ use Exception;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\App;
 use Intervention\Image\Image;
+use League\Fractal\Resource\ResourceAbstract;
 use Sheba\Business\CoWorker\Designations;
 use Sheba\Business\CoWorker\Filter\CoWorkerInfoFilter;
 use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
@@ -25,8 +26,6 @@ use App\Sheba\Business\Salary\Requester as CoWorkerSalaryRequester;
 use Sheba\Business\CoWorker\Validation\CoWorkerExistenceCheck;
 use Sheba\Dal\Salary\SalaryRepository;
 use League\Fractal\Serializer\ArraySerializer;
-use Sheba\Reports\ExcelHandler;
-use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Repositories\ProfileRepository;
 use League\Fractal\Resource\Collection;
@@ -44,8 +43,6 @@ use Sheba\ModificationFields;
 use App\Models\BusinessRole;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
-use App\Models\Member;
-use Carbon\Carbon;
 use Sheba\Business\CoWorker\SalaryCertificate\SalaryCertificateInfo;
 use DB;
 
@@ -85,7 +82,6 @@ class CoWorkerController extends Controller
     private $businessMemberRepository;
     /** @var CoWorkerExistenceCheck $coWorkerExistenceCheck */
     private $coWorkerExistenceCheck;
-
 
     /**
      * CoWorkerController constructor.
@@ -131,6 +127,69 @@ class CoWorkerController extends Controller
         $this->coWorkerInfoSort = $co_worker_info_sort;
         $this->businessMemberRepository = $business_member_repo;
         $this->coWorkerExistenceCheck = $co_worker_existence_check;
+    }
+
+    /**
+     * @param $business
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function index($business, Request $request)
+    {
+        /** @var Business $business */
+        $business = $request->business;
+        $business_members = $business->getAllBusinessMember();
+        list($offset, $limit) = calculatePagination($request);
+
+        if ($request->has('for') && $request->for == 'prorate') {
+            $department_info = $this->getEmployeeGroupByDepartment($business);
+            return api_response($request, $department_info, 200, ['department_info' => $department_info]);
+        }
+
+        if ($request->has('department')) $business_members = $this->coWorkerInfoFilter->filterByDepartment($business_members, $request);
+        if ($request->has('status')) $business_members = $this->coWorkerInfoFilter->filterByStatus($business_members, $request);
+
+        $manager = new Manager();
+        $manager->setSerializer(new ArraySerializer());
+        $employees = new Collection($business_members->get(), new CoWorkerListTransformer());
+        $employees = collect($manager->createData($employees)->toArray()['data']);
+
+        $employees = $this->coWorkerInfoSort->sortCoworkerInList($employees, $request);
+        $employees = $this->coWorkerInfoFilter->filterCoworkerInList($employees, $request);
+
+        $total_employees = count($employees);
+        $limit = $this->getLimit($request, $limit, $total_employees);
+        $employees = collect($employees)->splice($offset, $limit);
+
+        if (count($employees) > 0) return api_response($request, $employees, 200, [
+            'employees' => $employees,
+            'total_employees' => $total_employees
+        ]);
+        return api_response($request, null, 404);
+    }
+
+    /**
+     * @param $business
+     * @param $business_member_id
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function show($business, $business_member_id, Request $request)
+    {
+        if (!is_numeric($business_member_id)) return api_response($request, null, 400);
+        $business_member = $this->businessMemberRepository->find($business_member_id);
+        if (!$business_member) return api_response($request, null, 404);
+
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $member = new Item($business_member, new CoWorkerDetailTransformer());
+        $employee = $manager->createData($member)->toArray()['data'];
+
+        if (count($employee) > 0) return api_response($request, $employee, 200, [
+            'employee' => $employee,
+            'business_member_id' => $business_member->id
+        ]);
+        return api_response($request, null, 404);
     }
 
     /**
@@ -385,175 +444,6 @@ class CoWorkerController extends Controller
         $member = $this->coWorkerUpdater->setEmergencyRequest($emergency_request)->setBusiness($business)->setMember($member_id)->emergencyInfoUpdate();
         if ($member) return api_response($request, 1, 200);
         return api_response($request, null, 404);
-    }
-
-    /**
-     * @param $business
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function index($business, Request $request)
-    {
-        /** @var Business $business */
-        $business = $request->business;
-        $business_members = $business->getAllBusinessMember();
-        list($offset, $limit) = calculatePagination($request);
-
-        if ($request->has('for') && $request->for == 'prorate') {
-            $department_info = $this->getEmployeeGroupByDepartment($business);
-            return api_response($request, $department_info, 200, ['department_info' => $department_info]);
-        }
-
-        if ($request->has('department')) $business_members = $this->coWorkerInfoFilter->filterByDepartment($business_members, $request);
-        if ($request->has('status')) $business_members = $this->coWorkerInfoFilter->filterByStatus($business_members, $request);
-
-        $manager = new Manager();
-        $manager->setSerializer(new ArraySerializer());
-        $employees = new Collection($business_members->get(), new CoWorkerListTransformer());
-        $employees = collect($manager->createData($employees)->toArray()['data']);
-
-        $employees = $this->coWorkerInfoSort->sortCoworkerInList($employees, $request);
-        $employees = $this->coWorkerInfoFilter->filterCoworkerInList($employees, $request);
-
-        $total_employees = count($employees);
-        $limit = $this->getLimit($request, $limit, $total_employees);
-        $employees = collect($employees)->splice($offset, $limit);
-
-        if (count($employees) > 0) return api_response($request, $employees, 200, [
-            'employees' => $employees,
-            'total_employees' => $total_employees
-        ]);
-        return api_response($request, null, 404);
-    }
-
-    /**
-     * @param $business
-     * @param $business_member_id
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function show($business, $business_member_id, Request $request)
-    {
-        if (!is_numeric($business_member_id)) return api_response($request, null, 400);
-        $business_member = $this->businessMemberRepository->find($business_member_id);
-        if (!$business_member) return api_response($request, null, 404);
-
-        $manager = new Manager();
-        $manager->setSerializer(new CustomSerializer());
-        $member = new Item($business_member, new CoWorkerDetailTransformer());
-        $employee = $manager->createData($member)->toArray()['data'];
-
-        if (count($employee) > 0) return api_response($request, $employee, 200, [
-            'employee' => $employee,
-            'business_member_id' => $business_member->id
-        ]);
-        return api_response($request, null, 404);
-    }
-
-    /**
-     * @param $business
-     * @param $business_member_id
-     * @param Request $request
-     * @return JsonResponse
-     * @throws Exception
-     */
-    public function statusUpdate($business, $business_member_id, Request $request)
-    {
-        $this->validate($request, ['status' => 'required|string|in:' . implode(',', Statuses::get())]);
-        $requester_business_member = $request->business_member;
-        if ($requester_business_member == $business_member_id) return api_response($request, null, 404, ['message' => 'Sorry, You cannot deactivated yourself as super admin.']);
-
-        $business = $request->business;
-        $manager_member = $request->manager_member;
-        $this->setModifier($manager_member);
-
-        $business_member = $this->businessMemberRepository->find($business_member_id);
-        $coWorker_requester = $this->coWorkerRequester->setStatus($request->status);
-        $this->coWorkerUpdater->setCoWorkerRequest($coWorker_requester)->setBusiness($business)->setBusinessMember($business_member);
-
-        if ($this->isReInviteFeasible($business_member->status, $request->status)) {
-            $this->coWorkerUpdater->reInvite();
-            return api_response($request, 1, 200);
-        }
-        if ($this->isDeleteFeasible($business_member->status, $request->status)) {
-            $this->coWorkerUpdater->delete();
-            return api_response($request, 1, 200);
-        }
-        if ($this->isActive($request->status)) {
-            $this->coWorkerExistenceCheck->setBusiness($business)->setBusinessMember($business_member)->isActiveOrInvitedInAnotherBusiness();
-            if ($this->coWorkerExistenceCheck->hasError()) {
-                return api_response($request, null, $this->coWorkerExistenceCheck->getErrorCode(), ['message' => $this->coWorkerExistenceCheck->getErrorMessage()]);
-            }
-        }
-        $business_member = $this->coWorkerUpdater->statusUpdate();
-        if ($business_member) return api_response($request, 1, 200);
-
-        return api_response($request, null, 404);
-    }
-
-    /**
-     * @param $business
-     * @param Request $request
-     * @return JsonResponse
-     * @throws Exception
-     */
-    public function bulkStatusUpdate($business, Request $request)
-    {
-        $this->validate($request, [
-            'employee_ids' => "required",
-            'status' => 'required|string|in:' . implode(',', Statuses::get())
-        ]);
-        $business = $request->business;
-        $manager_member = $request->manager_member;
-        $requester_business_member = $request->business_member;
-        $this->setModifier($manager_member);
-        $business_member_ids = json_decode($request->employee_ids);
-
-        if (in_array($requester_business_member->id, $business_member_ids)) return api_response($request, null, 404, ['message' => 'One of the Ids contains superadmin ID, which cannot be deactivated, Please check again.']);
-
-        foreach ($business_member_ids as $business_member_id) {
-            $business_member = BusinessMember::where('id', $business_member_id)->first();
-            $coWorker_requester = $this->coWorkerRequester->setStatus($request->status);
-            $this->coWorkerUpdater->setCoWorkerRequest($coWorker_requester)->setBusiness($business)->setBusinessMember($business_member);
-            if ($this->isReInviteFeasible($business_member->status, $request->status)) $this->coWorkerUpdater->reInvite();
-            if ($this->isDeleteFeasible($business_member->status, $request->status)) $this->coWorkerUpdater->delete();
-            if ($business_member->status == $request->status) continue;
-            if ($request->status == Statuses::DELETE) continue;
-            $this->coWorkerUpdater->statusUpdate();
-        }
-        return api_response($request, null, 200);
-    }
-
-    /**
-     * @param $business_member_current_status
-     * @param $requested_status
-     * @return bool
-     */
-    private function isReInviteFeasible($business_member_current_status, $requested_status)
-    {
-        if ($business_member_current_status == Statuses::INVITED && $requested_status == Statuses::INVITED)
-            return true;
-    }
-
-    /**
-     * @param $business_member_current_status
-     * @param $requested_status
-     * @return bool
-     */
-    private function isDeleteFeasible($business_member_current_status, $requested_status)
-    {
-        if ($business_member_current_status == Statuses::INVITED && $requested_status == Statuses::DELETE)
-            return true;
-    }
-
-    /**
-     * @param $requested_status
-     * @return bool
-     */
-    private function isActive($requested_status)
-    {
-        if ($requested_status == Statuses::ACTIVE) return true;
-        return false;
     }
 
     /**

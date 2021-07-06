@@ -19,6 +19,7 @@ class BasicRequest
     private $grade;
     private $employeeType;
     private $employeeId;
+    private $status;
 
     /**
      * @param $business_member
@@ -218,7 +219,6 @@ class BasicRequest
         return $this->grade;
     }
 
-
     /**
      * @param $employee_type
      * @return $this
@@ -237,16 +237,40 @@ class BasicRequest
         return $this->employeeType;
     }
 
-
+    /**
+     * @param $employee_id
+     * @return $this
+     */
     public function setEmployeeId($employee_id)
     {
         $this->employeeId = $employee_id;
         return $this;
     }
 
+    /**
+     * @return mixed
+     */
     public function getEmployeeId()
     {
         return $this->employeeId;
+    }
+
+    /**
+     * @param $status
+     * @return $this
+     */
+    public function setStatus($status)
+    {
+        $this->status = $status;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getStatus()
+    {
+        return $this->status;
     }
 
     /**

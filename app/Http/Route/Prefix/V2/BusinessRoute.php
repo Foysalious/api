@@ -93,7 +93,7 @@ class BusinessRoute
                     $api->get('/', 'B2b\CoWorkerController@index');
                     $api->post('/', 'B2b\CoWorkerController@basicInfoStore');
                     $api->get('/roles', 'B2b\CoWorkerController@getRoles');
-                    $api->post('/change-status', 'B2b\CoWorkerController@bulkStatusUpdate');
+                    $api->post('/change-status', 'B2b\CoWorkerStatusController@bulkStatusUpdate');
                     $api->post('/invite', 'B2b\CoWorkerInviteController@sendInvitation');
                     $api->post('/single-invite', 'B2b\CoWorkerInviteController@sendSingleInvitation');
                     $api->get('/report', 'B2b\CoWorkerController@downloadEmployeesReport');
@@ -104,7 +104,8 @@ class BusinessRoute
                         $api->post('/financial-info', 'B2b\CoWorkerController@financialInfoEdit');
                         $api->post('/emergency-info', 'B2b\CoWorkerController@emergencyInfoEdit');
                         $api->post('/salary-info', 'B2b\CoWorkerController@salaryInfoEdit');
-                        $api->post('/status', 'B2b\CoWorkerController@statusUpdate');
+                        $api->post('/status', 'B2b\CoWorkerStatusController@statusUpdate');
+                        $api->post('/active', 'B2b\CoWorkerStatusController@activeFromInvited');
                         $api->get('/', 'B2b\CoWorkerController@show');
                         $api->post('/', 'B2b\CoWorkerController@update');
                         $api->get('/expense/pdf', 'B2b\CoWorkerController@show');
