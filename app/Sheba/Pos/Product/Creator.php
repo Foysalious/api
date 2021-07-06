@@ -193,7 +193,7 @@ class Creator
         $batchData = [];
         $batchData['partner_pos_service_id'] = $service_id;
         $batchData['stock'] = $stock;
-        $batchData['cost']  = $cost;
+        $batchData['cost']  = $cost ?? 0.0;
 
         $partner_pos_service_batch = PartnerPosServiceBatch::create($batchData);
         $this->data->stock = $batchData['stock'];
