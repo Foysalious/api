@@ -199,7 +199,7 @@ class Creator
         $this->data->stock = $batchData['stock'];
         $this->data->cost = $batchData['cost'];
 
-        $this->createExpenseEntry($this->data, (array) (json_decode($this->accounting_info)));
+        if(isset($this->accounting_info)) $this->createExpenseEntry($this->data, (array) (json_decode($this->accounting_info)));
         return $partner_pos_service_batch;
     }
 }

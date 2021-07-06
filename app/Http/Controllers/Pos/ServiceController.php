@@ -201,7 +201,7 @@ class ServiceController extends Controller
         if(!$service) return api_response($request, null, 404, ['message' => 'Service not found']);
 
         $this->validate($request, [
-            'stock' => 'sometimes|required',
+            'stock' => 'required',
             'cost' => 'sometimes|required'
         ]);
 
