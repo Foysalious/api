@@ -77,16 +77,17 @@ class CoWorkerInviteController extends Controller
                 array_push($errors, ['email' => $email, 'message' => 'Invalid email address']);
                 continue;
             }
-            $this->basicRequest->setEmail($email);
-            $this->coWorkerCreator->setBusiness($business)->setEmail($email)->setStatus(Statuses::INVITED)->setBasicRequest($this->basicRequest);
 
-            if ($this->coWorkerCreator->hasError()) {
-                array_push($errors, ['email' => $email, 'message' => $this->coWorkerCreator->getErrorMessage()]);
-                $this->coWorkerCreator->resetError();
+            $this->coWorkerExistenceCheck->setBusiness($business)->setEmail($email)->checkEmailUsability();
+            if ($this->coWorkerExistenceCheck->hasError()) {
+                array_push($errors, ['email' => $email, 'message' => $this->coWorkerExistenceCheck->getErrorMessage()]);
+                $this->coWorkerExistenceCheck->resetError();
                 continue;
             }
 
-            #$this->coWorkerCreator->basicInfoStore();
+            $this->basicRequest->setEmail($email);
+            $this->coWorkerCreator->setBusiness($business)->setStatus(Statuses::INVITED)
+                ->setBasicRequest($this->basicRequest)->basicInfoStore();
         }
 
         if ($errors) {
@@ -113,7 +114,6 @@ class CoWorkerInviteController extends Controller
         return api_response($request, null, 200);
     }
 
-
     /**
      * @param $business
      * @param Request $request
@@ -133,15 +133,19 @@ class CoWorkerInviteController extends Controller
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return api_response($request, null, 420, ['email' => $email, 'message' => 'Invalid email address']);
         }
-        $this->basicRequest->setEmail($email);
+
         $this->coWorkerExistenceCheck->setBusiness($business)->setEmail($email)->checkEmailUsability();
 
         if ($this->coWorkerExistenceCheck->hasError()) {
-            return api_response($request, null, $this->coWorkerExistenceCheck->getErrorCode(), ['message' => $this->coWorkerExistenceCheck->getErrorMessage(), 'business_member_id' => $this->coWorkerExistenceCheck->getBusinessMemberId()]);
+            return api_response($request, null, $this->coWorkerExistenceCheck->getErrorCode(), [
+                'message' => $this->coWorkerExistenceCheck->getErrorMessage(),
+                'business_member_id' => $this->coWorkerExistenceCheck->getBusinessMemberId()
+            ]);
         }
+        $this->basicRequest->setEmail($email);
+        $this->coWorkerCreator->setBasicRequest($this->basicRequest)->setBusiness($business)
+            ->setStatus(Statuses::INVITED)->basicInfoStore();
 
-        $this->coWorkerCreator->setBasicRequest($this->basicRequest)->setBusiness($business)->setStatus(Statuses::INVITED)->setEmail($email);
-        $this->coWorkerCreator->basicInfoStore();
         return api_response($request, null, 200);
     }
 
