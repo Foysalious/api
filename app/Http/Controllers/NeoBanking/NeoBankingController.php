@@ -91,6 +91,8 @@ class NeoBankingController extends Controller
 
     public function getAccountInformationCompletion($partner, Request $request, NeoBanking $neoBanking)
     {
+        ini_set('max_execution_time', 360);
+
         try {
             $this->validate($request, [
                 'bank_code' => 'required|string'
@@ -189,16 +191,36 @@ class NeoBankingController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function selectTypes(Request $request)
     {
         try {
             $type=$request->type?:'organization_type_list';
             $data = NeoBankingGeneralStatics::types($type);
+            if ($type == 'branch_code' && isset($request->district)){
+                $data = $this->filterByDistrict($request, $data['list']);
+                if (count($data['list']) === 0) {
+                    return response()->json(['code' => 404, 'message' => 'প্রিয় গ্রাহক, আপনার নির্ধারিত জেলায় প্রাইম ব্যাংকের কোন সার্ভিস নেই। আমরা যত দ্রুত সম্ভব সার্ভিসটি চালু করার চেষ্টা করব। বিস্তারিত জানতে ইনবক্স করুন অথবা কল করুন ১৬৫১৬ নম্বরে।']);
+                }
+            }
             return api_response($request, $data, 200, ['data' => $data]);
         } catch (\Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function filterByDistrict($request, $values)
+    {
+        $data = [];
+        foreach ($values as $value) {
+            if (strtolower($value['district']) == strtolower($request->district))
+                array_push($data, $value);
+        }
+        return ['list' => $data,'title'=>'ব্রাঞ্চ কোড সিলেক্ট করুন'];
     }
 
     public function accountApply(Request $request, NeoBanking $neoBanking)
@@ -235,6 +257,26 @@ class NeoBankingController extends Controller
         } catch (NeoBankingException $exception) {
             logError($exception);
             return api_response($request, null, $exception->getCode());
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @param NeoBanking $neoBanking
+     * @return JsonResponse
+     */
+    public function partnerAcknowledgment(Request $request, NeoBanking $neoBanking)
+    {
+        try {
+            $this->validate($request, ['bank_code' => 'required|string']);
+            $mobile = ($request->manager_resource->profile->mobile);
+            $data = $neoBanking->setPartner($request->partner)->setResource($request->manager_resource)->setMobile($mobile)->setBank($request->bank_code)->getAcknowledgment();
+            return api_response($request, $data, 200, ['data' => $data]);
+        }catch (NeoBankingException $e){
+            return api_response($request,null,$e->getCode(),['message'=>$e->getMessage()]);
         } catch (\Throwable $e) {
             logError($e);
             return api_response($request, null, 500);

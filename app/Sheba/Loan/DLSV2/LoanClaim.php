@@ -3,8 +3,8 @@
 
 use App\Models\PartnerBankLoan;
 use App\Sheba\Loan\DLSV2\Notification\SMS\SMSHandler;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use Carbon\Carbon;
 use Sheba\Dal\LoanClaimRequest\Model as LoanClaimModel;
 use Sheba\Dal\LoanClaimRequest\EloquentImplementation as LoanClaimRepo;

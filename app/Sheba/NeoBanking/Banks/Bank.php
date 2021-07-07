@@ -118,6 +118,8 @@ abstract class Bank
 
     abstract public function storeGigatechKyc($data);
 
+    abstract public function getAcknowledgment();
+
         /**
      * @return Partner
      */
@@ -162,12 +164,20 @@ abstract class Bank
     {
         $data = (array)$post_data;
         foreach ($detail as $key => $item) {
+            $hasValue = false;
             if ($item['field_type'] == 'multipleView') {
                 $this->validatePostData($item['views'], $data[$item['name']]);
                 continue;
             }
-            if ($item['mandatory'] && (!isset($data[$item['name']]) || empty($data[$item['name']]))) {
-                throw new CategoryPostDataInvalidException($item['error_message']);
+
+            if ($item['mandatory']) {
+                if ((!isset($data[$item['name']]) || empty($data[$item['name']]))) throw new CategoryPostDataInvalidException($item['error_message']);
+                if ($item['field_type'] == 'radioGroup' || $item['field_type'] == 'conditionalSelect') {
+                    foreach ($data[$item['name']] as $key => $value) {
+                        if (($item['field_type'] == 'radioGroup' && $value == 1) || ($item['field_type'] == 'conditionalSelect' && $value !== '')) $hasValue = true;
+                    }
+                    if (!$hasValue) throw new CategoryPostDataInvalidException($item['error_message']);
+                }
             }
             if ($item['field_type'] == 'date') {
                 try {
