@@ -287,6 +287,7 @@ class ProfileRequester
     public function setSocialLinks($social_links)
     {
         $this->socialLinks = $social_links;
+        if($this->socialLinks) $this->isJSON();
         return $this;
     }
 
@@ -352,6 +353,13 @@ class ProfileRequester
             $this->setError(400, 'This mobile number belongs to another member. Please contact with sheba');
 
         return $this;
+    }
+
+    private function isJSON()
+    {
+        json_decode($this->socialLinks);
+        if(json_last_error() != JSON_ERROR_NONE) $this->setError(420, 'Social Links does not contain a Valid JSON. Please check again');
+        return;
     }
 
 }
