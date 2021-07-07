@@ -357,8 +357,8 @@ class ProfileRequester
 
     private function isJSON()
     {
-        json_decode($this->socialLinks);
-        if(json_last_error() != JSON_ERROR_NONE) $this->setError(420, 'Social Links does not contain a Valid JSON. Please check again');
+        $json_array = json_decode($this->socialLinks, 1);
+        if(json_last_error() != JSON_ERROR_NONE || !is_array($json_array)) $this->setError(420, 'Social Links does not contain a Valid JSON. Please check again');
         return;
     }
 
