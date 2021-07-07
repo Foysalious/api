@@ -11,7 +11,7 @@ use Sheba\Reports\PdfHandler;
 use Sheba\Usage\Usage;
 use Exception;
 
-class DueTrackerController extends Controller
+class AccountingDueTrackerController extends Controller
 {
     use ModificationFields;
 

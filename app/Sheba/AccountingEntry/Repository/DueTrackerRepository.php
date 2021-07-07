@@ -82,31 +82,6 @@ class DueTrackerRepository extends BaseRepository
         }
     }
 
-    public function entryDetails()
-    {
-        try {
-            $url = "api/entries/" . $this->entry_id;
-            $data = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
-            if ($data["attachments"]) {
-                $data["attachments"] = json_decode($data["attachments"]);
-            }
-            if ($data["customer_id"]) {
-                /** @var PartnerPosCustomer $partner_pos_customer */
-                $partner_pos_customer = PartnerPosCustomer::where('partner_id', $this->partner->id)->where(
-                    'customer_id',
-                    $data["customer_id"]
-                )->first();
-                $customer_details = $partner_pos_customer->details();
-                $data["customer_details"] = $customer_details;
-            } else {
-                $data["customer_details"] = null;
-            }
-            return $data;
-        } catch (AccountingEntryServerError $e) {
-            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
-        }
-    }
-
     /**
      * @param $request
      * @param false $paginate
