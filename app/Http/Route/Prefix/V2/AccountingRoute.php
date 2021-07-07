@@ -20,13 +20,13 @@ class AccountingRoute
             $api->delete('/accounts/{id}', 'Accounting\\AccountController@deleteAccount');
             $api->get('/icons', 'Accounting\\IconsController@getIcons');
             $api->group(['prefix' => 'due-tracker'], function ($api) {
-                $api->get('/due-list', 'Accounting\\DueTrackerController@dueList');
-                $api->get('/due-list-balance', 'Accounting\\DueTrackerController@dueListBalance');
-                $api->get('/due-list/{customerId}', 'Accounting\\DueTrackerController@dueListByCustomerId');
-                $api->get('/due-list/{customerId}/balance', 'Accounting\\DueTrackerController@dueListBalanceByCustomer');
-                $api->post('/', 'Accounting\\DueTrackerController@store');
-                $api->post('/{entry_id}', 'Accounting\\DueTrackerController@update');
-                $api->delete('/{entry_id}', 'Accounting\\DueTrackerController@delete');
+                $api->get('/due-list', 'Accounting\\AccountingDueTrackerController@dueList');
+                $api->get('/due-list-balance', 'Accounting\\AccountingDueTrackerController@dueListBalance');
+                $api->get('/due-list/{customerId}', 'Accounting\\AccountingDueTrackerController@dueListByCustomerId');
+                $api->get('/due-list/{customerId}/balance', 'Accounting\\AccountingDueTrackerController@dueListBalanceByCustomer');
+                $api->post('/', 'Accounting\\AccountingDueTrackerController@store');
+                $api->post('/{entry_id}', 'Accounting\\AccountingDueTrackerController@update');
+                $api->delete('/{entry_id}', 'Accounting\\AccountingDueTrackerController@delete');
             });
             $api->group(['prefix' => 'home'], function ($api) {
                 $api->get('/asset-balance', 'Accounting\\HomepageController@getAssetAccountBalance');
@@ -39,7 +39,7 @@ class AccountingRoute
                 $api->get('training-video', 'Accounting\\HomepageController@getTrainingVideo');
             });
             $api->group(['prefix' => 'entries'], function ($api) {
-                $api->get('/{entry_id}', 'Accounting\\DueTrackerController@details');
+                $api->get('/{entry_id}', 'Accounting\\EntriesController@details');
             });
             $api->group(['prefix' => 'reports'], function ($api) {
                 $api->get('/pos/customer-wise', 'Accounting\\ReportsController@getCustomerWiseReport');

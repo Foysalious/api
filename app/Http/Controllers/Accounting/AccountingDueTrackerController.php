@@ -2,23 +2,24 @@
 
 
 use App\Http\Controllers\Controller;
-use App\Sheba\AccountingEntry\Repository\DueTrackerRepository;
+use App\Sheba\AccountingEntry\Repository\AccountingDueTrackerRepository;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\ModificationFields;
 use Sheba\Reports\PdfHandler;
 use Sheba\Usage\Usage;
-use Exception;
 
-class DueTrackerController extends Controller
+class AccountingDueTrackerController extends Controller
 {
     use ModificationFields;
 
-    /** @var DueTrackerRepository */
+    /** @var AccountingDueTrackerRepository */
     private $dueTrackerRepo;
 
-    public function __construct(DueTrackerRepository $dueTrackerRepo) {
+    public function __construct(AccountingDueTrackerRepository $dueTrackerRepo)
+    {
         $this->dueTrackerRepo = $dueTrackerRepo;
     }
 
@@ -26,7 +27,7 @@ class DueTrackerController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function store(Request $request ): JsonResponse
+    public function store(Request $request): JsonResponse
     {
         try {
             $this->validate($request, [
@@ -90,13 +91,32 @@ class DueTrackerController extends Controller
 
     /**
      * @param Request $request
-     * @param $entry_id
      * @return JsonResponse
      */
-    public function details(Request $request, $entry_id): JsonResponse
+    public function dueList(Request $request): JsonResponse
     {
         try {
-            $data = $this->dueTrackerRepo->setPartner($request->partner)->setEntryId($entry_id)->entryDetails();
+            $data = $this->dueTrackerRepo->setPartner($request->partner)->getDueList($request);
+            if ((($request->has('download_pdf')) && ($request->download_pdf == 1)) ||
+                (($request->has('share_pdf')) && ($request->share_pdf == 1))) {
+                $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
+                $data['end_date'] = $request->has("end_date") ? $request->end_date : null;
+                $balanceData = $this->dueTrackerRepo->setPartner($request->partner)->getDuelistBalance($request);
+                $data = array_merge($data, $balanceData);
+                $pdf_link = (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile(
+                    'due_tracker_due_list'
+                )->save(true);
+                if (($request->has('download_pdf')) && ($request->download_pdf == 1)) {
+                    return api_response(
+                        $request,
+                        null,
+                        200,
+                        ['message' => 'PDF download successful', 'pdf_link' => $pdf_link]
+                    );
+                }
+                $data['pdf_link'] = $pdf_link;
+            }
+
             return api_response($request, null, 200, ['data' => $data]);
         } catch (AccountingEntryServerError $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
@@ -110,35 +130,6 @@ class DueTrackerController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function dueList(Request $request): JsonResponse
-    {
-        try {
-            $data = $this->dueTrackerRepo->setPartner($request->partner)->getDueList($request);
-            if (($request->has('download_pdf')) && ($request->download_pdf == 1)){
-                $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
-                $data['end_date'] = $request->has("end_date") ? $request->end_date : null;
-                $balanceData = $this->dueTrackerRepo->setPartner($request->partner)->getDuelistBalance($request);
-                $data = array_merge($data, $balanceData);
-                $pdf_link = (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile('due_tracker_due_list')->save(true);
-                return api_response($request, null, 200, ['message' => 'PDF download successful','pdf_link' => $pdf_link]);
-            }
-
-            if (($request->has('share_pdf')) && ($request->share_pdf == 1)){
-                $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
-                $data['end_date'] = $request->has("end_date") ? $request->end_date : null;
-                $balanceData = $this->dueTrackerRepo->setPartner($request->partner)->getDuelistBalance($request);
-                $data = array_merge($data, $balanceData);
-                $data['pdf_link'] = (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile('due_tracker_due_list')->save(true);
-            }
-            return api_response($request, null, 200, ['data' => $data]);
-        } catch (AccountingEntryServerError $e) {
-            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
-        } catch (\Throwable $e) {
-            logError($e);
-            return api_response($request, null, 500);
-        }
-    }
-
     public function dueListBalance(Request $request): JsonResponse
     {
         try {
@@ -182,6 +173,11 @@ class DueTrackerController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @param $customerId
+     * @return JsonResponse
+     */
     public function dueListBalanceByCustomer(Request $request, $customerId): JsonResponse
     {
         try {
