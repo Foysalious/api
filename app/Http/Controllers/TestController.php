@@ -57,10 +57,8 @@ class TestController extends Controller
            $m->from('yourEmail@domain.com', 'Sheba.xyz');
            $m->to('shovan@sheba.xyz')->subject('Low Balance for testvendor');
        });*/ // $movie_ticket_order = MovieTicketOrder::find(1);
-
         //$vendor = $vendor->getById(1);
         // $movie_ticket_order->vendor = $vendor;
-
         //dispatch(new SendEmailToNotifyVendorBalance('transport_ticket',1));
         try {
             (new SendEmailToNotifyVendorBalance('transport_ticket', 1))->handle($mailer);
