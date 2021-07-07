@@ -54,7 +54,7 @@ pipeline {
             steps {
                 script {
                     sshPublisher(publishers: [
-                        sshPublisherDesc(configName: 'stage-server',
+                        sshPublisherDesc(configName: 'production-server-on-premises',
                             transfers: [sshTransfer(
                                 cleanRemote: false,
                                 excludes: '',
