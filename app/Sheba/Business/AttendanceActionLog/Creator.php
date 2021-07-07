@@ -62,12 +62,6 @@ class Creator
         return $this;
     }
 
-    public function setNote($note)
-    {
-        $this->note = $note;
-        return $this;
-    }
-
     /**
      * @param mixed $deviceId
      * @return Creator
