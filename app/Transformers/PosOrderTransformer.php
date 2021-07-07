@@ -29,7 +29,7 @@ class PosOrderTransformer extends TransformerAbstract
             'date'=>$order->created_at->format('Y-m-d'),
             'partner_name' => $order->partner->name,
             'price' => (double)$order->getNetBill(),
-            'original_price' => (double)$order->getTotalBill(),
+            'original_price' => (double)$order->getTotalBill() - (double)$order->getTotalItemDiscount(),
             'order_status' => $order->status,
             'payment_status' => $order->getPaymentStatus(),
             'vat' => (double)$order->getTotalVat(),
