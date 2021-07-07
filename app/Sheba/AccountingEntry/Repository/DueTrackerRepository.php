@@ -2,6 +2,7 @@
 
 namespace App\Sheba\AccountingEntry\Repository;
 
+use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
@@ -12,7 +13,6 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
-use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
 use Sheba\RequestIdentification;
 
@@ -96,9 +96,11 @@ class DueTrackerRepository extends BaseRepository
             $order_by = $request->order_by;
             $result = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
             $list = $this->attachProfile(collect($result['list']));
-            $list = $list->reject(function ($value) {
-                return $value == null;
-            });
+            $list = $list->reject(
+                function ($value) {
+                    return $value == null;
+                }
+            );
             if ($request->has('filter_by_supplier') && $request->filter_by_supplier == 1) {
                 $list = $list->where('is_supplier', 1)->values();
             }
@@ -123,8 +125,9 @@ class DueTrackerRepository extends BaseRepository
                 $list = $list->slice($offset)->take($limit)->values();
             }
             $new_data = array();
-            foreach ($list as $l)
+            foreach ($list as $l) {
                 $new_data[] = $l;
+            }
             return [
                 'list' => $new_data
             ];
@@ -175,7 +178,6 @@ class DueTrackerRepository extends BaseRepository
                     return $item;
                 }
             );
-
             return [
                 'list' => $list
             ];
@@ -223,6 +225,43 @@ class DueTrackerRepository extends BaseRepository
     }
 
     /**
+     * @param array $list
+     * @param Partner $partner
+     * @return mixed
+     */
+    public function generateDueReminders(array $list, Partner $partner)
+    {
+        $response['today'] = [];
+        $response['previous'] = [];
+        $response['next'] = [];
+        foreach ($list['list'] as $item) {
+            $partner_pos_customer = PartnerPosCustomer::byPartnerAndCustomer($partner->id, $item['customer_id'])->first();
+            $due_date_reminder = $partner_pos_customer['due_date_reminder'];
+            if ($partner_pos_customer && $due_date_reminder) {
+                $temp['customer_name'] = $item['customer_name'];
+                $temp['customer_id'] = $item['customer_id'];
+                $temp['profile_id'] = $item['profile_id'];
+                $temp['phone'] = $partner_pos_customer->details()['phone'];
+                $temp['balance'] = $item['balance'];
+                $temp['due_date_reminder'] = $due_date_reminder;
+
+                if (Carbon::parse($due_date_reminder) == Carbon::parse(Carbon::today())) {
+                    array_push($response['today'], $temp);
+                } else {
+                    if (Carbon::parse($due_date_reminder) < (Carbon::today())) {
+                        array_push($response['previous'], $temp);
+                    } else {
+                        if ((Carbon::parse($due_date_reminder)) > (Carbon::today())) {
+                            array_push($response['next'], $temp);
+                        }
+                    }
+                }
+            }
+        }
+        return $response;
+    }
+
+    /**
      * @param Collection $list
      * @return Collection
      */
@@ -244,7 +283,6 @@ class DueTrackerRepository extends BaseRepository
                             $customerId
                         )->first();
                     }
-
                     if (isset($posProfile) && isset($posProfile->nick_name)) {
                         $item['customer_name'] = $posProfile->nick_name;
                     } else {
