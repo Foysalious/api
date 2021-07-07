@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\PartnerPosCustomer;
+use App\Sheba\AccountingEntry\Repository\AccountingDueTrackerRepository;
 use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -184,20 +185,22 @@ class DueTrackerController extends Controller
             logError($e);
             return api_response($request, null, 500);
         }
-
     }
 
     /**
      * @param Request $request
      * @param DueTrackerRepository $dueTrackerRepository
+     * @param AccountingDueTrackerRepository $accountingDueTrackerRepository
      * @return JsonResponse
      */
-    public function dueDateWiseCustomerList(Request $request, DueTrackerRepository $dueTrackerRepository)
-    {
-
+    public function dueDateWiseCustomerList(
+        Request $request,
+        DueTrackerRepository $dueTrackerRepository,
+        AccountingDueTrackerRepository $accountingDueTrackerRepository
+    ) {
         try {
             $request->merge(['balance_type' => 'due']);
-            $dueList = $dueTrackerRepository->setPartner($request->partner)->getDueList($request, false);
+            $dueList = $accountingDueTrackerRepository->setPartner($request->partner)->getDueList($request, false);
             $response = $dueTrackerRepository->generateDueReminders($dueList, $request->partner);
             return api_response($request, null, 200, ['data' => $response]);
         } catch (\Throwable $e) {
@@ -209,15 +212,18 @@ class DueTrackerController extends Controller
     /**
      * @param Request $request
      * @param DueTrackerRepository $dueTrackerRepository
+     * @param AccountingDueTrackerRepository $accountingDueTrackerRepository
      * @return JsonResponse
      */
-    public function getDueCalender(Request $request, DueTrackerRepository $dueTrackerRepository)
-    {
-
+    public function getDueCalender(
+        Request $request,
+        DueTrackerRepository $dueTrackerRepository,
+        AccountingDueTrackerRepository $accountingDueTrackerRepository
+    ) {
         try {
             $this->validate($request, ['month' => 'required', 'year' => 'required']);
             $request->merge(['balance_type' => 'due']);
-            $dueList = $dueTrackerRepository->setPartner($request->partner)->getDueList($request, false);
+            $dueList = $accountingDueTrackerRepository->setPartner($request->partner)->getDueList($request, false);
             $response = $dueTrackerRepository->generateDueCalender($dueList, $request);
             return api_response($request, null, 200, ['data' => $response]);
         } catch (ValidationException $e) {
