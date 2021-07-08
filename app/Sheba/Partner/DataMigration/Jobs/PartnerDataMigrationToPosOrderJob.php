@@ -53,6 +53,8 @@ class PartnerDataMigrationToPosOrderJob extends Job implements ShouldQueue
             $client->post('api/v1/partners/'.$this->partner->id.'/migrate', $this->data);
             $current_key = $redis_pos_order_namespace . $this->queueNo;
             $this->deleteRedisKey($current_key);
+        } else {
+            $this->release(10);
         }
    }
 
