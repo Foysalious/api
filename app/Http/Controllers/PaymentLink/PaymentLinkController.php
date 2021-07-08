@@ -89,7 +89,12 @@ class PaymentLinkController extends Controller
         }
     }
 
-    public function partnerPaymentLinks(Request $request)
+    /**
+     * @param Request $request
+     * @param PaymentLink $paymentLink
+     * @return JsonResponse
+     */
+    public function partnerPaymentLinks(Request $request, PaymentLink $paymentLink): JsonResponse
     {
         try {
             $payment_links_list = $this->paymentLinkRepo->getPartnerPaymentLinkList($request);
@@ -98,6 +103,7 @@ class PaymentLinkController extends Controller
                 $fractal       = new Manager();
                 $resources     = new Collection($links, new PaymentLinkArrayTransform());
                 $payment_links = $fractal->createData($resources)->toArray()['data'];
+                if(!is_null($request->link_type)) $payment_links = $paymentLink->filterPaymentLinkList($payment_links, $request->link_type);
                 return api_response($request, $payment_links, 200, ['payment_links' => $payment_links]);
             } else {
                 return api_response($request, [], 200, ['payment_links' => []]);
