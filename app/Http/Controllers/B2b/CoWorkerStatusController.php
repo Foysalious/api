@@ -1,7 +1,10 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use Carbon\Carbon;
 use Sheba\Business\CoWorker\Requests\BasicRequest;
 use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
+use Sheba\Reports\ExcelHandler;
+use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Business\CoWorker\Validation\CoWorkerExistenceCheck;
 use Sheba\Business\CoWorker\Updater as CoWorkerUpdater;
@@ -42,7 +45,7 @@ class CoWorkerStatusController extends Controller
      * @param BusinessMemberRepositoryInterface $business_member_repo
      * @param CoWorkerExistenceCheck $co_worker_existence_check
      */
-    public function __construct(FileRepository $file_repository, CoWorkerUpdater $co_worker_updater,BasicRequest $basic_request,
+    public function __construct(FileRepository $file_repository, CoWorkerUpdater $co_worker_updater, BasicRequest $basic_request,
                                 CoWorkerRequester $coWorker_requester, BusinessMemberRepositoryInterface $business_member_repo,
                                 CoWorkerExistenceCheck $co_worker_existence_check)
     {
@@ -98,10 +101,11 @@ class CoWorkerStatusController extends Controller
     /**
      * @param $business
      * @param Request $request
+     * @param ExcelHandler $excel_handler
      * @return JsonResponse
-     * @throws Exception
+     * @throws NotAssociativeArray
      */
-    public function bulkStatusUpdate($business, Request $request)
+    public function bulkStatusUpdate($business, Request $request, ExcelHandler $excel_handler)
     {
         $this->validate($request, [
             'employee_ids' => "required",
@@ -114,17 +118,49 @@ class CoWorkerStatusController extends Controller
         $business_member_ids = json_decode($request->employee_ids);
 
         if (in_array($requester_business_member->id, $business_member_ids)) return api_response($request, null, 404, ['message' => 'One of the Ids contains superadmin ID, which cannot be deactivated, Please check again.']);
-
+        $errors = [];
         foreach ($business_member_ids as $business_member_id) {
-            $business_member = BusinessMember::where('id', $business_member_id)->first();
+            $business_member = $this->businessMemberRepository->find($business_member_id);
             $coWorker_requester = $this->coWorkerRequester->setStatus($request->status);
             $this->coWorkerUpdater->setCoWorkerRequest($coWorker_requester)->setBusiness($business)->setBusinessMember($business_member);
             if ($this->isReInviteFeasible($business_member->status, $request->status)) $this->coWorkerUpdater->reInvite();
             if ($this->isDeleteFeasible($business_member->status, $request->status)) $this->coWorkerUpdater->delete();
             if ($business_member->status == $request->status) continue;
             if ($request->status == Statuses::DELETE) continue;
+
+            if ($this->isActive($request->status)) {
+                $this->coWorkerExistenceCheck->setBusiness($business)->setBusinessMember($business_member)
+                    ->isActiveOrInvitedInAnotherBusiness()->isEssentialInfoAvailableForActivate();
+                if ($this->coWorkerExistenceCheck->hasError()) {
+                    array_push($errors, ['email' => $this->coWorkerExistenceCheck->getEmail(), 'message' => $this->coWorkerExistenceCheck->getErrorMessage()]);
+                    continue;
+                }
+            }
+
             $this->coWorkerUpdater->statusUpdate();
         }
+
+        if ($errors) {
+            $file_name = Carbon::now()->timestamp . "_co_worker_status_change_error_$business->id.xlsx";
+            $file = $excel_handler->setName('Co worker Status Change')->setFilename($file_name)->setDownloadFormat('xlsx')->createReport($errors)->save();
+            $file_path = $this->saveFileToCDN($file, getCoWorkerStatusChangeErrorFolder(), $file_name);
+            unlink($file);
+
+            if ($this->isFailedToChangeStatusAllCoworker($errors, $business_member_ids)) {
+                return api_response($request, null, 422, [
+                    'message' => 'Alert! Status Change failed',
+                    'description' => "Download the excel file to see details",
+                    'link' => $file_path
+                ]);
+            }
+
+            return api_response($request, null, 303, [
+                'message' => 'Alert! Some Status Change failed',
+                'description' => "Download the excel file to see details",
+                'link' => $file_path
+            ]);
+        }
+
         return api_response($request, null, 200);
     }
 
@@ -212,5 +248,10 @@ class CoWorkerStatusController extends Controller
         if ($data == 'null') return true;
         if ($data == null) return true;
         return false;
+    }
+
+    private function isFailedToChangeStatusAllCoworker(array $errors, $business_member_ids)
+    {
+        return count($errors) == count($business_member_ids);
     }
 }
