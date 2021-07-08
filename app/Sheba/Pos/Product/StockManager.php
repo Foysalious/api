@@ -48,7 +48,6 @@ class StockManager
 
     private function updatedStock($quantity)
     {
-        $lastStock = 0;
         while ($quantity > 0) {
 
             $firstBatch = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->first();
@@ -59,16 +58,16 @@ class StockManager
                 $firstBatch->delete();
             }
             else if($quantity >= $firstBatch->stock && count($allBatches) == 1) {
-                $quantity = 0;
                 $negativeStock = $firstBatch->stock - $quantity;
-                $firstBatch->update(['stock' => null ]);
+                $firstBatch->update(['stock' => $negativeStock ]);
+                $quantity = 0;
             }
             else {
                 $firstBatch->update(['stock' => $firstBatch->stock - $quantity]);
                 $quantity = 0;
             }
         }
-        return $lastStock;
+        return true;
     }
 
     private function increaseUpdatedStock($quantity)
