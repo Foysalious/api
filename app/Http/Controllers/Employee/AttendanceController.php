@@ -88,12 +88,12 @@ class AttendanceController extends Controller
 
         $checkin = $action_processor->setActionName(Actions::CHECKIN)->getAction();
         $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
+        $is_note_required = 0;
         if ($request->action == Actions::CHECKIN && $checkin->isLateNoteRequired()) {
-            //$validation_data += ['note' => 'string|required_if:action,' . Actions::CHECKIN];
-            $validation_data += ['note' => 'string'];
+            $is_note_required = 1;
         }
         if ($request->action == Actions::CHECKOUT && $checkout->isLeftEarlyNoteRequired()) {
-            $validation_data += ['note' => 'string|required_if:action,' . Actions::CHECKOUT];
+            $is_note_required = 1;
         }
         if ($business->isRemoteAttendanceEnable($business_member->id)) {
             $validation_data += ['lat' => 'required|numeric', 'lng' => 'required|numeric'];
@@ -104,13 +104,14 @@ class AttendanceController extends Controller
         $attendance_action->setBusinessMember($business_member)
             ->setAction($request->action)
             ->setBusiness($business_member->business)
-            ->setNote($request->note)
             ->setDeviceId($request->device_id)
             ->setLat($request->lat)
             ->setLng($request->lng);
         $action = $attendance_action->doAction();
 
-        return response()->json(['code' => $action->getResultCode(), 'message' => $action->getResultMessage()]);
+        return response()->json(['code' => $action->getResultCode(),
+                                 'is_note_required' => $is_note_required,
+                                 'message' => $action->getResultMessage()]);
     }
 
     /**

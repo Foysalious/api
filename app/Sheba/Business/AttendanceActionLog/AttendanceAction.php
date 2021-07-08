@@ -33,7 +33,6 @@ class AttendanceAction
     private $attendanceCreator;
     private $attendanceActionLogCreator;
     private $action;
-    private $note;
     private $deviceId;
     private $userAgent;
     private $lat;
@@ -70,12 +69,6 @@ class AttendanceAction
     public function setAction($action)
     {
         $this->action = $action;
-        return $this;
-    }
-
-    public function setNote($note)
-    {
-        $this->note = $note;
         return $this;
     }
 
@@ -166,9 +159,6 @@ class AttendanceAction
                 ->setBusiness($this->business)
                 ->setWhichHalfDay($this->checkHalfDayLeave());
             if ($geo = $this->getGeo()) $this->attendanceActionLogCreator->setGeo($geo);
-            if ($this->action == Actions::CHECKIN || $this->action == Actions::CHECKOUT) {
-                $this->attendanceActionLogCreator->setNote($this->note);  
-            }
             $attendance_action_log = $this->attendanceActionLogCreator->create();
             $this->updateAttendance($attendance_action_log);
         });

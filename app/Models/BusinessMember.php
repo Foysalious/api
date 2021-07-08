@@ -88,6 +88,11 @@ class BusinessMember extends Model
         return $this->hasMany(Attendance::class)->where('date', (Carbon::now())->toDateString())->first();
     }
 
+    public function lastAttendance()
+    {
+        return $this->hasMany(Attendance::class)->orderBy('id', 'desc')->first();
+    }
+
     public function leaves()
     {
         return $this->hasMany(Leave::class);
