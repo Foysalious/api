@@ -56,7 +56,8 @@ class ExchangePosItem extends RefundNature
         $this->newOrder = $creator->setPartner($this->order->partner)->setData($this->prepareCreateData())->setRequest($this->request)->setStatus(OrderStatuses::COMPLETED)->create();
         $this->generateDetails();
         $this->saveLog();
-        $this->updateEntry($this->newOrder, 'exchange');
+        Log::info(['Exchange Order', ]);
+//        $this->updateEntry($this->newOrder, 'exchange');
         $this->transferPaidAmount();
     }
 
