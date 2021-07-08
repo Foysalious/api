@@ -55,4 +55,19 @@ class EntriesRepository extends BaseRepository
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
     }
+
+    /**
+     * @return mixed
+     * @throws AccountingEntryServerError
+     */
+    public function deleteEntry()
+    {
+        try {
+            $url = "api/entries/" . $this->entry_id;
+            return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->delete($url);
+        } catch (AccountingEntryServerError $e) {
+            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+        }
+    }
+
 }

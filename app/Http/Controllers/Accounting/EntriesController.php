@@ -35,4 +35,22 @@ class EntriesController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    /**
+     * @param Request $request
+     * @param $entry_id
+     * @return JsonResponse
+     */
+    public function delete(Request $request, $entry_id): JsonResponse
+    {
+        try {
+            $this->entriesRepo->setPartner($request->partner)->setEntryId($entry_id)->deleteEntry();
+            return api_response($request, null, 200, ['data' => "Entry delete successful"]);
+        } catch (AccountingEntryServerError $e) {
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
+    }
 }

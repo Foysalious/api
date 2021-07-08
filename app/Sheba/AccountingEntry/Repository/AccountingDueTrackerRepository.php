@@ -68,20 +68,6 @@ class AccountingDueTrackerRepository extends BaseRepository
     }
 
     /**
-     * @return mixed
-     * @throws AccountingEntryServerError
-     */
-    public function deleteEntry()
-    {
-        try {
-            $url = "api/entries/" . $this->entry_id;
-            return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->delete($url);
-        } catch (AccountingEntryServerError $e) {
-            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
-        }
-    }
-
-    /**
      * @param $request
      * @param false $paginate
      * @return array
@@ -89,37 +75,53 @@ class AccountingDueTrackerRepository extends BaseRepository
      */
     public function getDueList($request, $paginate = false): array
     {
-        try {
+//        try {
             $url = "api/due-list?";
             $url = $this->updateRequestParam($request, $url);
-            $order_by = $request->order_by;
+            $customerProfiles = null;
+            if($request->has('q') && !empty($request->q)) {
+                $profiles = PartnerPosCustomer::with([
+                 'customer' => function($q) {
+                     $q->select('id', 'profile_id');
+                 },
+                 'customer.profile' => function($q) {
+                     $q->select('name', 'mobile', 'id', 'pro_pic');
+                 }])->where('partner_id', $this->partner->id);
+
+                if (is_numeric($request->q)) {
+                    $profiles->whereHas('customer.profile', function ($query) use ($request) {
+                        $query->where('mobile', 'like', '%'.$request->q.'%');
+                    });
+                }
+                else {
+                    $profiles->whereHas('customer.profile', function ($query) use ($request) {
+                        $query->where('name', 'like', '%'.$request->q.'%');
+                    });
+                }
+                $customerProfiles = $profiles->get();
+                if ($customerProfiles->isEmpty()) {
+                    return ['list' => []];
+                }
+                $ids = $profiles->get()->pluck('customer_id');
+                $ids = implode(",", $ids->toArray());
+                $url .= "&q=$ids";
+            }
             $result = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
-            $list = $this->attachProfile(collect($result['list']));
+            if ($customerProfiles) {
+                $list = $this->attachCustomerProfile(collect($result['list']), $customerProfiles);
+            } else {
+                $list = $this->attachProfile(collect($result['list']));
+            }
             $list = $list->reject(function ($value) {
                 return $value == null;
             });
+
             if ($request->has('filter_by_supplier') && $request->filter_by_supplier == 1) {
                 $list = $list->where('is_supplier', 1)->values();
             }
-            if ($request->has('q') && !empty($request->q)) {
-                $query = trim($request->q);
-                $list = $list->filter(
-                    function ($item) use ($query) {
-                        return strpos(strtolower($item['customer_name']), "$query") !== false || strpos(
-                                strtolower($item['customer_mobile']),
-                                "$query"
-                            ) !== false;
-                    }
-                )->values();
-            }
-
             if (!empty($order_by) && $order_by == "name") {
                 $order = ($request->order == 'desc') ? 'sortByDesc' : 'sortBy';
                 $list = $list->$order('customer_name', SORT_NATURAL | SORT_FLAG_CASE)->values();
-            }
-            if ($paginate && isset($request['offset']) && isset($request['limit'])) {
-                list($offset, $limit) = calculatePagination($request);
-                $list = $list->slice($offset)->take($limit)->values();
             }
             $new_data = array();
             foreach ($list as $l)
@@ -127,9 +129,9 @@ class AccountingDueTrackerRepository extends BaseRepository
             return [
                 'list' => $new_data
             ];
-        } catch (AccountingEntryServerError $e) {
-            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
-        }
+//        } catch (AccountingEntryServerError $e) {
+//            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+//        }
     }
 
     public function getDuelistBalance($request)
@@ -260,6 +262,30 @@ class AccountingDueTrackerRepository extends BaseRepository
     }
 
     /**
+     * @param Collection $list
+     * @param $customerProfile
+     * @return Collection
+     */
+    private function attachCustomerProfile(Collection $list, $customerProfile)
+    {
+        $list = $list->map(function ($item) use ($customerProfile) {
+            $profile = $customerProfile->where('customer_id', (int)$item['party_id']);
+            $cus = $profile->map(
+                function($items) use ($item) {
+                    $item['customer_name'] = isset($items->nick_name) ? $items->nick_name : $items->customer->profile->name ;
+                    $item['customer_mobile'] =  $items->customer->profile->mobile;
+                    $item['avatar'] = $items->customer->profile->pro_pic;
+                    $item['customer_id'] = $items->customer_id;
+                    $item['is_supplier'] = $items->is_supplier;
+                    return $item;
+                }
+            );
+            return $cus->count() > 0 ? call_user_func_array('array_merge', $cus->toArray()) : [];
+        });
+        return $list;
+    }
+
+    /**
      * @param Request $request
      * @param $url
      * @return mixed|string
@@ -267,9 +293,6 @@ class AccountingDueTrackerRepository extends BaseRepository
     private function updateRequestParam(Request $request, $url)
     {
         $order_by = $request->order_by;
-        if ($request->has('limit') && $request->has('offset')) {
-            $url .= "limit=$request->limit&offset=$request->offset";
-        }
         if (!empty($order_by) && $order_by != "name") {
             $order = !empty($request->order) ? strtolower($request->order) : 'desc';
             $url .= "&order_by=$order_by&order=$order";
@@ -281,6 +304,15 @@ class AccountingDueTrackerRepository extends BaseRepository
 
         if ($request->has('start_date') && $request->has('end_date')) {
             $url .= "&start_date=$request->start_date&end_date=$request->end_date";
+        }
+
+        if (($request->has('download_pdf')) && ($request->download_pdf == 1) ||
+            ($request->has('share_pdf')) && ($request->share_pdf == 1)) {
+            return $url;
+        }
+
+        if ($request->has('limit') && $request->has('offset')) {
+            $url .= "limit=$request->limit&offset=$request->offset";
         }
         return $url;
     }

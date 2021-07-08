@@ -60,6 +60,9 @@ class DueTrackerRepository extends BaseRepository
                 });
             }
             $customerProfiles = $profiles->get();
+            if ($customerProfiles->isEmpty()) {
+                return ['list' => []];
+            }
             $ids = $profiles->get()->pluck('customer.profile.id');
             $ids = implode(",", $ids->toArray());
             $url .= "&q=$ids";
