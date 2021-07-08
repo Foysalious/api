@@ -151,16 +151,9 @@ class EmployeeController extends Controller
         $is_note_required = 0;
         $note_action = null;
         if ($last_attendance_log && !$last_attendance_log['note']) {
-            $checkin = $action_processor->setActionName(Actions::CHECKIN)->getAction();
-            $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
-            if ($last_attendance_log['action'] == Actions::CHECKIN && $checkin->isLateNoteRequiredForSpecificDate($last_attendance['date'], $last_attendance['checkin_time'])) {
-                $is_note_required = 1;
-                $note_action = Actions::CHECKIN;
-            }
-            if ($last_attendance_log['action'] == Actions::CHECKOUT && $checkout->isLeftEarlyNoteRequiredForSpecificDate($last_attendance['date'], $last_attendance['checkout_time'])) {
-                $is_note_required = 1;
-                $note_action = Actions::CHECKOUT;
-            }
+           $note_data = $this->checkNoteRequired($last_attendance, $last_attendance_log, $action_processor);
+           $is_note_required = $note_data['is_note_required'];
+           $note_action = $note_data['note_action'];
         }
 
         $approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMember($business_member);
@@ -381,5 +374,33 @@ class EmployeeController extends Controller
             }
         }
         return $pending_leave_count;
+    }
+
+    /**
+     * @param $last_attendance
+     * @param $last_attendance_log
+     * @param ActionProcessor $action_processor
+     * @return array
+     */
+    private function checkNoteRequired($last_attendance, $last_attendance_log, ActionProcessor $action_processor)
+    {
+        $is_note_required = 0;
+        $note_action = null;
+
+        $checkin = $action_processor->setActionName(Actions::CHECKIN)->getAction();
+        $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
+        if ($last_attendance_log['action'] == Actions::CHECKIN && $checkin->isLateNoteRequiredForSpecificDate($last_attendance['date'], $last_attendance['checkin_time'])) {
+            $is_note_required = 1;
+            $note_action = Actions::CHECKIN;
+        }
+        if ($last_attendance_log['action'] == Actions::CHECKOUT && $checkout->isLeftEarlyNoteRequiredForSpecificDate($last_attendance['date'], $last_attendance['checkout_time'])) {
+            $is_note_required = 1;
+            $note_action = Actions::CHECKOUT;
+        }
+
+        return [
+            'is_note_required' => $is_note_required,
+            'note_action' => $note_action
+        ];
     }
 }
