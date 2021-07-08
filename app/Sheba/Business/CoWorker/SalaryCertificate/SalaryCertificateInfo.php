@@ -18,6 +18,7 @@ class SalaryCertificateInfo
     private $profile;
     /** @var BusinessMember $businessMember */
     private $businessMember;
+    private $profile;
 
     /**
      * @param BusinessMember $business_member
