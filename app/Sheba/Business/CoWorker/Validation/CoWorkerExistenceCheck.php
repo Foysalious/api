@@ -23,8 +23,13 @@ class CoWorkerExistenceCheck
     private $member;
     private $email;
     private $mobile;
-
-
+    private $profile;
+    
+    /**
+     * CoWorkerExistenceCheck constructor.
+     * @param ProfileRepository $profile_repository
+     * @param BusinessMemberRepositoryInterface $business_member_repository
+     */
     public function __construct(ProfileRepository $profile_repository, BusinessMemberRepositoryInterface $business_member_repository)
     {
         $this->profileRepository = $profile_repository;
@@ -49,6 +54,7 @@ class CoWorkerExistenceCheck
     {
         $this->businessMember = $business_member;
         $this->member = $this->businessMember->member;
+        $this->profile = $this->member->profile;
         return $this;
     }
 
@@ -63,6 +69,14 @@ class CoWorkerExistenceCheck
     }
 
     /**
+     * @return mixed
+     */
+    public function getEmail()
+    {
+        return $this->email;
+    }
+
+    /**
      * @param $mobile
      * @return $this
      */
@@ -72,6 +86,9 @@ class CoWorkerExistenceCheck
         return $this;
     }
 
+    /**
+     * @return $this
+     */
     public function isMobileNumberAlreadyTaken()
     {
         $business_member = $this->businessMemberRepository->checkExistingMobile($this->mobile);
@@ -88,6 +105,7 @@ class CoWorkerExistenceCheck
     {
         if ($this->member->businesses()->where('businesses.id', '<>', $this->business->id)->count() > 0) {
             $this->setError(422, "This person is already active or invited in another business");
+            if ($this->profile->email) $this->setEmail($this->profile->email);
         }
         return $this;
     }
@@ -121,12 +139,19 @@ class CoWorkerExistenceCheck
         return $this;
     }
 
+    /**
+     * @param $business_member
+     * @return $this
+     */
     private function setBusinessMemberId($business_member)
     {
         $this->businessMember = $business_member;
         return $this;
     }
 
+    /**
+     * @return BusinessMember
+     */
     public function getBusinessMemberId()
     {
         return $this->businessMember;
@@ -151,4 +176,22 @@ class CoWorkerExistenceCheck
         return $this->errorCode = null;
     }
 
+    /**
+     * @return $this
+     */
+    public function isEssentialInfoAvailableForActivate()
+    {
+        $errors = [];
+        $result = null;
+        if (!$this->profile->name) array_push($errors, 'Name not found');
+        if (!$this->profile->gender) array_push($errors, "Gender not found");
+        if (!$this->businessMember->business_role_id) array_push($errors, "Designation not found");
+        if (!$this->businessMember->join_date) array_push($errors, "Join date not found");
+
+        if ($errors) $result = implode(', ', $errors);
+        $this->setError(409, $result);
+
+        if ($this->profile->email) $this->setEmail($this->profile->email);
+        return $this;
+    }
 }
