@@ -26,7 +26,6 @@ class AccountingRoute
                 $api->get('/due-list/{customerId}/balance', 'Accounting\\AccountingDueTrackerController@dueListBalanceByCustomer');
                 $api->post('/', 'Accounting\\AccountingDueTrackerController@store');
                 $api->post('/{entry_id}', 'Accounting\\AccountingDueTrackerController@update');
-                $api->delete('/{entry_id}', 'Accounting\\AccountingDueTrackerController@delete');
             });
             $api->group(['prefix' => 'home'], function ($api) {
                 $api->get('/asset-balance', 'Accounting\\HomepageController@getAssetAccountBalance');
@@ -40,6 +39,7 @@ class AccountingRoute
             });
             $api->group(['prefix' => 'entries'], function ($api) {
                 $api->get('/{entry_id}', 'Accounting\\EntriesController@details');
+                $api->delete('/{entry_id}', 'Accounting\\EntriesController@delete');
             });
             $api->group(['prefix' => 'reports'], function ($api) {
                 $api->get('/pos/customer-wise', 'Accounting\\ReportsController@getCustomerWiseReport');
