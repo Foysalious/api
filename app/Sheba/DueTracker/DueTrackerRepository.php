@@ -65,6 +65,9 @@ class DueTrackerRepository extends BaseRepository
             }
             $customerProfiles = $profiles->get();
             $ids = $profiles->get()->pluck('customer.profile.id');
+            if (count($ids) < 1) {
+                return [];
+            }
             $ids = implode(",", $ids->toArray());
             $url .= "&q=$ids";
         }
