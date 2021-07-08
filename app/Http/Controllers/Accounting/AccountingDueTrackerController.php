@@ -7,6 +7,7 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ModificationFields;
 use Sheba\Reports\PdfHandler;
 use Sheba\Usage\Usage;
@@ -68,24 +69,6 @@ class AccountingDueTrackerController extends Controller
             return api_response($request, $response, 200, ['data' => $response]);
         } catch (AccountingEntryServerError $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
-        }
-    }
-
-    /**
-     * @param Request $request
-     * @param $entry_id
-     * @return JsonResponse
-     */
-    public function delete(Request $request, $entry_id): JsonResponse
-    {
-        try {
-            $this->dueTrackerRepo->setPartner($request->partner)->setEntryId($entry_id)->deleteEntry();
-            return api_response($request, null, 200, ['data' => "Entry delete successful"]);
-        } catch (AccountingEntryServerError $e) {
-            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
-        } catch (\Throwable $e) {
-            logError($e);
-            return api_response($request, null, 500);
         }
     }
 

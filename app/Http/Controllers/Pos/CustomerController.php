@@ -5,12 +5,13 @@ use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
+use App\Sheba\AccountingEntry\Repository\AccountingDueTrackerRepository;
 use App\Transformers\CustomSerializer;
 use App\Transformers\PosOrderTransformer;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
@@ -220,17 +221,39 @@ class CustomerController extends Controller
         }
     }
 
-    public function delete(Request $request, $partner, $customer, DueTrackerRepository $dueTrackerRepository)
-    {
+    /**
+     * @param Request $request
+     * @param $partner
+     * @param $customer
+     * @param DueTrackerRepository $dueTrackerRepository
+     * @param AccountingDueTrackerRepository $accDueTrackerRepository
+     * @return JsonResponse
+     */
+    public function delete(
+        Request $request,
+        $partner,
+        $customer,
+        DueTrackerRepository $dueTrackerRepository,
+        AccountingDueTrackerRepository $accDueTrackerRepository
+    ): JsonResponse {
         try {
-            $partner_pos_customer = PartnerPosCustomer::byPartner($request->partner->id)->where('customer_id', $customer)->with(['customer'])->first();
+            $partner_pos_customer = PartnerPosCustomer::byPartner($request->partner->id)->where(
+                'customer_id',
+                $customer
+            )->with(['customer'])->first();
             /** @var PosCustomer $customer */
-            if (empty($partner_pos_customer) || empty($partner_pos_customer->customer))
+            if (empty($partner_pos_customer) || empty($partner_pos_customer->customer)) {
                 throw new InvalidPartnerPosCustomer();
+            }
             $customer = $partner_pos_customer->customer;
-            $dueTrackerRepository->setPartner($request->partner)->removeCustomer($customer->profile_id);
-            $this->deletePosOrder($request->partner->id,$customer->id);
-            $partner_pos_customer->delete();
+            DB::transaction(
+                function () use ($customer, $dueTrackerRepository, $partner_pos_customer, $request, $accDueTrackerRepository) {
+                    $dueTrackerRepository->setPartner($request->partner)->removeCustomer($customer->profile_id);
+                    $accDueTrackerRepository->setPartner($request->partner)->deleteCustomer($customer->id);
+                    $this->deletePosOrder($request->partner->id, $customer->id);
+                    $partner_pos_customer->delete();
+                }
+            );
             return api_response($request, true, 200);
         } catch (InvalidPartnerPosCustomer $e) {
             return api_response($request, null, 500, ['message' => $e->getMessage()]);

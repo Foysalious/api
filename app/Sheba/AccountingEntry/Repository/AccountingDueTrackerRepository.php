@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
+use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\RequestIdentification;
 
 class AccountingDueTrackerRepository extends BaseRepository
@@ -52,19 +53,11 @@ class AccountingDueTrackerRepository extends BaseRepository
         }
     }
 
-    private function createEntryData(Request $request, $type)
+
+    public function deleteCustomer($customerId)
     {
-        $data['created_from'] = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
-        $data['amount'] = (double)$request->amount;
-        $data['source_type'] = $type;
-        $data['note'] = $request->note;
-        $data['debit_account_key'] = $type === EntryTypes::DUE ? $request->customer_id : $request->account_key;
-        $data['credit_account_key'] = $type === EntryTypes::DUE ? $request->account_key : $request->customer_id;
-        $data['customer_id'] = $request->customer_id;
-        $data['customer_name'] = $request->customer_name;
-        $data['entry_at'] = $request->date ?: Carbon::now()->format('Y-m-d H:i:s');
-        $data['attachments'] = $this->uploadAttachments($request);
-        return $data;
+        $url = "api/due-list/" . $customerId;
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->delete($url);
     }
 
     /**
@@ -315,6 +308,21 @@ class AccountingDueTrackerRepository extends BaseRepository
             $url .= "limit=$request->limit&offset=$request->offset";
         }
         return $url;
+    }
+
+    private function createEntryData(Request $request, $type)
+    {
+        $data['created_from'] = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
+        $data['amount'] = (double)$request->amount;
+        $data['source_type'] = $type;
+        $data['note'] = $request->note;
+        $data['debit_account_key'] = $type === EntryTypes::DUE ? $request->customer_id : $request->account_key;
+        $data['credit_account_key'] = $type === EntryTypes::DUE ? $request->account_key : $request->customer_id;
+        $data['customer_id'] = $request->customer_id;
+        $data['customer_name'] = $request->customer_name;
+        $data['entry_at'] = $request->date ?: Carbon::now()->format('Y-m-d H:i:s');
+        $data['attachments'] = $this->uploadAttachments($request);
+        return $data;
     }
 
     /**
