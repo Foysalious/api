@@ -1807,7 +1807,7 @@
             "time": "2017-03-12T09:23:10+00:00"
         },
         {
-            "name": "jeremeamia/SuperClosure",
+            "name": "jeremeamia/superclosure",
             "version": "2.3.0",
             "source": {
                 "type": "git",
@@ -3782,7 +3782,7 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
-                "reference": "a934df65874695656bdfcd76a876e2e545711de6"
+                "reference": "cdf345054de53a8c791368755bb5cd45ca4717aa"
             },
             "require": {
                 "php": ">=5.4"
@@ -3809,7 +3809,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2021-06-07T11:30:23+00:00"
+            "time": "2021-07-07T08:09:13+00:00"
         },
         {
             "name": "sheba/elasticsearch",
@@ -3925,7 +3925,7 @@
             "source": {
                 "type": "git",
                 "url": "https://mac_pasha@bitbucket.org/startern/sheba_sms.git",
-                "reference": "9fb24dbaa97e43d61140d74d7f9638e7a3eeeeb8"
+                "reference": "074f6a0534e982ce08a7cb768b3d9decf42c8ca4"
             },
             "require": {
                 "ext-curl": "*"
@@ -3946,7 +3946,7 @@
                 }
             ],
             "description": "Sms for Sheba",
-            "time": "2021-05-18T09:09:47+00:00"
+            "time": "2021-06-22T08:18:14+00:00"
         },
         {
             "name": "sheba/voucher",
