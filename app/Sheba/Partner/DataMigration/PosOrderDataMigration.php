@@ -7,8 +7,6 @@ use App\Models\PosOrderLog;
 use App\Sheba\InventoryService\InventoryServerClient;
 use App\Sheba\Partner\DataMigration\Jobs\PartnerDataMigrationToPosOrderJob;
 use Illuminate\Support\Facades\Redis;
-use Sheba\Pos\Repositories\Interfaces\PosDiscountRepositoryInterface;
-use Sheba\Pos\Repositories\PosOrderItemRepository;
 use DB;
 use stdClass;
 
@@ -30,10 +28,8 @@ class PosOrderDataMigration
     private $posOrderLogs;
 
 
-    public function __construct(PosDiscountRepositoryInterface $posOrderDiscountRepository, PosOrderItemRepository $posOrderItemRepository, InventoryServerClient $inventoryServerClient)
+    public function __construct(InventoryServerClient $inventoryServerClient)
     {
-        $this->posOrderDiscountRepository = $posOrderDiscountRepository;
-        $this->posOrderItemRepository = $posOrderItemRepository;
         $this->inventoryServerClient = $inventoryServerClient;
     }
 
@@ -105,7 +101,7 @@ class PosOrderDataMigration
 
     private function generatePosOrdersMigrationData()
     {
-        $pos_orders = PosOrder::where('partner_id', $this->partner->id)
+        $pos_orders = PosOrder::where('partner_id', $this->partner->id)->where('is_migrated', '<>', 1)
             ->select('id', 'partner_wise_order_id', 'partner_id', 'customer_id', DB::raw('(CASE 
                         WHEN pos_orders.sales_channel = "pos" THEN "1" 
                         ELSE "2" 

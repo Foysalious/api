@@ -22,8 +22,8 @@ class PartnerDataMigrationToPosOrderJob extends Job implements ShouldQueue
 
     public function __construct($partner, $data, $queueNo)
     {
-        $this->connection = 'data_migration';
-        $this->queue = 'data_migration';
+        $this->connection = 'pos_rebuild_data_migration';
+        $this->queue = 'pos_rebuild_data_migration';
         $this->partner = $partner;
         $this->data = $data;
         $this->queueNo = $queueNo;
@@ -53,6 +53,8 @@ class PartnerDataMigrationToPosOrderJob extends Job implements ShouldQueue
             $client->post('api/v1/partners/'.$this->partner->id.'/migrate', $this->data);
             $current_key = $redis_pos_order_namespace . $this->queueNo;
             $this->deleteRedisKey($current_key);
+        } else {
+            $this->release(10);
         }
    }
 

@@ -154,9 +154,8 @@ class InventoryDataMigration
 
     private function generatePartnerPosServicesMigrationData()
     {
-        $partner_pos_services = $this->partnerPosServiceRepository->where('partner_id', $this->partner->id);
-        $this->partnerPosServiceIds = $partner_pos_services;
-        $products = $partner_pos_services->withTrashed()->select('id', 'partner_id', 'pos_category_id AS category_id',
+        $products = $this->partnerPosServiceRepository->where('partner_id', $this->partner->id)
+            ->where('is_migrated', '<>', 1)->withTrashed()->select('id', 'partner_id', 'pos_category_id AS category_id',
             'name', 'app_thumb', 'description', 'cost', 'price', 'unit', 'wholesale_price', 'stock', 'warranty', 'warranty_unit',
             'vat_percentage', 'publication_status', 'is_published_for_shop', 'created_by_name', 'updated_by_name',
             'created_at', 'updated_at', 'deleted_at')->get()->toArray();

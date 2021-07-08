@@ -3,7 +3,6 @@
 use App\Exceptions\Pos\DataMigrationException;
 use App\Models\Partner;
 use App\Sheba\Partner\DataMigration\PosOrderDataMigration;
-use Illuminate\Support\Facades\Redis;
 use Sheba\ModificationFields;
 use Sheba\Partner\DataMigration\Jobs\PartnerMigrationCompleteJob;
 use Sheba\Partner\DataMigration\Jobs\PartnerMigrationStartJob;
@@ -19,9 +18,6 @@ class DataMigration
      * @var PosOrderDataMigration
      */
     private $posOrderDataMigration;
-    /**
-     * @var SmanagerUserDataMigration
-     */
     private $smanagerUserDataMigration;
 
     public function __construct(InventoryDataMigration $inventoryDataMigration, PosOrderDataMigration $posOrderDataMigration, SmanagerUserDataMigration $smanagerUserDataMigration)

@@ -1,31 +1,18 @@
 <?php namespace Sheba\Partner\DataMigration;
 
 use App\Models\Partner;
-use App\Sheba\SmanagerUserService\SmanagerUserServerClient;
+use Illuminate\Support\Facades\Redis;
 use Sheba\Partner\DataMigration\Jobs\PartnerDataMigrationToSmanagerUserJob;
-use Sheba\Repositories\PartnerRepository;
 use DB;
 
 class SmanagerUserDataMigration
 {
     const CHUNK_SIZE = 10;
+    private $currentQueue = 1;
     /** @var Partner */
     private $partner;
-    /** @var SmanagerUserServerClient */
-    private $client;
-    /** @var PartnerRepository */
-    private $partnerRepository;
-
-    /**
-     * PosCustomerDataMigration constructor.
-     * @param SmanagerUserServerClient $client
-     * @param PartnerRepository $partnerRepository
-     */
-    public function __construct(SmanagerUserServerClient $client, PartnerRepository $partnerRepository)
-    {
-        $this->client = $client;
-        $this->partnerRepository = $partnerRepository;
-    }
+    private $partnerInfo;
+    private $posCustomers;
 
     /**
      * @param Partner $partner
@@ -39,13 +26,22 @@ class SmanagerUserDataMigration
 
     public function migrate()
     {
-        $this->migratePartner();
-        $this->migratePosCustomers();
+        $this->generateMigrationData();
+        $this->migratePartner($this->partnerInfo);
+        $this->migratePosCustomers($this->posCustomers);
     }
 
-    private function migratePartner()
+    private function generateMigrationData()
     {
-        dispatch(new PartnerDataMigrationToSmanagerUserJob($this->partner, ['partner_info' => $this->generatePartnerMigrationData()]));
+        $this->partnerInfo = $this->generatePartnerMigrationData();
+        $this->posCustomers = $this->generatePosCustomersMigrationData();
+    }
+
+    private function migratePartner($data)
+    {
+        $this->setRedisKey();
+        dispatch(new PartnerDataMigrationToSmanagerUserJob($this->partner, ['partner_info' => $data], $this->currentQueue));
+        $this->increaseCurrentQueueValue();
     }
 
     private function generatePartnerMigrationData()
@@ -57,11 +53,13 @@ class SmanagerUserDataMigration
         ];
     }
 
-    private function migratePosCustomers()
+    private function migratePosCustomers($data)
     {
-        $chunks = array_chunk($this->generatePosCustomersMigrationData(), self::CHUNK_SIZE);
+        $chunks = array_chunk($data, self::CHUNK_SIZE);
         foreach ($chunks as $chunk) {
-            dispatch(new PartnerDataMigrationToSmanagerUserJob($this->partner, ['pos_customers' => $chunk]));
+            $this->setRedisKey();
+            dispatch(new PartnerDataMigrationToSmanagerUserJob($this->partner, ['pos_customers' => $chunk], $this->currentQueue));
+            $this->increaseCurrentQueueValue();
         }
     }
 
@@ -78,5 +76,15 @@ class SmanagerUserDataMigration
                 'profiles.dob', 'profiles.pro_pic', 'profiles.created_by_name', 'profiles.updated_by_name', 'profiles.created_at',
                 'profiles.updated_at')
             ->get();
+    }
+
+    private function setRedisKey()
+    {
+        Redis::set('DataMigration::Partner::' . $this->partner->id . '::SmanagerUser::Queue::' . $this->currentQueue, 'initiated');
+    }
+
+    private function increaseCurrentQueueValue()
+    {
+        $this->currentQueue += 1;
     }
 }

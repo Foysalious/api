@@ -16,20 +16,21 @@ class PartnerMigrationCompleteJob extends Job implements ShouldQueue
 
     public function __construct($partner)
     {
-        $this->connection = 'data_migration';
-        $this->queue = 'data_migration';
+        $this->connection = 'pos_rebuild_data_migration';
+        $this->queue = 'pos_rebuild_data_migration';
         $this->partner = $partner;
     }
 
     public function handle()
     {
-        if ($this->isQueuesProcessed()) $this->storeSuccessLog();
+        $this->isQueuesProcessed() ? $this->storeSuccessLog() : $this->release(10);
     }
 
     private function isQueuesProcessed(): bool
     {
         return empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::Inventory::Queue::*')) &&
-            empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::PosOrder::Queue::*'));
+            empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::PosOrder::Queue::*')) &&
+            empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::SmanagerUser::Queue::*'));
     }
 
     private function storeSuccessLog()
