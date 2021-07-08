@@ -12,6 +12,7 @@ class CollectionService
     protected $description;
     protected $partner_id, $is_published, $thumb, $banner, $app_thumb, $app_banner, $sharding_id;
     protected $collection_id, $products;
+    protected $offset,$limit;
 
     public function __construct(InventoryServerClient $client)
     {
@@ -128,9 +129,27 @@ class CollectionService
         return $this;
     }
 
+    /**
+     * @param mixed $offset
+     */
+    public function setOffset($offset)
+    {
+        $this->offset = $offset;
+        return $this;
+    }
+
+    /**
+     * @param mixed $limit
+     */
+    public function setLimit($limit)
+    {
+        $this->limit = $limit;
+        return $this;
+    }
+
     public function getAllCollection()
     {
-        return $this->client->get('api/v1/partners/' . $this->partner_id . '/collections');
+        return $this->client->get('api/v1/partners/' . $this->partner_id . '/collections?'. 'offset='. $this->offset . '&limit='. $this->limit);
     }
 
     public function store()
