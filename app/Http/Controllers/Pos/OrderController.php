@@ -14,6 +14,7 @@ use App\Transformers\PosOrderTransformer;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
@@ -302,6 +303,7 @@ class OrderController extends Controller
             $return_nature = $is_returned ? $this->getReturnType($request, $order) : null;
             /** @var RefundNature $refund */
             $refund = NatureFactory::getRefundNature($order, $request->all(), $refund_nature, $return_nature);
+            Log::info(["Here is product update", $refund_nature, $return_nature, $request->services]);
             $request->merge([
                 'refund_nature' => $refund_nature,
                 'return_nature' => $return_nature
