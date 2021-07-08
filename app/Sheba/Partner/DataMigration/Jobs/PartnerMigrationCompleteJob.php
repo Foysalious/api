@@ -16,8 +16,8 @@ class PartnerMigrationCompleteJob extends Job implements ShouldQueue
 
     public function __construct($partner)
     {
-        $this->connection = 'data_migration';
-        $this->queue = 'data_migration';
+        $this->connection = 'pos_rebuild_data_migration';
+        $this->queue = 'pos_rebuild_data_migration';
         $this->partner = $partner;
     }
 

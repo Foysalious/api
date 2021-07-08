@@ -75,10 +75,10 @@ return [
                 'queue' => 'business_notification',
                 'expire' => 60
             ],
-            'data_migration' => [
+            'pos_rebuild_data_migration' => [
                 'driver' => 'redis',
                 'connection' => 'default',
-                'queue' => 'data_migration',
+                'queue' => 'pos_rebuild_data_migration',
                 'expire' => 60
             ],
         ] + $top_up_queues,
