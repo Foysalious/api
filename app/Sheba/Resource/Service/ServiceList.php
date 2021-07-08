@@ -51,8 +51,10 @@ class ServiceList
             $services->each(function (&$service) {
                 if ($service->variable_type == 'Options') {
                     $service['questions'] = $this->formatServiceQuestionsAndAnswers($service);
+                    $service['option_prices'] = $this->formatOptionWithPrice(json_decode($service->pivot->prices));
                 } else {
                     $service['questions'] = [];
+                    $service['option_prices'] = [];
                 }
                 array_forget($service, 'variables');
                 removeRelationsAndFields($service);
