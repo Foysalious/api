@@ -10,6 +10,7 @@ use Sheba\Business\AttendanceActionLog\ActionChecker\ActionChecker;
 use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
 use Sheba\Business\AttendanceActionLog\AttendanceAction;
 use App\Transformers\Business\AttendanceTransformer;
+use App\Sheba\Business\Attendance\Note\Updater as AttendanceNoteUpdater;
 use Illuminate\Validation\ValidationException;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
@@ -169,6 +170,28 @@ class AttendanceController extends Controller
         ];
 
         return api_response($request, null, 200, ['info' => $data]);
+    }
+
+    public function storeNote(Request $request, AttendanceNoteUpdater $note_updater)
+    {
+        $validation_data = [
+            'action' => 'required|string|in:' . implode(',', Actions::get()),
+            'date' => 'required|string',
+            'note' => 'required|string'
+        ];
+        $this->validate($request, $validation_data);
+
+        $business_member = $this->getBusinessMember($request);
+        /** @var Business $business */
+        $business = $this->getBusiness($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $this->setModifier($business_member->member);
+
+        $note_updater->setBusinessMember($business_member)
+                     ->setAction($request->action)
+                     ->setDate($request->date)
+                     ->setNote($request->note)
+                     ->doAction();
     }
 
 }
