@@ -1,8 +1,7 @@
 <?php namespace Sheba\Business\CoWorker;
 
-use App\Models\Business;
+use Sheba\Business\BusinessMemberStatusChangeLog\Creator as BusinessMemberStatusChangeLogCreator;
 use Sheba\Business\BusinessMember\Requester as BusinessMemberRequester;
-use Sheba\Business\CoWorker\Email\Invite;
 use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Business\BusinessMember\Creator as BusinessMemberCreator;
@@ -20,6 +19,7 @@ use Sheba\Business\Role\Updater as RoleUpdater;
 use Sheba\Business\Role\Creator as RoleCreator;
 use Sheba\Helpers\HasErrorCodeAndMessage;
 use Sheba\Repositories\ProfileRepository;
+use Sheba\Business\CoWorker\Email\Invite;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\FileManagers\CdnFileManager;
 use App\Repositories\FileRepository;
@@ -29,6 +29,7 @@ use App\Models\BusinessMember;
 use Intervention\Image\Image;
 use Sheba\ModificationFields;
 use App\Models\BusinessRole;
+use App\Models\Business;
 use App\Models\Profile;
 use App\Models\Member;
 use Carbon\Carbon;
@@ -91,6 +92,8 @@ class Updater
      * @var array
      */
     private $businessMemberData = [];
+    /**  @var BusinessMemberStatusChangeLogCreator $businessMemberStatusChangeLogCreator */
+    private $businessMemberStatusChangeLogCreator;
 
     /**
      * Updater constructor.
@@ -106,13 +109,15 @@ class Updater
      * @param ProfileBankInfoInterface $profile_bank_information
      * @param MemberRepositoryInterface $member_repository
      * @param BusinessRoleRepositoryInterface $business_role_repository
+     * @param BusinessMemberStatusChangeLogCreator $business_member_status_change_log_creator
      */
     public function __construct(FileRepository $file_repository, ProfileRepository $profile_repository,
                                 BusinessMemberRepositoryInterface $business_member_repository,
                                 RoleRequester $role_requester, RoleCreator $role_creator, RoleUpdater $role_updater,
                                 BusinessMemberRequester $business_member_requester, BusinessMemberCreator $business_member_creator,
                                 BusinessMemberUpdater $business_member_updater, ProfileBankInfoInterface $profile_bank_information,
-                                MemberRepositoryInterface $member_repository, BusinessRoleRepositoryInterface $business_role_repository)
+                                MemberRepositoryInterface $member_repository, BusinessRoleRepositoryInterface $business_role_repository,
+                                BusinessMemberStatusChangeLogCreator $business_member_status_change_log_creator)
     {
         $this->fileRepository = $file_repository;
         $this->profileRepository = $profile_repository;
@@ -126,6 +131,7 @@ class Updater
         $this->profileBankInfoRepository = $profile_bank_information;
         $this->memberRepository = $member_repository;
         $this->businessRoleRepository = $business_role_repository;
+        $this->businessMemberStatusChangeLogCreator = $business_member_status_change_log_creator;
     }
 
     /**
@@ -500,14 +506,23 @@ class Updater
 
     public function reInvite()
     {
-        (new Invite($this->profile))->sendReInviteMail();
+        DB::beginTransaction();
+        try {
+            $this->businessMemberStatusChangeLogCreator->setBusinessMember($this->businessMember)->setFromStatus('invited')->setToStatus('invited')->create();
+            (new Invite($this->profile))->sendReInviteMail();
+            DB::commit();
+        } catch (Throwable $e) {
+            DB::rollback();
+            app('sentry')->captureException($e);
+            return null;
+        }
     }
 
     public function activeFormInvite()
     {
         DB::beginTransaction();
         try {
-            $profile_data['name'] =  $this->basicRequest->getFirstName();
+            $profile_data['name'] = $this->basicRequest->getFirstName();
             $profile_data['gender'] = $this->personalRequest->getGender();
             $this->profile = $this->profileRepository->update($this->profile, $profile_data);
 
