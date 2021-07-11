@@ -90,6 +90,13 @@ class CollectionServiceProvider extends ServiceProvider
                 ]
             );
         });
+
+        Collection::macro('forgetEach', function($key) {
+            return collect($this->items)->map(function ($item) use ($key) {
+                if (array_key_exists($key, $item)) unset($item[$key]);
+                return $item;
+            });
+        });
     }
 
     /**

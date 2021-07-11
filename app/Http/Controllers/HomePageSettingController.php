@@ -11,7 +11,6 @@ use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
-use Illuminate\Validation\ValidationException;
 use Sheba\AppSettings\HomePageSetting\DS\Builders\ItemBuilder;
 use Throwable;
 
@@ -19,48 +18,36 @@ class HomePageSettingController extends Controller
 {
     public function index(Request $request)
     {
-        try {
-            /** @var Repository $store */
-            $store = Cache::store('redis');
-            $portals = config('sheba.portals');
-            $screens = config('sheba.screen');
-            $this->validate($request, [
-                'for' => 'string|in:app,web,app_json,app_json_revised',
-                'portal' => 'in:' . implode(',', $portals),
-                'screen' => 'in:' . implode(',', $screens),
-                'location' => 'numeric',
-                'lat' => 'numeric',
-                'lng' => 'numeric'
-            ]);
-            $setting_key = null;
-            $location = 4;
+        $portals = config('sheba.portals');
+        $screens = config('sheba.screen');
+        $this->validate($request, [
+            'for' => 'string|in:app,web,app_json,app_json_revised',
+            'portal' => 'in:' . implode(',', $portals),
+            'screen' => 'in:' . implode(',', $screens),
+            'location' => 'numeric',
+            'lat' => 'numeric',
+            'lng' => 'numeric'
+        ]);
+        $setting_key = null;
+        $location = 4;
 
-            if ($request->has('location')) {
-                $location = (int)$request->location;
-            } elseif ($request->has('lat') && $request->has('lng')) {
-                $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
-                if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
-            }
-            $city = (Location::find($location))->city_id;
-            $location_id = ($city == 1) ? 4 : 120;
-            $portal = ($request->get('portal') == 'customer-app') ? 'app' : 'web';
-
-            $settings = file_get_contents(base_path() . '/public/screen_setting/screen_setting_' . $portal . '_' . $location_id . '.json');
-
-            if ($settings) {
-                $settings = json_decode($settings);
-                if ($request->portal == 'customer-portal') $settings = $this->formatWeb($settings, $location);
-                return api_response($request, $settings, 200, ['settings' => $settings]);
-            } else {
-                return api_response($request, null, 404);
-            }
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        if ($request->has('location')) {
+            $location = (int)$request->location;
+        } elseif ($request->has('lat') && $request->has('lng')) {
+            $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+            if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
         }
+        $city = (Location::find($location))->city_id;
+        $location_id = ($city == 1) ? 4 : 120;
+        $portal = ($request->get('portal') == 'customer-app') ? 'app' : 'web';
+
+        $settings = file_get_contents(base_path() . '/public/screen_setting/screen_setting_' . $portal . '_' . $location_id . '.json');
+
+        if (!$settings) return api_response($request, null, 404);
+
+        $settings = json_decode($settings);
+        if ($request->portal == 'customer-portal') $settings = $this->formatWeb($settings, $location);
+        return api_response($request, $settings, 200, ['settings' => $settings]);
     }
 
     /**
@@ -69,61 +56,51 @@ class HomePageSettingController extends Controller
      */
     public function indexNew(Request $request)
     {
-        try {
-            /** @var Repository $store */
-            $store = Cache::store('redis');
-            $portals = config('sheba.portals');
-            $screens = config('sheba.screen');
-            $platforms = constants('DEVELOPMENT_PLATFORMS');
-            $this->validate($request, [
-                'for' => 'string|in:app,web,app_json,app_json_revised',
-                'portal' => 'in:' . implode(',', $portals),
-                'screen' => 'in:' . implode(',', $screens),
-                'location' => 'numeric',
-                'lat' => 'numeric',
-                'platform' => 'sometimes|in:' . implode(',', $platforms),
-                'lng' => 'numeric'
-            ]);
-            $setting_key = null;
-            $location = '';
-            if ($request->has('location')) {
-                $location = (int)$request->location;
-            } elseif ($request->has('lat') && $request->has('lng')) {
-                $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
-                if (!is_null($hyperLocation)) $location = $hyperLocation->location_id;
-            }
-            if ($request->has('portal') && $request->has('screen')) {
-                $platform = $this->getPlatform($request);
-                $setting_key = 'NewScreenSetting::' . snake_case(camel_case($request->portal)) . '_' . $request->screen . "_" . strtolower($platform) . "_" . $location;
-            } else {
-                $setting_key = 'NewScreenSetting::customer_app_home_android_4';
-            }
-
-            $settings = $store->get($setting_key);
-            if ($settings) {
-                $settings = json_decode($settings);
-                if (empty($settings->sections)) return api_response($request, null, 404);
-                if ($request->portal == 'customer-portal') {
-                    $this->categoryGroupPushToCategory($settings, $location);
-                }
-
-                foreach ($settings->sections as &$section) {
-                    if($section->item_type == 'service_group'){
-                        $this->addFlashOfferDataToServiceGroup($section);
-                    }
-                }
-                $settings->min_order_amount_for_emi = config('sheba.min_order_amount_for_emi');
-                return api_response($request, $settings, 200, ['settings' => $settings]);
-            } else {
-                return api_response($request, null, 404);
-            }
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        /** @var Repository $store */
+        $store = Cache::store('redis');
+        $portals = config('sheba.portals');
+        $screens = config('sheba.screen');
+        $platforms = constants('DEVELOPMENT_PLATFORMS');
+        $this->validate($request, [
+            'for' => 'string|in:app,web,app_json,app_json_revised',
+            'portal' => 'in:' . implode(',', $portals),
+            'screen' => 'in:' . implode(',', $screens),
+            'location' => 'numeric',
+            'lat' => 'numeric',
+            'platform' => 'sometimes|in:' . implode(',', $platforms),
+            'lng' => 'numeric'
+        ]);
+        $setting_key = null;
+        $location = '';
+        if ($request->has('location')) {
+            $location = (int)$request->location;
+        } elseif ($request->has('lat') && $request->has('lng')) {
+            $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+            if (!is_null($hyperLocation)) $location = $hyperLocation->location_id;
         }
+        if ($request->has('portal') && $request->has('screen')) {
+            $platform = $this->getPlatform($request);
+            $setting_key = 'NewScreenSetting::' . snake_case(camel_case($request->portal)) . '_' . $request->screen . "_" . strtolower($platform) . "_" . $location;
+        } else {
+            $setting_key = 'NewScreenSetting::customer_app_home_android_4';
+        }
+
+        $settings = $store->get($setting_key);
+        if (!$settings) return api_response($request, null, 404);
+
+        $settings = json_decode($settings);
+        if (empty($settings->sections)) return api_response($request, null, 404);
+        if ($request->portal == 'customer-portal') {
+            $this->categoryGroupPushToCategory($settings, $location);
+        }
+
+        foreach ($settings->sections as &$section) {
+            if($section->item_type == 'service_group'){
+                $this->addFlashOfferDataToServiceGroup($section);
+            }
+        }
+        $settings->min_order_amount_for_emi = config('sheba.min_order_amount_for_emi');
+        return api_response($request, $settings, 200, ['settings' => $settings]);
     }
 
     private function getPlatform(Request $request)
@@ -147,41 +124,16 @@ class HomePageSettingController extends Controller
         return $platform;
     }
 
-    private function getLocationId(Request $request)
-    {
-        $location = '';
-        if ($request->has('location')) {
-            $location = (int)$request->location;
-        } elseif ($request->has('lat') && $request->has('lng')) {
-            $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
-            if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
-        }
-        return $location;
-    }
-
-    private function getPublishedFor($for)
-    {
-        return 'publishedFor' . ucwords($for);
-    }
-
     public function getCar(Request $request)
     {
-        try {
-            $settings = json_decode(Redis::get('car_settings'));
-            return api_response($request, $settings, 200, ['settings' => $settings]);
-        } catch (Throwable $e) {
-            return api_response($request, null, 500);
-        }
+        $settings = json_decode(Redis::get('car_settings'));
+        return api_response($request, $settings, 200, ['settings' => $settings]);
     }
 
     public function getCarV3(Request $request)
     {
-        try {
-            $settings = json_decode(Redis::get('car_settings_v3'));
-            return api_response($request, $settings, 200, ['settings' => $settings]);
-        } catch (Throwable $e) {
-            return api_response($request, null, 500);
-        }
+        $settings = json_decode(Redis::get('car_settings_v3'));
+        return api_response($request, $settings, 200, ['settings' => $settings]);
     }
 
     public function formatWeb(array $settings, $location)
@@ -229,9 +181,8 @@ class HomePageSettingController extends Controller
             $children_items = [];
             $best_deal_category_group = CategoryGroup::where('name', 'Best Deal')->first();
 
-            $best_deal_category = $best_deal_category_group->categories()->whereHas('locations', function ($query) use ($location) {
-                $query->where('id', $location);
-            })->published()->orderBy('category_group_category.order')->get();
+            $best_deal_category = $best_deal_category_group->categories()->hasLocation($location)
+                ->published()->orderBy('category_group_category.order')->get();
 
             foreach ($best_deal_category as $child) {
                 $children_items[] = $item_builder->buildCategory($child)->toArray();

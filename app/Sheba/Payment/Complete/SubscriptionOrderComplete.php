@@ -38,6 +38,7 @@ class SubscriptionOrderComplete extends PaymentComplete
     public function complete()
     {
         try {
+            $this->payment->reload();
             if ($this->payment->isComplete()) return $this->payment;
             $this->paymentRepository->setPayment($this->payment);
             $payable = $this->payment->payable;

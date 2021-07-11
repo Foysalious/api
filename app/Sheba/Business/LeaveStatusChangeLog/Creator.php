@@ -73,6 +73,6 @@ class Creator
     {
         if ($this->status == Status::CANCELED)
             return $this->member->profile->name." $this->status this leave";
-        return "Leave status change from $this->previousStatus to $this->status";
+        return "Leave status changed from $this->previousStatus to $this->status";
     }
 }

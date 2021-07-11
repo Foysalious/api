@@ -2,11 +2,17 @@
 
 use App\Models\Payable;
 use App\Models\Payment;
+use Illuminate\Support\Facades\Redis;
+use Sheba\Dal\CardType\Contract as CardTypeRepo;
+use Sheba\Dal\EmiBank\Repository\EmiBankContract;
+use Sheba\Payment\Exceptions\AlreadyCompletingPayment;
+use Sheba\Payment\Exceptions\FailedToInitiate;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
 use Sheba\Payment\Factory\PaymentStrategy;
 use Sheba\Payment\Policy\PaymentInitiate;
 use Sheba\Payment\Exceptions\InitiateFailedException;
 use Sheba\Payment\Methods\PaymentMethod;
+use Throwable;
 
 class PaymentManager
 {
@@ -77,13 +83,13 @@ class PaymentManager
     /**
      * @return Payment
      * @throws InitiateFailedException
-     * @throws InvalidPaymentMethod
+     * @throws InvalidPaymentMethod|FailedToInitiate
      */
-    public function init()
+    public function init($fallback = false)
     {
-        $this->canInit();
+        if (!$fallback) $this->canInit();
         $payment = $this->getMethod()->init($this->payable);
-        if (!$payment->isInitiated()) throw new InitiateFailedException();
+        if (!$payment->isInitiated()) throw new FailedToInitiate();
         return $payment;
     }
 
@@ -101,23 +107,68 @@ class PaymentManager
      */
     public function storeRequestPayload()
     {
-        $this->payment->request_payload  = json_encode(request()->all());
+        $this->payment->request_payload = json_encode(request()->all());
         $this->payment->save();
         return $this;
     }
 
     /**
      * @return Payment
-     * @throws InvalidPaymentMethod
+     * @throws InvalidPaymentMethod|AlreadyCompletingPayment|Throwable
      */
     public function complete()
     {
-        $payment = $this->storeRequestPayload()->validate();
-        if ($payment->canComplete()) {
-            $completion_class = $this->payable->getCompletionClass();
-            $completion_class->setPayment($payment);
-            $payment = $completion_class->complete();
+        $this->runningCompletionCheckAndSet();
+        try {
+            $payment = $this->storeRequestPayload()->validate();
+            if ($payment->canComplete()) {
+                $completion_class = $this->payable->getCompletionClass();
+                $completion_class->setPayment($payment);
+                $payment = $completion_class->complete();
+            }
+            $this->unsetRunningCompletion();
+            return $payment;
+        } catch (Throwable $e) {
+            $this->unsetRunningCompletion();
+            throw  $e;
         }
-        return $payment;
+
+    }
+
+    public function getCardType($cardNumber)
+    {
+        $cardTypes = app(CardTypeRepo::class)->builder()->with('paymentGateway')->where('regular_expression', '!=', '')->get();
+        foreach ($cardTypes as $cardType) {
+            if (preg_match('/' . $cardType->regular_expression . '/', $cardNumber)) return $cardType;
+        }
+        return null;
+    }
+
+    public function getEmibank($bankId)
+    {
+        return app(EmiBankContract::class)->builder()->with('paymentGateway')->find($bankId);
+    }
+
+    private function getKey()
+    {
+        return 'Payment::Completing::' . $this->payment->id;
+    }
+
+    /**
+     * @throws AlreadyCompletingPayment
+     */
+    private function runningCompletionCheckAndSet()
+    {
+        $key     = $this->getKey();
+        $already = Redis::get($key);
+        if ($already) {
+            throw new AlreadyCompletingPayment();
+        }
+        Redis::set($key, 1);
+    }
+
+    private function unsetRunningCompletion()
+    {
+        Redis::del($this->getKey());
     }
 }

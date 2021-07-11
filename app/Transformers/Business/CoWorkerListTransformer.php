@@ -30,7 +30,7 @@ class CoWorkerListTransformer extends TransformerAbstract
                 'id' => $profile->id,
                 'name' => $profile->name,
                 'pro_pic' => $profile->pro_pic,
-                'mobile' => $profile->mobile,
+                'mobile' => $business_member->mobile,
                 'email' => $profile->email,
             ],
             'status' => $business_member->status,

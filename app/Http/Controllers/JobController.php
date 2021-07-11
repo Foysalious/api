@@ -48,6 +48,7 @@ use Sheba\Payment\PaymentManager;
 use Sheba\Payment\ShebaPaymentValidator;
 use Sheba\Services\FormatServices;
 use Sheba\UserAgentInformation;
+use Sheba\Dal\PartnerOrderPayment;
 use Throwable;
 
 class JobController extends Controller
@@ -290,7 +291,6 @@ class JobController extends Controller
             $q->with('service');
         }]);
         $job->calculate(true);
-
         if (count($job->jobServices) == 0) {
             $services = array();
             $service_list = array();
@@ -324,12 +324,22 @@ class JobController extends Controller
                 ));
             }
         }
+        $payment_method_names = [
+            "cbl" => "City Bank",
+            "Ssl" => "Other Debit/Credit",
+            "Wallet" => "Sheba Credit",
+            "Bonus" => "Sheba Credit",
+            "Bondhu_balance" => "Bondhu Point"
+        ];
         $partnerOrder = $job->partnerOrder;
+        $methods_with_amounts = $partnerOrder->payments()->select('method','amount')->get()->toArray();
+        foreach ($methods_with_amounts as &$method) {
+            if(!array_key_exists($method['method'], $payment_method_names)) $method['name'] = $method['method'];
+            else $method['name'] = $payment_method_names[$method['method']];
+        }
         $partnerOrder->calculate(true);
-
         $original_delivery_charge = $job->deliveryPrice;
         $delivery_discount = $job->deliveryDiscount;
-
         $voucher = $partnerOrder->order->voucher ? [
             'code' => $partnerOrder->order->voucher->code,
             'amount' => $partnerOrder->order->voucher->amount
@@ -351,6 +361,7 @@ class JobController extends Controller
         $bill['material_price'] = (double)$job->materialPrice;
         $bill['total_service_price'] = (double)$job->servicePrice;
         $bill['discount'] = (double)$job->discountWithoutDeliveryDiscount;
+        $bill['payment_methods'] = $methods_with_amounts;
         $bill['services'] = $services;
         $bill['service_list'] = $service_list;
         $bill['category_name'] = $job->category->name;

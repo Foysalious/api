@@ -34,8 +34,8 @@ class GenericGatewayErrorResponse extends TopUpResponse
         return 'Error message not given.';
     }
 
-    public function resolveTopUpSuccessStatus()
+    public function isPending()
     {
-        return "";
+        return false;
     }
 }

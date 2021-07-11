@@ -9,7 +9,6 @@ class CategoryGroupDataStore implements DataStoreObject
     /** @var CategoryGroupCacheRequest */
     private $categoryGroupCacheRequest;
 
-
     public function setCacheRequest(CacheRequest $request)
     {
         $this->categoryGroupCacheRequest = $request;
@@ -22,13 +21,7 @@ class CategoryGroupDataStore implements DataStoreObject
     public function generate()
     {
         $category_group = CategoryGroup::whereHas('categories', function ($q) {
-            $q->published()->whereHas('services', function ($q) {
-                $q->published()->whereHas('locations', function ($q) {
-                    $q->where('locations.id', $this->categoryGroupCacheRequest->getLocationId());
-                });
-            })->whereHas('locations', function ($q) {
-                $q->where('locations.id', $this->categoryGroupCacheRequest->getLocationId());
-            });
+            $q->publishedWithServiceOnLocation($this->categoryGroupCacheRequest->getLocationId());
         })->where('id', $this->categoryGroupCacheRequest->getCategoryGroupId())->with(['categories' => function ($q) {
             $q->select('id', 'name', 'thumb', 'app_thumb', 'banner', 'app_banner', 'icon', 'icon_png', 'parent_id');
         }])->select('id', 'name')->first();
@@ -40,6 +33,7 @@ class CategoryGroupDataStore implements DataStoreObject
                 'name' => $category_group->name,
                 'secondaries' => $category_group->categories->map(function ($category) {
                     $category['slug'] = $category->getSlug();
+                    $category->thumb_sizes = getResizedUrls($category->thumb, 180, 270);
                     removeRelationsAndFields($category);
                     return $category;
                 })

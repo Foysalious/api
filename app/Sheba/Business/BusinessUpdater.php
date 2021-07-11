@@ -40,6 +40,11 @@ class BusinessUpdater
         return $this->business->update($this->withUpdateModificationField($this->getBusinessData()));
     }
 
+    public function updateLogo()
+    {
+        return $this->business->update($this->withUpdateModificationField(['logo' => $this->businessCreatorRequest->getLogoUrl()]));
+    }
+
     /**
      * @return array
      */

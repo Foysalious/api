@@ -7,11 +7,11 @@ use App\Models\Job;
 use App\Models\Partner;
 use App\Models\PartnerAffiliation;
 use App\Models\PartnerOrder;
-use App\Models\PartnerTransaction;
 use App\Models\Profile;
 use App\Models\ProfileBankInformation;
 use App\Models\ProfileMobileBankInformation;
 use App\Models\Resource;
+use App\Models\TopUpOrder;
 use Sheba\Dal\Service\Service;
 use App\Repositories\AffiliateRepository;
 use App\Repositories\FileRepository;
@@ -30,7 +30,6 @@ use Carbon\Carbon;
 use DB;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Bondhu\Statuses;
@@ -59,49 +58,44 @@ class AffiliateController extends Controller
     private $affiliateRepository;
     private $nidOcrRepo;
 
-    public function __construct()
+    public function __construct(FileRepository $file_repo, LocationRepository $location_repo, AffiliateRepository $affiliate_repo)
     {
-        $this->fileRepository = new FileRepository();
-        $this->locationRepository = new LocationRepository();
-        $this->affiliateRepository = new AffiliateRepository();
+        $this->fileRepository = $file_repo;
+        $this->locationRepository = $location_repo;
+        $this->affiliateRepository = $affiliate_repo;
     }
 
     public function edit($affiliate, Request $request)
     {
-        try {
-            $except_fields = [];
-            if ($request->has('bkash_no')) {
-                $mobile = formatMobile(ltrim($request->bkash_no));
-                $request->merge(['bkash_no' => $mobile]);
-            } else {
-                $except_fields = ['bkash_no'];
-            }
-            $validation_fields = count($except_fields) > 0 ? $request->except($except_fields) : $request->all();
-            if ($msg = $this->_validateEdit($validation_fields)) {
-                return response()->json(['code' => 500, 'msg' => $msg]);
-            }
-            $affiliate = Affiliate::find($affiliate);
-            if ($request->has('name') || $request->has('address')) {
-                /** @var Profile $profile */
-                $profile = $affiliate->profile;
-                if ($request->has('name')) $profile->name = $request->name;
-                if ($request->has('address')) $profile->address = $request->address;
-                $profile->update();
-            }
-            if ($request->has('bkash_no')) {
-                $banking_info = $affiliate->banking_info;
-                $banking_info->bKash = $mobile;
-                $affiliate->banking_info = json_encode($banking_info);
-            }
-            if ($request->has('geolocation')) {
-                $affiliate->geolocation = $request->geolocation;
-            }
-
-            return $affiliate->update() ? response()->json(['code' => 200]) : response()->json(['code' => 404]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        $except_fields = [];
+        if ($request->has('bkash_no')) {
+            $mobile = formatMobile(ltrim($request->bkash_no));
+            $request->merge(['bkash_no' => $mobile]);
+        } else {
+            $except_fields = ['bkash_no'];
         }
+        $validation_fields = count($except_fields) > 0 ? $request->except($except_fields) : $request->all();
+        if ($msg = $this->_validateEdit($validation_fields)) {
+            return response()->json(['code' => 500, 'msg' => $msg]);
+        }
+        $affiliate = Affiliate::find($affiliate);
+        if ($request->has('name') || $request->has('address')) {
+            /** @var Profile $profile */
+            $profile = $affiliate->profile;
+            if ($request->has('name')) $profile->name = $request->name;
+            if ($request->has('address')) $profile->address = $request->address;
+            $profile->update();
+        }
+        if ($request->has('bkash_no')) {
+            $banking_info = $affiliate->banking_info;
+            $banking_info->bKash = $mobile;
+            $affiliate->banking_info = json_encode($banking_info);
+        }
+        if ($request->has('geolocation')) {
+            $affiliate->geolocation = $request->geolocation;
+        }
+
+        return $affiliate->update() ? response()->json(['code' => 200]) : response()->json(['code' => 404]);
     }
 
     private function _validateEdit($request)
@@ -114,62 +108,46 @@ class AffiliateController extends Controller
 
     public function getStatus($affiliate, Request $request)
     {
-        try {
-            $affiliate = Affiliate::where('id', $affiliate)
-                ->select('verification_status', 'is_suspended', 'ambassador_code', 'is_ambassador', 'is_moderator')
-                ->first();
-            return $affiliate != null ? response()->json(['code' => 200, 'affiliate' => $affiliate]) : response()->json(['code' => 404, 'msg' => 'Not found!']);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $affiliate = Affiliate::where('id', $affiliate)
+            ->select('verification_status', 'is_suspended', 'ambassador_code', 'is_ambassador', 'is_moderator')
+            ->first();
+        return $affiliate != null ? response()->json(['code' => 200, 'affiliate' => $affiliate]) : response()->json(['code' => 404, 'msg' => 'Not found!']);
     }
 
     public function getDashboardInfo($affiliate, Request $request)
     {
-        try {
-            /** @var Affiliate $affiliate */
-            $affiliate = Affiliate::find($affiliate);
-            $info = [
-                'wallet' => (double)$affiliate->wallet,
-                'total_income' => (double)$affiliate->getIncome(),
-                'total_service_referred' => $affiliate->affiliations->count(),
-                'total_sp_referred' => $affiliate->partnerAffiliations->count(),
-                'last_updated' => Carbon::parse($affiliate->updated_at)->format('dS F,g:i A'),
-                'robi_topup_wallet' => (double)$affiliate->robi_topup_wallet,
-                "is_robi_retailer" => $affiliate->retailers->where('strategic_partner_id', 2)->count() ? 1 : 0,
-                'total_notifications' => $affiliate->notifications()->count(),
-                'total_unseen_notifications' => $affiliate->notifications()->where('is_seen', 0)->count(),
+        /** @var Affiliate $affiliate */
+        $affiliate = Affiliate::find($affiliate);
+        $info = [
+            'wallet' => (double)$affiliate->wallet,
+            'total_income' => (double)$affiliate->getIncome(),
+            'total_service_referred' => $affiliate->affiliations->count(),
+            'total_sp_referred' => $affiliate->partnerAffiliations->count(),
+            'last_updated' => Carbon::parse($affiliate->updated_at)->format('dS F,g:i A'),
+            'robi_topup_wallet' => (double)$affiliate->robi_topup_wallet,
+            "is_robi_retailer" => $affiliate->retailers->where('strategic_partner_id', 2)->count() ? 1 : 0,
+            'total_notifications' => $affiliate->notifications()->count(),
+            'total_unseen_notifications' => $affiliate->notifications()->where('is_seen', 0)->count(),
 
-            ];
-            $affiliate->update(["last_login" => Carbon::now()]);
-            return api_response($request, $info, 200, ['info' => $info]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        ];
+        $affiliate->update(["last_login" => Carbon::now()]);
+        return api_response($request, $info, 200, ['info' => $info]);
     }
 
     public function updateProfilePic(Request $request)
     {
-        try {
-            if ($msg = $this->_validateImage($request)) {
-                return response()->json(['code' => 500, 'msg' => $msg]);
-            }
-            $photo = $request->file('photo');
-            $profile = ($request->affiliate)->profile;
-            if (basename($profile->pro_pic) != 'default.jpg') {
-                $filename = substr($profile->pro_pic, strlen(env('S3_URL')));
-                $this->fileRepository->deleteFileFromCDN($filename);
-            }
-            $filename = $profile->id . '_profile_image_' . Carbon::now()->timestamp . '.' . $photo->extension();
-            $profile->pro_pic = $this->fileRepository->uploadToCDN($filename, $request->file('photo'), 'images/profiles/');
-            return $profile->update() ? response()->json(['code' => 200, 'picture' => $profile->pro_pic]) : response()->json(['code' => 404]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        if ($msg = $this->_validateImage($request)) {
+            return response()->json(['code' => 500, 'msg' => $msg]);
         }
-
+        $photo = $request->file('photo');
+        $profile = ($request->affiliate)->profile;
+        if (basename($profile->pro_pic) != 'default.jpg') {
+            $filename = substr($profile->pro_pic, strlen(env('S3_URL')));
+            $this->fileRepository->deleteFileFromCDN($filename);
+        }
+        $filename = $profile->id . '_profile_image_' . Carbon::now()->timestamp . '.' . $photo->extension();
+        $profile->pro_pic = $this->fileRepository->uploadToCDN($filename, $request->file('photo'), 'images/profiles/');
+        return $profile->update() ? response()->json(['code' => 200, 'picture' => $profile->pro_pic]) : response()->json(['code' => 404]);
     }
 
     private function _validateImage($request)
@@ -210,28 +188,23 @@ class AffiliateController extends Controller
 
     public function getAmbassador($affiliate, Request $request)
     {
-        try {
-            $validator = Validator::make($request->all(), [
-                'code' => 'required|string'
-            ]);
-            if ($validator->fails()) {
-                $error = $validator->errors()->all()[0];
-                return api_response($request, $error, 400, ['msg' => $error]);
-            }
-            $ambassador = Affiliate::with(['profile' => function ($q) {
-                $q->select('id', 'name', DB::raw('pro_pic as picture'));
-            }])->where([
-                ['ambassador_code', strtoupper(trim($request->code))],
-                ['is_ambassador', 1]
-            ])->first();
-            if ($ambassador) {
-                return api_response($request, $ambassador->profile, 200, ['info' => $ambassador->profile]);
-            } else {
-                return api_response($request, null, 404);
-            }
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        $validator = Validator::make($request->all(), [
+            'code' => 'required|string'
+        ]);
+        if ($validator->fails()) {
+            $error = $validator->errors()->all()[0];
+            return api_response($request, $error, 400, ['msg' => $error]);
+        }
+        $ambassador = Affiliate::with(['profile' => function ($q) {
+            $q->select('id', 'name', DB::raw('pro_pic as picture'));
+        }])->where([
+            ['ambassador_code', strtoupper(trim($request->code))],
+            ['is_ambassador', 1]
+        ])->first();
+        if ($ambassador) {
+            return api_response($request, $ambassador->profile, 200, ['info' => $ambassador->profile]);
+        } else {
+            return api_response($request, null, 404);
         }
     }
 
@@ -242,107 +215,85 @@ class AffiliateController extends Controller
      */
     public function joinClan($affiliate, Request $request)
     {
-        try {
-            $this->validate($request, ['code' => 'required|string']);
-            $affiliate = $request->affiliate;
+        $this->validate($request, ['code' => 'required|string']);
+        $affiliate = $request->affiliate;
 
-            if ($affiliate->ambassador_id || $affiliate->previous_ambassador_id)
-                return api_response($request, null, 403);
+        if ($affiliate->ambassador_id || $affiliate->previous_ambassador_id)
+            return api_response($request, null, 403);
 
-            $agents_ids = $affiliate->agents->pluck('id')->toArray();
-            array_push($agents_ids, $affiliate->id);
-            $ambassador = Affiliate::where('ambassador_code', strtoupper(trim($request->code)))
-                ->where('is_ambassador', 1)
-                ->whereNotIn('id', $agents_ids)
-                ->first();
+        $agents_ids = $affiliate->agents->pluck('id')->toArray();
+        array_push($agents_ids, $affiliate->id);
+        $ambassador = Affiliate::where('ambassador_code', strtoupper(trim($request->code)))
+            ->where('is_ambassador', 1)
+            ->whereNotIn('id', $agents_ids)
+            ->first();
 
-            if (!$ambassador) return api_response($request, null, 404);
+        if (!$ambassador) return api_response($request, null, 404);
 
-            $affiliate->ambassador_id = $ambassador->id;
-            $affiliate->under_ambassador_since = Carbon::now();
-            $affiliate->update();
+        $affiliate->ambassador_id = $ambassador->id;
+        $affiliate->under_ambassador_since = Carbon::now();
+        $affiliate->update();
 
-            return api_response($request, $ambassador, 200);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['msg' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        return api_response($request, $ambassador, 200);
     }
 
     public function getAgents($affiliate, Request $request)
     {
         $affiliate = $request->affiliate;
-        try {
-            if ($affiliate->is_ambassador == 0) {
-                return api_response($request, null, 403);
-            }
-            $q = $request->get('query');
-            $range = $request->get('range');
-            $sort_order = $request->get('sort_order');
+        if ($affiliate->is_ambassador == 0) {
+            return api_response($request, null, 403);
+        }
+        $q = $request->get('query');
+        $range = $request->get('range');
+        $sort_order = $request->get('sort_order');
 
-            list($offset, $limit) = calculatePagination($request);
-            /**
-             * if (empty($range)) {
-             * $query[] = $this->allAgents($request->affiliate);
-             * }
-             *
-             * $query[] = Affiliate::agentsWithFilter($request, 'affiliations')->get()->toArray();
-             * $query[] = Affiliate::agentsWithFilter($request, 'partner_affiliations')->get()->toArray();
-             *
-             * $agents = $this->mapAgents($query)->where('ambassador_id', $affiliate->id);*/
+        list($offset, $limit) = calculatePagination($request);
 
-            $agents = collect(DB::select('SELECT 
-    affiliates.id,
-    affiliates.profile_id,
-      (Sum(affiliate_transactions.amount))  AS total_gifted_amount, 
-     Count(DISTINCT( affiliate_transactions.id )) AS total_gifted_number,
-    affiliates.profile_id,
-    affiliates.ambassador_id,
-    affiliates.under_ambassador_since,
-    profiles.name,
-    profiles.pro_pic AS picture,
-    profiles.mobile,
-    affiliates.created_at
+        $agents = collect(DB::select('SELECT 
+affiliates.id,
+affiliates.profile_id,
+  (Sum(affiliate_transactions.amount))  AS total_gifted_amount, 
+ Count(DISTINCT( affiliate_transactions.id )) AS total_gifted_number,
+affiliates.profile_id,
+affiliates.ambassador_id,
+affiliates.under_ambassador_since,
+profiles.name,
+profiles.pro_pic AS picture,
+profiles.mobile,
+affiliates.created_at
 FROM
-    affiliate_transactions
-        LEFT JOIN
-    `affiliates` ON `affiliate_transactions`.`affiliate_id` = `affiliates`.`id`
-        LEFT JOIN
-    profiles ON affiliates.profile_id = profiles.id
+affiliate_transactions
+    LEFT JOIN
+`affiliates` ON `affiliate_transactions`.`affiliate_id` = `affiliates`.`id`
+    LEFT JOIN
+profiles ON affiliates.profile_id = profiles.id
 WHERE
-         affiliate_id IN (SELECT 
-            id
-        FROM
-            affiliates
-        WHERE
-            ambassador_id = ?)
+     affiliate_id IN (SELECT 
+        id
+    FROM
+        affiliates
+    WHERE
+        ambassador_id = ?)
 GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id]));
 
-            $agents->map(function ($agent) {
-                $agent->total_gifted_amount = (double)$agent->total_gifted_amount;
-            });
+        $agents->map(function ($agent) {
+            $agent->total_gifted_amount = (double)$agent->total_gifted_amount;
+        });
 
-            $agents = $this->filterAgents($q, $agents);
+        $agents = $this->filterAgents($q, $agents);
 
-            $agents = $this->sortAgents($sort_order, $agents);
+        $agents = $this->sortAgents($sort_order, $agents);
 
-            $agents = $agents->splice($offset, $limit)->toArray();
-            if (count($agents) > 0) {
-                $response = ['agents' => $agents];
-                if ($range) {
-                    $r_d = getRangeFormat($request);
-                    $response['range'] = ['to' => $r_d[0], 'from' => $r_d[1]];
-                }
-                return api_response($request, $agents, 200, $response);
+        $agents = $agents->splice($offset, $limit)->toArray();
+        if (count($agents) > 0) {
+            $response = ['agents' => $agents];
+            if ($range) {
+                $r_d = getRangeFormat($request);
+                $response['range'] = ['to' => $r_d[0], 'from' => $r_d[1]];
             }
-            return api_response($request, null, 404);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+            return api_response($request, $agents, 200, $response);
         }
+        return api_response($request, null, 404);
     }
 
     private function filterAgents($q, $agents)
@@ -365,236 +316,198 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id]));
 
     public function getGodFather($affiliate, Request $request)
     {
-        try {
-            $affiliate = $request->affiliate;
-            if ($affiliate->ambassador_id == null) {
-                return api_response($request, null, 404);
-            } else {
-                $profile = collect($affiliate->ambassador->profile)->only(['name', 'pro_pic', 'mobile'])->all();
-                $profile['picture'] = $profile['pro_pic'];
-                array_forget($profile, 'pro_pic');
-                return api_response($request, $profile, 200, ['info' => $profile]);
-            }
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        $affiliate = $request->affiliate;
+        if ($affiliate->ambassador_id == null) {
+            return api_response($request, null, 404);
+        } else {
+            $profile = collect($affiliate->ambassador->profile)->only(['name', 'pro_pic', 'mobile'])->all();
+            $profile['picture'] = $profile['pro_pic'];
+            array_forget($profile, 'pro_pic');
+            return api_response($request, $profile, 200, ['info' => $profile]);
         }
     }
 
     public function getLeaderboard($affiliate, Request $request)
     {
-        try {
-            list($offset, $limit) = calculatePagination($request);
-            $transactions = AffiliateTransaction::where('affiliation_type', '<>', null)
-                ->with(['affiliate' => function ($q) {
-                    $q->with(['profile' => function ($q) {
-                        $q->select('id', 'name', 'pro_pic');
-                    }, 'affiliations' => function ($q) {
-                        $q->selectRaw('count(*) as total_reference, affiliate_id')->groupBy('affiliate_id');
-                    }, 'partnerAffiliations' => function ($q) {
-                        $q->selectRaw('count(*) as total_partner_reference, affiliate_id')->groupBy('affiliate_id');
-                    }]);
-                }])
-                ->selectRaw('sum(amount) as earning_amount, affiliate_id')
-                ->where('type', 'Credit')->groupBy('affiliate_id')->orderBy('earning_amount', 'desc')->skip($offset)->take($limit)->get();
-            $final = [];
-            foreach ($transactions as $transaction) {
-                $info['id'] = $transaction->affiliate->id;
-                $info['earning_amount'] = (double)$transaction->earning_amount;
-                $total_affiliation = $transaction->affiliate->affiliations->first() ? $transaction->affiliate->affiliations->first()->total_reference : 0;
-                $total_partner_affiliation = $transaction->affiliate->partnerAffiliations->first() ? $transaction->affiliate->partnerAffiliations->first()->total_partner_reference : 0;
-                $info['total_reference'] = $total_affiliation + $total_partner_affiliation;
-                $info['name'] = $transaction->affiliate->profile->name;
-                $info['picture'] = $transaction->affiliate->profile->pro_pic;
-                array_push($final, $info);
-            }
-            return count($final) != 0 ? api_response($request, $final, 200, ['affiliates' => $final]) : api_response($request, null, 404);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        list($offset, $limit) = calculatePagination($request);
+        $transactions = AffiliateTransaction::where('affiliation_type', '<>', null)
+            ->with(['affiliate' => function ($q) {
+                $q->with(['profile' => function ($q) {
+                    $q->select('id', 'name', 'pro_pic');
+                }, 'affiliations' => function ($q) {
+                    $q->selectRaw('count(*) as total_reference, affiliate_id')->groupBy('affiliate_id');
+                }, 'partnerAffiliations' => function ($q) {
+                    $q->selectRaw('count(*) as total_partner_reference, affiliate_id')->groupBy('affiliate_id');
+                }]);
+            }])
+            ->selectRaw('sum(amount) as earning_amount, affiliate_id')
+            ->where('type', 'Credit')->groupBy('affiliate_id')->orderBy('earning_amount', 'desc')->skip($offset)->take($limit)->get();
+        $final = [];
+        foreach ($transactions as $transaction) {
+            $info['id'] = $transaction->affiliate->id;
+            $info['earning_amount'] = (double)$transaction->earning_amount;
+            $total_affiliation = $transaction->affiliate->affiliations->first() ? $transaction->affiliate->affiliations->first()->total_reference : 0;
+            $total_partner_affiliation = $transaction->affiliate->partnerAffiliations->first() ? $transaction->affiliate->partnerAffiliations->first()->total_partner_reference : 0;
+            $info['total_reference'] = $total_affiliation + $total_partner_affiliation;
+            $info['name'] = $transaction->affiliate->profile->name;
+            $info['picture'] = $transaction->affiliate->profile->pro_pic;
+            array_push($final, $info);
         }
+        return count($final) != 0 ? api_response($request, $final, 200, ['affiliates' => $final]) : api_response($request, null, 404);
     }
 
     public function getAmbassadorSummary($affiliate, Request $request, TopUpEarning $top_up_earning)
     {
-        try {
-            $affiliate = $request->affiliate;
-            if ($affiliate->is_ambassador == 0) {
-                return api_response($request, null, 403);
-            }
-
-            $partner_affiliation_total_amount = DB::select('SELECT SUM(affiliate_transactions.amount) as total_amount FROM affiliate_transactions 
-                    LEFT JOIN `partner_affiliations` ON `affiliate_transactions`.`affiliation_id` = `partner_affiliations`.`id` 
-                    LEFT JOIN `affiliates` ON `partner_affiliations`.`affiliate_id` = `affiliates`.`id` 
-                    WHERE `affiliate_transactions`.`affiliation_type` = \'App\\\Models\\\PartnerAffiliation\'
-                    AND affiliate_transactions.affiliate_id = ? AND is_gifted = 1
-                    AND affiliates.under_ambassador_since < affiliate_transactions.created_at', [$affiliate->id]
-            );
-            $partner_affiliation_amount = $partner_affiliation_total_amount[0]->total_amount ?: 0;
-
-            $lite_affiliation_total_amount = DB::select('SELECT SUM(affiliate_transactions.amount) as total_amount FROM affiliate_transactions 
-                    LEFT JOIN `affiliates` ON `affiliate_transactions`.`affiliate_id` = `affiliates`.`id` 
-                    WHERE `affiliate_transactions`.`affiliation_type` = \'App\\\Models\\\Partner\'
-                    AND affiliate_transactions.affiliate_id = ? AND is_gifted = 1 group by affiliate_transactions.affiliate_id
-                    ', [$affiliate->id]
-            );
-
-            $lite_total_amount = count($lite_affiliation_total_amount) > 0 ? ($lite_affiliation_total_amount[0]->total_amount ?: 0) : 0;
-            $request->filter_type = 'lifetime';
-            $topup_earning = $top_up_earning->setType('affiliate')->getFormattedDate($request)->getAgentsData($affiliate)['earning_amount'];
-            $total_amount = $partner_affiliation_amount + $lite_total_amount + $topup_earning;
-
-            $partner_affiliation_count = PartnerAffiliation::spCount($affiliate->id)->count();
-            $lite_affiliation_count_query = DB::select('select count(*) as count from partners where affiliate_id in (select id from affiliates where ambassador_id = ?)', [$affiliate->id]);
-            $lite_affiliation_count = $lite_affiliation_count_query[0]->count ?: 0;
-
-            $info = collect();
-            $info->put('agent_count', $affiliate->agents->count());
-            $info->put('earning_amount', $affiliate->agents->sum('total_gifted_amount') + (double)$total_amount);
-            $info->put('total_refer', Affiliation::totalRefer($affiliate->id)->count());
-            $info->put('sp_count', $partner_affiliation_count + $lite_affiliation_count);
-            return api_response($request, $info, 200, ['info' => $info->all()]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        $affiliate = $request->affiliate;
+        if ($affiliate->is_ambassador == 0) {
+            return api_response($request, null, 403);
         }
+
+        $partner_affiliation_total_amount = DB::select('SELECT SUM(affiliate_transactions.amount) as total_amount FROM affiliate_transactions 
+                LEFT JOIN `partner_affiliations` ON `affiliate_transactions`.`affiliation_id` = `partner_affiliations`.`id` 
+                LEFT JOIN `affiliates` ON `partner_affiliations`.`affiliate_id` = `affiliates`.`id` 
+                WHERE `affiliate_transactions`.`affiliation_type` = \'App\\\Models\\\PartnerAffiliation\'
+                AND affiliate_transactions.affiliate_id = ? AND is_gifted = 1
+                AND affiliates.under_ambassador_since < affiliate_transactions.created_at', [$affiliate->id]
+        );
+        $partner_affiliation_amount = $partner_affiliation_total_amount[0]->total_amount ?: 0;
+
+        $lite_affiliation_total_amount = DB::select('SELECT SUM(affiliate_transactions.amount) as total_amount FROM affiliate_transactions 
+                LEFT JOIN `affiliates` ON `affiliate_transactions`.`affiliate_id` = `affiliates`.`id` 
+                WHERE `affiliate_transactions`.`affiliation_type` = \'App\\\Models\\\Partner\'
+                AND affiliate_transactions.affiliate_id = ? AND is_gifted = 1 group by affiliate_transactions.affiliate_id
+                ', [$affiliate->id]
+        );
+
+        $lite_total_amount = count($lite_affiliation_total_amount) > 0 ? ($lite_affiliation_total_amount[0]->total_amount ?: 0) : 0;
+        $request->filter_type = 'lifetime';
+        $topup_earning = $top_up_earning->setType('affiliate')->getFormattedDate($request)->getAgentsData($affiliate)['earning_amount'];
+        $total_amount = $partner_affiliation_amount + $lite_total_amount + $topup_earning;
+
+        $partner_affiliation_count = PartnerAffiliation::spCount($affiliate->id)->count();
+        $lite_affiliation_count_query = DB::select('select count(*) as count from partners where affiliate_id in (select id from affiliates where ambassador_id = ?)', [$affiliate->id]);
+        $lite_affiliation_count = $lite_affiliation_count_query[0]->count ?: 0;
+
+        $info = collect();
+        $info->put('agent_count', $affiliate->agents->count());
+        $info->put('earning_amount', $affiliate->agents->sum('total_gifted_amount') + (double)$total_amount);
+        $info->put('total_refer', Affiliation::totalRefer($affiliate->id)->count());
+        $info->put('sp_count', $partner_affiliation_count + $lite_affiliation_count);
+        return api_response($request, $info, 200, ['info' => $info->all()]);
     }
 
     public function lifeTimeGift($affiliate, $agent_id, Request $request)
     {
-        try {
-            $affiliate = $request->affiliate;
-            if ($affiliate->is_ambassador == 0) {
-                return api_response($request, null, 403);
-            }
-            $info = collect();
-            $agent = $request->affiliate->agents()->where('id', $agent_id)->first();
-            $sp = Affiliate::agentsWithFilter($request, 'partner_affiliations')->get()->filter(function ($d) use ($agent_id) {
-                return $d['id'] == $agent_id;
-            })->first();
+        $affiliate = $request->affiliate;
+        if ($affiliate->is_ambassador == 0) {
+            return api_response($request, null, 403);
+        }
+        $info = collect();
+        $agent = $request->affiliate->agents()->where('id', $agent_id)->first();
+        $sp = Affiliate::agentsWithFilter($request, 'partner_affiliations')->get()->filter(function ($d) use ($agent_id) {
+            return $d['id'] == $agent_id;
+        })->first();
 
-            $lite_refers = collect(DB::select('SELECT 
-    affiliates.id,
-    affiliates.profile_id,
-      (Sum(affiliate_transactions.amount))  AS total_gifted_amount, 
-     Count(DISTINCT( affiliate_transactions.id )) AS total_gifted_number,
-    affiliates.profile_id,
-    affiliates.ambassador_id,
-    affiliates.under_ambassador_since,
-    profiles.name,
-    profiles.pro_pic AS picture,
-    profiles.mobile,
-    affiliates.created_at
+        $lite_refers = collect(DB::select('SELECT 
+affiliates.id,
+affiliates.profile_id,
+  (Sum(affiliate_transactions.amount))  AS total_gifted_amount, 
+ Count(DISTINCT( affiliate_transactions.id )) AS total_gifted_number,
+affiliates.profile_id,
+affiliates.ambassador_id,
+affiliates.under_ambassador_since,
+profiles.name,
+profiles.pro_pic AS picture,
+profiles.mobile,
+affiliates.created_at
 FROM
-    affiliate_transactions
-        LEFT JOIN
-    `affiliates` ON `affiliate_transactions`.`affiliate_id` = `affiliates`.`id`
-        LEFT JOIN
-    profiles ON affiliates.profile_id = profiles.id
+affiliate_transactions
+    LEFT JOIN
+`affiliates` ON `affiliate_transactions`.`affiliate_id` = `affiliates`.`id`
+    LEFT JOIN
+profiles ON affiliates.profile_id = profiles.id
 WHERE
-         affiliate_id IN (SELECT 
-            id
-        FROM
-            affiliates
-        WHERE
-            ambassador_id = ? AND affiliates.id = ?)
+     affiliate_id IN (SELECT 
+        id
+    FROM
+        affiliates
+    WHERE
+        ambassador_id = ? AND affiliates.id = ?)
 GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
 
-            $lite_refers->map(function ($agent) {
-                $agent->total_gifted_amount = (double)$agent->total_gifted_amount;
-            });
+        $lite_refers->map(function ($agent) {
+            $agent->total_gifted_amount = (double)$agent->total_gifted_amount;
+        });
 
-            $gift_amount = $agent ? $agent->total_gifted_amount : 0;
-            $gift_amount += $sp ? $sp->total_gifted_amount : 0;
-            $gift_amount += count($lite_refers) > 0 ? $lite_refers[0]->total_gifted_amount : 0;
-            $info->put('life_time_gift', $gift_amount);
-            return api_response($request, $info, 200, $info->all());
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $gift_amount = $agent ? $agent->total_gifted_amount : 0;
+        $gift_amount += $sp ? $sp->total_gifted_amount : 0;
+        $gift_amount += count($lite_refers) > 0 ? $lite_refers[0]->total_gifted_amount : 0;
+        $info->put('life_time_gift', $gift_amount);
+        return api_response($request, $info, 200, $info->all());
     }
 
     public function getTransactions($affiliate, Request $request)
     {
-        try {
-            list($offset, $limit) = calculatePagination($request);
-            $affiliate = $request->affiliate;
-            $credit_affiliate = clone $affiliate;
-            $debit_affiliate = clone $affiliate;
+        list($offset, $limit) = calculatePagination($request);
+        $affiliate = $request->affiliate;
+        $credit_affiliate = clone $affiliate;
+        $debit_affiliate = clone $affiliate;
 
-            $affiliate_credit_transactions = $credit_affiliate->load([
-                'transactions' => function ($q) use ($offset, $limit) {
-                    $q->where('type', 'Credit')
-                        ->select('id', 'affiliate_id', 'affiliation_id', 'type', 'log', 'amount', DB::raw('DATE_FORMAT(created_at, "%M %d, %Y at %h:%i %p") as time'))
-                        ->orderBy('id', 'desc')
-                        ->skip($offset)
-                        ->take($limit);
-                },
-            ]);
-            $affiliate_debit_transactions = $debit_affiliate->load([
-                'transactions' => function ($q) use ($offset, $limit) {
-                    $q->where('type', 'Debit')
-                        ->select('id', 'affiliate_id', 'affiliation_id', 'type', 'log', 'amount', DB::raw('DATE_FORMAT(created_at, "%M %d, %Y at %h:%i %p") as time'))
-                        ->orderBy('id', 'desc')
-                        ->skip($offset)
-                        ->take($limit);
-                }
-            ]);
-
-            if ($affiliate->transactions()->count()) {
-                $credit = $affiliate_credit_transactions->transactions->values()->all();
-                $debit = $affiliate_debit_transactions->transactions->values()->all();
-
-                return api_response($request, null, 200, ['credit' => $credit, 'debit' => $debit]);
-            } else {
-                return api_response($request, null, 404);
+        $affiliate_credit_transactions = $credit_affiliate->load([
+            'transactions' => function ($q) use ($offset, $limit) {
+                $q->where('type', 'Credit')
+                    ->select('id', 'affiliate_id', 'affiliation_id', 'type', 'log', 'amount', DB::raw('DATE_FORMAT(created_at, "%M %d, %Y at %h:%i %p") as time'))
+                    ->orderBy('id', 'desc')
+                    ->skip($offset)
+                    ->take($limit);
+            },
+        ]);
+        $affiliate_debit_transactions = $debit_affiliate->load([
+            'transactions' => function ($q) use ($offset, $limit) {
+                $q->where('type', 'Debit')
+                    ->select('id', 'affiliate_id', 'affiliation_id', 'type', 'log', 'amount', DB::raw('DATE_FORMAT(created_at, "%M %d, %Y at %h:%i %p") as time'))
+                    ->orderBy('id', 'desc')
+                    ->skip($offset)
+                    ->take($limit);
             }
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        ]);
+
+        if ($affiliate->transactions()->count()) {
+            $credit = $affiliate_credit_transactions->transactions->values()->all();
+            $debit = $affiliate_debit_transactions->transactions->values()->all();
+
+            return api_response($request, null, 200, ['credit' => $credit, 'debit' => $debit]);
+        } else {
+            return api_response($request, null, 404);
         }
     }
 
     public function getNotifications($affiliate, Request $request)
     {
-        try {
-            list($offset, $limit) = calculatePagination($request);
-            $notifications = $request->affiliate->notifications()->select('id', 'title', 'event_type', 'event_id', 'type', 'is_seen', 'created_at')->orderBy('id', 'desc')->skip($offset)->limit($limit)->get();
-            if (count($notifications) > 0) {
-                $notifications = $notifications->map(function ($notification) {
-                    $notification->event_type = str_replace('App\Models\\', "", $notification->event_type);
-                    array_add($notification, 'timestamp', $notification->created_at->timestamp);
-                    return $notification;
-                });
-                return api_response($request, $notifications, 200, ['notifications' => $notifications]);
-            } else {
-                return api_response($request, null, 404);
-            }
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        list($offset, $limit) = calculatePagination($request);
+        $notifications = $request->affiliate->notifications()->select('id', 'title', 'event_type', 'event_id', 'type', 'is_seen', 'created_at')->orderBy('id', 'desc')->skip($offset)->limit($limit)->get();
+        if (count($notifications) == 0) return api_response($request, null, 404);
+        $notifications = $notifications->map(function ($notification) {
+            $notification->event_type = str_replace('App\Models\\', "", $notification->event_type);
+            if (json_decode($notification->title) != null)  $notification->title = json_decode($notification->title);
+            array_add($notification, 'timestamp', $notification->created_at->timestamp);
+            return $notification;
+        });
+        return api_response($request, $notifications, 200, ['notifications' => $notifications]);
     }
 
     public function getNotification($affiliate, $notification, Request $request)
     {
-        try {
-            $notifications = $request->affiliate->notifications()->select('id', 'title', 'description', 'event_type', 'event_id', 'type', 'is_seen', 'created_at')->where('id', $notification)->get();
-            if (count($notifications) > 0) {
-                $notifications = $notifications->map(function ($notification) {
-                    $notification->event_type = str_replace('App\Models\\', "", $notification->event_type);
-                    array_add($notification, 'timestamp', $notification->created_at->timestamp);
-                    return $notification;
-                });
-                return api_response($request, $notifications, 200, ['notification' => $notifications]);
-            } else {
-                return api_response($request, null, 404);
-            }
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $notifications = $request->affiliate->notifications()->select('id', 'title', 'description', 'event_type', 'event_id', 'type', 'is_seen', 'created_at')->where('id', $notification)->get();
+        if (count($notifications) == 0) return api_response($request, null, 404);
+        $notifications = $notifications->map(function ($notification) {
+            $notification->event_type = str_replace('App\Models\\', "", $notification->event_type);
+            if (json_decode($notification->title) != null) $notification->title = json_decode($notification->title);
+            if (json_decode($notification->description) != null) $notification->description = json_decode($notification->description);
+            array_add($notification, 'timestamp', $notification->created_at->timestamp);
+            return $notification;
+        });
+        return api_response($request, $notifications, 200, ['notification' => $notifications]);
     }
 
     /**
@@ -619,11 +532,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             $this->recharge($affiliate, $transaction);
             return api_response($request, null, 200, ['message' => "Moneybag refilled."]);*/
         } catch (InvalidTransaction $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 400, ['message' => $e->getMessage()]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+            logError($e);
         }
     }
 
@@ -631,11 +540,6 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
     {
         $data = $this->makeRechargeData($transaction);
         $amount = $transaction['amount'];
-        /*
-         * WALLET TRANSACTION NEED TO REMOVE
-         * DB::transaction(function () use ($amount, $affiliate, $data) {
-            $affiliate->rechargeWallet($amount, $data);
-        });*/
         (new WalletTransactionHandler())->setModel($affiliate)->setSource(TransactionSources::BKASH)->setTransactionDetails($data['transaction_details'])->setType(Types::credit())->setAmount($amount)->setLog($data['log'])->dispatch();
     }
 
@@ -660,27 +564,22 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
 
     public function getServicesInfo($affiliate, Request $request)
     {
-        try {
-            $services = Service::select('id', 'category_id', 'name', 'description', 'bn_name', 'app_thumb', 'banner', 'min_quantity', 'unit')
-                ->publishedForBondhu()->orderByRaw('order_for_bondhu IS NULL, order_for_bondhu')
-                ->get()->map(function ($service) {
-                    return [
-                        'id' => $service->id,
-                        'name' => $service->name,
-                        'bangla_name' => empty($service->bn_name) ? null : $service->bn_name,
-                        'image' => $service->app_thumb,
-                        'min_quantity' => $service->min_quantity,
-                        'unit' => $service->unit,
-                        'category_id' => $service->category_id,
-                        'banner' => $service->banner,
-                        'description' => $service->description
-                    ];
-                });
-            return api_response($request, $services, 200, ['services' => $services]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $services = Service::select('id', 'category_id', 'name', 'description', 'bn_name', 'app_thumb', 'banner', 'min_quantity', 'unit')
+            ->publishedForBondhu()->orderByRaw('order_for_bondhu IS NULL, order_for_bondhu')
+            ->get()->map(function ($service) {
+                return [
+                    'id' => $service->id,
+                    'name' => $service->name,
+                    'bangla_name' => empty($service->bn_name) ? null : $service->bn_name,
+                    'image' => $service->app_thumb,
+                    'min_quantity' => $service->min_quantity,
+                    'unit' => $service->unit,
+                    'category_id' => $service->category_id,
+                    'banner' => $service->banner,
+                    'description' => $service->description
+                ];
+            });
+        return api_response($request, $services, 200, ['services' => $services]);
     }
 
     public function history($affiliate, AffiliateHistory $history, Request $request)
@@ -765,18 +664,18 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         $topup_otfs = $topup_vendor_otf->builder()->get()->pluckMultiple(['name_en', 'name_bn'], 'id')->toArray();
         $topup_data = [];
         foreach ($topups as $topup) {
-            $topup = [
+            /** @var TopUpOrder $topup */
+            array_push($topup_data, [
                 'payee_mobile' => $topup->payee_mobile,
                 'payee_name' => $topup->payee_name ?: 'N/A',
                 'amount' => $topup->amount,
                 'operator' => $topup->vendor->name,
-                'status' => $topup->status,
+                'status' => $topup->getStatusForAgent(),
                 'otf_name_en' => isset($topup_otfs[$topup->otf_id]) ? $topup_otfs[$topup->otf_id]['name_en'] : "",
                 'otf_name_bn' => isset($topup_otfs[$topup->otf_id]) ? $topup_otfs[$topup->otf_id]['name_bn'] : "",
                 'created_at' => $topup->created_at->format('jS M, Y h:i A'),
-                'created_at_raw' => $topup->created_at->format('Y-m-d h:i:s')
-            ];
-            array_push($topup_data, $topup);
+                'created_at_raw' => $topup->created_at->format('Y-m-d H:i:s')
+            ]);
         }
 
         if ($is_excel_report) {
@@ -792,46 +691,30 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
 
     public function getCustomerInfo(Request $request)
     {
-        try {
-            $this->validate($request, [
-                'mobile' => 'required|mobile:bd'
-            ]);
-            $profile = Profile::where('mobile', '+88' . $request->mobile)->first();
-            if (!is_null($profile)) {
-                $customer_name = $profile->name;
+        $this->validate($request, [
+            'mobile' => 'required|mobile:bd'
+        ]);
+        $profile = Profile::where('mobile', '+88' . $request->mobile)->first();
+        if (!is_null($profile)) {
+            $customer_name = $profile->name;
 
-                return api_response($request, $customer_name, 200, ['name' => $customer_name]);
-            }
-            return api_response($request, [], 404, ['message' => 'Customer not found.']);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+            return api_response($request, $customer_name, 200, ['name' => $customer_name]);
         }
+        return api_response($request, [], 404, ['message' => 'Customer not found.']);
     }
 
     public function getPartnerInfo(Request $request)
     {
-        try {
-            $this->validate($request, [
-                'partner_id' => 'required|numeric'
-            ]);
-            $partner = Partner::find($request->partner_id);
-            if (!is_null($partner)) {
-                $customer_name = $partner->name;
+        $this->validate($request, [
+            'partner_id' => 'required|numeric'
+        ]);
+        $partner = Partner::find($request->partner_id);
+        if (!is_null($partner)) {
+            $customer_name = $partner->name;
 
-                return api_response($request, $customer_name, 200, ['name' => $customer_name]);
-            }
-            return api_response($request, [], 404, ['message' => 'Customer not found.']);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+            return api_response($request, $customer_name, 200, ['name' => $customer_name]);
         }
+        return api_response($request, [], 404, ['message' => 'Customer not found.']);
     }
 
     /**
@@ -841,23 +724,17 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
      */
     public function profileDetails($affiliate, Request $request)
     {
-        try {
-            $affiliate = $request->affiliate;
-            $is_verified = $affiliate->verification_status;
+        $affiliate = $request->affiliate;
+        $is_verified = $affiliate->verification_status;
 
-            $member_since = date_format($affiliate->created_at, 'Y-m-d');
-            $manager = new Manager();
-            $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($affiliate->profile, new ProfileDetailTransformer());
-            $details = $manager->createData($resource)->toArray()['data'];
-            $details['is_verified'] = $is_verified;
-            $details['member_since'] = $member_since;
-//            $details['since'] = timeAgo($affiliate->created_at);
-            return api_response($request, null, 200, ['data' => $details]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $member_since = date_format($affiliate->created_at, 'Y-m-d');
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Item($affiliate->profile, new ProfileDetailTransformer());
+        $details = $manager->createData($resource)->toArray()['data'];
+        $details['is_verified'] = $is_verified;
+        $details['member_since'] = $member_since;
+        return api_response($request, null, 200, ['data' => $details]);
     }
 
     /**
@@ -868,44 +745,36 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
      */
     public function updatePersonalInformation($affiliate, Request $request, ProfileRepositoryInterface $profile_repo)
     {
-        try {
-            $affiliate = $request->affiliate;
-            list($is_access_denied, $msg) = $this->checkUpdateParamsOnVerifiedStatus($affiliate, $request);
-            if ($is_access_denied) return api_response($request, null, 403, ['msg' => $msg]);
+        $affiliate = $request->affiliate;
+        list($is_access_denied, $msg) = $this->checkUpdateParamsOnVerifiedStatus($affiliate, $request);
+        if ($is_access_denied) return api_response($request, null, 403, ['msg' => $msg]);
 
-            $this->validate($request, [
-                'dob' => 'date',
-            ]);
+        $this->validate($request, [
+            'dob' => 'date',
+        ]);
 
-            $this->setModifier($affiliate);
+        $this->setModifier($affiliate);
 
-            $updatable_data = [];
-            if ($request->name != null) $updatable_data['name'] = $request->name;
-            if ($request->bn_name != null) $updatable_data['bn_name'] = $request->bn_name;
-            if ($request->dob != null) $updatable_data['dob'] = $request->dob;
-            if ($request->nid_no != null) $updatable_data['nid_no'] = $request->nid_no;
-            if ($request->gender != null) $updatable_data['gender'] = $request->gender;
+        $updatable_data = [];
+        if ($request->name != null) $updatable_data['name'] = $request->name;
+        if ($request->bn_name != null) $updatable_data['bn_name'] = $request->bn_name;
+        if ($request->dob != null) $updatable_data['dob'] = $request->dob;
+        if ($request->nid_no != null) $updatable_data['nid_no'] = $request->nid_no;
+        if ($request->gender != null) $updatable_data['gender'] = $request->gender;
 
-            $profile_repo->update($affiliate->profile, $updatable_data);
+        $profile_repo->update($affiliate->profile, $updatable_data);
 
-            $manager = new Manager();
-            $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($affiliate->profile, new ProfileDetailPersonalInfoTransformer());
-            $details = $manager->createData($resource)->toArray()['data'];
-            return api_response($request, null, 200, ['data' => $details]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Item($affiliate->profile, new ProfileDetailPersonalInfoTransformer());
+        $details = $manager->createData($resource)->toArray()['data'];
+        return api_response($request, null, 200, ['data' => $details]);
     }
 
     /**
      * @param $affiliate
      * @param Request $request
-     * @return bool
+     * @return array
      */
     public function checkUpdateParamsOnVerifiedStatus($affiliate, Request $request)
     {
@@ -926,219 +795,154 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
 
     public function storeBankInformation($affiliate, Request $request, ProfileBankingRepositoryInterface $profile_bank_repo)
     {
-        try {
-            $this->validate($request, [
-                'bank_name' => 'required',
-                'account_no' => 'required',
-                'branch_name' => 'required',
-            ]);
-            $affiliate = $request->affiliate;
-            $this->setModifier($affiliate);
-            $data = $request->except('affiliate', 'remember_token');
-            $data['profile_id'] = $request->affiliate->profile_id;
-            $bank_details = $profile_bank_repo->create($data);
-            $manager = new Manager();
-            $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($bank_details, new BankDetailTransformer());
+        $this->validate($request, [
+            'bank_name' => 'required',
+            'account_no' => 'required',
+            'branch_name' => 'required',
+        ]);
+        $affiliate = $request->affiliate;
+        $this->setModifier($affiliate);
+        $data = $request->except('affiliate', 'remember_token');
+        $data['profile_id'] = $request->affiliate->profile_id;
+        $bank_details = $profile_bank_repo->create($data);
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Item($bank_details, new BankDetailTransformer());
 
-            $details = $manager->createData($resource)->toArray()['data'];
+        $details = $manager->createData($resource)->toArray()['data'];
 
-            return api_response($request, null, 200, ['data' => $details]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        return api_response($request, null, 200, ['data' => $details]);
     }
 
     public function storeMobileBankInformation($affiliate, Request $request, ProfileMobileBankingRepositoryInterface $profile_mobile_bank_repo)
     {
-        try {
-            $this->validate($request, [
-                'bank_name' => 'required',
-                'account_no' => 'required'
-            ]);
-            $affiliate = $request->affiliate;
-            $this->setModifier($affiliate);
-            $data = $request->except('affiliate', 'remember_token');
-            $data['profile_id'] = $request->affiliate->profile_id;
-            $bank_details = $profile_mobile_bank_repo->create($data);
+        $this->validate($request, [
+            'bank_name' => 'required',
+            'account_no' => 'required'
+        ]);
+        $affiliate = $request->affiliate;
+        $this->setModifier($affiliate);
+        $data = $request->except('affiliate', 'remember_token');
+        $data['profile_id'] = $request->affiliate->profile_id;
+        $bank_details = $profile_mobile_bank_repo->create($data);
 
-            $manager = new Manager();
-            $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($bank_details, new MobileBankDetailTransformer());
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Item($bank_details, new MobileBankDetailTransformer());
 
-            $details = $manager->createData($resource)->toArray()['data'];
+        $details = $manager->createData($resource)->toArray()['data'];
 
-            return api_response($request, null, 200, ['data' => $details]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        return api_response($request, null, 200, ['data' => $details]);
     }
 
     public function updateBankInformation($affiliate, ProfileBankInformation $profile_bank_information, Request $request, ProfileBankingRepositoryInterface $profile_bank_repo)
     {
-        try {
-            $affiliate = $request->affiliate;
-            $this->setModifier($affiliate);
-            $data = $request->except('affiliate', 'remember_token');
-            $bank_details = $profile_bank_repo->update($profile_bank_information, $data);
+        $affiliate = $request->affiliate;
+        $this->setModifier($affiliate);
+        $data = $request->except('affiliate', 'remember_token');
+        $bank_details = $profile_bank_repo->update($profile_bank_information, $data);
 
-            $manager = new Manager();
-            $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($bank_details, new BankDetailTransformer());
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Item($bank_details, new BankDetailTransformer());
 
-            $details = $manager->createData($resource)->toArray()['data'];
+        $details = $manager->createData($resource)->toArray()['data'];
 
-            return api_response($request, null, 200, ['data' => $details]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        return api_response($request, null, 200, ['data' => $details]);
     }
 
     public function updateMobileBankInformation($affiliate, ProfileMobileBankInformation $profile_mobile_bank_info, Request $request, ProfileMobileBankingRepositoryInterface $profile_mobile_bank_repo)
     {
-        try {
-            $affiliate = $request->affiliate;
-            $this->setModifier($affiliate);
-            $data = $request->except('affiliate', 'remember_token');
-            $mobile_bank_details = $profile_mobile_bank_repo->update($profile_mobile_bank_info, $data);
+        $affiliate = $request->affiliate;
+        $this->setModifier($affiliate);
+        $data = $request->except('affiliate', 'remember_token');
+        $mobile_bank_details = $profile_mobile_bank_repo->update($profile_mobile_bank_info, $data);
 
-            $manager = new Manager();
-            $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($mobile_bank_details, new MobileBankDetailTransformer());
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Item($mobile_bank_details, new MobileBankDetailTransformer());
 
-            $details = $manager->createData($resource)->toArray()['data'];
+        $details = $manager->createData($resource)->toArray()['data'];
 
-            return api_response($request, null, 200, ['data' => $details]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        return api_response($request, null, 200, ['data' => $details]);
     }
 
     public function deleteBankInformation($affiliate, $bank_info_id, Request $request, ProfileBankingRepositoryInterface $profile_bank_repo)
     {
+        $affiliate = $request->affiliate;
+        $this->setModifier($affiliate);
+        $is_exist = $profile_bank_repo->find($bank_info_id);
 
-        try {
-            $affiliate = $request->affiliate;
-            $this->setModifier($affiliate);
-            $is_exist = $profile_bank_repo->find($bank_info_id);
-
-            if ($is_exist) {
-                $profile_bank_repo->delete($bank_info_id);
-                return api_response($request, null, 200, ['msg' => 'deleted bank information']);
-            }
-            return api_response($request, null, 200, ['msg' => 'all ready delete']);
-
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        if ($is_exist) {
+            $profile_bank_repo->delete($bank_info_id);
+            return api_response($request, null, 200, ['msg' => 'deleted bank information']);
         }
+        return api_response($request, null, 200, ['msg' => 'all ready delete']);
     }
 
     public function deleteMobileBankInformation($affiliate, $mobile_bank_info_id, Request $request, ProfileMobileBankingRepositoryInterface $profile_mobile_bank_repo)
     {
-        try {
-            $affiliate = $request->affiliate;
-            $this->setModifier($affiliate);
-            $is_exist = $profile_mobile_bank_repo->find($mobile_bank_info_id);
-            if ($is_exist) {
-                $profile_mobile_bank_repo->delete($mobile_bank_info_id);
-                return api_response($request, null, 200, ['msg' => 'deleted bank information']);
-            }
-            return api_response($request, null, 200, ['msg' => 'all ready deleted']);
-
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        $affiliate = $request->affiliate;
+        $this->setModifier($affiliate);
+        $is_exist = $profile_mobile_bank_repo->find($mobile_bank_info_id);
+        if ($is_exist) {
+            $profile_mobile_bank_repo->delete($mobile_bank_info_id);
+            return api_response($request, null, 200, ['msg' => 'deleted bank information']);
         }
+        return api_response($request, null, 200, ['msg' => 'all ready deleted']);
     }
 
     public function getPersonalInformation(Request $request)
     {
-        try {
-            $this->validate($request, [
-                'mobile' => 'required|mobile:bd'
-            ]);
-            $profile = Profile::where('mobile', '+88' . $request->mobile)->first();
-            if (!is_null($profile)) {
-                $customer_name = $profile->name;
-                $resource = Resource::where('profile_id', $profile->id)->first();
-                if ($resource) {
-                    $token = $resource->remember_token;
-                    $resource_informations = [
-                        'name' => $profile->name,
-                        'image' => $profile->pro_pic,
-                        'resource' => [
-                            'id' => $resource->id,
-                            'token' => $token
-                        ]
-                    ];
-                    if (count($resource->partners) > 0) {
-                        $resource_informations['partner'] = [
-                            'id' => $resource->partners[0]->id,
-                            'name' => $resource->partners[0]->name,
-                        ];
-                        if ($resource->partners[0]->geo_informations) {
-                            $resource_informations['partner']['lat'] = json_decode($resource->partners[0]->geo_informations)->lat;
-                            $resource_informations['partner']['lng'] = json_decode($resource->partners[0]->geo_informations)->lng;
-                            $resource_informations['partner']['radius'] = json_decode($resource->partners[0]->geo_informations)->radius;
-                        }
-                    }
-                    return api_response($request, $customer_name, 200, ['data' => $resource_informations]);
-                } else {
-                    $resource_informations = [
-                        'name' => $profile->name,
-                        'image' => $profile->pro_pic,
-                    ];
-                    return api_response($request, $customer_name, 200, ['data' => $resource_informations]);
+        $this->validate($request, [
+            'mobile' => 'required|mobile:bd'
+        ]);
+        $profile = Profile::where('mobile', '+88' . $request->mobile)->first();
+        if (is_null($profile)) return api_response($request, [], 404, null);
+
+        $customer_name = $profile->name;
+        $resource = Resource::where('profile_id', $profile->id)->first();
+        if ($resource) {
+            $token = $resource->remember_token;
+            $resource_informations = [
+                'name' => $profile->name,
+                'image' => $profile->pro_pic,
+                'resource' => [
+                    'id' => $resource->id,
+                    'token' => $token
+                ]
+            ];
+            if (count($resource->partners) > 0) {
+                $resource_informations['partner'] = [
+                    'id' => $resource->partners[0]->id,
+                    'name' => $resource->partners[0]->name,
+                ];
+                if ($resource->partners[0]->geo_informations) {
+                    $resource_informations['partner']['lat'] = json_decode($resource->partners[0]->geo_informations)->lat;
+                    $resource_informations['partner']['lng'] = json_decode($resource->partners[0]->geo_informations)->lng;
+                    $resource_informations['partner']['radius'] = json_decode($resource->partners[0]->geo_informations)->radius;
                 }
             }
-            return api_response($request, [], 404, null);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+            return api_response($request, $customer_name, 200, ['data' => $resource_informations]);
+        } else {
+            $resource_informations = [
+                'name' => $profile->name,
+                'image' => $profile->pro_pic,
+            ];
+            return api_response($request, $customer_name, 200, ['data' => $resource_informations]);
         }
     }
 
     public function bankList(Request $request)
     {
-        try {
-            $bank_list = GeneralBanking::getPublishedBank();
-            return api_response($request, null, 200, ['data' => $bank_list]);
-        } catch (Throwable $e) {
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $bank_list = GeneralBanking::getPublishedBank();
+        return api_response($request, null, 200, ['data' => $bank_list]);
     }
 
     public function mobileBankList(Request $request)
     {
-        try {
-            $bank_list = MobileBanking::getPublishedBank();
-            return api_response($request, null, 200, ['data' => $bank_list]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $bank_list = MobileBanking::getPublishedBank();
+        return api_response($request, null, 200, ['data' => $bank_list]);
     }
 
     private function mapAgents($query)
@@ -1176,127 +980,75 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         })->toArray();
     }
 
-    private function ifTransactionAlreadyExists($transaction_id)
-    {
-        return (AffiliateTransaction::where('transaction_details', 'like', "%$transaction_id%")->count() > 0) ||
-            (PartnerTransaction::where('transaction_details', 'like', "%$transaction_id%")->count() > 0);
-    }
-
-    private function dateDiffInDays($date1, $date2)
-    {
-        $diff = strtotime($date2) - strtotime($date1);
-        $result = '';
-
-        $days = abs(round($diff / 86400));
-
-        $years = ($days / 365);
-        $years = floor($years);
-        if ($years) {
-            $result = "$years" . " years ";
-        }
-
-        $month = ($days % 365) / 30.5;
-        $month = floor($month);
-        if ($month) {
-            $result .= "$month" . " months ";
-        }
-
-        $days = ($days % 365) % 30.5;
-        if ($days) {
-            $result .= "$days" . " days";
-        }
-
-
-        return $result;
-    }
-
     public function getOrderList($affiliate, Request $request)
     {
-        try {
-            $this->validate($request, [
-                'filter' => 'sometimes|string|in:ongoing,history',
-            ]);
-            $filter = $request->filter;
-            list($offset, $limit) = calculatePagination($request);
-            $affiliate = $request->affiliate->load(['orders' => function ($q) use ($filter, $offset, $limit) {
-                $q->select('orders.id', 'customer_id', 'partner_id', 'location_id', 'sales_channel', 'delivery_name', 'delivery_mobile', 'delivery_address', 'subscription_order_id')->where('sales_channel', constants('SALES_CHANNELS')['DDN']['name'])->orderBy('orders.id', 'desc')
-                    ->skip($offset)->take($limit);
+        $this->validate($request, [
+            'filter' => 'sometimes|string|in:ongoing,history',
+        ]);
+        $filter = $request->filter;
+        list($offset, $limit) = calculatePagination($request);
+        $affiliate = $request->affiliate->load(['orders' => function ($q) use ($filter, $offset, $limit) {
+            $q->select('orders.id', 'customer_id', 'partner_id', 'location_id', 'sales_channel', 'delivery_name', 'delivery_mobile', 'delivery_address', 'subscription_order_id')->where('sales_channel', constants('SALES_CHANNELS')['DDN']['name'])->orderBy('orders.id', 'desc')
+                ->skip($offset)->take($limit);
 
-                if ($filter) {
-                    $q->whereHas('partnerOrders', function ($q) use ($filter) {
-                        $q->$filter();
-                    });
-                }
-                $q->with(['partnerOrders' => function ($q) use ($filter, $offset, $limit) {
-                    $q->with(['partner.resources.profile', 'order' => function ($q) {
-                        $q->select('id', 'sales_channel', 'subscription_order_id');
-                    }, 'jobs' => function ($q) {
-                        $q->with(['statusChangeLogs', 'resource.profile', 'jobServices', 'customerComplains', 'category', 'review' => function ($q) {
-                            $q->select('id', 'rating', 'job_id');
-                        }, 'usedMaterials']);
-                        $q->with('jobServices.service');
-                    }]);
+            if ($filter) {
+                $q->whereHas('partnerOrders', function ($q) use ($filter) {
+                    $q->$filter();
+                });
+            }
+            $q->with(['partnerOrders' => function ($q) use ($filter, $offset, $limit) {
+                $q->with(['partner.resources.profile', 'order' => function ($q) {
+                    $q->select('id', 'sales_channel', 'subscription_order_id');
+                }, 'jobs' => function ($q) {
+                    $q->with(['statusChangeLogs', 'resource.profile', 'jobServices', 'customerComplains', 'category', 'review' => function ($q) {
+                        $q->select('id', 'rating', 'job_id');
+                    }, 'usedMaterials']);
+                    $q->with('jobServices.service');
                 }]);
             }]);
-            if (count($affiliate->orders) > 0) {
-                $all_jobs = $this->getInformation($affiliate->orders);
-                $cancelled_served_jobs = $all_jobs->filter(function ($job) {
-                    return $job['cancelled_date'] != null || $job['status'] == 'Served';
-                });
-                $others = $all_jobs->diff($cancelled_served_jobs);
-                $all_jobs = $others->merge($cancelled_served_jobs);
+        }]);
+        if (count($affiliate->orders) > 0) {
+            $all_jobs = $this->getInformation($affiliate->orders);
+            $cancelled_served_jobs = $all_jobs->filter(function ($job) {
+                return $job['cancelled_date'] != null || $job['status'] == 'Served';
+            });
+            $others = $all_jobs->diff($cancelled_served_jobs);
+            $all_jobs = $others->merge($cancelled_served_jobs);
 
-                $all_jobs->map(function ($job) {
-                    $order_job = Job::find($job['job_id']);
-                    $job['can_pay'] = $this->canPay($order_job);
-                    $job['can_take_review'] = $this->canTakeReview($order_job);
-                    return $job;
-                });
+            $all_jobs->map(function ($job) {
+                $order_job = Job::find($job['job_id']);
+                $job['can_pay'] = $this->canPay($order_job);
+                $job['can_take_review'] = $this->canTakeReview($order_job);
+                return $job;
+            });
 
-            } else {
-                $all_jobs = collect();
-            }
-
-            return count($all_jobs) > 0 ? api_response($request, $all_jobs, 200, ['orders' => $all_jobs->values()->all()]) : api_response($request, null, 404);
-
-
-        } catch (ValidationException $e) {
-            app('sentry')->captureException($e);
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        } else {
+            $all_jobs = collect();
         }
 
-
+        return count($all_jobs) > 0 ? api_response($request, $all_jobs, 200, ['orders' => $all_jobs->values()->all()]) : api_response($request, null, 404);
     }
 
     public function getOrderDetails($affiliate, $order, Request $request)
     {
-        try {
-            /** @var Job $job */
-            $job = Job::find($order);
-            if (empty($job)) return api_response($request, null, 404);
-            $partner_order = $job->partner_order;
-            $partner_order->calculate(true);
-            $partner_order['total_paid'] = (double)$partner_order->paid;
-            $partner_order['total_due'] = (double)$partner_order->due;
-            $partner_order['total_price'] = (double)$partner_order->totalPrice;
-            $partner_order['delivery_name'] = $partner_order->order->delivery_name;
-            $partner_order['delivery_mobile'] = $partner_order->order->delivery_mobile;
-            $partner_order['delivery_address'] = $partner_order->order->delivery_address_id ? $partner_order->order->deliveryAddress->address : $partner_order->order->delivery_address;
-            $final = collect();
-            foreach ($partner_order->jobs as $job) {
-                $final->push($this->getJobInformation($job, $partner_order));
-            }
-            removeRelationsAndFields($partner_order);
-            $partner_order['jobs'] = $final;
-            return api_response($request, $partner_order, 200, ['orders' => $partner_order]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        /** @var Job $job */
+        $job = Job::find($order);
+        if (empty($job)) return api_response($request, null, 404);
+        $partner_order = $job->partner_order;
+        $partner_order->calculate(true);
+        $partner_order['total_paid'] = (double)$partner_order->paid;
+        $partner_order['total_due'] = (double)$partner_order->due;
+        $partner_order['total_price'] = (double)$partner_order->totalPrice;
+        $partner_order['delivery_name'] = $partner_order->order->delivery_name;
+        $partner_order['delivery_mobile'] = $partner_order->order->delivery_mobile;
+        $partner_order['delivery_address'] = $partner_order->order->delivery_address_id ? $partner_order->order->deliveryAddress->address : $partner_order->order->delivery_address;
+        $final = collect();
+        foreach ($partner_order->jobs as $job) {
+            $final->push($this->getJobInformation($job, $partner_order));
         }
+        removeRelationsAndFields($partner_order);
+        $partner_order['jobs'] = $final;
+        return api_response($request, $partner_order, 200, ['orders' => $partner_order]);
     }
 
     private function getInformation($orders)
@@ -1331,7 +1083,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         $service = $job->jobServices[0]->service;
         $show_expert = $job->canCallExpert();
         $process_log = $job->statusChangeLogs->where('to_status', constants('JOB_STATUSES')['Process'])->first();
-        return collect(array(
+        return collect([
             'id' => $partnerOrder->id,
             'job_id' => $job->id,
             'subscription_order_id' => $partnerOrder->order->subscription_order_id,
@@ -1371,7 +1123,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             'discounted_price' => (double)$partnerOrder->totalPrice + $job->logistic_charge,
             'complain_count' => $job->customerComplains->count(),
             'message' => (new JobLogs($job))->getOrderMessage(),
-        ));
+        ]);
     }
 
     protected function canPay($job)

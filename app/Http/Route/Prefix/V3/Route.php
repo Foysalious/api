@@ -70,6 +70,8 @@ class Route
                 $api->get('/{id}', 'SubscriptionController@details');
             });
             $api->get('payment-gateways/{service_type}', 'PaymentGatewayController@getPaymentGateways');
+//            emi-info with static info
+            $api->get('emi-info', 'ShebaController@getEmiInfoV3');
         });
 
 

@@ -1,13 +1,14 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Models\Business;
-use App\Models\Department;
+use App\Transformers\Business\CoWorkerReportDetailsTransformer;
 use Exception;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\App;
 use Intervention\Image\Image;
-use Sheba\Business\BusinessMember\Events\BusinessMemberUpdated;
 use Sheba\Business\CoWorker\Designations;
 use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
+use Sheba\Business\CoWorker\Excel as EmployeeExcel;
 use App\Transformers\Business\CoWorkerDetailTransformer;
 use Sheba\Business\CoWorker\Creator as CoWorkerCreator;
 use Sheba\Business\CoWorker\Updater as CoWorkerUpdater;
@@ -41,6 +42,7 @@ use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use App\Models\Member;
 use Carbon\Carbon;
+use Sheba\Business\CoWorker\SalaryCertificate\SalaryCertificateInfo;
 use DB;
 
 class CoWorkerController extends Controller
@@ -353,6 +355,7 @@ class CoWorkerController extends Controller
         $business = $request->business;
         $this->coWorkerSalaryRequester->setMember($member_id)
             ->setGrossSalary($request->gross_salary)
+            ->setBreakdownPercentage($request->breakdown_percentage)
             ->setManagerMember($manager_member)
             ->createOrUpdate();
         return api_response($request, null, 200);
@@ -531,7 +534,11 @@ class CoWorkerController extends Controller
     public function statusUpdate($business, $member_id, Request $request)
     {
         $this->validate($request, ['status' => 'required|string|in:' . implode(',', Statuses::get())]);
+        $logged_in_member_id = $request->business_member->member_id;
+        if ($logged_in_member_id == $member_id) return api_response($request, null, 404, ['message' => 'Sorry, You cannot deactivated yourself as Superadmin.']);
+
         $manager_member = $request->manager_member;
+
         $business = $request->business;
         $this->setModifier($manager_member);
 
@@ -554,9 +561,13 @@ class CoWorkerController extends Controller
         ]);
         $business = $request->business;
         $manager_member = $request->manager_member;
+        $logged_in_member_id = $request->business_member->member_id;
         $this->setModifier($manager_member);
+        $member_ids = json_decode($request->employee_ids);
 
-        foreach (json_decode($request->employee_ids) as $member_id) {
+        if (in_array($logged_in_member_id, $member_ids)) return api_response($request, null, 404, ['message' => 'One of the Ids contains superadmin ID, which cannot be deactivated, Please check again.']);
+
+        foreach ($member_ids as $member_id) {
             $business_member = BusinessMember::where([
                 ['member_id', $member_id], ['business_id', $business->id]
             ])->first();
@@ -874,5 +885,128 @@ class CoWorkerController extends Controller
     {
         if ($request->has('limit') && $request->limit == 'all') return $total_employees;
         return $limit;
+    }
+
+
+    /**
+     * @param $business
+     * @param Request $request
+     * @param BusinessMemberRepositoryInterface $business_member_repo
+     * @param EmployeeExcel $employee_report
+     */
+    public function downloadEmployeesReport($business, Request $request, BusinessMemberRepositoryInterface $business_member_repo, EmployeeExcel $employee_report) {
+        $business = $request->business;
+
+        $is_inactive_filter_applied = false;
+
+        if ($request->has('status') && $request->status == Statuses::INACTIVE) {
+            $is_inactive_filter_applied = true;
+            $members = $business->members()->select('members.id', 'profile_id',
+                'emergency_contract_person_name', 'emergency_contract_person_number', 'emergency_contract_person_relationship')->with([
+                'profile' => function ($q) {
+                    $q->select('profiles.id', 'name', 'mobile', 'email', 'dob', 'address', 'nationality', 'nid_no', 'tin_no')->with('banks');
+                }
+            ])->wherePivot('status', Statuses::INACTIVE)->get()->unique()
+                ->each(function ($member) use ($business_member_repo, $business) {
+                    $business_member = $business_member_repo->builder()
+                        ->where('business_id', $business->id)
+                        ->where('member_id', $member->id)
+                        ->where('status', Statuses::INACTIVE)
+                        ->first();
+
+                    $member->setRelation('businessMemberGenerated', $business_member->load([
+                        'role' => function ($q) {
+                            $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                                'businessDepartment' => function ($q) {
+                                    $q->select('business_departments.id', 'business_id', 'name');
+                                }
+                            ]);
+                        }
+                    ]));
+                    $member->push();
+                });
+
+            if ($request->has('department')) {
+                $members = $members->filter(function ($member) use ($request) {
+                    return $member->businessMemberGenerated->role && $member->businessMemberGenerated->role->businessDepartment->id == $request->department;
+                });
+            }
+        } else {
+            $members = $business->membersWithProfile();
+            if ($request->has('department')) {
+                $members = $members->whereHas('businessMember', function ($q) use ($request) {
+                    $q->whereHas('role', function ($q) use ($request) {
+                        $q->whereHas('businessDepartment', function ($q) use ($request) {
+                            $q->where('business_departments.id', $request->department);
+                        });
+                    });
+                });
+            }
+            $members = $members->get()->unique();
+        }
+
+        $manager = new Manager();
+        $manager->setSerializer(new ArraySerializer());
+        $employees = new Collection($members, new CoWorkerReportDetailsTransformer($is_inactive_filter_applied));
+        $employees = collect($manager->createData($employees)->toArray()['data']);
+
+        if ($request->has('status')) $employees = $this->findByStatus($employees, $request->status)->values();
+        if ($request->has('sort_by_name')) $employees = $this->sortByName($employees, $request->sort_by_name)->values();
+        if ($request->has('sort_by_department')) $employees = $this->sortByDepartment($employees, $request->sort_by_department)->values();
+        if ($request->has('sort_by_status')) $employees = $this->sortByStatus($employees, $request->sort_by_status)->values();
+        if ($request->has('search')) $employees = $this->searchEmployee($employees, $request);
+
+        $employees = collect($employees);
+
+        return $employee_report->setEmployee($employees->toArray())->get();
+    }
+
+
+    /**
+     * @param $business
+     * @param $member_id
+     * @param Request $request
+     * @param BusinessMemberRepositoryInterface $business_member_repo
+     * @param SalaryCertificateInfo $salaryCertificateInfo
+     * @return JsonResponse
+     */
+    public function salaryCertificatePdf($business, $member_id, Request $request, BusinessMemberRepositoryInterface $business_member_repo, SalaryCertificateInfo $salaryCertificateInfo)
+    {
+        $is_inactive_filter_applied = false;
+        if (!is_numeric($member_id)) return api_response($request, null, 400);
+        $member = Member::findOrFail($member_id);
+        if (!$member) return api_response($request, null, 404);
+        $business = $request->business;
+
+        if (!$member->businessMember) {
+            $business_member = $business_member_repo->builder()
+                ->where('business_id', $business->id)
+                ->where('member_id', $member->id)
+                ->where('status', Statuses::INACTIVE)
+                ->first();
+            if (!$business_member) return api_response($request, null, 404);
+            $is_inactive_filter_applied = true;
+            $member->setRelation('businessMemberGenerated', $business_member->load([
+                'role' => function ($q) {
+                    $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                        'businessDepartment' => function ($q) {
+                            $q->select('business_departments.id', 'business_id', 'name');
+                        }
+                    ]);
+                }
+            ]));
+            $member->push();
+        }
+
+        $business_member = $is_inactive_filter_applied ? $member->businessMemberGenerated : $member->businessMember;
+
+        $salary_certificate_info = $salaryCertificateInfo->setBusinessMember($business_member)->get();
+
+        if($request->file=='pdf') {
+//            return view('pdfs.payroll.salary_certificate', compact('salary_certificate_info'));
+            return App::make('dompdf.wrapper')->loadView('pdfs.payroll.salary_certificate', compact('salary_certificate_info'))->download("salary_certificate.pdf");
+        }
+
+        return api_response($request, null, 200, ['salary_info_details' => $salary_certificate_info]);
     }
 }

@@ -4,7 +4,7 @@ class  PaymentLinkStatics
 {
     public static function faq_webview()
     {
-        return config('sheba.partners_url')."/api/payment-link-faq";
+        return config('sheba.partners_url') . "/api/payment-link-faq";
     }
 
     public static function get_payment_link_tax()
@@ -49,5 +49,10 @@ class  PaymentLinkStatics
             "payment_link_tax"               => self::get_payment_link_tax(),
             "payment_link_charge_percentage" => self::get_payment_link_commission()
         ];
+    }
+
+    public static function paidByTypes()
+    {
+        return ['partner', 'customer'];
     }
 }

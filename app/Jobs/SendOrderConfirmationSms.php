@@ -1,10 +1,9 @@
 <?php namespace App\Jobs;
 
-use App\Jobs\Job;
 use App\Models\Customer;
 use App\Models\Order;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -16,8 +15,6 @@ class SendOrderConfirmationSms extends Job implements ShouldQueue
 
     private $customer;
     private $order;
-    private $sms;
-    /** @var Sms */
 
     /**
      * Create a new job instance.
@@ -29,7 +26,6 @@ class SendOrderConfirmationSms extends Job implements ShouldQueue
     {
         $this->customer = $customer;
         $this->order = $order;
-        $this->sms = new Sms();//app(Sms::class);
     }
 
     /**
@@ -42,7 +38,7 @@ class SendOrderConfirmationSms extends Job implements ShouldQueue
         $this->order->calculate();
         $message = "Thanks for placing order at Sheba.xyz. Order ID: " . $this->order->code() . ". Plz check email for details or log into www.sheba.xyz. Helpline: 16516";
 
-        $this->sms
+        (new Sms())
             ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
             ->setBusinessType(BusinessType::MARKETPLACE)
             ->shoot($this->order->delivery_mobile, $message);

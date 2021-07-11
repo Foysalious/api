@@ -133,6 +133,7 @@ class EmployeeController extends Controller
     public function getDashboard(Request $request, ActionProcessor $action_processor,
                                  ProfileCompletionCalculator $completion_calculator)
     {
+        /** @var Business $business */
         $business = $this->getBusiness($request);
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
@@ -148,6 +149,7 @@ class EmployeeController extends Controller
 
         $approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMember($business_member);
         $pending_approval_requests = $this->approvalRequestRepo->getPendingApprovalRequestByBusinessMember($business_member);
+        $pending_approval_requests_count = $this->countPendingApprovalRequests($pending_approval_requests);
         $profile_completion_score = $completion_calculator->setBusinessMember($business_member)->getDigiGoScore();
 
         $data = [
@@ -156,19 +158,21 @@ class EmployeeController extends Controller
             'attendance' => [
                 'can_checkin' => !$attendance ? 1 : ($attendance->canTakeThisAction(Actions::CHECKIN) ? 1 : 0),
                 'can_checkout' => $attendance && $attendance->canTakeThisAction(Actions::CHECKOUT) ? 1 : 0,
-                'is_note_required' => 0
+                'is_left_early_note_required' => 0
             ],
-            'is_remote_enable' => $business->isRemoteAttendanceEnable(),
+            'is_remote_enable' => $business->isRemoteAttendanceEnable($business_member->id),
             'is_approval_request_required' => $approval_requests->count() > 0 ? 1 : 0,
-            'approval_requests' => ['pending_request' => $pending_approval_requests->count()],
+            'approval_requests' => ['pending_request' => $pending_approval_requests_count],
             'is_profile_complete' => $profile_completion_score ? 1 : 0,
             'is_eligible_for_lunch' => in_array($business->id, config('b2b.BUSINESSES_IDS_FOR_LUNCH')) ? [
                 'link' => config('b2b.BUSINESSES_LUNCH_LINK'),
-            ] : null
+            ] : null,
+            'is_sheba_platform' => in_array($business->id, config('b2b.BUSINESSES_IDS_FOR_REFERRAL') ) ? 1 : 0,
+            'is_payroll_enable' => $business->payrollSetting->is_enable
         ];
 
         if ($data['attendance']['can_checkout']) {
-            $data['attendance']['is_note_required'] = $checkout->isNoteRequired();
+            $data['attendance']['is_left_early_note_required'] = $checkout->isLeftEarlyNoteRequired();
         }
 
         return api_response($request, $business_member, 200, ['info' => $data]);
@@ -345,5 +349,21 @@ class EmployeeController extends Controller
     {
         if ($request->has('for') && $request->for == 'phone_book') return $business->getActiveBusinessMember();
         return $business->getAccessibleBusinessMember();
+    }
+
+    /**
+     * @param $approval_requests
+     * @return int
+     */
+    private function countPendingApprovalRequests($approval_requests)
+    {
+        $pending_leave_count = 0;
+        foreach($approval_requests as $approval_request) {
+            $requestable = $approval_request->requestable;
+            if ($requestable->status === 'pending') {
+                $pending_leave_count++;
+            }
+        }
+        return $pending_leave_count;
     }
 }
