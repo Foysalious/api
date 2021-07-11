@@ -1,8 +1,10 @@
 <?php namespace App\Transformers\Business;
 
+use Sheba\Business\BusinessMemberStatusChangeLog\LogFormatter as EmployeeStatusChangeLogFormatter;
 use App\Sheba\Business\CoWorker\ProfileInformation\SocialLink;
 use App\Sheba\Business\PayrollComponent\Components\GrossSalaryBreakdownCalculate;
 use App\Sheba\Business\SalaryLog\Formatter as SalaryLogFormatter;
+use Sheba\Business\CoWorker\Statuses;
 use Sheba\Dal\PayrollComponent\TargetType;
 use Sheba\Dal\PayrollComponent\Type;
 use Sheba\Dal\PayrollComponent\Components;
@@ -37,6 +39,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
             'emergency_info' => $this->getEmergencyInfo(),
             'salary_info' => $this->getSalaryInfo($business_member),
             'profile_completion' => $this->profileCompletion($business_member),
+            're_invite_logs' => $this->reInviteLogs($business_member)
         ];
     }
 
@@ -265,5 +268,14 @@ class CoWorkerDetailTransformer extends TransformerAbstract
             ]);
         }
         return $global_gross_component_data;
+    }
+
+    private function reInviteLogs($business_member)
+    {
+        if ($business_member->status != Statuses::INVITED) return [];
+        if ($business_member->statusChangeLogs->isEmpty()) return [];
+
+        $status_change_logs = $business_member->statusChangeLogs()->orderBy('created_at', 'DESC')->get();
+        return (new EmployeeStatusChangeLogFormatter())->setEmployeeStatusChangeLogs($status_change_logs)->format();
     }
 }
