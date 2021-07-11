@@ -1,5 +1,6 @@
 <?php namespace App\Transformers;
 
+use App\Models\PartnerPosService;
 use League\Fractal\TransformerAbstract;
 
 class PosServiceTransformer extends TransformerAbstract
@@ -17,6 +18,8 @@ class PosServiceTransformer extends TransformerAbstract
         } else {
             $description = json_decode($service->description);
         }
+
+        /** @var PartnerPosService $service */
         $service_discount = $service->discount();
 
 

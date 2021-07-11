@@ -239,28 +239,23 @@ class PartnerPosService extends BaseModel
         return $this->is_published_for_shop == 1;
     }
 
-    public function stock()
+    public function batches()
     {
         return $this->hasMany(PartnerPosServiceBatch::class);
     }
 
     public function getLastStock()
     {
-        return $this->stock()->latest()->first()->stock ? $this->stock()->latest()->first()->stock : null;
+        return $this->batches()->latest()->first()->stock ? $this->batches()->latest()->first()->stock : null;
     }
 
     public function getStock()
     {
-        return $this->stock()->get()->sum('stock');
-    }
-
-    public function cost()
-    {
-        return $this->hasMany(PartnerPosServiceBatch::class);
+        return $this->batches()->get()->sum('stock');
     }
 
     public function getLastCost()
     {
-        return $this->cost()->latest()->first()->cost ? $this->cost()->latest()->first()->cost : 0.0;
+        return $this->batches()->latest()->first()->cost ? $this->batches()->latest()->first()->cost : 0.0;
     }
 }
