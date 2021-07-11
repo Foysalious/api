@@ -5,6 +5,7 @@ use App\Sheba\Business\ComponentPackage\Creator as PackageCreator;
 use App\Sheba\Business\ComponentPackage\Updater as PackageUpdater;
 use App\Sheba\Business\PayrollComponent\Components\GrossComponents\Creator;
 use App\Sheba\Business\PayrollComponent\Components\GrossComponents\Updater;
+use Carbon\Carbon;
 use Sheba\Business\PayrollSetting\Requester as PayrollSettingRequester;
 use Sheba\Business\PayrollSetting\Updater as PayrollSettingUpdater;
 use Sheba\Business\PayrollComponent\Updater as PayrollComponentUpdater;
@@ -12,6 +13,8 @@ use Sheba\Business\PayrollComponent\Requester as PayrollComponentRequester;
 use App\Sheba\Business\PayrollComponent\Components\Additions\Creator as AdditionCreator;
 use App\Sheba\Business\PayrollComponent\Components\Deductions\Creator as DeductionsCreator;
 use App\Transformers\Business\PayrollSettingsTransformer;
+use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepo;
+use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepo;
 use Sheba\Dal\PayrollComponent\Components;
 use Sheba\Dal\PayrollComponent\PayrollComponentRepository;
 use Sheba\Dal\PayrollComponent\TargetType;
@@ -42,6 +45,10 @@ class PayrollController extends Controller
     private $payrollComponentRequester;
     /*** @var PayrollComponentRepository */
     private $payrollComponentRepository;
+    /*** @var BusinessWeekendRepo */
+    private $businessWeekRepo;
+    /** * @var BusinessHolidayRepo */
+    private $businessHolidayRepo;
 
     /**
      * PayrollController constructor.
@@ -51,13 +58,17 @@ class PayrollController extends Controller
      * @param PayrollComponentUpdater $payroll_component_updater
      * @param PayrollComponentRequester $payroll_component_requester
      * @param PayrollComponentRepository $payroll_component_repository
+     * @param BusinessWeekendRepo $business_weekend_repo
+     * @param BusinessHolidayRepo $business_holiday_repo
      */
     public function __construct(PayrollSettingRepository $payroll_setting_repository,
                                 PayrollSettingRequester $payroll_setting_requester,
                                 PayrollSettingUpdater $payroll_setting_updater,
                                 PayrollComponentUpdater $payroll_component_updater,
                                 PayrollComponentRequester $payroll_component_requester,
-                                PayrollComponentRepository $payroll_component_repository)
+                                PayrollComponentRepository $payroll_component_repository,
+                                BusinessWeekendRepo $business_weekend_repo,
+                                BusinessHolidayRepo $business_holiday_repo)
     {
         $this->payrollSettingRepository = $payroll_setting_repository;
         $this->payrollSettingRequester = $payroll_setting_requester;
@@ -65,6 +76,8 @@ class PayrollController extends Controller
         $this->payrollComponentUpdater = $payroll_component_updater;
         $this->payrollComponentRequester = $payroll_component_requester;
         $this->payrollComponentRepository = $payroll_component_repository;
+        $this->businessWeekRepo = $business_weekend_repo;
+        $this->businessHolidayRepo = $business_holiday_repo;
     }
 
 
@@ -223,6 +236,54 @@ class PayrollController extends Controller
             ]);
         }
         return api_response($request, null, 200, ['payroll_components' => ['gross_component' => $gross, 'addition_component' => $addition, 'deduction_component' => $deduction]]);
+    }
+
+    public function checkPayDayConflicting(Request $request)
+    {
+        /** @var Business $business */
+        $business = $request->business;
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        /** @var PayrollSetting $payroll_setting */
+        $payroll_setting = $business->payrollSetting;
+        $last_pay_day = $payroll_setting->last_pay_day;
+        $next_pay_day = $payroll_setting->next_pay_day;
+        $pay_day_type = $request->pay_day_type;
+        $start_date_for_next_pay_day = Carbon::parse($next_pay_day)->subMonth();
+        $start_date_for_new_pay_day = null;
+        $end_date_for_new_pay_day = null;
+        $new_pay_day = null;
+        $type = '';
+        if ($pay_day_type == PayDayType::FIXED_DATE){
+            $new_pay_day = Carbon::now()->month(Carbon::parse($next_pay_day)->month)->day($request->pay_day);
+            $start_date_for_new_pay_day = $new_pay_day->subMonth();
+            $type = $start_date_for_next_pay_day < $start_date_for_new_pay_day ? 'GAP' : 'OVERLAPPING';
+        }
+        else if ($pay_day_type == PayDayType::LAST_WORKING_DAY){
+            $new_pay_day = $this->lastWorkingDayOfMonth($business, Carbon::parse($next_pay_day)->lastOfMonth());
+            $start_date_for_new_pay_day = $new_pay_day->subMonth();
+            $type = $start_date_for_next_pay_day < $start_date_for_new_pay_day ? 'GAP' : 'OVERLAPPING';
+        }
+        $day_difference = $start_date_for_new_pay_day->diffInDays($start_date_for_next_pay_day);
+        $pay_day_details = [
+            'current_payroll_cycle' => $start_date_for_next_pay_day->format('jS').' 00:00:00 - '.Carbon::parse($next_pay_day)->subDay()->format('jS').' 23:59:59',
+            'new_payroll_cycle' => $start_date_for_new_pay_day->format('jS').' 00:00:00 - '.$new_pay_day->subDay()->format('jS').' 23:59:59',
+            'type' => $type,
+            'days' => $day_difference
+        ];
+
+        return api_response($request, null, 200, ['pay_day_details' => $pay_day_details]);
+    }
+
+
+    private function lastWorkingDayOfMonth($business, $last_day_of_month)
+    {
+        while ($last_day_of_month) {
+            if (!$this->businessWeekRepo->isWeekendByBusiness($business, $last_day_of_month) &&
+                !$this->businessHolidayRepo->isHolidayByBusiness($business, $last_day_of_month)) break;
+            $last_day_of_month = $last_day_of_month->subDay(1);
+        }
+        return $last_day_of_month;
     }
 
 }
