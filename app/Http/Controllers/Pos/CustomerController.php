@@ -223,6 +223,7 @@ class CustomerController extends Controller
 
     /**
      * @param Request $request
+     * @param $partner
      * @param $customer
      * @param DueTrackerRepository $dueTrackerRepository
      * @param AccountingDueTrackerRepository $accDueTrackerRepository
@@ -230,6 +231,7 @@ class CustomerController extends Controller
      */
     public function delete(
         Request $request,
+        $partner,
         $customer,
         DueTrackerRepository $dueTrackerRepository,
         AccountingDueTrackerRepository $accDueTrackerRepository
