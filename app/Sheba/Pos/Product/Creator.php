@@ -198,10 +198,23 @@ class Creator
         }
 
         $partner_pos_service_batch = PartnerPosServiceBatch::create($batchData);
+        $batchData = $this->makeReturnDataForBatch($partner_pos_service_batch);
         $this->data['stock'] = $batchData['stock'];
         $this->data['cost'] = $batchData['cost'];
 
         if(isset($this->accounting_info)) $this->createExpenseEntry($service, $accounting_data);
-        return $partner_pos_service_batch;
+        return $batchData;
+    }
+
+    private function makeReturnDataForBatch($partner_pos_service)
+    {
+        $data = [];
+        $data['id'] = $partner_pos_service['partner_pos_service_id'];
+        $data['batch_id'] = $partner_pos_service['id'];
+        $data['stock'] = $partner_pos_service['stock'];
+        $data['cost'] = $partner_pos_service['cost'];
+        $data['from_account'] = $partner_pos_service['from_account'];
+        $data['supplier_id'] = $partner_pos_service['supplier_id'];
+        return $data;
     }
 }
