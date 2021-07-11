@@ -194,7 +194,7 @@ class Creator
         if(isset($this->accounting_info)) {
             $accounting_data = (array) (json_decode($this->accounting_info));
             $batchData['from_account'] = $accounting_data['from_account'];
-            $batchData['supplier_id'] = $accounting_data['supplier_id'];
+            $batchData['supplier_id'] = $accounting_data['supplier_id'] ?? null;
         }
 
         $partner_pos_service_batch = PartnerPosServiceBatch::create($batchData);
