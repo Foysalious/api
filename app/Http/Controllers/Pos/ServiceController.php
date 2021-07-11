@@ -414,7 +414,7 @@ class ServiceController extends Controller
     {
         $rules = $request->partner->subscription_rules;
         if (is_string($rules)) $rules = json_decode($rules, true);
-        $posService = PartnerPosService::query()->where([['id', $service], ['partner_id', $partner]])->with('stock')->first();
+        $posService = PartnerPosService::query()->where([['id', $service], ['partner_id', $partner]])->with('batches')->first();
 
         if (empty($posService)) {
             return api_response($request, null, 404, ['message' => 'Requested service not found .']);
