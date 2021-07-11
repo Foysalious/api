@@ -4,8 +4,8 @@ use App\Models\Job;
 use App\Models\Partner;
 use App\Models\PartnerOrder;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use Illuminate\Support\Collection;
 use Sheba\AutoSpAssign\ImpressionManager;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequest;
@@ -102,8 +102,8 @@ class Creator
             ->setBusinessType(BusinessType::SMANAGER)
             ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
             ->send($partner->getContactNumber(), [
-            'partner_name' => $partner->name
-        ]);
+                'partner_name' => $partner->name
+            ]);
     }
 
     private function getServices(Job $job)

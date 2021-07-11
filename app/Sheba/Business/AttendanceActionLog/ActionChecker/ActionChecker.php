@@ -207,7 +207,21 @@ abstract class ActionChecker
         return $this->resultCode ? in_array($this->resultCode, [ActionResultCodes::SUCCESSFUL, ActionResultCodes::LATE_TODAY]) : true;
     }
 
-    public function isNoteRequired()
+    public function isLateNoteRequired()
+    {
+        $date = Carbon::now();
+        $time = new TimeByBusiness();
+        $weekendHoliday = new WeekendHolidayByBusiness();
+        $checkin_time = $time->getOfficeStartTimeByBusiness();
+
+        if (is_null($checkin_time)) return 0;
+        if (!$weekendHoliday->isWeekendByBusiness($date) && !$weekendHoliday->isHolidayByBusiness($date)) {
+            return Carbon::now()->gt(Carbon::parse($checkin_time)) ? 1 : 0;
+        }
+        return 0;
+    }
+
+    public function isLeftEarlyNoteRequired()
     {
         $date = Carbon::now();
         $time = new TimeByBusiness();

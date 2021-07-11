@@ -39,20 +39,7 @@ class PdfHandler extends Handler
     public function download($mPdf = false)
     {
         if ($mPdf) {
-            $defaultConfig = (new ConfigVariables())->getDefaults();
-            $fontDirs = $defaultConfig['fontDir'];
-            $defaultFontConfig = (new FontVariables())->getDefaults();
-            $fontData = $defaultFontConfig['fontdata'];
-            $mPDF = new Mpdf([
-                'tempDir' => '/tmp',
-                'fontDir' => array_merge($fontDirs, [
-                    storage_path('/fonts'),
-                ]), 'fontdata' => $fontData + [
-                        'kalpurush' => [
-                            'R' => 'Siyamrupali.ttf', 'I' => 'Siyamrupali.ttf', 'useOTL' => 0xFF, 'useKashida' => 75,
-                        ]
-                    ], 'default_font' => 'kalpurush'
-            ]);
+            $mPDF=$this->getMpdf();
             $mPDF->simpleTables = true;
             $mPDF->packTableData = true;
             $mPDF->shrink_tables_to_fit = 1;
@@ -66,26 +53,39 @@ class PdfHandler extends Handler
         return $this->pdf->download("$this->filename.$this->downloadFormat");
     }
 
+    /**
+     * @throws MpdfException
+     */
+    private function getMpdf(){
+        $defaultConfig = (new ConfigVariables())->getDefaults();
+        $fontDirs = $defaultConfig['fontDir'];
+        $defaultFontConfig = (new FontVariables())->getDefaults();
+        $fontData = $defaultFontConfig['fontdata'];
+        return new Mpdf([
+            'mode' => 'utf-8',
+            'tempDir' => storage_path('app/temp'),
+            'fontDir' => array_merge($fontDirs, [
+                storage_path('fonts'),
+            ]), 'fontdata' => $fontData + [
+                    'kalpurush' => [
+                        'R' => 'Siyamrupali.ttf', 'I' => 'Siyamrupali.ttf', 'useOTL' => 0xFF, 'useKashida' => 75,
+                    ]
+                ], 'default_font' => 'kalpurush'
+        ]);
+
+    }
+
+    /**
+     * @throws MpdfException
+     * @throws Throwable
+     */
     public function save($mPdf = false)
     {
         if (!is_dir(public_path('temp'))) {
             mkdir(public_path('temp'), 0777, true);
         }
         if ($mPdf) {
-            $defaultConfig = (new ConfigVariables())->getDefaults();
-            $fontDirs = $defaultConfig['fontDir'];
-            $defaultFontConfig = (new FontVariables())->getDefaults();
-            $fontData = $defaultFontConfig['fontdata'];
-            $mPDF = new Mpdf([
-                'tempDir' => '/tmp',
-                'fontDir' => array_merge($fontDirs, [
-                    storage_path('/fonts'),
-                ]), 'fontdata' => $fontData + [
-                        'kalpurush' => [
-                            'R' => 'Siyamrupali.ttf', 'I' => 'Siyamrupali.ttf', 'useOTL' => 0xFF, 'useKashida' => 75,
-                        ]
-                    ], 'default_font' => 'kalpurush'
-            ]);
+           $mPDF=$this->getMpdf();
             $mPDF->simpleTables = true;
             $mPDF->packTableData = true;
             $mPDF->shrink_tables_to_fit = 1;
