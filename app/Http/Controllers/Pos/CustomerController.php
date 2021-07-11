@@ -246,14 +246,10 @@ class CustomerController extends Controller
                 throw new InvalidPartnerPosCustomer();
             }
             $customer = $partner_pos_customer->customer;
-            DB::transaction(
-                function () use ($customer, $dueTrackerRepository, $partner_pos_customer, $request, $accDueTrackerRepository) {
-                    $dueTrackerRepository->setPartner($request->partner)->removeCustomer($customer->profile_id);
-                    $accDueTrackerRepository->setPartner($request->partner)->deleteCustomer($customer->id);
-                    $this->deletePosOrder($request->partner->id, $customer->id);
-                    $partner_pos_customer->delete();
-                }
-            );
+            $dueTrackerRepository->setPartner($request->partner)->removeCustomer($customer->profile_id);
+            $accDueTrackerRepository->setPartner($request->partner)->deleteCustomer($customer->id);
+            $this->deletePosOrder($request->partner->id, $customer->id);
+            $partner_pos_customer->delete();
             return api_response($request, true, 200);
         } catch (InvalidPartnerPosCustomer $e) {
             return api_response($request, null, 500, ['message' => $e->getMessage()]);
