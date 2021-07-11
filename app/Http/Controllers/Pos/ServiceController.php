@@ -99,7 +99,7 @@ class ServiceController extends Controller
     public function show($partner, $service, Request $request)
     {
         try {
-            $service = PartnerPosService::with('category', 'discounts', 'stock')->find($service);
+            $service = PartnerPosService::with('category', 'discounts', 'batches')->find($service);
             if (!$service) return api_response($request, null, 404);
             $partner = $service->partner;
             $manager = new Manager();
