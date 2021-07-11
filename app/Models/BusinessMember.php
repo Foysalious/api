@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use Sheba\Dal\BusinessMemberStatusChangeLog\Model as BusinessMemberStatusChangeLog;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Database\Eloquent\Collection;
@@ -96,6 +97,11 @@ class BusinessMember extends Model
     public function manager()
     {
         return $this->belongsTo(BusinessMember::class, 'manager_id');
+    }
+
+    public function statusChangeLogs()
+    {
+        return $this->hasMany(BusinessMemberStatusChangeLog::class);
     }
 
     public function scopeActive($query)
