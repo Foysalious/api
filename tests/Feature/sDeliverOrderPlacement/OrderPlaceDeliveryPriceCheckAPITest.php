@@ -34,8 +34,8 @@ class OrderPlaceDeliveryPriceCheckAPITest extends FeatureTestCase
             'delivery_district' => 'Dhaka',
             'delivery_thana' => 'Dhanmondi',
             'partner_id' => '1',
-            'pickup_thana' => 'Dhaka',
-            "pickup_district"=> 'Gulshan'
+            'pickup_thana' => 'Gulshan',
+            "pickup_district"=> 'Dhaka'
 
         ]/*, [
             'Authorization' => "Bearer $this->token"
@@ -53,8 +53,8 @@ class OrderPlaceDeliveryPriceCheckAPITest extends FeatureTestCase
             'delivery_district' => 'Dhaka',
             'delivery_thana' => 'Dhanmondi',
             'partner_id' => '1',
-            'pickup_thana' => 'Dhaka',
-            "pickup_district"=> 'Gulshan'
+            'pickup_thana' => 'Gulshan',
+            "pickup_district"=> 'Dhaka'
 
         ]);
         $data = $response->decodeResponseJson();
@@ -70,8 +70,8 @@ class OrderPlaceDeliveryPriceCheckAPITest extends FeatureTestCase
             'delivery_district' => 'Dhaka',
             'delivery_thana' => 'Dhanmondi',
             'partner_id' => '1',
-            'pickup_thana' => 'Dhaka',
-            "pickup_district"=> 'Gulshan'
+            'pickup_thana' => 'Gulshan',
+            "pickup_district"=> 'Dhaka'
 
         ]);
         $data = $response->decodeResponseJson();
@@ -87,8 +87,8 @@ class OrderPlaceDeliveryPriceCheckAPITest extends FeatureTestCase
             'cod_amount' => 500,
             'delivery_district' => 'Dhaka',
             'delivery_thana' => 'Dhanmondi',
-            'pickup_thana' => 'Dhaka',
-            "pickup_district"=> 'Gulshan'
+            'pickup_thana' => 'Gulshan',
+            "pickup_district"=> 'Dhaka'
 
         ]);
         $data = $response->decodeResponseJson();
@@ -103,8 +103,8 @@ class OrderPlaceDeliveryPriceCheckAPITest extends FeatureTestCase
             'weight' => '1',
             'cod_amount' => 500,
             'partner_id' => '1',
-            'pickup_thana' => 'Dhaka',
-            "pickup_district"=> 'Gulshan'
+            'pickup_thana' => 'Gulshan',
+            "pickup_district"=> 'Dhaka'
 
         ]);
         $data = $response->decodeResponseJson();
@@ -136,19 +136,19 @@ class OrderPlaceDeliveryPriceCheckAPITest extends FeatureTestCase
     public function testProductPriceChangeAccordingtoWeight()
     {
         $response = $this->post('/v2/pos/delivery/delivery-charge', [
-            'weight' => '5',
+            'weight' => '1',
             'cod_amount' => 500,
             'delivery_district' => 'Dhaka',
             'delivery_thana' => 'Dhanmondi',
             'partner_id' => '1',
-            'pickup_thana' => 'Dhaka',
-            "pickup_district"=> 'Gulshan'
+            'pickup_thana' => 'Gulshan',
+            "pickup_district"=> 'Dhaka'
 
         ]);
         $data = $response->decodeResponseJson();
         //dd($data);
 
-        $this->assertEquals(240, $data['delivery_charge']);
+        $this->assertEquals(55, $data['delivery_charge']);
 
     }
 }
