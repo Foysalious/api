@@ -134,22 +134,20 @@ class AccountingDueTrackerController extends Controller
         try {
             $data = $this->dueTrackerRepo->setPartner($request->partner)->getDueListByCustomer($request, $customerId);
 
-            if (($request->has('download_pdf')) && ($request->download_pdf == 1)) {
+            if ((($request->has('download_pdf')) && ($request->download_pdf == 1)) ||
+                (($request->has('share_pdf')) && ($request->share_pdf == 1))) {
                 $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
                 $data['end_date'] = $request->has("end_date") ? $request->end_date : null;
                 $balanceData = $this->dueTrackerRepo->setPartner($request->partner)->dueListBalanceByCustomer($request, $customerId);
                 $data = array_merge($data, $balanceData);
                 $pdf_link = (new PdfHandler())->setName("due tracker by customer")->setData($data)->setViewFile('due_tracker_due_list_by_customer')->save(true);
-                return api_response($request, null, 200, ['message' => 'PDF download successful','link'  => $pdf_link]);
-            }
-            if (($request->has('share_pdf')) && ($request->share_pdf == 1)){
-                $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
-                $data['end_date'] = $request->has("end_date") ? $request->end_date : null;
-                $balanceData = $this->dueTrackerRepo->setPartner($request->partner)->dueListBalanceByCustomer($request, $customerId);
-                $data = array_merge($data, $balanceData);
-                $data['pdf_link'] = (new PdfHandler())->setName("due tracker by customer")->setData($data)->setViewFile('due_tracker_due_list_by_customer')->save(true);
+                if (($request->has('download_pdf')) && ($request->download_pdf == 1)) {
+                    return api_response($request, null, 200, ['message' => 'PDF download successful','link'  => $pdf_link]);
+                }
+                $data['pdf_link']  = $pdf_link;
             }
             return api_response($request, null, 200, ['data' => $data]);
+
         } catch (Exception $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         }

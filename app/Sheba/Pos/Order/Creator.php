@@ -214,11 +214,12 @@ class Creator
         $order = $order->calculate();
         $this->discountHandler->setOrder($order)->setType(DiscountTypes::ORDER)->setData($this->data);
         if ($this->discountHandler->hasDiscount()) $this->discountHandler->create($order);
-
         $this->voucherCalculation($order);
         $this->resolvePaymentMethod();
         $this->storeIncome($order);
-//        $this->storeJournal($order);
+        if (!$this->request->has('refund_nature') && $this->request->refund_nature != 'exchange') {
+            $this->storeJournal($order);
+        }
         return $order;
     }
 
