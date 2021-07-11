@@ -98,8 +98,7 @@ class Updater
         }
         if(!empty($this->batchData)) {
             $this->batchData['partner_pos_service_id'] = $this->service->id;
-            $lastBatchId = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->latest()->first()->id;
-            PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->where('id', $lastBatchId)->update($this->batchData);
+            $lastBatchData->update($this->batchData);
         }
         $this->storeImageGallery($image_gallery);
         if(isset($cloned_data['accounting_info']) && !empty($cloned_data['accounting_info'])) $this->createExpenseEntry($this->service,$cloned_data);
