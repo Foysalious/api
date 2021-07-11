@@ -64,7 +64,7 @@ pipeline {
                                 makeEmptyDirs: false,
                                 noDefaultExcludes: false,
                                 patternSeparator: '[, ]+',
-                                remoteDirectory: '/tech_alerts/public',
+                                remoteDirectory: '/tech_api/public',
                                 remoteDirectorySDF: false,
                                 removePrefix: '',
                                 sourceFiles: '**/api-test-result.xml'
