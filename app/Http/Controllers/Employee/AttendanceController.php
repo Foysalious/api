@@ -3,6 +3,7 @@
 use App\Sheba\Business\BusinessBasicInformation;
 use Illuminate\Support\Facades\Log;
 use Sheba\Business\Attendance\AttendanceCommonInfo;
+use Sheba\Dal\AttendanceActionLog\RemoteMode;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
@@ -10,6 +11,7 @@ use Sheba\Business\AttendanceActionLog\ActionChecker\ActionChecker;
 use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
 use Sheba\Business\AttendanceActionLog\AttendanceAction;
 use App\Transformers\Business\AttendanceTransformer;
+use App\Sheba\Business\Attendance\Note\Updater as AttendanceNoteUpdater;
 use Illuminate\Validation\ValidationException;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
@@ -97,6 +99,7 @@ class AttendanceController extends Controller
         }
         if ($business->isRemoteAttendanceEnable($business_member->id)) {
             $validation_data += ['lat' => 'required|numeric', 'lng' => 'required|numeric'];
+            $validation_data += ['remote_mode' => 'required|string|in:' . implode(',', RemoteMode::get())];
         }
         $this->validate($request, $validation_data);
         $this->setModifier($business_member->member);
@@ -105,6 +108,7 @@ class AttendanceController extends Controller
             ->setAction($request->action)
             ->setBusiness($business_member->business)
             ->setDeviceId($request->device_id)
+            ->setRemoteMode($request->remote_mode)
             ->setLat($request->lat)
             ->setLng($request->lng);
         $action = $attendance_action->doAction();
@@ -169,6 +173,32 @@ class AttendanceController extends Controller
         ];
 
         return api_response($request, null, 200, ['info' => $data]);
+    }
+
+    /**
+     * @param Request $request
+     * @param AttendanceNoteUpdater $note_updater
+     * @return JsonResponse
+     */
+    public function storeNote(Request $request, AttendanceNoteUpdater $note_updater)
+    {
+        $validation_data = [
+            'action' => 'required|string|in:' . implode(',', Actions::get()),
+            'date' => 'required|string',
+            'note' => 'required|string'
+        ];
+        $this->validate($request, $validation_data);
+
+        /** @var BusinessMember $business_member */
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+
+        $note_updater->setBusinessMember($business_member)
+                     ->setAction($request->action)
+                     ->setDate($request->date)
+                     ->setNote($request->note)
+                     ->updateNote();
+        return api_response($request, null, 200);
     }
 
 }
