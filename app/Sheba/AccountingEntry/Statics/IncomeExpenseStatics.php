@@ -1,6 +1,4 @@
-<?php
-
-namespace Sheba\AccountingEntry\Statics;
+<?php namespace Sheba\AccountingEntry\Statics;
 
 class IncomeExpenseStatics
 {

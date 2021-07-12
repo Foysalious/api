@@ -92,9 +92,9 @@ class Creator
         $data = [];
         collect($image_gallery)->each(function($image) use($partner_pos_service, &$data){
             array_push($data, [
-                'partner_pos_service_id' => $partner_pos_service->id,
-                'image_link' => $image
-            ] +  $this->modificationFields(true, false) );
+                    'partner_pos_service_id' => $partner_pos_service->id,
+                    'image_link' => $image
+                ] +  $this->modificationFields(true, false) );
         });
         return PartnerPosServiceImageGallery::insert($data);
     }

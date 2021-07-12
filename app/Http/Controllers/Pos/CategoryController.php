@@ -53,8 +53,7 @@ class CategoryController extends Controller
 
             $master_categories = PosCategory::whereIn('id', $partner_categories)->select($this->getSelectColumnsOfCategory())->get()
                 ->load(['children' => function ($q) use ($request, $service_where_query, $deleted_service_where_query, $updated_after_clause, $deleted_after_clause) {
-                    $q->whereHas('services', $service_where_query)
-                        ->with(['services' => function ($service_query) use ($service_where_query, $updated_after_clause) {
+                    $q->whereHas('services', $service_where_query)->with(['services' => function ($service_query) use ($service_where_query, $updated_after_clause) {
                             $service_query->where($service_where_query);
 
                             $service_query->with(['discounts' => function ($discounts_query) use ($updated_after_clause) {
@@ -63,7 +62,6 @@ class CategoryController extends Controller
 
                                 $discounts_query->where($updated_after_clause);
                             }])->select($this->getSelectColumnsOfService())->orderBy('created_at', 'desc');
-
                         }]);
                     if ($request->has('updated_after')) {
                         $q->orWhereHas('deletedServices', $deleted_service_where_query)->with(['deletedServices' => function ($deleted_service_query) use ($deleted_after_clause, $deleted_service_where_query) {
@@ -153,7 +151,8 @@ class CategoryController extends Controller
     {
         return [
             'id', 'partner_id', 'pos_category_id', 'name', 'publication_status', 'is_published_for_shop',
-            'thumb', 'banner', 'app_thumb', 'app_banner', 'cost', 'price', 'wholesale_price', 'vat_percentage', 'stock', 'unit', 'warranty', 'warranty_unit', 'show_image', 'shape', 'color'
+            'thumb', 'banner', 'app_thumb', 'app_banner', 'cost', 'price', 'wholesale_price', 'vat_percentage',
+            'stock', 'unit', 'warranty', 'warranty_unit', 'show_image', 'shape', 'color'
         ];
     }
     private function getSelectColumnsOfDeletedService()

@@ -1,7 +1,4 @@
-<?php
-
-
-namespace App\Sheba\AccountingEntry\Constants;
+<?php namespace App\Sheba\AccountingEntry\Constants;
 
 
 use Sheba\Helpers\ConstGetter;

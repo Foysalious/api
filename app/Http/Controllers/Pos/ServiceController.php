@@ -139,6 +139,7 @@ class ServiceController extends Controller
         $is_valid_sub_category = (in_array($request->category_id, $sub_categories)) ? 1 : 0;
         if (!$request->has('master_category_id') && !$is_valid_sub_category)
             return api_response($request, null, 400, ['message' => 'The selected category id is invalid']);
+
         if ($request->has('master_category_id') && !$is_valid_sub_category) {
             $request->request->remove('category_id');
             $request->merge($this->resolveSubcategory($request->master_category_id));
@@ -289,6 +290,7 @@ class ServiceController extends Controller
             }
         }
         $updater->setService($partner_pos_service)->setData($request->except('master_category_id'))->update();
+        $partner_pos_service = PartnerPosService::find($request->service);
         if ($request->discount_id) {
             $discount_data = [];
             $discount = PartnerPosServiceDiscount::find($request->discount_id);
@@ -328,6 +330,8 @@ class ServiceController extends Controller
         $partner_pos_service->master_category_id = $partner_pos_service->category->parent_id;
         $partner_pos_service->sub_category_id = $partner_pos_service->category->id;
         $partner_pos_service->weight_unit = $partner_pos_service->weight_unit? array_merge(config('weight.weight_unit')[$partner_pos_service->weight_unit], ['key' => $partner_pos_service->weight_unit]): null;
+        $partner_pos_service->stock = $partner_pos_service->getLastStock();
+        $partner_pos_service->cost = $partner_pos_service->getLastCost();
         $partner_pos_service_arr = $partner_pos_service->toArray();
         $partner_pos_service_arr['image_gallery'] = $partner_pos_service->imageGallery ? $partner_pos_service->imageGallery->map(function ($image) {
             return [

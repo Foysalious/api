@@ -132,7 +132,7 @@ class ExpenseEntry
         $data->to_account_key       = $this->id;
         $data->customer_id          = $this->accountingInfo['supplier_id'] ?? null;
         $data->inventory_products   = json_encode([['id' => $this->id, 'unit_price' => $this->costPerUnit, 'name' => $this->name, 'quantity' => $this->stock]]);
-        $data->amount_cleared       = $this->accountingInfo['transaction_type'] == 'due' ?  $this->accountingInfo['amount_cleared'] : $this->stock * $this->costPerUnit;
+        $data->amount_cleared       = $this->accountingInfo['transaction_type'] == 'due' ?  ($this->accountingInfo['amount_cleared'] ?? 0.0) : $this->stock * $this->costPerUnit;
         $data->source_id            = null;
         return $data;
     }
