@@ -99,7 +99,6 @@ class AccountingDueTrackerRepository extends BaseRepository
                 $ids = implode(",", $ids->toArray());
                 $url .= "&q=$ids";
             }
-            dd($url);
             $result = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
             if ($customerProfiles) {
                 $list = $this->attachCustomerProfile(collect($result['list']), $customerProfiles);
