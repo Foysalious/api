@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="Application Test Suite" tests="1" assertions="0" failures="0" errors="0" time="10.790812">
-    <testsuite name="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" tests="1" assertions="0" failures="0" errors="0" time="10.790812">
-      <testcase name="testTopupConsecutiveNumber" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="85" assertions="0" time="10.790812"/>
+  <testsuite name="Application Test Suite" tests="1" assertions="1" failures="0" errors="0" time="13.017114">
+    <testsuite name="Tests\Feature\TopUp\SbusinessSingleTopupTest" file="/var/www/tests/Feature/TopUp/SbusinessSingleTopupTest.php" tests="1" assertions="1" failures="0" errors="0" time="13.017114">
+      <testcase name="testBusinessSuccessfulTopupDeductAmountFromBusinessMemberWallet" class="Tests\Feature\TopUp\SbusinessSingleTopupTest" file="/var/www/tests/Feature/TopUp/SbusinessSingleTopupTest.php" line="517" assertions="1" time="13.017114"/>
     </testsuite>
   </testsuite>
 </testsuites>

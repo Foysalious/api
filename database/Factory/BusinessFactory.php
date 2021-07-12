@@ -17,6 +17,7 @@ class BusinessFactory extends Factory
             'name' =>'My Company',
             'sub_domain'=>'my-company',
             'type'=>'Company',
+            'wallet'=> 1000,
             'is_verified'=> 1
         ]);
     }
