@@ -48,40 +48,26 @@ class StockManager
 
     private function updatedStock($quantity)
     {
-        $lastStock = 0;
         while ($quantity > 0) {
 
-            $lastBatch = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->latest()->first();
+            $firstBatch = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->first();
             $allBatches = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->get();
-            if(!$lastBatch) $lastStock = 0;
-            else $lastStock = $lastBatch->stock;
 
-            if($lastStock < $quantity && count($allBatches) == 1) {
-                $lastStock -= $quantity;
-                $quantity = 0;
-                PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->where('id', $lastBatch->id)->update(['stock' => $lastStock]);
+            if($quantity >= $firstBatch->stock && count($allBatches) > 1) {
+                $quantity =  $quantity - $firstBatch->stock;
+                $firstBatch->delete();
             }
-            else if($lastStock < $quantity && count($allBatches) > 1) {
-                $quantity = $quantity - $lastStock;
-                PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->where('id', $lastBatch->id)->update(['stock' => 0]);
-                $lastBatch->delete();
-            }
-            else if($lastStock == $quantity && count($allBatches) == 1){
+            else if($quantity >= $firstBatch->stock && count($allBatches) == 1) {
+                $negativeStock = $firstBatch->stock - $quantity;
+                $firstBatch->update(['stock' => $negativeStock ]);
                 $quantity = 0;
-                PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->where('id', $lastBatch->id)->update(['stock' => 0]);
-            }
-            else if($lastStock == $quantity && count($allBatches) > 1){
-                $quantity = 0;
-                $lastBatch->delete();
             }
             else {
+                $firstBatch->update(['stock' => $firstBatch->stock - $quantity]);
                 $quantity = 0;
-                $lastStock-=$quantity;
-                if(count($allBatches) == 0) PartnerPosServiceBatch::create(['partner_pos_service_id' => $this->service->id, 'stock' => $lastStock, 'cost' => 0.0]);
-                else PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->where('id', $lastBatch->id)->update(['stock' => $lastStock]);
             }
         }
-        return $lastStock;
+        return true;
     }
 
     private function increaseUpdatedStock($quantity)

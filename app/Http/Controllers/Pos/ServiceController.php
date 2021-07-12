@@ -8,7 +8,6 @@ use App\Transformers\PosServiceTransformer;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use League\Fractal\Serializer\ArraySerializer;
@@ -40,7 +39,7 @@ class ServiceController extends Controller
         try {
             $partner = $request->partner;
             $services = [];
-            $base_query = PartnerPosService::with('discounts', 'stock')->published();
+            $base_query = PartnerPosService::with('discounts', 'batches')->published();
 
             if ($request->has('category_id') && !empty($request->category_id)) {
                 $category_ids = explode(',', $request->category_id);
@@ -52,8 +51,6 @@ class ServiceController extends Controller
                 ->each(function ($service) use (&$services) {
                     $services[] = [
                         'id' => $service->id,
-                        'weight' => $service->weight,
-                        'weight_unit' => $service->weight_unit,
                         'name' => $service->name,
                         'app_thumb' => $service->app_thumb,
                         'app_banner' => $service->app_banner,
@@ -71,7 +68,6 @@ class ServiceController extends Controller
                         'show_image' => $service->show_image,
                         'shape' => $service->shape,
                         'color' => $service->color,
-
                         'image_gallery' => $service->imageGallery ? $service->imageGallery->map(function ($image) {
                             return [
                                 'id' => $image->id,
@@ -103,20 +99,18 @@ class ServiceController extends Controller
     public function show($partner, $service, Request $request)
     {
         try {
-            $service = PartnerPosService::with('category', 'discounts', 'stock')->find($service);
+            $service = PartnerPosService::with('category', 'discounts', 'batches')->find($service);
             if (!$service) return api_response($request, null, 404);
             $partner = $service->partner;
             $manager = new Manager();
             $manager->setSerializer(new ArraySerializer());
             $resource = new Item($service, new PosServiceTransformer());
             $service = $manager->createData($resource)->toArray();
-
             return api_response($request, $service, 200, ['service' => $service, 'partner' => [
                 'id' => $partner->id,
                 'name' => $partner->name,
                 'logo' => $partner->logo,
-                'is_webstore_published' => $partner->is_webstore_published ?: 0,
-
+                'is_webstore_published' => $partner->is_webstore_published ?: 0
             ]]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
@@ -145,11 +139,15 @@ class ServiceController extends Controller
         $is_valid_sub_category = (in_array($request->category_id, $sub_categories)) ? 1 : 0;
         if (!$request->has('master_category_id') && !$is_valid_sub_category)
             return api_response($request, null, 400, ['message' => 'The selected category id is invalid']);
+
         if ($request->has('master_category_id') && !$is_valid_sub_category) {
             $request->request->remove('category_id');
             $request->merge($this->resolveSubcategory($request->master_category_id));
         }
-        $partner_pos_service = $creator->setData($request->except('master_category_id'))->create();
+        $partner_pos_service = $creator->setData($request->except('master_category_id'))
+            ->setAccountingInfo($request->accounting_info)
+            ->create();
+
         if ($request->has('discount_amount') && $request->discount_amount > 0) {
             $this->createServiceDiscount($request, $partner_pos_service);
         }
@@ -161,6 +159,19 @@ class ServiceController extends Controller
                 $discounts_query->runningDiscounts()->select(['id', 'partner_pos_service_id', 'amount', 'is_amount_percentage', 'cap', 'start_date', 'end_date']);
             }
         ])->find($partner_pos_service->id);
+        if (json_decode($partner_pos_service->name) == null) {
+            $name = $partner_pos_service->name;
+        } else {
+            $name = json_decode($partner_pos_service->name);
+        }
+        if (json_decode($partner_pos_service->description) == null) {
+            $description = $partner_pos_service->description;
+        } else {
+            $description = json_decode($partner_pos_service->description);
+        }
+
+        $partner_pos_service->description = $description;
+        $partner_pos_service->name = $name;
         $partner_pos_service->partner_id = $partner_pos_service_model->partner_id;
         $partner_pos_service->thumb = $partner_pos_service_model->thumb;
         $partner_pos_service->banner = $partner_pos_service_model->banner;
@@ -172,7 +183,7 @@ class ServiceController extends Controller
         $partner_pos_service->master_category_id = $partner_pos_service_model->category->parent_id;
         $partner_pos_service->master_category_name = $partner_pos_service_model->category->parent->name;
         $partner_pos_service->sub_category_id = $partner_pos_service_model->category->id;
-        $partner_pos_service->weight_unit =$partner_pos_service_model->weight_unit? array_merge(config('weight.weight_unit')[$partner_pos_service_model->weight_unit], ['key' => $partner_pos_service_model->weight_unit]): null;
+        $partner_pos_service->weight_unit = $partner_pos_service_model->weight_unit ? array_merge(config('weight.weight_unit')[$partner_pos_service_model->weight_unit], ['key' => $partner_pos_service_model->weight_unit]) : null;
         $partner_pos_service->image_gallery = $partner_pos_service_model->imageGallery ? $partner_pos_service_model->imageGallery->map(function ($image) {
             return [
                 'id' => $image->id,
@@ -194,13 +205,14 @@ class ServiceController extends Controller
         if(!$service) return api_response($request, null, 404, ['message' => 'Service not found']);
 
         $this->validate($request, [
-            'stock' => 'sometimes|required',
+            'stock' => 'required',
             'cost' => 'sometimes|required'
         ]);
 
         /** @var Creator $creator */
         $creator = app(Creator::class);
-        return $creator->savePartnerPosServiceBatch($service_id, $request->stock, $request->cost);
+        $partner_pos_service = $creator->setData($service)->setAccountingInfo($request->accounting_info)->savePartnerPosServiceBatch($service, $request->stock, $request->cost);
+        return api_response($request, null, 200, ['service' => $partner_pos_service]);
     }
 
     /**
@@ -226,9 +238,7 @@ class ServiceController extends Controller
         $master_category->parent_id = $master_category->id;
         $master_category->name = 'Sub None Category';
         $master_category->slug = 'sub-none-category';
-
         $sub_category = collect($master_category)->all();
-
         return PosCategory::create($this->withCreateModificationField(array_except($sub_category, ['id', 'created_at', 'created_by', 'created_by_name', 'updated_at', 'updated_by', 'updated_by_name'])));
 
     }
@@ -280,6 +290,7 @@ class ServiceController extends Controller
             }
         }
         $updater->setService($partner_pos_service)->setData($request->except('master_category_id'))->update();
+        $partner_pos_service = PartnerPosService::find($request->service);
         if ($request->discount_id) {
             $discount_data = [];
             $discount = PartnerPosServiceDiscount::find($request->discount_id);
@@ -302,12 +313,25 @@ class ServiceController extends Controller
         if ($request->is_discount_off == 'false' && !$request->discount_id) {
             $this->createServiceDiscount($request, $partner_pos_service);
         }
-
+        if (json_decode($partner_pos_service->name) == null) {
+            $name = $partner_pos_service->name;
+        } else {
+            $name = json_decode($partner_pos_service->name);
+        }
+        if (json_decode($partner_pos_service->description) == null) {
+            $description = $partner_pos_service->description;
+        } else {
+            $description = json_decode($partner_pos_service->description);
+        }
+        $partner_pos_service->name = $name;
+        $partner_pos_service->description = $description;
         $partner_pos_service->unit = $partner_pos_service->unit ? constants('POS_SERVICE_UNITS')[$partner_pos_service->unit] : null;
         $partner_pos_service->warranty_unit = $partner_pos_service->warranty_unit ? config('pos.warranty_unit')[$partner_pos_service->warranty_unit] : null;
         $partner_pos_service->master_category_id = $partner_pos_service->category->parent_id;
         $partner_pos_service->sub_category_id = $partner_pos_service->category->id;
-        $partner_pos_service->weight_unit =$partner_pos_service->weight_unit? array_merge(config('weight.weight_unit')[$partner_pos_service->weight_unit], ['key' => $partner_pos_service->weight_unit]): null;
+        $partner_pos_service->weight_unit = $partner_pos_service->weight_unit? array_merge(config('weight.weight_unit')[$partner_pos_service->weight_unit], ['key' => $partner_pos_service->weight_unit]): null;
+        $partner_pos_service->stock = $partner_pos_service->getLastStock();
+        $partner_pos_service->cost = $partner_pos_service->getLastCost();
         $partner_pos_service_arr = $partner_pos_service->toArray();
         $partner_pos_service_arr['image_gallery'] = $partner_pos_service->imageGallery ? $partner_pos_service->imageGallery->map(function ($image) {
             return [
@@ -383,6 +407,32 @@ class ServiceController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @param $partner
+     * @param $service
+     * @return JsonResponse
+     * @throws AccessRestrictedExceptionForPackage
+     */
+    public function togglePublishForShopStatus(Request $request, $partner, $service)
+    {
+        $rules = $request->partner->subscription_rules;
+        if (is_string($rules)) $rules = json_decode($rules, true);
+        $posService = PartnerPosService::query()->where([['id', $service], ['partner_id', $partner]])->with('batches')->first();
+
+        if (empty($posService)) {
+            return api_response($request, null, 404, ['message' => 'Requested service not found .']);
+        }
+        if (!$posService->is_published_for_shop) {
+            if (PartnerPosService::webstorePublishedServiceByPartner($request->partner->id)->count() >= config('pos.maximum_publishable_product_in_webstore_for_free_packages'))
+                AccessManager::checkAccess(AccessManager::Rules()->POS->ECOM->PRODUCT_PUBLISH, $request->partner->subscription->getAccessRules());
+            if ($posService->getStock() == null || $posService->getStock() < 0) return api_response($request, null, 403, ['message' => 'পন্যের স্টক আপডেট করে ওয়েবস্টোরে পাবলিশ করুন']);
+        }
+        $posService->is_published_for_shop = !(int)$posService->is_published_for_shop;
+        $posService->save();
+        return api_response($request, null, 200, ['message' => 'Service successfully ' . ($posService->is_published_for_shop ? 'published' : 'unpublished')]);
+    }
+
     public function getPosProductWeightUnit(Request $request)
     {
         try {
@@ -403,31 +453,6 @@ class ServiceController extends Controller
         }
     }
 
-    /**
-     * @param Request $request
-     * @param $partner
-     * @param $service
-     * @return JsonResponse
-     * @throws AccessRestrictedExceptionForPackage
-     */
-    public function togglePublishForShopStatus(Request $request, $partner, $service)
-    {
-        $rules = $request->partner->subscription_rules;
-        if (is_string($rules)) $rules = json_decode($rules, true);
-        $posService = PartnerPosService::query()->where([['id', $service], ['partner_id', $partner]])->with('stock')->first();
-
-        if (empty($posService)) {
-            return api_response($request, null, 404, ['message' => 'Requested service not found .']);
-        }
-        if (!$posService->is_published_for_shop) {
-            if (PartnerPosService::webstorePublishedServiceByPartner($request->partner->id)->count() >= config('pos.maximum_publishable_product_in_webstore_for_free_packages'))
-                AccessManager::checkAccess(AccessManager::Rules()->POS->ECOM->PRODUCT_PUBLISH, $request->partner->subscription->getAccessRules());
-            if ($posService->getStock() == null || $posService->getStock() < 0) return api_response($request, null, 403, ['message' => 'পন্যের স্টক আপডেট করে ওয়েবস্টোরে পাবলিশ করুন']);
-        }
-        $posService->is_published_for_shop = !(int)$posService->is_published_for_shop;
-        $posService->save();
-        return api_response($request, null, 200, ['message' => 'Service successfully ' . ($posService->is_published_for_shop ? 'published' : 'unpublished')]);
-    }
 
     /**
      * @param Request $request

@@ -10,7 +10,7 @@
   "minimum-stability": "dev",
   "prefer-stable": true,
   "require": {
-    "php": ">=7.0",
+    "php": ">=7.1",
     "laravel/framework": "5.2.*",
     "league/flysystem-aws-s3-v3": "~1.0",
     "dingo/api": "1.0.*@dev",
