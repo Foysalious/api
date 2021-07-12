@@ -38,6 +38,7 @@ class AttendanceAction
     private $lat;
     private $lng;
     private $isRemote;
+    private $remoteMode;
 
     /**
      * AttendanceAction constructor.
@@ -125,6 +126,16 @@ class AttendanceAction
         return $this;
     }
 
+    /**
+     * @param $remote_mode
+     * @return $this
+     */
+    public function setRemoteMode($remote_mode)
+    {
+        $this->remoteMode = $remote_mode;
+        return $this;
+    }
+
     public function doAction()
     {
         $action = $this->checkTheAction();
@@ -159,6 +170,7 @@ class AttendanceAction
                 ->setBusiness($this->business)
                 ->setWhichHalfDay($this->checkHalfDayLeave());
             if ($geo = $this->getGeo()) $this->attendanceActionLogCreator->setGeo($geo);
+            if ($this->isRemote) $this->attendanceActionLogCreator->setRemoteMode($this->remoteMode);
             $attendance_action_log = $this->attendanceActionLogCreator->create();
             $this->updateAttendance($attendance_action_log);
         });

@@ -168,13 +168,15 @@ abstract class ActionChecker
     {
         if (!$this->isSuccess()) return;
         if ($this->business->isIpBasedAttendanceEnable()) {
-            if ($this->business->offices()->count() > 0 && !$this->isInWifiArea()) {
+            $office_ip_count = $this->business->offices()->count();
+            if ($office_ip_count > 0 && !$this->isInWifiArea()) {
                 if ($this->business->isRemoteAttendanceEnable($this->businessMember->id)) {
                     $this->remoteAttendance();
                 } else {
                     $this->setResult(ActionResultCodes::OUT_OF_WIFI_AREA, ActionResultCodeMessages::OUT_OF_WIFI_AREA);
                 }
             } else {
+                if ($office_ip_count < 1) $this->isRemote = 1;
                 $this->setSuccessfulResponseMessage();
             }
         } else {
