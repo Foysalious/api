@@ -98,6 +98,7 @@ class AttendanceController extends Controller
         }
         if ($business->isRemoteAttendanceEnable($business_member->id)) {
             $validation_data += ['lat' => 'required|numeric', 'lng' => 'required|numeric'];
+            $validation_data += ['remote_mode' => 'required|numeric'];
         }
         $this->validate($request, $validation_data);
         $this->setModifier($business_member->member);
@@ -106,6 +107,7 @@ class AttendanceController extends Controller
             ->setAction($request->action)
             ->setBusiness($business_member->business)
             ->setDeviceId($request->device_id)
+            ->setRemoteMode($request->remote_mode)
             ->setLat($request->lat)
             ->setLng($request->lng);
         $action = $attendance_action->doAction();

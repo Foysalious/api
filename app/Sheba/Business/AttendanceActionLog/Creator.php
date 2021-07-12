@@ -25,6 +25,7 @@ class Creator
     private $isRemote;
     private $whichHalfDay;
     private $address;
+    private $remoteMode;
     /** @var CheckinStatusCalculator $checkinStatusCalculator */
     private $checkinStatusCalculator;
     /** @var CheckoutStatusCalculator $checkoutStatusCalculator */
@@ -122,6 +123,12 @@ class Creator
         return $this;
     }
 
+    public function setRemoteMode($remoteMode)
+    {
+        $this->remoteMode = $remoteMode;
+        return $this;
+    }
+
     /**
      * @param $which_half
      * @return $this
@@ -155,6 +162,7 @@ class Creator
         $this->address = $this->getAddress();
 
         if ($this->geo) $attendance_log_data['location'] = json_encode(['lat' => $this->geo->getLat(), 'lng' => $this->geo->getLng(), 'address' => $this->address]);
+        if ($this->remoteMode) $attendance_log_data['remote_mode'] = $this->remoteMode;
         return $this->attendanceActionLogRepository->create($attendance_log_data);
     }
 
