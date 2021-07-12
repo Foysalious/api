@@ -3,6 +3,7 @@
 use App\Models\BusinessMember;
 use Sheba\Dal\AttendanceActionLog\Model as AttendanceActionLog;
 use Sheba\ModificationFields;
+use DB;
 
 class Updater
 {

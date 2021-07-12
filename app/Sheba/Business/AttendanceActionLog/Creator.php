@@ -123,6 +123,10 @@ class Creator
         return $this;
     }
 
+    /**
+     * @param $remoteMode
+     * @return $this
+     */
     public function setRemoteMode($remoteMode)
     {
         $this->remoteMode = $remoteMode;

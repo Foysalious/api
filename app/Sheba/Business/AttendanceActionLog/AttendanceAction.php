@@ -126,6 +126,10 @@ class AttendanceAction
         return $this;
     }
 
+    /**
+     * @param $remote_mode
+     * @return $this
+     */
     public function setRemoteMode($remote_mode)
     {
         $this->remoteMode = $remote_mode;
