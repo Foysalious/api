@@ -37,4 +37,11 @@ class ServiceController extends Controller
 
         return api_response($request, $data, 200, ['service' => $data]);
     }
+
+    public function getSuggestions(Request $request)
+    {
+        $categories = Service::where('publication_status', 0)->select('id', 'name', 'bn_name')->get();
+
+        return count($categories) > 0 ? api_response($request, $categories, 200, ['service' => $categories]) : api_response($request, null, 404);
+    }
 }
