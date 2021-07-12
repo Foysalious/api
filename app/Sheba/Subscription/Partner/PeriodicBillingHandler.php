@@ -12,6 +12,8 @@ class PeriodicBillingHandler
     private $partner;
     private $today;
 
+    const FREE_PACKAGE_ID = 1;
+
     public function __construct(Partner $partner)
     {
         $this->partner = $partner;
