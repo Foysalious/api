@@ -166,7 +166,9 @@ class AttendanceAction
                 ->setBusiness($this->business)
                 ->setWhichHalfDay($this->checkHalfDayLeave());
             if ($geo = $this->getGeo()) $this->attendanceActionLogCreator->setGeo($geo);
-            if ($this->action == Actions::CHECKOUT) $this->attendanceActionLogCreator->setNote($this->note);
+            if ($this->action == Actions::CHECKIN || $this->action == Actions::CHECKOUT) {
+                $this->attendanceActionLogCreator->setNote($this->note);  
+            }
             $attendance_action_log = $this->attendanceActionLogCreator->create();
             $this->updateAttendance($attendance_action_log);
         });

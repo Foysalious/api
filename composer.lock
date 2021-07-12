@@ -1807,7 +1807,7 @@
             "time": "2017-03-12T09:23:10+00:00"
         },
         {
-            "name": "jeremeamia/superclosure",
+            "name": "jeremeamia/SuperClosure",
             "version": "2.3.0",
             "source": {
                 "type": "git",
@@ -3638,10 +3638,6 @@
                 "mime",
                 "mime type"
             ],
-            "support": {
-                "issues": "https://github.com/rosell-dk/image-mime-type-guesser/issues",
-                "source": "https://github.com/rosell-dk/image-mime-type-guesser/tree/0.3"
-            },
             "time": "2019-03-29T09:33:28+00:00"
         },
         {
@@ -3718,10 +3714,6 @@
                 "png",
                 "png2webp"
             ],
-            "support": {
-                "issues": "https://github.com/rosell-dk/webp-convert/issues",
-                "source": "https://github.com/rosell-dk/webp-convert/tree/2.4.0"
-            },
             "time": "2020-11-10T11:24:50+00:00"
         },
         {
@@ -3964,7 +3956,7 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
-                "reference": "de203e9c37cbe5484725d5a13db2573e9312c66b"
+                "reference": "cec55ec9dd64837c543c123f56e5e495ab8850cb"
             },
             "require": {
                 "php": ">=5.4"
@@ -3991,7 +3983,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2021-06-21T09:25:46+00:00"
+            "time": "2021-07-08T11:43:00+00:00"
         },
         {
             "name": "sheba/elasticsearch",
