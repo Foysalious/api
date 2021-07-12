@@ -92,6 +92,7 @@ class AttendanceController extends Controller
         $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
         $is_note_required = 0;
         if ($request->action == Actions::CHECKIN && $checkin->isLateNoteRequired()) {
+            $validation_data += ['note' => 'string|required_if:action,' . Actions::CHECKIN];
             $is_note_required = 1;
         }
         if ($request->action == Actions::CHECKOUT && $checkout->isLeftEarlyNoteRequired()) {
