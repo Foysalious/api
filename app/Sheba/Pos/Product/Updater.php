@@ -91,6 +91,7 @@ class Updater
         $this->setOldCost($lastBatchData->cost);
         $this->setOldStock($lastBatchData->stock);
 
+
         if (!empty($this->updatedData)) {
             $old_service = clone $this->service;
             $this->serviceRepo->update($this->service, $this->updatedData);
@@ -281,7 +282,7 @@ class Updater
             $this->batchData['stock'] = (double)$this->data['stock'];
         }
 
-        $this->batchData['cost'] = $this->data['cost'] ?? $this->service->getLastCost();
+        $this->batchData['cost'] = (double)$this->data['cost'] ?? $this->service->getLastCost();
     }
 
     private function deleteBatchesFifo()
