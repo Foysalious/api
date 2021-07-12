@@ -330,7 +330,7 @@ class ServiceController extends Controller
         $partner_pos_service->master_category_id = $partner_pos_service->category->parent_id;
         $partner_pos_service->sub_category_id = $partner_pos_service->category->id;
         $partner_pos_service->weight_unit = $partner_pos_service->weight_unit? array_merge(config('weight.weight_unit')[$partner_pos_service->weight_unit], ['key' => $partner_pos_service->weight_unit]): null;
-        $partner_pos_service->stock = $partner_pos_service->getLastStock();
+        $partner_pos_service->stock = $partner_pos_service->getStock();
         $partner_pos_service->cost = $partner_pos_service->getLastCost();
         $partner_pos_service_arr = $partner_pos_service->toArray();
         $partner_pos_service_arr['image_gallery'] = $partner_pos_service->imageGallery ? $partner_pos_service->imageGallery->map(function ($image) {
