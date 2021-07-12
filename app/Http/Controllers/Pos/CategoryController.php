@@ -97,7 +97,6 @@ class CategoryController extends Controller
                     $service->unit = $service->unit ? constants('POS_SERVICE_UNITS')[$service->unit] : null;
                     $service->warranty_unit = $service->warranty_unit ? config('pos.warranty_unit')[$service->warranty_unit] : null;
                     $service->stock = $service->batches->sum('stock');
-//                    $service->cost = $service->getLastCost();
                     $service->image_gallery = $service->imageGallery ? $service->imageGallery->map(function($image){
                         return [
                             'id' =>   $image->id,
