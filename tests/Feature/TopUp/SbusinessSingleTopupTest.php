@@ -52,10 +52,10 @@ class SbusinessSingleTopupTest extends FeatureTestCase
 
         $this->topUpVendor = factory(TopUpVendor::class)->create();
         $this->topUpVendorCommission = factory(TopUpVendorCommission::class)->create([
-            'topup_vendor_id' => $this->topUpVendor->id,
-            'agent_commission' => '1.00',
-            'type'=> "App\Models\Business",
-            'type_id' =>1
+             'topup_vendor_id' => $this->topUpVendor->id,
+             'agent_commission' => '1.00',
+             'type'=> "App\Models\Business",
+             'type_id' =>1
 
 
         ]);
@@ -92,7 +92,6 @@ class SbusinessSingleTopupTest extends FeatureTestCase
 
     public function testSuccessfulBusinessTopupResponse()
     {
-
         $response = $this->post('/v2/top-up/business', [
             'mobile' => '01620011019',
             'vendor_id' => $this->topUpVendor->id,
@@ -104,7 +103,6 @@ class SbusinessSingleTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-
         $this->assertEquals(200, $data['code']);
         $this->assertEquals("Recharge Request Successful", $data['message']);
     }
@@ -469,7 +467,7 @@ class SbusinessSingleTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-        // $this->assertEquals(400, $data['code']); //actual 200
+       // $this->assertEquals(400, $data['code']); //actual 200
         //$this->assertEquals("The amount may not be greater than 1000.", $data['message']); // actual response is "Success"
     }
 

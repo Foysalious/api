@@ -16,6 +16,7 @@ class TopUpVendorFactory extends Factory
             'amount' => '100000',
             'gateway' => 'ssl',
             'sheba_commission' => 4.0,
+            'waiting_time' => 3,
             'is_published' => 1,
         ]);
     }
