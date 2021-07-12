@@ -175,6 +175,11 @@ class AttendanceController extends Controller
         return api_response($request, null, 200, ['info' => $data]);
     }
 
+    /**
+     * @param Request $request
+     * @param AttendanceNoteUpdater $note_updater
+     * @return JsonResponse
+     */
     public function storeNote(Request $request, AttendanceNoteUpdater $note_updater)
     {
         $validation_data = [
@@ -184,17 +189,16 @@ class AttendanceController extends Controller
         ];
         $this->validate($request, $validation_data);
 
+        /** @var BusinessMember $business_member */
         $business_member = $this->getBusinessMember($request);
-        /** @var Business $business */
-        $business = $this->getBusiness($request);
         if (!$business_member) return api_response($request, null, 404);
-        $this->setModifier($business_member->member);
 
         $note_updater->setBusinessMember($business_member)
                      ->setAction($request->action)
                      ->setDate($request->date)
                      ->setNote($request->note)
-                     ->doAction();
+                     ->updateNote();
+        return api_response($request, null, 200);
     }
 
 }
