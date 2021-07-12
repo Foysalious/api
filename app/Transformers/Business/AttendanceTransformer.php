@@ -100,7 +100,7 @@ class AttendanceTransformer extends TransformerAbstract
                         'time' => $attendance->checkout_time,
                         'is_remote' => $attendance_checkout_action->is_remote ?: 0,
                         'address' => $attendance_checkout_action->is_remote ? json_decode($attendance_checkout_action->location)->address : null,
-                        'remote_mode' => $attendance_checkin_action->remote_mode ?: null
+                        'remote_mode' => $attendance_checkout_action->remote_mode ?: null
                     ] : null,
                     'late_note' => (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance->hasLateCheckin()) ? $attendance->checkinAction()->note : null,
                     'left_early_note' => (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance->hasEarlyCheckout()) ? $attendance->checkoutAction()->note : null,
