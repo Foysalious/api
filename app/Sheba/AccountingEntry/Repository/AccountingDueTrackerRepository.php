@@ -305,7 +305,7 @@ class AccountingDueTrackerRepository extends BaseRepository
         }
 
         if ($request->has('limit') && $request->has('offset')) {
-            $url .= "limit=$request->limit&offset=$request->offset";
+            $url .= "&limit=$request->limit&offset=$request->offset";
         }
         return $url;
     }
