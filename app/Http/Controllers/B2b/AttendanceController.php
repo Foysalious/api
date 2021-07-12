@@ -738,7 +738,7 @@ class AttendanceController extends Controller
 
             $edited_offices = $offices->where('action', ActionType::EDIT);
             $edited_offices->each(function ($edited_office) use ($setting_updater, $business, &$errors) {
-                $setting_updater->setBusinessOfficeId($edited_office->id)->setName($edited_office->name)->setIp($edited_office->ip);
+                $setting_updater->setBusinessOfficeId($edited_office->id)->setName($edited_office->office_name)->setIp($edited_office->ip);
                 if ($setting_updater->hasError()) {
                     array_push($errors, $setting_updater->getErrorMessage());
                     $setting_updater->resetError();
