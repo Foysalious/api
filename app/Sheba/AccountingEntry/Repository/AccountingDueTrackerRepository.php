@@ -99,6 +99,7 @@ class AccountingDueTrackerRepository extends BaseRepository
                 $ids = implode(",", $ids->toArray());
                 $url .= "&q=$ids";
             }
+            dd($url);
             $result = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
             if ($customerProfiles) {
                 $list = $this->attachCustomerProfile(collect($result['list']), $customerProfiles);
@@ -305,7 +306,7 @@ class AccountingDueTrackerRepository extends BaseRepository
         }
 
         if ($request->has('limit') && $request->has('offset')) {
-            $url .= "limit=$request->limit&offset=$request->offset";
+            $url .= "&limit=$request->limit&offset=$request->offset";
         }
         return $url;
     }
