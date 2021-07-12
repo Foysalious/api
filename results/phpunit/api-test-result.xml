@@ -1,13 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="Application Test Suite" tests="6" assertions="10" failures="0" errors="0" time="7.735083">
-    <testsuite name="Tests\Feature\sDeliveryOrderManagement\DeliveryVendorUpdateAPITest" file="/var/www/tests/Feature/sDeliveryOrderManagement/DeliveryVendorUpdateAPITest.php" tests="6" assertions="10" failures="0" errors="0" time="7.735083">
-      <testcase name="testsDeliveryUpdateVendor" class="Tests\Feature\sDeliveryOrderManagement\DeliveryVendorUpdateAPITest" file="/var/www/tests/Feature/sDeliveryOrderManagement/DeliveryVendorUpdateAPITest.php" line="42" assertions="2" time="2.131228"/>
-      <testcase name="testVendorSelectSelfDeliverySystem" class="Tests\Feature\sDeliveryOrderManagement\DeliveryVendorUpdateAPITest" file="/var/www/tests/Feature/sDeliveryOrderManagement/DeliveryVendorUpdateAPITest.php" line="57" assertions="2" time="0.808407"/>
-      <testcase name="testAuthorizationError" class="Tests\Feature\sDeliveryOrderManagement\DeliveryVendorUpdateAPITest" file="/var/www/tests/Feature/sDeliveryOrderManagement/DeliveryVendorUpdateAPITest.php" line="72" assertions="2" time="0.729125"/>
-      <testcase name="testDataValidationError" class="Tests\Feature\sDeliveryOrderManagement\DeliveryVendorUpdateAPITest" file="/var/www/tests/Feature/sDeliveryOrderManagement/DeliveryVendorUpdateAPITest.php" line="87" assertions="2" time="2.393031"/>
-      <testcase name="testDeliveryVendorDataSuccessfullyUpdateIntoDB" class="Tests\Feature\sDeliveryOrderManagement\DeliveryVendorUpdateAPITest" file="/var/www/tests/Feature/sDeliveryOrderManagement/DeliveryVendorUpdateAPITest.php" line="102" assertions="1" time="0.876853"/>
-      <testcase name="testSeltDeliverySuccessfullyUpdateIntoDB" class="Tests\Feature\sDeliveryOrderManagement\DeliveryVendorUpdateAPITest" file="/var/www/tests/Feature/sDeliveryOrderManagement/DeliveryVendorUpdateAPITest.php" line="118" assertions="1" time="0.796439"/>
+  <testsuite name="Application Test Suite" tests="1" assertions="0" failures="0" errors="0" time="10.790812">
+    <testsuite name="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" tests="1" assertions="0" failures="0" errors="0" time="10.790812">
+      <testcase name="testTopupConsecutiveNumber" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="85" assertions="0" time="10.790812"/>
     </testsuite>
   </testsuite>
 </testsuites>

@@ -94,7 +94,6 @@ class SingleTopUpTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-        //dump($data);
 
         $response = $this->post('/v2/top-up/affiliate', [
             'mobile' => '+8801620011019',
@@ -106,9 +105,8 @@ class SingleTopUpTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-        //dump($data);
-       // $this->assertEquals(400, $data['code']);
-        //$this->assertEquals("এই নাম্বারে কিছুক্ষন আগে টপ-আপ করা হয়েছে । পুনরায় এই নাম্বারে টপ-আপ করার জন্য অনুগ্রহপূর্বক 3 মিনিট অপেক্ষা করুন ।", $data['message']);
+        $this->assertEquals(400, $data['code']);
+        $this->assertEquals("এই নাম্বারে কিছুক্ষন আগে টপ-আপ করা হয়েছে । পুনরায় এই নাম্বারে টপ-আপ করার জন্য অনুগ্রহপূর্বক 3 মিনিট অপেক্ষা করুন ।", $data['message']);
     }
 
     public function testMobileNumberValidationResponseCode()

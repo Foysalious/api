@@ -53,7 +53,6 @@ class SmanagerTopupTest extends FeatureTestCase
             'agent_commission' => '1.00',
             'type'=> "App\Models\Partner"
         ]);
-      //  dd($this->topUpVendorCommission);
 
 
         $this->topUpOtfSettings = factory(TopUpOTFSettings::class)->create([
@@ -62,7 +61,6 @@ class SmanagerTopupTest extends FeatureTestCase
             'type'=> 'App\Models\Partner',
              'agent_commission'=> '5.03',
         ]);
-     //   dd($this->topUpOtfSettings);
 
         $this->topUpVendorOtf = factory(TopUpVendorOTF::class)->create([
             'topup_vendor_id' => $this->topUpVendor->id
