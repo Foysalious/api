@@ -208,28 +208,7 @@ class Updater
     }
 
     /**
-     * @param $member
-     * @return $this
-     */
-    public function setMember($member)
-    {
-        $this->member = Member::findOrFail($member);
-        $this->profile = $this->member->profile;
-        $this->businessMember = $this->member->businessMember;
-
-        if (!$this->businessMember) {
-            $this->businessMember = $this->businessMemberRepository->builder()
-                ->where('business_id', $this->business->id)
-                ->where('member_id', $this->member->id)
-                ->where('status', Statuses::INACTIVE)
-                ->first();
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return mixed
+     * @return Member
      */
     public function getMember()
     {
@@ -237,7 +216,7 @@ class Updater
     }
 
     /**
-     * @return mixed
+     * @return BusinessMember
      */
     public function getBusinessMember()
     {
@@ -245,11 +224,11 @@ class Updater
     }
 
     /**
-     * @return mixed
+     * @return Profile
      */
     public function getProfile()
     {
-        return $this->profile = $this->getMember()->profile;
+        return $this->profile;
     }
 
     /**
@@ -494,7 +473,8 @@ class Updater
     {
         DB::beginTransaction();
         try {
-            $business_member_data = ['status' => $this->coWorkerRequester->getStatus()];
+            $business_member_data['status'] = $this->coWorkerRequester->getStatus();
+            if ($this->coWorkerRequester->getStatus() == Statuses::INACTIVE) $business_member_data['is_super'] = 0;
             $this->businessMember = $this->businessMemberUpdater->setBusinessMember($this->businessMember)->update($business_member_data);
             DB::commit();
             return $this->businessMember;

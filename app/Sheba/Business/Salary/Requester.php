@@ -31,27 +31,15 @@ class Requester
         $this->updater = $salary_updater;
     }
 
-    public function setMember($member)
-    {
-        $this->member = Member::findOrFail($member);
-        $this->profile = $this->member->profile;
-        $this->businessMember = $this->member->businessMember;
-
-        if (!$this->businessMember) {
-            $this->businessMember = $this->businessMemberRepository->builder()
-                ->where('business_id', $this->business->id)
-                ->where('member_id', $this->member->id)
-                ->where('status', Statuses::INACTIVE)
-                ->first();
-        }
-
-        return $this;
-    }
-
+    /**
+     * @param BusinessMember $business_member
+     * @return $this
+     */
     public function setBusinessMember(BusinessMember $business_member)
     {
         $this->businessMember = $business_member;
-        $this->profile = $this->businessMember->profile();
+        $this->member = $this->businessMember->member;
+        $this->profile = $this->member->profile;
         return $this;
     }
 
