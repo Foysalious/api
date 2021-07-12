@@ -185,15 +185,15 @@ class DueTrackerController extends Controller
         DueTrackerRepository $dueTrackerRepository,
         AccountingDueTrackerRepository $accountingDueTrackerRepository
     ) {
-        try {
+//        try {
             $request->merge(['balance_type' => 'due']);
             $dueList = $accountingDueTrackerRepository->setPartner($request->partner)->getDueList($request, false);
             $response = $dueTrackerRepository->generateDueReminders($dueList, $request->partner);
             return api_response($request, null, 200, ['data' => $response]);
-        } catch (\Throwable $e) {
-            logError($e);
-            return api_response($request, null, 500);
-        }
+//        } catch (\Throwable $e) {
+//            logError($e);
+//            return api_response($request, null, 500);
+//        }
     }
 
     /**
