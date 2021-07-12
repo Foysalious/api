@@ -176,7 +176,9 @@ class MemberController extends Controller
             });
             if (!$business_members->count()) return api_response($request, null, 420, ['message' => 'You account deactivated from this company']);
         }
-        $business_member = $member->businessMember;
+
+        $business_member = $member->activeBusinessMember->first();
+        if (!$business_member) return api_response($request, null, 420, ['message' => 'You account is not active yet. Please contract with your company.']);
         $profile = $member->profile;
         $access_control->setBusinessMember($business_member);
         $info = [
