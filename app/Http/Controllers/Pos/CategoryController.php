@@ -61,7 +61,7 @@ class CategoryController extends Controller
                                     ->select($this->getSelectColumnsOfServiceDiscount());
 
                                 $discounts_query->where($updated_after_clause);
-                            }])->select($this->getSelectColumnsOfService())->orderBy('name', 'asc')->limit(1);
+                            }])->select($this->getSelectColumnsOfService())->orderBy('name', 'asc');
 
                         }]);
                     if ($request->has('updated_after')) {
