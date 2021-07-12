@@ -3,7 +3,7 @@
 use App\Sheba\Business\BusinessBasicInformation;
 use Illuminate\Support\Facades\Log;
 use Sheba\Business\Attendance\AttendanceCommonInfo;
-use Sheba\Dal\AttendanceActionLog\RemoteMode;
+//use Sheba\Dal\AttendanceActionLog\RemoteMode;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
@@ -99,7 +99,7 @@ class AttendanceController extends Controller
         }
         if ($business->isRemoteAttendanceEnable($business_member->id)) {
             $validation_data += ['lat' => 'required|numeric', 'lng' => 'required|numeric'];
-            $validation_data += ['remote_mode' => 'required|string|in:' . implode(',', RemoteMode::get())];
+            //$validation_data += ['remote_mode' => 'required|string|in:' . implode(',', RemoteMode::get())];
         }
         $this->validate($request, $validation_data);
         $this->setModifier($business_member->member);
