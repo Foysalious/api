@@ -398,12 +398,16 @@ class DueTrackerRepository extends BaseRepository
         $response['previous'] = [];
         $response['next']     = [];
         foreach ($list['list'] as $item) {
-            $partner_pos_customer = PartnerPosCustomer::byPartnerAndCustomer($partner->id, $item['customer_id'])->first();
+            $partner_pos_customer = PartnerPosCustomer::with([
+                 'customer' => function($q) {
+                     $q->select('id', 'profile_id');
+                 }])->byPartnerAndCustomer($partner->id, $item['customer_id'])->first();
+
             $due_date_reminder    = $partner_pos_customer['due_date_reminder'];
             if ($partner_pos_customer && $due_date_reminder) {
                 $temp['customer_name']     = $item['customer_name'];
                 $temp['customer_id']       = $item['customer_id'];
-                $temp['profile_id']        = $item['profile_id'];
+                $temp['profile_id']        = $partner_pos_customer->customer->profile_id;
                 $temp['phone']             = $partner_pos_customer->details()['phone'];
                 $temp['balance']           = $item['balance'];
                 $temp['due_date_reminder'] = $due_date_reminder;
