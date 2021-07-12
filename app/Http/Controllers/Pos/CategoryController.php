@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use App\Sheba\Pos\Category\Category;
 use Sheba\Dal\PartnerPosServiceBatch\Model as PosServiceBatch;
+use Illuminate\Support\Facades\DB;
 
 
 class CategoryController extends Controller
@@ -60,7 +61,7 @@ class CategoryController extends Controller
                                     ->select($this->getSelectColumnsOfServiceDiscount());
 
                                 $discounts_query->where($updated_after_clause);
-                            }])->select($this->getSelectColumnsOfService())->orderBy('name', 'asc');
+                            }])->select($this->getSelectColumnsOfService())->orderBy('name', 'asc')->limit(1);
 
                         }]);
                     if ($request->has('updated_after')) {
@@ -96,6 +97,8 @@ class CategoryController extends Controller
                     $service->pos_category_id = $category_id;
                     $service->unit = $service->unit ? constants('POS_SERVICE_UNITS')[$service->unit] : null;
                     $service->warranty_unit = $service->warranty_unit ? config('pos.warranty_unit')[$service->warranty_unit] : null;
+                    $service->stock = $service->getStock();
+                    $service->cost = $service->getLastCost();
                     $service->image_gallery = $service->imageGallery ? $service->imageGallery->map(function($image){
                         return [
                             'id' =>   $image->id,
