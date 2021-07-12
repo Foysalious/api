@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="Application Test Suite" tests="6" assertions="29" failures="0" errors="0" time="8.543739">
-    <testsuite name="Tests\Feature\sDeliverOrderPlacement\OrderPlacementAPITest" file="/var/www/tests/Feature/sDeliverOrderPlacement/OrderPlacementAPITest.php" tests="6" assertions="29" failures="0" errors="0" time="8.543739">
-      <testcase name="testSuccessfulOrderPlaceAPIForPos" class="Tests\Feature\sDeliverOrderPlacement\OrderPlacementAPITest" file="/var/www/tests/Feature/sDeliverOrderPlacement/OrderPlacementAPITest.php" line="48" assertions="2" time="2.209842"/>
-      <testcase name="testSuccessfulOrderPlaceAPIForSalesChannel" class="Tests\Feature\sDeliverOrderPlacement\OrderPlacementAPITest" file="/var/www/tests/Feature/sDeliverOrderPlacement/OrderPlacementAPITest.php" line="76" assertions="2" time="0.841530"/>
-      <testcase name="testPosOrderPlaceAPIForDataFailedToPassValidation" class="Tests\Feature\sDeliverOrderPlacement\OrderPlacementAPITest" file="/var/www/tests/Feature/sDeliverOrderPlacement/OrderPlacementAPITest.php" line="103" assertions="1" time="2.528917"/>
-      <testcase name="testPosOrderPlaceAPIForAuthorizationError" class="Tests\Feature\sDeliverOrderPlacement\OrderPlacementAPITest" file="/var/www/tests/Feature/sDeliverOrderPlacement/OrderPlacementAPITest.php" line="126" assertions="2" time="1.083161"/>
-      <testcase name="testSuccessfullyDataInsertIntoDBForPosOrderPlaceAPI" class="Tests\Feature\sDeliverOrderPlacement\OrderPlacementAPITest" file="/var/www/tests/Feature/sDeliverOrderPlacement/OrderPlacementAPITest.php" line="151" assertions="11" time="0.902958"/>
-      <testcase name="testPosOrderPlaceAPIForSuccessfullyDataInsertIntoDBForWebstore" class="Tests\Feature\sDeliverOrderPlacement\OrderPlacementAPITest" file="/var/www/tests/Feature/sDeliverOrderPlacement/OrderPlacementAPITest.php" line="189" assertions="11" time="0.977331"/>
+  <testsuite name="Application Test Suite" tests="4" assertions="8" failures="0" errors="0" time="6.192894">
+    <testsuite name="Tests\Feature\sDeliveryOrderManagement\DeliveryOrderCancelAPITest" file="/var/www/tests/Feature/sDeliveryOrderManagement/DeliveryOrderCancelAPITest.php" tests="4" assertions="8" failures="0" errors="0" time="6.192894">
+      <testcase name="testCancelPosDeliveryOrder" class="Tests\Feature\sDeliveryOrderManagement\DeliveryOrderCancelAPITest" file="/var/www/tests/Feature/sDeliveryOrderManagement/DeliveryOrderCancelAPITest.php" line="38" assertions="3" time="2.048620"/>
+      <testcase name="testFailedToCancelPosDeliveryOrderDueToAuthorizationError" class="Tests\Feature\sDeliveryOrderManagement\DeliveryOrderCancelAPITest" file="/var/www/tests/Feature/sDeliveryOrderManagement/DeliveryOrderCancelAPITest.php" line="53" assertions="2" time="0.779162"/>
+      <testcase name="testPosOrderIdFieldIsRequired" class="Tests\Feature\sDeliveryOrderManagement\DeliveryOrderCancelAPITest" file="/var/www/tests/Feature/sDeliveryOrderManagement/DeliveryOrderCancelAPITest.php" line="67" assertions="2" time="2.420573"/>
+      <testcase name="testCancelOrderDataUpdateIntoDB" class="Tests\Feature\sDeliveryOrderManagement\DeliveryOrderCancelAPITest" file="/var/www/tests/Feature/sDeliveryOrderManagement/DeliveryOrderCancelAPITest.php" line="85" assertions="1" time="0.944539"/>
     </testsuite>
   </testsuite>
 </testsuites>
