@@ -135,28 +135,16 @@ class AttendanceController extends Controller
         if (!$business_member) return api_response($request, null, 404);
         /** @var Attendance $attendance */
         $attendance = $business_member->attendanceOfToday();
-        /** @var ActionChecker $checkin */
-        $checkin = $action_processor->setActionName(Actions::CHECKIN)->getAction();
-        /** @var ActionChecker $checkout */
-        $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
         /** @var Business $business */
         $business = $this->getBusiness($request);
         $is_remote_enable = $business->isRemoteAttendanceEnable($business_member->id);
         $data = [
             'can_checkin' => !$attendance ? 1 : ($attendance->canTakeThisAction(Actions::CHECKIN) ? 1 : 0),
             'can_checkout' => $attendance && $attendance->canTakeThisAction(Actions::CHECKOUT) ? 1 : 0,
-            'is_late_note_required' => 0,
-            'is_left_early_note_required' => 0,
             'checkin_time' => $attendance ? $attendance->checkin_time : null,
             'checkout_time' => $attendance ? $attendance->checkout_time : null,
             'is_geo_required' => $is_remote_enable ? 1 : 0
         ];
-        if ($data['can_checkin']) {
-            $data['is_late_note_required'] = $checkin->isLateNoteRequired();
-        }
-        if ($data['can_checkout']) {
-            $data['is_left_early_note_required'] = $checkout->isLeftEarlyNoteRequired();
-        }
         return api_response($request, null, 200, ['attendance' => $data]);
     }
 
