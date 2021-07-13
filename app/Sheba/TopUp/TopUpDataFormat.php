@@ -132,7 +132,12 @@ class TopUpDataFormat
         ];
     }
 
-    public function makeVendorWiseCommissionData(&$vendor, $topup_charges, $agent)
+    /**
+     * @param $vendor
+     * @param $agent
+     * @param $topup_charges
+     */
+    public function makeVendorWiseCommissionData(&$vendor, $agent, $topup_charges)
     {
         $vendor_commission = TopUpVendorCommission::where([['topup_vendor_id', $vendor->id], ['type', $agent]])->first();
         $asset_name = strtolower(trim(preg_replace('/\s+/', '_', $vendor->name)));
