@@ -72,6 +72,8 @@ class AttendanceList
     private $checkinLocation;
     private $checkinOfficeOrRemote;
     private $checkoutOfficeOrRemote;
+    private $checkInRemoteMode;
+    private $checkOutRemoteMode;
 
     /**
      * AttendanceList constructor.
@@ -241,6 +243,26 @@ class AttendanceList
         $this->checkoutLocation = $checkout_location;
         return $this;
     }
+
+    /**
+     * @param $checkin_remote_mode
+     * @return $this
+     */
+    public function setCheckInRemoteMode($checkin_remote_mode)
+    {
+        $this->checkInRemoteMode = $checkin_remote_mode;
+        return $this;
+    }
+
+    /**
+     * @param $checkout_remote_mode
+     * @return $this
+     */
+    public function setCheckOutRemoteMode($checkout_remote_mode)
+    {
+        $this->checkOutRemoteMode = $checkout_remote_mode;
+        return $this;
+    }
     /**
      * @return array
      */
@@ -322,6 +344,18 @@ class AttendanceList
         if ($this->checkoutLocation) {
             $attendances = $attendances->whereHas('actions', function ($q) {
                 $q->where([['ip', $this->checkoutLocation],['action', Actions::CHECKOUT]]);
+            });
+        }
+
+        if ($this->checkInRemoteMode) {
+            $attendances = $attendances->whereHas('actions', function ($q) {
+                $q->where([['remote_mode', $this->checkInRemoteMode],['action', Actions::CHECKIN]]);
+            });
+        }
+
+        if ($this->checkOutRemoteMode) {
+            $attendances = $attendances->whereHas('actions', function ($q) {
+                $q->where([['remote_mode', $this->checkOutRemoteMode],['action', Actions::CHECKOUT]]);
             });
         }
 
