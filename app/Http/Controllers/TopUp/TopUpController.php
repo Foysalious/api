@@ -73,9 +73,10 @@ class TopUpController extends Controller
     /**
      * @param Request $request
      * @param TopUpDataFormat $formatter
+     * @param $user
      * @return JsonResponse
      */
-    public function getVendor(Request $request, TopUpDataFormat $formatter, $user = ''): JsonResponse
+    public function getVendor(Request $request, TopUpDataFormat $formatter, $user): JsonResponse
     {
         try {
             $topup_charges = [];
