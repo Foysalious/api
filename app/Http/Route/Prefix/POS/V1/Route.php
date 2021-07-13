@@ -6,11 +6,9 @@ class Route
     public function set($api)
     {
         $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
-
-
             $api->get('/channels', "Inventory\ChannelController@index");
             $api->get('/units', "Inventory\UnitController@index");
-
+            $api->post('orders/validate-promo', 'PosOrder\OrderController@validatePromo');
         });
 
    $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers', 'middleware' => ['jwtAccessToken']], function ($api) {
@@ -81,7 +79,6 @@ class Route
             $api->group(['prefix' => 'orders'], function ($api) {
                 $api->get('/', 'PosOrder\OrderController@index');
                 $api->get('/{order}', 'PosOrder\OrderController@show');
-                $api->post('/validate-promo', 'PosOrder\OrderController@validatePromo');
                 $api->post('/', 'PosOrder\OrderController@store');
                 $api->group(['prefix' => '{order}'], function ($api) {
                     $api->post('/update-status', 'PosOrder\OrderController@updateStatus');
