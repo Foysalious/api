@@ -46,15 +46,23 @@ class SmanagerTopupTest extends FeatureTestCase
         ]);
         $this->logIn();
 
+
         $this->topUpVendor = factory(TopUpVendor::class)->create();
         $this->topUpVendorCommission = factory(TopUpVendorCommission::class)->create([
             'topup_vendor_id' => $this->topUpVendor->id,
+            'agent_commission' => '1.00',
+            'type'=> "App\Models\Partner"
         ]);
+      //  dd($this->topUpVendorCommission);
 
 
         $this->topUpOtfSettings = factory(TopUpOTFSettings::class)->create([
-            'topup_vendor_id' => $this->topUpVendor->id
+            'topup_vendor_id' => $this->topUpVendor->id,
+            'applicable_gateways'=> '["ssl","airtel"]',
+            'type'=> 'App\Models\Partner',
+             'agent_commission'=> '5.03',
         ]);
+     //   dd($this->topUpOtfSettings);
 
         $this->topUpVendorOtf = factory(TopUpVendorOTF::class)->create([
             'topup_vendor_id' => $this->topUpVendor->id
@@ -68,14 +76,21 @@ class SmanagerTopupTest extends FeatureTestCase
          * TODO
          * create topup topBlocklistNumbers table
          */
-        $this->topBlocklistNumbers = factory(TopUpBlacklistNumber::class)->create();
 
-        $verify_pin_mock = $this->getMockBuilder(VerifyPin::class)->setConstructorArgs([$this->app->make(AccountServer::class)])->setMethods(['verify'])->getMock();
+        $this->topBlocklistNumbers = factory(TopUpBlacklistNumber::class)->create();
+         //dd($this->topBlocklistNumbers);
+
+        $verify_pin_mock = $this->getMockBuilder(VerifyPin::class)
+            ->setConstructorArgs([$this->app->make(AccountServer::class)])
+            ->setMethods(['verify'])
+            ->getMock();
         $verify_pin_mock->method('setAgent')->will($this->returnSelf());
         $verify_pin_mock->method('setProfile')->will($this->returnSelf());
         $verify_pin_mock->method('setRequest')->will($this->returnSelf());
 
         $this->app->instance(VerifyPin::class, $verify_pin_mock);
+        $this->app->singleton(ExpenseTrackerClient::class, MockExpenseClient::class);
+
     }
 
     public function testSuccessfulTopupResponse()
@@ -512,7 +527,7 @@ class SmanagerTopupTest extends FeatureTestCase
         $resourceNIDStatus = Profile::find(1);;
         $resourceNIDStatus->update(["nid_verified" => 1]);
         $response = $this->post('/v2/top-up/partner', [
-            'mobile' => '+8801620011019',
+            'mobile' => '01620011019',
             'vendor_id' => $this->topUpVendor->id,
             'connection_type' => 'prepaid',
             'amount' => 10,
@@ -537,9 +552,7 @@ class SmanagerTopupTest extends FeatureTestCase
     {
 
         $resourceNIDStatus = Profile::find(1);
-        $partner_wallet = Partner::find(1);
         $resourceNIDStatus->update(["nid_verified" => 1]);
-        $partner_wallet->update(["wallet" =>10000]);
         $response = $this->post('/v2/top-up/partner', [
             'mobile' => '01620011019',
             'vendor_id' => $this->topUpVendor->id,
