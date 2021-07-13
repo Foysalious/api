@@ -11,7 +11,7 @@ class Statics
 
     public static function getEmiFaqWebView(): string
     {
-        return config('sheba.partners_url') . "/api/emi";
+        return config('sheba.partners_url') . "/emi/details";
     }
 
     public static function emiFaq(): array
