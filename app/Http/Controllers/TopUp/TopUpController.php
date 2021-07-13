@@ -81,9 +81,9 @@ class TopUpController extends Controller
 
             $vendors = TopUpVendor::select('id', 'name', 'is_published')->published()->get();
 
-            foreach ($vendors as $vendor) {
+            foreach ($vendors as $vendor)
                 $formatter->makeVendorWiseCommissionData($vendor, $topup_charges, $agent);
-            }
+
             $regular_expression = $formatter->getAdditionalData();
             return api_response($request, $vendors, 200, ['vendors' => $vendors, 'regex' => $regular_expression]);
         } catch (Throwable $e) {
