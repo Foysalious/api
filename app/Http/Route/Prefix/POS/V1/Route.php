@@ -10,6 +10,7 @@ class Route
             $api->get('/units', "Inventory\UnitController@index");
             $api->get('/partners/{sub_domain}', "Webstore\PartnerController@show");
             $api->get('voucher-details/{voucher_id}', 'VoucherController@getVoucherDetails');
+            $api->post('webstore/validity-check', 'VoucherController@validateVoucher');
         });
 
    $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers', 'middleware' => ['jwtAccessToken']], function ($api) {
