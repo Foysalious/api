@@ -276,7 +276,7 @@ class AttendanceList
             ->where('date', '<=', $this->endDate->toDateString())
             ->with([
                 'actions' => function ($q) {
-                    $q->select('id', 'attendance_id', 'note', 'action', 'status', 'ip', 'is_remote', 'location', 'created_at');
+                    $q->select('id', 'attendance_id', 'note', 'action', 'status', 'ip', 'is_remote', 'remote_mode', 'location', 'created_at');
                 },
                 'businessMember' => function ($q) {
                     $this->withMembers($q);
@@ -398,7 +398,8 @@ class AttendanceList
                             'is_remote' => $action->is_remote ?: 0,
                             'address' => $action->is_remote ? json_decode($action->location)->address : null,
                             'checkin_time' => Carbon::parse($attendance->date . ' ' . $attendance->checkin_time)->format('g:i a'),
-                            'note' => $action->note
+                            'note' => $action->note,
+                            'remote_mode' => $action->remote_mode ?: null
                         ]);
                     }
                     if ($action->action == Actions::CHECKOUT) {
@@ -407,7 +408,8 @@ class AttendanceList
                             'is_remote' => $action->is_remote ?: 0,
                             'address' => $action->is_remote ? json_decode($action->location)->address : null,
                             'checkout_time' => $attendance->checkout_time ? Carbon::parse($attendance->date . ' ' . $attendance->checkout_time)->format('g:i a') : null,
-                            'note' => $action->note
+                            'note' => $action->note,
+                            'remote_mode' => $action->remote_mode ?: null
                         ]);
                     }
                 }
