@@ -18,6 +18,7 @@ use Illuminate\Http\JsonResponse;
 use Jose\Factory\JWEFactory;
 use Jose\Factory\JWKFactory;
 use Sheba\Dal\AuthenticationRequest\Purpose;
+use Sheba\Dal\SubscriptionWisePaymentGateway\Model as SubscriptionWisePaymentGateway;
 use Sheba\Dal\TopUpBulkRequest\Statuses;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
@@ -36,6 +37,7 @@ use Sheba\TopUp\Bulk\Validator\SheetNameValidator;
 use Sheba\TopUp\ConnectionType;
 use Sheba\OAuth2\AuthUser;
 use Sheba\TopUp\Exception\PinMismatchException;
+use Sheba\TopUp\Exception\InvalidSubscriptionWiseCommission;
 use Sheba\TopUp\History\RequestBuilder;
 use Sheba\TopUp\OTF\OtfAmount;
 use Sheba\TopUp\TopUpAgent;
@@ -70,30 +72,33 @@ class TopUpController extends Controller
 
     /**
      * @param Request $request
-     * @param $user
+     * @param TopUpDataFormat $formatter
      * @return JsonResponse
      */
-    public function getVendor(Request $request, $user)
+    public function getVendor(Request $request, TopUpDataFormat $formatter): JsonResponse
     {
-        $agent = $this->getFullAgentType($user);
+        try {
+            $agent = $this->getFullAgentType($request->type);
+            if ($agent === "App\Models\Partner") {
+                /** @var Partner $partner */
+                $partner = ($request->user);
+                /** @var SubscriptionWisePaymentGateway $gateway_charges */
+                $gateway_charges = $partner->subscription->validPaymentGatewayAndTopUpCharges;
 
-        $vendors = TopUpVendor::select('id', 'name', 'is_published')->published()->get();
-        $error_message = "Currently, we’re supporting";
-        foreach ($vendors as $vendor) {
-            $vendor_commission = TopUpVendorCommission::where([['topup_vendor_id', $vendor->id], ['type', $agent]])->first();
-            $asset_name = strtolower(trim(preg_replace('/\s+/', '_', $vendor->name)));
-            array_add($vendor, 'asset', $asset_name);
-            array_add($vendor, 'agent_commission', $vendor_commission ? $vendor_commission->agent_commission : 0);
-            array_add($vendor, 'is_prepaid_available', 1);
-            array_add($vendor, 'is_postpaid_available', ($vendor->id != 6) ? 1 : 0);
-            if ($vendor->is_published) $error_message .= ',' . $vendor->name;
+                $topup_charges = json_decode($gateway_charges->topup_charges);
+            }
+
+            $vendors = TopUpVendor::select('id', 'name', 'is_published')->published()->get();
+
+            foreach ($vendors as $vendor)
+                $formatter->makeVendorWiseCommissionData($vendor, $topup_charges, $agent);
+
+            $regular_expression = $formatter->getAdditionalData();
+            return api_response($request, $vendors, 200, ['vendors' => $vendors, 'regex' => $regular_expression]);
+        } catch (Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
         }
-        $regular_expression = [
-            'typing' => "^(013|13|014|14|018|18|016|16|017|17|019|19|015|15)",
-            'from_contact' => "^(?:\+?88)?01[16|8]\d{8}$",
-            'error_message' => $error_message . '.'
-        ];
-        return api_response($request, $vendors, 200, ['vendors' => $vendors, 'regex' => $regular_expression]);
     }
 
     /**
@@ -362,7 +367,7 @@ class TopUpController extends Controller
     {
         ini_set('memory_limit', '6096M');
         ini_set('max_execution_time', 480);
-        
+
         list($offset, $limit) = calculatePagination($request);
         /** @var AuthUser $user */
         $user = $this->getAgent($request, $user);
@@ -516,7 +521,7 @@ class TopUpController extends Controller
 
         return $agent;
     }
-    
+
     private function hasLastTopupWithinIntervalTime(TopUpRequest $topUpRequest, Request $request)
     {
         $agent = $topUpRequest->getAgent();
