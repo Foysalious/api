@@ -18,6 +18,7 @@ use App\Transformers\Business\PersonalInfoTransformer;
 use App\Transformers\BusinessEmployeeDetailsTransformer;
 use App\Transformers\BusinessEmployeesTransformer;
 use App\Transformers\CustomSerializer;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
@@ -189,7 +190,7 @@ class EmployeeController extends Controller
                 'can_checkout' => $attendance && $attendance->canTakeThisAction(Actions::CHECKOUT) ? 1 : 0,
             ],
             'note_data' => [
-               'date' => $last_attendance ? $last_attendance['date'] : null,
+               'date' => $last_attendance ? Carbon::parse($last_attendance['date'])->format('jS F Y') : null,
                'is_note_required' => $is_note_required,
                'note_action' => $note_action
             ],
