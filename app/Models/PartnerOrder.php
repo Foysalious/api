@@ -257,7 +257,7 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
         /*$this->roundingCutOff = 0;*/
 
         $total = $this->totalPrice - floatval($this->discount);
-        $this->roundingCutOff = $total - floor($total);
+        $this->roundingCutOff = $total - round($total);
         return $this;
     }
 
