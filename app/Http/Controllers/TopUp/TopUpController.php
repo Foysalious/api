@@ -63,14 +63,17 @@ class TopUpController extends Controller
 
     /**
      * @param Request $request
+     * @param $user
      * @param TopUpDataFormat $formatter
      * @return JsonResponse
      */
-    public function getVendor(Request $request, TopUpDataFormat $formatter): JsonResponse
+    public function getVendor(Request $request, $user, TopUpDataFormat $formatter): JsonResponse
     {
         try {
-            $agent = $this->getFullAgentType($request->type);
-            if ($agent === "App\Models\Partner") {
+            $topup_charges = [];
+            $agent = $this->getFullAgentType($user);
+
+            if ($user == "partner") {
                 /** @var Partner $partner */
                 $partner = ($request->user);
                 /** @var SubscriptionWisePaymentGateway $gateway_charges */
@@ -82,7 +85,7 @@ class TopUpController extends Controller
             $vendors = TopUpVendor::select('id', 'name', 'is_published')->published()->get();
 
             foreach ($vendors as $vendor)
-                $formatter->makeVendorWiseCommissionData($vendor, $topup_charges, $agent);
+                $formatter->makeVendorWiseCommissionData($vendor, $agent, $topup_charges);
 
             $regular_expression = $formatter->getAdditionalData();
             return api_response($request, $vendors, 200, ['vendors' => $vendors, 'regex' => $regular_expression]);
