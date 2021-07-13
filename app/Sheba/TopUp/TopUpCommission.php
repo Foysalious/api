@@ -94,7 +94,7 @@ abstract class TopUpCommission
             $this->topUpOrder->agent_commission = $this->calculateCommission($this->topUpOrder->amount);
         } catch (InvalidSubscriptionWiseCommission $exception) {
             $otf_details = $this->getVendorOTFDetails($this->topUpOrder->vendor_id, $this->topUpOrder->amount, $this->topUpOrder->gateway, $this->topUpOrder->payee_mobile_type, true);
-            $this->topUpOrder->agent_commission = $this->getDefaultCommissionForPartner($this->topUpOrder->amount);
+            $this->topUpOrder->agent_commission = $this->getDefaultCommission($this->topUpOrder->amount);
             logError($exception);
         }
 
@@ -134,7 +134,7 @@ abstract class TopUpCommission
         return $commission;
     }
 
-    protected function getDefaultCommissionForPartner($amount)
+    protected function getDefaultCommission($amount)
     {
         return (double)$amount * ($this->getVendorAgentCommission() / 100);
     }
@@ -173,8 +173,15 @@ abstract class TopUpCommission
     {
         $this->setModifier($this->agent);
         $amount = $this->topUpOrder->amount;
+        try {
+            if ($this->agent instanceof Partner) $this->setSubscriptionWiseCommission();
+            $commission = $this->calculateCommission($amount);
+        } catch (InvalidSubscriptionWiseCommission $exception) {
+            logError($exception);
+            $commission = $this->getDefaultCommission($amount);
+        }
         $otf_commission = $this->topUpOrder->otf_agent_commission ?? 0;
-        $amount_after_commission = round($amount - $this->calculateCommission($amount) - $otf_commission, 2);
+        $amount_after_commission = round($amount - $commission - $otf_commission, 2);
         $log = "Your recharge TK $amount to {$this->topUpOrder->payee_mobile} has failed, TK $amount_after_commission is refunded in your account.";
         $this->refundUser($amount_after_commission, $log,$this->topUpOrder->isRobiWalletTopUp());
     }
