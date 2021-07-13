@@ -116,7 +116,7 @@ class AttendanceController extends Controller
 
         return response()->json(['code' => $action->getResultCode(),
                                  'is_note_required' => $is_note_required,
-                                 'date' => Carbon::now()->format('Y-m-d'),
+                                 'date' => Carbon::now()->format('jS F Y'),
                                  'message' => $action->getResultMessage()]);
     }
 
