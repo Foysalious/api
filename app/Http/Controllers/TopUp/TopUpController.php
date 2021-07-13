@@ -63,17 +63,16 @@ class TopUpController extends Controller
 
     /**
      * @param Request $request
-     * @param $user
      * @param TopUpDataFormat $formatter
      * @return JsonResponse
      */
-    public function getVendor(Request $request, $user, TopUpDataFormat $formatter): JsonResponse
+    public function getVendor(Request $request, TopUpDataFormat $formatter): JsonResponse
     {
         try {
             $topup_charges = [];
-            $agent = $this->getFullAgentType($user);
+            $agent = get_class($request->user);
 
-            if ($user == "partner") {
+            if ($agent === "App\Models\Partner") {
                 /** @var Partner $partner */
                 $partner = ($request->user);
                 /** @var SubscriptionWisePaymentGateway $gateway_charges */
