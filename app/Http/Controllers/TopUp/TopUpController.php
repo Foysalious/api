@@ -72,11 +72,11 @@ class TopUpController extends Controller
             $topup_charges = [];
             /** @var TopUpAgent $agent */
             $agent = $this->getAgent($request, $user);
-            $agent = get_class($agent);
+            $agent_class = get_class($agent);
 
-            if ($agent === "App\Models\Partner") {
+            if ($agent_class === "App\Models\Partner") {
                 /** @var Partner $partner */
-                $partner = ($request->user);
+                $partner = $agent;
                 /** @var SubscriptionWisePaymentGateway $gateway_charges */
                 $gateway_charges = $partner->subscription->validPaymentGatewayAndTopUpCharges;
 
@@ -86,7 +86,7 @@ class TopUpController extends Controller
             $vendors = TopUpVendor::select('id', 'name', 'is_published')->published()->get();
 
             foreach ($vendors as $vendor)
-                $formatter->makeVendorWiseCommissionData($vendor, $agent, $topup_charges);
+                $formatter->makeVendorWiseCommissionData($vendor, $agent_class, $topup_charges);
 
             $regular_expression = $formatter->getAdditionalData();
             return api_response($request, $vendors, 200, ['vendors' => $vendors, 'regex' => $regular_expression]);
