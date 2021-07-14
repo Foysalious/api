@@ -11,6 +11,7 @@ use App\Models\Resource;
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
+use Sheba\Dal\SubscriptionWisePaymentGateway\Model;
 use Sheba\Dal\TopUpBlacklistNumber\TopUpBlacklistNumber;
 use Sheba\Dal\TopUpOTFSettings\Model as TopUpOTFSettings;
 use Sheba\Dal\TopUpVendorOTF\Model as TopUpVendorOTF;
@@ -18,6 +19,7 @@ use Sheba\Dal\TopUpVendorOTFChangeLog\Model as TopUpVendorOTFChangeLog;
 use Sheba\ExpenseTracker\Repository\ExpenseTrackerClient;
 use Sheba\OAuth2\AccountServer;
 use Sheba\OAuth2\VerifyPin;
+use Sheba\Subscription\Partner\PartnerPackage;
 use Tests\Feature\FeatureTestCase;
 use Tests\Mocks\MockExpenseClient;
 
@@ -34,8 +36,6 @@ class SmanagerTopupTest extends FeatureTestCase
     {
         parent::setUp();
         $this->truncateTables([
-            TopUpVendor::class,
-            TopUpVendorCommission::class,
             TopUpOTFSettings::class,
             TopUpOrder::class,
             TopUpBlacklistNumber::class,
@@ -43,18 +43,11 @@ class SmanagerTopupTest extends FeatureTestCase
             Partner::class,
             Resource::class,
             PartnerTransaction::class,
+            Model::class
         ]);
         $this->logIn();
 
-
-        $this->topUpVendor = factory(TopUpVendor::class)->create();
-        $this->topUpVendorCommission = factory(TopUpVendorCommission::class)->create([
-            'topup_vendor_id' => $this->topUpVendor->id,
-            'agent_commission' => '1.00',
-            'type'=> "App\Models\Partner"
-        ]);
-      //  dd($this->topUpVendorCommission);
-
+        $this->SubscriptionWisePaymentGateways = factory(Model::class)->create();
 
         $this->topUpOtfSettings = factory(TopUpOTFSettings::class)->create([
             'topup_vendor_id' => $this->topUpVendor->id,
@@ -62,7 +55,6 @@ class SmanagerTopupTest extends FeatureTestCase
             'type'=> 'App\Models\Partner',
              'agent_commission'=> '5.03',
         ]);
-     //   dd($this->topUpOtfSettings);
 
         $this->topUpVendorOtf = factory(TopUpVendorOTF::class)->create([
             'topup_vendor_id' => $this->topUpVendor->id
@@ -78,7 +70,6 @@ class SmanagerTopupTest extends FeatureTestCase
          */
 
         $this->topBlocklistNumbers = factory(TopUpBlacklistNumber::class)->create();
-         //dd($this->topBlocklistNumbers);
 
         $verify_pin_mock = $this->getMockBuilder(VerifyPin::class)
             ->setConstructorArgs([$this->app->make(AccountServer::class)])
@@ -107,7 +98,6 @@ class SmanagerTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-        //dd($data);
         $this->assertEquals(200, $data['code']);
         $this->assertEquals("Recharge Request Successful", $data['message']);
     }

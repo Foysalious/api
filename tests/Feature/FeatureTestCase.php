@@ -33,6 +33,7 @@ use Sheba\Dal\JobService\JobService;
 use Sheba\Dal\LocationService\LocationService;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\Dal\Service\Service;
+use Sheba\Dal\SubscriptionWisePaymentGateway\Model;
 use Sheba\Services\Type as ServiceType;
 use Sheba\Subscription\Partner\Access\RulesDescriber\Pos;
 use TestCase;
@@ -104,6 +105,12 @@ class FeatureTestCase extends TestCase
      * @var PosOrderPayment
      */
     protected $PosOrderPayment;
+
+    /**
+     * @var Model
+     */
+    protected $SubscriptionWisePaymentGateways;
+
 
 
 

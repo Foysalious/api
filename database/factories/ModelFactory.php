@@ -41,6 +41,8 @@ use \Factory\PartnerPosServiceFactory;
 use \Factory\PartnerPosCategoryFactory;
 use \Factory\PosCategoriesFactory;
 use \Factory\PosOrderPaymentFactory;
+use \Factory\SubscriptionWisePaymentGatewaysFactory;
+
 
 
 
@@ -86,7 +88,8 @@ $factory_classes = [
     PartnerPosServiceFactory::class,
     PartnerPosCategoryFactory::class,
     PosCategoriesFactory::class,
-    PosOrderPaymentFactory::class
+    PosOrderPaymentFactory::class,
+    SubscriptionWisePaymentGatewaysFactory::class
 ];
 
 foreach ($factory_classes as $factory_class) {
