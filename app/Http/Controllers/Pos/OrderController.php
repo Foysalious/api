@@ -303,7 +303,6 @@ class OrderController extends Controller
             $return_nature = $is_returned ? $this->getReturnType($request, $order) : null;
             /** @var RefundNature $refund */
             $refund = NatureFactory::getRefundNature($order, $request->all(), $refund_nature, $return_nature);
-            Log::info(["Here is product update", $refund_nature, $return_nature, $request->services]);
             $request->merge(['refund_nature' => $refund_nature]);
 
             $refund->setNew($new)->update();

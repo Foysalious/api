@@ -217,7 +217,7 @@ class Creator
         $this->voucherCalculation($order);
         $this->resolvePaymentMethod();
         $this->storeIncome($order);
-        if (!$this->request->has('refund_nature') && $this->request->refund_nature != 'exchange') {
+        if (!$this->request->has('refund_nature')) {
             $this->storeJournal($order);
         }
         return $order;

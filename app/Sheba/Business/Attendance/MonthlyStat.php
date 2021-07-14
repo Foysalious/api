@@ -103,12 +103,14 @@ class MonthlyStat
                             'status' => $is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day) ? null : $attendance_checkin_action->status,
                             'time' => Carbon::parse($attendance->checkin_time)->format('h:i a'),
                             'is_remote' => $attendance_checkin_action->is_remote ?: 0,
+                            'remote_mode' => $attendance_checkin_action->remote_mode ?: null,
                             'address' => $attendance_checkin_action->is_remote ? json_decode($attendance_checkin_action->location)->address : null
                         ] : null,
                         'check_out' => $attendance_checkout_action ? [
                             'status' => $is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day) ? null : $attendance_checkout_action->status,
                             'time' => Carbon::parse($attendance->checkout_time)->format('h:i a'),
                             'is_remote' => $attendance_checkout_action->is_remote ?: 0,
+                            'remote_mode' => $attendance_checkout_action->remote_mode ?: null,
                             'address' => $attendance_checkout_action->is_remote ? json_decode($attendance_checkout_action->location)->address : null
                         ] : null,
                         'late_note' => (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance->hasLateCheckin()) ? $attendance->checkinAction()->note : null,
