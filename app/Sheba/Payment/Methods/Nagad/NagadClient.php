@@ -12,9 +12,7 @@ class NagadClient
     /** @var NagadProxyClient $client */
     private $client;
     private $baseUrl;
-    /**
-     * @var NagadStore
-     */
+    /**@var NagadStore $store */
     private $store;
     const TIMEOUT = 120;
 
