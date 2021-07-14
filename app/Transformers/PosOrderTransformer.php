@@ -1,9 +1,11 @@
 <?php namespace App\Transformers;
 
 use App\Models\PosOrder;
+use App\Sheba\Partner\Delivery\Methods;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use League\Fractal\TransformerAbstract;
+use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInformation;
 use Sheba\PaymentLink\PaymentLinkTransformer;
 
 class PosOrderTransformer extends TransformerAbstract
@@ -41,13 +43,24 @@ class PosOrderTransformer extends TransformerAbstract
             'return_orders' => null,
             'partner_wise_order_id' => $order->partner_wise_order_id,
             'partner_wise_previous_order_id' => $order->previousOrder ? $order->previousOrder->partner_wise_order_id : null,
-            'sales_channel' => $order->sales_channel
+            'sales_channel' => $order->sales_channel,
+            'delivery_charge' => $order->delivery_charge,
+            'delivery_by_third_party' => $order->delivery_thana && $order->delivery_district ? 1 : 0,
+            'selected_delivery_method' => $this->getDeliveryMethod($order->partner_id),
+            'total_weight' => $order->weight
         ];
 
         if ($data['due'] > 0) $data['payment_link_target'] = $order->getPaymentLinkTarget();
 
         return $data;
     }
+
+    private function getDeliveryMethod($partner_id)
+    {
+        $partnerDeliveryInformation =  PartnerDeliveryInformation::where('partner_id', $partner_id)->first();
+        return !empty($partnerDeliveryInformation) ? $partnerDeliveryInformation->delivery_vendor : Methods::OWN_DELIVERY;
+    }
+
 
     public function includeItems($order)
     {
