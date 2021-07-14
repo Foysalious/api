@@ -97,6 +97,7 @@ class Cors2MiddleWare
             "https://stage.sheba.xyz",
             "https://admin.stage.sheba.xyz",
             "http://103.97.44.39",
+            "https://103.97.44.39",
             "https://okwalletmerchant.onebank.com.bd",
             "http://smanager.sheba.test",
             "https://smanager.dev-sheba.xyz",
