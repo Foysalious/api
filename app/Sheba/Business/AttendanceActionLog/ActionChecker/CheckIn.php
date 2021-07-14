@@ -36,8 +36,8 @@ class CheckIn extends ActionChecker
 
         $which_half_day = (new HalfDayLeaveCheck())->setBusinessMember($this->businessMember)->checkHalfDayLeave();
         $today_last_checkin_time = $this->business->calculationTodayLastCheckInTime($which_half_day);
-        if (is_null($today_last_checkin_time)) return;
 
+        if (is_null($today_last_checkin_time)) return;
         if (!$this->isSuccess()) return;
 
         $today_checkin_time_without_second = Carbon::parse($date->format('Y-m-d H:i'));

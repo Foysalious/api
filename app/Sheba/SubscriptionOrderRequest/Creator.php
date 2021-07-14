@@ -3,8 +3,8 @@
 use App\Models\Partner;
 use App\Models\SubscriptionOrder;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use Carbon\Carbon;
 use Sheba\Dal\PushNotificationMonitoring\PushNotificationMonitoringItem;
 use Sheba\Dal\SubscriptionOrderRequest\SubscriptionOrderRequest;

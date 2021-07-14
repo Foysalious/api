@@ -44,4 +44,12 @@ trait BusinessBasicInformation
         if (!isset($profile['id'])) return null;
         return Profile::findOrFail($profile['id']);
     }
+
+    public function isDefaultImageByUrl($logo_url)
+    {
+        if (empty($logo_url) || $logo_url === '' || $logo_url === null) return 1;
+        $path_info = pathinfo($logo_url);
+        if (!in_array($path_info['extension'], ['png', 'jpg', 'jpeg', 'svg', 'gif']) || strtolower($path_info['filename']) == 'default') return 1;
+        return 0;
+    }
 }
