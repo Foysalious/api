@@ -73,10 +73,10 @@ class TopUpController extends Controller
     /**
      * @param Request $request
      * @param TopUpDataFormat $formatter
-     * @param $user
+     * @param string $user
      * @return JsonResponse
      */
-    public function getVendor(Request $request, TopUpDataFormat $formatter, $user): JsonResponse
+    public function getVendor(Request $request, TopUpDataFormat $formatter, string $user = ''): JsonResponse
     {
         try {
             $topup_charges = [];
@@ -523,6 +523,7 @@ class TopUpController extends Controller
         if ($user == 'business') $agent = $auth_user->getBusiness();
         elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
         elseif ($user == 'partner') $agent = $auth_user->getPartner();
+        else $agent = $request->user;
 
         return $agent;
     }
