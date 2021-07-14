@@ -55,6 +55,7 @@ class StockManager
 
             if($quantity >= $firstBatch->stock && count($allBatches) > 1) {
                 $quantity =  $quantity - $firstBatch->stock;
+                $firstBatch->update(['stock' => 0 ]);
                 $firstBatch->delete();
             }
             else if($quantity >= $firstBatch->stock && count($allBatches) == 1) {

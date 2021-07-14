@@ -10,6 +10,14 @@ use App\Models\PartnerPosService;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Models\Profile;
+use App\Sheba\AccountingEntry\Constants\EntryTypes;
+use App\Sheba\AccountingEntry\Repository\AccountingRepository;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Sheba\AccountingEntry\Accounts\Accounts;
+use Sheba\AccountingEntry\Accounts\RootAccounts;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Dal\POSOrder\SalesChannels;
@@ -51,15 +59,22 @@ class Creator
     private $paymentMethod;
     /** @var OrderStatuses $status */
     protected $status;
+    /** @var Request */
+    private $request;
 
-    public function __construct(PosOrderRepository $order_repo, PosOrderItemRepository $item_repo,
-                                PaymentCreator $payment_creator, StockManager $stock_manager,
-                                OrderCreateValidator $create_validator, DiscountHandler $discount_handler, PosServiceRepositoryInterface $posServiceRepo)
-    {
-        $this->orderRepo       = $order_repo;
-        $this->itemRepo        = $item_repo;
-        $this->paymentCreator  = $payment_creator;
-        $this->stockManager    = $stock_manager;
+    public function __construct(
+        PosOrderRepository $order_repo,
+        PosOrderItemRepository $item_repo,
+        PaymentCreator $payment_creator,
+        StockManager $stock_manager,
+        OrderCreateValidator $create_validator,
+        DiscountHandler $discount_handler,
+        PosServiceRepositoryInterface $posServiceRepo
+    ) {
+        $this->orderRepo = $order_repo;
+        $this->itemRepo = $item_repo;
+        $this->paymentCreator = $payment_creator;
+        $this->stockManager = $stock_manager;
         $this->createValidator = $create_validator;
         $this->discountHandler = $discount_handler;
         $this->posServiceRepo  = $posServiceRepo;
@@ -75,8 +90,12 @@ class Creator
 
     public function hasDueError()
     {
-        if ($this->resolveCustomerId() !== null) return false;
-        if ($this->data['paid_amount'] - $this->getNetPrice() >= 0) return false;
+        if ($this->resolveCustomerId() !== null) {
+            return false;
+        }
+        if ($this->data['paid_amount'] - $this->getNetPrice() >= 0) {
+            return false;
+        }
         return ['code' => 421, 'msg' => 'Can not make due order with out customer'];
     }
 
@@ -88,8 +107,19 @@ class Creator
     {
         $this->data = $data;
         $this->createValidator->setServices(json_decode($this->data['services'], true));
-        if (!isset($this->data['payment_method'])) $this->data['payment_method'] = 'cod';
-        if (isset($this->data['customer_address'])) $this->setAddress($this->data['customer_address']);
+        if (!isset($this->data['payment_method'])) {
+            $this->data['payment_method'] = 'cod';
+        }
+        if (isset($this->data['customer_address'])) {
+            $this->setAddress($this->data['customer_address']);
+        }
+        return $this;
+    }
+
+    public function setRequest(Request $request)
+    {
+        $this->request = $request;
+        $this->setData($request->all());
         return $this;
     }
 
@@ -119,12 +149,17 @@ class Creator
 
     /**
      * @return PosOrder
-     * @throws InvalidDiscountType
-     * @throws ExpenseTrackingServerError
+     * @throws AccountingEntryServerError
      * @throws DoNotReportException
+     * @throws InvalidDiscountType
+     * @throws NotEnoughStockException
+     * @throws PartnerPosCustomerNotFoundException
+     * @throws PosCustomerNotFoundException|ExpenseTrackingServerError
      */
     public function create()
     {
+        $default_instance = 0;
+
         $order_data['partner_id']            = $this->partner->id;
         $order_data['customer_id']           = $this->resolveCustomerId();
         $order_data['address']               = $this->address;
@@ -141,7 +176,11 @@ class Creator
         $services                            = json_decode($this->data['services'], true);
         foreach ($services as $service) {
             /** @var PartnerPosService $original_service */
-            $original_service = isset($service['id']) && !empty($service['id']) ? $this->posServiceRepo->find($service['id']) : $this->posServiceRepo->defaultInstance($service);
+            if(isset($service['id']) && !empty($service['id'])) $original_service = $this->posServiceRepo->find($service['id']);
+            else {
+                $vat_percentage = $this->partner->posSetting->vat_percentage;
+                $original_service = $this->posServiceRepo->defaultInstance($service, $this->partner);
+            }
             if(!$original_service)
                 throw new DoNotReportException("Service not found with provided ID", 400);
             if($original_service->is_published_for_shop && isset($service['quantity']) && !empty($service['quantity']) && $service['quantity'] > $original_service->getStock())
@@ -177,10 +216,12 @@ class Creator
         $order = $order->calculate();
         $this->discountHandler->setOrder($order)->setType(DiscountTypes::ORDER)->setData($this->data);
         if ($this->discountHandler->hasDiscount()) $this->discountHandler->create($order);
-
         $this->voucherCalculation($order);
         $this->resolvePaymentMethod();
         $this->storeIncome($order);
+        if (!$this->request->has('refund_nature') && $this->request->refund_nature != 'exchange') {
+            $this->storeJournal($order);
+        }
         return $order;
     }
 
@@ -261,19 +302,19 @@ class Creator
         $amount  = (double)$order->getNetBill();
         $profile = $order->customer ? $order->customer->profile : new Profile();
         $entry->setPartner($this->partner)
-              ->setParty($profile)
-              ->setAmount($amount)
-              ->setAmountCleared($order->getPaid())
-              ->setHead($order->sales_channel == SalesChannels::POS ? AutomaticIncomes::POS : AutomaticIncomes::WEBSTORE_SALES )
-              ->setSourceType(class_basename($order))
-              ->setInterest($order->interest)
-              ->setSourceId($order->id)
-              ->setEmiMonth($order->emi_month)
-              ->setInterest($order->interest)
-              ->setBankTransactionCharge($order->bank_transaction_charge)
-              ->setPaymentMethod($this->paymentMethod)
-              ->setIsWebstoreOrder($order->sales_channel == SalesChannels::WEBSTORE ? 1 : 0)
-              ->store();
+            ->setParty($profile)
+            ->setAmount($amount)
+            ->setAmountCleared($order->getPaid())
+            ->setHead($order->sales_channel == SalesChannels::POS ? AutomaticIncomes::POS : AutomaticIncomes::WEBSTORE_SALES )
+            ->setSourceType(class_basename($order))
+            ->setInterest($order->interest)
+            ->setSourceId($order->id)
+            ->setEmiMonth($order->emi_month)
+            ->setInterest($order->interest)
+            ->setBankTransactionCharge($order->bank_transaction_charge)
+            ->setPaymentMethod($this->paymentMethod)
+            ->setIsWebstoreOrder($order->sales_channel == SalesChannels::WEBSTORE ? 1 : 0)
+            ->store();
     }
 
     /**
@@ -298,8 +339,8 @@ class Creator
         $services                = json_decode($this->data['services'], true);
         foreach ($services as $service) {
             /** @var PartnerPosService $original_service */
-            $original_service = isset($service['id']) && !empty($service['id']) ? $this->posServiceRepo->find($service['id']) : $this->posServiceRepo->defaultInstance($service);
-            if (is_null($original_service)) $original_service = $this->posServiceRepo->defaultInstance($service);
+            $original_service = isset($service['id']) && !empty($service['id']) ? $this->posServiceRepo->find($service['id']) : $this->posServiceRepo->defaultInstance($service, $this->partner);
+            if (is_null($original_service)) $original_service = $this->posServiceRepo->defaultInstance($service, $this->partner);
             $service_id[]                 = isset($service['id']) && !empty($service['id']) ? $service['id'] : 0;
             $service_wholesale_applicable = $original_service->wholesale_price ? true : false;
             $service['unit_price']        = (isset($service['updated_price']) && $service['updated_price']) ? $service['updated_price'] : ($this->isWholesalePriceApplicable($service_wholesale_applicable) ? $original_service->wholesale_price : $original_service->price);
@@ -332,5 +373,38 @@ class Creator
     private function getDiscountAmount($discount)
     {
         return (isset($discount) && isset($discount['amount'])) ? $discount['amount'] : 0;
+    }
+
+    /**
+     * @param PosOrder $order
+     * @throws AccountingEntryServerError
+     */
+    private function storeJournal(PosOrder $order)
+    {
+        $this->additionalAccountingData($order);
+        /** @var AccountingRepository $accounting_repo */
+        $accounting_repo = app()->make(AccountingRepository::class);
+        $this->request->merge([
+            "inventory_products" => $accounting_repo->getInventoryProducts($order->items, $this->data['services']),
+        ]);
+        if (isset($this->customer->id)) {
+            $this->request["customer_id"] = $this->customer->id;
+        }
+        $accounting_repo->storeEntry($this->request, EntryTypes::POS);
+    }
+
+    private function additionalAccountingData(PosOrder $order)
+    {
+        $order_discount = $order->discounts->count() > 0 ? $order->discounts()->sum('amount') : 0;
+        $this->request->merge([
+            "from_account_key"   => (new Accounts())->income->sales::SALES_FROM_POS,
+            "to_account_key"     => $order->sales_channel == SalesChannels::WEBSTORE ? (new Accounts())->asset->sheba::SHEBA_ACCOUNT : (new Accounts())->asset->cash::CASH,
+            "amount"             => (double)$order->getNetBill(),
+            "amount_cleared"     => $order->getPaid(),
+            "total_discount"     => $order_discount,
+            "note"               => $order->sales_channel == SalesChannels::WEBSTORE ? SalesChannels::WEBSTORE : SalesChannels::POS,
+            "source_id"          => $order->id,
+            "total_vat"          => $order->getTotalVat()
+        ]);
     }
 }
