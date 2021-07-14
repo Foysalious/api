@@ -13,7 +13,8 @@ class PaymentLinkRoute
             $api->post('/{link}', 'PaymentLink\PaymentLinkController@statusChange');
             $api->get('/default', 'PaymentLink\PaymentLinkController@getDefaultLink');
             $api->get('/dashboard', 'PaymentLink\PaymentLinkController@getDashboard');
-            $api->get('/custom-link-data', 'PaymentLink\PaymentLinkController@customLinkCreateData');
+            $api->get('/custom-link-data', 'PaymentLink\PaymentLinkCreateController@customLinkCreateData');
+            $api->get('/subscription-wise-gateway-charges', 'PaymentLink\PaymentLinkCreateController@subscriptionWiseCharges');
             $api->get('/{link}/payments', 'PaymentLink\PaymentLinkController@getPaymentLinkPayments');
             $api->get('/{link}/payments/{payment}', 'PaymentLink\PaymentLinkController@paymentLinkPaymentDetails');
             $api->get('/transactions', 'PaymentLink\PaymentLinkController@transactionList');
