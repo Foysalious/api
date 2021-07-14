@@ -12,8 +12,12 @@ class NagadClient
     /** @var NagadProxyClient $client */
     private $client;
     private $baseUrl;
+    /** @var NagadStore $store */
+    private $store;
+
     /**
-     * @var NagadStore
+     * NagadClient constructor.
+     * @param \Sheba\TPProxy\TPProxyClient $client
      */
     private $store;
 

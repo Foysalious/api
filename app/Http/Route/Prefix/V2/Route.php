@@ -61,10 +61,6 @@ class Route
             $api->group(['prefix' => 'ssl'], function ($api) {
                 $api->post('validate', 'SslController@validatePayment');
             });
-            $api->group(['prefix' => 'ok-wallet/payments'], function ($api) {
-                $api->post('success', 'OkWalletController@validatePayment');
-                $api->post('fail', 'OkWalletController@validatePayment');
-            });
             $api->group(['prefix' => 'bkash'], function ($api) {
                 $api->post('validate', 'BkashController@validatePayment');
                 $api->group(['prefix' => 'tokenized'], function ($api) {
@@ -103,6 +99,11 @@ class Route
                     $api->get('redirect-without-validate', 'PortWalletController@redirectWithoutValidation');
                     $api->get('validate-on-redirect', 'PortWalletController@validateOnRedirect');
                 });
+                $api->group(['prefix' => 'ok-wallet'], function ($api) {
+                    $api->post('success', 'OkWalletController@validatePayment');
+                    $api->post('fail', 'OkWalletController@validatePayment');
+                    $api->post('cancel', 'OkWalletController@validatePayment');
+                });
             });
             $api->group(['prefix' => 'login'], function ($api) {
                 $api->post('gmail', 'Auth\GoogleController@login');
@@ -138,11 +139,9 @@ class Route
                     $api->get('', 'OfferGroupController@show');
                 });
             });
-
             $api->group(['middleware' => 'terminate'], function ($api) {
                 (new BusinessRoute())->set($api);
             });
-
             $api->group(['prefix' => 'services'], function ($api) {
                 $api->get('', 'ServiceController@index');
             });
@@ -194,21 +193,22 @@ class Route
             $api->post('admin/payout', 'Bkash\\BkashPayoutController@pay');
             $api->post('admin/payout-balance', 'Bkash\\BkashPayoutController@queryPayoutBalance');
             $api->post('admin/bkash-balance', 'Bkash\\BkashPayoutController@queryBalance');
-            //$api->post('forget-password', 'ProfileController@forgetPassword');
-            /** EMI INFO */
+            // $api->post('forget-password', 'ProfileController@forgetPassword');
+            /**
+             * EMI INFO
+             */
             $api->group(['prefix' => 'emi-info'], function ($api) {
                 $api->get('/', 'ShebaController@getEmiInfo');
                 $api->get('/manager', 'ShebaController@emiInfoForManager');
                 $api->get('/bank-list', 'ShebaController@getEmiBankList');
             });
-
             $api->group(['prefix' => 'tickets', 'middleware' => 'jwtGlobalAuth'], function ($api) {
-//                $api->get('validate-token', 'ProfileController@validateJWT');
+                // $api->get('validate-token', 'ProfileController@validateJWT');
                 $api->get('payments', 'ShebaController@getPayments');
                 (new TransportRoute())->set($api);
                 (new MovieTicketRoute())->set($api);
             });
-//            $api->get('refresh-token', 'ProfileController@refresh');
+            // $api->get('refresh-token', 'ProfileController@refresh');
             $api->get('service-price-calculate', 'Service\ServicePricingController@getCalculatedPrice');
             $api->post('due-tracker/create-pos-order-payment', 'Pos\DueTrackerController@createPosOrderPayment');
             $api->delete('due-tracker/remove-pos-order-payment/{pos_order_id}', 'Pos\DueTrackerController@removePosOrderPayment');
