@@ -14,7 +14,6 @@ class Updater
     private $lastAttendance;
     private $lastAttendanceLog;
     private $action;
-    private $date;
     private $note;
     private $member;
 
@@ -50,16 +49,6 @@ class Updater
     }
 
     /**
-     * @param $date
-     * @return $this
-     */
-    public function setDate($date)
-    {
-        $this->date = $date;
-        return $this;
-    }
-
-    /**
      * @param $note
      * @return $this
      */
@@ -72,7 +61,7 @@ class Updater
     public function updateNote()
     {
         $this->setModifier($this->member);
-        if ($this->lastAttendance['date'] === $this->date && $this->lastAttendanceLog['action'] === $this->action) {
+        if ($this->lastAttendanceLog['action'] === $this->action) {
             DB::transaction(function () {
                 $this->attendanceActionLog->update($this->lastAttendanceLog, $this->withUpdateModificationField(['note' => $this->note]));
             });
