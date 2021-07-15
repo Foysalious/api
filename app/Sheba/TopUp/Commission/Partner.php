@@ -12,7 +12,7 @@ class Partner extends TopUpCommission
     private $partner;
     private $topUpDisburse;
 
-    public function __construct(TopUpCommission $topUpCommission, \App\Models\Partner $partner)
+    public function __construct(TopUpCommission $topUpCommission = null, \App\Models\Partner $partner = null)
     {
         $this->topUpDisburse =$topUpCommission;
         $this->partner = $partner;
@@ -22,7 +22,7 @@ class Partner extends TopUpCommission
     {
         $this->storeAgentsCommission();
         $this->storeExpenseIncome();
-        $this->saleTopUp();
+//        $this->saleTopUp();
     }
 
     private function storeExpenseIncome()
@@ -42,7 +42,7 @@ class Partner extends TopUpCommission
     {
         $this->refundAgentsCommission();
         $this->deleteExpenseIncome();
-        $this->refundTopUp();
+//        $this->refundTopUp();
     }
 
     private function deleteExpenseIncome()
