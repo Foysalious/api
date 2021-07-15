@@ -184,6 +184,11 @@ class CoWorkerController extends Controller
         $member = new Item($business_member, new CoWorkerDetailTransformer());
         $employee = $manager->createData($member)->toArray()['data'];
 
+//        dd($employee);
+        if ($request->file === 'pdf') {
+            return App::make('dompdf.wrapper')->loadView('pdfs.co_worker_details', compact('employee'))->download("co_worker_details.pdf");
+        }
+
         if (count($employee) > 0) return api_response($request, $employee, 200, [
             'employee' => $employee,
             'business_member_id' => $business_member->id
