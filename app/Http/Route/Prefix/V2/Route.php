@@ -166,6 +166,7 @@ class Route
                 $api->get('/active-bulk', 'TopUp\TopUpController@activeBulkTopUps');
                 $api->get('/special-amount-data', 'TopUp\TopUpController@specialAmount');
                 $api->get('bulk-list', 'TopUp\TopUpController@bulkList');
+                $api->get('/all-top-up', 'TopUp\TopUpController@allTopUps');
                 /**
                  * FOR TEST
                  * $api->post('top-up-test', 'TopUp\\TopUpController@topUpTest');
@@ -198,8 +199,11 @@ class Route
             $api->post('admin/bkash-balance', 'Bkash\\BkashPayoutController@queryBalance');
             //$api->post('forget-password', 'ProfileController@forgetPassword');
             /** EMI INFO */
-            $api->get('emi-info', 'ShebaController@getEmiInfo');
-            $api->get('emi-info/manager', 'ShebaController@emiInfoForManager');
+            $api->group(['prefix' => 'emi-info'], function ($api) {
+                $api->get('/', 'ShebaController@getEmiInfo');
+                $api->get('/manager', 'ShebaController@emiInfoForManager');
+                $api->get('/bank-list', 'ShebaController@getEmiBankList');
+            });
 
             $api->group(['prefix' => 'tickets', 'middleware' => 'jwtGlobalAuth'], function ($api) {
 //                $api->get('validate-token', 'ProfileController@validateJWT');

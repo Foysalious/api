@@ -7,8 +7,6 @@ use App\Models\Job;
 use App\Models\Customer;
 use App\Models\PartnerOrder;
 use App\Models\Profile;
-use App\Models\Reward;
-use App\Models\RewardAction;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Models\Order;
@@ -51,14 +49,6 @@ class InfoCallController extends Controller
         $auth_user_array = $auth_user->toArray();
         $created_by = $auth_user_array['resource']['id'];
         $query = InfoCall::where('created_by', $created_by)->where('created_by_type', get_class($resource));
-        $reward_action = RewardAction::where('event_name', 'info_call_completed')->latest('id')->first();
-        if ($reward_action != null) {
-            $info_call_reward = Reward::where('detail_id', $reward_action->id)
-                ->select('rewards.*')
-                ->get();
-            $reward_exists = $info_call_reward[0]->amount;
-        }
-        else $reward_exists = 0;
         if (!($request->has('year')) && !($request->has('month'))) {
             if (($request->has('mobile'))) {
                 $customer_exists = $query->where('customer_mobile','like', '%'. $request->mobile);
@@ -93,8 +83,11 @@ class InfoCallController extends Controller
                     $reward = 0;
                 }
                 elseif ($partner_order['closed_and_paid_at'] != null) {
+                    $job = $partner_order ? Job::where('partner_order_id', $partner_order['id'])->get()->last()->toArray() : null;
+                    $resource_transaction = $job ? DB::table('resource_transactions')->where('resource_id',$auth_user_array['resource']['id'])->where('job_id', $job['id'])->get() : null;
+                    $reward_amount = ($resource_transaction != null) ? array_sum(array_column($resource_transaction, 'amount')) : 0;
                     $order_status = 'শেষ';
-                    $reward = $reward_exists;
+                    $reward = $reward_amount;
                 }
                 else {
                     $order_status = 'চলছে';
@@ -117,14 +110,6 @@ class InfoCallController extends Controller
             'offset' => 'numeric|min:0', 'limit' => 'numeric|min:1',
             'month' => 'sometimes|required|integer|between:1,12', 'year' => 'sometimes|required|integer'
         ]);
-        $reward_exists = 0;
-        $reward_action = RewardAction::where('event_name', 'info_call_completed')->latest('id')->first();
-        if ($reward_action != null) {
-            $info_call_reward = Reward::where('detail_id', $reward_action->id)
-                ->select('rewards.*')
-                ->get();
-            $reward_exists = $info_call_reward[0]->amount;
-        }
         $cancelled_order = 0;
         $completed_order = 0;
         /** @var AuthUser $auth_user */
@@ -140,13 +125,17 @@ class InfoCallController extends Controller
         $data = [
             'total_service_requests' => ! ($total_requests) ? 0 : $total_requests,
         ];
+        $resource_transaction = DB::table('resource_transactions')->where('resource_id',$auth_user_array['resource']['id'])->where('job_id','<>',null);
         if (!($request->has('year')) && !($request->has('month'))) {
+            $filtered_reward = ($resource_transaction != null) ? array_sum(array_column($resource_transaction->get(), 'amount')) : 0;
             $filtered_info_calls = $query->get();
             $total_orders = $filtered_info_calls->where('status', Statuses::CONVERTED)->count();
             $month_wise_service_requests = $filtered_info_calls->count();
             $rejected_requests = $filtered_info_calls->where('status', Statuses::REJECTED)->count();
         }
         else {
+            $filtered_reward_check = $resource_transaction ? $info_calls->getFilteredInfoCalls($resource_transaction)->get() : null;
+            $filtered_reward = $filtered_reward_check ? array_sum(array_column($filtered_reward_check, 'amount')) : 0;
             $filtered_info_calls = $info_calls->getFilteredInfoCalls($query)->get();
             $converted_info_call_ids = $info_calls->getFilteredInfoCalls($query)->where('status',Statuses::CONVERTED)->pluck('id')->toArray();
             $order_ids = Order::whereIn('info_call_id',$converted_info_call_ids)->pluck('id')->toArray();
@@ -169,7 +158,7 @@ class InfoCallController extends Controller
         $cancelled_orders = $rejected_requests + $cancelled_order;
         $data['cancelled_order'] = $cancelled_orders;
         $data['completed_order'] = $completed_order;
-        $data['total_rewards'] = $reward_exists*$completed_order;
+        $data['total_rewards'] = $filtered_reward;
         return ['code' => 200, 'message'=>'Successful','service_request_dashboard' => $data];
     }
 
@@ -208,8 +197,12 @@ class InfoCallController extends Controller
         $info_call = $this->infoCallRepository->create($data);
         return api_response($request, $info_call, 200, ['message'=>'Successful','info_call' => $info_call]);
     }
-    public function show($id)
+    public function show(Request $request, $id)
     {
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $auth_user_array = $auth_user->toArray();
+        $resource_id = $auth_user_array['resource']['id'];
         $info_call_exixts = InfoCall::where('id', $id)->count();
         if ($info_call_exixts > 0 && is_numeric($id)) {
             $info_call = InfoCall::findOrFail($id);
@@ -228,7 +221,7 @@ class InfoCallController extends Controller
                 $info_call_details['order_created_at'] = $order[0]->created_at->toDateTimeString();
                 $partner_order = PartnerOrder::where('order_id', $order[0]->id)->get()->last()->toArray();
                 $job = $partner_order ? Job::where('partner_order_id', $partner_order['id'])->get()->last()->toArray() : null;
-                $resource_transaction = $job ? DB::table('resource_transactions')->where('job_id', $job['id'])->get() : null;
+                $resource_transaction = $job ? DB::table('resource_transactions')->where('resource_id',$resource_id)->where('job_id', $job['id'])->get() : null;
                 if ($resource_transaction!=null) $reward_amount = array_sum(array_column($resource_transaction, 'amount'));
                 else $reward_amount = 0;
                 if ($partner_order['closed_and_paid_at'] != null) {
