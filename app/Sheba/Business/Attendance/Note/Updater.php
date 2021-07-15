@@ -63,7 +63,11 @@ class Updater
         $this->setModifier($this->member);
         if ($this->lastAttendanceLog['action'] === $this->action) {
             DB::transaction(function () {
-                $this->attendanceActionLog->update($this->lastAttendanceLog, $this->withUpdateModificationField(['note' => $this->note]));
+                $data = [];
+                $data['note'] = $this->note;
+                $this->lastAttendanceLog->update($data);
+//                $this->lastAttendanceLog->update($data);
+//                $this->attendanceActionLog->update($this->lastAttendanceLog, $this->withUpdateModificationField($data));
             });
         }
     }
