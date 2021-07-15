@@ -11,11 +11,43 @@ use Sheba\Utility\UtilityOrder;
 
 class Payable extends Model
 {
-    protected $guarded    = ['id'];
-    protected $casts      = ['amount' => 'double'];
-    public    $timestamps = false;
-
+    public $timestamps = false;
+    protected $guarded = ['id'];
+    protected $casts = ['amount' => 'double'];
     private $typeObject;
+
+    /**
+     * @param $type
+     */
+    public function setTypeAttribute($type)
+    {
+        if (Types::isInvalid($type)) throw new InvalidArgumentException("Invalid payable type.");
+
+        $this->attributes['type'] = $type;
+    }
+
+    public function getReadableTypeAttribute()
+    {
+        if ($this->isPartnerOrder()) {
+            return 'order';
+        } else if ($this->isWalletRecharge()) {
+            return 'recharge';
+        } else if ($this->isSubscriptionOrder()) {
+            return 'subscription_order';
+        } else if ($this->isGiftCardPurchase()) {
+            return 'gift_card_purchase';
+        } else if ($this->isMovieTicketPurchase()) {
+            return 'movie_ticket_purchase';
+        } else if ($this->isTransportTicketPurchase()) {
+            return 'transport_ticket_purchase';
+        } else if ($this->isUtilityOrder()) {
+            return 'utility_order';
+        } else if ($this->isPaymentLink()) {
+            return 'payment_link';
+        } else if ($this->isProcurement()) {
+            return 'procurement';
+        }
+    }
 
     public function isPartnerOrder()
     {
@@ -61,42 +93,10 @@ class Payable extends Model
     {
         return $this->type == Types::PROCUREMENT;
     }
-    public function isLoan(){
-        return $this->type==Types::PARTNER_BANK_LOAN;
-    }
-    /**
-     * @param $type
-     */
-    public function setTypeAttribute($type)
-    {
-        if (Types::isInvalid($type)) throw new InvalidArgumentException("Invalid payable type.");
 
-        $this->attributes['type'] = $type;
-    }
-
-    public function getReadableTypeAttribute()
+    public function isLoan()
     {
-        if ($this->isPartnerOrder()) {
-            return 'order';
-        } else if ($this->isWalletRecharge()) {
-            return 'recharge';
-        } else if ($this->isSubscriptionOrder()) {
-            return 'subscription_order';
-        } else if ($this->isGiftCardPurchase()) {
-            return 'gift_card_purchase';
-        } else if ($this->isMovieTicketPurchase()) {
-            return 'movie_ticket_purchase';
-        } else if ($this->isTransportTicketPurchase()) {
-            return 'transport_ticket_purchase';
-        } else if ($this->isUtilityOrder()) {
-            return 'utility_order';
-        } else if ($this->isPaymentLink()) {
-            return 'payment_link';
-        } else if ($this->isProcurement()) {
-            return 'procurement';
-        }else if ($this->isLoan()){
-            return 'loan';
-        }
+        return $this->type == Types::PARTNER_BANK_LOAN;
     }
 
     public function getCompletionClass(): PaymentComplete
@@ -174,32 +174,27 @@ class Payable extends Model
         return '';
     }
 
-
-    public function getPayableModel()
-    {
-        $model = "App\\Models\\";
-        if ($this->type == Types::PARTNER_ORDER) {
-            $model .= 'PartnerOrder';
-        } elseif ($this->type == Types::SUBSCRIPTION_ORDER) {
-            $model .= 'SubscriptionOrder';
-        } elseif ($this->type == Types::GIFT_CARD_PURCHASE) {
-            $model .= 'GiftCardPurchase';
-        } elseif ($this->type == Types::MOVIE_TICKET_PURCHASE) {
-            $model .= 'MovieTicketOrder';
-        } elseif ($this->type == Types::TRANSPORT_TICKET_PURCHASE) {
-            $model .= "Transport\\TransportTicketOrder";
-        } elseif ($this->type == Types::PROCUREMENT) {
-            $model .= "Procurement";
-        }elseif($this->type== Types::PARTNER_BANK_LOAN){
-            $model.="PartnerBankLoan";
-        }
-
-        return $model;
-    }
-
     public function payments()
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function getPaymentAttribute()
+    {
+        return $this->payments->last();
+    }
+
+    /**
+     * @return PaymentLinkTransformer|null
+     */
+    public function getPaymentLink()
+    {
+        if (!$this->isPaymentLink()) return null;
+
+        /** @var PaymentLinkOrder $payment_link_order */
+        $payment_link_order = $this->getPayableType();
+
+        return $payment_link_order->getTransformer();
     }
 
     /**
@@ -220,21 +215,25 @@ class Payable extends Model
         return $this->typeObject;
     }
 
-    public function getPaymentAttribute()
+    public function getPayableModel()
     {
-        return $this->payments->last();
-    }
+        $model = "App\\Models\\";
+        if ($this->type == Types::PARTNER_ORDER) {
+            $model .= 'PartnerOrder';
+        } elseif ($this->type == Types::SUBSCRIPTION_ORDER) {
+            $model .= 'SubscriptionOrder';
+        } elseif ($this->type == Types::GIFT_CARD_PURCHASE) {
+            $model .= 'GiftCardPurchase';
+        } elseif ($this->type == Types::MOVIE_TICKET_PURCHASE) {
+            $model .= 'MovieTicketOrder';
+        } elseif ($this->type == Types::TRANSPORT_TICKET_PURCHASE) {
+            $model .= "Transport\\TransportTicketOrder";
+        } elseif ($this->type == Types::PROCUREMENT) {
+            $model .= "Procurement";
+        } elseif ($this->type == Types::PARTNER_BANK_LOAN) {
+            $model .= "PartnerBankLoan";
+        }
 
-    /**
-     * @return PaymentLinkTransformer|null
-     */
-    public function getPaymentLink()
-    {
-        if (!$this->isPaymentLink()) return null;
-
-        /** @var PaymentLinkOrder $payment_link_order */
-        $payment_link_order = $this->getPayableType();
-
-        return $payment_link_order->getTransformer();
+        return $model;
     }
 }

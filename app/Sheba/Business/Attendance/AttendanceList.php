@@ -14,6 +14,7 @@ use Sheba\Dal\Attendance\Contract as AttendanceRepositoryInterface;
 use Sheba\Dal\AttendanceActionLog\Actions;
 use Sheba\Dal\AttendanceActionLog\Contract as AttendanceActionLogRepositoryInterface;
 use Sheba\Dal\AttendanceActionLog\Model as AttendanceActionLog;
+use Sheba\Dal\AttendanceActionLog\RemoteMode;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\Leave\Model as Leave;
@@ -347,16 +348,30 @@ class AttendanceList
             });
         }
 
-        if ($this->checkInRemoteMode) {
-            $attendances = $attendances->whereHas('actions', function ($q) {
-                $q->where([['remote_mode', $this->checkInRemoteMode],['action', Actions::CHECKIN]]);
-            });
+        if ($this->checkInRemoteMode && $this->checkinOfficeOrRemote == 'remote') {
+            if ($this->checkInRemoteMode === RemoteMode::HOME) {
+                $attendances = $attendances->whereHas('actions', function ($q) {
+                    $q->where([['remote_mode', '<>', RemoteMode::FIELD],['action', Actions::CHECKIN]]);
+                });
+            }
+            if ($this->checkInRemoteMode === RemoteMode::FIELD) {
+                $attendances = $attendances->whereHas('actions', function ($q) {
+                    $q->where([['remote_mode', RemoteMode::FIELD],['action', Actions::CHECKIN]]);
+                });
+            }
         }
 
-        if ($this->checkOutRemoteMode) {
-            $attendances = $attendances->whereHas('actions', function ($q) {
-                $q->where([['remote_mode', $this->checkOutRemoteMode],['action', Actions::CHECKOUT]]);
-            });
+        if ($this->checkOutRemoteMode && $this->checkoutOfficeOrRemote == 'remote') {
+            if ($this->checkOutRemoteMode === RemoteMode::HOME) {
+                $attendances = $attendances->whereHas('actions', function ($q) {
+                    $q->where([['remote_mode', '<>', RemoteMode::FIELD],['action', Actions::CHECKOUT]]);
+                });
+            }
+            if ($this->checkOutRemoteMode === RemoteMode::FIELD) {
+                $attendances = $attendances->whereHas('actions', function ($q) {
+                    $q->where([['remote_mode', RemoteMode::FIELD],['action', Actions::CHECKOUT]]);
+                });
+            }
         }
 
         if ($this->sort && $this->sortColumn) {

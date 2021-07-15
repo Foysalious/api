@@ -499,12 +499,12 @@ class Updater
         }
     }
 
-    public function activeFormInvite()
+    public function activeFormInviteOrInactive()
     {
         DB::beginTransaction();
         try {
             $profile_data['name'] = $this->basicRequest->getFirstName();
-            $profile_data['gender'] = $this->personalRequest->getGender();
+            $profile_data['gender'] = $this->basicRequest->getGender();
             $this->profile = $this->profileRepository->update($this->profile, $profile_data);
 
             $this->businessRole = $this->getBusinessRole();

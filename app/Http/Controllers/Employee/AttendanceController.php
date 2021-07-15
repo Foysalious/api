@@ -174,7 +174,6 @@ class AttendanceController extends Controller
     {
         $validation_data = [
             'action' => 'required|string|in:' . implode(',', Actions::get()),
-            'date' => 'required|string',
             'note' => 'required|string'
         ];
         $this->validate($request, $validation_data);
@@ -185,7 +184,6 @@ class AttendanceController extends Controller
 
         $note_updater->setBusinessMember($business_member)
                      ->setAction($request->action)
-                     ->setDate($request->date)
                      ->setNote($request->note)
                      ->updateNote();
         return api_response($request, null, 200);

@@ -50,14 +50,12 @@ abstract class PaymentMethod
     /**
      * @return Carbon
      */
-    protected function getValidTill()
+    protected function getValidTill(): Carbon
     {
         return Carbon::now()->addMinutes($this->getValidityInMinutes());
     }
 
-
-    public function getValidityInMinutes()
-
+    public function getValidityInMinutes(): int
     {
         return self::VALIDITY_IN_MINUTES;
     }
@@ -80,7 +78,6 @@ abstract class PaymentMethod
 
         DB::transaction(function () use (&$payment, $payable, $user, $gateway_account_name) {
             $invoice = $this->getUniquePaymentInvoiceId($payable);
-
             $payment->payable_id             = $payable->id;
             $payment->transaction_id         = $invoice;
             $payment->gateway_transaction_id = $invoice;
