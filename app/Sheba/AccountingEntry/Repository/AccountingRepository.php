@@ -126,16 +126,16 @@ class AccountingRepository extends BaseRepository
                     "name" => $original_service->name ?? $requested_service[$key]['name'],
                     "unit_price" => (double)$unitPrice,
                     "selling_price" => (double)$sellingPrice,
-                    "quantity" => isset($requested_service[$key]['quantity']) ? $requested_service[$key]['quantity'] : 1
+                    "quantity" => $requested_service[$key]['quantity'] ?? 1
                 ];
             } else {
-                $sellingPrice = isset($requested_service[$key]['updated_price']) ? $requested_service[$key]['updated_price'] : $original_service->price;
+                $sellingPrice = $requested_service[$key]['updated_price'] ?? $original_service->price;
                 $inventory_products[] = [
                     "id" => 0,
                     "name" => 'Custom Amount',
                     "unit_price" => $sellingPrice,
-                    "selling_price" => isset($original_service->cost) ? $original_service->cost : $sellingPrice,
-                    "quantity" => isset($requested_service[$key]['quantity']) ? $requested_service[$key]['quantity'] : 1
+                    "selling_price" => $original_service->cost ?? $sellingPrice,
+                    "quantity" => $requested_service[$key]['quantity'] ?? 1
                 ];
             }
         }
