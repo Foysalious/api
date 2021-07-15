@@ -42,12 +42,11 @@ class SubscriptionWisePaymentGatewaysFactory extends Factory
 
     protected function getData()
     {
-        return array_merge($this->commonSeeds,[
+        return array_merge([
             'package_id'=>1,
-            //'gateway_charges'=>json_decode($this->gatewayCharge),
-            //'topup_charges'=>json_encode($this->topupCharges),
-            'expired'=>1,
-            'updated_by'=>1
+            'gateway_charges'=>json_encode($this->gatewayCharge),
+            'topup_charges'=>json_encode($this->topupCharges),
+            'expired'=>0,
   ]);
         // TODO: Implement getData() method.
     }

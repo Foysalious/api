@@ -21,6 +21,7 @@ use App\Models\PosOrder;
 use App\Models\PosOrderPayment;
 use App\Models\Profile;
 use App\Models\Resource;
+use App\Models\TopUpVendor;
 use Carbon\Carbon;
 use Factory\PartnerDeliveryInfoFactory;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
@@ -110,6 +111,11 @@ class FeatureTestCase extends TestCase
      * @var Model
      */
     protected $SubscriptionWisePaymentGateways;
+
+    /**
+     * @var TopUpVendor
+     */
+    protected $topupVendor;
 
 
 

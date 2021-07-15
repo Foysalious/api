@@ -551,7 +551,11 @@ class SingleTopUpTest extends FeatureTestCase
     public function testSuccessfulTopupAgentGenerateTransaction()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01956154440', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 100, 'password' => '12349'
+            'mobile' => '01956154440',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 100,
+            'password' => '12349'
 
         ], [
             'Authorization' => "Bearer $this->token"
