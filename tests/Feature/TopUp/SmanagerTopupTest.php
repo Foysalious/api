@@ -62,7 +62,7 @@ class SmanagerTopupTest extends FeatureTestCase
             'topup_vendor_id' => $this->topUpVendor->id,
             'applicable_gateways'=> '["ssl","airtel"]',
             'type'=> 'App\Models\Partner',
-             'agent_commission'=> '5.03',
+            'agent_commission'=> '5.03',
         ]);
 
         $this->topUpVendorOtf = factory(TopUpVendorOTF::class)->create([
@@ -557,7 +557,7 @@ class SmanagerTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-         $this->partner->reload();
+        $this->partner->reload();
         /*
          * Initial wallet balance = 1000
          * Partner Subscription Package ID = 1
@@ -587,7 +587,7 @@ class SmanagerTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-         $this->partner->reload();
+        $this->partner->reload();
 
         $top_up_order=TopUpOrder::first();
         $this->assertEquals($this->partner->id,$top_up_order->agent_id);
