@@ -22,7 +22,7 @@ class Partner extends TopUpCommission
     {
         $this->storeAgentsCommission();
         $this->storeExpenseIncome();
-        $this->saleTopUp();
+//        $this->saleTopUp();
     }
 
     private function storeExpenseIncome()

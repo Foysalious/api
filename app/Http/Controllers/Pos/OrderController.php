@@ -20,6 +20,7 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\Discount\InvalidDiscountType;
+use League\Fractal\Resource\ResourceAbstract;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\ExpenseTracker\EntryType;
