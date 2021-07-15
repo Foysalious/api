@@ -65,8 +65,7 @@ class Updater
             DB::transaction(function () {
                 $data = [];
                 $data['note'] = $this->note;
-                $selection = AttendanceActionLog::where('id', $this->lastAttendanceLog['id'])->first();
-                $selection->update($data);
+                $this->lastAttendanceLog->update($data);
 //                $this->lastAttendanceLog->update($data);
 //                $this->attendanceActionLog->update($this->lastAttendanceLog, $this->withUpdateModificationField($data));
             });
