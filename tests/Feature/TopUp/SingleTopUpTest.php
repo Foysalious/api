@@ -759,7 +759,6 @@ class SingleTopUpTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-        //dd($response);
 
         $top_up_order = TopUpOrder::first();
 
