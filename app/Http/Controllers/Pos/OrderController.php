@@ -1,5 +1,9 @@
 <?php namespace App\Http\Controllers\Pos;
 
+use App\Exceptions\DoNotReportException;
+use App\Exceptions\Pos\Customer\PartnerPosCustomerNotFoundException;
+use App\Exceptions\Pos\Customer\PosCustomerNotFoundException;
+use App\Exceptions\Pos\Order\NotEnoughStockException;
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Models\PosCustomer;
@@ -10,9 +14,13 @@ use App\Transformers\PosOrderTransformer;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
+use League\Fractal\Resource\ResourceAbstract;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\ExpenseTracker\EntryType;
@@ -95,15 +103,15 @@ class OrderController extends Controller
 
         $order['data']['payment_method'] = empty($order['data']['payments']) ? 'cod' : collect($order['data']['payments'])->where('transaction_type',Types::CREDIT)->sortByDesc('created_at')->first()['method'];
 
-       if (array_key_exists('payment_link_target', $order['data'])) {
+        if (array_key_exists('payment_link_target', $order['data'])) {
 
-           $payment_link_target = $order['data']['payment_link_target'];
-           $link = app(PaymentLinkRepositoryInterface::class)->getActivePaymentLinkByPosOrder($payment_link_target);
-           if($link)
-           {
-               (new PosOrderTransformer())->addPaymentLinkDataToOrder($order, $link);
-               unset($order['data']['payment_link_target']);
-           }
+            $payment_link_target = $order['data']['payment_link_target'];
+            $link = app(PaymentLinkRepositoryInterface::class)->getActivePaymentLinkByPosOrder($payment_link_target);
+            if($link)
+            {
+                (new PosOrderTransformer())->addPaymentLinkDataToOrder($order, $link);
+                unset($order['data']['payment_link_target']);
+            }
         }
         return api_response($request, null, 200, ['order' => $order]);
     }
@@ -116,7 +124,13 @@ class OrderController extends Controller
      * @param PosCustomerCreator $posCustomerCreator
      * @param PartnerRepository $partnerRepository
      * @param PaymentLinkCreator $paymentLinkCreator
-     * @return array|JsonResponse
+     * @return array|false|JsonResponse
+     * @throws DoNotReportException
+     * @throws InvalidDiscountType
+     * @throws PartnerPosCustomerNotFoundException
+     * @throws PosCustomerNotFoundException
+     * @throws NotEnoughStockException
+     * @throws AccountingEntryServerError|ExpenseTrackingServerError
      */
     public function store($partner, Request $request, Creator $creator, ProfileCreator $profileCreator, PosCustomerCreator $posCustomerCreator, PartnerRepository $partnerRepository, PaymentLinkCreator $paymentLinkCreator)
     {
@@ -158,7 +172,7 @@ class OrderController extends Controller
             $creator->setCustomer($pos_customer);
             $creator->setStatus(OrderStatuses::PENDING);
         }
-        $creator->setPartner($partner)->setData($request->all());
+        $creator->setPartner($partner)->setRequest($request);
         if ($error = $creator->hasDueError())
             return $error;
         /**
@@ -282,20 +296,22 @@ class OrderController extends Controller
     public function update(Request $request, Updater $updater)
     {
         $this->setModifier($request->manager_resource);
-            /** @var PosOrder $order */
-            $new           = 1;
-            $order         = PosOrder::with('items')->find($request->order);
-            $is_returned   = ($this->isReturned($order, $request, $new));
-            $refund_nature = $is_returned ? Natures::RETURNED : Natures::EXCHANGED;
-            $return_nature = $is_returned ? $this->getReturnType($request, $order) : null;
-            /** @var RefundNature $refund */
-            $refund = NatureFactory::getRefundNature($order, $request->all(), $refund_nature, $return_nature);
-            $refund->setNew($new)->update();
-            $order->payment_status = $order->calculate()->getPaymentStatus();
-            return api_response($request, null, 200, [
-                'msg'   => 'Order Updated Successfully',
-                'order' => $order
-            ]);
+        /** @var PosOrder $order */
+        $new           = 1;
+        $order         = PosOrder::with('items')->find($request->order);
+        $is_returned   = ($this->isReturned($order, $request, $new));
+        $refund_nature = $is_returned ? Natures::RETURNED : Natures::EXCHANGED;
+        $return_nature = $is_returned ? $this->getReturnType($request, $order) : null;
+        /** @var RefundNature $refund */
+        $refund = NatureFactory::getRefundNature($order, $request->all(), $refund_nature, $return_nature);
+        $request->merge(['refund_nature' => $refund_nature]);
+
+        $refund->setNew($new)->update();
+        $order->payment_status = $order->calculate()->getPaymentStatus();
+        return api_response($request, null, 200, [
+            'msg'   => 'Order Updated Successfully',
+            'order' => $order
+        ]);
     }
 
     /**
@@ -486,11 +502,12 @@ class OrderController extends Controller
                 $customer     = $pos_order->customer->profile;
                 $info['user'] = [
                     'name'   => $customer->name,
-                    'mobile' => $customer->mobile
+                    'mobile' => $customer->mobile,
+                    'address' => $customer->address
                 ];
             }
             $invoice_name = 'pos_order_invoice_' . $pos_order->id;
-            $link         = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
+            $link         = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save(true);
             return api_response($request, null, 200, [
                 'message' => 'Successfully Download receipt',
                 'link'    => $link
@@ -532,11 +549,12 @@ class OrderController extends Controller
                 $customer     = $pos_order->customer->profile;
                 $info['user'] = [
                     'name'   => $customer->name,
-                    'mobile' => $customer->mobile
+                    'mobile' => $customer->mobile,
+                    'address' => $customer->address
                 ];
             }
             $invoice_name = 'pos_order_invoice_' . $pos_order->id;
-            $link         = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
+            $link         = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save(true);
             return api_response($request, null, 200, [
                 'message' => 'Successfully Download receipt',
                 'link'    => $link
