@@ -22,6 +22,8 @@ use App\Models\PosOrderPayment;
 use App\Models\Profile;
 use App\Models\Resource;
 use App\Models\TopUpVendor;
+use App\Sheba\InventoryService\InventoryServerClient;
+use App\Sheba\PosOrderService\PosOrderServerClient;
 use Carbon\Carbon;
 use Factory\PartnerDeliveryInfoFactory;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
@@ -38,6 +40,8 @@ use Sheba\Dal\SubscriptionWisePaymentGateway\Model;
 use Sheba\Services\Type as ServiceType;
 use Sheba\Subscription\Partner\Access\RulesDescriber\Pos;
 use TestCase;
+use Tests\Mocks\MockInventoryServerClient;
+use Tests\Mocks\MockPosOrderServerClient;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class FeatureTestCase extends TestCase
@@ -123,6 +127,8 @@ class FeatureTestCase extends TestCase
     public function setUp()
     {
         parent::setUp();
+        $this->app->singleton(InventoryServerClient::class,MockInventoryServerClient::class);
+        $this->app->singleton(PosOrderServerClient::class,MockPosOrderServerClient::class);
     }
 
     public function get($uri, array $headers = [])

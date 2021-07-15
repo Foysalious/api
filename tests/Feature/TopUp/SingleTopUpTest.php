@@ -76,6 +76,8 @@ class SingleTopUpTest extends FeatureTestCase
 
     public function testTopupConsecutiveNumber()
     {
+        $top_up_vendor = TopUpVendor::find(1);
+        $top_up_vendor->update(["waiting_time" => 1]);
         $response = $this->post('/v2/top-up/affiliate', [
             'mobile' => '+8801620011019', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 112, 'password' => 12345,
         ], [
@@ -786,8 +788,6 @@ class SingleTopUpTest extends FeatureTestCase
 
     public function testTopUpOrderGatewayTimeoutThreeTimes()
     {
-        $top_up_vendor = TopUpVendor::find(1);;
-        $top_up_vendor->update(["waiting_time" => 0]);
         $response = $this->post('/v2/top-up/affiliate', [
             'mobile' => '+8801700999999', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 112, 'password' => '12349'
 
