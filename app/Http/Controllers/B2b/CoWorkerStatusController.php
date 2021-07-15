@@ -182,7 +182,7 @@ class CoWorkerStatusController extends Controller
         ]);
 
         $requester_business_member = $request->business_member;
-        if ($requester_business_member == $business_member_id) return api_response($request, null, 404, ['message' => 'Sorry, You cannot deactivated yourself as super admin.']);
+        if ($requester_business_member->id == $business_member_id) return api_response($request, null, 404, ['message' => 'Sorry, You cannot deactivated yourself as super admin.']);
 
         $business = $request->business;
         $manager_member = $request->manager_member;
@@ -198,7 +198,7 @@ class CoWorkerStatusController extends Controller
             ->setJoinDate($request->join_date);
 
         $this->coWorkerUpdater->setBasicRequest($basic_request)->setBusiness($business)->setBusinessMember($business_member);
-        $business_member = $this->coWorkerUpdater->activeFormInvite();
+        $business_member = $this->coWorkerUpdater->activeFormInviteOrInactive();
 
         if ($business_member) return api_response($request, 1, 200);
 
