@@ -112,33 +112,39 @@ class AccountingRepository extends BaseRepository
      * @param $requestedService
      * @return false|string
      */
-    public function getInventoryProducts($services, $requestedService)
+    public function getInventoryProducts($services, $requestedService, $servicesStockCostInfo)
     {
         $requested_service = json_decode($requestedService, true);
         $inventory_products = [];
         foreach ($services as $key => $service) {
             $original_service = ($service->service);
-            if ($original_service) {
-                $sellingPrice = isset($requested_service[$key]['updated_price']) && $requested_service[$key]['updated_price'] ? $requested_service[$key]['updated_price'] : $original_service->price;
-                $unitPrice = $original_service->cost ?: $sellingPrice;
-                $inventory_products[] = [
-                    "id" => $original_service->id ?? $requested_service[$key]['id'],
-                    "name" => $original_service->name ?? $requested_service[$key]['name'],
-                    "unit_price" => (double)$unitPrice,
-                    "selling_price" => (double)$sellingPrice,
-                    "quantity" => $requested_service[$key]['quantity'] ?? 1
-                ];
-            } else {
-                $sellingPrice = $requested_service[$key]['updated_price'] ?? $original_service->price;
-                $inventory_products[] = [
-                    "id" => 0,
-                    "name" => 'Custom Amount',
-                    "unit_price" => $sellingPrice,
-                    "selling_price" => $original_service->cost ?? $sellingPrice,
-                    "quantity" => $requested_service[$key]['quantity'] ?? 1
-                ];
+            $serviceBatches = $servicesStockCostInfo[$original_service->id];
+
+            foreach ($serviceBatches as $serviceBatch)
+            {
+                if ($original_service) {
+                    $sellingPrice = isset($requested_service[$key]['updated_price']) && $requested_service[$key]['updated_price'] ? $requested_service[$key]['updated_price'] : $original_service->price;
+                    $unitPrice = $serviceBatch['cost'] ?: $sellingPrice;
+                    $inventory_products[] = [
+                        "id" => $original_service->id ?? $requested_service[$key]['id'],
+                        "name" => $original_service->name ?? $requested_service[$key]['name'],
+                        "unit_price" => (double)$unitPrice,
+                        "selling_price" => (double)$sellingPrice,
+                        "quantity" => $serviceBatch['stock'] ?? ($requested_service[$key]['quantity'] ?? 1)
+                    ];
+                } else {
+                    $sellingPrice = $requested_service[$key]['updated_price'] ?? $original_service->price;
+                    $inventory_products[] = [
+                        "id" => 0,
+                        "name" => 'Custom Amount',
+                        "unit_price" => $sellingPrice,
+                        "selling_price" => $serviceBatch['cost']  ?? $sellingPrice,
+                        "quantity" => $serviceBatch['stock'] ?? ($requested_service[$key]['quantity'] ?? 1)
+                    ];
+                }
             }
         }
+
         if (count($inventory_products) > 0) {
             return json_encode($inventory_products);
         }
