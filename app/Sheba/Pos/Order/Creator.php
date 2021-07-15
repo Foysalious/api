@@ -61,6 +61,7 @@ class Creator
     protected $status;
     /** @var Request */
     private $request;
+    public $allServicesStockDecreasingArray;
 
     public function __construct(
         PosOrderRepository $order_repo,
@@ -86,6 +87,16 @@ class Creator
     public function hasError()
     {
         return $this->createValidator->hasError();
+    }
+
+    /**
+     * @param mixed $allServicesStockDecreasingArray
+     * @return Creator
+     */
+    public function setAllServicesStockDecreasingArray($allServicesStockDecreasingArray)
+    {
+        $this->allServicesStockDecreasingArray = $allServicesStockDecreasingArray;
+        return $this;
     }
 
     public function hasDueError()
@@ -174,6 +185,7 @@ class Creator
         $order_data['delivery_thana']        = isset($this->data['sales_channel']) && $this->data['sales_channel'] == SalesChannels::WEBSTORE && isset($this->data['delivery_thana']) ? $this->data['delivery_thana'] : null;
         $order                               = $this->orderRepo->save($order_data);
         $services                            = json_decode($this->data['services'], true);
+        $servicesStockDecreasingInfo = [];
         foreach ($services as $service) {
             /** @var PartnerPosService $original_service */
             if(isset($service['id']) && !empty($service['id'])) $original_service = $this->posServiceRepo->find($service['id']);
@@ -200,7 +212,9 @@ class Creator
 
             $pos_order_item        = $this->itemRepo->save($service);
             $is_stock_maintainable = $this->stockManager->setPosService($original_service)->isStockMaintainable();
-            if ($is_stock_maintainable) $this->stockManager->decrease($service['quantity']);
+            if ($is_stock_maintainable) {
+                $servicesStockDecreasingInfo[$original_service->id] = $this->stockManager->decrease($service['quantity']);
+            }
 
             $this->discountHandler->setOrder($order)->setPosService($original_service)->setType(DiscountTypes::SERVICE)->setData($service);
             if ($this->discountHandler->hasDiscount()) $this->discountHandler->setPosOrderItem($pos_order_item)->create($order);
@@ -219,6 +233,7 @@ class Creator
         $this->voucherCalculation($order);
         $this->resolvePaymentMethod();
         $this->storeIncome($order);
+        $this->setAllServicesStockDecreasingArray($servicesStockDecreasingInfo);
         if (!$this->request->has('refund_nature') && $this->request->refund_nature != 'exchange') {
             $this->storeJournal($order);
         }
@@ -385,7 +400,7 @@ class Creator
         /** @var AccountingRepository $accounting_repo */
         $accounting_repo = app()->make(AccountingRepository::class);
         $this->request->merge([
-            "inventory_products" => $accounting_repo->getInventoryProducts($order->items, $this->data['services']),
+            "inventory_products" => $accounting_repo->getInventoryProducts($order->items, $this->data['services'], $this->allServicesStockDecreasingArray),
         ]);
         if (isset($this->customer->id)) {
             $this->request["customer_id"] = $this->customer->id;

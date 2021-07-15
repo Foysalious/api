@@ -39,36 +39,40 @@ class StockManager
 
     /**
      * @param $quantity |double
-     * @return \Illuminate\Database\Eloquent\Model
+     * @return array
      */
     public function decrease($quantity)
     {
-        return $this->serviceRepo->update($this->service, ['stock' => $this->updatedStock($quantity)]);
+        return $this->updatedStock($quantity);
     }
 
-    private function updatedStock($quantity)
+    private function updatedStock($quantity) : array
     {
+        $decreasedBatchesInfo = [];
         while ($quantity > 0) {
 
             $firstBatch = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->first();
             $allBatches = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->get();
 
             if($quantity >= $firstBatch->stock && count($allBatches) > 1) {
+                $decreasedBatchesInfo[$firstBatch->id] = ['stock' => $firstBatch->stock, 'cost' => $firstBatch->cost];
                 $quantity =  $quantity - $firstBatch->stock;
                 $firstBatch->update(['stock' => 0 ]);
                 $firstBatch->delete();
             }
             else if($quantity >= $firstBatch->stock && count($allBatches) == 1) {
                 $negativeStock = $firstBatch->stock - $quantity;
+                $decreasedBatchesInfo[$firstBatch->id] = ['stock' => $quantity, 'cost' => $firstBatch->cost];
                 $firstBatch->update(['stock' => $negativeStock ]);
                 $quantity = 0;
             }
             else {
+                $decreasedBatchesInfo[$firstBatch->id] = ['stock' => $quantity, 'cost' => $firstBatch->cost];
                 $firstBatch->update(['stock' => $firstBatch->stock - $quantity]);
                 $quantity = 0;
             }
         }
-        return true;
+        return $decreasedBatchesInfo;
     }
 
     private function increaseUpdatedStock($quantity)
