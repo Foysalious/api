@@ -8,7 +8,9 @@ class Route
         $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
             $api->get('/channels', "Inventory\ChannelController@index");
             $api->get('/units', "Inventory\UnitController@index");
-            $api->post('webstore/validity-check', 'VoucherController@validateVoucher');
+            $api->group(['prefix' => 'partners/{partner_id}/vouchers'], function ($api) {
+                $api->post('validity-check', 'VoucherController@validateVoucher');
+            });
         });
 
         $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers', 'middleware' => ['jwtAccessToken']], function ($api) {
