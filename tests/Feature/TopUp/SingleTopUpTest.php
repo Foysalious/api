@@ -766,8 +766,6 @@ class SingleTopUpTest extends FeatureTestCase
         $this->assertEquals($this->affiliate->id, $top_up_order->agent_id);
         $this->assertEquals("Failed", $top_up_order->status);
         $this->assertEquals("gateway_timeout", $top_up_order->failed_reason);
-        // $this->assertEquals(200, $data['code']);
-        //   $this->assertEquals("Recharge Request Successful", $data['message']);
     }
 
     public function testTopUpOrderGatewayErrorResponseCodeAndMessage()
@@ -787,8 +785,6 @@ class SingleTopUpTest extends FeatureTestCase
         $this->assertEquals($this->affiliate->id, $top_up_order->agent_id);
         $this->assertEquals("Failed", $top_up_order->status);
         $this->assertEquals("gateway_error", $top_up_order->failed_reason);
-        // $this->assertEquals(200, $data['code']);
-        //   $this->assertEquals("Recharge Request Successful", $data['message']);
     }
 
     public function testTopUpOrderGatewayTimeoutThreeTimes()

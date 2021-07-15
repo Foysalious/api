@@ -47,7 +47,6 @@ abstract class TopUpManager
 
     protected function markOrderAsSystemError(Throwable $e)
     {
-        dde($e);
         logErrorWithExtra($e, ['topup' => $this->topUpOrder->getDirty()]);
         $this->statusChanger->systemError();
     }
