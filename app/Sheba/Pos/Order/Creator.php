@@ -399,7 +399,7 @@ class Creator
         /** @var AccountingRepository $accounting_repo */
         $accounting_repo = app()->make(AccountingRepository::class);
         $this->request->merge([
-            "inventory_products" => $accounting_repo->getInventoryProducts($order->items, $this->data['services']),
+            "inventory_products" => $accounting_repo->getInventoryProducts($order->items, $this->data['services'], $this->allServicesStockDecreasingArray),
         ]);
         if (isset($this->customer->id)) {
             $this->request["customer_id"] = $this->customer->id;
