@@ -36,10 +36,10 @@ $cbl            = [
 ];
 $online         = [
     'name'        => 'Other Debit/Credit',
-    'name_bn'     =>  null,
+    'name_bn'     =>  "ভিসা / মাস্টার ও অন্যান্য",
     'asset'       => 'ssl',
     'method_name' => 'online',
-    'icon'        => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/payments/Visa+Master.png',
+    'icon'        => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/payments/online.png',
     'cash_in_charge' => 0,
 ];
 $ok_wallet      = [
