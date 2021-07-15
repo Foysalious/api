@@ -44,9 +44,13 @@ class VoucherValidate
 
     public function voucherValidate($request)
     {
+        $real_pos_customer = PosCustomer::find($request->pos_customer);
+        $pos_customer = $real_pos_customer ?: $this->getUser($partner->id, $request->pos_customer);
         $pos_order_params = $this->posOrderParams($request);
         $result = $this->OrderVoucherResult($request, $pos_order_params);
 
+        if(!$result['is_valid'])
+            return api_response($request, null, 403, ['message' => 'Invalid Promo']);
         if ($result['is_valid']) {
             $voucher = $result['voucher'];
             $voucher = [
@@ -56,9 +60,9 @@ class VoucherValidate
                 'title' => $voucher->title
             ];
             return api_response($request, null, 200, ['voucher' => $voucher]);
-        } else {
-            return api_response($request, null, 403, ['message' => 'Invalid Promo']);
         }
     }
+
+
 
 }
