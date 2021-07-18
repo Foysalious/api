@@ -3,6 +3,7 @@
 
 use App\Models\BusinessMember;
 use App\Sheba\Business\ComponentPackage\Formatter;
+use App\Sheba\Business\PayrollSetting\PayrollCommonCalculation;
 use Carbon\Carbon;
 use Sheba\Dal\PayrollComponent\TargetType as ComponentTargetType;
 use Sheba\Dal\PayrollComponentPackage\CalculationType;
@@ -15,6 +16,8 @@ class PackageCalculator
 {
     const FIXED_AMOUNT = 'fixed_amount';
     const GROSS_SALARY = 'gross';
+
+    use PayrollCommonCalculation;
 
     /** @var BusinessMember */
     private $businessMember;
@@ -57,20 +60,12 @@ class PackageCalculator
         $final_amount = 0;
         if ($calculation_type == CalculationType::VARIABLE_AMOUNT) return $final_amount;
         $current_time = Carbon::now();
-        $business_member_salary = $this->businessMember->salary ? floatValFormat($this->businessMember->salary->gross_salary) : 0;
+        //$business_member_salary = $this->businessMember->salary ? floatValFormat($this->businessMember->salary->gross_salary) : 0;
         if ($schedule_type == ScheduleType::FIXED_DATE && $current_time->month != $schedule_date) return $final_amount;
         $next_generated_month = Carbon::parse($this->package->generated_at)->format('Y-m'); // Calculate Package Generation Day Based on Last Generated Day
         if ($schedule_type == ScheduleType::PERIODICALLY && $next_generated_month != $current_time->format('Y-m')) return $final_amount;
         if ($calculation_type == CalculationType::FIX_PAY_AMOUNT) {
-            if ($on_what == self::FIXED_AMOUNT) $final_amount = $amount;
-            else if ($on_what == self::GROSS_SALARY) $final_amount = (($business_member_salary * $amount) / 100);
-            else {
-                $component = $this->package->payrollComponent->where('name', $this->package->on_what)->where('target_type', ComponentTargetType::EMPLOYEE)->where('target_id', $this->businessMember->id)->first();
-                if (!$component) $component = $this->package->payrollComponent->where('name', $this->package->on_what)->where('target_type', ComponentTargetType::GENERAL)->first();
-                $percentage = json_decode($component->setting, 1)['percentage'];
-                $component_amount = ($business_member_salary * $percentage) / 100;
-                $final_amount = ( $component_amount * $amount ) / 100;
-            }
+            $final_amount = $this->getFixPayAmountCalculation($this->businessMember, $this->package, $on_what, $amount);
         }
         //dump($this->businessMember->id.' = '.$this->package->name.' = '.$schedule_type);
         if ($schedule_type != ScheduleType::PERIODICALLY) return $final_amount;

@@ -1,6 +1,7 @@
 <?php namespace App\Sheba\Business\ComponentPackage;
 
 use App\Models\BusinessMember;
+use App\Sheba\Business\PayrollSetting\PayrollCommonCalculation;
 use Carbon\Carbon;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepo;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepo;
@@ -11,6 +12,8 @@ use Sheba\Repositories\Interfaces\Business\DepartmentRepositoryInterface;
 
 class Formatter
 {
+    use PayrollCommonCalculation;
+
     private $businessMember;
     private $department;
     private $businessWeekendRepo;
@@ -90,11 +93,6 @@ class Formatter
     {
         $business = $payroll_setting->business;
         $last_day_of_month = $time->lastOfMonth();
-        while ($last_day_of_month) {
-            if (!$this->businessWeekendRepo->isWeekendByBusiness($business, $last_day_of_month) &&
-                !$this->businessHolidayRepo->isHolidayByBusiness($business, $last_day_of_month)) break;
-            $last_day_of_month = $last_day_of_month->subDay(1);
-        }
-        return $last_day_of_month->format('y-m-d');
+        return $this->lastWorkingDayOfMonth($business, $last_day_of_month)->format('y-m-d');
     }
 }

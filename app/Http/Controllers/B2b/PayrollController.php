@@ -5,7 +5,7 @@ use App\Sheba\Business\ComponentPackage\Creator as PackageCreator;
 use App\Sheba\Business\ComponentPackage\Updater as PackageUpdater;
 use App\Sheba\Business\PayrollComponent\Components\GrossComponents\Creator;
 use App\Sheba\Business\PayrollComponent\Components\GrossComponents\Updater;
-use App\Sheba\Business\PayrollSetting\LastWorkingDayOfMonth;
+use App\Sheba\Business\PayrollSetting\PayrollCommonCalculation;
 use Carbon\Carbon;
 use Sheba\Business\PayrollSetting\Requester as PayrollSettingRequester;
 use Sheba\Business\PayrollSetting\Updater as PayrollSettingUpdater;
@@ -36,7 +36,7 @@ use DB;
 
 class PayrollController extends Controller
 {
-    use ModificationFields;
+    use ModificationFields, PayrollCommonCalculation;
 
     private $payrollSettingRepository;
     private $payrollSettingRequester;
@@ -255,7 +255,7 @@ class PayrollController extends Controller
             $type = $start_date_for_next_pay_day < $start_date_for_new_pay_day ? 'GAP' : 'OVERLAPPING';
         }
         else if ($pay_day_type == PayDayType::LAST_WORKING_DAY){
-            $new_pay_day = (new LastWorkingDayOfMonth())->get($business, Carbon::parse($next_pay_day)->lastOfMonth());
+            $new_pay_day = $this->lastWorkingDayOfMonth($business, Carbon::parse($next_pay_day)->lastOfMonth());
             $start_date_for_new_pay_day = $new_pay_day->subMonth();
             $type = $start_date_for_next_pay_day < $start_date_for_new_pay_day ? 'GAP' : 'OVERLAPPING';
         }

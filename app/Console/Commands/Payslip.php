@@ -4,7 +4,7 @@ use App\Sheba\Business\PayrollComponent\Components\Deductions\Tax\TaxCalculator;
 use App\Sheba\Business\PayrollComponent\Components\GrossSalaryBreakdownCalculate;
 use App\Sheba\Business\PayrollComponent\Components\PackageCalculator;
 use App\Sheba\Business\PayrollComponent\Components\PayrollComponentSchedulerCalculation;
-use App\Sheba\Business\PayrollSetting\LastWorkingDayOfMonth;
+use App\Sheba\Business\PayrollSetting\PayrollCommonCalculation;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepo;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepo;
@@ -20,7 +20,7 @@ use Carbon\Carbon;
 
 class Payslip extends Command
 {
-    use ModificationFields;
+    use ModificationFields, PayrollCommonCalculation;
 
     /** @var string The name and signature of the console command. */
     protected $signature = 'sheba:generate-payslips';
@@ -136,7 +136,7 @@ class Payslip extends Command
             $next_pay_day = Carbon::now()->addMonth()->day($business_pay_day)->format('Y-m-d');
         } elseif ($pay_day_type == PayDayType::LAST_WORKING_DAY){
             $last_day_of_month = Carbon::now()->addMonth()->lastOfMonth();
-            $last_day_of_month = (new LastWorkingDayOfMonth())->get($business, $last_day_of_month);
+            $last_day_of_month = $this->lastWorkingDayOfMonth($business, $last_day_of_month);
             $next_pay_day = $last_day_of_month->format('Y-m-d');
         }
         $data['next_pay_day'] = $next_pay_day;
