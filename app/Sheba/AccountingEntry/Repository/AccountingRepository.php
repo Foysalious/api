@@ -118,7 +118,7 @@ class AccountingRepository extends BaseRepository
         $requested_service = json_decode($requestedService, true);
         $inventory_products = [];
         foreach ($services as $key => $service) {
-            $original_service = ($service->service);
+            $original_service = isset($service->service) ? $service->service : null;
             if ($original_service) {
                 $sellingPrice = isset($requested_service[$key]['updated_price']) && $requested_service[$key]['updated_price'] ? $requested_service[$key]['updated_price'] : $original_service->price;
                 $unitPrice = $original_service->cost ?: $sellingPrice;
