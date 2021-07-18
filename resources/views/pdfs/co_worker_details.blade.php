@@ -46,6 +46,23 @@
             background-color: #fff8f8fb;
         }
 
+        .tableRowValue {
+            font-size: 10px;
+            font-weight: 400;
+            font-family: 'Lato', sans-serif;
+            padding: 5px 10px;
+            border-bottom: solid 1px #d2d8e6;
+        }
+
+        .employeeBasicInfo {
+            vertical-align: top;
+            font-family: 'Lato', sans-serif;
+            font-size: 10px;
+            font-weight: 400;
+            color: #000000;
+            padding-bottom: 10px
+        }
+
         @page {
             margin-top: 20px;
         }
@@ -71,12 +88,12 @@
         }
 
         .pdf-title {
-            margin: -20px 0 0 0;
-            padding: 0 0 25px 0;
+            margin: 0;
             opacity: 0.8;
+            padding: 0 0 25px 0;
             font-family: 'Poppins', sans-serif;
-            font-size: 24px;
-            font-weight: 300;
+            font-size: 20px;
+            font-weight: 600;
             color: #000000;
         }
         /* Footer */
@@ -137,80 +154,197 @@
     </tr>
 </table>
 
-<table style="width: 100%; border: none; margin-top: -15px">
+<table style="width: 100%; border: none; margin-left: 6px">
     <tr>
-        <td style="width: 50%; border : none; vertical-align: top;">
-            <table style="width: 50%; border : none">
+        <td style="width: 80%; border : none; vertical-align: top;">
+            <table style="width: 100%; border : none">
                 <tr>
-                    <td style="vertical-align: top; font-family: 'Poppins', sans-serif; font-size: 12px; color: #000000; opacity: 0.8; padding-bottom: 13px">Employee Name</td>
-                    <td style="vertical-align: top; font-family: 'Poppins', sans-serif; font-size: 12px; color: #000000; opacity: 0.8; padding-bottom: 13px">:</td>
-                    <td style="padding-left: 10px;  padding-bottom: 13px; font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: normal; color: #000000; opacity: 0.8">{{ $employee['basic_info']['profile']['name'] }}</td>
+                    <td class="employeeBasicInfo" style="width: 97px">Employee Name</td>
+                    <td class="employeeBasicInfo" style="width: 20px">:</td>
+                    <td class="employeeBasicInfo" style="width: 400px">{{ $employee['basic_info']['profile']['name'] }}</td>
                 </tr>
                 <tr>
-                    <td style="vertical-align: top; font-family: 'Poppins', sans-serif; font-size: 12px; color: #000000; opacity: 0.8; padding-bottom: 13px">Email</td>
-                    <td style="vertical-align: top; font-family: 'Poppins', sans-serif; font-size: 12px; color: #000000; opacity: 0.8; padding-bottom: 13px">:</td>
-                    <td style="padding-left: 10px;  padding-bottom: 13px; font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: normal; color: #000000; opacity: 0.8">{{ $employee['basic_info']['profile']['email'] }}</td>
+                    <td class="employeeBasicInfo" style="width: 97px">Email</td>
+                    <td class="employeeBasicInfo" style="width: 20px">:</td>
+                    <td class="employeeBasicInfo" style="width: 400px">{{ $employee['basic_info']['profile']['email'] }}</td>
                 </tr>
                 <tr>
-                    <td style="vertical-align: top; font-family: 'Poppins', sans-serif; font-size: 12px; color: #000000; opacity: 0.8; padding-bottom: 13px">Department</td>
-                    <td style="vertical-align: top; font-family: 'Poppins', sans-serif; font-size: 12px; color: #000000; opacity: 0.8; padding-bottom: 13px">:</td>
-                    <td style="padding-left: 10px; padding-top: 7px; padding-bottom: 13px; font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: bold; color: #000000; opacity: 1">{{ $employee['basic_info']['department'] }}</td>
+                    <td class="employeeBasicInfo" style="width: 97px">Department</td>
+                    <td class="employeeBasicInfo" style="width: 20px">:</td>
+                    <td class="employeeBasicInfo" style="width: 400px">{{ $employee['basic_info']['department'] }}</td>
                 </tr>
                 <tr>
-                    <td style="font-family: 'Poppins', sans-serif; padding-bottom: 13px; font-size: 12px; color: #000000; opacity: 0.8">Designation</td>
-                    <td style="font-family: 'Poppins', sans-serif; padding-bottom: 13px; font-size: 12px; color: #000000; opacity: 0.8">:</td>
-                    <td style="padding-left: 10px; padding-bottom: 13px; font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: normal; color: #000000; opacity: 0.8">{{ $employee['basic_info']['designation'] }}</td>
+                    <td class="employeeBasicInfo" style="width: 97px">Designation</td>
+                    <td class="employeeBasicInfo" style="width: 20px">:</td>
+                    <td class="employeeBasicInfo" style="width: 400px">{{ $employee['basic_info']['designation'] }}</td>
                 </tr>
                 <tr>
-                    <td style="font-family: 'Poppins', sans-serif; padding-bottom: 13px; font-size: 12px; color: #000000; opacity: 0.8">Manager</td>
-                    <td style="font-family: 'Poppins', sans-serif; padding-bottom: 13px;  font-size: 12px; color: #000000; opacity: 0.8">:</td>
-                    <td style="padding-left: 10px; padding-bottom: 13px; font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: normal; color: #000000; opacity: 0.8">{{ $employee['basic_info']['manager_detail']['name'] }}</td>
+                    <td class="employeeBasicInfo" style="width: 97px">Manager</td>
+                    <td class="employeeBasicInfo" style="width: 20px">:</td>
+                    <td class="employeeBasicInfo" style="width: 400px">{{ $employee['basic_info']['manager_detail']['name'] }}</td>
                 </tr>
                 <tr>
-                    <td style="vertical-align: top; font-family: 'Poppins', sans-serif; font-size: 12px; color: #000000; opacity: 0.8; padding-bottom: 13px">Date of joining</td>
-                    <td style="vertical-align: top; font-family: 'Poppins', sans-serif; font-size: 12px; color: #000000; opacity: 0.8; padding-bottom: 13px">:</td>
-                    <td style="padding-left: 10px;  padding-bottom: 13px; font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: normal; color: #000000; opacity: 0.8">{{ $employee['basic_info']['department'] }}</td>
+                    <td class="employeeBasicInfo" style="width: 97px">Date of joining</td>
+                    <td class="employeeBasicInfo" style="width: 20px">:</td>
+                    <td class="employeeBasicInfo" style="width: 400px">{{ $employee['basic_info']['department'] }}</td>
                 </tr>
                 <tr>
-                    <td style="font-family: 'Poppins', sans-serif; padding-bottom: 13px; font-size: 12px; color: #000000; opacity: 0.8">Employee Type</td>
-                    <td style="font-family: 'Poppins', sans-serif; padding-bottom: 13px; font-size: 12px; color: #000000; opacity: 0.8">:</td>
-                    <td style="padding-left: 10px; padding-bottom: 13px; font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: normal; color: #000000; opacity: 0.8">{{ ucfirst($employee['official_info']['employee_type']) }}</td>
+                    <td class="employeeBasicInfo" style="width: 97px">Employee Type</td>
+                    <td class="employeeBasicInfo" style="width: 20px">:</td>
+                    <td class="employeeBasicInfo" style="width: 400px">{{ ucfirst($employee['official_info']['employee_type']) }}</td>
                 </tr>
                 <tr>
-                    <td style="font-family: 'Poppins', sans-serif; padding-bottom: 13px; font-size: 12px; color: #000000; opacity: 0.8">Employee ID</td>
-                    <td style="font-family: 'Poppins', sans-serif; padding-bottom: 13px; font-size: 12px; color: #000000; opacity: 0.8">:</td>
-                    <td style="padding-left: 10px; padding-bottom: 13px; font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: normal; color: #000000; opacity: 0.8">{{ $employee['official_info']['employee_id'] }}</td>
+                    <td class="employeeBasicInfo" style="width: 97px">Employee ID</td>
+                    <td class="employeeBasicInfo" style="width: 20px">:</td>
+                    <td class="employeeBasicInfo" style="width: 400px">{{ $employee['official_info']['employee_id'] }}</td>
                 </tr>
                 <tr>
-                    <td style="font-family: 'Poppins', sans-serif; padding-bottom: 13px; font-size: 12px; color: #000000; opacity: 0.8">Grade</td>
-                    <td style="font-family: 'Poppins', sans-serif; padding-bottom: 13px; font-size: 12px; color: #000000; opacity: 0.8">:</td>
-                    <td style="padding-left: 10px; padding-bottom: 13px; font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: normal; color: #000000; opacity: 0.8">{{ $employee['official_info']['grade'] }}</td>
+                    <td class="employeeBasicInfo" style="width: 97px">Grade</td>
+                    <td class="employeeBasicInfo" style="width: 20px">:</td>
+                    <td class="employeeBasicInfo" style="width: 400px">{{ $employee['official_info']['grade'] }}</td>
+                </tr>
+            </table>
+        </td>
+        <td style="width: 20%">
+            <table style="border: none;margin-top: -150px;margin-left: 20px">
+                <tr>
+                    <td><img src="{{ $employee['basic_info']['profile']['profile_picture'] }}" style="height: 90px;width: 90px;border-radius: 50%;"/></td>
                 </tr>
             </table>
         </td>
     </tr>
 </table>
 
-<table class="tableHead" style="width: 100%; margin-bottom: 20px; position: relative">
+
+<table class="tableHead" style="width: 100%;margin-top: 20px">
 
     <thead>
     <tr class="tableHeadRegular" style="background: #f8f8fb; width: 100%">
-        <td style="width:80%;font-size: 12px; opacity: 0.8; font-weight: bold; font-family: 'Poppins', sans-serif; padding: 10px;border: solid 1px #d2d8e6;">
+        <td style="width:15%;font-size: 12px; opacity: 0.8; font-weight: bold; font-family: 'Poppins', sans-serif; padding: 10px;border-bottom: solid 1px #d2d8e6;">
             Personal
+        </td>
+        <td style="width:3%;border-bottom: solid 1px #d2d8e6;">
+
+        </td>
+        <td style="width:82%;border-bottom: solid 1px #d2d8e6;">
+
         </td>
     </tr>
     </thead>
 
     <tbody>
-    <tr style="width: 100%">
-        <td style="width: 20%">Gender</td>
-        <td style="width: 20%">:</td>
-        <td style="width: 20%">{{ $employee['personal_info']['gender'] }}</td>
+    <tr>
+        <td class="tableRowValue" style="width: 15%">Gender</td>
+        <td class="tableRowValue" style="width:3%">:</td>
+        <td class="tableRowValue" style="width: 82%">{{ $employee['personal_info']['gender'] }}</td>
     </tr>
-    <tr style="width: 100%">
-        <td style="width: 20%">Phone</td>
-        <td style="width: 20%">:</td>
-        <td style="width: 20%">{{ $employee['personal_info']['mobile'] }}</td>
+    <tr>
+        <td class="tableRowValue" style="width: 15%">Phone</td>
+        <td class="tableRowValue" style="width:3%">:</td>
+        <td class="tableRowValue" style="width: 82%">{{ $employee['personal_info']['mobile'] }}</td>
+    </tr>
+    <tr>
+        <td class="tableRowValue" style="width: 15%">Date of Birth</td>
+        <td class="tableRowValue" style="width:3%">:</td>
+        <td class="tableRowValue" style="width: 82%">{{ $employee['personal_info']['date_of_birth'] }}</td>
+    </tr>
+    <tr>
+        <td class="tableRowValue" style="width: 15%">Address</td>
+        <td class="tableRowValue" style="width:3%">:</td>
+        <td class="tableRowValue" style="width: 82%">{{ $employee['personal_info']['address'] }}</td>
+    </tr>
+    <tr>
+        <td class="tableRowValue" style="width: 15%">Nationality</td>
+        <td class="tableRowValue" style="width:3%">:</td>
+        <td class="tableRowValue" style="width: 82%">{{ $employee['personal_info']['nationality'] }}</td>
+    </tr>
+    <tr>
+        <td class="tableRowValue" style="width: 15%">NID</td>
+        <td class="tableRowValue" style="width:3%">:</td>
+        <td class="tableRowValue" style="width: 82%">{{ $employee['personal_info']['nid_no'] }}</td>
+    </tr>
+    <tr>
+        <td class="tableRowValue" style="width: 15%">Passport</td>
+        <td class="tableRowValue" style="width:3%">:</td>
+        <td class="tableRowValue" style="width: 82%">{{ $employee['personal_info']['passport_no'] }}</td>
+    </tr>
+    <tr>
+        <td class="tableRowValue" style="width: 15%">Blood Group</td>
+        <td class="tableRowValue" style="width:3%">:</td>
+        <td class="tableRowValue" style="width: 82%">{{ $employee['personal_info']['blood_group'] }}</td>
+    </tr>
+    </tbody>
+
+</table>
+
+
+<table class="tableHead" style="width: 100%;margin-top: 24px">
+
+    <thead>
+    <tr class="tableHeadRegular" style="background: #f8f8fb; width: 100%">
+        <td style="width:15%;font-size: 12px; opacity: 0.8; font-weight: bold; font-family: 'Poppins', sans-serif; padding: 10px;border-bottom: solid 1px #d2d8e6;">
+            Financial
+        </td>
+        <td style="width:3%;border-bottom: solid 1px #d2d8e6;">
+
+        </td>
+        <td style="width:82%;border-bottom: solid 1px #d2d8e6;">
+
+        </td>
+    </tr>
+    </thead>
+
+    <tbody>
+    <tr>
+        <td class="tableRowValue" style="width: 15%">TIN</td>
+        <td class="tableRowValue" style="width:3%">:</td>
+        <td class="tableRowValue" style="width: 82%">{{ $employee['financial_info']['tin_no'] }}</td>
+    </tr>
+    <tr>
+        <td class="tableRowValue" style="width: 15%">Bank Name</td>
+        <td class="tableRowValue" style="width:3%">:</td>
+        <td class="tableRowValue" style="width: 82%">{{ $employee['financial_info']['bank_name'] }}</td>
+    </tr>
+    <tr>
+        <td class="tableRowValue" style="width: 15%">Bank Account No</td>
+        <td class="tableRowValue" style="width:3%">:</td>
+        <td class="tableRowValue" style="width: 82%">{{ $employee['financial_info']['account_no'] }}</td>
+    </tr>
+    </tbody>
+
+</table>
+
+<table class="tableHead" style="width: 100%;margin-top: 24px">
+
+    <thead>
+    <tr class="tableHeadRegular" style="background: #f8f8fb; width: 100%">
+        <td style="width:15%;font-size: 12px; opacity: 0.8; font-weight: bold; font-family: 'Poppins', sans-serif; padding: 10px;border-bottom: solid 1px #d2d8e6;">
+            Emergency
+        </td>
+        <td style="width:3%;border-bottom: solid 1px #d2d8e6;">
+
+        </td>
+        <td style="width:82%;border-bottom: solid 1px #d2d8e6;">
+
+        </td>
+    </tr>
+    </thead>
+
+    <tbody>
+    <tr>
+        <td class="tableRowValue" style="width: 15%">Name</td>
+        <td class="tableRowValue" style="width:3%">:</td>
+        <td class="tableRowValue" style="width: 82%">{{ $employee['emergency_info']['emergency_contract_person_name'] }}</td>
+    </tr>
+    <tr>
+        <td class="tableRowValue" style="width: 15%">Mobile Number</td>
+        <td class="tableRowValue" style="width:3%">:</td>
+        <td class="tableRowValue" style="width: 82%">{{ $employee['emergency_info']['emergency_contract_person_number'] }}</td>
+    </tr>
+    <tr>
+        <td class="tableRowValue" style="width: 15%">Relationship</td>
+        <td class="tableRowValue" style="width:3%">:</td>
+        <td class="tableRowValue" style="width: 82%">{{ $employee['emergency_info']['emergency_contract_person_relationship'] }}</td>
     </tr>
     </tbody>
 
