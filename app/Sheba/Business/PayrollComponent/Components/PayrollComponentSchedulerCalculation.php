@@ -67,7 +67,7 @@ class PayrollComponentSchedulerCalculation
         })->orderBy('type')->get();
         $total_addition = 0;
         foreach ($components as $component) {
-            if (!$component->is_default) $total_addition += $this->calculatePackage($component->componentPackages->where('is_active', 1));
+            if (!$component->is_default) $total_addition += $this->calculatePackage($component->componentPackages->where('is_active', 1), $component);
             $this->additionData['addition'][$component->name] = $total_addition;
             $total_addition = 0;
         }
@@ -82,7 +82,7 @@ class PayrollComponentSchedulerCalculation
         $total_deduction = 0;
         foreach ($components as $component) {
             if (!$component->is_default) {
-                $total_deduction += $this->calculatePackage($component->componentPackages->where('is_active', 1));
+                $total_deduction += $this->calculatePackage($component->componentPackages->where('is_active', 1), $component);
                 $this->deductionData['deduction'][$component->name] = $total_deduction;
                 $total_deduction = 0;
                 continue;
@@ -91,25 +91,25 @@ class PayrollComponentSchedulerCalculation
         }
         return $this->deductionData;
     }
-    private function calculatePackage($packages)
+    private function calculatePackage($packages, $component)
     {
         $total_package_amount = 0;
+        $taxable_packages = [];
         foreach ($packages as $package) {
             $employee_target = $package->packageTargets->where('effective_for', PackageTargetType::EMPLOYEE)->where('target_id', $this->businessMember->id);
             $department_target = $this->department ? $package->packageTargets->where('effective_for', PackageTargetType::DEPARTMENT)->where('target_id', $this->department->id) : null;
             $global_target =  $package->packageTargets->where('effective_for', PackageTargetType::GENERAL);
             $target_amount = 0;
-            if ($employee_target || $department_target || $global_target) {
+            if (!$employee_target->isEmpty() || !$department_target->isEmpty() || !$global_target->isEmpty()) {
                 $package_component = $package->payrollComponent;
                 if ($package_component->is_taxable){
-                    $component_id = $package_component->id;
-                    if (!array_key_exists($component_id, $this->taxComponentData)) $this->taxComponentData[$component_id] = $package_component;
+                    $taxable_packages[] = $package;
                 }
                 $target_amount = $this->packageCalculator->setBusinessMember($this->businessMember)->setPayrollSetting($this->payrollSetting)->setPackage($package)->calculate();
             }
-
             $total_package_amount += $target_amount;
         }
+        if($taxable_packages) $this->taxComponentData[$component->id] = $taxable_packages;
         return $total_package_amount;
     }
 
