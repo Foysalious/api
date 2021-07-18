@@ -30,9 +30,9 @@ class OrderPlaceDeliveryPriceCheckAPITest extends FeatureTestCase
     {
         $response = $this->post('/v2/pos/delivery/delivery-charge', [
             'weight' => '1',
-            'cod_amount' => 500,
+            'cod_amount' => 200,
             'delivery_district' => 'Dhaka',
-            'delivery_thana' => 'Dhanmondi',
+            'delivery_thana' => 'Gulshan',
             'partner_id' => '1',
             'pickup_thana' => 'Gulshan',
             "pickup_district"=> 'Dhaka'
@@ -41,6 +41,7 @@ class OrderPlaceDeliveryPriceCheckAPITest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]*/);
         $data = $response->decodeResponseJson();
+        //dd($data);
 
         $this->assertEquals(200, $data['code']);
         $this->assertEquals("Successful", $data['message']);

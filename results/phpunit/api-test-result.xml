@@ -1,59 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="Application Test Suite" tests="46" assertions="95" failures="1" errors="0" time="234.027058">
-    <testsuite name="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" tests="46" assertions="95" failures="1" errors="0" time="234.027058">
-      <testcase name="testInvalidMobileNumberIsRejected" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="65" assertions="2" time="4.572369"/>
-      <testcase name="testTopupConsecutiveNumber" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="77" assertions="1" time="16.258175">
-        <failure type="PHPUnit_Framework_ExpectationFailedException">Tests\Feature\TopUp\SingleTopUpTest::testTopupConsecutiveNumber
-Failed asserting that 200 matches expected 400.
-
-/var/www/tests/Feature/TopUp/SingleTopUpTest.php:92
-</failure>
-      </testcase>
-      <testcase name="testMobileNumberValidationResponseCode" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="96" assertions="2" time="2.443480"/>
-      <testcase name="testVendorIdValidationResponseCode" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="108" assertions="2" time="2.154290"/>
-      <testcase name="testConnectionTypeValidationResponseCode" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="121" assertions="2" time="2.458330"/>
-      <testcase name="testAmountValidationResponseCode" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="133" assertions="2" time="2.461731"/>
-      <testcase name="testPasswordValidationResponseCode" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="145" assertions="2" time="2.288282"/>
-      <testcase name="testOneTopUpRequestCreateOneTopUpOrder" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="158" assertions="1" time="8.676998"/>
-      <testcase name="testTopUpOrderDataMatchesTopUpRequestData" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="170" assertions="9" time="6.863300"/>
-      <testcase name="testTopUpOrderSuccessfulResponseCodeAndMessage" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="191" assertions="2" time="7.632538"/>
-      <testcase name="testMaximumAmountValueBlocksTopup" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="205" assertions="1" time="2.099025"/>
-      <testcase name="testMinimumAmountValueBlocksTopup" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="219" assertions="1" time="2.069698"/>
-      <testcase name="testTopupInvalidVendorId" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="233" assertions="1" time="2.113179"/>
-      <testcase name="testTopupNullVendorId" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="246" assertions="2" time="2.120281"/>
-      <testcase name="testTopupTestWithoutVendorId" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="260" assertions="2" time="2.012070"/>
-      <testcase name="testTopupInternationalNumberInput" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="274" assertions="1" time="2.104162"/>
-      <testcase name="testTopupInsufficientBalance" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="288" assertions="2" time="1.526360"/>
-      <testcase name="testTopupInputWithoutAmountValue" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="307" assertions="2" time="2.228479"/>
-      <testcase name="testTopupInputNullAmountValue" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="322" assertions="2" time="2.161526"/>
-      <testcase name="testTopupInputNullConnectionType" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="336" assertions="2" time="2.197988"/>
-      <testcase name="testTopupInputWithoutConnectionType" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="350" assertions="2" time="3.349200"/>
-      <testcase name="testTopupWithoutPin" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="365" assertions="2" time="2.456317"/>
-      <testcase name="testTopupWithoutNullPin" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="380" assertions="2" time="2.453412"/>
-      <testcase name="testTopupWithPendingUser" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="394" assertions="2" time="1.524523"/>
-      <testcase name="testTopupWithRejecteddUser" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="410" assertions="2" time="0.956758"/>
-      <testcase name="testTopupNullNumber" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="426" assertions="2" time="2.445925"/>
-      <testcase name="testTopupTestWithoutNumberNpin" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="441" assertions="2" time="2.456913"/>
-      <testcase name="testTopupNullPinAndNumber" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="455" assertions="2" time="2.228337"/>
-      <testcase name="testTopupTestBlockNumber" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="469" assertions="2" time="0.937822"/>
-      <testcase name="testSuccessfulTopupDeductAmountFromAgentWallet" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="482" assertions="1" time="8.013059"/>
-      <testcase name="testTopupOtfShebaOtfCommissionCheck" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="502" assertions="2" time="7.538235"/>
-      <testcase name="testTopupOtfOtfAgentCommissionCheck" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="519" assertions="2" time="8.626608"/>
-      <testcase name="testTopupOtfOtfvendorIDnCheck" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="537" assertions="2" time="7.693128"/>
-      <testcase name="testSuccessfulTopupAgentGenerateTransaction" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="554" assertions="2" time="8.504829"/>
-      <testcase name="testTopupGeneralUserAgentCommission" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="578" assertions="2" time="8.199319"/>
-      <testcase name="testTopupSpecificUserAgentCommission" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="596" assertions="2" time="7.589966"/>
-      <testcase name="testTopupTransactionStoreAgentLatLng" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="633" assertions="3" time="7.342406"/>
-      <testcase name="testTopupTransactionStoreAgentIP" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="653" assertions="2" time="8.919146"/>
-      <testcase name="testTopupTransactionStoreUserAgentType" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="671" assertions="2" time="8.212807"/>
-      <testcase name="testAffiliateSuccessfulTopupTransactionStoreAmbassadorCommission" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="688" assertions="2" time="8.667083"/>
-      <testcase name="testTopupTransactionStoreUserAgentInformation" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="705" assertions="2" time="8.920267"/>
-      <testcase name="testTopupTransactionStoreTransactionID" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="722" assertions="2" time="8.881402"/>
-      <testcase name="testResponseCodeWhenAuthorizationTokenChanges" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="739" assertions="1" time="0.947665"/>
-      <testcase name="testTopUpOrderGatewayTimeoutResponseCodeAndMessage" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="751" assertions="3" time="6.181876"/>
-      <testcase name="testTopUpOrderGatewayErrorResponseCodeAndMessage" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="769" assertions="3" time="5.483408"/>
-      <testcase name="testTopUpOrderGatewayTimeoutThreeTimes" class="Tests\Feature\TopUp\SingleTopUpTest" file="/var/www/tests/Feature/TopUp/SingleTopUpTest.php" line="787" assertions="3" time="19.054386"/>
+  <testsuite name="Application Test Suite" tests="1" assertions="6" failures="0" errors="0" time="129.442255">
+    <testsuite name="Tests\Feature\TopUp\SbusinessSingleTopupTest" file="/var/www/tests/Feature/TopUp/SbusinessSingleTopupTest.php" tests="1" assertions="6" failures="0" errors="0" time="129.442255">
+      <testcase name="testBusinessTopupsBusinessConsecutiveNumber" class="Tests\Feature\TopUp\SbusinessSingleTopupTest" file="/var/www/tests/Feature/TopUp/SbusinessSingleTopupTest.php" line="86" assertions="6" time="129.442255"/>
     </testsuite>
   </testsuite>
 </testsuites>

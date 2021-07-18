@@ -83,6 +83,61 @@ class SbusinessSingleTopupTest extends FeatureTestCase
         $this->assertEquals("Recharge Request Successful", $data['message']);
     }
 
+    public function testBusinessTopupsBusinessConsecutiveNumber()
+    {
+        $top_up_vendor = TopUpVendor::find(1);
+        $top_up_vendor->update(["waiting_time" => 3]);
+        $response = $this->post('/v2/top-up/business', [
+            'mobile' => '01620011019', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 10, 'is_otf_allow' => 0, 'password' => 12345,
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+
+        $response = $this->post('/v2/top-up/business', [
+            'mobile' => '01620011019', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 10, 'is_otf_allow' => 0, 'password' => 12345,
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(400, $data['code']);
+        $this->assertEquals("এই নাম্বারে কিছুক্ষন আগে টপ-আপ করা হয়েছে । পুনরায় এই নাম্বারে টপ-আপ করার জন্য অনুগ্রহপূর্বক 3 মিনিট অপেক্ষা করুন ।", $data['message']);
+
+        sleep(60);
+        $response = $this->post('/v2/top-up/business', [
+            'mobile' => '01620011019', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 10, 'is_otf_allow' => 0, 'password' => 12345,
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+
+        $response = $this->post('/v2/top-up/business', [
+            'mobile' => '01620011019', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 10, 'is_otf_allow' => 0, 'password' => 12345,
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(400, $data['code']);
+        $this->assertEquals("এই নাম্বারে কিছুক্ষন আগে টপ-আপ করা হয়েছে । পুনরায় এই নাম্বারে টপ-আপ করার জন্য অনুগ্রহপূর্বক 2 মিনিট অপেক্ষা করুন ।", $data['message']);
+
+        sleep(60);
+        $response = $this->post('/v2/top-up/business', [
+            'mobile' => '01620011019', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 10, 'is_otf_allow' => 0, 'password' => 12345,
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $response = $this->post('/v2/top-up/business', [
+            'mobile' => '01620011019', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 10, 'is_otf_allow' => 0, 'password' => 12345,
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(400, $data['code']);
+        $this->assertEquals("এই নাম্বারে কিছুক্ষন আগে টপ-আপ করা হয়েছে । পুনরায় এই নাম্বারে টপ-আপ করার জন্য অনুগ্রহপূর্বক 1 মিনিট অপেক্ষা করুন ।", $data['message']);
+
+    }
+
     public function testBusinessTopupResponseForInvalidMobileNumber()
     {
         $response = $this->post('/v2/top-up/business', [
@@ -197,6 +252,7 @@ class SbusinessSingleTopupTest extends FeatureTestCase
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The connection type field is required.", $data['message']);
     }
+
 
     public function testBusinessTopupResponseWithNullAmount()
     {
