@@ -79,7 +79,6 @@ class AttendanceController extends Controller
             'action' => 'required|string|in:' . implode(',', Actions::get()),
             'device_id' => 'string',
             'user_agent' => 'string',
-            'is_in_wifi_area' => 'required|numeric'
         ];
 
         $business_member = $this->getBusinessMember($request);
@@ -98,9 +97,8 @@ class AttendanceController extends Controller
         if ($request->action == Actions::CHECKOUT && $checkout->isLeftEarlyNoteRequired()) {
             $is_note_required = 1;
         }
-        if ($business->isRemoteAttendanceEnable($business_member->id) && !$request->is_in_wifi_area) {
+        if ($business->isRemoteAttendanceEnable($business_member->id)) {
             $validation_data += ['lat' => 'required|numeric', 'lng' => 'required|numeric'];
-            $validation_data += ['remote_mode' => 'required|string|in:' . implode(',', RemoteMode::get())];
         }
         $this->validate($request, $validation_data);
         $this->setModifier($business_member->member);
@@ -115,8 +113,6 @@ class AttendanceController extends Controller
         $action = $attendance_action->doAction();
 
         return response()->json(['code' => $action->getResultCode(),
-                                 'is_note_required' => $is_note_required,
-                                 'date' => Carbon::now()->format('jS F Y'),
                                  'message' => $action->getResultMessage()]);
     }
 
