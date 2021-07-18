@@ -66,7 +66,6 @@ class Updater
                 $data = [];
                 $data['note'] = $this->note;
                 $this->lastAttendanceLog->update($data);
-//                $this->lastAttendanceLog->update($data);
 //                $this->attendanceActionLog->update($this->lastAttendanceLog, $this->withUpdateModificationField($data));
             });
         }
