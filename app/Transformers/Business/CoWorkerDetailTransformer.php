@@ -283,6 +283,10 @@ class CoWorkerDetailTransformer extends TransformerAbstract
         return (new EmployeeStatusChangeLogFormatter())->setEmployeeStatusChangeLogs($status_change_logs)->format();
     }
 
+    /**
+     * @param $business_member
+     * @return array
+     */
     private function getPdfInfo($business_member)
     {
        return [
