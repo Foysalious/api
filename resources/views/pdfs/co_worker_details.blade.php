@@ -96,30 +96,6 @@
             font-weight: 600;
             color: #000000;
         }
-        /* Footer */
-        .footer {
-            width: 100%;
-            font-family: 'Poppins', sans-serif;
-            position: fixed;
-            left: 0;
-            bottom: 4em;
-            border: none;
-        }
-
-        .footer__row-title td {
-            font-size: 12px;
-            font-weight: bold;
-            text-align: center;
-            color: #000000;
-            height: 80px;
-
-        }
-
-        .footer__row-info td {
-            font-size: 12px;
-            text-align: center;
-            color: #000000;
-        }
 
         ​/*new styles end*/
     </style>
@@ -186,29 +162,31 @@
                 <tr>
                     <td class="employeeBasicInfo" style="width: 97px">Date of joining</td>
                     <td class="employeeBasicInfo" style="width: 20px">:</td>
-                    <td class="employeeBasicInfo" style="width: 400px">{{ $employee['basic_info']['department'] }}</td>
+                    <td class="employeeBasicInfo" style="width: 400px">{{ $employee['pdf_info']['joining_date'] }}</td>
                 </tr>
                 <tr>
                     <td class="employeeBasicInfo" style="width: 97px">Employee Type</td>
                     <td class="employeeBasicInfo" style="width: 20px">:</td>
-                    <td class="employeeBasicInfo" style="width: 400px">{{ ucfirst($employee['official_info']['employee_type']) }}</td>
+                    <td class="employeeBasicInfo" style="width: 400px">{{ $employee['official_info']['employee_type'] ? ucfirst($employee['official_info']['employee_type']) : 'N/A' }}</td>
                 </tr>
                 <tr>
                     <td class="employeeBasicInfo" style="width: 97px">Employee ID</td>
                     <td class="employeeBasicInfo" style="width: 20px">:</td>
-                    <td class="employeeBasicInfo" style="width: 400px">{{ $employee['official_info']['employee_id'] }}</td>
+                    <td class="employeeBasicInfo" style="width: 400px">{{ $employee['official_info']['employee_id'] ?  : 'N/A' }}</td>
                 </tr>
                 <tr>
                     <td class="employeeBasicInfo" style="width: 97px">Grade</td>
                     <td class="employeeBasicInfo" style="width: 20px">:</td>
-                    <td class="employeeBasicInfo" style="width: 400px">{{ $employee['official_info']['grade'] }}</td>
+                    <td class="employeeBasicInfo" style="width: 400px">{{ $employee['official_info']['grade'] ?  : 'N/A' }}</td>
                 </tr>
             </table>
         </td>
         <td style="width: 20%">
             <table style="border: none;margin-top: -150px;margin-left: 20px">
                 <tr>
+                    @if($employee['basic_info']['profile']['profile_picture'])
                     <td><img src="{{ $employee['basic_info']['profile']['profile_picture'] }}" style="height: 90px;width: 90px;border-radius: 50%;"/></td>
+                    @endif
                 </tr>
             </table>
         </td>
@@ -236,42 +214,42 @@
     <tr>
         <td class="tableRowValue" style="width: 15%">Gender</td>
         <td class="tableRowValue" style="width:3%">:</td>
-        <td class="tableRowValue" style="width: 82%">{{ $employee['personal_info']['gender'] }}</td>
+        <td class="tableRowValue" style="width: 82%">{{ $employee['personal_info']['gender'] ?  : 'N/A' }}</td>
     </tr>
     <tr>
         <td class="tableRowValue" style="width: 15%">Phone</td>
         <td class="tableRowValue" style="width:3%">:</td>
-        <td class="tableRowValue" style="width: 82%">{{ $employee['personal_info']['mobile'] }}</td>
+        <td class="tableRowValue" style="width: 82%">{{ $employee['personal_info']['mobile'] ?  : 'N/A' }}</td>
     </tr>
     <tr>
         <td class="tableRowValue" style="width: 15%">Date of Birth</td>
         <td class="tableRowValue" style="width:3%">:</td>
-        <td class="tableRowValue" style="width: 82%">{{ $employee['personal_info']['date_of_birth'] }}</td>
+        <td class="tableRowValue" style="width: 82%">{{ $employee['pdf_info']['date_of_birth'] }}</td>
     </tr>
     <tr>
         <td class="tableRowValue" style="width: 15%">Address</td>
         <td class="tableRowValue" style="width:3%">:</td>
-        <td class="tableRowValue" style="width: 82%">{{ $employee['personal_info']['address'] }}</td>
+        <td class="tableRowValue" style="width: 82%">{{ $employee['personal_info']['address'] ?  : 'N/A' }}</td>
     </tr>
     <tr>
         <td class="tableRowValue" style="width: 15%">Nationality</td>
         <td class="tableRowValue" style="width:3%">:</td>
-        <td class="tableRowValue" style="width: 82%">{{ $employee['personal_info']['nationality'] }}</td>
+        <td class="tableRowValue" style="width: 82%">{{ $employee['personal_info']['nationality'] ?  : 'N/A' }}</td>
     </tr>
     <tr>
         <td class="tableRowValue" style="width: 15%">NID</td>
         <td class="tableRowValue" style="width:3%">:</td>
-        <td class="tableRowValue" style="width: 82%">{{ $employee['personal_info']['nid_no'] }}</td>
+        <td class="tableRowValue" style="width: 82%">{{ $employee['personal_info']['nid_no'] ?  : 'N/A' }}</td>
     </tr>
     <tr>
         <td class="tableRowValue" style="width: 15%">Passport</td>
         <td class="tableRowValue" style="width:3%">:</td>
-        <td class="tableRowValue" style="width: 82%">{{ $employee['personal_info']['passport_no'] }}</td>
+        <td class="tableRowValue" style="width: 82%">{{ $employee['personal_info']['passport_no'] ?  : 'N/A' }}</td>
     </tr>
     <tr>
         <td class="tableRowValue" style="width: 15%">Blood Group</td>
         <td class="tableRowValue" style="width:3%">:</td>
-        <td class="tableRowValue" style="width: 82%">{{ $employee['personal_info']['blood_group'] }}</td>
+        <td class="tableRowValue" style="width: 82%">{{ $employee['personal_info']['blood_group'] ?  : 'N/A' }}</td>
     </tr>
     </tbody>
 
@@ -298,17 +276,17 @@
     <tr>
         <td class="tableRowValue" style="width: 15%">TIN</td>
         <td class="tableRowValue" style="width:3%">:</td>
-        <td class="tableRowValue" style="width: 82%">{{ $employee['financial_info']['tin_no'] }}</td>
+        <td class="tableRowValue" style="width: 82%">{{ $employee['financial_info']['tin_no'] ?  : 'N/A' }}</td>
     </tr>
     <tr>
         <td class="tableRowValue" style="width: 15%">Bank Name</td>
         <td class="tableRowValue" style="width:3%">:</td>
-        <td class="tableRowValue" style="width: 82%">{{ $employee['financial_info']['bank_name'] }}</td>
+        <td class="tableRowValue" style="width: 82%">{{ $employee['financial_info']['bank_name'] ?  : 'N/A' }}</td>
     </tr>
     <tr>
         <td class="tableRowValue" style="width: 15%">Bank Account No</td>
         <td class="tableRowValue" style="width:3%">:</td>
-        <td class="tableRowValue" style="width: 82%">{{ $employee['financial_info']['account_no'] }}</td>
+        <td class="tableRowValue" style="width: 82%">{{ $employee['financial_info']['account_no'] ?  : 'N/A' }}</td>
     </tr>
     </tbody>
 
@@ -334,17 +312,17 @@
     <tr>
         <td class="tableRowValue" style="width: 15%">Name</td>
         <td class="tableRowValue" style="width:3%">:</td>
-        <td class="tableRowValue" style="width: 82%">{{ $employee['emergency_info']['emergency_contract_person_name'] }}</td>
+        <td class="tableRowValue" style="width: 82%">{{ $employee['emergency_info']['emergency_contract_person_name'] ?  : 'N/A' }}</td>
     </tr>
     <tr>
         <td class="tableRowValue" style="width: 15%">Mobile Number</td>
         <td class="tableRowValue" style="width:3%">:</td>
-        <td class="tableRowValue" style="width: 82%">{{ $employee['emergency_info']['emergency_contract_person_number'] }}</td>
+        <td class="tableRowValue" style="width: 82%">{{ $employee['emergency_info']['emergency_contract_person_number'] ?  : 'N/A' }}</td>
     </tr>
     <tr>
         <td class="tableRowValue" style="width: 15%">Relationship</td>
         <td class="tableRowValue" style="width:3%">:</td>
-        <td class="tableRowValue" style="width: 82%">{{ $employee['emergency_info']['emergency_contract_person_relationship'] }}</td>
+        <td class="tableRowValue" style="width: 82%">{{ $employee['emergency_info']['emergency_contract_person_relationship'] ?  : 'N/A' }}</td>
     </tr>
     </tbody>
 

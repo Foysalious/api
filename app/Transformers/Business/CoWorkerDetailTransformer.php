@@ -1,6 +1,7 @@
 <?php namespace App\Transformers\Business;
 
 use App\Sheba\Business\BusinessBasicInformation;
+use Carbon\Carbon;
 use Sheba\Business\BusinessMemberStatusChangeLog\LogFormatter as EmployeeStatusChangeLogFormatter;
 use App\Sheba\Business\CoWorker\ProfileInformation\SocialLink;
 use App\Sheba\Business\PayrollComponent\Components\GrossSalaryBreakdownCalculate;
@@ -287,6 +288,8 @@ class CoWorkerDetailTransformer extends TransformerAbstract
        return [
            'company_name' => $this->business->name,
            'company_logo' => $this->isDefaultImageByUrl($this->business->logo) ? null : $this->business->logo,
+           'joining_date' => $business_member->join_date ? Carbon::parse($business_member->join_date)->format('d.m.y') : 'N/A',
+           'date_of_birth' => $this->profile->dob ? Carbon::parse($this->profile->dob)->format('d.m.y') : 'N/A'
        ];
     }
 }
