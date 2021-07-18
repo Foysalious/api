@@ -44,15 +44,12 @@ class EventServiceProvider extends ServiceProvider
         BusinessMemberDeleted::class => [
             BusinessMemberDeletedListener::class
         ],
-        PartnerPosServiceSaved::class => [
-            WebstorePublishCheck::class
-        ],
-        PartnerPosSettingUpdated::class => [
-                PartnerPosSettingUpdatedListener::class,
-            ],
-        PartnerModelUpdated::class => [
-            PartnerModelUpdatedListener::class,
-        ],
+//        PartnerPosSettingUpdated::class => [
+//                PartnerPosSettingUpdatedListener::class,
+//            ],
+//        PartnerModelUpdated::class => [
+//            PartnerModelUpdatedListener::class,
+//        ],
     ];
 
     /**
