@@ -171,4 +171,30 @@ class TopUpDataFormat
             'from_contact' => "^(?:\+?88)?01[16|8]\d{8}$"
         ];
     }
+
+    /**
+     * @param $vendor_id
+     * @param $agent
+     * @param $partner
+     * @param $vendor_name
+     * @param $otf_settings
+     * @param $otf_list
+     */
+    public function makeTopUpOTFData($vendor_id, $agent, $partner, $vendor_name, $otf_settings, &$otf_list)
+    {
+        $vendor_commission = TopUpVendorCommission::where([['topup_vendor_id', $vendor_id], ['type', $agent]])->first();
+        if ($agent === "App\Models\Partner")
+            $topup_charges = (new TopUpChargesSubscriptionWise())->getCharges($partner);
+
+        if(isset($topup_charges))
+            $single_charge = (new TopUpChargesSubscriptionWise())->getChargeByVendor($topup_charges, $vendor_name);
+
+        $vendor_agent_commission = isset($single_charge) ? $single_charge->commission : $vendor_commission->agent_commission;
+        $vendor_otf_commission   = isset($single_charge) ? $single_charge->otf_commission : $otf_settings->agent_commission;
+
+        foreach ($otf_list as $otf) {
+            array_add($otf, 'regular_commission', round(min(($vendor_agent_commission / 100) * $otf->amount, 50), 2));
+            array_add($otf, 'otf_commission', round(($vendor_otf_commission / 100) * $otf->cashback_amount, 2));
+        }
+    }
 }

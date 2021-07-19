@@ -24,6 +24,7 @@ use Sheba\TopUp\Jobs\TopUpExcelJob;
 use Sheba\TopUp\Jobs\TopUpJob;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpChargesSubscriptionWise;
+use Sheba\TopUp\TopUpDataFormat;
 use Sheba\TopUp\TopUpExcel;
 use Sheba\TopUp\TopUpLifecycleManager;
 use Sheba\TopUp\TopUpRequest;
@@ -232,7 +233,7 @@ class TopUpController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function topUpOTF(Request $request)
+    public function topUpOTF(Request $request): JsonResponse
     {
         $this->validate($request, TopUpStatics::topUpOTFRequestValidate());
 
@@ -251,25 +252,10 @@ class TopUpController extends Controller
         $otf_settings = $topup_otf_settings->builder()->where([
             ['topup_vendor_id', $request->vendor_id], ['type', $agent]
         ])->first();
-
-        if ($agent === "App\Models\Partner")
-            $topup_charges = (new TopUpChargesSubscriptionWise())->getCharges($request->partner);
-
-
         if ($otf_settings && $otf_settings->applicable_gateways != 'null' && in_array($vendor->gateway, json_decode($otf_settings->applicable_gateways)) == true) {
-            $vendor_commission = TopUpVendorCommission::where([['topup_vendor_id', $request->vendor_id], ['type', $agent]])->first();
             $otf_list = $topup_vendor_otf->builder()->where('topup_vendor_id', $request->vendor_id)->where('sim_type', 'like', '%' . $request->sim_type . '%')->where('status', 'Active')->orderBy('cashback_amount', 'DESC')->get();
 
-            if(isset($topup_charges))
-                $single_charge = (new TopUpChargesSubscriptionWise())->getChargeByVendor($topup_charges, $vendor->name);
-
-            $vendor_agent_commission = $single_charge ? $single_charge->commission : $vendor_commission->agent_commission;
-            $vendor_otf_commission   = $single_charge ? $single_charge->otf_commission : $otf_settings->agent_commission;
-
-            foreach ($otf_list as $otf) {
-                array_add($otf, 'regular_commission', round(min(($vendor_agent_commission / 100) * $otf->amount, 50), 2));
-                array_add($otf, 'otf_commission', round(($vendor_otf_commission / 100) * $otf->cashback_amount, 2));
-            }
+            (new TopUpDataFormat())->makeTopUpOTFData($request->vendor_id, $agent, $request->partner, $vendor->name, $otf_settings, $otf_list);
 
             return api_response($request, $otf_list, 200, ['data' => $otf_list]);
         } else {
@@ -282,7 +268,7 @@ class TopUpController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function topUpOTFDetails(Request $request)
+    public function topUpOTFDetails(Request $request): JsonResponse
     {
         $this->validate($request, TopUpStatics::topUpOTFDetailsValidate());
 
@@ -304,13 +290,9 @@ class TopUpController extends Controller
         ])->first();
 
         if ($otf_settings->applicable_gateways != 'null' && in_array($vendor->gateway, json_decode($otf_settings->applicable_gateways)) == true) {
-            $vendor_commission = TopUpVendorCommission::where([['topup_vendor_id', $request->vendor_id], ['type', $agent]])->first();
             $otf_list = $topup_vendor_otf->builder()->where('id', $request->otf_id)->where('status', 'Active')->get();
 
-            foreach ($otf_list as $otf) {
-                array_add($otf, 'regular_commission', round(min(($vendor_commission->agent_commission / 100) * $otf->amount, 50), 2));
-                array_add($otf, 'otf_commission', round(($otf_settings->agent_commission / 100) * $otf->cashback_amount, 2));
-            }
+            (new TopUpDataFormat())->makeTopUpOTFData($request->vendor_id, $agent, $request->partner, $vendor->name, $otf_settings, $otf_list);
 
             return api_response($request, $otf_list, 200, ['data' => $otf_list]);
         } else {
