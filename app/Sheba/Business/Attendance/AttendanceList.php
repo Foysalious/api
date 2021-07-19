@@ -72,6 +72,7 @@ class AttendanceList
     private $checkinLocation;
     private $checkinOfficeOrRemote;
     private $checkoutOfficeOrRemote;
+    private $officeTimeDurationInMinutes;
 
     /**
      * AttendanceList constructor.
@@ -246,6 +247,7 @@ class AttendanceList
      */
     public function get()
     {
+        $this->setOfficeTimeDuration();
         $this->runAttendanceQueryV2();
         return $this->getDataV2();
     }
@@ -417,6 +419,7 @@ class AttendanceList
                         'check_in' => $checkin_data,
                         'check_out' => $checkout_data,
                         'active_hours' => $attendance->staying_time_in_minutes ? $this->formatMinute($attendance->staying_time_in_minutes) : null,
+                        'overtime' => $attendance->checkout_time ? $this->calculateOvertime($attendance->staying_time_in_minutes) : null,
                         'date' => $attendance->date,
                         'is_absent' => $attendance->status == Statuses::ABSENT ? 1 : 0,
                         'is_on_leave' => 0,
@@ -717,5 +720,26 @@ class AttendanceList
         $weekend_day = $business_weekend->pluck('weekday_name')->toArray();
 
         return $this->isWeekend($this->startDate, $weekend_day) ? 'weekend' : 'holiday';
+    }
+
+
+    private function setOfficeTimeDuration()
+    {
+        $office_hour = $this->business->officeHour;
+        $this->officeTimeDurationInMinutes = Carbon::parse($office_hour->start_time)->diffInMinutes(Carbon::parse($office_hour->end_time)) + 1;
+    }
+
+    /**
+     * @param $staying_time
+     * @return int|string
+     */
+    private function calculateOvertime($staying_time)
+    {
+       if ($staying_time > $this->officeTimeDurationInMinutes) {
+           $overtime = $staying_time - $this->officeTimeDurationInMinutes;
+           return $this->formatMinute($overtime);
+       } else {
+           return 0;
+       }
     }
 }
