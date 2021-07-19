@@ -41,6 +41,7 @@ use Sheba\TopUp\Exception\InvalidSubscriptionWiseCommission;
 use Sheba\TopUp\History\RequestBuilder;
 use Sheba\TopUp\OTF\OtfAmount;
 use Sheba\TopUp\TopUpAgent;
+use Sheba\TopUp\TopUpChargesSubscriptionWise;
 use Sheba\TopUp\TopUpDataFormat;
 use Sheba\TopUp\TopUpHistoryExcel;
 use Sheba\TopUp\TopUpSpecialAmount;
@@ -84,14 +85,8 @@ class TopUpController extends Controller
             $agent = $this->getAgent($request, $user);
             $agent_class = get_class($agent);
 
-            if ($agent_class === "App\Models\Partner") {
-                /** @var Partner $partner */
-                $partner = $agent;
-                /** @var SubscriptionWisePaymentGateway $gateway_charges */
-                $gateway_charges = $partner->subscription->validPaymentGatewayAndTopUpCharges;
-
-                $topup_charges = json_decode($gateway_charges->topup_charges);
-            }
+            if ($agent_class === "App\Models\Partner")
+                $topup_charges = (new TopUpChargesSubscriptionWise())->getCharges($agent);
 
             $vendors = TopUpVendor::select('id', 'name', 'is_published')->published()->get();
 
