@@ -18,7 +18,7 @@ class TopUpChargesSubscriptionWise
         /** @var SubscriptionWisePaymentGateway $gateway_charges */
         $gateway_charges = $partner->subscription->validPaymentGatewayAndTopUpCharges;
 
-        return json_decode($gateway_charges->topup_charges);
+        return isset($gateway_charges->topup_charges) ? json_decode($gateway_charges->topup_charges) : null;
     }
 
     /**
