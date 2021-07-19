@@ -1,7 +1,7 @@
 <?php namespace App\Sheba\Business\Attendance\Note;
 
 use App\Models\BusinessMember;
-use Sheba\Dal\AttendanceActionLog\Model as AttendanceActionLog;
+use Sheba\Dal\AttendanceActionLog\Contract as AttendanceActionLogRepositoryInterface;
 use Sheba\ModificationFields;
 use DB;
 
@@ -10,20 +10,21 @@ class Updater
     use ModificationFields;
     /** @var BusinessMember */
     private $businessMember;
-    private $attendanceActionLog;
+    private $attendanceActionLogRepo;
     private $lastAttendance;
     private $lastAttendanceLog;
     private $action;
     private $note;
     private $member;
 
+
     /**
      * Updater constructor.
-     * @param AttendanceActionLog $attendance_action_log
+     * @param AttendanceActionLogRepositoryInterface $attendance_action_log_repo
      */
-    public function __construct(AttendanceActionLog $attendance_action_log)
+    public function __construct(AttendanceActionLogRepositoryInterface $attendance_action_log_repo)
     {
-        $this->attendanceActionLog = $attendance_action_log;
+        $this->attendanceActionLogRepo = $attendance_action_log_repo;
     }
 
     /**
@@ -65,8 +66,7 @@ class Updater
             DB::transaction(function () {
                 $data = [];
                 $data['note'] = $this->note;
-                $this->lastAttendanceLog->update($data);
-//                $this->attendanceActionLog->update($this->lastAttendanceLog, $this->withUpdateModificationField($data));
+                $this->attendanceActionLogRepo->update($this->lastAttendanceLog, $this->withUpdateModificationField($data));
             });
         }
     }
