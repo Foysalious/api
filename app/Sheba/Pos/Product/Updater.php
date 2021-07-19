@@ -282,7 +282,7 @@ class Updater
             $this->batchData['stock'] = (double)$this->data['stock'];
         }
 
-        $this->batchData['cost'] = (double)$this->data['cost'] ?? $this->service->getLastCost();
+        $this->batchData['cost'] = isset($this->data['cost']) ? (double)$this->data['cost'] : (double)$this->service->getLastCost();
     }
 
     private function deleteBatchesFifo()
