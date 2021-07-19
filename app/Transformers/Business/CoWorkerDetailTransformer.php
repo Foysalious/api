@@ -1,5 +1,7 @@
 <?php namespace App\Transformers\Business;
 
+use App\Sheba\Business\BusinessBasicInformation;
+use Carbon\Carbon;
 use Sheba\Business\BusinessMemberStatusChangeLog\LogFormatter as EmployeeStatusChangeLogFormatter;
 use App\Sheba\Business\CoWorker\ProfileInformation\SocialLink;
 use App\Sheba\Business\PayrollComponent\Components\GrossSalaryBreakdownCalculate;
@@ -16,6 +18,7 @@ use App\Models\Member;
 
 class CoWorkerDetailTransformer extends TransformerAbstract
 {
+    use BusinessBasicInformation;
     const THRESHOLD = 17;
 
     /** @var Business $business */
@@ -39,7 +42,8 @@ class CoWorkerDetailTransformer extends TransformerAbstract
             'emergency_info' => $this->getEmergencyInfo(),
             'salary_info' => $this->getSalaryInfo($business_member),
             'profile_completion' => $this->profileCompletion($business_member),
-            're_invite_logs' => $this->reInviteLogs($business_member)
+            're_invite_logs' => $this->reInviteLogs($business_member),
+            'pdf_info' => $this->getPdfInfo($business_member)
         ];
     }
 
@@ -277,5 +281,19 @@ class CoWorkerDetailTransformer extends TransformerAbstract
 
         $status_change_logs = $business_member->statusChangeLogs()->orderBy('created_at', 'DESC')->get();
         return (new EmployeeStatusChangeLogFormatter())->setEmployeeStatusChangeLogs($status_change_logs)->format();
+    }
+
+    /**
+     * @param $business_member
+     * @return array
+     */
+    private function getPdfInfo($business_member)
+    {
+       return [
+           'company_name' => $this->business->name,
+           'company_logo' => $this->isDefaultImageByUrl($this->business->logo) ? null : $this->business->logo,
+           'joining_date' => $business_member->join_date ? Carbon::parse($business_member->join_date)->format('d.m.y') : 'N/A',
+           'date_of_birth' => $this->profile->dob ? Carbon::parse($this->profile->dob)->format('d.m.y') : 'N/A'
+       ];
     }
 }
