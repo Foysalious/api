@@ -202,7 +202,8 @@ class EmployeeController extends Controller
                 'link' => config('b2b.BUSINESSES_LUNCH_LINK'),
             ] : null,
             'is_sheba_platform' => in_array($business->id, config('b2b.BUSINESSES_IDS_FOR_REFERRAL') ) ? 1 : 0,
-            'is_payroll_enable' => $business->payrollSetting->is_enable
+            'is_payroll_enable' => $business->payrollSetting->is_enable,
+            'location_fetch_waiting_time' => 3
         ];
 
         return api_response($request, $business_member, 200, ['info' => $data]);
