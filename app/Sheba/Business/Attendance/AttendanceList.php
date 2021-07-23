@@ -445,7 +445,7 @@ class AttendanceList
                         $checkin_data = collect([
                             'status' => $this->getStatusBasedOnLeaveAction($action, $is_weekend_or_holiday, $is_on_leave, $is_on_half_day_leave),
                             'is_remote' => $action->is_remote ?: 0,
-                            'address' => $action->is_remote ? json_decode($action->location)->address : null,
+                            'address' => $action->is_remote && $action->location ? json_decode($action->location)->address : null,
                             'checkin_time' => Carbon::parse($attendance->date . ' ' . $attendance->checkin_time)->format('g:i a'),
                             'note' => $action->note,
                             'remote_mode' => $action->remote_mode ?: null
