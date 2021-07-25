@@ -34,37 +34,33 @@ class SmanagerUserService
         $this->customerId = $customerId;
         return $this;
     }
-/*
- "id": 565,
-        "name": "Shovan Chowdhury",
-        "phone": "+8801674558806",
-        "email": "shovancse0918@gmail.com",
-        "address": null,
-        "image": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/profiles/avatar/default.jpg",
-        "customer_since": "2020-05-19",
-        "customer_since_formatted": "1 year ago",
-        "total_purchase_amount": 214105.71,
-        "total_due_amount": 202342.7,
-        "total_used_promo": 0,
-        "total_payable_amount": 0,
-        "is_customer_editable": true,
-        "note": "",
-        "is_supplier": 0
- */
+
     public function show()
     {
         $customer_info = $this->getCustomerInfoFromSmanagerUserService();
         $customer_details = [];
-        $customer_details['id'] = $customer_info['_id'];
-        $customer_details['name'] = $customer_info['_id'];
-        $customer_details['phone'] = $customer_info['_id'];
-        $customer_details['email'] = $customer_info['_id'];
+        $customer_details['id'] = isset($customer_info['name']) ? $customer_info['name'] : null;
+        $customer_details['name'] = isset($customer_info['name']) ? $customer_info['name'] : null;
+        $customer_details['phone'] = isset($customer_info['phone']) ? $customer_info['phone'] : null;
+        $customer_details['email'] = isset($customer_info['email']) ? $customer_info['email'] : null;
+        $customer_details['address'] = isset($customer_info['address']) ? $customer_info['address'] : null;
+        $customer_details['image'] = isset($customer_info['pro_pic']) ? $customer_info['pro_pic'] : null;
+        $customer_details['customer_since'] = isset($customer_info['created_at']) ? $customer_info['created_at'] : null;
+        $customer_details['customer_since_formatted'] = isset($customer_info['created_at']) ? $customer_info['created_at']->diffForHumans(): null;
+        $customer_details['total_purchase_amount'] = '';
+        $customer_details['total_due_amount'] = '';
+        $customer_details['total_used_promo'] = '';
+        $customer_details['total_payable_amount'] = '';
+        $customer_details['is_customer_editable'] = true;
+        $customer_details['note'] =  isset($customer_info['note']) ? $customer_info['note'] : null;
+        $customer_details['is_supplier'] =  isset($customer_info['is_supplier']) ? $customer_info['is_supplier'] : null;
 
+        return $customer_details;
     }
 
     private function getCustomerInfoFromSmanagerUserService()
     {
-        return $this->smanagerUserServerClient->get('api/v1/partners/'.$this->partnerId.'/users/'.$this->customerId);
+        return $this->smanagerUserServerClient->get('api/v1/partners/'.$this->partnerId.'/pos-users/'.$this->customerId);
     }
 
 }
