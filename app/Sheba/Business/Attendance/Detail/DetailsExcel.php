@@ -25,6 +25,7 @@ class DetailsExcel
     private $profile;
     private $startDate;
     private $endDate;
+    private $overtime;
 
     public function __construct()
     {
@@ -102,6 +103,7 @@ class DetailsExcel
             $this->checkOutAddress = '-';
 
             $this->totalHours = '-';
+            $this->overtime = '-';
             $this->lateNote = null;
             $this->leftEarlyNote = null;
             if (!$attendance['weekend_or_holiday_tag']) {
@@ -147,6 +149,7 @@ class DetailsExcel
                 'check_out_address' => $this->checkOutAddress,
 
                 'total_hours' => $this->totalHours,
+                'overtime' => $this->overtime,
                 'late_check_in_note' => $this->lateNote,
                 'left_early_note' => $this->leftEarlyNote,
             ]);
@@ -157,7 +160,7 @@ class DetailsExcel
     {
         return ['Date', 'Status', 'Check in time', 'Check in status', 'Check in location',
             'Check in address', 'Check out time', 'Check out status',
-            'Check out location', 'Check out address', 'Total Hours', 'Late check in note', 'Left early note'];
+            'Check out location', 'Check out address', 'Total Hours', 'Overtime in Minutes', 'Late check in note', 'Left early note'];
     }
 
     private function checkInOutLogics($attendance)
@@ -205,6 +208,11 @@ class DetailsExcel
         if ($attendance['attendance']['active_hours']) {
             $this->totalHours = $attendance['attendance']['active_hours'];
         }
+
+        if ($attendance['attendance']['overtime_in_minutes']) {
+            $this->overtime = $attendance['attendance']['overtime_in_minutes'];
+        }
+
         $this->lateNote = $attendance['attendance']['late_note'];
         $this->leftEarlyNote = $attendance['attendance']['left_early_note'];
     }

@@ -22,6 +22,7 @@ class DailyExcel
     private $totalHours;
     private $lateNote;
     private $leftEarlyNote;
+    private $overtime;
 
     private function initializeData()
     {
@@ -38,6 +39,7 @@ class DailyExcel
         $this->checkOutLocation = '-';
         $this->checkOutAddress = '-';
         $this->totalHours = '-';
+        $this->overtime = '-';
         $this->lateNote = '-';
         $this->leftEarlyNote = '-';
     }
@@ -117,6 +119,7 @@ class DailyExcel
                 }
 
                 $this->totalHours = $attendance['active_hours'];
+                $this->overtime = $attendance['overtime_in_minutes'];
                 $this->lateNote = $attendance['check_in']['note'];
                 $this->leftEarlyNote = $attendance['check_out']['note'];
             }
@@ -149,6 +152,7 @@ class DailyExcel
                 'check_out_address' => $this->checkOutAddress,
 
                 'total_hours' => $this->totalHours,
+                'overtime' => $this->overtime,
                 'late_check_in_note' => $this->lateNote,
                 'left_early_note' => $this->leftEarlyNote,
             ]);
@@ -160,6 +164,6 @@ class DailyExcel
         return ['Date', 'Employee ID', 'Employee Name', 'Department',
             'Status', 'Check in time', 'Check in status', 'Check in location',
             'Check in address', 'Check out time', 'Check out status',
-            'Check out location', 'Check out address', 'Total Hours', 'Late check in note', 'Left early note'];
+            'Check out location', 'Check out address', 'Total Hours', 'Overtime in Minutes', 'Late check in note', 'Left early note'];
     }
 }
