@@ -112,6 +112,7 @@ class AccountingRepository extends BaseRepository
     /**
      * @param $services
      * @param $requestedService
+     * @param $servicesStockCostInfo
      * @return false|string
      */
     public function getInventoryProducts($services, $requestedService, $servicesStockCostInfo)
@@ -122,8 +123,7 @@ class AccountingRepository extends BaseRepository
             $original_service = ($service->service);
             $serviceBatches = $servicesStockCostInfo[$original_service->id];
 
-            foreach ($serviceBatches as $serviceBatch)
-            {
+            foreach ($serviceBatches as $serviceBatch) {
                 if ($original_service) {
                     $sellingPrice = isset($requested_service[$key]['updated_price']) && $requested_service[$key]['updated_price'] ? $requested_service[$key]['updated_price'] : $original_service->price;
                     $unitPrice = $serviceBatch['cost'] ?: $sellingPrice;
