@@ -3,8 +3,8 @@
 use App\Models\Partner;
 use App\Models\PosOrder;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use Exception;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Expense\SmsPurchase;
@@ -14,13 +14,13 @@ use Sheba\FraudDetection\TransactionSources;
 use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
-class SmsHandler {
-    /**
-     * @var PosOrder
-     */
+class SmsHandler
+{
+    /** @var PosOrder */
     private $order;
 
-    public function setOrder(PosOrder $order) {
+    public function setOrder(PosOrder $order)
+    {
         $this->order = $order->calculate();
         return $this;
     }
@@ -28,11 +28,13 @@ class SmsHandler {
     /**
      * @throws Exception
      */
-    public function handle() {
+    public function handle()
+    {
         /** @var Partner $partner */
         $partner = $this->order->partner;
         $partner->reload();
         if (empty($this->order->customer)) return;
+
         $service_break_down = [];
         $this->order->items->each(function ($item) use (&$service_break_down) {
             $service_break_down[$item->id] = $item->service_name . ': ' . $item->getTotal();
@@ -74,33 +76,26 @@ class SmsHandler {
      * @return SmsHandlerRepo
      * @throws Exception
      */
-    private function getSms($service_break_down) {
+    private function getSms($service_break_down)
+    {
+        $message_data = [
+            'order_id'           => $this->order->partner_wise_order_id,
+            'service_break_down' => $service_break_down,
+            'total_amount'       => $this->order->getNetBill(),
+            'partner_name'       => $this->order->partner->name
+        ];
+
         if ($this->order->getDue() > 0) {
-            $sms = (new SmsHandlerRepo('pos-due-order-bills'))
-                ->setVendor('infobip')
-                ->setMobile($this->order->customer->profile->mobile)
-                ->setFeatureType(FeatureType::POS)
-                ->setBusinessType(BusinessType::SMANAGER)
-                ->setMessage([
-                'order_id'           => $this->order->partner_wise_order_id,
-                'service_break_down' => $service_break_down,
-                'total_amount'       => $this->order->getNetBill(),
-                'total_due_amount'   => $this->order->getDue(),
-                'partner_name'       => $this->order->partner->name
-            ]);
+            $sms_handler = (new SmsHandlerRepo('pos-due-order-bills'));
+            $message_data['total_due_amount'] = $this->order->getDue();
         } else {
-            $sms = (new SmsHandlerRepo('pos-order-bills'))
-                ->setVendor('infobip')
-                ->setMobile($this->order->customer->profile->mobile)
-                ->setFeatureType(FeatureType::POS)
-                ->setBusinessType(BusinessType::SMANAGER)
-                ->setMessage([
-                'order_id'           => $this->order->partner_wise_order_id,
-                'service_break_down' => $service_break_down,
-                'total_amount'       => $this->order->getNetBill(),
-                'partner_name'       => $this->order->partner->name
-            ]);
+            $sms_handler = (new SmsHandlerRepo('pos-order-bills'));
         }
-        return $sms;
+
+        return $sms_handler
+            ->setMobile($this->order->customer->profile->mobile)
+            ->setFeatureType(FeatureType::POS)
+            ->setBusinessType(BusinessType::SMANAGER)
+            ->setMessage($message_data);
     }
 }

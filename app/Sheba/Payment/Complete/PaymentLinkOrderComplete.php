@@ -11,7 +11,6 @@ use App\Sheba\AccountingEntry\Repository\PaymentLinkAccountingRepository;
 use Carbon\Carbon;
 use DB;
 use GuzzleHttp\Exception\RequestException;
-use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Support\Facades\Log;
 use LaravelFCM\Message\Exceptions\InvalidOptionsException;
@@ -35,6 +34,7 @@ use Sheba\RequestIdentification;
 use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Usage\Usage;
+use Throwable;
 
 class PaymentLinkOrderComplete extends PaymentComplete
 {
@@ -63,9 +63,14 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $this->paymentLinkTax        = PaymentLinkStatics::get_payment_link_tax();
     }
 
+    /**
+     * @return Payment
+     * @throws Throwable
+     */
     public function complete()
     {
         try {
+            $this->payment->reload();
             if ($this->payment->isComplete())
                 return $this->payment;
             $this->paymentLink      = $this->getPaymentLink();
@@ -76,24 +81,25 @@ class PaymentLinkOrderComplete extends PaymentComplete
                 $this->setModifier($customer = $payable->user);
                 $this->completePayment();
                 $this->processTransactions($this->payment_receiver);
-                $this->clearTarget();
             });
-        } catch (QueryException $e) {
+        } catch (Throwable $e) {
             $this->failPayment();
             Log::info(["error while completing payment link", $e->getMessage(), $e->getCode()]);
             throw $e;
         }
         try {
+            $this->clearTarget();
             $this->storeEntry();
-            $this->payment = $this->saveInvoice();
+            $this->saveInvoice();
             $this->dispatchReward();
             $this->createUsage($this->payment_receiver, $this->payment->payable->user);
             $this->notify();
 
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             Log::info(["error while storing payment link entry", $e->getMessage(), $e->getCode()]);
             logError($e);
         }
+        $this->payment->reload();
         return $this->payment;
     }
 
@@ -123,9 +129,9 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $entry_repo->setParty($payer);
         }
         $entry_repo->setPaymentMethod($this->payment->paymentDetails->last()->readable_method)
-                   ->setPaymentId($this->payment->id)
-                   ->setIsPaymentLink(1)
-                   ->setIsDueTrackerPaymentLink($this->paymentLink->isDueTrackerPaymentLink());
+            ->setPaymentId($this->payment->id)
+            ->setIsPaymentLink(1)
+            ->setIsDueTrackerPaymentLink($this->paymentLink->isDueTrackerPaymentLink());
         if ($this->target instanceof PosOrder) {
             $entry_repo->setIsWebstoreOrder($this->target->sales_channel == SalesChannels::WEBSTORE ? 1 : 0);
             $entry_repo->updateFromSrc();
@@ -236,14 +242,14 @@ class PaymentLinkOrderComplete extends PaymentComplete
         try {
             $this->payment->invoice_link = $this->invoiceCreator->setPaymentLink($this->paymentLink)->setPayment($this->payment)->save();
             $this->payment->update();
-            return $this->payment;
-        } catch (QueryException $e) {
-            return null;
+        } catch (Throwable $e) {
+            logError($e);
         }
+        return $this->payment;
     }
 
     /**
-     * @param Payment                $payment
+     * @param Payment $payment
      * @param PaymentLinkTransformer $payment_link
      * @throws InvalidOptionsException
      */
