@@ -219,7 +219,7 @@ return [
                 'id'            => 'mother_name_en',
                 'hint'          => 'উদাহরণ: Salma Begum',
                 'error_message' => 'মায়ের নাম পূরণ আবশ্যক',
-                'is_editable'   => false
+                'is_editable'   => true
             ],
             [
                 'field_type'    => 'editText',
