@@ -414,12 +414,15 @@ class AttendanceList
                     }
                 }
 
+                $overtime_in_minutes = $attendance->checkout_time ? $this->calculateOvertimeInMinutes($attendance->staying_time_in_minutes) : 0;
+
                 array_push($data, $this->getBusinessMemberData($attendance->businessMember) + [
                         'id' => $attendance->id,
                         'check_in' => $checkin_data,
                         'check_out' => $checkout_data,
                         'active_hours' => $attendance->staying_time_in_minutes ? $this->formatMinute($attendance->staying_time_in_minutes) : null,
-                        'overtime' => $attendance->checkout_time ? $this->calculateOvertime($attendance->staying_time_in_minutes) : null,
+                        'overtime_in_minutes' => $attendance->checkout_time ? $overtime_in_minutes : 0,
+                        'overtime' => $attendance->checkout_time ? $this->formatMinute($overtime_in_minutes) : null,
                         'date' => $attendance->date,
                         'is_absent' => $attendance->status == Statuses::ABSENT ? 1 : 0,
                         'is_on_leave' => 0,
@@ -731,15 +734,14 @@ class AttendanceList
 
     /**
      * @param $staying_time
-     * @return int|string
+     * @return int
      */
-    private function calculateOvertime($staying_time)
+    private function calculateOvertimeInMinutes($staying_time)
     {
-       if ($staying_time > $this->officeTimeDurationInMinutes) {
-           $overtime = $staying_time - $this->officeTimeDurationInMinutes;
-           return $this->formatMinute($overtime);
-       } else {
-           return 0;
-       }
+        if ($staying_time > $this->officeTimeDurationInMinutes) {
+            return $staying_time - $this->officeTimeDurationInMinutes;
+        } else {
+            return 0;
+        }
     }
 }
