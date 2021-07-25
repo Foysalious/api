@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Sheba\AccountingEntry\Repository;
+<?php namespace App\Sheba\AccountingEntry\Repository;
 
 use App\Models\Partner;
 use App\Sheba\AccountingEntry\Constants\UserType;
@@ -121,10 +119,12 @@ class AccountingRepository extends BaseRepository
         $inventory_products = [];
         foreach ($services as $key => $service) {
             $original_service = ($service->service);
-            $serviceBatches = $servicesStockCostInfo[$original_service->id];
+            if($original_service)
+            {
+                $serviceBatches = $servicesStockCostInfo[$original_service->id];
 
-            foreach ($serviceBatches as $serviceBatch) {
-                if ($original_service) {
+                foreach ($serviceBatches as $serviceBatch)
+                {
                     $sellingPrice = isset($requested_service[$key]['updated_price']) && $requested_service[$key]['updated_price'] ? $requested_service[$key]['updated_price'] : $original_service->price;
                     $unitPrice = $serviceBatch['cost'] ?: $sellingPrice;
                     $inventory_products[] = [
@@ -134,16 +134,17 @@ class AccountingRepository extends BaseRepository
                         "selling_price" => (double)$sellingPrice,
                         "quantity" => $serviceBatch['stock'] ?? ($requested_service[$key]['quantity'] ?? 1)
                     ];
-                } else {
-                    $sellingPrice = $requested_service[$key]['updated_price'] ?? $original_service->price;
-                    $inventory_products[] = [
-                        "id" => 0,
-                        "name" => 'Custom Amount',
-                        "unit_price" => $sellingPrice,
-                        "selling_price" => $serviceBatch['cost']  ?? $sellingPrice,
-                        "quantity" => $serviceBatch['stock'] ?? ($requested_service[$key]['quantity'] ?? 1)
-                    ];
                 }
+            }
+            else {
+                $sellingPrice = $requested_service[$key]['updated_price'] ?? $original_service->price;
+                $inventory_products[] = [
+                    "id" => 0,
+                    "name" => 'Custom Amount',
+                    "unit_price" => $sellingPrice,
+                    "selling_price" => $serviceBatch['cost']  ?? $sellingPrice,
+                    "quantity" => $serviceBatch['stock'] ?? ($requested_service[$key]['quantity'] ?? 1)
+                ];
             }
         }
 
