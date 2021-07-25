@@ -65,7 +65,7 @@ class DailyExcel
                 $sheet->fromArray($this->data, null, 'A1', false, false);
                 $sheet->prependRow($this->getHeaders());
                 $sheet->freezeFirstRow();
-                $sheet->cell('A1:P1', function ($cells) {
+                $sheet->cell('A1:Q1', function ($cells) {
                     $cells->setFontWeight('bold');
                 });
                 $sheet->getDefaultStyle()->getAlignment()->applyFromArray(
@@ -119,7 +119,7 @@ class DailyExcel
                 }
 
                 $this->totalHours = $attendance['active_hours'];
-                $this->overtime = $attendance['overtime_in_minutes'];
+                $this->overtime = $attendance['overtime'];
                 $this->lateNote = $attendance['check_in']['note'];
                 $this->leftEarlyNote = $attendance['check_out']['note'];
             }
@@ -164,6 +164,6 @@ class DailyExcel
         return ['Date', 'Employee ID', 'Employee Name', 'Department',
             'Status', 'Check in time', 'Check in status', 'Check in location',
             'Check in address', 'Check out time', 'Check out status',
-            'Check out location', 'Check out address', 'Total Hours', 'Overtime in Minutes', 'Late check in note', 'Left early note'];
+            'Check out location', 'Check out address', 'Total Hours', 'Overtime', 'Late check in note', 'Left early note'];
     }
 }

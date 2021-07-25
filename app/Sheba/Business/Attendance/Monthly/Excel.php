@@ -67,13 +67,13 @@ class Excel
                 'on_leave' => $employee['attendance']['on_leave'],
                 'absent' => $employee['attendance']['absent'],
                 'total_hours' => $employee['attendance']['total_hours'],
-                'overtime' => $employee['attendance']['overtime_in_minutes'],
+                'overtime' => $employee['attendance']['overtime'],
             ]);
         }
     }
 
     private function getHeaders()
     {
-        return ['Employee ID', 'Employee Name', 'Department', 'Working Days', 'Present', 'On time', 'Late', 'Left Timely', 'Left early', 'On leave', 'Absent', 'Total Hours', 'Overtime in Minutes'];
+        return ['Employee ID', 'Employee Name', 'Department', 'Working Days', 'Present', 'On time', 'Late', 'Left Timely', 'Left early', 'On leave', 'Absent', 'Total Hours', 'Overtime'];
     }
 }
