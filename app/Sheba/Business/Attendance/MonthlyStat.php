@@ -16,6 +16,8 @@ class MonthlyStat
     private $businessWeekend;
     private $forOneEmployee;
     private $businessMemberLeave;
+    private $business;
+    private $officeTimeDurationInMinutes;
 
     /**
      * MonthlyStat constructor.
@@ -25,13 +27,15 @@ class MonthlyStat
      * @param $business_member_leave
      * @param bool $for_one_employee
      */
-    public function __construct(TimeFrame $time_frame, $business_holiday, $business_weekend, $business_member_leave, $for_one_employee = true)
+    public function __construct(TimeFrame $time_frame, $business, $business_holiday, $business_weekend, $business_member_leave, $for_one_employee = true)
     {
         $this->timeFrame = $time_frame;
+        $this->business = $business;
         $this->businessHoliday = $business_holiday;
         $this->businessWeekend = $business_weekend;
         $this->businessMemberLeave = $business_member_leave;
         $this->forOneEmployee = $for_one_employee;
+        $this->setOfficeTimeDuration();
     }
 
     /**
@@ -65,7 +69,9 @@ class MonthlyStat
             'half_day_leave' => 0,
             'present' => 0,
             'left_early_note' => 0,
-            'total_hours' => 0
+            'total_hours' => 0,
+            'overtime_in_minutes' => 0,
+            'overtime' => 0,
         ];
 
         $daily_breakdown = [];
@@ -93,6 +99,7 @@ class MonthlyStat
             $attendance = $attendances->where('date', $date->toDateString())->first();
 
             if ($attendance) {
+                $overtime_in_minutes = $this->calculateOvertimeInMinutes($attendance->staying_time_in_minutes);
                 $attendance_checkin_action = $attendance->checkinAction();
                 $attendance_checkout_action = $attendance->checkoutAction();
                 if ($this->forOneEmployee) {
@@ -116,12 +123,15 @@ class MonthlyStat
                         'late_note' => (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance->hasLateCheckin()) ? $attendance->checkinAction()->note : null,
                         'left_early_note' => (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance->hasEarlyCheckout()) ? $attendance->checkoutAction()->note : null,
                         'active_hours' => $attendance->staying_time_in_minutes ? $this->formatMinute($attendance->staying_time_in_minutes) : null,
+                        'overtime_in_minutes' => $attendance->checkout_time ? $overtime_in_minutes : 0,
+                        'overtime' => $attendance->checkout_time ? $this->formatMinute($overtime_in_minutes) : null,
                     ];
                 }
                 if (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance_checkin_action) $statistics[$attendance_checkin_action->status]++;
                 if (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance_checkout_action) $statistics[$attendance_checkout_action->status]++;
                 $statistics['left_early_note'] = (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance->hasEarlyCheckout()) ? $attendance->checkoutAction()->note : null;
                 $statistics['total_hours'] += $attendance->staying_time_in_minutes;
+                $statistics['overtime_in_minutes'] += $attendance->checkout_time ? $overtime_in_minutes : 0;
             }
 
             if ($this->isAbsent($attendance, ($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)), $date)) {
@@ -136,6 +146,7 @@ class MonthlyStat
         $statistics['present'] = $statistics[Statuses::ON_TIME] + $statistics[Statuses::LATE];
         $statistics['on_leave'] = $statistics['full_day_leave'] + $statistics['half_day_leave'];
         $statistics['total_hours'] = $statistics['total_hours'] ? $this->formatMinute($statistics['total_hours']) : 0;
+        $statistics['overtime'] = $statistics['overtime_in_minutes'] ? $this->formatMinute($statistics['overtime_in_minutes']) : 0;
 
 
         return $this->forOneEmployee ? ['statistics' => $statistics, 'daily_breakdown' => $daily_breakdown] : ['statistics' => $statistics];
@@ -290,5 +301,24 @@ class MonthlyStat
     private function hasAttendanceButNotAbsent($attendance)
     {
         return $attendance && !($attendance->status == Statuses::ABSENT);
+    }
+
+    private function setOfficeTimeDuration()
+    {
+        $office_hour = $this->business->officeHour;
+        $this->officeTimeDurationInMinutes = Carbon::parse($office_hour->start_time)->diffInMinutes(Carbon::parse($office_hour->end_time)) + 1;
+    }
+
+    /**
+     * @param $staying_time
+     * @return int
+     */
+    private function calculateOvertimeInMinutes($staying_time)
+    {
+        if ($staying_time > $this->officeTimeDurationInMinutes) {
+            return $staying_time - $this->officeTimeDurationInMinutes;
+        } else {
+            return 0;
+        }
     }
 }
