@@ -224,7 +224,7 @@ class HomepageController extends Controller
     private function convertStartDate($date) {
         return $date ?
             Carbon::createFromFormat('Y-m-d H:i:s', $date . ' 0:00:00')->timestamp :
-            strtotime('today midnight');
+            strtotime('1 January 1971');
     }
 
     private function convertEndDate($date) {
