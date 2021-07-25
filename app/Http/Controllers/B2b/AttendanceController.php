@@ -103,6 +103,10 @@ class AttendanceController extends Controller
             ->setCheckoutLocation($checkout_location)
             ->get();
 
+        if ($request->sort && $request->sort_column === 'overtime') {
+            $attendances = $this->attendanceSortOnOvertime($attendances, $request->sort)->values()->toArray();
+        }
+
         $count = count($attendances);
         if ($request->file == 'excel') return (new DailyExcel())->setDate($date->format('Y-m-d'))->setData($attendances)->download();
         return api_response($request, null, 200, ['attendances' => $attendances, 'total' => $count]);
@@ -161,7 +165,7 @@ class AttendanceController extends Controller
             $time_frame = $time_frame->forDateRange($start_date, $end_date);
             $business_member_leave = $business_member->leaves()->accepted()->startDateBetween($time_frame)->endDateBetween($time_frame)->get();
             $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
-            $employee_attendance = (new MonthlyStat($time_frame, $business_holiday, $business_weekend, $business_member_leave, false))->transform($attendances);
+            $employee_attendance = (new MonthlyStat($time_frame, $business, $business_holiday, $business_weekend, $business_member_leave, false))->transform($attendances);
 
             array_push($all_employee_attendance, [
                 'business_member_id' => $business_member->id,
@@ -257,6 +261,19 @@ class AttendanceController extends Controller
         $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
         return $employee_attendance->$sort_by(function ($attendance, $key) {
             return strtoupper($attendance['attendance']['late']);
+        });
+    }
+
+    /**
+     * @param $attendances
+     * @param string $sort
+     * @return mixed
+     */
+    private function attendanceSortOnOvertime($attendances, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($attendances)->$sort_by(function ($attendance, $key) {
+            return $attendance['overtime_in_minutes'];
         });
     }
 
