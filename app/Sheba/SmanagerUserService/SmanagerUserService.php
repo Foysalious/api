@@ -1,7 +1,4 @@
-<?php
-
-
-namespace App\Sheba\SmanagerUserService;
+<?php namespace App\Sheba\SmanagerUserService;
 
 
 class SmanagerUserService
@@ -37,16 +34,37 @@ class SmanagerUserService
         $this->customerId = $customerId;
         return $this;
     }
-
+/*
+ "id": 565,
+        "name": "Shovan Chowdhury",
+        "phone": "+8801674558806",
+        "email": "shovancse0918@gmail.com",
+        "address": null,
+        "image": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/profiles/avatar/default.jpg",
+        "customer_since": "2020-05-19",
+        "customer_since_formatted": "1 year ago",
+        "total_purchase_amount": 214105.71,
+        "total_due_amount": 202342.7,
+        "total_used_promo": 0,
+        "total_payable_amount": 0,
+        "is_customer_editable": true,
+        "note": "",
+        "is_supplier": 0
+ */
     public function show()
     {
         $customer_info = $this->getCustomerInfoFromSmanagerUserService();
+        $customer_details = [];
+        $customer_details['id'] = $customer_info['_id'];
+        $customer_details['name'] = $customer_info['_id'];
+        $customer_details['phone'] = $customer_info['_id'];
+        $customer_details['email'] = $customer_info['_id'];
 
     }
 
     private function getCustomerInfoFromSmanagerUserService()
     {
-        $this->smanagerUserServerClient->get('api/v1/partners/'.$this->partnerId.'/users/'.$this->customerId);
+        return $this->smanagerUserServerClient->get('api/v1/partners/'.$this->partnerId.'/users/'.$this->customerId);
     }
 
 }

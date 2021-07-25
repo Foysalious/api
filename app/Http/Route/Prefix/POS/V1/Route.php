@@ -14,14 +14,17 @@ class Route
         });
 
         $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers', 'middleware' => ['jwtAccessToken']], function ($api) {
-
             $api->group(['prefix' => 'collections'], function ($api) {
                     $api->get('/', 'Inventory\CollectionController@index');
                     $api->post('/', 'Inventory\CollectionController@store');
                     $api->get('/{collection}', 'Inventory\CollectionController@show');
                     $api->put('/{collection}', 'Inventory\CollectionController@update');
                     $api->delete('/{collection}', 'Inventory\CollectionController@destroy');
-                });
+            });
+
+            $api->group(['prefix' => 'customers'], function ($api) {
+                $api->get('/{customer}', 'PosCustomer\PosCustomerController@show');
+            });
 
                 $api->get('warranty-units', 'Inventory\WarrantyUnitController@getWarrantyList');
                 $api->get('voucher-details/{voucher_id}', 'VoucherController@getVoucherDetails');
@@ -89,6 +92,7 @@ class Route
                     $api->put('/{order}', 'PosOrder\OrderController@update');
                     $api->delete('/{order}', 'PosOrder\OrderController@destroy');
                 });
+
         });
 
         $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
