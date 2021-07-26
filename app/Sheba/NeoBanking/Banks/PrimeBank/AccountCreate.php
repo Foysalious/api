@@ -61,7 +61,6 @@ class AccountCreate
     {
         if (!isset($this->neoBankingData->information_for_bank_account)) throw new InvalidPartnerInformationException();
         $application = json_decode($this->neoBankingData->information_for_bank_account, 1);
-        if (!isset($application['personal']) || !isset($application['institution']) || !isset($application['nid_selfie'])) throw new InvalidPartnerInformationException();
         $application['account'] = NeoBankingGeneralStatics::primeBankDefaultAccountData();
         $branchCode = $application['personal']['branch_code'] ?? null;
         if (!$branchCode) {
@@ -177,8 +176,8 @@ class AccountCreate
             "owner_title"   => $this->removeSpecialCharacters($application['personal']['applicant_name']),
             "gender"        => $gender,
             "dob"           => (isset($application['personal']['birth_date'])) ? Carbon::parse($application['personal']['birth_date'])->format('Ymd') : null,
-            "father"        => isset($application['personal']['father_name']) ? $this->removeSpecialCharacters($application['personal']['father_name']) : null,
-            "mother"        => isset($application['personal']['mother_name']) ? $this->removeSpecialCharacters($application['personal']['mother_name']) : null,
+            "father"        => isset($application['personal']['father_name_en']) ? $this->removeSpecialCharacters($application['personal']['father_name_en']) : null,
+            "mother"        => isset($application['personal']['mother_name_en']) ? $this->removeSpecialCharacters($application['personal']['mother_name_en']) : null,
             "spouse"        => isset($application['personal']['husband_or_wife_name']) ? $this->removeSpecialCharacters($application['personal']['husband_or_wife_name']) : null,
             "nid"           => $application['nid_selfie']['nid_no'] ?? null,
             'tin'           => $application['personal']["etin_number"] ?? null,
