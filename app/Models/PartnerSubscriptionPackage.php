@@ -129,6 +129,11 @@ class PartnerSubscriptionPackage extends Model implements SubscriptionPackage,Pa
         return $this->rules()->subscription_fee;
     }
 
+    public function validPaymentGateway(): BelongsTo
+    {
+        return $this->belongsTo(SubscriptionWisePaymentGateway::class, 'id', 'package_id')->notExpired();
+    }
+
     public function validPaymentGatewayAndTopUpCharges(): BelongsTo
     {
         return $this->belongsTo(SubscriptionWisePaymentGateway::class, 'id', 'package_id')->notExpired();

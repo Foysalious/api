@@ -49,10 +49,15 @@ class ServiceList
         })->get();
         if (count($services) > 0) {
             $services->each(function (&$service) {
+                $variables = json_decode($service->variables);
                 if ($service->variable_type == 'Options') {
                     $service['questions'] = $this->formatServiceQuestionsAndAnswers($service);
+                    $service['option_prices'] = $this->formatOptionWithPrice(json_decode($service->pivot->prices));
+                    $service['fixed_price'] = null;
                 } else {
                     $service['questions'] = [];
+                    $service['option_prices'] = [];
+                    $service['fixed_price'] = is_object($variables->price) ? $variables->price : (double)$variables->price;
                 }
                 array_forget($service, 'variables');
                 removeRelationsAndFields($service);
