@@ -99,7 +99,7 @@ class AttendanceController extends Controller
             $is_note_required = 1;
         }
         if ($business->isRemoteAttendanceEnable($business_member->id) && !$request->is_in_wifi_area) {
-            $validation_data += ['lat' => 'sometimes_required|numeric', 'lng' => 'sometimes_required|numeric'];
+            $validation_data += ['lat' => 'sometimes|required|numeric', 'lng' => 'sometimes|required|numeric'];
             $validation_data += ['remote_mode' => 'required|string|in:' . implode(',', RemoteMode::get())];
         }
         $this->validate($request, $validation_data);
