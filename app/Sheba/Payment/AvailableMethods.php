@@ -190,7 +190,8 @@ class AvailableMethods
     {
         return [
             PaymentStrategy::NAGAD,
-            PaymentStrategy::BKASH
+            PaymentStrategy::BKASH,
+            PaymentStrategy::ONLINE
         ];
     }
 
