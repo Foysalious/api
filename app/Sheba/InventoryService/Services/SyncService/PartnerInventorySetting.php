@@ -1,5 +1,6 @@
 <?php namespace App\Sheba\InventoryService\Services\SyncService;
 
+use App\Models\Partner;
 use App\Sheba\InventoryService\InventoryServerClient;
 
 class PartnerInventorySetting extends Service
@@ -24,17 +25,17 @@ class PartnerInventorySetting extends Service
     {
         $data = [];
 
-        if(self::PARTNER_POS_SETTING == $this->modelName){
-            $data = [
-                'vat_percentage' => $this->model->vat_percentage
-            ];
+        if($this->modelName == self::PARTNER) {
+            $partner_id = $this->model->id;
+        } else {
+            $partner_id = $this->model->partner_id;
         }
 
-        if(self::PARTNER == $this->modelName){
-            $data = [
-                 'sub_domain' => $this->model->sub_domain
-            ];
-        }
+        $partner = Partner::find($partner_id);
+        $data = [
+            'vat_percentage' => $partner->posSetting->vat_percentage,
+            'sub_domain' => $partner->sub_domain,
+        ];
         return $data;
     }
 
