@@ -14,9 +14,6 @@ use Sheba\Dal\PayrollSetting\PayrollSetting;
 
 class PackageCalculator
 {
-    const FIXED_AMOUNT = 'fixed_amount';
-    const GROSS_SALARY = 'gross';
-
     use PayrollCommonCalculation;
 
     /** @var BusinessMember */

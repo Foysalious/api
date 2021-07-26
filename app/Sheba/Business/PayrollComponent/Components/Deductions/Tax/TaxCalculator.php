@@ -1,12 +1,13 @@
 <?php namespace App\Sheba\Business\PayrollComponent\Components\Deductions\Tax;
 
 
+use App\Sheba\Business\PayrollSetting\PayrollCommonCalculation;
+use App\Sheba\Business\PayrollSetting\PayrollConstGetter;
+use Sheba\Dal\PayrollComponentPackage\CalculationType;
+
 class TaxCalculator
 {
-    const BASIC_SALARY = 'basic_salary';
-    const HOUSE_RENT = 'house_rent';
-    const MEDICAL_ALLOWANCE = 'medical_allowance';
-    const CONVEYANCE = 'conveyance';
+    use PayrollCommonCalculation;
 
     private $businessMember;
     private $grosSalary;
@@ -46,12 +47,13 @@ class TaxCalculator
     {
         $this->calculateTaxForGrossComponents();
         $this->calculateTaxForPayrollComponents();
+        dd($this->taxableIncome);
     }
 
     private function calculateTaxForGrossComponents()
     {
         foreach ($this->grossSalaryBreakdown as $gross_breakdown){
-            if ($gross_breakdown['name'] == self::BASIC_SALARY) {
+            if ($gross_breakdown['name'] == PayrollConstGetter::BASIC_SALARY) {
                 $yearly_basic_salary = $this->yearlyTotalGrossAmount($gross_breakdown['percentage']);
                 $this->yearlyAmount[] = $yearly_basic_salary;
                 $this->houseRentTaxExemptionAmount = $yearly_basic_salary / 2;
@@ -59,22 +61,22 @@ class TaxCalculator
                 $this->taxableIncome += $yearly_basic_salary;
                 continue;
             }
-            if ($gross_breakdown['name'] == self::HOUSE_RENT) {
+            if ($gross_breakdown['name'] == PayrollConstGetter::HOUSE_RENT) {
                 $yearly_house_rent = $this->yearlyTotalGrossAmount($gross_breakdown['percentage']);
                 $this->yearlyAmount[] = $yearly_house_rent;
-                $this->taxableIncome += $yearly_house_rent - min(300000, $this->houseRentTaxExemptionAmount) <= 0 ? 0 : $yearly_house_rent - min(300000, $this->houseRentTaxExemptionAmount);
+                $this->taxableIncome += $yearly_house_rent - min(PayrollConstGetter::HOUSE_RENT_EXEMPTION, $this->houseRentTaxExemptionAmount) <= 0 ? 0 : $yearly_house_rent - min(PayrollConstGetter::HOUSE_RENT_EXEMPTION, $this->houseRentTaxExemptionAmount);
                 continue;
             }
-            if ($gross_breakdown['name'] == self::CONVEYANCE) {
+            if ($gross_breakdown['name'] == PayrollConstGetter::CONVEYANCE) {
                 $yearly_conveyance = $this->yearlyTotalGrossAmount($gross_breakdown['percentage']);
                 $this->yearlyAmount[] = $yearly_conveyance;
-                $this->taxableIncome += $yearly_conveyance > 300000 ? $yearly_conveyance - 300000 : 0;
+                $this->taxableIncome += $yearly_conveyance > PayrollConstGetter::CONVEYANCE_EXEMPTION ? $yearly_conveyance - PayrollConstGetter::CONVEYANCE_EXEMPTION : 0;
                 continue;
             }
-            if ($gross_breakdown['name'] == self::MEDICAL_ALLOWANCE) {
+            if ($gross_breakdown['name'] == PayrollConstGetter::MEDICAL_ALLOWANCE) {
                 $yearly_medical_allowance = $this->yearlyTotalGrossAmount($gross_breakdown['percentage']);
                 $this->yearlyAmount[] = $yearly_medical_allowance;
-                $this->taxableIncome += $yearly_medical_allowance - min(120000, $this->medicalAllowanceTaxExemptionAmount) <= 0 ? 0 : $yearly_medical_allowance - min(120000, $this->medicalAllowanceTaxExemptionAmount);
+                $this->taxableIncome += $yearly_medical_allowance - min(PayrollConstGetter::MEDICAL_ALLOWANCE_EXEMPTION, $this->medicalAllowanceTaxExemptionAmount) <= 0 ? 0 : $yearly_medical_allowance - min(PayrollConstGetter::MEDICAL_ALLOWANCE_EXEMPTION, $this->medicalAllowanceTaxExemptionAmount);
                 continue;
             }
             if($gross_breakdown['is_taxable']) {
@@ -83,21 +85,27 @@ class TaxCalculator
                 $this->taxableIncome += $custom_gross_component;
             }
         }
-        //dd($this->yearlyAmount, $this->taxableIncome);
     }
 
     private function calculateTaxForPayrollComponents()
     {
         foreach ($this->taxableComponent as $component_packages){
+            $final_amount = 0;
             foreach ($component_packages as $package){
-                //$component_packages = $component->componentPackages;
+                $calculation_type = $package->calculation_type;
+                $on_what = $package->on_what;
+                $amount = floatValFormat($package->amount);
+                if ($calculation_type == CalculationType::VARIABLE_AMOUNT) {
+                    $final_amount += 0;
+                    continue;
+                }
+                if ($calculation_type == CalculationType::FIX_PAY_AMOUNT) {
+                    $period = $package->periodic_schedule ? (12 / intval($package->periodic_schedule)) : 1;
+                    $final_amount += ($this->getFixPayAmountCalculation($this->businessMember, $package, $on_what, $amount) * $period);
+                }
             }
+            $this->taxableIncome += $final_amount;
         }
-    }
-
-    private function yearlyTotalGrossAmount($percentage)
-    {
-        return (($percentage * $this->grosSalary) / 100) * 12;
     }
 
 }

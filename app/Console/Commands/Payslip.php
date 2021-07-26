@@ -99,7 +99,7 @@ class Payslip extends Command
                     //$this->payslipRepository->create($payslip_data);
                 }
                 $package_generate_information = $this->payrollComponentSchedulerCalculation->getPackageGenerateData();
-                if ($package_generate_information) $this->updatePackageGenerateDate($package_generate_information);
+                //if ($package_generate_information) $this->updatePackageGenerateDate($package_generate_information);
                 //$this->updatePayDay($payroll_setting, $business);
             }
         }
