@@ -68,7 +68,6 @@ class DueTrackerRepository extends BaseRepository
             $url .= "&q=$ids";
         }
         $result = $this->client->get($url);
-
         if ($customerProfiles) {
             $list = $this->attachCustomerProfile(collect($result['data']['list']), $customerProfiles);
         } else {
@@ -508,7 +507,7 @@ class DueTrackerRepository extends BaseRepository
         if ((double)$request->partner->wallet < $sms_cost) throw new InsufficientBalance();
 
         $sms->setBusinessType(BusinessType::SMANAGER)->setFeatureType(FeatureType::DUE_TRACKER);
-        $sms->shoot();
+        if(config('sms.is_on')) $sms->shoot();
         $transaction = (new WalletTransactionHandler())
             ->setModel($request->partner)
             ->setAmount($sms_cost)

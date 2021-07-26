@@ -12,6 +12,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\RequestIdentification;
@@ -68,7 +69,7 @@ class AccountingDueTrackerRepository extends BaseRepository
      */
     public function getDueList($request, $paginate = false): array
     {
-//        try {
+        try {
             $url = "api/due-list?";
             $url = $this->updateRequestParam($request, $url);
             $customerProfiles = null;
@@ -122,9 +123,9 @@ class AccountingDueTrackerRepository extends BaseRepository
             return [
                 'list' => $new_data
             ];
-//        } catch (AccountingEntryServerError $e) {
-//            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
-//        }
+        } catch (AccountingEntryServerError $e) {
+            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+        }
     }
 
     public function getDuelistBalance($request)
@@ -165,7 +166,13 @@ class AccountingDueTrackerRepository extends BaseRepository
                     $item['created_at'] = Carbon::parse($item['created_at'])->format('Y-m-d h:i A');
                     $item['entry_at'] = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
                     $pos_order = PosOrder::withTrashed()->find($item['source_id']);
-                    $item['partner_wise_order_id'] = $item['source_type'] === 'POS' && $pos_order ? $pos_order->partner_wise_order_id : null;
+                    $item['partner_wise_order_id'] = $item['source_type'] === 'PosOrder' && $pos_order ? $pos_order->partner_wise_order_id: null;
+                    if ($pos_order && $pos_order->sales_channel === SalesChannels::WEBSTORE) {
+                        $item['source_type'] = 'WebstoreOrder';
+                        $item['head'] = 'Webstore sales';
+                        $item['head_bn'] = 'ওয়েবস্টোর সেলস';
+                    }
+
                     return $item;
                 }
             );
@@ -177,7 +184,7 @@ class AccountingDueTrackerRepository extends BaseRepository
         }
     }
 
-    public function dueListBalanceByCustomer($request, $customerId)
+    public function dueListBalanceByCustomer($customerId)
     {
         try {
             $partner_pos_customer = PartnerPosCustomer::byPartner($this->partner->id)->where(
@@ -193,8 +200,8 @@ class AccountingDueTrackerRepository extends BaseRepository
             }
             $url = "api/due-list/" . $customerId . "/balance";
             $result = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
-            $total_debit = $request['other_info']['total_debit'];
-            $total_credit = $request['other_info']['total_credit'];
+            $total_debit = $result['other_info']['total_debit'];
+            $total_credit = $result['other_info']['total_credit'];
             $result['balance']['color'] = $total_debit > $total_credit ? '#219653' : '#DC1E1E';
             return [
                 'customer' => [

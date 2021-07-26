@@ -419,7 +419,8 @@ class Creator
             "total_discount"     => $order_discount,
             "note"               => $order->sales_channel == SalesChannels::WEBSTORE ? SalesChannels::WEBSTORE : SalesChannels::POS,
             "source_id"          => $order->id,
-            "total_vat"          => $order->getTotalVat()
+            "total_vat"          => $order->getTotalVat(),
+            "delivery_charge"    => $order->delivery_charge ?? 0
         ]);
     }
 }

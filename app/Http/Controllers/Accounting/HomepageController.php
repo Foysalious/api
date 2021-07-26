@@ -196,7 +196,7 @@ class HomepageController extends Controller
             [
                 'title' => 'এই সপ্তাহ (' .
                     convertNumbersToBangla($startOfWeek->day, false) .
-                    ($startOfWeek->month === $endOfWeek->month ?: ' '.banglaMonth($startOfWeek->month)). ' - ' .
+                    ($startOfWeek->month === $endOfWeek->month ? '' : banglaMonth($startOfWeek->month)). ' - ' .
                     convertNumbersToBangla($endOfWeek->day, false) .' '.
                     banglaMonth($endOfWeek->month) . ')',
                 'start_date' => $startOfWeek->format('Y-m-d'),

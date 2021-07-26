@@ -163,25 +163,26 @@ class AccountingRepository extends BaseRepository
      */
     private function createEntryData($request, $type, $type_id = null): array
     {
-        $data['created_from']               = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
-        $data['amount']                     = (double)$request->amount;
-        $data['source_type']                = $type;
-        $data['source_id']                  = $type_id;
-        $data['note']                       = isset($request->note) ? $request->note : null;
-        $data['amount_cleared']             = $request->amount_cleared;
-        $data['debit_account_key']          = (string)$request->to_account_key; // to = debit = je account e jabe
-        $data['credit_account_key']         = (string)$request->from_account_key; // from = credit = je account theke jabe
-        $data['customer_id']                = isset($request->customer_id) ? $request->customer_id : null;
-        $data['customer_name']              = isset($request->customer_id) ? $request->customer_name : null;
-        $data['inventory_products']         = isset($request->inventory_products) ? $request->inventory_products : null;
-        $data['entry_at']                   = isset($request->date) ? $request->date : Carbon::now()->format('Y-m-d H:i:s');
-        $data['attachments']                = $this->uploadAttachments($request);
-        $data['total_discount']             = isset($request->total_discount) ? (double)$request->total_discount : null;
-        $data['total_vat']                  = isset($request->total_vat) ? (double)$request->total_vat : null;
-        $data['bank_transaction_charge']    = isset($request->bank_transaction_charge) ? $request->bank_transaction_charge : null;
-        $data['interest']                   = isset($request->interest) ? $request->interest : null;
-        $data['details']                    = isset($request->details) ? $request->details : null;
-        $data['reference']                  = isset($request->reference) ? $request->reference : null;
+        $data['created_from'] = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
+        $data['amount'] = (double)$request->amount;
+        $data['source_type'] = $type;
+        $data['source_id'] = $type_id;
+        $data['note'] = isset($request->note) ? $request->note : null;
+        $data['amount_cleared'] = $request->amount_cleared;
+        $data['debit_account_key'] = $request->to_account_key; // to = debit = je account e jabe
+        $data['credit_account_key'] = $request->from_account_key; // from = credit = je account theke jabe
+        $data['customer_id'] = isset($request->customer_id) ? $request->customer_id : null;
+        $data['customer_name'] = isset($request->customer_id) ? $request->customer_name : null;
+        $data['inventory_products'] = isset($request->inventory_products) ? $request->inventory_products : null;
+        $data['entry_at'] = isset($request->date) ? $request->date : Carbon::now()->format('Y-m-d H:i:s');
+        $data['attachments'] = $this->uploadAttachments($request);
+        $data['total_discount'] = isset($request->total_discount) ? (double)$request->total_discount : null;
+        $data['total_vat'] = isset($request->total_vat) ? (double)$request->total_vat : null;
+        $data['delivery_charge'] = isset($request->delivery_charge) ? (double)$request->delivery_charge : null;
+        $data['bank_transaction_charge'] = isset($request->bank_transaction_charge) ? $request->bank_transaction_charge : null;
+        $data['interest'] = isset($request->interest) ? $request->interest : null;
+        $data['details'] = isset($request->details) ? $request->details : null;
+        $data['reference'] = isset($request->reference) ? $request->reference : null;
         return $data;
     }
 }
