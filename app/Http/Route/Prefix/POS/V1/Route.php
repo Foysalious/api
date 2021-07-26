@@ -23,7 +23,7 @@ class Route
             });
 
             $api->group(['prefix' => 'customers'], function ($api) {
-                $api->get('/{customer}', 'PosCustomer\PosCustomerController@show');
+                $api->get('/{customer_id}', 'PosCustomer\PosCustomerController@show');
             });
 
                 $api->get('warranty-units', 'Inventory\WarrantyUnitController@getWarrantyList');
