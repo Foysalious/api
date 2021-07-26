@@ -2,6 +2,8 @@
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Sheba\Dal\SubscriptionWisePaymentGateway\Model as SubscriptionWisePaymentGateway;
 use Sheba\Payment\PayableType;
 use Sheba\Subscription\Partner\BillingType;
 use Sheba\Subscription\SubscriptionPackage;
@@ -125,5 +127,10 @@ class PartnerSubscriptionPackage extends Model implements SubscriptionPackage,Pa
     public function getSubscriptionFee()
     {
         return $this->rules()->subscription_fee;
+    }
+
+    public function validPaymentGateway(): BelongsTo
+    {
+        return $this->belongsTo(SubscriptionWisePaymentGateway::class, 'id', 'package_id')->notExpired();
     }
 }
