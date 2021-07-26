@@ -195,7 +195,7 @@ class AttendanceController extends Controller
         if ($request->has('sort_on_present')) $all_employee_attendance = $this->attendanceSortOnPresent($all_employee_attendance, $request->sort_on_present);
         if ($request->has('sort_on_leave')) $all_employee_attendance = $this->attendanceSortOnLeave($all_employee_attendance, $request->sort_on_leave);
         if ($request->has('sort_on_late')) $all_employee_attendance = $this->attendanceSortOnLate($all_employee_attendance, $request->sort_on_late);
-        if ($request->has('sort_on_overtime')) $all_employee_attendance = $this->attendanceSortOnOvertime($all_employee_attendance, $request->sort_on_overtime);
+        if ($request->has('sort_on_overtime')) $all_employee_attendance = $this->attendanceCustomSortOnOvertime($all_employee_attendance, $request->sort_on_overtime);
 
         $total_members = $all_employee_attendance->count();
         if ($request->has('limit')) $all_employee_attendance = $all_employee_attendance->splice($offset, $limit);
@@ -284,6 +284,19 @@ class AttendanceController extends Controller
     }
 
     /**
+     * @param $attendances
+     * @param string $sort
+     * @return mixed
+     */
+    private function attendanceCustomSortOnOvertime($attendances, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return $attendances->$sort_by(function ($attendance, $key) {
+            return $attendance['attendance']['overtime_in_minutes'];
+        });
+    }
+
+    /**
      * @param $month
      * @param $year
      * @return bool
@@ -335,7 +348,7 @@ class AttendanceController extends Controller
         if ($request->has('sort_on_hour')) $daily_breakdowns = $this->attendanceSortOnHour($daily_breakdowns, $request->sort_on_hour)->values();
         if ($request->has('sort_on_checkin')) $daily_breakdowns = $this->attendanceSortOnCheckin($daily_breakdowns, $request->sort_on_checkin)->values();
         if ($request->has('sort_on_checkout')) $daily_breakdowns = $this->attendanceSortOnCheckout($daily_breakdowns, $request->sort_on_checkout)->values();
-        if ($request->has('sort_on_overtime')) $daily_breakdowns = $this->attendanceSortOnOvertime($daily_breakdowns, $request->sort_on_overtime)->values();
+        if ($request->has('sort_on_overtime')) $daily_breakdowns = $this->attendanceCustomSortOnOvertime($daily_breakdowns, $request->sort_on_overtime)->values();
         if ($request->file == 'excel') {
             return $details_excel->setBreakDownData($daily_breakdowns->toArray())
                 ->setBusinessMember($business_member)
