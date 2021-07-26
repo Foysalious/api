@@ -43,10 +43,20 @@ class SmanagerUserService
         $customer_info = $this->getCustomerInfoFromSmanagerUserService();
 
     }
+    public function showCustomerListByPartnerId()
+    {
+        return $this->getCustomerListByPartnerId();
+
+    }
 
     private function getCustomerInfoFromSmanagerUserService()
     {
         $this->smanagerUserServerClient->get('api/v1/partners/'.$this->partnerId.'/users/'.$this->customerId);
+    }
+
+    private function getCustomerListByPartnerId()
+    {
+        return $this->smanagerUserServerClient->get('api/v1/partners/'.$this->partnerId);
     }
 
 }
