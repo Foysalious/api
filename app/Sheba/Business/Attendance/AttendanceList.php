@@ -359,6 +359,12 @@ class AttendanceList
                     $q->where([['remote_mode', RemoteMode::FIELD],['action', Actions::CHECKIN]]);
                 });
             }
+            if ($this->checkInRemoteMode === RemoteMode::NO_LOCATION) {
+                $attendances = $attendances->whereHas('actions', function ($q) {
+                    $q->where('action', Actions::CHECKIN)
+                        ->whereNull('location');
+                });
+            }
         }
 
         if ($this->checkOutRemoteMode && $this->checkoutOfficeOrRemote == 'remote') {
@@ -370,6 +376,12 @@ class AttendanceList
             if ($this->checkOutRemoteMode === RemoteMode::FIELD) {
                 $attendances = $attendances->whereHas('actions', function ($q) {
                     $q->where([['remote_mode', RemoteMode::FIELD],['action', Actions::CHECKOUT]]);
+                });
+            }
+            if ($this->checkOutRemoteMode === RemoteMode::NO_LOCATION) {
+                $attendances = $attendances->whereHas('actions', function ($q) {
+                    $q->where('action', Actions::CHECKOUT)
+                        ->whereNull('location');
                 });
             }
         }
