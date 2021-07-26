@@ -264,10 +264,14 @@ class CustomerController extends Controller
      * @param Partner $partner
      * @param PosCustomer $customer
      * @return bool|int
+     * @throws InvalidPartnerPosCustomer
+     * @throws \Sheba\AccountingEntry\Exceptions\AccountingEntryServerError
      */
-    private function getDueAmountFromDueTracker($dueTrackerRepository, Partner $partner, PosCustomer $customer){
-
-        $data = $dueTrackerRepository->setPartner($partner)->getDueListByProfile($partner,(new Request(['customer_id' => $customer->id])));
+    private function getDueAmountFromDueTracker($dueTrackerRepository, Partner $partner, PosCustomer $customer)
+    {
+        /** @var AccountingDueTrackerRepository $accDueTrackerRepository */
+        $accDueTrackerRepository = app(AccountingDueTrackerRepository::class);
+        $data = $accDueTrackerRepository->setPartner($partner)->dueListBalanceByCustomer($customer->id);
         return $data['stats']['due'] > 0 ? $data['stats']['due'] : 0;
     }
 
