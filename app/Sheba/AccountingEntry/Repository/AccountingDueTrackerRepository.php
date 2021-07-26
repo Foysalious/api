@@ -69,7 +69,7 @@ class AccountingDueTrackerRepository extends BaseRepository
      */
     public function getDueList($request, $paginate = false): array
     {
-//        try {
+        try {
             $url = "api/due-list?";
             $url = $this->updateRequestParam($request, $url);
             $customerProfiles = null;
@@ -123,9 +123,9 @@ class AccountingDueTrackerRepository extends BaseRepository
             return [
                 'list' => $new_data
             ];
-//        } catch (AccountingEntryServerError $e) {
-//            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
-//        }
+        } catch (AccountingEntryServerError $e) {
+            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+        }
     }
 
     public function getDuelistBalance($request)
