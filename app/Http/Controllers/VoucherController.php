@@ -309,8 +309,11 @@ class VoucherController extends Controller
      */
     public function validateVoucher(Request $request)
     {
-        $partner = $request->partner_id;
-        return $this->voucherValidate->setPartner($partner)->setPosCustomer($request->pos_customer)->voucherValidate($request);
+        $partner = $request->user;
+        $real_pos_customer = PosCustomer::find($request->pos_customer);
+        $pos_customer = $real_pos_customer ? $real_pos_customer : $this->getUser($partner->id, $request->pos_customer);
+        return $this->voucherValidate->setPartner($partner)->setRealPosCustomer($real_pos_customer)->setPosCustomer($pos_customer)->voucherValidate($request);
+
     }
 
     public function getVoucherDetails(Request $request)
