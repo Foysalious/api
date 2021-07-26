@@ -68,6 +68,7 @@ class DueTrackerRepository extends BaseRepository
             $url .= "&q=$ids";
         }
         $result = $this->client->get($url);
+        dd($result);
 
         if ($customerProfiles) {
             $list = $this->attachCustomerProfile(collect($result['data']['list']), $customerProfiles);
