@@ -23,14 +23,14 @@ class PosCustomerController extends Controller
     {
         $partner = $request->auth_user->getPartner();
         $customer_details = $this->smanagerUserService->setPartnerId($partner->id)->setCustomerId($customerId)->getDetails();
-        return http_response($request, null, 200, ['message'=> 'Successful','data' => $customer_details]);
+        return http_response($request, null, 200, ['message' => 'Successful', 'data' => $customer_details]);
     }
 
     public function showCustomerByPartnerId(Request $request)
     {
-        dd(1);
         $partner = $request->auth_user->getPartner();
-        return $this->smanagerUserService->setPartnerId($partner->id)->showCustomerListByPartnerId();
+        $customer_list= $this->smanagerUserService->setPartnerId($partner->id)->showCustomerListByPartnerId();
+        return http_response($request, null, 200, ['message' => 'Successful', 'data' => $customer_list]);
     }
 
 }
