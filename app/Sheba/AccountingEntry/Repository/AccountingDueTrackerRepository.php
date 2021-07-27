@@ -5,6 +5,7 @@ namespace App\Sheba\AccountingEntry\Repository;
 use App\Models\PartnerPosCustomer;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
+use App\Models\PosOrderPayment;
 use App\Models\Profile;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Constants\UserType;
@@ -14,7 +15,7 @@ use Illuminate\Support\Collection;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
-use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
+use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\RequestIdentification;
 
 class AccountingDueTrackerRepository extends BaseRepository
@@ -48,7 +49,14 @@ class AccountingDueTrackerRepository extends BaseRepository
         $data = $this->createEntryData($request, $type);
         $url = $with_update ? "api/entries/" . $request->entry_id : $type == "deposit" ? "api/entries/deposit" : "api/entries";
         try {
-            return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
+            $data = $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
+            if ($type == "deposit") {
+                foreach ($data as $datum) {
+                    if ($datum['source_type'] == 'pos') {
+                        $this->createPosOrderPayment($datum['amount_cleared'], $datum['source_id'], 'cod');
+                    }
+                }
+            }
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
@@ -343,5 +351,31 @@ class AccountingDueTrackerRepository extends BaseRepository
             'avatar' => $partner->logo,
             'mobile' => $partner->mobile,
         ];
+    }
+
+    public function createPosOrderPayment($amount_cleared, $pos_order_id, $payment_method)
+    {
+        /** @var PosOrder $order */
+        $order = PosOrder::find($pos_order_id);
+        if(isset($order)) {
+            $order->calculate();
+            if ($order->getDue() > 0) {
+                $payment_data['pos_order_id'] = $pos_order_id;
+                $payment_data['amount']       = $amount_cleared;
+                $payment_data['method']       = $payment_method;
+                /** @var PaymentCreator $paymentCreator */
+                $paymentCreator = app(PaymentCreator::class);
+                $paymentCreator->credit($payment_data);
+            }
+        }
+    }
+
+    public function removePosOrderPayment($pos_order_id, $amount){
+        $payment = PosOrderPayment::where('pos_order_id', $pos_order_id)
+            ->where('amount', $amount)
+            ->where('transaction_type', 'Credit')
+            ->first();
+
+        return $payment ? $payment->delete() : false;
     }
 }
