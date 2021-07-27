@@ -1,13 +1,12 @@
 <?php namespace App\Sheba\SmanagerUserService;
 
-
+use App\Models\Partner;
 use App\Sheba\PosOrderService\PosOrderServerClient;
 use Carbon\Carbon;
 use Sheba\Pos\Repositories\PosCustomerRepository;
 
 class SmanagerUserService
 {
-    private $partnerId;
     private $customerId;
     /**
      * @var SmanagerUserServerClient
@@ -21,6 +20,7 @@ class SmanagerUserService
      * @var PosCustomerRepository
      */
     private $posCustomerRepository;
+    private $partner;
 
     public function __construct(SmanagerUserServerClient $smanagerUserServerClient, PosOrderServerClient $posOrderServerClient, PosCustomerRepository $posCustomerRepository)
     {
@@ -30,12 +30,12 @@ class SmanagerUserService
     }
 
     /**
-     * @param mixed $partnerId
+     * @param Partner $partner
      * @return SmanagerUserService
      */
-    public function setPartnerId($partnerId)
+    public function setPartner( Partner $partner)
     {
-        $this->partnerId = $partnerId;
+        $this->partner = $partner;
         return $this;
     }
 
@@ -56,9 +56,8 @@ class SmanagerUserService
     {
         $customer_info = $this->getCustomerInfoFromSmanagerUserService();
         list($total_purchase_amount,$total_used_promo) = $this->getPurchaseAmountAndTotalUsedPromo();
-        $customerAmount =  $this->posCustomerRepository->getDueAmountFromDueTracker($request->partner, $customer->id);
-        $data['total_due_amount']      = $customerAmount['due'];
-        $data['total_payable_amount']  = $customerAmount['payable'];
+        list($total_due_amount,$total_payable_amount) = $this->getDueAndPayableAmount();
+
         $customer_details = [];
         $customer_details['id'] = isset($customer_info['_id']) ? $customer_info['_id'] : null;
         $customer_details['name'] = isset($customer_info['name']) ? $customer_info['name'] : null;
@@ -70,11 +69,11 @@ class SmanagerUserService
         $customer_details['customer_since_formatted'] = isset($customer_info['created_at']) ? Carbon::parse($customer_info['created_at'])->diffForHumans(): null;
         $customer_details['total_purchase_amount'] = $total_purchase_amount;
         $customer_details['total_used_promo'] = $total_used_promo;
-      /*  $customer_details['total_due_amount'] = $this->getTotalDueAmount();
-        $customer_details['total_payable_amount'] = $this->getTotalPurchaseAmount();*/
+        $customer_details['total_due_amount'] = $total_due_amount;
+        $customer_details['total_payable_amount'] = $total_payable_amount;
         $customer_details['is_customer_editable'] = true;
         $customer_details['note'] =  isset($customer_info['note']) ? $customer_info['note'] : null;
-        $customer_details['is_supplier'] =  isset($customer_info['is_supplier']) ? $customer_info['is_supplier'] : null;
+        $customer_details['is_supplier'] =  isset($customer_info['is_supplier']) ? $customer_info['is_supplier'] : 0;
 
         return $customer_details;
     }
@@ -84,7 +83,7 @@ class SmanagerUserService
      */
     private function getCustomerInfoFromSmanagerUserService()
     {
-        return $this->smanagerUserServerClient->get('api/v1/partners/'.$this->partnerId.'/pos-users/'.$this->customerId);
+        return $this->smanagerUserServerClient->get('api/v1/partners/'.$this->partner->id.'/pos-users/'.$this->customerId);
     }
 
     /**
@@ -96,9 +95,9 @@ class SmanagerUserService
         return [$response['total_purchase_amount'],$response['total_used_promo']];
     }
 
-    private function getTotalDueAmountAndPayableAmount()
+    private function getDueAndPayableAmount()
     {
-
+        $customer_amount =  $this->posCustomerRepository->getDueAmountFromDueTracker($this->partner, $this->customerId);
+        return [$customer_amount['due'],$customer_amount['payable']];
     }
-
 }
