@@ -1,22 +1,17 @@
 <?php namespace App\Models;
 
-use App\Sheba\InventoryService\Events\PartnerPosSettingUpdated;
-use Illuminate\Database\Eloquent\Model;
+use App\Sheba\PosOrderService\PosSetting\Events\Updated;
+use Sheba\Dal\BaseModel;
 
-class PartnerPosSetting extends Model
+
+class PartnerPosSetting extends BaseModel
 {
 
     protected $guarded = ['id'];
     protected $casts = ['vat_percentage' => 'double'];
 
-    protected static function boot()
-    {
-        parent::boot();
+    public static $updatedEventClass = Updated::class;
 
-        self::saved(function($partner_pos_setting) {
-            event(new PartnerPosSettingUpdated($partner_pos_setting));
-        });
-    }
 
     public function partner()
     {

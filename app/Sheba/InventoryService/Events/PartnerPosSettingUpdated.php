@@ -20,6 +20,5 @@ class PartnerPosSettingUpdated extends Event
     public function getModel()
     {
         return $this->partnerPosSetting;
-
     }
 }
