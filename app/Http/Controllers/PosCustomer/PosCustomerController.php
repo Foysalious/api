@@ -22,14 +22,14 @@ class PosCustomerController extends Controller
     public function show(Request $request, $customerId)
     {
         $partner = $request->auth_user->getPartner();
-        $customer_details = $this->smanagerUserService->setPartnerId($partner->id)->setCustomerId($customerId)->getDetails();
+        $customer_details = $this->smanagerUserService->setPartner($partner->id)->setCustomerId($customerId)->getDetails();
         return http_response($request, null, 200, ['message' => 'Successful', 'data' => $customer_details]);
     }
 
     public function showCustomerByPartnerId(Request $request)
     {
         $partner = $request->auth_user->getPartner();
-        $customer_list = $this->smanagerUserService->setPartnerId($partner->id)->showCustomerListByPartnerId();
+        $customer_list = $this->smanagerUserService->setPartner($partner)->showCustomerListByPartnerId();
         return http_response($request, null, 200, ['message' => 'Successful', 'data' => $customer_list]);
     }
 
@@ -40,7 +40,7 @@ class PosCustomerController extends Controller
         if ($request->input('pro_pic')) {
             $image = base64_encode(file_get_contents($request->file('pro_pic')->path()));
         }
-        $this->smanagerUserService->setPartnerId($partner->id)->setNote($request->note)->setName($request->name)->setBnName($request->bnName)->setMobile($request->mobile)
+        $this->smanagerUserService->setPartner($partner)->setNote($request->note)->setName($request->name)->setBnName($request->bnName)->setMobile($request->mobile)
             ->setEmail($request->email)->setAddress($request->address)->setGender($request->gender)->setBloodGroup($request->blood_group)->setDob($request->dob)->setproPic($image)
             ->storePosCustomer();
     }
@@ -53,7 +53,7 @@ class PosCustomerController extends Controller
         if ($request->input('pro_pic')) {
             $image = base64_encode(file_get_contents($request->file('pro_pic')->path()));
         }
-        $this->smanagerUserService->setPartnerId($partner->id)->setNote($request->note)->setName($request->name)->setBnName($request->bnName)->setMobile($request->mobile)
+        $this->smanagerUserService->setPartner($partner)->setNote($request->note)->setName($request->name)->setBnName($request->bnName)->setMobile($request->mobile)
             ->setEmail($request->email)->setAddress($request->address)->setGender($request->gender)->setBloodGroup($request->blood_group)->setDob($request->dob)->setproPic($image)->setCustomerId($customer_id)
             ->updatePosCustomer();
     }
