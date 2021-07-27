@@ -169,7 +169,7 @@ class PaymentLinkAccountingRepository extends AccountingRepository
             $payload = $this->makeData($userId);
             return $this->storeEntry((object)$payload, EntryTypes::PAYMENT_LINK);
         } catch (AccountingEntryServerError $e) {
-            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+            logError($e);
         }
     }
 
@@ -179,7 +179,7 @@ class PaymentLinkAccountingRepository extends AccountingRepository
             $payload = $this->makeData($userId);
             return $this->updateEntryBySource((object)$payload, $this->source_id, $this->source_type);
         } catch (AccountingEntryServerError $e) {
-            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+            logError($e);
         }
     }
 

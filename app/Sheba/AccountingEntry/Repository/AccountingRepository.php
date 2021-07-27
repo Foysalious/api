@@ -27,7 +27,7 @@ class AccountingRepository extends BaseRepository
         try {
             return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->post($url, $data);
         } catch (AccountingEntryServerError $e) {
-            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+            logError($e);
         }
     }
 
@@ -49,7 +49,7 @@ class AccountingRepository extends BaseRepository
         try {
             return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->post($url, $data);
         } catch (AccountingEntryServerError $e) {
-            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+            logError($e);
         }
     }
 
@@ -70,7 +70,7 @@ class AccountingRepository extends BaseRepository
         try {
             return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->post($url, $data);
         } catch (AccountingEntryServerError $e) {
-            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+            logError($e);
         }
     }
 
@@ -79,7 +79,6 @@ class AccountingRepository extends BaseRepository
      * @param $sourceType
      * @param $sourceId
      * @return mixed
-     * @throws AccountingEntryServerError
      */
     public function deleteEntryBySource(Partner $partner, $sourceType, $sourceId)
     {
@@ -87,7 +86,7 @@ class AccountingRepository extends BaseRepository
         try {
             return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->delete($url);
         } catch (AccountingEntryServerError $e) {
-            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+            logError($e);
         }
     }
 
