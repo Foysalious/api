@@ -17,11 +17,11 @@ class MonthlyStat
     private $forOneEmployee;
     private $businessMemberLeave;
     private $business;
-    private $officeTimeDurationInMinutes;
 
     /**
      * MonthlyStat constructor.
      * @param TimeFrame $time_frame
+     * @param $business
      * @param $business_holiday
      * @param $business_weekend
      * @param $business_member_leave
@@ -35,7 +35,6 @@ class MonthlyStat
         $this->businessWeekend = $business_weekend;
         $this->businessMemberLeave = $business_member_leave;
         $this->forOneEmployee = $for_one_employee;
-        $this->setOfficeTimeDuration();
     }
 
     /**
@@ -99,7 +98,7 @@ class MonthlyStat
             $attendance = $attendances->where('date', $date->toDateString())->first();
 
             if ($attendance) {
-                $overtime_in_minutes = $this->calculateOvertimeInMinutes($attendance->staying_time_in_minutes);
+                $overtime_in_minutes = $attendance->overtime_in_minutes;
                 $attendance_checkin_action = $attendance->checkinAction();
                 $attendance_checkout_action = $attendance->checkoutAction();
                 if ($this->forOneEmployee) {
@@ -299,24 +298,5 @@ class MonthlyStat
     private function hasAttendanceButNotAbsent($attendance)
     {
         return $attendance && !($attendance->status == Statuses::ABSENT);
-    }
-
-    private function setOfficeTimeDuration()
-    {
-        $office_hour = $this->business->officeHour;
-        $this->officeTimeDurationInMinutes = Carbon::parse($office_hour->start_time)->diffInMinutes(Carbon::parse($office_hour->end_time)) + 1;
-    }
-
-    /**
-     * @param $staying_time
-     * @return int
-     */
-    private function calculateOvertimeInMinutes($staying_time)
-    {
-        if ($staying_time > $this->officeTimeDurationInMinutes) {
-            return $staying_time - $this->officeTimeDurationInMinutes;
-        } else {
-            return 0;
-        }
     }
 }

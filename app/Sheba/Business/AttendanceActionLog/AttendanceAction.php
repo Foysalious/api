@@ -196,6 +196,7 @@ class AttendanceAction
             $data['status'] = ($this->attendance->status == Statuses::LATE) ? Statuses::LATE : $model->status;
             $data['checkout_time'] = $model->created_at->format('H:i:s');
             $data['staying_time_in_minutes'] = $model->created_at->diffInMinutes($this->attendance->checkin_time);
+            $data['overtime_in_minutes'] = $this->calculateOvertime($data['staying_time_in_minutes']);
         }
         $this->attendanceRepository->update($this->attendance, $data);
     }
@@ -216,5 +217,21 @@ class AttendanceAction
     private function checkHalfDayLeave()
     {
         return (new HalfDayLeaveCheck())->setBusinessMember($this->businessMember)->checkHalfDayLeave();
+    }
+
+    /**
+     * @param $staying_time
+     * @return int
+     */
+    private function calculateOvertime($staying_time)
+    {
+        $office_hour = $this->business->officeHour;
+        $office_time_duration_in_minutes = Carbon::parse($office_hour->start_time)->diffInMinutes(Carbon::parse($office_hour->end_time)) + 1;
+
+        if ($staying_time > $office_time_duration_in_minutes) {
+            return $staying_time - $office_time_duration_in_minutes;
+        } else {
+            return 0;
+        }
     }
 }
