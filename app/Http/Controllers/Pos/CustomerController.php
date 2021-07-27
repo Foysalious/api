@@ -23,6 +23,7 @@ use Sheba\ModificationFields;
 use Sheba\Pos\Customer\Creator;
 use Sheba\Pos\Customer\Updater;
 use Sheba\Pos\Discount\DiscountTypes;
+use Sheba\Pos\Repositories\PosCustomerRepository;
 use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Usage\Usage;
 use Throwable;
@@ -60,7 +61,7 @@ class CustomerController extends Controller
      * @param DueTrackerRepository $dueTrackerRepository
      * @return JsonResponse
      */
-    public function show($partner, $customer, Request $request, EntryRepository $entry_repo,DueTrackerRepository $dueTrackerRepository)
+    public function show($partner, $customer, Request $request, EntryRepository $entry_repo,DueTrackerRepository $dueTrackerRepository, PosCustomerRepository $posCustomerRepository)
     {
         try {
             /** @var PosCustomer $customer */
@@ -84,7 +85,7 @@ class CustomerController extends Controller
                 $total_purchase_amount += $order->getNetBill();
                 $total_used_promo += !empty($order->voucher_id) ? $this->getVoucherAmount($order) : 0;
             });
-            $customerAmount = $this->getDueAmountFromDueTracker($dueTrackerRepository, $request->partner, $customer);
+            $customerAmount = $posCustomerRepository->getDueAmountFromDueTracker($request->partner, $customer->id);
             $data['total_purchase_amount'] = $total_purchase_amount;
             $data['total_due_amount']      = $customerAmount['due'];
             $data['total_used_promo']      = $total_used_promo;
@@ -260,32 +261,6 @@ class CustomerController extends Controller
         $pos_orders = PosOrder::byPartnerAndCustomer($partner_id,$customer)->get();
         foreach ($pos_orders as $pos_order)
             $pos_order->delete();
-    }
-
-    /**
-     * @param $dueTrackerRepository
-     * @param Partner $partner
-     * @param PosCustomer $customer
-     * @return int[]
-     * @throws InvalidPartnerPosCustomer
-     * @throws \Sheba\AccountingEntry\Exceptions\AccountingEntryServerError
-     */
-    private function getDueAmountFromDueTracker($dueTrackerRepository, Partner $partner, PosCustomer $customer)
-    {
-        $response = [
-            'due' => 0,
-            'payable' => 0
-        ];
-        /** @var AccountingDueTrackerRepository $accDueTrackerRepository */
-        $accDueTrackerRepository = app(AccountingDueTrackerRepository::class);
-        $data = $accDueTrackerRepository->setPartner($partner)->dueListBalanceByCustomer($customer->id);
-        if ($data['balance']['type'] == 'receivable') {
-             $response['due'] = $data['balance']['amount'];
-        }
-        else {
-            $response['payable'] = $data['balance']['amount'];
-        }
-        return $response;
     }
 
     private function getVoucherAmount($order)
