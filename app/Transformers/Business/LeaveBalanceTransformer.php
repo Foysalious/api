@@ -37,21 +37,21 @@ class LeaveBalanceTransformer extends TransformerAbstract
     }
 
     /**
-     * @param Collection $members
+     * @param Collection $business_members
      * @return array
      */
-    public function transform(Collection $members)
+    public function transform(Collection $business_members)
     {
         $employee_wise_leave_balance = [];
-        $members->each(function ($member) use (&$employee_wise_leave_balance) {
+        $business_members->each(function ($business_member) use (&$employee_wise_leave_balance) {
             /** @var BusinessMember $business_member */
-            $this->businessMember = $member->businessMemberWithoutStatusCheck();
+            $this->businessMember = $business_member;
 
             array_push($employee_wise_leave_balance, [
                 'id' => $this->businessMember->id,
-                'employee_id' => $this->businessMember->employee_id ? $this->businessMember->employee_id : null,
+                'employee_id' => $this->businessMember->employee_id ?: null,
                 'department' => $this->businessMember->role ? $this->businessMember->role->businessDepartment->name : null,
-                'employee_name' => $member->profile->name,
+                'employee_name' => $business_member->member->profile->name,
                 'leave_balance' => $this->calculate()
             ]);
         });
