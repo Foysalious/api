@@ -27,13 +27,14 @@ class LeaveBalanceTransformer extends TransformerAbstract
      * @param $leave_types
      * @param Business $business
      */
-    public function __construct($leave_types, Business $business)
+    public function __construct($leave_types, Business $business, $time_frame)
     {
         $this->leave_types = $leave_types;
         $this->businessHoliday = app(BusinessHolidayRepoInterface::class)->getAllDateArrayByBusiness($business);
         $this->businessWeekend = app(BusinessWeekendRepoInterface::class)->getAllByBusiness($business)->pluck('weekday_name')->toArray();
         $this->business = $business;
         $this->business_member_leave_prorate = $this->business->getBusinessMemberProrate();
+        $this->timeFrame = $time_frame;
     }
 
     /**
@@ -65,7 +66,7 @@ class LeaveBalanceTransformer extends TransformerAbstract
 
         foreach ($this->leave_types as $leave_type) {
             $leaves_filtered_by_type = $this->businessMember->leaves->where('leave_type_id', $leave_type['id'])->where('status', Status::ACCEPTED);
-            $used_leave_days = $this->businessMember->getCountOfUsedLeaveDaysByFiscalYear($leaves_filtered_by_type, $this->businessHoliday, $this->businessWeekend);
+            $used_leave_days = $this->businessMember->getCountOfUsedLeaveDaysByDateRange($leaves_filtered_by_type, $this->timeFrame, $this->businessHoliday, $this->businessWeekend);
             $total_days = $this->getTotalDays($leave_type);
             array_push($single_employee_leave_balance, [
                 'id' => $leave_type['id'],
