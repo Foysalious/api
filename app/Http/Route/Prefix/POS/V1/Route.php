@@ -25,6 +25,8 @@ class Route
             $api->group(['prefix' => 'customers'], function ($api) {
                 $api->get('/{customer_id}', 'PosCustomer\PosCustomerController@show');
                 $api->get('/', 'PosCustomer\PosCustomerController@showCustomerByPartnerId');
+                $api->post('/', 'PosCustomer\PosCustomerController@storePosCustomer');
+                $api->put('/{customer_id}', 'PosCustomer\PosCustomerController@updatePosCustomer');
             });
 
                 $api->get('warranty-units', 'Inventory\WarrantyUnitController@getWarrantyList');
