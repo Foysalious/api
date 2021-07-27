@@ -220,7 +220,7 @@ abstract class TopUpCommission
      * @param bool $default_for_partner
      * @return array
      */
-    private function getVendorOTFDetails($vendor_id, $amount, $gateway, $con_type, bool $default_for_partner = false): array
+    private function getVendorOTFDetails($vendor_id, $amount, $gateway, $con_type,  $default_for_partner = false): array
     {
         if (!$this->isAgentEligibleForOtf()) return [];
 
