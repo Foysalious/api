@@ -3,6 +3,7 @@
 
 use App\Sheba\PosOrderService\PosOrderServerClient;
 use Carbon\Carbon;
+use Sheba\Pos\Repositories\PosCustomerRepository;
 
 class SmanagerUserService
 {
@@ -16,11 +17,16 @@ class SmanagerUserService
      * @var PosOrderServerClient
      */
     private $posOrderServerClient;
+    /**
+     * @var PosCustomerRepository
+     */
+    private $posCustomerRepository;
 
-    public function __construct(SmanagerUserServerClient $smanagerUserServerClient, PosOrderServerClient $posOrderServerClient)
+    public function __construct(SmanagerUserServerClient $smanagerUserServerClient, PosOrderServerClient $posOrderServerClient, PosCustomerRepository $posCustomerRepository)
     {
         $this->smanagerUserServerClient = $smanagerUserServerClient;
         $this->posOrderServerClient = $posOrderServerClient;
+        $this->posCustomerRepository = $posCustomerRepository;
     }
 
     /**
@@ -50,6 +56,9 @@ class SmanagerUserService
     {
         $customer_info = $this->getCustomerInfoFromSmanagerUserService();
         list($total_purchase_amount,$total_used_promo) = $this->getPurchaseAmountAndTotalUsedPromo();
+        $customerAmount =  $this->posCustomerRepository->getDueAmountFromDueTracker($request->partner, $customer->id);
+        $data['total_due_amount']      = $customerAmount['due'];
+        $data['total_payable_amount']  = $customerAmount['payable'];
         $customer_details = [];
         $customer_details['id'] = isset($customer_info['_id']) ? $customer_info['_id'] : null;
         $customer_details['name'] = isset($customer_info['name']) ? $customer_info['name'] : null;
