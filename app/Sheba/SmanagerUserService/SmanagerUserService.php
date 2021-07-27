@@ -3,6 +3,8 @@
 use App\Models\Partner;
 use App\Sheba\PosOrderService\PosOrderServerClient;
 use Carbon\Carbon;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
 use Sheba\Pos\Repositories\PosCustomerRepository;
 
 class SmanagerUserService
@@ -52,30 +54,35 @@ class SmanagerUserService
     /**
      * @return array
      */
-    public function getDetails()
+    public function getDetails(): array
     {
         $customer_info = $this->getCustomerInfoFromSmanagerUserService();
         list($total_purchase_amount,$total_used_promo) = $this->getPurchaseAmountAndTotalUsedPromo();
         list($total_due_amount,$total_payable_amount) = $this->getDueAndPayableAmount();
 
         $customer_details = [];
-        $customer_details['id'] = isset($customer_info['_id']) ? $customer_info['_id'] : null;
-        $customer_details['name'] = isset($customer_info['name']) ? $customer_info['name'] : null;
-        $customer_details['phone'] = isset($customer_info['phone']) ? $customer_info['phone'] : null;
-        $customer_details['email'] = isset($customer_info['email']) ? $customer_info['email'] : null;
-        $customer_details['address'] = isset($customer_info['address']) ? $customer_info['address'] : null;
-        $customer_details['image'] = isset($customer_info['pro_pic']) ? $customer_info['pro_pic'] : null;
-        $customer_details['customer_since'] = isset($customer_info['created_at']) ? $customer_info['created_at'] : null;
+        $customer_details['id'] = $customer_info['_id'] ?? null;
+        $customer_details['name'] = $customer_info['name'] ?? null;
+        $customer_details['phone'] = $customer_info['phone'] ?? null;
+        $customer_details['email'] = $customer_info['email'] ?? null;
+        $customer_details['address'] = $customer_info['address'] ?? null;
+        $customer_details['image'] = $customer_info['pro_pic'] ?? null;
+        $customer_details['customer_since'] = $customer_info['created_at'] ?? null;
         $customer_details['customer_since_formatted'] = isset($customer_info['created_at']) ? Carbon::parse($customer_info['created_at'])->diffForHumans(): null;
         $customer_details['total_purchase_amount'] = $total_purchase_amount;
         $customer_details['total_used_promo'] = $total_used_promo;
         $customer_details['total_due_amount'] = $total_due_amount;
         $customer_details['total_payable_amount'] = $total_payable_amount;
         $customer_details['is_customer_editable'] = true;
-        $customer_details['note'] =  isset($customer_info['note']) ? $customer_info['note'] : null;
-        $customer_details['is_supplier'] =  isset($customer_info['is_supplier']) ? $customer_info['is_supplier'] : 0;
+        $customer_details['note'] = $customer_info['note'] ?? null;
+        $customer_details['is_supplier'] = $customer_info['is_supplier'] ?? 0;
 
         return $customer_details;
+    }
+    public function showCustomerListByPartnerId()
+    {
+        return $this->getCustomerListByPartnerId();
+
     }
 
     /**
@@ -89,15 +96,24 @@ class SmanagerUserService
     /**
      * @return array
      */
-    private function getPurchaseAmountAndTotalUsedPromo()
+    private function getPurchaseAmountAndTotalUsedPromo(): array
     {
         $response = $this->posOrderServerClient->get('api/v1/customers/'.$this->customerId.'/order-amount');
         return [$response['total_purchase_amount'],$response['total_used_promo']];
     }
 
-    private function getDueAndPayableAmount()
+    /**
+     * @throws InvalidPartnerPosCustomer
+     * @throws AccountingEntryServerError
+     */
+    private function getDueAndPayableAmount(): array
     {
         $customer_amount =  $this->posCustomerRepository->getDueAmountFromDueTracker($this->partner, $this->customerId);
         return [$customer_amount['due'],$customer_amount['payable']];
+    }
+
+    private function getCustomerListByPartnerId()
+    {
+        return $this->smanagerUserServerClient->get('api/v1/partners/'.$this->partner->id);
     }
 }

@@ -18,8 +18,11 @@ class PosCustomerRepository extends BaseRepository
         return PosCustomer::create($this->withCreateModificationField($data));
     }
 
-
-    public function getDueAmountFromDueTracker(Partner $partner, $customerId)
+    /**
+     * @throws InvalidPartnerPosCustomer
+     * @throws AccountingEntryServerError
+     */
+    public function getDueAmountFromDueTracker(Partner $partner, $customerId): array
     {
         $response = [
             'due' => 0,
