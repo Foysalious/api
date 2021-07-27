@@ -16,6 +16,16 @@ class SmanagerUserService
      * @var PosOrderServerClient
      */
     private $posOrderServerClient;
+    private $note;
+    private $name;
+    private $gender;
+    private $bloodGroup;
+    private $pic;
+    private $bnName;
+    private $mobile;
+    private $address;
+    private $email;
+    private $dob;
     /**
      * @var PosCustomerRepository
      */
@@ -39,6 +49,66 @@ class SmanagerUserService
         return $this;
     }
 
+    public function setNote($note)
+    {
+        $this->note = $note;
+        return $this;
+    }
+
+    public function setName($name)
+    {
+        $this->name = $name;
+        return $this;
+    }
+
+    public function setBnName($bnName)
+    {
+        $this->bnName = $bnName;
+        return $this;
+    }
+
+    public function setMobile($mobile)
+    {
+        $this->mobile = $mobile;
+        return $this;
+    }
+
+    public function setEmail($email)
+    {
+        $this->email = $email;
+        return $this;
+    }
+
+    public function setAddress($address)
+    {
+        $this->address = $address;
+        return $this;
+    }
+
+    public function setGender($gender)
+    {
+        $this->gender = $gender;
+        return $this;
+    }
+
+    public function setBloodGroup($bloodGroup)
+    {
+        $this->bloodGroup = $bloodGroup;
+        return $this;
+    }
+
+    public function setDob($dob)
+    {
+        $this->dob = $dob;
+        return $this;
+    }
+
+    public function setproPic($pic)
+    {
+        $this->pic = $pic;
+        return $this;
+    }
+
     /**
      * @param mixed $customerId
      * @return SmanagerUserService
@@ -49,12 +119,14 @@ class SmanagerUserService
         return $this;
     }
 
+
     /**
      * @return array
      */
     public function getDetails()
     {
         $customer_info = $this->getCustomerInfoFromSmanagerUserService();
+        // list($total_purchase_amount,$total_used_promo) = $this->getPurchaseAmountAndTotalUsedPromo();
         list($total_purchase_amount,$total_used_promo) = $this->getPurchaseAmountAndTotalUsedPromo();
         list($total_due_amount,$total_payable_amount) = $this->getDueAndPayableAmount();
 
@@ -77,10 +149,60 @@ class SmanagerUserService
 
         return $customer_details;
     }
+
     public function showCustomerListByPartnerId()
     {
         return $this->getCustomerListByPartnerId();
 
+    }
+
+    public function makeCreateData()
+    {
+        return [
+            'note' => $this->note,
+            'name' => $this->name,
+            'bn_name' => $this->bnName,
+            'mobile' => $this->mobile,
+            'email' => $this->email,
+            'address' => $this->address,
+            'gender' => $this->gender,
+            'blood_group' => $this->bloodGroup,
+            'dob' => $this->dob,
+            'pro_pic' => $this->pic,
+        ];
+    }
+
+    public function storePosCustomer()
+    {
+        $data = $this->makeCreateData();
+        return $this->smanagerUserServerClient->post('api/v1/partners/' . $this->partnerId, $data);
+    }
+
+    public function makeUpdateData()
+    {
+
+        $data = [];
+
+        if (isset($this->pic)) $data['pro_pic'] = $this->pic;
+        if (isset($this->dob)) $data['dob'] = $this->dob;
+        if (isset($this->bloodGroup)) $data['blood_group'] = $this->bloodGroup;
+        if (isset($this->gender)) $data['gender'] = $this->gender;
+        if (isset($this->address)) $data['address'] = $this->address;
+        if (isset($this->email)) $data['email'] = $this->email;
+        if (isset($this->bnName)) $data['bn_name'] = $this->bnName;
+        if (isset($this->mobile)) $data['mobile'] = $this->mobile;
+        if (isset($this->name)) $data['name'] = $this->name;
+        if (isset($this->note)) $data['note'] = $this->note;
+        if (isset($this->email)) $data['email'] = $this->email;
+
+
+        return $data;
+    }
+
+    public function updatePosCustomer()
+    {
+        $data = $this->makeUpdateData();
+        return $this->smanagerUserServerClient->put('api/v1/partners/' . $this->partnerId.'/pos-users/'.$this->customerId, $data);
     }
 
     /**
