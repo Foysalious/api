@@ -126,7 +126,6 @@ class SmanagerUserService
     public function getDetails()
     {
         $customer_info = $this->getCustomerInfoFromSmanagerUserService();
-        // list($total_purchase_amount,$total_used_promo) = $this->getPurchaseAmountAndTotalUsedPromo();
         list($total_purchase_amount,$total_used_promo) = $this->getPurchaseAmountAndTotalUsedPromo();
         list($total_due_amount,$total_payable_amount) = $this->getDueAndPayableAmount();
 
