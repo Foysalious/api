@@ -40,29 +40,25 @@ class WebstoreOrderSmsHandler
         $sms_handler = $this->buildSmsHandler();
         $sms_cost = $sms_handler->estimateCharge();
         if ((double)$partner->wallet < $sms_cost) return;
-       /** @var WalletTransactionHandler $walletTransactionHandler */
-            $sms->setFeatureType(FeatureType::WEB_STORE)->setBusinessType(BusinessType::SMANAGER)->shoot();
-            $transaction = (new WalletTransactionHandler())->setModel($partner)->setAmount($sms_cost)->setType(Types::debit())->setLog($sms_cost . " BDT has been deducted for sending pos order update sms to customer(order id: {$this->order->id})")->setTransactionDetails([])->setSource(TransactionSources::SMS)->store();
-
-            (new JournalCreateRepository())->setTypeId($partner->id)
-                ->setSource($transaction)
-                ->setAmount($sms_cost)
-                ->setDebitAccountKey(SmsPurchase::SMS_PURCHASE_FROM_SHEBA)
-                ->setCreditAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
-                ->setDetails("Webstore sms cost")
-                ->setReference($this->order->id)
-                ->store();
-        }
 
         $sms_handler->shoot();
 
-        (new WalletTransactionHandler())
+        $transaction = (new WalletTransactionHandler())
             ->setModel($partner)
             ->setAmount($sms_cost)
             ->setType(Types::debit())
             ->setLog($sms_cost . " BDT has been deducted for sending pos order update sms to customer(order id: {$this->order->id})")
             ->setTransactionDetails([])
             ->setSource(TransactionSources::SMS)
+            ->store();
+
+        (new JournalCreateRepository())->setTypeId($partner->id)
+            ->setSource($transaction)
+            ->setAmount($sms_cost)
+            ->setDebitAccountKey(SmsPurchase::SMS_PURCHASE_FROM_SHEBA)
+            ->setCreditAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
+            ->setDetails("Webstore sms cost")
+            ->setReference($this->order->id)
             ->store();
     }
 
@@ -91,6 +87,7 @@ class WebstoreOrderSmsHandler
                 'payment_status' => $this->order->getPaid() ? 'প্রদত্ত' : 'বকেয়া'
             ];
         }
+
         return $sms_handler
             ->setMobile($this->order->customer->profile->mobile)
             ->setFeatureType(FeatureType::WEB_STORE)
