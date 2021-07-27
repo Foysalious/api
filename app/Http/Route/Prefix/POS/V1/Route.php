@@ -15,18 +15,21 @@ class Route
             });
         });
 
-   $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers', 'middleware' => ['jwtAccessToken']], function ($api) {
-      
+        $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers', 'middleware' => ['jwtAccessToken']], function ($api) {
             $api->group(['prefix' => 'collections'], function ($api) {
-                $api->get('/', 'Inventory\CollectionController@index');
-                $api->post('/', 'Inventory\CollectionController@store');
-                $api->get('/{collection}', 'Inventory\CollectionController@show');
-                $api->put('/{collection}', 'Inventory\CollectionController@update');
-                $api->delete('/{collection}', 'Inventory\CollectionController@destroy');
+                    $api->get('/', 'Inventory\CollectionController@index');
+                    $api->post('/', 'Inventory\CollectionController@store');
+                    $api->get('/{collection}', 'Inventory\CollectionController@show');
+                    $api->put('/{collection}', 'Inventory\CollectionController@update');
+                    $api->delete('/{collection}', 'Inventory\CollectionController@destroy');
             });
 
-            $api->get('warranty-units', 'Inventory\WarrantyUnitController@getWarrantyList');
-            $api->get('voucher-details/{voucher_id}', 'VoucherController@getVoucherDetails');
+            $api->group(['prefix' => 'customers'], function ($api) {
+                $api->get('/{customer_id}', 'PosCustomer\PosCustomerController@show');
+            });
+
+                $api->get('warranty-units', 'Inventory\WarrantyUnitController@getWarrantyList');
+                $api->get('voucher-details/{voucher_id}', 'VoucherController@getVoucherDetails');
 
             $api->get('/category-tree', 'Inventory\CategoryController@allCategory');
             $api->group(['prefix' => 'products'], function ($api) {
