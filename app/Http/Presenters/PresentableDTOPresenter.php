@@ -14,8 +14,16 @@ class PresentableDTOPresenter extends Presenter
         $this->dbGateways = $dbGateways;
     }
 
-    public function mergeWithDbGateways($userType){
+    public function mergeWithDbGateways($userType, $payableType){
         $dto = $this->dto->toArray();
+
+        if ($userType === 'customer') {
+            if ($payableType === 'order' && $gateway = $this->dbGateways->where('method_name', $dto['method_name'])->first()) {
+                $dto['discount_message'] = $gateway->discount_message;
+            }
+            return $dto;
+        }
+
         if ($gateway = $this->dbGateways->where('method_name', $dto['method_name'])->first()){
             $dto['name'] = $gateway->name_en;
             $dto['name_bn'] = $gateway->name_bn;
