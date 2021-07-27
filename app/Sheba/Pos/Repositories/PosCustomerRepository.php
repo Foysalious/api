@@ -22,7 +22,7 @@ class PosCustomerRepository extends BaseRepository
      * @throws InvalidPartnerPosCustomer
      * @throws AccountingEntryServerError
      */
-    public function getDueAmountFromDueTracker(Partner $partner, $customerId)
+    public function getDueAmountFromDueTracker(Partner $partner, $customerId): array
     {
         $response = [
             'due' => 0,
