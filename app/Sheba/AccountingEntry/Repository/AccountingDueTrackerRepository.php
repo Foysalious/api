@@ -46,7 +46,7 @@ class AccountingDueTrackerRepository extends BaseRepository
         $this->getCustomer($request);
         $this->setModifier($request->partner);
         $data = $this->createEntryData($request, $type);
-        $url = $with_update ? "api/entries/" . $request->entry_id : "api/entries/";
+        $url = $with_update ? "api/entries/" . $request->entry_id : $type == "deposit" ? "api/entries/deposit" : "api/entries";
         try {
             return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
         } catch (AccountingEntryServerError $e) {
