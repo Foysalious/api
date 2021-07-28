@@ -248,14 +248,16 @@ class PaymentLinkTransaction
             $customer = PosCustomer::where('profile_id', $this->customer->profile->id)->first();
         }
         /** @var PaymentLinkAccountingRepository $paymentLinkRepo */
-        $paymentLinkRepo = app(PaymentLinkAccountingRepository::class);
-        Log::info(["payment link charges", $amount, $feeTransaction, $interest]);
-        $paymentLinkRepo->setAmount($amount)
+        $paymentLinkRepo =  app(PaymentLinkAccountingRepository::class);
+        Log::info(["payment link charges", $amount, $feeTransaction, $interest, $customer->id]);
+        $transaction = $paymentLinkRepo->setAmount($amount)
             ->setBankTransactionCharge($feeTransaction)
             ->setInterest($interest)
-            ->setCustomerId(isset($customer) ? $customer->id : null)
-            ->setCustomerName(isset($this->customer) ? $this->customer->profile->name : null)
-            ->setAmountCleared($amount)
-            ->store($this->receiver->id);
+            ->setAmountCleared($amount);
+        if ($customer) {
+            $transaction = $transaction->setCustomerId(isset($customer) ? $customer->id: null)
+                    ->setCustomerName(isset($this->customer) ? $this->customer->profile->name: null);
+        }
+        $transaction->store($this->receiver->id);
     }
 }
