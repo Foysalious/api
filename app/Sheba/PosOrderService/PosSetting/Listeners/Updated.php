@@ -48,7 +48,10 @@ class Updated
     private function syncPartnerPos($changed_attributes)
     {
         $changed_data_keys = array_keys($changed_attributes);
-        unset($changed_data_keys[array_search('vat_percentage',$changed_data_keys)]);
+        $key = array_search('vat_percentage',$changed_data_keys);
+        if($key !== false) {
+            unset($changed_data_keys[$key]);
+        }
         if(array_intersect($changed_data_keys,self::UPDATING_ATTR_TO_LOOK)) {
             return true;
         }else {

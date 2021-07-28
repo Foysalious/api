@@ -10,13 +10,9 @@ class Created
 {
     use DispatchesJobs;
 
-    public function __construct()
-    {
-    }
-
     public function handle(EventsCreated $event)
     {
-        $this->dispatch((new SyncPartnersSetting($event->getModel()))->setSyncService(PartnerInventorySetting::class));
-        $this->dispatch((new SyncPartnersSetting($event->getModel()))->setSyncService(PartnerPosSetting::class));
+        $this->dispatch((new SyncPartnersSetting($event->newModel))->setSyncService(PartnerInventorySetting::class));
+        $this->dispatch((new SyncPartnersSetting($event->newModel))->setSyncService(PartnerPosSetting::class));
     }
 }

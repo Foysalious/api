@@ -21,15 +21,18 @@ class PartnerPosSetting extends Service
 
     private function makeData(): array
     {
-        $pos_settings = $this->partner->posSetting;
         $data = [
             'name' => $this->partner->name,
-            'sub_domain' => $this->partner->sub_domain ?? 'default',
-            'sms_invoice' => $pos_settings->sms_invoice ?? 0,
-            'auto_printing' => $pos_settings->auto_printing ?? 0,
-            'printer_name' => $pos_settings->printer_name ?? 'default',
-            'printer_model' => $pos_settings->printer_model ?? 'NAI',
+            'sub_domain' => $this->partner->sub_domain,
         ];
+        $pos_settings = $this->partner->posSetting;
+        if ($pos_settings) {
+            $pos_data['sms_invoice'] = $pos_settings->sms_invoice;
+            $pos_data['auto_printing'] = $pos_settings->auto_printing;
+            if(!is_null($pos_settings->printer_name)) $pos_data['printer_name'] = $pos_settings->printer_name;
+            if(!is_null($pos_settings->printer_model)) $pos_data['printer_model'] = $pos_settings->printer_model;
+            $data = array_merge($data,$pos_data);
+        }
         return $data;
     }
 

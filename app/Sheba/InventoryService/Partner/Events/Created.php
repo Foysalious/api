@@ -1,22 +1,7 @@
 <?php namespace App\Sheba\InventoryService\Partner\Events;
 
-use App\Models\Partner;
+use Sheba\Dal\Extras\Events\BaseCreatedEvent;
 
-class Created
+class Created extends BaseCreatedEvent
 {
-    protected $partner;
-
-    public function __construct(Partner $partner)
-    {
-        $this->partner = $partner;
-    }
-
-
-    /**
-     * @return Partner
-     */
-    public function getModel(): Partner
-    {
-        return $this->partner;
-    }
 }
