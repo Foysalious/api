@@ -395,7 +395,7 @@ class Creator
     {
         $order_discount = $order->discounts->count() > 0 ? $order->discounts()->sum('amount') : 0;
         $this->request->merge([
-            "from_account_key"   => (new Accounts())->income->sales::SALES_FROM_POS,
+            "from_account_key"   => $order->sales_channel == SalesChannels::WEBSTORE ? (new Accounts())->income->sales::SALES_FROM_ECOM : (new Accounts())->income->sales::SALES_FROM_POS,
             "to_account_key"     => $order->sales_channel == SalesChannels::WEBSTORE ? (new Accounts())->asset->sheba::SHEBA_ACCOUNT : (new Accounts())->asset->cash::CASH,
             "amount"             => (double)$order->getNetBill(),
             "amount_cleared"     => $order->getPaid(),
