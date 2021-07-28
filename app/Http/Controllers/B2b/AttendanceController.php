@@ -130,7 +130,7 @@ class AttendanceController extends Controller
         /** @var Business $business */
         $business = Business::where('id', (int)$business)->select('id', 'name', 'phone', 'email', 'type')->first();
 
-        $business_members = $business->getAccessibleBusinessMember();
+        $business_members = $business->getAllBusinessMemberExceptInvited();
 
         if ($request->has('department_id')) {
             $business_members = $business_members->whereHas('role', function ($q) use ($request) {
@@ -138,6 +138,10 @@ class AttendanceController extends Controller
                     $q->where('business_departments.id', $request->department_id);
                 });
             });
+        }
+
+        if($request->has('status')) {
+            $business_members = $business_members->where('status', $request->status);
         }
 
         $all_employee_attendance = [];
