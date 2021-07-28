@@ -60,12 +60,12 @@ return [
     ],
     'nagad'       => [
         'stores' => [
-            'default'   => [
+            'default'     => [
                 'base_url'         => env('NAGAD_BASE_URL', 'http://sandbox.mynagad.com:10080/remote-payment-gateway-1.0'),
                 'merchant_id'      => env('NAGAD_MERCHANT_ID', '683002007104225'),
                 'context_path'     => 'remote-payment-gateway-1.0'
             ],
-            'affiliate' => [
+            'affiliate'   => [
                 'base_url'         => env('NAGAD_BASE_URL', 'http://sandbox.mynagad.com:10080/remote-payment-gateway-1.0'),
                 'merchant_id'      => env('NAGAD_AFFILIATE_MERCHANT_ID', '683002007104225'),
                 'context_path'     => 'remote-payment-gateway-1.0'
@@ -76,5 +76,8 @@ return [
                 'context_path'     => 'remote-payment-gateway-1.0'
             ],
         ]
+    ],
+    'ebl'         => [
+        'auth_token' => env('EBL_APP_AUTH_TOKEN')
     ]
 ];
