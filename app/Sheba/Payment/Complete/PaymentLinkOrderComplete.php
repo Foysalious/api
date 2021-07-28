@@ -81,6 +81,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             DB::transaction(function () {
                 $this->paymentRepository->setPayment($this->payment);
                 $payable = $this->payment->payable;
+                Log::info(['payment link total information', $payable, $payable->user, $this->payment_receiver]);
                 $this->setModifier($customer = $payable->user);
                 $this->completePayment();
                 $this->processTransactions($this->payment_receiver);
