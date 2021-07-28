@@ -4,6 +4,7 @@
 namespace Sheba\PaymentLink;
 
 use App\Models\Payment;
+use App\Models\PosCustomer;
 use App\Sheba\AccountingEntry\Repository\PaymentLinkAccountingRepository;
 use App\Sheba\AccountingEntry\Repository\PaymentLinkRepository;
 use Illuminate\Support\Facades\Log;
@@ -242,12 +243,15 @@ class PaymentLinkTransaction
      * @throws AccountingEntryServerError
      */
     private function storePaymentLinkEntry($amount, $feeTransaction, $interest) {
+        $customer = PosCustomer::where('profile_id', $this->customer->profile->id)->first();
         /** @var PaymentLinkAccountingRepository $paymentLinkRepo */
         $paymentLinkRepo =  app(PaymentLinkAccountingRepository::class);
         Log::info(["payment link charges", $amount, $feeTransaction, $interest]);
         $paymentLinkRepo->setAmount($amount)
             ->setBankTransactionCharge($feeTransaction)
             ->setInterest($interest)
+            ->setCustomerId($customer->id)
+            ->setCustomerName($this->customer->profile->name)
             ->setAmountCleared($amount)
             ->store($this->receiver->id);
     }
