@@ -311,6 +311,10 @@ class Route
             $api->group(['prefix' => 'nagad'], function ($api) {
                 $api->get('validate', 'NagadController@validatePayment');
             });
+            $api->group(['prefix'=>'ebl'],function($api){
+                $api->post('validate','EblController@validatePayment');
+                $api->post('cancel','EblController@cancelPayment');
+            });
             $api->get('profiles', 'Profile\ProfileController@getDetail')->middleware('jwtGlobalAuth');
 
             $api->post('register-mobile', 'ShebaController@registerCustomer');
