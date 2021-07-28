@@ -1,7 +1,8 @@
 <?php namespace App\Models;
 
 use App\Models\Transport\TransportTicketOrder;
-use App\Sheba\InventoryService\Events\PartnerModelUpdated;
+use App\Sheba\InventoryService\Partner\Events\Created;
+use App\Sheba\InventoryService\Partner\Events\Updated;
 use App\Sheba\Payment\Rechargable;
 use Carbon\Carbon;
 use DB;
@@ -132,19 +133,13 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     ];
     private $resourceTypes;
 
+    public static $updatedEventClass = Updated::class;
+    public static $createdEventClass = Created::class;
+
     public function __construct($attributes = [])
     {
         parent::__construct($attributes);
         $this->resourceTypes = constants('RESOURCE_TYPES');
-    }
-
-    public static function boot()
-    {
-        parent::boot();
-
-        self::saved(function($partner) {
-            event(new PartnerModelUpdated($partner));
-        });
     }
 
     public function basicInformations()
