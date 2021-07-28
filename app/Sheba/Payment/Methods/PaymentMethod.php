@@ -5,6 +5,7 @@ use App\Models\Payment;
 use App\Models\PaymentDetail;
 use App\Repositories\PaymentStatusChangeLogRepository;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Facades\DB;
 use Sheba\ModificationFields;
 use Sheba\Payment\StatusChanger;
@@ -13,8 +14,7 @@ use Sheba\RequestIdentification;
 
 abstract class PaymentMethod
 {
-    const VALIDITY_IN_MINUTES = 3;
-
+    const VALIDITY_IN_MINUTES= 3;
     use ModificationFields;
 
     /** @var PaymentStatusChangeLogRepository */
@@ -63,14 +63,14 @@ abstract class PaymentMethod
      * @param Payable $payable
      * @param string  $gateway_account_name
      * @return Payment
-     * @throws \Exception
+     * @throws Exception
      */
     protected function createPayment(Payable $payable, $gateway_account_name = 'default'): Payment
     {
         $payment = new Payment();
         $user    = $payable->user;
-        $invoice = "SHEBA_" . strtoupper($this->getMethodName()) . "_" . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' .randomString(10, 1, 1);
-
+        $invoice = "SHEBA_" . strtoupper($this->getMethodName()) . "_" . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . randomString(10, 1, 1);
+        
         DB::transaction(function () use (&$payment, $payable, $invoice, $user, $gateway_account_name) {
             $payment->payable_id             = $payable->id;
             $payment->transaction_id         = $invoice;

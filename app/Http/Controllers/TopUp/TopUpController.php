@@ -14,6 +14,7 @@ use Elasticsearch\Common\Exceptions\Missing404Exception;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Sheba\Dal\AuthenticationRequest\Purpose;
+use Sheba\Dal\SubscriptionWisePaymentGateway\Model as SubscriptionWisePaymentGateway;
 use Sheba\Dal\TopUpBulkRequest\Statuses;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
@@ -27,9 +28,11 @@ use Sheba\TopUp\Bulk\Validator\SheetNameValidator;
 
 use Sheba\TopUp\ConnectionType;
 use Sheba\OAuth2\AuthUser;
+use Sheba\TopUp\Exception\InvalidSubscriptionWiseCommission;
 use Sheba\TopUp\History\RequestBuilder;
 use Sheba\TopUp\OTF\OtfAmount;
 use Sheba\TopUp\TopUpAgent;
+use Sheba\TopUp\TopUpChargesSubscriptionWise;
 use Sheba\TopUp\TopUpDataFormat;
 use Sheba\TopUp\TopUpHistoryExcel;
 use Sheba\TopUp\TopUpSpecialAmount;
@@ -59,27 +62,34 @@ class TopUpController extends Controller
 {
     use ModificationFields;
 
-    public function getVendor(Request $request)
+    /**
+     * @param Request $request
+     * @param TopUpDataFormat $formatter
+     * @param string $user
+     * @return JsonResponse
+     */
+    public function getVendor(Request $request, TopUpDataFormat $formatter, string $user = ''): JsonResponse
     {
-        $agent = $this->getFullAgentType($request->type);
+        try {
+            $topup_charges = [];
+            /** @var TopUpAgent $agent */
+            $agent = $this->getAgent($request, $user);
+            $agent_class = get_class($agent);
 
-        $vendors = TopUpVendor::select('id', 'name', 'is_published')->published()->get();
-        $error_message = "Currently, we’re supporting";
-        foreach ($vendors as $vendor) {
-            $vendor_commission = TopUpVendorCommission::where([['topup_vendor_id', $vendor->id], ['type', $agent]])->first();
-            $asset_name = strtolower(trim(preg_replace('/\s+/', '_', $vendor->name)));
-            array_add($vendor, 'asset', $asset_name);
-            array_add($vendor, 'agent_commission', $vendor_commission ? $vendor_commission->agent_commission : 0);
-            array_add($vendor, 'is_prepaid_available', 1);
-            array_add($vendor, 'is_postpaid_available', ($vendor->id != 6) ? 1 : 0);
-            if ($vendor->is_published) $error_message .= ',' . $vendor->name;
+            if ($agent_class === "App\Models\Partner")
+                $topup_charges = (new TopUpChargesSubscriptionWise())->getCharges($agent);
+
+            $vendors = TopUpVendor::select('id', 'name', 'is_published')->published()->get();
+
+            foreach ($vendors as $vendor)
+                $formatter->makeVendorWiseCommissionData($vendor, $agent_class, $topup_charges);
+
+            $regular_expression = $formatter->getAdditionalData();
+            return api_response($request, $vendors, 200, ['vendors' => $vendors, 'regex' => $regular_expression]);
+        } catch (Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
         }
-        $regular_expression = [
-            'typing' => "^(013|13|014|14|018|18|016|16|017|17|019|19|015|15)",
-            'from_contact' => "^(?:\+?88)?01[16|8]\d{8}$",
-            'error_message' => $error_message . '.'
-        ];
-        return api_response($request, $vendors, 200, ['vendors' => $vendors, 'regex' => $regular_expression]);
     }
 
     /**
@@ -495,5 +505,22 @@ class TopUpController extends Controller
             'code' => 200,
             'data' => $top_up_data,
         ]);
+    }
+
+    /**
+     * @param Request $request
+     * @param $user
+     * @return Affiliate|Business|Partner
+     */
+    private function getAgent(Request $request, $user)
+    {
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        if ($user == 'business') $agent = $auth_user->getBusiness();
+        elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
+        elseif ($user == 'partner') $agent = $auth_user->getPartner();
+        else $agent = $request->user;
+
+        return $agent;
     }
 }

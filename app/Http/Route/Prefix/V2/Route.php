@@ -38,6 +38,7 @@ class Route
             $api->post('service-requests', 'ServiceRequestController@store');
             $api->get('validate-transaction-id', 'PartnerTransactionController@validateTransactionId');
             $api->post('transactions/{transactionID}', 'ShebaController@checkTransactionStatus');
+            $api->get('transactions/info/{transactionID}', 'ShebaController@paymentInitiatedInfo');
             $api->get('transactions/{transactionID}', 'ShebaController@checkTransactionStatus');
             // $api->post('password/email', 'Auth\PasswordController@sendResetPasswordEmail');
             $api->post('password/validate', 'Auth\PasswordController@validatePasswordResetCode');
@@ -157,7 +158,7 @@ class Route
                 $api->get('current', 'LocationController@getCurrent');
             });
             $api->group(['prefix' => 'top-up', 'middleware' => ['topUp.auth']], function ($api) {
-                $api->get('/vendor', 'TopUp\TopUpController@getVendor');
+                $api->get('/vendor/{user?}', 'TopUp\TopUpController@getVendor')->where('user', "(business|partner|affiliate)");
                 $api->post('/get-topup-token', 'TopUp\TopUpController@generateJwt');
                 $api->post('/{user?}', 'TopUp\TopUpController@topUp')->where('user', "(business|partner|affiliate)");
                 $api->post('/bulk', 'TopUp\TopUpController@bulkTopUp');
