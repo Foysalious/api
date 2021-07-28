@@ -81,6 +81,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             DB::transaction(function () {
                 $this->paymentRepository->setPayment($this->payment);
                 $payable = $this->payment->payable;
+                Log::info(['User dettails', $payable->user->profile->id]);
                 $this->setModifier($customer = $payable->user);
                 $this->completePayment();
                 $this->processTransactions($this->payment_receiver, $payable->user);
@@ -184,7 +185,10 @@ class PaymentLinkOrderComplete extends PaymentComplete
      */
     private function processTransactions(HasWalletTransaction $payment_receiver, $customer)
     {
-        $this->transaction = (new PaymentLinkTransaction($this->payment, $this->paymentLink))->setReceiver($payment_receiver)->setCustomer($customer)->create();
+        $this->transaction = (new PaymentLinkTransaction($this->payment, $this->paymentLink))
+                                ->setReceiver($payment_receiver)
+                                ->setCustomer($customer)
+                                ->create();
 
     }
 
