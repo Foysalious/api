@@ -92,6 +92,7 @@ class Route
                         $api->post('/update-status', 'PosOrder\OrderController@updateStatus');
                         $api->post('/validate-promo', 'PosOrder\OrderController@validatePromo');
                     });
+                    $api->put('/{order}/update-customer', 'PosOrder\OrderController@updateCustomer');
                     $api->put('/{order}', 'PosOrder\OrderController@update');
                     $api->delete('/{order}', 'PosOrder\OrderController@destroy');
                 });
