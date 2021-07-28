@@ -86,17 +86,19 @@ class Route
             });
             $api->post('migrate', 'Partner\DataMigrationController@migrate');
 
-            $api->group(['prefix' => 'orders'], function ($api) {
-                $api->get('/', 'PosOrder\OrderController@index');
-                $api->get('/{order}', 'PosOrder\OrderController@show');
-                $api->post('/', 'PosOrder\OrderController@store');
-                $api->group(['prefix' => '{order}'], function ($api) {
-                    $api->post('/update-status', 'PosOrder\OrderController@updateStatus');
-                    $api->post('/validate-promo', 'PosOrder\OrderController@validatePromo');
+                $api->group(['prefix' => 'orders'], function ($api) {
+                    $api->get('/', 'PosOrder\OrderController@index');
+                    $api->get('/{order}', 'PosOrder\OrderController@show');
+                    $api->post('/', 'PosOrder\OrderController@store');
+                    $api->group(['prefix' => '{order}'], function ($api) {
+                        $api->post('/update-status', 'PosOrder\OrderController@updateStatus');
+                        $api->post('/validate-promo', 'PosOrder\OrderController@validatePromo');
+                    });
+                    $api->put('/{order}/update-customer', 'PosOrder\OrderController@updateCustomer');
+                    $api->put('/{order}', 'PosOrder\OrderController@update');
+                    $api->delete('/{order}', 'PosOrder\OrderController@destroy');
                 });
-                $api->put('/{order}', 'PosOrder\OrderController@update');
-                $api->delete('/{order}', 'PosOrder\OrderController@destroy');
-            });
+
         });
         $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
             $api->post('test-migrate', 'Partner\DataMigrationController@testMigration');
