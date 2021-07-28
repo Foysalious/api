@@ -31,7 +31,6 @@ use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Sheba\Dal\EmiBank\Repository\EmiBankContract;
 use Sheba\Dal\MetaTag\MetaTagRepositoryInterface;
 use Sheba\Dal\RedirectUrl\RedirectUrl;
 use Sheba\Dal\UniversalSlug\Model as SluggableType;
