@@ -74,15 +74,9 @@ class PaymentLinkOrderComplete extends PaymentComplete
             DB::transaction(function () {
                 $this->paymentRepository->setPayment($this->payment);
                 $payable = $this->payment->payable;
-                $payableUser = $payable->user;
-                $this->target = $this->paymentLink->getTarget();
-                if ($this->target instanceof PosOrder) {
-                    $payableUser = null;
-                }
-                Log::info(["payable user", $payableUser]);
                 $this->setModifier($customer = $payable->user);
                 $this->completePayment();
-                $this->processTransactions($this->payment_receiver, $payableUser);
+                $this->processTransactions($this->payment_receiver, $payable->user);
             });
         } catch (Throwable $e) {
             $this->failPayment();
@@ -187,6 +181,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             ->setReceiver($payment_receiver)
             ->setCustomer($customer)
             ->create();
+
     }
 
 
@@ -269,18 +264,13 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $event_type       = $this->target && $this->target instanceof PosOrder && $this->target->sales_channel == SalesChannels::WEBSTORE ? 'WebstoreOrder' : class_basename($this->target);
         /** @var Payable $payable */
         $payable = Payable::find($this->payment->payable_id);
-        (new PushNotificationHandler())->send(
-            [
-                "title" => 'Order Successful',
-                "message" => "$formatted_amount Tk has been collected from {$payable->getName() } by order link- {$payment_link->getLinkID()}",
-                "event_type" => $event_type,
-                "event_id" => $this->target->id,
-                "sound" => "notification_sound",
-                "channel_id" => $channel
-            ],
-            $topic,
-            $channel,
-            $sound
-        );
+        (new PushNotificationHandler())->send([
+                                                  "title"      => 'Order Successful',
+                                                  "message"    => "$formatted_amount Tk has been collected from {$payable->getName() } by order link- {$payment_link->getLinkID()}",
+                                                  "event_type" => $event_type,
+                                                  "event_id"   => $this->target->id,
+                                                  "sound"      => "notification_sound",
+                                                  "channel_id" => $channel
+                                              ], $topic, $channel, $sound);
     }
 }
