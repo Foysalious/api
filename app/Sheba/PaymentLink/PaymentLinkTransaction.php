@@ -24,6 +24,7 @@ class PaymentLinkTransaction
     private $formattedRechargeAmount;
     /** @var HasWalletTransaction $receiver */
     private $receiver;
+    private $customer;
     private $tax;
     private $walletTransactionHandler;
     /**
@@ -120,6 +121,12 @@ class PaymentLinkTransaction
     public function setReceiver($receiver)
     {
         $this->receiver = $receiver;
+        return $this;
+    }
+
+    public function setCustomer($customer)
+    {
+        $this->customer = $customer;
         return $this;
     }
 

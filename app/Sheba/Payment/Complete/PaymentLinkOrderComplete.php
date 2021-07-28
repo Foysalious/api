@@ -81,10 +81,9 @@ class PaymentLinkOrderComplete extends PaymentComplete
             DB::transaction(function () {
                 $this->paymentRepository->setPayment($this->payment);
                 $payable = $this->payment->payable;
-                Log::info(["payment link total information", $payable->user, $this->payment_receiver]);
                 $this->setModifier($customer = $payable->user);
                 $this->completePayment();
-                $this->processTransactions($this->payment_receiver);
+                $this->processTransactions($this->payment_receiver, $payable->user);
             });
         } catch (Throwable $e) {
             $this->failPayment();
@@ -98,6 +97,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $this->dispatchReward();
             $this->createUsage($this->payment_receiver, $this->payment->payable->user);
             $this->notify();
+            Log::info(['target information', $this->target]);
         } catch (Throwable $e) {
             Log::info(["error while storing payment link entry", $e->getMessage(), $e->getCode()]);
             logError($e);
@@ -180,10 +180,11 @@ class PaymentLinkOrderComplete extends PaymentComplete
 
     /**
      * @param HasWalletTransaction $payment_receiver
+     * @param $customer
      */
-    private function processTransactions(HasWalletTransaction $payment_receiver)
+    private function processTransactions(HasWalletTransaction $payment_receiver, $customer)
     {
-        $this->transaction = (new PaymentLinkTransaction($this->payment, $this->paymentLink))->setReceiver($payment_receiver)->create();
+        $this->transaction = (new PaymentLinkTransaction($this->payment, $this->paymentLink))->setReceiver($payment_receiver)->setCustomer($customer)->create();
 
     }
 
