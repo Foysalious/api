@@ -89,7 +89,9 @@ class Payslip extends Command
                     $tax_gross_breakdown = $this->grossSalaryBreakdownCalculate->getGrossBreakdown();
                     $taxable_payroll_component = $this->payrollComponentSchedulerCalculation->getTaxComponentData();
                     $this->taxCalculator->setBusinessMember($business_member)->setGrossSalary($gross_salary)->setGrossSalaryBreakdown($tax_gross_breakdown)->setTaxableComponent($taxable_payroll_component)->calculate();
-
+                    $monthly_tax_amount = $this->taxCalculator->getMonthlyTaxAmount();
+                    $payroll_component_calculation['payroll_component']['deduction']['tax'] = $monthly_tax_amount;
+                    dd($monthly_tax_amount, $payroll_component_calculation);
                     $payslip_data = [
                         'business_member_id' => $business_member->id,
                         'schedule_date' => Carbon::now(),

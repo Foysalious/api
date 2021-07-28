@@ -35,4 +35,12 @@ trait PayrollCommonCalculation
     {
         return (($percentage * $this->grosSalary) / 100) * 12;
     }
+
+    public function getNetTaxableIncome($taxable_income, $gender)
+    {
+        if ($gender === 'Male' ||  $gender === null) return ($taxable_income - PayrollConstGetter::MALE_TAX_EXEMPTED) <= 0 ? 0 : ($taxable_income - PayrollConstGetter::MALE_TAX_EXEMPTED);
+        if ($gender === 'Female') return ($taxable_income - PayrollConstGetter::FEMALE_TAX_EXEMPTED) <= 0 ? 0 : ($taxable_income - PayrollConstGetter::FEMALE_TAX_EXEMPTED);
+
+        return ($taxable_income - PayrollConstGetter::SPECIAL_TAX_EXEMPTED) <= 0 ? 0 : ($taxable_income - PayrollConstGetter::SPECIAL_TAX_EXEMPTED);
+    }
 }

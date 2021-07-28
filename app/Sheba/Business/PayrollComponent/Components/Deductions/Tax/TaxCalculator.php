@@ -17,6 +17,16 @@ class TaxCalculator
     private $taxableIncome = 0;
     private $medicalAllowanceTaxExemptionAmount;
     private $houseRentTaxExemptionAmount;
+    /** @var TaxDeduction $taxDeduction */
+    private $taxDeduction;
+    private $monthlyTaxAmount;
+    private $yearlyTaxAmount;
+
+
+    public function __construct()
+    {
+        $this->taxDeduction = app(TaxDeduction::class);
+    }
 
 
     public function setBusinessMember($business_member)
@@ -47,7 +57,12 @@ class TaxCalculator
     {
         $this->calculateTaxForGrossComponents();
         $this->calculateTaxForPayrollComponents();
-        dd($this->taxableIncome);
+        $this->yearlyTaxAmount = $this->taxDeduction->setBusinessMember($this->businessMember)->setTaxableIncome($this->taxableIncome)->calculate();
+    }
+
+    public function getMonthlyTaxAmount()
+    {
+        return ($this->yearlyTaxAmount / 12);
     }
 
     private function calculateTaxForGrossComponents()

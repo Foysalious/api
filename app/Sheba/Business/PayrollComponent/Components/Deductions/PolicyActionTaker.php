@@ -3,6 +3,7 @@
 
 use App\Models\Business;
 use App\Models\BusinessMember;
+use App\Sheba\Business\PayrollSetting\PayrollConstGetter;
 use Sheba\Business\Prorate\Creator as ProrateCreator;
 use Sheba\Business\Prorate\Requester as ProrateRequester;
 use Sheba\Business\Prorate\Updater as ProrateUpdater;
@@ -104,11 +105,10 @@ class PolicyActionTaker
                 $one_working_day_amount = $this->oneWorkingDayAmount($business_member_salary,  floatValFormat($this->totalWorkingDays));
                 return $this->totalPenaltyAmountByOneWorkingDay($one_working_day_amount, $penalty_amount);
             }
-            $note = 'Leave deducted as per payroll policies';
             $total_leave_type_days_after_penalty = $total_leave_type_days - $penalty_amount;
             $this->prorateRequester->setLeaveTypeId($penalty_type)
                 ->setTotalDays($total_leave_type_days_after_penalty)
-                ->setNote($note);
+                ->setNote(PayrollConstGetter::LEAVE_PRORATE_NOTE_FOR_POLICY_ACTION);
             if ($existing_prorate) $this->prorateUpdater->setRequester($this->prorateRequester)->setBusinessMemberLeaveType($existing_prorate)->update();
             else $this->prorateCreator->setRequester($this->prorateRequester)->create();
 
