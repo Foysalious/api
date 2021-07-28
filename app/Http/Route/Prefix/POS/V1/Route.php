@@ -14,14 +14,20 @@ class Route
         });
 
         $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers', 'middleware' => ['jwtAccessToken']], function ($api) {
-
             $api->group(['prefix' => 'collections'], function ($api) {
                     $api->get('/', 'Inventory\CollectionController@index');
                     $api->post('/', 'Inventory\CollectionController@store');
                     $api->get('/{collection}', 'Inventory\CollectionController@show');
                     $api->put('/{collection}', 'Inventory\CollectionController@update');
                     $api->delete('/{collection}', 'Inventory\CollectionController@destroy');
-                });
+            });
+
+            $api->group(['prefix' => 'customers'], function ($api) {
+                $api->get('/{customer_id}', 'PosCustomer\PosCustomerController@show');
+                $api->get('/', 'PosCustomer\PosCustomerController@showCustomerByPartnerId');
+                $api->post('/', 'PosCustomer\PosCustomerController@storePosCustomer');
+                $api->put('/{customer_id}', 'PosCustomer\PosCustomerController@updatePosCustomer');
+            });
 
                 $api->get('warranty-units', 'Inventory\WarrantyUnitController@getWarrantyList');
                 $api->get('voucher-details/{voucher_id}', 'VoucherController@getVoucherDetails');
@@ -86,9 +92,11 @@ class Route
                         $api->post('/update-status', 'PosOrder\OrderController@updateStatus');
                         $api->post('/validate-promo', 'PosOrder\OrderController@validatePromo');
                     });
+                    $api->put('/{order}/update-customer', 'PosOrder\OrderController@updateCustomer');
                     $api->put('/{order}', 'PosOrder\OrderController@update');
                     $api->delete('/{order}', 'PosOrder\OrderController@destroy');
                 });
+
         });
 
         $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers'], function ($api) {

@@ -22,6 +22,7 @@ use Sheba\ModificationFields;
 use Sheba\Pos\Customer\Creator;
 use Sheba\Pos\Customer\Updater;
 use Sheba\Pos\Discount\DiscountTypes;
+use Sheba\Pos\Repositories\PosCustomerRepository;
 use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Usage\Usage;
 use Throwable;
@@ -59,7 +60,7 @@ class CustomerController extends Controller
      * @param DueTrackerRepository $dueTrackerRepository
      * @return JsonResponse
      */
-    public function show($partner, $customer, Request $request, EntryRepository $entry_repo,DueTrackerRepository $dueTrackerRepository)
+    public function show($partner, $customer, Request $request, EntryRepository $entry_repo,DueTrackerRepository $dueTrackerRepository, PosCustomerRepository $posCustomerRepository)
     {
         try {
             /** @var PosCustomer $customer */
@@ -83,11 +84,12 @@ class CustomerController extends Controller
                 $total_purchase_amount += $order->getNetBill();
                 $total_used_promo += !empty($order->voucher_id) ? $this->getVoucherAmount($order) : 0;
             });
+            $customerAmount = $posCustomerRepository->getDueAmountFromDueTracker($request->partner, $customer->id);
+            $data['total_due_amount']      = $customerAmount['due'];
+            $data['total_payable_amount']  = $customerAmount['payable'];
             $data['total_purchase_amount'] = $total_purchase_amount;
-            $data['total_due_amount']      = $this->getDueAmountFromDueTracker($dueTrackerRepository,$request->partner,$customer);
             $data['total_used_promo']      = $total_used_promo;
-            $data['total_payable_amount']  = $entry_repo->setPartner($request->partner)->getTotalPayableAmountByCustomer($customer->profile_id)['total_payables'];
-//            $data['is_customer_editable']  = $customer->isEditable();
+            $data['is_customer_editable']  = $customer->isEditable();
             $data['is_customer_editable']  = true;
             $data['note']                  = $partner_pos_customer->note;
             $data['is_supplier']                  = $partner_pos_customer->is_supplier;

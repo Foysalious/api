@@ -51,7 +51,7 @@ class SmanagerUserServerClient
     private function getOptions($data = null, $multipart = false)
     {
         $options['headers'] = [
-            'Accept' => 'application/json'
+            'Accept' => 'application/x-www-form-urlencoded'
         ];
         if (!$data) return $options;
         if ($multipart) {
