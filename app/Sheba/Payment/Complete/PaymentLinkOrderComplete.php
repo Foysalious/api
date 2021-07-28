@@ -79,6 +79,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
                 if ($this->target instanceof PosOrder) {
                     $payableUser = null;
                 }
+                Log::info(["payable user", $payableUser]);
                 $this->setModifier($customer = $payable->user);
                 $this->completePayment();
                 $this->processTransactions($this->payment_receiver, $payableUser);
