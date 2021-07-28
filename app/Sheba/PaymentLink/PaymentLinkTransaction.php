@@ -243,15 +243,18 @@ class PaymentLinkTransaction
      * @throws AccountingEntryServerError
      */
     private function storePaymentLinkEntry($amount, $feeTransaction, $interest) {
-        $customer = PosCustomer::where('profile_id', $this->customer->profile->id)->first();
+        $customer = null;
+        if (isset($this->customer)) {
+            $customer = PosCustomer::where('profile_id', $this->customer->profile->id)->first();
+        }
         /** @var PaymentLinkAccountingRepository $paymentLinkRepo */
-        $paymentLinkRepo =  app(PaymentLinkAccountingRepository::class);
+        $paymentLinkRepo = app(PaymentLinkAccountingRepository::class);
         Log::info(["payment link charges", $amount, $feeTransaction, $interest]);
         $paymentLinkRepo->setAmount($amount)
             ->setBankTransactionCharge($feeTransaction)
             ->setInterest($interest)
-            ->setCustomerId($customer->id)
-            ->setCustomerName($this->customer->profile->name)
+            ->setCustomerId(isset($customer) ? $customer->id : null)
+            ->setCustomerName(isset($this->customer) ? $this->customer->profile->name : null)
             ->setAmountCleared($amount)
             ->store($this->receiver->id);
     }

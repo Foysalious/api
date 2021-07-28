@@ -3,21 +3,17 @@
 use App\Jobs\Partner\PaymentLink\SendPaymentLinkSms;
 use App\Models\PartnerPosCustomer;
 use App\Models\Payable;
-use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PosOrder;
 use App\Models\Profile;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\PaymentLinkAccountingRepository;
-use Carbon\Carbon;
 use DB;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Support\Facades\Log;
 use LaravelFCM\Message\Exceptions\InvalidOptionsException;
 use Sheba\AccountingEntry\Accounts\Accounts;
-use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
-use Sheba\AccountingEntry\Repository\JournalCreateRepository;
 use Sheba\Dal\ExternalPayment\Model as ExternalPayment;
 use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\ExpenseTracker\AutomaticIncomes;
@@ -27,13 +23,10 @@ use Sheba\PaymentLink\InvoiceCreator;
 use Sheba\PaymentLink\PaymentLinkStatics;
 use Sheba\PaymentLink\PaymentLinkTransaction;
 use Sheba\PaymentLink\PaymentLinkTransformer;
-use Sheba\Pos\Order\PosOrderResolver;
-use Sheba\Pos\Order\PosOrderTypes;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\PushNotificationHandler;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
-use Sheba\RequestIdentification;
 use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Usage\Usage;
@@ -81,10 +74,14 @@ class PaymentLinkOrderComplete extends PaymentComplete
             DB::transaction(function () {
                 $this->paymentRepository->setPayment($this->payment);
                 $payable = $this->payment->payable;
-                Log::info(['User dettails', $payable->user->profile->id]);
+                $payableUser = $payable->user;
+                $this->target = $this->paymentLink->getTarget();
+                if ($this->target instanceof PosOrder) {
+                    $payableUser = null;
+                }
                 $this->setModifier($customer = $payable->user);
                 $this->completePayment();
-                $this->processTransactions($this->payment_receiver, $payable->user);
+                $this->processTransactions($this->payment_receiver, $payableUser);
             });
         } catch (Throwable $e) {
             $this->failPayment();
@@ -186,10 +183,9 @@ class PaymentLinkOrderComplete extends PaymentComplete
     private function processTransactions(HasWalletTransaction $payment_receiver, $customer)
     {
         $this->transaction = (new PaymentLinkTransaction($this->payment, $this->paymentLink))
-                                ->setReceiver($payment_receiver)
-                                ->setCustomer($customer)
-                                ->create();
-
+            ->setReceiver($payment_receiver)
+            ->setCustomer($customer)
+            ->create();
     }
 
 
@@ -272,13 +268,18 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $event_type       = $this->target && $this->target instanceof PosOrder && $this->target->sales_channel == SalesChannels::WEBSTORE ? 'WebstoreOrder' : class_basename($this->target);
         /** @var Payable $payable */
         $payable = Payable::find($this->payment->payable_id);
-        (new PushNotificationHandler())->send([
-            "title"      => 'Order Successful',
-            "message"    => "$formatted_amount Tk has been collected from {$payable->getName() } by order link- {$payment_link->getLinkID()}",
-            "event_type" => $event_type,
-            "event_id"   => $this->target->id,
-            "sound"      => "notification_sound",
-            "channel_id" => $channel
-        ], $topic, $channel, $sound);
+        (new PushNotificationHandler())->send(
+            [
+                "title" => 'Order Successful',
+                "message" => "$formatted_amount Tk has been collected from {$payable->getName() } by order link- {$payment_link->getLinkID()}",
+                "event_type" => $event_type,
+                "event_id" => $this->target->id,
+                "sound" => "notification_sound",
+                "channel_id" => $channel
+            ],
+            $topic,
+            $channel,
+            $sound
+        );
     }
 }
