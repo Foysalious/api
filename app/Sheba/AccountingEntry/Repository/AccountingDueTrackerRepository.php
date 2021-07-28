@@ -174,7 +174,7 @@ class AccountingDueTrackerRepository extends BaseRepository
                     $item['created_at'] = Carbon::parse($item['created_at'])->format('Y-m-d h:i A');
                     $item['entry_at'] = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
                     $pos_order = PosOrder::withTrashed()->find($item['source_id']);
-                    $item['partner_wise_order_id'] = ($item['source_type'] == 'pos' && $pos_order) ? $pos_order->partner_wise_order_id: null;
+                    $item['partner_wise_order_id'] = isset($pos_order) ? $pos_order->partner_wise_order_id: null;
                     if ($pos_order && $pos_order->sales_channel == SalesChannels::WEBSTORE) {
                         $item['source_type'] = 'WebstoreOrder';
                         $item['head'] = 'Webstore sales';
