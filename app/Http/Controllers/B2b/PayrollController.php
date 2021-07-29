@@ -225,4 +225,41 @@ class PayrollController extends Controller
         return api_response($request, null, 200, ['payroll_components' => ['gross_component' => $gross, 'addition_component' => $addition, 'deduction_component' => $deduction]]);
     }
 
+    public function checkPayDayConflicting(Request $request)
+    {
+        /** @var Business $business */
+        $business = $request->business;
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        /** @var PayrollSetting $payroll_setting */
+        $payroll_setting = $business->payrollSetting;
+        $last_pay_day = $payroll_setting->last_pay_day;
+        $next_pay_day = $payroll_setting->next_pay_day;
+        $pay_day_type = $request->pay_day_type;
+        $start_date_for_next_pay_day = Carbon::parse($next_pay_day)->subMonth();
+        $start_date_for_new_pay_day = null;
+        $end_date_for_new_pay_day = null;
+        $new_pay_day = null;
+        $type = '';
+        if ($pay_day_type == PayDayType::FIXED_DATE){
+            $new_pay_day = Carbon::now()->month(Carbon::parse($next_pay_day)->month)->day($request->pay_day);
+            $start_date_for_new_pay_day = $new_pay_day->subMonth();
+            $type = $start_date_for_next_pay_day < $start_date_for_new_pay_day ? 'GAP' : 'OVERLAPPING';
+        }
+        else if ($pay_day_type == PayDayType::LAST_WORKING_DAY){
+            $new_pay_day = $this->lastWorkingDayOfMonth($business, Carbon::parse($next_pay_day)->lastOfMonth());
+            $start_date_for_new_pay_day = $new_pay_day->subMonth();
+            $type = $start_date_for_next_pay_day < $start_date_for_new_pay_day ? 'GAP' : 'OVERLAPPING';
+        }
+        $day_difference = $start_date_for_new_pay_day->diffInDays($start_date_for_next_pay_day);
+        $pay_day_details = [
+            'current_payroll_cycle' => $start_date_for_next_pay_day->format('jS').' 00:00:00 - '.Carbon::parse($next_pay_day)->subDay()->format('jS').' 23:59:59',
+            'new_payroll_cycle' => $start_date_for_new_pay_day->format('jS').' 00:00:00 - '.$new_pay_day->subDay()->format('jS').' 23:59:59',
+            'type' => $type,
+            'days' => $day_difference + 1
+        ];
+
+        return api_response($request, null, 200, ['pay_day_details' => $pay_day_details]);
+    }
+
 }
