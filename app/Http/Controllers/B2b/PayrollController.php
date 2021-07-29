@@ -5,6 +5,8 @@ use App\Sheba\Business\ComponentPackage\Creator as PackageCreator;
 use App\Sheba\Business\ComponentPackage\Updater as PackageUpdater;
 use App\Sheba\Business\PayrollComponent\Components\GrossComponents\Creator;
 use App\Sheba\Business\PayrollComponent\Components\GrossComponents\Updater;
+use App\Sheba\Business\PayrollSetting\PayrollCommonCalculation;
+use Carbon\Carbon;
 use Sheba\Business\PayrollSetting\Requester as PayrollSettingRequester;
 use Sheba\Business\PayrollSetting\Updater as PayrollSettingUpdater;
 use Sheba\Business\PayrollComponent\Updater as PayrollComponentUpdater;
@@ -32,7 +34,7 @@ use DB;
 
 class PayrollController extends Controller
 {
-    use ModificationFields;
+    use ModificationFields, PayrollCommonCalculation;
 
     private $payrollSettingRepository;
     private $payrollSettingRequester;

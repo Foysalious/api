@@ -10,6 +10,7 @@ class GrossSalaryBreakdownCalculate
     private $componentPercentage;
     private $totalAmountPerComponent;
     private $grossSalaryBreakdownWithTotalAmount;
+    private $breakdownData = [];
 
     public function __construct()
     {
@@ -65,8 +66,19 @@ class GrossSalaryBreakdownCalculate
         foreach ($gross_components as $payroll_component) {
             $percentage = floatValFormat(json_decode($payroll_component->setting, 1)['percentage']);
             $data[$payroll_component->name] = $percentage;
+            array_push($this->breakdownData, [
+                'name' => $payroll_component->name,
+                'is_default' => $payroll_component->is_default,
+                'is_taxable' => $payroll_component->is_taxable,
+                'percentage' => $percentage
+            ]);
         }
         return $data;
+    }
+
+    public function getGrossBreakdown()
+    {
+        return $this->breakdownData;
     }
 
 

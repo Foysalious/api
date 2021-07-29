@@ -1,7 +1,9 @@
 <?php namespace App\Console\Commands;
 
+use App\Sheba\Business\PayrollComponent\Components\Deductions\Tax\TaxCalculator;
 use App\Sheba\Business\PayrollComponent\Components\GrossSalaryBreakdownCalculate;
 use App\Sheba\Business\PayrollComponent\Components\PayrollComponentSchedulerCalculation;
+use App\Sheba\Business\PayrollSetting\PayrollCommonCalculation;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepo;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepo;
@@ -9,7 +11,6 @@ use Sheba\Dal\PayrollComponent\PayrollComponentRepository;
 use Sheba\Dal\PayrollComponentPackage\PayrollComponentPackageRepository;
 use Sheba\Dal\PayrollSetting\PayrollSettingRepository;
 use Sheba\Dal\PayrollSetting\PayrollSetting;
-use Sheba\Dal\PayrollSetting\PayDayType;
 use Sheba\Dal\Payslip\PayslipRepository;
 use Sheba\ModificationFields;
 use App\Models\Business;
@@ -17,7 +18,7 @@ use Carbon\Carbon;
 
 class Payslip extends Command
 {
-    use ModificationFields;
+    use ModificationFields, PayrollCommonCalculation;
 
     /** @var string The name and signature of the console command. */
     protected $signature = 'sheba:generate-payslips';
@@ -33,6 +34,8 @@ class Payslip extends Command
     private $businessHolidayRepo;
     private $payrollComponentSchedulerCalculation;
     private $payrollComponentPackageRepository;
+    /** @var TaxCalculator */
+    private $taxCalculator;
 
 
     /**
@@ -44,6 +47,7 @@ class Payslip extends Command
      * @param BusinessWeekendRepo $business_weekend_repo
      * @param BusinessHolidayRepo $business_holiday_repo
      * @param PayrollComponentSchedulerCalculation $payroll_component_scheduler_calculation
+     * @param TaxCalculator $tax_calculator
      */
     public function __construct(PayrollSettingRepository $payroll_setting_repository,
                                 PayrollComponentRepository $payroll_component_repository,
@@ -51,7 +55,8 @@ class Payslip extends Command
                                 PayslipRepository $payslip_repository,
                                 BusinessWeekendRepo $business_weekend_repo,
                                 BusinessHolidayRepo $business_holiday_repo,
-                                PayrollComponentSchedulerCalculation $payroll_component_scheduler_calculation)
+                                PayrollComponentSchedulerCalculation $payroll_component_scheduler_calculation,
+                                TaxCalculator $tax_calculator)
     {
         $this->payrollSettingRepository = $payroll_setting_repository;
         $this->payrollComponentRepository = $payroll_component_repository;
@@ -61,6 +66,7 @@ class Payslip extends Command
         $this->businessHolidayRepo = $business_holiday_repo;
         $this->payrollComponentSchedulerCalculation = $payroll_component_scheduler_calculation;
         $this->payrollComponentPackageRepository = app(PayrollComponentPackageRepository::class);
+        $this->taxCalculator = $tax_calculator;
         parent::__construct();
     }
 
@@ -69,7 +75,7 @@ class Payslip extends Command
         $payroll_settings = $this->payrollSettingRepository->where('is_enable', 1)->get();
         foreach ($payroll_settings as $payroll_setting) {
             $business = $payroll_setting->business;
-            if ($this->isPayDay($payroll_setting, $business)) {
+            if ($this->isPayDay($payroll_setting)) {
                 $business_members = $business->getAccessibleBusinessMember()->get();
                 foreach ($business_members as $business_member) {
                     $gross_salary_breakdown_percentage = $this->grossSalaryBreakdownCalculate->payslipComponentPercentageBreakdown($business_member);
@@ -78,6 +84,11 @@ class Payslip extends Command
                     $salary = $business_member->salary;
                     if ($salary) $gross_salary = floatValFormat($salary->gross_salary);
                     $gross_salary_breakdown = $this->grossSalaryBreakdownCalculate->totalAmountPerComponent($gross_salary, $gross_salary_breakdown_percentage);
+                    $tax_gross_breakdown = $this->grossSalaryBreakdownCalculate->getGrossBreakdown();
+                    $taxable_payroll_component = $this->payrollComponentSchedulerCalculation->getTaxComponentData();
+                    $this->taxCalculator->setBusinessMember($business_member)->setGrossSalary($gross_salary)->setGrossSalaryBreakdown($tax_gross_breakdown)->setTaxableComponent($taxable_payroll_component)->calculate();
+                    $monthly_tax_amount = $this->taxCalculator->getMonthlyTaxAmount();
+                    $payroll_component_calculation['payroll_component']['deduction']['tax'] = $monthly_tax_amount;
                     $payslip_data = [
                         'business_member_id' => $business_member->id,
                         'schedule_date' => Carbon::now(),
@@ -85,10 +96,10 @@ class Payslip extends Command
                         'salary_breakdown' => json_encode(array_merge(['gross_salary_breakdown' => $gross_salary_breakdown], $payroll_component_calculation))
                     ];
                     $this->payslipRepository->create($payslip_data);
-
                 }
                 $package_generate_information = $this->payrollComponentSchedulerCalculation->getPackageGenerateData();
                 if ($package_generate_information) $this->updatePackageGenerateDate($package_generate_information);
+                $this->updatePayDay($payroll_setting, $business);
             }
         }
     }
@@ -103,20 +114,11 @@ class Payslip extends Command
         }
     }
 
-    /**
-     * @param PayrollSetting $payroll_setting
-     * @param Business $business
-     * @return bool
-     */
-    private function isPayDay(PayrollSetting $payroll_setting, Business $business)
+    private function updatePayDay(PayrollSetting $payroll_setting, Business $business)
     {
-        if ($payroll_setting->pay_day_type == PayDayType::FIXED_DATE && Carbon::now()->day == $payroll_setting->pay_day) return true;
-        $last_day_of_month = Carbon::now()->lastOfMonth();
-        while ($last_day_of_month) {
-            if (!$this->businessWeekRepo->isWeekendByBusiness($business, $last_day_of_month) &&
-                !$this->businessHolidayRepo->isHolidayByBusiness($business, $last_day_of_month)) break;
-            $last_day_of_month = $last_day_of_month->subDay(1);
-        }
-        return $last_day_of_month->isToday();
+        $next_pay_day = $this->nextPayslipGenerationDay($business);
+        $data['next_pay_day'] = $next_pay_day;
+        $data['last_pay_day'] = Carbon::now()->format('Y-m-d');
+        $payroll_setting->update($data);
     }
 }
