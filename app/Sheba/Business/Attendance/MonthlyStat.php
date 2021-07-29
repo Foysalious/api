@@ -98,7 +98,7 @@ class MonthlyStat
             $attendance = $attendances->where('date', $date->toDateString())->first();
 
             if ($attendance) {
-                $overtime_in_minutes = $attendance->overtime_in_minutes;
+                $overtime_in_minutes = (int) $attendance->overtime_in_minutes;
                 $attendance_checkin_action = $attendance->checkinAction();
                 $attendance_checkout_action = $attendance->checkoutAction();
                 if ($this->forOneEmployee) {
