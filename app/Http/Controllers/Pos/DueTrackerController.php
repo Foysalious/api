@@ -233,8 +233,8 @@ class DueTrackerController extends Controller
     {
         try {
             $request->merge(['customer_id' => $customer_id]);
-            $this->validate($request, ['type' => 'required|in:due,deposit', 'amount' => 'required']);
-            if ($request->type == 'due') {
+            $this->validate($request, ['type' => 'required|in:receivable, payable', 'amount' => 'required']);
+            if ($request->type == 'receivable') {
                 $request['payment_link'] = $dueTrackerRepository->createPaymentLink($request, $this->paymentLinkCreator);
             }
             $dueTrackerRepository->sendSMS($request);
@@ -267,6 +267,9 @@ class DueTrackerController extends Controller
     }
 
     /**
+     * @param Request $request
+     * @param DueTrackerRepository $dueTrackerRepository
+     * @return JsonResponse
      * @throws UnauthorizedRequestFromExpenseTrackerException
      */
     public function createPosOrderPayment(Request $request, DueTrackerRepository $dueTrackerRepository)
