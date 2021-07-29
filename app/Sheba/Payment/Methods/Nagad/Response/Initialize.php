@@ -1,5 +1,6 @@
 <?php namespace Sheba\Payment\Methods\Nagad\Response;
 
+use Illuminate\Support\Facades\Log;
 use Sheba\Payment\Methods\Nagad\Stores\NagadStore;
 
 class Initialize extends Response
@@ -13,13 +14,11 @@ class Initialize extends Response
 
     public function getPaymentReferenceId()
     {
-        return isset($this->output['paymentReferenceId']) ? $this->output['paymentReferenceId'] : null;
+        return $this->output['paymentReferenceId'] ?? null;
     }
 
     public function getChallenge()
     {
-        return isset($this->output['challenge']) ? $this->output['challenge'] : null;
+        return $this->output['challenge'] ?? null;
     }
-
-
 }

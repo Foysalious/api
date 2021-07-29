@@ -51,15 +51,14 @@ class WalletController extends Controller
         }
     }
 
-
     /**
-     * @param Request        $request
+     * @param Request $request
      * @param PaymentManager $payment_manager
      * @return JsonResponse
      * @throws InitiateFailedException
      * @throws InvalidPaymentMethod
      */
-    public function recharge(Request $request, PaymentManager $payment_manager)
+    public function recharge(Request $request, PaymentManager $payment_manager): JsonResponse
     {
         $methods = implode(',', $request->user_type == 'affiliate' ? AvailableMethods::getBondhuPointPayments() : AvailableMethods::getWalletRechargePayments());
         $this->validate($request, [
@@ -70,28 +69,32 @@ class WalletController extends Controller
             'remember_token' => 'required'
         ]);
         $class_name = "App\\Models\\" . ucwords($request->user_type);
+
         if ($request->user_type === 'partner') {
             $user = (new PartnerRepository($request->user_id))->validatePartner($request->remember_token);
         } else {
-            $user = $class_name::where([['id', (int)$request->user_id], ['remember_token', $request->remember_token]])->first();
+            $user = $class_name::where([
+                ['id', (int)$request->user_id],
+                ['remember_token', $request->remember_token]
+            ])->first();
+
             if ($user instanceof Affiliate && $user->isNotVerified()) {
-                return api_response($request, null, 403, [
-                    'message' => 'অনুগ্রহপূর্বক আপনার বন্ধু প্রোফাইল ভেরিফাই করুন। প্রফাইল ভেরিফিকেশন এর জন্য প্লে স্টোর থেকে বন্ধু মোবাইল অ্যাপ ডাউনলোড করুন এবং এতে দেখানো পদ্ধতি অনুসরণ করুন। কোন সমস্যা সমাধানে কল করুন ১৬৫১৬'
-                ]);
+                return api_response($request, null, 403, ['message' => 'অনুগ্রহপূর্বক আপনার বন্ধু প্রোফাইল ভেরিফাই করুন। প্রফাইল ভেরিফিকেশন এর জন্য প্লে স্টোর থেকে বন্ধু মোবাইল অ্যাপ ডাউনলোড করুন এবং এতে দেখানো পদ্ধতি অনুসরণ করুন। কোন সমস্যা সমাধানে কল করুন ১৬৫১৬']);
             }
         }
 
         if (!$user) return api_response($request, null, 404, ['message' => 'User Not found.']);
-        $recharge_adapter = new RechargeAdapter($user, $request->amount);
 
+        $recharge_adapter = new RechargeAdapter($user, $request->amount);
         $payment = $payment_manager->setMethodName($request->payment_method)->setPayable($recharge_adapter->getPayable())->init();
+
         return api_response($request, $payment, 200, ['link' => $payment['link'], 'payment' => $payment->getFormattedPayment()]);
     }
 
     /**
-     * @param Request                          $request
+     * @param Request $request
      * @param PaymentStatusChangeLogRepository $paymentRepository
-     * @param BonusCredit                      $bonus_credit
+     * @param BonusCredit $bonus_credit
      * @return JsonResponse
      */
     public function purchase(Request $request, PaymentStatusChangeLogRepository $paymentRepository, BonusCredit $bonus_credit)
@@ -175,14 +178,16 @@ class WalletController extends Controller
      */
     public function getFaqs(Request $request)
     {
-        try {
-            $faqs = [
-                ['question' => '1. What is Bonus Credit?', 'answer' => 'Bonus credit is a promotional credit which is given by Sheba.xyz to make service purchase at discounted price.'], ['question' => '2. How to get bonus credit?', 'answer' => 'You can get bonus credit by purchasing services for which bonus credit offer is running. '], ['question' => '3. When does bonus credit expire?', 'answer' => 'From bonus credit list you can check the validity of each bonus credit.'], ['question' => '4. Where is bonus credit applicable?', 'answer' => 'Bonus credit can be applied in any sort of service booking. You can pay the full or partial amount of the total bill by bonus credit. '], ['question' => '5. What is Voucher?', 'answer' => 'Voucher is a promotional offer to buy bonus credit which can be used in any sort of service purchase. Each voucher has its own validity.'], ['question' => '6. How can I purchase Voucher?', 'answer' => 'Sheba voucher can be purchased through any payment method available at payment screen.'], ['question' => '7. Is there any hidden charge in purchasing Sheba Voucher?', 'answer' => 'There is no hidden charge applicable.']
-            ];
-            return api_response($request, $faqs, 200, ['faqs' => $faqs]);
-        } catch (Throwable $e) {
-            logError($e);
-            return api_response($request, null, 500);
-        }
+        $faqs = [
+            ['question' => '1. What is Bonus Credit?', 'answer' => 'Bonus credit is a promotional credit which is given by Sheba.xyz to make service purchase at discounted price.'],
+            ['question' => '2. How to get bonus credit?', 'answer' => 'You can get bonus credit by purchasing services for which bonus credit offer is running. '],
+            ['question' => '3. When does bonus credit expire?', 'answer' => 'From bonus credit list you can check the validity of each bonus credit.'],
+            ['question' => '4. Where is bonus credit applicable?', 'answer' => 'Bonus credit can be applied in any sort of service booking. You can pay the full or partial amount of the total bill by bonus credit. '],
+            ['question' => '5. What is Voucher?', 'answer' => 'Voucher is a promotional offer to buy bonus credit which can be used in any sort of service purchase. Each voucher has its own validity.'],
+            ['question' => '6. How can I purchase Voucher?', 'answer' => 'Sheba voucher can be purchased through any payment method available at payment screen.'],
+            ['question' => '7. Is there any hidden charge in purchasing Sheba Voucher?', 'answer' => 'There is no hidden charge applicable.']
+        ];
+
+        return api_response($request, $faqs, 200, ['faqs' => $faqs]);
     }
 }
