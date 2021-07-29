@@ -195,6 +195,16 @@ class Updater
     }
 
     /**
+     * @param Business $business
+     * @return $this
+     */
+    public function setBusiness(Business $business)
+    {
+        $this->business = $business;
+        return $this;
+    }
+
+    /**
      * @param BusinessMember $business_member
      * @return $this
      */
@@ -405,9 +415,7 @@ class Updater
 
             $profile_bank_data = [];
 
-            if ($this->financialRequest->getBankName() == 'null') {
-                $profile_bank_data['bank_name'] = null;
-            } else {
+            if ($this->isNull($this->financialRequest->getBankName())) {
                 $profile_bank_data['bank_name'] = $this->financialRequest->getBankName();
             }
             if ($this->financialRequest->getBankAccNumber() == 'null') {
@@ -420,6 +428,7 @@ class Updater
             } else {
                 $profile_bank_data['profile_id'] = $this->profile->id;
             }
+
             if ($this->financialRequest->getBankAccNumber() != 'null') $this->profileBankInfoRepository->create($profile_bank_data);
 
             DB::commit();
@@ -619,12 +628,13 @@ class Updater
     }
 
     /**
-     * @param Business $business
-     * @return $this
+     * @param $data
+     * @return bool
      */
-    public function setBusiness(Business $business)
+    private function isNull($data)
     {
-        $this->business = $business;
-        return $this;
+        if ($data == 'null') return true;
+        if ($data == null) return true;
+        return false;
     }
 }
