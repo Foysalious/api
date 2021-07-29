@@ -4,6 +4,7 @@
 namespace Sheba\PaymentLink;
 
 use App\Models\Payment;
+use App\Models\PosCustomer;
 use App\Sheba\AccountingEntry\Repository\PaymentLinkAccountingRepository;
 use App\Sheba\AccountingEntry\Repository\PaymentLinkRepository;
 use Illuminate\Support\Facades\Log;
@@ -24,6 +25,7 @@ class PaymentLinkTransaction
     private $formattedRechargeAmount;
     /** @var HasWalletTransaction $receiver */
     private $receiver;
+    private $customer;
     private $tax;
     private $walletTransactionHandler;
     /**
@@ -120,6 +122,12 @@ class PaymentLinkTransaction
     public function setReceiver($receiver)
     {
         $this->receiver = $receiver;
+        return $this;
+    }
+
+    public function setCustomer($customer)
+    {
+        $this->customer = $customer;
         return $this;
     }
 
@@ -235,13 +243,21 @@ class PaymentLinkTransaction
      * @throws AccountingEntryServerError
      */
     private function storePaymentLinkEntry($amount, $feeTransaction, $interest) {
+        $customer = null;
+        if (isset($this->customer)) {
+            $customer = PosCustomer::where('profile_id', $this->customer->profile->id)->first();
+        }
         /** @var PaymentLinkAccountingRepository $paymentLinkRepo */
         $paymentLinkRepo =  app(PaymentLinkAccountingRepository::class);
-        Log::info(["payment link charges", $amount, $feeTransaction, $interest]);
-        $paymentLinkRepo->setAmount($amount)
+        Log::info(["payment link charges", $amount, $feeTransaction, $interest, $customer->id]);
+        $transaction = $paymentLinkRepo->setAmount($amount)
             ->setBankTransactionCharge($feeTransaction)
             ->setInterest($interest)
-            ->setAmountCleared($amount)
-            ->store($this->receiver->id);
+            ->setAmountCleared($amount);
+        if ($customer) {
+            $transaction = $transaction->setCustomerId(isset($customer) ? $customer->id: null)
+                    ->setCustomerName(isset($this->customer) ? $this->customer->profile->name: null);
+        }
+        $transaction->store($this->receiver->id);
     }
 }
