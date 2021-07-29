@@ -42,7 +42,6 @@ abstract class TopUpCommission
     {
         $this->topUpOrder = $top_up_order;
         $this->amount = $this->topUpOrder->amount;
-
         $this->setAgent($top_up_order->agent)->setTopUpVendor($top_up_order->vendor)->setVendorCommission();
 
         unset($top_up_order->agent);
@@ -115,6 +114,7 @@ abstract class TopUpCommission
             ->setLog($log_message)
             ->setTopUpOrder($this->topUpOrder)
             ->setIsRobiTopUp($this->topUpOrder->isRobiWalletTopUp());
+
         $this->transaction =  $this->agent->topUpTransaction($transaction);
     }
 
