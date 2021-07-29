@@ -4,12 +4,15 @@
 use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
 use App\Models\PosCustomer;
+use App\Models\PosOrder;
+use App\Models\PosOrderPayment;
 use Illuminate\Http\Request;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
+use Sheba\Pos\Payment\Creator as PaymentCreator;
 
 class BaseRepository
 {
@@ -71,5 +74,31 @@ class BaseRepository
             $partner_id = (int) $request->partner;
         }
         return Partner::find($partner_id);
+    }
+
+    public function createPosOrderPayment($amount_cleared, $pos_order_id, $payment_method)
+    {
+        /** @var PosOrder $order */
+        $order = PosOrder::find($pos_order_id);
+        if(isset($order)) {
+            $order->calculate();
+            if ($order->getDue() > 0) {
+                $payment_data['pos_order_id'] = $pos_order_id;
+                $payment_data['amount']       = $amount_cleared;
+                $payment_data['method']       = $payment_method;
+                /** @var PaymentCreator $paymentCreator */
+                $paymentCreator = app(PaymentCreator::class);
+                $paymentCreator->credit($payment_data);
+            }
+        }
+    }
+
+    public function removePosOrderPayment($pos_order_id, $amount){
+        $payment = PosOrderPayment::where('pos_order_id', $pos_order_id)
+            ->where('amount', $amount)
+            ->where('transaction_type', 'Credit')
+            ->first();
+
+        return $payment ? $payment->delete() : false;
     }
 }

@@ -26,12 +26,16 @@ class AccountingRepository extends BaseRepository
         $data = $this->createEntryData($request, $type, $request->source_id);
         $url = "api/entries/";
         try {
-            return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->post($url, $data);
+            $data = $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->post($url, $data);
+            foreach ($data as $datum) {
+                if ($datum['source_type'] == 'pos') {
+                    $this->createPosOrderPayment($datum['amount_cleared'], $datum['source_id'], 'cod');
+                }
+            }
         } catch (AccountingEntryServerError $e) {
             logError($e);
         }
     }
-
 
     /**
      * @param $request
