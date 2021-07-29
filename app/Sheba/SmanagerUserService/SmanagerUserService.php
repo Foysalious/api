@@ -124,6 +124,7 @@ class SmanagerUserService
 
     /**
      * @return array
+     * @throws InvalidPartnerPosCustomer
      */
     public function getDetails(): array
     {
@@ -151,10 +152,14 @@ class SmanagerUserService
         return $customer_details;
     }
 
+    public function getOrders()
+    {
+        return $this->smanagerUserServerClient->get('api/v1/partners/'.$this->partner->id.'/customers'.$this->customerId.'/orders');
+    }
+
     public function showCustomerListByPartnerId()
     {
         return $this->getCustomerListByPartnerId();
-
     }
 
     public function makeCreateData()
