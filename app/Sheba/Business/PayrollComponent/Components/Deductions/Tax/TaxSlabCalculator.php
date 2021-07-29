@@ -29,8 +29,6 @@ class TaxSlabCalculator
         $fifth_slab = $this->netTaxableIncome > (PayrollConstGetter::FIRST_TAX_SLAB + PayrollConstGetter::SECOND_TAX_SLAB + PayrollConstGetter::THIRD_TAX_SLAB + PayrollConstGetter::FOURTH_TAX_SLAB) ? $this->netTaxableIncome - (PayrollConstGetter::FIRST_TAX_SLAB +  PayrollConstGetter::SECOND_TAX_SLAB + PayrollConstGetter::THIRD_TAX_SLAB + PayrollConstGetter::FOURTH_TAX_SLAB) : 0;
         $fifth_slab_tax_amount = ($fifth_slab * PayrollConstGetter::FIFTH_TAX_SLAB_PERCENTAGE) / 100;
 
-        //dd($first_slab_tax_amount, $second_slab_tax_amount, $third_slab_tax_amount, $fourth_slab_tax_amount, $fifth_slab_tax_amount);
-
         return ($first_slab_tax_amount + $second_slab_tax_amount + $third_slab_tax_amount + $fourth_slab_tax_amount + $fifth_slab_tax_amount);
     }
 }

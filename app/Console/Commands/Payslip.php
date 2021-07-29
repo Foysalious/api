@@ -2,7 +2,6 @@
 
 use App\Sheba\Business\PayrollComponent\Components\Deductions\Tax\TaxCalculator;
 use App\Sheba\Business\PayrollComponent\Components\GrossSalaryBreakdownCalculate;
-use App\Sheba\Business\PayrollComponent\Components\PackageCalculator;
 use App\Sheba\Business\PayrollComponent\Components\PayrollComponentSchedulerCalculation;
 use App\Sheba\Business\PayrollSetting\PayrollCommonCalculation;
 use Illuminate\Support\Facades\DB;
@@ -12,7 +11,6 @@ use Sheba\Dal\PayrollComponent\PayrollComponentRepository;
 use Sheba\Dal\PayrollComponentPackage\PayrollComponentPackageRepository;
 use Sheba\Dal\PayrollSetting\PayrollSettingRepository;
 use Sheba\Dal\PayrollSetting\PayrollSetting;
-use Sheba\Dal\PayrollSetting\PayDayType;
 use Sheba\Dal\Payslip\PayslipRepository;
 use Sheba\ModificationFields;
 use App\Models\Business;
@@ -91,18 +89,17 @@ class Payslip extends Command
                     $this->taxCalculator->setBusinessMember($business_member)->setGrossSalary($gross_salary)->setGrossSalaryBreakdown($tax_gross_breakdown)->setTaxableComponent($taxable_payroll_component)->calculate();
                     $monthly_tax_amount = $this->taxCalculator->getMonthlyTaxAmount();
                     $payroll_component_calculation['payroll_component']['deduction']['tax'] = $monthly_tax_amount;
-                    dd($monthly_tax_amount, $payroll_component_calculation);
                     $payslip_data = [
                         'business_member_id' => $business_member->id,
                         'schedule_date' => Carbon::now(),
                         'status' => 'pending',
                         'salary_breakdown' => json_encode(array_merge(['gross_salary_breakdown' => $gross_salary_breakdown], $payroll_component_calculation))
                     ];
-                    //$this->payslipRepository->create($payslip_data);
+                    $this->payslipRepository->create($payslip_data);
                 }
                 $package_generate_information = $this->payrollComponentSchedulerCalculation->getPackageGenerateData();
-                //if ($package_generate_information) $this->updatePackageGenerateDate($package_generate_information);
-                //$this->updatePayDay($payroll_setting, $business);
+                if ($package_generate_information) $this->updatePackageGenerateDate($package_generate_information);
+                $this->updatePayDay($payroll_setting, $business);
             }
         }
     }
@@ -117,30 +114,9 @@ class Payslip extends Command
         }
     }
 
-    /**
-     * @param PayrollSetting $payroll_setting
-     * @return bool
-     */
-    private function isPayDay(PayrollSetting $payroll_setting)
-    {
-        $next_pay_day = $payroll_setting->next_pay_day;
-        if (Carbon::now()->format('Y-m-d') == $next_pay_day) return true;
-        return false;
-    }
-
     private function updatePayDay(PayrollSetting $payroll_setting, Business $business)
     {
-        $pay_day_type = $payroll_setting->pay_day_type;
-        $business_pay_day = $payroll_setting->pay_day;
-        $next_pay_day = null;
-        $data = [];
-        if ($pay_day_type == PayDayType::FIXED_DATE) {
-            $next_pay_day = Carbon::now()->addMonth()->day($business_pay_day)->format('Y-m-d');
-        } elseif ($pay_day_type == PayDayType::LAST_WORKING_DAY){
-            $last_day_of_month = Carbon::now()->addMonth()->lastOfMonth();
-            $last_day_of_month = $this->lastWorkingDayOfMonth($business, $last_day_of_month);
-            $next_pay_day = $last_day_of_month->format('Y-m-d');
-        }
+        $next_pay_day = $this->nextPayslipGenerationDay($business);
         $data['next_pay_day'] = $next_pay_day;
         $data['last_pay_day'] = Carbon::now()->format('Y-m-d');
         $payroll_setting->update($data);
