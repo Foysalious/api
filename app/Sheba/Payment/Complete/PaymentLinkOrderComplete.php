@@ -207,7 +207,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             if ($this->transaction->isPaidByCustomer()) {
                 $this->target->update(['interest' => 0, 'bank_transaction_charge' => 0]);
             }
-            $this->storeAccountingJournal($payment_data);
+//            $this->storeAccountingJournal($payment_data);
         }
         if ($this->target instanceof ExternalPayment) {
             $this->target->payment_id = $this->payment->id;
@@ -270,12 +270,12 @@ class PaymentLinkOrderComplete extends PaymentComplete
         /** @var Payable $payable */
         $payable = Payable::find($this->payment->payable_id);
         (new PushNotificationHandler())->send([
-                                                  "title"      => 'Order Successful',
-                                                  "message"    => "$formatted_amount Tk has been collected from {$payable->getName() } by order link- {$payment_link->getLinkID()}",
-                                                  "event_type" => $event_type,
-                                                  "event_id"   => $this->target->id,
-                                                  "sound"      => "notification_sound",
-                                                  "channel_id" => $channel
-                                              ], $topic, $channel, $sound);
+          "title"      => 'Order Successful',
+          "message"    => "$formatted_amount Tk has been collected from {$payable->getName() } by order link- {$payment_link->getLinkID()}",
+          "event_type" => $event_type,
+          "event_id"   => $this->target->id,
+          "sound"      => "notification_sound",
+          "channel_id" => $channel
+        ], $topic, $channel, $sound);
     }
 }

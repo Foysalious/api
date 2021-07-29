@@ -249,7 +249,6 @@ class PaymentLinkTransaction
         }
         /** @var PaymentLinkAccountingRepository $paymentLinkRepo */
         $paymentLinkRepo =  app(PaymentLinkAccountingRepository::class);
-        Log::info(["payment link charges", $amount, $feeTransaction, $interest, $customer->id]);
         $transaction = $paymentLinkRepo->setAmount($amount)
             ->setBankTransactionCharge($feeTransaction)
             ->setInterest($interest)
