@@ -329,7 +329,16 @@ class FeatureTestCase extends TestCase
             'customer' =>[
                 'id' => $this->customer->id
             ],
-            'resource' => null,
+            'resource' => [
+                'id' => $this->resource->id,
+                "partner" => [
+                    "id" => $this->partner->id,
+                    "name" => $this->partner->name,
+                    "sub_domain" => $this->partner->sub_domain,
+                    "logo" => $this->partner->logo,
+                    "is_manager" => true
+                ]
+            ],
             'member' => [
                 'id' => $this->member->id
             ],
