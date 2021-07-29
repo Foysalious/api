@@ -1,5 +1,9 @@
 <?php namespace Sheba\TopUp\Commission;
 
+use ReflectionException;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\AccountingEntry\Exceptions\InvalidSourceException;
+use Sheba\AccountingEntry\Exceptions\KeyNotFoundException;
 use Sheba\ExpenseTracker\AutomaticExpense;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
@@ -9,20 +13,38 @@ use Sheba\TopUp\TopUpCommission;
 
 class Partner extends TopUpCommission
 {
-    private $partner;
-    private $topUpDisburse;
-
-    public function __construct(TopUpCommission $topUpCommission = null, \App\Models\Partner $partner = null)
-    {
-        $this->topUpDisburse =$topUpCommission;
-        $this->partner = $partner;
-    }
-
+    /**
+     * @throws AccountingEntryServerError
+     * @throws InvalidSourceException
+     * @throws ReflectionException
+     * @throws KeyNotFoundException
+     */
     public function disburse()
     {
         $this->storeAgentsCommission();
         $this->storeExpenseIncome();
-//        $this->saleTopUp();
+        $this->storeTopUpJournal();
+    }
+
+    /**
+     * @throws ReflectionException
+     * @throws AccountingEntryServerError
+     * @throws InvalidSourceException
+     * @throws KeyNotFoundException
+     */
+    private function storeTopUpJournal()
+    {
+        /** @var \App\Models\Partner $partner */
+        $partner = $this->agent;
+        (new JournalCreateRepository())
+            ->setTypeId($partner->id)
+            ->setSource($this->transaction)
+            ->setAmount($this->transaction->amount)
+            ->setDebitAccountKey(AccountKeys\Asset\Cash::CASH)
+            ->setCreditAccountKey(AccountKeys\Income\TopUp::TOP_UP)
+            ->setDetails("TopUp for sale")
+            ->setReference("TopUp sales amount is" . $this->transaction->amount . " tk.")
+            ->store();
     }
 
     private function storeExpenseIncome()
@@ -54,20 +76,6 @@ class Partner extends TopUpCommission
         $entryRepo = app(AutomaticEntryRepository::class);
         $entryRepo = $entryRepo->setPartner($partner)->setSourceType(class_basename($this->topUpOrder))->setSourceId($this->topUpOrder->id);
         $entryRepo->delete();
-    }
-
-    private function saleTopUp()
-    {
-        $transaction = $this->getTopUpTransaction();
-        (new JournalCreateRepository())
-            ->setTypeId($this->partner->id)
-            ->setSource($transaction)
-            ->setAmount($transaction->amount)
-            ->setDebitAccountKey(AccountKeys\Asset\Cash::CASH)
-            ->setCreditAccountKey(AccountKeys\Income\TopUp::TOP_UP)
-            ->setDetails("TopUp for sale")
-            ->setReference("TopUp sales amount is" . $transaction->amount . " tk.")
-            ->store();
     }
 
     private function refundTopUp()
