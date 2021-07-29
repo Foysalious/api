@@ -58,4 +58,16 @@ class PosCustomerController extends Controller
             ->updatePosCustomer();
     }
 
+    /**
+     * @param Request $request
+     * @param $customerId
+     * @return JsonResponse
+     */
+    public function orders(Request $request, $customerId)
+    {
+        $partner = $request->auth_user->getPartner();
+        $orders = $this->smanagerUserService->setPartner($partner->id)->setCustomerId($customerId)->getOrders();
+        return http_response($request, null, 200, ['message' => 'Successful', 'data' => $orders]);
+    }
+
 }
