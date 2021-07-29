@@ -503,7 +503,7 @@ class OrderController extends Controller
                 $info['user'] = [
                     'name'   => $customer->name,
                     'mobile' => $customer->mobile,
-                    'address' => $customer->address
+                    'address' => !$pos_order->address?$customer->address:$pos_order->address
                 ];
             }
             $invoice_name = 'pos_order_invoice_' . $pos_order->id;
@@ -550,7 +550,7 @@ class OrderController extends Controller
                 $info['user'] = [
                     'name'   => $customer->name,
                     'mobile' => $customer->mobile,
-                    'address' => $customer->address
+                    'address' => !$pos_order->address?$customer->address:$pos_order->address
                 ];
             }
             $invoice_name = 'pos_order_invoice_' . $pos_order->id;
