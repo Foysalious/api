@@ -176,7 +176,7 @@ class SmanagerUserService
     public function storePosCustomer()
     {
         $data = $this->makeCreateData();
-        return $this->smanagerUserServerClient->post('api/v1/partners/' . $this->partner->id, $data);
+        return $this->smanagerUserServerClient->post('api/v1/partners/' . $this->partner->id.'/users', $data);
     }
 
     public function makeUpdateData()
@@ -211,7 +211,7 @@ class SmanagerUserService
      */
     private function getCustomerInfoFromSmanagerUserService()
     {
-        return $this->smanagerUserServerClient->get('api/v1/partners/'.$this->partner->id.'/pos-users/'.$this->customerId);
+        return $this->smanagerUserServerClient->get('api/v1/partners/'.$this->partner->id.'/pos-users/'.$this->customerId.'/users');
     }
 
     /**
@@ -235,6 +235,6 @@ class SmanagerUserService
 
     private function getCustomerListByPartnerId()
     {
-        return $this->smanagerUserServerClient->get('api/v1/partners/'.$this->partner->id);
+        return $this->smanagerUserServerClient->get('api/v1/partners/'.$this->partner->id.'/users');
     }
 }
