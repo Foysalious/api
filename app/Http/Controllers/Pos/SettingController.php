@@ -6,12 +6,10 @@ use App\Models\Partner;
 use App\Models\PartnerPosSetting;
 use App\Models\PosCustomer;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
-use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
 use Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\FeatureType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
 use Sheba\Pos\Repositories\PosSettingRepository;
@@ -112,10 +110,10 @@ class SettingController extends Controller
             ->setMessage([
                 'partner_name' => $partner->name,
                 'due_amount' => $request->due_amount
-            ]);
+            ])
+            ->setMobile($customer->profile->mobile);
         $sms_cost = $sms->estimateCharge();
         if ((double)$partner->wallet < $sms_cost) throw new InsufficientBalanceException();
-
         $sms->send($customer->profile->mobile, [
             'partner_name' => $partner->name,
             'due_amount' => $request->due_amount

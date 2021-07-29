@@ -199,8 +199,8 @@ class ExpenseRepo
                         }
                     ]);
                 }
-            ])->select('id', 'member_id', 'amount', 'created_at', DB::raw('YEAR(created_at) year, MONTH(created_at) month'), DB::raw('SUM(amount) amount'))
-            ->groupby('year', 'month', 'member_id')
+            ])->select('id', 'member_id', 'amount', 'type', 'created_at', DB::raw('YEAR(created_at) year, MONTH(created_at) month'), DB::raw('SUM(amount) amount'))
+            ->groupby('year', 'month', 'member_id', 'type')
             ->orderBy('created_at', 'desc');
     }
 

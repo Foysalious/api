@@ -38,6 +38,7 @@ class Route
             $api->post('service-requests', 'ServiceRequestController@store');
             $api->get('validate-transaction-id', 'PartnerTransactionController@validateTransactionId');
             $api->post('transactions/{transactionID}', 'ShebaController@checkTransactionStatus');
+            $api->get('transactions/info/{transactionID}', 'ShebaController@paymentInitiatedInfo');
             $api->get('transactions/{transactionID}', 'ShebaController@checkTransactionStatus');
             //$api->post('password/email', 'Auth\PasswordController@sendResetPasswordEmail');
             $api->post('password/validate', 'Auth\PasswordController@validatePasswordResetCode');
@@ -158,7 +159,7 @@ class Route
                 $api->get('current', 'LocationController@getCurrent');
             });
             $api->group(['prefix' => 'top-up', 'middleware' => ['topUp.auth']], function ($api) {
-                $api->get('/vendor', 'TopUp\TopUpController@getVendor');
+                $api->get('/vendor/{user?}', 'TopUp\TopUpController@getVendor')->where('user', "(business|partner|affiliate)");
                 $api->post('/get-topup-token', 'TopUp\TopUpController@generateJwt');
                 $api->post('/{user?}', 'TopUp\TopUpController@topUp')->where('user', "(business|partner|affiliate)");
                 $api->post('/bulk', 'TopUp\TopUpController@bulkTopUp');
@@ -166,6 +167,7 @@ class Route
                 $api->get('/active-bulk', 'TopUp\TopUpController@activeBulkTopUps');
                 $api->get('/special-amount-data', 'TopUp\TopUpController@specialAmount');
                 $api->get('bulk-list', 'TopUp\TopUpController@bulkList');
+                $api->get('/all-top-up', 'TopUp\TopUpController@allTopUps');
                 /**
                  * FOR TEST
                  * $api->post('top-up-test', 'TopUp\\TopUpController@topUpTest');
@@ -198,8 +200,11 @@ class Route
             $api->post('admin/bkash-balance', 'Bkash\\BkashPayoutController@queryBalance');
             //$api->post('forget-password', 'ProfileController@forgetPassword');
             /** EMI INFO */
-            $api->get('emi-info', 'ShebaController@getEmiInfo');
-            $api->get('emi-info/manager', 'ShebaController@emiInfoForManager');
+            $api->group(['prefix' => 'emi-info'], function ($api) {
+                $api->get('/', 'ShebaController@getEmiInfo');
+                $api->get('/manager', 'ShebaController@emiInfoForManager');
+                $api->get('/bank-list', 'ShebaController@getEmiBankList');
+            });
 
             $api->group(['prefix' => 'tickets', 'middleware' => 'jwtGlobalAuth'], function ($api) {
 //                $api->get('validate-token', 'ProfileController@validateJWT');
@@ -211,7 +216,7 @@ class Route
             $api->get('service-price-calculate', 'Service\ServicePricingController@getCalculatedPrice');
             $api->post('due-tracker/create-pos-order-payment', 'Pos\DueTrackerController@createPosOrderPayment');
             $api->delete('due-tracker/remove-pos-order-payment/{pos_order_id}', 'Pos\DueTrackerController@removePosOrderPayment');
-            $api->group(['prefix' => 'voucher', 'middleware' => ['vendor.auth']], function ($api) {
+            $api->group(['prefix' => 'voucher'], function ($api) {
                 $api->post('/vendor', 'VoucherController@voucherAgainstVendor');
             });
         });

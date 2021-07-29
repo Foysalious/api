@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ab9dad5cb3d9254a3c941982b747adf7",
+    "content-hash": "efa9af200e87c638a611efb96b7e51a5",
     "packages": [
         {
             "name": "algolia/algoliasearch-client-php",
@@ -3718,10 +3718,6 @@
                 "png",
                 "png2webp"
             ],
-            "support": {
-                "issues": "https://github.com/rosell-dk/webp-convert/issues",
-                "source": "https://github.com/rosell-dk/webp-convert/tree/2.4.0"
-            },
             "time": "2020-11-10T11:24:50+00:00"
         },
         {
@@ -3964,7 +3960,8 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
-                "reference": "de203e9c37cbe5484725d5a13db2573e9312c66b"
+                "reference": "408502013b6fe1aa9b8db623655cfa3499bda552"
+
             },
             "require": {
                 "php": ">=5.4"
@@ -3991,7 +3988,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2021-06-21T09:25:46+00:00"
+            "time": "2021-06-23T05:39:44+00:00"
         },
         {
             "name": "sheba/elasticsearch",
@@ -4103,7 +4100,7 @@
         },
         {
             "name": "sheba/sms",
-            "version": "dev-feature/sms-service",
+            "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "https://mac_pasha@bitbucket.org/startern/sheba_sms.git",

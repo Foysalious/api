@@ -7,11 +7,13 @@ use App\Sheba\Payment\Methods\Nagad\NagadBuilder;
 use Sheba\Helpers\ConstGetter;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
 use Sheba\Payment\Methods\Bkash\Bkash;
+use Sheba\Payment\Methods\BondhuBalance;
 use Sheba\Payment\Methods\Cbl\Cbl;
+use Sheba\Payment\Methods\Ebl\EblBuilder;
 use Sheba\Payment\Methods\Nagad\Nagad;
 use Sheba\Payment\Methods\OkWallet\OkWallet;
 use Sheba\Payment\Methods\PartnerWallet;
-use Sheba\Payment\Methods\BondhuBalance;
+use Sheba\Payment\Methods\PaymentMethod;
 use Sheba\Payment\Methods\PortWallet\PortWallet;
 use Sheba\Payment\Methods\Ssl\Ssl;
 use Sheba\Payment\Methods\Ssl\SslBuilder;
@@ -33,6 +35,7 @@ class PaymentStrategy
     const SSL_DONATION   = "ssl_donation";
     const PORT_WALLET    = "port_wallet";
     const NAGAD          = 'nagad';
+    const EBL            = 'ebl';
 
     public static function getDefaultOnlineMethod()
     {
@@ -42,7 +45,7 @@ class PaymentStrategy
     /**
      * @param         $method
      * @param Payable $payable
-     * @return Bkash|Cbl|Ssl|Wallet|PartnerWallet|OkWallet|PortWallet|Nagad|BondhuBalance
+     * @return PaymentMethod
      * @throws InvalidPaymentMethod
      */
     public static function getMethod($method, Payable $payable)
@@ -72,6 +75,8 @@ class PaymentStrategy
                 return app(PortWallet::class);
             case self::NAGAD:
                 return NagadBuilder::get($payable);
+            case self::EBL:
+                return EblBuilder::get($payable);
         }
     }
 

@@ -364,6 +364,7 @@ class PartnerRegistrationController extends Controller
             return api_response($request, null, 403, ['message' => 'You already have a company!']);
         $request['package_id']   = env('LITE_PACKAGE_ID');
         $request['billing_type'] = 'monthly';
+        $request->merge(['number' => $profile->mobile]);
         $data                    = $this->makePartnerCreateData($request);
         $partner = $this->createPartner($resource, $data);
 
@@ -413,6 +414,7 @@ class PartnerRegistrationController extends Controller
                 return api_response($request, null, 200, ['info' => $info]);
             }
         }
+        if ($profile) $request->merge(['number' => $profile->mobile]);
         $data                      = $this->makePartnerCreateData($request);
         $data['moderation_status'] = 'pending';
         $partner = $this->createPartner($resource, $data);

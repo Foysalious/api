@@ -85,6 +85,24 @@ class FormItemBuilder
      * @return array
      * @throws ReflectionException
      */
+    private function banner()
+    {
+        return $this->initItem()->toArray();
+    }
+
+    /**
+     * @return array
+     * @throws ReflectionException
+     */
+    private function warning()
+    {
+        return $this->initItem()->toArray();
+    }
+
+    /**
+     * @return array
+     * @throws ReflectionException
+     */
     private function date()
     {
         return $this->initItem()->toArray();
@@ -163,5 +181,11 @@ class FormItemBuilder
     {
         return $this->initItem()->toArray();
     }
-
+    /**
+     * @return array
+     * @throws ReflectionException
+     */
+    private function conditionalSelect() {
+        return $this->multipleView();
+    }
 }
