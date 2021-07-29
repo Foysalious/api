@@ -216,7 +216,7 @@ class SmanagerUserService
      */
     private function getCustomerInfoFromSmanagerUserService()
     {
-        return $this->smanagerUserServerClient->get('api/v1/partners/'.$this->partner->id.'/pos-users/'.$this->customerId.'/users');
+        return $this->smanagerUserServerClient->get('api/v1/partners/'.$this->partner->id.'/pos-users/'.$this->customerId);
     }
 
     /**
