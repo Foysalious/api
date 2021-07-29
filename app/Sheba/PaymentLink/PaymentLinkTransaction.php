@@ -4,8 +4,10 @@
 namespace Sheba\PaymentLink;
 
 use App\Models\Payment;
+use App\Models\PosCustomer;
 use App\Sheba\AccountingEntry\Repository\PaymentLinkAccountingRepository;
 use App\Sheba\AccountingEntry\Repository\PaymentLinkRepository;
+use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Transactions\Types;
@@ -23,6 +25,7 @@ class PaymentLinkTransaction
     private $formattedRechargeAmount;
     /** @var HasWalletTransaction $receiver */
     private $receiver;
+    private $customer;
     private $tax;
     private $walletTransactionHandler;
     /**
@@ -122,6 +125,12 @@ class PaymentLinkTransaction
         return $this;
     }
 
+    public function setCustomer($customer)
+    {
+        $this->customer = $customer;
+        return $this;
+    }
+
     public function getFee()
     {
         return $this->fee;
@@ -217,23 +226,6 @@ class PaymentLinkTransaction
         return $this;
     }
 
-
-    /**
-     * @param $amount
-     * @param $feeTransaction
-     * @param $interest
-     * @throws AccountingEntryServerError
-     */
-    private function storePaymentLinkEntry($amount, $feeTransaction, $interest) {
-        /** @var PaymentLinkAccountingRepository $paymentLinkRepo */
-        $paymentLinkRepo =  app(PaymentLinkAccountingRepository::class);
-        $paymentLinkRepo->setAmount($amount)
-            ->setBankTransactionCharge($feeTransaction)
-            ->setInterest($interest)
-            ->setAmountCleared($amount)
-            ->store($this->receiver->id);
-    }
-
     /**
      * @return float
      */
@@ -244,4 +236,28 @@ class PaymentLinkTransaction
         return round($real_amount, 2);
     }
 
+    /**
+     * @param $amount
+     * @param $feeTransaction
+     * @param $interest
+     * @throws AccountingEntryServerError
+     */
+    private function storePaymentLinkEntry($amount, $feeTransaction, $interest) {
+        $customer = null;
+        if (isset($this->customer)) {
+            $customer = PosCustomer::where('profile_id', $this->customer->profile->id)->first();
+        }
+        /** @var PaymentLinkAccountingRepository $paymentLinkRepo */
+        $paymentLinkRepo =  app(PaymentLinkAccountingRepository::class);
+        Log::info(["payment link charges", $amount, $feeTransaction, $interest, $customer->id]);
+        $transaction = $paymentLinkRepo->setAmount($amount)
+            ->setBankTransactionCharge($feeTransaction)
+            ->setInterest($interest)
+            ->setAmountCleared($amount);
+        if ($customer) {
+            $transaction = $transaction->setCustomerId(isset($customer) ? $customer->id: null)
+                    ->setCustomerName(isset($this->customer) ? $this->customer->profile->name: null);
+        }
+        $transaction->store($this->receiver->id);
+    }
 }
