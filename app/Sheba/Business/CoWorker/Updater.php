@@ -384,7 +384,6 @@ class Updater
     {
         DB::beginTransaction();
         try {
-            $this->getProfile();
             $tin_certificate_name = $tin_certificate_link = null;
             $tin_certificate = $this->financialRequest->getTinCertificate();
 
@@ -406,6 +405,7 @@ class Updater
             $this->profileRepository->update($this->profile, $profile_data);
 
             $profile_bank_data = [];
+
             if ($this->financialRequest->getBankName() == 'null') {
                 $profile_bank_data['bank_name'] = null;
             } else {
