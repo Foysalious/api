@@ -75,11 +75,6 @@ class PaymentLinkOrderComplete extends PaymentComplete
                 $this->paymentRepository->setPayment($this->payment);
                 $payable = $this->payment->payable;
                 $payableUser = $payable->user;
-                $this->target = $this->paymentLink->getTarget();
-                Log::info(["payment link target check", $this->target, $this->target instanceof PosOrder]);
-                if ($this->target instanceof PosOrder) {
-                    $payableUser = null;
-                }
                 $this->setModifier($customer = $payable->user);
                 $this->completePayment();
                 $this->processTransactions($this->payment_receiver, $payableUser);
@@ -208,7 +203,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             if ($this->transaction->isPaidByCustomer()) {
                 $this->target->update(['interest' => 0, 'bank_transaction_charge' => 0]);
             }
-            $this->storeAccountingJournal($payment_data);
+//            $this->storeAccountingJournal($payment_data);
         }
         if ($this->target instanceof ExternalPayment) {
             $this->target->payment_id = $this->payment->id;
