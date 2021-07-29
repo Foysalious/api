@@ -15,7 +15,7 @@ class PartnerStatusAuthMiddleware
     /**
      * @var array[]
      */
-    private $access;
+    protected $access;
 
     public function __construct()
     {
