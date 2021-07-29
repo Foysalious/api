@@ -137,6 +137,7 @@ class PaymentLinkController extends Controller
 
     public function store(Request $request)
     {
+        dd(123);
         try {
             $this->validate($request, [
                 'amount'             => 'required',

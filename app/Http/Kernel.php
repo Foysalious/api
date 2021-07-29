@@ -23,6 +23,7 @@ use App\Http\Middleware\MemberAuthMiddleware;
 use App\Http\Middleware\PartnerJobAuthMiddleware;
 use App\Http\Middleware\PartnerOrderAuthMiddleware;
 use App\Http\Middleware\PartnerResourceAuthMiddleware;
+use App\Http\Middleware\PartnerStatusAuthMiddleware;
 use App\Http\Middleware\PaymentLinkAuthMiddleware;
 use App\Http\Middleware\ProfileAuthMiddleware;
 use App\Http\Middleware\RedirectIfAuthenticated;
@@ -118,6 +119,7 @@ class Kernel extends HttpKernel
         'apiRequestLog' => ApiRequestMiddleware::class,
         'shebaServer' => ShebaNetworkMiddleware::class,
         'terminate' => TerminatingMiddleware::class,
+        'partner.status'=> PartnerStatusAuthMiddleware::class
 
     ];
 }
