@@ -55,6 +55,7 @@ class TaxCalculator
 
     public function calculate()
     {
+        $this->taxableIncome = 0;
         $this->calculateTaxForGrossComponents();
         $this->calculateTaxForPayrollComponents();
         $this->yearlyTaxAmount = $this->taxDeduction->setBusinessMember($this->businessMember)->setTaxableIncome($this->taxableIncome)->calculate();
