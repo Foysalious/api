@@ -5,6 +5,7 @@ namespace App\Sheba\AccountingEntry\Repository;
 use App\Models\PartnerPosCustomer;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
+use App\Models\PosOrderPayment;
 use App\Models\Profile;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Constants\UserType;
@@ -12,8 +13,9 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
-use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
+use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\RequestIdentification;
 
 class AccountingDueTrackerRepository extends BaseRepository
@@ -45,9 +47,16 @@ class AccountingDueTrackerRepository extends BaseRepository
         $this->getCustomer($request);
         $this->setModifier($request->partner);
         $data = $this->createEntryData($request, $type);
-        $url = $with_update ? "api/entries/" . $request->entry_id : "api/entries/";
+        $url = $with_update ? "api/entries/" . $request->entry_id : $type == "deposit" ? "api/entries/deposit" : "api/entries/";
         try {
-            return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
+            $data = $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
+            if ($type == "deposit") {
+                foreach ($data as $datum) {
+                    if ($datum['source_type'] == 'pos') {
+                        $this->createPosOrderPayment($datum['amount_cleared'], $datum['source_id'], 'cod');
+                    }
+                }
+            }
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
@@ -68,7 +77,7 @@ class AccountingDueTrackerRepository extends BaseRepository
      */
     public function getDueList($request, $paginate = false): array
     {
-//        try {
+        try {
             $url = "api/due-list?";
             $url = $this->updateRequestParam($request, $url);
             $customerProfiles = null;
@@ -122,9 +131,9 @@ class AccountingDueTrackerRepository extends BaseRepository
             return [
                 'list' => $new_data
             ];
-//        } catch (AccountingEntryServerError $e) {
-//            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
-//        }
+        } catch (AccountingEntryServerError $e) {
+            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+        }
     }
 
     public function getDuelistBalance($request)
@@ -165,7 +174,13 @@ class AccountingDueTrackerRepository extends BaseRepository
                     $item['created_at'] = Carbon::parse($item['created_at'])->format('Y-m-d h:i A');
                     $item['entry_at'] = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
                     $pos_order = PosOrder::withTrashed()->find($item['source_id']);
-                    $item['partner_wise_order_id'] = $item['source_type'] === 'POS' && $pos_order ? $pos_order->partner_wise_order_id : null;
+                    $item['partner_wise_order_id'] = isset($pos_order) ? $pos_order->partner_wise_order_id: null;
+                    if ($pos_order && $pos_order->sales_channel == SalesChannels::WEBSTORE) {
+                        $item['source_type'] = 'WebstoreOrder';
+                        $item['head'] = 'Webstore sales';
+                        $item['head_bn'] = 'ওয়েবস্টোর সেলস';
+                    }
+
                     return $item;
                 }
             );
@@ -177,7 +192,7 @@ class AccountingDueTrackerRepository extends BaseRepository
         }
     }
 
-    public function dueListBalanceByCustomer($request, $customerId)
+    public function dueListBalanceByCustomer($customerId)
     {
         try {
             $partner_pos_customer = PartnerPosCustomer::byPartner($this->partner->id)->where(
@@ -193,8 +208,8 @@ class AccountingDueTrackerRepository extends BaseRepository
             }
             $url = "api/due-list/" . $customerId . "/balance";
             $result = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
-            $total_debit = $request['other_info']['total_debit'];
-            $total_credit = $request['other_info']['total_credit'];
+            $total_debit = $result['other_info']['total_debit'];
+            $total_credit = $result['other_info']['total_credit'];
             $result['balance']['color'] = $total_debit > $total_credit ? '#219653' : '#DC1E1E';
             return [
                 'customer' => [
@@ -336,5 +351,31 @@ class AccountingDueTrackerRepository extends BaseRepository
             'avatar' => $partner->logo,
             'mobile' => $partner->mobile,
         ];
+    }
+
+    public function createPosOrderPayment($amount_cleared, $pos_order_id, $payment_method)
+    {
+        /** @var PosOrder $order */
+        $order = PosOrder::find($pos_order_id);
+        if(isset($order)) {
+            $order->calculate();
+            if ($order->getDue() > 0) {
+                $payment_data['pos_order_id'] = $pos_order_id;
+                $payment_data['amount']       = $amount_cleared;
+                $payment_data['method']       = $payment_method;
+                /** @var PaymentCreator $paymentCreator */
+                $paymentCreator = app(PaymentCreator::class);
+                $paymentCreator->credit($payment_data);
+            }
+        }
+    }
+
+    public function removePosOrderPayment($pos_order_id, $amount){
+        $payment = PosOrderPayment::where('pos_order_id', $pos_order_id)
+            ->where('amount', $amount)
+            ->where('transaction_type', 'Credit')
+            ->first();
+
+        return $payment ? $payment->delete() : false;
     }
 }

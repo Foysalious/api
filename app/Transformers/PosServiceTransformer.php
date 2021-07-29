@@ -34,6 +34,7 @@ class PosServiceTransformer extends TransformerAbstract
             'weight_unit' => $service->weight_unit ? array_merge(config('weight.weight_unit')[$service->weight_unit], ['key' => $service->weight_unit]) : null,
             'is_published_for_shop' => (int)$service->is_published_for_shop,
             'price' => $service->price,
+            'original_price' => $service->price,
             'wholesale_price' => $service->wholesale_price,
             'cost' => $service->getLastCost(),
             'category_id' => $service->subCategory->parent->id,

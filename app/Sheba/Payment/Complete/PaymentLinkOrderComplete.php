@@ -97,8 +97,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $this->dispatchReward();
             $this->createUsage($this->payment_receiver, $this->payment->payable->user);
             $this->notify();
-
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             Log::info(["error while storing payment link entry", $e->getMessage(), $e->getCode()]);
             logError($e);
         }

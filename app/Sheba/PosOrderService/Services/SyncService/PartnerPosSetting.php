@@ -6,8 +6,6 @@ use App\Sheba\PosOrderService\PosOrderServerClient;
 class PartnerPosSetting extends Service
 {
     protected $uri;
-    const PARTNER_POS_SETTING = 'App\Models\PartnerPosSetting';
-    const PARTNER = 'App\Models\Partner';
 
     public function __construct(PosOrderServerClient $client)
     {
@@ -23,34 +21,24 @@ class PartnerPosSetting extends Service
 
     private function makeData(): array
     {
-        $data = [];
-
-        if(self::PARTNER_POS_SETTING == $this->modelName){
-            $data = [
-                'sms_invoice' => $this->model->sms_invoice,
-                'auto_printing' => $this->model->auto_printing,
-                'printer_name' => $this->model->printer_name,
-                'printer_model' => $this->model->printer_model,
-            ];
-        }
-
-        if(self::PARTNER == $this->modelName){
-            $data = [
-                'name' => $this->model->name,
-                'sub_domain' => $this->model->sub_domain
-            ];
+        $data = [
+            'name' => $this->partner->name,
+            'sub_domain' => $this->partner->sub_domain,
+        ];
+        $pos_settings = $this->partner->posSetting;
+        if ($pos_settings) {
+            $pos_data['sms_invoice'] = $pos_settings->sms_invoice;
+            $pos_data['auto_printing'] = $pos_settings->auto_printing;
+            if(!is_null($pos_settings->printer_name)) $pos_data['printer_name'] = $pos_settings->printer_name;
+            if(!is_null($pos_settings->printer_model)) $pos_data['printer_model'] = $pos_settings->printer_model;
+            $data = array_merge($data,$pos_data);
         }
         return $data;
     }
 
     private function makeUri()
     {
-        if($this->modelName == self::PARTNER) {
-            $partner_id = $this->model->id;
-        } else {
-            $partner_id = $this->model->partner_id;
-        }
-        $this->uri = 'api/v1/partners/' . $partner_id;
+        $this->uri = 'api/v1/partners/' . $this->partner->id;
     }
 
 }

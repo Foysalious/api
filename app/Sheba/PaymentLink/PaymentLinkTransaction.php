@@ -228,7 +228,6 @@ class PaymentLinkTransaction
         return round($real_amount, 2);
     }
 
-
     /**
      * @param $amount
      * @param $feeTransaction
@@ -245,5 +244,4 @@ class PaymentLinkTransaction
             ->setAmountCleared($amount)
             ->store($this->receiver->id);
     }
-
 }

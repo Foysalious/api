@@ -5,13 +5,11 @@ use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
-use App\Sheba\AccountingEntry\Repository\AccountingDueTrackerRepository;
 use App\Transformers\CustomSerializer;
 use App\Transformers\PosOrderTransformer;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
@@ -23,8 +21,8 @@ use Sheba\ModificationFields;
 use Sheba\Pos\Customer\Creator;
 use Sheba\Pos\Customer\Updater;
 use Sheba\Pos\Discount\DiscountTypes;
+use Sheba\Pos\Repositories\PosCustomerRepository;
 use Sheba\Pos\Repositories\PosOrderRepository;
-use Sheba\Usage\Usage;
 use Throwable;
 
 class CustomerController extends Controller
@@ -60,7 +58,7 @@ class CustomerController extends Controller
      * @param DueTrackerRepository $dueTrackerRepository
      * @return JsonResponse
      */
-    public function show($partner, $customer, Request $request, EntryRepository $entry_repo,DueTrackerRepository $dueTrackerRepository)
+    public function show($partner, $customer, Request $request, EntryRepository $entry_repo,DueTrackerRepository $dueTrackerRepository, PosCustomerRepository $posCustomerRepository)
     {
         try {
             /** @var PosCustomer $customer */
@@ -84,11 +82,12 @@ class CustomerController extends Controller
                 $total_purchase_amount += $order->getNetBill();
                 $total_used_promo += !empty($order->voucher_id) ? $this->getVoucherAmount($order) : 0;
             });
+            $customerAmount = $posCustomerRepository->getDueAmountFromDueTracker($request->partner, $customer->id);
+            $data['total_due_amount']      = $customerAmount['due'];
+            $data['total_payable_amount']  = $customerAmount['payable'];
             $data['total_purchase_amount'] = $total_purchase_amount;
-            $data['total_due_amount']      = $this->getDueAmountFromDueTracker($dueTrackerRepository,$request->partner,$customer);
-            $data['total_used_promo']      = $total_used_promo;
-            $data['total_payable_amount']  = $entry_repo->setPartner($request->partner)->getTotalPayableAmountByCustomer($customer->profile_id)['total_payables'];
-//            $data['is_customer_editable']  = $customer->isEditable();
+             $data['total_used_promo']      = $total_used_promo;
+            $data['is_customer_editable']  = $customer->isEditable();
             $data['is_customer_editable']  = true;
             $data['note']                  = $partner_pos_customer->note;
             $data['is_supplier']                  = $partner_pos_customer->is_supplier;
@@ -228,6 +227,8 @@ class CustomerController extends Controller
      * @param DueTrackerRepository $dueTrackerRepository
      * @param AccountingDueTrackerRepository $accDueTrackerRepository
      * @return JsonResponse
+     * @throws InvalidPartnerPosCustomer
+     * @throws \Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError
      */
     public function delete(
         Request $request,
@@ -236,27 +237,20 @@ class CustomerController extends Controller
         DueTrackerRepository $dueTrackerRepository,
         AccountingDueTrackerRepository $accDueTrackerRepository
     ): JsonResponse {
-        try {
-            $partner_pos_customer = PartnerPosCustomer::byPartner($request->partner->id)->where(
+        $partner_pos_customer = PartnerPosCustomer::byPartner($request->partner->id)->where(
                 'customer_id',
                 $customer
             )->with(['customer'])->first();
-            /** @var PosCustomer $customer */
-            if (empty($partner_pos_customer) || empty($partner_pos_customer->customer)) {
-                throw new InvalidPartnerPosCustomer();
+        /** @var PosCustomer $customer */
+        if (empty($partner_pos_customer) || empty($partner_pos_customer->customer)) {
+            throw new InvalidPartnerPosCustomer();
             }
-            $customer = $partner_pos_customer->customer;
-            $dueTrackerRepository->setPartner($request->partner)->removeCustomer($customer->profile_id);
-            $accDueTrackerRepository->setPartner($request->partner)->deleteCustomer($customer->id);
-            $this->deletePosOrder($request->partner->id, $customer->id);
-            $partner_pos_customer->delete();
-            return api_response($request, true, 200);
-        } catch (InvalidPartnerPosCustomer $e) {
-            return api_response($request, null, 500, ['message' => $e->getMessage()]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $customer = $partner_pos_customer->customer;
+        $dueTrackerRepository->setPartner($request->partner)->removeCustomer($customer->profile_id);
+        $accDueTrackerRepository->setPartner($request->partner)->deleteCustomer($customer->id);
+        $this->deletePosOrder($request->partner->id, $customer->id);
+        $partner_pos_customer->delete();
+        return api_response($request, true, 200);
     }
 
     private function deletePosOrder($partner_id,$customer)
@@ -264,18 +258,6 @@ class CustomerController extends Controller
         $pos_orders = PosOrder::byPartnerAndCustomer($partner_id,$customer)->get();
         foreach ($pos_orders as $pos_order)
             $pos_order->delete();
-    }
-
-    /**
-     * @param $dueTrackerRepository
-     * @param Partner $partner
-     * @param PosCustomer $customer
-     * @return bool|int
-     */
-    private function getDueAmountFromDueTracker($dueTrackerRepository, Partner $partner, PosCustomer $customer){
-
-        $data = $dueTrackerRepository->setPartner($partner)->getDueListByProfile($partner,(new Request(['customer_id' => $customer->id])));
-        return $data['stats']['due'] > 0 ? $data['stats']['due'] : 0;
     }
 
     private function getVoucherAmount($order)

@@ -2,10 +2,16 @@
 
 namespace App\Providers;
 
-use App\Sheba\InventoryService\Events\PartnerModelUpdated;
-use App\Sheba\InventoryService\Events\PartnerPosSettingUpdated;
-use App\Sheba\InventoryService\Listeners\PartnerModelUpdatedListener;
-use App\Sheba\InventoryService\Listeners\PartnerPosSettingUpdatedListener;
+use App\Sheba\InventoryService\Partner\Events\Created as PartnerCreatedEvent;
+use App\Sheba\InventoryService\Partner\Listeners\Created as PartnerCreatedListener ;
+use App\Sheba\InventoryService\Partner\Events\Updated as PartnerUpdatedEvent;
+use App\Sheba\InventoryService\Partner\Listeners\Updated as PartnerUpdatedListener;
+
+use App\Sheba\PosOrderService\PosSetting\Events\Created as PosSettingCreatedEvent;
+use App\Sheba\PosOrderService\PosSetting\Listeners\Created as PosSettingCreatedListener;
+use App\Sheba\PosOrderService\PosSetting\Events\Updated as PosSettingUpdatedEvent;
+use App\Sheba\PosOrderService\PosSetting\Listeners\Updated as PosSettingUpdatedListener;
+
 use Illuminate\Contracts\Events\Dispatcher as DispatcherContract;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Sheba\Business\BusinessMember\Events\BusinessMemberCreated;
@@ -44,12 +50,18 @@ class EventServiceProvider extends ServiceProvider
         BusinessMemberDeleted::class => [
             BusinessMemberDeletedListener::class
         ],
-//        PartnerPosSettingUpdated::class => [
-//                PartnerPosSettingUpdatedListener::class,
-//            ],
-//        PartnerModelUpdated::class => [
-//            PartnerModelUpdatedListener::class,
-//        ],
+        PartnerCreatedEvent::class => [
+            PartnerCreatedListener::class,
+        ],
+        PartnerUpdatedEvent::class => [
+            PartnerUpdatedListener::class,
+        ],
+        PosSettingCreatedEvent::class => [
+            PosSettingCreatedListener::class
+        ],
+        PosSettingUpdatedEvent::class => [
+            PosSettingUpdatedListener::class
+        ]
     ];
 
     /**

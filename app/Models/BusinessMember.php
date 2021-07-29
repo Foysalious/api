@@ -155,6 +155,18 @@ class BusinessMember extends Model
         return $this->getCountOfUsedDays($leaves, $time_frame, $business_holiday, $business_weekend);
     }
 
+    /**
+     * @param Collection $leaves
+     * @param $time_frame
+     * @param array $business_holiday
+     * @param array $business_weekend
+     * @return float
+     */
+    public function getCountOfUsedLeaveDaysByDateRange(Collection $leaves, $time_frame, array $business_holiday, array $business_weekend)
+    {
+        return $this->getCountOfUsedDays($leaves, $time_frame, $business_holiday, $business_weekend);
+    }
+
     public function getBusinessFiscalPeriod()
     {
         $business_fiscal_start_month = $this->business->fiscal_year ?: Business::BUSINESS_FISCAL_START_MONTH;

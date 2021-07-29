@@ -3,6 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Models\PartnerPosCustomer;
 use App\Sheba\AccountingEntry\Repository\AccountingDueTrackerRepository;
+use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -147,31 +148,17 @@ class DueTrackerController extends Controller
      */
     public function setDueDateReminder(Request $request, PartnerPosCustomerRepository $partner_pos_customer_repo)
     {
-        try {
-            $this->validate($request, ['due_date_reminder' => 'required|date']);
-            $partner_pos_customer = PartnerPosCustomer::byPartnerAndCustomer(
-                $request->partner->id,
-                $request->customer_id
-            )->first();
-            if (empty($partner_pos_customer)) {
-                throw new InvalidPartnerPosCustomer();
-            }
-            $this->setModifier($request->partner);
-            $partner_pos_customer_repo->update(
-                $partner_pos_customer,
-                ['due_date_reminder' => $request->due_date_reminder]
-            );
-            return api_response($request, null, 200);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (InvalidPartnerPosCustomer $e) {
-            $message = "Invalid pos customer for this partner";
-            return api_response($request, $message, 403, ['message' => $message]);
-        } catch (\Throwable $e) {
-            logError($e);
-            return api_response($request, null, 500);
+        $this->validate($request, ['due_date_reminder' => 'required|date']);
+        $partner_pos_customer = PartnerPosCustomer::byPartnerAndCustomer(
+            $request->partner->id,
+            $request->customer_id
+        )->first();
+        if (empty($partner_pos_customer)) {
+            throw new InvalidPartnerPosCustomer();
         }
+        $this->setModifier($request->partner);
+        $partner_pos_customer_repo->update($partner_pos_customer, ['due_date_reminder' => $request->due_date_reminder]);
+        return api_response($request, null, 200);
     }
 
     /**
@@ -246,13 +233,31 @@ class DueTrackerController extends Controller
      */
     public function sendSMS(Request $request, DueTrackerRepository $dueTrackerRepository, $partner, $customer_id)
     {
-        $request->merge(['customer_id' => $customer_id]);
-        $this->validate($request, ['type' => 'required|in:due,deposit', 'amount' => 'required']);
-        if ($request->type == 'due') {
-            $request['payment_link'] = $dueTrackerRepository->createPaymentLink($request, $this->paymentLinkCreator);
+        try {
+            $request->merge(['customer_id' => $customer_id]);
+            $this->validate($request, ['type' => 'required|in:due,deposit', 'amount' => 'required']);
+            if ($request->type == 'due') {
+                $request['payment_link'] = $dueTrackerRepository->createPaymentLink(
+                    $request,
+                    $this->paymentLinkCreator
+                );
+            }
+            $dueTrackerRepository->sendSMS($request);
+            return api_response($request, true, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (InvalidPartnerPosCustomer $e) {
+            $message = "Invalid pos customer for this partner";
+            return api_response($request, $message, 403, ['message' => $message]);
+        } catch (InsufficientBalance $e) {
+            $message = "Insufficient Balance";
+            return api_response($request, $message, 402, ['message' => $message]);
+        } catch (\Throwable $e) {
+            dd($e->getMessage());
+            logError($e);
+            return api_response($request, null, 500);
         }
-        $dueTrackerRepository->sendSMS($request);
-        return api_response($request, true, 200);
     }
 
     /**

@@ -75,7 +75,6 @@ class AttendanceList
     private $checkoutOfficeOrRemote;
     private $checkInRemoteMode;
     private $checkOutRemoteMode;
-    private $officeTimeDurationInMinutes;
 
     /**
      * AttendanceList constructor.
@@ -270,7 +269,6 @@ class AttendanceList
      */
     public function get()
     {
-        $this->setOfficeTimeDuration();
         $this->runAttendanceQueryV2();
         return $this->getDataV2();
     }
@@ -465,15 +463,13 @@ class AttendanceList
                     }
                 }
 
-                $overtime_in_minutes = $attendance->checkout_time ? $this->calculateOvertimeInMinutes($attendance->staying_time_in_minutes) : 0;
-
                 array_push($data, $this->getBusinessMemberData($attendance->businessMember) + [
                         'id' => $attendance->id,
                         'check_in' => $checkin_data,
                         'check_out' => $checkout_data,
                         'active_hours' => $attendance->staying_time_in_minutes ? $this->formatMinute($attendance->staying_time_in_minutes) : null,
-                        'overtime_in_minutes' => $attendance->checkout_time ? $overtime_in_minutes : 0,
-                        'overtime' => $attendance->checkout_time ? $this->formatMinute($overtime_in_minutes) : null,
+                        'overtime_in_minutes' => $attendance->overtime_in_minutes ? $overtime_in_minutes : 0,
+                        'overtime' => $attendance->overtime_in_minutes ? $this->formatMinute($overtime_in_minutes) : null,
                         'date' => $attendance->date,
                         'is_absent' => $attendance->status == Statuses::ABSENT ? 1 : 0,
                         'is_on_leave' => 0,
@@ -776,23 +772,4 @@ class AttendanceList
         return $this->isWeekend($this->startDate, $weekend_day) ? 'weekend' : 'holiday';
     }
 
-
-    private function setOfficeTimeDuration()
-    {
-        $office_hour = $this->business->officeHour;
-        $this->officeTimeDurationInMinutes = Carbon::parse($office_hour->start_time)->diffInMinutes(Carbon::parse($office_hour->end_time)) + 1;
-    }
-
-    /**
-     * @param $staying_time
-     * @return int
-     */
-    private function calculateOvertimeInMinutes($staying_time)
-    {
-        if ($staying_time > $this->officeTimeDurationInMinutes) {
-            return $staying_time - $this->officeTimeDurationInMinutes;
-        } else {
-            return 0;
-        }
-    }
 }
