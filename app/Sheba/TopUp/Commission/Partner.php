@@ -64,36 +64,31 @@ class Partner extends TopUpCommission
     {
         $this->refundAgentsCommission();
         $this->deleteExpenseIncome();
-//        $this->refundTopUp();
+        $this->refundTopUpJournal();
+    }
+
+    private function refundTopUpJournal()
+    {
+        /** @var \App\Models\Partner $partner */
+        $partner = $this->agent;
+        (new JournalCreateRepository())
+            ->setTypeId($partner->id)
+            ->setSource($this->transaction)
+            ->setAmount($this->transaction->amount)
+            ->setDebitAccountKey(AccountKeys\Asset\Sheba::SHEBA_ACCOUNT)
+            ->setCreditAccountKey(AccountKeys\Income\Refund::GENERAL_REFUNDS)
+            ->setDetails("Refund TopUp")
+            ->setReference("TopUp refunds amount is" . $this->transaction->amount . " tk.")
+            ->store();
     }
 
     private function deleteExpenseIncome()
     {
-
         /** @var \App\Models\Partner $partner */
         $partner = $this->agent;
         /** @var AutomaticEntryRepository $entryRepo */
         $entryRepo = app(AutomaticEntryRepository::class);
         $entryRepo = $entryRepo->setPartner($partner)->setSourceType(class_basename($this->topUpOrder))->setSourceId($this->topUpOrder->id);
         $entryRepo->delete();
-    }
-
-    private function refundTopUp()
-    {
-        $transaction = $this->getTopUpTransaction();
-        (new JournalCreateRepository())
-            ->setTypeId($this->partner->id)
-            ->setSource($transaction)
-            ->setAmount($transaction->amount)
-            ->setDebitAccountKey(AccountKeys\Asset\Sheba::SHEBA_ACCOUNT)
-            ->setCreditAccountKey(AccountKeys\Income\Refund::GENERAL_REFUNDS)
-            ->setDetails("Refund TopUp")
-            ->setReference("TopUp refunds amount is" . $transaction->amount . " tk.")
-            ->store();
-    }
-
-    public function getTopUpTransaction()
-    {
-        return $this->topUpDisburse->getTransaction();
     }
 }
