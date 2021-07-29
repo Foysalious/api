@@ -373,6 +373,41 @@ class CoWorkerController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
+    public function financialInfoEdit($business, $business_member_id, Request $request)
+    {
+        $validation_data = ['tin_number ' => 'sometimes|required', 'bank_name ' => 'sometimes|required', 'bank_account_number ' => 'sometimes|required'];
+        $validation_data ['tin_certificate '] = $this->isFile($request->tin_certificate) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
+        $this->validate($request, $validation_data);
+
+        $business_member = $this->businessMemberRepository->find($business_member_id);
+        $manager_member = $request->manager_member;
+        $business = $request->business;
+        $this->setModifier($manager_member);
+
+        $financial_request = $this->financialRequest->setTinNumber($request->tin_number)
+            ->setTinCertificate($request->tin_certificate)
+            ->setBankName($request->bank_name)
+            ->setBankAccNumber($request->bank_account_number);
+
+        list($profile, $image_name, $image_link) = $this->coWorkerUpdater
+            ->setFinancialRequest($financial_request)
+            ->setBusiness($business)
+            ->setBusinessMember($business_member)
+            ->financialInfoUpdate();
+
+        if ($profile) return api_response($request, 1, 200, [
+            'tin_certificate_name' => $image_name,
+            'tin_certificate_link' => $image_link
+        ]);
+        return api_response($request, null, 404);
+    }
+
+    /**
+     * @param $business
+     * @param $business_member_id
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function salaryInfoEdit($business, $business_member_id, Request $request)
     {
         $business_member = $this->businessMemberRepository->find($business_member_id);
@@ -451,7 +486,7 @@ class CoWorkerController extends Controller
         foreach ($business_departments as $business_dept) {
             $dept_role = collect();
             foreach ($business_dept->businessRoles as $role) {
-                $role = ['id' => $role->id, 'name' => $role->name,];
+                $role = ['id' => $role->id, 'name' => $role->name];
                 $dept_role->push($role);
             }
 
