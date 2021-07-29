@@ -82,7 +82,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
                 }
                 $this->setModifier($customer = $payable->user);
                 $this->completePayment();
-                $this->processTransactions($this->payment_receiver, $payable->user);
+                $this->processTransactions($this->payment_receiver, $payableUser);
             });
         } catch (Throwable $e) {
             $this->failPayment();
