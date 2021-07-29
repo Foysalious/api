@@ -22,7 +22,7 @@ class PosCustomerController extends Controller
     public function show(Request $request, $customerId)
     {
         $partner = $request->auth_user->getPartner();
-        $customer_details = $this->smanagerUserService->setPartner($partner->id)->setCustomerId($customerId)->getDetails();
+        $customer_details = $this->smanagerUserService->setPartner($partner)->setCustomerId($customerId)->getDetails();
         return http_response($request, null, 200, ['message' => 'Successful', 'data' => $customer_details]);
     }
 
