@@ -50,13 +50,17 @@ return [
         ]
     ],
     'ok_wallet'   => [
-        'base_url'   => env('OK_WALLET_BASE_URL'),
-        'account'    => env('OK_WALLET_ACCOUNT'),
-        'api_key'    => env('OK_WALLET_API_KEY'),
-        'api_secret' => env('OK_WALLET_API_SECRET'),
-        'format'     => env('OK_WALLET_API_FORMAT', 'json'),
-        'key_path'   => env('OK_WALLET_KEY_PATH', 'assets/ok-wallet/public.key'),
-        'merchant'   => env('OK_WALLET_MERCHANT', 'sheba.xyz')
+        'base_url'      => env('OK_WALLET_BASE_URL'),
+        'api_user'      => env('OK_WALLET_API_USER'),
+        'api_password'  => env('OK_WALLET_API_PASSWORD'),
+        'merchant_id'   => env('OK_WALLET_MERCHANT_ID'),
+        'access_key'    => env('OK_WALLET_ACCESS_KEY'),
+        'web_client_base_url' => env('OK_WALLET_WEB_CLIENT_BASE_URL'),
+        'urls'          => [
+            'approve' => env('SHEBA_API_URL') . '/v2/payments/ok-wallet/success',
+            'decline' => env('SHEBA_API_URL') . '/v2/payments/ok-wallet/fail',
+            'cancel'  => env('SHEBA_API_URL') . '/v2/payments/ok-wallet/cancel',
+        ]
     ],
     'nagad'       => [
         'stores' => [

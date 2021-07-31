@@ -159,7 +159,7 @@ class PaymentManager
      */
     private function runningCompletionCheckAndSet()
     {
-        $key     = $this->getKey();
+        $key = $this->getKey();
         $already = Redis::get($key);
         if ($already) {
             throw new AlreadyCompletingPayment();

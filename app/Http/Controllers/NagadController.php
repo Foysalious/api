@@ -1,6 +1,5 @@
 <?php namespace App\Http\Controllers;
 
-
 use Illuminate\Http\Request;
 use Sheba\Payment\Methods\Nagad\Nagad;
 use Sheba\Payment\Methods\Nagad\Validator;
