@@ -97,7 +97,7 @@ class PaymentManager
      * @return Payment
      * @throws InvalidPaymentMethod
      */
-    public function validate()
+    public function validate(): Payment
     {
         return $this->getMethod()->validate($this->payment);
     }
@@ -105,7 +105,7 @@ class PaymentManager
     /**
      * @return $this
      */
-    public function storeRequestPayload()
+    public function storeRequestPayload(): PaymentManager
     {
         $this->payment->request_payload = json_encode(request()->all());
         $this->payment->save();
@@ -116,7 +116,7 @@ class PaymentManager
      * @return Payment
      * @throws InvalidPaymentMethod|AlreadyCompletingPayment|Throwable
      */
-    public function complete()
+    public function complete(): Payment
     {
         $this->runningCompletionCheckAndSet();
         try {
@@ -130,9 +130,8 @@ class PaymentManager
             return $payment;
         } catch (Throwable $e) {
             $this->unsetRunningCompletion();
-            throw  $e;
+            throw $e;
         }
-
     }
 
     public function getCardType($cardNumber)
