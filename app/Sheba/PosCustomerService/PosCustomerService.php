@@ -263,6 +263,6 @@ class PosCustomerService
 
     private function getCustomerListByPartnerId()
     {
-        return $this->smanagerUserServerClient->get('api/v1/partners/'.$this->partner->id.'/users');
+        return $this->smanagerUserServerClient->get('api/v1/partners/'.$this->partner->id.'/pos-users');
     }
 }
