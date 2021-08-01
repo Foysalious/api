@@ -1,7 +1,7 @@
 <?php namespace App\Sheba\PosOrderService\Services;
 
 use App\Sheba\PosOrderService\PosOrderServerClient;
-use App\Sheba\SmanagerUserService\SmanagerUserServerClient;
+use App\Sheba\PosCustomerService\SmanagerUserServerClient;
 
 class OrderService
 {
