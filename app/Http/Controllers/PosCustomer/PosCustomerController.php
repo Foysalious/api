@@ -70,4 +70,16 @@ class PosCustomerController extends Controller
         return http_response($request, null, 200, ['message' => 'Successful', 'data' => $orders]);
     }
 
+    /**
+     * @param Request $request
+     * @param $customerId
+     * @return JsonResponse
+     */
+    public function delete(Request $request, $customerId)
+    {
+        $partner = $request->auth_user->getPartner();
+        $this->smanagerUserService->setPartner($partner->id)->setCustomerId($customerId)->deleteUser();
+        return http_response($request, null, 200, ['message' => 'Customer has been deleted successfully', ]);
+    }
+
 }
