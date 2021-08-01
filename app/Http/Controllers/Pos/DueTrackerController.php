@@ -233,14 +233,12 @@ class DueTrackerController extends Controller
      */
     public function sendSMS(Request $request, DueTrackerRepository $dueTrackerRepository, $partner, $customer_id)
     {
+//        TODO: new "receivable", "payable" support should be in V3 API
         try {
             $request->merge(['customer_id' => $customer_id]);
-            $this->validate($request, ['type' => 'required|in:due,deposit', 'amount' => 'required']);
-            if ($request->type == 'due') {
-                $request['payment_link'] = $dueTrackerRepository->createPaymentLink(
-                    $request,
-                    $this->paymentLinkCreator
-                );
+            $this->validate($request, ['type' => 'required|in:due, deposit, receivable, payable', 'amount' => 'required']);
+            if ($request->type == 'receivable' || $request->type == 'due') {
+                $request['payment_link'] = $dueTrackerRepository->createPaymentLink($request, $this->paymentLinkCreator);
             }
             $dueTrackerRepository->sendSMS($request);
             return api_response($request, true, 200);

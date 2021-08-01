@@ -175,12 +175,14 @@ class AccountingDueTrackerRepository extends BaseRepository
                     $item['entry_at'] = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
                     $pos_order = PosOrder::withTrashed()->find($item['source_id']);
                     $item['partner_wise_order_id'] = isset($pos_order) ? $pos_order->partner_wise_order_id: null;
-                    if ($pos_order && $pos_order->sales_channel == SalesChannels::WEBSTORE) {
-                        $item['source_type'] = 'WebstoreOrder';
-                        $item['head'] = 'Webstore sales';
-                        $item['head_bn'] = 'ওয়েবস্টোর সেলস';
+                    if ($pos_order) {
+                        $item['source_type'] = 'PosOrder';
+                        if ($pos_order->sales_channel == SalesChannels::WEBSTORE) {
+                            $item['source_type'] = 'WebstoreOrder';
+                            $item['head'] = 'Webstore sales';
+                            $item['head_bn'] = 'ওয়েবস্টোর সেলস';
+                        }
                     }
-
                     return $item;
                 }
             );
@@ -351,31 +353,5 @@ class AccountingDueTrackerRepository extends BaseRepository
             'avatar' => $partner->logo,
             'mobile' => $partner->mobile,
         ];
-    }
-
-    public function createPosOrderPayment($amount_cleared, $pos_order_id, $payment_method)
-    {
-        /** @var PosOrder $order */
-        $order = PosOrder::find($pos_order_id);
-        if(isset($order)) {
-            $order->calculate();
-            if ($order->getDue() > 0) {
-                $payment_data['pos_order_id'] = $pos_order_id;
-                $payment_data['amount']       = $amount_cleared;
-                $payment_data['method']       = $payment_method;
-                /** @var PaymentCreator $paymentCreator */
-                $paymentCreator = app(PaymentCreator::class);
-                $paymentCreator->credit($payment_data);
-            }
-        }
-    }
-
-    public function removePosOrderPayment($pos_order_id, $amount){
-        $payment = PosOrderPayment::where('pos_order_id', $pos_order_id)
-            ->where('amount', $amount)
-            ->where('transaction_type', 'Credit')
-            ->first();
-
-        return $payment ? $payment->delete() : false;
     }
 }

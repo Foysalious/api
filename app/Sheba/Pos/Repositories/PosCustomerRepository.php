@@ -39,4 +39,12 @@ class PosCustomerRepository extends BaseRepository
         }
         return $response;
     }
+
+    public function deleteCustomerFromDueTracker(Partner $partner, $customerId)
+    {
+        /** @var AccountingDueTrackerRepository $accDueTrackerRepository */
+        $accDueTrackerRepository = app(AccountingDueTrackerRepository::class);
+        $accDueTrackerRepository->setPartner($partner)->deleteCustomer($customerId);
+
+    }
 }

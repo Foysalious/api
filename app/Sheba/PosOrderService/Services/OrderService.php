@@ -1,7 +1,7 @@
 <?php namespace App\Sheba\PosOrderService\Services;
 
 use App\Sheba\PosOrderService\PosOrderServerClient;
-use App\Sheba\SmanagerUserService\SmanagerUserServerClient;
+use App\Sheba\PosCustomerService\SmanagerUserServerClient;
 
 class OrderService
 {
@@ -16,18 +16,14 @@ class OrderService
     private $deliveryCharge;
     private $status;
     private $orderId;
-    private $skus;
     private $token;
+    private $skus, $discount, $paymentMethod, $paymentLinkAmount, $paidAmount;
     protected $emi_month, $interest, $bank_transaction_charge, $delivery_name, $delivery_mobile, $note, $voucher_id;
     protected $filter_params;
     /**
      * @var mixed
      */
-    private $discount;
     private $isDiscountPercentage;
-    private $paymentMethod;
-    private $paymentLinkAmount;
-    private $paidAmount;
     protected $userId;
 
     public function __construct(PosOrderServerClient $client, SmanagerUserServerClient $smanagerUserClient)
@@ -263,6 +259,11 @@ class OrderService
         return $this->client->post('api/v1/partners/'.$this->partnerId.'/orders/'.$this->orderId.'/update-status', $data, true);
     }
 
+    public function storeDeliveryInformation($deliveryData)
+    {
+        return $this->client->put('api/v1/partners/' . $this->partnerId. '/orders/' . $this->orderId, $deliveryData);
+    }
+
     public function updateCustomer()
     {
         return $this->client->put('api/v1/partners/' . $this->partnerId. '/orders/' . $this->orderId . '/update-customer', $this->makeCustomerUpdateData(), false);
@@ -319,6 +320,14 @@ class OrderService
         if ($this->paymentLinkAmount) array_push($data, ['name' => 'payment_link_amount','contents' => $this->paymentLinkAmount]);
         if ($this->paidAmount) array_push($data, ['name' => 'paid_amount','contents' => $this->paidAmount]);
         if($this->voucher_id) array_push($data, ['name' => 'voucher_id', 'contents' => $this->voucher_id]);
+        return $data;
+    }
+
+    private function makeDeliveryData()
+    {
+        $data = [];
+        if (isset($this->deliveryAddress)) $data['delivery_address']                    = $this->deliveryAddress;
+        if (isset($this->deliveryCharge)) $data['delivery_charge']                      = $this->deliveryCharge;
         return $data;
     }
 
