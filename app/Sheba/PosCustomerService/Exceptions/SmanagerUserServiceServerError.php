@@ -1,4 +1,4 @@
-<?php namespace App\Sheba\SmanagerUserService\Exceptions;
+<?php namespace App\Sheba\PosCustomerService\Exceptions;
 
 use App\Exceptions\HttpException;
 use Throwable;

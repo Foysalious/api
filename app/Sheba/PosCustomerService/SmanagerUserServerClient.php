@@ -1,7 +1,7 @@
-<?php namespace App\Sheba\SmanagerUserService;
+<?php namespace App\Sheba\PosCustomerService;
 
 
-use App\Sheba\SmanagerUserService\Exceptions\SmanagerUserServiceServerError;
+use App\Sheba\PosCustomerService\Exceptions\SmanagerUserServiceServerError;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 

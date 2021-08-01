@@ -1,4 +1,4 @@
-<?php namespace App\Sheba\SmanagerUserService;
+<?php namespace App\Sheba\PosCustomerService;
 
 use App\Models\Partner;
 use App\Sheba\PosOrderService\PosOrderServerClient;
@@ -7,7 +7,7 @@ use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
 use Sheba\Pos\Repositories\PosCustomerRepository;
 
-class SmanagerUserService
+class PosCustomerService
 {
     private $customerId;
     /**
@@ -43,7 +43,7 @@ class SmanagerUserService
 
     /**
      * @param Partner $partner
-     * @return SmanagerUserService
+     * @return PosCustomerService
      */
     public function setPartner( Partner $partner)
     {
@@ -113,7 +113,7 @@ class SmanagerUserService
 
     /**
      * @param mixed $customerId
-     * @return SmanagerUserService
+     * @return PosCustomerService
      */
     public function setCustomerId($customerId)
     {
