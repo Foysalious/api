@@ -154,7 +154,30 @@ class SmanagerUserService
 
     public function getOrders()
     {
-        return $this->smanagerUserServerClient->get('api/v1/partners/'.$this->partner->id.'/customers'.$this->customerId.'/orders');
+        return $this->posOrderServerClient->get('api/v1/partners/'.$this->partner->id.'/customers/'.$this->customerId.'/orders');
+    }
+
+    public function deleteUser()
+    {
+        $this->deleteCustomerFromSmanagerUserService();
+        $this->deleteCustomerFromPosOrderService();
+        $this->deleteUserFromAccountingService();
+        return true;
+    }
+
+    private function deleteCustomerFromSmanagerUserService()
+    {
+        return $this->smanagerUserServerClient->delete('api/v1/partners/'.$this->partner->id.'/pos-users/'.$this->customerId);
+    }
+
+    private function deleteCustomerFromPosOrderService()
+    {
+        return $this->posOrderServerClient->delete('api/v1/partners/'.$this->partner->id.'/customers/'.$this->customerId);
+    }
+
+    private function deleteUserFromAccountingService()
+    {
+         $this->posCustomerRepository->deleteCustomerFromDueTracker($this->partner, $this->customerId);
     }
 
     public function showCustomerListByPartnerId()
