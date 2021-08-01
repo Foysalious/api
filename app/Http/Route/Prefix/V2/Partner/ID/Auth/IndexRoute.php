@@ -284,7 +284,7 @@ class IndexRoute
             });
             $api->group(['prefix' => 'withdrawals'], function ($api) {
                 $api->get('/', 'Partner\\PartnerWithdrawalRequestV2Controller@index');
-                $api->post('/', 'Partner\\PartnerWithdrawalRequestV2Controller@store')->middleware('apiRequestLog');
+                $api->post('/', 'Partner\\PartnerWithdrawalRequestV2Controller@store')->middleware(['apiRequestLog', 'partner.status']);
                 $api->put('{withdrawals}', 'Partner\\PartnerWithdrawalRequestV2Controller@update');
                 $api->get('{withdrawals}/cancel', 'Partner\\PartnerWithdrawalRequestV2Controller@cancel');
                 $api->post('bank-info', 'Partner\\PartnerWithdrawalRequestV2Controller@storeBankInfo');

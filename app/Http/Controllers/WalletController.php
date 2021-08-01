@@ -11,10 +11,13 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Authentication\Exceptions\AuthenticationFailedException;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
+use Sheba\PartnerStatusAuthentication;
 use Sheba\Payment\Adapters\Payable\RechargeAdapter;
 use Sheba\Payment\AvailableMethods;
+use Sheba\Payment\Exceptions\FailedToInitiate;
 use Sheba\Payment\Exceptions\InitiateFailedException;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
 use Sheba\Payment\Factory\PaymentStrategy;
@@ -53,11 +56,12 @@ class WalletController extends Controller
 
 
     /**
-     * @param Request        $request
+     * @param Request $request
      * @param PaymentManager $payment_manager
      * @return JsonResponse
      * @throws InitiateFailedException
      * @throws InvalidPaymentMethod
+     * @throws AuthenticationFailedException|FailedToInitiate
      */
     public function recharge(Request $request, PaymentManager $payment_manager)
     {
@@ -72,6 +76,7 @@ class WalletController extends Controller
         $class_name = "App\\Models\\" . ucwords($request->user_type);
         if ($request->user_type === 'partner') {
             $user = (new PartnerRepository($request->user_id))->validatePartner($request->remember_token);
+            (new PartnerStatusAuthentication())->handleInside($user);
         } else {
             $user = $class_name::where([['id', (int)$request->user_id], ['remember_token', $request->remember_token]])->first();
             if ($user instanceof Affiliate && $user->isNotVerified()) {
