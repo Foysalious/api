@@ -18,8 +18,9 @@ class PresentableDTOPresenter extends Presenter
         $dto = $this->dto->toArray();
 
         if ($userType === 'customer') {
-            if ($payableType === 'order' && $gateway = $this->dbGateways->where('method_name', $dto['method_name'])->first()) {
-                $dto['discount_message'] = $gateway->discount_message;
+            if ($payableType === 'order') {
+                if ($gateway = $this->dbGateways->where('method_name', $dto['method_name'])->first()) $dto['discount_message'] = $gateway->discount_message;
+                else $dto['discount_message'] = '';
             }
             return $dto;
         }
