@@ -18,6 +18,7 @@ use App\Repositories\NotificationRepository;
 use App\Repositories\SmsHandler;
 use App\Sheba\Bondhu\BondhuAutoOrderV3;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Sheba\ServiceRequest\Exception\ServiceIsUnpublishedException;
 use Sheba\Sms\BusinessType;
@@ -58,8 +59,10 @@ class OrderController extends Controller
      */
     public function store(Request $request, OrderPlace $order_place, OrderAdapter $order_adapter, UserAgentInformation $userAgentInformation): JsonResponse
     {
-        if ($this->isFraudOrder($request))
+        if ($this->isFraudOrder($request)) {
+            Log::info("FRAUD_ORDER_PLACE: " . json_encode($request->all()) . " REQUEST_HEADER: " . json_encode($request->header()));
             return api_response($request, null, 500);
+        }
         
         $request->merge(['mobile' => formatMobile(preg_replace('/\b \b|-/', '', $request->mobile))]);
 
