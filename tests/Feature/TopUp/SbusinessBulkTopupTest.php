@@ -263,12 +263,11 @@ class SbusinessBulkTopupTest extends FeatureTestCase
         $file = $this->getFileForUpload([
             [
                 'mobile' => '+8801620011019',
-                'operator' => 'AIRTEL',
+                'operator' => 'MOCK',
                 'connection_type' => 'prepaid',
                 'amount' => 2000
             ], [
                 'mobile' => '+8801620011020',
-                'operator' => 'C',
                 'connection_type' => 'prepaid',
                 'amount' => 2000
             ]
@@ -283,7 +282,6 @@ class SbusinessBulkTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
-         // dd($data);
         $this->assertEquals(420, $data['code']);
         $this->assertEquals("Check The Excel Data Format Properly.", $data['message']);
     }

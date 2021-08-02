@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="Application Test Suite" tests="1" assertions="2" failures="0" errors="0" time="4.259959">
-    <testsuite name="Tests\Feature\TopUp\SbusinessBulkTopupTest" file="/var/www/tests/Feature/TopUp/SbusinessBulkTopupTest.php" tests="1" assertions="2" failures="0" errors="0" time="4.259959">
-      <testcase name="testBulkTopupAmountExceededTopUpPrepaidLimitExitResponse" class="Tests\Feature\TopUp\SbusinessBulkTopupTest" file="/var/www/tests/Feature/TopUp/SbusinessBulkTopupTest.php" line="226" assertions="2" time="4.259959"/>
+  <testsuite name="Application Test Suite" tests="1" assertions="2" failures="0" errors="0" time="6.298438">
+    <testsuite name="Tests\Feature\TopUp\SbusinessBulkTopupTest" file="/var/www/tests/Feature/TopUp/SbusinessBulkTopupTest.php" tests="1" assertions="2" failures="0" errors="0" time="6.298438">
+      <testcase name="testBulkTopupMaximumAmountExceededTopUpPrepaidLimitResponse" class="Tests\Feature\TopUp\SbusinessBulkTopupTest" file="/var/www/tests/Feature/TopUp/SbusinessBulkTopupTest.php" line="258" assertions="2" time="6.298438"/>
     </testsuite>
   </testsuite>
 </testsuites>
