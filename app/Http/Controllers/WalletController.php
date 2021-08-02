@@ -76,7 +76,7 @@ class WalletController extends Controller
         $class_name = "App\\Models\\" . ucwords($request->user_type);
         if ($request->user_type === 'partner') {
             $user = (new PartnerRepository($request->user_id))->validatePartner($request->remember_token);
-            (new PartnerStatusAuthentication())->handleInside($user);
+            if($user) (new PartnerStatusAuthentication())->handleInside($user);
         } else {
             $user = $class_name::where([['id', (int)$request->user_id], ['remember_token', $request->remember_token]])->first();
             if ($user instanceof Affiliate && $user->isNotVerified()) {
