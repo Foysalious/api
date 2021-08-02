@@ -30,6 +30,7 @@ class Updater
     /** @var GrossSalaryBreakdownCalculate $grossSalaryBreakdownCalculate */
     private $grossSalaryBreakdownCalculate;
     private $businessMemberRepository;
+    private $payslips;
 
 
     /**
@@ -95,12 +96,11 @@ class Updater
 
     public function disburse()
     {
-        $payslips = $this->payslipRepository->getPaySlipByStatus($this->businessMemberIds, Status::PENDING)->where('schedule_date', 'like', '%' . $this->scheduleDate . '%');
-
-        DB::transaction(function () use ($payslips) {
-            $payslips->update(['status' => Status::DISBURSED]);
+        DB::transaction(function () {
+            $this->payslipRepository->getPaySlipByStatus($this->businessMemberIds, Status::PENDING)->where('schedule_date', 'like', '%' . $this->scheduleDate . '%')->update(['status' => Status::DISBURSED]);
         });
-        $this->sendNotifications($payslips);
+
+        $this->sendNotifications();
         return true;
     }
 
@@ -131,9 +131,9 @@ class Updater
         return json_encode($data);
     }
 
-    public function sendNotifications($payslips)
+    public function sendNotifications()
     {
-        $payslips = $payslips->get();
+        $payslips = $this->payslipRepository->getPaySlipByStatus($this->businessMemberIds, Status::DISBURSED)->where('schedule_date', 'like', '%' . $this->scheduleDate . '%')->get();
         foreach ($payslips as $payslip) {
             $business_member = $this->businessMemberRepository->find($payslip->business_member_id);
             #dispatch(new SendPayslipDisburseNotificationToEmployee($business_member, $payslip));
