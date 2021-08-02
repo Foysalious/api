@@ -1,5 +1,7 @@
 <?php namespace App\Sheba\Business\Payslip\PayReport;
 
+use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Facades\App;
 use Sheba\FileManagers\CdnFileManager;
 
@@ -9,6 +11,13 @@ class PayReportPdfHandler
 
     private $payReportDetails;
     private $timePeriod;
+    private $businessMember;
+
+    public function setBusinessMember($business_member)
+    {
+        $this->businessMember = $business_member;
+        return $this;
+    }
 
     public function setPayReportDetails($pay_report_details)
     {
@@ -22,9 +31,13 @@ class PayReportPdfHandler
         return $this;
     }
 
+    /**
+     * @throws Exception
+     */
     public function generate()
     {
-        $filename = 'Payslip_'.$this->timePeriod->start->format('M').'_'.$this->timePeriod->start->format('Y').'.pdf';
+        $six_digit_random_number = random_int(100000, 999999);
+        $filename = 'Payslip_' . Carbon::now()->timestamp . '_' . $six_digit_random_number . $this->businessMember->id . $six_digit_random_number . '.pdf';
         $file = $this->getTempFolder() . $filename;
         $pay_report_detail = $this->payReportDetails;
         App::make('dompdf.wrapper')->loadView('pdfs.payslip.payroll_details', compact('pay_report_detail'))->save($file);
@@ -32,6 +45,7 @@ class PayReportPdfHandler
         unlink($file);
         return $s3_payslip_link;
     }
+
     private function saveToCDN($file, $filename)
     {
         $s3_payslip_path = 'payslips/';
@@ -46,5 +60,4 @@ class PayReportPdfHandler
         }
         return $temp_folder;
     }
-
 }
