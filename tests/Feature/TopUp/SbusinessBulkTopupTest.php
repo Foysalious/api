@@ -294,12 +294,12 @@ class SbusinessBulkTopupTest extends FeatureTestCase
         $file = $this->getFileForUpload([
             [
                 'mobile' => '+8801620011019',
-                'operator' => 'AIRTEL',
+                'operator' => 'MOCK',
                 'connection_type' => 'prepaid',
                 'amount' => 8
             ], [
                 'mobile' => '+8801620011020',
-                'operator' => 'AIRTEL',
+                'operator' => 'MOCK',
                 'connection_type' => 'prepaid',
                 'amount' => 9
             ]
