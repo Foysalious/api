@@ -90,11 +90,10 @@ class SbusinessBulkTopupTest extends FeatureTestCase
         $this->app->instance(VerifyPin::class, $verify_pin_mock);
     }
 
-  /*  public function testSuccessfulBulkTopupResponse()
+    public function testSuccessfulBulkTopupResponse()
     {
         $businessWallet = Business::find(1);;
         $businessWallet->update(["wallet" => 1000]);
-       $businessWallet);
 
         $file = $this->getFileForUpload([
             [
@@ -119,7 +118,6 @@ class SbusinessBulkTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
-       // dd($data);
         $this->assertEquals(200, $data['code']);
         $this->assertEquals("Your top-up request has been received and will be transferred and notified shortly.", $data['message']);
     }
@@ -152,7 +150,6 @@ class SbusinessBulkTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
-        //dd($data);
         $this->assertEquals(420, $data['code']);
         $this->assertEquals("Check The Excel Data Format Properly.", $data['message']);
 
@@ -234,12 +231,12 @@ class SbusinessBulkTopupTest extends FeatureTestCase
         $file = $this->getFileForUpload([
             [
                 'mobile' => '+8801620011019',
-                'operator' => 'AIRTEL',
+                'operator' => 'MOCK',
                 'connection_type' => 'prepaid',
                 'amount' => 1000
             ], [
                 'mobile' => '+8801620011020',
-                'operator' => 'AIRTEL',
+                'operator' => 'MOCK',
                 'connection_type' => 'prepaid',
                 'amount' => 1000
             ]
@@ -254,7 +251,6 @@ class SbusinessBulkTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
-      //  dd($data);
         $this->assertEquals(403, $data['code']);
         $this->assertEquals("You do not have sufficient balance to recharge.", $data['message']);
     }
@@ -320,7 +316,7 @@ class SbusinessBulkTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
-         dd($data);
+         //dd($data);
         $this->assertEquals(420, $data['code']);
         $this->assertEquals("Check The Excel Data Format Properly.", $data['message']);
     }
@@ -353,7 +349,7 @@ class SbusinessBulkTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
-        dd($data);
+        //dd($data);
         $this->assertEquals(420, $data['code']);
         $this->assertEquals("Check The Excel Data Format Properly.", $data['message']);
     }
@@ -385,7 +381,7 @@ class SbusinessBulkTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
-        dd($data);
+        //dd($data);
         $this->assertEquals(420, $data['code']);
         $this->assertEquals("Check The Excel Data Format Properly.", $data['message']);
     }
@@ -416,7 +412,6 @@ class SbusinessBulkTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
-        dd($data);
         $this->assertEquals(420, $data['code']);
         $this->assertEquals("Check The Excel Data Format Properly.", $data['message']);
     }
@@ -449,7 +444,6 @@ class SbusinessBulkTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
-        dd($data);
         $this->assertEquals(420, $data['code']);
         $this->assertEquals("Check The Excel Data Format Properly.", $data['message']);
     }
@@ -483,7 +477,6 @@ class SbusinessBulkTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
-        dd($data);
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The sheet name used in the excel file is incorrect. Please download the sample excel file for reference.", $data['message']);
     }
@@ -503,10 +496,10 @@ class SbusinessBulkTopupTest extends FeatureTestCase
         return $this->excel->create($this->excelFileName, function (LaravelExcelWriter $excel) use ($data) {
             $excel->setTitle($this->excelFileName);
 
-            //$excel->sheet("data", function (LaravelExcelWorksheet $sheet) use ($data) {
-            $excel->sheet("table", function (LaravelExcelWorksheet $sheet) use ($data) {
+            $excel->sheet("data", function (LaravelExcelWorksheet $sheet) use ($data) {
+            //$excel->sheet("table", function (LaravelExcelWorksheet $sheet) use ($data) {
                 $sheet->fromArray($data);
             });
         });
-    }*/
+    }
 }
