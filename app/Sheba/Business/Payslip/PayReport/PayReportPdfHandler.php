@@ -36,8 +36,7 @@ class PayReportPdfHandler
      */
     public function generate()
     {
-        $six_digit_random_number = random_int(100000, 999999);
-        $filename = 'Payslip_' . Carbon::now()->timestamp . '_' . $six_digit_random_number . $this->businessMember->id . $six_digit_random_number . '.pdf';
+        $filename = 'Payslip_' . Carbon::now()->timestamp . random_int(100000, 999999) . $this->businessMember->id . random_int(100000, 999999) . '.pdf';
         $file = $this->getTempFolder() . $filename;
         $pay_report_detail = $this->payReportDetails;
         App::make('dompdf.wrapper')->loadView('pdfs.payslip.payroll_details', compact('pay_report_detail'))->save($file);
