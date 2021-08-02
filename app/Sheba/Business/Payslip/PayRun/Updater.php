@@ -27,7 +27,7 @@ class Updater
     private $business;
     private $businessMemberIds;
     private $payrollComponentRepository;
-    /** @var GrossSalaryBreakdownCalculate  $grossSalaryBreakdownCalculate*/
+    /** @var GrossSalaryBreakdownCalculate $grossSalaryBreakdownCalculate */
     private $grossSalaryBreakdownCalculate;
     private $businessMemberRepository;
 
@@ -98,10 +98,12 @@ class Updater
      */
     public function disburse()
     {
-        DB::transaction(function () {
-            $this->payslipRepository->getPaySlipByStatus($this->businessMemberIds, Status::PENDING)->where('schedule_date', 'like', '%' . $this->scheduleDate . '%')->update(['status' => Status::DISBURSED]);
+        $payslips = $this->payslipRepository->getPaySlipByStatus($this->businessMemberIds, Status::PENDING)->where('schedule_date', 'like', '%' . $this->scheduleDate . '%');
+
+        DB::transaction(function () use ($payslips) {
+            $payslips->update(['status' => Status::DISBURSED]);
         });
-        $this->sendNotifications();
+        $this->sendNotifications($payslips);
         return true;
     }
 
@@ -116,8 +118,8 @@ class Updater
         $data = [];
         foreach ($gross_salary_breakdown_percentage as $component_name => $component_value) {
             $component = $this->payrollComponentRepository->where('name', $component_name)->where('type', Type::GROSS)->where('is_active', 1)->where('target_type', TargetType::EMPLOYEE)->where('target_id', $business_member->id)->first();
-            if (!$component) $component = $this->payrollComponentRepository->where('name', $component_name)->where('type', Type::GROSS)->where('target_type', TargetType::GENERAL)->where(function($query) {
-                return $query->where('is_default', 1)->orWhere('is_active',1);
+            if (!$component) $component = $this->payrollComponentRepository->where('name', $component_name)->where('type', Type::GROSS)->where('target_type', TargetType::GENERAL)->where(function ($query) {
+                return $query->where('is_default', 1)->orWhere('is_active', 1);
             })->first();
 
             $percentage = floatval(json_decode($component->setting, 1)['percentage']);
@@ -132,15 +134,13 @@ class Updater
         return json_encode($data);
     }
 
-    public function sendNotifications()
+    public function sendNotifications($payslips)
     {
-        $business_members = $this->business->getAccessibleBusinessMember()->get();
-        foreach ($business_members as $business_member) {
-            $payslip = $this->payslipRepository->where('business_member_id', $business_member->id)->where('status', Status::DISBURSED)->where('schedule_date', 'like', '%' . $this->scheduleDate . '%')->first();
-            if ($payslip) {
-                dispatch(new SendPayslipDisburseNotificationToEmployee($business_member, $payslip));
-                dispatch(new SendPayslipDisbursePushNotificationToEmployee($business_member, $payslip));
-            }
+        $payslips = $payslips->get();
+        foreach ($payslips as $payslip) {
+            $business_member = $this->businessMemberRepository->find($payslip->business_member_id);
+            dispatch(new SendPayslipDisburseNotificationToEmployee($business_member, $payslip));
+            dispatch(new SendPayslipDisbursePushNotificationToEmployee($business_member, $payslip));
         }
     }
 }
