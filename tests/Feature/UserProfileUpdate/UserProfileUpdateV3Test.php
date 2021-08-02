@@ -1,6 +1,5 @@
 <?php namespace Tests\Feature\UserProfileUpdate;
 
-use App\Models\Affiliate;
 use App\Models\Customer;
 use App\Models\Profile;
 use Carbon\Carbon;
@@ -19,75 +18,6 @@ class UserProfileUpdateV3Test extends FeatureTestCase
         $this->logIn();
 
     }
-
-//    public function testUserProfileUpdateAPIV3ByCreatingProfileGivingBirthdayDateEmailGenderName()
-//    {
-//
-//        //arrange
-//
-//        //act
-//
-//        $response = $this->put("/v3/customers/" . $this->customer->id . "/edit?remember_token=" . $this->customer->remember_token,[
-//            'dob' => '2009-6-29',
-//            'email'=> 'johndoe@gmail.com',
-//            'gender' => 'Male',
-//            'is_old_user' => 0,
-//            'name' => 'John Doe'
-//        ]);
-//
-//        $data = $response->decodeResponseJson();
-//
-//        //assert
-//
-//        $this->assertEquals(200, $data["code"]);
-//        $this->assertEquals("Successful", $data["message"]);
-//
-//    }
-//
-//    public function testUserProfileUpdateAPIV3ByCreatingProfileGivingDateOfBirthGenderName()
-//    {
-//
-//        //arrange
-//
-//        //act
-//
-//        $response = $this->put("/v3/customers/" . $this->customer->id . "/edit?remember_token=" . $this->customer->remember_token,[
-//            'dob' => '2009-6-29',
-//            'gender' => 'Male',
-//            'is_old_user' => 0,
-//            'name' => 'John Doe'
-//        ]);
-//
-//        $data = $response->decodeResponseJson();
-//
-//        //assert
-//
-//        $this->assertEquals(200, $data["code"]);
-//        $this->assertEquals("Successful", $data["message"]);
-//
-//    }
-//
-//    public function testUserProfileUpdateAPIV3ByCreatingProfileGivingDateOfBirthGender()
-//    {
-//
-//        //arrange
-//
-//        //act
-//
-//        $response = $this->put("/v3/customers/" . $this->customer->id . "/edit?remember_token=" . $this->customer->remember_token,[
-//            'dob' => '2009-6-29',
-//            'gender' => 'Male',
-//            'is_old_user' => 0
-//        ]);
-//
-//        $data = $response->decodeResponseJson();
-//
-//        //assert
-//
-//        $this->assertEquals(200, $data["code"]);
-//        $this->assertEquals("Successful", $data["message"]);
-//
-//    }
 
     public function testUserProfileUpdateAPIV3ByUpdatingName()
     {
@@ -204,7 +134,7 @@ class UserProfileUpdateV3Test extends FeatureTestCase
         $response = $this->put("/v3/customers/" . $this->customer->id . "/edit?remember_token=" . $this->customer->remember_token,[
             'dob' => '2009-6-29',
             'gender' => 'Male',
-            'is_old_user' => 1,
+            'is_old_user' => 1
         ]);
 
         $data = $response->decodeResponseJson();
@@ -310,29 +240,6 @@ class UserProfileUpdateV3Test extends FeatureTestCase
 
     }
 
-    public function testUserProfileUpdateAPIV3ByNotGivingIsOldUser()
-    {
-
-        //arrange
-
-        //act
-
-        $response = $this->put("/v3/customers/" . $this->customer->id . "/edit?remember_token=" . $this->customer->remember_token,[
-            'dob' => '2009-6-29',
-            'email'=> 'johndoe@gmail.com',
-            'gender' => 'Male',
-            'name' => 'John Doe'
-        ]);
-
-        $data = $response->decodeResponseJson();
-
-        //assert
-
-        $this->assertEquals(400, $data["code"]);
-        $this->assertEquals("The is old user field is required.", $data["message"]);
-
-    }
-
     public function testUserProfileUpdateAPIV3ByGivingInvalidGender()
     {
 
@@ -345,7 +252,7 @@ class UserProfileUpdateV3Test extends FeatureTestCase
             'is_old_user' => 1,
             'email'=> 'johndoe@gmail.com',
             'gender' => 'dkjsfshkdf',
-            'name' => 'John Doe'
+            'name' => 'John Doe',
         ]);
 
         $data = $response->decodeResponseJson();

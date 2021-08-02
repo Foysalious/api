@@ -73,7 +73,7 @@ class UserProfileUpdateV1Test extends FeatureTestCase
 
         $response = $this->put("/v1/customers/" . $this->customer->id . "/edit?remember_token=" . $this->customer->remember_token,[
             'field' => 'gender',
-            'value' => 'Male',
+            'value' => 'Female',
         ]);
         $data = $response->decodeResponseJson();
 
@@ -91,7 +91,7 @@ class UserProfileUpdateV1Test extends FeatureTestCase
 
         $response = $this->put("/v1/customers/" . $this->customer->id . "/edit?remember_token=" . $this->customer->remember_token,[
             'field' => 'birthday',
-            'value' => '2007-06-27'
+            'value' => '2005-06-27'
         ]);
         $data = $response->decodeResponseJson();
 

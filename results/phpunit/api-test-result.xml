@@ -1,16 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="Application Test Suite" tests="9" assertions="47" failures="0" errors="0" time="81.708860">
-    <testsuite name="Tests\Feature\UserProfileUpdate\SProInfoCallDetailsTest" file="/var/www/tests/Feature/UserProfileUpdate/SProInfoCallDetailsTest.php" tests="9" assertions="47" failures="0" errors="0" time="81.708860">
-      <testcase name="testInfoCallDetailsAPIForInvalidInfoCallId" class="Tests\Feature\UserProfileUpdate\SProInfoCallDetailsTest" file="/var/www/tests/Feature/UserProfileUpdate/SProInfoCallDetailsTest.php" line="45" assertions="2" time="5.182316"/>
-      <testcase name="testInfoCallDetailsAPIForPassingChacracterAsInfoCallId" class="Tests\Feature\UserProfileUpdate\SProInfoCallDetailsTest" file="/var/www/tests/Feature/UserProfileUpdate/SProInfoCallDetailsTest.php" line="67" assertions="2" time="5.645457"/>
-      <testcase name="testInfoCallDetailsAPIForPassingInvalidURL" class="Tests\Feature\UserProfileUpdate\SProInfoCallDetailsTest" file="/var/www/tests/Feature/UserProfileUpdate/SProInfoCallDetailsTest.php" line="89" assertions="1" time="4.792907"/>
-      <testcase name="testInfoCallDetailsAPIForInvalidAuthorizedToken" class="Tests\Feature\UserProfileUpdate\SProInfoCallDetailsTest" file="/var/www/tests/Feature/UserProfileUpdate/SProInfoCallDetailsTest.php" line="119" assertions="2" time="4.995956"/>
-      <testcase name="testInfoCallDetailsAPIForOpenInfoCall" class="Tests\Feature\UserProfileUpdate\SProInfoCallDetailsTest" file="/var/www/tests/Feature/UserProfileUpdate/SProInfoCallDetailsTest.php" line="141" assertions="5" time="5.044003"/>
-      <testcase name="testInfoCallDetailsAPIForRejectedInfoCall" class="Tests\Feature\UserProfileUpdate\SProInfoCallDetailsTest" file="/var/www/tests/Feature/UserProfileUpdate/SProInfoCallDetailsTest.php" line="175" assertions="7" time="5.900721"/>
-      <testcase name="testInfoCallDetailsAPIForConvertedInfoCallRunning" class="Tests\Feature\UserProfileUpdate\SProInfoCallDetailsTest" file="/var/www/tests/Feature/UserProfileUpdate/SProInfoCallDetailsTest.php" line="216" assertions="9" time="20.542149"/>
-      <testcase name="testInfoCallDetailsAPIForConvertedInfoCallCompleted" class="Tests\Feature\UserProfileUpdate\SProInfoCallDetailsTest" file="/var/www/tests/Feature/UserProfileUpdate/SProInfoCallDetailsTest.php" line="323" assertions="10" time="13.350754"/>
-      <testcase name="testInfoCallDetailsAPIForConvertedInfoCallCanceled" class="Tests\Feature\UserProfileUpdate\SProInfoCallDetailsTest" file="/var/www/tests/Feature/UserProfileUpdate/SProInfoCallDetailsTest.php" line="433" assertions="9" time="16.254597"/>
+  <testsuite name="Application Test Suite" tests="12" assertions="24" failures="0" errors="0" time="70.342008">
+    <testsuite name="Tests\Feature\UserProfileUpdate\UserProfileUpdateV1Test" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileUpdateV1Test.php" tests="12" assertions="24" failures="0" errors="0" time="70.342008">
+      <testcase name="testUserProfileUpdateAPIV1ByUpdatingNameGenderBirthdayAddress" class="Tests\Feature\UserProfileUpdate\UserProfileUpdateV1Test" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileUpdateV1Test.php" line="22" assertions="2" time="5.846598"/>
+      <testcase name="testUserProfileUpdateAPIV1ByUpdatingNameOnly" class="Tests\Feature\UserProfileUpdate\UserProfileUpdateV1Test" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileUpdateV1Test.php" line="49" assertions="2" time="4.547308"/>
+      <testcase name="testUserProfileUpdateAPIV1ByUpdatingGenderOnly" class="Tests\Feature\UserProfileUpdate\UserProfileUpdateV1Test" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileUpdateV1Test.php" line="67" assertions="2" time="5.579797"/>
+      <testcase name="testUserProfileUpdateAPIV1ByUpdatingBirthdayOnly" class="Tests\Feature\UserProfileUpdate\UserProfileUpdateV1Test" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileUpdateV1Test.php" line="85" assertions="2" time="5.725180"/>
+      <testcase name="testUserProfileUpdateAPIV1ByUpdatingAddressOnly" class="Tests\Feature\UserProfileUpdate\UserProfileUpdateV1Test" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileUpdateV1Test.php" line="103" assertions="2" time="5.312571"/>
+      <testcase name="testUserProfileUpdateAPIV1ByGivingNullValueOfName" class="Tests\Feature\UserProfileUpdate\UserProfileUpdateV1Test" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileUpdateV1Test.php" line="121" assertions="2" time="6.299253"/>
+      <testcase name="testUserProfileUpdateAPIV1ByGivingNullValueOfGender" class="Tests\Feature\UserProfileUpdate\UserProfileUpdateV1Test" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileUpdateV1Test.php" line="139" assertions="2" time="6.882518"/>
+      <testcase name="testUserProfileUpdateAPIV1ByGivingNullValueOfBirthday" class="Tests\Feature\UserProfileUpdate\UserProfileUpdateV1Test" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileUpdateV1Test.php" line="157" assertions="2" time="5.844908"/>
+      <testcase name="testUserProfileUpdateAPIV1ByGivingNullValueOfAddress" class="Tests\Feature\UserProfileUpdate\UserProfileUpdateV1Test" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileUpdateV1Test.php" line="175" assertions="2" time="6.145344"/>
+      <testcase name="testUserProfileUpdateAPIV1ByGivingInvalidBirthday" class="Tests\Feature\UserProfileUpdate\UserProfileUpdateV1Test" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileUpdateV1Test.php" line="193" assertions="2" time="6.854580"/>
+      <testcase name="testUserProfileUpdateAPIV1ByGivingCharacterInputInBirthday" class="Tests\Feature\UserProfileUpdate\UserProfileUpdateV1Test" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileUpdateV1Test.php" line="213" assertions="2" time="5.375815"/>
+      <testcase name="testUserProfileUpdateAPIV1ByGivingInvalidGender" class="Tests\Feature\UserProfileUpdate\UserProfileUpdateV1Test" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileUpdateV1Test.php" line="233" assertions="2" time="5.928136"/>
     </testsuite>
   </testsuite>
 </testsuites>
