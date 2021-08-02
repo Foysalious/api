@@ -103,17 +103,6 @@ class Updater
         $this->sendNotifications($payslips);
         return true;
     }
-    public function sendNotifications($payslips)
-    {
-        $payslips = $payslips->get();
-        foreach ($payslips as $payslip) {
-            $business_member = $this->businessMemberRepository->find($payslip->business_member_id);
-            /*dispatch(new SendPayslipDisburseNotificationToEmployee($business_member, $payslip));
-            dispatch(new SendPayslipDisbursePushNotificationToEmployee($business_member, $payslip));*/
-            (new SendPayslipDisburseNotificationToEmployee($business_member, $payslip))->handle();
-            (new SendPayslipDisbursePushNotificationToEmployee($business_member, $payslip))->handle();
-        }
-    }
 
     /**
      * @param $business_member
