@@ -5,9 +5,7 @@ use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
 use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
 use App\Http\Controllers\Controller;
-use App\Http\Presenters\OrderPlacedResponse;
 use App\Http\Requests\OrderCreateFromBondhuRequest;
-use App\Http\Requests\OrderPlaceRequest;
 use App\Jobs\AddCustomerGender;
 use App\Models\Affiliate;
 use App\Models\Customer;
@@ -65,7 +63,7 @@ class OrderController extends Controller
             Log::info("FRAUD_ORDER_PLACE: " . json_encode($request->all()) . " REQUEST_HEADER: " . json_encode($request->header()));
             return api_response($request, null, 500);
         }
-        
+
         $request->merge(['mobile' => formatMobile(preg_replace('/\b \b|-/', '', $request->mobile))]);
 
         $this->validate($request, [
@@ -121,24 +119,35 @@ class OrderController extends Controller
         if (!$order) return api_response($request, null, 500);
 
         $order = Order::find($order->id);
-        $customer = $request->getCustomer();
+        $customer = $request->customer;
         if (!empty($customer->profile->name) && empty($customer->profile->gender)) dispatch(new AddCustomerGender($customer->profile));
         $payment_method = $request->payment_method;
         /** @var Payment $payment */
         $payment = $this->getPayment($payment_method, $order, $order_adapter);
         if ($payment) $payment = $payment->getFormattedPayment();
-
-        try {
+        $job = $order->jobs->first();
+        $partner_order = $job->partnerOrder;
+        $order_with_response_data = [
+            'job_id' => $job->id,
+            'order_code' => $order->code(),
+            'payment' => $payment,
+            'order' => [
+                'id' => $order->id,
+                'code' => $order->code(),
+                'job' => ['id' => $job->id]
+            ]
+        ];
+        if ($partner_order->partner_id) {
+            $order_with_response_data['provider_mobile'] = $partner_order->partner->getContactNumber();
             $this->sendNotifications($customer, $order);
-            $this->sendSmsToCustomer($customer, $order);
-        } catch (\Exception $e) {
-            logError($e);
         }
 
-        return api_response($request, null, 200, (new OrderPlacedResponse($order, $payment))->toArray());
+        $this->sendSmsToCustomer($customer, $order);
+
+        return api_response($request, null, 200, $order_with_response_data);
     }
 
-    private function setModifierFromRequest(OrderPlaceRequest $request)
+    private function setModifierFromRequest(Request $request)
     {
         if ($request->has('created_by_type')) {
             if ($request->created_by_type === Resource::class) {
@@ -146,39 +155,37 @@ class OrderController extends Controller
                 return;
             }
         }
-        $this->setModifier($modifier);
+
+        if ($request->has('created_by')) $this->setModifier(User::find((int)$request->created_by));
+        else $this->setModifier($request->customer);
     }
 
     /**
      * @TODO FIx notification sending
      * @param $customer
      * @param $order
-     * @throws \Exception
      */
     private function sendNotifications($customer, $order)
     {
-        if (!$order->partnerOrders->first()->partner_id) return;
+        try {
+            /** @var Partner $partner */
+            $partner = $order->partnerOrders->first()->partner;
+            (new NotificationRepository())->send($order);
+            if (!(bool)config('sheba.send_order_create_sms')) return;
 
-        /** @var Partner $partner */
-        $partner = $order->partnerOrders->first()->partner;
-        (new NotificationRepository())->send($order);
-        if (!(bool)config('sheba.send_order_create_sms')) return;
-
-        if (!$order->jobs->first()->resource_id) {
-            (new SmsHandler('order-created-to-partner'))
-                ->setBusinessType(BusinessType::SMANAGER)
-                ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
-                ->send($partner->getContactNumber(), [
-                'order_code' => $order->code(), 'partner_name' => $partner->name
-            ]);
+            if (!$order->jobs->first()->resource_id) {
+                (new SmsHandler('order-created-to-partner'))
+                    ->setBusinessType(BusinessType::SMANAGER)
+                    ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
+                    ->send($partner->getContactNumber(), [
+                        'order_code' => $order->code(), 'partner_name' => $partner->name
+                    ]);
+            }
+        } catch (Throwable $e) {
+            logError($e);
         }
     }
 
-    /**
-     * @param $customer
-     * @param $order
-     * @throws \Exception
-     */
     private function sendSmsToCustomer($customer, $order)
     {
         $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
