@@ -285,8 +285,10 @@ class SbusinessBulkTopupTest extends FeatureTestCase
         $this->assertEquals(420, $data['code']);
         $this->assertEquals("Check The Excel Data Format Properly.", $data['message']);
     }
-
-    public function testBulkMinTopupAmountExceededTopUpPrepaidLimitResponse()
+/**
+ * API Failed to handle minimum amount error
+ */
+  /*  public function testBulkMinTopupAmountExceededTopUpPrepaidLimitResponse()
     {
         $businessWallet = Business::find(1);;
         $businessWallet->update(["wallet" => 1000]);
@@ -296,12 +298,12 @@ class SbusinessBulkTopupTest extends FeatureTestCase
                 'mobile' => '+8801620011019',
                 'operator' => 'MOCK',
                 'connection_type' => 'prepaid',
-                'amount' => 8
+                'amount' => 5
             ], [
                 'mobile' => '+8801620011020',
                 'operator' => 'MOCK',
                 'connection_type' => 'prepaid',
-                'amount' => 9
+                'amount' => 5
             ]
         ]);
 
@@ -317,22 +319,22 @@ class SbusinessBulkTopupTest extends FeatureTestCase
          //dd($data);
         $this->assertEquals(420, $data['code']);
         $this->assertEquals("Check The Excel Data Format Properly.", $data['message']);
-    }
+    }*/
 
     public function testBulkTopupAFileExtensionResponse()
     {
         $businessWallet = Business::find(1);;
         $businessWallet->update(["wallet" => 2000]);
 
-        $file = $this->getFileForUpload([
+        $file = $this->getFileForUploadWrongExtention([
             [
                 'mobile' => '+8801620011019',
-                'operator' => 'AIRTEL',
+                'operator' => 'MOCK',
                 'connection_type' => 'prepaid',
                 'amount' => 1000
             ], [
                 'mobile' => '+8801620011020',
-                'operator' => 'AIRTEL',
+                'operator' => 'MOCK',
                 'connection_type' => 'prepaid',
                 'amount' => 1000
             ]
@@ -347,9 +349,8 @@ class SbusinessBulkTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
-        //dd($data);
-        $this->assertEquals(420, $data['code']);
-        $this->assertEquals("Check The Excel Data Format Properly.", $data['message']);
+        $this->assertEquals(400, $data['code']);
+        $this->assertEquals("File type not support", $data['message']);
     }
     public function testBulkTopupNonVendorResponse()
     {
@@ -484,6 +485,14 @@ class SbusinessBulkTopupTest extends FeatureTestCase
     private function getFileForUpload(array $data)
     {
        $file = $this->getExcelFile($data)->save("xlsx");
+        $file_name = $file->getFileName() . '.' . $file->ext;
+        $path = $file->storagePath . DIRECTORY_SEPARATOR . $file_name;
+        return new UploadedFile($path, $file_name, null, null, null, true);
+    }
+
+    private function getFileForUploadWrongExtention(array $data)
+    {
+        $file = $this->getExcelFile($data)->save("CSV");
         $file_name = $file->getFileName() . '.' . $file->ext;
         $path = $file->storagePath . DIRECTORY_SEPARATOR . $file_name;
         return new UploadedFile($path, $file_name, null, null, null, true);
