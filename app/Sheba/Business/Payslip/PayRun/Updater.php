@@ -100,16 +100,26 @@ class Updater
     /**
      * @return bool
      */
-    public function disburse()
+    /*public function disburse()
     {
         DB::transaction(function () {
             $this->payslipRepository->getPaySlipByStatus($this->businessMemberIds, Status::PENDING)->where('schedule_date', 'like', '%' . $this->scheduleDate . '%')->update(['status' => Status::DISBURSED]);
         });
         $this->sendNotifications();
         return true;
+    }*/
+
+    public function disburse()
+    {
+        $payslips = $this->payslipRepository->getPaySlipByStatus($this->businessMemberIds, Status::PENDING)->where('schedule_date', 'like', '%' . $this->scheduleDate . '%');
+        DB::transaction(function () use ($payslips) {
+            $payslips->update(['status' => Status::DISBURSED]);
+        });
+        $this->sendNotifications($payslips);
+        return true;
     }
 
-    public function sendNotifications()
+    /*public function sendNotifications()
     {
         $business_members = $this->business->getAccessibleBusinessMember()->get();
         foreach ($business_members as $business_member) {
@@ -120,6 +130,17 @@ class Updater
                 //dispatch(new SendPayslipDisbursePushNotificationToEmployee($business_member, $payslip));
                 (new SendPayslipDisbursePushNotificationToEmployee($business_member, $payslip))->handle();
             }
+        }
+    }*/
+    public function sendNotifications($payslips)
+    {
+        $payslips = $payslips->get();
+        foreach ($payslips as $payslip) {
+            $business_member = $this->businessMemberRepository->find($payslip->business_member_id);
+            /*dispatch(new SendPayslipDisburseNotificationToEmployee($business_member, $payslip));
+            dispatch(new SendPayslipDisbursePushNotificationToEmployee($business_member, $payslip));*/
+            (new SendPayslipDisburseNotificationToEmployee($business_member, $payslip))->handle();
+            (new SendPayslipDisbursePushNotificationToEmployee($business_member, $payslip))->handle();
         }
     }
 
