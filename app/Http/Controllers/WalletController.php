@@ -77,7 +77,7 @@ class WalletController extends Controller
 
         if ($request->user_type === 'partner') {
             $user = (new PartnerRepository($request->user_id))->validatePartner($request->remember_token);
-            (new PartnerStatusAuthentication())->handleInside($user);
+            if($user) (new PartnerStatusAuthentication())->handleInside($user);
         } else {
             $user = $class_name::where([
                 ['id', (int)$request->user_id],
