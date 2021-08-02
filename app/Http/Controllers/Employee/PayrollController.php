@@ -23,7 +23,6 @@ class PayrollController extends Controller
 
     public function downloadPayslip(Request $request, PayReportDetails $pay_report_details, TimeFrame $time_frame, PayReportPdfHandler $pay_report_pdf_handler)
     {
-        return api_response($request, null, 200);
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
         $time_period = $time_frame->forAMonth($request->month, $request->year);

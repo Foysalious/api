@@ -139,8 +139,10 @@ class Updater
         $payslips = $payslips->get();
         foreach ($payslips as $payslip) {
             $business_member = $this->businessMemberRepository->find($payslip->business_member_id);
-            dispatch(new SendPayslipDisburseNotificationToEmployee($business_member, $payslip));
-            dispatch(new SendPayslipDisbursePushNotificationToEmployee($business_member, $payslip));
+            #dispatch(new SendPayslipDisburseNotificationToEmployee($business_member, $payslip));
+            (new SendPayslipDisburseNotificationToEmployee($business_member, $payslip))->handle();
+            #dispatch(new SendPayslipDisbursePushNotificationToEmployee($business_member, $payslip));
+            (new SendPayslipDisbursePushNotificationToEmployee($business_member, $payslip))->handle();
         }
     }
 }
