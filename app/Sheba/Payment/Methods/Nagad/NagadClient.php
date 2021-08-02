@@ -9,12 +9,12 @@ use Sheba\TPProxy\TPProxyServerError;
 
 class NagadClient
 {
-    const TIMEOUT = 120;
     /** @var NagadProxyClient $client */
     private $client;
     private $baseUrl;
     /**@var NagadStore $store */
     private $store;
+    const TIMEOUT = 120;
 
     /**
      * NagadClient constructor.
