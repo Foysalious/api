@@ -352,7 +352,11 @@ class SbusinessBulkTopupTest extends FeatureTestCase
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("File type not support", $data['message']);
     }
-    public function testBulkTopupNonVendorResponse()
+    /**
+     * Bulk topup API support Excel without vendor field,
+     *
+     */
+/*    public function testBulkTopupNonVendorResponse()
     {
         $businessWallet = Business::find(1);;
         $businessWallet->update(["wallet" => 2000]);
@@ -383,9 +387,13 @@ class SbusinessBulkTopupTest extends FeatureTestCase
         //dd($data);
         $this->assertEquals(420, $data['code']);
         $this->assertEquals("Check The Excel Data Format Properly.", $data['message']);
-    }
+    }*/
 
-    public function testBulkTopupNonAmountResponse()
+    /**
+     *  Bulk topup API support Excel without Amount field,
+     */
+
+    /*public function testBulkTopupNonAmountResponse()
     {
         $businessWallet = Business::find(1);;
         $businessWallet->update(["wallet" => 2000]);
@@ -413,9 +421,13 @@ class SbusinessBulkTopupTest extends FeatureTestCase
         $data = $response->decodeResponseJson();
         $this->assertEquals(420, $data['code']);
         $this->assertEquals("Check The Excel Data Format Properly.", $data['message']);
-    }
+    }*/
 
-    public function testBulkTopupNonNumberResponse()
+    /**
+     *  Bulk topup API support Excel without Mobile Number field,
+     */
+
+  /*  public function testBulkTopupNonNumberResponse()
     {
         $businessWallet = Business::find(1);;
         $businessWallet->update(["wallet" => 2000]);
@@ -445,15 +457,14 @@ class SbusinessBulkTopupTest extends FeatureTestCase
         $data = $response->decodeResponseJson();
         $this->assertEquals(420, $data['code']);
         $this->assertEquals("Check The Excel Data Format Properly.", $data['message']);
-    }
+    }*/
 
     public function testSuccessfulBulkTopupSheetNameErrorResponse()
     {
         $businessWallet = Business::find(1);;
         $businessWallet->update(["wallet" => 1000]);
-        // dd($businessWallet);
 
-        $file = $this->getFileForUpload([
+        $file = $this->getFileForUploadErrorSheetName([
             [
                 'mobile' => '+8801620011019',
                 'operator' => 'MOCK',
@@ -498,15 +509,34 @@ class SbusinessBulkTopupTest extends FeatureTestCase
         return new UploadedFile($path, $file_name, null, null, null, true);
     }
 
+    private function getFileForUploadErrorSheetName(array $data)
+    {
+        $file = $this->getExcelFileErrorSheetName($data)->save("xlsx");
+        $file_name = $file->getFileName() . '.' . $file->ext;
+        $path = $file->storagePath . DIRECTORY_SEPARATOR . $file_name;
+        return new UploadedFile($path, $file_name, null, null, null, true);
+    }
+
     private function getExcelFile(array $data)
     {
         return $this->excel->create($this->excelFileName, function (LaravelExcelWriter $excel) use ($data) {
             $excel->setTitle($this->excelFileName);
 
             $excel->sheet("data", function (LaravelExcelWorksheet $sheet) use ($data) {
-            //$excel->sheet("table", function (LaravelExcelWorksheet $sheet) use ($data) {
                 $sheet->fromArray($data);
             });
         });
     }
+
+    private function getExcelFileErrorSheetName(array $data)
+    {
+        return $this->excel->create($this->excelFileName, function (LaravelExcelWriter $excel) use ($data) {
+            $excel->setTitle($this->excelFileName);
+
+                $excel->sheet("table", function (LaravelExcelWorksheet $sheet) use ($data) {
+                $sheet->fromArray($data);
+            });
+        });
+    }
+
 }
