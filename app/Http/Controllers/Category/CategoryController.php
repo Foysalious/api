@@ -80,7 +80,7 @@ class CategoryController extends Controller
         if ($request->has('location')) {
             $location = Location::find($request->location);
         } else if ($request->has('lat')) {
-            $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location');
+            $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
             if (!is_null($hyperLocation)) $location = $hyperLocation->location;
         }
         $categories = Category::where('parent_id', null)->whereHas('locations', function ($q) use($location) {
