@@ -92,7 +92,17 @@ class CategoryController extends Controller
 
     public function getSubCategories(Request $request, $category)
     {
-        $categories = Category::where('parent_id', $category)->published()->select('id', 'name', 'bn_name', 'thumb','app_thumb')->get();
+        $this->validate($request, ['location' => 'sometimes|numeric', 'lat' => 'sometimes|numeric', 'lng' => 'required_with:lat']);
+        $location = null;
+        if ($request->has('location')) {
+            $location = Location::find($request->location);
+        } else if ($request->has('lat')) {
+            $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+            if (!is_null($hyperLocation)) $location = $hyperLocation->location;
+        }
+        $categories = Category::where('parent_id', $category)->whereHas('locations', function ($q) use($location) {
+            $q->published()->where('category_location.location_id', $location->toArray()['id']);
+        })->select('id', 'name', 'bn_name', 'thumb','app_thumb','icon','icon_png','icon_svg')->get();;
 
         return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $categories]) : api_response($request, null, 404);
     }
