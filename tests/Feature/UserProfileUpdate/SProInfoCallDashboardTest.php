@@ -293,6 +293,7 @@ class SProInfoCallDashboardTest extends FeatureTestCase
 
         $this->resource_Transaction = factory(Model::class)->create([
             'job_id' => $this->job->id,
+            'created_at' => $today
         ]);
 
         //act
@@ -311,7 +312,7 @@ class SProInfoCallDashboardTest extends FeatureTestCase
         $this->assertEquals(1, $data["service_request_dashboard"]["total_order"]);
         $this->assertEquals(0, $data["service_request_dashboard"]["cancelled_order"]);
         $this->assertEquals(1, $data["service_request_dashboard"]["completed_order"]);
-        $this->assertEquals(0, $data["service_request_dashboard"]["total_rewards"]);
+        $this->assertEquals(1000, $data["service_request_dashboard"]["total_rewards"]);
 
     }
 
