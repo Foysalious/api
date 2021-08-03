@@ -8,13 +8,10 @@ class PartnerStatusAuthentication extends PartnerStatusAuthMiddleware
 {
     /**
      * @param Partner $partner
-     * @param string $role
      * @throws AuthenticationFailedException
      */
-    public function handleInside(Partner $partner, $role = "both")
+    public function handleInside(Partner $partner)
     {
-        if (in_array($partner->status,$this->access[$role])){
-            throw new AuthenticationFailedException("You are not allowed to access this url");
-        }
+        $this->generateException($partner->status);
     }
 }
