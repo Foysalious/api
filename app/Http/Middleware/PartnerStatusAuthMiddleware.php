@@ -29,19 +29,30 @@ class PartnerStatusAuthMiddleware
     /**
      * @param         $request
      * @param Closure $next
-     * @param string  $role
      * @return mixed
      * @throws AuthenticationFailedException
      * @throws DoNotReportException
      */
-    public function handle($request, Closure $next, $role = "both")
+    public function handle($request, Closure $next)
     {
         if (!isset($request->partner) && $request->partner instanceof Partner) {
             throw new DoNotReportException("Not a Partner");
         }
-        if (in_array($request->partner->status,$this->access[$role])){
-            throw new AuthenticationFailedException("You are not allowed to access this url");
-        }
+        $this->generateException($request->partner->status);
+
         return $next($request);
+    }
+
+    /**
+     * @throws AuthenticationFailedException
+     */
+    protected function generateException($status)
+    {
+        if($status === $this->access['blacklisted'][0])
+            throw new AuthenticationFailedException("You are not allowed to access this url");
+
+        elseif ($status === $this->access['paused'][0])
+            throw new AuthenticationFailedException("You are temporarily suspended to access this url", 403);
+
     }
 }
