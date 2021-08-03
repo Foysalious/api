@@ -30,6 +30,7 @@ class AccountingRepository extends BaseRepository
             if ($datum['source_type'] == 'pos' && $datum['amount_cleared'] > 0) {
                 $this->createPosOrderPayment($datum['amount_cleared'], $datum['source_id'], 'cod');
             }
+            return $datum;
         } catch (AccountingEntryServerError $e) {
             logError($e);
         }
