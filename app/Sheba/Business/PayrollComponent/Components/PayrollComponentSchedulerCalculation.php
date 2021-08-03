@@ -205,12 +205,11 @@ class PayrollComponentSchedulerCalculation
             $is_on_leave = $this->isLeave($date, $leaves);
             if (!$is_weekend_or_holiday && !$is_on_leave) {
                 $total_working_days++;
-                if (array_key_exists($date->format('y-m-d'), $business_member_attendance)){
-                    if($business_member_attendance[$date->format('y-m-d')]['checkin_time'] > $office_start_time || $business_member_attendance[$date->format('y-m-d')]['checkout_time'] < $office_end_time) $total_late_checkin_or_early_checkout++;
-                    if($business_member_attendance[$date->format('y-m-d')]['checkin_time'] > $office_start_time) $total_late_checkin++;
-                    if($business_member_attendance[$date->format('y-m-d')]['checkout_time'] < $office_end_time) $total_early_checkout++;
-                    if($business_member_attendance[$date->format('y-m-d')]['checkin_time'] > $office_start_time_with_grace || $business_member_attendance[$date->format('y-m-d')]['checkout_time'] < $office_end_time_with_grace) $grace_time_over++;
-
+                if (array_key_exists($date->format('Y-m-d'), $business_member_attendance)){
+                    if($business_member_attendance[$date->format('Y-m-d')]['checkin_time'] > $office_start_time || $business_member_attendance[$date->format('Y-m-d')]['checkout_time'] < $office_end_time) $total_late_checkin_or_early_checkout++;
+                    if($business_member_attendance[$date->format('Y-m-d')]['checkin_time'] > $office_start_time) $total_late_checkin++;
+                    if($business_member_attendance[$date->format('Y-m-d')]['checkout_time'] < $office_end_time) $total_early_checkout++;
+                    if($business_member_attendance[$date->format('Y-m-d')]['checkin_time'] > $office_start_time_with_grace || $business_member_attendance[$date->format('Y-m-d')]['checkout_time'] < $office_end_time_with_grace) $grace_time_over++;
                     $total_present++;
                 }
             }
