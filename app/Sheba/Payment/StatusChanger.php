@@ -65,17 +65,19 @@ class StatusChanger
      * @param string $error_details JSON transaction details
      * @return Payment
      */
-    public function changeToValidationFailed($error_details)
+    public function changeToValidationFailed(string $error_details): Payment
     {
         $this->logRepo->create([
-            'to'                  => Statuses::VALIDATION_FAILED,
-            'from'                => $this->payment->status,
+            'to' => Statuses::VALIDATION_FAILED,
+            'from' => $this->payment->status,
             'transaction_details' => $this->payment->transaction_details
         ]);
-        $this->payment->status              = Statuses::VALIDATION_FAILED;
+
+        $this->payment->status = Statuses::VALIDATION_FAILED;
         $this->payment->transaction_details = $error_details;
-        $this->payment->request_payload     = json_encode(request()->all());
+        $this->payment->request_payload = json_encode(request()->all());
         $this->payment->update();
+
         return $this->payment;
     }
 }

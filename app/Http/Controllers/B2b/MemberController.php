@@ -4,6 +4,7 @@ use App\Models\Attachment;
 use App\Models\Business;
 use App\Models\HyperLocal;
 use App\Sheba\Business\ACL\AccessControl;
+use App\Sheba\Business\BusinessBasicInformation;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -30,7 +31,7 @@ use DB;
 
 class MemberController extends Controller
 {
-    use ModificationFields, FilesAttachment, FileManager;
+    use ModificationFields, FilesAttachment, FileManager, BusinessBasicInformation;
 
     /** BusinessMemberRequester $businessMemberRequester */
     private $businessMemberRequester;
@@ -145,7 +146,7 @@ class MemberController extends Controller
             "sub_domain" => $business->sub_domain,
             "tagline" => $business->tagline,
             "company_type" => $business->type,
-            'company_logo' => $this->isDefaultImage($business->logo) ? null : $business->logo,
+            'company_logo' => $this->isDefaultImageByUrl($business->logo) ? null : $business->logo,
             "address" => $business->address,
             "area" => $location ? $location->name : null,
             "geo_informations" => $geo_information,
@@ -323,12 +324,5 @@ class MemberController extends Controller
         $profile_updater->update();
 
         return api_response($request, null, 200);
-    }
-
-    public function isDefaultImage($logo_url)
-    {
-        $path_info = pathinfo($logo_url);
-        if (!in_array($path_info['extension'], ['png', 'jpg', 'jpeg', 'svg', 'gif']) || strtolower($path_info['filename']) == 'default') return 1;
-        return 0;
     }
 }

@@ -2,58 +2,73 @@
 
 use App\Models\Payable;
 use App\Models\Payment;
-use App\Models\PaymentDetail;
-use App\Sheba\Payment\Methods\OkWallet\Request\InitRequest;
-use App\Sheba\Payment\Methods\OkWallet\Response\ValidateTransaction;
-use Illuminate\Support\Facades\DB;
+use Sheba\Payment\Methods\Nagad\Exception\InvalidOrderId;
+use Sheba\Payment\Methods\Nagad\Validator;
 use Sheba\Payment\Methods\OkWallet\Exception\FailedToInitiateException;
 use Sheba\Payment\Methods\PaymentMethod;
 use Sheba\Payment\Statuses;
-use Sheba\RequestIdentification;
-use Sheba\TPProxy\TPProxyServerError;
+use Throwable;
 
 class OkWallet extends PaymentMethod
 {
     const NAME = 'ok_wallet';
+    /** @var OkWalletClient $client */
+    private $client;
+
+    /**
+     * OkWallet constructor.
+     * @param OkWalletClient $okwallet_client
+     */
+    public function __construct(OkWalletClient $okwallet_client)
+    {
+        parent::__construct();
+        $this->client = $okwallet_client;
+    }
 
     /**
      * @param Payable $payable
      * @return Payment
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function init(Payable $payable): Payment
     {
         $payment = $this->createPayment($payable);
         try {
-            /** @var OkWalletClient $ok_wallet */
-            $ok_wallet = app(OkWalletClient::class);
-            $session = $ok_wallet->createSession($payment->payable->amount, $payment->getShebaTransaction()->getTransactionId());
-        } catch (\Throwable $e) {
+            $order_create = $this->client
+                ->createOrder($payment->payable->amount, $payment->getShebaTransaction()->getTransactionId());
+        } catch (Throwable $e) {
             $error = ['status' => "failed", "errorMessage" => $e->getMessage(), 'statusCode' => $e->getCode()];
             $this->onInitFailed($payment, json_encode($error));
             throw $e;
         }
-        if ($session->hasError()) {
-            $this->onInitFailed($payment, $session->toString());
-            throw new FailedToInitiateException($session->getMessage());
-        }
-        $payment->gateway_transaction_id = $session->getSessionKey();
-        $payment->transaction_details    = $session->toString();
-        $payment->redirect_url           = $session->getRedirectUrl();
-        $payment->update();
-        return $payment;
 
+        if ($order_create->hasError()) {
+            $this->onInitFailed($payment, $order_create->toString());
+            throw new FailedToInitiateException($order_create->getMessage());
+        }
+
+        $payment->gateway_transaction_id = $order_create->getOrderId();
+        $payment->transaction_details = $order_create->toString();
+        $payment->redirect_url = $order_create->getRedirectUrl();
+
+        $payment->update();
+
+        return $payment;
     }
 
+    /**
+     * @param Payment $payment
+     * @param $error
+     */
     private function onInitFailed(Payment $payment, $error)
     {
         $this->paymentLogRepo->setPayment($payment);
         $this->paymentLogRepo->create([
-            'to'                  => Statuses::INITIATION_FAILED,
-            'from'                => $payment->status,
+            'to' => Statuses::INITIATION_FAILED,
+            'from' => $payment->status,
             'transaction_details' => $error
         ]);
-        $payment->status              = Statuses::INITIATION_FAILED;
+        $payment->status = Statuses::INITIATION_FAILED;
         $payment->transaction_details = $error;
         $payment->update();
     }
@@ -61,24 +76,21 @@ class OkWallet extends PaymentMethod
     /**
      * @param Payment $payment
      * @return Payment
-     * @throws TPProxyServerError
+     * @throws FailedToInitiateException
      */
     public function validate(Payment $payment): Payment
     {
-        $request = request()->all();
-        $request = (new InitRequest(json_decode($request['data'], true)));
-        $validate_transaction = (new ValidateTransaction($this->paymentLogRepo))->setPayment($payment);
-
-        if ($request->getRescode() != 2000) {
-            $payment = $validate_transaction->changeToFailed();
+        $verify_order = $this->client->validateOrder($payment);
+        if ($verify_order->hasError()) {
+            $this->statusChanger->setPayment($payment)->changeToValidationFailed($verify_order->toString());
         } else {
-            $payment = $validate_transaction->initValidation();
+            $this->statusChanger->setPayment($payment)->changeToValidated($verify_order->toString());
         }
-        $payment->update();
+
         return $payment;
     }
 
-    public function getMethodName()
+    public function getMethodName(): string
     {
         return self::NAME;
     }

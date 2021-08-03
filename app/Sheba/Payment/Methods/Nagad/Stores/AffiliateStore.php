@@ -1,7 +1,4 @@
-<?php
-
-
-namespace Sheba\Payment\Methods\Nagad\Stores;
+<?php namespace Sheba\Payment\Methods\Nagad\Stores;
 
 class AffiliateStore extends NagadStore
 {
@@ -9,10 +6,8 @@ class AffiliateStore extends NagadStore
 
     public function __construct()
     {
-        $this->baseUrl     = config('payment.nagad.stores.affiliate.base_url');
-        $this->merchantId  = config('payment.nagad.stores.affiliate.merchant_id');
-        $this->publicKey   = file_get_contents(config('payment.nagad.stores.affiliate.public_key_path'));
-        $this->privateKey  = file_get_contents(config('payment.nagad.stores.affiliate.private_key_path'));
+        $this->baseUrl = config('payment.nagad.stores.affiliate.base_url');
+        $this->merchantId = config('payment.nagad.stores.affiliate.merchant_id');
         $this->contextPath = config('payment.nagad.stores.affiliate.context_path');
     }
 
@@ -23,5 +18,4 @@ class AffiliateStore extends NagadStore
     {
         return self::NAME;
     }
-
 }
