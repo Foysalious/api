@@ -43,7 +43,7 @@ class SmsCampaign
     private $transaction;
 
     public function __construct(SmsHandler $sms, CampaignSmsStatusChanger $sms_status_changer,
-                                SmsCampaignOrderReceiverRepository $receiver_repo, SmsCampaignOrderRepository $order_repo)
+        SmsCampaignOrderReceiverRepository $receiver_repo, SmsCampaignOrderRepository $order_repo)
     {
         $this->smsHandler = $sms;
         $this->smsStatusChanger = $sms_status_changer;
@@ -92,22 +92,22 @@ class SmsCampaign
 
         $response = $this->smsHandler->sendBulkMessages($this->mobileNumbers, $this->message);
         $campaign_order = $this->orderRepo->create([
-            'title' => $this->title,
-            'message' => $this->message,
-            'partner_id' => $this->partner->id,
-            'rate_per_sms' => $response->getChargePerSms(),
-            'bulk_id' => $response->getSmsId() ?: null
-        ]);
+                                                       'title' => $this->title,
+                                                       'message' => $this->message,
+                                                       'partner_id' => $this->partner->id,
+                                                       'rate_per_sms' => $response->getChargePerSms(),
+                                                       'bulk_id' => $response->getSmsId() ?: null
+                                                   ]);
 
         foreach ($response->getSinglesResponse() as $index => $single) {
             $this->receiverRepo->create([
-                'sms_campaign_order_id' => $campaign_order->id,
-                'receiver_number' => $single->getMobile(),
-                'receiver_name' => $this->getNthCustomerName($index),
-                'message_id' => $single->getSmsId(),
-                'status' => Status::PENDING,
-                'sms_count' => $single->getSmsCount()
-            ]);
+                                            'sms_campaign_order_id' => $campaign_order->id,
+                                            'receiver_number' => $single->getMobile(),
+                                            'receiver_name' => $this->getNthCustomerName($index),
+                                            'message_id' => $single->getSmsId(),
+                                            'status' => Status::PENDING,
+                                            'sms_count' => $single->getSmsCount()
+                                        ]);
         }
 
         $amount_to_be_deducted = $response->getTotalCharge();

@@ -2,6 +2,7 @@
 
 
 use App\Models\PosOrder;
+use App\Sheba\PosOrderService\Services\OrderService;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Pos\Repositories\PosOrderRepository;
@@ -29,11 +30,16 @@ class OrderPlace
      */
     private $posOrderRepository;
     private $token;
+    /**
+     * @var OrderService
+     */
+    private $orderService;
 
-    public function __construct(DeliveryServerClient $client, PosOrderRepository $posOrderRepository)
+    public function __construct(DeliveryServerClient $client, PosOrderRepository $posOrderRepository, OrderService $orderService)
     {
         $this->client = $client;
         $this->posOrderRepository = $posOrderRepository;
+        $this->orderService = $orderService;
     }
 
     public function setPartner($partner)
@@ -135,9 +141,10 @@ class OrderPlace
         return $this->client->setToken($this->token)->post('orders', $data);
     }
 
+
     /**
      * @param $info
-     * @return Model
+     * @return array|Model|object|string|null
      */
     public function storeDeliveryInformation($info)
     {
@@ -150,8 +157,8 @@ class OrderPlace
             'delivery_request_id' => $info['uid'],
             'status' => OrderStatuses::SHIPPED
         ];
-
-        return $this->posOrderRepository->update($this->posOrder, $data);
+        if ($this->posOrder && !$this->posOrder->is_migrated) return $this->posOrderRepository->update($this->posOrder, $data);
+        return $this->orderService->storeDeliveryInformation($data);
     }
 
 

@@ -8,9 +8,10 @@ class CoWorkerMinimumTransformer extends TransformerAbstract
     public function transform(Member $member)
     {
         $profile = $member->profile;
-        $role = $member->businessMember->role;
+        $business_member = $member->businessMember;
+        $role = $business_member ? $business_member->role : null;
         return [
-            'id' => $member->businessMember->id,
+            'id' => $business_member ? $business_member->id : null,
             'profile' => [
                 'name' => $profile->name,
                 'pro_pic' => $profile->pro_pic

@@ -12,10 +12,9 @@ class NagadClient
     /** @var NagadProxyClient $client */
     private $client;
     private $baseUrl;
-    /**
-     * @var NagadStore
-     */
+    /**@var NagadStore $store */
     private $store;
+    const TIMEOUT = 120;
 
     /**
      * NagadClient constructor.
@@ -70,6 +69,7 @@ class NagadClient
      */
     public function placeOrder($transaction_id, Initialize $resp, $amount, $call_back_url): CheckoutComplete
     {
+        ini_set('max_execution_time', self::TIMEOUT + self::TIMEOUT);
         $payment_ref_id = $resp->getPaymentReferenceId();
         $url = "$this->baseUrl/api/dfs/check-out/complete/$payment_ref_id";
         list($payment_data, $store_data) = Inputs::complete($transaction_id, $resp, $amount, $call_back_url, $this->store);
@@ -82,7 +82,6 @@ class NagadClient
             ->setStoreData($store_data);
 
         $resp = $this->client->call($request);
-
         return new CheckoutComplete($resp, $this->store);
     }
 
@@ -94,6 +93,7 @@ class NagadClient
      */
     public function validate($ref_id): Validator
     {
+        ini_set('max_execution_time', self::TIMEOUT + self::TIMEOUT);
         $url = "$this->baseUrl/api/dfs/verify/payment/$ref_id";
         $request = (new NagadRequest())
             ->setUrl($url)
@@ -101,7 +101,6 @@ class NagadClient
             ->setHeaders(Inputs::headers());
 
         $resp = $this->client->call($request);
-
         return new Validator($resp, true);
     }
 }

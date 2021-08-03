@@ -2,7 +2,7 @@
 
 use Sheba\Dal\ResourceTransaction\Model;
 
-class ModelFactory extends Factory
+class ResourceTransactionFactory extends Factory
 {
     protected function getModelClass()
     {

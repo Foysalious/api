@@ -5,6 +5,7 @@ use App\Repositories\FileRepository;
 use App\Sheba\Pos\Product\Accounting\ExpenseEntry;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
+use Sheba\Dal\PartnerPosServiceBatch\Model as PartnerPosServiceBatch;
 use Sheba\Dal\PartnerPosServiceImageGallery\Model as PartnerPosServiceImageGallery;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
@@ -19,9 +20,12 @@ class Updater
 
     private $data;
     private $updatedData;
+    private $batchData;
     /** @var PosServiceRepositoryInterface */
     private $serviceRepo;
     private $service;
+    private $oldStock;
+    private $oldCost;
     private $posServiceLogRepo;
     /**
      * @var ExpenseEntry
@@ -52,31 +56,69 @@ class Updater
         return $this;
     }
 
+    /**
+     * @param mixed $oldStock
+     * @return Updater
+     */
+    public function setOldStock($oldStock)
+    {
+        $this->oldStock = $oldStock;
+        return $this;
+    }
+
+    /**
+     * @param mixed $oldCost
+     * @return Updater
+     */
+    public function setOldCost($oldCost)
+    {
+        $this->oldCost = $oldCost;
+        return $this;
+    }
+
     public function update()
     {
         $this->saveImages();
         $this->format();
+        $this->formatBatchData();
         $image_gallery = [];
-        if (isset($this->updatedData['image_gallery']))
-            $image_gallery = json_decode($this->updatedData['image_gallery'], true);
+        if (isset($this->updatedData['image_gallery'])) $image_gallery = json_decode($this->updatedData['image_gallery'], true);
         $cloned_data = $this->data;
         $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'is_vat_percentage_off', 'is_stock_off', 'image_gallery','accounting_info']);
         if (!empty($this->updatedData)) $this->updatedData = array_except($this->updatedData, 'image_gallery');
+
+        $lastBatchData = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->latest()->first();
+        $this->setOldCost($lastBatchData->cost);
+        $this->setOldStock($lastBatchData->stock);
+
+
         if (!empty($this->updatedData)) {
             $old_service = clone $this->service;
             $this->serviceRepo->update($this->service, $this->updatedData);
             $this->storeLogs($old_service, $this->updatedData);
         }
+        if(!empty($this->batchData)) {
+            $this->batchData['partner_pos_service_id'] = $this->service->id;
+            $lastBatchData->update($this->batchData);
+        }
         $this->storeImageGallery($image_gallery);
-        if(isset($cloned_data['accounting_info']) && !empty($cloned_data['accounting_info']))
-            $this->createExpenseEntry($this->service,$cloned_data);
+        if(isset($cloned_data['accounting_info']) && !empty($cloned_data['accounting_info'])) $this->createExpenseEntry($this->service,$cloned_data);
 
     }
 
     private function createExpenseEntry($partner_pos_service,$data)
     {
         $accounting_info = json_decode($data['accounting_info'],true);
-        $this->stockExpenseEntry->setPartner($partner_pos_service->partner)->setName($partner_pos_service->name)->setId($partner_pos_service->id)->setNewStock($accounting_info['new_stock'])->setCostPerUnit($partner_pos_service->cost)->setAccountingInfo($accounting_info)->create();
+        $this->stockExpenseEntry->setPartner($partner_pos_service->partner_id)
+            ->setName($partner_pos_service->name)
+            ->setId($partner_pos_service->id)
+            ->setOldStock($this->oldStock)
+            ->setOldCost($this->oldCost)
+            ->setIsUpdate(true)
+            ->setNewStock($this->batchData['stock'])
+            ->setCostPerUnit($this->batchData['cost'])
+            ->setAccountingInfo($accounting_info)
+            ->create();
     }
 
     private function storeImageGallery($image_gallery)
@@ -155,14 +197,6 @@ class Updater
 
     private function format()
     {
-        if ((isset($this->data['is_stock_off']) && ($this->data['is_stock_off'] == 'true' && $this->service->getStock() != null))) {
-            $this->updatedData['stock'] = null;
-        }
-
-        if (isset($this->data['is_stock_off']) && $this->data['is_stock_off'] == 'false') {
-            $this->updatedData['stock'] = (double)$this->data['stock'];
-        }
-
         if ((isset($this->data['is_vat_percentage_off']) && $this->data['is_vat_percentage_off'] == 'true')) {
             $this->updatedData['vat_percentage'] = null;
         } else if (isset($this->data['vat_percentage']) && $this->data['vat_percentage'] != $this->service->vat_percentage) {
@@ -197,9 +231,7 @@ class Updater
         if ((isset($this->data['pos_category_id']) && $this->data['pos_category_id'] != $this->service->pos_category_id)) {
             $this->updatedData['pos_category_id'] = $this->data['pos_category_id'];
         }
-        if ((isset($this->data['cost']) && $this->data['cost'] != $this->service->cost)) {
-            $this->updatedData['cost'] = $this->data['cost'];
-        }
+
         if ((isset($this->data['price']) && $this->data['price'] != $this->service->price)) {
             $this->updatedData['price'] = $this->data['price'] ?: null;
         }
@@ -237,6 +269,39 @@ class Updater
             }
         }
 
+    }
+
+    private function formatBatchData()
+    {
+        if ((isset($this->data['is_stock_off']) && ($this->data['is_stock_off'] == 'true' && $this->service->getStock() != null))) {
+            $this->deleteBatchesFifo();
+            return;
+        }
+
+        if (isset($this->data['is_stock_off']) && $this->data['is_stock_off'] == 'false') {
+            $this->batchData['stock'] = (double)$this->data['stock'];
+        }
+
+        $this->batchData['cost'] = isset($this->data['cost']) ? (double)$this->data['cost'] : (double)$this->service->getLastCost();
+    }
+
+    private function deleteBatchesFifo()
+    {
+        $batchCounter = 0;
+        $allBatches = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->get();
+        foreach ($allBatches as $batch)
+        {
+            $batchCounter++;
+            if($batchCounter == count($allBatches)) {
+                $lastBatch = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->latest()->first();
+                PartnerPosServiceBatch::where('id', $lastBatch->id)->update([
+                   'stock' => null
+                ]);
+            }
+            else {
+                $batch->delete();
+            }
+        }
     }
 
     /**

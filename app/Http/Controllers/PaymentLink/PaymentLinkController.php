@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\PaymentLink;
 
 use App\Http\Controllers\Controller;
+use App\Models\Partner;
 use App\Models\Payable;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
@@ -13,8 +14,8 @@ use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use Sheba\ModificationFields;
+use Sheba\Partner\PartnerStatuses;
 use Sheba\PaymentLink\Creator;
-use Sheba\PaymentLink\Exceptions\InvalidGatewayChargesException;
 use Sheba\PaymentLink\PaymentLink;
 use Sheba\PaymentLink\PaymentLinkClient;
 use Sheba\PaymentLink\PaymentLinkStatics;
@@ -89,7 +90,12 @@ class PaymentLinkController extends Controller
         }
     }
 
-    public function partnerPaymentLinks(Request $request)
+    /**
+     * @param Request $request
+     * @param PaymentLink $paymentLink
+     * @return JsonResponse
+     */
+    public function partnerPaymentLinks(Request $request, PaymentLink $paymentLink): JsonResponse
     {
         try {
             $payment_links_list = $this->paymentLinkRepo->getPartnerPaymentLinkList($request);
@@ -98,6 +104,7 @@ class PaymentLinkController extends Controller
                 $fractal       = new Manager();
                 $resources     = new Collection($links, new PaymentLinkArrayTransform());
                 $payment_links = $fractal->createData($resources)->toArray()['data'];
+                if(!is_null($request->payment_link_type)) $payment_links = $paymentLink->filterPaymentLinkList($payment_links, $request->payment_link_type);
                 return api_response($request, $payment_links, 200, ['payment_links' => $payment_links]);
             } else {
                 return api_response($request, [], 200, ['payment_links' => []]);
@@ -112,6 +119,12 @@ class PaymentLinkController extends Controller
     {
         try {
             $link = $paymentLinkRepository->findByIdentifier($identifier);
+            if ($link) {
+                $receiver = $link->getPaymentReceiver();
+                if ($receiver instanceof Partner && $receiver->status == PartnerStatuses::BLACKLISTED) {
+                    return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
+                }
+            }
             if ($link && !(int)$link->getIsActive()) {
                 return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
             }

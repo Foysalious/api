@@ -96,7 +96,7 @@ class DeliveryVendorUpdateAPITest extends FeatureTestCase
 
         $data = $response->decodeResponseJson();
         $this->assertEquals(400, $data['code']);
-        $this->assertEquals("Your session has expired. Try Login", $data['message']);
+        $this->assertEquals("The selected vendor name is invalid.", $data['message']);
     }
 
     public function testDeliveryVendorDataSuccessfullyUpdateIntoDB()

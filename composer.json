@@ -10,7 +10,7 @@
   "minimum-stability": "dev",
   "prefer-stable": true,
   "require": {
-    "php": ">=7.0",
+    "php": ">=7.1",
     "laravel/framework": "5.2.*",
     "league/flysystem-aws-s3-v3": "~1.0",
     "dingo/api": "1.0.*@dev",
@@ -50,8 +50,8 @@
     "symfony/polyfill-mbstring": "1.5.0",
     "spomky-labs/jose": "6.1.7",
     "fgrosse/phpasn1": "1.5",
-    "mpdf/mpdf": "^8.0",
-    "setasign/fpdi": "^2.3"
+    "setasign/fpdi": "^2.3",
+    "mpdf/mpdf": "^8.0"
   },
   "require-dev": {
     "fzaninotto/faker": "~1.4",

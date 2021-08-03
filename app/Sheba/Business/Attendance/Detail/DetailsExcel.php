@@ -1,5 +1,6 @@
 <?php namespace Sheba\Business\Attendance\Detail;
 
+use App\Sheba\Business\Attendance\AttendanceConstGetter;
 use Carbon\Carbon;
 use Excel;
 
@@ -25,6 +26,7 @@ class DetailsExcel
     private $profile;
     private $startDate;
     private $endDate;
+    private $overtime;
 
     public function __construct()
     {
@@ -77,7 +79,7 @@ class DetailsExcel
                 $sheet->fromArray($this->data, null, 'A1', false, false);
                 $sheet->prependRow($this->getHeaders());
                 $sheet->freezeFirstRow();
-                $sheet->cell('A1:M1', function ($cells) {
+                $sheet->cell('A1:N1', function ($cells) {
                     $cells->setFontWeight('bold');
                 });
                 $sheet->setAutoSize(true);
@@ -94,26 +96,27 @@ class DetailsExcel
             $this->checkInTime = '-';
             $this->checkInStatus = '-';
             $this->checkInLocation = '-';
-            $this->checkInAddress = '-';
+            $this->checkInAddress = '';
 
             $this->checkOutTime = '-';
             $this->checkOutStatus = '-';
             $this->checkOutLocation = '-';
-            $this->checkOutAddress = '-';
+            $this->checkOutAddress = '';
 
             $this->totalHours = '-';
+            $this->overtime = '-';
             $this->lateNote = null;
             $this->leftEarlyNote = null;
             if (!$attendance['weekend_or_holiday_tag']) {
                 if ($attendance['show_attendance'] == 1) {
                     $this->date = $attendance['date'];
                     $this->checkInOutLogics($attendance);
-                    $this->status = 'Present';
+                    $this->status = AttendanceConstGetter::PRESENT;
                 }
                 if ($attendance['show_attendance'] == 0) {
                     if ($attendance['is_absent'] == 1) {
                         $this->date = $attendance['date'];
-                        $this->status = 'Absent';
+                        $this->status = AttendanceConstGetter::ABSENT;
                     }
                 }
             }
@@ -122,13 +125,13 @@ class DetailsExcel
                 if ($attendance['show_attendance'] == 1) {
                     $this->checkInOutLogics($attendance);
                 }
-                if ($attendance['weekend_or_holiday_tag'] === 'weekend') {
+                if ($attendance['weekend_or_holiday_tag'] === AttendanceConstGetter::WEEKEND) {
                     $this->status = 'Weekend';
-                } else if ($attendance['weekend_or_holiday_tag'] === 'holiday') {
+                } else if ($attendance['weekend_or_holiday_tag'] === AttendanceConstGetter::HOLIDAY) {
                     $this->status = 'Holiday';
-                } else if ($attendance['weekend_or_holiday_tag'] === 'full_day') {
+                } else if ($attendance['weekend_or_holiday_tag'] === AttendanceConstGetter::FULL_DAY) {
                     $this->status = 'On leave: full day';
-                } else if ($attendance['weekend_or_holiday_tag'] === 'first_half' || $attendance['weekend_or_holiday_tag'] === 'second_half') {
+                } else if ($attendance['weekend_or_holiday_tag'] === AttendanceConstGetter::FIRST_HALF || $attendance['weekend_or_holiday_tag'] === AttendanceConstGetter::SECOND_HALF) {
                     $this->status = "On leave: half day";
                 }
             }
@@ -139,14 +142,15 @@ class DetailsExcel
                 'check_in_time' => $this->checkInTime,
                 'check_in_status' => $this->checkInStatus,
                 'check_in_location' => $this->checkInLocation,
-                'check_in_address' => $this->checkInAddress,
+                'check_in_address' => $this->checkInLocation === AttendanceConstGetter::REMOTE && empty($this->checkInAddress) ? AttendanceConstGetter::LOCATION_FETCH_ERROR_MESSAGE : $this->checkInAddress,
 
                 'check_out_time' => $this->checkOutTime,
                 'check_out_status' => $this->checkOutStatus,
                 'check_out_location' => $this->checkOutLocation,
-                'check_out_address' => $this->checkOutAddress,
+                'check_out_address' => $this->checkOutLocation === AttendanceConstGetter::REMOTE && empty($this->checkOutAddress) ? AttendanceConstGetter::LOCATION_FETCH_ERROR_MESSAGE :  $this->checkOutAddress,
 
                 'total_hours' => $this->totalHours,
+                'overtime' => $this->overtime,
                 'late_check_in_note' => $this->lateNote,
                 'left_early_note' => $this->leftEarlyNote,
             ]);
@@ -157,7 +161,7 @@ class DetailsExcel
     {
         return ['Date', 'Status', 'Check in time', 'Check in status', 'Check in location',
             'Check in address', 'Check out time', 'Check out status',
-            'Check out location', 'Check out address', 'Total Hours', 'Late check in note', 'Left early note'];
+            'Check out location', 'Check out address', 'Total Hours', 'Overtime', 'Late check in note', 'Left early note'];
     }
 
     private function checkInOutLogics($attendance)
@@ -166,14 +170,14 @@ class DetailsExcel
         $attendance_check_out = $attendance['attendance']['check_out'];
 
         $this->checkInTime = $attendance_check_in['time'];
-        if ($attendance_check_in['status'] === 'late') {
+        if ($attendance_check_in['status'] === AttendanceConstGetter::LATE) {
             $this->checkInStatus = 'Late';
         }
-        if ($attendance_check_in['status'] === 'on_time') {
+        if ($attendance_check_in['status'] === AttendanceConstGetter::ON_TIME) {
             $this->checkInStatus = 'On time';
         }
         if ($attendance_check_in['is_remote']) {
-            $this->checkInLocation = "Remote";
+            $this->checkInLocation = AttendanceConstGetter::REMOTE;
         } else {
             $this->checkInLocation = "Office IP";
         }
@@ -184,16 +188,16 @@ class DetailsExcel
         if (!is_null($attendance_check_out)) {
             $this->checkOutTime = $attendance_check_out['time'];
 
-            if ($attendance_check_out['status'] === 'left_early') {
+            if ($attendance_check_out['status'] === AttendanceConstGetter::LEFT_EARLY) {
                 $this->checkOutStatus = 'Left early';
             }
 
-            if ($attendance_check_out['status'] === 'left_timely') {
+            if ($attendance_check_out['status'] === AttendanceConstGetter::LEFT_TIMELY) {
                 $this->checkOutStatus = 'Left timely';
             }
 
             if ($attendance_check_out['is_remote']) {
-                $this->checkOutLocation = 'Remote';
+                $this->checkOutLocation = AttendanceConstGetter::REMOTE;
             } else {
                 $this->checkOutLocation = 'Office IP';
             }
@@ -205,6 +209,11 @@ class DetailsExcel
         if ($attendance['attendance']['active_hours']) {
             $this->totalHours = $attendance['attendance']['active_hours'];
         }
+
+        if ($attendance['attendance']['overtime_in_minutes']) {
+            $this->overtime = $attendance['attendance']['overtime'];
+        }
+
         $this->lateNote = $attendance['attendance']['late_note'];
         $this->leftEarlyNote = $attendance['attendance']['left_early_note'];
     }

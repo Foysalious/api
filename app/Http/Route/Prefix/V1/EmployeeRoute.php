@@ -33,6 +33,7 @@ class EmployeeRoute
             $api->get('last-notifications', 'Employee\NotificationController@lastNotificationCount');
             $api->get('test-notification', 'Employee\NotificationController@test');
             $api->post('notifications/seen', 'Employee\NotificationController@seen');
+            $api->post('notifications/history/update', 'Employee\NotificationHistoryController@changeStatus');
             $api->group(['prefix' => 'supports'], function ($api) {
                 $api->get('/', 'Employee\SupportController@index');
                 $api->group(['prefix' => '{support}'], function ($api) {
@@ -63,6 +64,7 @@ class EmployeeRoute
                 $api->get('/info', 'Employee\AttendanceController@attendanceInfo');
                 $api->post('action', 'Employee\AttendanceController@takeAction');
                 $api->get('today', 'Employee\AttendanceController@getTodaysInfo');
+                $api->post('note', 'Employee\AttendanceController@storeNote');
             });
             $api->group(['prefix' => 'leaves'], function ($api) {
                 $api->get('/', 'Employee\LeaveController@index');

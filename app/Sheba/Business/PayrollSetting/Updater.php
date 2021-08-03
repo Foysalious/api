@@ -1,10 +1,14 @@
 <?php namespace Sheba\Business\PayrollSetting;
 
+use App\Sheba\Business\PayrollSetting\PayrollCommonCalculation;
+use Carbon\Carbon;
 use Sheba\Dal\PayrollSetting\PayrollSettingRepository;
 use Sheba\Dal\PayrollSetting\PayrollSetting;
 
 class Updater
 {
+    use PayrollCommonCalculation;
+
     private $payrollSettingRequest;
     private $payrollSettingRepository;
     private $payrollSetting;
@@ -41,5 +45,7 @@ class Updater
             'pay_day_type' => $this->payrollSettingRequest->getPayDayType(),
             'pay_day' => $this->payrollSettingRequest->getPayDay()
         ];
+        if ($this->payrollSetting->next_pay_day == null) $data['next_pay_day'] = $this->nextPayslipGenerationDay($this->payrollSetting->business);
+        return $data;
     }
 }

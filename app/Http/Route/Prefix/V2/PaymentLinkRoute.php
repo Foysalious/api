@@ -8,7 +8,7 @@ class PaymentLinkRoute
         ], function ($api) {
             $api->get('/', 'PaymentLink\PaymentLinkController@index');
             $api->get('/partner-payment-links', 'PaymentLink\PaymentLinkController@partnerPaymentLinks');
-            $api->post('/', 'PaymentLink\PaymentLinkController@store');
+            $api->post('/', 'PaymentLink\PaymentLinkController@store')->middleware(['partner.status']);
             $api->post('/due-collection', 'PaymentLink\PaymentLinkController@createPaymentLinkForDueCollection');
             $api->post('/{link}', 'PaymentLink\PaymentLinkController@statusChange');
             $api->get('/default', 'PaymentLink\PaymentLinkController@getDefaultLink');

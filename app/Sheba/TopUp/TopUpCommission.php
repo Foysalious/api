@@ -10,11 +10,13 @@ use App\Sheba\Transactions\Wallet\RobiTopUpWalletTransactionHandler;
 use Sheba\Dal\TopUpOTFSettings\Model as TopUpOTFSettings;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
+use Sheba\TopUp\Exception\InvalidSubscriptionWiseCommission;
 use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Sheba\Dal\TopUpOTFSettings\Contract as TopUpOTFSettingsRepo;
 use Sheba\Dal\TopUpVendorOTF\Contract as TopUpVendorOTFRepo;
+use Sheba\Dal\SubscriptionWisePaymentGateway\Model as SubscriptionWisePaymentGateway;
 
 abstract class TopUpCommission
 {
@@ -30,6 +32,7 @@ abstract class TopUpCommission
     protected $vendorCommission;
     protected $amount;
     protected $transaction;
+    protected $subscriptionWiseTopUpCommission;
 
     /**
      * @param TopUpOrder $top_up_order
@@ -39,7 +42,6 @@ abstract class TopUpCommission
     {
         $this->topUpOrder = $top_up_order;
         $this->amount = $this->topUpOrder->amount;
-
         $this->setAgent($top_up_order->agent)->setTopUpVendor($top_up_order->vendor)->setVendorCommission();
 
         unset($top_up_order->agent);
@@ -84,17 +86,21 @@ abstract class TopUpCommission
 
     abstract public function refund();
 
-    /**
-     *
-     */
     protected function storeAgentsCommission()
     {
-        $this->topUpOrder->agent_commission = $this->calculateCommission($this->topUpOrder->amount);
-        $otf_details = $this->getVendorOTFDetails($this->topUpOrder->vendor_id, $this->topUpOrder->amount, $this->topUpOrder->gateway, $this->topUpOrder->payee_mobile_type);
+        try {
+            if($this->agent instanceof Partner) $this->setSubscriptionWiseCommission();
+            $otf_details = $this->getVendorOTFDetails($this->topUpOrder->vendor_id, $this->topUpOrder->amount, $this->topUpOrder->gateway, $this->topUpOrder->payee_mobile_type);
+            $this->topUpOrder->agent_commission = $this->calculateCommission($this->topUpOrder->amount);
+        } catch (InvalidSubscriptionWiseCommission $exception) {
+            $otf_details = $this->getVendorOTFDetails($this->topUpOrder->vendor_id, $this->topUpOrder->amount, $this->topUpOrder->gateway, $this->topUpOrder->payee_mobile_type, true);
+            $this->topUpOrder->agent_commission = $this->getDefaultCommission($this->topUpOrder->amount);
+            logError($exception);
+        }
 
-        $this->topUpOrder->otf_id = isset($otf_details['otf_id']) ? $otf_details['otf_id'] : 0;
-        $this->topUpOrder->otf_agent_commission = isset($otf_details['agent_commisssion']) ? $otf_details['agent_commisssion'] : 0;
-        $this->topUpOrder->otf_sheba_commission = isset($otf_details['sheba_commisssion']) ? $otf_details['sheba_commisssion'] : 0;
+        $this->topUpOrder->otf_id = $otf_details['otf_id'] ?? 0;
+        $this->topUpOrder->otf_agent_commission = $otf_details['agent_commisssion'] ?? 0;
+        $this->topUpOrder->otf_sheba_commission = $otf_details['sheba_commisssion'] ?? 0;
         $this->topUpOrder->save();
 
         if ($this->topUpOrder->otf_agent_commission > 0) {
@@ -108,6 +114,7 @@ abstract class TopUpCommission
             ->setLog($log_message)
             ->setTopUpOrder($this->topUpOrder)
             ->setIsRobiTopUp($this->topUpOrder->isRobiWalletTopUp());
+
         $this->transaction =  $this->agent->topUpTransaction($transaction);
     }
 
@@ -117,6 +124,9 @@ abstract class TopUpCommission
      */
     protected function calculateCommission($amount)
     {
+        if($this->agent instanceof Partner)
+            return (double)$amount * ($this->getSubscriptionWiseTopUpCommission() / 100);
+
         $commission = (double)$amount * ($this->getVendorAgentCommission() / 100);
         if ($this->agent instanceof Affiliate) {
             $cap = constants('AFFILIATE_REWARD')['TOP_UP']['AGENT']['cap'];
@@ -125,10 +135,15 @@ abstract class TopUpCommission
         return $commission;
     }
 
+    protected function getDefaultCommission($amount)
+    {
+        return (double)$amount * ($this->getVendorAgentCommission() / 100);
+    }
+
     /**
      * @return float
      */
-    private function getVendorAgentCommission()
+    private function getVendorAgentCommission(): float
     {
         return (double)$this->vendorCommission->agent_commission;
     }
@@ -159,26 +174,35 @@ abstract class TopUpCommission
     {
         $this->setModifier($this->agent);
         $amount = $this->topUpOrder->amount;
-        $amount_after_commission = round($amount - $this->calculateCommission($amount), 2);
-        $log = "Your recharge TK $amount to {$this->topUpOrder->payee_mobile} has failed, TK $amount_after_commission is refunded in your account.";
-        $this->refundUser($amount_after_commission, $log,$this->topUpOrder->isRobiWalletTopUp());
+        try {
+            if ($this->agent instanceof Partner) $this->setSubscriptionWiseCommission();
+            $commission = $this->calculateCommission($amount);
+        } catch (InvalidSubscriptionWiseCommission $exception) {
+            logError($exception);
+            $commission = $this->getDefaultCommission($amount);
+        }
+
+        $otf_commission          = $this->topUpOrder->otf_agent_commission ?? 0;
+        $amount_after_commission = round($amount - $commission - $otf_commission, 2);
+        $log                     = "Your recharge TK $amount to {$this->topUpOrder->payee_mobile} has failed, TK $amount_after_commission is refunded in your account.";
+        $this->transaction       = $this->refundUser($amount_after_commission, $log,$this->topUpOrder->isRobiWalletTopUp());
     }
 
     private function refundUser($amount, $log, $isRobiTopUp=false)
     {
-        if ($amount == 0) return;
+        if ($amount == 0) return 0;
 
         /** @var HasWalletTransaction $model */
         $model = $this->agent;
 
         if (!$isRobiTopUp)
-            (new WalletTransactionHandler())
+            return (new WalletTransactionHandler())
                 ->setModel($model)
                 ->setSource(TransactionSources::TOP_UP)
                 ->setType(Types::credit())
                 ->setAmount($amount)
                 ->setLog($log)
-                ->dispatch();
+                ->store();
         else {
             (new RobiTopupWalletTransactionHandler())
                 ->setModel($model)
@@ -195,7 +219,15 @@ abstract class TopUpCommission
         return $this->transaction;
     }
 
-    private function getVendorOTFDetails($vendor_id, $amount, $gateway, $con_type)
+    /**
+     * @param $vendor_id
+     * @param $amount
+     * @param $gateway
+     * @param $con_type
+     * @param bool $default_for_partner
+     * @return array
+     */
+    private function getVendorOTFDetails($vendor_id, $amount, $gateway, $con_type,  $default_for_partner = false): array
     {
         if (!$this->isAgentEligibleForOtf()) return [];
 
@@ -215,7 +247,11 @@ abstract class TopUpCommission
 
         if(!$otf) return [];
 
-        $agent_commission = round(($otf_setting->agent_commission / 100) * $otf->cashback_amount, 2);
+        if($this->agent instanceof Partner && !$default_for_partner)
+            $agent_otf_commission = $this->getSubscriptionWiseOTFCommission();
+        else $agent_otf_commission = $otf_setting->agent_commission;
+
+        $agent_commission = round(($agent_otf_commission/ 100) * $otf->cashback_amount, 2);
         return [
             'otf_id' => $otf->id,
             'agent_commisssion' => $agent_commission,
@@ -235,5 +271,33 @@ abstract class TopUpCommission
     {
         return $otf_setting->applicable_gateways != 'null' &&
             in_array($gateway, json_decode($otf_setting->applicable_gateways));
+    }
+
+    /**
+     * @throws InvalidSubscriptionWiseCommission
+     */
+    public function setSubscriptionWiseCommission()
+    {
+        /** @var Partner $partner */
+        $partner = $this->agent;
+        /** @var SubscriptionWisePaymentGateway $gateway_charges */
+        $gateway_charges = $partner->subscription->validPaymentGatewayAndTopUpCharges;
+
+        $topup_charges = json_decode($gateway_charges->topup_charges);
+        foreach ($topup_charges as $charge)
+            if(strtolower($charge->key) == strtolower($this->topUpOrder->vendor->name))
+                $subscription_wise_commission = $charge;
+        if(isset($subscription_wise_commission)) $this->subscriptionWiseTopUpCommission = $subscription_wise_commission;
+        else throw new InvalidSubscriptionWiseCommission();
+    }
+
+    public function getSubscriptionWiseOTFCommission()
+    {
+        return $this->subscriptionWiseTopUpCommission->otf_commission;
+    }
+
+    public function getSubscriptionWiseTopUpCommission()
+    {
+        return $this->subscriptionWiseTopUpCommission->commission;
     }
 }

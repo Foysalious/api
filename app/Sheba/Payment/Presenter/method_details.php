@@ -36,7 +36,7 @@ $cbl            = [
 ];
 $online         = [
     'name'           => 'Other Cards',
-    'name_bn'        => null,
+    'name_bn'        => "ভিসা / মাস্টার ও অন্যান্য",
     'asset'          => 'ssl',
     'method_name'    => 'online',
     'icon'           => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/payments/online.png',
@@ -59,7 +59,7 @@ $nagad          = [
     'cash_in_charge' => 0,
 ];
 $ebl            = [
-    'name'           => 'Visa/Master',
+    'name'           => 'Visa, Mastercard',
     'name_bn'        => null,
     'asset'          => 'ebl',
     'method_name'    => 'ebl',

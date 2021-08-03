@@ -153,7 +153,7 @@ class ExpenseController extends Controller
         });
         $searched_expenses = collect(array_merge($employee_ids, $employee_names, $amounts));
         $searched_expenses = $searched_expenses->unique(function ($expense) {
-            return $expense['id'];
+            return $expense['member_id'];
         });
         return $searched_expenses->values()->all();
     }
@@ -229,11 +229,11 @@ class ExpenseController extends Controller
 
     public function downloadPdf(Request $request, ExpensePdf $pdf)
     {
-        $business_member = BusinessMember::where('business_id', $request->business_member->business_id)->where('member_id', $request->member_id)->first();
+        $business_member = BusinessMember::findOrFail($request->business_member_id);
         return $pdf->generate($business_member, $request->month, $request->year);
     }
 
-    public function filterMonth(Request $request)
+    public function filterMonth($member_id, Request $request)
     {
         try {
             $this->validate($request, [

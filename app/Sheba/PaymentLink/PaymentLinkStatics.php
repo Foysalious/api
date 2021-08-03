@@ -2,6 +2,9 @@
 
 class  PaymentLinkStatics
 {
+    const PAYMENT_LINK_TYPE_EMI = "emi";
+    const PAYMENT_LINK_TYPE_DIGITAL_COLLECTION = "digital_collection";
+
     public static function faq_webview()
     {
         return config('sheba.partners_url') . "/api/payment-link-faq";

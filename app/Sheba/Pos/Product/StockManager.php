@@ -1,8 +1,7 @@
 <?php namespace Sheba\Pos\Product;
 
 use App\Models\PartnerPosService;
-use App\Sheba\Pos\Repositories\Interfaces\PosServiceBatchRepositoryInterface;
-use Sheba\Dal\PartnerPosServiceBatch\Model as PosServiceBatch;
+use Sheba\Dal\PartnerPosServiceBatch\Model as PartnerPosServiceBatch;
 use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
 use Sheba\Pos\Repositories\PosServiceRepository;
 
@@ -12,12 +11,9 @@ class StockManager
     private $serviceRepo;
     /**  @var PartnerPosService $service */
     private $service;
-    /** @var PosServiceBatchRepositoryInterface $partnerPosServiceBatchRepo */
-    protected $partnerPosServiceBatchRepo;
 
-    public function __construct(PosServiceRepositoryInterface $service_repo, PosServiceBatchRepositoryInterface $partnerPosServiceBatchRepo)
+    public function __construct(PosServiceRepositoryInterface $service_repo)
     {
-        $this->partnerPosServiceBatchRepo = $partnerPosServiceBatchRepo;
         $this->serviceRepo = $service_repo;
     }
 
@@ -38,15 +34,52 @@ class StockManager
      */
     public function increase($quantity)
     {
-        return $this->serviceRepo->update($this->service, ['stock' => $this->service->stock + $quantity]);
+        return $this->serviceRepo->update($this->service, ['stock' => $this->increaseUpdatedStock($quantity)]);
     }
 
     /**
      * @param $quantity |double
-     * @return \Illuminate\Database\Eloquent\Model
+     * @return array
      */
     public function decrease($quantity)
     {
-        return $this->serviceRepo->update($this->service, ['stock' => $this->service->stock - $quantity]);
+        return $this->updatedStock($quantity);
+    }
+
+    private function updatedStock($quantity) : array
+    {
+        $decreasedBatchesInfo = [];
+        while ($quantity > 0) {
+
+            $firstBatch = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->first();
+            $allBatches = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->get();
+
+            if($quantity >= $firstBatch->stock && count($allBatches) > 1) {
+                $decreasedBatchesInfo[$firstBatch->id] = ['stock' => $firstBatch->stock, 'cost' => $firstBatch->cost];
+                $quantity =  $quantity - $firstBatch->stock;
+                $firstBatch->update(['stock' => 0 ]);
+                $firstBatch->delete();
+            }
+            else if($quantity >= $firstBatch->stock && count($allBatches) == 1) {
+                $negativeStock = $firstBatch->stock - $quantity;
+                $decreasedBatchesInfo[$firstBatch->id] = ['stock' => $quantity, 'cost' => $firstBatch->cost];
+                $firstBatch->update(['stock' => $negativeStock ]);
+                $quantity = 0;
+            }
+            else {
+                $decreasedBatchesInfo[$firstBatch->id] = ['stock' => $quantity, 'cost' => $firstBatch->cost];
+                $firstBatch->update(['stock' => $firstBatch->stock - $quantity]);
+                $quantity = 0;
+            }
+        }
+        return $decreasedBatchesInfo;
+    }
+
+    private function increaseUpdatedStock($quantity)
+    {
+        $lastBatch = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->latest()->first();
+        $lastStock = $lastBatch ? $lastBatch->stock : 0;
+        PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->where('id', $lastBatch->id)->update(['stock' => $lastStock + $quantity]);
+        return $lastStock + $quantity;
     }
 }

@@ -8,8 +8,10 @@ class RobiFailedReason extends PretupsFailedReason
     {
         try {
             $transaction_details = json_decode($this->transaction, true);
-            if ($transaction_details_response = $transaction_details['response']) {
-                return $transaction_details_response['MESSAGE'];
+            if (array_key_exists('response', $transaction_details)) {
+                if (array_key_exists('MESSAGE', $transaction_details['response'])) {
+                    return $transaction_details['response']['MESSAGE'];
+                }
             }
             return $transaction_details['message'];
         } catch (Throwable $e) {

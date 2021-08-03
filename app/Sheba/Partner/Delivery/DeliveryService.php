@@ -438,6 +438,7 @@ class DeliveryService
         $data = [
             'name' => $info['contact_info']['name'],
             'partner_id' => $this->partner->id,
+            'merchant_id' =>  $info['uid'],
             'mobile' => $info['phone'],
             'email' => $info['contact_info']['email'],
             'business_type' => $info['product_nature'],
@@ -473,8 +474,7 @@ class DeliveryService
     {
         $data = $this->makeDeliveryChargeData();
         $response =  $this->client->post('price-check', $data);
-        return $response['data'][0]['package_price'];
-
+        return ceil($response['data'][0]['package_price']);
     }
 
 

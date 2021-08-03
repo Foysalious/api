@@ -53,10 +53,11 @@ class ExchangePosItem extends RefundNature
         $creator = app(Creator::class);
         $this->stockRefill();
         $this->data['previous_order_id'] = $this->order->id;
-        $this->newOrder = $creator->setPartner($this->order->partner)->setData($this->prepareCreateData())->setStatus(OrderStatuses::COMPLETED)->create();
+        $this->newOrder = $creator->setPartner($this->order->partner)->setData($this->prepareCreateData())->setRequest($this->request)->setStatus(OrderStatuses::COMPLETED)->create();
         $this->generateDetails();
         $this->saveLog();
-        $this->updateEntry($this->newOrder->id, 'exchange');
+        Log::info(['Exchange Order', $this->details]);
+//        $this->updateEntry($this->newOrder, 'exchange');
         $this->transferPaidAmount();
     }
 
@@ -125,16 +126,16 @@ class ExchangePosItem extends RefundNature
      * @param $refundType
      * @throws AccountingEntryServerError
      */
-    protected function updateEntry(PosOrder $order, $refundType)
-    {
-        $this->additionalAccountingData($order, $refundType);
-        /** @var AccountingRepository $accounting_repo */
-        $accounting_repo = app()->make(AccountingRepository::class);
-        $this->request->merge([
-            "inventory_products" => $accounting_repo->getInventoryProducts($order->items, $this->data['services']),
-        ]);
-        $accounting_repo->updateEntryBySource($this->request, $order->id, EntryTypes::POS);
-    }
+//    protected function updateEntry(PosOrder $order, $refundType)
+//    {
+//        $this->additionalAccountingData($order, $refundType);
+//        /** @var AccountingRepository $accounting_repo */
+//        $accounting_repo = app()->make(AccountingRepository::class);
+//        $this->request->merge([
+//            "inventory_products" => $accounting_repo->getInventoryProducts($order->items, $this->data['services']),
+//        ]);
+//        $accounting_repo->updateEntryBySource($this->request, $order->id, EntryTypes::POS);
+//    }
 
     private function additionalAccountingData(PosOrder $order, $refundType)
     {

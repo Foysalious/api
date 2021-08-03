@@ -44,7 +44,9 @@ use Factory\PosOrderPaymentFactory;
 use Factory\InfoCallFactory;
 use Factory\InfoCallRejectReasonFactory;
 use Factory\InfoCallStatusLogFactory;
-use Factory\ModelFactory;
+use Factory\ResourceTransactionFactory;
+use \Factory\SubscriptionWisePaymentGatewaysFactory;
+
 
 
 $factory_classes = [
@@ -93,7 +95,9 @@ $factory_classes = [
     InfoCallFactory::class,
     InfoCallRejectReasonFactory::class,
     InfoCallStatusLogFactory::class,
-    ModelFactory::class
+    ResourceTransactionFactory::class,
+    SubscriptionWisePaymentGatewaysFactory::class
+
 ];
 
 foreach ($factory_classes as $factory_class) {

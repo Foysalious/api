@@ -31,12 +31,10 @@ class SingleTopUpTest extends FeatureTestCase
         ]);
         $this->logIn();
 
-
         $this->topUpVendor = factory(TopUpVendor::class)->create();
         $this->topUpVendorCommission = factory(TopUpVendorCommission::class)->create([
-            'topup_vendor_id' => $this->topUpVendor->id
+            'topup_vendor_id' => $this->topUpVendor->id,
         ]);
-
 
         $this->topUpOtfSettings = factory(TopUpOTFSettings::class)->create([
             'topup_vendor_id' => $this->topUpVendor->id
@@ -74,6 +72,64 @@ class SingleTopUpTest extends FeatureTestCase
         $data = $response->decodeResponseJson();
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The mobile is an invalid bangladeshi number .", $data['message']);
+    }
+
+    public function testTopupConsecutiveNumber()
+    {
+        $top_up_vendor = TopUpVendor::find(1);
+        $top_up_vendor->update(["waiting_time" => 3]);
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '+8801620011019', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 112, 'password' => 12345,
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '+8801620011019', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 112, 'password' => 12345,
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(400, $data['code']);
+        $this->assertEquals("এই নাম্বারে কিছুক্ষন আগে টপ-আপ করা হয়েছে । পুনরায় এই নাম্বারে টপ-আপ করার জন্য অনুগ্রহপূর্বক 3 মিনিট অপেক্ষা করুন ।", $data['message']);
+
+        sleep(60);
+        $top_up_vendor = TopUpVendor::find(1);
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '+8801620011019', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 10, 'password' => 12345,
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '+8801620011019', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 112, 'password' => 12345,
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(400, $data['code']);
+        $this->assertEquals("এই নাম্বারে কিছুক্ষন আগে টপ-আপ করা হয়েছে । পুনরায় এই নাম্বারে টপ-আপ করার জন্য অনুগ্রহপূর্বক 2 মিনিট অপেক্ষা করুন ।", $data['message']);
+
+        sleep(60);
+        $top_up_vendor = TopUpVendor::find(1);
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '+8801620011019', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 112, 'password' => 12345,
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '+8801620011019', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 112, 'password' => 12345,
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(400, $data['code']);
+        $this->assertEquals("এই নাম্বারে কিছুক্ষন আগে টপ-আপ করা হয়েছে । পুনরায় এই নাম্বারে টপ-আপ করার জন্য অনুগ্রহপূর্বক 1 মিনিট অপেক্ষা করুন ।", $data['message']);
+
     }
 
     public function testMobileNumberValidationResponseCode()
@@ -274,7 +330,7 @@ class SingleTopUpTest extends FeatureTestCase
 
         $walletBalanceUpdate = Affiliate::find(1);;
         $walletBalanceUpdate->update(["wallet" => 100]);
-        
+
 
         $response = $this->post('/v2/top-up/affiliate', [
             'mobile' => '01956154440', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 1000, 'password' => '12349'
@@ -395,7 +451,6 @@ class SingleTopUpTest extends FeatureTestCase
 
         $verificationStatus = Affiliate::find(1);;
         $verificationStatus->update(["verification_status" => 'rejected']);
-        // dd($verificationStatus);
         $response = $this->post('/v2/top-up/affiliate', [
             'mobile' => '01956154440', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 10, 'password' => '12349'
 
@@ -453,7 +508,7 @@ class SingleTopUpTest extends FeatureTestCase
     public function testTopupTestBlockNumber()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01678987656', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 10, 'password' => '12349'
+            'mobile' => '+8801678987656', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 10, 'password' => '12349'
 
         ], [
             'Authorization' => "Bearer $this->token"
@@ -498,7 +553,6 @@ class SingleTopUpTest extends FeatureTestCase
         $this->assertEquals($this->affiliate->id, $top_up_order->agent_id);
         $this->assertEquals(11.4, $top_up_order->otf_sheba_commission);
 
-        // dd($this->affiliate);
     }
 
     public function testTopupOtfOtfAgentCommissionCheck()
@@ -534,7 +588,6 @@ class SingleTopUpTest extends FeatureTestCase
         $this->assertEquals($this->affiliate->id, $top_up_order->agent_id);
         $this->assertEquals(1, $top_up_order->vendor_id);
 
-        // dd($this->affiliate);
     }
 
     public function testSuccessfulTopupAgentGenerateTransaction()
@@ -744,15 +797,12 @@ class SingleTopUpTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-        //dd($response);
 
         $top_up_order = TopUpOrder::first();
 
         $this->assertEquals($this->affiliate->id, $top_up_order->agent_id);
         $this->assertEquals("Failed", $top_up_order->status);
         $this->assertEquals("gateway_timeout", $top_up_order->failed_reason);
-        // $this->assertEquals(200, $data['code']);
-        //   $this->assertEquals("Recharge Request Successful", $data['message']);
     }
 
     public function testTopUpOrderGatewayErrorResponseCodeAndMessage()
@@ -765,19 +815,31 @@ class SingleTopUpTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-        // dd($response);
 
         $top_up_order = TopUpOrder::first();
 
         $this->assertEquals($this->affiliate->id, $top_up_order->agent_id);
         $this->assertEquals("Failed", $top_up_order->status);
         $this->assertEquals("gateway_error", $top_up_order->failed_reason);
-        // $this->assertEquals(200, $data['code']);
-        //   $this->assertEquals("Recharge Request Successful", $data['message']);
     }
 
     public function testTopUpOrderGatewayTimeoutThreeTimes()
     {
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '+8801700999999', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 112, 'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '+8801700999999', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 112, 'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
 
         $response = $this->post('/v2/top-up/affiliate', [
             'mobile' => '+8801700999999', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 112, 'password' => '12349'
@@ -786,6 +848,7 @@ class SingleTopUpTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
 
+        $data = $response->decodeResponseJson();
 
         $response = $this->post('/v2/top-up/affiliate', [
             'mobile' => '+8801700999999', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 112, 'password' => '12349'
@@ -794,6 +857,7 @@ class SingleTopUpTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
 
+        $data = $response->decodeResponseJson();
 
         $response = $this->post('/v2/top-up/affiliate', [
             'mobile' => '+8801700999999', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 112, 'password' => '12349'
@@ -802,40 +866,19 @@ class SingleTopUpTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
 
-
+        $data = $response->decodeResponseJson();
         $top_up_vendor = TopUpVendor::first();
-
         $this->assertEquals(0, $top_up_vendor->is_published);
 
-
         $response = $this->post('/v2/top-up/affiliate', [
             'mobile' => '+8801700999999', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 112, 'password' => '12349'
 
         ], [
             'Authorization' => "Bearer $this->token"
         ]);
-
 
         $data = $response->decodeResponseJson();
         $this->assertEquals(403, $data['code']);
-
-
-    }
-
-    public function testTopUpOrderGatewayTimeoutVendorUnpublishedResponseCodeAndMessage()
-    {
-
-        $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '+8801700888888', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 112, 'password' => '12349'
-
-        ], [
-            'Authorization' => "Bearer $this->token"
-        ]);
-        $data = $response->decodeResponseJson();
-
-        $top_up_vendor = TopUpVendor::first();
-
-        //$this->assertEquals($this->affiliate->id,$top_up_order->agent_id);
-        $this->assertEquals(0, $this->topUpVendor->is_published);
+        $this->assertEquals("Sorry, we don't support this operator at this moment.", $data['message']);
     }
 }

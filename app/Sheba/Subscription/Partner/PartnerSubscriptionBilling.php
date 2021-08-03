@@ -309,7 +309,9 @@ class PartnerSubscriptionBilling
             }
             if ($template) {
                 self::sendSms($this->partner, $old_package, $new_package, $old_billing_type, $new_billing_type, $this->packagePrice, $template);
-                self::sendNotification($this->partner, $old_package, $new_package, $old_billing_type, $new_billing_type, $this->packagePrice, $grade);
+
+                if($new_package->id !== PeriodicBillingHandler::FREE_PACKAGE_ID)
+                    self::sendNotification($this->partner, $old_package, $new_package, $old_billing_type, $new_billing_type, $this->packagePrice, $grade);
             }
         }
     }

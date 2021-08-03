@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
+<<<<<<< HEAD
   <testsuite name="Application Test Suite" tests="12" assertions="24" failures="0" errors="0" time="63.549241">
     <testsuite name="Tests\Feature\UserProfileUpdate\UserProfileUpdateV1Test" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileUpdateV1Test.php" tests="12" assertions="24" failures="0" errors="0" time="63.549241">
       <testcase name="testUserProfileUpdateAPIV1ByUpdatingNameGenderBirthdayAddress" class="Tests\Feature\UserProfileUpdate\UserProfileUpdateV1Test" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileUpdateV1Test.php" line="22" assertions="2" time="3.843082"/>
@@ -14,6 +15,11 @@
       <testcase name="testUserProfileUpdateAPIV1ByGivingInvalidBirthday" class="Tests\Feature\UserProfileUpdate\UserProfileUpdateV1Test" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileUpdateV1Test.php" line="193" assertions="2" time="7.046500"/>
       <testcase name="testUserProfileUpdateAPIV1ByGivingCharacterInputInBirthday" class="Tests\Feature\UserProfileUpdate\UserProfileUpdateV1Test" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileUpdateV1Test.php" line="213" assertions="2" time="6.654355"/>
       <testcase name="testUserProfileUpdateAPIV1ByGivingInvalidGender" class="Tests\Feature\UserProfileUpdate\UserProfileUpdateV1Test" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileUpdateV1Test.php" line="233" assertions="2" time="6.164232"/>
+=======
+  <testsuite name="Application Test Suite" tests="1" assertions="2" failures="0" errors="0" time="3.465704">
+    <testsuite name="Tests\Feature\TopUp\SbusinessBulkTopupTest" file="/var/www/tests/Feature/TopUp/SbusinessBulkTopupTest.php" tests="1" assertions="2" failures="0" errors="0" time="3.465704">
+      <testcase name="testSuccessfulBulkTopupSheetNameErrorResponse" class="Tests\Feature\TopUp\SbusinessBulkTopupTest" file="/var/www/tests/Feature/TopUp/SbusinessBulkTopupTest.php" line="462" assertions="2" time="3.465704"/>
+>>>>>>> development
     </testsuite>
   </testsuite>
 </testsuites>

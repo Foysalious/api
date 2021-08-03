@@ -36,7 +36,8 @@ class AccountingReportRepository extends BaseRepository
         try {
             $data = $this->client->setUserType($userType)->setUserId($userId)
                 ->get($this->api . "accounting-report/$reportType?start_date=$startDate&end_date=$endDate&account_id=$accountId&account_type=$accountType");
-            return ($reportType === AccountingReport::JOURNAL_REPORT) ? (new JournalReportData())->format_data($data): $data;
+            if($reportType === AccountingReport::JOURNAL_REPORT) return (new JournalReportData())->format_data($data);
+            return $reportType === AccountingReport::PROFIT_LOSS_REPORT ? (new ProfitLossReportData())->format_data($data): $data;
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
@@ -47,35 +48,35 @@ class AccountingReportRepository extends BaseRepository
     {
         return [
             [
-                'key' => AccountingReport::PROFIT_LOSS_REPORT,
-                'report_bangla_name' => 'লাভ-ক্ষতি রিপোর্ট',
-                'url' => url('/v2/accounting/reports/profit_loss_report'),
-                'icon' => config('accounting_entry.icon_url').'/'.'loss_profit_report.png'
+                'key' => AccountingReport::PRODUCT_WISE_SALES_REPORT,
+                'report_bangla_name' => 'পণ্য অনুযায়ী বিক্রয় রিপোর্ট',
+                'url' => config('sheba.api_url') . '/v2/accounting/reports/pos/product-wise',
+                'icon' => config('accounting_entry.icon_url').'/'.'item_wise_sales_report.png'
+            ],
+            [
+                'key' => AccountingReport::CUSTOMER_WISE_SALES_REPORT,
+                'report_bangla_name' => 'কাস্টমার আনুযায়ী বিক্রির রিপোর্ট',
+                'url' => config('sheba.api_url') . '/v2/accounting/reports/pos/customer-wise',
+                'icon' => config('accounting_entry.icon_url').'/'.'customer_wise_sales_report.png'
             ],
             [
                 'key' => AccountingReport::JOURNAL_REPORT,
                 'report_bangla_name' => 'জার্নাল রিপোর্ট',
-                'url' => url('/v2/accounting/reports/journal_report'),
+                'url' => config('sheba.api_url') . '/v2/accounting/reports/journal_report',
                 'icon' => config('accounting_entry.icon_url').'/'.'journal_report.png'
             ],
             [
                 'key' => AccountingReport::GENERAL_LEDGER_REPORT,
                 'report_bangla_name' => 'জেনারেল লেজার রিপোর্ট',
-                'url' => url('/v2/accounting/reports/general_ledger_report'),
+                'url' => config('sheba.api_url') . '/v2/accounting/reports/general_ledger_report',
                 'icon' => config('accounting_entry.icon_url').'/'.'general_ledger_report.png'
             ],
             [
-                'key' => AccountingReport::CUSTOMER_WISE_SALES_REPORT,
-                'report_bangla_name' => 'কাস্টমার আনুযায়ী বিক্রির রিপোর্ট',
-                'url' => url('/v2/accounting/reports/pos/customer-wise'),
-                'icon' => config('accounting_entry.icon_url').'/'.'customer_wise_sales_report.png'
+                'key' => AccountingReport::PROFIT_LOSS_REPORT,
+                'report_bangla_name' => 'লাভ-ক্ষতি রিপোর্ট',
+                'url' => config('sheba.api_url') . '/v2/accounting/reports/profit_loss_report',
+                'icon' => config('accounting_entry.icon_url').'/'.'loss_profit_report.png'
             ],
-            [
-                'key' => AccountingReport::PRODUCT_WISE_SALES_REPORT,
-                'report_bangla_name' => 'পণ্য অনুযায়ী বিক্রয় রিপোর্ট',
-                'url' => url('/v2/accounting/reports/pos/product-wise'),
-                'icon' => config('accounting_entry.icon_url').'/'.'item_wise_sales_report.png'
-            ]
         ];
     }
 }

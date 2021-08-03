@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\PaymentLink;
 
 use App\Http\Controllers\Controller;
+use App\Models\Partner;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Sheba\Dal\SubscriptionWisePaymentGateway\Model as SubscriptionWisePaymentGateway;
 use Sheba\Payment\Methods\Bkash\Bkash;
 use Sheba\Payment\Methods\Nagad\Nagad;
 use Sheba\Payment\Presenter\PaymentMethodDetails;
@@ -39,9 +41,12 @@ class PaymentLinkCreateController extends Controller
         try {
             $data = array();
             $others = array();
+            /** @var Partner $partner */
             $partner = $request->partner;
-            if (isset($partner->subscription->validPaymentGateway))
-                $gateway_charges = json_decode($partner->subscription->validPaymentGateway->gateway_charges,1);
+            $gateway_charges_id = $partner->getGatewayChargesId();
+
+            if (isset($gateway_charges_id))
+                $gateway_charges = json_decode(SubscriptionWisePaymentGateway::find($gateway_charges_id)->gateway_charges,1);
             else throw new InvalidGatewayChargesException();
 
             foreach ($gateway_charges as $charge) {

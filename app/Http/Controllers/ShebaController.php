@@ -17,6 +17,9 @@ use App\Models\Payable;
 use App\Models\Payment;
 use App\Models\Profile;
 use App\Models\Resource;
+use Sheba\Dal\EmiBank\Repository\EmiBankContract;
+use Sheba\Dal\PaymentGateway\Contract as PaymentGatewayRepository;
+use Sheba\Dal\Service\Service;
 use App\Models\Slider;
 use App\Models\SliderPortal;
 use App\Repositories\ReviewRepository;
@@ -28,11 +31,8 @@ use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Sheba\Dal\EmiBank\Repository\EmiBankContract;
 use Sheba\Dal\MetaTag\MetaTagRepositoryInterface;
-use Sheba\Dal\PaymentGateway\Contract as PaymentGatewayRepository;
 use Sheba\Dal\RedirectUrl\RedirectUrl;
-use Sheba\Dal\Service\Service;
 use Sheba\Dal\UniversalSlug\Model as SluggableType;
 use Sheba\EMI\Banks;
 use Sheba\EMI\Calculator;
@@ -296,7 +296,8 @@ class ShebaController extends Controller
     {
         $version_code  = (int)$request->header('Version-Code');
         $platform_name = $request->header('Platform-Name');
-        $user_type     = $request->type;
+        $user_type = $request->type;
+        $payable_type = $request->payable_type;
         if (!$user_type) $user_type = getUserTypeFromRequestHeader($request);
         if (!$user_type) $user_type = "customer";
 
@@ -307,8 +308,8 @@ class ShebaController extends Controller
             ->where('status', 'Published')
             ->get();
 
-        $payments = array_map(function (PaymentMethodDetails $details) use ($dbGateways, $user_type) {
-            return (new PresentableDTOPresenter($details, $dbGateways))->mergeWithDbGateways($user_type);
+        $payments = array_map(function (PaymentMethodDetails $details) use ($dbGateways, $user_type, $payable_type){
+            return (new PresentableDTOPresenter($details, $dbGateways))->mergeWithDbGateways($user_type, $payable_type);
         }, AvailableMethods::getDetails($request->payable_type, $request->payable_type_id, $version_code, $platform_name, $user_type));
 
         if ($user_type == 'partner') {

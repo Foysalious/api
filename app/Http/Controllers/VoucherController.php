@@ -9,6 +9,7 @@ use App\Models\Taggable;
 use App\Models\Voucher;
 use App\Sheba\PosOrderService\Services\OrderService;
 use App\Repositories\VoucherRepository;
+use App\Sheba\Voucher\VoucherValidate;
 use App\Transformers\CustomSerializer;
 use App\Transformers\VoucherDetailTransformer;
 use App\Transformers\VoucherTransformer;
@@ -33,9 +34,14 @@ class VoucherController extends Controller
     use ModificationFields;
 
     protected $orderService;
+    /**
+     * @var VoucherValidate
+     */
+    private $voucherValidate;
 
-    public function __construct(OrderService $orderService)
+    public function __construct(OrderService $orderService, VoucherValidate $voucherValidate)
     {
+        $this->voucherValidate = $voucherValidate;
         $this->orderService = $orderService;
     }
 
@@ -307,36 +313,11 @@ class VoucherController extends Controller
      */
     public function validateVoucher(Request $request)
     {
-        try {
-            $partner = $request->auth_user->getPartner();
-            $real_pos_customer = PosCustomer::find($request->pos_customer);
-            $pos_customer = $real_pos_customer ? $real_pos_customer : $this->getUser($partner->id, $request->pos_customer);
+        $partner = $request->user;
+        $real_pos_customer = PosCustomer::find($request->pos_customer);
+        $pos_customer = $real_pos_customer ? $real_pos_customer : $this->getUser($partner->id, $request->pos_customer);
+        return $this->voucherValidate->setPartner($partner)->setRealPosCustomer($real_pos_customer)->setPosCustomer($pos_customer)->voucherValidate($request);
 
-            $pos_order_params = (new CheckParamsForPosOrder());
-            $pos_order_params->setOrderAmount($request->amount);
-            $pos_order_params = $real_pos_customer ? $pos_order_params->setApplicant($pos_customer) : $pos_order_params->setApplicant(new PosCustomer());
-            $pos_order_params = $pos_order_params->setPartnerPosService($request->pos_services);
-
-            $result = voucher($request->code)->checkForPosOrder($pos_order_params);
-            $result = $real_pos_customer ? $result->reveal() : $result->checkMobile($pos_customer['mobile'])->reveal();
-
-            if ($result['is_valid']) {
-                $voucher = $result['voucher'];
-                $voucher = [
-                    'amount' => (double)$result['amount'],
-                    'code' => $voucher->code,
-                    'id' => $voucher->id,
-                    'title' => $voucher->title
-                ];
-
-                return api_response($request, null, 200, ['voucher' => $voucher]);
-            } else {
-                return api_response($request, null, 403, ['message' => 'Invalid Promo']);
-            }
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
     }
 
     public function getVoucherDetails(Request $request)
