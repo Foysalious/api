@@ -43,7 +43,7 @@ class PresentableDTOPresenter extends Presenter
             return $dto;
         }
 
-        if ($userType == 'partner') {
+        if ($userType == 'partner' && $payableType == 'wallet_recharge') {
             return null;
         }
 
