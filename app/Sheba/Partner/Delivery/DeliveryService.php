@@ -506,7 +506,12 @@ class DeliveryService
         $data = [
             'uid' => $delivery_order_id
         ];
-        return $this->client->setToken($this->token)->post('orders/track', $data);
+        $response = $this->client->setToken($this->token)->post('orders/track', $data);
+        return [
+            'status' => $response['data']['status'],
+            'delivery_order_id' => $delivery_order_id,
+            'merchant_id' => $this->posOrder->deliveryInformation ? $this->posOrder->deliveryInformation->merchant_id : null
+        ];
     }
 
     public function cancelOrder()
