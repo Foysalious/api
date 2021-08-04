@@ -4,19 +4,14 @@ use App\Exceptions\HyperLocationNotFoundException;
 use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
 use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
-use Sheba\Dal\Category\Category;
-use Sheba\Dal\CategoryPartner\CategoryPartner;
-use Sheba\Dal\DeliveryChargeUpdateRequest\DeliveryChargeUpdateRequest;
 use App\Models\HyperLocal;
 use App\Models\Job;
 use App\Models\Location;
 use App\Models\Partner;
 use App\Models\PartnerOrder;
 use App\Models\PartnerPosCustomer;
-use Sheba\Dal\PartnerService\PartnerService;
 use App\Models\PartnerServicePricesUpdate;
 use App\Models\Resource;
-use Sheba\Dal\Service\Service;
 use App\Models\SubscriptionOrder;
 use App\Repositories\DiscountRepository;
 use App\Repositories\FileRepository;
@@ -37,6 +32,11 @@ use Illuminate\Support\Facades\Redis;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
 use Sheba\Checkout\Partners\LitePartnerList;
 use Sheba\Checkout\Requests\PartnerListRequest;
+use Sheba\Dal\Category\Category;
+use Sheba\Dal\CategoryPartner\CategoryPartner;
+use Sheba\Dal\DeliveryChargeUpdateRequest\DeliveryChargeUpdateRequest;
+use Sheba\Dal\PartnerService\PartnerService;
+use Sheba\Dal\Service\Service;
 use Sheba\Logistics\Repository\ParcelRepository;
 use Sheba\Manager\JobList;
 use Sheba\ModificationFields;
@@ -112,6 +112,24 @@ class PartnerController extends Controller
         return api_response($request, $details, 200, ['info' => $details]);
     }
 
+    public function showByDomain(Request $request, PartnerDetails $details)
+    {
+        $this->validate($request, ['domain_name' => 'required|string']);
+        ini_set('memory_limit', '6096M');
+        ini_set('max_execution_time', 660);
+        try {
+            $details->setPartnerFromDomain($request->domain_name);
+        } catch (\Exception $e) {
+            dd($e);
+            return api_response($request, null, 404);
+        }
+        $loc = getLocationFromRequest($request);
+        if ($loc) $details->setLocationId($loc->id);
+        $info = $details->get();
+        return api_response($request, $info, 200, ['info' => $info]);
+    }
+
+
     /**
      * @SWG\Get(
      *     path="/v2/partners/{partner}/categories/{category}/services",
@@ -141,7 +159,7 @@ class PartnerController extends Controller
      *     )
      * )
      */
-    
+
     public function getServices($partner, $category, Request $request)
     {
         $partner = Partner::find((int)$partner);
@@ -1017,7 +1035,7 @@ class PartnerController extends Controller
             'delivery_charge' => $request->has('is_home_delivery_applied') ? $request->delivery_charge : 0,
             'uses_sheba_logistic' => $this->doesUseShebaLogistic($category, $request),
         ];
-        return [ $old, $new ];
+        return [$old, $new];
     }
 
     private function doesUseShebaLogistic(Category $category, Request $request)
@@ -1111,8 +1129,8 @@ class PartnerController extends Controller
 
         $this->validate($request, ['logo' => 'required|file|image']);
         $partner = Partner::find($partner);
-        $repo = new PartnerRepository($partner);
-        $logo = $repo->updateLogo($request);
+        $repo    = new PartnerRepository($partner);
+        $logo    = $repo->updateLogo($request);
         return api_response($request, $logo, 200, ['logo' => $logo]);
     }
 
@@ -1276,7 +1294,7 @@ class PartnerController extends Controller
     public function toggleSmsActivation(Request $request, $partner, Updater $updater)
     {
         /** @var Partner $partner */
-        $partner = $request->partner;
+        $partner             = $request->partner;
         $isWebstoreSmsActive = !(int)$partner->is_webstore_sms_active;
         $updater->setPartner($partner)->setIsWebstoreSmsActive($isWebstoreSmsActive)->update();
         return api_response($request, null, 200, ['message' => 'SMS Settings Updated Successfully']);
