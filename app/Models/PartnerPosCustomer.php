@@ -27,11 +27,11 @@ class PartnerPosCustomer extends Model
         $profile = $customer->profile;
         return [
             'id' => $customer->id,
-            'name' => $this->nick_name ? $this->nick_name : $profile->name,
-            'phone' => $profile->mobile,
-            'email' => $profile->email,
-            'address' => $profile->address,
-            'image' => $profile->pro_pic,
+            'name' => $this->nick_name ?: ($profile ? $profile->name : null),
+            'phone' => $profile ? $profile->mobile : null,
+            'email' => $profile ? $profile->email : null,
+            'address' => $profile ? $profile->address : null,
+            'image' => $profile ? $profile->pro_pic : null,
             'note' => $this->note,
             'is_supplier' => $this->is_supplier
 

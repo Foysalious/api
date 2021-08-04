@@ -54,7 +54,9 @@ class PaymentLinkClient
             $offset = $request->offset;
             $order = $request->order;
             $linkType = $request->linkType;
-            $url = "$this->partnerPaymentUrl?userType=$user_type&userId=$user_id&search=$search_value&limit=$limit&offset=$offset&order=$order&linkType=$linkType";
+            $paymentLinkType = $request->payment_link_type;
+            $url = "$this->partnerPaymentUrl?userType=$user_type&userId=$user_id&search=$search_value&limit=$limit&offset=$offset&order=$order&linkType=$linkType&paymentLinkType=$paymentLinkType";
+
             $response = $this->client->get($url)->getBody()->getContents();
             $response = json_decode($response, 1);
             if ($response['code'] == 200)

@@ -84,7 +84,7 @@ class PayrollSettingsTransformer extends TransformerAbstract
      */
     private function payrollSettingCompletion()
     {
-        $total = ($this->totalGrossPercentage / 2) + $this->payScheduleData['pay_schedule_completion'];
+        $total = ($this->totalGrossPercentage/2 + $this->payScheduleData['pay_schedule_completion']);
         return round($total, 0);
     }
 

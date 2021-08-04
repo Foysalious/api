@@ -16,7 +16,7 @@ pull_from_docker_registry() {
 # USE ON LOCAL
 run_on_local() {
   . ./bin/parse_env.sh
-  ./bin/dcup.sh local -d
+  ./bin/dcup.sh local -d --build
 }
 
 # USE ON DEVELOPMENT

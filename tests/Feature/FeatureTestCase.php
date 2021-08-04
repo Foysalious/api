@@ -16,7 +16,9 @@ use App\Models\PartnerResource;
 use App\Models\PartnerSubscriptionPackage;
 use App\Models\Profile;
 use App\Models\Resource;
-use App\Models\ServiceRequest;
+use App\Models\TopUpVendor;
+use App\Sheba\InventoryService\InventoryServerClient;
+use App\Sheba\PosOrderService\PosOrderServerClient;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\Schema;
@@ -28,8 +30,11 @@ use Sheba\Dal\InfoCall\InfoCall;
 use Sheba\Dal\JobService\JobService;
 use Sheba\Dal\LocationService\LocationService;
 use Sheba\Dal\Service\Service;
+use Sheba\Dal\SubscriptionWisePaymentGateway\Model;
 use Sheba\Services\Type as ServiceType;
 use TestCase;
+use Tests\Mocks\MockInventoryServerClient;
+use Tests\Mocks\MockPosOrderServerClient;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class FeatureTestCase extends TestCase
@@ -66,11 +71,57 @@ class FeatureTestCase extends TestCase
     /**
      * @var $InfoCall
      */
-    protected $InfoCall;
+    protected $PosOrder;
+
+    /**
+     * @var PosCustomer
+     */
+    protected $PosCustomer;
+
+    /**
+     * @var PartnerDeliveryInfoFactory
+     */
+    protected $PartnerDeliveryInfoFactory;
+
+    /**
+     * @var PartnerPosService
+     */
+    protected $PartnerPosService;
+
+    /**
+     * @var PartnerPosCategory
+     */
+    protected $PartnerPosCategory;
+
+
+    /**
+     * @var PosCategory
+     */
+    protected $PosCategory;
+
+    /**
+     * @var PosOrderPayment
+     */
+    protected $PosOrderPayment;
+
+    /**
+     * @var Model
+     */
+    protected $SubscriptionWisePaymentGateways;
+
+    /**
+     * @var TopUpVendor
+     */
+    protected $topupVendor;
+
+
+
 
     public function setUp()
     {
         parent::setUp();
+        $this->app->singleton(InventoryServerClient::class,MockInventoryServerClient::class);
+        $this->app->singleton(PosOrderServerClient::class,MockPosOrderServerClient::class);
     }
 
     public function get($uri, array $headers = [])
@@ -101,7 +152,7 @@ class FeatureTestCase extends TestCase
     public function runDatabaseMigrations()
     {
         // \Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
-        // $this->artisan('migrate');
+      //  $this->artisan('migrate');
         // $this->beforeApplicationDestroyed(function () {
         //     \Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
         // });

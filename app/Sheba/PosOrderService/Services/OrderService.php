@@ -1,13 +1,14 @@
 <?php namespace App\Sheba\PosOrderService\Services;
 
 use App\Sheba\PosOrderService\PosOrderServerClient;
+use App\Sheba\PosCustomerService\SmanagerUserServerClient;
 
 class OrderService
 {
     /**
      * @var PosOrderServerClient
      */
-    private $client;
+    private $client, $smanagerUserClient;
     private $partnerId;
     private $customerId;
     private $deliveryAddress;
@@ -15,21 +16,80 @@ class OrderService
     private $deliveryCharge;
     private $status;
     private $orderId;
-    private $skus;
+    private $token;
+    private $skus, $discount, $paymentMethod, $paymentLinkAmount, $paidAmount;
     protected $emi_month, $interest, $bank_transaction_charge, $delivery_name, $delivery_mobile, $note, $voucher_id;
     protected $filter_params;
     /**
      * @var mixed
      */
-    private $discount;
     private $isDiscountPercentage;
-    private $paymentMethod;
-    private $paymentLinkAmount;
-    private $paidAmount;
+    protected $userId;
 
-    public function __construct(PosOrderServerClient $client)
+    public function __construct(PosOrderServerClient $client, SmanagerUserServerClient $smanagerUserClient)
     {
         $this->client = $client;
+        $this->smanagerUserClient = $smanagerUserClient;
+    }
+
+    /**
+     * @param mixed $user_id
+     * @return OrderService
+     */
+    public function setUserId($user_id)
+    {
+        $this->userId = $user_id;
+        return $this;
+    }
+
+    /**
+     * @param mixed $token
+     * @return OrderService
+     */
+    public function setToken($token)
+    {
+        $this->token = $token;
+        return $this;
+    }
+
+    /**
+     * @param mixed $payment_link_amount
+     * @return OrderService
+     */
+    public function setPaymentLinkAmount($payment_link_amount)
+    {
+        $this->paymentLinkAmount = $payment_link_amount;
+        return $this;
+    }
+
+    /**
+     * @param mixed $paid_amount
+     * @return OrderService
+     */
+    public function setPaidAmount($paid_amount)
+    {
+        $this->paidAmount = $paid_amount;
+        return $this;
+    }
+
+    /**
+     * @param mixed $payment_method
+     * @return OrderService
+     */
+    public function setPaymentMethod($payment_method)
+    {
+        $this->paymentMethod = $payment_method;
+        return $this;
+    }
+
+    /**
+     * @param mixed $discount
+     * @return OrderService
+     */
+    public function setDiscount($discount)
+    {
+        $this->discount = $discount;
+        return $this;
     }
 
     /**
@@ -151,48 +211,12 @@ class OrderService
     }
 
     /**
-     * @param mixed $discount
-     * @return OrderService
-     */
-    public function setDiscount($discount)
-    {
-        $this->discount = $discount;
-        return $this;
-    }
-    /**
      * @param mixed $isDiscountPercentage
      * @return OrderService
      */
     public function setIsDiscountPercentage($isDiscountPercentage)
     {
         $this->isDiscountPercentage = $isDiscountPercentage;
-        return $this;
-    }
-    /**
-     * @param mixed $paymentMethod
-     * @return OrderService
-     */
-    public function setPaymentMethod($paymentMethod)
-    {
-        $this->paymentMethod = $paymentMethod;
-        return $this;
-    }
-    /**
-     * @param mixed $paymentLinkAmount
-     * @return OrderService
-     */
-    public function setPaymentLinkAmount($paymentLinkAmount)
-    {
-        $this->paymentLinkAmount = $paymentLinkAmount;
-        return $this;
-    }
-    /**
-     * @param mixed $paidAmount
-     * @return OrderService
-     */
-    public function setPaidAmount($paidAmount)
-    {
-        $this->paidAmount = $paidAmount;
         return $this;
     }
 
@@ -216,10 +240,15 @@ class OrderService
         return $this->client->get('api/v1/partners/' . $this->partnerId . '/orders/' . $this->orderId);
     }
 
+    public function getUser()
+    {
+        return $this->smanagerUserClient->get('api/v1/partners/' . $this->partnerId . '/users/' . $this->userId);
+    }
+
     public function store()
     {
         $data = $this->makeCreateData();
-        return $this->client->post('api/v1/partners/'.$this->partnerId.'/orders', $data, true);
+        return $this->client->setToken($this->token)->post('api/v1/partners/'.$this->partnerId.'/orders', $data, true);
     }
 
     public function updateStatus()
@@ -230,6 +259,11 @@ class OrderService
         return $this->client->post('api/v1/partners/'.$this->partnerId.'/orders/'.$this->orderId.'/update-status', $data, true);
     }
 
+    public function storeDeliveryInformation($deliveryData)
+    {
+        return $this->client->put('api/v1/partners/' . $this->partnerId. '/orders/' . $this->orderId, $deliveryData);
+    }
+
     public function updateCustomer()
     {
         return $this->client->put('api/v1/partners/' . $this->partnerId. '/orders/' . $this->orderId . '/update-customer', $this->makeCustomerUpdateData(), false);
@@ -237,7 +271,7 @@ class OrderService
 
     public function update()
     {
-        return $this->client->put('api/v1/partners/' . $this->partnerId. '/orders/' . $this->orderId, $this->makeUpdateData(), false);
+        return $this->client->setToken($this->token)->put('api/v1/partners/' . $this->partnerId. '/orders/' . $this->orderId, $this->makeUpdateData());
     }
 
     public function delete()
@@ -254,20 +288,21 @@ class OrderService
 
     private function makeUpdateData() : array
     {
-        return [
-            'partner_id'                => $this->partnerId,
-            'emi_month'                 => $this->emi_month,
-            'interest'                  => $this->interest,
-            'bank_transaction_charge'   => $this->bank_transaction_charge,
-            'delivery_name'             => $this->delivery_name,
-            'delivery_mobile'           => $this->delivery_mobile,
-            'note'                      => $this->note,
-            'voucher_id'                => $this->voucher_id,
-            'delivery_address'          => $this->deliveryAddress,
-            'delivery_charge'           => $this->deliveryCharge,
-            'sales_channel_id'          => $this->salesChannelId,
-            'skus'                      => $this->skus
-        ];
+        $data = [];
+        if (isset($this->partnerId)) $data['partner_id']                                = $this->partnerId;
+        if (isset($this->emi_month)) $data['emi_month']                                 = $this->emi_month;
+        if (isset($this->interest)) $data['interest']                                   = $this->interest;
+        if (isset($this->bank_transaction_charge)) $data['bank_transaction_charge']     = $this->bank_transaction_charge;
+        if (isset($this->delivery_name)) $data['delivery_name']                         = $this->delivery_name;
+        if (isset($this->delivery_mobile)) $data['delivery_mobile']                     = $this->delivery_mobile;
+        if (isset($this->note)) $data['note']                                           = $this->note;
+        if (isset($this->voucher_id)) $data['voucher_id']                               = $this->voucher_id;
+        if (isset($this->deliveryAddress)) $data['delivery_address']                    = $this->deliveryAddress;
+        if (isset($this->deliveryCharge)) $data['delivery_charge']                      = $this->deliveryCharge;
+        if (isset($this->salesChannelId)) $data['sales_channel_id']                     = $this->salesChannelId;
+        if (isset($this->skus)) $data['skus']                                           = $this->skus;
+        if (isset($this->discount)) $data['discount']                                   = $this->discount;
+        return $data;
     }
 
     private function makeCreateData() : array
@@ -284,6 +319,15 @@ class OrderService
         if ($this->paymentMethod) array_push($data, ['name' => 'payment_method','contents' => $this->paymentMethod]);
         if ($this->paymentLinkAmount) array_push($data, ['name' => 'payment_link_amount','contents' => $this->paymentLinkAmount]);
         if ($this->paidAmount) array_push($data, ['name' => 'paid_amount','contents' => $this->paidAmount]);
+        if($this->voucher_id) array_push($data, ['name' => 'voucher_id', 'contents' => $this->voucher_id]);
+        return $data;
+    }
+
+    private function makeDeliveryData()
+    {
+        $data = [];
+        if (isset($this->deliveryAddress)) $data['delivery_address']                    = $this->deliveryAddress;
+        if (isset($this->deliveryCharge)) $data['delivery_charge']                      = $this->deliveryCharge;
         return $data;
     }
 

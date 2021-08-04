@@ -7,6 +7,8 @@ class CreateRequest
     private $startTime;
     private $endTime;
     private $workingDaysType;
+    private $isForLateCheckinEnable;
+    private $isForEarlyCheckoutEnable;
 
     /**
      * @return mixed
@@ -71,5 +73,27 @@ class CreateRequest
     public function getTotalWorkingDaysType()
     {
         return $this->workingDaysType;
+    }
+
+    public function setIsForLateCheckinPolicy($is_enable)
+    {
+        $this->isForLateCheckinEnable = $is_enable;
+        return $this;
+    }
+
+    public function setIsForEarlyCheckoutPolicy($is_enable)
+    {
+        $this->isForEarlyCheckoutEnable = $is_enable;
+        return $this;
+    }
+
+    public function getIsForLateCheckinPolicy()
+    {
+        return $this->isForLateCheckinEnable;
+    }
+
+    public function getIsForEarlyCheckoutPolicy()
+    {
+        return $this->isForEarlyCheckoutEnable;
     }
 }

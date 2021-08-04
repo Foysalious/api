@@ -8,6 +8,7 @@ class Route
             (new CustomerRoute())->set($api);
             (new AffiliateRoute())->set($api);
             (new PartnerRoute())->set($api);
+            (new EmiRoute())->set($api);
 
             $api->group(['middleware' => 'terminate'], function ($api) {
                 (new BusinessRoute())->set($api);
@@ -43,10 +44,11 @@ class Route
                 $api->post('accountkit', 'AccountKit\AccountKitController@continueWithKit');
             });
             $api->group(['prefix' => 'categories'], function ($api) {
+                $api->get('/', 'Category\CategoryController@getMasterCategories');
                 $api->get('tree', 'Category\CategoryController@getCategoryTree');
-                $api->get('suggestions', 'Category\CategoryController@getSuggestions');
                 $api->group(['prefix' => '{category}'], function ($api) {
                     $api->get('/', 'Category\CategoryController@show');
+                    $api->get('/sub-categories', 'Category\CategoryController@getSubCategories');
                     $api->get('secondaries', 'Category\CategoryController@getSecondaries');
                     $api->get('services', 'Category\CategoryController@getServicesOfChildren');
                 });

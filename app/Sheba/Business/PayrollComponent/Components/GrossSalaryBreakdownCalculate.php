@@ -10,6 +10,7 @@ class GrossSalaryBreakdownCalculate
     private $componentPercentage;
     private $totalAmountPerComponent;
     private $grossSalaryBreakdownWithTotalAmount;
+    private $breakdownData = [];
 
     public function __construct()
     {
@@ -36,7 +37,7 @@ class GrossSalaryBreakdownCalculate
                 'id' => $payroll_component->id,
                 'payroll_setting_id' => $payroll_component->payroll_setting_id,
                 'name' => $payroll_component->name,
-                'title' => $payroll_component->is_default ? Components::getComponents($payroll_component->name)['value'] : $payroll_component->value,
+                'title' => $payroll_component->is_default ? Components::getComponents($payroll_component->name)['value'] : $payroll_component->value, // If it is Default Component Title will come from Class otherwise from DB
                 'percentage' => $percentage,
                 'amount' => $this->percentageToAmountCalculation($salary, $percentage),
                 'type' => $payroll_component->type,
@@ -65,12 +66,23 @@ class GrossSalaryBreakdownCalculate
         foreach ($gross_components as $payroll_component) {
             $percentage = floatValFormat(json_decode($payroll_component->setting, 1)['percentage']);
             $data[$payroll_component->name] = $percentage;
+            array_push($this->breakdownData, [
+                'name' => $payroll_component->name,
+                'is_default' => $payroll_component->is_default,
+                'is_taxable' => $payroll_component->is_taxable,
+                'percentage' => $percentage
+            ]);
         }
         return $data;
     }
 
+    public function getGrossBreakdown()
+    {
+        return $this->breakdownData;
+    }
 
-    public function totalAmountPerComponent($gross_salary = 0.0, $gross_salary_breakdown_percentage)
+
+    public function totalAmountPerComponent($gross_salary, $gross_salary_breakdown_percentage)
     {
         $data = ['gross_salary' => $gross_salary];
         foreach ($gross_salary_breakdown_percentage as $breakdown_name => $breakdown_value) {
@@ -79,14 +91,15 @@ class GrossSalaryBreakdownCalculate
         return $data;
     }
 
-    public function makeGrossComponentCollection($payroll_components, $payroll_component_by_target)
+    public function filterGrossComponentForSpecificBusinessMember($payroll_components, $payroll_component_by_target)
     {
         foreach ($payroll_component_by_target as $target){
-            $payroll_components->search(function($value, $key) use($target, $payroll_components){
-                if($value->name == $target->name) return $payroll_components->forget($key);
+            $payroll_components->search(function($payroll_components_value, $payroll_components_value_index) use($target, $payroll_components){
+                if($payroll_components_value->name == $target->name) return $payroll_components->forget($payroll_components_value_index);
             });
-        }
-        return $payroll_components->merge($payroll_component_by_target);
+        } // It will filter employee target wise components with global components and remove from global if specific business member wise target exists
+
+        return $payroll_components->merge($payroll_component_by_target); // Merging both collection will make a collection which is only for specific business member
     }
 
     private function percentageToAmountCalculation($gross_salary, $percentage)
@@ -96,10 +109,12 @@ class GrossSalaryBreakdownCalculate
 
     private function getBusinessMemberGrossComponent($payroll_setting, $business_member)
     {
-        $payroll_components = $payroll_setting->components()->where('type', Type::GROSS)->where('is_active', 1)->where('target_type', TargetType::GENERAL)->orderBy('name')->get();
+        $payroll_components = $payroll_setting->components()->where('type', Type::GROSS)->where('target_type', TargetType::GENERAL)->where(function($query) {
+            return $query->where('is_default', 1)->orWhere('is_active',1);
+        })->orderBy('type')->get();
         $gross_components = $payroll_components;
         $payroll_component_by_target = $payroll_setting->components()->where('type', Type::GROSS)->where('target_id', $business_member->id)->where('is_active', 1)->orderBy('name')->get();
-        if ($payroll_component_by_target) $gross_components = $this->makeGrossComponentCollection($payroll_components, $payroll_component_by_target);
+        if ($payroll_component_by_target) $gross_components = $this->filterGrossComponentForSpecificBusinessMember($payroll_components, $payroll_component_by_target);
 
         return $gross_components;
     }

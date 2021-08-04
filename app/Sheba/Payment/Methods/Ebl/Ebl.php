@@ -7,10 +7,12 @@ namespace Sheba\Payment\Methods\Ebl;
 use App\Models\Payable;
 use App\Models\Payment;
 use Exception;
+use GuzzleHttp\Client;
 use ReflectionException;
 use Sheba\Payment\Methods\Ebl\Stores\EblStore;
 use Sheba\Payment\Methods\PaymentMethod;
 use Sheba\TPProxy\TPProxyServerError;
+use Sheba\Payment\Methods\Ebl\Exception\EblServerException;
 
 class Ebl extends PaymentMethod
 {
@@ -38,16 +40,31 @@ class Ebl extends PaymentMethod
      */
     public function init(Payable $payable): Payment
     {
-        $payment = $this->createPayment($payable);
-        $input   = (new EblInputs($this->store))->setPayment($payment)->generate();
+        return $this->setPayment($this->createPayment($payable, $this->store->getName()));
 
-        EblClient::get()->setStore($this->store)->init($input);
+    }
+
+    private function setPayment(Payment $payment)
+    {
+        $payment->gateway_transaction_id =   uniqid('EBLx' . $payment->id.'x');
+        $payment->redirect_url           = config('sheba.ebl_url') . '/checkout?transaction_id=' . $payment->transaction_id;
+        $payment->update();
         return $payment;
     }
 
+    /**
+     * @throws EblServerException
+     */
     public function validate(Payment $payment): Payment
     {
-        // TODO: Implement validate() method.
+        $payment->reload();
+
+        /** @var EblValidator $validator */
+        $validator = app(EblValidator::class);
+        $validator->validate($payment);
+        $payment->reload();
+        return $payment;
+
     }
 
     public function getMethodName()

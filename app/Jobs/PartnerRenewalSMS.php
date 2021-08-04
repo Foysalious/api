@@ -3,8 +3,8 @@
 use App\Models\Partner;
 use App\Models\PartnerSubscriptionPackage;
 use App\Repositories\SmsHandler;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -52,11 +52,11 @@ class PartnerRenewalSMS extends Job implements ShouldQueue
                 ->setBusinessType(BusinessType::SMANAGER)
                 ->setFeatureType(FeatureType::PARTNER_RENEWAL)
                 ->send($this->partner->getContactNumber(), [
-                'package_name'           => $this->package->show_name_bn,
-                'package_type'           => $this->partner->billing_type,
-                'formatted_package_type' => $this->partner->billing_type == 'monthly' ? 'মাসের' : 'বছরের',
-                'subscription_amount'    => $this->subscription_amount
-            ]);
+                    'package_name'           => $this->package->show_name_bn,
+                    'package_type'           => $this->partner->billing_type,
+                    'formatted_package_type' => $this->partner->billing_type == 'monthly' ? 'মাসের' : 'বছরের',
+                    'subscription_amount'    => $this->subscription_amount
+                ]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
         }

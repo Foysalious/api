@@ -2,12 +2,10 @@
 
 namespace Sheba\Pos\Order\RefundNatures;
 
-use Exception;
 use App\Models\PosOrder;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\AccountingRepository;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\JournalCreateRepository;
@@ -43,7 +41,6 @@ abstract class ReturnPosItem extends RefundNature
             $this->oldOrder = clone $this->order;
             $this->old_services = $this->new ? $this->order->items->pluckMultiple(['quantity', 'unit_price'], 'id', true)->toArray()
                 : $this->old_services = $this->order->items->pluckMultiple(['quantity', 'unit_price'], 'service_id', true)->toArray();
-            Log::info(['checking update data', $this->data['services'], $this->request->paid_amount, $this->request->payment_method, $this->request->refund_nature, $this->request->return_nature]);
             $this->makeInventoryProduct($this->order->items, $this->data['services']);
             $this->updater->setOrder($this->order)->setData($this->data)->setNew($this->new)->update();
             if ($this->order->calculate()->getPaid()) {
@@ -51,9 +48,7 @@ abstract class ReturnPosItem extends RefundNature
             }
             $this->generateDetails();
             $this->saveLog();
-            Log::info("checking refund 1");
             if ($this->order) {
-                Log::info(["checking refund 2", $this->request->inventory_products]);
                 $this->returnItem($this->order);
                 $this->updateEntry($this->order, 'refund');
             }
@@ -81,7 +76,7 @@ abstract class ReturnPosItem extends RefundNature
 
     private function returnItem(PosOrder $order)
     {
-        $amount = (double)$order->calculate()->getNetBill();
+        $amount = isset($this->data['is_refunded']) && $this->data['is_refunded'] ? (double)$this->data['paid_amount'] : 0;
         (new JournalCreateRepository())
             ->setTypeId($order->partner->id)
             ->setSource($order)
@@ -179,7 +174,6 @@ abstract class ReturnPosItem extends RefundNature
                     $unitPrice = $original_service->cost ?? $sellingPrice;
                     // Full return
                     if ($value['quantity'] == 0 && $product->quantity != 0) {
-                        Log::info(["full return", $product->quantity]);
                         $inventory_products[] = $this->makeInventoryData(
                             $originalSvc,
                             $unitPrice,

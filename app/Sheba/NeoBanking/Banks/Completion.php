@@ -44,15 +44,18 @@ class Completion
         return $this;
     }
 
-    /**
-     * @throws InvalidBankCode
-     * @throws InvalidListInsertion|ReflectionException
-     */
     public function getAll(): BankCompletion
     {
         $completion = $this->completionPercentage();
         $this->setGigaTechData()->setApply($completion);
-        return (new BankCompletion())->setGigaTechStatusInfo($this->gigatech_data)->setCompletion($completion)->setCanApply($this->can_apply)->setBankDetailTitle(BankStatics::AccountDetailsTitle())->setBankDetailLink(BankStatics::AccountDetailsURL())->setPblTermsAndCondition(BankStatics::PblTermsAndCondition())->setPepIpDefinition(BankStatics::PepIpDefinition())->setMessage(BankStatics::completionMessage($this->can_apply))->setMessageType(BankStatics::completionType($this->can_apply));
+        return (new BankCompletion())->setGigaTechStatusInfo($this->gigatech_data)
+            ->setCompletion($completion)->setCanApply($this->can_apply)
+            ->setBankDetailTitle(BankStatics::AccountDetailsTitle())
+            ->setBankDetailLink(BankStatics::AccountDetailsURL())
+            ->setPblTermsAndCondition(BankStatics::PblTermsAndCondition())
+            ->setPepIpDefinition(BankStatics::PepIpDefinition())
+            ->setMessage(BankStatics::completionMessage($this->can_apply))
+            ->setMessageType(BankStatics::completionType($this->can_apply));
     }
 
     public function completionPercentage()
@@ -72,19 +75,19 @@ class Completion
     private function setGigaTechData()
     {
         $this->mobile = str_replace('+88', '', $this->mobile);
-        $this->gigatech_data = $this->bank->getGigatechKycStatus(["mobile" => $this->mobile]);
-//        $this->gigatech_data = [
-//            "code" => 200,
-//            "data" => [
-//                "status" => 'success',
-//                "data" => [
-//                    "status" => "passed",
-//                ],
-//                "detail" => [
-//                    "nid_no" => 123122324243131
-//                ]
-//            ]
-//        ];
+//        $this->gigatech_data = $this->bank->getGigatechKycStatus(["mobile" => $this->mobile]);
+        $this->gigatech_data = [
+            "code" => 200,
+            "data" => [
+                "status" => 'success',
+                "data" => [
+                    "status" => "passed",
+                ],
+                "detail" => [
+                    "nid_no" => 123122324243131
+                ]
+            ]
+        ];
         return $this;
     }
 

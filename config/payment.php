@@ -50,13 +50,17 @@ return [
         ]
     ],
     'ok_wallet'   => [
-        'base_url'   => env('OK_WALLET_BASE_URL'),
-        'account'    => env('OK_WALLET_ACCOUNT'),
-        'api_key'    => env('OK_WALLET_API_KEY'),
-        'api_secret' => env('OK_WALLET_API_SECRET'),
-        'format'     => env('OK_WALLET_API_FORMAT', 'json'),
-        'key_path'   => env('OK_WALLET_KEY_PATH', 'assets/ok-wallet/public.key'),
-        'merchant'   => env('OK_WALLET_MERCHANT', 'sheba.xyz')
+        'base_url'      => env('OK_WALLET_BASE_URL'),
+        'api_user'      => env('OK_WALLET_API_USER'),
+        'api_password'  => env('OK_WALLET_API_PASSWORD'),
+        'merchant_id'   => env('OK_WALLET_MERCHANT_ID'),
+        'access_key'    => env('OK_WALLET_ACCESS_KEY'),
+        'web_client_base_url' => env('OK_WALLET_WEB_CLIENT_BASE_URL'),
+        'urls'          => [
+            'approve' => env('SHEBA_API_URL') . '/v2/payments/ok-wallet/success',
+            'decline' => env('SHEBA_API_URL') . '/v2/payments/ok-wallet/fail',
+            'cancel'  => env('SHEBA_API_URL') . '/v2/payments/ok-wallet/cancel',
+        ]
     ],
     'nagad'       => [
         'stores' => [
@@ -78,17 +82,6 @@ return [
         ]
     ],
     'ebl'         => [
-        'stores' => [
-            'default' => [
-                'base_url'     => env('EBL_BASE_URL', 'https://testsecureacceptance.cybersource.com'),
-                'access_key'   => env('EBL_ACCESS_KEY', '59f2e88276b23a609a41bbc855eaeaad'),
-                'profile_id'   => env('EBL_PROFILE_ID', '189C3320-583D-4148-984B-8193431BD3BB'),
-                'profile_name' => env('EBL_PROFILE_NAME', 'SHEBA XYZ'),
-                'signature'    => env('EBL_SIGNATURE', 'HMAC-SHA256'),
-                'merchant_id'  => env('EBL_MERCHANT_ID', '20010024'),
-                'account_id'   => env('EBL_ACCOUNT_ID', '20010024_acct'),
-                'secret_key'   => env('EBL_SECRET_KEY_PATH', resource_path('assets/ebl/keySecret.txt'))
-            ]
-        ]
+        'auth_token' => env('EBL_APP_AUTH_TOKEN')
     ]
 ];

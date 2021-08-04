@@ -75,12 +75,17 @@ class Updater
                 $period = 0;
                 $last_generated_date = null;
                 if (!empty($existing_package->generated_at)) {
-                    $period = intval($existing_package->periodic_schedule);
-                    $last_generated_date = $existing_package->generated_at;
+                    $existing_period = intval($existing_package->periodic_schedule);
+                    $existing_generated_date = $existing_package->generated_at;
+                    $pay_day = $this->payrollSetting->pay_day;
+                    $period = $packages['periodic_schedule'];
+                    if (Carbon::now()->day < $pay_day) $last_generated_date = Carbon::parse($existing_generated_date)->subMonths($existing_period)->format('y-m-d');
+                    if (Carbon::now()->day > $pay_day || Carbon::now()->day == $pay_day) $last_generated_date = Carbon::parse($existing_generated_date)->format('y-m-d');
                 }
                 $package_generate_data = (new Formatter)->packageGenerateData($this->payrollSetting, $last_generated_date, $period);
                 if (empty($existing_package->periodic_schedule_created_at)) $package_generate_data = array_merge($package_generate_data, ['periodic_schedule_created_at' => Carbon::now()]);
                 $data = array_merge($data, $package_generate_data);
+
             }
             if ($packages['schedule_type'] == ScheduleType::FIXED_DATE) $data = array_merge($data, ['generated_at' => null]);
 

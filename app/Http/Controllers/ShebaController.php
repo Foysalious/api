@@ -3,6 +3,13 @@
 use App\Http\Presenters\PresentableDTOPresenter;
 use App\Http\Requests\AppVersionRequest;
 use App\Jobs\SendFaqEmail;
+use App\Models\PotentialCustomer;
+use App\Repositories\CustomerRepository;
+use App\Models\Customer;
+use App\Sheba\BankingInfo\EmiBanking;
+use Sheba\AppVersion\AppVersionManager;
+use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
+use Sheba\Dal\Category\Category;
 use App\Models\HyperLocal;
 use App\Models\Job;
 use App\Models\OfferShowcase;
@@ -10,9 +17,11 @@ use App\Models\Payable;
 use App\Models\Payment;
 use App\Models\Profile;
 use App\Models\Resource;
+use Sheba\Dal\EmiBank\Repository\EmiBankContract;
+use Sheba\Dal\PaymentGateway\Contract as PaymentGatewayRepository;
+use Sheba\Dal\Service\Service;
 use App\Models\Slider;
 use App\Models\SliderPortal;
-use App\Repositories\CustomerRepository;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
 use Cache;
@@ -22,13 +31,8 @@ use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Sheba\AppVersion\AppVersionManager;
-use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
-use Sheba\Dal\Category\Category;
 use Sheba\Dal\MetaTag\MetaTagRepositoryInterface;
-use Sheba\Dal\PaymentGateway\Contract as PaymentGatewayRepository;
 use Sheba\Dal\RedirectUrl\RedirectUrl;
-use Sheba\Dal\Service\Service;
 use Sheba\Dal\UniversalSlug\Model as SluggableType;
 use Sheba\EMI\Banks;
 use Sheba\EMI\Calculator;
@@ -38,9 +42,12 @@ use Sheba\Payment\AvailableMethods;
 use Sheba\Payment\Presenter\PaymentMethodDetails;
 use Sheba\Payment\Statuses;
 use Sheba\Repositories\PaymentLinkRepository;
+use Sheba\RequestIdentification;
+use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Throwable;
 use Validator;
+use GuzzleHttp\Client;
 
 class ShebaController extends Controller
 {
@@ -156,10 +163,10 @@ class ShebaController extends Controller
     public function getSimilarOffer($offer)
     {
         $offer = OfferShowcase::select('id', 'thumb', 'title', 'banner', 'short_description', 'detail_description', 'target_link')
-                              ->where([
-                                  ['id', '<>', $offer],
-                                  ['is_active', 1]
-                              ])->get();
+            ->where([
+                ['id', '<>', $offer],
+                ['is_active', 1]
+            ])->get();
         return count($offer) >= 3 ? response()->json(['offer' => $offer, 'code' => 200]) : response()->json(['code' => 404]);
     }
 
@@ -244,9 +251,12 @@ class ShebaController extends Controller
             'created_at'                       => $payment->created_at->format('jS M, Y, h:i A'),
             'invoice_link'                     => $payment->invoice_link,
             'transaction_id'                   => $payment->transaction_id,
-            'external_payment_redirection_url' => $external_payment ? $external_payment->success_url : null
+            'external_payment_redirection_url' => $external_payment ? $external_payment->success_url : null,
+            'store'                            => $payment->gateway_account_name
         ];
+
         if ($payable->isPaymentLink()) $this->mergePaymentLinkInfo($info, $payable);
+
         return $info;
     }
 
@@ -286,19 +296,20 @@ class ShebaController extends Controller
     {
         $version_code  = (int)$request->header('Version-Code');
         $platform_name = $request->header('Platform-Name');
-        $user_type     = $request->type;
+        $user_type = $request->type;
+        $payable_type = $request->payable_type;
         if (!$user_type) $user_type = getUserTypeFromRequestHeader($request);
         if (!$user_type) $user_type = "customer";
 
         $serviceType = 'App\\Models\\' . ucfirst($user_type);
         $dbGateways  = $paymentGateWayRepository->builder()
-                                                ->where('service_type', $serviceType)
-                                                ->whereNull('payment_method')
+            ->where('service_type', $serviceType)
+            ->whereNull('payment_method')
             ->where('status', 'Published')
-                                                ->get();
+            ->get();
 
-        $payments = array_map(function (PaymentMethodDetails $details) use ($dbGateways, $user_type) {
-            return (new PresentableDTOPresenter($details, $dbGateways))->mergeWithDbGateways($user_type);
+        $payments = array_map(function (PaymentMethodDetails $details) use ($dbGateways, $user_type, $payable_type){
+            return (new PresentableDTOPresenter($details, $dbGateways))->mergeWithDbGateways($user_type, $payable_type);
         }, AvailableMethods::getDetails($request->payable_type, $request->payable_type_id, $version_code, $platform_name, $user_type));
 
         if ($user_type == 'partner') {
@@ -402,9 +413,9 @@ class ShebaController extends Controller
             $nidValidation = new NidValidation();
             if ($request->has('manager_resource')) {
                 $exists = Profile::query()
-                                 ->where('nid_no', $request->nid)
-                                 ->whereNotIn('id', [$request->manager_resource->profile->id])
-                                 ->first();
+                    ->where('nid_no', $request->nid)
+                    ->whereNotIn('id', [$request->manager_resource->profile->id])
+                    ->first();
                 if (!empty($exists)) return api_response($request, null, 400, ['message' => 'Nid Number is used by another user']);
                 if ($request->manager_resource->profile->nid_verified == 1) return api_response($request, null, 400, ['message' => 'NID is already verified']);
                 $nidValidation->setProfile($request->manager_resource->profile);
@@ -462,10 +473,17 @@ class ShebaController extends Controller
         $this->validate($request, ['start_date' => 'required|date_format:Y-m-d', 'end_date' => 'required|date_format:Y-m-d']);
         $ids         = json_decode($request->id);
         $attendances = $attendance_repo->builder()
-                                       ->whereIn('business_member_id', $ids)->where([['date', ">=", $request->start_date], ['date', '<=', $request->end_date]])
-                                       ->select('id', 'business_member_id', 'date', 'checkin_time', 'checkout_time', 'staying_time_in_minutes')
-                                       ->get();
+            ->whereIn('business_member_id', $ids)->where([['date', ">=", $request->start_date], ['date', '<=', $request->end_date]])
+            ->select('id', 'business_member_id', 'date', 'checkin_time', 'checkout_time', 'staying_time_in_minutes')
+            ->get();
         return api_response($request, null, 200, ['data' => $attendances->groupBy('business_member_id')]);
+    }
+
+    public function getEmiBankList(Request $request, EmiBankContract $emiBankContract)
+    {
+        $bank_lists = $emiBankContract->builder()->get();
+
+        return api_response($request, null, 200, ['data' => $bank_lists]);
     }
 
     public function paymentInitiatedInfo(Request $request, $transaction_id)
@@ -474,8 +492,14 @@ class ShebaController extends Controller
         $payment = Payment::where('transaction_id', $transaction_id)->first();
         if (!$payment) return api_response($request, null, 404, ['message' => 'No Payment found']);
         if ($payment->status != Statuses::INITIATED) return api_response($request, null, 400, ['message' => 'Payment already processed please contact with the the seller or call sheba platform limited']);
-
-        $info = $this->getPaymentInfo($payment);
+        $info                           = $this->getPaymentInfo($payment);
+        $info['gateway_transaction_id'] = $payment->gateway_transaction_id;
+        $info['gateway_account_name']   = $payment->gateway_account_name;
+        if (!isset($info['payer'])) {
+            /** @var Payable $payer */
+            $payer = $payment->payable;
+            $info  = array_merge($info, ['payer' => ['name' => $payer->getName(), 'id' => $payer->user->id, 'mobile' => $payer->getMobile()]]);
+        }
         return api_response($request, $info, 200, ['data' => $info]);
     }
 }

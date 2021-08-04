@@ -6,7 +6,7 @@ class InfoCallFactory extends Factory
 {
     protected function getModelClass()
     {
-        return InfoCall::class;// TODO: Implement getModelClass() method.
+        return InfoCall::class;
     }
 
     protected function getData()
@@ -17,7 +17,7 @@ class InfoCallFactory extends Factory
             'priority' => 'High',
             'flag' => 'Red',
             'status' => 'Open',
-            'service_id'=> '1',
+            //'service_id'=> '1',
             'service_name'=> 'Ac service'
             //  'created_at'=>
         ]);

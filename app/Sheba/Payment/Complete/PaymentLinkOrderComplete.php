@@ -3,19 +3,17 @@
 use App\Jobs\Partner\PaymentLink\SendPaymentLinkSms;
 use App\Models\PartnerPosCustomer;
 use App\Models\Payable;
-use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PosOrder;
 use App\Models\Profile;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
-use Carbon\Carbon;
+use App\Sheba\AccountingEntry\Repository\PaymentLinkAccountingRepository;
 use DB;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Support\Facades\Log;
 use LaravelFCM\Message\Exceptions\InvalidOptionsException;
 use Sheba\AccountingEntry\Accounts\Accounts;
-use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\ExternalPayment\Model as ExternalPayment;
 use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\ExpenseTracker\AutomaticIncomes;
@@ -25,13 +23,10 @@ use Sheba\PaymentLink\InvoiceCreator;
 use Sheba\PaymentLink\PaymentLinkStatics;
 use Sheba\PaymentLink\PaymentLinkTransaction;
 use Sheba\PaymentLink\PaymentLinkTransformer;
-use Sheba\Pos\Order\PosOrderResolver;
-use Sheba\Pos\Order\PosOrderTypes;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\PushNotificationHandler;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
-use Sheba\RequestIdentification;
 use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Usage\Usage;
@@ -71,6 +66,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
     public function complete()
     {
         try {
+            $this->payment->reload();
             if ($this->payment->isComplete())
                 return $this->payment;
             $this->paymentLink      = $this->getPaymentLink();
@@ -78,9 +74,10 @@ class PaymentLinkOrderComplete extends PaymentComplete
             DB::transaction(function () {
                 $this->paymentRepository->setPayment($this->payment);
                 $payable = $this->payment->payable;
+                $payableUser = $payable->user;
                 $this->setModifier($customer = $payable->user);
                 $this->completePayment();
-                $this->processTransactions($this->payment_receiver);
+                $this->processTransactions($this->payment_receiver, $payableUser);
             });
         } catch (Throwable $e) {
             $this->failPayment();
@@ -95,7 +92,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $this->createUsage($this->payment_receiver, $this->payment->payable->user);
             $this->notify();
 
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             Log::info(["error while storing payment link entry", $e->getMessage(), $e->getCode()]);
             logError($e);
         }
@@ -177,10 +174,14 @@ class PaymentLinkOrderComplete extends PaymentComplete
 
     /**
      * @param HasWalletTransaction $payment_receiver
+     * @param $customer
      */
-    private function processTransactions(HasWalletTransaction $payment_receiver)
+    private function processTransactions(HasWalletTransaction $payment_receiver, $customer)
     {
-        $this->transaction = (new PaymentLinkTransaction($this->payment, $this->paymentLink))->setReceiver($payment_receiver)->create();
+        $this->transaction = (new PaymentLinkTransaction($this->payment, $this->paymentLink))
+            ->setReceiver($payment_receiver)
+            ->setCustomer($customer)
+            ->create();
 
     }
 
@@ -201,8 +202,8 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $payment_creator->credit($payment_data);
             if ($this->transaction->isPaidByCustomer()) {
                 $this->target->update(['interest' => 0, 'bank_transaction_charge' => 0]);
-                $this->storeAccountingJournal($payment_data);
             }
+//            $this->storeAccountingJournal($payment_data);
         }
         if ($this->target instanceof ExternalPayment) {
             $this->target->payment_id = $this->payment->id;
@@ -217,23 +218,20 @@ class PaymentLinkOrderComplete extends PaymentComplete
             ->where('customer_id', $this->target->customer_id)
             ->with(['customer'])
             ->first();
-        $data = [
-            'customer_id' => $partner_pos_customer->customer_id,
-            'customer_name' => $partner_pos_customer->details()["name"],
-            'source_id' => $paymentData['pos_order_id'],
-            'source_type' => EntryTypes::POS,
-            'debit_account_key' => (new Accounts())->asset->sheba::SHEBA_ACCOUNT,
-            'credit_account_key' => (new Accounts())->income->sales::SALES_FROM_POS,
-            'amount' => (double)$paymentData['amount'],
-            'amount_cleared' => (double)$paymentData['amount'],
-            'details' => 'Payment link for pos order',
-            'note' => 'payment_link',
-            'entry_at' => request()->has("date") ? request()->date : Carbon::now()->format('Y-m-d H:i:s'),
-            'created_from' => json_encode($this->withBothModificationFields((new RequestIdentification())->get()))
-        ];
-        /** @var \App\Sheba\AccountingEntry\Repository\PaymentLinkRepository $paymentLinkRepo */
-        $paymentLinkRepo = app(\App\Sheba\AccountingEntry\Repository\PaymentLinkRepository::class);
-        $paymentLinkRepo->paymentLinkPosOrderJournal($data, $this->target->partner_id);
+
+        /** @var PaymentLinkAccountingRepository $paymentLinkRepo */
+        $paymentLinkRepo = app(PaymentLinkAccountingRepository::class);
+        return $paymentLinkRepo->setCustomerId($partner_pos_customer->customer_id)
+            ->setCustomerName($partner_pos_customer->details()["name"])
+            ->setSourceId($paymentData['pos_order_id'])
+            ->setSourceType(EntryTypes::POS)
+            ->setDebitAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
+            ->setCreditAccountKey((new Accounts())->income->sales::SALES_FROM_POS)
+            ->setAmount((double)$paymentData['amount'])
+            ->setAmountCleared((double)$paymentData['amount'])
+            ->setDetails('Payment link for pos order')
+            ->setNote('payment_link')
+            ->updatePaymentLinkEntry($this->target->partner_id);
     }
 
     private function createUsage($payment_receiver, $modifier)
@@ -268,12 +266,12 @@ class PaymentLinkOrderComplete extends PaymentComplete
         /** @var Payable $payable */
         $payable = Payable::find($this->payment->payable_id);
         (new PushNotificationHandler())->send([
-            "title"      => 'Order Successful',
-            "message"    => "$formatted_amount Tk has been collected from {$payable->getName() } by order link- {$payment_link->getLinkID()}",
-            "event_type" => $event_type,
-            "event_id"   => $this->target->id,
-            "sound"      => "notification_sound",
-            "channel_id" => $channel
+          "title"      => 'Order Successful',
+          "message"    => "$formatted_amount Tk has been collected from {$payable->getName() } by order link- {$payment_link->getLinkID()}",
+          "event_type" => $event_type,
+          "event_id"   => $this->target->id,
+          "sound"      => "notification_sound",
+          "channel_id" => $channel
         ], $topic, $channel, $sound);
     }
 }

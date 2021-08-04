@@ -23,6 +23,8 @@ class RechargeComplete extends PaymentComplete
     public function complete()
     {
         try {
+            $this->payment->reload();
+            if ($this->payment->isComplete()) return $this->payment;
             $this->paymentRepository->setPayment($this->payment);
             DB::transaction(function () {
                 $this->storeTransaction();
@@ -61,7 +63,7 @@ class RechargeComplete extends PaymentComplete
      */
     private function calculateCommission($charge): float
     {
-        if ($this->payment->payable->user instanceof Partner) return round (($this->payment->payable->amount / (100 + $charge)) * $charge, 2);
+        if ($this->payment->payable->user instanceof Partner) return round(($this->payment->payable->amount / (100 + $charge)) * $charge, 2);
         return (double)round(($charge * $this->payment->payable->amount) / 100, 2);
     }
 
@@ -73,12 +75,12 @@ class RechargeComplete extends PaymentComplete
         if ($this->paymentGateway && $this->paymentGateway->cash_in_charge > 0) {
             $amount = $this->calculateCommission($this->paymentGateway->cash_in_charge);
             (new WalletTransactionHandler())->setModel($user)
-                                            ->setAmount($amount)
-                                            ->setType(Types::debit())
-                                            ->setLog($amount . ' BDT has been deducted as a gateway charge for SHEBA credit recharge')
-                                            ->setTransactionDetails($this->payment->getShebaTransaction()->toArray())
-                                            ->setSource($this->payment->paymentDetails->last()->method)
-                                            ->store();
+                ->setAmount($amount)
+                ->setType(Types::debit())
+                ->setLog($amount . ' BDT has been deducted as a gateway charge for SHEBA credit recharge')
+                ->setTransactionDetails($this->payment->getShebaTransaction()->toArray())
+                ->setSource($this->payment->paymentDetails->last()->method)
+                ->store();
         }
     }
 

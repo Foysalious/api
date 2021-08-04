@@ -7,8 +7,8 @@ use App\Models\PartnerSubscriptionPackage;
 use App\Models\Tag;
 use App\Repositories\NotificationRepository;
 use App\Repositories\SmsHandler;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use App\Sheba\Subscription\Partner\PartnerSubscriptionChange;
 use App\Sheba\Subscription\Partner\PartnerSubscriptionCharges;
 use Carbon\Carbon;
@@ -309,7 +309,9 @@ class PartnerSubscriptionBilling
             }
             if ($template) {
                 self::sendSms($this->partner, $old_package, $new_package, $old_billing_type, $new_billing_type, $this->packagePrice, $template);
-                self::sendNotification($this->partner, $old_package, $new_package, $old_billing_type, $new_billing_type, $this->packagePrice, $grade);
+
+                if($new_package->id !== PeriodicBillingHandler::FREE_PACKAGE_ID)
+                    self::sendNotification($this->partner, $old_package, $new_package, $old_billing_type, $new_billing_type, $this->packagePrice, $grade);
             }
         }
     }
@@ -388,15 +390,15 @@ class PartnerSubscriptionBilling
             ->setBusinessType(BusinessType::SMANAGER)
             ->setFeatureType(FeatureType::PARTNER_SUBSCRIPTION)
             ->send($partner->getContactNumber(), [
-            'old_package_name'       => $old_package->show_name_bn,
-            'new_package_name'       => $new_package->show_name_bn,
-            'subscription_amount'    => $price,
-            'old_package_type'       => $old_billing_type,
-            'new_package_type'       => $new_billing_type,
-            'package_name'           => $new_package->show_name_bn,
-            'formatted_package_type' => $new_package->titleTypeBn($new_billing_type),
-            'package_type'           => $new_billing_type
-        ]);
+                'old_package_name'       => $old_package->show_name_bn,
+                'new_package_name'       => $new_package->show_name_bn,
+                'subscription_amount'    => $price,
+                'old_package_type'       => $old_billing_type,
+                'new_package_type'       => $new_billing_type,
+                'package_name'           => $new_package->show_name_bn,
+                'formatted_package_type' => $new_package->titleTypeBn($new_billing_type),
+                'package_type'           => $new_billing_type
+            ]);
     }
 
     /**

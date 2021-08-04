@@ -84,8 +84,11 @@ class AttendanceController extends Controller
         $selected_date = $time_frame->forADay($date);
 
         $checkin_location = $checkout_location = null;
+        $checkin_remote_mode = $checkout_remote_mode = null;
         if ($request->checkin_location) $checkin_location = $this->getIpById($request->checkin_location, $business_office_repo);
         if ($request->checkout_location) $checkout_location = $this->getIpById($request->checkout_location, $business_office_repo);
+        if ($request->checkin_remote_mode) $checkin_remote_mode = $request->checkin_remote_mode;
+        if ($request->checkout_remote_mode) $checkout_remote_mode = $request->checkout_remote_mode;
 
         /** @var array $attendances */
         $attendances = $stat->setBusiness($request->business)
@@ -101,7 +104,13 @@ class AttendanceController extends Controller
             ->setOfficeOrRemoteCheckout($request->checkout_office_or_remote)
             ->setCheckinLocation($checkin_location)
             ->setCheckoutLocation($checkout_location)
+            ->setCheckInRemoteMode($checkin_remote_mode)
+            ->setCheckOutRemoteMode($checkout_remote_mode)
             ->get();
+
+        if ($request->sort && $request->sort_column === 'overtime') {
+            $attendances = $this->attendanceSortOnOvertime( collect($attendances), $request->sort)->values()->toArray();
+        }
 
         $count = count($attendances);
         if ($request->file == 'excel') return (new DailyExcel())->setDate($date->format('Y-m-d'))->setData($attendances)->download();
@@ -130,7 +139,7 @@ class AttendanceController extends Controller
         /** @var Business $business */
         $business = Business::where('id', (int)$business)->select('id', 'name', 'phone', 'email', 'type')->first();
 
-        $business_members = $business->getAccessibleBusinessMember();
+        $business_members = $business->getAllBusinessMemberExceptInvited();
 
         if ($request->has('department_id')) {
             $business_members = $business_members->whereHas('role', function ($q) use ($request) {
@@ -138,6 +147,10 @@ class AttendanceController extends Controller
                     $q->where('business_departments.id', $request->department_id);
                 });
             });
+        }
+
+        if($request->has('status')) {
+            $business_members = $business_members->where('status', $request->status);
         }
 
         $all_employee_attendance = [];
@@ -161,7 +174,7 @@ class AttendanceController extends Controller
             $time_frame = $time_frame->forDateRange($start_date, $end_date);
             $business_member_leave = $business_member->leaves()->accepted()->startDateBetween($time_frame)->endDateBetween($time_frame)->get();
             $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
-            $employee_attendance = (new MonthlyStat($time_frame, $business_holiday, $business_weekend, $business_member_leave, false))->transform($attendances);
+            $employee_attendance = (new MonthlyStat($time_frame, $business, $business_holiday, $business_weekend, $business_member_leave, false))->transform($attendances);
 
             array_push($all_employee_attendance, [
                 'business_member_id' => $business_member->id,
@@ -186,6 +199,7 @@ class AttendanceController extends Controller
         if ($request->has('sort_on_present')) $all_employee_attendance = $this->attendanceSortOnPresent($all_employee_attendance, $request->sort_on_present);
         if ($request->has('sort_on_leave')) $all_employee_attendance = $this->attendanceSortOnLeave($all_employee_attendance, $request->sort_on_leave);
         if ($request->has('sort_on_late')) $all_employee_attendance = $this->attendanceSortOnLate($all_employee_attendance, $request->sort_on_late);
+        if ($request->has('sort_on_overtime')) $all_employee_attendance = $this->attendanceCustomSortOnOvertime($all_employee_attendance, $request->sort_on_overtime);
 
         $total_members = $all_employee_attendance->count();
         if ($request->has('limit')) $all_employee_attendance = $all_employee_attendance->splice($offset, $limit);
@@ -261,6 +275,32 @@ class AttendanceController extends Controller
     }
 
     /**
+     * @param $attendances
+     * @param string $sort
+     * @return mixed
+     */
+    private function attendanceSortOnOvertime($attendances, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return $attendances->$sort_by(function ($attendance, $key) {
+            return $attendance['overtime_in_minutes'];
+        });
+    }
+
+    /**
+     * @param $attendances
+     * @param string $sort
+     * @return mixed
+     */
+    private function attendanceCustomSortOnOvertime($attendances, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return $attendances->$sort_by(function ($attendance, $key) {
+            return $attendance['attendance']['overtime_in_minutes'];
+        });
+    }
+
+    /**
      * @param $month
      * @param $year
      * @return bool
@@ -302,7 +342,7 @@ class AttendanceController extends Controller
         $business_holiday = $business_holiday_repo->getAllByBusiness($business);
         $business_weekend = $business_weekend_repo->getAllByBusiness($business);
 
-        $employee_attendance = (new MonthlyStat($time_frame, $business_holiday, $business_weekend, $business_member_leave))->transform($attendances);
+        $employee_attendance = (new MonthlyStat($time_frame, $business, $business_holiday, $business_weekend, $business_member_leave))->transform($attendances);
         $daily_breakdowns = collect($employee_attendance['daily_breakdown']);
         $daily_breakdowns = $daily_breakdowns->filter(function ($breakdown) {
             return Carbon::parse($breakdown['date'])->lessThanOrEqualTo(Carbon::today());
@@ -312,6 +352,7 @@ class AttendanceController extends Controller
         if ($request->has('sort_on_hour')) $daily_breakdowns = $this->attendanceSortOnHour($daily_breakdowns, $request->sort_on_hour)->values();
         if ($request->has('sort_on_checkin')) $daily_breakdowns = $this->attendanceSortOnCheckin($daily_breakdowns, $request->sort_on_checkin)->values();
         if ($request->has('sort_on_checkout')) $daily_breakdowns = $this->attendanceSortOnCheckout($daily_breakdowns, $request->sort_on_checkout)->values();
+        if ($request->has('sort_on_overtime')) $daily_breakdowns = $this->attendanceCustomSortOnOvertime($daily_breakdowns, $request->sort_on_overtime)->values();
         if ($request->file == 'excel') {
             return $details_excel->setBreakDownData($daily_breakdowns->toArray())
                 ->setBusinessMember($business_member)
@@ -738,7 +779,7 @@ class AttendanceController extends Controller
 
             $edited_offices = $offices->where('action', ActionType::EDIT);
             $edited_offices->each(function ($edited_office) use ($setting_updater, $business, &$errors) {
-                $setting_updater->setBusinessOfficeId($edited_office->id)->setName($edited_office->name)->setIp($edited_office->ip);
+                $setting_updater->setBusinessOfficeId($edited_office->id)->setName($edited_office->office_name)->setIp($edited_office->ip);
                 if ($setting_updater->hasError()) {
                     array_push($errors, $setting_updater->getErrorMessage());
                     $setting_updater->resetError();
@@ -809,7 +850,7 @@ class AttendanceController extends Controller
         ]);
 
         $start_time = Carbon::parse($request->start_time)->format('H:i') . ':59';
-        $end_time = Carbon::parse($request->end_time)->format('H:i') . ':59';
+        $end_time = Carbon::parse($request->end_time)->format('H:i') . ':00';
 
         $business_member = $request->business_member;
         $office_timing = $updater->setBusiness($request->business)
@@ -859,11 +900,12 @@ class AttendanceController extends Controller
 
     public function createUnpaidLeavePolicy(Request $request, PolicyRuleRequester $requester, PolicyRuleUpdater $updater)
     {
-        $this->validate($request, [
+        $data = [
             'is_enable' => 'required',
-            'rules' => 'required',
             'policy_type' => 'required'
-        ]);
+        ];
+        if ($request->is_enable == 1) $data['rules'] = 'required';
+        $this->validate($request, $data);
         $business = $request->business;
         if (!$business) return api_response($request, null, 403, ['message' => 'You Are not authorized to show this settings']);
         $this->setModifier($request->manager_member);

@@ -61,12 +61,6 @@ class CategoryService
         return $this;
     }
 
-    public function getAllMasterCategories($partner_id)
-    {
-        $url = 'api/v1/partners/'.$partner_id.'/categories';
-        return $this->client->get($url);
-    }
-
     /**
      * @param mixed $subCategories
      */
@@ -74,6 +68,13 @@ class CategoryService
     {
         $this->subCategories = $subCategories;
         return $this;
+    }
+
+
+    public function getAllMasterCategories($partner_id)
+    {
+        $url = 'api/v1/partners/'.$partner_id.'/categories';
+        return $this->client->get($url);
     }
 
     public function makeStoreData()

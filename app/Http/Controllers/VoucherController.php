@@ -4,20 +4,27 @@ use App\Models\Customer;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Models\PosOrderDiscount;
+use App\Models\Tag;
+use App\Models\Taggable;
 use App\Models\Voucher;
+use App\Sheba\PosOrderService\Services\OrderService;
 use App\Repositories\VoucherRepository;
+use App\Sheba\Voucher\VoucherValidate;
 use App\Transformers\CustomSerializer;
 use App\Transformers\VoucherDetailTransformer;
 use App\Transformers\VoucherTransformer;
 use Carbon\Carbon;
 use Exception;
+use App\Http\Requests\VendorVoucherRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\ModificationFields;
+use Sheba\Vendor\Voucher\VendorVoucherDataGenerator;
 use Sheba\Voucher\DTO\Params\CheckParamsForPosOrder;
+use Sheba\Voucher\VoucherDiscount;
 use Sheba\Voucher\VoucherRule;
 use Throwable;
 use Illuminate\Validation\Rule;
@@ -25,6 +32,18 @@ use Illuminate\Validation\Rule;
 class VoucherController extends Controller
 {
     use ModificationFields;
+
+    protected $orderService;
+    /**
+     * @var VoucherValidate
+     */
+    private $voucherValidate;
+
+    public function __construct(OrderService $orderService, VoucherValidate $voucherValidate)
+    {
+        $this->voucherValidate = $voucherValidate;
+        $this->orderService = $orderService;
+    }
 
     /**
      * @param Request $request
@@ -294,29 +313,26 @@ class VoucherController extends Controller
      */
     public function validateVoucher(Request $request)
     {
-        try {
-            $pos_customer = $request->pos_customer ? PosCustomer::find($request->pos_customer) : new PosCustomer();
-            $pos_order_params = (new CheckParamsForPosOrder());
-            $pos_order_params->setOrderAmount($request->amount)->setApplicant($pos_customer)->setPartnerPosService($request->pos_services);
-            $result = voucher($request->code)->checkForPosOrder($pos_order_params)->reveal();
+        $partner = $request->user;
+        $real_pos_customer = PosCustomer::find($request->pos_customer);
+        $pos_customer = $real_pos_customer ? $real_pos_customer : $this->getUser($partner->id, $request->pos_customer);
+        return $this->voucherValidate->setPartner($partner)->setRealPosCustomer($real_pos_customer)->setPosCustomer($pos_customer)->voucherValidate($request);
 
-            if ($result['is_valid']) {
-                $voucher = $result['voucher'];
-                $voucher = [
-                    'amount' => (double)$result['amount'],
-                    'code' => $voucher->code,
-                    'id' => $voucher->id,
-                    'title' => $voucher->title
-                ];
+    }
 
-                return api_response($request, null, 200, ['voucher' => $voucher]);
-            } else {
-                return api_response($request, null, 403, ['message' => 'Invalid Promo']);
-            }
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+    public function getVoucherDetails(Request $request)
+    {
+        $voucher_id = $request->voucher_id;
+        $voucher =  Voucher::findOrFail($voucher_id);
+//        dd($voucher);
+//        app(VoucherDiscount::class)->setVoucher($voucher)->
+//        $voucher_id = $request->voucher_id;
+        return $voucher;
+    }
+
+    public function getUser($partner_id, $user_id)
+    {
+        return $this->orderService->setPartnerId($partner_id)->setUserId($user_id)->getUser();
     }
 
     /**
@@ -383,9 +399,11 @@ class VoucherController extends Controller
         return $total_sale;
     }
 
-    public function voucherAgainstVendor(Request $request, VoucherRepository $voucherRepository)
+    public function voucherAgainstVendor(Request $request, VoucherRepository $voucherRepository, VendorVoucherDataGenerator $voucher_generator)
     {
+        // need to handle this in a Request Class
         if(!isset($request['start_date'])) return api_response($request, null, 403, ['message' => 'Start Date field is required']);
+        if(!isset($request['channel']) || !in_array($request->channel, ['xtra'])  ) return api_response($request, null, 403, ['message' => 'invalid channel']);
         $this->validate($request, [
             'mobile' => 'mobile:bd',
             'amount' => 'required|numeric',
@@ -399,48 +417,7 @@ class VoucherController extends Controller
             'end_date.after_or_equal' => 'The end date should be after start date'
         ]);
 
-        $vendor_contribution_in_percentage = 96;
-
-        $customer = Customer::whereHas('profile', function ($query) use ($request) {
-            return $query->where('mobile', '+88' . $request->mobile);
-        })->first();
-
-
-        $rules = [
-          'mobile'=> '+88' . $request->mobile
-        ];
-
-        $voucher = [
-            'code' => strtoupper(($request->channel ? $request->channel : 'PROMO')
-                .($customer ? explode(' ',trim($customer->getName()))[0] : $request->mobile)
-                .$request->amount.$this->generateRandomString(2)
-            ),
-            'start_date' => Carbon::parse($request->start_date)->format('Y-m-d h:i:s'),
-            'end_date' => Carbon::parse($request->end_date)->format('Y-m-d h:i:s'),
-            'amount' => $request->amount,
-            'is_amount_percentage' => $request->is_percentage,
-            'cap' => $request->cap,
-            'rules' => json_encode($rules),
-            'title' => $request->title ? $request->title : '',
-            'max_order' => 1,
-            'max_customer' => 1,
-            'is_created_by_sheba' => 1,
-            'sheba_contribution' => 100 - $vendor_contribution_in_percentage,
-            'vendor_contribution' => $vendor_contribution_in_percentage,
-        ];
-
-        $voucher = $voucherRepository->create($voucher);
-
+        $voucher = $voucher_generator->setChannel($request->channel)->setData($request)->setRepository($voucherRepository)->generate();
         return api_response($request, null, 200, ['code' => $voucher->code]);
-    }
-
-    private function generateRandomString($length = 10) {
-        $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        $charactersLength = strlen($characters);
-        $randomString = '';
-        for ($i = 0; $i < $length; $i++) {
-            $randomString .= $characters[rand(0, $charactersLength - 1)];
-        }
-        return $randomString;
     }
 }

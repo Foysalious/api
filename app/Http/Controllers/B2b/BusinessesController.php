@@ -12,8 +12,8 @@ use App\Models\Procurement;
 use App\Models\Profile;
 use App\Models\Resource;
 use App\Sheba\BankingInfo\GeneralBanking;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use App\Transformers\Business\VendorDetailsTransformer;
 use App\Transformers\Business\VendorListTransformer;
 use App\Transformers\CustomSerializer;
@@ -52,20 +52,15 @@ class BusinessesController extends Controller
 
     const DIGIGO_PORTAL = 'digigo-portal';
     private $digigo_management_emails = ['one' => 'b2b@sheba.xyz'];
-    private $sms;
-    /**
-     * @var AccountServer
-     */
+    /** @var AccountServer */
     private $accountServer;
 
     /**
      * BusinessesController constructor.
-     * @param Sms $sms
      * @param AccountServer $account_server
      */
-    public function __construct(Sms $sms, AccountServer $account_server)
+    public function __construct(AccountServer $account_server)
     {
-        $this->sms = $sms;
         $this->accountServer = $account_server;
     }
 
@@ -91,14 +86,12 @@ class BusinessesController extends Controller
                 $data = ['business_id' => $business->id, 'mobile' => $mobile];
                 BusinessJoinRequest::create($data);
                 $invited_vendor++;
-                $this->sms
+                $message = "You have been invited to serve corporate client. Just click the link- http://bit.ly/ShebaManagerApp. 
+                    sheba.xyz will help you to grow and manage your business. by $business->name";
+                (new Sms())
                     ->setFeatureType(FeatureType::INVITE_VENDORS)
                     ->setBusinessType(BusinessType::B2B)
-                    ->shoot(
-                    $number,
-                    "You have been invited to serve corporate client. Just click the link- http://bit.ly/ShebaManagerApp. 
-                    sheba.xyz will help you to grow and manage your business. by $business->name"
-                );
+                    ->shoot($number, $message);
             }
         }
 
@@ -118,7 +111,7 @@ class BusinessesController extends Controller
         if (!$resource) return false;
         $partner = $resource->firstPartner();
 
-        return $partner ? $partner : false;
+        return $partner ?: false;
     }
 
     /**

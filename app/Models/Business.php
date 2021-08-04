@@ -45,9 +45,9 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
 
     public function membersWithProfileAndAccessibleBusinessMember()
     {
-        return $this->members()->select('members.id', 'profile_id')->with([
+        return $this->members()->select('members.id', 'profile_id', 'social_links')->with([
             'profile' => function ($q) {
-                $q->select('profiles.id', 'name', 'mobile', 'email', 'pro_pic');
+                $q->select('profiles.id', 'name', 'mobile', 'email','dob', 'blood_group','pro_pic');
             }, 'businessMember' => function ($q) {
                 $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id', 'status')->with([
                     'role' => function ($q) {
@@ -84,6 +84,25 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
                 ]);
             }
         ])->wherePivot('status', '<>', Statuses::INACTIVE);
+    }
+
+    public function getAllBusinessMember()
+    {
+        return BusinessMember::where('business_id', $this->id)->with([
+            'member' => function ($q) {
+                $q->select('members.id', 'profile_id')->with([
+                    'profile' => function ($q) {
+                        $q->select('profiles.id', 'name', 'mobile', 'email', 'pro_pic');
+                    }
+                ]);
+            }, 'role' => function ($q) {
+                $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                    'businessDepartment' => function ($q) {
+                        $q->select('business_departments.id', 'business_id', 'name');
+                    }
+                ]);
+            }
+        ]);
     }
 
     public function getActiveBusinessMember()
@@ -131,6 +150,28 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
                 $q->select('members.id', 'profile_id')->with([
                     'profile' => function ($q) {
                         $q->select('profiles.id', 'name', 'mobile', 'email', 'pro_pic');
+                    }
+                ]);
+            }, 'role' => function ($q) {
+                $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                    'businessDepartment' => function ($q) {
+                        $q->select('business_departments.id', 'business_id', 'name');
+                    }
+                ]);
+            }
+        ]);
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getAllBusinessMemberExceptInvited()
+    {
+        return BusinessMember::where('business_id', $this->id)->where('status', '<>', Statuses::INVITED)->with([
+            'member' => function ($q) {
+                $q->select('members.id', 'profile_id')->with([
+                    'profile' => function ($q) {
+                        $q->select('profiles.id', 'name', 'mobile', 'email', 'pro_pic', 'address');
                     }
                 ]);
             }, 'role' => function ($q) {
@@ -418,19 +459,18 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
 
     public function calculationTodayLastCheckOutTime($which_half_day)
     {
-        $which_half_day = 'first_half';
         if ($which_half_day) {
             if ($which_half_day == HalfDayType::FIRST_HALF) {
                 $checkout_time = $this->halfDayEndTimeUsingWhichHalf(HalfDayType::SECOND_HALF);
                 if ($this->officeHour->is_end_grace_time_enable) {
-                    return Carbon::parse($checkout_time)->subMinutes($this->officeHour->end_grace_time)->format('h:i:s');
+                    return Carbon::parse($checkout_time)->subMinutes($this->officeHour->end_grace_time)->format('H:i:s');
                 }
                 return $checkout_time;
             }
             if ($which_half_day == HalfDayType::SECOND_HALF) {
                 $checkout_time = $this->halfDayEndTimeUsingWhichHalf(HalfDayType::FIRST_HALF);
                 if ($this->officeHour->is_end_grace_time_enable) {
-                    return Carbon::parse($checkout_time)->subMinutes($this->officeHour->end_grace_time)->format('h:i:s');
+                    return Carbon::parse($checkout_time)->subMinutes($this->officeHour->end_grace_time)->format('H:i:s');
                 }
                 return $checkout_time;
             }
