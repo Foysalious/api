@@ -214,7 +214,10 @@ class PayrollComponentSchedulerCalculation
                 }
             }
         }
-        $late_checkin_early_checkout_days = ($is_for_late_checkin && $is_for_early_checkout) ? $total_late_checkin_or_early_checkout : ($is_for_late_checkin && !$is_for_early_checkout) ? $total_late_checkin : (!$is_for_late_checkin && $is_for_early_checkout) ? $total_early_checkout : 0;
+        $late_checkin_early_checkout_days = 0;
+        if ($is_for_late_checkin && $is_for_early_checkout) $late_checkin_early_checkout_days = $total_late_checkin_or_early_checkout;
+        elseif ($is_for_late_checkin && !$is_for_early_checkout) $late_checkin_early_checkout_days = $total_late_checkin;
+        elseif (!$is_for_late_checkin && $is_for_early_checkout) $late_checkin_early_checkout_days = $total_early_checkout;
         $total_absent = ($total_working_days - $total_present);
         $attendance_adjustment = 0;
         $leave_adjustment = 0;
