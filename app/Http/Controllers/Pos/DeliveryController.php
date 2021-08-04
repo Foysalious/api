@@ -232,8 +232,8 @@ class DeliveryController extends Controller
         $this->validate($request, [
             'pos_order_id' => 'required',
         ]);
-        $statusInfo = $delivery_service->setPartner($partner)->setToken($this->bearerToken($request))->setPosOrder($request->pos_order_id)->getDeliveryStatus();
-        return api_response($request, null, 200, ['status' => $statusInfo['data']['status']]);
+        $data = $delivery_service->setPartner($partner)->setToken($this->bearerToken($request))->setPosOrder($request->pos_order_id)->getDeliveryStatus();
+        return api_response($request, null, 200, $data);
     }
 
     /**
