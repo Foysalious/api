@@ -140,4 +140,12 @@ class PartnerSubscription
         return array_merge($data, SubscriptionStatics::getPackageStaticDiscount());
     }
 
+    public function updateRenewSubscription(array $data, Partner $partner)
+    {
+        $partner->auto_billing_activated = isset($data['auto_billing_activated']) ? $data['auto_billing_activated'] : $partner->auto_billing_activated;
+        $partner->subscription_renewal_warning = isset($data['subscription_renewal_warning']) ? $data['subscription_renewal_warning'] :  $partner->subscription_renewal_warning;
+        $partner->renewal_warning_days = isset($data['renewal_warning_days']) ? $data['renewal_warning_days'] :  $partner->renewal_warning_days;
+        return $partner->save();
+    }
+
 }
