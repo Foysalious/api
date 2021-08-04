@@ -15,6 +15,7 @@ class EmployeeRoute
                 $api->get('payslip', 'Employee\PayrollController@downloadPayslip');
                 $api->get('disbursed-month', 'Employee\PayrollController@disbursedMonth');
             });
+            $api->get('manager-list', 'Employee\EmployeeVisitTrackingController@getCoWorkerManagerList');
             //$api->post('password', 'Employee\EmployeeController@updateMyPassword');
             $api->get('dashboard', 'Employee\EmployeeController@getDashboard');
             $api->get('notifications', 'Employee\NotificationController@index');
