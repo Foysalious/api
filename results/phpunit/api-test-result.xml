@@ -1,8 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="Application Test Suite" tests="1" assertions="2" failures="0" errors="0" time="3.465704">
-    <testsuite name="Tests\Feature\TopUp\SbusinessBulkTopupTest" file="/var/www/tests/Feature/TopUp/SbusinessBulkTopupTest.php" tests="1" assertions="2" failures="0" errors="0" time="3.465704">
-      <testcase name="testSuccessfulBulkTopupSheetNameErrorResponse" class="Tests\Feature\TopUp\SbusinessBulkTopupTest" file="/var/www/tests/Feature/TopUp/SbusinessBulkTopupTest.php" line="462" assertions="2" time="3.465704"/>
+  <testsuite name="Application Test Suite" tests="18" assertions="36" failures="0" errors="0" time="89.455108">
+    <testsuite name="Tests\Feature\UserProfileUpdate\UserProfileCreateTest" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileCreateTest.php" tests="18" assertions="36" failures="0" errors="0" time="89.455108">
+      <testcase name="testUserProfileCreateAPIByUpdatingName" class="Tests\Feature\UserProfileUpdate\UserProfileCreateTest" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileCreateTest.php" line="22" assertions="2" time="4.283645"/>
+      <testcase name="testUserProfileCreateAPIByUpdatingEmail" class="Tests\Feature\UserProfileUpdate\UserProfileCreateTest" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileCreateTest.php" line="43" assertions="2" time="4.141104"/>
+      <testcase name="testUserProfileCreateAPIByUpdatingDateOfBirth" class="Tests\Feature\UserProfileUpdate\UserProfileCreateTest" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileCreateTest.php" line="64" assertions="2" time="4.867987"/>
+      <testcase name="testUserProfileCreateAPIByUpdatingGender" class="Tests\Feature\UserProfileUpdate\UserProfileCreateTest" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileCreateTest.php" line="85" assertions="2" time="4.060178"/>
+      <testcase name="testUserProfileCreateAPIByUpdatingAddress" class="Tests\Feature\UserProfileUpdate\UserProfileCreateTest" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileCreateTest.php" line="106" assertions="2" time="5.343767"/>
+      <testcase name="testUserProfileCreateAPIByUpdatingDateOfBirthGender" class="Tests\Feature\UserProfileUpdate\UserProfileCreateTest" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileCreateTest.php" line="127" assertions="2" time="4.743312"/>
+      <testcase name="testUserProfileCreateAPIByUpdatingDateOfBirthName" class="Tests\Feature\UserProfileUpdate\UserProfileCreateTest" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileCreateTest.php" line="149" assertions="2" time="4.973864"/>
+      <testcase name="testUserProfileCreateAPIByUpdatingDateOfBirthGenderName" class="Tests\Feature\UserProfileUpdate\UserProfileCreateTest" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileCreateTest.php" line="171" assertions="2" time="5.240710"/>
+      <testcase name="testUserProfileCreateAPIByUpdatingDateOfBirthEmailGenderName" class="Tests\Feature\UserProfileUpdate\UserProfileCreateTest" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileCreateTest.php" line="194" assertions="2" time="4.580022"/>
+      <testcase name="testUserProfileCreateAPIByUpdatingDateOfBirthEmailGenderNameAddress" class="Tests\Feature\UserProfileUpdate\UserProfileCreateTest" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileCreateTest.php" line="218" assertions="2" time="4.900008"/>
+      <testcase name="testUserProfileCreateAPIByGivingInvalidGender" class="Tests\Feature\UserProfileUpdate\UserProfileCreateTest" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileCreateTest.php" line="243" assertions="2" time="6.248916"/>
+      <testcase name="testUserProfileCreateAPIByGivingInvalidRememberToken" class="Tests\Feature\UserProfileUpdate\UserProfileCreateTest" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileCreateTest.php" line="267" assertions="2" time="4.318738"/>
+      <testcase name="testUserProfileCreateAPIByNotGivingRememberToken" class="Tests\Feature\UserProfileUpdate\UserProfileCreateTest" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileCreateTest.php" line="291" assertions="2" time="3.971951"/>
+      <testcase name="testUserProfileCreateAPIByGivingInvalidCustomerId" class="Tests\Feature\UserProfileUpdate\UserProfileCreateTest" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileCreateTest.php" line="315" assertions="2" time="4.588838"/>
+      <testcase name="testUserProfileCreateAPIByGivingInvalidDateOfBirth" class="Tests\Feature\UserProfileUpdate\UserProfileCreateTest" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileCreateTest.php" line="339" assertions="2" time="4.908900"/>
+      <testcase name="testUserProfileCreateAPIByGivingCharacterInputInDateOfBirth" class="Tests\Feature\UserProfileUpdate\UserProfileCreateTest" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileCreateTest.php" line="365" assertions="2" time="6.327624"/>
+      <testcase name="testUserProfileCreateAPIByGivingInvalidEmail" class="Tests\Feature\UserProfileUpdate\UserProfileCreateTest" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileCreateTest.php" line="391" assertions="2" time="6.488366"/>
+      <testcase name="testUserProfileCreateAPIByGivingInvalidDateOfBirthGenderEmail" class="Tests\Feature\UserProfileUpdate\UserProfileCreateTest" file="/var/www/tests/Feature/UserProfileUpdate/UserProfileCreateTest.php" line="415" assertions="2" time="5.467178"/>
     </testsuite>
   </testsuite>
 </testsuites>
