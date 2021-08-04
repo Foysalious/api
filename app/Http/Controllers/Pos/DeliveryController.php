@@ -256,7 +256,6 @@ class DeliveryController extends Controller
     {
         $data = $delivery_service->getPaperflyDeliveryCharge();
         return api_response($request, null, 200, ['data' => $data]);
-
     }
 
     private function bearerToken($request)
