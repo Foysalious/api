@@ -474,7 +474,10 @@ class DashboardController extends Controller
                     'remaining_day' => $partner->last_billed_date ? $partner->periodicBillingHandler()->remainingDay() : 0,
                     'billing_type'  => $partner->billing_type,
                     'rules'         => $partner->subscription->getAccessRules(),
-                    'is_light'      => $partner->subscription->id == (int)config('sheba.partner_lite_packages_id')
+                    'is_light'      => $partner->subscription->id == (int)config('sheba.partner_lite_packages_id'),
+                    'auto_billing_activated' => (bool)$partner->auto_billing_activated,
+                    'subscription_renewal_warning' => (bool)$partner->subscription_renewal_warning,
+                    'renewal_warning_days' => $partner->renewal_warning_days,
                 ],
                 "status" => $partner->getStatusToCalculateAccess()
             ];

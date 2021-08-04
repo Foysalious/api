@@ -339,4 +339,10 @@ class ProductService
     {
         return $this->client->delete('api/v1/partners/'.$this->partnerId.'/products/'.$this->productId);
     }
+
+    public function getLogs()
+    {
+        return $this->client->get('api/v1/partners/'. $this->partnerId . '/products/' .  $this->productId . '/logs');
+    }
+
 }
