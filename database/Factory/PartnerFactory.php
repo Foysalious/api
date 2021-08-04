@@ -15,7 +15,7 @@ class PartnerFactory extends Factory
     {
         return array_merge($this->commonSeeds, [
             'name'=> $this->faker->name,
-            'sub_domain'=>"test-sp",
+          //  'sub_domain'=>"test-sp", // don't comment out this section. it create duplicate sql error.
             'package_id'=>2,
             'mobile' => '+8801678242967',
             'password' => bcrypt(14725),

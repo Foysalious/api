@@ -11,6 +11,7 @@ $helper_files = [
     "app/Sheba/Helpers/Model/functions.php",
     "app/Sheba/Helpers/Http/functions.php",
     "app/Sheba/Helpers/Miscellaneous/functions.php",
+    "app/Sheba/Helpers/BearerToken/token_helper_functions.php"
 ];
 
 foreach ($helper_files as $file) {

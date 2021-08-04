@@ -26,7 +26,7 @@ class WebstorePublishCheck
         /** @var PartnerPosService $partner_pos_service */
         $partner_pos_service = $event->model;
         if (!$partner_pos_service->isWebstorePublished()) return;
-        if (PartnerPosService::webstorePublishedServiceByPartner($partner_pos_service->partner_id)->count() < config('pos.maximum_publishable_product_in_webstore_for_free_packages')) return;
+        if (PartnerPosService::webstorePublishedServiceByPartner($partner_pos_service->partner_id)->count() < $partner_pos_service->partner->subscription->getAccessRules()['pos']['ecom']['product_publish_limit']) return;
         try {
             AccessManager::checkAccess(AccessManager::Rules()->POS->ECOM->PRODUCT_PUBLISH, $partner_pos_service->partner->subscription->getAccessRules());
         } catch (AccessRestrictedExceptionForPackage $e) {

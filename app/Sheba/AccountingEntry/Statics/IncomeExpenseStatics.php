@@ -26,7 +26,7 @@ class IncomeExpenseStatics
             'from_account_key' => 'required',
             'to_account_key' => 'required',
             'date' => 'required|date_format:Y-m-d H:i:s',
-            'amount_cleared' => 'sometimes|required|numeric'
+            'amount_cleared' => 'required|numeric'
         ];
     }
 
@@ -40,6 +40,16 @@ class IncomeExpenseStatics
         return [
             $start_date." 00:00:00",
             $end_date." 23:59:59"
+        ];
+    }
+
+    public static function transferEntryValidation(): array
+    {
+        return [
+            'amount' => 'required|numeric',
+            'from_account_key' => 'required',
+            'to_account_key' => 'required',
+            'date' => 'required|date_format:Y-m-d H:i:s'
         ];
     }
 }

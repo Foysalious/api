@@ -15,3 +15,5 @@ composer-auth.json
 results/phpunit/
 .env.testing
 .DS_Store
+resources/assets/ebl/*
+resources/assets/ebl/*

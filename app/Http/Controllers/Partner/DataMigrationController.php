@@ -1,6 +1,6 @@
 <?php namespace App\Http\Controllers\Partner;
 
-use App\Exceptions\Pos\DataAlreadyMigratedException;
+use App\Exceptions\Pos\DataMigrationException;
 use App\Models\Partner;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,7 +14,7 @@ class DataMigrationController extends Controller
      * @param Request $request
      * @param DataMigration $dataMigration
      * @return JsonResponse
-     * @throws DataAlreadyMigratedException
+     * @throws DataMigrationException
      */
     public function migrate(Request $request, DataMigration $dataMigration)
     {

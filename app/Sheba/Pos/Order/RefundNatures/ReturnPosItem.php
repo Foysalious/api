@@ -1,7 +1,7 @@
 <?php
+
 namespace Sheba\Pos\Order\RefundNatures;
 
-use Exception;
 use App\Models\PosOrder;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\AccountingRepository;
@@ -29,8 +29,7 @@ abstract class ReturnPosItem extends RefundNature
     protected $refundAmount = 0;
     protected $request;
 
-    public function __construct(LogCreator $log_creator, Updater $updater, PaymentCreator $payment_creator, Request $request)
-    {
+    public function __construct(LogCreator $log_creator, Updater $updater, PaymentCreator $payment_creator, Request $request) {
         parent::__construct($log_creator, $updater);
         $this->paymentCreator = $payment_creator;
         $this->request = $request;
@@ -42,24 +41,21 @@ abstract class ReturnPosItem extends RefundNature
             $this->oldOrder = clone $this->order;
             $this->old_services = $this->new ? $this->order->items->pluckMultiple(['quantity', 'unit_price'], 'id', true)->toArray()
                 : $this->old_services = $this->order->items->pluckMultiple(['quantity', 'unit_price'], 'service_id', true)->toArray();
+            $this->makeInventoryProduct($this->order->items, $this->data['services']);
             $this->updater->setOrder($this->order)->setData($this->data)->setNew($this->new)->update();
             if ($this->order->calculate()->getPaid()) {
                 $this->refundPayment();
             }
             $this->generateDetails();
             $this->saveLog();
-
             if ($this->order) {
                 $this->returnItem($this->order);
-//                $this->updateEntry($this->order, 'refund');
+                $this->updateEntry($this->order, 'refund');
             }
             $this->updateIncome($this->order);
         } catch (ExpenseTrackingServerError $e) {
             app('sentry')->captureException($e);
-        } catch (Exception $e) {
-            Throw new Exception($e->getMessage(), $e->getCode());
         }
-
     }
 
     private function refundPayment()
@@ -80,7 +76,7 @@ abstract class ReturnPosItem extends RefundNature
 
     private function returnItem(PosOrder $order)
     {
-        $amount = (double)$order->calculate()->getNetBill();
+        $amount = isset($this->data['is_refunded']) && $this->data['is_refunded'] ? (double)$this->data['paid_amount'] : 0;
         (new JournalCreateRepository())
             ->setTypeId($order->partner->id)
             ->setSource($order)
@@ -146,26 +142,84 @@ abstract class ReturnPosItem extends RefundNature
         $this->additionalAccountingData($order, $refundType);
         /** @var AccountingRepository $accounting_repo */
         $accounting_repo = app()->make(AccountingRepository::class);
-        if (empty($this->request->inventory_products)) {
-            $this->request->merge([
-                "inventory_products" => $accounting_repo->getInventoryProducts($order->items, $this->data['services']),
-            ]);
-        }
-        $accounting_repo->updateEntryBySource($this->request, $order->id,EntryTypes::POS);
+        $accounting_repo->updateEntryBySource($this->request, $order->id, EntryTypes::POS);
     }
 
     private function additionalAccountingData(PosOrder $order, $refundType)
     {
         $this->request->merge(
             [
-                "from_account_key" => (new Accounts())->income->sales::SALES_FROM_POS,
-                "to_account_key" => (new Accounts())->income->sales::SALES_FROM_POS, // To account is not a default account for refund
-                "amount" => (double)$this->refundAmount,
+                "from_account_key" => (new Accounts())->asset->cash::CASH,
+                "to_account_key" => (new Accounts())->income->sales::SALES_FROM_POS,
+                "amount" => isset($this->data['is_refunded']) && $this->data['is_refunded'] ? (double)$this->data['paid_amount'] : 0,
+                // might have negative value
                 "note" => $refundType,
                 "source_id" => $order->id,
-                "customer_id" => $order->customer->id,
-                "customer_name" => $order->customer->name
+                "customer_id" => isset($order->customer) ? $order->customer->id : null,
+                "customer_name" => isset($order->customer) ? $order->customer->name: null
             ]
         );
+    }
+
+    protected function makeInventoryProduct($services, $requestedServices)
+    {
+        $requested_service = json_decode($requestedServices, true);
+        $inventory_products = [];
+        foreach ($requested_service as $key => $value) {
+            if ($services->contains($value['id'])) {
+                $product = $services->find($value['id']);
+                $originalSvc = $services->find($value['id'])->service;
+                if ($originalSvc) {
+                    $sellingPrice = isset($value['updated_price']) && $value['updated_price'] ? $value['updated_price'] : $originalSvc->price;
+                    $unitPrice = $original_service->cost ?? $sellingPrice;
+                    // Full return
+                    if ($value['quantity'] == 0 && $product->quantity != 0) {
+                        $inventory_products[] = $this->makeInventoryData(
+                            $originalSvc,
+                            $unitPrice,
+                            $sellingPrice,
+                            $product->quantity
+                        );
+                    }
+                    // Quantity Increase
+                    if ($value['quantity'] > $product->quantity) {
+                        $qty = $value['quantity'] - $product->quantity;
+                        $type = 'quantity_increase';
+                        $inventory_products[] = $this->makeInventoryData($originalSvc, $unitPrice, $sellingPrice, $qty, $type);
+                    }
+                    // Partial Return
+                    if ($value['quantity'] != 0 && $value['quantity'] < $product->quantity) {
+                        $inventory_products[] = $this->makeInventoryData(
+                            $originalSvc,
+                            $unitPrice,
+                            $sellingPrice,
+                            $value['quantity']
+                        );
+                    }
+                } else {
+                    $sellingPrice = $product->unit_price;
+                    $unitPrice = $product->unit_price;
+                    $qty = isset($requested_service[$key]['quantity']) && $requested_service[$key]['quantity'] > 0 ? $requested_service[$key]['quantity'] - $product->quantity : $product->quantity;
+                    $inventory_products[] = $this->makeInventoryData($originalSvc, $unitPrice, $sellingPrice, $qty);
+                }
+            }
+        }
+        $this->request->merge(
+            [
+                'inventory_products' => json_encode($inventory_products)
+            ]
+        );
+    }
+
+    private function makeInventoryData($originalSvc, $unitPrice, $sellingPrice, $quantity, $type = 'refund')
+    {
+        return [
+            "id" => $originalSvc ? $originalSvc->id : 0,
+            "name" => $originalSvc ? $originalSvc->name : 'Custom Amount',
+            "unit_price" => (double)$unitPrice,
+            "selling_price" => (double)$sellingPrice,
+            "quantity" => $quantity,
+            "type" => $type
+        ];
     }
 }

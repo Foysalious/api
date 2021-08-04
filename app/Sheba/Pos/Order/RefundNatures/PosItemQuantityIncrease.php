@@ -2,6 +2,7 @@
 
 use App\Models\PosOrder;
 use Exception;
+use Illuminate\Support\Facades\Log;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
@@ -21,47 +22,21 @@ class PosItemQuantityIncrease extends ReturnPosItem
                 'quantity',
                 'unit_price'
             ], 'service_id')->toArray();
-
-//            $this->inventoryUpdate($this->order->items, $this->data['services']);
+            Log::info(['checking update data', $this->data['services'], $this->request->paid_amount, $this->request->payment_method, $this->request->refund_nature, $this->request->return_nature]);
+            $this->makeInventoryProduct($this->order->items, $this->data['services']);
             $this->updater->setOrder($this->order)->setData($this->data)->setNew($this->new)->update();
             $this->refundPayment();
             $this->generateDetails($this->order);
             $this->saveLog();
             if ($this->order) {
-//                $this->updateEntry($this->order, 'quantity_increase');
+                Log::info("checking refund 3");
+                $this->updateEntry($this->order, 'quantity_increase');
                 $this->updateIncome($this->order);
             }
         } catch (ExpenseTrackingServerError $e) {
             app('sentry')->captureException($e);
         }
     }
-
-    private function inventoryUpdate($services, $requestedServices)
-    {
-        $requested_service = json_decode($requestedServices, true);
-        $inventory_products = [];
-        foreach ($requested_service as $key => $value) {
-            if ($services->contains($value['id'])) {
-                $product = $services->find($value['id']);
-                $originalSvc = $services->find($value['id'])->service;
-                if ($value['quantity'] > $product->quantity) {
-                    $sellingPrice = isset($value['updated_price']) && $value['updated_price'] ? $value['updated_price'] : $originalSvc->price;
-                    $unitPrice = $original_service->cost ?? $sellingPrice;
-                    $inventory_products[] = [
-                        "id"           => $originalSvc ? $originalSvc->id : 0,
-                        "name"         => $originalSvc ? $originalSvc->name : 'Custom Amount',
-                        "unit_price"   => (double)$unitPrice,
-                        "selling_price" => (double)$sellingPrice,
-                        "quantity"     => $value['quantity'] - $product->quantity
-                    ];
-                }
-            }
-        }
-        $this->request->merge([
-            'inventory_products' => json_encode($inventory_products)
-        ]);
-    }
-
     private function refundPayment()
     {
         $payment_data['pos_order_id'] = $this->order->id;

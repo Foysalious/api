@@ -149,7 +149,7 @@ class PartnerController extends Controller
 
         $services = $partner->services()->select($this->getSelectColumnsOfService())->where('category_id', $request->category)->where(function ($q) {
             $q->where('publication_status', 1);
-            $q->where('is_published_for_backend', 1);
+            $q->orWhere('is_published_for_backend', 1);
         })->get();
         if (count($services) == 0) return api_response($request, null, 404);
 

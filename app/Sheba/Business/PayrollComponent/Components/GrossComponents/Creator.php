@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\DB;
 use Sheba\Business\PayrollComponent\Requester as PayrollComponentRequester;
 use Sheba\Dal\PayrollComponent\PayrollComponentRepository;
+use Sheba\Dal\PayrollComponent\TargetType;
 use Sheba\ModificationFields;
 
 class Creator
@@ -45,6 +46,7 @@ class Creator
                     'name' => $component['key'],
                     'value' => $component['title'],
                     'type' => 'gross',
+                    'target_type' => TargetType::GENERAL,
                     'is_default' => 0,
                     'is_active' => $component['is_active'],
                     'is_taxable' => $component['taxable'],

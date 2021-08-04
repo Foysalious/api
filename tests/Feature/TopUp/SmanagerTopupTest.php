@@ -11,6 +11,7 @@ use App\Models\Resource;
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
+use Sheba\Dal\SubscriptionWisePaymentGateway\Model;
 use Sheba\Dal\TopUpBlacklistNumber\TopUpBlacklistNumber;
 use Sheba\Dal\TopUpOTFSettings\Model as TopUpOTFSettings;
 use Sheba\Dal\TopUpVendorOTF\Model as TopUpVendorOTF;
@@ -18,6 +19,7 @@ use Sheba\Dal\TopUpVendorOTFChangeLog\Model as TopUpVendorOTFChangeLog;
 use Sheba\ExpenseTracker\Repository\ExpenseTrackerClient;
 use Sheba\OAuth2\AccountServer;
 use Sheba\OAuth2\VerifyPin;
+use Sheba\Subscription\Partner\PartnerPackage;
 use Tests\Feature\FeatureTestCase;
 use Tests\Mocks\MockExpenseClient;
 
@@ -34,8 +36,6 @@ class SmanagerTopupTest extends FeatureTestCase
     {
         parent::setUp();
         $this->truncateTables([
-            TopUpVendor::class,
-            TopUpVendorCommission::class,
             TopUpOTFSettings::class,
             TopUpOrder::class,
             TopUpBlacklistNumber::class,
@@ -43,26 +43,27 @@ class SmanagerTopupTest extends FeatureTestCase
             Partner::class,
             Resource::class,
             PartnerTransaction::class,
+            Model::class,
+            TopUpVendor::class,
+            TopUpVendorCommission::class
         ]);
         $this->logIn();
-
-
         $this->topUpVendor = factory(TopUpVendor::class)->create();
+
         $this->topUpVendorCommission = factory(TopUpVendorCommission::class)->create([
             'topup_vendor_id' => $this->topUpVendor->id,
             'agent_commission' => '1.00',
-            'type'=> "App\Models\Partner"
+            'type' => "App\Models\Partner"
         ]);
-      //  dd($this->topUpVendorCommission);
 
+        $this->SubscriptionWisePaymentGateways = factory(Model::class)->create();
 
         $this->topUpOtfSettings = factory(TopUpOTFSettings::class)->create([
             'topup_vendor_id' => $this->topUpVendor->id,
-            'applicable_gateways'=> '["ssl","airtel"]',
-            'type'=> 'App\Models\Partner',
-             'agent_commission'=> '5.03',
+            'applicable_gateways' => '["ssl","airtel"]',
+            'type' => 'App\Models\Partner',
+            'agent_commission' => '5.03',
         ]);
-     //   dd($this->topUpOtfSettings);
 
         $this->topUpVendorOtf = factory(TopUpVendorOTF::class)->create([
             'topup_vendor_id' => $this->topUpVendor->id
@@ -78,7 +79,6 @@ class SmanagerTopupTest extends FeatureTestCase
          */
 
         $this->topBlocklistNumbers = factory(TopUpBlacklistNumber::class)->create();
-         //dd($this->topBlocklistNumbers);
 
         $verify_pin_mock = $this->getMockBuilder(VerifyPin::class)
             ->setConstructorArgs([$this->app->make(AccountServer::class)])
@@ -98,11 +98,11 @@ class SmanagerTopupTest extends FeatureTestCase
         $resourceNIDStatus = Profile::find(1);;
         $resourceNIDStatus->update(["nid_verified" => 1]);
         $response = $this->post('/v2/top-up/partner', [
-            'mobile' => '01620011019',
+            'mobile' => '+8801620011019',
             'vendor_id' => $this->topUpVendor->id,
             'connection_type' => 'prepaid',
             'amount' => 10,
-            'password' => 12345,
+            'password' => '12345',
         ], [
             'Authorization' => "Bearer $this->token"
         ]);
@@ -110,6 +110,87 @@ class SmanagerTopupTest extends FeatureTestCase
         //dd($data);
         $this->assertEquals(200, $data['code']);
         $this->assertEquals("Recharge Request Successful", $data['message']);
+    }
+
+    public function testsManagerConsecutiveTopupNumber()
+    {
+        $top_up_vendor = TopUpVendor::find(1);
+        $top_up_vendor->update(["waiting_time" => 3]);
+        $resourceNIDStatus = Profile::find(1);;
+        $resourceNIDStatus->update(["nid_verified" => 1]);
+        $response = $this->post('/v2/top-up/partner', [
+            'mobile' => '+8801620011019',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 10,
+            'password' => '12345',
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+
+        $response = $this->post('/v2/top-up/partner', [
+            'mobile' => '+8801620011019',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 10,
+            'password' => '12345',
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(400, $data['code']);
+        $this->assertEquals("এই নাম্বারে কিছুক্ষন আগে টপ-আপ করা হয়েছে । পুনরায় এই নাম্বারে টপ-আপ করার জন্য অনুগ্রহপূর্বক 3 মিনিট অপেক্ষা করুন ।", $data['message']);
+
+        sleep(60);
+        $response = $this->post('/v2/top-up/partner', [
+            'mobile' => '+8801620011019',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 10,
+            'password' => '12345',
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+
+        $response = $this->post('/v2/top-up/partner', [
+            'mobile' => '+8801620011019',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 10,
+            'password' => '12345',
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(400, $data['code']);
+        $this->assertEquals("এই নাম্বারে কিছুক্ষন আগে টপ-আপ করা হয়েছে । পুনরায় এই নাম্বারে টপ-আপ করার জন্য অনুগ্রহপূর্বক 2 মিনিট অপেক্ষা করুন ।", $data['message']);
+
+        sleep(60);
+        $response = $this->post('/v2/top-up/partner', [
+            'mobile' => '+8801620011019',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 10,
+            'password' => '12345',
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $response = $this->post('/v2/top-up/partner', [
+            'mobile' => '+8801620011019',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 10,
+            'password' => '12345',
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(400, $data['code']);
+        $this->assertEquals("এই নাম্বারে কিছুক্ষন আগে টপ-আপ করা হয়েছে । পুনরায় এই নাম্বারে টপ-আপ করার জন্য অনুগ্রহপূর্বক 1 মিনিট অপেক্ষা করুন ।", $data['message']);
+
     }
 
     public function testTopupResponseForInvalidMobileNumber()
@@ -130,6 +211,7 @@ class SmanagerTopupTest extends FeatureTestCase
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The mobile is an invalid bangladeshi number .", $data['message']);
     }
+
     public function testTopupResponseForForeignMobileNumber()
     {
         $resourceNIDStatus = Profile::find(1);;
@@ -144,7 +226,6 @@ class SmanagerTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-        //dd($data);
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The mobile is an invalid bangladeshi number .", $data['message']);
     }
@@ -163,7 +244,6 @@ class SmanagerTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-        //dd($data);
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The mobile field is required.", $data['message']);
     }
@@ -181,7 +261,6 @@ class SmanagerTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-        //dd($data);
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The mobile field is required.", $data['message']);
     }
@@ -200,7 +279,6 @@ class SmanagerTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-        //dd($data);
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The selected vendor id is invalid.", $data['message']);
     }
@@ -219,7 +297,6 @@ class SmanagerTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-        //dd($data);
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The vendor id field is required.", $data['message']);
     }
@@ -237,7 +314,6 @@ class SmanagerTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-        //dd($data);
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The vendor id field is required.", $data['message']);
     }
@@ -256,10 +332,10 @@ class SmanagerTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-        //dd($data);
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The connection type field is required.", $data['message']);
     }
+
     public function testTopupResponseWithoutConnectionType()
     {
         $resourceNIDStatus = Profile::find(1);;
@@ -273,7 +349,6 @@ class SmanagerTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-        //dd($data);
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The connection type field is required.", $data['message']);
     }
@@ -292,10 +367,10 @@ class SmanagerTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-        //dd($data);
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The amount field is required.", $data['message']);
     }
+
     public function testTopupResponseWithoutAmount()
     {
         $resourceNIDStatus = Profile::find(1);
@@ -309,7 +384,6 @@ class SmanagerTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-        //dd($data);
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The amount field is required.", $data['message']);
     }
@@ -328,7 +402,6 @@ class SmanagerTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-        //dd($data);
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The password field is required.", $data['message']);
     }
@@ -346,7 +419,6 @@ class SmanagerTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-        //dd($data);
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The password field is required.", $data['message']);
     }
@@ -364,7 +436,6 @@ class SmanagerTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-        //dd($data);
         $this->assertEquals(403, $data['code']);
         $this->assertEquals("You are not verified to do this operation.", $data['message']);
     }
@@ -383,7 +454,6 @@ class SmanagerTopupTest extends FeatureTestCase
             'Authorization' => "gfjhvjhvtydhjk nmvtyvhj"
         ]);
         $data = $response->decodeResponseJson();
-        //dd($data);
         $this->assertEquals(401, $data['code']);
         $this->assertEquals("Your session has expired. Try Login", $data['message']);
     }
@@ -402,7 +472,6 @@ class SmanagerTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-        //dd($data);
         $this->assertEquals(403, $data['code']);
         $this->assertEquals("You can't recharge to a blocked number.", $data['message']);
     }
@@ -421,7 +490,6 @@ class SmanagerTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-        //dd($data);
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The amount must be at least 10.", $data['message']);
     }
@@ -440,12 +508,12 @@ class SmanagerTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-        //dd($data);
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The amount may not be greater than 1000.", $data['message']);
     }
 
-    public function testTopupResponseInsufficientBalance() {
+    public function testTopupResponseInsufficientBalance()
+    {
 
 
         $walletBalanceUpdate = Partner::find(1);;
@@ -467,7 +535,8 @@ class SmanagerTopupTest extends FeatureTestCase
         $this->assertEquals("You don't have sufficient balance to recharge.", $data['message']);
     }
 
-    public function testTopupResponseWithRejectedUser() {
+    public function testTopupResponseWithRejectedUser()
+    {
 
         $verificationStatus = Resource::find(1);;
         $verificationStatus->update(["status" => 'rejected']);
@@ -487,7 +556,8 @@ class SmanagerTopupTest extends FeatureTestCase
         $this->assertEquals("You are not verified to do this operation.", $data['message']);
     }
 
-    public function testTopupResponseWithPendingUser() {
+    public function testTopupResponseWithPendingUser()
+    {
 
         $verificationStatus = Resource::find(1);;
         $verificationStatus->update(["status" => 'Pending']);
@@ -522,43 +592,54 @@ class SmanagerTopupTest extends FeatureTestCase
         ]);
         $this->assertEquals(1, TopUpOrder::count());
     }
+
     public function testTopUpOrderDataMatchesOnTopUpOrderTable()
     {
-        $resourceNIDStatus = Profile::find(1);;
+        $resourceNIDStatus = Profile::find(1);
         $resourceNIDStatus->update(["nid_verified" => 1]);
+        $partnerWallet = Partner::find(1);
+        $partnerWallet->update(["wallet" => 1000]);
+        $partnerPackage = Partner::find(1);
+        $partnerPackage->update(['package_id' => 1]);
+        $resourceNIDStatus = Profile::find(1);
+
         $response = $this->post('/v2/top-up/partner', [
-            'mobile' => '01620011019',
+            'mobile' => '+8801620011019',
             'vendor_id' => $this->topUpVendor->id,
             'connection_type' => 'prepaid',
             'amount' => 10,
-            'password' => 12345,
+            'password' => '12345',
         ], [
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-        $top_up_order=TopUpOrder::first();
-        $this->assertEquals(1,$top_up_order->id);
-        $this->assertEquals('Successful',$top_up_order->status);
-        $this->assertEquals('+8801620011019',$top_up_order->payee_mobile);
-        $this->assertEquals('prepaid',$top_up_order->payee_mobile_type);
-        $this->assertEquals('10',$top_up_order->amount);
-        $this->assertEquals('1',$top_up_order->vendor_id);
-        $this->assertEquals('App\Models\Partner',$top_up_order->agent_type);
-        $this->assertEquals($this->partner->id,$top_up_order->agent_id);
-        $this->assertEquals('0.10',$top_up_order->agent_commission);
+        $this->partner->reload();
+        $top_up_order = TopUpOrder::first();
+        $this->assertEquals(1, $top_up_order->id);
+        $this->assertEquals("Successful", $top_up_order->status);
+        $this->assertEquals('+8801620011019', $top_up_order->payee_mobile);
+        $this->assertEquals('prepaid', $top_up_order->payee_mobile_type);
+        $this->assertEquals('10', $top_up_order->amount);
+        $this->assertEquals('1', $top_up_order->vendor_id);
+        $this->assertEquals('App\Models\Partner', $top_up_order->agent_type);
+        $this->assertEquals($this->partner->id, $top_up_order->agent_id);
+        $this->assertEquals('0.10', $top_up_order->agent_commission);
     }
 
     public function testSuccessfulTopupDeductAmountFromPartnerWallet()
     {
-
+        $partnerWallet = Partner::find(1);
+        $partnerWallet->update(["wallet" => 1000]);
+        $partnerPackage = Partner::find(1);
+        $partnerPackage->update(['package_id' => 1]);
         $resourceNIDStatus = Profile::find(1);
         $resourceNIDStatus->update(["nid_verified" => 1]);
         $response = $this->post('/v2/top-up/partner', [
-            'mobile' => '01620011019',
+            'mobile' => '+8801620011019',
             'vendor_id' => $this->topUpVendor->id,
             'connection_type' => 'prepaid',
-            'amount' => 800,
-            'password' => '12349'
+            'amount' => 100,
+            'password' => '12345'
 
         ], [
             'Authorization' => "Bearer $this->token"
@@ -566,16 +647,24 @@ class SmanagerTopupTest extends FeatureTestCase
         $data = $response->decodeResponseJson();
         $this->partner->reload();
         /*
-         * Initial wallet balance = 10000 -> PartnerFactory
-         * Vendor Commission = 1% -> TopupVendorCommissionFactory
-         * Wallet balance should be = 10000 - 800 + (800 % 1) = 9208
+         * Initial wallet balance = 1000
+         * Partner Subscription Package ID = 1
+         * Subscriptionwise Partner Vendor Commission = 1% -> SubscriptionWisePaymentGatewaysFactory
+         * Wallet balance should be = 1000 - 100 + (100 % 1) = 901
          */
-        $this->assertEquals(9208, $this->partner->wallet);
+        $this->assertEquals(901, $this->partner->wallet);
     }
+
     public function testSuccessfulTopupOtfShebaOtfCommissionCheck()
     {
-        $resourceNIDStatus = Profile::find(1);;
+        $resourceNIDStatus = Profile::find(1);
         $resourceNIDStatus->update(["nid_verified" => 1]);
+        $partnerWallet = Partner::find(1);
+        $partnerWallet->update(["wallet" => 1000]);
+        $partnerPackage = Partner::find(1);
+        $partnerPackage->update(['package_id' => 1]);
+        $resourceNIDStatus = Profile::find(1);
+
         $response = $this->post('/v2/top-up/partner', [
             'mobile' => '01620011019',
             'vendor_id' => $this->topUpVendor->id,
@@ -587,20 +676,23 @@ class SmanagerTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-       // dd($data);
-         $this->partner->reload();
+        $this->partner->reload();
 
-        $top_up_order=TopUpOrder::first();
-        //dd($top_up_order);
-        $this->assertEquals($this->partner->id,$top_up_order->agent_id);
-        $this->assertEquals(11.4,$top_up_order->otf_sheba_commission);
+        $top_up_order = TopUpOrder::first();
+        $this->assertEquals($this->partner->id, $top_up_order->agent_id);
+        $this->assertEquals(11.88, $top_up_order->otf_sheba_commission);
 
     }
 
     public function testSuccessfulTopupOtfAgentOtfCommissionCheck()
     {
-        $resourceNIDStatus = Profile::find(1);;
+        $resourceNIDStatus = Profile::find(1);
         $resourceNIDStatus->update(["nid_verified" => 1]);
+        $partnerWallet = Partner::find(1);
+        $partnerWallet->update(["wallet" => 1000]);
+        $partnerPackage = Partner::find(1);
+        $partnerPackage->update(['package_id' => 1]);
+        $resourceNIDStatus = Profile::find(1);
         $response = $this->post('/v2/top-up/partner', [
             'mobile' => '01620011019',
             'vendor_id' => $this->topUpVendor->id,
@@ -612,13 +704,11 @@ class SmanagerTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-       // dd($data);
         $this->partner->reload();
 
-        $top_up_order=TopUpOrder::first();
-        //dd($top_up_order);
-        $this->assertEquals($this->partner->id,$top_up_order->agent_id);
-        $this->assertEquals(11.4,$top_up_order->otf_agent_commission);
+        $top_up_order = TopUpOrder::first();
+        $this->assertEquals($this->partner->id, $top_up_order->agent_id);
+        $this->assertEquals(0.12, $top_up_order->otf_agent_commission);
 
     }
 
@@ -640,9 +730,9 @@ class SmanagerTopupTest extends FeatureTestCase
         // dd($data);
         $this->partner->reload();
 
-        $top_up_order=TopUpOrder::first();
-        $this->assertEquals($this->partner->id,$top_up_order->agent_id);
-        $this->assertEquals(1,$top_up_order->vendor_id);
+        $top_up_order = TopUpOrder::first();
+        $this->assertEquals($this->partner->id, $top_up_order->agent_id);
+        $this->assertEquals(1, $top_up_order->vendor_id);
 
     }
 
@@ -663,13 +753,12 @@ class SmanagerTopupTest extends FeatureTestCase
         ]);
         $data = $response->decodeResponseJson();
 
-        $Top_up_orders=TopUpOrder::first();
+        $Top_up_orders = TopUpOrder::first();
 
 
-        $this->assertEquals($this->partner->id,$Top_up_orders->agent_id);
-        $this->assertEquals(null ,$Top_up_orders->lat);
-        $this->assertEquals(null ,$Top_up_orders->lng);
-
+        $this->assertEquals($this->partner->id, $Top_up_orders->agent_id);
+        $this->assertEquals(null, $Top_up_orders->lat);
+        $this->assertEquals(null, $Top_up_orders->lng);
 
 
     }
@@ -691,11 +780,11 @@ class SmanagerTopupTest extends FeatureTestCase
         ]);
         $data = $response->decodeResponseJson();
 
-        $Top_up_orders=TopUpOrder::first();
+        $Top_up_orders = TopUpOrder::first();
 
 
-        $this->assertEquals($this->partner->id,$Top_up_orders->agent_id);
-        $this->assertEquals("127.0.0.1" ,$Top_up_orders->ip);
+        $this->assertEquals($this->partner->id, $Top_up_orders->agent_id);
+        $this->assertEquals("127.0.0.1", $Top_up_orders->ip);
 
     }
 
@@ -717,39 +806,14 @@ class SmanagerTopupTest extends FeatureTestCase
         ]);
         $data = $response->decodeResponseJson();
 
-        $Top_up_orders=TopUpOrder::first();
+        $Top_up_orders = TopUpOrder::first();
 
 
-        $this->assertEquals($this->partner->id,$Top_up_orders->agent_id);
-        $this->assertEquals("App\Models\Partner" ,$Top_up_orders->agent_type);
+        $this->assertEquals($this->partner->id, $Top_up_orders->agent_id);
+        $this->assertEquals("App\Models\Partner", $Top_up_orders->agent_type);
     }
 
     public function testSuccessfulTopupTransactionStoreUserAgentDeviceInformation()
-    {$resourceNIDStatus = Profile::find(1);;
-        $resourceNIDStatus->update(["nid_verified" => 1]);
-        $response = $this->post('/v2/top-up/partner', [
-            'mobile' => '01620011019',
-            'vendor_id' => $this->topUpVendor->id,
-            'connection_type' => 'prepaid',
-            'amount' => 104,
-            'password' => '12349',
-
-
-        ], [
-            'Authorization' => "Bearer $this->token"
-        ]);
-        $data = $response->decodeResponseJson();
-
-        $Top_up_orders=TopUpOrder::first();
-
-
-        $this->assertEquals($this->partner->id,$Top_up_orders->agent_id);
-        $this->assertEquals("Symfony/3.X" ,$Top_up_orders->user_agent);
-    }
-
-
-
-    public function testSuccessfulTopupTransactionStoreTopupTransactionID()
     {
         $resourceNIDStatus = Profile::find(1);;
         $resourceNIDStatus->update(["nid_verified" => 1]);
@@ -766,18 +830,54 @@ class SmanagerTopupTest extends FeatureTestCase
         ]);
         $data = $response->decodeResponseJson();
 
-        $Top_up_orders=TopUpOrder::first();
+        $Top_up_orders = TopUpOrder::first();
 
 
-        $this->assertEquals($this->partner->id,$Top_up_orders->agent_id);
-        $this->assertEquals("123456" ,$Top_up_orders->transaction_id);
+        $this->assertEquals($this->partner->id, $Top_up_orders->agent_id);
+        $this->assertEquals("Symfony/3.X", $Top_up_orders->user_agent);
+    }
+
+
+    public function testSuccessfulTopupTransactionStoreTopupTransactionID()
+    {
+        $resourceNIDStatus = Profile::find(1);
+        $resourceNIDStatus->update(["nid_verified" => 1]);
+        $partnerWallet = Partner::find(1);
+        $partnerWallet->update(["wallet" => 1000]);
+        $partnerPackage = Partner::find(1);
+        $partnerPackage->update(['package_id' => 1]);
+        $resourceNIDStatus = Profile::find(1);
+        $response = $this->post('/v2/top-up/partner', [
+            'mobile' => '01620011019',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 104,
+            'password' => '12349',
+
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->partner->reload();
+
+        $Top_up_orders = TopUpOrder::first();
+
+
+        $this->assertEquals($this->partner->id, $Top_up_orders->agent_id);
+        $this->assertEquals("123456", $Top_up_orders->transaction_id);
     }
 
 
     public function testSuccessfulTopupPartnerCommissionCheck()
     {
-        $resourceNIDStatus = Profile::find(1);;
+        $resourceNIDStatus = Profile::find(1);
         $resourceNIDStatus->update(["nid_verified" => 1]);
+        $partnerWallet = Partner::find(1);
+        $partnerWallet->update(["wallet" => 1000]);
+        $partnerPackage = Partner::find(1);
+        $partnerPackage->update(['package_id' => 1]);
+        $resourceNIDStatus = Profile::find(1);
         $response = $this->post('/v2/top-up/partner', [
             'mobile' => '01620011019',
             'vendor_id' => $this->topUpVendor->id,
@@ -790,15 +890,15 @@ class SmanagerTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
+        $this->partner->reload();
 
-        $top_up_order=TopUpOrder::first();
+        $top_up_order = TopUpOrder::first();
 
-        $this->assertEquals($this->partner->id,$top_up_order->agent_id);
-        $this->assertEquals(1.04,$top_up_order->agent_commission);
+        $this->assertEquals($this->partner->id, $top_up_order->agent_id);
+        $this->assertEquals(1.04, $top_up_order->agent_commission);
 
 
     }
-
 
 
     public function testSuccessfulTopupSpecificPartnerCommissionCheck()
@@ -810,9 +910,9 @@ class SmanagerTopupTest extends FeatureTestCase
 
         $this->topUpVendorCommission = factory(TopUpVendorCommission::class)->create([
             'topup_vendor_id' => $this->topUpVendor->id,
-            'agent_commission' =>  '0',
+            'agent_commission' => '0',
             'ambassador_commission' => '0',
-            'type' =>'App\Models\Partner',
+            'type' => 'App\Models\Partner',
             'type_id' => 2
 
         ]);
@@ -841,10 +941,10 @@ class SmanagerTopupTest extends FeatureTestCase
         ]);
         $data = $response->decodeResponseJson();
 
-        $top_up_order=TopUpOrder::first();
+        $top_up_order = TopUpOrder::first();
 
-        $this->assertEquals($this->partner->id,$top_up_order->agent_id);
-        $this->assertEquals(0,$top_up_order->agent_commission);
+        $this->assertEquals($this->partner->id, $top_up_order->agent_id);
+        $this->assertEquals(0, $top_up_order->agent_commission);
 
     }
 
@@ -852,6 +952,12 @@ class SmanagerTopupTest extends FeatureTestCase
     {
         $resourceNIDStatus = Profile::find(1);
         $resourceNIDStatus->update(["nid_verified" => 1]);
+        $partnerWallet = Partner::find(1);
+        $partnerWallet->update(["wallet" => 1000]);
+        $partnerPackage = Partner::find(1);
+        $partnerPackage->update(['package_id' => 1]);
+        $resourceNIDStatus = Profile::find(1);
+
         $response = $this->post('/v2/top-up/partner', [
             'mobile' => '01620011019',
             'vendor_id' => $this->topUpVendor->id,
@@ -863,17 +969,17 @@ class SmanagerTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
+        $this->partner->reload();
 
-        $partner_transactions=PartnerTransaction::first();
-        // dd($affiliate_transactions);
+        $partner_transactions = PartnerTransaction::first();
 
         /*
       * Initial wallet balance = 10000 -> PartnerFactory
       * Vendor Commission = 1% -> TopupVendorCommissionFactory
       * Topup Amount should be = 100 - (100 % 1) = 99
       */
-        $this->assertEquals($this->partner->id,$partner_transactions->partner_id);
-        $this->assertEquals(99,$partner_transactions->amount);
+        $this->assertEquals($this->partner->id, $partner_transactions->partner_id);
+        $this->assertEquals(99, $partner_transactions->amount);
 
     }
 

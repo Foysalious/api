@@ -5,6 +5,7 @@ use App\Models\BusinessMember;
 use App\Models\BusinessRole;
 use App\Models\Member;
 use App\Models\Profile;
+use App\Sheba\Business\BusinessBasicInformation;
 use League\Fractal\TransformerAbstract;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
 use Sheba\Dal\Leave\LeaveStatusPresenter as LeaveStatusPresenter;
@@ -15,6 +16,8 @@ use Sheba\Helpers\TimeFrame;
 
 class LeaveBalanceDetailsTransformer extends TransformerAbstract
 {
+    use BusinessBasicInformation;
+
     private $leave_types;
     /** @var TimeFrame $timeFrame */
     private $timeFrame;
@@ -67,7 +70,7 @@ class LeaveBalanceDetailsTransformer extends TransformerAbstract
             'designation' => $role ? $role->name : null,
             'department' => $role ? $role->businessDepartment->name : null,
             'company' => $business->name,
-            'logo' => $business->logo,
+            'logo' => $this->isDefaultImageByUrl($business->logo) ? null : $business->logo,
             'approved_count' => $leaves_approved_count,
             'rejected_count' => $leaves_rejected_count,
             'leave_balance' => $this->calculate(),

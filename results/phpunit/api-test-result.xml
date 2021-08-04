@@ -1,8 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="Application Test Suite" tests="1" assertions="5" failures="0" errors="0" time="0.144243">
-    <testsuite name="Tests\Feature\Payment\EMIDetailsInfo\EMIDetailsInfoTest" file="/var/www/tests/Feature/Payment/EMIDetailsInfo/EMIDetailsInfoTest.php" tests="1" assertions="5" failures="0" errors="0" time="0.144243">
-      <testcase name="testEMIInfoByGivingParameterOfZeroAmount" class="Tests\Feature\Payment\EMIDetailsInfo\EMIDetailsInfoTest" file="/var/www/tests/Feature/Payment/EMIDetailsInfo/EMIDetailsInfoTest.php" line="150" assertions="5" time="0.144243"/>
+  <testsuite name="Application Test Suite" tests="12" assertions="66" failures="0" errors="0" time="87.551338">
+    <testsuite name="Tests\Feature\UserProfileUpdate\SProInfoCallDashboardTest" file="/var/www/tests/Feature/UserProfileUpdate/SProInfoCallDashboardTest.php" tests="12" assertions="66" failures="0" errors="0" time="87.551338">
+      <testcase name="testInfoCallDashboardAPIForServiceRequest" class="Tests\Feature\UserProfileUpdate\SProInfoCallDashboardTest" file="/var/www/tests/Feature/UserProfileUpdate/SProInfoCallDashboardTest.php" line="44" assertions="8" time="6.431033"/>
+      <testcase name="testInfoCallDashboardAPIForCancelledOrder" class="Tests\Feature\UserProfileUpdate\SProInfoCallDashboardTest" file="/var/www/tests/Feature/UserProfileUpdate/SProInfoCallDashboardTest.php" line="77" assertions="8" time="4.708201"/>
+      <testcase name="testInfoCallDashboardAPIForTotalOrder" class="Tests\Feature\UserProfileUpdate\SProInfoCallDashboardTest" file="/var/www/tests/Feature/UserProfileUpdate/SProInfoCallDashboardTest.php" line="113" assertions="8" time="12.633026"/>
+      <testcase name="testInfoCallDashboardAPIForCompletedOrder" class="Tests\Feature\UserProfileUpdate\SProInfoCallDashboardTest" file="/var/www/tests/Feature/UserProfileUpdate/SProInfoCallDashboardTest.php" line="214" assertions="8" time="13.827909"/>
+      <testcase name="testInfoCallDashboardAPIWithoutMonthAndYearParameter" class="Tests\Feature\UserProfileUpdate\SProInfoCallDashboardTest" file="/var/www/tests/Feature/UserProfileUpdate/SProInfoCallDashboardTest.php" line="319" assertions="8" time="5.707726"/>
+      <testcase name="testInfoCallDashboardAPIWithInvalidMonth13" class="Tests\Feature\UserProfileUpdate\SProInfoCallDashboardTest" file="/var/www/tests/Feature/UserProfileUpdate/SProInfoCallDashboardTest.php" line="351" assertions="2" time="7.416086"/>
+      <testcase name="testInfoCallDashboardAPIWithInvalidMonth0" class="Tests\Feature\UserProfileUpdate\SProInfoCallDashboardTest" file="/var/www/tests/Feature/UserProfileUpdate/SProInfoCallDashboardTest.php" line="375" assertions="2" time="6.752115"/>
+      <testcase name="testInfoCallDashboardAPIWithInvalidMonthString" class="Tests\Feature\UserProfileUpdate\SProInfoCallDashboardTest" file="/var/www/tests/Feature/UserProfileUpdate/SProInfoCallDashboardTest.php" line="399" assertions="2" time="6.237779"/>
+      <testcase name="testInfoCallDashboardAPIWithInvalidYearString" class="Tests\Feature\UserProfileUpdate\SProInfoCallDashboardTest" file="/var/www/tests/Feature/UserProfileUpdate/SProInfoCallDashboardTest.php" line="423" assertions="2" time="6.480177"/>
+      <testcase name="testInfoCallDashboardAPIWithoutMonthAndYearValue" class="Tests\Feature\UserProfileUpdate\SProInfoCallDashboardTest" file="/var/www/tests/Feature/UserProfileUpdate/SProInfoCallDashboardTest.php" line="447" assertions="2" time="6.200847"/>
+      <testcase name="testInfoCallDashboardAPIWithOnlyMonthParameter" class="Tests\Feature\UserProfileUpdate\SProInfoCallDashboardTest" file="/var/www/tests/Feature/UserProfileUpdate/SProInfoCallDashboardTest.php" line="469" assertions="8" time="5.112993"/>
+      <testcase name="testInfoCallDashboardAPIWithOnlyYearParameter" class="Tests\Feature\UserProfileUpdate\SProInfoCallDashboardTest" file="/var/www/tests/Feature/UserProfileUpdate/SProInfoCallDashboardTest.php" line="499" assertions="8" time="6.043447"/>
     </testsuite>
   </testsuite>
 </testsuites>

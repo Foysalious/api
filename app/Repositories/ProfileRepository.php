@@ -6,8 +6,8 @@ use App\Models\Member;
 use App\Models\Promotion;
 use App\Models\Voucher;
 use App\Models\AffiliateTransaction;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Customer;
@@ -383,8 +383,8 @@ class ProfileRepository
             ->setBusinessType(BusinessType::BONDHU)
             ->setFeatureType(FeatureType::AFFILIATE_BONUS)
             ->send($affiliate->profile->mobile, [
-            'bonus_amount' => $affiliate_bonus_amount
-        ]);
+                'bonus_amount' => $affiliate_bonus_amount
+            ]);
     }
 
     public function registerAvatarByEmail($avatar, $request, $user)

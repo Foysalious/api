@@ -28,6 +28,25 @@ return [
             'engine' => null,
             'sticky' => true
         ],
+        'mysql2' => [
+            'driver' => 'mysql',
+            'read' => [
+                'host' => env('DB_READ_HOST_SECOND', 'localhost'),
+                'port' => env('DB_READ_PORT_SECOND', 3306),
+            ], 'write' => [
+                'host' => env('DB_WRITE_HOST_SECOND', 'localhost'),
+                'port' => env('DB_WRITE_PORT_SECOND', 3306)
+            ],
+            'database' => env('DB_DATABASE_SECOND', 'forge'),
+            'username' => env('DB_USERNAME_SECOND', 'forge'),
+            'password' => env('DB_PASSWORD_SECOND', ''),
+            'charset' => 'utf8',
+            'collation' => 'utf8_unicode_ci',
+            'prefix' => '',
+            'strict' => false,
+            'engine' => null,
+            'sticky' => true
+        ],
         'pgsql' => [
             'driver' => 'pgsql',
             'host' => env('DB_HOST', 'localhost'),

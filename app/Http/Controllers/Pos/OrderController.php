@@ -14,11 +14,13 @@ use App\Transformers\PosOrderTransformer;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\Discount\InvalidDiscountType;
+use League\Fractal\Resource\ResourceAbstract;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\ExpenseTracker\EntryType;
@@ -26,6 +28,7 @@ use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
+use Sheba\PartnerStatusAuthentication;
 use Sheba\PaymentLink\Creator as PaymentLinkCreator;
 use Sheba\PaymentLink\PaymentLinkTransformer;
 use Sheba\Pos\Customer\Creator as PosCustomerCreator;
@@ -128,11 +131,11 @@ class OrderController extends Controller
      * @throws PartnerPosCustomerNotFoundException
      * @throws PosCustomerNotFoundException
      * @throws NotEnoughStockException
-     * @throws AccountingEntryServerError
+     * @throws AccountingEntryServerError|ExpenseTrackingServerError
+     * @throws \Sheba\Authentication\Exceptions\AuthenticationFailedException
      */
     public function store($partner, Request $request, Creator $creator, ProfileCreator $profileCreator, PosCustomerCreator $posCustomerCreator, PartnerRepository $partnerRepository, PaymentLinkCreator $paymentLinkCreator)
     {
-
         $this->validate($request, [
             'services' => 'required|string',
             'paid_amount' => 'sometimes|required|numeric',
@@ -201,6 +204,7 @@ class OrderController extends Controller
         $order->net_bill = $order->getNetBill();
         $payment_link_amount = $request->has('payment_link_amount') ? $request->payment_link_amount : $order->net_bill;
         if ($request->payment_method == 'payment_link' || $request->payment_method == 'emi') {
+            (new PartnerStatusAuthentication())->handleInside($partner);
             $paymentLink = $paymentLinkCreator->setAmount($payment_link_amount)->setReason("PosOrder ID: $order->id Due payment")
                 ->setUserName($partner->name)->setUserId($partner->id)
                 ->setUserType('partner')
@@ -295,20 +299,22 @@ class OrderController extends Controller
     public function update(Request $request, Updater $updater)
     {
         $this->setModifier($request->manager_resource);
-        /** @var PosOrder $order */
-        $new           = 1;
-        $order         = PosOrder::with('items')->find($request->order);
-        $is_returned   = ($this->isReturned($order, $request, $new));
-        $refund_nature = $is_returned ? Natures::RETURNED : Natures::EXCHANGED;
-        $return_nature = $is_returned ? $this->getReturnType($request, $order) : null;
-        /** @var RefundNature $refund */
-        $refund = NatureFactory::getRefundNature($order, $request->all(), $refund_nature, $return_nature);
-        $refund->setNew($new)->update();
-        $order->payment_status = $order->calculate()->getPaymentStatus();
-        return api_response($request, null, 200, [
-            'msg'   => 'Order Updated Successfully',
-            'order' => $order
-        ]);
+            /** @var PosOrder $order */
+            $new           = 1;
+            $order         = PosOrder::with('items')->find($request->order);
+            $is_returned   = ($this->isReturned($order, $request, $new));
+            $refund_nature = $is_returned ? Natures::RETURNED : Natures::EXCHANGED;
+            $return_nature = $is_returned ? $this->getReturnType($request, $order) : null;
+            /** @var RefundNature $refund */
+            $refund = NatureFactory::getRefundNature($order, $request->all(), $refund_nature, $return_nature);
+            $request->merge(['refund_nature' => $refund_nature]);
+
+            $refund->setNew($new)->update();
+            $order->payment_status = $order->calculate()->getPaymentStatus();
+            return api_response($request, null, 200, [
+                'msg'   => 'Order Updated Successfully',
+                'order' => $order
+            ]);
     }
 
     /**
@@ -499,11 +505,12 @@ class OrderController extends Controller
                 $customer     = $pos_order->customer->profile;
                 $info['user'] = [
                     'name'   => $customer->name,
-                    'mobile' => $customer->mobile
+                    'mobile' => $customer->mobile,
+                    'address' => !$pos_order->address?$customer->address:$pos_order->address
                 ];
             }
             $invoice_name = 'pos_order_invoice_' . $pos_order->id;
-            $link         = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
+            $link         = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save(true);
             return api_response($request, null, 200, [
                 'message' => 'Successfully Download receipt',
                 'link'    => $link
@@ -545,11 +552,12 @@ class OrderController extends Controller
                 $customer     = $pos_order->customer->profile;
                 $info['user'] = [
                     'name'   => $customer->name,
-                    'mobile' => $customer->mobile
+                    'mobile' => $customer->mobile,
+                    'address' => !$pos_order->address?$customer->address:$pos_order->address
                 ];
             }
             $invoice_name = 'pos_order_invoice_' . $pos_order->id;
-            $link         = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
+            $link         = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save(true);
             return api_response($request, null, 200, [
                 'message' => 'Successfully Download receipt',
                 'link'    => $link

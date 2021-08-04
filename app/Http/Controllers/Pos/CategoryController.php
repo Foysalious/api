@@ -3,15 +3,13 @@
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Models\PosCategory;
-use App\Sheba\Pos\Category\Category;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
+use App\Sheba\Pos\Category\Category;
+use Sheba\Dal\PartnerPosServiceBatch\Model as PosServiceBatch;
+use Illuminate\Validation\ValidationException;
 use Sheba\ModificationFields;
-
-
-
 
 
 class CategoryController extends Controller
@@ -55,8 +53,7 @@ class CategoryController extends Controller
 
             $master_categories = PosCategory::whereIn('id', $partner_categories)->select($this->getSelectColumnsOfCategory())->get()
                 ->load(['children' => function ($q) use ($request, $service_where_query, $deleted_service_where_query, $updated_after_clause, $deleted_after_clause) {
-                    $q->whereHas('services', $service_where_query)
-                        ->with(['services' => function ($service_query) use ($service_where_query, $updated_after_clause) {
+                    $q->whereHas('services', $service_where_query)->with(['services' => function ($service_query) use ($service_where_query, $updated_after_clause) {
                             $service_query->where($service_where_query);
 
                             $service_query->with(['discounts' => function ($discounts_query) use ($updated_after_clause) {
@@ -65,7 +62,6 @@ class CategoryController extends Controller
 
                                 $discounts_query->where($updated_after_clause);
                             }])->select($this->getSelectColumnsOfService())->orderBy('created_at', 'desc');
-
                         }]);
                     if ($request->has('updated_after')) {
                         $q->orWhereHas('deletedServices', $deleted_service_where_query)->with(['deletedServices' => function ($deleted_service_query) use ($deleted_after_clause, $deleted_service_where_query) {
@@ -100,6 +96,7 @@ class CategoryController extends Controller
                     $service->pos_category_id = $category_id;
                     $service->unit = $service->unit ? constants('POS_SERVICE_UNITS')[$service->unit] : null;
                     $service->warranty_unit = $service->warranty_unit ? config('pos.warranty_unit')[$service->warranty_unit] : null;
+                    $service->stock = $service->batches->sum('stock');
                     $service->image_gallery = $service->imageGallery ? $service->imageGallery->map(function($image){
                         return [
                             'id' =>   $image->id,
@@ -108,7 +105,7 @@ class CategoryController extends Controller
                     }) : [];
                     $total_items++;
                     if ($service->cost) $items_with_buying_price++;
-                    $total_buying_price += $service->cost * $service->stock;
+                    $total_buying_price += $this->getBuyingPriceOfService($service->id);
                 });
             });
 
@@ -155,7 +152,8 @@ class CategoryController extends Controller
     {
         return [
             'id', 'partner_id', 'pos_category_id', 'name', 'publication_status', 'is_published_for_shop',
-            'thumb', 'banner', 'app_thumb', 'app_banner', 'cost', 'price', 'wholesale_price', 'vat_percentage', 'stock', 'unit', 'warranty', 'warranty_unit', 'show_image', 'shape', 'color'
+            'thumb', 'banner', 'app_thumb', 'app_banner', 'cost', 'price', 'wholesale_price', 'vat_percentage',
+            'stock', 'unit', 'warranty', 'warranty_unit', 'show_image', 'shape', 'color'
         ];
     }
     private function getSelectColumnsOfDeletedService()
@@ -266,5 +264,20 @@ class CategoryController extends Controller
             return api_response($request, null, 403, ['message' => 'Not allowed to update this category']);
         $category->update($modifier, $pos_category, $request->name);
         return api_response($request, null, 200, ['message' => 'Category Updated Successfully']);
+    }
+
+    public function getBuyingPriceOfService($service_id)
+    {
+        $all_batches_of_service = $this->getAllBatchesOfService($service_id);
+        $total_batch_price = 0.0;
+        foreach ($all_batches_of_service as $batch) {
+            $total_batch_price += $batch->cost * $batch->stock;
+        }
+        return $total_batch_price;
+    }
+
+    public function getAllBatchesOfService($service_id)
+    {
+        return PosServiceBatch::where('partner_pos_service_id', $service_id)->get();
     }
 }

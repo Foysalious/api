@@ -21,6 +21,9 @@ use App\Models\PosOrder;
 use App\Models\PosOrderPayment;
 use App\Models\Profile;
 use App\Models\Resource;
+use App\Models\TopUpVendor;
+use App\Sheba\InventoryService\InventoryServerClient;
+use App\Sheba\PosOrderService\PosOrderServerClient;
 use Carbon\Carbon;
 use Factory\PartnerDeliveryInfoFactory;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
@@ -33,9 +36,12 @@ use Sheba\Dal\JobService\JobService;
 use Sheba\Dal\LocationService\LocationService;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\Dal\Service\Service;
+use Sheba\Dal\SubscriptionWisePaymentGateway\Model;
 use Sheba\Services\Type as ServiceType;
 use Sheba\Subscription\Partner\Access\RulesDescriber\Pos;
 use TestCase;
+use Tests\Mocks\MockInventoryServerClient;
+use Tests\Mocks\MockPosOrderServerClient;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class FeatureTestCase extends TestCase
@@ -105,11 +111,24 @@ class FeatureTestCase extends TestCase
      */
     protected $PosOrderPayment;
 
+    /**
+     * @var Model
+     */
+    protected $SubscriptionWisePaymentGateways;
+
+    /**
+     * @var TopUpVendor
+     */
+    protected $topupVendor;
+
+
 
 
     public function setUp()
     {
         parent::setUp();
+        $this->app->singleton(InventoryServerClient::class,MockInventoryServerClient::class);
+        $this->app->singleton(PosOrderServerClient::class,MockPosOrderServerClient::class);
     }
 
     public function get($uri, array $headers = [])
@@ -140,7 +159,7 @@ class FeatureTestCase extends TestCase
     public function runDatabaseMigrations()
     {
         // \Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
-         //  $this->artisan('migrate');
+      //  $this->artisan('migrate');
         // $this->beforeApplicationDestroyed(function () {
         //     \Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
         // });
@@ -329,7 +348,16 @@ class FeatureTestCase extends TestCase
             'customer' =>[
                 'id' => $this->customer->id
             ],
-            'resource' => null,
+            'resource' => [
+                'id' => $this->resource->id,
+                "partner" => [
+                    "id" => $this->partner->id,
+                    "name" => $this->partner->name,
+                    "sub_domain" => $this->partner->sub_domain,
+                    "logo" => $this->partner->logo,
+                    "is_manager" => true
+                ]
+            ],
             'member' => [
                 'id' => $this->member->id
             ],

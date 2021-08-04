@@ -6,13 +6,12 @@ use App\Sheba\Pos\Product\Accounting\ExpenseEntry;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
+use Sheba\Dal\PartnerPosServiceBatch\Model as PartnerPosServiceBatch;
 use Sheba\Dal\PartnerPosServiceImageGallery\Model as PartnerPosServiceImageGallery;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
-use Sheba\Pos\Repositories\Interfaces\PosServiceImageGalleyRepositoryInterface;
 use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
-use Sheba\Pos\Repositories\PosServiceRepository;
 use Sheba\RequestIdentification;
 use Sheba\Subscription\Partner\Access\AccessManager;
 
@@ -20,7 +19,7 @@ class Creator
 {
     use FileManager, CdnFileManager, ModificationFields;
 
-    private $data;
+    private $data, $accounting_info;
     private $serviceRepo;
     private $imageGalleryRepo;
     /**
@@ -41,29 +40,44 @@ class Creator
         return $this;
     }
 
+    /**
+     * @param mixed $accounting_info
+     * @return Creator
+     */
+    public function setAccountingInfo($accounting_info)
+    {
+        $this->accounting_info = $accounting_info;
+        return $this;
+    }
+
     public function create()
     {
         $this->saveImages();
         $this->data['partner_id'] = $this->data['partner']['id'];
         $this->data['pos_category_id'] = $this->data['category_id'];
-        $this->data['cost'] = (double)$this->data['cost'];
+        $cost = (double)$this->data['cost'] ?? ((double)$this->data['price'] ?? 0.0);
+        $stock = $this->data['stock'];
         $this->format();
         $image_gallery = null;
-        if (isset($this->data['image_gallery']))
-            $image_gallery = $this->data['image_gallery'];
-        $cloned_data = $this->data;
+        if (isset($this->data['image_gallery'])) $image_gallery = $this->data['image_gallery'];
         $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'image_gallery','accounting_info']);
         $partner_pos_service = $this->serviceRepo->save($this->data + (new RequestIdentification())->get());
+        $this->savePartnerPosServiceBatch($partner_pos_service, $stock, $cost);
         $this->storeImageGallery($partner_pos_service, json_decode($image_gallery,true));
-      //  if (isset($cloned_data['accounting_info']) && !empty($cloned_data['accounting_info']))
-        //    $this->createExpenseEntry($partner_pos_service, json_decode($cloned_data['accounting_info'], true));
         return $partner_pos_service;
     }
 
     private function createExpenseEntry($partner_pos_service, $accounting_info)
     {
-        $this->stockExpenseEntry->setPartner($partner_pos_service->partner)->setName($partner_pos_service->name)->setId($partner_pos_service->id)->setNewStock($this->data['stock'])->setCostPerUnit($partner_pos_service->cost)->setAccountingInfo($accounting_info)->create();
+        $this->stockExpenseEntry->setPartner($partner_pos_service['partner_id'])
+            ->setName($partner_pos_service['name'])
+            ->setId($partner_pos_service['id'])
+            ->setNewStock($partner_pos_service['stock'])
+            ->setCostPerUnit($partner_pos_service['cost'])
+            ->setAccountingInfo($accounting_info)
+            ->create();
     }
+
 
     private function saveImages()
     {
@@ -78,9 +92,9 @@ class Creator
         $data = [];
         collect($image_gallery)->each(function($image) use($partner_pos_service, &$data){
             array_push($data, [
-                'partner_pos_service_id' => $partner_pos_service->id,
-                'image_link' => $image
-            ] +  $this->modificationFields(true, false) );
+                    'partner_pos_service_id' => $partner_pos_service->id,
+                    'image_link' => $image
+                ] +  $this->modificationFields(true, false) );
         });
         return PartnerPosServiceImageGallery::insert($data);
     }
@@ -118,7 +132,6 @@ class Creator
      */
     private function format()
     {
-        $this->data['stock']            = (isset($this->data['stock']) && $this->data['stock'] > 0) ? (double)$this->data['stock'] : null;
         $this->data['vat_percentage']   = (isset($this->data['vat_percentage']) && $this->data['vat_percentage'] > 0) ? (double)$this->data['vat_percentage'] : 0.00;
         $this->data['warranty_unit']    = (isset($this->data['warranty_unit']) && in_array($this->data['warranty_unit'], array_keys(config('pos.warranty_unit')))) ? $this->data['warranty_unit'] : config('pos.warranty_unit.day.en');
         $this->data['wholesale_price']  = (isset($this->data['wholesale_price']) && $this->data['wholesale_price'] > 0) ? (double)$this->data['wholesale_price'] : 0.00;
@@ -169,5 +182,39 @@ class Creator
 
         if(!empty($data))
             PartnerPosCategory::insert($data);
+    }
+
+    public function savePartnerPosServiceBatch($service, $stock = null, $cost = null)
+    {
+        $batchData = [];
+        $accounting_data = [];
+        $batchData['partner_pos_service_id'] = $service->id;
+        $batchData['stock'] = $stock;
+        $batchData['cost']  = $cost ?? 0.0;
+        if(isset($this->accounting_info)) {
+            $accounting_data = (array) (json_decode($this->accounting_info));
+            $batchData['from_account'] = $accounting_data['from_account'];
+            $batchData['supplier_id'] = $accounting_data['supplier_id'] ?? null;
+        }
+
+        $partner_pos_service_batch = PartnerPosServiceBatch::create($batchData);
+        $batchData = $this->makeReturnDataForBatch($partner_pos_service_batch);
+        $this->data['stock'] = $batchData['stock'];
+        $this->data['cost'] = $batchData['cost'];
+
+        if(isset($this->accounting_info)) $this->createExpenseEntry($service, $accounting_data);
+        return $batchData;
+    }
+
+    private function makeReturnDataForBatch($partner_pos_service)
+    {
+        $data = [];
+        $data['id'] = $partner_pos_service['partner_pos_service_id'];
+        $data['batch_id'] = $partner_pos_service['id'];
+        $data['stock'] = $partner_pos_service['stock'];
+        $data['cost'] = $partner_pos_service['cost'];
+        $data['from_account'] = $partner_pos_service['from_account'];
+        $data['supplier_id'] = $partner_pos_service['supplier_id'];
+        return $data;
     }
 }

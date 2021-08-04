@@ -37,13 +37,13 @@ class HolidayController extends Controller
 
         $business_holidays = $business_holiday_repo->getAllByBusiness($business);
         $weekend = $business_weekend_repo->weekendDates($business);
-
+        sort($weekend);
         $fractal = new Manager();
         $resource = new Collection($business_holidays, new HolidayListTransformer($firstDayOfPreviousMonth, $lastDayOfNextMonth));
         $holidays = $fractal->createData($resource)->toArray()['data'];
         
         $holidays = $holidays ? call_user_func_array('array_merge', $holidays) : [];
-
+        sort($holidays);
         return api_response($request, null, 200, ['holidays' => $holidays, 'weekends' => $weekend, 'is_sandwich_leave_enable' => $business->is_sandwich_leave_enable]);
     }
 }

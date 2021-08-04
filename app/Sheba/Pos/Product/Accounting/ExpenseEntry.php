@@ -1,8 +1,8 @@
 <?php namespace App\Sheba\Pos\Product\Accounting;
 
-
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\AccountingRepository;
+use Sheba\Dal\PartnerPosServiceBatch\Model as PartnerPosServiceBatch;
 
 class ExpenseEntry
 {
@@ -12,6 +12,10 @@ class ExpenseEntry
     protected $stock;
     protected $costPerUnit;
     protected $accountingInfo;
+    protected $oldStock;
+    protected $oldCost;
+    protected $isUpdate = false;
+
     /**
      * @var AccountingRepository
      */
@@ -77,8 +81,44 @@ class ExpenseEntry
         return $this;
     }
 
+
+    /**
+     * @param mixed $oldStock
+     * @return ExpenseEntry
+     */
+    public function setOldStock($oldStock)
+    {
+        $this->oldStock = $oldStock;
+        return $this;
+    }
+
+    /**
+     * @param mixed $oldCost
+     * @return ExpenseEntry
+     */
+    public function setOldCost($oldCost)
+    {
+        $this->oldCost = $oldCost;
+        return $this;
+    }
+
+
+    /**
+     * @param bool $isUpdate
+     * @return ExpenseEntry
+     */
+    public function setIsUpdate(bool $isUpdate): ExpenseEntry
+    {
+        $this->isUpdate = $isUpdate;
+        return $this;
+    }
+
     public function create()
     {
+        if($this->isUpdate) {
+            $negativeEntryData = $this->makeNegativeEntryData();
+            $this->accountingRepo->storeEntry($negativeEntryData, EntryTypes::INVENTORY);
+        }
         $data = $this->makeData();
         $this->accountingRepo->storeEntry($data, EntryTypes::INVENTORY);
     }
@@ -86,15 +126,29 @@ class ExpenseEntry
     private function makeData()
     {
         $data = collect();
-        $data->partner = $this->partner;
-        $data->amount = $this->stock * $this->costPerUnit;
-        $data->from_account_key = $this->accountingInfo['from_account'];
-        $data->to_account_key = $this->id;
-        $data->customer_id = $this->accountingInfo['supplier_id'];
-        $data->inventory_products = [['id' => $this->id, 'unit_price' => $this->costPerUnit, 'name' => $this->name, 'quantity' => $this->stock]];
-        if ($this->accountingInfo['transaction_type'] == 'due')
-            $data->amount_cleared = $this->accountingInfo['amount_cleared'];
-        $data->source_id = null;
+        $data->partner              = $this->partner;
+        $data->amount               = $this->stock * $this->costPerUnit;
+        $data->from_account_key     = $this->accountingInfo['from_account'];
+        $data->to_account_key       = $this->id;
+        $data->customer_id          = $this->accountingInfo['supplier_id'] ?? null;
+        $data->inventory_products   = json_encode([['id' => $this->id, 'unit_price' => $this->costPerUnit, 'name' => $this->name, 'quantity' => $this->stock]]);
+        $data->amount_cleared       = $this->accountingInfo['transaction_type'] == 'due' ?  $this->accountingInfo['amount_cleared'] : $this->stock * $this->costPerUnit;
+        $data->source_id            = null;
+        return $data;
+    }
+
+    private function makeNegativeEntryData()
+    {
+        $lastBatch = PartnerPosServiceBatch::where('partner_pos_service_id', $this->id)->latest()->first();
+        $data = collect();
+        $data->partner              = $this->partner;
+        $data->amount               = $this->oldStock * $this->oldCost;
+        $data->from_account_key     = $this->id;
+        $data->to_account_key       = $lastBatch->from_account;
+        $data->customer_id          = $lastBatch->supplier_id ?? null;
+        $data->inventory_products   = json_encode([['id' => $this->id, 'unit_price' => $this->oldCost, 'name' => $this->name, 'quantity' => $this->oldStock]]);
+        $data->amount_cleared       = $this->oldStock * $this->oldCost;
+        $data->source_id            = null;
         return $data;
     }
 

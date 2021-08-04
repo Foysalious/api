@@ -76,7 +76,7 @@
             <td class="text-left" colspan="3">DUE AMOUNT</td>
             <td class="s-price">{{ $partner_order->due }}</td>
         @else
-            <td class="text-left" colspan="3">GRAND TOTAL @if($type=="QUOTATION") *** @endif</td>
+            <td class="text-left" colspan="3">GRAND TOTAL @if($type=="QUOTATION") @endif</td>
             <td class="s-price">{{ $partner_order->grossAmount }}</td>
         @endif
     </tr>

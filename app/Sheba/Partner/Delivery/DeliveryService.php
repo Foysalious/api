@@ -4,12 +4,16 @@
 use App\Exceptions\DoNotReportException;
 use App\Http\Requests\Request;
 use App\Models\Partner;
+use App\Models\PartnerPosService;
 use App\Models\PosOrder;
 use App\Models\PosOrderPayment;
 use App\Sheba\Partner\Delivery\Exceptions\DeliveryCancelRequestError;
+use App\Sheba\PosOrderService\PosOrderServerClient;
+use App\Sheba\PosOrderService\Services\OrderService;
 use Illuminate\Support\Str;
 use Sheba\Dal\PartnerDeliveryInformation\Contract as PartnerDeliveryInformationRepositoryInterface;
 use Sheba\Dal\POSOrder\OrderStatuses;
+use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
 use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Transactions\Types;
 use Throwable;
@@ -57,13 +61,24 @@ class DeliveryService
      * @var PosOrderRepository
      */
     private $posOrderRepository;
+    private $serviceRepositoryInterface;
+    /** @var PosOrderServerClient */
+    private $posOrderClient;
+    /** @var OrderService */
+    private $orderService;
+    private $posOrderId;
 
 
-    public function __construct(DeliveryServerClient $client, PartnerDeliveryInformationRepositoryInterface $partnerDeliveryInfoRepositoryInterface,PosOrderRepository $posOrderRepository)
+    public function __construct(DeliveryServerClient $client, PartnerDeliveryInformationRepositoryInterface $partnerDeliveryInfoRepositoryInterface,
+                                PosOrderRepository $posOrderRepository,PosServiceRepositoryInterface $serviceRepositoryInterface, PosOrderServerClient $posOrderClient,
+                                OrderService $orderService)
     {
         $this->client = $client;
         $this->partnerDeliveryInfoRepositoryInterface = $partnerDeliveryInfoRepositoryInterface;
         $this->posOrderRepository = $posOrderRepository;
+        $this->serviceRepositoryInterface = $serviceRepositoryInterface;
+        $this->posOrderClient = $posOrderClient;
+        $this->orderService = $orderService;
     }
 
     public function setPartner($partner)
@@ -134,7 +149,21 @@ class DeliveryService
         $data['delivery_method'] = $this->getDeliveryMethod();
         $data['is_registered_for_delivery'] = $this->partner->deliveryInformation ? 1 : 0;
         $data['delivery_charge'] = $this->partner->delivery_charge;
+        $data['products_without_weight'] = $this->countProductWithoutWeight();
         return $data;
+    }
+
+    /**
+     * @return int
+     */
+    private function countProductWithoutWeight()
+    {
+        return PartnerPosService::where('partner_id', $this->partner->id)
+            ->where('is_published_for_shop', 1)
+            ->where(function ($q) {
+                $q->where('weight', 0)
+                    ->orWhere('weight', null);
+            })->count();
     }
 
     private function getDeliveryMethod()
@@ -161,9 +190,11 @@ class DeliveryService
     public function getOrderInfo()
     {
 
-        if ($this->partner->id != $this->posOrder->partner_id) {
+        if ($this->posOrder && $this->partner->id != $this->posOrder->partner_id) {
             throw new DoNotReportException("Order does not belongs to this partner", 400);
         }
+        $customer_delivery_info = $this->resolveDeliveryInfo();
+        $payment_info = $this->paymentInfo($this->posOrder->id);
         return [
             'partner_pickup_information' => [
                 'merchant_name' => $this->partner->name,
@@ -178,15 +209,15 @@ class DeliveryService
                 ],
             ],
             'customer-delivery_information' => [
-                'name' => $this->posOrder->customer->profile->name,
-                'number' => $this->posOrder->customer->profile->mobile,
+                'name' => $customer_delivery_info['name'],
+                'number' => $customer_delivery_info['number'],
                 'address' => [
-                    'full_address' => $this->posOrder->address,
-                    'thana' => $this->posOrder->delivery_thana,
-                    'zilla' => $this->posOrder->delivery_district
+                    'full_address' => $customer_delivery_info['address'],
+                    'thana' => $customer_delivery_info['delivery_thana'],
+                    'zilla' => $customer_delivery_info['delivery_zilla']
                 ],
-                'payment_method' => ($payment_info = $this->paymentInfo($this->posOrder->id)) ? $payment_info->method : null,
-                'cod_amount' => $this->getDueAmount(),
+                'payment_method' => $customer_delivery_info['payment_method'] ,
+                'cod_amount' => $customer_delivery_info['cod_amount'],
             ],
         ];
     }
@@ -407,6 +438,7 @@ class DeliveryService
         $data = [
             'name' => $info['contact_info']['name'],
             'partner_id' => $this->partner->id,
+            'merchant_id' =>  $info['uid'],
             'mobile' => $info['phone'],
             'email' => $info['contact_info']['email'],
             'business_type' => $info['product_nature'],
@@ -442,8 +474,7 @@ class DeliveryService
     {
         $data = $this->makeDeliveryChargeData();
         $response =  $this->client->post('price-check', $data);
-        return $response['data'][0]['package_price'] - ((config('pos_delivery.cash_on_delivery_charge_percentage')/100) *  $this->cashOnDelivery);
-
+        return ceil($response['data'][0]['package_price']);
     }
 
 
@@ -460,7 +491,7 @@ class DeliveryService
     public function setPosOrder($posOrderId)
     {
         $this->posOrder = PosOrder::find($posOrderId);
-
+        $this->posOrderId = $posOrderId;
         return $this;
     }
 
@@ -469,7 +500,7 @@ class DeliveryService
      */
     public function getDeliveryStatus()
     {
-        $delivery_order_id = $this->posOrder->delivery_request_id;
+        $delivery_order_id = $this->resolveDeliveryRequestId();
         if(!$delivery_order_id)
             throw new DoNotReportException('Delivery tracking id not found',404);
         $data = [
@@ -482,7 +513,7 @@ class DeliveryService
     {
         $status = $this->getDeliveryStatus()['data']['status'];
         $data = [
-            'uid' => $this->posOrder->delivery_request_id
+            'uid' => $this->resolveDeliveryRequestId()
         ];
         if ($status == Statuses::PICKED_UP)
             throw new DeliveryCancelRequestError();
@@ -496,7 +527,8 @@ class DeliveryService
         $data = [
           'status' => OrderStatuses::CANCELLED
         ];
-        $this->posOrderRepository->update($this->posOrder, $data);
+        !$this->isOrderMigrated() ? $this->posOrderRepository->update($this->posOrder, $data) :
+            $this->orderService->setPartnerId($this->partner->id)->setOrderId($this->posOrderId)->setStatus(OrderStatuses::CANCELLED)->updateStatus();
     }
 
     public function getPaperflyDeliveryCharge()
@@ -504,5 +536,42 @@ class DeliveryService
         return config('pos_delivery.paperfly_charge');
     }
 
+    private function resolveDeliveryRequestId()
+    {
+        if (!$this->isOrderMigrated()) return $this->posOrder->delivery_request_id;
+        $deliveryDetails = $this->posOrderClient->get('api/v1/partners/' . $this->partner->id . '/orders/' . $this->posOrderId . '/delivery-info');
+        return $deliveryDetails['order']['delivery_request_id'];
+    }
+
+    private function resolveDeliveryInfo()
+    {
+        if (!$this->isOrderMigrated()) {
+            return [
+                'name' => $this->posOrder->customer->profile->name,
+                'number' => $this->posOrder->customer->profile->mobile,
+                'address' => $this->posOrder->address,
+                'delivery_thana' => $this->posOrder->delivery_thana,
+                'delivery_zilla' => $this->posOrder->delivery_district,
+                'payment_method' => ($payment_info = $this->paymentInfo($this->posOrder->id)) ? $payment_info->method : null,
+                'cod_amount' => $this->getDueAmount(),
+            ];
+        }
+        $deliveryDetails = $this->posOrderClient->get('api/v1/partners/' . $this->partner->id . '/orders/' . $this->posOrderId . '/delivery-info');
+        return [
+            'name' => $deliveryDetails['order']['delivery_name'],
+            'number' => $deliveryDetails['order']['delivery_mobile'],
+            'address' => $deliveryDetails['order']['delivery_address'],
+            'delivery_thana' => $deliveryDetails['order']['delivery_thana'],
+            'delivery_zilla' => $deliveryDetails['order']['delivery_district'],
+            'payment_method' => $deliveryDetails['order']['payment_method'],
+            'cod_amount' => $deliveryDetails['order']['due'],
+        ];
+    }
+
+    private function isOrderMigrated()
+    {
+        if ($this->posOrder && !$this->posOrder->is_migrated) return false;
+        return true;
+    }
 
 }

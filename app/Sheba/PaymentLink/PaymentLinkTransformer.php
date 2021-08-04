@@ -3,8 +3,9 @@
 use App\Models\Partner;
 use App\Models\PosCustomer;
 use Carbon\Carbon;
-use Sheba\Dal\ExternalPayment\Model as ExternalPayment;
+use Sheba\Pos\Order\PosOrderResolver;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
+use Sheba\Dal\ExternalPayment\Model as ExternalPayment;
 use stdClass;
 
 class PaymentLinkTransformer
@@ -86,6 +87,11 @@ class PaymentLinkTransformer
     public function getBankTransactionCharge()
     {
         return isset($this->response->bankTransactionCharge) ? $this->response->bankTransactionCharge : null;
+    }
+
+    public function getRealAmount()
+    {
+        return $this->response->realAmount ?? null;
     }
 
     /**
@@ -199,27 +205,28 @@ class PaymentLinkTransformer
         $payer      = $this->getPayer();
         $isExternal = $this->isExternalPayment();
         return [
-                   'id'                   => $this->getLinkID(),
-                   'identifier'           => $this->getLinkIdentifier(),
-                   'purpose'              => $this->getReason(),
-                   'amount'               => $this->getAmount(),
-                   'emi_month'            => $this->getEmiMonth(),
-                   'paid_by'              => $this->getPaidBy(),
-                   'partner_profit'       => $this->getPartnerProfit(),
-                   'is_old'               => $this->isOld(),
-                   'interest'             => $this->getInterest(),
-                   'bank_transaction_fee' => $this->getBankTransactionCharge(),
-                   'payment_receiver'     => [
+                   'id'                    => $this->getLinkID(),
+                   'identifier'            => $this->getLinkIdentifier(),
+                   'purpose'               => $this->getReason(),
+                   'amount'                => $this->getAmount(),
+                   'emi_month'             => $this->getEmiMonth(),
+                   'paid_by'               => $this->getPaidBy(),
+                   'partner_profit'        => $this->getPartnerProfit(),
+                   'is_old'                => $this->isOld(),
+                   'interest'              => $this->getInterest(),
+                   'bank_transaction_fee'  => $this->getBankTransactionCharge(),
+                   'payment_receiver'      => [
                        'name'  => $user->name,
                        'image' => $user->logo,
                        'id'    => $user->id,
                    ],
-                   'payer'                => $payer ? [
+                   'payer'                 => $payer ? [
                        'id'     => $payer->id,
                        'name'   => $payer->name,
                        'mobile' => $payer->mobile
                    ] : null,
-                   'is_external_payment'  => $isExternal,
+                   'is_external_payment'   => $isExternal,
+                   'installment_per_month' => $this->getInstallmentPerMonth()
                ] + ($isExternal ? ['success_url' => $this->getSuccessUrl(), 'fail_url' => $this->getFailUrl()] : []);
 
     }
@@ -278,6 +285,14 @@ class PaymentLinkTransformer
     public function isOld()
     {
         return !isset($this->response->paidBy);
+    }
+
+    public function getInstallmentPerMonth()
+    {
+        if ($this->getEmiMonth() > 0) {
+            return round($this->getAmount() / $this->getEmiMonth(), 2);
+        }
+        return null;
     }
 
 

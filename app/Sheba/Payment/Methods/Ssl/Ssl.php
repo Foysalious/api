@@ -113,18 +113,29 @@ class Ssl extends PaymentMethod
         $data['cus_name']     = $payable->getName();
         $data['cus_email']    = $payable->getEmail();
         $data['cus_phone']    = $payable->getMobile();
-        if ($payable->amount >= config('sheba.min_order_amount_for_emi')) {
-            $data['emi_option'] = 1;
-            $data['emi_max_inst_option'] = 12;
-            if ($payable->emi_month) {
-                $data['emi_selected_inst'] = (int)$payable->emi_month;
-                $data['emi_allow_only'] = 1;
-            }
-        }
+        $this->setEmi($payable,$data);
 
         $request = (new TPRequest())->setUrl($this->store->getSessionUrl())
             ->setMethod(TPRequest::METHOD_POST)->setInput($data);
         return $this->tpClient->call($request);
+    }
+    private function setEmi(Payable $payable,&$data){
+        if ($payable->completion_type=='payment_link'){
+            if ($payable->emi_month > 0) {
+                $data['emi_option']          = 1;
+                $data['emi_allow_only']    = 1;
+                $data['emi_selected_inst'] = (int)$payable->emi_month;
+            }
+        }else{
+            if ($payable->amount >= config('sheba.min_order_amount_for_emi')) {
+                $data['emi_option'] = 1;
+                $data['emi_max_inst_option'] = 12;
+                if ($payable->emi_month) {
+                    $data['emi_selected_inst'] = (int)$payable->emi_month;
+                    $data['emi_allow_only'] = 1;
+                }
+            }
+        }
     }
 
     /**

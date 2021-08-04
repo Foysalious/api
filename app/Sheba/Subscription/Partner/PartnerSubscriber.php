@@ -4,6 +4,7 @@ use App\Models\Partner;
 use App\Models\PartnerSubscriptionPackage;
 use App\Models\PartnerSubscriptionUpdateRequest;
 use DB;
+use Exception;
 use Sheba\Subscription\ShebaSubscriber;
 use Sheba\Subscription\SubscriptionPackage;
 
@@ -37,7 +38,7 @@ class PartnerSubscriber extends ShebaSubscriber
     /**
      * @param SubscriptionPackage $package
      * @param PartnerSubscriptionUpdateRequest $update_request
-     * @throws \Exception
+     * @throws Exception
      */
     public function upgrade(SubscriptionPackage $package, PartnerSubscriptionUpdateRequest $update_request)
     {
@@ -53,6 +54,7 @@ class PartnerSubscriber extends ShebaSubscriber
     /**
      * @param PartnerSubscriptionPackage $new_package
      * @param                            $new_billing_type
+     * @throws Exception
      */
     public function upgradeNew(PartnerSubscriptionPackage $new_package, $new_billing_type)
     {

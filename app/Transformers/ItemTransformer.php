@@ -20,7 +20,14 @@ class ItemTransformer extends TransformerAbstract
             'discount_amount'   => (double)$item->getDiscountAmount(),
             'vat_percentage'    => $item->service ? (double)$item->service->vat_percentage : 0.00,
             'warranty'          => $item->service ? (double)$item->service->warranty : 0.00,
-            'warranty_unit'     => $item->service ? config('pos.warranty_unit')[$item->service->warranty_unit] : null
+            'warranty_unit'     => $item->service ? config('pos.warranty_unit')[$item->service->warranty_unit] : null,
+            'image_gallery'     => $item->service && $item->service->imageGallery ? $item->service->imageGallery->map(function ($image) {
+                return [
+                    'id' => $image->id,
+                    'image_link' => $image->image_link
+                ];
+
+            }) : []
         ];
     }
 }

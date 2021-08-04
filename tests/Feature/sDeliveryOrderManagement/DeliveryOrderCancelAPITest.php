@@ -93,7 +93,7 @@ class DeliveryOrderCancelAPITest extends FeatureTestCase
 
         $data = $response->decodeResponseJson();
         $Cancel_order = PosOrder::first();
-        $this->assertEquals("Pending", $Cancel_order->status);
+        $this->assertEquals("Cancelled", $Cancel_order->status);
     }
 
 }

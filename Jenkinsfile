@@ -54,21 +54,37 @@ pipeline {
             steps {
                 script {
                     sshPublisher(publishers: [
-                        sshPublisherDesc(configName: 'stage-server',
-                            transfers: [sshTransfer(
-                                cleanRemote: false,
-                                excludes: '',
-                                execCommand: '',
-                                execTimeout: 120000,
-                                flatten: false,
-                                makeEmptyDirs: false,
-                                noDefaultExcludes: false,
-                                patternSeparator: '[, ]+',
-                                remoteDirectory: '/tech_alerts/public',
-                                remoteDirectorySDF: false,
-                                removePrefix: '',
-                                sourceFiles: '**/api-test-result.xml'
-                            )],
+                        sshPublisherDesc(configName: 'production-server-on-premises',
+                            transfers: [
+                                sshTransfer(
+                                    cleanRemote: false,
+                                    excludes: '',
+                                    execCommand: '',
+                                    execTimeout: 120000,
+                                    flatten: false,
+                                    makeEmptyDirs: false,
+                                    noDefaultExcludes: false,
+                                    patternSeparator: '[, ]+',
+                                    remoteDirectory: '/tech_api/public',
+                                    remoteDirectorySDF: false,
+                                    removePrefix: '',
+                                    sourceFiles: '**/api-test-result.xml'
+                                ),
+                                sshTransfer(
+                                    cleanRemote: false,
+                                    excludes: '',
+                                    execCommand: 'cd /var/www/tech_api && ./bin/test_result_send_to_slack.sh',
+                                    execTimeout: 3600000,
+                                    flatten: false,
+                                    makeEmptyDirs: false,
+                                    noDefaultExcludes: false,
+                                    patternSeparator: '[, ]+',
+                                    remoteDirectory: '',
+                                    remoteDirectorySDF: false,
+                                    removePrefix: '',
+                                    sourceFiles: ''
+                                )
+                            ],
                             usePromotionTimestamp: false,
                             useWorkspaceInPromotion: false,
                             verbose: true

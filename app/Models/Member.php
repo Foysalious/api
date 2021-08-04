@@ -13,9 +13,19 @@ class Member extends Model
         return $this->belongsTo(Profile::class);
     }
 
+    public function allBusinesses()
+    {
+        return $this->belongsToMany(Business::class)->withTimestamps();
+    }
+
     public function businesses()
     {
         return $this->belongsToMany(Business::class)->whereIn('status', Statuses::getAccessible())->withTimestamps();
+    }
+
+    public function inactiveBusinesses()
+    {
+        return $this->belongsToMany(Business::class)->where('status', Statuses::INACTIVE)->withTimestamps();
     }
 
     public function inspections()
@@ -26,6 +36,16 @@ class Member extends Model
     public function businessMember()
     {
         return $this->businessMembers()->whereIn('status', Statuses::getAccessible());
+    }
+
+    public function activeBusinessMember()
+    {
+        return $this->businessMembers()->where('status', Statuses::ACTIVE);
+    }
+
+    public function inactiveBusinessMember()
+    {
+        return $this->businessMembers()->where('status', Statuses::INACTIVE);
     }
 
     public function businessMemberWithoutStatusCheck()

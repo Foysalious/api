@@ -1,5 +1,6 @@
 <?php namespace Sheba\Pos\Payment;
 
+use Sheba\Pos\Order\PosOrderTypes;
 use Sheba\Pos\Repositories\PosOrderPaymentRepository;
 
 class Creator
@@ -12,20 +13,20 @@ class Creator
         $this->paymentRepo = $payment_repo;
     }
 
-    public function credit(array $data)
+    public function credit(array $data, $pos_order_type = PosOrderTypes::OLD_SYSTEM)
     {
         $data['transaction_type'] = 'Credit';
-        $this->create($data);
+        $this->create($data, $pos_order_type);
     }
 
-    public function debit(array $data)
+    public function debit(array $data, $pos_order_type = PosOrderTypes::OLD_SYSTEM)
     {
         $data['transaction_type'] = 'Debit';
-        $this->create($data);
+        $this->create($data, $pos_order_type);
     }
 
-    private function create(array $data)
+    private function create(array $data, $pos_order_type)
     {
-        $this->paymentRepo->save($data);
+        $pos_order_type == PosOrderTypes::NEW_SYSTEM ? $this->paymentRepo->saveToNewPosOrderSystem($data) : $this->paymentRepo->save($data);
     }
 }

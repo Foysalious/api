@@ -4,6 +4,7 @@ use App\Models\Attachment;
 use App\Models\Business;
 use App\Models\HyperLocal;
 use App\Sheba\Business\ACL\AccessControl;
+use App\Sheba\Business\BusinessBasicInformation;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -30,7 +31,7 @@ use DB;
 
 class MemberController extends Controller
 {
-    use ModificationFields, FilesAttachment, FileManager;
+    use ModificationFields, FilesAttachment, FileManager, BusinessBasicInformation;
 
     /** BusinessMemberRequester $businessMemberRequester */
     private $businessMemberRequester;
@@ -145,7 +146,7 @@ class MemberController extends Controller
             "sub_domain" => $business->sub_domain,
             "tagline" => $business->tagline,
             "company_type" => $business->type,
-            'company_logo' => $this->isDefaultImage($business->logo) ? null : $business->logo,
+            'company_logo' => $this->isDefaultImageByUrl($business->logo) ? null : $business->logo,
             "address" => $business->address,
             "area" => $location ? $location->name : null,
             "geo_informations" => $geo_information,
@@ -176,22 +177,24 @@ class MemberController extends Controller
             if (!$business_members->count()) return api_response($request, null, 420, ['message' => 'You account deactivated from this company']);
         }
 
+        $business_member = $member->activeBusinessMember->first();
+        if (!$business_member) return api_response($request, null, 420, ['message' => 'You account is not active yet. Please contract with your company.']);
         $profile = $member->profile;
-        $access_control->setBusinessMember($member->businessMember);
+        $access_control->setBusinessMember($business_member);
         $info = [
             'profile_id' => $profile->id,
             'name' => $profile->name,
-            'mobile' => $profile->mobile,
+            'mobile' => $business_member->mobile,
             'email' => $profile->email,
             'pro_pic' => $profile->pro_pic,
-            'designation' => ($member->businessMember && $member->businessMember->role) ? $member->businessMember->role->name : null,
+            'designation' => ($business_member && $business_member->role) ? $business_member->role->name : null,
             'gender' => $profile->gender,
             'date_of_birth' => $profile->dob ? Carbon::parse($profile->dob)->format('M-j, Y') : null,
             'nid_no' => $profile->nid_no,
             'address' => $profile->address,
             'business_id' => $business ? $business->id : null,
             'remember_token' => $member->remember_token,
-            'is_super' => $member->businessMember ? $member->businessMember->is_super : null,
+            'is_super' => $business_member ? $business_member->is_super : null,
             'is_payroll_enable' => $business->is_payroll_enable,
             'access' => [
                 'support' => $business ? (in_array($business->id, config('business.WHITELISTED_BUSINESS_IDS')) && $access_control->hasAccess('support.rw') ? 1 : 0) : 0,
@@ -323,12 +326,5 @@ class MemberController extends Controller
         $profile_updater->update();
 
         return api_response($request, null, 200);
-    }
-
-    public function isDefaultImage($logo_url)
-    {
-        $path_info = pathinfo($logo_url);
-        if (!in_array($path_info['extension'], ['png', 'jpg', 'jpeg', 'svg', 'gif']) || strtolower($path_info['filename']) == 'default') return 1;
-        return 0;
     }
 }

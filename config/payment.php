@@ -50,22 +50,26 @@ return [
         ]
     ],
     'ok_wallet'   => [
-        'base_url'   => env('OK_WALLET_BASE_URL'),
-        'account'    => env('OK_WALLET_ACCOUNT'),
-        'api_key'    => env('OK_WALLET_API_KEY'),
-        'api_secret' => env('OK_WALLET_API_SECRET'),
-        'format'     => env('OK_WALLET_API_FORMAT', 'json'),
-        'key_path'   => env('OK_WALLET_KEY_PATH', 'assets/ok-wallet/public.key'),
-        'merchant'   => env('OK_WALLET_MERCHANT', 'sheba.xyz')
+        'base_url'      => env('OK_WALLET_BASE_URL'),
+        'api_user'      => env('OK_WALLET_API_USER'),
+        'api_password'  => env('OK_WALLET_API_PASSWORD'),
+        'merchant_id'   => env('OK_WALLET_MERCHANT_ID'),
+        'access_key'    => env('OK_WALLET_ACCESS_KEY'),
+        'web_client_base_url' => env('OK_WALLET_WEB_CLIENT_BASE_URL'),
+        'urls'          => [
+            'approve' => env('SHEBA_API_URL') . '/v2/payments/ok-wallet/success',
+            'decline' => env('SHEBA_API_URL') . '/v2/payments/ok-wallet/fail',
+            'cancel'  => env('SHEBA_API_URL') . '/v2/payments/ok-wallet/cancel',
+        ]
     ],
     'nagad'       => [
         'stores' => [
-            'default'   => [
+            'default'     => [
                 'base_url'         => env('NAGAD_BASE_URL', 'http://sandbox.mynagad.com:10080/remote-payment-gateway-1.0'),
                 'merchant_id'      => env('NAGAD_MERCHANT_ID', '683002007104225'),
                 'context_path'     => 'remote-payment-gateway-1.0'
             ],
-            'affiliate' => [
+            'affiliate'   => [
                 'base_url'         => env('NAGAD_BASE_URL', 'http://sandbox.mynagad.com:10080/remote-payment-gateway-1.0'),
                 'merchant_id'      => env('NAGAD_AFFILIATE_MERCHANT_ID', '683002007104225'),
                 'context_path'     => 'remote-payment-gateway-1.0'
@@ -76,5 +80,8 @@ return [
                 'context_path'     => 'remote-payment-gateway-1.0'
             ],
         ]
+    ],
+    'ebl'         => [
+        'auth_token' => env('EBL_APP_AUTH_TOKEN')
     ]
 ];

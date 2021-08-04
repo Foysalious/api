@@ -1,6 +1,5 @@
 <?php namespace Sheba\TopUp\Jobs;
 
-use App\Jobs\Job;
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use Exception;
@@ -8,13 +7,12 @@ use Illuminate\Queue\Failed\FailedJobProviderInterface;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Sheba\QueueMonitor\MonitoredJob;
 use Sheba\TopUp\TopUpRechargeManager;
 use Sheba\TopUp\TopUpAgent;
-use Sheba\TopUp\Vendor\Vendor;
-use Sheba\TopUp\Vendor\VendorFactory;
 use Sheba\TopUp\TopUpCompletedEvent;
 
-class TopUpJob extends Job implements ShouldQueue
+class TopUpJob extends MonitoredJob implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
 
@@ -81,7 +79,7 @@ class TopUpJob extends Job implements ShouldQueue
     }
 
     /**
-     * @throws Exception
+     * @throws Exception|\Throwable
      */
     private function _handle()
     {
@@ -153,5 +151,11 @@ class TopUpJob extends Job implements ShouldQueue
         logErrorWithExtra($e, [
             config('queue.failed.table') . ".id" => $id
         ]);
+    }
+
+    protected function getTitle()
+    {
+        $agent = $this->getAgent();
+        return "Top up to " . $this->topUpOrder->payee_mobile . " by " . class_basename($agent) . "#" . $agent->id;
     }
 }

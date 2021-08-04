@@ -1304,7 +1304,7 @@ return [
         [
             'key' => 'limited',
             'en' => 'Limited',
-            'bn' => 'লিমিটেড-1'
+            'bn' => 'লিমিটেড'
         ],
         [
             'key' => 'partnership',
@@ -1338,8 +1338,8 @@ return [
     ],
     'PARTNER_BUSINESS_TYPE' => [
         'grocery_business' => [
-          'en' =>  'Grocery Business',
-          'bn' =>  'মুদি ব্যবসা',
+            'en' =>  'Grocery Business',
+            'bn' =>  'মুদি ব্যবসা',
         ],
         'clothing_business' => [
             'en' =>  'Clothing Business',
@@ -1349,93 +1349,98 @@ return [
             'en' =>  'Electronics',
             'bn' =>   'ইলেক্ট্রনিক্স'
         ],
+        'mobile_and_gadgets' => [
+            'en' =>  'Mobile and Gadgets',
+            'bn' =>  'মোবাইল এবং গ্যাজেট'
+        ],
         'e-commerce' => [
             'en' =>  'E-Commerce',
             'bn' =>  'ই-কমার্স'
-        ],
-        'f_commerce_or_facebook_business' => [
-            'en' =>  'F-Commerce or Facebook Business',
-            'bn' =>  'এফ-কমার্স বা ফেসবুক ব্যবসা'
-        ],
-        'm_commerce_or_mobile_topup_business' => [
-            'en' =>  'M-Commerce or Mobile Topup Business',
-            'bn' =>  'এম-কমার্স বা মোবাইল টপআপ ব্যবসা'
         ],
         'drugstore' => [
             'en' =>  'Drugstore',
             'bn' =>  'ঔষধের দোকান'
         ],
-        'mobile_and_gadgets' => [
-            'en' =>  'Mobile and Gadgets',
-            'bn' =>  'মোবাইল এবং গ্যাজেট'
+        'm_commerce_or_mobile_topup_business' => [
+            'id' => 6,
+            'en' =>  'M-Commerce or Mobile Topup Business',
+            'bn' =>  'এম-কমার্স বা মোবাইল টপআপ ব্যবসা'
         ],
-        'confectionery_and_foods' => [
-            'en' =>  'Confectionery and Foods',
-            'bn' =>  'কনফেকশনারি এন্ড ফুডস'
-        ],
-        'household_items' => [
-            'en' =>  'Household Items',
-            'bn' =>  'গৃহস্থালি জিনিসপত্র'
+        'f_commerce_or_facebook_business' => [
+            'en' =>  'F-Commerce or Facebook Business',
+            'bn' =>  'এফ-কমার্স বা ফেসবুক ব্যবসা'
         ],
         'raw_materials_business' => [
             'en' =>  'Raw Materials Business',
             'bn' =>  'কাঁচামালের ব্যবসায়'
         ],
-        'hardware' => [
-            'en' =>  'Hardware',
-            'bn' =>  'হার্ডওয়্যার'
+        'poultry_and_agro_business' => [
+            'en' =>  'Poultry and Agro Business',
+            'bn' =>  'পোলট্রি এন্ড এগ্রো ব্যবসায়'
         ],
         'cosmetics' => [
             'en' =>  'Cosmetics',
             'bn' =>  'কসমেটিক্স'
         ],
+        'confectionery_and_foods' => [
+            'en' =>  'Confectionery and Foods',
+            'bn' =>  'কনফেকশনারি এন্ড ফুডস'
+        ],
+        'hardware' => [
+            'en' =>  'Hardware',
+            'bn' =>  'হার্ডওয়্যার'
+        ],
+        'service_and_repairing' => [
+            'en' =>  'Service & Repairing',
+            'bn' =>  'সার্ভিস ও রিপেয়ারিং'
+        ],
         'furniture' => [
             'en' =>  'Furniture',
             'bn' =>  'ফার্নিচার'
         ],
-        'toy_store' => [
-            'en' =>  'Toy Store',
-            'bn' =>  'খেলনার দোকান'
-        ],
-        'eyewear_store' => [
-            'en' =>  'Eyewear Store',
-            'bn' =>  'চশমার দোকান'
-        ],
-        'motor_parts_business' => [
-            'en' =>  'Motor Parts Business',
-            'bn' =>  'মোটর যন্ত্রাংশের ব্যবসায়'
+        'household_items' => [
+            'en' =>  'Household Items',
+            'bn' =>  'গৃহস্থালি জিনিসপত্র'
         ],
         'restaurant_and_catering_business' => [
             'en' =>  'Restaurant and Catering Business',
             'bn' =>  'রেস্টুরেন্ট ও ক্যাটারিং ব্যবসায়'
         ],
-        'poultry_and_agro_business' => [
-            'en' =>  'Poultry and Agro Business',
-            'bn' =>  'পোলট্রি এন্ড এগ্রো ব্যবসায়'
+        'motor_parts_business' => [
+            'en' =>  'Motor Parts Business',
+            'bn' =>  'মোটর যন্ত্রাংশের ব্যবসায়'
         ],
-        'handicraft_business' => [
-            'en' =>  'Handicraft Business',
-            'bn' =>  'হ্যান্ডি ক্রাফট ব্যবসায়'
+        'service' => [
+            'en' =>  'Service & Repairing',
+            'bn' =>  'সার্ভিস'
         ],
         'rent-a-car_or_car_rental_business' => [
             'en' =>  'Rent-a-car or Car Rental Business',
             'bn' =>  'রেন্ট-এ-কার বা গাড়ি ভাড়া ব্যবসায়্'
         ],
-        'cleaning_and_pest_control' => [
-            'en' =>  'Cleaning & Pest Control',
-            'bn' =>  'ক্লিনিং ও পেস্ট কন্ট্রোল'
+        'toy_store' => [
+            'en' =>  'Toy Store',
+            'bn' =>  'খেলনার দোকান'
+        ],
+        'trading' => [
+            'en' => 'Trading',
+            'bn' => 'ট্রেডিং'
+        ],
+        'manufacturing' => [
+            'en' => 'Manufacturing',
+            'bn' => 'ম্যানুফ্যাকচারিং'
         ],
         'beauty_and_salon' => [
             'en' =>  'Beauty & Salon',
             'bn' =>  'বিউটি ও সেলুন'
         ],
-        'ticket_and_travel_business' => [
-            'en' =>  'Ticket & Travel Business',
-            'bn' =>  'টিকেট ও ট্রাভেলস ব্যবসায়'
-        ],
         'laundry' => [
             'en' =>  'Laundry',
             'bn' =>  'লন্ড্রি'
+        ],
+        'ticket_and_travel_business' => [
+            'en' =>  'Ticket & Travel Business',
+            'bn' =>  'টিকেট ও ট্রাভেলস ব্যবসায়'
         ],
         'house_shifting_business' => [
             'en' =>  'House Shifting Business',
@@ -1445,9 +1450,13 @@ return [
             'en' =>  'Painting and Renovation',
             'bn' =>  'পেইন্টিং ও রেনোভেশন'
         ],
-        'service_and_repairing' => [
-            'en' =>  'Service & Repairing',
-            'bn' =>  'সার্ভিস ও রিপেয়ারিং'
+        'eyewear_store' => [
+            'en' =>  'Eyewear Store',
+            'bn' =>  'চশমার দোকান'
+        ],
+        'handicraft_business' => [
+            'en' =>  'Handicraft Business',
+            'bn' =>  'হ্যান্ডি ক্রাফট ব্যবসায়'
         ],
         'others' => [
             'en' =>  'Others',
@@ -1456,5 +1465,5 @@ return [
     ],
     "PARTNER_ORDER_TARGET_TYPE" => 'PARTNER_ORDER_DETAILS',
     'PARTNER_SUBSCRIPTION_SMS' => env('PARTNER_SUBSCRIPTION_SMS'),
-    'MAX_CONCURRENT_TIME' => 300
+    'MAX_CONCURRENT_TIME' => 900
 ];

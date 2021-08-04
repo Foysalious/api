@@ -71,15 +71,24 @@ class Updater
                 'periodic_schedule' => $packages['periodic_schedule'],
                 'schedule_date' => $packages['schedule_date'],
             ];
-            if (empty($existing_package->periodic_schedule_created_at) && empty($existing_package->generated_at)) {
-                if ($packages['schedule_type'] == ScheduleType::PERIODICALLY) {
-                    $current_time = Carbon::now();
-                    $business_pay_day = $this->payrollSetting->pay_day;
-                    if ($current_time->day < $business_pay_day) $current_package_pay_generate_date = $current_time->day($business_pay_day)->format('Y-m-d');
-                    else $current_package_pay_generate_date = $current_time->addMonth()->day($business_pay_day)->format('Y-m-d');
-                    $data = array_merge($data, ['periodic_schedule_created_at' => $current_time->format('Y-m-d H:i:s'), 'generated_at' => $current_package_pay_generate_date]);
+            if ($packages['schedule_type'] == ScheduleType::PERIODICALLY) {
+                $period = 0;
+                $last_generated_date = null;
+                if (!empty($existing_package->generated_at)) {
+                    $existing_period = intval($existing_package->periodic_schedule);
+                    $existing_generated_date = $existing_package->generated_at;
+                    $pay_day = $this->payrollSetting->pay_day;
+                    $period = $packages['periodic_schedule'];
+                    if (Carbon::now()->day < $pay_day) $last_generated_date = Carbon::parse($existing_generated_date)->subMonths($existing_period)->format('y-m-d');
+                    if (Carbon::now()->day > $pay_day || Carbon::now()->day == $pay_day) $last_generated_date = Carbon::parse($existing_generated_date)->format('y-m-d');
                 }
+                $package_generate_data = (new Formatter)->packageGenerateData($this->payrollSetting, $last_generated_date, $period);
+                if (empty($existing_package->periodic_schedule_created_at)) $package_generate_data = array_merge($package_generate_data, ['periodic_schedule_created_at' => Carbon::now()]);
+                $data = array_merge($data, $package_generate_data);
+
             }
+            if ($packages['schedule_type'] == ScheduleType::FIXED_DATE) $data = array_merge($data, ['generated_at' => null]);
+
             $this->payrollComponentPackageRepository->update($existing_package, $data);
             if (!empty($packages['effective_for'])) $this->makeTargetData($existing_package, $packages['effective_for'], $packages['target']);
         }

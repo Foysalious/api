@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\HyperLocal;
+use App\Models\Location;
 use Illuminate\Http\Request;
 use Sheba\Cache\CacheAside;
 use Sheba\Cache\Category\Children\CategoryChildrenCacheRequest;
@@ -72,9 +73,36 @@ class CategoryController extends Controller
         return null;
     }
 
-    public function getSuggestions(Request $request)
+    public function getMasterCategories(Request $request)
     {
-        $categories = Category::where('parent_id', '<>', 'null')->published()->select('id', 'name', 'bn_name')->get();
+        $this->validate($request, ['location' => 'sometimes|numeric', 'lat' => 'sometimes|numeric', 'lng' => 'required_with:lat']);
+        $location = null;
+        if ($request->has('location')) {
+            $location = Location::find($request->location);
+        } else if ($request->has('lat')) {
+            $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+            if (!is_null($hyperLocation)) $location = $hyperLocation->location;
+        }
+        $categories = Category::where('parent_id', null)->whereHas('locations', function ($q) use($location) {
+            $location ? $q->published()->where('category_location.location_id', $location->toArray()['id']) : $q->published();
+        })->select('id', 'name', 'bn_name', 'thumb','app_thumb','icon','icon_png','icon_svg')->get();
+
+        return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $categories]) : api_response($request, null, 404);
+    }
+
+    public function getSubCategories(Request $request, $category)
+    {
+        $this->validate($request, ['location' => 'sometimes|numeric', 'lat' => 'sometimes|numeric', 'lng' => 'required_with:lat']);
+        $location = null;
+        if ($request->has('location')) {
+            $location = Location::find($request->location);
+        } else if ($request->has('lat')) {
+            $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+            if (!is_null($hyperLocation)) $location = $hyperLocation->location;
+        }
+        $categories = Category::where('parent_id', $category)->whereHas('locations', function ($q) use($location) {
+            $location ? $q->published()->where('category_location.location_id', $location->toArray()['id']) : $q->published();
+        })->select('id', 'name', 'bn_name', 'thumb','app_thumb','icon','icon_png','icon_svg')->get();
 
         return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $categories]) : api_response($request, null, 404);
     }

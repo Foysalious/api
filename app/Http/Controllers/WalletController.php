@@ -11,10 +11,13 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Authentication\Exceptions\AuthenticationFailedException;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
+use Sheba\PartnerStatusAuthentication;
 use Sheba\Payment\Adapters\Payable\RechargeAdapter;
 use Sheba\Payment\AvailableMethods;
+use Sheba\Payment\Exceptions\FailedToInitiate;
 use Sheba\Payment\Exceptions\InitiateFailedException;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
 use Sheba\Payment\Factory\PaymentStrategy;
@@ -30,11 +33,11 @@ class WalletController extends Controller
     use ModificationFields;
 
     /**
-     * @param Request        $request
+     * @param Request $request
      * @param PaymentManager $payment_manager
      * @return JsonResponse
      */
-    public function validatePayment(Request $request, PaymentManager $payment_manager)
+    public function validatePayment(Request $request, PaymentManager $payment_manager): JsonResponse
     {
         try {
             /** @var Payment $payment */
@@ -57,21 +60,24 @@ class WalletController extends Controller
      * @return JsonResponse
      * @throws InitiateFailedException
      * @throws InvalidPaymentMethod
+     * @throws AuthenticationFailedException|FailedToInitiate
      */
     public function recharge(Request $request, PaymentManager $payment_manager): JsonResponse
     {
         $methods = implode(',', $request->user_type == 'affiliate' ? AvailableMethods::getBondhuPointPayments() : AvailableMethods::getWalletRechargePayments());
         $this->validate($request, [
             'payment_method' => 'required|in:' . $methods,
-            'amount'         => 'required|numeric|min:10|max:100000',
-            'user_id'        => 'required',
-            'user_type'      => 'required|in:customer,affiliate,partner',
+            'amount' => 'required|numeric|min:10|max:100000',
+            'user_id' => 'required',
+            'user_type' => 'required|in:customer,affiliate,partner',
             'remember_token' => 'required'
         ]);
+
         $class_name = "App\\Models\\" . ucwords($request->user_type);
 
         if ($request->user_type === 'partner') {
             $user = (new PartnerRepository($request->user_id))->validatePartner($request->remember_token);
+            if($user) (new PartnerStatusAuthentication())->handleInside($user);
         } else {
             $user = $class_name::where([
                 ['id', (int)$request->user_id],
@@ -97,18 +103,16 @@ class WalletController extends Controller
      * @param BonusCredit $bonus_credit
      * @return JsonResponse
      */
-    public function purchase(Request $request, PaymentStatusChangeLogRepository $paymentRepository, BonusCredit $bonus_credit)
+    public function purchase(Request $request, PaymentStatusChangeLogRepository $paymentRepository, BonusCredit $bonus_credit): JsonResponse
     {
         $this->validate($request, ['transaction_id' => 'required']);
 
         /** @var Payment $payment */
         $payment = Payment::where('transaction_id', $request->transaction_id)->valid()->first();
-        if (!$payment)
-            return api_response($request, null, 404); elseif ($payment->isFailed()) return api_response($request, null, 500, ['message' => 'Payment failed']);
-        elseif ($payment->isPassed())
-            return api_response($request, null, 200);
+        if (!$payment) return api_response($request, null, 404); elseif ($payment->isFailed()) return api_response($request, null, 500, ['message' => 'Payment failed']);
+        elseif ($payment->isPassed()) return api_response($request, null, 200);
 
-        $user         = $payment->payable->user;
+        $user = $payment->payable->user;
         $sheba_credit = $user->shebaCredit();
         $paymentRepository->setPayment($payment);
         if ($sheba_credit == 0) {
@@ -121,23 +125,23 @@ class WalletController extends Controller
         try {
             $transaction = '';
             DB::transaction(function () use ($payment, $user, $bonus_credit, &$transaction) {
-                $spent_model       = $payment->payable->getPayableType();
+                $spent_model = $payment->payable->getPayableType();
                 $is_spend_on_order = $spent_model && ($spent_model instanceof PartnerOrder);
-                $category          = $is_spend_on_order ? $spent_model->jobs->first()->category : null;
-                $category_name     = $category ? $category->name : '';
-                $bonus_log         = $is_spend_on_order ? 'Service Purchased ' . $category_name : 'Purchased ' . class_basename($spent_model);
-                $remaining         = $bonus_credit->setUser($user)->setPayableType($spent_model)->setLog($bonus_log)->deduct($payment->payable->amount);
+                $category = $is_spend_on_order ? $spent_model->jobs->first()->category : null;
+                $category_name = $category ? $category->name : '';
+                $bonus_log = $is_spend_on_order ? 'Service Purchased ' . $category_name : 'Purchased ' . class_basename($spent_model);
+                $remaining = $bonus_credit->setUser($user)->setPayableType($spent_model)->setLog($bonus_log)->deduct($payment->payable->amount);
                 if ($remaining > 0 && $user->wallet > 0) {
                     if ($user->wallet < $remaining) {
-                        $remaining              = $user->wallet;
-                        $payment_detail         = $payment->paymentDetails->where('method', 'wallet')->first();
+                        $remaining = $user->wallet;
+                        $payment_detail = $payment->paymentDetails->where('method', 'wallet')->first();
                         $payment_detail->amount = $remaining;
                         $payment_detail->update();
                     }
                     $this->setModifier($user);
                     $transactionHandler = (new WalletTransactionHandler())->setModel($user)->setType(Types::debit())->setAmount($remaining);
                     if (in_array($payment->payable->type, ['movie_ticket_purchase', 'transport_ticket_purchase'])) {
-                        $log    = sprintf(constants('TICKET_LOG')[$payment->payable->type]['log'], number_format($remaining, 2));
+                        $log = sprintf(constants('TICKET_LOG')[$payment->payable->type]['log'], number_format($remaining, 2));
                         $source = ($payment->payable->type == 'movie_ticket_purchase') ? TransactionSources::MOVIE : TransactionSources::TRANSPORT;
                         $transactionHandler->setSource($source);
                     } else {
@@ -155,11 +159,9 @@ class WalletController extends Controller
             });
 
             $paymentRepository->create([
-                'to'                  => 'validated',
-                'from'                => $payment->status,
-                'transaction_details' => $payment->transaction_details
+                'to' => 'validated', 'from' => $payment->status, 'transaction_details' => $payment->transaction_details
             ]);
-            $payment->status              = 'validated';
+            $payment->status = 'validated';
             $payment->transaction_details = json_encode(['payment_id' => $payment->id, 'transaction_id' => $transaction ? $transaction->id : null]);
             $payment->update();
         } catch (QueryException $e) {
@@ -176,7 +178,7 @@ class WalletController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function getFaqs(Request $request)
+    public function getFaqs(Request $request): JsonResponse
     {
         $faqs = [
             ['question' => '1. What is Bonus Credit?', 'answer' => 'Bonus credit is a promotional credit which is given by Sheba.xyz to make service purchase at discounted price.'],

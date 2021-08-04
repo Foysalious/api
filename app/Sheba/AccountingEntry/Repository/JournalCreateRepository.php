@@ -35,6 +35,10 @@ class JournalCreateRepository
     protected $entryAt;
     protected $commission;
     private   $end_point = "api/journals/";
+    private   $sourceType;
+    private   $sourceId;
+    private   $amountCleared;
+    private   $note;
 
     public function __construct()
     {

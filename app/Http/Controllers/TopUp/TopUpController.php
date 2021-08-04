@@ -18,6 +18,7 @@ use Illuminate\Http\JsonResponse;
 use Jose\Factory\JWEFactory;
 use Jose\Factory\JWKFactory;
 use Sheba\Dal\AuthenticationRequest\Purpose;
+use Sheba\Dal\SubscriptionWisePaymentGateway\Model as SubscriptionWisePaymentGateway;
 use Sheba\Dal\TopUpBulkRequest\Statuses;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
@@ -36,9 +37,11 @@ use Sheba\TopUp\Bulk\Validator\SheetNameValidator;
 use Sheba\TopUp\ConnectionType;
 use Sheba\OAuth2\AuthUser;
 use Sheba\TopUp\Exception\PinMismatchException;
+use Sheba\TopUp\Exception\InvalidSubscriptionWiseCommission;
 use Sheba\TopUp\History\RequestBuilder;
 use Sheba\TopUp\OTF\OtfAmount;
 use Sheba\TopUp\TopUpAgent;
+use Sheba\TopUp\TopUpChargesSubscriptionWise;
 use Sheba\TopUp\TopUpDataFormat;
 use Sheba\TopUp\TopUpHistoryExcel;
 use Sheba\TopUp\TopUpSpecialAmount;
@@ -70,30 +73,32 @@ class TopUpController extends Controller
 
     /**
      * @param Request $request
-     * @param $user
+     * @param TopUpDataFormat $formatter
+     * @param string $user
      * @return JsonResponse
      */
-    public function getVendor(Request $request, $user)
+    public function getVendor(Request $request, TopUpDataFormat $formatter, string $user = ''): JsonResponse
     {
-        $agent = $this->getFullAgentType($user);
+        try {
+            $topup_charges = [];
+            /** @var TopUpAgent $agent */
+            $agent = $this->getAgent($request, $user);
+            $agent_class = get_class($agent);
 
-        $vendors = TopUpVendor::select('id', 'name', 'is_published')->published()->get();
-        $error_message = "Currently, we’re supporting";
-        foreach ($vendors as $vendor) {
-            $vendor_commission = TopUpVendorCommission::where([['topup_vendor_id', $vendor->id], ['type', $agent]])->first();
-            $asset_name = strtolower(trim(preg_replace('/\s+/', '_', $vendor->name)));
-            array_add($vendor, 'asset', $asset_name);
-            array_add($vendor, 'agent_commission', $vendor_commission ? $vendor_commission->agent_commission : 0);
-            array_add($vendor, 'is_prepaid_available', 1);
-            array_add($vendor, 'is_postpaid_available', ($vendor->id != 6) ? 1 : 0);
-            if ($vendor->is_published) $error_message .= ',' . $vendor->name;
+            if ($agent_class === "App\Models\Partner")
+                $topup_charges = (new TopUpChargesSubscriptionWise())->getCharges($agent);
+
+            $vendors = TopUpVendor::select('id', 'name', 'is_published')->published()->get();
+
+            foreach ($vendors as $vendor)
+                $formatter->makeVendorWiseCommissionData($vendor, $agent_class, $topup_charges);
+
+            $regular_expression = $formatter->getAdditionalData();
+            return api_response($request, $vendors, 200, ['vendors' => $vendors, 'regex' => $regular_expression]);
+        } catch (Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
         }
-        $regular_expression = [
-            'typing' => "^(013|13|014|14|018|18|016|16|017|17|019|19|015|15)",
-            'from_contact' => "^(?:\+?88)?01[16|8]\d{8}$",
-            'error_message' => $error_message . '.'
-        ];
-        return api_response($request, $vendors, 200, ['vendors' => $vendors, 'regex' => $regular_expression]);
     }
 
     /**
@@ -153,7 +158,12 @@ class TopUpController extends Controller
         if ($top_up_request->hasError()) {
             return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
         }
-        
+
+        $waiting_time = $this->hasLastTopupWithinIntervalTime($top_up_request, $request);
+        if($waiting_time !== false)
+            return api_response($request, null, 400, ['message' => 'এই নাম্বারে কিছুক্ষন আগে টপ-আপ করা হয়েছে । পুনরায় এই নাম্বারে টপ-আপ করার জন্য অনুগ্রহপূর্বক ' .$waiting_time. ' মিনিট অপেক্ষা করুন ।']);
+
+
         $topup_order = $creator->setTopUpRequest($top_up_request)->create();
         if ($topup_order) {
             dispatch((new TopUpJob($topup_order)));
@@ -357,7 +367,7 @@ class TopUpController extends Controller
     {
         ini_set('memory_limit', '6096M');
         ini_set('max_execution_time', 480);
-        
+
         list($offset, $limit) = calculatePagination($request);
         /** @var AuthUser $user */
         $user = $this->getAgent($request, $user);
@@ -508,7 +518,44 @@ class TopUpController extends Controller
         if ($user == 'business') $agent = $auth_user->getBusiness();
         elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
         elseif ($user == 'partner') $agent = $auth_user->getPartner();
+        else $agent = $request->user;
 
         return $agent;
+    }
+
+    private function hasLastTopupWithinIntervalTime(TopUpRequest $topUpRequest, Request $request)
+    {
+        $agent = $topUpRequest->getAgent();
+        $last_topup = $agent->topups()->select('id', 'payee_mobile as mobile', 'created_at')->where('payee_mobile', '=', $topUpRequest->getMobile())->orderBy('id', 'desc')->first();
+        if (!$last_topup) return false;
+        $vendor = TopUpVendor::where('id', $request->vendor_id)->first();
+        if ($topUpRequest->getMobile() == $last_topup->mobile) {
+            $passed_time = $last_topup->created_at->diffInSeconds(Carbon::now());
+            $waiting_time = $vendor->waiting_time * 60;
+            if($passed_time < $waiting_time) {
+                $try_after = (int) ceil(($waiting_time - $passed_time)/60);
+                return $try_after;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @param Request $request
+     * @param TopUpDataFormat $topUp_data_format
+     * @param TopUpOrderRepository $top_up_order_repo
+     * @return JsonResponse
+     */
+    public function allTopUps(Request $request, $user, TopUpDataFormat $topUp_data_format, TopUpOrderRepository $top_up_order_repo)
+    {
+        /** @var AuthUser $user */
+        $user = $this->getAgent($request, $user);
+        $all_topups = $top_up_order_repo->getAllTopUps($user);
+        $top_up_data = $topUp_data_format->allTopUpDataFormat($all_topups);
+
+        return response()->json([
+            'code' => 200,
+            'data' => $top_up_data,
+        ]);
     }
 }

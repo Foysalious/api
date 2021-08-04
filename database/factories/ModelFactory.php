@@ -35,12 +35,17 @@ use Factory\BusinessMemberFactory;
 use Factory\BusinessHolidayFactory;
 use Factory\CategoryLocationFactory;
 use Factory\PosOrderFactory;
-use \Factory\PosCustomerFactory;
-use \Factory\PartnerDeliveryInfoFactory;
-use \Factory\PartnerPosServiceFactory;
-use \Factory\PartnerPosCategoryFactory;
-use \Factory\PosCategoriesFactory;
-use \Factory\PosOrderPaymentFactory;
+use Factory\PosCustomerFactory;
+use Factory\PartnerDeliveryInfoFactory;
+use Factory\PartnerPosServiceFactory;
+use Factory\PartnerPosCategoryFactory;
+use Factory\PosCategoriesFactory;
+use Factory\PosOrderPaymentFactory;
+use Factory\InfoCallFactory;
+use Factory\InfoCallRejectReasonFactory;
+use Factory\InfoCallStatusLogFactory;
+use Factory\ResourceTransactionFactory;
+use \Factory\SubscriptionWisePaymentGatewaysFactory;
 
 
 
@@ -86,7 +91,13 @@ $factory_classes = [
     PartnerPosServiceFactory::class,
     PartnerPosCategoryFactory::class,
     PosCategoriesFactory::class,
-    PosOrderPaymentFactory::class
+    PosOrderPaymentFactory::class,
+    InfoCallFactory::class,
+    InfoCallRejectReasonFactory::class,
+    InfoCallStatusLogFactory::class,
+    ResourceTransactionFactory::class,
+    SubscriptionWisePaymentGatewaysFactory::class
+
 ];
 
 foreach ($factory_classes as $factory_class) {
