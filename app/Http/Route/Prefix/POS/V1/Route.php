@@ -58,6 +58,7 @@ class Route
                     $api->get('/', 'Inventory\ProductController@show');
                     $api->put('/', 'Inventory\ProductController@update');
                     $api->delete('/', 'Inventory\ProductController@destroy');
+                    $api->get('/logs', 'Inventory\ProductController@getLogs');
                 });
             });
             $api->group(['prefix' => 'category-products'], function ($api) {

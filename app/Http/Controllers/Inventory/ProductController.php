@@ -102,4 +102,11 @@ class ProductController extends Controller
         return http_response($request, null, 200, $product);
     }
 
+    public function getLogs(Request $request, $productId)
+    {
+        $partner = $request->auth_user->getPartner();
+        $product = $this->productService->setPartnerId($partner->id)->setProductId($productId)->getLogs();
+        return http_response($request, null, 200, $product);
+    }
+
 }
