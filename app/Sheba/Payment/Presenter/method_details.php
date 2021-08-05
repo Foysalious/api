@@ -59,7 +59,7 @@ $nagad          = [
     'cash_in_charge' => 0,
 ];
 $ebl            = [
-    'name'           => 'Visa/Master',
+    'name'           => 'Visa, Mastercard',
     'name_bn'        => null,
     'asset'          => 'ebl',
     'method_name'    => 'ebl',

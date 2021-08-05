@@ -4,7 +4,7 @@
 
 <head>
     <!-- start: Meta -->
-    <title>Payrooll Details</title>
+    <title>Payslip</title>
     <meta name="description" content="">
     <meta name="author" content="Asad Ahmed">
     <meta name="keyword" content="">
