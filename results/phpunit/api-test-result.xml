@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Application Test Suite" tests="7" assertions="15" failures="1" errors="2" time="24.759123">
+    <testsuite name="Tests\Feature\CustomerInfoCall\InfoCallListTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallListTest.php" tests="7" assertions="15" failures="1" errors="2" time="24.759123">
+      <testcase name="testInfoCallListCustomerForResponse200" class="Tests\Feature\CustomerInfoCall\InfoCallListTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallListTest.php" line="26" assertions="2" time="4.587331">
+        <error type="ErrorException">Tests\Feature\CustomerInfoCall\InfoCallListTest::testInfoCallListCustomerForResponse200
+ErrorException: Undefined offset: 0
+
+/var/www/vendor/sentry/sentry/lib/Raven/Breadcrumbs/ErrorHandler.php:34
+/var/www/tests/Feature/CustomerInfoCall/InfoCallListTest.php:42
+</error>
+      </testcase>
+      <testcase name="testInfoCallListCustomerWithoutValidBearerToken" class="Tests\Feature\CustomerInfoCall\InfoCallListTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallListTest.php" line="47" assertions="2" time="2.975224"/>
+      <testcase name="testInfoCallListCustomerWithInvalidCustomerId" class="Tests\Feature\CustomerInfoCall\InfoCallListTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallListTest.php" line="64" assertions="2" time="4.149254"/>
+      <testcase name="testInfoCallListCustomerWithInvalidURL" class="Tests\Feature\CustomerInfoCall\InfoCallListTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallListTest.php" line="83" assertions="1" time="3.095324"/>
+      <testcase name="testInfoCallListCustomerAfterRejectedStatus" class="Tests\Feature\CustomerInfoCall\InfoCallListTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallListTest.php" line="101" assertions="2" time="3.716920">
+        <error type="ErrorException">Tests\Feature\CustomerInfoCall\InfoCallListTest::testInfoCallListCustomerAfterRejectedStatus
+ErrorException: Undefined offset: 0
+
+/var/www/vendor/sentry/sentry/lib/Raven/Breadcrumbs/ErrorHandler.php:34
+/var/www/tests/Feature/CustomerInfoCall/InfoCallListTest.php:119
+</error>
+      </testcase>
+      <testcase name="testInfoCallListCustomerWithInvalidBearerToken" class="Tests\Feature\CustomerInfoCall\InfoCallListTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallListTest.php" line="123" assertions="2" time="3.173796"/>
+      <testcase name="testInfoCallListCustomerWithMultipleInfoCall" class="Tests\Feature\CustomerInfoCall\InfoCallListTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallListTest.php" line="143" assertions="4" time="3.061274">
+        <failure type="PHPUnit_Framework_ExpectationFailedException">Tests\Feature\CustomerInfoCall\InfoCallListTest::testInfoCallListCustomerWithMultipleInfoCall
+Failed asserting that two strings are equal.
+--- Expected
++++ Actual
+@@ @@
+-'Rejected'
++'Open'
+
+/var/www/tests/Feature/CustomerInfoCall/InfoCallListTest.php:168
+</failure>
+      </testcase>
+    </testsuite>
+  </testsuite>
+</testsuites>
