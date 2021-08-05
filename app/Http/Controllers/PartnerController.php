@@ -120,7 +120,6 @@ class PartnerController extends Controller
         try {
             $details->setPartnerFromDomain($request->domain_name);
         } catch (\Exception $e) {
-            dd($e);
             return api_response($request, null, 404);
         }
         $loc = getLocationFromRequest($request);
