@@ -27,6 +27,7 @@ class EmployeeRoute
                     $api->post('personal', 'Employee\EmployeeController@updatePersonalInfo');
                 });
             });
+            $api->get('manager-list', 'Employee\EmployeeVisitTrackingController@getCoWorkerManagerList');
             //$api->post('password', 'Employee\EmployeeController@updateMyPassword');
             $api->get('dashboard', 'Employee\EmployeeController@getDashboard');
             $api->get('notifications', 'Employee\NotificationController@index');
