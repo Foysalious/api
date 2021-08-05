@@ -1,9 +1,10 @@
 {
-
-    "http-basic": {
-        "bitbucket.org": {
-            "username": "shafiq_startern",
-            "password": "Shafiq.10213223"
-        }
+  "bitbucket-oauth": {
+    "bitbucket.org": {
+      "consumer-key": "BRaRb2RSQExPwsKJWW",
+      "consumer-secret": "SKmCpr6bp9FstqehYq9ergdwYDZc3J6N",
+      "access-token": "vahQn6S99zArMiupe8sju7aHezH3Vv-bdtEKKNQSQoGywHhLTaDC3F4rLl-ZQCXyJLCryTER1BVt5zo18GAIvhyHvwiOJo1DsuVS6eGYq_IJQ-Ld3dox_sNSGohdqOnfcQlGHtfKzvaUPI8qIJYp",
+      "access-token-expiration": 1620041421
     }
+  }
 }
