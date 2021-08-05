@@ -78,10 +78,11 @@ class ProductController extends Controller
         return http_response($request, null, 200, $product);
     }
 
-    public function destroy(Request $request, $partnerId, $productId)
+    public function destroy(Request $request, $productId)
     {
+        $partner = $request->auth_user->getPartner();
         $product = $this->productService
-            ->setPartnerId($partnerId)
+            ->setPartnerId($partner->id)
             ->setProductId($productId)
             ->delete();
         return http_response($request, null, 200, $product);
