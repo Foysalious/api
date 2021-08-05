@@ -2,6 +2,8 @@
 
 
 use App\Http\Controllers\Controller;
+use App\Sheba\EmployeeTracking\Creator;
+use App\Sheba\EmployeeTracking\Requester;
 use App\Transformers\Business\CoWorkerManagerListTransformer;
 use App\Transformers\BusinessEmployeeDetailsTransformer;
 use App\Transformers\CustomSerializer;
@@ -50,6 +52,21 @@ class EmployeeVisitTrackingController extends Controller
                 }
         }
         return api_response($request, null, 200, ['manager_list' => $managers_data]);
+    }
+
+    public function create(Request $request, Requester $requester, Creator $creator)
+    {
+        $this->validate($request, [
+            'date' => 'required|date_format:Y-m-d',
+            'employee' => 'required|numeric',
+            'title' => 'required|string',
+            'description' => 'sometimes|required|string',
+        ]);
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $requester->setBusinessMember($business_member)->setDate($request->date)->setEmployee($request->employee)->setTitle($request->title)->setDescription($request->description);
+        $creator->setRequester($requester)->create();
+        return api_response($request, null, 200);
     }
 
     private function getCoWorkersUnderSpecificManager($business_member_id)
