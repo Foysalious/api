@@ -69,7 +69,7 @@ class PayReportDetailsTransformer extends TransformerAbstract
             'conveyance' => $salary_break_down['conveyance'],
             'gross_salary' => $salary_break_down['gross_salary'],
             'net_payable' => $net_payable,
-            'net_payable_in_word' => $this->getAmountInWord($net_payable),
+            'net_payable_in_word' => $this->getAmountInWord(floatValFormat($net_payable)),
         ];
     }
 
