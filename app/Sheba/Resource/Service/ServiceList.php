@@ -147,7 +147,7 @@ class ServiceList
         $location = $hyperLocation->location->id;
 
         $services = $this->resource->firstPartner()->services()->select($this->getSelectColumnsOfService())->where(function ($q) {
-            $q->where('publication_status', 1);
+            $q->where('publication_status', 1)->where('is_add_on', 0);
         })->whereHas('locations', function ($q) use ($location) {
             $q->where('locations.id', $location);
         });
