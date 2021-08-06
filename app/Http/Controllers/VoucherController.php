@@ -1,12 +1,15 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\Partner;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Models\PosOrderDiscount;
 use App\Models\Voucher;
 use App\Sheba\PosOrderService\Services\OrderService;
 use App\Repositories\VoucherRepository;
+use App\Sheba\Voucher\PosCustomerWrapper;
+use App\Sheba\Voucher\VoucherService;
 use App\Sheba\Voucher\VoucherValidate;
 use App\Transformers\CustomSerializer;
 use App\Transformers\VoucherDetailTransformer;
@@ -303,18 +306,27 @@ class VoucherController extends Controller
     }
 
     /**
-     * @param Request $request
-     * @return JsonResponse
      * @throws Exception
      */
-    public function validateVoucher(Request $request)
+    public function validateVoucher($partner_id, Request $request, VoucherService $voucherService)
     {
-        $partner = $request->user;
-        $real_pos_customer = PosCustomer::find($request->pos_customer);
-        $pos_customer = $real_pos_customer ? $real_pos_customer : $this->getUser($partner->id, $request->pos_customer);
-        return $this->voucherValidate->setPartner($partner)->setRealPosCustomer($real_pos_customer)->setPosCustomer($pos_customer)->voucherValidate($request);
+        $result = $voucherService->setPartner($partner_id)
+            ->setPosCustomerId($request->pos_customer)
+            ->validate();
 
+        if (empty($result))
+            return api_response($request, null, 403, ['message' => 'Invalid Promo']);
+
+        $voucher = $result['voucher'];
+        $voucher = [
+            'amount' => (double)$result['amount'],
+            'code' => $voucher->code,
+            'id' => $voucher->id,
+            'title' => $voucher->title
+        ];
+        return api_response($request, null, 200, ['voucher' => $voucher]);
     }
+
 
     public function getVoucherDetails(Request $request)
     {
@@ -326,10 +338,7 @@ class VoucherController extends Controller
         return $voucher;
     }
 
-    public function getUser($partner_id, $user_id)
-    {
-        return $this->orderService->setPartnerId($partner_id)->setUserId($user_id)->getUser();
-    }
+
 
     /**
      * @param Request $request
