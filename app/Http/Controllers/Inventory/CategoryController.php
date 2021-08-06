@@ -22,7 +22,9 @@ class CategoryController extends Controller
     public function index(Request $request)
     {
         $partner = $request->auth_user->getPartner();
-        $products = $this->categoryService->getAllMasterCategories($partner->id);
+        $products = $this->categoryService
+            ->setUpdatedAfter($request->updated_after)
+            ->getAllMasterCategories($partner->id);
         return http_response($request, null, 200, $products);
     }
 
