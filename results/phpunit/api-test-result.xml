@@ -1,39 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="Application Test Suite" tests="7" assertions="15" failures="1" errors="2" time="32.185294">
-    <testsuite name="Tests\Feature\CustomerInfoCall\InfoCallListTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallListTest.php" tests="7" assertions="15" failures="1" errors="2" time="32.185294">
-      <testcase name="testInfoCallListCustomerForResponse200" class="Tests\Feature\CustomerInfoCall\InfoCallListTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallListTest.php" line="26" assertions="2" time="4.381359">
-        <error type="ErrorException">Tests\Feature\CustomerInfoCall\InfoCallListTest::testInfoCallListCustomerForResponse200
-ErrorException: Undefined offset: 0
-
-/var/www/vendor/sentry/sentry/lib/Raven/Breadcrumbs/ErrorHandler.php:34
-/var/www/tests/Feature/CustomerInfoCall/InfoCallListTest.php:42
-</error>
-      </testcase>
-      <testcase name="testInfoCallListCustomerWithoutValidBearerToken" class="Tests\Feature\CustomerInfoCall\InfoCallListTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallListTest.php" line="47" assertions="2" time="3.689416"/>
-      <testcase name="testInfoCallListCustomerWithInvalidCustomerId" class="Tests\Feature\CustomerInfoCall\InfoCallListTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallListTest.php" line="64" assertions="2" time="4.866382"/>
-      <testcase name="testInfoCallListCustomerWithInvalidURL" class="Tests\Feature\CustomerInfoCall\InfoCallListTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallListTest.php" line="83" assertions="1" time="4.011901"/>
-      <testcase name="testInfoCallListCustomerAfterRejectedStatus" class="Tests\Feature\CustomerInfoCall\InfoCallListTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallListTest.php" line="101" assertions="2" time="4.344999">
-        <error type="ErrorException">Tests\Feature\CustomerInfoCall\InfoCallListTest::testInfoCallListCustomerAfterRejectedStatus
-ErrorException: Undefined offset: 0
-
-/var/www/vendor/sentry/sentry/lib/Raven/Breadcrumbs/ErrorHandler.php:34
-/var/www/tests/Feature/CustomerInfoCall/InfoCallListTest.php:119
-</error>
-      </testcase>
-      <testcase name="testInfoCallListCustomerWithInvalidBearerToken" class="Tests\Feature\CustomerInfoCall\InfoCallListTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallListTest.php" line="123" assertions="2" time="5.361138"/>
-      <testcase name="testInfoCallListCustomerWithMultipleInfoCall" class="Tests\Feature\CustomerInfoCall\InfoCallListTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallListTest.php" line="143" assertions="4" time="5.530099">
-        <failure type="PHPUnit_Framework_ExpectationFailedException">Tests\Feature\CustomerInfoCall\InfoCallListTest::testInfoCallListCustomerWithMultipleInfoCall
-Failed asserting that two strings are equal.
---- Expected
-+++ Actual
-@@ @@
--'Rejected'
-+'Open'
-
-/var/www/tests/Feature/CustomerInfoCall/InfoCallListTest.php:168
-</failure>
-      </testcase>
+  <testsuite name="Application Test Suite" tests="16" assertions="66" failures="0" errors="0" time="110.219696">
+    <testsuite name="Tests\Feature\CustomerInfoCall\InfoCallDetailsTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallDetailsTest.php" tests="7" assertions="19" failures="0" errors="0" time="28.150059">
+      <testcase name="testInfoCallDetailsCustomerForResponse200" class="Tests\Feature\CustomerInfoCall\InfoCallDetailsTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallDetailsTest.php" line="25" assertions="5" time="3.795263"/>
+      <testcase name="testInfoCallDetailsCustomerWithoutBearerToken" class="Tests\Feature\CustomerInfoCall\InfoCallDetailsTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallDetailsTest.php" line="48" assertions="2" time="3.472411"/>
+      <testcase name="testInfoCallDetailsCustomerWithInvalidCustomerId" class="Tests\Feature\CustomerInfoCall\InfoCallDetailsTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallDetailsTest.php" line="65" assertions="2" time="4.402758"/>
+      <testcase name="testInfoCallDetailsCustomerWithInvalidInfoCallId" class="Tests\Feature\CustomerInfoCall\InfoCallDetailsTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallDetailsTest.php" line="84" assertions="2" time="5.130061"/>
+      <testcase name="testInfoCallDetailsCustomerWithInvalidURL" class="Tests\Feature\CustomerInfoCall\InfoCallDetailsTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallDetailsTest.php" line="103" assertions="1" time="4.114491"/>
+      <testcase name="testInfoCallDetailsCustomerAfterRejectedStatus" class="Tests\Feature\CustomerInfoCall\InfoCallDetailsTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallDetailsTest.php" line="121" assertions="5" time="3.458358"/>
+      <testcase name="testInfoCallDetailsCustomerWithInvalidBearerToken" class="Tests\Feature\CustomerInfoCall\InfoCallDetailsTest" file="/var/www/tests/Feature/CustomerInfoCall/InfoCallDetailsTest.php" line="145" assertions="2" time="3.776717"/>
+    </testsuite>
+    <testsuite name="Tests\Feature\UserProfileUpdate\SProInfoCallDetailsTest" file="/var/www/tests/Feature/UserProfileUpdate/SProInfoCallDetailsTest.php" tests="9" assertions="47" failures="0" errors="0" time="82.069637">
+      <testcase name="testInfoCallDetailsAPIForInvalidInfoCallId" class="Tests\Feature\UserProfileUpdate\SProInfoCallDetailsTest" file="/var/www/tests/Feature/UserProfileUpdate/SProInfoCallDetailsTest.php" line="45" assertions="2" time="9.335387"/>
+      <testcase name="testInfoCallDetailsAPIForPassingChacracterAsInfoCallId" class="Tests\Feature\UserProfileUpdate\SProInfoCallDetailsTest" file="/var/www/tests/Feature/UserProfileUpdate/SProInfoCallDetailsTest.php" line="67" assertions="2" time="4.764540"/>
+      <testcase name="testInfoCallDetailsAPIForPassingInvalidURL" class="Tests\Feature\UserProfileUpdate\SProInfoCallDetailsTest" file="/var/www/tests/Feature/UserProfileUpdate/SProInfoCallDetailsTest.php" line="89" assertions="1" time="7.459044"/>
+      <testcase name="testInfoCallDetailsAPIForInvalidAuthorizedToken" class="Tests\Feature\UserProfileUpdate\SProInfoCallDetailsTest" file="/var/www/tests/Feature/UserProfileUpdate/SProInfoCallDetailsTest.php" line="119" assertions="2" time="6.182185"/>
+      <testcase name="testInfoCallDetailsAPIForOpenInfoCall" class="Tests\Feature\UserProfileUpdate\SProInfoCallDetailsTest" file="/var/www/tests/Feature/UserProfileUpdate/SProInfoCallDetailsTest.php" line="141" assertions="5" time="5.891885"/>
+      <testcase name="testInfoCallDetailsAPIForRejectedInfoCall" class="Tests\Feature\UserProfileUpdate\SProInfoCallDetailsTest" file="/var/www/tests/Feature/UserProfileUpdate/SProInfoCallDetailsTest.php" line="175" assertions="7" time="7.283978"/>
+      <testcase name="testInfoCallDetailsAPIForConvertedInfoCallRunning" class="Tests\Feature\UserProfileUpdate\SProInfoCallDetailsTest" file="/var/www/tests/Feature/UserProfileUpdate/SProInfoCallDetailsTest.php" line="216" assertions="9" time="15.729488"/>
+      <testcase name="testInfoCallDetailsAPIForConvertedInfoCallCompleted" class="Tests\Feature\UserProfileUpdate\SProInfoCallDetailsTest" file="/var/www/tests/Feature/UserProfileUpdate/SProInfoCallDetailsTest.php" line="323" assertions="10" time="10.426822"/>
+      <testcase name="testInfoCallDetailsAPIForConvertedInfoCallCanceled" class="Tests\Feature\UserProfileUpdate\SProInfoCallDetailsTest" file="/var/www/tests/Feature/UserProfileUpdate/SProInfoCallDetailsTest.php" line="433" assertions="9" time="14.996308"/>
     </testsuite>
   </testsuite>
 </testsuites>
