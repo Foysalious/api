@@ -2,6 +2,7 @@
 
 use App\Models\Payable;
 use App\Models\Payment;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Sheba\Dal\CardType\Contract as CardTypeRepo;
 use Sheba\Dal\EmiBank\Repository\EmiBankContract;
@@ -63,6 +64,7 @@ class PaymentManager
      */
     public function getMethod()
     {
+        Log::info(['method name', $this->methodName, $this->payable]);
         if ($this->method) return $this->method;
         $this->method = PaymentStrategy::getMethod($this->methodName, $this->payable);
         return $this->method;
