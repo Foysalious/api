@@ -5,6 +5,7 @@ use App\Models\Payment;
 use Exception;
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\GuzzleException;
+use Illuminate\Support\Facades\Log;
 use Sheba\Payment\Methods\Cbl\Response\InitResponse;
 use Sheba\Payment\Methods\Cbl\Response\ValidateResponse;
 use Sheba\Payment\Methods\PaymentMethod;
@@ -48,7 +49,6 @@ class Cbl extends PaymentMethod
     public function init(Payable $payable): Payment
     {
         $payment = $this->createPayment($payable);
-
         $response = $this->post($this->makeOrderCreateData($payable));
         $init_response = new InitResponse();
         $init_response->setResponse($response);

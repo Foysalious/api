@@ -2,6 +2,7 @@
 
 use App\Models\Payable;
 use App\Models\Payment;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Sheba\Dal\CardType\Contract as CardTypeRepo;
 use Sheba\Dal\EmiBank\Repository\EmiBankContract;

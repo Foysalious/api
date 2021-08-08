@@ -14,6 +14,7 @@ class CategoryService
     public $client;
     public $subCategories;
     protected $thumb;
+    private $updatedAfter;
 
     public function __construct(InventoryServerClient $client)
     {
@@ -70,10 +71,21 @@ class CategoryService
         return $this;
     }
 
+    /**
+     * @param mixed $updatedAfter
+     * @return CategoryService
+     */
+    public function setUpdatedAfter($updatedAfter)
+    {
+        $this->updatedAfter = $updatedAfter;
+        return $this;
+    }
+
 
     public function getAllMasterCategories($partner_id)
     {
-        $url = 'api/v1/partners/'.$partner_id.'/categories';
+        $url = 'api/v1/partners/'.$partner_id.'/categories?';
+        if($this->updatedAfter) $url .= 'updated_after='.$this->updatedAfter;
         return $this->client->get($url);
     }
 
@@ -159,5 +171,4 @@ class CategoryService
         }
         return array_merge_recursive($data,$sub_category);
     }
-
 }
