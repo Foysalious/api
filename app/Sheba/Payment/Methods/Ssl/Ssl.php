@@ -94,6 +94,7 @@ class Ssl extends PaymentMethod
     {
         /** @var Payable $payable */
         $payable = $payment->payable;
+        Log::info(['$payable details in ssl', $payable, $payment]);
         $data = array();
         $data['store_id'] = $this->store->getStoreId();
         $data['store_passwd'] = $this->store->getStorePassword();
