@@ -71,6 +71,7 @@ class PartnerSubscription
     {
         $price_bn = convertNumbersToBangla($partner->subscription->originalPrice($partner->billing_type));
         $billing_type_bn = $partner->subscription->titleTypeBn($partner->billing_type);
+        // two api for current subscription. DashboardController@getCurrentPackage is another one
         return [
             'current_package'            => $partner_subscription_package,
             'billing_type'               => $partner->billing_type,
@@ -81,7 +82,9 @@ class PartnerSubscription
             'static_message'             => $partner_subscription_package->id === (int)SubscriptionStatics::getLitePackageID() ? SubscriptionStatics::getLitePackageMessage() : '',
             'dynamic_message'            => SubscriptionStatics::getPackageMessage($partner, $price_bn),
             'price_bn'                   => $price_bn,
-            'billing_type_bn'            => $billing_type_bn
+            'billing_type_bn'            => $billing_type_bn,
+            'subscription_renewal_warning' => (bool)$partner->subscription_renewal_warning,
+            'renewal_warning_days'       => $partner->renewal_warning_days,
         ];
     }
 
