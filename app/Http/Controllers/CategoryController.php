@@ -423,7 +423,7 @@ class CategoryController extends Controller
                         $q->whereNotIn('id', $this->serviceGroupServiceIds());
 
                     }*/
-                    $q->where('is_add_on',0)->whereHas('locations', function ($query) use ($location) {
+                    $q->whereHas('locations', function ($query) use ($location) {
                         $query->where('locations.id', $location);
                     })->select(
                         'id', 'category_id', 'unit', 'name', 'bn_name', 'thumb',
