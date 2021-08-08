@@ -85,7 +85,7 @@ class CategoryService
     public function getAllMasterCategories($partner_id)
     {
         $url = 'api/v1/partners/'.$partner_id.'/categories?';
-        if (isset($this->updated_after)) $url .= 'updated_after='.$this->updated_after;
+        if($this->updatedAfter) $url .= 'updated_after='.$this->updatedAfter;
         return $this->client->get($url);
     }
 
