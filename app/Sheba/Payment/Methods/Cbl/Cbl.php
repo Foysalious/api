@@ -48,7 +48,6 @@ class Cbl extends PaymentMethod
      */
     public function init(Payable $payable): Payment
     {
-        Log::info(['$payable details in city bank limited', $payable]);
         $payment = $this->createPayment($payable);
         $response = $this->post($this->makeOrderCreateData($payable));
         $init_response = new InitResponse();
