@@ -32,7 +32,8 @@ class PayrollController extends Controller
         $pay_report_detail = $pay_report_details->setPayslip($payslip)->get();
         if ($request->send_email) {
             $pay_report_pdf = $pay_report_pdf_handler->setBusinessMember($business_member)->setPayReportDetails($pay_report_detail)->setTimePeriod($time_period)->generate();
-            dispatch(new SendPayslipEmailToBusinessMember($business_member, $time_period, $pay_report_pdf));
+            //dispatch(new SendPayslipEmailToBusinessMember($business_member, $time_period, $pay_report_pdf));
+            (new SendPayslipEmailToBusinessMember($business_member, $time_period, $pay_report_pdf))->handle();
         }
         return api_response($request, null, 200, ['pay_report_detail' => $pay_report_detail]);
     }
