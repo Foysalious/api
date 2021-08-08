@@ -115,7 +115,7 @@ class PaymentLinkController extends Controller
             $link = $paymentLinkRepository->findByIdentifier($identifier);
             if ($link) {
                 $receiver = $link->getPaymentReceiver();
-                if ($receiver instanceof Partner && $receiver->status == PartnerStatuses::BLACKLISTED) {
+                if ($receiver instanceof Partner && in_array($receiver->status, [PartnerStatuses::BLACKLISTED, PartnerStatuses::PAUSED])) {
                     return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
                 }
             }
@@ -145,7 +145,8 @@ class PaymentLinkController extends Controller
                 'interest_paid_by'   => 'sometimes|in:' . implode(',', PaymentLinkStatics::paidByTypes()),
                 'transaction_charge' => 'sometimes|numeric|min:' . PaymentLinkStatics::get_payment_link_commission()
             ]);
-            if (!$request->user) return api_response($request, null, 404, ['message' => 'User not found']);
+            $userStatusCheck = $this->userStatusCheck($request);
+            if ($userStatusCheck !== true) return $userStatusCheck;
             $emi_month_invalidity = Creator::validateEmiMonth($request->all());
             if ($emi_month_invalidity !== false) return api_response($request, null, 400, ['message' => $emi_month_invalidity]);
             $this->creator
@@ -226,6 +227,8 @@ class PaymentLinkController extends Controller
             ]);
             $purpose = 'Due Collection';
             if (!$request->user) return api_response($request, null, 404, ['message' => 'User not found']);
+            $userStatusCheck = $this->userStatusCheck($request);
+            if ($userStatusCheck !== true) return $userStatusCheck;
             if ($request->has('customer_id')) $customer = PosCustomer::find($request->customer_id);
 
             $this->creator->setAmount($request->amount)
@@ -255,6 +258,15 @@ class PaymentLinkController extends Controller
             logError($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function userStatusCheck($request)
+    {
+        if (!$request->user) return api_response($request, null, 404, ['message' => 'User not found']);
+        if ($request->user instanceof Partner && in_array($request->user->status, [PartnerStatuses::BLACKLISTED, PartnerStatuses::PAUSED])) {
+            return api_response($request, null, 401);
+        }
+        return true;
     }
 
     public function statusChange($link, Request $request)
