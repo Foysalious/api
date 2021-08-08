@@ -49,10 +49,9 @@ class AttendanceTransformer extends TransformerAbstract
         }
         $dates_of_holidays_formatted = $data;
         $period = CarbonPeriod::create($this->timeFrame->start, $this->timeFrame->end);
-        $remaining_days = $this->timeFrame->start->diffInDays(Carbon::parse($this->timeFrame->end)) + 1;
+        $remaining_days = (($this->timeFrame->start)->diffInDays($this->timeFrame->end)) + 1;
         $statistics = [
-            //'working_days' => $this->timeFrame->start->daysInMonth,
-            'working_days' => $remaining_days,
+            'working_days' => $this->timeFrame->start->format('Y-m') === Carbon::now()->format('Y-m') ? $this->timeFrame->start->daysInMonth : $remaining_days,
             'present' => 0,
             Statuses::ON_TIME => 0,
             Statuses::LATE => 0,
