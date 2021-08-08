@@ -28,7 +28,7 @@ class CategoryRepository
             ->whereIn('category_id', $category_ids)->skip($offset)->take($limit);
 
         if (request()->get('is_for_backend')) {
-            $services = $services->publishedForAll()->get();
+            $services = $services->where('is_add_on',0)->publishedForAll()->get();
         } else if ((int)request()->get('is_business')) {
             $services = $services->publishedForBusiness()->get();
         } else if ((int)request()->get('is_ddn')) {
