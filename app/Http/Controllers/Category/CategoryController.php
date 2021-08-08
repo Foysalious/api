@@ -75,7 +75,7 @@ class CategoryController extends Controller
 
     public function getMasterCategories(Request $request)
     {
-        $this->validate($request, ['location' => 'sometimes|numeric', 'lat' => 'sometimes|numeric', 'lng' => 'required_with:lat']);
+        $this->validate($request, ['location' => 'sometimes|numeric', 'lat' => 'required_with:lng|numeric', 'lng' => 'required_with:lat|numeric']);
         $location = null;
         if ($request->has('location')) {
             $location = Location::find($request->location);
@@ -92,7 +92,7 @@ class CategoryController extends Controller
 
     public function getSubCategories(Request $request, $category)
     {
-        $this->validate($request, ['location' => 'sometimes|numeric', 'lat' => 'sometimes|numeric', 'lng' => 'required_with:lat']);
+        $this->validate($request, ['location' => 'sometimes|numeric', 'lat' => 'required_with:lng|numeric', 'lng' => 'required_with:lat|numeric']);
         $location = null;
         if ($request->has('location')) {
             $location = Location::find($request->location);
