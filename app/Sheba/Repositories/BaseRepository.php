@@ -5,6 +5,7 @@ use Illuminate\Support\Collection;
 use Sheba\FileManagers\FileManager;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\ModificationFields;
+use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\Repositories\Interfaces\BaseRepositoryInterface;
 use Sheba\RequestIdentification;
 
@@ -22,10 +23,15 @@ class BaseRepository implements BaseRepositoryInterface
 
     /** @var string $modelClass */
     protected $modelClass;
+    /**
+     * @var PaymentCreator
+     */
+    protected $paymentCreator;
 
-    public function __construct()
+    public function __construct(PaymentCreator $paymentCreator)
     {
         $this->requestIdentification = new RequestIdentification();
+        $this->paymentCreator = $paymentCreator;
     }
 
     public function setModel($model)
