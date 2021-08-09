@@ -2,10 +2,9 @@
 
 
 use Illuminate\Support\Facades\DB;
-use Sheba\Dal\Visit\Status;
 use Sheba\Dal\Visit\VisitRepoImplementation;
 
-class Creator
+class Updater
 {
     /** @var VisitRepoImplementation $visitRepository*/
     private $visitRepository;
@@ -14,7 +13,6 @@ class Creator
     {
         $this->visitRepository = app(VisitRepoImplementation::class);
     }
-
     /** @var Requester  $requester **/
     private $requester;
     private $visitData = [];
@@ -25,23 +23,21 @@ class Creator
         return $this;
     }
 
-    public function create()
+    public function update()
     {
         $this->makeData();
         DB::transaction(function () {
-            $this->visitRepository->create($this->visitData);
+            $this->visitRepository->update($this->requester->getEmployeeVisit(), $this->visitData);
         });
     }
 
     private function makeData()
     {
         $this->visitData = [
-            'assignee_id' => $this->requester->getBusinessMember()->id,
-            'visitor_id' => $this->requester->getEmployee(),
             'schedule_date' => $this->requester->getDate(),
+            'visitor_id' => $this->requester->getEmployee(),
             'title' => $this->requester->getTitle(),
             'description' => $this->requester->getDescription(),
-            'status' => STATUS::CREATED,
         ];
     }
 

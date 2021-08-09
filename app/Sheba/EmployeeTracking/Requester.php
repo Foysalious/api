@@ -11,6 +11,7 @@ class Requester
     private $employee;
     private $title;
     private $description;
+    private $visit;
 
     public function setBusinessMember(BusinessMember $business_member)
     {
@@ -21,6 +22,17 @@ class Requester
     public function getBusinessMember()
     {
         return $this->businessMember;
+    }
+
+    public function setEmployeeVisit($visit)
+    {
+        $this->visit = $visit;
+        return $this;
+    }
+
+    public function getEmployeeVisit()
+    {
+        return $this->visit;
     }
 
     public function setDate($date)
