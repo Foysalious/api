@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\Pos;
 
 use App\Http\Controllers\Controller;
+use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
 use App\Sheba\AccountingEntry\Repository\AccountingDueTrackerRepository;
 use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
@@ -16,6 +17,7 @@ use Sheba\ModificationFields;
 use Sheba\PaymentLink\Creator as PaymentLinkCreator;
 use Sheba\Pos\Repositories\PartnerPosCustomerRepository;
 use Sheba\Reports\Exceptions\NotAssociativeArray;
+use Sheba\Pos\Repositories\PosOrderPaymentRepository;
 use Sheba\Reports\PdfHandler;
 use Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
 use Sheba\Usage\Usage;
@@ -252,7 +254,6 @@ class DueTrackerController extends Controller
             $message = "Insufficient Balance";
             return api_response($request, $message, 402, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e->getMessage());
             logError($e);
             return api_response($request, null, 500);
         }
@@ -269,47 +270,54 @@ class DueTrackerController extends Controller
         return api_response($request, $faqs, 200, ['faqs' => $faqs]);
     }
 
-    /**
-     * @param Request $request
-     * @param DueTrackerRepository $dueTrackerRepository
-     * @return JsonResponse
-     * @throws UnauthorizedRequestFromExpenseTrackerException
-     */
-    public function createPosOrderPayment(Request $request, DueTrackerRepository $dueTrackerRepository)
+    public function createPosOrderPayment(Request $request, PosOrderPaymentRepository $posOrderPaymentRepository)
     {
-        $this->validate($request, [
-            'amount' => 'required',
-            'pos_order_id' => 'required',
-            'payment_method'    => 'required|string|in:' . implode(',', config('pos.payment_method')),
-            'api_key' => 'required'
-        ]);
-        if($request->api_key != config('expense_tracker.api_key')) {
-            throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
+        try {
+            $this->validate($request, [
+                'amount' => 'required',
+                'pos_order_id' => 'required',
+                'payment_method'    => 'required|string|in:' . implode(',', config('pos.payment_method')),
+                'api_key' => 'required',
+                'expense_account_id' => 'sometimes'
+            ]);
+            if($request->api_key != config('expense_tracker.api_key'))
+                throw new UnauthorizedRequestFromExpenseTrackerException();
+            $posOrderPaymentRepository->setExpenseAccountId($request->expense_account_id)->createPosOrderPayment($request->amount, $request->pos_order_id,$request->payment_method);
+            return api_response($request, true, 200, ['message' => 'Pos Order Payment created successfully']);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (UnauthorizedRequestFromExpenseTrackerException $e) {
+            $message = "Unauthorized Request";
+            return api_response($request, $message, 401, ['message' => $message]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
         }
-
-        $dueTrackerRepository->createPosOrderPayment($request->amount, $request->pos_order_id,$request->payment_method);
-        return api_response($request, true, 200, ['message' => 'Pos Order Payment created successfully']);
     }
 
-    /**
-     * @param Request $request
-     * @param DueTrackerRepository $dueTrackerRepository
-     * @param $pos_order_id
-     * @return JsonResponse
-     * @throws UnauthorizedRequestFromExpenseTrackerException
-     */
-    public function removePosOrderPayment(Request $request, DueTrackerRepository $dueTrackerRepository, $pos_order_id)
-    {
-        $this->validate($request, [
-            'api_key' => 'required'
-        ]);
-        if($request->api_key != config('expense_tracker.api_key')) {
-            throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
-        }
-        $result = $dueTrackerRepository->removePosOrderPayment($pos_order_id, $request->amount);
 
-        if($result) $message = 'Pos Order Payment remove successfully';
-        else $message = 'There is no Pos Order Payment';
-        return api_response($request, true, 200, ['message' => $message]);
+    public function removePosOrderPayment(Request $request, $pos_order_id, PosOrderPaymentRepository $posOrderPaymentRepository) {
+        try {
+            $this->validate($request, [
+                'api_key' => 'required'
+            ]);
+            if($request->api_key != config('expense_tracker.api_key'))
+                throw new UnauthorizedRequestFromExpenseTrackerException();
+            $result = $posOrderPaymentRepository->removePosOrderPayment($pos_order_id, $request->amount);
+            $message = null;
+            if($result) $message = 'Pos Order Payment remove successfully';
+            else $message = 'There is no Pos Order Payment';
+            return api_response($request, true, 200, ['message' => $message]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (UnauthorizedRequestFromExpenseTrackerException $e) {
+            $message = "Unauthorized Request";
+            return api_response($request, $message, 401, ['message' => $message]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
     }
 }
