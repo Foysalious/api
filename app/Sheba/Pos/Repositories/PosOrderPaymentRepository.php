@@ -5,12 +5,22 @@ use App\Models\PosOrder;
 use App\Models\PosOrderPayment;
 use App\Sheba\PosOrderService\PosOrderServerClient;
 use Sheba\Pos\Order\PosOrderTypes;
+use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\Repositories\BaseRepository;
 
 class PosOrderPaymentRepository extends BaseRepository
 {
     private $partner;
-    private $expenseAccountId;
+    /**
+     * @var PaymentCreator
+     */
+    private $paymentCreator;
+
+    public function __construct(PaymentCreator $paymentCreator)
+    {
+        parent::__construct();
+        $this->paymentCreator = $paymentCreator;
+    }
 
     /**
      * @param array $data
