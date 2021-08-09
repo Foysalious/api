@@ -58,7 +58,7 @@ class FeatureTestCase extends TestCase
     protected $partner_resource;
     /** @var PartnerBonus */
     protected $PartnerBonus;
-//    @var ParnerSubscriptionPackage
+    /** @var ParnerSubscriptionPackage $partner_package */
     protected $partner_package;
     /**
      * @var $business
@@ -72,50 +72,38 @@ class FeatureTestCase extends TestCase
      * @var $InfoCall
      */
     protected $PosOrder;
-
     /**
      * @var PosCustomer
      */
     protected $PosCustomer;
-
     /**
      * @var PartnerDeliveryInfoFactory
      */
     protected $PartnerDeliveryInfoFactory;
-
     /**
      * @var PartnerPosService
      */
     protected $PartnerPosService;
-
     /**
      * @var PartnerPosCategory
      */
     protected $PartnerPosCategory;
-
-
     /**
      * @var PosCategory
      */
     protected $PosCategory;
-
     /**
      * @var PosOrderPayment
      */
     protected $PosOrderPayment;
-
     /**
      * @var Model
      */
     protected $SubscriptionWisePaymentGateways;
-
     /**
      * @var TopUpVendor
      */
     protected $topupVendor;
-
-
-
 
     public function setUp()
     {
@@ -238,6 +226,7 @@ class FeatureTestCase extends TestCase
             'user_id' => $this->partner->id
         ]);
     }
+
     protected function mxOrderCreate(){
         $this->location = Location::find(1);
         $this->truncateTables([
@@ -315,7 +304,6 @@ class FeatureTestCase extends TestCase
         $this->createClientAccounts();
     }
 
-
     protected function logInWithMobileNEmail($mobile,$email=null)
     {
         $this->createAccountWithMobileNEmail($mobile,$email);
@@ -323,7 +311,6 @@ class FeatureTestCase extends TestCase
         $this->createAuthTables();
 
     }
-
 
     protected function generateToken()
     {
