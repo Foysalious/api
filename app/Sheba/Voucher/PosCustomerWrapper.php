@@ -1,11 +1,13 @@
 <?php namespace App\Sheba\Voucher;
 
-use Sheba\Voucher\Contracts\CanApplyVoucher;
 
-class PosCustomerWrapper implements CanApplyVoucher
+class PosCustomerWrapper
 {
     private $customer;
-
+    /**
+     * @var null
+     */
+    public $profile;
 
     /**
      * @param $customer

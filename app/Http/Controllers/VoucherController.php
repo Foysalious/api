@@ -34,14 +34,14 @@ class VoucherController extends Controller
 
     protected $orderService;
     /**
-     * @var VoucherValidate
+     * @var VoucherService
      */
-    private $voucherValidate;
+    private $voucherService;
 
-    public function __construct(OrderService $orderService, VoucherValidate $voucherValidate)
+    public function __construct(OrderService $orderService, VoucherService $voucherService)
     {
-        $this->voucherValidate = $voucherValidate;
         $this->orderService = $orderService;
+        $this->voucherService = $voucherService;
     }
 
     /**
@@ -305,26 +305,17 @@ class VoucherController extends Controller
         return $rule;
     }
 
+
     /**
      * @throws Exception
      */
-    public function validateVoucher($partner_id, Request $request, VoucherService $voucherService)
+    public function validateVoucher(Request $request, $partner)
     {
-        $result = $voucherService->setPartner($partner_id)
-            ->setPosCustomerId($request->pos_customer)
-            ->validate();
+            $result = $this->voucherService->validateVoucher($partner,$request);
+            if (empty($result))
+                return api_response($request, null, 403, ['message' => 'Invalid Promo']);
+            return api_response($request, null, 200, ['voucher' => $result]);
 
-        if (empty($result))
-            return api_response($request, null, 403, ['message' => 'Invalid Promo']);
-
-        $voucher = $result['voucher'];
-        $voucher = [
-            'amount' => (double)$result['amount'],
-            'code' => $voucher->code,
-            'id' => $voucher->id,
-            'title' => $voucher->title
-        ];
-        return api_response($request, null, 200, ['voucher' => $voucher]);
     }
 
 
