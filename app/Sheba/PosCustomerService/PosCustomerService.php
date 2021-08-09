@@ -125,6 +125,7 @@ class PosCustomerService
     /**
      * @return array
      * @throws InvalidPartnerPosCustomer
+     * @throws AccountingEntryServerError
      */
     public function getDetails(): array
     {

@@ -342,7 +342,7 @@ class PartnerSubscriptionController extends Controller
                 [
                     'auto_billing_activated' => 'boolean',
                     'subscription_renewal_warning' => 'boolean',
-                    'renewal_warning_days' => 'numeric'
+                    'renewal_warning_days' => 'numeric|min:0'
                 ]
             );
             /** @var Partner $partner */
@@ -350,7 +350,7 @@ class PartnerSubscriptionController extends Controller
             $updatePartner = $partnerSubscription->updateRenewSubscription($request->all(), $partner);
             if ($updatePartner) {
                 $message = 'Subscription auto renewal updated';
-                return api_response($request, $message, 201, ['message' => $message]);
+                return api_response($request, $message, 200, ['message' => $message]);
             }
         } catch (Exception $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);

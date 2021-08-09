@@ -95,7 +95,7 @@ class PayReportDetailsTransformer extends TransformerAbstract
             if ($component_type == $type) {
                 foreach ($component_breakdown as $component => $component_value) {
                     $total += $component_value;
-                    $final_data['breakdown'][ucwords(implode(" ", explode("_", $component)))] = $component_value;
+                    $final_data['breakdown'][ucwords(implode(" ", explode("_", $component)))] = $component_value ? $component_value : 0;
                 }
             }
         }

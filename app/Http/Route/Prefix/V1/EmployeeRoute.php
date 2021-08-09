@@ -28,6 +28,10 @@ class EmployeeRoute
                 });
             });
             $api->get('manager-list', 'Employee\EmployeeVisitTrackingController@getCoWorkerManagerList');
+            $api->group(['prefix' => 'employee-tracking'], function ($api) {
+                $api->post('create', 'Employee\EmployeeVisitTrackingController@create');
+                $api->post('update/{visit_id}', 'Employee\EmployeeVisitTrackingController@update');
+            });
             //$api->post('password', 'Employee\EmployeeController@updateMyPassword');
             $api->get('dashboard', 'Employee\EmployeeController@getDashboard');
             $api->get('notifications', 'Employee\NotificationController@index');

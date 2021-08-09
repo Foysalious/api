@@ -4,6 +4,8 @@ use App\Http\Controllers\Controller;
 use App\Sheba\PosCustomerService\PosCustomerService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
 
 class PosCustomerController extends Controller
 {
@@ -18,8 +20,10 @@ class PosCustomerController extends Controller
      * @param Request $request
      * @param $customerId
      * @return JsonResponse
+     * @throws InvalidPartnerPosCustomer
+     * @throws InvalidPartnerPosCustomer|AccountingEntryServerError
      */
-    public function show(Request $request, $customerId)
+    public function show(Request $request, $customerId): JsonResponse
     {
         $partner = $request->auth_user->getPartner();
         $customer_details = $this->posCustomerService->setPartner($partner)->setCustomerId($customerId)->getDetails();
@@ -63,7 +67,7 @@ class PosCustomerController extends Controller
      * @param $customerId
      * @return JsonResponse
      */
-    public function orders(Request $request, $customerId)
+    public function orders(Request $request, $customerId): JsonResponse
     {
         $partner = $request->auth_user->getPartner();
         $orders = $this->posCustomerService->setPartner($partner->id)->setCustomerId($customerId)->getOrders();
@@ -75,7 +79,7 @@ class PosCustomerController extends Controller
      * @param $customerId
      * @return JsonResponse
      */
-    public function delete(Request $request, $customerId)
+    public function delete(Request $request, $customerId): JsonResponse
     {
         $partner = $request->auth_user->getPartner();
         $this->posCustomerService->setPartner($partner->id)->setCustomerId($customerId)->deleteUser();
