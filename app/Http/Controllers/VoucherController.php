@@ -311,11 +311,10 @@ class VoucherController extends Controller
      */
     public function validateVoucher(Request $request, $partner)
     {
-            $result = $this->voucherService->validateVoucher($partner,$request);
-            if (empty($result))
-                return api_response($request, null, 403, ['message' => 'Invalid Promo']);
-            return api_response($request, null, 200, ['voucher' => $result]);
-
+        $response = $this->voucherService->validateVoucher($partner, $request);
+        if (empty($response))
+            return api_response($request, null, 403, ['message' => 'Invalid Promo']);
+        return api_response($request, null, 200, ['voucher' => $response]);
     }
 
 

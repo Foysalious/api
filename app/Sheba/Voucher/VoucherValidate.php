@@ -103,17 +103,17 @@ class VoucherValidate
         $result = voucher($this->code)->checkForPosOrder($pos_order_params);
         $result = $this->posCustomer instanceof PosCustomer ? $result->reveal() : $result->checkMobile($this->posCustomer->getCustomer()['mobile'])->reveal();
 
-        $voucher = [];
+        $response = [];
         if ($result['is_valid']) {
             $voucher = $result['voucher'];
-            $voucher = [
+            $response = [
                 'amount' => (double)$result['amount'],
                 'code' => $voucher->code,
                 'id' => $voucher->id,
                 'title' => $voucher->title
             ];
         }
-        return $voucher;
+        return $response;
     }
 
     private function resolvePosCustomer()
