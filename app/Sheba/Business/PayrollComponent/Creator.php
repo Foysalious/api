@@ -74,6 +74,7 @@ class Creator
                 'type' => $component['type'],
                 'is_default' => 1,
                 'is_active' => 1,
+                'target_type' => TargetType::GENERAL,
                 'setting' => json_encode([]),
             ];
         }
@@ -89,6 +90,7 @@ class Creator
                 'type' => $component['type'],
                 'is_default' => 1,
                 'is_active' => 1,
+                'target_type' => TargetType::GENERAL,
                 'setting' => json_encode([]),
             ];
         }
