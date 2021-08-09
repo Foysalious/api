@@ -23,7 +23,7 @@ class Updated
 
         if (is_null($changed_attributes)) return;
 
-        if(array_key_exists('name', $changed_attributes)) {
+        if(array_key_exists('name', $changed_attributes) || array_key_exists('sub_domain', $changed_attributes)) {
             $this->dispatch((new SyncPartnersSetting($event->newModel))->setSyncService(PartnerPosSetting::class));
         }
 
