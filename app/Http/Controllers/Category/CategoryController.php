@@ -84,7 +84,7 @@ class CategoryController extends Controller
             if (!is_null($hyperLocation)) $location = $hyperLocation->location;
         }
         $categories = Category::where('parent_id', null)->where('publication_status',1)->whereHas('locations', function ($q) use($location) {
-            $location ? $q->where('category_location.location_id', $location->toArray()['id']) : $q->published();
+            $location ? $q->published()->where('category_location.location_id', $location->toArray()['id']) : $q->published();
         })->select('id', 'name', 'bn_name', 'thumb','app_thumb','icon','icon_png','icon_svg')->get();
 
         return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $categories]) : api_response($request, null, 404);
