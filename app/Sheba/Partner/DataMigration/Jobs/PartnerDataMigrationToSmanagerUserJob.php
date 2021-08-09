@@ -3,7 +3,7 @@
 
 use App\Jobs\Job;
 use App\Models\PartnerPosCustomer;
-use App\Sheba\SmanagerUserService\SmanagerUserServerClient;
+use App\Sheba\PosCustomerService\SmanagerUserServerClient;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;

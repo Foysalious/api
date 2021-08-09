@@ -1,4 +1,4 @@
-<?php namespace App\Sheba\SmanagerUserService;
+<?php namespace App\Sheba\PosCustomerService;
 
 use App\Models\Partner;
 use App\Sheba\PosOrderService\PosOrderServerClient;
@@ -7,7 +7,7 @@ use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
 use Sheba\Pos\Repositories\PosCustomerRepository;
 
-class SmanagerUserService
+class PosCustomerService
 {
     private $customerId;
     /**
@@ -43,7 +43,7 @@ class SmanagerUserService
 
     /**
      * @param Partner $partner
-     * @return SmanagerUserService
+     * @return PosCustomerService
      */
     public function setPartner( Partner $partner)
     {
@@ -113,7 +113,7 @@ class SmanagerUserService
 
     /**
      * @param mixed $customerId
-     * @return SmanagerUserService
+     * @return PosCustomerService
      */
     public function setCustomerId($customerId)
     {
@@ -124,6 +124,8 @@ class SmanagerUserService
 
     /**
      * @return array
+     * @throws InvalidPartnerPosCustomer
+     * @throws AccountingEntryServerError
      */
     public function getDetails(): array
     {
@@ -151,10 +153,37 @@ class SmanagerUserService
         return $customer_details;
     }
 
+    public function getOrders()
+    {
+        return $this->posOrderServerClient->get('api/v1/partners/'.$this->partner->id.'/customers/'.$this->customerId.'/orders');
+    }
+
+    public function deleteUser()
+    {
+        $this->deleteCustomerFromSmanagerUserService();
+        $this->deleteCustomerFromPosOrderService();
+        $this->deleteUserFromAccountingService();
+        return true;
+    }
+
+    private function deleteCustomerFromSmanagerUserService()
+    {
+        return $this->smanagerUserServerClient->delete('api/v1/partners/'.$this->partner->id.'/pos-users/'.$this->customerId);
+    }
+
+    private function deleteCustomerFromPosOrderService()
+    {
+        return $this->posOrderServerClient->delete('api/v1/partners/'.$this->partner->id.'/customers/'.$this->customerId);
+    }
+
+    private function deleteUserFromAccountingService()
+    {
+         $this->posCustomerRepository->deleteCustomerFromDueTracker($this->partner, $this->customerId);
+    }
+
     public function showCustomerListByPartnerId()
     {
         return $this->getCustomerListByPartnerId();
-
     }
 
     public function makeCreateData()
@@ -176,7 +205,7 @@ class SmanagerUserService
     public function storePosCustomer()
     {
         $data = $this->makeCreateData();
-        return $this->smanagerUserServerClient->post('api/v1/partners/' . $this->partner->id, $data);
+        return $this->smanagerUserServerClient->post('api/v1/partners/' . $this->partner->id.'/users', $data);
     }
 
     public function makeUpdateData()
@@ -235,6 +264,6 @@ class SmanagerUserService
 
     private function getCustomerListByPartnerId()
     {
-        return $this->smanagerUserServerClient->get('api/v1/partners/'.$this->partner->id);
+        return $this->smanagerUserServerClient->get('api/v1/partners/'.$this->partner->id.'/pos-users');
     }
 }

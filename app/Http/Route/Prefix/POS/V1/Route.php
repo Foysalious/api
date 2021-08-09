@@ -27,6 +27,7 @@ class Route
                 $api->get('/', 'PosCustomer\PosCustomerController@showCustomerByPartnerId');
                 $api->post('/', 'PosCustomer\PosCustomerController@storePosCustomer');
                 $api->put('/{customer_id}', 'PosCustomer\PosCustomerController@updatePosCustomer');
+                $api->get('/{customer_id}/orders', 'PosCustomer\PosCustomerController@orders');
             });
 
                 $api->get('warranty-units', 'Inventory\WarrantyUnitController@getWarrantyList');
@@ -55,6 +56,7 @@ class Route
                         $api->get('/', 'Inventory\ProductController@show');
                         $api->put('/', 'Inventory\ProductController@update');
                         $api->delete('/', 'Inventory\ProductController@destroy');
+                        $api->get('/logs', 'Inventory\ProductController@getLogs');
                     });
                 });
                 $api->group(['prefix' => 'category-products'], function ($api) {
