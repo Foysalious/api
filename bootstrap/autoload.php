@@ -32,3 +32,7 @@ $compiledPath = __DIR__.'/cache/compiled.php';
 if (file_exists($compiledPath)) {
     require $compiledPath;
 }
+
+if (env('APP_ENV') == 'testing') {
+    ini_set('memory_limit', '6G');
+}

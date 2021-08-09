@@ -23,7 +23,7 @@ pipeline {
                                 cleanRemote: false,
                                 excludes: '',
                                 execCommand: 'cd /var/www/api && ./bin/test_by_docker.sh',
-                                execTimeout: 36000000,
+                                execTimeout: 3600000,
                                 flatten: false,
                                 makeEmptyDirs: false,
                                 noDefaultExcludes: false,
