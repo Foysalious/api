@@ -2,13 +2,10 @@
 
 namespace Sheba\DueTracker;
 
-use App\Jobs\PartnerRenewalSMS;
-use App\Jobs\SendToCustomerToInformDueDepositSMS;
 use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
-use App\Models\PosOrderPayment;
 use App\Models\Profile;
 use App\Repositories\FileRepository;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
@@ -232,7 +229,6 @@ class DueTrackerRepository extends BaseRepository
      * @param Request $request
      * @return mixed
      * @throws ExpenseTrackingServerError
-     * @throws InvalidPartnerPosCustomer
      */
     public function update(Partner $partner, Request $request)
     {
@@ -256,7 +252,7 @@ class DueTrackerRepository extends BaseRepository
         $response = $this->client->post("accounts/$this->accountId/entries/update/$request->entry_id", $data);
 
         if ($data['amount_cleared'] > 1 && $response['data']['source_type'] == 'PosOrder' && !empty($response['data']['source_id']))
-            $this->createPosOrderPayment($data['amount_cleared'], $response['data']['source_id'], 'cod');
+            $this->posOrderPaymentRepository->createPosOrderPayment($data['amount_cleared'], $response['data']['source_id'], 'cod');
 
         return $response['data'];
     }

@@ -33,7 +33,7 @@ class PosOrderPaymentRepository extends BaseRepository
         $data['amount'] = $amount;
         /** @var PosOrderServerClient $client */
         $client = app(PosOrderServerClient::class);
-        $client->post('api/v1/delete-payment', $data);
+        $client->post('api/v1/payment/delete', $data);
         return true;
     }
 
@@ -42,18 +42,17 @@ class PosOrderPaymentRepository extends BaseRepository
         $payment_data['pos_order_id'] = $pos_order_id;
         $payment_data['amount']       = $amount_cleared;
         $payment_data['method']       = $payment_method;
+        if($this->partner->is_migration_completed)
+           return $this->paymentCreator->credit($payment_data,PosOrderTypes::NEW_SYSTEM);
 
         /** @var PosOrder $order */
         $order = PosOrder::find($pos_order_id);
         if(isset($order)) {
             $order->calculate();
             if ($order->getDue() > 0) {
-                $this->paymentCreator->credit($payment_data);
+                return $this->paymentCreator->credit($payment_data);
             }
         }
-        if($this->partner->is_migration_completed)
-            $this->paymentCreator->credit($payment_data,PosOrderTypes::NEW_SYSTEM);
-
     }
 
     /**
