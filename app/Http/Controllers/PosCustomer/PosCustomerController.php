@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Sheba\PosCustomerService\PosCustomerService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
 
 class PosCustomerController extends Controller
@@ -20,6 +21,7 @@ class PosCustomerController extends Controller
      * @param $customerId
      * @return JsonResponse
      * @throws InvalidPartnerPosCustomer
+     * @throws InvalidPartnerPosCustomer|AccountingEntryServerError
      */
     public function show(Request $request, $customerId): JsonResponse
     {
