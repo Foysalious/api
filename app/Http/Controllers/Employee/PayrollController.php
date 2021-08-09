@@ -30,12 +30,12 @@ class PayrollController extends Controller
         $payslip = $this->payslipRepository->where('business_member_id', $business_member->id)->where('status', Status::DISBURSED)->whereBetween('schedule_date', [$time_period->start, $time_period->end])->first();
         if (!$payslip) return api_response($request, null, 404);
         $pay_report_detail = $pay_report_details->setPayslip($payslip)->get();
+        $pay_report_pdf = $pay_report_pdf_handler->setBusinessMember($business_member)->setPayReportDetails($pay_report_detail)->setTimePeriod($time_period)->generate();
         if ($request->send_email) {
-            $pay_report_pdf = $pay_report_pdf_handler->setBusinessMember($business_member)->setPayReportDetails($pay_report_detail)->setTimePeriod($time_period)->generate();
             //dispatch(new SendPayslipEmailToBusinessMember($business_member, $time_period, $pay_report_pdf));
             (new SendPayslipEmailToBusinessMember($business_member, $time_period, $pay_report_pdf))->handle();
         }
-        return api_response($request, null, 200, ['pay_report_detail' => $pay_report_detail]);
+        return api_response($request, null, 200, ['pay_report_detail' => $pay_report_pdf]);
     }
 
     public function disbursedMonth(Request $request)
