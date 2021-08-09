@@ -238,7 +238,7 @@ class PosCustomerService
     /**
      * @return mixed
      */
-    private function getCustomerInfoFromSmanagerUserService()
+    public function getCustomerInfoFromSmanagerUserService()
     {
         return $this->smanagerUserServerClient->get('api/v1/partners/'.$this->partner->id.'/pos-users/'.$this->customerId);
     }
