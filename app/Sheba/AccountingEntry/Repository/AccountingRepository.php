@@ -170,11 +170,11 @@ class AccountingRepository extends BaseRepository
         $data['inventory_products'] = isset($request->inventory_products) ? $request->inventory_products : null;
         $data['entry_at'] = isset($request->date) ? $request->date : Carbon::now()->format('Y-m-d H:i:s');
         $data['attachments'] = $this->uploadAttachments($request);
-        $data['total_discount'] = isset($request->total_discount) ? (double)$request->total_discount : null;
-        $data['total_vat'] = isset($request->total_vat) ? (double)$request->total_vat : null;
-        $data['delivery_charge'] = isset($request->delivery_charge) ? (double)$request->delivery_charge : null;
-        $data['bank_transaction_charge'] = isset($request->bank_transaction_charge) ? $request->bank_transaction_charge : null;
-        $data['interest'] = isset($request->interest) ? $request->interest : null;
+        $data['total_discount'] = isset($request->total_discount) ? (double)$request->total_discount : 0;
+        $data['total_vat'] = isset($request->total_vat) ? (double)$request->total_vat : 0;
+        $data['delivery_charge'] = isset($request->delivery_charge) ? (double)$request->delivery_charge : 0;
+        $data['bank_transaction_charge'] = isset($request->bank_transaction_charge) ? $request->bank_transaction_charge : 0;
+        $data['interest'] = isset($request->interest) ? $request->interest : 0;
         $data['details'] = isset($request->details) ? $request->details : null;
         $data['reference'] = isset($request->reference) ? $request->reference : null;
         return $data;
