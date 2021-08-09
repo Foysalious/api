@@ -35,6 +35,7 @@ class InfoCallListTest extends FeatureTestCase
         ]);
 
         $data = $response->decodeResponseJson();
+        dd($data);
 
         //assert
         $this->assertEquals(200, $data["code"]);
@@ -159,6 +160,7 @@ class InfoCallListTest extends FeatureTestCase
         ]);
 
         $data = $response->decodeResponseJson();
+        dd($data);
 
         //assert
 
