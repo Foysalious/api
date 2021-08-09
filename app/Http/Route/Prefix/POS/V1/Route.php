@@ -13,6 +13,7 @@ class Route
             $api->group(['prefix' => 'partners/{partner_id}/vouchers'], function ($api) {
                 $api->post('validity-check', 'VoucherController@validateVoucher');
             });
+            $api->post('/reward/action', 'Inventory\CollectionController@rewardDummy');
         });
 
         $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers', 'middleware' => ['jwtAccessToken']], function ($api) {
