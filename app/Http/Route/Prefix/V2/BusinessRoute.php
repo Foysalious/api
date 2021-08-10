@@ -379,6 +379,9 @@ class BusinessRoute
                     $api->post('/component/{payroll_settings}', 'B2b\PayrollController@addComponent');
                     $api->post('/gross-component/{payroll_settings}', 'B2b\PayrollController@grossComponentAddUpdate');
                 });
+                $api->group(['prefix' => 'employee-tracking'], function ($api) {
+                    $api->post('create', 'B2b\VisitController@create');
+                });
             });
         });
         $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {
