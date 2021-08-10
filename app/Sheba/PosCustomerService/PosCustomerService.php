@@ -158,6 +158,9 @@ class PosCustomerService
         return $this->posOrderServerClient->get('api/v1/partners/'.$this->partner->id.'/customers/'.$this->customerId.'/orders');
     }
 
+    /**
+     * @throws Exceptions\SmanagerUserServiceServerError
+     */
     public function deleteUser()
     {
         $this->deleteCustomerFromSmanagerUserService();
@@ -166,14 +169,17 @@ class PosCustomerService
         return true;
     }
 
+    /**
+     * @throws Exceptions\SmanagerUserServiceServerError
+     */
     private function deleteCustomerFromSmanagerUserService()
     {
-        return $this->smanagerUserServerClient->delete('api/v1/partners/'.$this->partner->id.'/pos-users/'.$this->customerId);
+         $this->smanagerUserServerClient->delete('api/v1/partners/'.$this->partner->id.'/pos-users/'.$this->customerId);
     }
 
     private function deleteCustomerFromPosOrderService()
     {
-        return $this->posOrderServerClient->delete('api/v1/partners/'.$this->partner->id.'/customers/'.$this->customerId);
+         $this->posOrderServerClient->delete('api/v1/partners/'.$this->partner->id.'/customers/'.$this->customerId);
     }
 
     private function deleteUserFromAccountingService()
