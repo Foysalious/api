@@ -113,6 +113,7 @@ class Ssl extends PaymentMethod
         $data['cus_name']     = $payable->getName();
         $data['cus_email']    = $payable->getEmail();
         $data['cus_phone']    = $payable->getMobile();
+        $data['product_category'] = $payable->description;
         $this->setEmi($payable,$data);
 
         $request = (new TPRequest())->setUrl($this->store->getSessionUrl())
