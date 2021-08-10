@@ -59,7 +59,8 @@
     "phpunit/phpunit": "~4.0",
     "symfony/css-selector": "2.8.*|3.0.*",
     "symfony/dom-crawler": "2.8.*|3.0.*",
-    "itsgoingd/clockwork": "^4.0"
+    "itsgoingd/clockwork": "^4.0",
+    "johnkary/phpunit-speedtrap": "v1.0.0"
   },
   "autoload": {
     "classmap": [

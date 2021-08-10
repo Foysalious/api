@@ -34,5 +34,5 @@ if (file_exists($compiledPath)) {
 }
 
 if (env('APP_ENV') == 'testing') {
-    ini_set('memory_limit', '6G');
+    ini_set('memory_limit', '4G');
 }

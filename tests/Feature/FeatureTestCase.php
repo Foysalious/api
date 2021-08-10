@@ -108,8 +108,9 @@ class FeatureTestCase extends TestCase
     public function setUp()
     {
         parent::setUp();
-        $this->app->singleton(InventoryServerClient::class,MockInventoryServerClient::class);
-        $this->app->singleton(PosOrderServerClient::class,MockPosOrderServerClient::class);
+
+        $this->app->singleton(InventoryServerClient::class, MockInventoryServerClient::class);
+        $this->app->singleton(PosOrderServerClient::class, MockPosOrderServerClient::class);
     }
 
     public function get($uri, array $headers = [])
@@ -140,7 +141,7 @@ class FeatureTestCase extends TestCase
     public function runDatabaseMigrations()
     {
         // \Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
-      //  $this->artisan('migrate');
+        // $this->artisan('migrate');
         // $this->beforeApplicationDestroyed(function () {
         //     \Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
         // });
@@ -153,7 +154,6 @@ class FeatureTestCase extends TestCase
 
     protected function logIn()
     {
-
         $this->createAccounts();
         $this->token = $this->generateToken();
         $this->createAuthTables();
@@ -172,11 +172,7 @@ class FeatureTestCase extends TestCase
             BusinessMember::class
         ]);
 
-
         $this->profile = factory(Profile::class)->create();
-
-
-
         $this->createClientAccounts();
     }
 
@@ -191,7 +187,6 @@ class FeatureTestCase extends TestCase
 
     private function createClientAccounts()
     {
-
         $this->affiliate = factory(Affiliate::class)->create([
             'profile_id' => $this->profile->id
         ]);
@@ -281,6 +276,7 @@ class FeatureTestCase extends TestCase
             'preferred_time_start'=>"19:48:04",
             'preferred_time_end'=>"20:48:04"
         ]);
+
         $this->job_service = factory(JobService::class)->create([
             'job_id'=>$this->job->id,
             'service_id'=>$this->job->service_id,
@@ -293,13 +289,9 @@ class FeatureTestCase extends TestCase
     private function createAccountWithMobileNEmail($mobile,$email=null)
     {
         $this->profile = factory(Profile::class)->create([
-
             'mobile' =>$mobile,
             'email' =>$email,
-
         ]);
-
-
 
         $this->createClientAccounts();
     }
@@ -309,7 +301,6 @@ class FeatureTestCase extends TestCase
         $this->createAccountWithMobileNEmail($mobile,$email);
         $this->token = $this->generateToken();
         $this->createAuthTables();
-
     }
 
     protected function generateToken()
@@ -368,8 +359,6 @@ class FeatureTestCase extends TestCase
 
     protected function truncateTable($table)
     {
-        $this->truncateTables([
-            $table
-        ]);
+        $this->truncateTables([$table]);
     }
 }
