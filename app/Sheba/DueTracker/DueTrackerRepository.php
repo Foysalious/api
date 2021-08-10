@@ -2,13 +2,10 @@
 
 namespace Sheba\DueTracker;
 
-use App\Jobs\PartnerRenewalSMS;
-use App\Jobs\SendToCustomerToInformDueDepositSMS;
 use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
-use App\Models\PosOrderPayment;
 use App\Models\Profile;
 use App\Repositories\FileRepository;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
@@ -232,7 +229,6 @@ class DueTrackerRepository extends BaseRepository
      * @param Request $request
      * @return mixed
      * @throws ExpenseTrackingServerError
-     * @throws InvalidPartnerPosCustomer
      */
     public function update(Partner $partner, Request $request)
     {
@@ -256,34 +252,12 @@ class DueTrackerRepository extends BaseRepository
         $response = $this->client->post("accounts/$this->accountId/entries/update/$request->entry_id", $data);
 
         if ($data['amount_cleared'] > 1 && $response['data']['source_type'] == 'PosOrder' && !empty($response['data']['source_id']))
-            $this->createPosOrderPayment($data['amount_cleared'], $response['data']['source_id'], 'cod');
+            $this->posOrderPaymentRepository->createPosOrderPayment($data['amount_cleared'], $response['data']['source_id'], 'cod');
 
         return $response['data'];
     }
 
-    public function createPosOrderPayment($amount_cleared, $pos_order_id, $payment_method)
-    {
-        /** @var PosOrder $order */
-        $order = PosOrder::find($pos_order_id);
-        if(isset($order)) {
-            $order->calculate();
-            if ($order->getDue() > 0) {
-                $payment_data['pos_order_id'] = $pos_order_id;
-                $payment_data['amount']       = $amount_cleared;
-                $payment_data['method']       = $payment_method;
-                $this->paymentCreator->credit($payment_data);
-            }
-        }
-    }
 
-    public function removePosOrderPayment($pos_order_id, $amount){
-        $payment = PosOrderPayment::where('pos_order_id', $pos_order_id)
-            ->where('amount', $amount)
-            ->where('transaction_type', 'Credit')
-            ->first();
-
-        return $payment ? $payment->delete() : false;
-    }
 
     private function createStoreData(Request $request)
     {
