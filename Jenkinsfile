@@ -18,7 +18,7 @@ pipeline {
             steps {
                 script {
                     sshPublisher(publishers: [
-                        sshPublisherDesc(configName: 'development-server',
+                        sshPublisherDesc(configName: 'testing-server',
                             transfers: [sshTransfer(
                                 cleanRemote: false,
                                 excludes: '',
@@ -44,8 +44,8 @@ pipeline {
         stage('TEST RESULT TO DEPLOYMENT SERVER') {
             when { branch 'development' }
             steps {
-                sshagent(['development-server-ssh']) {
-                    sh "scp sheba@103.197.207.30:/var/www/api/results/phpunit/api-test-result.xml ."
+                sshagent(['testing-server-ssh']) {
+                    sh "scp -P 2222 testing@103.197.207.58:/var/www/api/results/phpunit/api-test-result.xml ."
                 }
             }
         }
