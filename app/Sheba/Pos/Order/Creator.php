@@ -10,6 +10,7 @@ use App\Models\PartnerPosService;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Models\Profile;
+use App\Sheba\Pos\Order\Invoice\InvoiceService;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Dal\POSOrder\SalesChannels;
@@ -24,6 +25,7 @@ use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
 use Sheba\Pos\Repositories\PosOrderItemRepository;
 use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Pos\Validators\OrderCreateValidator;
+use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Voucher\DTO\Params\CheckParamsForPosOrder;
 
 class Creator
@@ -125,6 +127,7 @@ class Creator
      */
     public function create()
     {
+
         $order_data['partner_id']            = $this->partner->id;
         $order_data['customer_id']           = $this->resolveCustomerId();
         $order_data['address']               = $this->address;
@@ -181,7 +184,18 @@ class Creator
         $this->voucherCalculation($order);
         $this->resolvePaymentMethod();
         $this->storeIncome($order);
+        $this->generateInvoice($order);
         return $order;
+    }
+
+    /**
+     * @throws NotAssociativeArray
+     */
+    private function generateInvoice($order)
+    {
+        /** @var InvoiceService $invoiceService */
+        $invoiceService = app(InvoiceService::class)->setPosOrder($order);
+        $invoiceService->generateInvoice()->saveInvoiceLink();
     }
 
     /**
