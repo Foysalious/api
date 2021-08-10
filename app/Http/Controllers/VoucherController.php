@@ -8,7 +8,7 @@ use App\Models\PosOrderDiscount;
 use App\Models\Voucher;
 use App\Sheba\PosOrderService\Services\OrderService;
 use App\Repositories\VoucherRepository;
-use App\Sheba\Voucher\PosCustomerWrapper;
+use App\Sheba\Voucher\PosCustomerInfo;
 use App\Sheba\Voucher\VoucherService;
 use App\Sheba\Voucher\VoucherValidate;
 use App\Transformers\CustomSerializer;

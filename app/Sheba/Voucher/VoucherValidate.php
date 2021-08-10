@@ -9,9 +9,9 @@ use Sheba\Voucher\DTO\Params\CheckParamsForPosOrder;
 class VoucherValidate
 {
     /**
-     * @var PosCustomerWrapper
+     * @var PosCustomerInfo
      */
-    private $posCustomerWrapper;
+    private $posCustomerInfo;
     /**
      * @var PosCustomerService
      */
@@ -25,13 +25,15 @@ class VoucherValidate
     protected $code;
     private $posCustomerId;
     /**
-     * @var PosCustomerWrapper $posCustomer
+     * @var PosCustomer
      */
     private $posCustomer;
 
-    public function __construct( PosCustomerWrapper $posCustomerWrapper, PosCustomerService $posCustomerService)
+
+
+    public function __construct(PosCustomerInfo $posCustomerInfo, PosCustomerService $posCustomerService)
     {
-        $this->posCustomerWrapper = $posCustomerWrapper;
+        $this->posCustomerInfo = $posCustomerInfo;
         $this->posCustomerService = $posCustomerService;
     }
 
@@ -96,12 +98,16 @@ class VoucherValidate
     public function validate()
     {
         $this->resolvePosCustomer();
+        if ($this->posCustomerId && !$this->partner->is_migration_completed)
+            $this->posCustomerInfo->setCustomerMobile($this->posCustomer->mobile);
+        else
+            $this->posCustomerInfo->setCustomerMobile($this->getPosCustomer()['mobile']);
         $pos_order_params = (new CheckParamsForPosOrder());
         $pos_order_params->setOrderAmount($this->amount);
-        $pos_order_params = $pos_order_params->setApplicant( $this->posCustomer instanceof PosCustomer ? $this->posCustomer->getCustomer() :  new PosCustomer());
+        $pos_order_params = $pos_order_params->setApplicant($this->posCustomerInfo->getCustomer());
         $pos_order_params = $pos_order_params->setPartnerPosService($this->posServices);
         $result = voucher($this->code)->checkForPosOrder($pos_order_params);
-        $result = $this->posCustomer instanceof PosCustomer ? $result->reveal() : $result->checkMobile($this->posCustomer->getCustomer()['mobile'])->reveal();
+        $result =  $result->checkMobile($this->posCustomerInfo->getCustomerMobile())->reveal();
 
         $response = [];
         if ($result['is_valid']) {
@@ -118,11 +124,8 @@ class VoucherValidate
 
     private function resolvePosCustomer()
     {
-        if (!$this->partner->is_migration_completed)
-            $pos_customer = $this->posCustomerId ? PosCustomer::find($this->posCustomerId) : new PosCustomer();
-        else
-            $pos_customer = $this->getPosCustomer();
-        $this->posCustomer = $this->posCustomerWrapper->setCustomer($pos_customer);
+        $this->posCustomer = $this->posCustomerId ? PosCustomer::find($this->posCustomerId) : new PosCustomer();
+        $this->posCustomerInfo = $this->posCustomerInfo->setCustomer($this->posCustomer);
     }
 
     private function getPosCustomer()
