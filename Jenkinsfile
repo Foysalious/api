@@ -13,7 +13,7 @@ pipeline {
                 }
             }
         }
-        stage('RUN TEST RESULT') {
+        /* stage('RUN TEST RESULT') {
             when { branch 'development' }
             steps {
                 script {
@@ -40,7 +40,7 @@ pipeline {
                     )
                 }
             }
-        }
+        } */
         stage('TEST RESULT TO DEPLOYMENT SERVER') {
             when { branch 'development' }
             steps {
