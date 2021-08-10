@@ -4,6 +4,7 @@
 use App\Models\HyperLocal;
 use App\Models\Job;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ServiceList
 {
@@ -14,6 +15,8 @@ class ServiceList
     private $resource;
     private $geo;
     private $categoryId;
+    /** @var array */
+    private $serviceIds = [];
 
     public function setJob(Job $job)
     {
@@ -37,8 +40,22 @@ class ServiceList
         return $this;
     }
 
+    public function setServiceIds(array $ids)
+    {
+        $this->serviceIds = $ids;
+        return $this;
+    }
+
     public function getServicesList()
     {
+        $cs_service_ids = DB::table('crosssale_services')->whereIn('service_id', $this->serviceIds)->get();
+        $cs_add_on_service_ids = [];
+        if ($cs_service_ids!=null){
+            foreach ($cs_service_ids as $cs_service_id) {
+                array_push($cs_add_on_service_ids, $cs_service_id->add_on_service_id);
+            }
+        }
+//        dd($cs_add_on_service_ids!=null);
         $is_published_for_backend = $this->request->is_published_for_backend;
         $location = $this->job->partnerOrder->order->location->id;
         $services = $this->job->partnerOrder->partner->services()->whereHas('locations', function ($q) use ($location) {
@@ -72,7 +89,8 @@ class ServiceList
             'services.unit',
             'services.variables',
             'app_thumb',
-            'category_id'
+            'category_id',
+            'is_add_on'
         ];
     }
 
