@@ -211,8 +211,7 @@ class EmployeeController extends Controller
                 'link' => config('b2b.BUSINESSES_LUNCH_LINK'),
             ] : null,
             'is_sheba_platform' => in_array($business->id, config('b2b.BUSINESSES_IDS_FOR_REFERRAL') ) ? 1 : 0,
-            'is_payroll_enable' => $business->payrollSetting->is_enable,
-            'location_fetch_waiting_time' => 3
+            'location_fetch_waiting_time' => 3,
             'is_payroll_enable' => $business->payrollSetting->is_enable,
             'is_enable_employee_visit' => $business->is_enable_employee_visit,
             'pending_visit_count' => $all_pending_visit_count,
