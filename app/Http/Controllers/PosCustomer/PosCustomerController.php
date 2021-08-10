@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\PosCustomer;
 
 use App\Http\Controllers\Controller;
+use App\Sheba\PosCustomerService\Exceptions\SmanagerUserServiceServerError;
 use App\Sheba\PosCustomerService\PosCustomerService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -77,6 +78,7 @@ class PosCustomerController extends Controller
      * @param Request $request
      * @param $customerId
      * @return JsonResponse
+     * @throws SmanagerUserServiceServerError
      */
     public function delete(Request $request, $customerId): JsonResponse
     {
