@@ -122,6 +122,7 @@ class Cors2MiddleWare
             "https://payment.smanager.xyz",
             "https://testsecureacceptance.cybersource.com",
             "https://secureacceptance.cybersource.com",
+            "https://spareninja.xyz/"
         ];
         // ALLOW OPTIONS METHOD
         $headers['Access-Control-Allow-Credentials'] = 'true';
