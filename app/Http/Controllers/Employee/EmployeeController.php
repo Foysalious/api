@@ -8,6 +8,7 @@ use App\Transformers\Business\CoWorkerMinimumTransformer;
 use App\Transformers\BusinessEmployeeDetailsTransformer;
 use App\Transformers\BusinessEmployeesTransformer;
 use App\Transformers\CustomSerializer;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
@@ -22,6 +23,9 @@ use Sheba\Business\CoWorker\UpdaterV2 as Updater;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
+use Sheba\Dal\Visit\Status;
+use Sheba\Dal\Visit\Visit;
+use Sheba\Dal\Visit\VisitRepoImplementation;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\ModificationFields;
 use Sheba\OAuth2\AccountServer;
@@ -131,7 +135,7 @@ class EmployeeController extends Controller
      * @return JsonResponse
      */
     public function getDashboard(Request $request, ActionProcessor $action_processor,
-                                 ProfileCompletionCalculator $completion_calculator)
+                                 ProfileCompletionCalculator $completion_calculator, VisitRepoImplementation $visit_repository)
     {
         /** @var Business $business */
         $business = $this->getBusiness($request);
@@ -151,6 +155,12 @@ class EmployeeController extends Controller
         $pending_approval_requests = $this->approvalRequestRepo->getPendingApprovalRequestByBusinessMember($business_member);
         $pending_approval_requests_count = $this->countPendingApprovalRequests($pending_approval_requests);
         $profile_completion_score = $completion_calculator->setBusinessMember($business_member)->getDigiGoScore();
+        $pending_visit = $visit_repository->whereIn('status', [Status::CREATED, Status::STARTED]);
+        $all_pending_visit_count = $pending_visit->count();
+        $today = Carbon::now()->format('Y-m-d');
+        $today_visit = $pending_visit->whereBetween('schedule_date', [$today.' 00:00:00', $today.' 23:59:59']);
+        $today_visit_count = $today_visit->count();
+        $current_visit = $visit_repository->where('status', Status::STARTED)->whereBetween('start_date_time', [$today.' 00:00:00', $today.' 23:59:59'])->count();
 
         $data = [
             'id' => $member->id,
@@ -169,7 +179,11 @@ class EmployeeController extends Controller
             ] : null,
             'is_sheba_platform' => in_array($business->id, config('b2b.BUSINESSES_IDS_FOR_REFERRAL') ) ? 1 : 0,
             'is_payroll_enable' => $business->payrollSetting->is_enable,
-            'is_enable_employee_visit' => $business->is_enable_employee_visit
+            'is_enable_employee_visit' => $business->is_enable_employee_visit,
+            'pending_visit_count' => $all_pending_visit_count,
+            'today_visit_count' => $today_visit_count,
+            'single_visit_title' => $today_visit_count === 1 ? $today_visit->first()->title : null,
+            'currently_on_visit' => $current_visit ? true : false
         ];
 
         if ($data['attendance']['can_checkout']) {
