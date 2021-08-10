@@ -71,7 +71,7 @@ class PosCustomerController extends Controller
     public function orders(Request $request, $customerId): JsonResponse
     {
         $partner = $request->auth_user->getPartner();
-        $orders = $this->posCustomerService->setPartner($partner->id)->setCustomerId($customerId)->getOrders();
+        $orders = $this->posCustomerService->setPartner($partner)->setCustomerId($customerId)->getOrders();
         return http_response($request, null, 200, ['message' => 'Successful', 'data' => $orders]);
     }
 
@@ -84,7 +84,7 @@ class PosCustomerController extends Controller
     public function delete(Request $request, $customerId): JsonResponse
     {
         $partner = $request->auth_user->getPartner();
-        $this->posCustomerService->setPartner($partner->id)->setCustomerId($customerId)->deleteUser();
+        $this->posCustomerService->setPartner($partner)->setCustomerId($customerId)->deleteUser();
         return http_response($request, null, 200, ['message' => 'Customer has been deleted successfully', ]);
     }
 

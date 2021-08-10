@@ -32,6 +32,7 @@ class Route
                 $api->post('/', 'PosCustomer\PosCustomerController@storePosCustomer');
                 $api->put('/{customer_id}', 'PosCustomer\PosCustomerController@updatePosCustomer');
                 $api->get('/{customer_id}/orders', 'PosCustomer\PosCustomerController@orders');
+                $api->delete('/{customer_id}', 'PosCustomer\PosCustomerController@delete');
             });
 
                 $api->get('warranty-units', 'Inventory\WarrantyUnitController@getWarrantyList');
