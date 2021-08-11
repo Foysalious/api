@@ -55,7 +55,13 @@ class PayReportController extends Controller
         if ($request->limit == 'all') $limit = $count;
         $payslip = collect($payslip)->splice($offset, $limit);
 
-        return api_response($request, null, 200, ['payslip' => $payslip,'total_calculation' => $pay_report_list->getTotal(), 'total' => $count,'is_enable' => $payroll_setting->is_enable]);
+        return api_response($request, null, 200, [
+            'payslip' => $payslip,
+            'total_calculation' => $pay_report_list->getTotal(),
+            'total' => $count,
+            'is_prorated_filter_applicable' => $pay_report_list->getIsProratedFilterApplicable(),
+            'is_enable' => $payroll_setting->is_enable
+        ]);
     }
 
     /**

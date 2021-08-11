@@ -35,6 +35,7 @@ class PayrunList
     private $monthYear;
     private $departmentID;
     private $payslip;
+    private $isProratedFilterApplicable;
 
     /**
      * PayrunList constructor.
@@ -132,11 +133,13 @@ class PayrunList
     {
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
-        $payslip_list = new Collection($this->payslipList, new PayRunListTransformer());
+        $payrun_list_transformer = new PayRunListTransformer();
+        $payslip_list = new Collection($this->payslipList, $payrun_list_transformer);
         $payslip_list = collect($manager->createData($payslip_list)->toArray()['data']);
 
         if ($this->search) $payslip_list = collect($this->searchWithEmployeeName($payslip_list))->values();
         if ($this->sort && $this->sortColumn) $payslip_list = $this->sortByColumn($payslip_list, $this->sortColumn, $this->sort)->values();
+        $this->isProratedFilterApplicable = $payrun_list_transformer->getIsProratedFilterApplicable();
 
         return $payslip_list;
     }
@@ -152,6 +155,11 @@ class PayrunList
             'deduction' => $this->payslip->sum('deduction'),
             'net_payable' => $this->payslip->sum('net_payable'),
         ];
+    }
+
+    public function getIsProratedFilterApplicable()
+    {
+        return $this->isProratedFilterApplicable;
     }
 
     /**
