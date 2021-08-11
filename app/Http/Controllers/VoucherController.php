@@ -1,7 +1,6 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\Customer;
-use App\Models\Partner;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Models\PosOrderDiscount;
@@ -10,9 +9,7 @@ use App\Models\Taggable;
 use App\Models\Voucher;
 use App\Sheba\PosOrderService\Services\OrderService;
 use App\Repositories\VoucherRepository;
-use App\Sheba\Voucher\PosCustomerWrapper;
 use App\Sheba\Voucher\VoucherService;
-use App\Sheba\Voucher\VoucherValidate;
 use App\Transformers\CustomSerializer;
 use App\Transformers\VoucherDetailTransformer;
 use App\Transformers\VoucherTransformer;
@@ -27,7 +24,6 @@ use League\Fractal\Resource\Item;
 use Sheba\ModificationFields;
 use Sheba\Vendor\Voucher\VendorVoucherDataGenerator;
 use Sheba\Voucher\DTO\Params\CheckParamsForPosOrder;
-use Sheba\Voucher\VoucherDiscount;
 use Sheba\Voucher\VoucherRule;
 use Throwable;
 use Illuminate\Validation\Rule;

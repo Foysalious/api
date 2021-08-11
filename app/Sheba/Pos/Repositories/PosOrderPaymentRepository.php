@@ -1,17 +1,15 @@
 <?php namespace Sheba\Pos\Repositories;
 
 use App\Models\Partner;
+use App\Models\PosOrder;
 use App\Models\PosOrderPayment;
 use App\Sheba\PosOrderService\PosOrderServerClient;
-use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\Repositories\BaseRepository;
 
 class PosOrderPaymentRepository extends BaseRepository
 {
     private $partner;
-    /**
-     * @var PaymentCreator
-     */
+
     /**
      * @param array $data
      * @return PosOrderPayment
@@ -37,23 +35,24 @@ class PosOrderPaymentRepository extends BaseRepository
         return true;
     }
 
-//    public function createPosOrderPayment($amount_cleared, $pos_order_id,  $payment_method)
-//    {
-//        $payment_data['pos_order_id'] = $pos_order_id;
-//        $payment_data['amount']       = $amount_cleared;
-//        $payment_data['method']       = $payment_method;
-//        if($this->partner->is_migration_completed)
-//           return $this->paymentCreator->credit($payment_data,PosOrderTypes::NEW_SYSTEM);
-//
-//        /** @var PosOrder $order */
-//        $order = PosOrder::find($pos_order_id);
-//        if(isset($order)) {
-//            $order->calculate();
-//            if ($order->getDue() > 0) {
-//                return $this->paymentCreator->credit($payment_data);
-//            }
-//        }
-//    }
+    public function createPosOrderPayment($amount_cleared, $pos_order_id,  $payment_method)
+    {
+        $payment_data['pos_order_id'] = $pos_order_id;
+        $payment_data['amount']       = $amount_cleared;
+        $payment_data['method']       = $payment_method;
+        $payment_data['transaction_type'] = 'Credit';
+        if($this->partner->is_migration_completed)
+           return $this->saveToNewPosOrderSystem($payment_data);
+
+        /** @var PosOrder $order */
+        $order = PosOrder::find($pos_order_id);
+        if(isset($order)) {
+            $order->calculate();
+            if ($order->getDue() > 0) {
+                return $this->save($payment_data);
+            }
+        }
+    }
 
     /**
      * @param mixed $expenseAccountId

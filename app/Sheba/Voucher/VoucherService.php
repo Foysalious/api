@@ -20,7 +20,7 @@ class VoucherService
     public function validateVoucher($partner, $request)
     {
         return $this->voucherValidate
-            ->setPartner($partner)
+            ->setPartnerId($partner)
             ->setPosCustomerId($request->pos_customer)
             ->setAmount($request->amount)
             ->setCode($request->code)
