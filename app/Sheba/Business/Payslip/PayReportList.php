@@ -24,6 +24,7 @@ class PayReportList
     private $departmentID;
     private $payslip;
     private $isProratedFilterApplicable;
+    private $grossSalaryProrated;
 
     /**
      * PayReportList constructor.
@@ -93,6 +94,12 @@ class PayReportList
         return $this;
     }
 
+    public function setGrossSalaryProrated($gross_salary_prorated)
+    {
+        $this->grossSalaryProrated = $gross_salary_prorated;
+        return $this;
+    }
+
     /**
      * @return \Illuminate\Support\Collection
      */
@@ -115,6 +122,7 @@ class PayReportList
         $payslips = $this->payslipRepository->getPaySlipByStatus($this->businessMemberIds, Status::DISBURSED)->orderBy('id', 'DESC');
         if ($this->monthYear) $payslips = $this->filterByMonthYear($payslips);
         if ($this->departmentID) $payslips = $this->filterByDepartment($payslips);
+        if($this->grossSalaryProrated) $this->filterByGrossSalaryProrated($payslips);
         $this->payslipList = $payslips->get();
     }
 
@@ -200,5 +208,11 @@ class PayReportList
                 });
             });
         });
+    }
+
+    private function filterByGrossSalaryProrated($payslips)
+    {
+        if ($this->grossSalaryProrated === 'yes') $payslips->where('joining_log', '<>', null);
+        if ($this->grossSalaryProrated === 'no') $payslips->where('joining_log', null);
     }
 }

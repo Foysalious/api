@@ -65,6 +65,7 @@ class PayRunController extends Controller
             ->setSearch($request->search)
             ->setSortKey($request->sort)
             ->setSortColumn($request->sort_column)
+            ->setGrossSalaryProrated($request->gross_salary_prorated)
             ->get();
 
         $count = count($payslip);

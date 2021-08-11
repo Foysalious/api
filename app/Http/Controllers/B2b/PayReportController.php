@@ -48,6 +48,7 @@ class PayReportController extends Controller
             ->setSortColumn($request->sort_column)
             ->setMonthYear($request->month_year)
             ->setDepartmentID($request->department_id)
+            ->setGrossSalaryProrated($request->gross_salary_prorated)
             ->get();
 
         $count = count($payslip);
