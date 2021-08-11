@@ -155,12 +155,12 @@ class EmployeeController extends Controller
         $pending_approval_requests = $this->approvalRequestRepo->getPendingApprovalRequestByBusinessMember($business_member);
         $pending_approval_requests_count = $this->countPendingApprovalRequests($pending_approval_requests);
         $profile_completion_score = $completion_calculator->setBusinessMember($business_member)->getDigiGoScore();
-        $pending_visit = $visit_repository->whereIn('status', [Status::CREATED, Status::STARTED]);
+        $pending_visit = $visit_repository->where('assignee_id', $business_member->id)->whereIn('status', [Status::CREATED, Status::STARTED]);
         $all_pending_visit_count = $pending_visit->count();
         $today = Carbon::now()->format('Y-m-d');
         $today_visit = $pending_visit->whereBetween('schedule_date', [$today.' 00:00:00', $today.' 23:59:59']);
         $today_visit_count = $today_visit->count();
-        $current_visit = $visit_repository->where('status', Status::STARTED)->whereBetween('start_date_time', [$today.' 00:00:00', $today.' 23:59:59'])->count();
+        $current_visit = $visit_repository->where('assignee_id', $business_member->id)->where('status', Status::STARTED)->whereBetween('start_date_time', [$today.' 00:00:00', $today.' 23:59:59'])->count();
 
         $data = [
             'id' => $member->id,
