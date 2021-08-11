@@ -115,7 +115,7 @@ class Ssl extends PaymentMethod
         $data['cus_phone']    = $payable->getMobile();
         $data['product_category'] = $payable->description;
         $this->setEmi($payable,$data);
-
+        Log::info(['ssl session data', $data]);
         $request = (new TPRequest())->setUrl($this->store->getSessionUrl())
             ->setMethod(TPRequest::METHOD_POST)->setInput($data);
         return $this->tpClient->call($request);
