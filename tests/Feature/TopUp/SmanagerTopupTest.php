@@ -497,13 +497,10 @@ class SmanagerTopupTest extends FeatureTestCase
 
     public function testSuccessfulTopupDeductAmountFromPartnerWallet()
     {
-        $partnerWallet = Partner::find(1);
-        $partnerWallet->update(["wallet" => 1000]);
-        $partnerPackage = Partner::find(1);
-        $partnerPackage->update(['package_id' => 1, "nid_verified" => 1]);
+        Partner::find(1)->update(["wallet" => 1000, 'package_id' => 1]);
+        Profile::find(1)->update(["nid_verified" => 1]);
         $response = $this->post('/v2/top-up/partner', [
             'mobile' => '+8801620011019', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 100, 'password' => '12345'
-
         ], [
             'Authorization' => "Bearer $this->token"
         ]);
@@ -512,7 +509,7 @@ class SmanagerTopupTest extends FeatureTestCase
         /*
          * Initial wallet balance = 1000
          * Partner Subscription Package ID = 1
-         * Subscriptionwise Partner Vendor Commission = 1% -> SubscriptionWisePaymentGatewaysFactory
+         * Subscription wise Partner Vendor Commission = 1% -> SubscriptionWisePaymentGatewaysFactory
          * Wallet balance should be = 1000 - 100 + (100 % 1) = 901
          */
         $this->assertEquals(901, $this->partner->wallet);
@@ -549,7 +546,6 @@ class SmanagerTopupTest extends FeatureTestCase
         $partnerWallet->update(["wallet" => 1000, 'package_id' => 1]);
         $response = $this->post('/v2/top-up/partner', [
             'mobile' => '01620011019', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 104, 'password' => '12349'
-
         ], [
             'Authorization' => "Bearer $this->token"
         ]);
@@ -568,7 +564,6 @@ class SmanagerTopupTest extends FeatureTestCase
         $resourceNIDStatus->update(["nid_verified" => 1]);
         $response = $this->post('/v2/top-up/partner', [
             'mobile' => '01620011019', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 104, 'password' => '12349'
-
         ], [
             'Authorization' => "Bearer $this->token"
         ]);
@@ -586,8 +581,6 @@ class SmanagerTopupTest extends FeatureTestCase
         $resourceNIDStatus->update(["nid_verified" => 1]);
         $response = $this->post('/v2/top-up/partner', [
             'mobile' => '01620011019', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 104, 'password' => '12349',
-
-
         ], [
             'Authorization' => "Bearer $this->token"
         ]);
@@ -605,8 +598,6 @@ class SmanagerTopupTest extends FeatureTestCase
         $resourceNIDStatus->update(["nid_verified" => 1]);
         $response = $this->post('/v2/top-up/partner', [
             'mobile' => '01620011019', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 104, 'password' => '12349',
-
-
         ], [
             'Authorization' => "Bearer $this->token"
         ]);
@@ -624,8 +615,6 @@ class SmanagerTopupTest extends FeatureTestCase
         $resourceNIDStatus->update(["nid_verified" => 1]);
         $response = $this->post('/v2/top-up/partner', [
             'mobile' => '01620011019', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 104, 'password' => '12349',
-
-
         ], [
             'Authorization' => "Bearer $this->token"
         ]);
@@ -642,8 +631,6 @@ class SmanagerTopupTest extends FeatureTestCase
         $resourceNIDStatus->update(["nid_verified" => 1]);
         $response = $this->post('/v2/top-up/partner', [
             'mobile' => '01620011019', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 104, 'password' => '12349',
-
-
         ], [
             'Authorization' => "Bearer $this->token"
         ]);
@@ -664,8 +651,6 @@ class SmanagerTopupTest extends FeatureTestCase
         $partnerPackage->update(['package_id' => 1]);
         $response = $this->post('/v2/top-up/partner', [
             'mobile' => '01620011019', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 104, 'password' => '12349',
-
-
         ], [
             'Authorization' => "Bearer $this->token"
         ]);
@@ -687,8 +672,6 @@ class SmanagerTopupTest extends FeatureTestCase
         $partnerPackage->update(['package_id' => 1]);
         $response = $this->post('/v2/top-up/partner', [
             'mobile' => '01620011019', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 104, 'password' => '12349',
-
-
         ], [
             'Authorization' => "Bearer $this->token"
         ]);
@@ -706,7 +689,6 @@ class SmanagerTopupTest extends FeatureTestCase
         // set specific commission against this affiliate
         $this->topUpVendorCommission = factory(TopUpVendorCommission::class)->create([
             'topup_vendor_id' => $this->topUpVendor->id, 'agent_commission' => '0', 'ambassador_commission' => '0', 'type' => 'App\Models\Partner', 'type_id' => 2
-
         ]);
 
         // dd($this->topUpVendorCommission);
@@ -722,7 +704,6 @@ class SmanagerTopupTest extends FeatureTestCase
         $resourceNIDStatus->update(["nid_verified" => 1]);
         $response = $this->post('/v2/top-up/partner', [
             'mobile' => '01620011019', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 104, 'password' => '12349',
-
         ], [
             'Authorization' => "Bearer $this->token"
         ]);
@@ -743,7 +724,6 @@ class SmanagerTopupTest extends FeatureTestCase
 
         $response = $this->post('/v2/top-up/partner', [
             'mobile' => '01620011019', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 100, 'password' => '12349',
-
         ], [
             'Authorization' => "Bearer $this->token"
         ]);

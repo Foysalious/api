@@ -99,6 +99,12 @@ class LeaveController extends Controller
         if ($request->has('search')) $leave_approval_requests = $this->searchWithEmployeeName($leave_approval_requests, $request);
         if ($request->has('period_start') && $request->has('period_end')) $leave_approval_requests = $this->filterByPeriod($leave_approval_requests, $request);
 
+        // Grouped approval requests by leave_id and then taken the latest approval request
+        $leave_approval_requests = $leave_approval_requests->groupBy('requestable_id');
+        $leave_approval_requests = $leave_approval_requests->map(function ($item) {
+            return $item->first();
+        });
+
         $total_leave_approval_requests = $leave_approval_requests->count();
         $leave_approval_requests = $this->sortByStatus($leave_approval_requests);
         if ($request->has('limit') && !$request->has('file')) $leave_approval_requests = $leave_approval_requests->splice($offset, $limit);

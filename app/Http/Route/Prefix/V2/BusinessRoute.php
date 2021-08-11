@@ -383,6 +383,9 @@ class BusinessRoute
                     $api->post('/gross-component/{payroll_settings}', 'B2b\PayrollController@grossComponentAddUpdate');
                     $api->get('/pay-day', 'B2b\PayrollController@checkPayDayConflicting');
                 });
+                $api->group(['prefix' => 'employee-tracking'], function ($api) {
+                    $api->post('create', 'B2b\VisitController@create');
+                });
             });
         });
         $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {
