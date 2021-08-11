@@ -39,16 +39,12 @@ class VoucherValidate
 
 
     /**
-     * @param $partner
+     * @param $partnerId
      * @return VoucherValidate
      */
-    public function setPartner($partner)
+    public function setPartnerId($partnerId)
     {
-        if($partner instanceof Partner)
-            $this->partner = $partner;
-        else
-            $this->partner = Partner::find($partner);
-
+        $this->partner = Partner::find($partnerId);
         return $this;
     }
 
@@ -107,7 +103,8 @@ class VoucherValidate
         $pos_order_params = $pos_order_params->setApplicant($this->posCustomerInfo->getCustomer());
         $pos_order_params = $pos_order_params->setPartnerPosService($this->posServices);
         $result = voucher($this->code)->checkForPosOrder($pos_order_params);
-        $result =  $result->checkMobile($this->posCustomerInfo->getCustomerMobile())->reveal();
+        $customer_mobile = $this->posCustomerInfo->getCustomerMobile();
+        $result = $customer_mobile  ? $result->checkMobile($customer_mobile)->reveal() : $result->reveal();
 
         $response = [];
         if ($result['is_valid']) {
