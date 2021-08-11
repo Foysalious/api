@@ -13,6 +13,7 @@ class PayRunListTransformer extends TransformerAbstract
     const NET_PAYABLE = 'net_payable';
     const GROSS_SALARY = 'gross_salary';
     private $grossSalary;
+    private $isProratedFilterApplicable = 0;
 
     /**
      * @param Payslip $payslip
@@ -25,6 +26,7 @@ class PayRunListTransformer extends TransformerAbstract
         $department = $business_member->department();
         $salary_breakdown = $payslip->salaryBreakdown();
         $payroll_components = $business_member->business->payrollSetting->components->whereIn('type', [Type::ADDITION, Type::DEDUCTION])->sortBy('name');
+        if ($this->isProratedFilterApplicable === 0 && $payslip->joining_log) $this->isProratedFilterApplicable = 1;
         return [
             'id' => $payslip->id,
             'business_member_id' => $payslip->business_member_id,
@@ -42,6 +44,11 @@ class PayRunListTransformer extends TransformerAbstract
             'deduction_breakdown' => $this->getPayrollComponentBreakdown($salary_breakdown['payroll_component']['deduction'], $payroll_components, Type::DEDUCTION),
         ];
     }
+    public function getIsProratedFilterApplicable()
+    {
+        return $this->isProratedFilterApplicable;
+    }
+
 
     /**
      * @param BusinessMember $business_member

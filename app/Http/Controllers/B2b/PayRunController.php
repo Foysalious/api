@@ -3,25 +3,25 @@
 use App\Exceptions\DoNotReportException;
 use App\Http\Controllers\Controller;
 use App\Models\Business;
+use App\Models\BusinessMember;
 use App\Models\Member;
 use App\Sheba\Business\Payslip\Excel as PaySlipExcel;
 use App\Sheba\Business\Payslip\PayRun\PayRunBulkExcel;
+use App\Sheba\Business\Payslip\PayrunList;
+use App\Sheba\Business\Payslip\PendingMonths;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Models\BusinessMember;
 use Sheba\Business\Payslip\PayRun\Updater as PayRunUpdater;
 use Sheba\Dal\AuthenticationRequest\Purpose;
 use Sheba\Dal\PayrollComponent\Type;
 use Sheba\Dal\Payslip\PayslipRepository;
-use App\Sheba\Business\Payslip\PayrunList;
-use App\Sheba\Business\Payslip\PendingMonths;
 use Sheba\ModificationFields;
 use Sheba\OAuth2\AccountServerAuthenticationError;
 use Sheba\OAuth2\AccountServerNotWorking;
+use Sheba\OAuth2\VerifyPin;
 use Sheba\OAuth2\WrongPinError;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\TopUp\Exception\PinMismatchException;
-use Sheba\OAuth2\VerifyPin;
 
 class PayRunController extends Controller
 {
@@ -78,7 +78,13 @@ class PayRunController extends Controller
         
         $payslip = collect($payslip)->splice($offset, $limit);
 
-        return api_response($request, null, 200, ['payslip' => $payslip, 'payroll_components' => $payrun_list->getComponents($payroll_components), 'total' => $count, 'total_calculation' => $payrun_list->getTotal()]);
+        return api_response($request, null, 200, [
+            'payslip' => $payslip,
+            'payroll_components' => $payrun_list->getComponents($payroll_components),
+            'total' => $count,
+            'is_prorated_filter_applicable' => $payrun_list->getIsProratedFilterApplicable(),
+            'total_calculation' => $payrun_list->getTotal(),
+        ]);
     }
 
     /**
