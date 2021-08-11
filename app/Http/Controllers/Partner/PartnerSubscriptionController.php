@@ -9,7 +9,6 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Sheba\Dal\PartnerSubscription\Status;
 use Sheba\ModificationFields;
@@ -337,7 +336,6 @@ class PartnerSubscriptionController extends Controller
 
     public function updateSubscriptionRenewalInfo(Request $request, PartnerSubscription $partnerSubscription)
     {
-        Log::info(['renewal warning', $request->subscription_renewal_warning, $request->auto_billing_activated,  $request->renewal_warning_days]);
         try {
             $this->validate(
                 $request,
