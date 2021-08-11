@@ -124,6 +124,7 @@ class Creator
      * @throws InvalidDiscountType
      * @throws ExpenseTrackingServerError
      * @throws DoNotReportException
+     * @throws NotAssociativeArray
      */
     public function create()
     {
@@ -184,18 +185,10 @@ class Creator
         $this->voucherCalculation($order);
         $this->resolvePaymentMethod();
         $this->storeIncome($order);
-        $this->generateInvoice($order);
-        return $order;
-    }
-
-    /**
-     * @throws NotAssociativeArray
-     */
-    private function generateInvoice($order)
-    {
         /** @var InvoiceService $invoiceService */
         $invoiceService = app(InvoiceService::class)->setPosOrder($order);
         $invoiceService->generateInvoice()->saveInvoiceLink();
+        return $order;
     }
 
     /**

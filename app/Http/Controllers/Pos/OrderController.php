@@ -469,7 +469,7 @@ class OrderController extends Controller
         $invoiceService = $invoiceService->setPosOrder($order);
         $invoiceLink = $invoiceService->isAlreadyGenerated()->getInvoiceLink();
         if (!$invoiceLink)
-            $invoiceLink = $invoiceService->generateInvoice()->getInvoiceLink();
+            $invoiceLink = $invoiceService->generateInvoice()->saveInvoiceLink()->getInvoiceLink();
         return api_response($request, null, 200, [
             'message' => 'Successfully Download receipt',
             'link' => $invoiceLink
@@ -484,7 +484,7 @@ class OrderController extends Controller
         $invoiceService = $invoiceService->setPosOrder($order);
         $invoiceLink = $invoiceService->isAlreadyGenerated()->getInvoiceLink();
         if (!$invoiceLink)
-            $invoiceLink = $invoiceService->generateInvoice()->getInvoiceLink();
+            $invoiceLink = $invoiceService->generateInvoice()->saveInvoiceLink()->getInvoiceLink();
         return api_response($request, null, 200, [
             'message' => 'Successfully Download receipt',
             'link' => $invoiceLink

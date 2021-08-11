@@ -4,23 +4,11 @@ use App\Models\Partner;
 use App\Models\PosOrder;
 use App\Models\PosOrderPayment;
 use App\Sheba\PosOrderService\PosOrderServerClient;
-use Sheba\Pos\Order\PosOrderTypes;
-use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\Repositories\BaseRepository;
 
 class PosOrderPaymentRepository extends BaseRepository
 {
     private $partner;
-    /**
-     * @var PaymentCreator
-     */
-    private $paymentCreator;
-
-    public function __construct(PaymentCreator $paymentCreator)
-    {
-        parent::__construct();
-        $this->paymentCreator = $paymentCreator;
-    }
 
     /**
      * @param array $data
@@ -52,15 +40,16 @@ class PosOrderPaymentRepository extends BaseRepository
         $payment_data['pos_order_id'] = $pos_order_id;
         $payment_data['amount']       = $amount_cleared;
         $payment_data['method']       = $payment_method;
+        $payment_data['transaction_type'] = 'Credit';
         if($this->partner->is_migration_completed)
-           return $this->paymentCreator->credit($payment_data,PosOrderTypes::NEW_SYSTEM);
+           return $this->saveToNewPosOrderSystem($payment_data);
 
         /** @var PosOrder $order */
         $order = PosOrder::find($pos_order_id);
         if(isset($order)) {
             $order->calculate();
             if ($order->getDue() > 0) {
-                return $this->paymentCreator->credit($payment_data);
+                return $this->save($payment_data);
             }
         }
     }
