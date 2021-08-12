@@ -34,6 +34,7 @@ class PayReportDetailsTransformer extends TransformerAbstract
             'addition' => $this->getPayrollComponentBreakdown($payroll_components, Type::ADDITION),
             'deduction' => $this->getPayrollComponentBreakdown($payroll_components, Type::DEDUCTION),
             'salary_info' => $this->salaryInfo($payslip),
+            'joining_month' => Carbon::parse($payslip->joining_log)->format('F')
         ];
     }
 
