@@ -1,8 +1,13 @@
 <?php namespace App\Sheba\Voucher;
 
 
+use App\Models\PosCustomer;
+
 class PosCustomerInfo
 {
+    /**
+     * @var PosCustomer
+     */
     private $customer;
     /**
      * @var null
@@ -14,16 +19,17 @@ class PosCustomerInfo
      * @param $customer
      * @return $this
      */
-    public function setCustomer($customer)
+    public function setCustomer(PosCustomer $customer): PosCustomerInfo
     {
         $this->customer = $customer;
         return $this;
     }
 
+
     /**
-     * @return mixed
+     * @return PosCustomer
      */
-    public function getCustomer()
+    public function getCustomer(): PosCustomer
     {
         return $this->customer;
     }

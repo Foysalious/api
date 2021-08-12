@@ -95,7 +95,7 @@ class VoucherValidate
     {
         $this->resolvePosCustomer();
         if ($this->posCustomerId && !$this->partner->is_migration_completed)
-            $this->posCustomerInfo->setCustomerMobile($this->posCustomer->mobile);
+            $this->posCustomerInfo->setCustomerMobile($this->posCustomer->profile->mobile);
         else
             $this->posCustomerInfo->setCustomerMobile($this->getPosCustomer()['mobile']);
         $pos_order_params = (new CheckParamsForPosOrder());
