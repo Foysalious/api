@@ -231,6 +231,7 @@ class NeoBankingController extends Controller
             $data = $neoBanking->setPartner($request->partner)->setResource($request->manager_resource)->setMobile($mobile)->setBank($request->bank_code)->storeAccount();
             return api_response($request, $data, 200, ['data' => ["message" => "Account has been created."]]);
         }catch (NeoBankingException $e){
+            logError($e);
             return api_response($request,null,$e->getCode(),['message'=>$e->getMessage()]);
         } catch (\Throwable $e) {
             logError($e);
