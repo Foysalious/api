@@ -174,6 +174,7 @@ class CoWorkerController extends Controller
      * @param $business
      * @param $business_member_id
      * @param Request $request
+     * @param PayslipRepoImplementation $payslip_repository
      * @return JsonResponse
      */
     public function show($business, $business_member_id, Request $request, PayslipRepoImplementation $payslip_repository)
