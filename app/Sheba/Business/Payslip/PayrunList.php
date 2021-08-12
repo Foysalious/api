@@ -35,6 +35,8 @@ class PayrunList
     private $monthYear;
     private $departmentID;
     private $payslip;
+    private $isProratedFilterApplicable;
+    private $grossSalaryProrated;
 
     /**
      * PayrunList constructor.
@@ -110,6 +112,12 @@ class PayrunList
         return $this;
     }
 
+    public function setGrossSalaryProrated($gross_salary_prorated)
+    {
+        $this->grossSalaryProrated = $gross_salary_prorated;
+        return $this;
+    }
+
     public function get()
     {
         $this->runPayslipQuery();
@@ -122,6 +130,7 @@ class PayrunList
         $payslips = $this->payslipRepositoryInterface->getPaySlipByStatus($this->businessMemberIds, Status::PENDING)->orderBy('id', 'DESC');
         if ($this->monthYear) $payslips = $this->filterByMonthYear($payslips);
         if ($this->departmentID) $payslips = $this->filterByDepartment($payslips);
+        if($this->grossSalaryProrated) $this->filterByGrossSalaryProrated($payslips);
         $this->payslipList = $payslips->get();
     }
 
@@ -132,11 +141,13 @@ class PayrunList
     {
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
-        $payslip_list = new Collection($this->payslipList, new PayRunListTransformer());
+        $payrun_list_transformer = new PayRunListTransformer();
+        $payslip_list = new Collection($this->payslipList, $payrun_list_transformer);
         $payslip_list = collect($manager->createData($payslip_list)->toArray()['data']);
 
         if ($this->search) $payslip_list = collect($this->searchWithEmployeeName($payslip_list))->values();
         if ($this->sort && $this->sortColumn) $payslip_list = $this->sortByColumn($payslip_list, $this->sortColumn, $this->sort)->values();
+        $this->isProratedFilterApplicable = $payrun_list_transformer->getIsProratedFilterApplicable();
 
         return $payslip_list;
     }
@@ -152,6 +163,11 @@ class PayrunList
             'deduction' => $this->payslip->sum('deduction'),
             'net_payable' => $this->payslip->sum('net_payable'),
         ];
+    }
+
+    public function getIsProratedFilterApplicable()
+    {
+        return $this->isProratedFilterApplicable;
     }
 
     /**
@@ -212,5 +228,11 @@ class PayrunList
                 });
             });
         });
+    }
+
+    private function filterByGrossSalaryProrated($payslips)
+    {
+        if ($this->grossSalaryProrated === 'yes') $payslips->where('joining_log', '<>', null);
+        if ($this->grossSalaryProrated === 'no') $payslips->where('joining_log', null);
     }
 }
