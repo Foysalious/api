@@ -14,6 +14,7 @@ class Route
                 $api->post('validity-check', 'VoucherController@validateVoucher');
             });
             $api->post('/reward/action', 'Inventory\CollectionController@rewardDummy');
+            $api->get('voucher-details/{voucher_id}', 'VoucherController@getVoucherDetails');
         });
 
         $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers', 'middleware' => ['jwtAccessToken']], function ($api) {
@@ -31,10 +32,10 @@ class Route
                 $api->post('/', 'PosCustomer\PosCustomerController@storePosCustomer');
                 $api->put('/{customer_id}', 'PosCustomer\PosCustomerController@updatePosCustomer');
                 $api->get('/{customer_id}/orders', 'PosCustomer\PosCustomerController@orders');
+                $api->delete('/{customer_id}', 'PosCustomer\PosCustomerController@delete');
             });
 
                 $api->get('warranty-units', 'Inventory\WarrantyUnitController@getWarrantyList');
-                $api->get('voucher-details/{voucher_id}', 'VoucherController@getVoucherDetails');
 
             $api->get('/category-tree', 'Inventory\CategoryController@allCategory');
             $api->group(['prefix' => 'products'], function ($api) {

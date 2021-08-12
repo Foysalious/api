@@ -35,6 +35,9 @@ use Sheba\Business\CoWorker\UpdaterV2 as Updater;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
+use Sheba\Dal\Visit\Status;
+use Sheba\Dal\Visit\Visit;
+use Sheba\Dal\Visit\VisitRepoImplementation;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\ModificationFields;
 use Sheba\OAuth2\AccountServer;
@@ -150,7 +153,7 @@ class EmployeeController extends Controller
      * @return JsonResponse
      */
     public function getDashboard(Request $request, ActionProcessor $action_processor,
-                                 ProfileCompletionCalculator $completion_calculator)
+                                 ProfileCompletionCalculator $completion_calculator, VisitRepoImplementation $visit_repository)
     {
         /** @var Business $business */
         $business = $this->getBusiness($request);
@@ -176,9 +179,14 @@ class EmployeeController extends Controller
         }
 
         $approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMember($business_member);
-        $pending_approval_requests = $this->approvalRequestRepo->getPendingApprovalRequestByBusinessMember($business_member);
-        $pending_approval_requests_count = $this->countPendingApprovalRequests($pending_approval_requests);
+        $pending_approval_requests_count = $this->approvalRequestRepo->countPendingLeaveApprovalRequests($business_member);
         $profile_completion_score = $completion_calculator->setBusinessMember($business_member)->getDigiGoScore();
+        $pending_visit = $visit_repository->where('assignee_id', $business_member->id)->whereIn('status', [Status::CREATED, Status::STARTED]);
+        $all_pending_visit_count = $pending_visit->count();
+        $today = Carbon::now()->format('Y-m-d');
+        $today_visit = $pending_visit->whereBetween('schedule_date', [$today.' 00:00:00', $today.' 23:59:59']);
+        $today_visit_count = $today_visit->count();
+        $current_visit = $visit_repository->where('assignee_id', $business_member->id)->where('status', Status::STARTED)->whereBetween('start_date_time', [$today.' 00:00:00', $today.' 23:59:59'])->count();
 
         $data = [
             'id' => $member->id,
@@ -202,8 +210,13 @@ class EmployeeController extends Controller
                 'link' => config('b2b.BUSINESSES_LUNCH_LINK'),
             ] : null,
             'is_sheba_platform' => in_array($business->id, config('b2b.BUSINESSES_IDS_FOR_REFERRAL') ) ? 1 : 0,
+            'location_fetch_waiting_time' => 3,
             'is_payroll_enable' => $business->payrollSetting->is_enable,
-            'location_fetch_waiting_time' => 3
+            'is_enable_employee_visit' => $business->is_enable_employee_visit,
+            'pending_visit_count' => $all_pending_visit_count,
+            'today_visit_count' => $today_visit_count,
+            'single_visit_title' => $today_visit_count === 1 ? $today_visit->first()->title : null,
+            'currently_on_visit' => $current_visit ? true : false
         ];
 
         return api_response($request, $business_member, 200, ['info' => $data]);
@@ -380,244 +393,5 @@ class EmployeeController extends Controller
     {
         if ($request->has('for') && $request->for == 'phone_book') return $business->getActiveBusinessMember();
         return $business->getAccessibleBusinessMember();
-    }
-
-    /**
-     * @param $approval_requests
-     * @return int
-     */
-    private function countPendingApprovalRequests($approval_requests)
-    {
-        $pending_leave_count = 0;
-        foreach($approval_requests as $approval_request) {
-            $requestable = $approval_request->requestable;
-            if ($requestable->status === 'pending') {
-                $pending_leave_count++;
-            }
-        }
-        return $pending_leave_count;
-    }
-
-    /**
-     * @param $business_member_id
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function getFinancialInfo($business_member_id, Request $request)
-    {
-        $business_member = $this->getBusinessMember($request);
-        if (!$business_member) return api_response($request, null, 404);
-        $employee = $this->businessMember->find($business_member_id);
-        if (!$employee) return api_response($request, null, 404);
-        $manager = new Manager();
-        $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($employee, new FinancialInfoTransformer());
-        $employee_financial_details = $manager->createData($resource)->toArray()['data'];
-        return api_response($request, null, 200, ['financial_info' => $employee_financial_details]);
-    }
-
-    public function getOfficialInfo($business_member_id, Request $request)
-    {
-        $business_member = $this->getBusinessMember($request);
-        if (!$business_member) return api_response($request, null, 404);
-        $employee = $this->businessMember->find($business_member_id);
-        if (!$employee) return api_response($request, null, 404);
-        $manager = new Manager();
-        $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($employee, new OfficialInfoTransformer());
-        $employee_official_details = $manager->createData($resource)->toArray()['data'];
-        return api_response($request, null, 200, ['official_info' => $employee_official_details]);
-    }
-
-    public function updateEmployee($business_member_id, Request $request, ProfileUpdater $profile_updater)
-    {
-        $this->validate($request, [
-            'name' => 'required|string',
-            'email' => 'required|string',
-            'department' => 'required|string',
-            'designation' => 'required|string',
-            'joining_date' => 'required|date',
-            'gender' => 'required|string|in::Female,Male,Other'
-        ]);
-
-        $business_member = $this->getBusinessMember($request);
-        if (!$business_member) return api_response($request, null, 404);
-        $employee = $this->businessMember->find($business_member_id);
-        if (!$employee) return api_response($request, null, 404);
-        $member = $this->repo->find($business_member['member_id']);
-        $this->setModifier($member);
-
-        $this->profileRequester
-            ->setBusinessMember($employee)
-            ->setName($request->name)
-            ->setEmail($request->email)
-            ->setDepartment($request->department)
-            ->setDesignation($request->designation)
-            ->setJoiningDate($request->joining_date)
-            ->setGender($request->gender);
-
-        if ($this->profileRequester->hasError()) return api_response($request, null, $this->profileRequester->getErrorCode(), ['message' => $this->profileRequester->getErrorMessage()]);
-
-        $profile_updater->setProfileRequester($this->profileRequester)->update();
-
-        return api_response($request, null, 200);
-
-    }
-
-    public function updateOfficialInfo($business_member_id, Request $request, OfficialInfoUpdater $official_info_updater)
-    {
-        $this->validate($request, [
-            'manager' => 'required|numeric',
-            'employee_type' => 'required|string|in:'.implode(',', EmployeeType::get()),
-            'employee_id' => 'required',
-            'grade' => 'required'
-        ]);
-
-        $business_member = $this->getBusinessMember($request);
-        if (!$business_member) return api_response($request, null, 404);
-        $employee = $this->businessMember->find($business_member_id);
-        if (!$employee) return api_response($request, null, 404);
-        $member = $this->repo->find($business_member['member_id']);
-        $this->setModifier($member);
-
-        $this->profileRequester
-            ->setBusinessMember($employee)
-            ->setManager($request->manager)
-            ->setEmployeeType($request->employee_type)
-            ->setEmployeeId($request->employee_id)
-            ->setGrade($request->grade);
-
-        $official_info_updater->setProfileRequester($this->profileRequester)->update();
-
-        return api_response($request, null, 200);
-
-    }
-
-    public function updateEmergencyInfo($business_member_id, Request $request, EmergencyInfoUpdater $emergency_info_updater)
-    {
-        $this->validate($request, [
-            'name' => 'sometimes|required|string',
-            'mobile' => 'sometimes|required|mobile:bd',
-            'relationship' => 'sometimes|required|string',
-        ]);
-
-        $business_member = $this->getBusinessMember($request);
-        if (!$business_member) return api_response($request, null, 404);
-        $employee = $this->businessMember->find($business_member_id);
-        if (!$employee) return api_response($request, null, 404);
-        $member = $this->repo->find($business_member['member_id']);
-        $this->setModifier($member);
-
-        $this->profileRequester
-            ->setBusinessMember($employee)
-            ->setEmergencyContactName($request->name)
-            ->setEmergencyContactMobile($request->mobile)
-            ->setEmergencyContactRelation($request->relationship);
-
-        $emergency_info_updater->setProfileRequester($this->profileRequester)->update();
-
-        return api_response($request, null, 200);
-
-    }
-
-    public function getEmergencyContactInfo($business_member_id, Request $request)
-    {
-        $business_member = $this->getBusinessMember($request);
-        if (!$business_member) return api_response($request, null, 404);
-        $employee = $this->businessMember->find($business_member_id);
-        if (!$employee) return api_response($request, null, 404);
-        $manager = new Manager();
-        $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($employee, new EmergencyContactInfoTransformer());
-        $employee_emergency_details = $manager->createData($resource)->toArray()['data'];
-        return api_response($request, null, 200, ['emergency_contact_info' => $employee_emergency_details]);
-    }
-
-    public function getPersonalInfo($business_member_id, Request $request)
-    {
-        $business_member = $this->getBusinessMember($request);
-        if (!$business_member) return api_response($request, null, 404);
-        $employee = $this->businessMember->find($business_member_id);
-        if (!$employee) return api_response($request, null, 404);
-        $manager = new Manager();
-        $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($employee, new PersonalInfoTransformer());
-        $employee_emergency_details = $manager->createData($resource)->toArray()['data'];
-        return api_response($request, null, 200, ['emergency_contact_info' => $employee_emergency_details]);
-    }
-
-    public function updatePersonalInfo($business_member_id, Request $request, PersonalInfoUpdater $personal_info_updater)
-    {
-        $validation_data = [
-            'mobile' => 'mobile:bd',
-            'dob' => 'date',
-        ];
-
-        $validation_data['nid_front'] = $this->isFile($request->nid_front) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
-        $validation_data['nid_back'] = $this->isFile($request->nid_back) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
-        $validation_data['passport_image'] = $this->isFile($request->passport_image) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
-
-        $this->validate($request,$validation_data);
-
-            $business_member = $this->getBusinessMember($request);
-        if (!$business_member) return api_response($request, null, 404);
-        $employee = $this->businessMember->find($business_member_id);
-        if (!$employee) return api_response($request, null, 404);
-        $member = $this->repo->find($business_member['member_id']);
-        $this->setModifier($member);
-
-        $this->profileRequester
-            ->setBusinessMember($employee)
-            ->setMobile($request->mobile)
-            ->setDateOfBirth($request->dob)
-            ->setAddress($request->address)
-            ->setNationality($request->nationality)
-            ->setNidNo($request->nid_no)
-            ->setPassportNo($request->passport_no)
-            ->setBloodGroup($request->blood_group)
-            ->setSocialLinks($request->social_links)
-            ->setNidFrontImage($request->nid_front)
-            ->setNidBackImage($request->nid_back)
-            ->setPassportImage($request->passport_image);
-
-        if ($this->profileRequester->hasError()) return api_response($request, null, $this->profileRequester->getErrorCode(), ['message' => $this->profileRequester->getErrorMessage()]);
-
-        $personal_info_updater->setProfileRequester($this->profileRequester)->update();
-
-        return api_response($request, null, 200);
-    }
-
-    private function isFile($file)
-    {
-        if ($file instanceof Image || $file instanceof UploadedFile) return true;
-        return false;
-    }
-
-    /**
-     * @param $last_attendance
-     * @param $last_attendance_log
-     * @param ActionProcessor $action_processor
-     * @return array
-     */
-    private function checkNoteRequired($last_attendance, $last_attendance_log, ActionProcessor $action_processor)
-    {
-        $is_note_required = 0;
-        $note_action = null;
-
-        $checkin = $action_processor->setActionName(Actions::CHECKIN)->getAction();
-        $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
-        if ($last_attendance_log['action'] == Actions::CHECKIN && $checkin->isLateNoteRequiredForSpecificDate($last_attendance['date'], $last_attendance['checkin_time'])) {
-            $is_note_required = 1;
-            $note_action = Actions::CHECKIN;
-        }
-        if ($last_attendance_log['action'] == Actions::CHECKOUT && $checkout->isLeftEarlyNoteRequiredForSpecificDate($last_attendance['date'], $last_attendance['checkout_time'])) {
-            $is_note_required = 1;
-            $note_action = Actions::CHECKOUT;
-        }
-
-        return [
-            'is_note_required' => $is_note_required,
-            'note_action' => $note_action
-        ];
     }
 }

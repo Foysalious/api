@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Illuminate\Database\Eloquent\Model;
+use App\Sheba\Pos\Order\Invoice\InvoiceService;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Dal\POSOrder\SalesChannels;
@@ -31,6 +32,7 @@ use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
 use Sheba\Pos\Repositories\PosOrderItemRepository;
 use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Pos\Validators\OrderCreateValidator;
+use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Voucher\DTO\Params\CheckParamsForPosOrder;
 
 class Creator
@@ -237,6 +239,9 @@ class Creator
         if (!$this->request->has('refund_nature')) {
             $this->storeJournal($order);
         }
+        /** @var InvoiceService $invoiceService */
+        $invoiceService = app(InvoiceService::class)->setPosOrder($order);
+        $invoiceService->generateInvoice()->saveInvoiceLink();
         return $order;
     }
 

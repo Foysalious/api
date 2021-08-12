@@ -43,4 +43,16 @@ class TestCase extends Illuminate\Foundation\Testing\TestCase
         }
     }
 
+    protected function tearDown()
+    {
+        parent::tearDown();
+
+        $reflection_object = new ReflectionObject($this);
+        foreach ($reflection_object->getProperties() as $prop) {
+            if (!$prop->isStatic() && 0 !== strpos($prop->getDeclaringClass()->getName(), 'PHPUnit_')) {
+                $prop->setAccessible(true);
+                $prop->setValue($this, null);
+            }
+        }
+    }
 }

@@ -167,6 +167,7 @@ class MemberController extends Controller
     {
         /** @var Member $member */
         $member = Member::find((int)$member);
+        /** @var Business $business */
         $business = $member->businessMember ? $member->businessMember->business : null;
         $business_members = BusinessMember::where('member_id', $member->id)->get();
 
@@ -179,6 +180,9 @@ class MemberController extends Controller
 
         $business_member = $member->activeBusinessMember->first();
         if (!$business_member) return api_response($request, null, 420, ['message' => 'You account is not active yet. Please contract with your company.']);
+        $manager = $business ? $business->getActiveBusinessMember()->where('manager_id', $business_member->id)->count() : null;
+        $is_manager = $manager ? 1 : 0;
+
         $profile = $member->profile;
         $access_control->setBusinessMember($business_member);
         $info = [
@@ -195,7 +199,8 @@ class MemberController extends Controller
             'business_id' => $business ? $business->id : null,
             'remember_token' => $member->remember_token,
             'is_super' => $business_member ? $business_member->is_super : null,
-            'is_payroll_enable' => $business->is_payroll_enable,
+            'is_payroll_enable' => $business_member ? $business_member->is_payroll_enable : null,
+            'is_manager' => $is_manager,
             'access' => [
                 'support' => $business ? (in_array($business->id, config('business.WHITELISTED_BUSINESS_IDS')) && $access_control->hasAccess('support.rw') ? 1 : 0) : 0,
                 'expense' => $business ? (in_array($business->id, config('business.WHITELISTED_BUSINESS_IDS')) && $access_control->hasAccess('expense.rw') ? 1 : 0) : 0,

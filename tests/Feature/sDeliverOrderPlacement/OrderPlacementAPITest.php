@@ -1,13 +1,8 @@
-<?php
-
+<?php namespace Tests\Feature\sDeliverOrderPlacement;
 /**
  * Khairun Nahar
  * 22 May,2021
  */
-
-
-namespace Tests\Feature\sDeliverOrderPlacement;
-
 
 use App\Models\Partner;
 use App\Models\PartnerPosService;
@@ -24,10 +19,11 @@ use Tests\Mocks\MockDeliveryServerClient;
 
 class OrderPlacementAPITest extends FeatureTestCase
 {
-
+    /** @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed $posOrderCreate */
     private $posOrderCreate;
-    private $partnerPosCustomer;
 
+    /** @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed $partnerPosCustomer */
+    private $partnerPosCustomer;
 
     public function setUp()
     {
@@ -42,7 +38,6 @@ class OrderPlacementAPITest extends FeatureTestCase
        $this->partnerPosCustomer = factory(PosCustomer::class)->create();
        $this->posOrderCreate = factory(PosOrder::class)->create();
        $this->app->singleton(DeliveryServerClient::class,MockDeliveryServerClient::class);
-
     }
 
     public function testSuccessfulOrderPlaceAPIForPos()
@@ -62,16 +57,13 @@ class OrderPlacementAPITest extends FeatureTestCase
             'delivery_thana' => 'Ramna',
             'delivery_district' => 'Dhaka',
             'pos_order_id' => '1'
-
         ], [
             'Authorization' => "Bearer $this->token"
         ]);
-
         $data = $response->decodeResponseJson();
         $this->assertEquals(200, $data['code']);
         $this->assertEquals("Successful", $data['message']);
     }
-
 
     public function testSuccessfulOrderPlaceAPIForSalesChannel()
     {
@@ -90,12 +82,10 @@ class OrderPlacementAPITest extends FeatureTestCase
             'delivery_thana' => 'Ramna',
             'delivery_district' => 'Dhaka',
             'pos_order_id' => '1'
-
         ], [
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-       // dd($data);
         $this->assertEquals(200, $data['code']);
         $this->assertEquals("Successful", $data['message']);
     }
@@ -115,7 +105,6 @@ class OrderPlacementAPITest extends FeatureTestCase
             'delivery_address' => 'bangla motor',
             'delivery_district' => 'Dhaka',
             'pos_order_id' => '1'
-
         ], [
             'Authorization' => "Bearer $this->token"
         ]);
@@ -140,7 +129,6 @@ class OrderPlacementAPITest extends FeatureTestCase
             'delivery_thana' => 'Ramna',
             'delivery_district' => 'Dhaka',
             'pos_order_id' => '1'
-
         ]);
         $data = $response->decodeResponseJson();
 
@@ -165,13 +153,11 @@ class OrderPlacementAPITest extends FeatureTestCase
             'delivery_thana' => 'Ramna',
             'delivery_district' => 'Dhaka',
             'pos_order_id' => '1'
-
         ], [
             'Authorization' => "Bearer $this->token"
         ]);
-        $data = $response->decodeResponseJson();
+        $response->decodeResponseJson();
         $Pos_order=PosOrder::first();
-
         $this->assertEquals(1,$Pos_order->partner_wise_order_id);
         $this->assertEquals(1,$Pos_order->partner_id);
         $this->assertEquals(1,$Pos_order->customer_id);
@@ -188,9 +174,7 @@ class OrderPlacementAPITest extends FeatureTestCase
 
     public function testPosOrderPlaceAPIForSuccessfullyDataInsertIntoDBForWebstore()
     {
-        $pos_order = Profile::find(1);;
-        $pos_order->update(["sales_channel" => 'web store']);
-
+        Profile::find(1)->update(["sales_channel" => 'web store']);
         $response = $this->post('/v2/pos/delivery/orders', [
             'logistic_partner_id' => 1,
             'weight' => '2.5',
@@ -206,13 +190,11 @@ class OrderPlacementAPITest extends FeatureTestCase
             'delivery_thana' => 'Ramna',
             'delivery_district' => 'Dhaka',
             'pos_order_id' => '1'
-
         ], [
             'Authorization' => "Bearer $this->token"
         ]);
-        $data = $response->decodeResponseJson();
+        $response->decodeResponseJson();
         $Pos_order=PosOrder::first();
-
         $this->assertEquals(1,$Pos_order->partner_wise_order_id);
         $this->assertEquals(1,$Pos_order->partner_id);
         $this->assertEquals(1,$Pos_order->customer_id);
@@ -226,7 +208,4 @@ class OrderPlacementAPITest extends FeatureTestCase
         //$this->assertEquals('Pending',$Pos_order->status);
         $this->assertEquals('pos',$Pos_order->sales_channel);
     }
-
-
-
 }

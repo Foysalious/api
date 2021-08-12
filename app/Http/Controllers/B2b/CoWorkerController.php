@@ -3,6 +3,7 @@
 use App\Jobs\Business\SendEmailForPublishTenderToBusiness;
 use App\Models\Business;
 use App\Transformers\Business\CoWorkerReportDetailsTransformer;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\App;
@@ -24,6 +25,7 @@ use Sheba\Business\CoWorker\Requests\PersonalRequest;
 use Sheba\Business\CoWorker\Requests\BasicRequest;
 use App\Sheba\Business\Salary\Requester as CoWorkerSalaryRequester;
 use Sheba\Business\CoWorker\Validation\CoWorkerExistenceCheck;
+use Sheba\Dal\Payslip\PayslipRepoImplementation;
 use Sheba\Dal\Salary\SalaryRepository;
 use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
@@ -172,9 +174,10 @@ class CoWorkerController extends Controller
      * @param $business
      * @param $business_member_id
      * @param Request $request
+     * @param PayslipRepoImplementation $payslip_repository
      * @return JsonResponse
      */
-    public function show($business, $business_member_id, Request $request)
+    public function show($business, $business_member_id, Request $request, PayslipRepoImplementation $payslip_repository)
     {
         if (!is_numeric($business_member_id)) return api_response($request, null, 400);
         $business_member = $this->businessMemberRepository->find($business_member_id);
@@ -188,10 +191,12 @@ class CoWorkerController extends Controller
         if ($request->file === 'pdf') {
             return App::make('dompdf.wrapper')->loadView('pdfs.co_worker_details', compact('employee'))->download("co_worker_details.pdf");
         }
-
+        $generated_payslip = $payslip_repository->where('business_member_id', $business_member_id)->where('schedule_date', 'LIKE', '%' . Carbon::now()->format('Y-m') . '%')->first();
+        $employee_join_date = Carbon::parse($business_member->join_date);
         if (count($employee) > 0) return api_response($request, $employee, 200, [
             'employee' => $employee,
-            'business_member_id' => $business_member->id
+            'business_member_id' => $business_member->id,
+            'joining_prorate' => !$generated_payslip && $employee_join_date->format('Y-m') === Carbon::now()->format('Y-m') ? $employee_join_date->format('F') : null
         ]);
         return api_response($request, null, 404);
     }

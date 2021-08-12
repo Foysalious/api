@@ -516,7 +516,7 @@ class DeliveryService
 
     public function cancelOrder()
     {
-        $status = $this->getDeliveryStatus()['data']['status'];
+        $status = $this->getDeliveryStatus()['status'];
         $data = [
             'uid' => $this->resolveDeliveryRequestId()
         ];

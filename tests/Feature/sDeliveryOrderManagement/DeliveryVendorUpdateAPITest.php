@@ -1,13 +1,8 @@
-<?php
-
+<?php namespace Tests\Feature\sDeliveryOrderManagement;
 /**
  * Khairun
  * 26th May, 2021
  */
-
-
-namespace Tests\Feature\sDeliveryOrderManagement;
-
 
 use App\Models\Partner;
 use App\Models\PosCustomer;
@@ -19,9 +14,8 @@ use Tests\Mocks\MockDeliveryServerClient;
 
 class DeliveryVendorUpdateAPITest extends FeatureTestCase
 {
-
+    /** @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed $partnerDeliveryinfo */
     private $partnerDeliveryinfo;
-
 
     public function setUp()
     {
@@ -35,8 +29,6 @@ class DeliveryVendorUpdateAPITest extends FeatureTestCase
             'partner_id'=> $this->partner->id
             ]);
         $this->app->singleton(DeliveryServerClient::class,MockDeliveryServerClient::class);
-
-
     }
 
     public function testsDeliveryUpdateVendor()
@@ -44,11 +36,9 @@ class DeliveryVendorUpdateAPITest extends FeatureTestCase
         $response = $this->post('/v2/pos/delivery/partner-vendor', [
             'vendor_name' => 'paperfly',
             'delivery_info_id' => 1
-
         ], [
             'Authorization' => "Bearer $this->token"
         ]);
-
         $data = $response->decodeResponseJson();
         $this->assertEquals(200, $data['code']);
         $this->assertEquals("Successful", $data['message']);
@@ -59,11 +49,9 @@ class DeliveryVendorUpdateAPITest extends FeatureTestCase
         $response = $this->post('/v2/pos/delivery/partner-vendor', [
             'vendor_name' => 'own_delivery',
             'delivery_info_id' => 2
-
         ], [
             'Authorization' => "Bearer $this->token"
         ]);
-
         $data = $response->decodeResponseJson();
         $this->assertEquals(200, $data['code']);
         $this->assertEquals("Successful", $data['message']);
@@ -74,11 +62,9 @@ class DeliveryVendorUpdateAPITest extends FeatureTestCase
         $response = $this->post('/v2/pos/delivery/partner-vendor', [
             'vendor_name' => 'own_delivery',
             'delivery_info_id' => 2
-
         ], [
             'Authorization' => "Bearer $this->token"."behvbeh"
         ]);
-
         $data = $response->decodeResponseJson();
         $this->assertEquals(401, $data['code']);
         $this->assertEquals("Your session has expired. Try Login", $data['message']);
@@ -89,11 +75,9 @@ class DeliveryVendorUpdateAPITest extends FeatureTestCase
         $response = $this->post('/v2/pos/delivery/partner-vendor', [
             'vendor_name' => 'Own_delivery',
             'delivery_info_id' => 2
-
         ], [
             'Authorization' => "Bearer $this->token"
         ]);
-
         $data = $response->decodeResponseJson();
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The selected vendor name is invalid.", $data['message']);
@@ -104,14 +88,11 @@ class DeliveryVendorUpdateAPITest extends FeatureTestCase
         $response = $this->post('/v2/pos/delivery/partner-vendor', [
             'vendor_name' => 'paperfly',
             'delivery_info_id' => 1
-
         ], [
             'Authorization' => "Bearer $this->token"
         ]);
-
-        $data = $response->decodeResponseJson();
+        $response->decodeResponseJson();
         $Partner_delivery_information=Model::first();
-
         $this->assertEquals('paperfly',$Partner_delivery_information->delivery_vendor);
     }
 
@@ -120,16 +101,11 @@ class DeliveryVendorUpdateAPITest extends FeatureTestCase
         $response = $this->post('/v2/pos/delivery/partner-vendor', [
             'vendor_name' => 'own_delivery',
             'delivery_info_id' => 2
-
         ], [
             'Authorization' => "Bearer $this->token"
         ]);
-
-        $data = $response->decodeResponseJson();
+        $response->decodeResponseJson();
         $Partner_delivery_information=Model::first();
-
         $this->assertEquals('own_delivery',$Partner_delivery_information->delivery_vendor);
     }
-
-
 }

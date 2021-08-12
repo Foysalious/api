@@ -58,7 +58,7 @@ class FeatureTestCase extends TestCase
     protected $partner_resource;
     /** @var PartnerBonus */
     protected $PartnerBonus;
-//    @var ParnerSubscriptionPackage
+    /** @var ParnerSubscriptionPackage $partner_package */
     protected $partner_package;
     /**
      * @var $business
@@ -72,56 +72,45 @@ class FeatureTestCase extends TestCase
      * @var $InfoCall
      */
     protected $PosOrder;
-
     /**
      * @var PosCustomer
      */
     protected $PosCustomer;
-
     /**
      * @var PartnerDeliveryInfoFactory
      */
     protected $PartnerDeliveryInfoFactory;
-
     /**
      * @var PartnerPosService
      */
     protected $PartnerPosService;
-
     /**
      * @var PartnerPosCategory
      */
     protected $PartnerPosCategory;
-
-
     /**
      * @var PosCategory
      */
     protected $PosCategory;
-
     /**
      * @var PosOrderPayment
      */
     protected $PosOrderPayment;
-
     /**
      * @var Model
      */
     protected $SubscriptionWisePaymentGateways;
-
     /**
      * @var TopUpVendor
      */
     protected $topupVendor;
 
-
-
-
     public function setUp()
     {
         parent::setUp();
-        $this->app->singleton(InventoryServerClient::class,MockInventoryServerClient::class);
-        $this->app->singleton(PosOrderServerClient::class,MockPosOrderServerClient::class);
+
+        $this->app->singleton(InventoryServerClient::class, MockInventoryServerClient::class);
+        $this->app->singleton(PosOrderServerClient::class, MockPosOrderServerClient::class);
     }
 
     public function get($uri, array $headers = [])
@@ -152,7 +141,7 @@ class FeatureTestCase extends TestCase
     public function runDatabaseMigrations()
     {
         // \Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
-      //  $this->artisan('migrate');
+       //  $this->artisan('migrate');
         // $this->beforeApplicationDestroyed(function () {
         //     \Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
         // });
@@ -165,7 +154,6 @@ class FeatureTestCase extends TestCase
 
     protected function logIn()
     {
-
         $this->createAccounts();
         $this->token = $this->generateToken();
         $this->createAuthTables();
@@ -184,11 +172,7 @@ class FeatureTestCase extends TestCase
             BusinessMember::class
         ]);
 
-
         $this->profile = factory(Profile::class)->create();
-
-
-
         $this->createClientAccounts();
     }
 
@@ -203,7 +187,6 @@ class FeatureTestCase extends TestCase
 
     private function createClientAccounts()
     {
-
         $this->affiliate = factory(Affiliate::class)->create([
             'profile_id' => $this->profile->id
         ]);
@@ -238,6 +221,7 @@ class FeatureTestCase extends TestCase
             'user_id' => $this->partner->id
         ]);
     }
+
     protected function mxOrderCreate(){
         $this->location = Location::find(1);
         $this->truncateTables([
@@ -292,6 +276,7 @@ class FeatureTestCase extends TestCase
             'preferred_time_start'=>"19:48:04",
             'preferred_time_end'=>"20:48:04"
         ]);
+
         $this->job_service = factory(JobService::class)->create([
             'job_id'=>$this->job->id,
             'service_id'=>$this->job->service_id,
@@ -304,26 +289,19 @@ class FeatureTestCase extends TestCase
     private function createAccountWithMobileNEmail($mobile,$email=null)
     {
         $this->profile = factory(Profile::class)->create([
-
             'mobile' =>$mobile,
             'email' =>$email,
-
         ]);
-
-
 
         $this->createClientAccounts();
     }
-
 
     protected function logInWithMobileNEmail($mobile,$email=null)
     {
         $this->createAccountWithMobileNEmail($mobile,$email);
         $this->token = $this->generateToken();
         $this->createAuthTables();
-
     }
-
 
     protected function generateToken()
     {
@@ -381,8 +359,6 @@ class FeatureTestCase extends TestCase
 
     protected function truncateTable($table)
     {
-        $this->truncateTables([
-            $table
-        ]);
+        $this->truncateTables([$table]);
     }
 }

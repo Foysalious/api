@@ -9,7 +9,7 @@ use App\Models\Taggable;
 use App\Models\Voucher;
 use App\Sheba\PosOrderService\Services\OrderService;
 use App\Repositories\VoucherRepository;
-use App\Sheba\Voucher\VoucherValidate;
+use App\Sheba\Voucher\VoucherService;
 use App\Transformers\CustomSerializer;
 use App\Transformers\VoucherDetailTransformer;
 use App\Transformers\VoucherTransformer;
@@ -24,7 +24,6 @@ use League\Fractal\Resource\Item;
 use Sheba\ModificationFields;
 use Sheba\Vendor\Voucher\VendorVoucherDataGenerator;
 use Sheba\Voucher\DTO\Params\CheckParamsForPosOrder;
-use Sheba\Voucher\VoucherDiscount;
 use Sheba\Voucher\VoucherRule;
 use Throwable;
 use Illuminate\Validation\Rule;
@@ -35,14 +34,14 @@ class VoucherController extends Controller
 
     protected $orderService;
     /**
-     * @var VoucherValidate
+     * @var VoucherService
      */
-    private $voucherValidate;
+    private $voucherService;
 
-    public function __construct(OrderService $orderService, VoucherValidate $voucherValidate)
+    public function __construct(OrderService $orderService, VoucherService $voucherService)
     {
-        $this->voucherValidate = $voucherValidate;
         $this->orderService = $orderService;
+        $this->voucherService = $voucherService;
     }
 
     /**
@@ -306,19 +305,18 @@ class VoucherController extends Controller
         return $rule;
     }
 
+
     /**
-     * @param Request $request
-     * @return JsonResponse
      * @throws Exception
      */
-    public function validateVoucher(Request $request)
+    public function validateVoucher(Request $request, $partner)
     {
-        $partner = $request->user;
-        $real_pos_customer = PosCustomer::find($request->pos_customer);
-        $pos_customer = $real_pos_customer ? $real_pos_customer : $this->getUser($partner->id, $request->pos_customer);
-        return $this->voucherValidate->setPartner($partner)->setRealPosCustomer($real_pos_customer)->setPosCustomer($pos_customer)->voucherValidate($request);
-
+        $response = $this->voucherService->validateVoucher($partner, $request);
+        if (empty($response))
+            return api_response($request, null, 403, ['message' => 'Invalid Promo']);
+        return api_response($request, null, 200, ['voucher' => $response]);
     }
+
 
     public function getVoucherDetails(Request $request)
     {
@@ -330,10 +328,7 @@ class VoucherController extends Controller
         return $voucher;
     }
 
-    public function getUser($partner_id, $user_id)
-    {
-        return $this->orderService->setPartnerId($partner_id)->setUserId($user_id)->getUser();
-    }
+
 
     /**
      * @param Request $request

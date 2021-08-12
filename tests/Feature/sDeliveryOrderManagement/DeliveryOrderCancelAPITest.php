@@ -1,8 +1,4 @@
-<?php
-
-
-namespace Tests\Feature\sDeliveryOrderManagement;
-
+<?php namespace Tests\Feature\sDeliveryOrderManagement;
 
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
@@ -13,10 +9,11 @@ use Tests\Mocks\MockDeliveryServerClient;
 
 class DeliveryOrderCancelAPITest extends FeatureTestCase
 {
-
+    /** @vard $posOrderCreate */
     private $posOrderCreate;
-    private $partnerPosCustomer;
 
+    /** @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed $partnerPosCustomer */
+    private $partnerPosCustomer;
 
     public function setUp()
     {
@@ -25,25 +22,21 @@ class DeliveryOrderCancelAPITest extends FeatureTestCase
         $this->truncateTables([
             PosOrder::class,
             PosCustomer::class,
-
         ]);
         $this->logIn();
 
         $this->partnerPosCustomer = factory(PosCustomer::class)->create();
         $this->posOrderCreate = factory(PosOrder::class)->create();
         $this->app->singleton(DeliveryServerClient::class, MockDeliveryServerClient::class);
-
     }
 
     public function testCancelPosDeliveryOrder()
     {
         $response = $this->post('/v2/pos/delivery/cancel-order', [
             'pos_order_id' => 1
-
         ], [
             'Authorization' => "Bearer $this->token"
         ]);
-
         $data = $response->decodeResponseJson();
         $this->assertEquals(200, $data['code']);
         $this->assertEquals("Successful", $data['message']);
@@ -54,11 +47,9 @@ class DeliveryOrderCancelAPITest extends FeatureTestCase
     {
         $response = $this->post('/v2/pos/delivery/cancel-order', [
             'pos_order_id' => 1
-
         ], [
-            'Authorization' => "Bearer $this->token".'rtthrthr'
+            'Authorization' => "Bearer $this->token" . 'rtthrthr'
         ]);
-
         $data = $response->decodeResponseJson();
         $this->assertEquals(401, $data['code']);
         $this->assertEquals("Your session has expired. Try Login", $data['message']);
@@ -67,11 +58,9 @@ class DeliveryOrderCancelAPITest extends FeatureTestCase
     public function testPosOrderIdFieldIsRequired()
     {
         $response = $this->post('/v2/pos/delivery/cancel-order', [
-
         ], [
             'Authorization' => "Bearer $this->token"
         ]);
-
         $data = $response->decodeResponseJson();
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The pos order id field is required.", $data['message']);
@@ -86,14 +75,11 @@ class DeliveryOrderCancelAPITest extends FeatureTestCase
     {
         $response = $this->post('/v2/pos/delivery/cancel-order', [
             'pos_order_id' => 1
-
         ], [
             'Authorization' => "Bearer $this->token"
         ]);
-
-        $data = $response->decodeResponseJson();
+        $response->decodeResponseJson();
         $Cancel_order = PosOrder::first();
         $this->assertEquals("Cancelled", $Cancel_order->status);
     }
-
 }

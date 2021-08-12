@@ -1,65 +1,132 @@
 <?php namespace App\Sheba\Voucher;
 
-
+use App\Models\Partner;
 use App\Models\PosCustomer;
-use Illuminate\Database\Eloquent\Model;
+use App\Sheba\PosCustomerService\PosCustomerService;
+use Exception;
 use Sheba\Voucher\DTO\Params\CheckParamsForPosOrder;
 
 class VoucherValidate
 {
-    private $real_pos_customer;
-    private $customer;
+    /**
+     * @var PosCustomerInfo
+     */
+    private $posCustomerInfo;
+    /**
+     * @var PosCustomerService
+     */
+    private $posCustomerService;
+    /**
+     * @var $partner Partner
+     */
+    private $partner;
+    protected $amount;
+    protected $posServices;
+    protected $code;
+    private $posCustomerId;
+    /**
+     * @var PosCustomer
+     */
+    private $posCustomer;
 
-    public function setPartner($partner_id)
+
+
+    public function __construct(PosCustomerInfo $posCustomerInfo, PosCustomerService $posCustomerService)
     {
-        $this->partnerId = $partner_id;
+        $this->posCustomerInfo = $posCustomerInfo;
+        $this->posCustomerService = $posCustomerService;
+    }
+
+
+    /**
+     * @param $partnerId
+     * @return VoucherValidate
+     */
+    public function setPartnerId($partnerId)
+    {
+        $this->partner = Partner::find($partnerId);
         return $this;
     }
 
-    public function setRealPosCustomer($real_pos_customer)
+    /**
+     * @param mixed $amount
+     * @return VoucherValidate
+     */
+    public function setAmount($amount)
     {
-        $this->real_pos_customer = $real_pos_customer;
+        $this->amount = $amount;
         return $this;
     }
 
-    public function setPosCustomer($customer)
+    /**
+     * @param mixed $posServices
+     * @return VoucherValidate
+     */
+    public function setPosServices($posServices)
     {
-        $this->customer = $customer;
+        $this->posServices = $posServices;
         return $this;
     }
 
-    public function posOrderParams($request)
+    /**
+     * @param mixed $code
+     * @return VoucherValidate
+     */
+    public function setCode($code)
     {
+        $this->code = $code;
+        return $this;
+    }
+
+    /**
+     * @param $posCustomerId
+     * @return VoucherValidate
+     */
+    public function setPosCustomerId($posCustomerId)
+    {
+        $this->posCustomerId = $posCustomerId;
+        return $this;
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function validate()
+    {
+        $this->resolvePosCustomer();
+        if ($this->posCustomerId && !$this->partner->is_migration_completed)
+            $this->posCustomerInfo->setCustomerMobile($this->posCustomer->mobile);
+        else
+            $this->posCustomerInfo->setCustomerMobile($this->getPosCustomer()['mobile']);
         $pos_order_params = (new CheckParamsForPosOrder());
-        $pos_order_params->setOrderAmount($request->amount);
-        $pos_order_params = $this->real_pos_customer ? $pos_order_params->setApplicant($this->customer) : $pos_order_params->setApplicant(new PosCustomer());
-        return $pos_order_params->setPartnerPosService($request->pos_services);
+        $pos_order_params->setOrderAmount($this->amount);
+        $pos_order_params = $pos_order_params->setApplicant($this->posCustomerInfo->getCustomer());
+        $pos_order_params = $pos_order_params->setPartnerPosService($this->posServices);
+        $result = voucher($this->code)->checkForPosOrder($pos_order_params);
+        $customer_mobile = $this->posCustomerInfo->getCustomerMobile();
+        $result = $customer_mobile  ? $result->checkMobile($customer_mobile)->reveal() : $result->reveal();
+
+        $response = [];
+        if ($result['is_valid']) {
+            $voucher = $result['voucher'];
+            $response = [
+                'amount' => (double)$result['amount'],
+                'code' => $voucher->code,
+                'id' => $voucher->id,
+                'title' => $voucher->title
+            ];
+        }
+        return $response;
     }
 
-    public function OrderVoucherResult($request, $pos_order_params)
+    private function resolvePosCustomer()
     {
-        $result = voucher($request->code)->checkForPosOrder($pos_order_params);
-        return $this->real_pos_customer ? $result->reveal() : $result->checkMobile($this->customer['mobile'])->reveal();
+        $this->posCustomer = $this->posCustomerId ? PosCustomer::find($this->posCustomerId) : new PosCustomer();
+        $this->posCustomerInfo = $this->posCustomerInfo->setCustomer($this->posCustomer);
     }
 
-    public function voucherValidate($request)
+    private function getPosCustomer()
     {
-        $pos_order_params = $this->posOrderParams($request);
-        $result = $this->OrderVoucherResult($request, $pos_order_params);
-
-        if (!$result['is_valid'])
-            return api_response($request, null, 403, ['message' => 'Invalid Promo']);
-
-        $voucher = $result['voucher'];
-        $voucher = [
-            'amount' => (double)$result['amount'],
-            'code' => $voucher->code,
-            'id' => $voucher->id,
-            'title' => $voucher->title
-        ];
-        return api_response($request, null, 200, ['voucher' => $voucher]);
-
+        return $this->posCustomerService->setPartner($this->partner)->setCustomerId($this->posCustomerId)->getCustomerInfoFromSmanagerUserService();
     }
-
-
 }

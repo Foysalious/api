@@ -13,19 +13,23 @@ use Tests\Feature\FeatureTestCase;
 
 class DeliveryOrderInfoAPITest extends FeatureTestCase
 {
-
+    /** @var $posOrderCreate */
     private $posOrderCreate;
-    private $partnerPosCustomer;
-    private $partnerDeliveryinfo;
-    private $posOrderPayment;
 
+    /** @var $partnerPosCustomer */
+    private $partnerPosCustomer;
+
+    /** @var $partnerDeliveryinfo */
+    private $partnerDeliveryinfo;
+
+    /** @var  $posOrderPayment */
+    private $posOrderPayment;
 
     public function setUp()
     {
         parent::setUp();
 
         $this->truncateTables([
-
             PosCustomer::class,
             PosOrder::class,
             PosOrderPayment::class,
@@ -33,14 +37,12 @@ class DeliveryOrderInfoAPITest extends FeatureTestCase
         ]);
         $this->logIn();
 
-
         $this->partnerPosCustomer = factory(PosCustomer::class)->create();
         $this->posOrderCreate = factory(PosOrder::class)->create();
         $this->posOrderPayment = factory(PosOrderPayment::class)->create();
         $this->partnerDeliveryinfo = factory(PartnerDeliveryInformation::class)->create([
             'partner_id'=>$this->partner->id
         ]);
-
     }
 
     public function testPosDeliveryOrderInfo()
@@ -48,7 +50,6 @@ class DeliveryOrderInfoAPITest extends FeatureTestCase
         $response = $this->get('/v2/pos/delivery/order-information/1', [
             'Authorization' => "Bearer $this->token"
         ]);
-
         $data = $response->decodeResponseJson();
         $this->assertEquals(200, $data['code']);
         $this->assertEquals("Successful", $data['message']);
@@ -59,7 +60,6 @@ class DeliveryOrderInfoAPITest extends FeatureTestCase
         $response = $this->get('/v2/pos/delivery/order-information/1', [
             'Authorization' => "Bearer $this->token" . 'hrthew'
         ]);
-
         $data = $response->decodeResponseJson();
         $this->assertEquals(401, $data['code']);
         $this->assertEquals("Your session has expired. Try Login", $data['message']);
@@ -73,6 +73,5 @@ class DeliveryOrderInfoAPITest extends FeatureTestCase
 
         $data = $response->decodeResponseJson();
         $this->assertEquals('0', $data['order_information'][0]['cod_amount'][]);
-
     }*/
 }

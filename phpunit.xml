@@ -6,7 +6,7 @@
          convertErrorsToExceptions="true"
          convertNoticesToExceptions="true"
          convertWarningsToExceptions="true"
-         processIsolation="false"
+         processIsolation="true"
          stopOnFailure="false"
          stopOnError="false">
     <testsuites>
@@ -25,8 +25,26 @@
     <php>
         <env name="DB_DATABASE" value="sheba_testing"/>
         <env name="APP_ENV" value="testing"/>
+        <ini name="memory_limit" value="4G"/>
     </php>
     <logging>
         <log type="junit" target="results/phpunit/api-test-result.xml" logIncompleteSkipped="true"/>
     </logging>
+    <listeners>
+        <listener class="JohnKary\PHPUnit\Listener\SpeedTrapListener">
+            <arguments>
+                <array>
+                    <element key="slowThreshold">
+                        <integer>500</integer>
+                    </element>
+                    <element key="reportLength">
+                        <integer>500</integer>
+                    </element>
+                    <element key="stopOnSlow">
+                        <boolean>false</boolean>
+                    </element>
+                </array>
+            </arguments>
+        </listener>
+    </listeners>
 </phpunit>
