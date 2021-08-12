@@ -38,11 +38,13 @@ class PosCustomerController extends Controller
 
         for ($i = 0; $i < count($customer_list); $i++) {
             $customer_list[$i]['id'] = $customer_list[$i]['_id'];
+            $customer_list[$i]['phone'] = $customer_list[$i]['mobile'];
             unset($customer_list[$i]['_id']);
+            unset($customer_list[$i]['mobile']);
         }
 
 
-        return http_response($request, null, 200, ['message' => 'Successful', 'customers' => $customer_list]);
+        return http_response($request, null, 200, ["code"=> 200,'message' => 'Successful', 'customers' => $customer_list]);
     }
 
     public function storePosCustomer(Request $request)
