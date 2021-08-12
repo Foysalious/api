@@ -112,14 +112,14 @@ class PayReportList
 
     public function getDisbursedMonth()
     {
-        $payslip = $this->payslipRepository->getPaySlipByStatus($this->businessMemberIds, Status::DISBURSED)->select('schedule_date')->orderBy('schedule_date', 'DESC')->first();
+        $payslip = $this->getPaySlipByStatus($this->businessMemberIds, Status::DISBURSED)->select('schedule_date')->orderBy('schedule_date', 'DESC')->first();
         if (!$payslip) return null;
         return $payslip->schedule_date->format('Y-m');
     }
 
     private function runPayslipQuery()
     {
-        $payslips = $this->payslipRepository->getPaySlipByStatus($this->businessMemberIds, Status::DISBURSED)->orderBy('id', 'DESC');
+        $payslips = $this->getPaySlipByStatus($this->businessMemberIds, Status::DISBURSED)->orderBy('id', 'DESC');
         if ($this->monthYear) $payslips = $this->filterByMonthYear($payslips);
         if ($this->departmentID) $payslips = $this->filterByDepartment($payslips);
         if($this->grossSalaryProrated) $this->filterByGrossSalaryProrated($payslips);
@@ -215,4 +215,25 @@ class PayReportList
         if ($this->grossSalaryProrated === 'yes') $payslips->where('joining_log', '<>', null);
         if ($this->grossSalaryProrated === 'no') $payslips->where('joining_log', null);
     }
+
+        public function getPaySlipByStatus($business_member_ids, $status)
+    {
+            return $this->payslipRepository->select('id', 'business_member_id', 'schedule_date', 'status', 'salary_breakdown', 'joining_log', 'created_at')
+                ->where('status', $status)
+                ->whereIn('business_member_id', $business_member_ids)->with(['businessMember' => function ($q){
+                    $q->with(['member' => function ($q) {
+                        $q->select('id', 'profile_id')
+                            ->with([
+                                'profile' => function ($q) {
+                                    $q->select('id', 'name');
+                                }]);
+                    },'role' => function ($q) {
+                        $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                            'businessDepartment' => function ($q) {
+                                $q->select('business_departments.id', 'business_id', 'name');
+                            }
+                        ]);
+                    }]);
+                }]);
+        }
 }
