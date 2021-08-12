@@ -121,7 +121,7 @@ class ApprovalRequestTransformer extends TransformerAbstract
             $profile = $member->profile;
             array_push($approvers, [
                 'name' => $profile->name,
-                'status' => $requestable->status !== Status::CANCELED ? ApprovalRequestPresenter::statuses()[$approval_request->status] : null,
+                'status' => $this->getApproverStatus($requestable, $approval_request),
                 'reject_reason' => (new ApproverWithReason())->getRejectReason($this->approvalRequest, self::APPROVER, $business_member->id)
             ]);
         }
@@ -136,6 +136,24 @@ class ApprovalRequestTransformer extends TransformerAbstract
 
         });
         return $approvers;*/
+    }
+
+    /**
+     * @param $requestable
+     * @param $approval_request
+     * @return string|null
+     */
+    private function getApproverStatus($requestable, $approval_request)
+    {
+        if (ApprovalRequestPresenter::statuses()[$approval_request->status] !== Status::PENDING ) {
+            return ApprovalRequestPresenter::statuses()[$approval_request->status];
+        } else {
+            if ($requestable->status !== Status::CANCELED) {
+                return ApprovalRequestPresenter::statuses()[$approval_request->status];
+            } else {
+                return null;
+            }
+        }
     }
 
     /**
