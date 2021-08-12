@@ -190,11 +190,12 @@ class CoWorkerController extends Controller
         if ($request->file === 'pdf') {
             return App::make('dompdf.wrapper')->loadView('pdfs.co_worker_details', compact('employee'))->download("co_worker_details.pdf");
         }
-        $generated_payslip = $payslip_repository->where('business_member_id', $business_member_id)->first();
+        $generated_payslip = $payslip_repository->where('business_member_id', $business_member_id)->where('schedule_date', 'LIKE', '%' . Carbon::now()->format('Y-m') . '%')->first();
+        $employee_join_date = Carbon::parse($business_member->join_date);
         if (count($employee) > 0) return api_response($request, $employee, 200, [
             'employee' => $employee,
             'business_member_id' => $business_member->id,
-            'joining_prorate' => !$generated_payslip ? Carbon::parse($business_member->join_date)->format('F') : null
+            'joining_prorate' => !$generated_payslip && $employee_join_date->format('Y-m') === Carbon::now()->format('Y-m') ? $employee_join_date->format('F') : null
         ]);
         return api_response($request, null, 404);
     }
