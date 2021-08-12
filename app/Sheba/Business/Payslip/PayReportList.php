@@ -6,6 +6,7 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Dal\PayrollComponent\Components;
+use Sheba\Dal\Payslip\PayslipRepoImplementation;
 use Sheba\Dal\Payslip\PayslipRepository;
 use Sheba\Dal\Payslip\Status;
 use Sheba\Dal\Salary\SalaryRepository;
@@ -25,6 +26,10 @@ class PayReportList
     private $payslip;
     private $isProratedFilterApplicable;
     private $grossSalaryProrated;
+    /**
+     * @var \Illuminate\Foundation\Application|mixed
+     */
+    private $paysliprepo;
 
     /**
      * PayReportList constructor.
@@ -35,6 +40,7 @@ class PayReportList
     {
         $this->payslipRepository = $payslip_repository;
         $this->salaryRepository = $salary_repository;
+        $this->paysliprepo = app(PayslipRepoImplementation::class);//Test
     }
 
     public function setBusiness(Business $business)
@@ -218,8 +224,7 @@ class PayReportList
 
         public function getPaySlipByStatus($business_member_ids, $status)
     {
-            return $this->payslipRepository->select('id', 'business_member_id', 'schedule_date', 'status', 'salary_breakdown', 'joining_log', 'created_at')
-                ->where('status', $status)
+            return $this->paysliprepo->where('status', $status)
                 ->whereIn('business_member_id', $business_member_ids)->with(['businessMember' => function ($q){
                     $q->with(['member' => function ($q) {
                         $q->select('id', 'profile_id')
