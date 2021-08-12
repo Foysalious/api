@@ -384,7 +384,8 @@ class BusinessRoute
                     $api->get('/pay-day', 'B2b\PayrollController@checkPayDayConflicting');
                 });
                 $api->group(['prefix' => 'employee-tracking'], function ($api) {
-                    $api->post('create', 'B2b\VisitController@create');
+                    $api->post('settings', 'B2b\VisitSettingController@settings');
+                    $api->get('settings', 'B2b\VisitSettingController@getSettings');
                 });
             });
         });

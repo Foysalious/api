@@ -35,7 +35,16 @@ class PosCustomerController extends Controller
     {
         $partner = $request->auth_user->getPartner();
         $customer_list = $this->posCustomerService->setPartner($partner)->showCustomerListByPartnerId();
-        return http_response($request, null, 200, ['message' => 'Successful', 'data' => $customer_list]);
+
+        for ($i = 0; $i < count($customer_list); $i++) {
+            $customer_list[$i]['id'] = $customer_list[$i]['_id'];
+            $customer_list[$i]['phone'] = $customer_list[$i]['mobile'];
+            unset($customer_list[$i]['_id']);
+            unset($customer_list[$i]['mobile']);
+        }
+
+
+        return http_response($request, null, 200, ["code"=> 200,'message' => 'Successful', 'customers' => $customer_list]);
     }
 
     public function storePosCustomer(Request $request)
@@ -53,7 +62,7 @@ class PosCustomerController extends Controller
     public function updatePosCustomer(Request $request)
     {
         $partner = $request->auth_user->getPartner();
-        $customer_id=$request->customer_id;
+        $customer_id = $request->customer_id;
         $image = null;
         if ($request->input('pro_pic')) {
             $image = base64_encode(file_get_contents($request->file('pro_pic')->path()));
@@ -85,7 +94,7 @@ class PosCustomerController extends Controller
     {
         $partner = $request->auth_user->getPartner();
         $this->posCustomerService->setPartner($partner)->setCustomerId($customerId)->deleteUser();
-        return http_response($request, null, 200, ['message' => 'Customer has been deleted successfully', ]);
+        return http_response($request, null, 200, ['message' => 'Customer has been deleted successfully',]);
     }
 
 }

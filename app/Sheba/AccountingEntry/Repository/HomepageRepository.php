@@ -48,10 +48,10 @@ class HomepageRepository extends BaseRepository
         }
     }
 
-    public function getIncomeExpenseEntries($userId, $limit, $nextCursor=null, $userType = UserType::PARTNER){
+    public function getIncomeExpenseEntries($userId, $limit, $nextCursor, $startDate, $endDate, $sourceType, $userType = UserType::PARTNER){
         try {
             return $this->client->setUserType($userType)->setUserId($userId)
-                ->get($this->api . 'income-expense-entries?limit='.$limit.($nextCursor?'&next_cursor='.$nextCursor : '') );
+                ->get($this->api . 'income-expense-entries?limit='.$limit.($nextCursor?'&next_cursor='.$nextCursor : '') . ($startDate?'&start_date='.$startDate : '') . ($endDate?'&end_date='.$endDate : '') . ($sourceType?'&source_type='.$sourceType : ''));
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
