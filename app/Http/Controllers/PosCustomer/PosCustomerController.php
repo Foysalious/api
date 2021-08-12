@@ -41,7 +41,7 @@ class PosCustomerController extends Controller
         }
 
 
-        return http_response($request, null, 200, ['message' => 'Successful', 'data' => $customer_list]);
+        return http_response($request, null, 200, ['message' => 'Successful', 'customers' => $customer_list]);
     }
 
     public function storePosCustomer(Request $request)
