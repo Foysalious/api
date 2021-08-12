@@ -380,7 +380,8 @@ class BusinessRoute
                     $api->post('/gross-component/{payroll_settings}', 'B2b\PayrollController@grossComponentAddUpdate');
                 });
                 $api->group(['prefix' => 'employee-tracking'], function ($api) {
-                    $api->post('create', 'B2b\VisitController@create');
+                    $api->post('setting', 'B2b\VisitSettingController@settings');
+                    $api->get('setting', 'B2b\VisitSettingController@getSettings');
                 });
             });
         });
