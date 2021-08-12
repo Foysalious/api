@@ -449,7 +449,7 @@ class SmanagerTopupTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token"
         ]);
-        $response->decodeResponseJson();
+        $a=$response->decodeResponseJson();
         $top_up_order = TopUpOrder::first();
         $this->assertEquals(1, $top_up_order->id);
         $this->assertEquals("Successful", $top_up_order->status);
@@ -600,7 +600,6 @@ class SmanagerTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $response->decodeResponseJson();
-        $this->partner->reload();
         $Top_up_orders = TopUpOrder::first();
         $this->assertEquals($this->partner->id, $Top_up_orders->agent_id);
         $this->assertEquals("123456", $Top_up_orders->transaction_id);
@@ -616,7 +615,6 @@ class SmanagerTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $response->decodeResponseJson();
-        $this->partner->reload();
         $top_up_order = TopUpOrder::first();
         $this->assertEquals($this->partner->id, $top_up_order->agent_id);
         $this->assertEquals(1.04, $top_up_order->agent_commission);

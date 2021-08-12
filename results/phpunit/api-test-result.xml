@@ -1,91 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="Application Test Suite" tests="37" assertions="75" failures="6" errors="1" time="361.372214">
-    <testsuite name="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" tests="37" assertions="75" failures="6" errors="1" time="361.372214">
-      <testcase name="testSuccessfulTopupResponse" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="94" assertions="2" time="11.366068"/>
-      <testcase name="testsManagerConsecutiveTopupNumber" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="107" assertions="6" time="129.838649"/>
-      <testcase name="testTopupResponseForInvalidMobileNumber" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="159" assertions="2" time="3.931828"/>
-      <testcase name="testTopupResponseForForeignMobileNumber" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="172" assertions="2" time="4.566036"/>
-      <testcase name="testTopupResponseForNullMobileNumber" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="185" assertions="2" time="3.780983"/>
-      <testcase name="testTopupResponseWithoutlMobileNumber" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="199" assertions="2" time="3.883202"/>
-      <testcase name="testTopupResponseForInvalidVendorID" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="212" assertions="2" time="3.850099"/>
-      <testcase name="testTopupResponseForNullVendorID" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="225" assertions="2" time="4.541218"/>
-      <testcase name="testTopupResponseWithoutVendorID" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="238" assertions="2" time="3.716733"/>
-      <testcase name="testTopupResponseWithNullGatewayConnection" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="251" assertions="2" time="4.315490"/>
-      <testcase name="testTopupResponseWithoutConnectionType" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="264" assertions="2" time="4.424760"/>
-      <testcase name="testTopupResponseWithNullAmount" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="277" assertions="2" time="3.776196"/>
-      <testcase name="testTopupResponseWithoutAmount" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="290" assertions="2" time="3.958411"/>
-      <testcase name="testTopupResponseWithNullPassword" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="303" assertions="2" time="4.612133"/>
-      <testcase name="testTopupResponseWithoutPassword" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="316" assertions="2" time="4.933750"/>
-      <testcase name="testTopupResponseWithUnverifiedUser" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="329" assertions="2" time="2.560824"/>
-      <testcase name="testTopupSessionOutResponse" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="341" assertions="2" time="2.694751"/>
-      <testcase name="testTopupBlacklistNumberResponse" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="354" assertions="2" time="2.712894"/>
-      <testcase name="testTopupMinimumAmountResponse" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="367" assertions="2" time="4.377776"/>
-      <testcase name="testTopupMaximumAmountResponse" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="380" assertions="2" time="4.002746"/>
-      <testcase name="testTopupResponseInsufficientBalance" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="393" assertions="2" time="2.625650"/>
-      <testcase name="testTopupResponseWithRejectedUser" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="406" assertions="2" time="2.741496"/>
-      <testcase name="testTopupResponseWithPendingUser" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="419" assertions="2" time="2.485264"/>
-      <testcase name="testOnePartnerTopUpRequestCreateOneTopUpOrder" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="432" assertions="1" time="9.755188"/>
-      <testcase name="testTopUpOrderDataMatchesOnTopUpOrderTable" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="443" assertions="2" time="9.835734">
-        <failure type="PHPUnit_Framework_ExpectationFailedException">Tests\Feature\TopUp\SmanagerTopupTest::testTopUpOrderDataMatchesOnTopUpOrderTable
-Failed asserting that two strings are equal.
---- Expected
-+++ Actual
-@@ @@
--'Successful'
-+'System Error'
-
-/var/www/tests/Feature/TopUp/SmanagerTopupTest.php:455
-</failure>
-      </testcase>
-      <testcase name="testSuccessfulTopupDeductAmountFromPartnerWallet" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="465" assertions="1" time="10.174875">
-        <failure type="PHPUnit_Framework_ExpectationFailedException">Tests\Feature\TopUp\SmanagerTopupTest::testSuccessfulTopupDeductAmountFromPartnerWallet
-Failed asserting that 1000.0 matches expected 901.
-
-/var/www/tests/Feature/TopUp/SmanagerTopupTest.php:482
-</failure>
-      </testcase>
-      <testcase name="testSuccessfulTopupOtfShebaOtfCommissionCheck" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="485" assertions="2" time="11.359046">
+  <testsuite name="Application Test Suite" tests="1" assertions="2" failures="1" errors="0" time="9.921675">
+    <testsuite name="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" tests="1" assertions="2" failures="1" errors="0" time="9.921675">
+      <testcase name="testSuccessfulTopupOtfShebaOtfCommissionCheck" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="485" assertions="2" time="9.921675">
         <failure type="PHPUnit_Framework_ExpectationFailedException">Tests\Feature\TopUp\SmanagerTopupTest::testSuccessfulTopupOtfShebaOtfCommissionCheck
 Failed asserting that null matches expected 11.880000000000001.
 
 /var/www/tests/Feature/TopUp/SmanagerTopupTest.php:502
 </failure>
-      </testcase>
-      <testcase name="testSuccessfulTopupOtfAgentOtfCommissionCheck" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="505" assertions="2" time="9.957390">
-        <failure type="PHPUnit_Framework_ExpectationFailedException">Tests\Feature\TopUp\SmanagerTopupTest::testSuccessfulTopupOtfAgentOtfCommissionCheck
-Failed asserting that null matches expected 0.12.
-
-/var/www/tests/Feature/TopUp/SmanagerTopupTest.php:517
-</failure>
-      </testcase>
-      <testcase name="testManagerTopupOtfVendorIDCheck" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="521" assertions="2" time="8.562351"/>
-      <testcase name="testSuccessfulTopupTransactionStoreAgentLatLngInfo" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="535" assertions="3" time="8.994971"/>
-      <testcase name="testSuccessfulTopupTransactionStoreAgentIP" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="550" assertions="2" time="9.703365"/>
-      <testcase name="testSuccessfulTopupTransactionStoreUserAgentType" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="565" assertions="2" time="9.367236"/>
-      <testcase name="testSuccessfulTopupTransactionStoreUserAgentDeviceInformation" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="579" assertions="2" time="9.029266"/>
-      <testcase name="testSuccessfulTopupTransactionStoreTopupTransactionID" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="593" assertions="2" time="10.658353">
-        <failure type="PHPUnit_Framework_ExpectationFailedException">Tests\Feature\TopUp\SmanagerTopupTest::testSuccessfulTopupTransactionStoreTopupTransactionID
-Failed asserting that null matches expected '123456'.
-
-/var/www/tests/Feature/TopUp/SmanagerTopupTest.php:606
-</failure>
-      </testcase>
-      <testcase name="testSuccessfulTopupPartnerCommissionCheck" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="609" assertions="2" time="10.513718">
-        <failure type="PHPUnit_Framework_ExpectationFailedException">Tests\Feature\TopUp\SmanagerTopupTest::testSuccessfulTopupPartnerCommissionCheck
-Failed asserting that '0.00' matches expected 1.04.
-
-/var/www/tests/Feature/TopUp/SmanagerTopupTest.php:622
-</failure>
-      </testcase>
-      <testcase name="testSuccessfulTopupSpecificPartnerCommissionCheck" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="629" assertions="2" time="11.169878"/>
-      <testcase name="testSuccessfulTopupPartnerRechargeAmount" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="658" assertions="0" time="12.593886">
-        <error type="ErrorException">Tests\Feature\TopUp\SmanagerTopupTest::testSuccessfulTopupPartnerRechargeAmount
-ErrorException: Trying to get property of non-object
-
-/var/www/vendor/sentry/sentry/lib/Raven/Breadcrumbs/ErrorHandler.php:34
-/var/www/tests/Feature/TopUp/SmanagerTopupTest.php:677
-</error>
       </testcase>
     </testsuite>
   </testsuite>
