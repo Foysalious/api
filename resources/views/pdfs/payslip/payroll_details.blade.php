@@ -145,7 +145,7 @@
 <table class="header">
     <tr>
         @if($pay_report_detail['employee_info']['company_logo'])
-            <td class="text-left"><img src="{{ $pay_report_detail['employee_info']['company_logo'] }}" height="65"/></td>
+            <td class="text-left"><img src="{{ $pay_report_detail['employee_info']['company_logo'] }}" height="50"/></td>
         @endif
         @if($pay_report_detail['employee_info']['company_name'])
             <td class="text-right"><p class="company-name" style="font-family: 'Poppins', sans-serif">{{$pay_report_detail['employee_info']['company_name']}}</p></td>
