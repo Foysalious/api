@@ -194,6 +194,10 @@ class AttendanceController extends Controller
 
         $all_employee_attendance = collect($all_employee_attendance);
 
+        if($request->has('status') && $request->status === 'inactive') {
+            $all_employee_attendance = $this->filterInactiveCoWorkersWithData($all_employee_attendance);
+        }
+
         if ($request->has('search')) $all_employee_attendance = $this->searchWithEmployeeName($all_employee_attendance, $request);
         if ($request->has('sort_on_absent')) $all_employee_attendance = $this->attendanceSortOnAbsent($all_employee_attendance, $request->sort_on_absent);
         if ($request->has('sort_on_present')) $all_employee_attendance = $this->attendanceSortOnPresent($all_employee_attendance, $request->sort_on_present);
@@ -297,6 +301,17 @@ class AttendanceController extends Controller
         $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
         return $attendances->$sort_by(function ($attendance, $key) {
             return $attendance['attendance']['overtime_in_minutes'];
+        });
+    }
+
+    /**
+     * @param $employee_attendance
+     * @return mixed
+     */
+    private function filterInactiveCoWorkersWithData($employee_attendance)
+    {
+        return $employee_attendance->filter(function ($attendance) {
+            return $attendance['attendance']['present'] || $attendance['attendance']['on_leave'];
         });
     }
 
