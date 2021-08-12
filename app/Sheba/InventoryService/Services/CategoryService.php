@@ -142,7 +142,8 @@ class CategoryService
 
     public function getallcategory($partner_id)
     {
-        $url = 'api/v1/partners/'.$partner_id.'/category-tree';
+        $url = 'api/v1/partners/'.$partner_id.'/category-tree?';
+        if($this->updatedAfter) $url .= 'updated_after='.$this->updatedAfter;
 
         return $this->client->get($url);
     }
