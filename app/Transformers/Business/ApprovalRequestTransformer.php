@@ -121,7 +121,7 @@ class ApprovalRequestTransformer extends TransformerAbstract
             $profile = $member->profile;
             array_push($approvers, [
                 'name' => $profile->name,
-                'status' => ApprovalRequestPresenter::statuses()[$approval_request->status],
+                'status' => $requestable->status !== Status::CANCELED ? ApprovalRequestPresenter::statuses()[$approval_request->status] : null,
                 'reject_reason' => (new ApproverWithReason())->getRejectReason($this->approvalRequest, self::APPROVER, $business_member->id)
             ]);
         }

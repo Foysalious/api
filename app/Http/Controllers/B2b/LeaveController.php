@@ -288,7 +288,7 @@ class LeaveController extends Controller
                 'department' => $role ? $role->businessDepartment->name : null,
                 'phone' => $profile->mobile,
                 'profile_pic' => $profile->pro_pic,
-                'status' => ApprovalRequestPresenter::statuses()[$approval_request->status],
+                'status' => $requestable->status !== Status::CANCELED ? ApprovalRequestPresenter::statuses()[$approval_request->status] : null,
                 'reject_reason' => (new ApproverWithReason())->getRejectReason($approval_request, self::APPROVER, $business_member->id)
             ]);
         }
