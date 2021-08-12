@@ -38,7 +38,7 @@ class PayrollController extends Controller
             dispatch(new SendPayslipEmailToBusinessMember($business_member->business, $employee_email, $employee_name, $time_period, $pay_report_pdf));
             return api_response($request, null, 200, ['employee_email' => $employee_email]);
         }
-        return api_response($request, null, 200, ['pay_report_detail' => $pay_report_pdf]);
+        return api_response($request, null, 200, ['payslip_pdf_link' => $pay_report_pdf]);
     }
 
     public function disbursedMonth(Request $request)
