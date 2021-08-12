@@ -69,8 +69,11 @@ class HomepageController extends Controller
     {
         $limit = $request->limit ?? 10;
         $nextCursor = $request->next_cursor ?? null;
+        $startDate = $request->has('start_date') ? $this->convertStartDate($request->start_date) : null;
+        $endDate = $request->has('start_date') ? $this->convertEndDate($request->end_date) : null;
+        $sourceType = $request->has('root_account') ? $request->source_type : null;
         try {
-            $response = $this->homepageRepo->getIncomeExpenseEntries($request->partner->id, $limit, $nextCursor);
+            $response = $this->homepageRepo->getIncomeExpenseEntries($request->partner->id, $limit, $nextCursor, $startDate, $endDate, $sourceType);
             return api_response($request, $response, 200, ['data' => $response]);
         } catch (Exception $e) {
             return api_response(
