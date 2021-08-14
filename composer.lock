@@ -1864,7 +1864,7 @@
             "time": "2017-03-12T09:23:10+00:00"
         },
         {
-            "name": "jeremeamia/SuperClosure",
+            "name": "jeremeamia/superclosure",
             "version": "2.3.0",
             "source": {
                 "type": "git",
@@ -3695,6 +3695,10 @@
                 "mime",
                 "mime type"
             ],
+            "support": {
+                "issues": "https://github.com/rosell-dk/image-mime-type-guesser/issues",
+                "source": "https://github.com/rosell-dk/image-mime-type-guesser/tree/0.3"
+            },
             "time": "2019-03-29T09:33:28+00:00"
         },
         {
@@ -4184,8 +4188,8 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://bitbucket.org/startern/sheba_voucher.git",
-                "reference": "8852979a2711abc5dded95a6367dbb93bb2793d4"
+                "url": "https://mac_pasha@bitbucket.org/startern/sheba_voucher.git",
+                "reference": "1066fb2d2a0e1607353df24d749b6a072cb5411d"
             },
             "require": {
                 "php": ">=5.4"
@@ -4209,7 +4213,7 @@
                 }
             ],
             "description": "Voucher for Sheba.",
-            "time": "2021-06-16T11:46:47+00:00"
+            "time": "2021-08-14T18:27:33+00:00"
         },
         {
             "name": "spomky-labs/aes-key-wrap",
