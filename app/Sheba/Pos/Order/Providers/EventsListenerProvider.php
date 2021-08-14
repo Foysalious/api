@@ -22,11 +22,8 @@ class EventsListenerProvider extends ServiceProvider
      */
     public function boot(Dispatcher $events)
     {
-        dd(1);
         parent::boot($events);
         $events->listen(PosOrderSavedEvent::class, PosOrderSavedListener::class);
 
     }
-
-
 }

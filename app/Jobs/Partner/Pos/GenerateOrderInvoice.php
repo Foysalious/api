@@ -22,10 +22,10 @@ class GenerateOrderInvoice extends Job implements ShouldQueue
     public function handle()
     {
         try {
-            dd(1);
             /** @var InvoiceService $invoiceService */
             $invoiceService= app(InvoiceService::class);
-            $invoiceService->setPosOrder($this->model)->generateInvoice()->saveInvoiceLink();
+            $invoiceService  =  $invoiceService->setPosOrder($this->model);
+            $invoiceService->generateInvoice()->saveInvoiceLink();
         } catch (Exception $e) {
             logError($e->getMessage());
         }

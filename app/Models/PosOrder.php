@@ -1,7 +1,6 @@
 <?php namespace App\Models;
 
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\POSOrder\Events\PosOrderSaved as PosOrderSavedEvent;
@@ -48,7 +47,7 @@ class PosOrder  extends BaseModel
     private $netBill;
     private $originalTotal;
 
-    public static $savedEventClass = PosOrderSavedEvent::class;
+    public static $createdEventClass = PosOrderSavedEvent::class;
 
     public function calculate()
     {
