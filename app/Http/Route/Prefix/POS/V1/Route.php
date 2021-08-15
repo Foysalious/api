@@ -14,6 +14,7 @@ class Route
                 $api->post('validity-check', 'VoucherController@validateVoucher');
             });
             $api->post('/reward/action', 'PosRebuild\RewardController@actionReward');
+            $api->post('/usages', 'PosRebuild\UsageController@store');
             $api->get('voucher-details/{voucher_id}', 'VoucherController@getVoucherDetails');
         });
 
