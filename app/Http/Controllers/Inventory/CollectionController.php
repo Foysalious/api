@@ -89,15 +89,4 @@ class CollectionController extends Controller
         $response = $this->collectionService->setPartnerId($partner->id)->setCollectionId($collection_id)->delete();
         return http_response($request, null, 200, $response);
     }
-
-    public function rewardDummy(Request $request)
-    {
-        $this->validate($request, [
-            'event' => 'required',
-            'rewardable_type' => 'required',
-            'rewardable_id' => 'required',
-            'event_data' => 'required'
-        ]);
-        return http_response($request, null, 200);
-    }
 }
