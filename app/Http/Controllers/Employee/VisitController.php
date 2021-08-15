@@ -15,7 +15,7 @@ use Sheba\Dal\Visit\VisitRepoImplementation;
 use Sheba\ModificationFields;
 use Sheba\Repositories\Business\BusinessMemberRepository;
 
-class EmployeeVisitTrackingController extends Controller
+class VisitController extends Controller
 {
     use BusinessBasicInformation, ModificationFields;
 

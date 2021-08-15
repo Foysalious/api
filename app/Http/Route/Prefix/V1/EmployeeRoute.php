@@ -15,10 +15,10 @@ class EmployeeRoute
                 $api->get('payslip', 'Employee\PayrollController@downloadPayslip');
                 $api->get('disbursed-month', 'Employee\PayrollController@disbursedMonth');
             });
-            $api->get('manager-list', 'Employee\EmployeeVisitTrackingController@getCoWorkerManagerList');
+            $api->get('manager-list', 'Employee\VisitController@getCoWorkerManagerList');
             $api->group(['prefix' => 'employee-tracking'], function ($api) {
-                $api->post('create', 'Employee\EmployeeVisitTrackingController@create');
-                $api->post('update/{visit_id}', 'Employee\EmployeeVisitTrackingController@update');
+                $api->post('create', 'Employee\VisitController@create');
+                $api->post('update/{visit_id}', 'Employee\VisitController@update');
             });
             //$api->post('password', 'Employee\EmployeeController@updateMyPassword');
             $api->get('dashboard', 'Employee\EmployeeController@getDashboard');
