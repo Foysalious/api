@@ -185,10 +185,17 @@ class Creator
         $this->voucherCalculation($order);
         $this->resolvePaymentMethod();
         $this->storeIncome($order);
+        return $order;
+    }
+
+    /**
+     * @throws NotAssociativeArray
+     */
+    private function generateInvoice($order)
+    {
         /** @var InvoiceService $invoiceService */
         $invoiceService = app(InvoiceService::class)->setPosOrder($order);
         $invoiceService->generateInvoice()->saveInvoiceLink();
-        return $order;
     }
 
     /**
