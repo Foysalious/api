@@ -33,12 +33,15 @@ class Updater
 
     private function makeData()
     {
+        $business_member_id = $this->requester->getBusinessMember()->id;
+        $employee_id = $this->requester->getEmployee();
         $this->visitData = [
+            'visitor_id' => $employee_id,
             'schedule_date' => $this->requester->getDate(),
-            'visitor_id' => $this->requester->getEmployee(),
             'title' => $this->requester->getTitle(),
             'description' => $this->requester->getDescription(),
         ];
+        if ($business_member_id !== $employee_id) $this->visitData['assignee_id'] = $business_member_id;
     }
 
 }
