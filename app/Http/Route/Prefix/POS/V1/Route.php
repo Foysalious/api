@@ -13,6 +13,7 @@ class Route
             });
             $api->post('/reward/action', 'PosRebuild\RewardController@actionReward');
             $api->post('/usages', 'PosRebuild\UsageController@store');
+            $api->post('/check-access', 'PosRebuild\AccessManagerController@checkAccess');
             $api->get('voucher-details/{voucher_id}', 'VoucherController@getVoucherDetails');
         });
 
