@@ -38,7 +38,7 @@ class InvoiceService
 
     public function isAlreadyGenerated()
     {
-       $this->invoiceLink = $this->posOrderRepository->find($this->posOrder->id)->invoice;
+       $this->invoiceLink = PosOrder::find($this->posOrder->id)->invoice;
        return $this;
     }
 
