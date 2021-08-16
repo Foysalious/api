@@ -7,6 +7,7 @@ use App\Models\Resource;
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
+use Sheba\AccountingEntry\Repository\AccountingEntryClient;
 use Sheba\Dal\SubscriptionWisePaymentGateway\Model;
 use Sheba\Dal\TopUpBlacklistNumber\TopUpBlacklistNumber;
 use Sheba\Dal\TopUpOTFSettings\Model as TopUpOTFSettings;
@@ -16,6 +17,7 @@ use Sheba\ExpenseTracker\Repository\ExpenseTrackerClient;
 use Sheba\OAuth2\AccountServer;
 use Sheba\OAuth2\VerifyPin;
 use Tests\Feature\FeatureTestCase;
+use Tests\Mocks\MockAccountingEntryClient;
 use Tests\Mocks\MockExpenseClient;
 
 class SmanagerTopupTest extends FeatureTestCase
@@ -472,7 +474,6 @@ class SmanagerTopupTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $response->decodeResponseJson();
-        $this->partner->reload();
         /**
          * Initial wallet balance = 1000
          * Partner Subscription Package ID = 1
