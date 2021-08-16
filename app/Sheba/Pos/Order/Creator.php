@@ -163,8 +163,8 @@ class Creator
             $service                   = array_except($service, ['id', 'name', 'is_vat_applicable', 'updated_price']);
 
             $pos_order_item        = $this->itemRepo->save($service);
-           // $is_stock_maintainable = $this->stockManager->setPosService($original_service)->isStockMaintainable();
-          //  if ($is_stock_maintainable) $this->stockManager->decrease($service['quantity']);
+            $is_stock_maintainable = $this->stockManager->setPosService($original_service)->isStockMaintainable();
+            if ($is_stock_maintainable) $this->stockManager->decrease($service['quantity']);
 
             $this->discountHandler->setOrder($order)->setPosService($original_service)->setType(DiscountTypes::SERVICE)->setData($service);
             if ($this->discountHandler->hasDiscount()) $this->discountHandler->setPosOrderItem($pos_order_item)->create($order);
@@ -184,7 +184,6 @@ class Creator
         $this->voucherCalculation($order);
         $this->resolvePaymentMethod();
         $this->storeIncome($order);
-       // $this->generateInvoice($order);
         return $order;
     }
 
