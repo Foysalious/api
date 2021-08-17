@@ -185,7 +185,6 @@ class Creator
         $order_data['delivery_district']     = isset($this->data['sales_channel']) && $this->data['sales_channel'] == SalesChannels::WEBSTORE && isset($this->data['delivery_district']) ? $this->data['delivery_district'] : null;
         $order_data['delivery_thana']        = isset($this->data['sales_channel']) && $this->data['sales_channel'] == SalesChannels::WEBSTORE && isset($this->data['delivery_thana']) ? $this->data['delivery_thana'] : null;
         $order                               = $this->orderRepo->save($order_data);
-
         $services                            = json_decode($this->data['services'], true);
         $servicesStockDecreasingInfo = [];
         foreach ($services as $service) {
@@ -232,6 +231,7 @@ class Creator
         $order = $order->calculate();
         $this->discountHandler->setOrder($order)->setType(DiscountTypes::ORDER)->setData($this->data);
         if ($this->discountHandler->hasDiscount()) $this->discountHandler->create($order);
+
         $this->voucherCalculation($order);
         $this->resolvePaymentMethod();
         $this->storeIncome($order);

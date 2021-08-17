@@ -1,49 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="Application Test Suite" tests="20" assertions="68" failures="4" errors="0" time="114.398367">
-    <testsuite name="Tests\Feature\sProServiceBookCategory\sProSubCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProSubCategoryTest.php" tests="20" assertions="68" failures="4" errors="0" time="114.398367">
-      <testcase name="testSProSubCategoryAPIWithoutLocationParameter" class="Tests\Feature\sProServiceBookCategory\sProSubCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProSubCategoryTest.php" line="66" assertions="10" time="4.786436"/>
-      <testcase name="testSProSubCategoryAPIWithValidLatLngParameter" class="Tests\Feature\sProServiceBookCategory\sProSubCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProSubCategoryTest.php" line="89" assertions="10" time="4.419386"/>
-      <testcase name="testSProSubCategoryAPIWithValidLocationParameter" class="Tests\Feature\sProServiceBookCategory\sProSubCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProSubCategoryTest.php" line="112" assertions="10" time="4.906854"/>
-      <testcase name="testSProSubCategoryAPIWithInvalidLatAndValidLngParameter" class="Tests\Feature\sProServiceBookCategory\sProSubCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProSubCategoryTest.php" line="135" assertions="2" time="6.402987"/>
-      <testcase name="testSProSubCategoryAPIWithValidLatAndInvalidLngParameter" class="Tests\Feature\sProServiceBookCategory\sProSubCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProSubCategoryTest.php" line="149" assertions="2" time="5.369035"/>
-      <testcase name="testSProSubCategoryAPIWithInvalidLatLngParameter" class="Tests\Feature\sProServiceBookCategory\sProSubCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProSubCategoryTest.php" line="164" assertions="2" time="7.495173"/>
-      <testcase name="testSProSubCategoryAPIWithInvalidLocationParameter" class="Tests\Feature\sProServiceBookCategory\sProSubCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProSubCategoryTest.php" line="179" assertions="2" time="6.478288"/>
-      <testcase name="testSProSubCategoryAPIWithLatAndWithoutLngParameter" class="Tests\Feature\sProServiceBookCategory\sProSubCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProSubCategoryTest.php" line="194" assertions="2" time="6.856352"/>
-      <testcase name="testSProSubCategoryAPIWithoutLatAndWithLngParameter" class="Tests\Feature\sProServiceBookCategory\sProSubCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProSubCategoryTest.php" line="209" assertions="2" time="7.443805"/>
-      <testcase name="testSProSubCategoryAPIWithInvalidMasterCategoryId" class="Tests\Feature\sProServiceBookCategory\sProSubCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProSubCategoryTest.php" line="224" assertions="2" time="5.071640"/>
-      <testcase name="testSProSubCategoryAPIWithLocationNotAvailableForThisCategory" class="Tests\Feature\sProServiceBookCategory\sProSubCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProSubCategoryTest.php" line="239" assertions="2" time="6.434778"/>
-      <testcase name="testSProSubCategoryAPIWithSubCategoryUnpublishedAndMasterCategoryPublishedAndServicePublished" class="Tests\Feature\sProServiceBookCategory\sProSubCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProSubCategoryTest.php" line="254" assertions="2" time="5.615783"/>
-      <testcase name="testSProSubCategoryAPIWithSubCategoryUnpublishedAndMasterCategoryUnpublishedAndServiceUnpublished" class="Tests\Feature\sProServiceBookCategory\sProSubCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProSubCategoryTest.php" line="274" assertions="2" time="5.053068"/>
-      <testcase name="testSProSubCategoryAPIWithSubCategoryUnpublishedAndMasterCategoryUnpublishedAndServicePublished" class="Tests\Feature\sProServiceBookCategory\sProSubCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProSubCategoryTest.php" line="294" assertions="2" time="5.391426"/>
-      <testcase name="testSProSubCategoryAPIWithSubCategoryUnpublishedAndMasterCategoryPublishedAndServiceUnpublished" class="Tests\Feature\sProServiceBookCategory\sProSubCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProSubCategoryTest.php" line="314" assertions="2" time="5.700200"/>
-      <testcase name="testSProSubCategoryAPIWithSubCategoryPublishedAndMasterCategoryPublishedAndServicePublished" class="Tests\Feature\sProServiceBookCategory\sProSubCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProSubCategoryTest.php" line="334" assertions="10" time="5.953986"/>
-      <testcase name="testSProSubCategoryAPIWithSubCategoryPublishedAndMasterCategoryUnpublishedAndServiceUnpublished" class="Tests\Feature\sProServiceBookCategory\sProSubCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProSubCategoryTest.php" line="363" assertions="1" time="6.690388">
-        <failure type="PHPUnit_Framework_ExpectationFailedException">Tests\Feature\sProServiceBookCategory\sProSubCategoryTest::testSProSubCategoryAPIWithSubCategoryPublishedAndMasterCategoryUnpublishedAndServiceUnpublished
-Failed asserting that 200 matches expected 404.
+  <testsuite name="Application Test Suite" tests="1" assertions="2" failures="1" errors="0" time="9.921675">
+    <testsuite name="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" tests="1" assertions="2" failures="1" errors="0" time="9.921675">
+      <testcase name="testSuccessfulTopupOtfShebaOtfCommissionCheck" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="485" assertions="2" time="9.921675">
+        <failure type="PHPUnit_Framework_ExpectationFailedException">Tests\Feature\TopUp\SmanagerTopupTest::testSuccessfulTopupOtfShebaOtfCommissionCheck
+Failed asserting that null matches expected 11.880000000000001.
 
-/var/www/tests/Feature/sProServiceBookCategory/sProSubCategoryTest.php:378
-</failure>
-      </testcase>
-      <testcase name="testSProSubCategoryAPIWithSubCategoryPublishedAndMasterCategoryUnpublishedAndServicePublished" class="Tests\Feature\sProServiceBookCategory\sProSubCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProSubCategoryTest.php" line="384" assertions="1" time="4.531230">
-        <failure type="PHPUnit_Framework_ExpectationFailedException">Tests\Feature\sProServiceBookCategory\sProSubCategoryTest::testSProSubCategoryAPIWithSubCategoryPublishedAndMasterCategoryUnpublishedAndServicePublished
-Failed asserting that 200 matches expected 404.
-
-/var/www/tests/Feature/sProServiceBookCategory/sProSubCategoryTest.php:399
-</failure>
-      </testcase>
-      <testcase name="testSProSubCategoryAPIWithSubCategoryPublishedAndMasterCategoryPublishedAndServiceUnpublished" class="Tests\Feature\sProServiceBookCategory\sProSubCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProSubCategoryTest.php" line="405" assertions="1" time="4.719267">
-        <failure type="PHPUnit_Framework_ExpectationFailedException">Tests\Feature\sProServiceBookCategory\sProSubCategoryTest::testSProSubCategoryAPIWithSubCategoryPublishedAndMasterCategoryPublishedAndServiceUnpublished
-Failed asserting that 200 matches expected 404.
-
-/var/www/tests/Feature/sProServiceBookCategory/sProSubCategoryTest.php:420
-</failure>
-      </testcase>
-      <testcase name="testSProSubCategoryAPIWithLatLngOfLocationNotAvailableForThisCategory" class="Tests\Feature\sProServiceBookCategory\sProSubCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProSubCategoryTest.php" line="426" assertions="1" time="5.078285">
-        <failure type="PHPUnit_Framework_ExpectationFailedException">Tests\Feature\sProServiceBookCategory\sProSubCategoryTest::testSProSubCategoryAPIWithLatLngOfLocationNotAvailableForThisCategory
-Failed asserting that 200 matches expected 404.
-
-/var/www/tests/Feature/sProServiceBookCategory/sProSubCategoryTest.php:436
+/var/www/tests/Feature/TopUp/SmanagerTopupTest.php:502
 </failure>
       </testcase>
     </testsuite>
