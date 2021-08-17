@@ -35,14 +35,16 @@ class Creator
 
     private function makeData()
     {
+        $business_member_id = $this->requester->getBusinessMember()->id;
+        $employee_id = $this->requester->getEmployee();
         $this->visitData = [
-            'assignee_id' => $this->requester->getBusinessMember()->id,
-            'visitor_id' => $this->requester->getEmployee(),
+            'visitor_id' => $employee_id,
             'schedule_date' => $this->requester->getDate(),
             'title' => $this->requester->getTitle(),
             'description' => $this->requester->getDescription(),
             'status' => STATUS::CREATED,
         ];
+        if ($business_member_id !== $employee_id) $this->visitData['assignee_id'] = $business_member_id;
     }
 
 }
