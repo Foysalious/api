@@ -93,7 +93,6 @@ class ServiceList
             'services.variables',
             'app_thumb',
             'category_id',
-            'is_add_on'
         ];
     }
 
