@@ -152,8 +152,7 @@ class EmployeeController extends Controller
         $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
 
         $approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMember($business_member);
-        $pending_approval_requests = $this->approvalRequestRepo->getPendingApprovalRequestByBusinessMember($business_member);
-        $pending_approval_requests_count = $this->countPendingApprovalRequests($pending_approval_requests);
+        $pending_approval_requests_count = $this->approvalRequestRepo->countPendingLeaveApprovalRequests($business_member);
         $profile_completion_score = $completion_calculator->setBusinessMember($business_member)->getDigiGoScore();
         $pending_visit = $visit_repository->where('assignee_id', $business_member->id)->whereIn('status', [Status::CREATED, Status::STARTED]);
         $all_pending_visit_count = $pending_visit->count();
@@ -364,21 +363,5 @@ class EmployeeController extends Controller
     {
         if ($request->has('for') && $request->for == 'phone_book') return $business->getActiveBusinessMember();
         return $business->getAccessibleBusinessMember();
-    }
-
-    /**
-     * @param $approval_requests
-     * @return int
-     */
-    private function countPendingApprovalRequests($approval_requests)
-    {
-        $pending_leave_count = 0;
-        foreach($approval_requests as $approval_request) {
-            $requestable = $approval_request->requestable;
-            if ($requestable->status === 'pending') {
-                $pending_leave_count++;
-            }
-        }
-        return $pending_leave_count;
     }
 }

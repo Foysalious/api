@@ -4128,7 +4128,7 @@
             "source": {
                 "type": "git",
                 "url": "https://mac_pasha@bitbucket.org/startern/sheba_voucher.git",
-                "reference": "935f243725f82caf0e5d717627ead59c076f581f"
+                "reference": "1066fb2d2a0e1607353df24d749b6a072cb5411d"
             },
             "require": {
                 "php": ">=5.4"
@@ -4152,7 +4152,7 @@
                 }
             ],
             "description": "Voucher for Sheba.",
-            "time": "2020-10-13T12:19:30+00:00"
+            "time": "2021-08-14T18:27:33+00:00"
         },
         {
             "name": "spomky-labs/aes-key-wrap",
