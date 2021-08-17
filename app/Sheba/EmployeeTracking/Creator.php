@@ -37,14 +37,15 @@ class Creator
     {
         $business_member_id = $this->requester->getBusinessMember()->id;
         $employee_id = $this->requester->getEmployee();
+        $visitor = $employee_id ? $employee_id : $business_member_id;
         $this->visitData = [
-            'visitor_id' => $employee_id,
+            'visitor_id' => $visitor,
             'schedule_date' => $this->requester->getDate(),
             'title' => $this->requester->getTitle(),
             'description' => $this->requester->getDescription(),
             'status' => STATUS::CREATED,
         ];
-        if ($business_member_id !== $employee_id) $this->visitData['assignee_id'] = $business_member_id;
+        if ($employee_id) $this->visitData['assignee_id'] = $business_member_id;
     }
 
 }

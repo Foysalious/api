@@ -5,15 +5,10 @@ use App\Sheba\Business\CoWorker\ManagerSubordinateEmployeeList;
 use App\Sheba\EmployeeTracking\Creator;
 use App\Sheba\EmployeeTracking\Requester;
 use App\Sheba\EmployeeTracking\Updater;
-use App\Transformers\Business\CoWorkerManagerListTransformer;
-use App\Transformers\CustomSerializer;
 use Illuminate\Http\Request;
 use App\Sheba\Business\BusinessBasicInformation;
-use League\Fractal\Manager;
-use League\Fractal\Resource\Item;
 use Sheba\Dal\Visit\VisitRepository;
 use Sheba\ModificationFields;
-use Sheba\Repositories\Business\BusinessMemberRepository;
 
 class VisitController extends Controller
 {
@@ -31,7 +26,7 @@ class VisitController extends Controller
     {
         $this->validate($request, [
             'date' => 'required|date_format:Y-m-d H:i:s',
-            'employee' => 'required|numeric',
+            'employee' => 'numeric',
             'title' => 'required|string',
             'description' => 'sometimes|required|string',
         ]);
@@ -48,7 +43,7 @@ class VisitController extends Controller
     {
         $this->validate($request, [
             'date' => 'required|date_format:Y-m-d H:i:s',
-            'employee' => 'required|numeric',
+            'employee' => 'numeric',
             'title' => 'required|string',
             'description' => 'sometimes|required|string',
         ]);
