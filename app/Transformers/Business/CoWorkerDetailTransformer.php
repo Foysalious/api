@@ -19,6 +19,7 @@ use App\Models\Member;
 class CoWorkerDetailTransformer extends TransformerAbstract
 {
     use BusinessBasicInformation;
+
     const THRESHOLD = 17;
 
     /** @var Business $business */
@@ -227,11 +228,11 @@ class CoWorkerDetailTransformer extends TransformerAbstract
         return [
             'id' => $manager_member->id,
             'business_member' => $manager_business_member->id,
-            'name' => $manager_profile->name,
+            'name' => $manager_profile->name ?: null,
             'employee_id' => $manager_business_member->employee_id,
             'profile' => [
                 'id' => $manager_profile->id,
-                'name' => $manager_profile->name,
+                'name' => $manager_profile->name ?: null,
                 'pro_pic' => $manager_profile->pro_pic,
                 'mobile' => $manager_business_member->mobile,
                 'email' => $manager_profile->email
@@ -289,11 +290,11 @@ class CoWorkerDetailTransformer extends TransformerAbstract
      */
     private function getPdfInfo($business_member)
     {
-       return [
-           'company_name' => $this->business->name,
-           'company_logo' => $this->isDefaultImageByUrl($this->business->logo) ? null : $this->business->logo,
-           'joining_date' => $business_member->join_date ? Carbon::parse($business_member->join_date)->format('d.m.y') : 'N/A',
-           'date_of_birth' => $this->profile->dob ? Carbon::parse($this->profile->dob)->format('d.m.y') : 'N/A'
-       ];
+        return [
+            'company_name' => $this->business->name,
+            'company_logo' => $this->isDefaultImageByUrl($this->business->logo) ? null : $this->business->logo,
+            'joining_date' => $business_member->join_date ? Carbon::parse($business_member->join_date)->format('d.m.y') : 'N/A',
+            'date_of_birth' => $this->profile->dob ? Carbon::parse($this->profile->dob)->format('d.m.y') : 'N/A'
+        ];
     }
 }
