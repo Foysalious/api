@@ -1,6 +1,5 @@
 <?php namespace App\Sheba\EmployeeTracking;
 
-
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\Visit\VisitRepoImplementation;
 
