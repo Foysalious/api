@@ -107,7 +107,7 @@ class Excel
     {
         return [
             'Employee ID', 'Employee Name', 'Phone', 'Email', 'Status',
-            'Department', 'Designation', 'Manager', 'Employee Grade', 'Joining Date',
+            'Department', 'Designation', 'Manager', 'Joining Date', 'Employee Grade',
             'Employee Type', 'Previous Institution', 'DOB', 'Address',
             'Nationality', 'NID/Passport', 'TIN', 'Bank Name',
             'Bank Account No.','Emergency Contact', 'Name Emergency Contact', 'Relationship Emergency Contact'

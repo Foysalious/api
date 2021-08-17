@@ -130,7 +130,7 @@ class CoWorkerExistenceCheck
             return $this;
         }
         if ($profile->member->inactiveBusinesses()->where('businesses.id', $this->business->id)->count() > 0) {
-            $this->setError(409, "This employee exists in your inactive list. Do you want to activate again?");
+            $this->setError(409, "This employee exists in your inactive list.");
             $business_member = $profile->member->inactiveBusinessMember()->where('business_id', $this->business->id)->first();
             $this->setBusinessMemberId($business_member->id);
             return $this;
