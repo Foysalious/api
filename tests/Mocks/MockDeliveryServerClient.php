@@ -13,10 +13,8 @@ use App\Sheba\Partner\Delivery\DeliveryServerClient;
 
 class MockDeliveryServerClient extends DeliveryServerClient
 {
-
     public function post($uri, $data, $multipart = false)
     {
-
         if($uri == 'merchants/register') return $this->getRegistrationData();
        // if($uri == 'merchants/register' && $this->get422Registrationersponse()['code']==422) return $this->get422Registrationersponse();
         if($uri == 'orders') return $this->getOrderData();

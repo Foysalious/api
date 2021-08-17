@@ -22,12 +22,10 @@ use App\Sheba\PosOrderService\PosOrderServerClient;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\Schema;
-use Sheba\AccountingEntry\Repository\AccountingEntryClient;
 use Sheba\Dal\AuthorizationRequest\AuthorizationRequest;
 use Sheba\Dal\AuthorizationToken\AuthorizationToken;
 use Sheba\Dal\Category\Category;
 use Sheba\Dal\CategoryLocation\CategoryLocation;
-use Sheba\Dal\InfoCall\InfoCall;
 use Sheba\Dal\JobService\JobService;
 use Sheba\Dal\LocationService\LocationService;
 use Sheba\Dal\Service\Service;
@@ -113,7 +111,6 @@ class FeatureTestCase extends TestCase
 
         $this->app->singleton(InventoryServerClient::class, MockInventoryServerClient::class);
         $this->app->singleton(PosOrderServerClient::class, MockPosOrderServerClient::class);
-        $this->app->singleton(AccountingEntryClient::class, MockAccountingEntryClient::class);
     }
 
     public function get($uri, array $headers = [])

@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="Application Test Suite" tests="1" assertions="1" failures="1" errors="0" time="19.383418">
-    <testsuite name="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" tests="1" assertions="1" failures="1" errors="0" time="19.383418">
-      <testcase name="testSuccessfulTopupDeductAmountFromPartnerWallet" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="467" assertions="1" time="19.383418">
+  <testsuite name="Application Test Suite" tests="1" assertions="1" failures="1" errors="0" time="17.114056">
+    <testsuite name="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" tests="1" assertions="1" failures="1" errors="0" time="17.114056">
+      <testcase name="testSuccessfulTopupDeductAmountFromPartnerWallet" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="468" assertions="1" time="17.114056">
         <failure type="PHPUnit_Framework_ExpectationFailedException">Tests\Feature\TopUp\SmanagerTopupTest::testSuccessfulTopupDeductAmountFromPartnerWallet
 Failed asserting that 50000.0 matches expected 901.
 
-/var/www/tests/Feature/TopUp/SmanagerTopupTest.php:483
+/var/www/tests/Feature/TopUp/SmanagerTopupTest.php:484
 </failure>
       </testcase>
     </testsuite>

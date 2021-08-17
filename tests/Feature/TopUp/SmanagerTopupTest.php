@@ -91,6 +91,7 @@ class SmanagerTopupTest extends FeatureTestCase
 
         $this->app->instance(VerifyPin::class, $verify_pin_mock);
         $this->app->singleton(ExpenseTrackerClient::class, MockExpenseClient::class);
+        $this->app->singleton(AccountingEntryClient::class, MockAccountingEntryClient::class);
     }
 
     public function testSuccessfulTopupResponse()
@@ -173,7 +174,7 @@ class SmanagerTopupTest extends FeatureTestCase
 
     public function testTopupResponseForForeignMobileNumber()
     {
-        $resourceNIDStatus = Profile::find(1)->update(["nid_verified" => 1]);
+        Profile::find(1)->update(["nid_verified" => 1]);
         $response = $this->post('/v2/top-up/partner', [
             'mobile' => '+6444880800', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 10, 'password' => 12345,
         ], [
