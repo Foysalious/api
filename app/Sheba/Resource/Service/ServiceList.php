@@ -49,18 +49,16 @@ class ServiceList
     public function getServicesList()
     {
         $cs_service_ids = DB::table('crosssale_services')->whereIn('service_id', $this->serviceIds)->get();
-        $cs_add_on_service_ids = [];
-        if ($cs_service_ids!=null){
-            foreach ($cs_service_ids as $cs_service_id) {
-                array_push($cs_add_on_service_ids, $cs_service_id->add_on_service_id);
-            }
-        }
-//        dd($cs_add_on_service_ids!=null);
         $is_published_for_backend = $this->request->is_published_for_backend;
         $location = $this->job->partnerOrder->order->location->id;
-        $services = $this->job->partnerOrder->partner->services()->whereHas('locations', function ($q) use ($location) {
+        $services = $cs_service_ids ? $this->job->partnerOrder->partner->services()->whereHas('locations', function ($q) use ($location) {
             $q->where('location_id', $location);
         })->select($this->getSelectColumnsOfService())->where('category_id', $this->job->category_id)->where(function ($q) use ($is_published_for_backend) {
+            if (!$is_published_for_backend) $q->where('publication_status', 1);
+            $q->orWhere('is_published_for_backend', 1);
+        })->get() : $this->job->partnerOrder->partner->services()->whereHas('locations', function ($q) use ($location) {
+            $q->where('location_id', $location);
+        })->select($this->getSelectColumnsOfService())->where('category_id', $this->job->category_id)->where('is_add_on', 0)->where(function ($q) use ($is_published_for_backend) {
             if (!$is_published_for_backend) $q->where('publication_status', 1);
             $q->orWhere('is_published_for_backend', 1);
         })->get();
