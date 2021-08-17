@@ -15,6 +15,7 @@ use Sheba\Voucher\VoucherSuggesterServiceProvider;
 use Sheba\Analysis\PartnerPerformance\Providers\ServiceProvider as PartnerPerformanceServiceProvider;
 use Sheba\Analysis\PartnerSale\Providers\ServiceProvider as PartnerSaleServiceProvider;
 use Sheba\AppSettings\HomePageSetting\Getters\Provider as HomePageSettingGettersProvider;
+use App\Sheba\Pos\Order\Providers\EventsListenerProvider as PosOrderInvoiceGenerationEventsListenerProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -38,5 +39,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->register(CURServiceProvider::class);
         $this->app->register(EventsListenerProvider::class);
         $this->app->singleton(TerminatingMiddleware::class);
+        $this->app->register(PosOrderInvoiceGenerationEventsListenerProvider::class);
     }
 }

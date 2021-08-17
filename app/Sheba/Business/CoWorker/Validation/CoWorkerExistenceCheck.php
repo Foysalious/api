@@ -182,16 +182,16 @@ class CoWorkerExistenceCheck
     public function isEssentialInfoAvailableForActivate()
     {
         $errors = [];
-        $result = null;
         if (!$this->profile->name) array_push($errors, 'Name not found');
         if (!$this->profile->gender) array_push($errors, "Gender not found");
         if (!$this->businessMember->business_role_id) array_push($errors, "Designation not found");
         if (!$this->businessMember->join_date) array_push($errors, "Join date not found");
 
-        if ($errors) $result = implode(', ', $errors);
-        $this->setError(409, $result);
-
-        if ($this->profile->email) $this->setEmail($this->profile->email);
+        if ($errors) {
+            $result = implode(', ', $errors);
+            $this->setError(409, $result);
+            if ($this->profile->email) $this->setEmail($this->profile->email);
+        }
         return $this;
     }
 }

@@ -1,7 +1,5 @@
 <?php namespace App\Sheba\Algolia\Listeners;
 
-
-use App\Models\PartnerPosService;
 use Sheba\Dal\Extras\Events\BaseEvent;
 use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceSaved as PartnerPosServiceSavedEvent;
 

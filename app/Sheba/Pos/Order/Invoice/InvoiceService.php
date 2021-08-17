@@ -38,7 +38,7 @@ class InvoiceService
 
     public function isAlreadyGenerated()
     {
-       $this->invoiceLink = $this->posOrderRepository->find($this->posOrder->id)->invoice;
+       $this->invoiceLink = PosOrder::find($this->posOrder->id)->invoice;
        return $this;
     }
 
@@ -53,7 +53,7 @@ class InvoiceService
     {
         $data = $this->generateData();
         $invoice_name = 'pos_order_invoice_' . $this->posOrder->id;
-        $this->invoiceLink         =  (new PdfHandler())->setData($data)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
+        $this->invoiceLink         =  (new PdfHandler())->setData($data)->setName($invoice_name)->setViewFile('transaction_invoice')->save(true);
         return $this;
     }
 
@@ -96,7 +96,8 @@ class InvoiceService
             $customer     = $pos_order->customer->profile;
             $info['user'] = [
                 'name'   => $customer->name,
-                'mobile' => $customer->mobile
+                'mobile' => $customer->mobile,
+                'address' => !$pos_order->address? $customer->address: $pos_order->address
             ];
         }
         return $info;

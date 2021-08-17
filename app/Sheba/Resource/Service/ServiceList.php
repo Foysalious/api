@@ -4,6 +4,7 @@
 use App\Models\HyperLocal;
 use App\Models\Job;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ServiceList
 {
@@ -14,6 +15,8 @@ class ServiceList
     private $resource;
     private $geo;
     private $categoryId;
+    /** @var array */
+    private $serviceIds = [];
 
     public function setJob(Job $job)
     {
@@ -37,13 +40,25 @@ class ServiceList
         return $this;
     }
 
+    public function setServiceIds(array $ids)
+    {
+        $this->serviceIds = $ids;
+        return $this;
+    }
+
     public function getServicesList()
     {
+        $cs_service_ids = DB::table('crosssale_services')->whereIn('service_id', $this->serviceIds)->get();
         $is_published_for_backend = $this->request->is_published_for_backend;
         $location = $this->job->partnerOrder->order->location->id;
-        $services = $this->job->partnerOrder->partner->services()->whereHas('locations', function ($q) use ($location) {
+        $services = $cs_service_ids ? $this->job->partnerOrder->partner->services()->whereHas('locations', function ($q) use ($location) {
             $q->where('location_id', $location);
         })->select($this->getSelectColumnsOfService())->where('category_id', $this->job->category_id)->where(function ($q) use ($is_published_for_backend) {
+            if (!$is_published_for_backend) $q->where('publication_status', 1);
+            $q->orWhere('is_published_for_backend', 1);
+        })->get() : $this->job->partnerOrder->partner->services()->whereHas('locations', function ($q) use ($location) {
+            $q->where('location_id', $location);
+        })->select($this->getSelectColumnsOfService())->where('category_id', $this->job->category_id)->where('is_add_on', 0)->where(function ($q) use ($is_published_for_backend) {
             if (!$is_published_for_backend) $q->where('publication_status', 1);
             $q->orWhere('is_published_for_backend', 1);
         })->get();
@@ -77,7 +92,7 @@ class ServiceList
             'services.unit',
             'services.variables',
             'app_thumb',
-            'category_id'
+            'category_id',
         ];
     }
 
