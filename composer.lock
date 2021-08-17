@@ -3960,9 +3960,7 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
-                "reference": "408502013b6fe1aa9b8db623655cfa3499bda552"
-
-                "reference": "ed19c9885535d64de9bca88a85ff9f8a8f988812"
+                "reference": "8bffa4e13ca9473c79dd5a6d6079dfca82cdc3f7"
             },
             "require": {
                 "php": ">=5.4"
@@ -3989,8 +3987,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2021-06-23T05:39:44+00:00"
-            "time": "2021-07-11T09:33:25+00:00"
+            "time": "2021-08-11T10:48:28+00:00"
         },
         {
             "name": "sheba/elasticsearch",
@@ -4135,7 +4132,7 @@
             "source": {
                 "type": "git",
                 "url": "https://mac_pasha@bitbucket.org/startern/sheba_voucher.git",
-                "reference": "935f243725f82caf0e5d717627ead59c076f581f"
+                "reference": "1066fb2d2a0e1607353df24d749b6a072cb5411d"
             },
             "require": {
                 "php": ">=5.4"
@@ -4159,7 +4156,7 @@
                 }
             ],
             "description": "Voucher for Sheba.",
-            "time": "2020-10-13T12:19:30+00:00"
+            "time": "2021-08-14T18:27:33+00:00"
         },
         {
             "name": "spomky-labs/aes-key-wrap",

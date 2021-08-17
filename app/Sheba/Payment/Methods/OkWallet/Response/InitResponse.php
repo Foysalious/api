@@ -1,6 +1,4 @@
-<?php
-
-namespace Sheba\Payment\Methods\OkWallet\Response;
+<?php namespace Sheba\Payment\Methods\OkWallet\Response;
 
 use Illuminate\Contracts\Support\Arrayable;
 use Sheba\Payment\Methods\OkWallet\OkWalletClient;
@@ -8,22 +6,31 @@ use Sheba\Transactions\WalletClient;
 
 class InitResponse implements Arrayable
 {
-    const SUCCESS_CODE = 2000;
+    const SUCCESS_CODE = 200;
+
     private $response;
+    private $msg;
+    private $orderId;
+    private $code;
     private $status;
-    private $message;
-    private $sessionKey;
-    private $res_code;
+    private $transactionId;
+    private $amount;
     private $map = [];
 
+    /**
+     * InitResponse constructor.
+     * @param $response
+     */
     public function __construct($response)
     {
         $this->response = $response;
-        $this->map      = [
-            'status'     => 'STATUS',
-            'res_code'   => 'RESCODE',
-            'message'    => 'MESSAGE',
-            'sessionKey' => 'SESSIONKEY'
+        $this->map = [
+            'code'  => 'code',
+            'msg' => 'msg',
+            'amount' => 'amount',
+            'status' => 'status',
+            'orderId' => 'OrderID',
+            'transactionId' => 'transactionID'
         ];
         $this->init();
     }
@@ -50,25 +57,17 @@ class InitResponse implements Arrayable
     /**
      * @return mixed
      */
-    public function getStatus()
-    {
-        return $this->status;
-    }
-
-    /**
-     * @return mixed
-     */
     public function getMessage()
     {
-        return $this->message;
+        return $this->msg;
     }
 
     /**
      * @return mixed
      */
-    public function getSessionKey()
+    public function getOrderId()
     {
-        return $this->sessionKey;
+        return $this->orderId;
     }
 
     /**
@@ -76,7 +75,7 @@ class InitResponse implements Arrayable
      */
     public function getResCode()
     {
-        return $this->res_code;
+        return $this->code;
     }
 
     /**
@@ -90,13 +89,12 @@ class InitResponse implements Arrayable
     /**
      * @inheritDoc
      */
-    public function toArray()
+    public function toArray(): array
     {
         return [
-            'status'          => $this->status,
-            'message'         => $this->message,
-            'response_code'   => $this->res_code,
-            'session_key'     => $this->sessionKey,
+            'order_id' => $this->orderId,
+            'msg' => $this->msg,
+            'code' => $this->code,
             'client_response' => $this->response
         ];
     }
@@ -104,14 +102,13 @@ class InitResponse implements Arrayable
     /**
      * @return bool
      */
-    public function hasError()
+    public function hasError(): bool
     {
-        return ($this->res_code != self::SUCCESS_CODE);
+        return ($this->code != self::SUCCESS_CODE);
     }
 
-    public function getRedirectUrl()
+    public function getRedirectUrl(): string
     {
-        return OkWalletClient::getTransactionUrl($this->sessionKey);
+        return OkWalletClient::getTransactionUrl($this->orderId);
     }
-
 }

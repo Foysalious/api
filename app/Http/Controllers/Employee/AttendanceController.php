@@ -143,7 +143,8 @@ class AttendanceController extends Controller
             'is_left_early_note_required' => 0,
             'checkin_time' => $attendance ? $attendance->checkin_time : null,
             'checkout_time' => $attendance ? $attendance->checkout_time : null,
-            'is_geo_required' => $is_remote_enable ? 1 : 0
+            'is_geo_required' => $is_remote_enable ? 1 : 0,
+            'is_remote_enable' => $is_remote_enable
         ];
         if ($data['can_checkin']) {
             $data['is_late_note_required'] = $checkin->isLateNoteRequired();

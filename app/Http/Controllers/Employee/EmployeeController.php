@@ -166,8 +166,7 @@ class EmployeeController extends Controller
         $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
 
         $approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMember($business_member);
-        $pending_approval_requests = $this->approvalRequestRepo->getPendingApprovalRequestByBusinessMember($business_member);
-        $pending_approval_requests_count = $this->countPendingApprovalRequests($pending_approval_requests);
+        $pending_approval_requests_count = $this->approvalRequestRepo->countPendingLeaveApprovalRequests($business_member);
         $profile_completion_score = $completion_calculator->setBusinessMember($business_member)->getDigiGoScore();
 
         $data = [

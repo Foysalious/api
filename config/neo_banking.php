@@ -196,12 +196,30 @@ return [
             ],
             [
                 'field_type'    => 'editText',
+                'title'         => 'বাবার নাম (English) *',
+                'name'          => 'father_name_en',
+                'id'            => 'father_name_en',
+                'hint'          => 'উদাহরণ: Abdul Kader',
+                'error_message' => 'বাবার নাম পূরণ আবশ্যক',
+                'is_editable'   => true
+            ],
+            [
+                'field_type'    => 'editText',
                 'title'         => 'মায়ের নাম  *',
                 'name'          => 'mother_name',
                 'id'            => 'mother_name',
                 'hint'          => 'উদাহরণ: Salma Begum',
                 'error_message' => 'মায়ের নাম পূরণ আবশ্যক',
                 'is_editable'   => false
+            ],
+            [
+                'field_type'    => 'editText',
+                'title'         => 'মায়ের নাম  (English) *',
+                'name'          => 'mother_name_en',
+                'id'            => 'mother_name_en',
+                'hint'          => 'উদাহরণ: Salma Begum',
+                'error_message' => 'মায়ের নাম পূরণ আবশ্যক',
+                'is_editable'   => true
             ],
             [
                 'field_type'    => 'editText',
