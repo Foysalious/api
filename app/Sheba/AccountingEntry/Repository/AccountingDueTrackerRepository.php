@@ -169,7 +169,7 @@ class AccountingDueTrackerRepository extends BaseRepository
             $list = $due_list->map(
                 function ($item) {
                     if ($item["attachments"]) {
-                        $item["attachments"] = json_decode($item["attachments"]);
+                        $item["attachments"] = is_array($item["attachments"]) ? $item["attachments"] : json_decode($item["attachments"]);
                     }
                     $item['created_at'] = Carbon::parse($item['created_at'])->format('Y-m-d h:i A');
                     $item['entry_at'] = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
