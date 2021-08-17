@@ -15,7 +15,7 @@ class EmployeeRoute
                 $api->get('payslip', 'Employee\PayrollController@downloadPayslip');
                 $api->get('disbursed-month', 'Employee\PayrollController@disbursedMonth');
             });
-            $api->get('manager-list', 'Employee\VisitController@getCoWorkerManagerList');
+            $api->get('subordinate-employee-list', 'Employee\VisitController@getManagerSubordinateEmployeeList');
             $api->group(['prefix' => 'employee-tracking'], function ($api) {
                 $api->post('create', 'Employee\VisitController@create');
                 $api->post('update/{visit_id}', 'Employee\VisitController@update');
