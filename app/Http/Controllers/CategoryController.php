@@ -397,7 +397,6 @@ class CategoryController extends Controller
             $category = $cat->published()->first();
         }
 
-
         if ($category != null) {
             $category_slug = $category->getSlug();
             list($offset, $limit) = calculatePagination($request);
@@ -433,7 +432,7 @@ class CategoryController extends Controller
                     )->orderBy('order')->skip($offset)->take($limit);
 
                     if ((int)\request()->is_business) $q->publishedForBusiness();
-                    elseif ((int)\request()->is_for_backend) $q->publishedForAll();
+                    elseif ((int)\request()->is_for_backend) $q->publishedForAll()->where('is_add_on',0);
                     elseif ((int)\request()->is_b2b) $q->publishedForB2B();
                     elseif ((int)\request()->is_ddn) $q->publishedForDdn();
                     else $q->published();
