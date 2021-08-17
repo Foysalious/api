@@ -42,7 +42,7 @@ class JournalCreateRepository
 
     public function __construct()
     {
-        $this->client = new AccountingEntryClient(new Client());
+        $this->client = app(AccountingEntryClient::class);
         $this->type   = UserType::PARTNER;
 
     }
