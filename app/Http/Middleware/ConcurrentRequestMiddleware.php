@@ -19,7 +19,7 @@ class ConcurrentRequestMiddleware
         $rateLimiter = app(RateLimiter::class);
         $key = $paramName . '-' .$request->route($paramName)->id;
         if($rateLimiter->retriesLeft($key, $maxHit) <= 0) {
-            return response()->json(['code' => 403, 'message' => 'Too many requests']);
+            return response()->json(['code' => 403, 'message' => 'You need to wait at least ' . $duration . 'minutes before requesting again.']);
         }
         $rateLimiter->hit($key, $duration);
         return $next($request);
