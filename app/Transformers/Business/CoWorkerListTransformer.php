@@ -24,7 +24,7 @@ class CoWorkerListTransformer extends TransformerAbstract
             'is_super' => $business_member->is_super,
             'profile' => [
                 'id' => $profile->id,
-                'name' => $profile->name,
+                'name' => $profile->name ?: null,
                 'pro_pic' => $profile->pro_pic,
                 'mobile' => $business_member->mobile,
                 'email' => $profile->email,
