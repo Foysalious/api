@@ -386,6 +386,8 @@ class BusinessRoute
                 $api->group(['prefix' => 'employee-tracking'], function ($api) {
                     $api->post('settings', 'B2b\VisitSettingController@settings');
                     $api->get('settings', 'B2b\VisitSettingController@getSettings');
+                    $api->get('team-visits', 'B2b\VisitController@getTeamVisits');
+                    $api->get('my-visits', 'B2b\VisitController@getMyVisits');
                 });
             });
         });

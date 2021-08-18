@@ -146,6 +146,7 @@ class TopUpJob extends MonitoredJob implements ShouldQueue
 
     private function handleException(Exception $e)
     {
+        dde($e);
         $payload = $this->job->getRawBody();
         $id = $this->failedJobLogger->log($this->connection, $this->queue, $payload);
         logErrorWithExtra($e, [
