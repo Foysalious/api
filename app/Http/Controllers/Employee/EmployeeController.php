@@ -417,7 +417,7 @@ class EmployeeController extends Controller
             'department' => 'required|string',
             'designation' => 'required|string',
             'joining_date' => 'required|date',
-            'gender' => 'required|string|in::Female,Male,Other'
+            'gender' => 'required|string|in:Female,Male,Other'
         ]);
 
         try {
