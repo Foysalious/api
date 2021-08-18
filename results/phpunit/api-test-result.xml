@@ -1,13 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="Application Test Suite" tests="1" assertions="2" failures="1" errors="0" time="9.921675">
-    <testsuite name="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" tests="1" assertions="2" failures="1" errors="0" time="9.921675">
-      <testcase name="testSuccessfulTopupOtfShebaOtfCommissionCheck" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="485" assertions="2" time="9.921675">
-        <failure type="PHPUnit_Framework_ExpectationFailedException">Tests\Feature\TopUp\SmanagerTopupTest::testSuccessfulTopupOtfShebaOtfCommissionCheck
-Failed asserting that null matches expected 11.880000000000001.
+  <testsuite name="Application Test Suite" tests="1" assertions="0" failures="0" errors="1" time="0.382690">
+    <testsuite name="Tests\Feature\CustomerTransactionWallet\CustomerTransactionWalletTest" file="/var/www/tests/Feature/CustomerTransactionWallet/CustomerTransactionWalletTest.php" tests="1" assertions="0" failures="0" errors="1" time="0.382690">
+      <testcase name="testCustomerTransactionWalletAPIForStatusCode200" class="Tests\Feature\CustomerTransactionWallet\CustomerTransactionWalletTest" file="/var/www/tests/Feature/CustomerTransactionWallet/CustomerTransactionWalletTest.php" line="19" assertions="0" time="0.382690">
+        <error type="Error">Tests\Feature\CustomerTransactionWallet\CustomerTransactionWalletTest::testCustomerTransactionWalletAPIForStatusCode200
+Error: Class 'Factory\PaymentGatewayFactory' not found
 
-/var/www/tests/Feature/TopUp/SmanagerTopupTest.php:502
-</failure>
+/var/www/database/factories/ModelFactory.php:107
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Factory.php:113
+/var/www/vendor/laravel/framework/src/Illuminate/Database/Eloquent/Factory.php:47
+/var/www/vendor/laravel/framework/src/Illuminate/Database/DatabaseServiceProvider.php:73
+/var/www/vendor/laravel/framework/src/Illuminate/Container/Container.php:731
+/var/www/vendor/laravel/framework/src/Illuminate/Container/Container.php:629
+/var/www/vendor/laravel/framework/src/Illuminate/Foundation/Application.php:697
+/var/www/vendor/laravel/framework/src/Illuminate/Foundation/helpers.php:105
+/var/www/vendor/laravel/framework/src/Illuminate/Foundation/helpers.php:432
+/var/www/tests/Feature/CustomerTransactionWallet/CustomerTransactionWalletTest.php:22
+</error>
       </testcase>
     </testsuite>
   </testsuite>
