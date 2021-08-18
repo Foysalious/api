@@ -91,7 +91,7 @@ class VisitController extends Controller
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
         $own_visits = $visit_repository->where('visitor_id', $business_member->id)
-                                       ->whereNotIn('status', ['completed', 'cancelled'])
+                                       ->whereIn('status', ['completed', 'cancelled'])
                                        ->select('id', 'title', 'status', 'schedule_date', DB::raw('YEAR(schedule_date) year, MONTH(schedule_date) month'))
                                        ->orderBy('id', 'desc')->get();
         $own_visits = $own_visits->groupBy('year')->transform(function($item, $k) {
