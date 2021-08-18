@@ -19,6 +19,8 @@ class EmployeeRoute
             $api->group(['prefix' => 'employee-tracking'], function ($api) {
                 $api->post('create', 'Employee\VisitController@create');
                 $api->post('update/{visit_id}', 'Employee\VisitController@update');
+                $api->get('own-visit-list', 'Employee\VisitController@ownVisitList');
+//                $api->get('own-visit-history', 'Employee\VisitController@ownVisitHistory');
             });
             //$api->post('password', 'Employee\EmployeeController@updateMyPassword');
             $api->get('dashboard', 'Employee\EmployeeController@getDashboard');
