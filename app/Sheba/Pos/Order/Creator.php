@@ -191,7 +191,7 @@ class Creator
         } catch (Throwable $e) {
             DB::rollback();
             app('sentry')->captureException($e);
-            return null;
+            throw $e;
         }
     }
 
