@@ -192,7 +192,7 @@ class CoWorkerStatusController extends Controller
 
         $business_member = $this->businessMemberRepository->find($business_member_id);
 
-        $basic_request = $this->basicRequest->setFirstName($request->first_name)
+        $basic_request = $this->basicRequest->setFirstName($request->name)
             ->setDepartment($request->department)
             ->setRole($request->role)
             ->setGender($request->gender)
