@@ -24,7 +24,7 @@ class CoWorkerExistenceCheck
     private $email;
     private $mobile;
     private $profile;
-    
+
     /**
      * CoWorkerExistenceCheck constructor.
      * @param ProfileRepository $profile_repository
@@ -121,15 +121,15 @@ class CoWorkerExistenceCheck
         if (!$profile) return $this;
         if (!$profile->member) return $this;
 
-        if ($profile->member->businesses()->where('businesses.id', $this->business->id)->count() > 0) {
+        if ($profile->member->businesses()->where('businesses.id', $this->business->id)->whereNull('deleted_at')->count() > 0) {
             $this->setError(421, "This employee is already added to your business");
             return $this;
         }
-        if ($profile->member->businesses()->where('businesses.id', '<>', $this->business->id)->count() > 0) {
+        if ($profile->member->businesses()->where('businesses.id', '<>', $this->business->id)->whereNull('deleted_at')->count() > 0) {
             $this->setError(422, "This employee is already added in another business");
             return $this;
         }
-        if ($profile->member->inactiveBusinesses()->where('businesses.id', $this->business->id)->count() > 0) {
+        if ($profile->member->inactiveBusinesses()->where('businesses.id', $this->business->id)->whereNull('deleted_at')->count() > 0) {
             $this->setError(409, "This employee exists in your inactive list.");
             $business_member = $profile->member->inactiveBusinessMember()->where('business_id', $this->business->id)->first();
             $this->setBusinessMemberId($business_member->id);
