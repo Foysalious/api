@@ -34,7 +34,7 @@ class VisitList
                        ]);
                    }]);
            }
-       ])->select('id', 'visitor_id', 'title', 'status', 'schedule_date', DB::raw('DATE_FORMAT(schedule_date, "%Y-%m-%d") as date'))
+       ])->select('id', 'visitor_id', 'title', 'status', 'start_date_time', 'end_date_time', 'total_time_in_minutes', 'schedule_date', DB::raw('DATE_FORMAT(schedule_date, "%Y-%m-%d") as date'))
            ->orderBy('id', 'desc')->get();
    }
 
@@ -76,7 +76,11 @@ class VisitList
            array_push($visits, [
                'id' => $visit->id,
                'title' => $visit->title,
-               'schedule_time' => Carbon::parse($visit->schedule_date)->format('h:i A'),
+               'timings' => [
+                   'start_time' => $visit->start_date_time ? Carbon::parse($visit->start_date_time)->format('h:i A') : Carbon::parse($visit->schedule_date)->format('h:i A'),
+                   'end_time' => $visit->end_date_time ? Carbon::parse($visit->end_date_time)->format('h:i A') : null,
+                   'visit_duration' => $visit->total_time_in_minutes ? $this->formatMinute($visit->total_time_in_minutes) : null
+               ],
                'status' => $visit->status,
                'profile' => [
                    'id' => $profile->id,
@@ -89,4 +93,19 @@ class VisitList
 
        return $visits;
    }
+
+    /**
+     * @param $minute
+     * @return string
+     */
+    private function formatMinute($minutes)
+    {
+        $minutes = (int) $minutes;
+        $minute = 0;
+        if ($minutes < 60) return ".$minutes".'h';
+        $hour = $minutes / 60;
+        $intval_hr = intval($hour);
+        if ($hour > $intval_hr) $minute = ($minutes - (60 * intval($hour)));
+        return $intval_hr.'.'.$minute.'h';
+    }
 }
