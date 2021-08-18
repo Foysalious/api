@@ -131,8 +131,10 @@ class CoWorkerStatusController extends Controller
             if ($this->isActive($request->status)) {
                 $this->coWorkerExistenceCheck->setBusiness($business)->setBusinessMember($business_member)
                     ->isActiveOrInvitedInAnotherBusiness()->isEssentialInfoAvailableForActivate();
+
                 if ($this->coWorkerExistenceCheck->hasError()) {
                     array_push($errors, ['email' => $this->coWorkerExistenceCheck->getEmail(), 'message' => $this->coWorkerExistenceCheck->getErrorMessage()]);
+                    $this->coWorkerExistenceCheck->resetError();
                     continue;
                 }
             }

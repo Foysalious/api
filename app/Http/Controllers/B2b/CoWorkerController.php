@@ -319,7 +319,7 @@ class CoWorkerController extends Controller
         $validation_data = [
             'gender' => 'required|string|in:Female,Male,Other',
             'mobile' => 'sometimes|required',
-            'date_of_birth' => 'sometimes|required|date|date_format:Y-m-d',
+            'date_of_birth' => 'sometimes|required',
             'address' => 'sometimes|required',
             'nationality' => 'sometimes|required',
             'nid_number' => 'sometimes|required',

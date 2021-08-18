@@ -432,7 +432,7 @@ class CategoryController extends Controller
                         'terms_and_conditions', 'features','is_inspection_service', 'is_add_on'
                     )->orderBy('order')->skip($offset)->take($limit);
                     if ((int)\request()->is_business) $q->publishedForBusiness();
-                    elseif ((int)\request()->is_for_backend) $q->publishedForAll();
+                    elseif ((int)\request()->is_for_backend) $q->publishedForAll()->where('is_add_on',0);
                     elseif ((int)\request()->is_b2b) $q->publishedForB2B();
                     elseif ((int)\request()->is_ddn) $q->publishedForDdn();
                     else $q->published();

@@ -1,6 +1,5 @@
 <?php namespace App\Sheba\EmployeeTracking;
 
-
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\Visit\VisitRepoImplementation;
 
@@ -33,12 +32,16 @@ class Updater
 
     private function makeData()
     {
+        $business_member_id = $this->requester->getBusinessMember()->id;
+        $employee_id = $this->requester->getEmployee();
+        $visitor = $employee_id ? $employee_id : $business_member_id;
         $this->visitData = [
+            'visitor_id' => $visitor,
             'schedule_date' => $this->requester->getDate(),
-            'visitor_id' => $this->requester->getEmployee(),
             'title' => $this->requester->getTitle(),
             'description' => $this->requester->getDescription(),
         ];
+        if ($employee_id) $this->visitData['assignee_id'] = $business_member_id;
     }
 
 }

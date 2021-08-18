@@ -1,14 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="Application Test Suite" tests="1" assertions="2" failures="1" errors="0" time="9.921675">
-    <testsuite name="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" tests="1" assertions="2" failures="1" errors="0" time="9.921675">
-      <testcase name="testSuccessfulTopupOtfShebaOtfCommissionCheck" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="485" assertions="2" time="9.921675">
-        <failure type="PHPUnit_Framework_ExpectationFailedException">Tests\Feature\TopUp\SmanagerTopupTest::testSuccessfulTopupOtfShebaOtfCommissionCheck
-Failed asserting that null matches expected 11.880000000000001.
-
-/var/www/tests/Feature/TopUp/SmanagerTopupTest.php:502
-</failure>
-      </testcase>
+  <testsuite name="Application Test Suite" tests="1" assertions="1" failures="0" errors="0" time="16.058429">
+    <testsuite name="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" tests="1" assertions="1" failures="0" errors="0" time="16.058429">
+      <testcase name="testSuccessfulTopupDeductAmountFromPartnerWallet" class="Tests\Feature\TopUp\SmanagerTopupTest" file="/var/www/tests/Feature/TopUp/SmanagerTopupTest.php" line="489" assertions="1" time="16.058429"/>
     </testsuite>
   </testsuite>
 </testsuites>
