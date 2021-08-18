@@ -11,6 +11,7 @@ use App\Sheba\Business\BusinessBasicInformation;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\Visit\VisitRepository;
 use Sheba\ModificationFields;
+use Sheba\Business\EmployeeTracking\Visit\VisitList;
 
 class VisitController extends Controller
 {
@@ -109,6 +110,20 @@ class VisitController extends Controller
            }
         }
         return api_response($request, $own_visits, 200, ['own_visit_history' => $visit_history]);
+    }
+
+    public function teamVisitsList(Request $request, VisitRepository $visit_repository, VisitList $visit_list)
+    {
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $managers_data = (new ManagerSubordinateEmployeeList())->get($business_member);
+        $business_member_ids = array_column($managers_data, 'id');
+
+        $team_visits = $visit_list->getTeamVisits($visit_repository, $business_member_ids);
+        $team_visits = $team_visits->groupBy('date');
+        $team_visit_list = $visit_list->getTeamVisitList($team_visits);
+
+        return api_response($request, $team_visit_list, 200, ['team_visit_list' => $team_visit_list]);
     }
 
 }
