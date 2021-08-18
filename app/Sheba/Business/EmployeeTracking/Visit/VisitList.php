@@ -9,7 +9,12 @@ use Sheba\Dal\Visit\VisitRepository;
 
 class VisitList
 {
-   public function getTeamVisits(VisitRepository $visit_repository, $business_member_ids)
+    /**
+     * @param VisitRepository $visit_repository
+     * @param $business_member_ids
+     * @return mixed
+     */
+    public function getTeamVisits(VisitRepository $visit_repository, $business_member_ids)
    {
        return $visit_repository->whereIn('visitor_id', $business_member_ids)->with([
            'visitor' => function ($q) {
@@ -33,7 +38,11 @@ class VisitList
            ->orderBy('id', 'desc')->get();
    }
 
-   public function getTeamVisitList($team_visits)
+    /**
+     * @param $team_visits
+     * @return array
+     */
+    public function getTeamVisitList($team_visits)
    {
        $team_visit_list = [];
 
@@ -47,7 +56,11 @@ class VisitList
        return $team_visit_list;
    }
 
-   private function getVisits($team_visit)
+    /**
+     * @param $team_visit
+     * @return array
+     */
+    private function getVisits($team_visit)
    {
        $visits = [];
 

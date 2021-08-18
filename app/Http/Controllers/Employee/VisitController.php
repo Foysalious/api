@@ -74,7 +74,7 @@ class VisitController extends Controller
                                        ->whereNotIn('status', ['completed', 'cancelled'])
                                        ->select('id', 'title', 'status', 'schedule_date')
                                        ->orderBy('id', 'desc')->get();
-
+        if (count($own_visits) == 0) return api_response($request, null, 404);
         $own_visits->map(function (&$own_visit) {
             $own_visit['date'] = Carbon::parse($own_visit->schedule_date)->format('M d, Y');
             return $own_visit;
@@ -95,6 +95,7 @@ class VisitController extends Controller
                                        ->whereIn('status', ['completed', 'cancelled'])
                                        ->select('id', 'title', 'status', 'schedule_date', DB::raw('YEAR(schedule_date) year, MONTH(schedule_date) month'))
                                        ->orderBy('id', 'desc')->get();
+        if (count($own_visits) == 0) return api_response($request, null, 404);
         $own_visits = $own_visits->groupBy('year')->transform(function($item, $k) {
             return $item->groupBy('month');
         });
@@ -112,6 +113,12 @@ class VisitController extends Controller
         return api_response($request, $own_visits, 200, ['own_visit_history' => $visit_history]);
     }
 
+    /**
+     * @param Request $request
+     * @param VisitRepository $visit_repository
+     * @param VisitList $visit_list
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function teamVisitsList(Request $request, VisitRepository $visit_repository, VisitList $visit_list)
     {
         $business_member = $this->getBusinessMember($request);
@@ -120,6 +127,7 @@ class VisitController extends Controller
         $business_member_ids = array_column($managers_data, 'id');
 
         $team_visits = $visit_list->getTeamVisits($visit_repository, $business_member_ids);
+        if (count($team_visits) == 0) return api_response($request, null, 404);
         $team_visits = $team_visits->groupBy('date');
         $team_visit_list = $visit_list->getTeamVisitList($team_visits);
 
