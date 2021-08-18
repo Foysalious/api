@@ -74,9 +74,9 @@ class EmployeeController extends Controller
      * @param ApprovalRequestRepositoryInterface $approval_request_repository
      * @param AccountServer $accounts
      */
-    public function __construct(MemberRepositoryInterface $member_repository,
+    public function __construct(MemberRepositoryInterface          $member_repository,
                                 ApprovalRequestRepositoryInterface $approval_request_repository,
-                                AccountServer $accounts)
+                                AccountServer                      $accounts)
     {
         $this->repo = $member_repository;
         $this->approvalRequestRepo = $approval_request_repository;
@@ -155,8 +155,8 @@ class EmployeeController extends Controller
      * @param ProfileCompletionCalculator $completion_calculator
      * @return JsonResponse
      */
-    public function getDashboard(Request $request, ActionProcessor $action_processor,
-                                 ProfileCompletionCalculator $completion_calculator, VisitRepoImplementation $visit_repository)
+    public function getDashboard(Request                     $request, ActionProcessor $action_processor,
+                                 ProfileCompletionCalculator $completion_calculator)
     {
         /** @var Business $business */
         $business = $this->getBusiness($request);
@@ -362,7 +362,7 @@ class EmployeeController extends Controller
         $member = $profile->member;
         /** @var BusinessMember $business_member */
         $business_member = $member->businessMember;
-        if (!$business_member) return api_response($request, null, 401);
+        if (!$business_member) return api_response($request, null, 420, ['message' => 'You are not eligible employee']);
 
         $token = $this->accounts->getTokenByEmailAndPasswordV2($request->email, $request->password);
         $auth_user = AuthUser::createFromToken($token);
@@ -466,7 +466,7 @@ class EmployeeController extends Controller
 
             return api_response($request, null, 200);
         } catch (Throwable $e) {
-            return api_response($request, null, 401);
+            return api_response($request, null, 420, ['message' => 'You are not eligible employee']);
         }
     }
 
