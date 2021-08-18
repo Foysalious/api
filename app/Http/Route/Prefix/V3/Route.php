@@ -72,7 +72,7 @@ class Route
             });
             $api->get('payment-gateways/{service_type}', 'PaymentGatewayController@getPaymentGateways');
             $api->get('emi-info', 'ShebaController@getEmiInfoV3');
-            $api->group(['prefix' => 'spro'], function ($api){
+            $api->group(['prefix' => 'spro', 'middleware' => 'resource.jwt.auth'], function ($api){
                 $api->get('service/{serviceId}/instructions', 'Service\ServiceController@instructions');
             });
         });
