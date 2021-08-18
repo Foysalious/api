@@ -4016,7 +4016,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
+                "url": "https://bitbucket.org/startern/sheba_dal.git",
                 "reference": "21456dd203f7ceb007aa7161859f864a6369528e"
             },
             "require": {
@@ -4188,7 +4188,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://mac_pasha@bitbucket.org/startern/sheba_voucher.git",
+                "url": "https://bitbucket.org/startern/sheba_voucher.git",
                 "reference": "1066fb2d2a0e1607353df24d749b6a072cb5411d"
             },
             "require": {
