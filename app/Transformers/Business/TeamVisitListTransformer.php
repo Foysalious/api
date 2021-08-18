@@ -7,6 +7,10 @@ use App\Models\Member;
 
 class TeamVisitListTransformer extends TransformerAbstract
 {
+    /**
+     * @param $visit
+     * @return array
+     */
     public function transform($visit)
     {
         /** @var BusinessMember $visitor */
@@ -20,13 +24,15 @@ class TeamVisitListTransformer extends TransformerAbstract
         return [
             'id' => $visit->id,
             'title' => $visit->title,
+            'description' => $visit->description,
             'schedule_date' => $visit->schedule_date,
             'status' => $visit->status,
             'profile' => [
                 'id' => $profile->id,
                 'name' => $profile->name ?: null,
                 'pro_pic' => $profile->pro_pic,
-                'department' => $department ? $department->name : null
+                'department' => $department ? $department->name : null,
+                'department_id' => $department ? $department->id : null
             ]
         ];
     }
