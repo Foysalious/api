@@ -70,9 +70,9 @@ class EmployeeController extends Controller
      * @param ApprovalRequestRepositoryInterface $approval_request_repository
      * @param AccountServer $accounts
      */
-    public function __construct(MemberRepositoryInterface          $member_repository,
+    public function __construct(MemberRepositoryInterface $member_repository,
                                 ApprovalRequestRepositoryInterface $approval_request_repository,
-                                AccountServer                      $accounts)
+                                AccountServer $accounts)
     {
         $this->repo = $member_repository;
         $this->approvalRequestRepo = $approval_request_repository;
@@ -151,7 +151,7 @@ class EmployeeController extends Controller
      * @param ProfileCompletionCalculator $completion_calculator
      * @return JsonResponse
      */
-    public function getDashboard(Request                     $request, ActionProcessor $action_processor,
+    public function getDashboard(Request $request, ActionProcessor $action_processor,
                                  ProfileCompletionCalculator $completion_calculator)
     {
         /** @var Business $business */
