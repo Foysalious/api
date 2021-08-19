@@ -88,29 +88,20 @@ class VisitController extends Controller
      * @param VisitRepository $visit_repository
      * @return \Illuminate\Http\JsonResponse
      */
-    public function ownVisitHistory(Request $request, VisitRepository $visit_repository)
+    public function ownVisitHistory(Request $request, VisitRepository $visit_repository, VisitList $visit_list)
     {
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
         $own_visits = $visit_repository->where('visitor_id', $business_member->id)
                                        ->whereIn('status', ['completed', 'cancelled'])
-                                       ->select('id', 'title', 'status', 'schedule_date', DB::raw('YEAR(schedule_date) year, MONTH(schedule_date) month'))
+                                       ->select('id', 'title', 'status', 'start_date_time', 'end_date_time', 'total_time_in_minutes', 'schedule_date', DB::raw('YEAR(schedule_date) year, MONTH(schedule_date) month'))
                                        ->orderBy('id', 'desc')->get();
         if (count($own_visits) == 0) return api_response($request, null, 404);
         $own_visits = $own_visits->groupBy('year')->transform(function($item, $k) {
             return $item->groupBy('month');
         });
 
-        $visit_history = [];
-        foreach ($own_visits as $key => $own_visit ) {
-           foreach ($own_visit as $visit_key => $visit) {
-               array_push($visit_history, [
-                  'year_month' => date("F", mktime(0, 0, 0, $visit_key, 1)).', '.$key,
-                  'total_visits' => $visit->count(),
-                  'visits' => $visit->toArray(),
-               ]);
-           }
-        }
+        $visit_history = $visit_list->getOwnVisitHistory($own_visits);
         return api_response($request, $own_visits, 200, ['own_visit_history' => $visit_history]);
     }
 
