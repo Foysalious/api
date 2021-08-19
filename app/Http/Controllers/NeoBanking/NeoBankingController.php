@@ -38,8 +38,9 @@ class NeoBankingController extends Controller
         try {
             $this->validate($request, ['bank_code' => 'required|string']);
             $bank = $request->bank_code;
-            $partner = $request->partner;
-            $manager_resource = $request->manager_resource;
+            /** @var Partner $partner */
+            $partner = ($request->partner);
+            $manager_resource = $partner->getContactResource();
             $account_details = (new NeoBanking())->setBank($bank)->setPartner($partner)->setResource($manager_resource)->accountDetails();
 
             if (isset($account_details->code) && $account_details->code != 200) {
@@ -57,8 +58,9 @@ class NeoBankingController extends Controller
         try {
             $this->validate($request, ['bank_code' => 'required|string']);
             $bank = $request->bank_code;
-            $partner = $request->partner;
-            $manager_resource = $request->manager_resource;
+            /** @var Partner $partner */
+            $partner = ($request->partner);
+            $manager_resource = $partner->getContactResource();
             $account_details = (new NeoBanking())->setBank($bank)->setPartner($partner)->setResource($manager_resource)->transactionList();
 
             if (isset($account_details->code) && $account_details->code != 200) {
@@ -78,8 +80,9 @@ class NeoBankingController extends Controller
                 'amount' => 'required|numeric'
             ]);
             $bank = $request->bank;
-            $partner = $request->partner;
-            $manager_resource = $request->manager_resource;
+            /** @var Partner $partner */
+            $partner = ($request->partner);
+            $manager_resource = $partner->getContactResource();
             $transaction_response = (new NeoBanking())->setBank($bank)->setPartner($partner)->setResource($manager_resource)->createTransaction();
             return api_response($request, $transaction_response, 200, ['data' => $transaction_response]);
         } catch (\Throwable $e) {
@@ -97,9 +100,10 @@ class NeoBankingController extends Controller
             $this->validate($request, [
                 'bank_code' => 'required|string'
             ]);
-            $partner = $request->partner;
-            $resource = $request->manager_resource;
-            $mobile = $request->mobile;
+            /** @var Partner $partner */
+            $partner = ($request->partner);
+            $resource = $partner->getContactResource();
+            $mobile = $partner->getContactNumber();
 
             $completion = $neoBanking->setPartner($partner)->setResource($resource)->setMobile($mobile)->setBank($request->bank_code)->getCompletion()->toArray();
             return api_response($request, $completion, 200, ['data' => $completion]);
@@ -116,7 +120,9 @@ class NeoBankingController extends Controller
     {
         try {
             $this->validate($request, ['bank_code' => 'required|string', 'category_code' => 'required|string']);
-            $detail = $neoBanking->setPartner($request->partner)->setBank($request->bank_code)->setResource($request->manager_resource)->getCategoryDetail($request->category_code);
+            /** @var Partner $partner */
+            $partner = ($request->partner);
+            $detail = $neoBanking->setPartner($request->partner)->setBank($request->bank_code)->setResource($partner->getContactResource())->getCategoryDetail($request->category_code);
             return api_response($request, $detail, 200, ['data' => $detail]);
         } catch (NeoBankingException $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
@@ -134,7 +140,9 @@ class NeoBankingController extends Controller
         try {
             $this->validate($request, ['bank_code' => 'required|string', 'category_code' => 'required|string', 'post_data' => 'required']);
             $data = $request->post_data;
-            $neoBanking->setPartner($request->partner)->setResource($request->manager_resource)->setBank($request->bank_code)->setPostData($data)->postCategoryDetail($request->category_code);
+            /** @var Partner $partner */
+            $partner = ($request->partner);
+            $neoBanking->setPartner($request->partner)->setResource($partner->getContactResource())->setBank($request->bank_code)->setPostData($data)->postCategoryDetail($request->category_code);
             return api_response($request, null, 200);
         } catch (NeoBankingException $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
@@ -156,7 +164,9 @@ class NeoBankingController extends Controller
     {
         try {
             $this->validate($request, ['bank_code' => 'required|string', 'category_code' => 'required|string', 'file' => 'required', 'key' => 'required']);
-            $neoBanking->setPartner($request->partner)->setResource($request->manager_resource)->setBank($request->bank_code)->uploadDocument($request->file, $request->key)->postCategoryDetail($request->category_code, true);
+            /** @var Partner $partner */
+            $partner = ($request->partner);
+            $neoBanking->setPartner($request->partner)->setResource($partner->getContactResource())->setBank($request->bank_code)->uploadDocument($request->file, $request->key)->postCategoryDetail($request->category_code, true);
             return api_response($request, null, 200);
         } catch (NeoBankingException $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
@@ -227,8 +237,10 @@ class NeoBankingController extends Controller
     {
         try {
             $this->validate($request, ['bank_code' => 'required|string']);
-            $mobile = ($request->manager_resource->profile->mobile);
-            $data = $neoBanking->setPartner($request->partner)->setResource($request->manager_resource)->setMobile($mobile)->setBank($request->bank_code)->storeAccount();
+            /** @var Partner $partner */
+            $partner = ($request->partner);
+            $mobile = $partner->getContactNumber();
+            $data = $neoBanking->setPartner($request->partner)->setResource($partner->getContactResource())->setMobile($mobile)->setBank($request->bank_code)->storeAccount();
             return api_response($request, $data, 200, ['data' => ["message" => "Account has been created."]]);
         }catch (NeoBankingException $e){
             logError($e);
@@ -273,8 +285,10 @@ class NeoBankingController extends Controller
     {
         try {
             $this->validate($request, ['bank_code' => 'required|string']);
-            $mobile = ($request->manager_resource->profile->mobile);
-            $data = $neoBanking->setPartner($request->partner)->setResource($request->manager_resource)->setMobile($mobile)->setBank($request->bank_code)->getAcknowledgment();
+            /** @var Partner $partner */
+            $partner = ($request->partner);
+            $mobile = $partner->getContactNumber();
+            $data = $neoBanking->setPartner($request->partner)->setResource($partner->getContactResource())->setMobile($mobile)->setBank($request->bank_code)->getAcknowledgment();
             return api_response($request, $data, 200, ['data' => $data]);
         }catch (NeoBankingException $e){
             return api_response($request,null,$e->getCode(),['message'=>$e->getMessage()]);
