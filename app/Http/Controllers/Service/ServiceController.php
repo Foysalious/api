@@ -50,8 +50,18 @@ class ServiceController extends Controller
         $service = Service::select('id', 'name', 'description_bn')->find($serviceId);
         $instructions = config('spro.instructions');
         $instructions['service_details']['list'] = json_decode($service->description_bn);
+        $instructionKeys = config('spro.instruction_keys');
+
+//        remove service instruction key, if the list is null or empty
+        if($instructions['service_details']['list'] === null || count($instructions['service_details']['list']) === 0){
+            unset($instructions['service_details']);
+            if (($key = array_search('service_details', $instructionKeys)) !== false) {
+                array_splice($instructionKeys, $key, 1);
+            }
+        }
+
         $data = [
-            'instruction_keys' => config('spro.instruction_keys'),
+            'instruction_keys' => $instructionKeys,
             'instructions' => $instructions
         ];
         return api_response($request, $data, 200, ['data' => $data]);
