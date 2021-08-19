@@ -37,11 +37,11 @@ class PartnerNeoBankingInfo
                 'father_name' => $nidSelfie->father_name,
                 'mother_name' => $nidSelfie->mother_name,
                 'nid_passport_birth_cer_number' => $nidSelfie->nid_no,
-                'company_name' => ucfirst($this->partner->name)
+                'company_name' => strtoupper($this->partner->name)
             ];
         }
         return [
-            'company_name' => ucfirst($this->partner->name)
+            'company_name' => strtoupper($this->partner->name)
         ];
     }
 
