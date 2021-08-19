@@ -246,8 +246,7 @@ return [
                 'name'          => 'company_name',
                 'id'            => 'company_name',
                 'hint'          => 'Your Company Name',
-                'error_message' => 'প্রতিষ্ঠান এর নাম পূরণ আবশ্যক',
-                'is_editable'   => false,
+                'error_message' => 'প্রতিষ্ঠান এর নাম পূরণ আবশ্যক'
             ],
             [
                 'field_type'    => 'editText',
@@ -461,7 +460,6 @@ return [
                 'id'            => 'company_name',
                 'hint'          => 'AZAD TELECOM',
                 'error_message' => 'প্রতিষ্ঠানের নাম  পূরণ আবশ্যক',
-                'is_editable'   => false,
             ],
             [
                 'field_type'  => 'header',
