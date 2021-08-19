@@ -45,7 +45,7 @@
     "ext-mysql_xdevapi": "*",
     "ext-intl": "*",
     "algolia/algoliasearch-laravel": "^1.7",
-    "fideloper/proxy": "^3.3",
+    "fideloper/proxy": "^4.4",
     "rosell-dk/webp-convert": "^2.4",
     "symfony/polyfill-mbstring": "1.5.0",
     "spomky-labs/jose": "6.1.7",

@@ -25,7 +25,6 @@ class CustomerTransactionWalletTest extends FeatureTestCase
         $response_main = $this->get('/v2/payments?payable_type=order&type=customer');
 
         $data_main = $response_main->decodeResponseJson();
-        dd($data_main);
 
         //assert
         $this->assertEquals(200, $data_main["code"]);
