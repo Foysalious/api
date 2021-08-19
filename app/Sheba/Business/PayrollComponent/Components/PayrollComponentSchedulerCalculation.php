@@ -79,6 +79,7 @@ class PayrollComponentSchedulerCalculation
             return $query->where('is_default', 1)->orWhere('is_active',1);
         })->orderBy('type')->get();
         $default_deduction_component_data = $this->businessMemberPolicyRulesCalculator->setBusiness($this->business)->setBusinessMember($this->businessMember)->setAdditionBreakdown($this->additionData)->calculate();
+
         $total_deduction = 0;
         foreach ($components as $component) {
             if (!$component->is_default) {

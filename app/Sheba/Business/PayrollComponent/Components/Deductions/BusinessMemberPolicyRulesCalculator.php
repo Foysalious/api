@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Sheba\Dal\Attendance\Contract as AttendanceRepositoryInterface;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
+use Sheba\Dal\BusinessOffice\Type as WorkingDaysType;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\OfficePolicy\Type;
 use Sheba\Helpers\TimeFrame;
@@ -14,6 +15,7 @@ use Sheba\Helpers\TimeFrame;
 class BusinessMemberPolicyRulesCalculator
 {
     use AttendanceBasicInfo;
+
     /*** @var Business */
     private $business;
     /*** @var BusinessMember */
@@ -44,16 +46,19 @@ class BusinessMemberPolicyRulesCalculator
         $this->businessPayDay = $this->payrollSetting->pay_day;
         return $this;
     }
+
     public function setBusinessMember(BusinessMember $business_member)
     {
         $this->businessMember = $business_member;
         return $this;
     }
+
     public function setAdditionBreakdown($addition_breakdown)
     {
         $this->additionBreakdown = $addition_breakdown;
         return $this;
     }
+
     public function calculate()
     {
         $business_office = $this->business->officeHour;
@@ -68,6 +73,9 @@ class BusinessMemberPolicyRulesCalculator
         $is_for_late_checkin = $business_office->is_for_late_checkin;
         $is_for_early_checkout = $business_office->is_for_early_checkout;
         $is_unpaid_leave_policy_enable = $business_office->is_unpaid_leave_policy_enable;
+        $working_days_type = $business_office->type;
+        $is_weekend_included = $business_office->is_weekend_included;
+        $number_of_days = $business_office->number_of_days;
 
         if (!$is_grace_period_policy_enable && !$is_late_checkin_early_checkout_policy_enable && !$is_unpaid_leave_policy_enable) return ['attendance_adjustment' => 0, 'leave_adjustment' => 0, 'tax' => 0];
         $next_pay_day = $this->payrollSetting->next_pay_day;
@@ -87,17 +95,20 @@ class BusinessMemberPolicyRulesCalculator
         $total_present = 0;
         $total_working_days = 0;
         $grace_time_over = 0;
+        $total_policy_working_days = $period->count();
+        $weekend_or_holiday_count = 0;
         $business_member_attendance = $this->getBusinessMemberAttendanceTime($attendances, $business_office);
         foreach ($period as $date) {
             $is_weekend_or_holiday = $this->isWeekendHoliday($date, $business_weekend, $dates_of_holidays_formatted);
+            $weekend_or_holiday_count = $is_weekend_or_holiday ? ($weekend_or_holiday_count + 1) : $weekend_or_holiday_count;
             $is_on_leave = $this->isLeave($date, $leaves);
             if (!$is_weekend_or_holiday && !$is_on_leave) {
                 $total_working_days++;
-                if (array_key_exists($date->format('Y-m-d'), $business_member_attendance)){
-                    if($business_member_attendance[$date->format('Y-m-d')]['checkin_time'] > $office_start_time || $business_member_attendance[$date->format('Y-m-d')]['checkout_time'] < $office_end_time) $total_late_checkin_or_early_checkout++;
-                    if($business_member_attendance[$date->format('Y-m-d')]['checkin_time'] > $office_start_time) $total_late_checkin++;
-                    if($business_member_attendance[$date->format('Y-m-d')]['checkout_time'] < $office_end_time) $total_early_checkout++;
-                    if($business_member_attendance[$date->format('Y-m-d')]['checkin_time'] > $office_start_time_with_grace || $business_member_attendance[$date->format('Y-m-d')]['checkout_time'] < $office_end_time_with_grace) $grace_time_over++;
+                if (array_key_exists($date->format('Y-m-d'), $business_member_attendance)) {
+                    if ($business_member_attendance[$date->format('Y-m-d')]['checkin_time'] > $office_start_time || $business_member_attendance[$date->format('Y-m-d')]['checkout_time'] < $office_end_time) $total_late_checkin_or_early_checkout++;
+                    if ($business_member_attendance[$date->format('Y-m-d')]['checkin_time'] > $office_start_time) $total_late_checkin++;
+                    if ($business_member_attendance[$date->format('Y-m-d')]['checkout_time'] < $office_end_time) $total_early_checkout++;
+                    if ($business_member_attendance[$date->format('Y-m-d')]['checkin_time'] > $office_start_time_with_grace || $business_member_attendance[$date->format('Y-m-d')]['checkout_time'] < $office_end_time_with_grace) $grace_time_over++;
                     $total_present++;
                 }
             }
@@ -106,19 +117,22 @@ class BusinessMemberPolicyRulesCalculator
         if ($is_for_late_checkin && $is_for_early_checkout) $late_checkin_early_checkout_days = $total_late_checkin_or_early_checkout;
         elseif ($is_for_late_checkin && !$is_for_early_checkout) $late_checkin_early_checkout_days = $total_late_checkin;
         elseif (!$is_for_late_checkin && $is_for_early_checkout) $late_checkin_early_checkout_days = $total_early_checkout;
+        if ($working_days_type === WorkingDaysType::FIXED) $total_policy_working_days = $number_of_days;
+        elseif ($working_days_type === WorkingDaysType::AS_PER_CALENDAR && !$is_weekend_included) $total_policy_working_days = ($total_policy_working_days - $weekend_or_holiday_count);
         $total_absent = ($total_working_days - $total_present);
         $attendance_adjustment = 0;
         $leave_adjustment = 0;
-        $this->policyActionTaker->setBusiness($this->business)->setBusinessMember($this->businessMember)->setPayrollSetting($this->payrollSetting)->setAdditionBreakdown($this->additionBreakdown)->setTotalWorkingDays($total_working_days);
+        $this->policyActionTaker->setBusiness($this->business)->setBusinessMember($this->businessMember)->setPayrollSetting($this->payrollSetting)->setAdditionBreakdown($this->additionBreakdown)->setTotalWorkingDays($total_policy_working_days);
         if ($is_grace_period_policy_enable) $attendance_adjustment += $this->policyActionTaker->setPolicyType(Type::GRACE_PERIOD)->setPenaltyDays($grace_time_over)->takeAction();
         if ($is_late_checkin_early_checkout_policy_enable) $attendance_adjustment += $this->policyActionTaker->setPolicyType(Type::LATE_CHECKIN_EARLY_CHECKOUT)->setPenaltyDays($late_checkin_early_checkout_days)->takeAction();
-        if ($is_unpaid_leave_policy_enable) $leave_adjustment += $this->policyActionTaker->setPolicyType(Type::UNPAID_LEAVE)->setPenaltyDays($total_absent)->takeAction();
-        return ['attendance_adjustment' => $attendance_adjustment, 'leave_adjustment' => $leave_adjustment, 'tax' => 0];
+        $leave_adjustment += $this->policyActionTaker->setPolicyType(Type::UNPAID_LEAVE)->setPenaltyDays($total_absent)->setIsUnpaidLeaveEnable($is_unpaid_leave_policy_enable)->takeAction();
+        return ['attendance_adjustment' => floatValFormat($attendance_adjustment), 'leave_adjustment' => floatValFormat($leave_adjustment), 'tax' => 0];
     }
+
     private function getBusinessMemberAttendanceTime($attendances, $business_office)
     {
         $business_member_attendance = [];
-        foreach ($attendances as $attendance){
+        foreach ($attendances as $attendance) {
             $business_member_attendance[$attendance->date] = [
                 'checkin_time' => Carbon::parse($attendance->checkin_time)->format('h:i:s'),
                 'checkout_time' => $attendance->checkout_time ? Carbon::parse($attendance->checkout_time)->format('h:i:s') : Carbon::parse($business_office->end_time)->format('h:i:s'),
