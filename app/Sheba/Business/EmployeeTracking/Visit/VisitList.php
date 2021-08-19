@@ -95,7 +95,7 @@ class VisitList
    }
 
     /**
-     * @param $minute
+     * @param $minutes
      * @return string
      */
     private function formatMinute($minutes)
@@ -104,8 +104,8 @@ class VisitList
         $minute = 0;
         if ($minutes < 60) return ".$minutes".'h';
         $hour = $minutes / 60;
-        $intval_hr = intval($hour);
-        if ($hour > $intval_hr) $minute = ($minutes - (60 * intval($hour)));
-        return $intval_hr.'.'.$minute.'h';
+        $rounded_hour = intval($hour);
+        if ($hour > $rounded_hour) $minute = ($minutes - (60 * intval($hour)));
+        return $rounded_hour.'.'.$minute.'h';
     }
 }
