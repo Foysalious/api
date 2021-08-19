@@ -92,7 +92,13 @@ class NeoBankingController extends Controller
 
     }
 
-    public function getAccountInformationCompletion($partner, Request $request, NeoBanking $neoBanking)
+    /**
+     * @param $partner
+     * @param Request $request
+     * @param NeoBanking $neoBanking
+     * @return JsonResponse
+     */
+    public function getAccountInformationCompletion($partner, Request $request, NeoBanking $neoBanking): JsonResponse
     {
         ini_set('max_execution_time', 360);
 
@@ -116,7 +122,12 @@ class NeoBankingController extends Controller
         }
     }
 
-    public function getCategoryWiseDetails(Request $request, NeoBanking $neoBanking)
+    /**
+     * @param Request $request
+     * @param NeoBanking $neoBanking
+     * @return JsonResponse
+     */
+    public function getCategoryWiseDetails(Request $request, NeoBanking $neoBanking): JsonResponse
     {
         try {
             $this->validate($request, ['bank_code' => 'required|string', 'category_code' => 'required|string']);
@@ -135,7 +146,12 @@ class NeoBankingController extends Controller
         }
     }
 
-    public function submitCategoryWistDetails(Request $request, NeoBanking $neoBanking)
+    /**
+     * @param Request $request
+     * @param NeoBanking $neoBanking
+     * @return JsonResponse
+     */
+    public function submitCategoryWistDetails(Request $request, NeoBanking $neoBanking): JsonResponse
     {
         try {
             $this->validate($request, ['bank_code' => 'required|string', 'category_code' => 'required|string', 'post_data' => 'required']);
@@ -160,7 +176,7 @@ class NeoBankingController extends Controller
      * @param NeoBanking $neoBanking
      * @return JsonResponse
      */
-    public function uploadCategoryWiseDocument(Request $request, NeoBanking $neoBanking)
+    public function uploadCategoryWiseDocument(Request $request, NeoBanking $neoBanking): JsonResponse
     {
         try {
             $this->validate($request, ['bank_code' => 'required|string', 'category_code' => 'required|string', 'file' => 'required', 'key' => 'required']);
@@ -205,7 +221,7 @@ class NeoBankingController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function selectTypes(Request $request)
+    public function selectTypes(Request $request): JsonResponse
     {
         try {
             $type= $request->select_type ? : 'organization_type_list';
@@ -223,7 +239,7 @@ class NeoBankingController extends Controller
         }
     }
 
-    private function filterByDistrict($request, $values)
+    private function filterByDistrict($request, $values): array
     {
         $data = [];
         foreach ($values as $value) {
@@ -233,7 +249,7 @@ class NeoBankingController extends Controller
         return ['list' => $data,'title'=>'ব্রাঞ্চ কোড সিলেক্ট করুন'];
     }
 
-    public function accountApply(Request $request, NeoBanking $neoBanking)
+    public function accountApply(Request $request, NeoBanking $neoBanking): JsonResponse
     {
         try {
             $this->validate($request, ['bank_code' => 'required|string']);
@@ -281,7 +297,7 @@ class NeoBankingController extends Controller
      * @param NeoBanking $neoBanking
      * @return JsonResponse
      */
-    public function partnerAcknowledgment(Request $request, NeoBanking $neoBanking)
+    public function partnerAcknowledgment(Request $request, NeoBanking $neoBanking): JsonResponse
     {
         try {
             $this->validate($request, ['bank_code' => 'required|string']);
