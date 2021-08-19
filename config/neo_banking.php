@@ -1,7 +1,7 @@
 <?php
 
 if (!function_exists('addressViews')) {
-    function addressViews($type, $defaultCountry='')
+    function addressViews($type, $defaultCountry='Bangladesh')
     {
         return [
             [
@@ -236,6 +236,8 @@ return [
                 'name'          => 'occupation_name',
                 'id'            => 'occupation_name',
                 'hint'          => 'উদাহরণ: ব্যবসা',
+                'value'         => 'Business',
+                'is_editable'   => false,
                 'error_message' => 'পেশার ধরণ পূরণ আবশ্যক'
             ],
             [
@@ -243,8 +245,9 @@ return [
                 'title'         => 'প্রতিষ্ঠান এর নাম লিখুন *',
                 'name'          => 'company_name',
                 'id'            => 'company_name',
-                'hint'          => 'Sheba.xyz',
-                'error_message' => 'প্রতিষ্ঠান এর নাম পূরণ আবশ্যক'
+                'hint'          => 'Your Company Name',
+                'error_message' => 'প্রতিষ্ঠান এর নাম পূরণ আবশ্যক',
+                'is_editable'   => false,
             ],
             [
                 'field_type'    => 'editText',
@@ -433,7 +436,7 @@ return [
             [
                 'field_type'    => 'editText',
                 'title'         => 'মোবাইল নাম্বার  *',
-                'hint'          => '+880 1678242900',
+                'hint'          => '017*******',
                 'name'          => 'mobile',
                 'id'            => 'mobile',
                 'error_message' => "মোবাইল নাম্বার পূরণ আবশ্যক",
@@ -457,7 +460,8 @@ return [
                 'name'          => 'company_name',
                 'id'            => 'company_name',
                 'hint'          => 'AZAD TELECOM',
-                'error_message' => 'প্রতিষ্ঠানের নাম  পূরণ আবশ্যক'
+                'error_message' => 'প্রতিষ্ঠানের নাম  পূরণ আবশ্যক',
+                'is_editable'   => false,
             ],
             [
                 'field_type'  => 'header',
@@ -507,7 +511,7 @@ return [
                 'title'         => "অনুমোদনকারী প্রতিষ্ঠান *",
                 'name'          => 'grantor_organization',
                 'id'            => 'grantor_organization',
-                'hint'          => 'Sheba.xyz',
+                'hint'          => '',
                 'error_message' => 'অনুমোদনকারী প্রতিষ্ঠানের নাম পূরণ আবশ্যক '
             ],
             [
@@ -540,7 +544,7 @@ return [
                 'title'         => 'অনুমোদনকারী প্রতিষ্ঠান এবং দেশ',
                 'name'          => 'grantor_organization_and_country',
                 'id'            => 'grantor_organization_and_country',
-                'hint'          => 'উদাহরণ: Sheba Platform Limited, Bangladesh',
+                'hint'          => 'উদাহরণ: Azad Traders, Bangladesh',
                 'error_message' => 'নঅনুমোদনকারী প্রতিষ্ঠান এবং দেশের নাম পূরণ আবশ্যক ',
                 'mandatory'     => false,
             ],
@@ -597,7 +601,7 @@ return [
             ],
             [
                 'field_type'    => 'dropdown',
-                'title'         => 'ব্যবসার ধরণ',
+                'title'         => 'ব্যবসার ধরণ *',
                 'name'          => "business_type_list",
                 'id'            => "business_type_list",
                 'hint'          => '',
