@@ -599,7 +599,7 @@ return [
             ],
             [
                 'field_type'    => 'dropdown',
-                'title'         => 'ব্যবসার ধরণ',
+                'title'         => 'ব্যবসার ধরণ *',
                 'name'          => "business_type_list",
                 'id'            => "business_type_list",
                 'hint'          => '',
