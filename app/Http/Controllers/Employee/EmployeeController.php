@@ -24,8 +24,7 @@ use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
 use Sheba\Dal\Visit\Status;
-use Sheba\Dal\Visit\Visit;
-use Sheba\Dal\Visit\VisitRepoImplementation;
+use Sheba\Dal\Visit\VisitRepository;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\ModificationFields;
 use Sheba\OAuth2\AccountServer;
@@ -135,7 +134,7 @@ class EmployeeController extends Controller
      * @return JsonResponse
      */
     public function getDashboard(Request $request, ActionProcessor $action_processor,
-                                 ProfileCompletionCalculator $completion_calculator, VisitRepoImplementation $visit_repository)
+                                 ProfileCompletionCalculator $completion_calculator, VisitRepository $visit_repository)
     {
         /** @var Business $business */
         $business = $this->getBusiness($request);
