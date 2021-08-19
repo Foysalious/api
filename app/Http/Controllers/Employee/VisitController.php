@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use App\Sheba\Business\BusinessBasicInformation;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\Visit\VisitRepository;
+use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 use Sheba\Business\EmployeeTracking\Visit\VisitList;
 
@@ -119,7 +120,7 @@ class VisitController extends Controller
      * @param VisitList $visit_list
      * @return \Illuminate\Http\JsonResponse
      */
-    public function teamVisitsList(Request $request, VisitRepository $visit_repository, VisitList $visit_list)
+    public function teamVisitsList(Request $request, VisitRepository $visit_repository, VisitList $visit_list, TimeFrame $time_frame)
     {
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
@@ -127,6 +128,21 @@ class VisitController extends Controller
         $business_member_ids = array_column($managers_data, 'id');
 
         $team_visits = $visit_list->getTeamVisits($visit_repository, $business_member_ids);
+
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $time_frame = $time_frame->forDateRange($request->start_date, $request->end_date);
+            $team_visits = $team_visits->whereBetween('schedule_date', [$time_frame->start, $time_frame->end]);
+        }
+
+        if ($request->has('employees')) {
+            $team_visits = $team_visits->whereIn('visitor_id', json_decode($request->employees, 1));
+        }
+
+        if ($request->has('status')) {
+            $team_visits = $team_visits->where('status', $request->status);
+        }
+
+        $team_visits = $team_visits->get();
         if (count($team_visits) == 0) return api_response($request, null, 404);
         $team_visits = $team_visits->groupBy('date');
         $team_visit_list = $visit_list->getTeamVisitList($team_visits);

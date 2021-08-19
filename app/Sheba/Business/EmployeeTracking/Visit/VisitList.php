@@ -35,7 +35,7 @@ class VisitList
                    }]);
            }
        ])->select('id', 'visitor_id', 'title', 'status', 'start_date_time', 'end_date_time', 'total_time_in_minutes', 'schedule_date', DB::raw('DATE_FORMAT(schedule_date, "%Y-%m-%d") as date'))
-           ->orderBy('id', 'desc')->get();
+           ->orderBy('id', 'desc');
    }
 
     /**
