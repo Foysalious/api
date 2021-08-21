@@ -47,7 +47,7 @@ class PosOrder  extends BaseModel
     private $netBill;
     private $originalTotal;
 
-   /* public static $createdEventClass = PosOrderSavedEvent::class;*/
+    public static $createdEventClass = PosOrderSavedEvent::class;
 
     public function calculate()
     {
