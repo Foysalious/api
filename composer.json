@@ -50,8 +50,6 @@
     "sheba/sms": "dev-master",
     "sheba/report": "dev-feature/laravel-upgrade",
     "sheba/elasticsearch": "dev-feature/laravel-upgrade",
-    "symfony/polyfill-mbstring": "1.5.0",
-    "fgrosse/phpasn1": "1.5",
     "setasign/fpdi": "^2.3",
     "mpdf/mpdf": "^8.0"
   },
@@ -106,28 +104,28 @@
   },
   "repositories": [
     {
-      "type": "vcs",
-      "url": "https://shafiq_startern@bitbucket.org/startern/sheba_voucher.git"
+      "type": "git",
+      "url": "https://bitbucket.org/startern/sheba_voucher.git"
     },
     {
-      "type": "vcs",
-      "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git"
+      "type": "git",
+      "url": "https://bitbucket.org/startern/sheba_dal.git"
     },
     {
-      "type": "vcs",
-      "url": "https://shafiq_startern@bitbucket.org/startern/sheba_notification.git"
+      "type": "git",
+      "url": "https://bitbucket.org/startern/sheba_notification.git"
     },
     {
-      "type": "vcs",
-      "url": "https://shafiq_startern@bitbucket.org/startern/sheba_sms.git"
+      "type": "git",
+      "url": "https://bitbucket.org/startern/sheba_sms.git"
     },
     {
-      "type": "vcs",
-      "url": "https://shafiq_startern@bitbucket.org/startern/sheba_report.git"
+      "type": "git",
+      "url": "https://bitbucket.org/startern/sheba_report.git"
     },
     {
-      "type": "vcs",
-      "url": "https://shafiq_startern@bitbucket.org/startern/sheba_elasticsearch.git"
+      "type": "git",
+      "url": "https://bitbucket.org/startern/sheba_elasticsearch.git"
     }
   ]
 }
