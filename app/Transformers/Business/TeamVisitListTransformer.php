@@ -31,8 +31,7 @@ class TeamVisitListTransformer extends TransformerAbstract
                 'id' => $profile->id,
                 'name' => $profile->name ?: null,
                 'pro_pic' => $profile->pro_pic,
-                'department' => $department ? $department->name : null,
-                'department_id' => $department ? $department->id : null
+                'department' => $department ? $department->name : null
             ]
         ];
     }
