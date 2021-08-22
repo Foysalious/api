@@ -2,8 +2,10 @@
 
 use App\Models\Business;
 use App\Models\BusinessMember;
+use App\Sheba\Business\CoWorker\ManagerSubordinateEmployeeList;
 use App\Transformers\Business\MyVisitListTransformer;
 use App\Transformers\Business\TeamVisitListTransformer;
+use Illuminate\Http\JsonResponse;
 use League\Fractal\Serializer\ArraySerializer;
 use League\Fractal\Resource\Collection;
 use App\Http\Controllers\Controller;
@@ -11,17 +13,29 @@ use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use Sheba\Dal\Visit\Visit;
 use Sheba\Dal\Visit\VisitRepository;
+use Illuminate\Support\Arr;
 
 class VisitController extends Controller
 {
     /** @var VisitRepository $visitRepository */
     private $visitRepository;
+    /** @var ManagerSubordinateEmployeeList $subordinateEmployeeList */
+    private $subordinateEmployeeList;
 
-    public function __construct(VisitRepository $visit_repository)
+    /**
+     * @param VisitRepository $visit_repository
+     * @param ManagerSubordinateEmployeeList $subordinate_employee_list
+     */
+    public function __construct(VisitRepository $visit_repository, ManagerSubordinateEmployeeList $subordinate_employee_list)
     {
         $this->visitRepository = $visit_repository;
+        $this->subordinateEmployeeList = $subordinate_employee_list;
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getTeamVisits(Request $request)
     {
         /** @var Business $business */
@@ -30,7 +44,7 @@ class VisitController extends Controller
         $business_member = $request->business_member;
 
         list($offset, $limit) = calculatePagination($request);
-        $visits = Visit::with([
+        $visits = $this->visitRepository->builder()->with([
             'visitor' => function ($q) {
                 $q->with([
                     'member' => function ($q) {
@@ -48,12 +62,41 @@ class VisitController extends Controller
                         ]);
                     }]);
             }
-        ])->get();
+        ])->orderBy('id', 'DESC');
+
+        $visits = $visits->whereIn('visitor_id', $this->getBusinessMemberIds($business, $business_member));
+
+
+        /** Department Filter */
+        if ($request->has('department_id')) {
+            $visits = $visits->whereHas('visitor', function ($q) use ($request) {
+                $q->whereHas('role', function ($q) use ($request) {
+                    $q->whereHas('businessDepartment', function ($q) use ($request) {
+                        $q->where('business_departments.id', $request->department_id);
+                    });
+                });
+            });
+        }
+
+        /** Status Filter */
+        if ($request->has('status')) {
+            $visits = $visits->where('status', $request->status);
+        }
+
+        /** Month Filter */
+        $start_date = $request->has('start_date') ? $request->start_date : null;
+        $end_date = $request->has('end_date') ? $request->end_date : null;
+        if ($start_date && $end_date) {
+            $visits->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
+        }
 
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
-        $visits = new Collection($visits, new TeamVisitListTransformer());
+        $visits = new Collection($visits->get(), new TeamVisitListTransformer());
         $visits = collect($manager->createData($visits)->toArray()['data']);
+
+        if ($request->has('search')) $visits = $this->searchWithEmployeeName($visits, $request);
+
 
         $total_visits = count($visits);
         #$limit = $this->getLimit($request, $limit, $total_visits);
@@ -65,6 +108,10 @@ class VisitController extends Controller
         return api_response($request, null, 404);
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getMyVisits(Request $request)
     {
         /** @var Business $business */
@@ -73,7 +120,7 @@ class VisitController extends Controller
         $business_member = $request->business_member;
 
         list($offset, $limit) = calculatePagination($request);
-        $visits = Visit::with([
+        $visits = $this->visitRepository->builder()->with([
             'visitor' => function ($q) {
                 $q->with([
                     'member' => function ($q) {
@@ -91,12 +138,27 @@ class VisitController extends Controller
                         ]);
                     }]);
             }
-        ])->where('visitor_id', $business_member->id)->get();
+        ])->where('visitor_id', $business_member->id)->orderBy('id', 'DESC');
+
+        /** Status Filter */
+        if ($request->has('status')) {
+            $visits = $visits->where('status', $request->status);
+        }
+
+        /** Month Filter */
+        $start_date = $request->has('start_date') ? $request->start_date : null;
+        $end_date = $request->has('end_date') ? $request->end_date : null;
+        if ($start_date && $end_date) {
+            $visits->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
+        }
+
 
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
-        $visits = new Collection($visits, new MyVisitListTransformer());
+        $visits = new Collection($visits->get(), new MyVisitListTransformer());
         $visits = collect($manager->createData($visits)->toArray()['data']);
+
+        if ($request->has('search')) $visits = $this->searchWithVisitTitle($visits, $request);
 
         $total_visits = count($visits);
         #$limit = $this->getLimit($request, $limit, $total_visits);
@@ -106,5 +168,41 @@ class VisitController extends Controller
             'total_employees' => $total_visits
         ]);
         return api_response($request, null, 404);
+    }
+
+    /**
+     * @param Business $business
+     * @param BusinessMember $business_member
+     * @return array
+     */
+    private function getBusinessMemberIds(Business $business, BusinessMember $business_member)
+    {
+        if ($business_member->isSuperAdmin()) return $business->getActiveBusinessMember()->pluck('id')->toArray();
+        $manager_subordinates = $this->subordinateEmployeeList->get($business_member);
+        return Arr::pluck($manager_subordinates, 'id');
+    }
+
+    /**
+     * @param $visits
+     * @param Request $request
+     * @return mixed
+     */
+    private function searchWithEmployeeName($visits, Request $request)
+    {
+        return $visits->filter(function ($visit) use ($request) {
+            return str_contains(strtoupper($visit['profile']['name']), strtoupper($request->search));
+        });
+    }
+
+    /**
+     * @param $visits
+     * @param Request $request
+     * @return mixed
+     */
+    private function searchWithVisitTitle($visits, Request $request)
+    {
+        return $visits->filter(function ($visit) use ($request) {
+            return str_contains(strtoupper($visit['title']), strtoupper($request->search));
+        });
     }
 }

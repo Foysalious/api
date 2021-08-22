@@ -74,6 +74,9 @@ class Route
             $api->get('payment-gateways/{service_type}', 'PaymentGatewayController@getPaymentGateways');
 //            emi-info with static info
             $api->get('emi-info', 'ShebaController@getEmiInfoV3');
+            $api->group(['prefix' => 'spro', 'middleware' => 'resource.jwt.auth'], function ($api){
+                $api->get('service/{serviceId}/instructions', 'Service\ServiceController@instructions');
+            });
         });
     }
 }

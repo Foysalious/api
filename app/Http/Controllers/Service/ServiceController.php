@@ -44,4 +44,26 @@ class ServiceController extends Controller
 
         return count($categories) > 0 ? api_response($request, $categories, 200, ['service' => $categories]) : api_response($request, null, 404);
     }
+
+    public function instructions(Request $request, $serviceId)
+    {
+        $service = Service::select('id', 'name', 'description_bn')->find($serviceId);
+        $instructions = config('spro.instructions');
+        $instructions['service_details']['list'] = json_decode($service->description_bn);
+        $instructionKeys = config('spro.instruction_keys');
+
+//        remove service instruction key, if the list is null or empty
+        if($instructions['service_details']['list'] === null || count($instructions['service_details']['list']) === 0){
+            unset($instructions['service_details']);
+            if (($key = array_search('service_details', $instructionKeys)) !== false) {
+                array_splice($instructionKeys, $key, 1);
+            }
+        }
+
+        $data = [
+            'instruction_keys' => $instructionKeys,
+            'instructions' => $instructions
+        ];
+        return api_response($request, $data, 200, ['data' => $data]);
+    }
 }

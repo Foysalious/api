@@ -37,11 +37,11 @@ class PartnerNeoBankingInfo
                 'father_name' => $nidSelfie->father_name,
                 'mother_name' => $nidSelfie->mother_name,
                 'nid_passport_birth_cer_number' => $nidSelfie->nid_no,
-                'company_name' => ucfirst($this->partner->name)
+                'company_name' => $this->isValidString() ? strtoupper($this->partner->name) : '',
             ];
         }
         return [
-            'company_name' => ucfirst($this->partner->name)
+            'company_name' => $this->isValidString() ? strtoupper($this->partner->name) : '',
         ];
     }
 
@@ -50,7 +50,7 @@ class PartnerNeoBankingInfo
         if (!empty($this->information_for_bank_account) && isset($this->information_for_bank_account['institution'])) return $this->information_for_bank_account['institution'];
         return [
             "mobile"       => $this->partner->getManagerMobile(),
-            'company_name' => ucfirst($this->partner->name)
+            'company_name' => $this->isValidString() ? strtoupper($this->partner->name) : '',
         ];
     }
 
@@ -121,5 +121,10 @@ class PartnerNeoBankingInfo
         $data['mother_name'] = $nidSelfie->mother_name;
         $data['nid_passport_birth_cer_number'] = $nidSelfie->nid_no;
         return $data;
+    }
+
+    private function isValidString(): bool
+    {
+        return (!preg_match('/[^A-Za-z0-9. -]/', $this->partner->name));
     }
 }

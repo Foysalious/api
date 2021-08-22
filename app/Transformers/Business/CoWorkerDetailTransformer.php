@@ -67,7 +67,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
             'status' => $business_member->status,
             'profile' => [
                 'id' => $this->profile->id,
-                'name' => $this->profile->name,
+                'name' => !$this->isNull($this->profile->name) ? $this->profile->name : null,
                 'profile_picture_name' => $this->profile->pro_pic ? array_last(explode('/', $this->profile->pro_pic)) : null,
                 'profile_picture' => $this->profile->pro_pic,
                 'email' => $this->profile->email,
@@ -296,5 +296,15 @@ class CoWorkerDetailTransformer extends TransformerAbstract
             'joining_date' => $business_member->join_date ? Carbon::parse($business_member->join_date)->format('d.m.y') : 'N/A',
             'date_of_birth' => $this->profile->dob ? Carbon::parse($this->profile->dob)->format('d.m.y') : 'N/A'
         ];
+    }
+
+    /**
+     * @param $data
+     * @return bool
+     */
+    private function isNull($data)
+    {
+        if ($data == " ") return true;
+        return false;
     }
 }
