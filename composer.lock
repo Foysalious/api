@@ -4012,8 +4012,8 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
-                "reference": "2a8f4aa21034c1cbd5cece6929f1557d95cf0353"
+                "url": "https://bitbucket.org/startern/sheba_dal.git",
+                "reference": "8bffa4e13ca9473c79dd5a6d6079dfca82cdc3f7"
             },
             "require": {
                 "php": ">=5.4"
