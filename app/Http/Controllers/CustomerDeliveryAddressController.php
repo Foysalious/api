@@ -189,7 +189,11 @@ class CustomerDeliveryAddressController extends Controller
         $this->validate($request, ['address' => 'required|string']);
         $customer = $request->customer;
         $delivery_address = $this->_create($request, $customer);
-        return api_response($request, 1, 200, ['address' => $delivery_address->id]);
+        try {
+            return api_response($request, 1, 200, ['address' => $delivery_address->id]);
+        } catch (Exception $e){
+            return $delivery_address;
+        }
     }
 
     /**
