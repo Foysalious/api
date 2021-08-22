@@ -182,6 +182,14 @@ return [
                         'title'      => 'নারী',
                         'mandatory'  => false,
                         'value'      => 0
+                    ],
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'other',
+                        'id'         => 'other',
+                        'title'      => 'অন্যান্য',
+                        'mandatory'  => false,
+                        'value'      => 0
                     ]
                 ]
             ],
