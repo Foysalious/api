@@ -26,7 +26,7 @@ class PartnerWithdrawalService
         }
         $creditLimitData = [
             'min_wallet_threshold' => $creditLimitAmount,
-//            'reset_credit_limit_after' => Carbon::now()->addDays(7), //assuming one week for completing withdrawal request
+            'reset_credit_limit_after' => null,
             'log' => 'automatically updated credit limit because of withdrawal request'
         ];
         $newWithdrawal = WithdrawalRequest::create($data);
