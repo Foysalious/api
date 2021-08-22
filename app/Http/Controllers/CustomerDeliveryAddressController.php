@@ -3,7 +3,6 @@
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;
-use App\Models\Location;
 use Sheba\CustomerDeliveryAddress\CustomerDeliveryAddressManager;
 use Sheba\Dal\LocationService\LocationService;
 use App\Models\Partner;
@@ -112,10 +111,8 @@ class CustomerDeliveryAddressController extends Controller
             'service' => 'sometimes|string',
             'category' => 'sometimes|string',
         ]);
-        $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
-        if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
         $customer = $request->customer;
-        $customer_delivery_addresses = $customer_delivery_address_repo->getAddressesForOrderPlacement($customer->id)->where('location_id',$location)->get();
+        $customer_delivery_addresses = $customer_delivery_address_repo->getAddressesForOrderPlacement($customer->id)->get();
         $customer_order_addresses = $customer->orders()->selectRaw('delivery_address,count(*) as c')->groupBy('delivery_address')->orderBy('c', 'desc')->get();
         $target = new Coords((double)$request->lat, (double)$request->lng);
         $customer_delivery_addresses = $customer_delivery_addresses->reject(function ($address) {
@@ -189,11 +186,7 @@ class CustomerDeliveryAddressController extends Controller
         $this->validate($request, ['address' => 'required|string']);
         $customer = $request->customer;
         $delivery_address = $this->_create($request, $customer);
-        try {
-            return api_response($request, 1, 200, ['address' => $delivery_address->id]);
-        } catch (Exception $e){
-            return $delivery_address;
-        }
+        return api_response($request, 1, 200, ['address' => $delivery_address->id]);
     }
 
     /**
