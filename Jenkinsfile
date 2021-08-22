@@ -84,7 +84,7 @@ pipeline {
                                 sshTransfer(
                                     cleanRemote: false,
                                     excludes: '',
-                                    execCommand: 'cd /var/www/api && sudo ./deploy.sh master',
+                                    execCommand: 'cd /var/www/api && sudo ./deploy.sh',
                                     execTimeout: 300000,
                                     flatten: false,
                                     makeEmptyDirs: false,
@@ -227,6 +227,7 @@ pipeline {
             }
         }
         stage('DELETE DOCKER DANGLING IMAGES') {
+            when { branch 'master' }
             steps {
                 script {
                     sshPublisher(publishers: [
