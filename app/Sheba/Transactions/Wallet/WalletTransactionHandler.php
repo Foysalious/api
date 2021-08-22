@@ -1,6 +1,8 @@
 <?php namespace Sheba\Transactions\Wallet;
 
+use App\Models\Partner;
 use App\Models\Resource;
+use App\Models\WithdrawalRequest;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
@@ -33,10 +35,15 @@ class WalletTransactionHandler extends WalletTransaction
     public function store($extras = [], $isJob = false)
     {
         try {
-            if (empty($this->type) || empty($this->amount) || empty($this->model))
+            if (empty($this->type) || empty($this->amount) || empty($this->model)) {
                 throw new InvalidWalletTransaction();
-            if (!$isJob)
+            }
+            if (!$isJob) {
                 $extras = $this->withCreateModificationField((new RequestIdentification())->set($extras));
+            }
+            if ($this->type == Types::debit() && $this->model instanceof Partner) {
+                $this->isDebitTransactionAllowed();
+            }
             $transaction = $this->storeTransaction($extras);
             try {
                 $this->storeFraudDetectionTransaction(!$isJob);
@@ -237,5 +244,17 @@ class WalletTransactionHandler extends WalletTransaction
         $last_inserted_transaction = $this->model->transactions()->orderBy('id', 'desc')->first();
         $last_inserted_balance = $last_inserted_transaction ? $last_inserted_transaction->balance : 0.00;
         return strtolower($this->type) == 'credit' ? $last_inserted_balance + $this->amount : $last_inserted_balance - $this->amount;
+    }
+
+    private function isDebitTransactionAllowed()
+    {
+        $withdrawalRequests = WithdrawalRequest::where('requester_id', $this->model->id)
+            ->whereIn('status', ['pending', 'approval_pending'])
+            ->sum('amount');
+        $remainingAmount = $this->model->wallet - (int) $withdrawalRequests;
+        if ($this->amount > $remainingAmount) {
+            $message = sprintf("আপনি %s টাঁকা উত্তোলনের আবেদন করেছেন, একারনে পর্যাপ্ত ব্যালেন্স নেই। অনুগ্রহ করে সেবা ক্রেডিট রিচারজ করে পুনরায় চেষ্টা করুন।", $this->amount);
+            throw new WalletDebitForbiddenException($message, 403);
+        }
     }
 }
