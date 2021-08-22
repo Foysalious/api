@@ -13,3 +13,4 @@ resources/assets/ebl/*
 .composer/cache/.htaccess
 composer-auth.json
 .sentryclirc
+.env.testing
