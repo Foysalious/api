@@ -123,9 +123,8 @@ class PartnerNeoBankingInfo
         return $data;
     }
 
-    private function isValidString()
+    private function isValidString(): bool
     {
-        $new_string = str_slug($this->partner->name);
-        return (strlen($new_string)) > 1;
+        return (!preg_match('/[^A-Za-z0-9. -]/', $this->partner->name));
     }
 }
