@@ -7,6 +7,7 @@ use Exception;
 use Illuminate\Support\Facades\Event;
 use Sheba\Dal\TopUpBlacklistNumber\Contract;
 use Sheba\TopUp\Events\TopUpRequestOfBlockedNumber;
+use Sheba\TopUp\OTF\OtfAmountCheck;
 use Sheba\TopUp\Vendor\Vendor;
 use Sheba\TopUp\Vendor\VendorFactory;
 
@@ -26,11 +27,12 @@ class TopUpRequest
     private $bulk_id;
     private $isFromRobiTopUpWallet;
     private $topUpBlockNumberRepository;
-    /** @var array $blockedAmountByOperator */
-    private $blockedAmountByOperator = [];
     protected $userAgent;
     private $lat;
     private $long;
+    /** @var OtfAmountCheck */
+    private $otfAmountCheck;
+    private $isOtfAllow;
 
     public function __construct(VendorFactory $vendor_factory, Contract $top_up_block_number_repository)
     {
@@ -149,13 +151,15 @@ class TopUpRequest
         return getOriginalMobileNumber($this->mobile);
     }
 
-    /**
-     * @param array $blocked_amount_by_operator
-     * @return TopUpRequest
-     */
-    public function setBlockedAmount(array $blocked_amount_by_operator = [])
+    public function setIsOtfAllow($is_otf_allow)
     {
-        $this->blockedAmountByOperator = $blocked_amount_by_operator;
+        $this->isOtfAllow = $is_otf_allow;
+
+        $this->otfAmountCheck = app(OtfAmountCheck::class);
+        $this->otfAmountCheck->setAmount($this->amount)
+            ->setVendorId($this->vendorId)
+            ->setType($this->type)
+            ->setAgent($this->agent);
         return $this;
     }
 
@@ -180,7 +184,7 @@ class TopUpRequest
             return 1;
         }
 
-        if ($this->agent instanceof Business && $this->isAmountBlocked()) {
+        if ($this->agent instanceof Business && $this->isOtfAllow && $this->otfAmountCheck->isAmountInOtf()) {
             $this->errorMessage = "The recharge amount is blocked due to OTF activation issue.";
             return 1;
         }
@@ -210,24 +214,10 @@ class TopUpRequest
         return ($this->agent instanceof Partner && (!$this->agent->isNIDVerified())) ||
             ($this->agent instanceof Affiliate && $this->agent->isNotVerified());
     }
+
     private function isCanTopUpNo()
     {
         return ($this->agent instanceof Partner && (!$this->agent->canTopUp()));
-    }
-
-    /**
-     * @return bool
-     */
-    private function isAmountBlocked()
-    {
-        if (empty($this->blockedAmountByOperator)) return false;
-        if ($this->vendorId == VendorFactory::GP) return in_array($this->amount, $this->blockedAmountByOperator[TopUpSpecialAmount::GP]);
-        if ($this->vendorId == VendorFactory::BANGLALINK) return in_array($this->amount, $this->blockedAmountByOperator[TopUpSpecialAmount::BANGLALINK]);
-        if ($this->vendorId == VendorFactory::ROBI) return in_array($this->amount, $this->blockedAmountByOperator[TopUpSpecialAmount::ROBI]);
-        if ($this->vendorId == VendorFactory::AIRTEL) return in_array($this->amount, $this->blockedAmountByOperator[TopUpSpecialAmount::AIRTEL]);
-        if ($this->vendorId == VendorFactory::TELETALK) return in_array($this->amount, $this->blockedAmountByOperator[TopUpSpecialAmount::TELETALK]);
-
-        return false;
     }
 
     /**

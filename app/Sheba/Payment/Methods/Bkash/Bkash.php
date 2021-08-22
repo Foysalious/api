@@ -33,7 +33,6 @@ class Bkash extends PaymentMethod
     private $password;
     private $url;
     private $merchantNumber;
-
     /** @var Registrar $registrar */
     private $registrar;
 
@@ -50,7 +49,8 @@ class Bkash extends PaymentMethod
      */
     public function init(Payable $payable): Payment
     {
-        $this->setCredentials($payable->user);
+        $this->setCredentials($payable->user,$payable->type);
+
         $invoice = "SHEBA_BKASH_" . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . randomString(10, 1, 1);
         $payment = new Payment();
         DB::transaction(function () use ($payment, $payable, $invoice) {
@@ -85,10 +85,15 @@ class Bkash extends PaymentMethod
         return $payment;
     }
 
-    private function setCredentials($user)
+    /**
+     * @param $user
+     * @param $type
+     * @throws Exception
+     */
+    private function setCredentials($user, $type)
     {
         /** @var BkashAuthBuilder $bkash_auth */
-        $bkash_auth = BkashAuthBuilder::getForUser($user);
+        $bkash_auth = BkashAuthBuilder::getForUserAndType($user,$type);
         $this->appKey = $bkash_auth->appKey;
         $this->appSecret = $bkash_auth->appSecret;
         $this->username = $bkash_auth->username;
@@ -159,10 +164,11 @@ class Bkash extends PaymentMethod
      * @param Payment $payment
      * @return Payment|mixed
      * @throws GuzzleException
+     * @throws Exception
      */
     public function validate(Payment $payment): Payment
     {
-        $this->setCredentials($payment->payable->user);
+        $this->setCredentials($payment->payable->user,$payment->payable->type);
         $execute_response = new ExecuteResponse();
         $execute_response->setPayment($payment);
         if (false && $payment->payable->user->getAgreementId()) {

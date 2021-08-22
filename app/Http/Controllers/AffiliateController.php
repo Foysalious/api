@@ -476,16 +476,14 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
     {
         list($offset, $limit) = calculatePagination($request);
         $notifications = $request->affiliate->notifications()->select('id', 'title', 'event_type', 'event_id', 'type', 'is_seen', 'created_at')->orderBy('id', 'desc')->skip($offset)->limit($limit)->get();
-        if (count($notifications) > 0) {
-            $notifications = $notifications->map(function ($notification) {
-                $notification->event_type = str_replace('App\Models\\', "", $notification->event_type);
-                array_add($notification, 'timestamp', $notification->created_at->timestamp);
-                return $notification;
-            });
-            return api_response($request, $notifications, 200, ['notifications' => $notifications]);
-        } else {
-            return api_response($request, null, 404);
-        }
+        if (count($notifications) == 0) return api_response($request, null, 404);
+        $notifications = $notifications->map(function ($notification) {
+            $notification->event_type = str_replace('App\Models\\', "", $notification->event_type);
+            if (json_decode($notification->title) != null)  $notification->title = json_decode($notification->title);
+            array_add($notification, 'timestamp', $notification->created_at->timestamp);
+            return $notification;
+        });
+        return api_response($request, $notifications, 200, ['notifications' => $notifications]);
     }
 
     public function getNotification($affiliate, $notification, Request $request)
@@ -495,6 +493,8 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
 
         $notifications = $notifications->map(function ($notification) {
             $notification->event_type = str_replace('App\Models\\', "", $notification->event_type);
+            if (json_decode($notification->title) != null) $notification->title = json_decode($notification->title);
+            if (json_decode($notification->description) != null) $notification->description = json_decode($notification->description);
             array_add($notification, 'timestamp', $notification->created_at->timestamp);
             return $notification;
         });

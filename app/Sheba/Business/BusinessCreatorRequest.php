@@ -9,6 +9,7 @@ class BusinessCreatorRequest
     private $geoInformation;
     private $address;
     private $mobile;
+    private $logoUrl;
 
     /**
      * @return mixed
@@ -114,5 +115,16 @@ class BusinessCreatorRequest
             $counter++;
         }
         return $name;
+    }
+
+    public function setLogoUrl($logo_url)
+    {
+        $this->logoUrl = $logo_url;
+        return $this;
+    }
+
+    public function getLogoUrl()
+    {
+        return $this->logoUrl;
     }
 }

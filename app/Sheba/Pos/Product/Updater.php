@@ -160,6 +160,14 @@ class Updater
             $this->updatedData['warranty'] = $this->data['warranty'];
         }
 
+        if ((isset($this->data['weight']) && $this->data['weight'] != $this->service->weight)) {
+            $this->updatedData['weight'] = $this->data['weight'];
+        }
+
+        if ((isset($this->data['weight_unit']) && $this->data['weight_unit'] != $this->service->weight_unit)) {
+            $this->updatedData['weight_unit'] = $this->data['weight_unit'];
+        }
+
         if (isset($this->data['warranty_unit']) && $this->data['warranty_unit'] == "null") {
             $this->updatedData['warranty_unit'] = config('pos.warranty_unit.day.en');
         } else if (isset($this->data['warranty_unit']) && $this->data['warranty_unit'] != $this->service->warranty_unit) {

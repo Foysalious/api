@@ -117,9 +117,7 @@ return [
     | this array to grant expanded functionality to your applications.
     |
     */
-
     'providers' => [
-
         /*
          * Laravel Framework Service Providers...
          */
@@ -177,8 +175,8 @@ return [
         Sheba\Dal\Providers\DalEventsListenerProvider::class,
         Sheba\Report\Listeners\ReportUpdateProvider::class,
         Sheba\Logistics\Listeners\EventsProvider::class,
-        Sheba\Elasticsearch\ServiceProvider::class,
-        Sheba\Database\DatabaseServiceProvider::class
+        Sheba\Database\DatabaseServiceProvider::class,
+        Sheba\Elasticsearch\ServiceProvider::class
     ],
 
     /*

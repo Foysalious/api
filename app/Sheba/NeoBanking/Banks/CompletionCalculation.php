@@ -28,7 +28,8 @@ class CompletionCalculation
                 }
             }
 
-            $this->calculate($data);
+            elseif ($data['field_type'] == 'radioGroup' || $data['field_type'] == 'conditionalSelect') $this->calculateGroupedViews($data);
+            else $this->calculate($data);
         }
         return $this->count ? ($this->filled / $this->count) * 100 : 100;
     }
@@ -47,6 +48,21 @@ class CompletionCalculation
                 $this->count++;
                 $this->id[] = $data['id'];
             }
+        }
+    }
+
+    private function calculateGroupedViews($data){
+        if (!in_array($data['id'], $this->skipFields) && $data['mandatory'] !== false)
+        {
+            foreach ($data['views'] as $view){
+                if(($data['field_type'] == 'radioGroup' && $view['value'] == 1) || ($data['field_type'] == 'conditionalSelect' && $view['value'] !== '')){
+                    $this->filled++;
+                    $this->filled_id[] = $data['id'];
+                    break;
+                }
+            }
+            $this->count++;
+            $this->id[] = $data['id'];
         }
     }
 }

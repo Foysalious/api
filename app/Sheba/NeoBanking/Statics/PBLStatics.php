@@ -20,6 +20,7 @@ class PBLStatics
     const DEFAULT_BRANCH           = "BD0010104";
     const NID_NUMBER               = "NATIONAL.ID";
     const BIRTH_CERTIFICATE_NUMBER = "BIRTH.CERTIFICATE";
+    const ONBOARD_TYPE             = 2;
 
     /**
      * @return string

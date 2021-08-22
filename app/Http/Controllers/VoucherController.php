@@ -1,20 +1,26 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\Customer;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Models\PosOrderDiscount;
+use App\Models\Tag;
+use App\Models\Taggable;
 use App\Models\Voucher;
+use App\Repositories\VoucherRepository;
 use App\Transformers\CustomSerializer;
 use App\Transformers\VoucherDetailTransformer;
 use App\Transformers\VoucherTransformer;
 use Carbon\Carbon;
 use Exception;
+use App\Http\Requests\VendorVoucherRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\ModificationFields;
+use Sheba\Vendor\Voucher\VendorVoucherDataGenerator;
 use Sheba\Voucher\DTO\Params\CheckParamsForPosOrder;
 use Sheba\Voucher\VoucherRule;
 use Throwable;
@@ -379,5 +385,27 @@ class VoucherController extends Controller
         });
 
         return $total_sale;
+    }
+
+    public function voucherAgainstVendor(Request $request, VoucherRepository $voucherRepository, VendorVoucherDataGenerator $voucher_generator)
+    {
+        // need to handle this in a Request Class
+        if(!isset($request['start_date'])) return api_response($request, null, 403, ['message' => 'Start Date field is required']);
+        if(!isset($request['channel']) || !in_array($request->channel, ['xtra'])  ) return api_response($request, null, 403, ['message' => 'invalid channel']);
+        $this->validate($request, [
+            'mobile' => 'mobile:bd',
+            'amount' => 'required|numeric',
+            'cap' => 'numeric|required_if:is_percentage,==,1',
+            'is_percentage' => 'required|numeric|in:0,1',
+            'start_date' => 'required|date_format:Y-m-d',
+            'end_date' => 'required|date_format:Y-m-d|after_or_equal:start_date',
+            'title' => 'string'
+        ], [
+            'required' => 'The :attribute field is required.',
+            'end_date.after_or_equal' => 'The end date should be after start date'
+        ]);
+
+        $voucher = $voucher_generator->setChannel($request->channel)->setData($request)->setRepository($voucherRepository)->generate();
+        return api_response($request, null, 200, ['code' => $voucher->code]);
     }
 }

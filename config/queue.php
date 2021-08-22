@@ -28,53 +28,59 @@ return [
     |
     */
     'connections' => [
-            'sync' => [
-                'driver' => 'sync'
-            ],
-            'database' => [
-                'driver' => 'database',
-                'table' => 'jobs',
-                'queue' => 'default',
-                'retry_after' => 60
-            ],
-            'beanstalkd' => [
-                'driver' => 'beanstalkd',
-                'host' => 'localhost',
-                'queue' => 'default',
-                'retry_after' => 60
-            ],
-            'sqs' => [
-                'driver' => 'sqs',
-                'key' => 'your-public-key',
-                'secret' => 'your-secret-key',
-                'prefix' => 'https://sqs.us-east-1.amazonaws.com/your-account-id',
-                'queue' => 'your-queue-name',
-                'region' => 'us-east-1'
-            ],
-            'redis' => [
-                'driver' => 'redis',
-                'connection' => 'default',
-                'queue' => 'api_queue',
-                'retry_after' => 60
-            ],
-            'sms_campaign' => [
-                'driver' => 'redis',
-                'connection' => 'default',
-                'queue' => 'sms_campaign',
-                'retry_after' => 60
-            ],
-            'report' => [
-                'driver' => 'redis',
-                'connection' => 'default',
-                'queue' => 'report',
-                'retry_after' => 60
-            ],
-            'business_notification' => [
-                'driver' => 'redis',
-                'connection' => 'default',
-                'queue' => 'business_notification',
-                'retry_after' => 60
-            ]
+        'sync' => [
+            'driver' => 'sync'
+        ],
+        'database' => [
+            'driver' => 'database',
+            'table' => 'jobs',
+            'queue' => 'default',
+            'expire' => 60
+        ],
+        'beanstalkd' => [
+            'driver' => 'beanstalkd',
+            'host' => 'localhost',
+            'queue' => 'default',
+            'ttr' => 60
+        ],
+        'sqs' => [
+            'driver' => 'sqs',
+            'key' => 'your-public-key',
+            'secret' => 'your-secret-key',
+            'prefix' => 'https://sqs.us-east-1.amazonaws.com/your-account-id',
+            'queue' => 'your-queue-name',
+            'region' => 'us-east-1'
+        ],
+        'redis' => [
+            'driver' => 'redis',
+            'connection' => 'default',
+            'queue' => 'api_queue',
+            'expire' => 60
+        ],
+        'test' => [
+            'driver' => 'redis',
+            'connection' => 'default',
+            'queue' => 'test',
+            'expire' => 60
+        ],
+        'sms_campaign' => [
+            'driver' => 'redis',
+            'connection' => 'default',
+            'queue' => 'sms_campaign',
+            'expire' => 60
+        ],
+        'report' => [
+            'driver' => 'redis',
+            'connection' => 'default',
+            'queue' => 'report',
+            'expire' => 60
+        ],
+        'business_notification' => [
+            'driver' => 'redis',
+            'connection' => 'default',
+            'queue' => 'business_notification',
+            'expire' => 60
+        ]
         ] + $top_up_queues,
 
     /*

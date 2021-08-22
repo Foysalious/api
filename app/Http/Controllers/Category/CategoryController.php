@@ -8,6 +8,7 @@ use Sheba\Cache\Category\Children\CategoryChildrenCacheRequest;
 use Sheba\Cache\Category\Children\Services\ServicesCacheRequest;
 use Sheba\Cache\Category\Info\CategoryCacheRequest;
 use Sheba\Cache\Category\Tree\CategoryTreeCacheRequest;
+use Sheba\Dal\Category\Category;
 
 class CategoryController extends Controller
 {
@@ -69,5 +70,12 @@ class CategoryController extends Controller
             return $hyperLocation->location_id;
         }
         return null;
+    }
+
+    public function getSuggestions(Request $request)
+    {
+        $categories = Category::where('parent_id', '<>', 'null')->published()->select('id', 'name', 'bn_name')->get();
+
+        return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $categories]) : api_response($request, null, 404);
     }
 }

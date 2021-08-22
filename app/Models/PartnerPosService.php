@@ -1,23 +1,81 @@
 <?php namespace App\Models;
 
-use Laravel\Scout\Searchable;
+use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceCreated;
 use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceSaved;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Sheba\Dal\BaseModel;
+use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceUpdated;
 use Sheba\Dal\PartnerPosServiceImageGallery\Model as PartnerPosServiceImageGallery;
+use Sheba\Elasticsearch\ElasticsearchTrait;
 
 class PartnerPosService extends BaseModel
 {
-    use SoftDeletes, Searchable;
+    use SoftDeletes, ElasticsearchTrait;
 
     protected $guarded = ['id'];
     protected $casts = ['cost' => 'double', 'price' => 'double', 'stock' => 'double', 'vat_percentage' => 'double', 'show_image' => 'int'];
     protected $dates = ['deleted_at'];
 
     public static $savedEventClass = PartnerPosServiceSaved::class;
+    public static $updatedEventClass = PartnerPosServiceUpdated::class;
+    public static $createdEventClass = PartnerPosServiceCreated::class;
+
     public static $autoIndex = false;
+    protected $indexSettings = [
+        'analysis' => [
+            "analyzer" => [
+                "pos_service_search_analyzer" => [
+                    "type" => "standard",
+                    "filter" => ["lowercase", "asciifolding"],
+                    "max_token_length" => 2,
+                ]
+            ]
+        ],
+    ];
+    protected $mappingProperties = [
+        'id' => ['type' => 'integer'],
+        'partner_id' => ['type' => 'integer'],
+        'pos_category_id' => ['type' => 'integer'],
+        'name' => ['type' => 'text', 'analyzer' => 'pos_service_search_analyzer'],
+        'description' => ['type' => 'text', 'analyzer' => 'pos_service_search_analyzer'],
+        'stock' => ['type' => 'double'],
+        'is_published_for_shop' => ['type' => 'integer'],
+        'created_at' => ['type' => 'date', "format" => "yyyy-MM-dd HH:mm:ss"],
+        'updated_at' => ['type' => 'date', "format" => "yyyy-MM-dd HH:mm:ss"]
+    ];
+
+    public function getIndexDocumentData(): array
+    {
+        return [
+            'id' => $this->id,
+            'partner_id' => $this->partner_id,
+            'pos_category_id' => $this->pos_category_id,
+            'name' => $this->name,
+            'description' => $this->description,
+            'stock' => (double)$this->stock,
+            'is_published_for_shop' => +$this->is_published_for_shop,
+            'created_at' => $this->created_at->toDateTimeString(),
+            'updated_at' => $this->updated_at->toDateTimeString(),
+        ];
+    }
+
+    public function getIndexName(): string
+    {
+        return $this->getTable();
+    }
+
+    public $algoliaSettings = [
+        'searchableAttributes' => [
+            'name',
+            'description',
+        ],
+        'attributesForFaceting' => ['partner'],
+        'unretrievableAttributes' => [
+            'partner'
+        ]
+    ];
 
     public function subCategory()
     {

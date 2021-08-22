@@ -6,7 +6,18 @@ use Carbon\Carbon;
 class BusinessRole extends Model
 {
     protected $guarded = ['id',];
-    protected $table = 'business_roles';
+
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $table = config('database.connections.mysql.database') . '.business_roles';
+        $this->setTable($table);
+    }
+
+    public function setTable($table)
+    {
+        $this->table = $table;
+    }
 
     public function businessDepartment()
     {

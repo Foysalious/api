@@ -43,6 +43,9 @@ class PaymentLinkTransaction
      */
     private $entryAmount = 0;
 
+    /*** @var SubscriptionWisePaymentLinkCharges */
+    private $paymentLinkCharge;
+
     /**
      * @param Payment                $payment
      * @param PaymentLinkTransformer $linkTransformer
@@ -58,6 +61,7 @@ class PaymentLinkTransaction
         $this->paidByTypes              = PaymentLinkStatics::paidByTypes();
         $this->partnerProfit            = $this->paymentLink->getPartnerProfit();
         $this->interest                 = $this->paymentLink->getInterest();
+        $this->paymentLinkCharge        = (new SubscriptionWisePaymentLinkCharges());
     }
 
     public function isOld()
@@ -129,13 +133,13 @@ class PaymentLinkTransaction
     public function create()
     {
         $this->walletTransactionHandler->setModel($this->receiver);
-        return $this->amountTransaction()->interestTransaction()->feeTransaction()->setEntryAmount();
+        return $this->amountTransaction()->interestTransaction()->configurePaymentLinkCharge()->feeTransaction()->setEntryAmount();
 
     }
 
     private function amountTransaction()
     {
-        $this->amount = $this->payment->payable->amount;
+        $this->amount                  = $this->payment->payable->amount;
         $this->formattedRechargeAmount = number_format($this->amount, 2);
         $recharge_log                  = "$this->formattedRechargeAmount TK has been collected from {$this->payment->payable->getName()}, {$this->paymentLink->getReason()}";
         $this->rechargeTransaction     = $this->walletTransactionHandler->setType(Types::credit())->setAmount($this->amount)->setSource(TransactionSources::PAYMENT_LINK)->setTransactionDetails($this->payment->getShebaTransaction()->toArray())->setLog($recharge_log)->store();
@@ -152,6 +156,22 @@ class PaymentLinkTransaction
         return $this;
     }
 
+    private function configurePaymentLinkCharge(): PaymentLinkTransaction
+    {
+        if($this->paymentLinkCharge->isPartner($this->receiver) && !$this->paymentLink->isEmi()) {
+            $this->paymentLinkCharge->setPartner($this->receiver)->setPaymentConfigurations($this->getPaymentMethod());
+            $this->tax = $this->paymentLinkCharge->getFixedTaxAmount();
+            $this->linkCommission = $this->paymentLinkCharge->getGatewayChargePercentage();
+        }
+        return $this;
+    }
+
+    private function getPaymentMethod()
+    {
+        $payment_details = $this->payment->paymentDetails()->orderBy('id', 'DESC')->first();
+        return isset($payment_details) ? $payment_details->method : null;
+    }
+
     public function isPaidByPartner()
     {
         return $this->paymentLink->getPaidBy() == $this->paidByTypes[0];
@@ -165,9 +185,9 @@ class PaymentLinkTransaction
     private function feeTransaction()
     {
         if ($this->paymentLink->isEmi()) {
-            $this->fee = $this->paymentLink->isOld() || $this->isPaidByPartner() ? $this->paymentLink->getBankTransactionCharge() + $this->tax : $this->paymentLink->getBankTransactionCharge();
+            $this->fee = $this->paymentLink->isOld() || $this->isPaidByPartner() ? $this->paymentLink->getBankTransactionCharge() + $this->tax : $this->paymentLink->getBankTransactionCharge() - $this->paymentLink->getPartnerProfit();
         } else {
-            $realAmount = ($this->amount - $this->tax - $this->getPartnerProfit()) / (100 + $this->linkCommission) * 100;
+            $realAmount = $this->paymentLink->getRealAmount() !== null ? $this->paymentLink->getRealAmount() : $this->calculateRealAmount();
             $this->fee  = $this->paymentLink->isOld() || $this->isPaidByPartner() ? round(($this->amount * $this->linkCommission / 100) + $this->tax, 2) : round(($realAmount * $this->linkCommission / 100) + $this->tax, 2);
 
         }
@@ -191,6 +211,16 @@ class PaymentLinkTransaction
             }
         }
         return $this;
+    }
+
+    /**
+     * @return float
+     */
+    private function calculateRealAmount(): float
+    {
+        $amount_after_tax_profit = $this->amount - $this->getPartnerProfit() - 3;
+        $real_amount = ( 100 * $amount_after_tax_profit) / 102;
+        return round($real_amount, 2);
     }
 
 }

@@ -1,7 +1,8 @@
 <?php namespace App\Transformers\Business;
 
-use App\Sheba\Business\PayrollComponent\Components\GrossSalaryBreakdownCalculate;
+use App\Sheba\Business\ComponentPackage\Formatter;
 use Sheba\Dal\PayrollComponent\Components;
+use Sheba\Dal\PayrollComponent\TargetType;
 use Sheba\Dal\PayrollComponent\Type;
 use Sheba\Dal\PayrollSetting\PayrollSetting;
 use Sheba\Dal\PayrollSetting\PayDayType;
@@ -9,12 +10,12 @@ use League\Fractal\TransformerAbstract;
 
 class PayrollSettingsTransformer extends TransformerAbstract
 {
-    private $payrollComponentData;
+    private $payrollComponentData = [];
     private $payScheduleData;
+    private $totalGrossPercentage = 0;
 
     public function __construct()
     {
-        $this->payrollComponentData = [];
         $this->payScheduleData = [];
     }
 
@@ -27,29 +28,34 @@ class PayrollSettingsTransformer extends TransformerAbstract
         return [
             'id' => $payroll_setting->id,
             'business_id' => $payroll_setting->business_id,
-            'salary_breakdown' => $this->grossSalaryBreakdown($payroll_setting),
+            'salary_breakdown' => array_values($this->grossSalaryBreakdown($payroll_setting)),
+            'gross_salary_total' => $this->totalGrossPercentage,
+            'salary_breakdown_completion' => $this->totalGrossPercentage,
             'pay_components' => $this->payComponents($payroll_setting),
             'pay_schedule' => $this->paySchedule($payroll_setting),
             'payroll_setting_completion' => $this->payrollSettingCompletion(),
         ];
     }
 
-    /**
-     * @param $payroll_setting
-     * @return array
-     */
     private function grossSalaryBreakdown($payroll_setting)
     {
-        $payroll_percentage_breakdown = (new GrossSalaryBreakdownCalculate())->componentPercentageBreakdown($payroll_setting);
-        $count = 0;
-        if (($payroll_percentage_breakdown->basicSalary > 0) || ($payroll_percentage_breakdown->houseRent > 0) || ($payroll_percentage_breakdown->medicalAllowance > 0) || ($payroll_percentage_breakdown->conveyance > 0)) $count++;
-        $salary_breakdown_completion = round((($count / 1) * 50), 0);
-
-        $this->payrollComponentData[Components::BASIC_SALARY] = $payroll_percentage_breakdown->basicSalary;
-        $this->payrollComponentData[Components::HOUSE_RENT] = $payroll_percentage_breakdown->houseRent;
-        $this->payrollComponentData[Components::MEDICAL_ALLOWANCE] = $payroll_percentage_breakdown->medicalAllowance;
-        $this->payrollComponentData[Components::CONVEYANCE] = $payroll_percentage_breakdown->conveyance;
-        $this->payrollComponentData['salary_breakdown_completion'] = $salary_breakdown_completion;
+        $payroll_components = $payroll_setting->components()->where('type', Type::GROSS)->where(function($query) {
+            return $query->where('target_type', null)->orWhere('target_type', 'global');
+        });
+        foreach ($payroll_components->get() as $payroll_component) {
+            $salary_percentage = json_decode($payroll_component->setting, 1);
+            $percentage_value = $salary_percentage['percentage'];
+            if ($payroll_component->is_active) $this->totalGrossPercentage += $percentage_value;
+            array_push($this->payrollComponentData, [
+                'id' => $payroll_component->id,
+                'key' => $payroll_component->name,
+                'title' => $payroll_component->is_default ? Components::getComponents($payroll_component->name)['value'] : $payroll_component->value,
+                'value' => floatValFormat($salary_percentage['percentage']),
+                'is_default' => $payroll_component->is_default,
+                'is_active' => $payroll_component->is_default ? 1 : $payroll_component->is_active,
+                'taxable' => $payroll_component->is_taxable,
+            ]);
+        }
         return $this->payrollComponentData;
     }
 
@@ -80,14 +86,14 @@ class PayrollSettingsTransformer extends TransformerAbstract
      */
     private function payrollSettingCompletion()
     {
-        $total = $this->payrollComponentData['salary_breakdown_completion'] + $this->payScheduleData['pay_schedule_completion'];
+        $total = ($this->totalGrossPercentage/2 + $this->payScheduleData['pay_schedule_completion']);
         return round($total, 0);
     }
 
     private function payComponents($payroll_setting)
     {
-        $addition_components = $payroll_setting->components->where('type',Type::ADDITION)->sortBy('name');
-        $deduction_components = $payroll_setting->components->where('type',Type::DEDUCTION)->sortBy('name');
+        $addition_components = $payroll_setting->components->where('type', Type::ADDITION)->sortBy('name');
+        $deduction_components = $payroll_setting->components->where('type', Type::DEDUCTION)->sortBy('name');
         $addition = $this->getAdditionComponents($addition_components);
         $deduction = $this->getDeductionComponents($deduction_components);
 
@@ -98,8 +104,12 @@ class PayrollSettingsTransformer extends TransformerAbstract
     {
         $data = [];
         foreach ($addition_components as $addition) {
-            if (!$addition->is_default) $data['addition'][] = ['id' => $addition->id, 'name' => ucwords(implode(" ", explode("_",$addition->name))), 'is_default' => 0];
-            if ($addition->is_default) $data['addition'][] = ['id' => $addition->id, 'name' => Components::getComponents($addition->name)['value'], 'is_default' => 1];
+            if (!$addition->is_default) {
+                $package_formatter = new Formatter();
+                $packages = $package_formatter->makePackageData($addition);
+                $data['addition'][] = ['id' => $addition->id, 'key' =>$addition->name,  'value' => $addition->value, 'is_default' => 0, 'is_taxable' => $addition->is_taxable, 'package' => $packages];
+            }
+            if ($addition->is_default) $data['addition'][] = ['id' => $addition->id, 'key' =>$addition->name, 'value' => Components::getComponents($addition->name)['value'], 'is_default' => 1,  'is_taxable' => $addition->is_taxable];
         }
         return $data;
     }
@@ -108,8 +118,12 @@ class PayrollSettingsTransformer extends TransformerAbstract
     {
         $data = [];
         foreach ($deduction_components as $deduction) {
-            if (!$deduction->is_default) $data['deduction'][] = ['id' => $deduction->id, 'name' => ucwords(implode(" ", explode("_",$deduction->name))), 'is_default' => 0];
-            if ($deduction->is_default) $data['deduction'][] = ['id' => $deduction->id, 'name' => Components::getComponents($deduction->name)['value'], 'is_default' => 1];
+            if (!$deduction->is_default) {
+                $package_formatter = new Formatter();
+                $packages = $package_formatter->makePackageData($deduction);
+                $data['deduction'][] = ['id' => $deduction->id, 'key' =>$deduction->name,  'value' => $deduction->value, 'is_default' => 0, 'package' => $packages];
+            }
+            if ($deduction->is_default) $data['deduction'][] = ['id' => $deduction->id, 'key' =>$deduction->name, 'value' => Components::getComponents($deduction->name)['value'], 'is_default' => 1];
         }
         return $data;
     }

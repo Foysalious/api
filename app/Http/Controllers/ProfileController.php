@@ -4,8 +4,8 @@ use App\Models\Affiliate;
 use App\Models\Profile;
 use App\Repositories\FileRepository;
 use App\Repositories\ProfileRepository;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use App\Transformers\Affiliate\ProfileDetailPersonalInfoTransformer;
 use App\Transformers\CustomSerializer;
 use App\Transformers\NidInfoTransformer;
@@ -13,13 +13,11 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 use JWTAuth;
 use JWTFactory;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Affiliate\VerificationStatus;
-use Sheba\Auth\Auth;
 use Sheba\Dal\Profile\Events\ProfilePasswordUpdated;
 use Sheba\Dal\ProfileNIDSubmissionLog\Contact as ProfileNIDSubmissionRepo;
 use Sheba\Dal\ResourceStatusChangeLog\Model as ResourceStatusChangeLogModel;
@@ -130,17 +128,22 @@ class ProfileController extends Controller
         if (!$profile) return api_response($request, null, 404, ['message' => 'Profile no found']);
         $rules = ['pro_pic' => 'sometimes|string', 'nid_image_back' => 'sometimes', 'nid_image_front' => 'sometimes'];
         $this->validate($request, $rules);
-        $data = $request->all(['email', 'name', 'pro_pic', 'nid_image_front', 'email', 'gender', 'dob', 'mobile', 'nid_no', 'address']);
+        $data = $request->only(['email', 'name', 'pro_pic', 'nid_image_front', 'email', 'gender', 'dob', 'mobile', 'nid_no', 'address']);
         $data = array_filter($data, function ($item) {
             return $item != null;
         });
-        if (empty($data)) return api_response($request, null, 404, ['message' => 'No data provided']);
-
-        $validation = $repository->validate($data, $profile);
-        if ($validation === 'phone') return api_response($request, null, 500, ['message' => 'Mobile number used by another user']);
-        if ($validation === 'email') return api_response($request, null, 500, ['message' => 'Email used by another user']);
-        if ($validation === true) $repository->update($profile, $data);
-
+        if (!empty($data)) {
+            $validation = $repository->validate($data, $profile);
+            if ($validation === true) {
+                $repository->update($profile, $data);
+            } elseif ($validation === 'phone') {
+                return api_response($request, null, 500, ['message' => 'Mobile number used by another user']);
+            } elseif ($validation === 'email') {
+                return api_response($request, null, 500, ['message' => 'Email used by another user']);
+            }
+        } else {
+            return api_response($request, null, 404, ['message' => 'No data provided']);
+        }
         return api_response($request, null, 200, ['message' => 'Profile Updated']);
     }
 
@@ -161,14 +164,15 @@ class ProfileController extends Controller
         return api_response($request, null, 200, ['message' => 'Profile Updated']);
     }
 
-    public function forgetPassword(Request $request, Sms $sms)
+    public function forgetPassword(Request $request)
     {
         $this->validate($request, ['mobile' => 'required|mobile:bd']);
         $mobile = BDMobileFormatter::format($request->mobile);
         $profile = Profile::where('mobile', $mobile)->first();
         if (!$profile) return api_response($request, null, 404, ['message' => 'Profile not found with this number']);
         $password = str_random(6);
-        $sms->setFeatureType(FeatureType::COMMON)
+        (new Sms())
+            ->setFeatureType(FeatureType::COMMON)
             ->setBusinessType(BusinessType::COMMON)
             ->shoot($mobile, "আপনার পাসওয়ার্ডটি পরিবর্তিত হয়েছে $password ,দয়া করে লগইন করতে এই পাসওয়ার্ডটি ব্যবহার করুন");
         $profile->update(['password' => bcrypt($password)]);
@@ -306,8 +310,7 @@ class ProfileController extends Controller
             (!$nid_details['bn_name'] || !$nid_details['name'] || !$nid_details['dob'] || !$nid_details['nid_no'])
         ) return true;
 
-        if ($input["side"] == ImageSide::BACK && !$nid_details['address'])
-            return true;
+        if ($input["side"] == ImageSide::BACK && !$nid_details['address']) return true;
 
         return false;
     }

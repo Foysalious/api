@@ -49,7 +49,11 @@
     "sheba/notification": "dev-master",
     "sheba/sms": "dev-master",
     "sheba/report": "dev-feature/laravel-upgrade",
-    "sheba/elasticsearch": "dev-feature/laravel-upgrade"
+    "sheba/elasticsearch": "dev-feature/laravel-upgrade",
+    "symfony/polyfill-mbstring": "1.5.0",
+    "fgrosse/phpasn1": "1.5",
+    "setasign/fpdi": "^2.3",
+    "mpdf/mpdf": "^8.0"
   },
   "require-dev": {
     "nunomaduro/collision": "^5.0",

@@ -14,6 +14,7 @@ use Elasticsearch\Common\Exceptions\Missing404Exception;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Sheba\Dal\AuthenticationRequest\Purpose;
+use Sheba\Dal\SubscriptionWisePaymentGateway\Model as SubscriptionWisePaymentGateway;
 use Sheba\Dal\TopUpBulkRequest\Statuses;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
@@ -27,8 +28,11 @@ use Sheba\TopUp\Bulk\Validator\SheetNameValidator;
 
 use Sheba\TopUp\ConnectionType;
 use Sheba\OAuth2\AuthUser;
+use Sheba\TopUp\Exception\InvalidSubscriptionWiseCommission;
 use Sheba\TopUp\History\RequestBuilder;
+use Sheba\TopUp\OTF\OtfAmount;
 use Sheba\TopUp\TopUpAgent;
+use Sheba\TopUp\TopUpChargesSubscriptionWise;
 use Sheba\TopUp\TopUpDataFormat;
 use Sheba\TopUp\TopUpHistoryExcel;
 use Sheba\TopUp\TopUpSpecialAmount;
@@ -58,27 +62,34 @@ class TopUpController extends Controller
 {
     use ModificationFields;
 
-    public function getVendor(Request $request)
+    /**
+     * @param Request $request
+     * @param TopUpDataFormat $formatter
+     * @param string $user
+     * @return JsonResponse
+     */
+    public function getVendor(Request $request, TopUpDataFormat $formatter, string $user = ''): JsonResponse
     {
-        $agent = $this->getFullAgentType($request->type);
+        try {
+            $topup_charges = [];
+            /** @var TopUpAgent $agent */
+            $agent = $this->getAgent($request, $user);
+            $agent_class = get_class($agent);
 
-        $vendors = TopUpVendor::select('id', 'name', 'is_published')->published()->get();
-        $error_message = "Currently, we’re supporting";
-        foreach ($vendors as $vendor) {
-            $vendor_commission = TopUpVendorCommission::where([['topup_vendor_id', $vendor->id], ['type', $agent]])->first();
-            $asset_name = strtolower(trim(preg_replace('/\s+/', '_', $vendor->name)));
-            array_add($vendor, 'asset', $asset_name);
-            array_add($vendor, 'agent_commission', $vendor_commission ? $vendor_commission->agent_commission : 0);
-            array_add($vendor, 'is_prepaid_available', 1);
-            array_add($vendor, 'is_postpaid_available', ($vendor->id != 6) ? 1 : 0);
-            if ($vendor->is_published) $error_message .= ',' . $vendor->name;
+            if ($agent_class === "App\Models\Partner")
+                $topup_charges = (new TopUpChargesSubscriptionWise())->getCharges($agent);
+
+            $vendors = TopUpVendor::select('id', 'name', 'is_published')->published()->get();
+
+            foreach ($vendors as $vendor)
+                $formatter->makeVendorWiseCommissionData($vendor, $agent_class, $topup_charges);
+
+            $regular_expression = $formatter->getAdditionalData();
+            return api_response($request, $vendors, 200, ['vendors' => $vendors, 'regex' => $regular_expression]);
+        } catch (Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
         }
-        $regular_expression = [
-            'typing' => "^(013|13|014|14|018|18|016|16|017|17|019|19|015|15)",
-            'from_contact' => "^(?:\+?88)?01[16|8]\d{8}$",
-            'error_message' => $error_message . '.'
-        ];
-        return api_response($request, $vendors, 200, ['vendors' => $vendors, 'regex' => $regular_expression]);
     }
 
     /**
@@ -147,16 +158,14 @@ class TopUpController extends Controller
             ->setUserAgent($userAgentInformation->getUserAgent());
 
         if ($agent instanceof Business && $request->has('is_otf_allow') && !($request->is_otf_allow)) {
-            $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
-            $top_up_request->setBlockedAmount($blocked_amount_by_operator);
+            $top_up_request->setIsOtfAllow(!$request->is_otf_allow);
         }
 
         if ($top_up_request->hasError()) {
             return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
         }
-
+        
         $topup_order = $creator->setTopUpRequest($top_up_request)->create();
-
         if ($topup_order) {
             dispatch((new TopUpJob($topup_order)));
 
@@ -183,31 +192,6 @@ class TopUpController extends Controller
     }
 
     /**
-     * @param TopUpSpecialAmount $special_amount
-     * @return array
-     */
-    private function getBlockedAmountForTopup(TopUpSpecialAmount $special_amount)
-    {
-        $special_amount = $special_amount->get();
-        $blocked_amount = $special_amount->blockedAmount->list;
-        $trigger_amount = $special_amount->triggerAmount->list;
-
-        $blocked_amount_by_operator = [];
-
-        foreach ($blocked_amount as $data) {
-            if (isset($blocked_amount_by_operator[$data->operator_id])) array_push($blocked_amount_by_operator[$data->operator_id], $data->amount); else
-                $blocked_amount_by_operator[$data->operator_id] = [$data->amount];
-        }
-
-        foreach ($trigger_amount as $data) {
-            if (isset($blocked_amount_by_operator[$data->operator_id])) array_push($blocked_amount_by_operator[$data->operator_id], $data->amount); else
-                $blocked_amount_by_operator[$data->operator_id] = [$data->amount];
-        }
-
-        return $blocked_amount_by_operator;
-    }
-
-    /**
      * @param Request $request
      * @param VerifyPin $verifyPin
      * @param VendorFactory $vendor
@@ -231,9 +215,8 @@ class TopUpController extends Controller
             ->setRequest($request)
             ->verify();
 
-        $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
         $validator = (new ExtensionValidator())->setFile($request->file('file'));
-        $data_validator = (new DataFormatValidator())->setAgent($agent)->setBlockedAmountByOperator($blocked_amount_by_operator)->setRequest($request);
+        $data_validator = (new DataFormatValidator())->setAgent($agent)->setRequest($request);
         $validator->linkWith(new SheetNameValidator())->linkWith($data_validator);
         $validator->check();
 
@@ -308,11 +291,17 @@ class TopUpController extends Controller
     private function getFullAgentType($type)
     {
         switch ($type) {
-            case 'customer': return Customer::class;
-            case 'partner': return Partner::class;
-            case 'affiliate': return Affiliate::class;
-            case 'business': case 'Company': return Business::class;
-            default: return '';
+            case 'customer':
+                return Customer::class;
+            case 'partner':
+                return Partner::class;
+            case 'affiliate':
+                return Affiliate::class;
+            case 'business':
+            case 'Company':
+                return Business::class;
+            default:
+                return '';
         }
     }
 
@@ -370,7 +359,10 @@ class TopUpController extends Controller
         $user = $request->has('partner') ? $request->partner : $request->user;
 
         $is_excel_report = ($request->has('content_type') && $request->content_type == 'excel');
-        if ($is_excel_report) {$offset = 0; $limit = 10000;}
+        if ($is_excel_report) {
+            $offset = 0;
+            $limit = 10000;
+        }
 
         $request_builder->setOffset($offset)->setLimit($limit)->setAgent($user);
         if ($request->has('from') && $request->from !== "null") {
@@ -441,13 +433,14 @@ class TopUpController extends Controller
 
     /**
      * @param Request $request
-     * @param TopUpSpecialAmount $topUp_special_amount
+     * @param OtfAmount $otf_amount
      * @return JsonResponse
+     * @throws Exception
      */
-    public function specialAmount(Request $request, TopUpSpecialAmount $topUp_special_amount)
+    public function specialAmount(Request $request, OtfAmount $otf_amount)
     {
-        $special_amount = $topUp_special_amount->get();
-        return api_response($request, null, 200, ['data' => $special_amount]);
+        $special_amount = $otf_amount->get();
+        return api_response($request, null, 200, ['otf_lists' => $special_amount]);
     }
 
     public function generateJwt(Request $request, AccessTokenRequest $access_token_request, ShebaAccountKit $sheba_accountKit)
@@ -494,5 +487,40 @@ class TopUpController extends Controller
         $bulk_topup_data = $topup_formatter->setAgent($agent)->setAgentType($agent_type)->format();
 
         return api_response($request, null, 200, ['code' => 200, 'data' => $bulk_topup_data]);
+    }
+
+    /**
+     * @param Request $request
+     * @param TopUpDataFormat $topUp_data_format
+     * @param TopUpOrderRepository $top_up_order_repo
+     * @return JsonResponse
+     */
+    public function allTopUps(Request $request, TopUpDataFormat $topUp_data_format, TopUpOrderRepository $top_up_order_repo)
+    {
+        $user = $request->has('partner') ? $request->partner : $request->user;
+        $all_topups = $top_up_order_repo->getAllTopUps($user);
+        $top_up_data = $topUp_data_format->allTopUpDataFormat($all_topups);
+
+        return response()->json([
+            'code' => 200,
+            'data' => $top_up_data,
+        ]);
+    }
+
+    /**
+     * @param Request $request
+     * @param $user
+     * @return Affiliate|Business|Partner
+     */
+    private function getAgent(Request $request, $user)
+    {
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        if ($user == 'business') $agent = $auth_user->getBusiness();
+        elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
+        elseif ($user == 'partner') $agent = $auth_user->getPartner();
+        else $agent = $request->user;
+
+        return $agent;
     }
 }

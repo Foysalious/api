@@ -115,8 +115,10 @@ class UpdaterV2
         $data = ['status' => $this->status];
         $this->approvalRequestRepo->update($this->approvalRequest, $this->withUpdateModificationField($data));
         $this->approvalRequest->fresh();
+        $leave = $this->requestable;
 
         if ($this->requestableType == ApprovalRequestType::LEAVE && $this->approvalRequest->status == Status::ACCEPTED) {
+
             if (count($this->remainingApprovers) > 0) {
                 /** $first_approver */
                 $first_approver = reset($this->remainingApprovers);
@@ -125,14 +127,13 @@ class UpdaterV2
                     ->setRequestable($this->requestable)
                     ->create();
             }
-            if (count($this->remainingApprovers) == 0) {
-                $leave = $this->requestable;
+
+            if (count($this->remainingApprovers) == 0 && $leave->status == LeaveStatus::PENDING) {
                 $this->leaveUpdater->setLeave($leave)->setStatus(LeaveStatus::ACCEPTED)->setBusinessMember($this->businessMember)->updateStatus();
             }
         }
 
-        if ($this->requestableType == ApprovalRequestType::LEAVE && $this->approvalRequest->status == Status::REJECTED) {
-            $leave = $this->requestable;
+        if ($this->requestableType == ApprovalRequestType::LEAVE && $this->approvalRequest->status == Status::REJECTED && $leave->status == LeaveStatus::PENDING) {
             $this->leaveUpdater->setLeave($leave)
                 ->setStatus(LeaveStatus::REJECTED)
                 ->setBusinessMember($this->businessMember)

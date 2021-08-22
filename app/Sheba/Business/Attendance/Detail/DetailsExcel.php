@@ -18,9 +18,13 @@ class DetailsExcel
     private $checkOutLocation;
     private $checkOutAddress;
     private $totalHours;
+    private $lateNote;
     private $leftEarlyNote;
     private $businessMember;
     private $department;
+    private $profile;
+    private $startDate;
+    private $endDate;
 
     public function __construct()
     {
@@ -35,6 +39,20 @@ class DetailsExcel
     public function setBusinessMember($business_member)
     {
         $this->businessMember = $business_member;
+        $this->profile = $this->businessMember->member->profile;
+        $this->department = $this->businessMember->department();
+        return $this;
+    }
+
+    public function setStartDate($start_date)
+    {
+        $this->startDate = $start_date;
+        return $this;
+    }
+
+    public function setEndDate($end_date)
+    {
+        $this->endDate = $end_date;
         return $this;
     }
 
@@ -47,15 +65,19 @@ class DetailsExcel
     public function download()
     {
         $this->makeData();
-        $employee_id = $this->businessMember->employee_id ? $this->businessMember->employee_id : $this->businessMember->id;
-        $department_name = $this->department;
-        $file_name = $employee_id . '_' . $department_name . '_' . 'Attendance';
-        Excel::create($file_name, function ($excel) {
-            $excel->sheet('data', function ($sheet) {
+
+        $file_name = $this->businessMember->employee_id ?
+            $this->profile->name . '_' . $this->department->name . '_' . $this->businessMember->employee_id :
+            $this->profile->name . '_' . $this->department->name;
+
+        $sheet_name = $this->startDate . ' - ' . $this->endDate;
+
+        Excel::create($file_name, function ($excel) use ($sheet_name) {
+            $excel->sheet($sheet_name, function ($sheet) {
                 $sheet->fromArray($this->data, null, 'A1', false, false);
                 $sheet->prependRow($this->getHeaders());
                 $sheet->freezeFirstRow();
-                $sheet->cell('A1:L1', function ($cells) {
+                $sheet->cell('A1:M1', function ($cells) {
                     $cells->setFontWeight('bold');
                 });
                 $sheet->setAutoSize(true);
@@ -80,6 +102,7 @@ class DetailsExcel
             $this->checkOutAddress = '-';
 
             $this->totalHours = '-';
+            $this->lateNote = null;
             $this->leftEarlyNote = null;
             if (!$attendance['weekend_or_holiday_tag']) {
                 if ($attendance['show_attendance'] == 1) {
@@ -102,7 +125,7 @@ class DetailsExcel
                 if ($attendance['weekend_or_holiday_tag'] === 'weekend') {
                     $this->status = 'Weekend';
                 } else if ($attendance['weekend_or_holiday_tag'] === 'holiday') {
-                   $this->status = 'Holiday';
+                    $this->status = 'Holiday';
                 } else if ($attendance['weekend_or_holiday_tag'] === 'full_day') {
                     $this->status = 'On leave: full day';
                 } else if ($attendance['weekend_or_holiday_tag'] === 'first_half' || $attendance['weekend_or_holiday_tag'] === 'second_half') {
@@ -124,6 +147,7 @@ class DetailsExcel
                 'check_out_address' => $this->checkOutAddress,
 
                 'total_hours' => $this->totalHours,
+                'late_check_in_note' => $this->lateNote,
                 'left_early_note' => $this->leftEarlyNote,
             ]);
         }
@@ -133,7 +157,7 @@ class DetailsExcel
     {
         return ['Date', 'Status', 'Check in time', 'Check in status', 'Check in location',
             'Check in address', 'Check out time', 'Check out status',
-            'Check out location', 'Check out address', 'Total Hours', 'Left early note'];
+            'Check out location', 'Check out address', 'Total Hours', 'Late check in note', 'Left early note'];
     }
 
     private function checkInOutLogics($attendance)
@@ -153,7 +177,7 @@ class DetailsExcel
         } else {
             $this->checkInLocation = "Office IP";
         }
-        if($attendance_check_in['address']) {
+        if ($attendance_check_in['address']) {
             $this->checkInAddress = $attendance_check_in['address'];
         }
 
@@ -181,6 +205,7 @@ class DetailsExcel
         if ($attendance['attendance']['active_hours']) {
             $this->totalHours = $attendance['attendance']['active_hours'];
         }
-        $this->leftEarlyNote = $attendance['attendance']['note'];
+        $this->lateNote = $attendance['attendance']['late_note'];
+        $this->leftEarlyNote = $attendance['attendance']['left_early_note'];
     }
 }

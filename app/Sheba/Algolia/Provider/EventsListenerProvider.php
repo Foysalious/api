@@ -1,9 +1,11 @@
 <?php namespace Sheba\Algolia\Provider;
 
-use Illuminate\Foundation\Support\Providers\EventServiceProvider;
-use Illuminate\Support\Facades\Event;
-use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceSaved as PartnerPosServiceSavedEvent;
-use Sheba\Algolia\Listeners\PartnerPosServiceSaved as PartnerPosServiceSavedListener;
+use Illuminate\Contracts\Events\Dispatcher;
+use Illuminate\Support\ServiceProvider;
+use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceCreated;
+use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceSaved as PartnerPosServiceSaved;
+use App\Sheba\Algolia\Listeners\PartnerPosServiceSaved as PartnerPosServiceSavedListener;
+use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceUpdated;
 
 class EventsListenerProvider extends EventServiceProvider
 {
@@ -11,4 +13,16 @@ class EventsListenerProvider extends EventServiceProvider
     {
         Event::listen(PartnerPosServiceSavedEvent::class, PartnerPosServiceSavedListener::class);
     }
+}
+
+    /**
+     * @param Dispatcher $events
+     */
+    public function boot(Dispatcher $events)
+    {
+        parent::boot($events);
+        $events->listen(PartnerPosServiceSaved::class, PartnerPosServiceSavedListener::class);
+    }
+
+
 }

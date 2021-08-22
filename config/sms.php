@@ -1,23 +1,9 @@
 <?php
 
-/*
-|----------------------------------------------------
-| SMS Gateway configuration
-|----------------------------------------------------
-*/
-
 return [
-    'sslwireless' => [
-        'sid' => env('SMS_SID'),
-        'user' => env('SMS_USER'),
-        'password' => env('SMS_PASSWORD')
-    ],
-    'infobip' => [
-        'base_url' => env('INFOBIP_BASE_URL'),
-        'from' => env('INFOBIP_SMS_FROM'),
-        'user' => env('INFOBIP_SMS_USER_NAME'),
-        'password' => env('INFOBIP_SMS_PASSWORD')
-    ],
-    'default-provider' => env('SMS_GATEWAY', 'sslwireless'),
     'is_on' => env('SMS_SEND_ON', true),
+    'service' => [
+        'base_url' => env('SMS_SERVICE_BASE_URL', 'http://sms-service.dev-sheba.xyz'),
+        'api_key' => env('SMS_SERVICE_API_KEY', 'secret')
+    ]
 ];
