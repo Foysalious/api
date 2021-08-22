@@ -1,16 +1,16 @@
 <?php namespace App\Sheba\EmployeeTracking;
 
 use Illuminate\Support\Facades\DB;
-use Sheba\Dal\Visit\VisitRepoImplementation;
+use Sheba\Dal\Visit\VisitRepository;
 
 class Updater
 {
-    /** @var VisitRepoImplementation $visitRepository*/
+    /** @var VisitRepository $visitRepository*/
     private $visitRepository;
 
     public function __construct()
     {
-        $this->visitRepository = app(VisitRepoImplementation::class);
+        $this->visitRepository = app(VisitRepository::class);
     }
     /** @var Requester  $requester **/
     private $requester;

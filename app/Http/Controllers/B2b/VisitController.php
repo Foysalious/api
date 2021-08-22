@@ -5,13 +5,15 @@ use App\Models\BusinessMember;
 use App\Sheba\Business\CoWorker\ManagerSubordinateEmployeeList;
 use App\Transformers\Business\MyVisitListTransformer;
 use App\Transformers\Business\TeamVisitListTransformer;
+use App\Transformers\Business\VisitDetailsTransformer;
+use App\Transformers\CustomSerializer;
 use Illuminate\Http\JsonResponse;
+use League\Fractal\Resource\Item;
 use League\Fractal\Serializer\ArraySerializer;
 use League\Fractal\Resource\Collection;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
-use Sheba\Dal\Visit\Visit;
 use Sheba\Dal\Visit\VisitRepository;
 use Illuminate\Support\Arr;
 
@@ -168,6 +170,25 @@ class VisitController extends Controller
             'total_employees' => $total_visits
         ]);
         return api_response($request, null, 404);
+    }
+
+    /**
+     * @param $business
+     * @param $visit
+     * @param Request $request
+     * @return JsonResponse|void
+     */
+    public function show($business, $visit, Request $request)
+    {
+        $visit = $this->visitRepository->find($visit);
+        if (!$visit) return api_response($request, null, 404);
+
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Item($visit, new VisitDetailsTransformer());
+        $visit = $manager->createData($resource)->toArray()['data'];
+
+        if (count($visit) > 0) return api_response($request, $visit, 200, ['visit' => $visit]);
     }
 
     /**

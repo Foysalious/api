@@ -6,10 +6,12 @@ use App\Sheba\EmployeeTracking\Creator;
 use App\Sheba\EmployeeTracking\Requester;
 use App\Sheba\EmployeeTracking\Updater;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Sheba\Business\BusinessBasicInformation;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\Visit\VisitRepository;
+use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 use Sheba\Business\EmployeeTracking\Visit\VisitList;
 
@@ -17,6 +19,10 @@ class VisitController extends Controller
 {
     use BusinessBasicInformation, ModificationFields;
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getManagerSubordinateEmployeeList(Request $request)
     {
         $business_member = $this->getBusinessMember($request);
@@ -25,6 +31,12 @@ class VisitController extends Controller
         return api_response($request, null, 200, ['manager_list' => $managers_data]);
     }
 
+    /**
+     * @param Request $request
+     * @param Requester $requester
+     * @param Creator $creator
+     * @return JsonResponse
+     */
     public function create(Request $request, Requester $requester, Creator $creator)
     {
         $this->validate($request, [
@@ -42,6 +54,14 @@ class VisitController extends Controller
         return api_response($request, null, 200);
     }
 
+    /**
+     * @param $visit_id
+     * @param Request $request
+     * @param Requester $requester
+     * @param Updater $updater
+     * @param VisitRepository $visit_repository
+     * @return JsonResponse
+     */
     public function update($visit_id, Request $request, Requester $requester, Updater $updater, VisitRepository $visit_repository)
     {
         $this->validate($request, [
@@ -64,7 +84,7 @@ class VisitController extends Controller
     /**
      * @param Request $request
      * @param VisitRepository $visit_repository
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function ownVisitList(Request $request, VisitRepository $visit_repository)
     {
@@ -85,31 +105,23 @@ class VisitController extends Controller
     /**
      * @param Request $request
      * @param VisitRepository $visit_repository
-     * @return \Illuminate\Http\JsonResponse
+     * @param VisitList $visit_list
+     * @return JsonResponse
      */
-    public function ownVisitHistory(Request $request, VisitRepository $visit_repository)
+    public function ownVisitHistory(Request $request, VisitRepository $visit_repository, VisitList $visit_list)
     {
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
         $own_visits = $visit_repository->where('visitor_id', $business_member->id)
                                        ->whereIn('status', ['completed', 'cancelled'])
-                                       ->select('id', 'title', 'status', 'schedule_date', DB::raw('YEAR(schedule_date) year, MONTH(schedule_date) month'))
+                                       ->select('id', 'title', 'status', 'start_date_time', 'end_date_time', 'total_time_in_minutes', 'schedule_date', DB::raw('YEAR(schedule_date) year, MONTH(schedule_date) month'))
                                        ->orderBy('id', 'desc')->get();
         if (count($own_visits) == 0) return api_response($request, null, 404);
         $own_visits = $own_visits->groupBy('year')->transform(function($item, $k) {
             return $item->groupBy('month');
         });
 
-        $visit_history = [];
-        foreach ($own_visits as $key => $own_visit ) {
-           foreach ($own_visit as $visit_key => $visit) {
-               array_push($visit_history, [
-                  'year_month' => date("F", mktime(0, 0, 0, $visit_key, 1)).', '.$key,
-                  'total_visits' => $visit->count(),
-                  'visits' => $visit->toArray(),
-               ]);
-           }
-        }
+        $visit_history = $visit_list->getOwnVisitHistory($own_visits);
         return api_response($request, $own_visits, 200, ['own_visit_history' => $visit_history]);
     }
 
@@ -117,9 +129,10 @@ class VisitController extends Controller
      * @param Request $request
      * @param VisitRepository $visit_repository
      * @param VisitList $visit_list
-     * @return \Illuminate\Http\JsonResponse
+     * @param TimeFrame $time_frame
+     * @return JsonResponse
      */
-    public function teamVisitsList(Request $request, VisitRepository $visit_repository, VisitList $visit_list)
+    public function teamVisitsList(Request $request, VisitRepository $visit_repository, VisitList $visit_list, TimeFrame $time_frame)
     {
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
@@ -127,6 +140,21 @@ class VisitController extends Controller
         $business_member_ids = array_column($managers_data, 'id');
 
         $team_visits = $visit_list->getTeamVisits($visit_repository, $business_member_ids);
+
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $time_frame = $time_frame->forDateRange($request->start_date, $request->end_date);
+            $team_visits = $team_visits->whereBetween('schedule_date', [$time_frame->start, $time_frame->end]);
+        }
+
+        if ($request->has('employees')) {
+            $team_visits = $team_visits->whereIn('visitor_id', json_decode($request->employees, 1));
+        }
+
+        if ($request->has('status')) {
+            $team_visits = $team_visits->where('status', $request->status);
+        }
+
+        $team_visits = $team_visits->get();
         if (count($team_visits) == 0) return api_response($request, null, 404);
         $team_visits = $team_visits->groupBy('date');
         $team_visit_list = $visit_list->getTeamVisitList($team_visits);
