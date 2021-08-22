@@ -3,6 +3,7 @@
 
 use App\Models\Business;
 use App\Models\BusinessMember;
+use App\Sheba\Business\PayrollSetting\PayrollCommonCalculation;
 use App\Sheba\Business\PayrollSetting\PayrollConstGetter;
 use Sheba\Business\Prorate\Creator as ProrateCreator;
 use Sheba\Business\Prorate\Requester as ProrateRequester;
@@ -13,6 +14,7 @@ use Sheba\Dal\OfficePolicyRule\ActionType;
 
 class PolicyActionTaker
 {
+    use PayrollCommonCalculation;
     /*** @var Business */
     private $business;
     private $penaltyDays;
@@ -147,17 +149,6 @@ class PolicyActionTaker
                 return $this->totalPenaltyAmountByOneWorkingDay($one_working_day_amount, $penalty_amount);
             }
         }
-
         return $policy_total;
     }
-
-    private function oneWorkingDayAmount($amount, $total_working_days)
-    {
-        return ($amount / $total_working_days);
-    }
-    private function totalPenaltyAmountByOneWorkingDay($one_working_day_amount, $penalty_amount)
-    {
-        return ($one_working_day_amount * $penalty_amount);
-    }
-
 }
