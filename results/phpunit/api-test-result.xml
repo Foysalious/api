@@ -1,70 +1,73 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
   <testsuite name="Application Test Suite" tests="1" assertions="0" failures="0" errors="1" time="0.000000">
-    <testsuite name="Tests\Feature\CustomerTransactionWallet\CustomerTransactionWalletTest" file="/var/www/tests/Feature/CustomerTransactionWallet/CustomerTransactionWalletTest.php" tests="1" assertions="0" failures="0" errors="1" time="0.000000">
-      <testcase name="testCustomerTransactionWalletAPIToCheckEmptyDiscountMessageForShebaCredit" class="Tests\Feature\CustomerTransactionWallet\CustomerTransactionWalletTest" file="/var/www/tests/Feature/CustomerTransactionWallet/CustomerTransactionWalletTest.php" line="153" assertions="0" time="0.000000">
-        <error type="PHPUnit_Framework_Exception">Tests\Feature\CustomerTransactionWallet\CustomerTransactionWalletTest::testCustomerTransactionWalletAPIToCheckEmptyDiscountMessageForShebaCredit
-PHPUnit_Framework_Exception: array:4 [
-  "code" =&gt; 200
-  "message" =&gt; "Successful"
-  "payments" =&gt; array:5 [
-    0 =&gt; array:9 [
-      "name" =&gt; "Sheba Credit"
-      "name_bn" =&gt; null
-      "is_published" =&gt; 1
-      "description" =&gt; ""
-      "asset" =&gt; "sheba_credit"
-      "method_name" =&gt; "wallet"
-      "icon" =&gt; null
-      "cash_in_charge" =&gt; 0
-      "discount_message" =&gt; ""
-    ]
-    1 =&gt; array:9 [
-      "name" =&gt; "bKash"
-      "name_bn" =&gt; "বিকাশ"
-      "is_published" =&gt; 1
-      "description" =&gt; ""
-      "asset" =&gt; "bkash"
-      "method_name" =&gt; "bkash"
-      "icon" =&gt; "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/payments/Bkash.png"
-      "cash_in_charge" =&gt; 0
-      "discount_message" =&gt; ""
-    ]
-    2 =&gt; array:9 [
-      "name" =&gt; "Nagad"
-      "name_bn" =&gt; "নগদ"
-      "is_published" =&gt; 1
-      "description" =&gt; ""
-      "asset" =&gt; "nagad"
-      "method_name" =&gt; "nagad"
-      "icon" =&gt; "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/payments/Nagad.png"
-      "cash_in_charge" =&gt; 0
-      "discount_message" =&gt; ""
-    ]
-    3 =&gt; array:9 [
-      "name" =&gt; "City Bank (American Express)"
-      "name_bn" =&gt; null
-      "is_published" =&gt; 1
-      "description" =&gt; ""
-      "asset" =&gt; "cbl"
-      "method_name" =&gt; "cbl"
-      "icon" =&gt; "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/payments/City+Bank.png"
-      "cash_in_charge" =&gt; 0
-      "discount_message" =&gt; ""
-    ]
-    4 =&gt; array:9 [
-      "name" =&gt; "Other Cards"
-      "name_bn" =&gt; "ভিসা / মাস্টার ও অন্যান্য"
-      "is_published" =&gt; 1
-      "description" =&gt; ""
-      "asset" =&gt; "ssl"
-      "method_name" =&gt; "online"
-      "icon" =&gt; "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/payments/online.png"
-      "cash_in_charge" =&gt; 0
-      "discount_message" =&gt; ""
+    <testsuite name="Tests\Feature\sProServiceBookCategory\sProOrderDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProOrderDetailsTest.php" tests="1" assertions="0" failures="0" errors="1" time="0.000000">
+      <testcase name="testSProOrderDetailsAPIWithValidAuthToken" class="Tests\Feature\sProServiceBookCategory\sProOrderDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProOrderDetailsTest.php" line="26" assertions="0" time="0.000000">
+        <error type="PHPUnit_Framework_Exception">Tests\Feature\sProServiceBookCategory\sProOrderDetailsTest::testSProOrderDetailsAPIWithValidAuthToken
+PHPUnit_Framework_Exception: array:2 [
+  "message" =&gt; "404 Not Found"
+  "debug" =&gt; array:4 [
+    "line" =&gt; 161
+    "file" =&gt; "/var/www/vendor/laravel/framework/src/Illuminate/Routing/RouteCollection.php"
+    "class" =&gt; "Symfony\Component\HttpKernel\Exception\NotFoundHttpException"
+    "trace" =&gt; array:55 [
+      0 =&gt; "#0 /var/www/vendor/laravel/framework/src/Illuminate/Routing/Router.php(821): Illuminate\Routing\RouteCollection-&gt;match(Object(Dingo\Api\Http\Request))"
+      1 =&gt; "#1 /var/www/vendor/laravel/framework/src/Illuminate/Routing/Router.php(691): Illuminate\Routing\Router-&gt;findRoute(Object(Dingo\Api\Http\Request))"
+      2 =&gt; "#2 /var/www/vendor/laravel/framework/src/Illuminate/Routing/Router.php(675): Illuminate\Routing\Router-&gt;dispatchToRoute(Object(Dingo\Api\Http\Request))"
+      3 =&gt; "#3 /var/www/vendor/dingo/api/src/Routing/Adapter/Laravel.php(81): Illuminate\Routing\Router-&gt;dispatch(Object(Dingo\Api\Http\Request))"
+      4 =&gt; "#4 /var/www/vendor/dingo/api/src/Routing/Router.php(513): Dingo\Api\Routing\Adapter\Laravel-&gt;dispatch(Object(Dingo\Api\Http\Request), 'v1')"
+      5 =&gt; "#5 /var/www/vendor/dingo/api/src/Http/Middleware/Request.php(126): Dingo\Api\Routing\Router-&gt;dispatch(Object(Dingo\Api\Http\Request))"
+      6 =&gt; "#6 [internal function]: Dingo\Api\Http\Middleware\Request-&gt;Dingo\Api\Http\Middleware\{closure}(Object(Dingo\Api\Http\Request))"
+      7 =&gt; "#7 /var/www/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(150): call_user_func(Object(Closure), Object(Dingo\Api\Http\Request))"
+      8 =&gt; "#8 /var/www/app/Http/Middleware/SetRequestToJwtWhileTesting.php(23): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Dingo\Api\Http\Request))"
+      9 =&gt; "#9 [internal function]: App\Http\Middleware\SetRequestToJwtWhileTesting-&gt;handle(Object(Dingo\Api\Http\Request), Object(Closure))"
+      10 =&gt; "#10 /var/www/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(136): call_user_func_array(Array, Array)"
+      11 =&gt; "#11 /var/www/vendor/fideloper/proxy/src/TrustProxies.php(56): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Dingo\Api\Http\Request))"
+      12 =&gt; "#12 [internal function]: Fideloper\Proxy\TrustProxies-&gt;handle(Object(Dingo\Api\Http\Request), Object(Closure))"
+      13 =&gt; "#13 /var/www/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(136): call_user_func_array(Array, Array)"
+      14 =&gt; "#14 /var/www/app/Http/Middleware/XSS.php(61): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Dingo\Api\Http\Request))"
+      15 =&gt; "#15 [internal function]: App\Http\Middleware\XSS-&gt;handle(Object(Dingo\Api\Http\Request), Object(Closure))"
+      16 =&gt; "#16 /var/www/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(136): call_user_func_array(Array, Array)"
+      17 =&gt; "#17 /var/www/app/Http/Middleware/CriticalAppVersionMiddleware.php(37): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Dingo\Api\Http\Request))"
+      18 =&gt; "#18 [internal function]: App\Http\Middleware\CriticalAppVersionMiddleware-&gt;handle(Object(Dingo\Api\Http\Request), Object(Closure))"
+      19 =&gt; "#19 /var/www/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(136): call_user_func_array(Array, Array)"
+      20 =&gt; "#20 /var/www/app/Http/Middleware/CheckForMaintenanceMode.php(24): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Dingo\Api\Http\Request))"
+      21 =&gt; "#21 [internal function]: App\Http\Middleware\CheckForMaintenanceMode-&gt;handle(Object(Dingo\Api\Http\Request), Object(Closure))"
+      22 =&gt; "#22 /var/www/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(136): call_user_func_array(Array, Array)"
+      23 =&gt; "#23 /var/www/app/Http/Middleware/Cors2MiddleWare.php(139): Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Dingo\Api\Http\Request))"
+      24 =&gt; "#24 [internal function]: App\Http\Middleware\Cors2MiddleWare-&gt;handle(Object(Dingo\Api\Http\Request), Object(Closure))"
+      25 =&gt; "#25 /var/www/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(136): call_user_func_array(Array, Array)"
+      26 =&gt; "#26 [internal function]: Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Dingo\Api\Http\Request))"
+      27 =&gt; "#27 /var/www/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(102): call_user_func(Object(Closure), Object(Dingo\Api\Http\Request))"
+      28 =&gt; "#28 /var/www/vendor/dingo/api/src/Http/Middleware/Request.php(127): Illuminate\Pipeline\Pipeline-&gt;then(Object(Closure))"
+      29 =&gt; "#29 /var/www/vendor/dingo/api/src/Http/Middleware/Request.php(103): Dingo\Api\Http\Middleware\Request-&gt;sendRequestThroughRouter(Object(Dingo\Api\Http\Request))"
+      30 =&gt; "#30 [internal function]: Dingo\Api\Http\Middleware\Request-&gt;handle(Object(Dingo\Api\Http\Request), Object(Closure))"
+      31 =&gt; "#31 /var/www/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(136): call_user_func_array(Array, Array)"
+      32 =&gt; "#32 [internal function]: Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))"
+      33 =&gt; "#33 /var/www/vendor/laravel/framework/src/Illuminate/Routing/Pipeline.php(32): call_user_func(Object(Closure), Object(Illuminate\Http\Request))"
+      34 =&gt; "#34 /var/www/vendor/itsgoingd/clockwork/Clockwork/Support/Laravel/ClockworkMiddleware.php(27): Illuminate\Routing\Pipeline-&gt;Illuminate\Routing\{closure}(Object(Illuminate\Http\Request))"
+      35 =&gt; "#35 [internal function]: Clockwork\Support\Laravel\ClockworkMiddleware-&gt;handle(Object(Illuminate\Http\Request), Object(Closure))"
+      36 =&gt; "#36 /var/www/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(136): call_user_func_array(Array, Array)"
+      37 =&gt; "#37 [internal function]: Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Illuminate\Http\Request))"
+      38 =&gt; "#38 /var/www/vendor/laravel/framework/src/Illuminate/Routing/Pipeline.php(32): call_user_func(Object(Closure), Object(Illuminate\Http\Request))"
+      39 =&gt; "#39 [internal function]: Illuminate\Routing\Pipeline-&gt;Illuminate\Routing\{closure}(Object(Illuminate\Http\Request))"
+      40 =&gt; "#40 /var/www/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(102): call_user_func(Object(Closure), Object(Illuminate\Http\Request))"
+      41 =&gt; "#41 /var/www/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(132): Illuminate\Pipeline\Pipeline-&gt;then(Object(Closure))"
+      42 =&gt; "#42 /var/www/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(99): Illuminate\Foundation\Http\Kernel-&gt;sendRequestThroughRouter(Object(Illuminate\Http\Request))"
+      43 =&gt; "#43 /var/www/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php(515): Illuminate\Foundation\Http\Kernel-&gt;handle(Object(Illuminate\Http\Request))"
+      44 =&gt; "#44 /var/www/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php(110): Illuminate\Foundation\Testing\TestCase-&gt;call('GET', 'http://api.sheb...', Array, Array, Array, Array)"
+      45 =&gt; "#45 /var/www/tests/Feature/FeatureTestCase.php(119): Illuminate\Foundation\Testing\TestCase-&gt;get('http://api.sheb...', Array)"
+      46 =&gt; "#46 /var/www/tests/Feature/sProServiceBookCategory/sProOrderDetailsTest.php(32): Tests\Feature\FeatureTestCase-&gt;get('http://api.sheb...', Array)"
+      47 =&gt; "#47 [internal function]: Tests\Feature\sProServiceBookCategory\sProOrderDetailsTest-&gt;testSProOrderDetailsAPIWithValidAuthToken()"
+      48 =&gt; "#48 /var/www/vendor/phpunit/phpunit/src/Framework/TestCase.php(908): ReflectionMethod-&gt;invokeArgs(Object(Tests\Feature\sProServiceBookCategory\sProOrderDetailsTest), Array)"
+      49 =&gt; "#49 /var/www/vendor/phpunit/phpunit/src/Framework/TestCase.php(768): PHPUnit_Framework_TestCase-&gt;runTest()"
+      50 =&gt; "#50 /var/www/vendor/phpunit/phpunit/src/Framework/TestResult.php(612): PHPUnit_Framework_TestCase-&gt;runBare()"
+      51 =&gt; "#51 /var/www/vendor/phpunit/phpunit/src/Framework/TestCase.php(724): PHPUnit_Framework_TestResult-&gt;run(Object(Tests\Feature\sProServiceBookCategory\sProOrderDetailsTest))"
+      52 =&gt; "#52 -(237): PHPUnit_Framework_TestCase-&gt;run(Object(PHPUnit_Framework_TestResult))"
+      53 =&gt; "#53 -(971): __phpunit_run_isolated_test()"
+      54 =&gt; "#54 {main}"
     ]
   ]
-  "discount_message" =&gt; "Pay online and stay relaxed!!!"
 ]
 
 </error>
