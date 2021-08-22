@@ -48,6 +48,8 @@ class ServiceController extends Controller
     public function instructions(Request $request, $serviceId)
     {
         $service = Service::select('id', 'name', 'description_bn')->find($serviceId);
+        if (!$service) return api_response($request, '', 404, ['message' => 'Service not found']);
+
         $instructions = config('spro.instructions');
         $instructions['service_details']['list'] = json_decode($service->description_bn);
         $instructionKeys = config('spro.instruction_keys');
