@@ -250,7 +250,9 @@ class CoWorkerDetailTransformer extends TransformerAbstract
 
     private function getGlobalGrossSalaryComponent($payroll_setting)
     {
-        $global_gross_components = $payroll_setting->components()->where('type', Type::GROSS)->where('target_type', TargetType::GENERAL)->where(function($query) {
+        $global_gross_components = $payroll_setting->components()->where('type', Type::GROSS)->where(function($query) {
+            return $query->where('target_type', null)->orWhere('target_type', TargetType::GENERAL);
+        })->where(function($query) {
             return $query->where('is_default', 1)->orWhere('is_active',1);
         })->orderBy('type')->get();
         $global_gross_component_data = [];

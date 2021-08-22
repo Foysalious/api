@@ -9,7 +9,9 @@ use Sheba\Business\Prorate\Requester as ProrateRequester;
 use Sheba\Business\Prorate\Updater as ProrateUpdater;
 use Sheba\Dal\BusinessMemberLeaveType\Contract as BusinessMemberLeaveTypeInterface;
 use Sheba\Dal\OfficePolicy\Type;
+use Sheba\Dal\PayrollComponent\Type as PayrollComponentType;
 use Sheba\Dal\OfficePolicyRule\ActionType;
+use Sheba\Dal\PayrollComponent\TargetType;
 
 class PolicyActionTaker
 {
@@ -94,14 +96,12 @@ class PolicyActionTaker
             $query->where('from_days', '<=', $this->penaltyDays);
             $query->where('to_days', '>=', $this->penaltyDays);
         })->first();
-
         return $this->rulesPolicyCalculation();
     }
 
     private function rulesPolicyCalculation()
     {
         $policy_total = 0;
-
         if (!$this->policyRules) return $policy_total;
         $action = $this->policyRules->action;
         if ($action === ActionType::NO_PENALTY) return $policy_total;
@@ -128,8 +128,10 @@ class PolicyActionTaker
         if ($action === ActionType::SALARY_ADJUSTMENT) {
             $penalty_type = $this->policyRules->penalty_type;
             $penalty_amount = floatValFormat($this->policyRules->penalty_amount);
-            $gross_component = $this->payrollSetting->components->where('name', $penalty_type)->where('type', 'gross')->where('target_type', 'employee')->where('target_id', $this->businessMember)->first();
-            if (!$gross_component) $gross_component = $this->payrollSetting->components->where('name', $penalty_type)->where('type', 'gross')->where('target_type', 'employee')->where('target_id', $this->businessMember)->first();
+            $gross_component = $this->payrollSetting->components->where('name', $penalty_type)->where('type', PayrollComponentType::GROSS)->where('target_type', TargetType::EMPLOYEE)->where('target_id', $this->businessMember->id)->first();
+            if (!$gross_component) $gross_component = $this->payrollSetting->components->where('name', $penalty_type)->where('type', PayrollComponentType::GROSS)->where(function($query) {
+                return $query->where('target_type', null)->orWhere('target_type', TargetType::GENERAL);
+            })->first();
             if ($gross_component) {
                 $percentage = floatValFormat(json_decode($gross_component->setting, 1)['percentage']);
                 $amount = ($business_member_salary * $percentage) / 100;

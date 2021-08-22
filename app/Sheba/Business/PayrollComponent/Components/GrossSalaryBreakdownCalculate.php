@@ -109,7 +109,9 @@ class GrossSalaryBreakdownCalculate
 
     private function getBusinessMemberGrossComponent($payroll_setting, $business_member)
     {
-        $payroll_components = $payroll_setting->components()->where('type', Type::GROSS)->where('target_type', TargetType::GENERAL)->where(function($query) {
+        $payroll_components = $payroll_setting->components()->where('type', Type::GROSS)->where(function($query) {
+            return $query->where('target_type', null)->orWhere('target_type', TargetType::GENERAL);
+        })->where(function($query) {
             return $query->where('is_default', 1)->orWhere('is_active',1);
         })->orderBy('type')->get();
         $gross_components = $payroll_components;
