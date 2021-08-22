@@ -189,6 +189,9 @@ class CustomerDeliveryAddressController extends Controller
         $this->validate($request, ['address' => 'required|string']);
         $customer = $request->customer;
         $delivery_address = $this->_create($request, $customer);
+        if (json_decode($delivery_address->getContent())->code >=400){
+            return $delivery_address;
+        }
         return api_response($request, 1, 200, ['address' => $delivery_address->id]);
     }
 
