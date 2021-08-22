@@ -58,7 +58,7 @@ class Completion
             ->setMessageType(BankStatics::completionType($this->can_apply));
     }
 
-    public function completionPercentage()
+    public function completionPercentage(): array
     {
         $list       = (new BankFormCategoryFactory())->setBank($this->bank)->setPartner($this->partner)->getAllCategory();
         $iterator   = $list->getIterator();
