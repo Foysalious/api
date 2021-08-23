@@ -82,6 +82,7 @@ class VisitDetailsTransformer extends TransformerAbstract
         $all_notes = [];
         $all_visit_notes = $visit->visitNotes()->select('id', 'visit_id', 'note', 'status', 'date')->orderBy('id', 'DESC')->get()->groupBy('status');
 
+
         foreach ($all_visit_notes as $status => $visit_notes) {
             $notes = [];
             $date = null;
@@ -89,7 +90,8 @@ class VisitDetailsTransformer extends TransformerAbstract
                 $notes [] = $visit_note->note;
                 $date = $visit_note->date->format('h:i A') . " - " . $visit_note->date->format('j M,Y');
             }
-            $all_notes [$status] = [
+            $all_notes [] = [
+                'status' => $status,
                 'date' => $date,
                 'notes' => $notes
             ];
