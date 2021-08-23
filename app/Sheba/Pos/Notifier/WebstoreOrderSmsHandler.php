@@ -84,7 +84,9 @@ class WebstoreOrderSmsHandler
             $sms_handler = (new SmsHandlerRepo('pos-order-place-customer'));
             $message_data += [
                 'net_bill' => $this->order->getNetBill(),
-                'payment_status' => $this->order->getPaid() ? 'প্রদত্ত' : 'বকেয়া'
+                'payment_status' => $this->order->getPaid() ? 'প্রদত্ত' : 'বকেয়া',
+                'store_name' => $this->order->partner->name,
+                'invoice_link' => $this->order->invoice
             ];
         }
 
