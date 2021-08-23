@@ -3,6 +3,7 @@
 use App\Models\Business;
 use Carbon\Carbon;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepo;
+use Sheba\Dal\BusinessOffice\Type as WorkingDaysType;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepo;
 use Sheba\Dal\PayrollComponent\TargetType as ComponentTargetType;
 use Sheba\Dal\PayrollSetting\PayDayType;
@@ -45,8 +46,7 @@ trait PayrollCommonCalculation
         if (!$component) $component = $package->payrollComponent->where('name', $package->on_what)->where('target_type', ComponentTargetType::GENERAL)->first();
         $percentage = json_decode($component->setting, 1)['percentage'];
         $component_amount = ($business_member_salary * $percentage) / 100;
-        $final_amount = ( $component_amount * $amount ) / 100;
-        return $final_amount;
+        return (($component_amount * $amount) / 100);
     }
 
     public function lastWorkingDayOfMonth($business, $last_day_of_month)
@@ -72,5 +72,27 @@ trait PayrollCommonCalculation
         if ($gender === 'Female') return ($taxable_income - PayrollConstGetter::FEMALE_TAX_EXEMPTED) <= 0 ? 0 : ($taxable_income - PayrollConstGetter::FEMALE_TAX_EXEMPTED);
 
         return ($taxable_income - PayrollConstGetter::SPECIAL_TAX_EXEMPTED) <= 0 ? 0 : ($taxable_income - PayrollConstGetter::SPECIAL_TAX_EXEMPTED);
+    }
+
+    public function getTotalBusinessWorkingDays($period, $business_office)
+    {
+        $working_days_type = $business_office->type;
+        $is_weekend_included = $business_office->is_weekend_included;
+        $number_of_days = $business_office->number_of_days;
+        $total_policy_working_days = $period->count();
+        if ($working_days_type === WorkingDaysType::FIXED) return $number_of_days;
+        $period_wise_information = new PeriodWiseInformation();
+        $period_wise_information = $period_wise_information->setPeriod($period)->setBusinessOffice($business_office)->setIsCalculateAttendanceInfo(0)->get();
+        if ($working_days_type === WorkingDaysType::AS_PER_CALENDAR && !$is_weekend_included) return ($total_policy_working_days - $period_wise_information->weekend_count);
+        return $total_policy_working_days;
+    }
+
+    public function oneWorkingDayAmount($amount, $total_working_days)
+    {
+        return ($amount / $total_working_days);
+    }
+    public function totalPenaltyAmountByOneWorkingDay($one_working_day_amount, $penalty_amount)
+    {
+        return ($one_working_day_amount * $penalty_amount);
     }
 }
