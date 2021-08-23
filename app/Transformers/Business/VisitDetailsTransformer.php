@@ -26,7 +26,7 @@ class VisitDetailsTransformer extends TransformerAbstract
             'id' => $visit->id,
             'title' => $visit->title,
             'description' => $visit->description,
-            'schedule_date' => $visit->schedule_date->format('h:i A'),
+            'schedule_date' => $visit->schedule_date->format('d/m/Y'),
             'status' => $visit->status,
             'visitor_profile' => $visitor ? $this->getEmployeeProfile($visitor) : null,
             'assignee_profile' => $assignee ? $this->getEmployeeProfile($assignee) : null,
