@@ -46,28 +46,9 @@ class VisitController extends Controller
         $business_member = $request->business_member;
 
         list($offset, $limit) = calculatePagination($request);
-        $visits = $this->visitRepository->builder()->with([
-            'visitor' => function ($q) {
-                $q->with([
-                    'member' => function ($q) {
-                        $q->select('members.id', 'profile_id')->with([
-                            'profile' => function ($q) {
-                                $q->select('profiles.id', 'name', 'mobile', 'email', 'pro_pic');
-                            }
-                        ]);
-                    },
-                    'role' => function ($q) {
-                        $q->select('business_roles.id', 'business_department_id', 'name')->with([
-                            'businessDepartment' => function ($q) {
-                                $q->select('business_departments.id', 'business_id', 'name');
-                            }
-                        ]);
-                    }]);
-            }
-        ])->orderBy('id', 'DESC');
-
+        #$visits = $this->visitRepository->getAllVisitsWithRelations()->where('visitor_id', '<>', $business_member->id)->orderBy('id', 'DESC');
+        $visits = $this->visitRepository->getAllVisitsWithRelations()->orderBy('id', 'DESC');
         $visits = $visits->whereIn('visitor_id', $this->getBusinessMemberIds($business, $business_member));
-
 
         /** Department Filter */
         if ($request->has('department_id')) {
@@ -99,7 +80,6 @@ class VisitController extends Controller
 
         if ($request->has('search')) $visits = $this->searchWithEmployeeName($visits, $request);
 
-
         $total_visits = count($visits);
         #$limit = $this->getLimit($request, $limit, $total_visits);
         $visits = collect($visits)->splice($offset, $limit);
@@ -107,6 +87,7 @@ class VisitController extends Controller
             'employees' => $visits,
             'total_employees' => $total_visits
         ]);
+
         return api_response($request, null, 404);
     }
 
@@ -122,25 +103,7 @@ class VisitController extends Controller
         $business_member = $request->business_member;
 
         list($offset, $limit) = calculatePagination($request);
-        $visits = $this->visitRepository->builder()->with([
-            'visitor' => function ($q) {
-                $q->with([
-                    'member' => function ($q) {
-                        $q->select('members.id', 'profile_id')->with([
-                            'profile' => function ($q) {
-                                $q->select('profiles.id', 'name', 'mobile', 'email', 'pro_pic');
-                            }
-                        ]);
-                    },
-                    'role' => function ($q) {
-                        $q->select('business_roles.id', 'business_department_id', 'name')->with([
-                            'businessDepartment' => function ($q) {
-                                $q->select('business_departments.id', 'business_id', 'name');
-                            }
-                        ]);
-                    }]);
-            }
-        ])->where('visitor_id', $business_member->id)->orderBy('id', 'DESC');
+        $visits = $this->visitRepository->getAllVisitsWithRelations()->where('visitor_id', $business_member->id)->orderBy('id', 'DESC');
 
         /** Status Filter */
         if ($request->has('status')) {
@@ -153,7 +116,6 @@ class VisitController extends Controller
         if ($start_date && $end_date) {
             $visits->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
         }
-
 
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
@@ -169,6 +131,7 @@ class VisitController extends Controller
             'employees' => $visits,
             'total_employees' => $total_visits
         ]);
+
         return api_response($request, null, 404);
     }
 
