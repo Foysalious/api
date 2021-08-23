@@ -60,8 +60,8 @@ class VisitList
                 'id' => $visit->id,
                 'title' => $visit->title,
                 'timings' => [
-                    'start_time' => $visit->start_date_time ? Carbon::parse($visit->start_date_time)->format('h:i A') : Carbon::parse($visit->schedule_date)->format('h:i A'),
-                    'end_time' => $visit->end_date_time ? Carbon::parse($visit->end_date_time)->format('h:i A') : null,
+                    'start_time' => $visit->start_date_time ? $visit->start_date_time->format('h:i A') : $visit->schedule_date->format('h:i A'),
+                    'end_time' => $visit->end_date_time ? $visit->end_date_time->format('h:i A') : null,
                     'visit_duration' => $visit->total_time_in_minutes ? $this->formatMinute($visit->total_time_in_minutes) : null
                 ],
                 'status' => $visit->status,
@@ -124,12 +124,12 @@ class VisitList
                 'id' => $visit->id,
                 'title' => $visit->title,
                 'timings' => [
-                    'start_time' => $visit->start_date_time ? Carbon::parse($visit->start_date_time)->format('h:i A') : Carbon::parse($visit->schedule_date)->format('h:i A'),
-                    'end_time' => $visit->end_date_time ? Carbon::parse($visit->end_date_time)->format('h:i A') : null,
+                    'start_time' => $visit->start_date_time ? $visit->start_date_time->format('h:i A') : $visit->schedule_date->format('h:i A'),
+                    'end_time' => $visit->end_date_time ? $visit->end_date_time->format('h:i A') : null,
                     'visit_duration' => $visit->total_time_in_minutes ? $this->formatMinute($visit->total_time_in_minutes) : null
                 ],
                 'status' => $visit->status,
-                'date' => Carbon::parse($visit->schedule_date)->format('M d')
+                'date' => $visit->schedule_date->format('M d')
             ]);
         }
 
