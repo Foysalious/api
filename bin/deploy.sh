@@ -45,5 +45,5 @@ elif [ "${branch}" = "development" ]; then
 elif [ "${branch}" = "local" ]; then
   run_on_local
 else
-  run_on_development
+  run_on_development "${branch}"
 fi
