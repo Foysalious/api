@@ -104,6 +104,96 @@ pipeline {
                 }
             }
         }
+        stage('DEPLOY TO PRODUCTION - FOR API NODE 01') {
+            when { branch 'master' }
+            steps {
+                script {
+                    sshPublisher(publishers: [
+                        sshPublisherDesc(configName: 'api-node-01',
+                            transfers: [
+                                sshTransfer(
+                                    cleanRemote: false,
+                                    excludes: '',
+                                    execCommand: 'cd /var/www/api && sudo ./deploy.sh',
+                                    execTimeout: 300000,
+                                    flatten: false,
+                                    makeEmptyDirs: false,
+                                    noDefaultExcludes: false,
+                                    patternSeparator: '[, ]+',
+                                    remoteDirectory: '',
+                                    remoteDirectorySDF: false,
+                                    removePrefix: '',
+                                    sourceFiles: ''
+                                )
+                            ],
+                            usePromotionTimestamp: false,
+                            useWorkspaceInPromotion: false,
+                            verbose: true
+                        )]
+                    )
+                }
+            }
+        }
+        stage('DEPLOY TO PRODUCTION - FOR API NODE 02') {
+            when { branch 'master' }
+            steps {
+                script {
+                    sshPublisher(publishers: [
+                        sshPublisherDesc(configName: 'api-node-02',
+                            transfers: [
+                                sshTransfer(
+                                    cleanRemote: false,
+                                    excludes: '',
+                                    execCommand: 'cd /var/www/api && sudo ./deploy.sh',
+                                    execTimeout: 300000,
+                                    flatten: false,
+                                    makeEmptyDirs: false,
+                                    noDefaultExcludes: false,
+                                    patternSeparator: '[, ]+',
+                                    remoteDirectory: '',
+                                    remoteDirectorySDF: false,
+                                    removePrefix: '',
+                                    sourceFiles: ''
+                                )
+                            ],
+                            usePromotionTimestamp: false,
+                            useWorkspaceInPromotion: false,
+                            verbose: true
+                        )]
+                    )
+                }
+            }
+        }
+        stage('DEPLOY TO PRODUCTION - FOR PRODUCTION SERVER') {
+            when { branch 'master' }
+            steps {
+                script {
+                    sshPublisher(publishers: [
+                        sshPublisherDesc(configName: 'production-server',
+                            transfers: [
+                                sshTransfer(
+                                    cleanRemote: false,
+                                    excludes: '',
+                                    execCommand: 'cd /var/www/api && sudo ./deploy.sh',
+                                    execTimeout: 300000,
+                                    flatten: false,
+                                    makeEmptyDirs: false,
+                                    noDefaultExcludes: false,
+                                    patternSeparator: '[, ]+',
+                                    remoteDirectory: '',
+                                    remoteDirectorySDF: false,
+                                    removePrefix: '',
+                                    sourceFiles: ''
+                                )
+                            ],
+                            usePromotionTimestamp: false,
+                            useWorkspaceInPromotion: false,
+                            verbose: true
+                        )]
+                    )
+                }
+            }
+        }
         stage('DEPLOY TO PRODUCTION - FOR API NODE 03') {
             when { branch 'master' }
             steps {
