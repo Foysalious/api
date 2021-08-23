@@ -23,7 +23,7 @@ class AppVisitDetailsTransformer extends TransformerAbstract
             'notes' => $this->getNotes($visit),
             'photos' => $this->getPhotos($visit),
             'status_change_logs' => $this->getStatusChangesLogs($visit),
-            'cancel_note' => $visit->status === Status::CANCELLED ? $this->getCancelNote($visit) : null
+            'cancel_note' => $this->getCancelNote($visit)
         ];
     }
 
@@ -38,7 +38,7 @@ class AppVisitDetailsTransformer extends TransformerAbstract
             'title' => $visit->title,
             'description' => $visit->description,
             'status' => ucfirst($visit->status),
-            'schedule' => Carbon::parse($visit->schedule_date)->format('F d, Y'),
+            'schedule' => $visit->schedule_date->format('F d, Y'),
             'visitor' => $visit->visitor ? $this->getProfile($visit->visitor) : null,
             'assignee' => $visit->assignee ? $this->getProfile($visit->assignee) : null
         ];
@@ -140,6 +140,10 @@ class AppVisitDetailsTransformer extends TransformerAbstract
      */
     private function getCancelNote(Visit $visit)
     {
-       return $visit->visitNotes()->where('status', Status::CANCELLED)->select('note')->orderBy('id', 'DESC')->first();
+        if ($visit->status === Status::CANCELLED) {
+            return $visit->visitNotes()->where('status', Status::CANCELLED)->select('note')->orderBy('id', 'DESC')->first();
+        } else {
+            return null;
+        }
     }
 }
