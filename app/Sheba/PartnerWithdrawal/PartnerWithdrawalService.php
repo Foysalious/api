@@ -30,7 +30,7 @@ class PartnerWithdrawalService
             'log' => 'automatically updated credit limit because of withdrawal request'
         ];
         $newWithdrawal = WithdrawalRequest::create($data);
-        $this->updateSetting($partner, $creditLimitData);
+//        $this->updateSetting($partner, $creditLimitData);
         return $newWithdrawal;
     }
 
