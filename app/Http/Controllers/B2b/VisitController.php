@@ -85,7 +85,7 @@ class VisitController extends Controller
         $visits = collect($visits)->splice($offset, $limit);
         if (count($visits) > 0) return api_response($request, $visits, 200, [
             'employees' => $visits,
-            'total_employees' => $total_visits
+            'total_visits' => $total_visits
         ]);
 
         return api_response($request, null, 404);
@@ -129,7 +129,7 @@ class VisitController extends Controller
         $visits = collect($visits)->splice($offset, $limit);
         if (count($visits) > 0) return api_response($request, $visits, 200, [
             'employees' => $visits,
-            'total_employees' => $total_visits
+            'total_visits' => $total_visits
         ]);
 
         return api_response($request, null, 404);
