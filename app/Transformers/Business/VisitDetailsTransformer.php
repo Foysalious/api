@@ -22,10 +22,6 @@ class VisitDetailsTransformer extends TransformerAbstract
         /** @var BusinessMember $assignee */
         $assignee = $visit->assignee;
 
-        $photos = $this->getVisitPhotos($visit);
-        $notes = $this->getVisitNotes($visit);
-        $status_change_logs = $this->getVisitStatusChangeLogs($visit);
-
         return [
             'id' => $visit->id,
             'title' => $visit->title,
@@ -34,9 +30,9 @@ class VisitDetailsTransformer extends TransformerAbstract
             'status' => $visit->status,
             'visitor_profile' => $visitor ? $this->getEmployeeProfile($visitor) : null,
             'assignee_profile' => $assignee ? $this->getEmployeeProfile($assignee) : null,
-            'visit_photos' => $photos,
-            'visit_notes' => $notes,
-            'visit_status_change_logs' => $status_change_logs
+            'visit_photos' => $this->getVisitPhotos($visit),
+            'visit_notes' => $this->getVisitNotes($visit),
+            'visit_status_change_logs' => $this->getVisitStatusChangeLogs($visit)
         ];
     }
 
@@ -115,7 +111,7 @@ class VisitDetailsTransformer extends TransformerAbstract
         $status_change_logs = [];
         foreach ($visit_status_change_logs as $key => $visit_status_change_log) {
             $status_change_logs[$key] = [
-                'date' => $visit_status_change_log->created_at->format('d M, Y'),
+                'date' => $visit_status_change_log->created_at->format('d M'),
                 'time' => $visit_status_change_log->created_at->format('h:i A'),
                 'status' => $this->statusFormat($visit_status_change_log->new_status),
                 'location' => json_decode($visit_status_change_log->new_location)
