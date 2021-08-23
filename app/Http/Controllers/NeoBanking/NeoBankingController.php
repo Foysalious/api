@@ -158,7 +158,8 @@ class NeoBankingController extends Controller
             $data = $request->post_data;
             /** @var Partner $partner */
             $partner = ($request->partner);
-            $neoBanking->setPartner($request->partner)->setResource($partner->getContactResource())->setBank($request->bank_code)->setPostData($data)->postCategoryDetail($request->category_code);
+            $neoBanking->setPartner($request->partner)->setResource($partner->getContactResource())
+                ->setBank($request->bank_code)->setPostData($data)->postCategoryDetail($request->category_code);
             return api_response($request, null, 200);
         } catch (NeoBankingException $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
