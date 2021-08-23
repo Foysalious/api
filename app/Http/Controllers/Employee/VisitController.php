@@ -8,6 +8,7 @@ use App\Sheba\EmployeeTracking\Updater;
 use App\Transformers\Business\AppVisitDetailsTransformer;
 use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Sheba\Business\BusinessBasicInformation;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +23,10 @@ class VisitController extends Controller
 {
     use BusinessBasicInformation, ModificationFields;
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getManagerSubordinateEmployeeList(Request $request)
     {
         $business_member = $this->getBusinessMember($request);
@@ -30,6 +35,12 @@ class VisitController extends Controller
         return api_response($request, null, 200, ['manager_list' => $managers_data]);
     }
 
+    /**
+     * @param Request $request
+     * @param Requester $requester
+     * @param Creator $creator
+     * @return JsonResponse
+     */
     public function create(Request $request, Requester $requester, Creator $creator)
     {
         $this->validate($request, [
@@ -47,6 +58,14 @@ class VisitController extends Controller
         return api_response($request, null, 200);
     }
 
+    /**
+     * @param $visit_id
+     * @param Request $request
+     * @param Requester $requester
+     * @param Updater $updater
+     * @param VisitRepository $visit_repository
+     * @return JsonResponse
+     */
     public function update($visit_id, Request $request, Requester $requester, Updater $updater, VisitRepository $visit_repository)
     {
         $this->validate($request, [
@@ -69,7 +88,7 @@ class VisitController extends Controller
     /**
      * @param Request $request
      * @param VisitRepository $visit_repository
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function ownOngoingVisits(Request $request, VisitRepository $visit_repository)
     {
@@ -90,7 +109,8 @@ class VisitController extends Controller
     /**
      * @param Request $request
      * @param VisitRepository $visit_repository
-     * @return \Illuminate\Http\JsonResponse
+     * @param VisitList $visit_list
+     * @return JsonResponse
      */
     public function ownVisitHistory(Request $request, VisitRepository $visit_repository, VisitList $visit_list)
     {
@@ -113,7 +133,8 @@ class VisitController extends Controller
      * @param Request $request
      * @param VisitRepository $visit_repository
      * @param VisitList $visit_list
-     * @return \Illuminate\Http\JsonResponse
+     * @param TimeFrame $time_frame
+     * @return JsonResponse
      */
     public function teamVisitsList(Request $request, VisitRepository $visit_repository, VisitList $visit_list, TimeFrame $time_frame)
     {
