@@ -37,15 +37,15 @@ class SmsHandler
         });
 
         $service_break_down = implode(',', $service_break_down);
-        $sms                = $this->getSms($service_break_down);
-        $sms_cost           = $sms->estimateCharge();
+        $sms = $this->getSms($service_break_down);
+        $sms_cost = $sms->estimateCharge();
         if ((double)$partner->wallet < $sms_cost) return;
 
         try {
             $sms->setBusinessType(BusinessType::SMANAGER)
                 ->setFeatureType(FeatureType::POS)
                 ->shoot();
-        } catch(\Throwable $e) {
+        } catch (\Throwable $e) {
         }
 
         (new WalletTransactionHandler())
@@ -66,10 +66,10 @@ class SmsHandler
     private function getSms($service_break_down)
     {
         $message_data = [
-            'order_id'           => $this->order->partner_wise_order_id,
+            'order_id' => $this->order->partner_wise_order_id,
             'service_break_down' => $service_break_down,
-            'total_amount'       => $this->order->getNetBill(),
-            'partner_name'       => $this->order->partner->name
+            'total_amount' => $this->order->getNetBill(),
+            'invoice_link' => $this->order->invoice
         ];
 
         if ($this->order->getDue() > 0) {
