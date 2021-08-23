@@ -170,7 +170,7 @@ class VisitController extends Controller
      * @param Request $request
      * @param $visit
      * @param VisitRepository $visit_repository
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function show(Request $request, $visit, VisitRepository $visit_repository)
     {

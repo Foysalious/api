@@ -16,25 +16,8 @@ class VisitList
      */
     public function getTeamVisits(VisitRepository $visit_repository, $business_member_ids)
     {
-        return $visit_repository->whereIn('visitor_id', $business_member_ids)->with([
-            'visitor' => function ($q) {
-                $q->with([
-                    'member' => function ($q) {
-                        $q->select('members.id', 'profile_id')->with([
-                            'profile' => function ($q) {
-                                $q->select('profiles.id', 'name', 'mobile', 'email', 'pro_pic');
-                            }
-                        ]);
-                    },
-                    'role' => function ($q) {
-                        $q->select('business_roles.id', 'business_department_id', 'name')->with([
-                            'businessDepartment' => function ($q) {
-                                $q->select('business_departments.id', 'business_id', 'name');
-                            }
-                        ]);
-                    }]);
-            }
-        ])->select('id', 'visitor_id', 'title', 'status', 'start_date_time', 'end_date_time', 'total_time_in_minutes', 'schedule_date', DB::raw('DATE_FORMAT(schedule_date, "%Y-%m-%d") as date'))
+        return $visit_repository->getAllVisitsWithRelations()->whereIn('visitor_id', $business_member_ids)
+            ->select('id', 'visitor_id', 'title', 'status', 'start_date_time', 'end_date_time', 'total_time_in_minutes', 'schedule_date', DB::raw('DATE_FORMAT(schedule_date, "%Y-%m-%d") as date'))
             ->orderBy('id', 'desc');
     }
 
