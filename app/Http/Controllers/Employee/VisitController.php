@@ -5,11 +5,15 @@ use App\Sheba\Business\CoWorker\ManagerSubordinateEmployeeList;
 use App\Sheba\EmployeeTracking\Creator;
 use App\Sheba\EmployeeTracking\Requester;
 use App\Sheba\EmployeeTracking\Updater;
+use App\Transformers\Business\AppVisitDetailsTransformer;
+use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Sheba\Business\BusinessBasicInformation;
 use Illuminate\Support\Facades\DB;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Item;
 use Sheba\Dal\Visit\VisitRepository;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
@@ -86,7 +90,7 @@ class VisitController extends Controller
      * @param VisitRepository $visit_repository
      * @return JsonResponse
      */
-    public function ownVisitList(Request $request, VisitRepository $visit_repository)
+    public function ownOngoingVisits(Request $request, VisitRepository $visit_repository)
     {
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
@@ -160,6 +164,28 @@ class VisitController extends Controller
         $team_visit_list = $visit_list->getTeamVisitList($team_visits);
 
         return api_response($request, $team_visit_list, 200, ['team_visit_list' => $team_visit_list]);
+    }
+
+    /**
+     * @param Request $request
+     * @param $visit
+     * @param VisitRepository $visit_repository
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function show(Request $request, $visit, VisitRepository $visit_repository)
+    {
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+
+        $visit = $visit_repository->find($visit);
+        if (!$visit) return api_response($request, null, 404);
+
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Item($visit, new AppVisitDetailsTransformer());
+        $visit = $manager->createData($resource)->toArray()['data'];
+
+        return api_response($request, $visit, 200, ['visit' => $visit]);
     }
 
 }
