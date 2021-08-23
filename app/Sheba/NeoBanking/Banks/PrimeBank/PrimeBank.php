@@ -1,24 +1,18 @@
 <?php namespace Sheba\NeoBanking\Banks\PrimeBank;
 
-use App\Sheba\NeoBanking\Banks\BankAccountInfoWithTransaction;
 use App\Sheba\NeoBanking\Banks\PrimeBank\PrimeBankClient;
 use Carbon\Carbon;
 use Exception;
-use GuzzleHttp\Exception\GuzzleException;
 use ReflectionException;
 use Sheba\NeoBanking\Banks\Bank;
-use Sheba\NeoBanking\Banks\BankAccountInfo;
 use Sheba\NeoBanking\Banks\BankCompletion;
 use Sheba\NeoBanking\Banks\BankHomeInfo;
 use Sheba\NeoBanking\Banks\CategoryGetter;
 use Sheba\NeoBanking\Banks\Completion;
 use Sheba\NeoBanking\DTO\BankFormCategory;
 use Sheba\NeoBanking\DTO\BankFormCategoryList;
-use Sheba\NeoBanking\Exceptions\AccountCreateException;
 use Sheba\NeoBanking\Exceptions\AccountNotFoundException;
 use Sheba\NeoBanking\Exceptions\AccountNumberAlreadyExistException;
-use Sheba\NeoBanking\Exceptions\InvalidBankCode;
-use Sheba\NeoBanking\Exceptions\InvalidListInsertion;
 use Sheba\NeoBanking\Statics\BankStatics;
 use Sheba\NeoBanking\Statics\NeoBankingGeneralStatics;
 use Sheba\TPProxy\TPProxyServerError;
@@ -102,9 +96,6 @@ class PrimeBank extends Bank
 
     /**
      * @return BankCompletion
-     * @throws InvalidBankCode
-     * @throws InvalidListInsertion
-     * @throws ReflectionException
      */
     public function completion(): BankCompletion
     {
@@ -237,7 +228,14 @@ class PrimeBank extends Bank
         return $data;
     }
 
-    public function pendingAccountData($status, $account, $transaction_id) {
+    /**
+     * @param $status
+     * @param $account
+     * @param $transaction_id
+     * @return array
+     */
+    public function pendingAccountData($status, $account, $transaction_id): array
+    {
         $data['has_account'] = 1;
         $data['applicant_name'] = $status->name;
         $data['account_no'] = $account;
