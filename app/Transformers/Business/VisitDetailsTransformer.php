@@ -122,16 +122,28 @@ class VisitDetailsTransformer extends TransformerAbstract
         return $status_change_logs ?: null;
     }
 
-    /**
-     * @param $status
-     * @return string|void
-     */
+
     private function statusFormat($status)
     {
-        if ($status === Status::STARTED) return "Started Visit";
-        if ($status === Status::REACHED) return "Reached Destination";
-        if ($status === Status::RESCHEDULED) return "Visit Rescheduled";
-        if ($status === Status::CANCELLED) return "Cancelled Visit";
-        if ($status === Status::COMPLETED) return "Completed Visit";
+        if ($status === Status::STARTED) return [
+            'title' => 'Started Visit',
+            'status' => $status
+        ];
+        if ($status === Status::REACHED) return [
+            'title' => 'Reached Destination',
+            'status' => $status
+        ];
+        if ($status === Status::RESCHEDULED) return [
+            'title' => 'Visit Rescheduled',
+            'status' => $status
+        ];
+        if ($status === Status::CANCELLED) return [
+            'title' => 'Cancelled Visit',
+            'status' => $status
+        ];
+        if ($status === Status::COMPLETED) return [
+            'title' => 'Completed Visit',
+            'status' => $status
+        ];
     }
 }
