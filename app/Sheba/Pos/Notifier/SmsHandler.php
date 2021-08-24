@@ -42,7 +42,7 @@ class SmsHandler
 
         $service_break_down = implode(',', $service_break_down);
         $sms                = $this->getSms($service_break_down);
-        $sms_cost           = $sms->getCost();
+        $sms_cost           = $sms->estimateCharge();
         if ((double)$partner->wallet > (double)$sms_cost) {
             /** @var WalletTransactionHandler $walletTransactionHandler */
             try{
