@@ -120,6 +120,7 @@ class AccountingRepository extends BaseRepository
      */
     public function getInventoryProducts($services, $requestedService, $servicesStockCostInfo)
     {
+        Log::info(['services', $services, $requestedService, $servicesStockCostInfo]);
         $requested_service = json_decode($requestedService, true);
         $inventory_products = [];
         foreach ($services as $key => $service) {
