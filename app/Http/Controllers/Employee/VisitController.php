@@ -14,6 +14,7 @@ use App\Sheba\Business\BusinessBasicInformation;
 use Illuminate\Support\Facades\DB;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
+use Sheba\Dal\Visit\Status;
 use Sheba\Dal\Visit\VisitRepository;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
@@ -97,7 +98,7 @@ class VisitController extends Controller
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
         $own_visits = $visit_repository->where('visitor_id', $business_member->id)
-                                       ->whereNotIn('status', ['completed', 'cancelled'])
+                                       ->whereNotIn('status', [Status::COMPLETED, Status::CANCELLED])
                                        ->select('id', 'title', 'status', 'schedule_date')
                                        ->orderBy('id', 'desc')->get();
         if (count($own_visits) == 0) return api_response($request, null, 404);
@@ -119,7 +120,7 @@ class VisitController extends Controller
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
         $own_visits = $visit_repository->where('visitor_id', $business_member->id)
-                                       ->whereIn('status', ['completed', 'cancelled'])
+                                       ->whereIn('status', [Status::COMPLETED, Status::CANCELLED])
                                        ->select('id', 'title', 'status', 'start_date_time', 'end_date_time', 'total_time_in_minutes', 'schedule_date', DB::raw('YEAR(schedule_date) year, MONTH(schedule_date) month'))
                                        ->orderBy('id', 'desc')->get();
         if (count($own_visits) == 0) return api_response($request, null, 404);
@@ -228,7 +229,7 @@ class VisitController extends Controller
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
         $this->validate($request, [
-            'image' => 'file',
+            'image' => 'required|file',
         ]);
         $member = $this->getMember($request);
         $this->setModifier($member);
@@ -236,6 +237,25 @@ class VisitController extends Controller
         $visit = $visit_repository->find($visit);
         if (!$visit) return api_response($request, null, 404);
         $photo_creator->setVisit($visit)->setPhoto($request->image)->store();
+        return api_response($request, null, 200);
+    }
+
+    public function changeStatus(Request $request, $visit, VisitRepository $visit_repository)
+    {
+        $validation_data = [
+            'status' => 'required|string',
+            'lat' => 'required|numeric',
+            'lng' => 'required|numeric'
+        ];
+        if ($request->status === Status::RESCHEDULED) {
+            $validation_data += ['note' => 'string|required', 'date' => 'required|date_format:Y-m-d H:i:s'];
+        }
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $member = $this->getMember($request);
+        $this->setModifier($member);
+        $visit = $visit_repository->find($visit);
+        if (!$visit) return api_response($request, null, 404);
         return api_response($request, null, 200);
     }
 
