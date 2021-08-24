@@ -303,7 +303,6 @@ class OrderController extends Controller
      */
     public function update(Request $request, Updater $updater,InvoiceService $invoiceService)
     {
-        Log::info(['update order services', $request->services]);
         $this->setModifier($request->manager_resource);
             /** @var PosOrder $order */
             $new           = 1;
