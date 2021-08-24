@@ -499,11 +499,12 @@ class OrderController extends Controller
                 $customer     = $pos_order->customer->profile;
                 $info['user'] = [
                     'name'   => $customer->name,
-                    'mobile' => $customer->mobile
+                    'mobile' => $customer->mobile,
+                    'address' => !$pos_order->address?$customer->address:$pos_order->address
                 ];
             }
             $invoice_name = 'pos_order_invoice_' . $pos_order->id;
-            $link         = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
+            $link         = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save(true);
             return api_response($request, null, 200, [
                 'message' => 'Successfully Download receipt',
                 'link'    => $link
@@ -545,11 +546,12 @@ class OrderController extends Controller
                 $customer     = $pos_order->customer->profile;
                 $info['user'] = [
                     'name'   => $customer->name,
-                    'mobile' => $customer->mobile
+                    'mobile' => $customer->mobile,
+                    'address' => !$pos_order->address?$customer->address:$pos_order->address
                 ];
             }
             $invoice_name = 'pos_order_invoice_' . $pos_order->id;
-            $link         = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
+            $link         = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save(true);
             return api_response($request, null, 200, [
                 'message' => 'Successfully Download receipt',
                 'link'    => $link
