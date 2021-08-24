@@ -19,6 +19,7 @@ use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 use Sheba\Business\EmployeeTracking\Visit\VisitList;
 use Sheba\Business\EmployeeTracking\Visit\NoteCreator;
+use Sheba\Business\EmployeeTracking\Visit\PhotoCreator;
 
 class VisitController extends Controller
 {
@@ -215,11 +216,27 @@ class VisitController extends Controller
         return api_response($request, null, 200);
     }
 
-    public function storePhoto(Request $request, $visit)
+    /**
+     * @param Request $request
+     * @param $visit
+     * @param VisitRepository $visit_repository
+     * @param PhotoCreator $photo_creator
+     * @return JsonResponse
+     */
+    public function storePhoto(Request $request, $visit, VisitRepository $visit_repository, PhotoCreator $photo_creator)
     {
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
         $this->validate($request, [
-            'image' => 'required|string',
+            'image' => 'file',
         ]);
+        $member = $this->getMember($request);
+        $this->setModifier($member);
+
+        $visit = $visit_repository->find($visit);
+        if (!$visit) return api_response($request, null, 404);
+        $photo_creator->setVisit($visit)->setPhoto($request->image)->store();
+        return api_response($request, null, 200);
     }
 
 }
