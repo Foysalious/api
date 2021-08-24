@@ -255,7 +255,7 @@ class PosCustomerService
     private function getPurchaseAmountAndTotalUsedPromo(): array
     {
         $response = $this->posOrderServerClient->get('api/v1/partners/'.$this->partner->id.'/customers/'.$this->customerId.'/purchase-amount-promo-usage');
-        return [$response['total_purchase_amount'],$response['total_used_promo']];
+        return [$response['data']['total_purchase_amount'],$response['data']['total_used_promo']];
     }
 
     /**
