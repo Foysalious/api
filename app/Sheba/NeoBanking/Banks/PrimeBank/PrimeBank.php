@@ -78,18 +78,11 @@ class PrimeBank extends Bank
     /**
      * @param $account_no
      * @throws AccountNotFoundException
-     * @throws AccountNumberAlreadyExistException
      */
-    public function storeAccountNumber($account_no)
+    public function accountNumberNotification($account_no)
     {
         $neoBankAccount = $this->partner->neoBankAccount()->first();
         if(!isset($neoBankAccount)) throw new AccountNotFoundException();
-        if($neoBankAccount->account_no !== null) throw new AccountNumberAlreadyExistException();
-        $neoBankAccount->account_no = $account_no;
-        $neoBankAccount->updated_at = Carbon::now();
-        $neoBankAccount->updated_by = 0;
-        $neoBankAccount->updated_by_name = "SBS - Prime Bank";
-        $neoBankAccount->save();
         $this->sendNotification($account_no);
     }
 
