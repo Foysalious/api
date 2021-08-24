@@ -18,6 +18,8 @@ use Sheba\Dal\Visit\VisitRepository;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 use Sheba\Business\EmployeeTracking\Visit\VisitList;
+use Sheba\Business\EmployeeTracking\Visit\NoteCreator;
+use Sheba\Business\EmployeeTracking\Visit\PhotoCreator;
 
 class VisitController extends Controller
 {
@@ -186,6 +188,55 @@ class VisitController extends Controller
         $visit = $manager->createData($resource)->toArray()['data'];
 
         return api_response($request, $visit, 200, ['visit' => $visit]);
+    }
+
+    /**
+     * @param Request $request
+     * @param $visit
+     * @param VisitRepository $visit_repository
+     * @param NoteCreator $note_creator
+     * @return JsonResponse
+     */
+    public function storeNote(Request $request, $visit, VisitRepository $visit_repository, NoteCreator $note_creator)
+    {
+        $this->validate($request, [
+            'date' => 'required|date_format:Y-m-d H:i:s',
+            'note' => 'required|string',
+            'status' => 'required|string'
+        ]);
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $member = $this->getMember($request);
+        $this->setModifier($member);
+
+        $visit = $visit_repository->find($visit);
+        if (!$visit) return api_response($request, null, 404);
+        $note_creator->setVisit($visit)->setDate($request->date)
+                     ->setNote($request->note)->setStatus($request->status)->store();
+        return api_response($request, null, 200);
+    }
+
+    /**
+     * @param Request $request
+     * @param $visit
+     * @param VisitRepository $visit_repository
+     * @param PhotoCreator $photo_creator
+     * @return JsonResponse
+     */
+    public function storePhoto(Request $request, $visit, VisitRepository $visit_repository, PhotoCreator $photo_creator)
+    {
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $this->validate($request, [
+            'image' => 'file',
+        ]);
+        $member = $this->getMember($request);
+        $this->setModifier($member);
+
+        $visit = $visit_repository->find($visit);
+        if (!$visit) return api_response($request, null, 404);
+        $photo_creator->setVisit($visit)->setPhoto($request->image)->store();
+        return api_response($request, null, 200);
     }
 
 }

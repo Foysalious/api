@@ -24,6 +24,8 @@ class EmployeeRoute
                 $api->get('team-visits', 'Employee\VisitController@teamVisitsList');
                 $api->group(['prefix' => '{visit_id}'], function ($api) {
                     $api->get('/', 'Employee\VisitController@show');
+                    $api->post('note', 'Employee\VisitController@storeNote');
+                    $api->post('photo', 'Employee\VisitController@storePhoto');
                 });
             });
             //$api->post('password', 'Employee\EmployeeController@updateMyPassword');
