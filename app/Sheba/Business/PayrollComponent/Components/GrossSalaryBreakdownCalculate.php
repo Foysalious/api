@@ -4,6 +4,7 @@ use App\Models\BusinessMember;
 use App\Sheba\Business\Attendance\AttendanceBasicInfo;
 use App\Sheba\Business\PayrollSetting\PayrollCommonCalculation;
 use Sheba\Dal\PayrollComponent\Components;
+use Sheba\Dal\PayrollComponent\TargetType;
 use Sheba\Dal\PayrollComponent\Type;
 
 class GrossSalaryBreakdownCalculate
