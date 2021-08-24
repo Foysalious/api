@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\RentACar;
 
+use App\Exceptions\HyperLocationNotFoundException;
 use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
 use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
@@ -82,6 +83,8 @@ class RentACarController extends Controller
             return api_response($request, null, 400, ['message' => 'This service isn\'t available at this location.', 'code' => 701]);
         } catch (DestinationCitySameAsPickupException $e) {
             return api_response($request, null, 400, ['message' => 'Please try with inside city for this location.', 'code' => 702]);
+        } catch (HyperLocationNotFoundException $e) {
+            return api_response($request, null, 200, ['message' => $e->getMessage(), 'code' => $e->getCode()]);
         }
 
     }
