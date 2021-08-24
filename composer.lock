@@ -926,6 +926,63 @@
             "time": "2017-07-18T21:11:11+00:00"
         },
         {
+            "name": "fideloper/proxy",
+            "version": "3.3.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/fideloper/TrustedProxy.git",
+                "reference": "9cdf6f118af58d89764249bbcc7bb260c132924f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/fideloper/TrustedProxy/zipball/9cdf6f118af58d89764249bbcc7bb260c132924f",
+                "reference": "9cdf6f118af58d89764249bbcc7bb260c132924f",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/contracts": "~5.0",
+                "php": ">=5.4.0"
+            },
+            "require-dev": {
+                "illuminate/http": "~5.0",
+                "mockery/mockery": "~0.9.3",
+                "phpunit/phpunit": "^5.7"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "3.3-dev"
+                },
+                "laravel": {
+                    "providers": [
+                        "Fideloper\\Proxy\\TrustedProxyServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Fideloper\\Proxy\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Chris Fidao",
+                    "email": "fideloper@gmail.com"
+                }
+            ],
+            "description": "Set trusted proxies for Laravel",
+            "keywords": [
+                "load balancing",
+                "proxy",
+                "trusted proxy"
+            ],
+            "time": "2017-06-15T17:19:42+00:00"
+        },
+        {
             "name": "fgrosse/phpasn1",
             "version": "1.5.0",
             "source": {
@@ -3718,10 +3775,6 @@
                 "png",
                 "png2webp"
             ],
-            "support": {
-                "issues": "https://github.com/rosell-dk/webp-convert/issues",
-                "source": "https://github.com/rosell-dk/webp-convert/tree/2.4.0"
-            },
             "time": "2020-11-10T11:24:50+00:00"
         },
         {
@@ -3963,8 +4016,8 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
-                "reference": "de203e9c37cbe5484725d5a13db2573e9312c66b"
+                "url": "https://bitbucket.org/startern/sheba_dal.git",
+                "reference": "8bffa4e13ca9473c79dd5a6d6079dfca82cdc3f7"
             },
             "require": {
                 "php": ">=5.4"
@@ -3991,14 +4044,14 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2021-06-21T09:25:46+00:00"
+            "time": "2021-08-11T10:48:28+00:00"
         },
         {
             "name": "sheba/elasticsearch",
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://mac_pasha@bitbucket.org/startern/sheba_elasticsearch.git",
+                "url": "https://bitbucket.org/startern/sheba_elasticsearch.git",
                 "reference": "fd7d025e5b9428a78a44b85fa70d2e0d703a7993"
             },
             "require": {
@@ -4045,7 +4098,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://mac_pasha@bitbucket.org/startern/sheba_notification.git",
+                "url": "https://bitbucket.org/startern/sheba_notification.git",
                 "reference": "5c77770b2cea422d4ad8d909b6bd22d152bde39d"
             },
             "require": {
@@ -4077,7 +4130,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://mac_pasha@bitbucket.org/startern/sheba_report.git",
+                "url": "https://bitbucket.org/startern/sheba_report.git",
                 "reference": "548e3494488c089f2a5b6e0b43ccbb0882a70f7d"
             },
             "require": {
@@ -4106,7 +4159,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://mac_pasha@bitbucket.org/startern/sheba_sms.git",
+                "url": "https://bitbucket.org/startern/sheba_sms.git",
                 "reference": "074f6a0534e982ce08a7cb768b3d9decf42c8ca4"
             },
             "require": {
@@ -4135,8 +4188,8 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://mac_pasha@bitbucket.org/startern/sheba_voucher.git",
-                "reference": "935f243725f82caf0e5d717627ead59c076f581f"
+                "url": "https://bitbucket.org/startern/sheba_voucher.git",
+                "reference": "1066fb2d2a0e1607353df24d749b6a072cb5411d"
             },
             "require": {
                 "php": ">=5.4"
@@ -4160,7 +4213,7 @@
                 }
             ],
             "description": "Voucher for Sheba.",
-            "time": "2020-10-13T12:19:30+00:00"
+            "time": "2021-08-14T18:27:33+00:00"
         },
         {
             "name": "spomky-labs/aes-key-wrap",
@@ -5685,12 +5738,12 @@
             "version": "1.2.0",
             "source": {
                 "type": "git",
-                "url": "https://github.com/webmozarts/assert.git",
+                "url": "https://github.com/webmozart/assert.git",
                 "reference": "2db61e59ff05fe5126d152bd0655c9ea113e550f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/webmozarts/assert/zipball/2db61e59ff05fe5126d152bd0655c9ea113e550f",
+                "url": "https://api.github.com/repos/webmozart/assert/zipball/2db61e59ff05fe5126d152bd0655c9ea113e550f",
                 "reference": "2db61e59ff05fe5126d152bd0655c9ea113e550f",
                 "shasum": ""
             },

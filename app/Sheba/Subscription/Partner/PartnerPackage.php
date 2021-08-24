@@ -20,7 +20,7 @@ class PartnerPackage implements Package
         $this->partner->package_id         = $this->package->id;
         $this->partner->billing_type       = $billing_type;
         $this->partner->discount_id        = $discount_id;
-        $this->partner->subscription_rules = $this->package->new_rules;
+        $this->partner->subscription_rules = $this->rulesWithPaymentGatewayConfiguration();
         $this->partner->next_billing_date  = $this->package->calculateNextBillingDate($billing_type, $additional_days);
         $this->partner->update();
         $this->upgradeCommission($this->package->commission);
@@ -34,5 +34,14 @@ class PartnerPackage implements Package
             $category->pivot->commission = $commission;
             $category->pivot->update();
         }
+    }
+
+    private function rulesWithPaymentGatewayConfiguration() : string
+    {
+        $payment_gateway = $this->package->validPaymentGateway;
+        $rules_with_payment_gateway_id = isset($payment_gateway) ? $payment_gateway->id : 0;
+        $new_rules = json_decode($this->package->new_rules, 1);
+        $new_rules = array_merge($new_rules, ["payment_gateway_configuration_id" => $rules_with_payment_gateway_id]);
+        return json_encode($new_rules);
     }
 }

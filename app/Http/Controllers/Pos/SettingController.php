@@ -110,10 +110,10 @@ class SettingController extends Controller
             ->setMessage([
                 'partner_name' => $partner->name,
                 'due_amount' => $request->due_amount
-            ]);
+            ])
+            ->setMobile($customer->profile->mobile);
         $sms_cost = $sms->estimateCharge();
         if ((double)$partner->wallet < $sms_cost) throw new InsufficientBalanceException();
-
         $sms->send($customer->profile->mobile, [
             'partner_name' => $partner->name,
             'due_amount' => $request->due_amount

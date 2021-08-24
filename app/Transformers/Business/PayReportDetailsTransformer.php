@@ -1,6 +1,7 @@
 <?php namespace App\Transformers\Business;
 
 use App\Models\BusinessMember;
+use App\Sheba\Business\BusinessBasicInformation;
 use Carbon\Carbon;
 use League\Fractal\TransformerAbstract;
 use Sheba\Dal\PayrollComponent\Components;
@@ -10,6 +11,8 @@ use NumberFormatter;
 
 class PayReportDetailsTransformer extends TransformerAbstract
 {
+    use BusinessBasicInformation;
+
     private $businessMember;
     private $role;
     private $department;
@@ -40,7 +43,7 @@ class PayReportDetailsTransformer extends TransformerAbstract
         return [
             'business_member_id' => $this->businessMember->id,
             'company_name' => $this->businessMember->business->name,
-            'company_logo' => $this->businessMember->business->logo,
+            'company_logo' => $this->isDefaultImageByUrl($this->businessMember->business->logo) ? null : $this->businessMember->business->logo,
             'employee_id' => $this->businessMember->employee_id ?: 'N/A',
             'name' => $profile->name,
             'pro_pic' => $profile->pro_pic,
@@ -66,7 +69,7 @@ class PayReportDetailsTransformer extends TransformerAbstract
             'conveyance' => $salary_break_down['conveyance'],
             'gross_salary' => $salary_break_down['gross_salary'],
             'net_payable' => $net_payable,
-            'net_payable_in_word' => $this->getAmountInWord($net_payable),
+            'net_payable_in_word' => $this->getAmountInWord(floatValFormat($net_payable)),
         ];
     }
 
@@ -92,7 +95,7 @@ class PayReportDetailsTransformer extends TransformerAbstract
             if ($component_type == $type) {
                 foreach ($component_breakdown as $component => $component_value) {
                     $total += $component_value;
-                    $final_data['breakdown'][ucwords(implode(" ", explode("_", $component)))] = $component_value;
+                    $final_data['breakdown'][ucwords(implode(" ", explode("_", $component)))] = $component_value ? $component_value : 0;
                 }
             }
         }

@@ -168,13 +168,15 @@ abstract class ActionChecker
     {
         if (!$this->isSuccess()) return;
         if ($this->business->isIpBasedAttendanceEnable()) {
-            if ($this->business->offices()->count() > 0 && !$this->isInWifiArea()) {
+            $office_ip_count = $this->business->offices()->count();
+            if ($office_ip_count > 0 && !$this->isInWifiArea()) {
                 if ($this->business->isRemoteAttendanceEnable($this->businessMember->id)) {
                     $this->remoteAttendance();
                 } else {
                     $this->setResult(ActionResultCodes::OUT_OF_WIFI_AREA, ActionResultCodeMessages::OUT_OF_WIFI_AREA);
                 }
             } else {
+                if ($office_ip_count < 1) $this->isRemote = 1;
                 $this->setSuccessfulResponseMessage();
             }
         } else {
@@ -207,7 +209,21 @@ abstract class ActionChecker
         return $this->resultCode ? in_array($this->resultCode, [ActionResultCodes::SUCCESSFUL, ActionResultCodes::LATE_TODAY]) : true;
     }
 
-    public function isNoteRequired()
+    public function isLateNoteRequired()
+    {
+        $date = Carbon::now();
+        $time = new TimeByBusiness();
+        $weekendHoliday = new WeekendHolidayByBusiness();
+        $checkin_time = $time->getOfficeStartTimeByBusiness();
+
+        if (is_null($checkin_time)) return 0;
+        if (!$weekendHoliday->isWeekendByBusiness($date) && !$weekendHoliday->isHolidayByBusiness($date)) {
+            return Carbon::now()->gt(Carbon::parse($checkin_time)) ? 1 : 0;
+        }
+        return 0;
+    }
+
+    public function isLeftEarlyNoteRequired()
     {
         $date = Carbon::now();
         $time = new TimeByBusiness();
