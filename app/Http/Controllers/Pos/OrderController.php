@@ -156,6 +156,7 @@ class OrderController extends Controller
             'sales_channel' => 'sometimes|string'
         ]);
         $link = null;
+        Log::info(['order services', $request->services]);
         if ($request->manager_resource) {
             $partner = $request->partner;
             $modifier = $request->manager_resource;
