@@ -99,14 +99,12 @@ class PolicyActionTaker
             $query->where('from_days', '<=', $this->penaltyDays);
             $query->where('to_days', '>=', $this->penaltyDays);
         })->first();
-
         return $this->rulesPolicyCalculation();
     }
 
     private function rulesPolicyCalculation()
     {
         $policy_total = 0;
-
         if (!$this->policyRules) return $policy_total;
         $action = $this->policyRules->action;
         if ($action === ActionType::NO_PENALTY) return $policy_total;

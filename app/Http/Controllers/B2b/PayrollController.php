@@ -190,11 +190,13 @@ class PayrollController extends Controller
         return api_response($request, null, 200);
     }
 
-    public function getPayrollcomponents(Request $request)
+    public function getPayrollComponents(Request $request)
     {
         /** @var Business $business */
         $business = $request->business;
-        $gross_payroll_components = $business->payrollSetting->components()->where('type', Type::GROSS)->where('target_type', TargetType::GENERAL)->where(function($query) {
+        $gross_payroll_components = $business->payrollSetting->components()->where('type', Type::GROSS)->where(function($query) {
+            return $query->where('target_type', null)->orWhere('target_type', TargetType::GENERAL);
+        })->where(function($query) {
              return $query->where('is_default', 1)->orWhere('is_active',1);
         })->orderBy('type')->get();
 
