@@ -115,35 +115,24 @@ class VisitDetailsTransformer extends TransformerAbstract
             $status_change_logs[$key] = [
                 'date' => $visit_status_change_log->created_at->format('d M'),
                 'time' => $visit_status_change_log->created_at->format('h:i A'),
-                'status' => $this->statusFormat($visit_status_change_log->new_status),
+                'status' => $visit_status_change_log->new_status,
+                'status_title' => $this->statusTitleFormat($visit_status_change_log->new_status),
                 'location' => json_decode($visit_status_change_log->new_location)
             ];
         }
         return $status_change_logs ?: null;
     }
 
-
-    private function statusFormat($status)
+    /**
+     * @param $status
+     * @return string|void
+     */
+    private function statusTitleFormat($status)
     {
-        if ($status === Status::STARTED) return [
-            'title' => 'Started Visit',
-            'status' => $status
-        ];
-        if ($status === Status::REACHED) return [
-            'title' => 'Reached Destination',
-            'status' => $status
-        ];
-        if ($status === Status::RESCHEDULED) return [
-            'title' => 'Visit Rescheduled',
-            'status' => $status
-        ];
-        if ($status === Status::CANCELLED) return [
-            'title' => 'Cancelled Visit',
-            'status' => $status
-        ];
-        if ($status === Status::COMPLETED) return [
-            'title' => 'Completed Visit',
-            'status' => $status
-        ];
+        if ($status === Status::STARTED) return 'Started Visit';
+        if ($status === Status::REACHED) return 'Reached Destination';
+        if ($status === Status::RESCHEDULED) return 'Visit Rescheduled';
+        if ($status === Status::CANCELLED) return 'Cancelled Visit';
+        if ($status === Status::COMPLETED) return 'Completed Visit';
     }
 }
