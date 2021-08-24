@@ -6,6 +6,7 @@ use App\Models\PosOrder;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\AccountingRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\JournalCreateRepository;
@@ -151,8 +152,8 @@ abstract class ReturnPosItem extends RefundNature
             [
                 "from_account_key" => (new Accounts())->asset->cash::CASH,
                 "to_account_key" => (new Accounts())->income->sales::SALES_FROM_POS,
+                // amount in negative value
                 "amount" => isset($this->data['is_refunded']) && $this->data['is_refunded'] ? (double)$this->data['paid_amount'] : 0,
-                // might have negative value
                 "note" => $refundType,
                 "source_id" => $order->id,
                 "customer_id" => isset($order->customer) ? $order->customer->id : null,
