@@ -85,7 +85,7 @@ class VisitController extends Controller
         $visits = collect($visits)->splice($offset, $limit);
         if (count($visits) > 0) return api_response($request, $visits, 200, [
             'employees' => $visits,
-            'total_employees' => $total_visits
+            'total_visits' => $total_visits
         ]);
 
         return api_response($request, null, 404);
@@ -114,7 +114,7 @@ class VisitController extends Controller
         $start_date = $request->has('start_date') ? $request->start_date : null;
         $end_date = $request->has('end_date') ? $request->end_date : null;
         if ($start_date && $end_date) {
-            $visits->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
+            $visits->whereBetween('schedule_date', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
         }
 
         $manager = new Manager();
@@ -129,7 +129,7 @@ class VisitController extends Controller
         $visits = collect($visits)->splice($offset, $limit);
         if (count($visits) > 0) return api_response($request, $visits, 200, [
             'employees' => $visits,
-            'total_employees' => $total_visits
+            'total_visits' => $total_visits
         ]);
 
         return api_response($request, null, 404);

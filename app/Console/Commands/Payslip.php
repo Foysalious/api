@@ -12,6 +12,7 @@ use Sheba\Dal\PayrollComponentPackage\PayrollComponentPackageRepository;
 use Sheba\Dal\PayrollSetting\PayrollSettingRepository;
 use Sheba\Dal\PayrollSetting\PayrollSetting;
 use Sheba\Dal\Payslip\PayslipRepository;
+use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 use App\Models\Business;
 use Carbon\Carbon;
@@ -36,6 +37,7 @@ class Payslip extends Command
     private $payrollComponentPackageRepository;
     /** @var TaxCalculator */
     private $taxCalculator;
+    private $timeFrame;
 
 
     /**
@@ -67,6 +69,7 @@ class Payslip extends Command
         $this->payrollComponentSchedulerCalculation = $payroll_component_scheduler_calculation;
         $this->payrollComponentPackageRepository = app(PayrollComponentPackageRepository::class);
         $this->taxCalculator = $tax_calculator;
+        $this->timeFrame = app(TimeFrame::class);
         parent::__construct();
     }
 
@@ -78,12 +81,17 @@ class Payslip extends Command
             if ($this->isPayDay($payroll_setting)) {
                 $business_members = $business->getAccessibleBusinessMember()->get();
                 foreach ($business_members as $business_member) {
+                    $joining_date = $business_member->join_date;
+                    if ($joining_date <= Carbon::now()->subMonth()) $joining_date = null;
+                    $start_date = $joining_date ? Carbon::parse($joining_date) : Carbon::now()->subMonth()->format('Y-m-d');
+                    $end_date = Carbon::now()->subDay()->format('Y-m-d');
+                    $time_frame = $this->timeFrame->forDateRange($start_date, $end_date);
                     $gross_salary_breakdown_percentage = $this->grossSalaryBreakdownCalculate->payslipComponentPercentageBreakdown($business_member);
-                    $payroll_component_calculation = $this->payrollComponentSchedulerCalculation->setBusiness($business)->setBusinessMember($business_member)->getPayrollComponentCalculationBreakdown();
+                    $payroll_component_calculation = $this->payrollComponentSchedulerCalculation->setBusiness($business)->setBusinessMember($business_member)->setTimeFrame($time_frame)->getPayrollComponentCalculationBreakdown();
                     $gross_salary = 0.0;
                     $salary = $business_member->salary;
                     if ($salary) $gross_salary = floatValFormat($salary->gross_salary);
-                    $gross_salary_breakdown = $this->grossSalaryBreakdownCalculate->totalAmountPerComponent($gross_salary, $gross_salary_breakdown_percentage);
+                    $gross_salary_breakdown = $this->grossSalaryBreakdownCalculate->setBusiness($business)->setJoiningDate($joining_date)->setTimeFrame($time_frame)->totalAmountPerComponent($gross_salary, $gross_salary_breakdown_percentage);
                     $tax_gross_breakdown = $this->grossSalaryBreakdownCalculate->getGrossBreakdown();
                     $taxable_payroll_component = $this->payrollComponentSchedulerCalculation->getTaxComponentData();
                     $this->taxCalculator->setBusinessMember($business_member)->setGrossSalary($gross_salary)->setGrossSalaryBreakdown($tax_gross_breakdown)->setTaxableComponent($taxable_payroll_component)->calculate();
@@ -93,7 +101,8 @@ class Payslip extends Command
                         'business_member_id' => $business_member->id,
                         'schedule_date' => Carbon::now(),
                         'status' => 'pending',
-                        'salary_breakdown' => json_encode(array_merge(['gross_salary_breakdown' => $gross_salary_breakdown], $payroll_component_calculation))
+                        'salary_breakdown' => json_encode(array_merge(['gross_salary_breakdown' => $gross_salary_breakdown], $payroll_component_calculation)),
+                        'joining_log' => Carbon::parse($joining_date)->format('Y-m-d')
                     ];
                     $this->payslipRepository->create($payslip_data);
                 }

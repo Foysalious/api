@@ -3,15 +3,18 @@
 
 use App\Models\Business;
 use App\Models\BusinessMember;
+use App\Sheba\Business\PayrollSetting\PayrollCommonCalculation;
 use App\Sheba\Business\PayrollSetting\PayrollConstGetter;
 use Sheba\Business\Prorate\Creator as ProrateCreator;
 use Sheba\Business\Prorate\Requester as ProrateRequester;
 use Sheba\Business\Prorate\Updater as ProrateUpdater;
 use Sheba\Dal\BusinessMemberLeaveType\Contract as BusinessMemberLeaveTypeInterface;
+use Sheba\Dal\OfficePolicy\Type;
 use Sheba\Dal\OfficePolicyRule\ActionType;
 
 class PolicyActionTaker
 {
+    use PayrollCommonCalculation;
     /*** @var Business */
     private $business;
     private $penaltyDays;
@@ -26,6 +29,8 @@ class PolicyActionTaker
     private $payrollSetting;
     private $additionBreakdown;
     private $policyType;
+    private $isUnpaidLeavePolicyEnable;
+    private $businessMemberSalay;
 
     public function __construct()
     {
@@ -44,6 +49,7 @@ class PolicyActionTaker
     public function setBusinessMember(BusinessMember $business_member)
     {
         $this->businessMember = $business_member;
+        $this->businessMemberSalay = $business_member->salary ? floatValFormat($this->businessMember->salary->gross_salary) : 0;
         return $this;
     }
 
@@ -77,8 +83,15 @@ class PolicyActionTaker
         return $this;
     }
 
+    public function setIsUnpaidLeaveEnable($is_unpaid_leave_policy_enable)
+    {
+        $this->isUnpaidLeavePolicyEnable = $is_unpaid_leave_policy_enable;
+        return $this;
+    }
+
     public function takeAction()
     {
+        if ($this->policyType === Type::UNPAID_LEAVE && !$this->isUnpaidLeavePolicyEnable) return $this->totalPenaltyAmountByOneWorkingDay($this->oneWorkingDayAmount($this->businessMemberSalay,  floatValFormat($this->totalWorkingDays)), $this->penaltyDays);
         $this->policyRules = $this->business->policy()->where('policy_type', $this->policyType)->where(function ($query) {
             $query->where('from_days', '<=', $this->penaltyDays);
             $query->where('to_days', '>=', $this->penaltyDays);
@@ -136,17 +149,6 @@ class PolicyActionTaker
                 return $this->totalPenaltyAmountByOneWorkingDay($one_working_day_amount, $penalty_amount);
             }
         }
-
         return $policy_total;
     }
-
-    private function oneWorkingDayAmount($amount, $total_working_days)
-    {
-        return ($amount / $total_working_days);
-    }
-    private function totalPenaltyAmountByOneWorkingDay($one_working_day_amount, $penalty_amount)
-    {
-        return ($one_working_day_amount * $penalty_amount);
-    }
-
 }

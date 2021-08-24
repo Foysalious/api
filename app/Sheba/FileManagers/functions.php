@@ -1542,3 +1542,18 @@ if (!function_exists('getAppVersionImageLinkFolder')) {
         return $url . 'images/app_version_images/';
     }
 }
+
+if (!function_exists('getEmployeeVisitFolder')) {
+
+    /**
+     * @param false $with_base_url
+     * @return string
+     */
+    function getEmployeeVisitFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url) $url = env('S3_URL');
+
+        return $url . 'images/employee_visit_images';
+    }
+}

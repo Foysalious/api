@@ -211,7 +211,7 @@ class PosCustomerService
     public function storePosCustomer()
     {
         $data = $this->makeCreateData();
-        return $this->smanagerUserServerClient->post('api/v1/partners/' . $this->partner->id.'/users', $data);
+        return $this->smanagerUserServerClient->post('api/v1/partners/' . $this->partner->id.'/pos-users', $data);
     }
 
     public function makeUpdateData()
@@ -254,8 +254,8 @@ class PosCustomerService
      */
     private function getPurchaseAmountAndTotalUsedPromo(): array
     {
-        $response = $this->posOrderServerClient->get('api/v1/customers/'.$this->customerId.'/order-amount');
-        return [$response['total_purchase_amount'],$response['total_used_promo']];
+        $response = $this->posOrderServerClient->get('api/v1/partners/'.$this->partner->id.'/customers/'.$this->customerId.'/purchase-amount-promo-usage');
+        return [$response['data']['total_purchase_amount'],$response['data']['total_used_promo']];
     }
 
     /**

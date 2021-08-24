@@ -21,7 +21,7 @@ class MyVisitListTransformer extends TransformerAbstract
             'id' => $visit->id,
             'title' => $visit->title,
             'description' => $visit->description,
-            'schedule_date' => $visit->schedule_date,
+            'schedule_date' => $visit->schedule_date->format('d M, Y'),
             'status' => $visit->status,
             'profile' => [
                 'id' => $profile->id,
