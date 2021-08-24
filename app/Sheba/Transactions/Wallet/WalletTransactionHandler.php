@@ -51,7 +51,11 @@ class WalletTransactionHandler extends WalletTransaction
                 WalletTransaction::throwException($e);
             }
             return $transaction;
-        } catch (\Throwable $e) {
+        }
+        catch (WalletDebitForbiddenException $e) {
+            throw new WalletDebitForbiddenException($e->getMessage(), $e->getCode());
+        }
+        catch (\Throwable $e) {
             WalletTransaction::throwException($e);
         }
         return null;
@@ -253,7 +257,7 @@ class WalletTransactionHandler extends WalletTransaction
             ->sum('amount');
         $remainingAmount = $this->model->wallet - (int) $withdrawalRequests;
         if ($this->amount > $remainingAmount) {
-            $message = sprintf("আপনি %s টাঁকা উত্তোলনের আবেদন করেছেন, একারনে পর্যাপ্ত ব্যালেন্স নেই। অনুগ্রহ করে সেবা ক্রেডিট রিচারজ করে পুনরায় চেষ্টা করুন।", $this->amount);
+            $message = sprintf("আপনি %s টাকা উত্তোলনের জন্য আবেদন করেছেন, একারনে আপনার একাউন্টে পর্যাপ্ত ব্যালেন্স নেই। অনুগ্রহ করে সেবা ক্রেডিট রিচার্জ করে পুনরায় চেষ্টা করুন।", $withdrawalRequests);
             throw new WalletDebitForbiddenException($message, 403);
         }
     }

@@ -3,6 +3,7 @@
 namespace Sheba\Transactions\Wallet;
 
 use Exception;
+use Throwable;
 
 class WalletDebitForbiddenException extends Exception
 {

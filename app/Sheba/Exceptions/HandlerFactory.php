@@ -1,6 +1,7 @@
 <?php namespace Sheba\Exceptions;
 
 use App\Exceptions\DoNotReportException;
+use App\Exceptions\WalletTransaction\WalletDebitTransactionForbiddenHandler;
 use Exception as BaseException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -21,6 +22,7 @@ use Sheba\TopUp\Bulk\Exception\InvalidTotalAmount;
 use Sheba\TopUp\Bulk\Exception\InvalidTotalAmountHandler;
 use Sheba\TopUp\Exception\PinMismatchException;
 use Sheba\TopUp\Exception\PinMismatchExceptionHandler;
+use Sheba\Transactions\Wallet\WalletDebitForbiddenException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
@@ -58,6 +60,7 @@ class HandlerFactory
         if ($e instanceof NotFoundHttpException) return app(NotFoundHttpExceptionHandler::class);
         if ($e instanceof RouteNotFoundException) return app(RouteNotFoundExceptionHandler::class);
         if ($e instanceof ExceptionForClient) return app(ExceptionForClientHandler::class);
+        if ($e instanceof WalletDebitForbiddenException) return app(WalletDebitTransactionForbiddenHandler::class);
         if ($e instanceof Throwable) return app(ThrowableHandler::class);
         return null;
     }
