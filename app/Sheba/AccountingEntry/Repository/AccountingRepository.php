@@ -120,7 +120,6 @@ class AccountingRepository extends BaseRepository
      */
     public function getInventoryProducts($services, $requestedService, $servicesStockCostInfo)
     {
-        Log::info(['services', $services, $requestedService, $servicesStockCostInfo]);
         $requested_service = json_decode($requestedService, true);
         $inventory_products = [];
         foreach ($services as $key => $service) {
@@ -128,7 +127,6 @@ class AccountingRepository extends BaseRepository
             if($original_service)
             {
                 $serviceBatches = $servicesStockCostInfo[$original_service->id];
-
                 foreach ($serviceBatches as $serviceBatch)
                 {
                     $sellingPrice = isset($requested_service[$key]['updated_price']) && $requested_service[$key]['updated_price'] ? $requested_service[$key]['updated_price'] : $original_service->price;
