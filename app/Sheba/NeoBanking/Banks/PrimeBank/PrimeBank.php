@@ -35,20 +35,19 @@ class PrimeBank extends Bank
         // TODO: Implement categories() method.
     }
 
-    public function accountInfo()
+    /**
+     * @return array
+     * @throws AccountNotFoundException
+     * @throws TPProxyServerError
+     */
+    public function accountInfo(): array
     {
-        $account = $this->getAccount();
         $transactionId = $this->getTransactionId();
-        if ($transactionId) {
-            $headers = ['CLIENT-ID:'. config('neo_banking.sbs_client_id'), 'CLIENT-SECRET:'.  config('neo_banking.sbs_client_secret')];
-            $status = (new PrimeBankClient())->setPartner($this->partner)->get("api/v1/client/account/$transactionId/status", $headers);
-            return $this->formatAccountData($status, $account, $transactionId);
-        } else {
-            if($this->hasAccountWithNullId()) {
-                return $this->pendingAccountData($this->partner, $account, $transaction_id);
-            }
-            return $this->formatEmptyData();
-        }
+        if(!$transactionId) throw new AccountNotFoundException();
+
+        $headers = ['CLIENT-ID:'. config('neo_banking.sbs_client_id'), 'CLIENT-SECRET:'.  config('neo_banking.sbs_client_secret')];
+        $status = (new PrimeBankClient())->setPartner($this->partner)->get("api/v1/client/account/$transactionId/status", $headers);
+        return $this->formatAccountData($status, $transactionId);
 
     }
 
@@ -190,10 +189,16 @@ class PrimeBank extends Bank
         }
     }
 
-    public function formatAccountData($status, $account, $transactionId) {
+    /**
+     * @param $status
+     * @param $transactionId
+     * @return array
+     */
+    public function formatAccountData($status, $transactionId): array
+    {
         $data['has_account'] = 1;
         $data['applicant_name'] = $status->data->applicant_name;
-        $data['account_no'] = $account;
+        $data['account_no'] = $status->data->account;
         $data['transaction_id'] = (string)$transactionId;
         $accountStatus = $status->data->account_status;
         $data['account_status'] = $accountStatus;
@@ -224,15 +229,14 @@ class PrimeBank extends Bank
 
     /**
      * @param $status
-     * @param $account
      * @param $transaction_id
      * @return array
      */
-    public function pendingAccountData($status, $account, $transaction_id): array
+    public function pendingAccountData($status, $transaction_id): array
     {
         $data['has_account'] = 1;
         $data['applicant_name'] = $status->name;
-        $data['account_no'] = $account;
+        $data['account_no'] = null;
         $data['transaction_id'] = $transaction_id;
         $data['account_status'] = BankStatics::mapAccountFullStatus(self::CPV_PENDING_UNSIGNED);
         $data['status_message'] = config('neo_banking.cpv_pending_account_null_message');

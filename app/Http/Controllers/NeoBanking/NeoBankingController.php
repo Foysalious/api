@@ -22,7 +22,13 @@ class NeoBankingController extends Controller
     {
     }
 
-    public function getHomepage($partner, Request $request, Home $home)
+    /**
+     * @param $partner
+     * @param Request $request
+     * @param Home $home
+     * @return JsonResponse
+     */
+    public function getHomepage($partner, Request $request, Home $home): JsonResponse
     {
         try {
             $homepage = $home->setPartner($request->partner)->get();
