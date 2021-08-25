@@ -42,7 +42,7 @@ class AttendanceController extends Controller
      * @param BusinessWeekendRepoInterface $business_weekend_repo
      * @return JsonResponse
      */
-    public function index(Request $request, AttendanceRepoInterface $attendance_repo, TimeFrame $time_frame, BusinessHolidayRepoInterface $business_holiday_repo,
+    public function index(Request                      $request, AttendanceRepoInterface $attendance_repo, TimeFrame $time_frame, BusinessHolidayRepoInterface $business_holiday_repo,
                           BusinessWeekendRepoInterface $business_weekend_repo)
     {
         $this->validate($request, ['year' => 'required|string', 'month' => 'required|string']);
@@ -96,21 +96,19 @@ class AttendanceController extends Controller
 
         Log::info("Attendance for Employee#$business_member->id, Request#" . json_encode($request->except(['profile', 'auth_info', 'auth_user', 'access_token'])));
 
-        $checkin = $action_processor->setActionName(Actions::CHECKIN)->getAction();
-        $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
-        $is_note_required = 0;
-        if ($request->action == Actions::CHECKIN && $checkin->isLateNoteRequired()) {
-            $is_note_required = 1;
-        }
-        if ($request->action == Actions::CHECKOUT && $checkout->isLeftEarlyNoteRequired()) {
-            $is_note_required = 1;
-        }
         if ($business->isRemoteAttendanceEnable($business_member->id) && !$request->is_in_wifi_area) {
             $validation_data += ['lat' => 'sometimes|required|numeric', 'lng' => 'sometimes|required|numeric'];
             $validation_data += ['remote_mode' => 'required|string|in:' . implode(',', RemoteMode::get())];
         }
         $this->validate($request, $validation_data);
         $this->setModifier($business_member->member);
+
+        $checkin = $action_processor->setActionName(Actions::CHECKIN)->getAction();
+        $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
+
+        $is_note_required = 0;
+        if ($request->action == Actions::CHECKIN && $checkin->isLateNoteRequired()) $is_note_required = 1;
+        if ($request->action == Actions::CHECKOUT && $checkout->isLeftEarlyNoteRequired()) $is_note_required = 1;
 
         $attendance_action->setBusinessMember($business_member)
             ->setAction($request->action)
@@ -122,9 +120,9 @@ class AttendanceController extends Controller
         $action = $attendance_action->doAction();
 
         return response()->json(['code' => $action->getResultCode(),
-                                 'is_note_required' => $is_note_required,
-                                 'date' => Carbon::now()->format('jS F Y'),
-                                 'message' => $action->getResultMessage()]);
+            'is_note_required' => $is_note_required,
+            'date' => Carbon::now()->format('jS F Y'),
+            'message' => $action->getResultMessage()]);
     }
 
     /**
@@ -191,9 +189,9 @@ class AttendanceController extends Controller
         if (!$business_member) return api_response($request, null, 404);
 
         $note_updater->setBusinessMember($business_member)
-                     ->setAction($request->action)
-                     ->setNote($request->note)
-                     ->updateNote();
+            ->setAction($request->action)
+            ->setNote($request->note)
+            ->updateNote();
         return api_response($request, null, 200);
     }
 
