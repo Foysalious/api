@@ -33,6 +33,9 @@ class NeoBankingController extends Controller
         try {
             $homepage = $home->setPartner($request->partner)->get();
             return api_response($request, $homepage, 200, ['data' => $homepage]);
+        } catch (NeoBankingException $e) {
+            logError($e);
+            return api_response($request,null, $e->getCode(), ['message'=>$e->getMessage()]);
         } catch (\Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
