@@ -128,7 +128,8 @@ class PrimeBank extends Bank
 
     public function transactionList()
     {
-        return (new PrimeBankClient())->setPartner($this->partner)->get('api/v1/transaction-list/'.$this->getAccount());
+        $headers=['CLIENT-ID:'. config('neo_banking.sbs_client_id'), 'CLIENT-SECRET:'.  config('neo_banking.sbs_client_secret')];
+        return (new PrimeBankClient())->setPartner($this->partner)->get('api/v1/client/accounts/'.$this->getTransactionId().'/transaction-list', $headers);
     }
 
     /**
