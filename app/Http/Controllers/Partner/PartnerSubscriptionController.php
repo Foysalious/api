@@ -19,6 +19,7 @@ use Sheba\Subscription\Partner\BillingType;
 use Sheba\Subscription\Partner\PartnerSubscription;
 use Sheba\Subscription\Partner\PurchaseHandler;
 use Sheba\Subscription\Partner\SubscriptionStatics;
+use Sheba\Transactions\Wallet\WalletDebitForbiddenException;
 use Throwable;
 
 class PartnerSubscriptionController extends Controller
@@ -326,7 +327,13 @@ class PartnerSubscriptionController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
+        }
+        catch (WalletDebitForbiddenException $e) {
+            $message = $e->getMessage() ?? null;
+            $code = $e->getCode() ?? 500;
+            return api_response($request, $message, $code, ['message' => $message]);
+        }
+        catch (Throwable $e) {
             DB::rollback();
             //dd($e);
             app('sentry')->captureException($e);

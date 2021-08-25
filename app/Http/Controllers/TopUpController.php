@@ -34,6 +34,7 @@ use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\Ssl\SslSuccessResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\Ssl\SslFailResponse;
 use Sheba\TopUp\Vendor\VendorFactory;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Sheba\UserAgentInformation;
 use Storage;
 use Excel;
@@ -94,6 +95,9 @@ class TopUpController extends Controller
 
         $agent = $this->getAgent($request);
         $userAgentInformation->setRequest($request);
+        if ($agent instanceof Partner) {
+            WalletTransactionHandler::isDebitTransactionAllowed($agent, $request->amount);
+        }
 
         if ($this->hasLastTopupWithinIntervalTime($agent))
             return api_response($request, null, 400, ['message' => 'Wait another minute to topup']);
