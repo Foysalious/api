@@ -379,6 +379,7 @@ class BusinessRoute
                     $api->post('/component/{payroll_settings}', 'B2b\PayrollController@addComponent');
                     $api->post('/gross-component/{payroll_settings}', 'B2b\PayrollController@grossComponentAddUpdate');
                     $api->get('/pay-day', 'B2b\PayrollController@checkPayDayConflicting');
+                    $api->get('/tax-report', 'B2b\TaxHistoryController@index');
                 });
             });
         });
