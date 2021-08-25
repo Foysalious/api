@@ -43,7 +43,7 @@ class PrimeBank extends Bank
     public function accountInfo(): array
     {
         $transactionId = $this->getTransactionId();
-        if(!$transactionId) throw new AccountNotFoundException();
+        if(!$transactionId) throw new AccountNotFoundException("Transaction ID not found");
 
         $headers = ['CLIENT-ID:'. config('neo_banking.sbs_client_id'), 'CLIENT-SECRET:'.  config('neo_banking.sbs_client_secret')];
         $status = (new PrimeBankClient())->setPartner($this->partner)->get("api/v1/client/account/$transactionId/status", $headers);
