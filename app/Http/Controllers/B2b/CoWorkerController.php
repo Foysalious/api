@@ -581,7 +581,7 @@ class CoWorkerController extends Controller
         foreach ($business_departments as $business_department) {
             $members = $business->membersWithProfileAndAccessibleBusinessMember();
             $members = $members->whereHas('businessMember', function ($q) use ($business_department) {
-                $q->where('status', 'active')->whereHas('role', function ($q) use ($business_department) {
+                $q->where('status', Statuses::ACTIVE)->whereHas('role', function ($q) use ($business_department) {
                     $q->whereHas('businessDepartment', function ($q) use ($business_department) {
                         $q->where('business_departments.id', $business_department->id);
                     });
