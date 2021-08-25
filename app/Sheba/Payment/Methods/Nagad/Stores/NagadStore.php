@@ -1,8 +1,4 @@
-<?php
-
-
-namespace Sheba\Payment\Methods\Nagad\Stores;
-
+<?php namespace Sheba\Payment\Methods\Nagad\Stores;
 
 abstract class NagadStore
 {
@@ -56,6 +52,4 @@ abstract class NagadStore
     {
         return $this->baseUrl;
     }
-
-
 }
