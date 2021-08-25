@@ -97,11 +97,9 @@ class SslBuilder
         $payment_link = $payable->getPaymentLink();
 
         if ($payment_link->isForMissionSaveBangladesh()) return new Donation();
-        if ($payment_link->getEmiMonth()) return new DefaultStore();
 
-        if (self::isPortWalletFailed($payable)) return new DefaultStore();
+        return new DefaultStore();
 
-        throw new InvalidPaymentMethod("SSL is not used for general payment links.");
     }
 
     /**

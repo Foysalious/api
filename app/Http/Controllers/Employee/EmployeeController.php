@@ -148,7 +148,7 @@ class EmployeeController extends Controller
         $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
 
         $approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMember($business_member);
-        $pending_approval_requests = $this->approvalRequestRepo->getPendingApprovalRequestByBusinessMember($business_member);
+        $pending_approval_requests_count = $this->approvalRequestRepo->countPendingLeaveApprovalRequests($business_member);
         $profile_completion_score = $completion_calculator->setBusinessMember($business_member)->getDigiGoScore();
 
         $data = [
@@ -157,11 +157,11 @@ class EmployeeController extends Controller
             'attendance' => [
                 'can_checkin' => !$attendance ? 1 : ($attendance->canTakeThisAction(Actions::CHECKIN) ? 1 : 0),
                 'can_checkout' => $attendance && $attendance->canTakeThisAction(Actions::CHECKOUT) ? 1 : 0,
-                'is_note_required' => 0
+                'is_left_early_note_required' => 0
             ],
             'is_remote_enable' => $business->isRemoteAttendanceEnable($business_member->id),
             'is_approval_request_required' => $approval_requests->count() > 0 ? 1 : 0,
-            'approval_requests' => ['pending_request' => $pending_approval_requests->count()],
+            'approval_requests' => ['pending_request' => $pending_approval_requests_count],
             'is_profile_complete' => $profile_completion_score ? 1 : 0,
             'is_eligible_for_lunch' => in_array($business->id, config('b2b.BUSINESSES_IDS_FOR_LUNCH')) ? [
                 'link' => config('b2b.BUSINESSES_LUNCH_LINK'),
@@ -171,7 +171,7 @@ class EmployeeController extends Controller
         ];
 
         if ($data['attendance']['can_checkout']) {
-            $data['attendance']['is_note_required'] = $checkout->isNoteRequired();
+            $data['attendance']['is_left_early_note_required'] = $checkout->isLeftEarlyNoteRequired();
         }
 
         return api_response($request, $business_member, 200, ['info' => $data]);
