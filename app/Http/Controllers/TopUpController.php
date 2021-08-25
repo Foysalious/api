@@ -34,6 +34,7 @@ use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\Ssl\SslSuccessResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\Ssl\SslFailResponse;
 use Sheba\TopUp\Vendor\VendorFactory;
+use Sheba\Transactions\Wallet\WalletDebitForbiddenException;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Sheba\UserAgentInformation;
 use Storage;
@@ -95,8 +96,14 @@ class TopUpController extends Controller
 
         $agent = $this->getAgent($request);
         $userAgentInformation->setRequest($request);
-        if ($agent instanceof Partner) {
-            WalletTransactionHandler::isDebitTransactionAllowed($agent, $request->amount);
+        try {
+            if ($agent instanceof Partner) {
+                WalletTransactionHandler::isDebitTransactionAllowed($agent, $request->amount);
+            }
+        } catch (WalletDebitForbiddenException $e) {
+            $message = $e->getMessage() ?? null;
+            $code = $e->getCode() ?? 500;
+            return api_response($request, $message, $code, ['message' => $message]);
         }
 
         if ($this->hasLastTopupWithinIntervalTime($agent))

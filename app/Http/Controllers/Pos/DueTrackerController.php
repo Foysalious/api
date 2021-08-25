@@ -19,6 +19,7 @@ use Sheba\Pos\Repositories\PosOrderPaymentRepository;
 use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Reports\PdfHandler;
 use Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
+use Sheba\Transactions\Wallet\WalletDebitForbiddenException;
 use Sheba\Usage\Usage;
 
 class DueTrackerController extends Controller
@@ -252,8 +253,13 @@ class DueTrackerController extends Controller
         } catch (InsufficientBalance $e) {
             $message = "Insufficient Balance";
             return api_response($request, $message, 402, ['message' => $message]);
-        } catch (\Throwable $e) {
-            dd($e->getMessage());
+        }
+        catch (WalletDebitForbiddenException $e) {
+            $message = $e->getMessage() ?? null;
+            $code = $e->getCode() ?? 500;
+            return api_response($request, $message, $code, ['message' => $message]);
+        }
+        catch (\Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
         }
