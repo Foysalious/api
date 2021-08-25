@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use Sheba\Dal\Visit\VisitRepository;
 use Illuminate\Support\Arr;
+use Sheba\Helpers\TimeFrame;
 
 class VisitController extends Controller
 {
@@ -38,7 +39,7 @@ class VisitController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function getTeamVisits(Request $request)
+    public function getTeamVisits(Request $request, TimeFrame $time_frame)
     {
         /** @var Business $business */
         $business = $request->business;
@@ -67,10 +68,9 @@ class VisitController extends Controller
         }
 
         /** Month Filter */
-        $start_date = $request->has('start_date') ? $request->start_date : null;
-        $end_date = $request->has('end_date') ? $request->end_date : null;
-        if ($start_date && $end_date) {
-            $visits->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $time_frame = $time_frame->forDateRange($request->start_date, $request->end_date);
+            $visits = $visits->whereBetween('schedule_date', [$time_frame->start, $time_frame->end]);
         }
 
         $manager = new Manager();
@@ -93,9 +93,10 @@ class VisitController extends Controller
 
     /**
      * @param Request $request
+     * @param TimeFrame $time_frame
      * @return JsonResponse
      */
-    public function getMyVisits(Request $request)
+    public function getMyVisits(Request $request, TimeFrame $time_frame)
     {
         /** @var Business $business */
         $business = $request->business;
@@ -111,10 +112,9 @@ class VisitController extends Controller
         }
 
         /** Month Filter */
-        $start_date = $request->has('start_date') ? $request->start_date : null;
-        $end_date = $request->has('end_date') ? $request->end_date : null;
-        if ($start_date && $end_date) {
-            $visits->whereBetween('schedule_date', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $time_frame = $time_frame->forDateRange($request->start_date, $request->end_date);
+            $visits = $visits->whereBetween('schedule_date', [$time_frame->start, $time_frame->end]);
         }
 
         $manager = new Manager();

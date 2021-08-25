@@ -26,6 +26,17 @@ class VisitController extends Controller
 {
     use BusinessBasicInformation, ModificationFields;
 
+    /** @var VisitRepository $visitRepository */
+    private $visitRepository;
+
+    /**
+     * @param VisitRepository $visit_repository
+     */
+    public function __construct(VisitRepository $visit_repository)
+    {
+        $this->visitRepository = $visit_repository;
+    }
+
     /**
      * @param Request $request
      * @return JsonResponse
@@ -47,7 +58,7 @@ class VisitController extends Controller
     public function create(Request $request, Requester $requester, Creator $creator)
     {
         $this->validate($request, [
-            'date' => 'required|date_format:Y-m-d H:i:s',
+            'date' => 'required|date_format:Y-m-d',
             'employee' => 'numeric',
             'title' => 'required|string',
             'description' => 'sometimes|required|string',
@@ -56,7 +67,8 @@ class VisitController extends Controller
         if (!$business_member) return api_response($request, null, 404);
         $member = $this->getMember($request);
         $this->setModifier($member);
-        $requester->setBusinessMember($business_member)->setDate($request->date)->setEmployee($request->employee)->setTitle($request->title)->setDescription($request->description);
+        $requester->setBusinessMember($business_member)->setDate($request->date)
+            ->setEmployee($request->employee)->setTitle($request->title)->setDescription($request->description);
         $creator->setRequester($requester)->create();
         return api_response($request, null, 200);
     }
@@ -66,41 +78,40 @@ class VisitController extends Controller
      * @param Request $request
      * @param Requester $requester
      * @param Updater $updater
-     * @param VisitRepository $visit_repository
      * @return JsonResponse
      */
-    public function update($visit_id, Request $request, Requester $requester, Updater $updater, VisitRepository $visit_repository)
+    public function update($visit_id, Request $request, Requester $requester, Updater $updater)
     {
         $this->validate($request, [
-            'date' => 'required|date_format:Y-m-d H:i:s',
+            'date' => 'required|date_format:Y-m-d',
             'employee' => 'numeric',
             'title' => 'required|string',
             'description' => 'sometimes|required|string',
         ]);
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
-        $employee_visit = $visit_repository->find($visit_id);
+        $employee_visit = $this->visitRepository->find($visit_id);
         if (!$employee_visit) return api_response($request, null, 404);
         $member = $this->getMember($request);
         $this->setModifier($member);
-        $requester->setBusinessMember($business_member)->setEmployeeVisit($employee_visit)->setDate($request->date)->setEmployee($request->employee)->setTitle($request->title)->setDescription($request->description);
+        $requester->setBusinessMember($business_member)->setEmployeeVisit($employee_visit)
+            ->setDate($request->date)->setEmployee($request->employee)->setTitle($request->title)->setDescription($request->description);
         $updater->setRequester($requester)->update();
         return api_response($request, null, 200);
     }
 
     /**
      * @param Request $request
-     * @param VisitRepository $visit_repository
      * @return JsonResponse
      */
-    public function ownOngoingVisits(Request $request, VisitRepository $visit_repository)
+    public function ownOngoingVisits(Request $request)
     {
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
-        $own_visits = $visit_repository->where('visitor_id', $business_member->id)
-                                       ->whereNotIn('status', [Status::COMPLETED, Status::CANCELLED])
-                                       ->select('id', 'title', 'status', 'schedule_date')
-                                       ->orderBy('id', 'desc')->get();
+        $own_visits = $this->visitRepository->where('visitor_id', $business_member->id)
+            ->whereNotIn('status', [Status::COMPLETED, Status::CANCELLED])
+            ->select('id', 'title', 'status', 'schedule_date')
+            ->orderBy('id', 'desc')->get();
         if (count($own_visits) == 0) return api_response($request, null, 404);
         $own_visits->map(function (&$own_visit) {
             $own_visit['date'] = Carbon::parse($own_visit->schedule_date)->format('M d, Y');
@@ -111,20 +122,19 @@ class VisitController extends Controller
 
     /**
      * @param Request $request
-     * @param VisitRepository $visit_repository
      * @param VisitList $visit_list
      * @return JsonResponse
      */
-    public function ownVisitHistory(Request $request, VisitRepository $visit_repository, VisitList $visit_list)
+    public function ownVisitHistory(Request $request, VisitList $visit_list)
     {
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
-        $own_visits = $visit_repository->where('visitor_id', $business_member->id)
-                                       ->whereIn('status', [Status::COMPLETED, Status::CANCELLED])
-                                       ->select('id', 'title', 'status', 'start_date_time', 'end_date_time', 'total_time_in_minutes', 'schedule_date', DB::raw('YEAR(schedule_date) year, MONTH(schedule_date) month'))
-                                       ->orderBy('id', 'desc')->get();
+        $own_visits = $this->visitRepository->where('visitor_id', $business_member->id)
+            ->whereIn('status', [Status::COMPLETED, Status::CANCELLED])
+            ->select('id', 'title', 'status', 'start_date_time', 'end_date_time', 'total_time_in_minutes', 'schedule_date', DB::raw('YEAR(schedule_date) year, MONTH(schedule_date) month'))
+            ->orderBy('id', 'desc')->get();
         if (count($own_visits) == 0) return api_response($request, null, 404);
-        $own_visits = $own_visits->groupBy('year')->transform(function($item, $k) {
+        $own_visits = $own_visits->groupBy('year')->transform(function ($item, $k) {
             return $item->groupBy('month');
         });
 
@@ -134,19 +144,18 @@ class VisitController extends Controller
 
     /**
      * @param Request $request
-     * @param VisitRepository $visit_repository
      * @param VisitList $visit_list
      * @param TimeFrame $time_frame
      * @return JsonResponse
      */
-    public function teamVisitsList(Request $request, VisitRepository $visit_repository, VisitList $visit_list, TimeFrame $time_frame)
+    public function teamVisitsList(Request $request, VisitList $visit_list, TimeFrame $time_frame)
     {
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
         $managers_data = (new ManagerSubordinateEmployeeList())->get($business_member);
         $business_member_ids = array_column($managers_data, 'id');
 
-        $team_visits = $visit_list->getTeamVisits($visit_repository, $business_member_ids);
+        $team_visits = $visit_list->getTeamVisits($this->visitRepository, $business_member_ids);
 
         if ($request->has('start_date') && $request->has('end_date')) {
             $time_frame = $time_frame->forDateRange($request->start_date, $request->end_date);
@@ -172,15 +181,14 @@ class VisitController extends Controller
     /**
      * @param Request $request
      * @param $visit
-     * @param VisitRepository $visit_repository
      * @return JsonResponse
      */
-    public function show(Request $request, $visit, VisitRepository $visit_repository)
+    public function show(Request $request, $visit)
     {
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
 
-        $visit = $visit_repository->find($visit);
+        $visit = $this->visitRepository->find($visit);
         if (!$visit) return api_response($request, null, 404);
 
         $manager = new Manager();
@@ -194,14 +202,13 @@ class VisitController extends Controller
     /**
      * @param Request $request
      * @param $visit
-     * @param VisitRepository $visit_repository
      * @param NoteCreator $note_creator
      * @return JsonResponse
      */
-    public function storeNote(Request $request, $visit, VisitRepository $visit_repository, NoteCreator $note_creator)
+    public function storeNote(Request $request, $visit, NoteCreator $note_creator)
     {
         $this->validate($request, [
-            'date' => 'required|date_format:Y-m-d H:i:s',
+            'date' => 'required|date_format:Y-m-d',
             'note' => 'required|string',
             'status' => 'required|string'
         ]);
@@ -210,21 +217,20 @@ class VisitController extends Controller
         $member = $this->getMember($request);
         $this->setModifier($member);
 
-        $visit = $visit_repository->find($visit);
+        $visit = $this->visitRepository->find($visit);
         if (!$visit) return api_response($request, null, 404);
         $note_creator->setVisit($visit)->setDate($request->date)
-                     ->setNote($request->note)->setStatus($request->status)->store();
+            ->setNote($request->note)->setStatus($request->status)->store();
         return api_response($request, null, 200);
     }
 
     /**
      * @param Request $request
      * @param $visit
-     * @param VisitRepository $visit_repository
      * @param PhotoCreator $photo_creator
      * @return JsonResponse
      */
-    public function storePhoto(Request $request, $visit, VisitRepository $visit_repository, PhotoCreator $photo_creator)
+    public function storePhoto(Request $request, $visit, PhotoCreator $photo_creator)
     {
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
@@ -234,13 +240,18 @@ class VisitController extends Controller
         $member = $this->getMember($request);
         $this->setModifier($member);
 
-        $visit = $visit_repository->find($visit);
+        $visit = $this->visitRepository->find($visit);
         if (!$visit) return api_response($request, null, 404);
         $photo_creator->setVisit($visit)->setPhoto($request->image)->store();
         return api_response($request, null, 200);
     }
 
-    public function changeStatus(Request $request, $visit, VisitRepository $visit_repository)
+    /**
+     * @param Request $request
+     * @param $visit
+     * @return JsonResponse
+     */
+    public function changeStatus(Request $request, $visit)
     {
         $validation_data = [
             'status' => 'required|string',
@@ -248,13 +259,16 @@ class VisitController extends Controller
             'lng' => 'required|numeric'
         ];
         if ($request->status === Status::RESCHEDULED) {
-            $validation_data += ['note' => 'string|required', 'date' => 'required|date_format:Y-m-d H:i:s'];
+            $validation_data += ['note' => 'string|required', 'date' => 'required|date_format:Y-m-d'];
         }
+        $this->validate($request, $validation_data);
+
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
         $member = $this->getMember($request);
         $this->setModifier($member);
-        $visit = $visit_repository->find($visit);
+        $visit = $this->visitRepository->find($visit);
+
         if (!$visit) return api_response($request, null, 404);
         return api_response($request, null, 200);
     }
