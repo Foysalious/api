@@ -27,7 +27,6 @@ class BankHomeInfo implements Arrayable
 
     /**
      * @return array
-     * @throws ReflectionException
      */
     public function toArray()
     {
