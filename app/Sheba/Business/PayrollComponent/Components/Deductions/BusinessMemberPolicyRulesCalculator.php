@@ -96,8 +96,8 @@ class BusinessMemberPolicyRulesCalculator
         $business_member_attendance = [];
         foreach ($attendances as $attendance) {
             $business_member_attendance[$attendance->date] = [
-                'checkin_time' => Carbon::parse($attendance->checkin_time)->format('h:i:s'),
-                'checkout_time' => $attendance->checkout_time ? Carbon::parse($attendance->checkout_time)->format('h:i:s') : Carbon::parse($business_office->end_time)->format('h:i:s'),
+                'checkin_time' => Carbon::parse($attendance->checkin_time)->format('H:i:s'),
+                'checkout_time' => $attendance->checkout_time ? Carbon::parse($attendance->checkout_time)->format('H:i:s') : Carbon::parse($business_office->end_time)->format('H:i:s'),
             ];
         }
         return $business_member_attendance;

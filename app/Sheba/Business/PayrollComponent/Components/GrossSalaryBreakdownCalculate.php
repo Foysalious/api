@@ -4,6 +4,7 @@ use App\Models\BusinessMember;
 use App\Sheba\Business\Attendance\AttendanceBasicInfo;
 use App\Sheba\Business\PayrollSetting\PayrollCommonCalculation;
 use Sheba\Dal\PayrollComponent\Components;
+use Sheba\Dal\PayrollComponent\TargetType;
 use Sheba\Dal\PayrollComponent\Type;
 
 class GrossSalaryBreakdownCalculate
@@ -141,7 +142,7 @@ class GrossSalaryBreakdownCalculate
     private function getBusinessMemberGrossComponent($payroll_setting, $business_member)
     {
         $payroll_components = $payroll_setting->components()->where('type', Type::GROSS)->where(function($query) {
-            return $query->where('target_type', null)->orWhere('target_type', 'global');
+            return $query->where('target_type', null)->orWhere('target_type', TargetType::GENERAL);
         })->where(function($query) {
             return $query->where('is_default', 1)->orWhere('is_active',1);
         })->orderBy('type')->get();

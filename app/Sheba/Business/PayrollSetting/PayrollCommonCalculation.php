@@ -43,7 +43,9 @@ trait PayrollCommonCalculation
         if ($on_what === PayrollConstGetter::FIXED_AMOUNT) return $amount;
         else if ($on_what === PayrollConstGetter::GROSS_SALARY) return (($business_member_salary * $amount) / 100);
         $component = $package->payrollComponent->where('name', $package->on_what)->where('target_type', ComponentTargetType::EMPLOYEE)->where('target_id', $business_member->id)->first();
-        if (!$component) $component = $package->payrollComponent->where('name', $package->on_what)->where('target_type', ComponentTargetType::GENERAL)->first();
+        if (!$component) $component = $package->payrollComponent->where('name', $package->on_what)->where(function($query) {
+            return $query->where('target_type', null)->orWhere('target_type', ComponentTargetType::GENERAL);
+        })->first();
         $percentage = json_decode($component->setting, 1)['percentage'];
         $component_amount = ($business_member_salary * $percentage) / 100;
         return (($component_amount * $amount) / 100);

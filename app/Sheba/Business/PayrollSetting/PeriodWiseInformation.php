@@ -79,15 +79,15 @@ class PeriodWiseInformation
                 $office_end_time = Carbon::parse($this->businessOffice->end_time);
                 $start_grace_time = $this->businessOffice->start_grace_time;
                 $end_grace_time = $this->businessOffice->end_grace_time;
-                $office_start_time_with_grace = $office_start_time->addMinutes(intval($start_grace_time))->format('h:i:s');
-                $office_end_time_with_grace = $office_end_time->addMinutes(intval($end_grace_time))->format('h:i:s');
+                $office_start_time_with_grace = Carbon::parse($this->businessOffice->start_time)->addMinutes(intval($start_grace_time))->format('h:i:s');
+                $office_end_time_with_grace = Carbon::parse($this->businessOffice->end_time)->subMinutes(intval($end_grace_time))->format('h:i:s');
                 $is_on_leave = $this->isLeave($date, $this->businessMemberLeave);
                 if (!$is_weekend_or_holiday && !$is_on_leave) {
                     $total_working_days++;
                     if (array_key_exists($date->format('Y-m-d'), $this->businessMemberAttendance)) {
-                        if ($this->businessMemberAttendance[$date->format('Y-m-d')]['checkin_time'] > $office_start_time || $this->businessMemberAttendance[$date->format('Y-m-d')]['checkout_time'] < $office_end_time) $total_late_checkin_or_early_checkout++;
-                        if ($this->businessMemberAttendance[$date->format('Y-m-d')]['checkin_time'] > $office_start_time) $total_late_checkin++;
-                        if ($this->businessMemberAttendance[$date->format('Y-m-d')]['checkout_time'] < $office_end_time) $total_early_checkout++;
+                        if ($this->businessMemberAttendance[$date->format('Y-m-d')]['checkin_time'] > $office_start_time->format('H:i:s') || $this->businessMemberAttendance[$date->format('Y-m-d')]['checkout_time'] < $office_end_time->format('H:i:s')) $total_late_checkin_or_early_checkout++;
+                        if ($this->businessMemberAttendance[$date->format('Y-m-d')]['checkin_time'] > $office_start_time->format('H:i:s')) $total_late_checkin++;
+                        if ($this->businessMemberAttendance[$date->format('Y-m-d')]['checkout_time'] < $office_end_time->format('H:i:s')) $total_early_checkout++;
                         if ($this->businessMemberAttendance[$date->format('Y-m-d')]['checkin_time'] > $office_start_time_with_grace || $this->businessMemberAttendance[$date->format('Y-m-d')]['checkout_time'] < $office_end_time_with_grace) $grace_time_over++;
                         $total_present++;
                     }
