@@ -89,8 +89,7 @@ class AttendanceController extends Controller
         $checkin = $action_processor->setActionName(Actions::CHECKIN)->getAction();
         $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
         if ($request->action == Actions::CHECKIN && $checkin->isLateNoteRequired()) {
-            //$validation_data += ['note' => 'string|required_if:action,' . Actions::CHECKIN];
-            $validation_data += ['note' => 'string'];
+            $validation_data += ['note' => 'string|required_if:action,' . Actions::CHECKIN];
         }
         if ($request->action == Actions::CHECKOUT && $checkout->isLeftEarlyNoteRequired()) {
             $validation_data += ['note' => 'string|required_if:action,' . Actions::CHECKOUT];
@@ -144,7 +143,8 @@ class AttendanceController extends Controller
             'is_left_early_note_required' => 0,
             'checkin_time' => $attendance ? $attendance->checkin_time : null,
             'checkout_time' => $attendance ? $attendance->checkout_time : null,
-            'is_geo_required' => $is_remote_enable ? 1 : 0
+            'is_geo_required' => $is_remote_enable ? 1 : 0,
+            'is_remote_enable' => $is_remote_enable
         ];
         if ($data['can_checkin']) {
             $data['is_late_note_required'] = $checkin->isLateNoteRequired();

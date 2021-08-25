@@ -98,6 +98,12 @@ class LeaveController extends Controller
         if ($request->has('search')) $leave_approval_requests = $this->searchWithEmployeeName($leave_approval_requests, $request);
         if ($request->has('period_start') && $request->has('period_end')) $leave_approval_requests = $this->filterByPeriod($leave_approval_requests, $request);
 
+        // Grouped approval requests by leave_id and then taken the latest approval request
+        $leave_approval_requests = $leave_approval_requests->groupBy('requestable_id');
+        $leave_approval_requests = $leave_approval_requests->map(function ($item) {
+            return $item->first();
+        });
+
         $total_leave_approval_requests = $leave_approval_requests->count();
         $leave_approval_requests = $this->sortByStatus($leave_approval_requests);
         if ($request->has('limit') && !$request->has('file')) $leave_approval_requests = $leave_approval_requests->splice($offset, $limit);
@@ -288,12 +294,30 @@ class LeaveController extends Controller
                 'department' => $role ? $role->businessDepartment->name : null,
                 'phone' => $profile->mobile,
                 'profile_pic' => $profile->pro_pic,
-                'status' => ApprovalRequestPresenter::statuses()[$approval_request->status],
+                'status' => $this->getApproverStatus($requestable, $approval_request),
                 'reject_reason' => (new ApproverWithReason())->getRejectReason($approval_request, self::APPROVER, $business_member->id)
             ]);
         }
         $all_approvers = array_merge($approvers, $default_approvers);
         return $all_approvers;
+    }
+
+    /**
+     * @param $requestable
+     * @param $approval_request
+     * @return string|null
+     */
+    private function getApproverStatus($requestable, $approval_request)
+    {
+        if (ApprovalRequestPresenter::statuses()[$approval_request->status] !== Status::PENDING ) {
+            return ApprovalRequestPresenter::statuses()[$approval_request->status];
+        } else {
+            if ($requestable->status !== Status::CANCELED) {
+                return ApprovalRequestPresenter::statuses()[$approval_request->status];
+            } else {
+                return null;
+            }
+        }
     }
 
     /**
