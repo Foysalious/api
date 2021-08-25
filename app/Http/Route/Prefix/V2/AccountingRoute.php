@@ -47,6 +47,10 @@ class AccountingRoute
                 $api->get('/{reportType}', 'Accounting\\ReportsController@getAccountingReport');
                 $api->get('/', 'Accounting\\ReportsController@getAccountingReportsList');
             });
+            $api->group(['prefix' => 'user-migration'], function ($api) {
+                $api->get('/{user-id}', 'Accounting\\UserMigrationController@show');
+                $api->put('/{user-id}', 'Accounting\\UserMigrationController@update');
+            });
         });
     }
 }
