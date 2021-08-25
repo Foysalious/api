@@ -510,7 +510,7 @@ class DeliveryService
         return [
             'status' => $response['data']['status'],
             'delivery_order_id' => $delivery_order_id,
-            'merchant_id' => $this->posOrder->deliveryInformation ? $this->posOrder->deliveryInformation->merchant_id : null
+            'merchant_id' => $this->partner->deliveryInformation ? $this->partner->deliveryInformation->merchant_id : null
         ];
     }
 
