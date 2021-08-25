@@ -2,10 +2,11 @@
 
 
 use App\Models\BusinessMember;
+use Carbon\Carbon;
 
 class Requester
 {
-    /** @var BusinessMember $businessMember*/
+    /** @var BusinessMember $businessMember */
     private $businessMember;
     private $date;
     private $employee;
@@ -37,7 +38,7 @@ class Requester
 
     public function setDate($date)
     {
-        $this->date = $date;
+        $this->date = $date . ' ' . Carbon::now()->format('H:i:s');
         return $this;
     }
 

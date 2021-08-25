@@ -22,18 +22,32 @@ class NeoBankingController extends Controller
     {
     }
 
-    public function getHomepage($partner, Request $request, Home $home)
+    /**
+     * @param $partner
+     * @param Request $request
+     * @param Home $home
+     * @return JsonResponse
+     */
+    public function getHomepage($partner, Request $request, Home $home): JsonResponse
     {
         try {
             $homepage = $home->setPartner($request->partner)->get();
             return api_response($request, $homepage, 200, ['data' => $homepage]);
+        } catch (NeoBankingException $e) {
+            logError($e);
+            return api_response($request,null, $e->getCode(), ['message'=>$e->getMessage()]);
         } catch (\Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
         }
     }
 
-    public function getAccountDetails($partner, Request $request)
+    /**
+     * @param $partner
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getAccountDetails($partner, Request $request): JsonResponse
     {
         try {
             $this->validate($request, ['bank_code' => 'required|string']);
@@ -53,7 +67,12 @@ class NeoBankingController extends Controller
         }
     }
 
-    public function getTransactionList($partner, Request $request)
+    /**
+     * @param $partner
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getTransactionList($partner, Request $request): JsonResponse
     {
         try {
             $this->validate($request, ['bank_code' => 'required|string']);

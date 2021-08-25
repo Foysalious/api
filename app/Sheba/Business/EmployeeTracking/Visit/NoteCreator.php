@@ -1,5 +1,6 @@
 <?php namespace Sheba\Business\EmployeeTracking\Visit;
 
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\Visit\Visit;
 use Sheba\Dal\VisitNote\VisitNoteRepository;
@@ -12,7 +13,6 @@ class NoteCreator
     private $date;
     private $note;
     private $status;
-    private $visitNoteData = [];
 
     /**
      * @param VisitNoteRepository $visit_note_repository
@@ -38,7 +38,7 @@ class NoteCreator
      */
     public function setDate($date)
     {
-        $this->date = $date;
+        $this->date = $date . ' ' . Carbon::now()->format('H:i:s');
         return $this;
     }
 
@@ -64,19 +64,18 @@ class NoteCreator
 
     public function store()
     {
-        $this->makeData();
         DB::transaction(function () {
-            $this->visitNoteRepository->create($this->visitNoteData);
+            $this->visitNoteRepository->create($this->makeData());
         });
     }
 
     private function makeData()
     {
-       $this->visitNoteData = [
-           'visit_id' => $this->visit->id,
-           'note' => $this->note,
-           'status' => $this->status,
-           'date' => $this->date,
-       ];
+        return [
+            'visit_id' => $this->visit->id,
+            'note' => $this->note,
+            'status' => $this->status,
+            'date' => $this->date,
+        ];
     }
 }
