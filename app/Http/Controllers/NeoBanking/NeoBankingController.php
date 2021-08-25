@@ -33,7 +33,12 @@ class NeoBankingController extends Controller
         }
     }
 
-    public function getAccountDetails($partner, Request $request)
+    /**
+     * @param $partner
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getAccountDetails($partner, Request $request): JsonResponse
     {
         try {
             $this->validate($request, ['bank_code' => 'required|string']);
@@ -53,7 +58,12 @@ class NeoBankingController extends Controller
         }
     }
 
-    public function getTransactionList($partner, Request $request)
+    /**
+     * @param $partner
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getTransactionList($partner, Request $request): JsonResponse
     {
         try {
             $this->validate($request, ['bank_code' => 'required|string']);
