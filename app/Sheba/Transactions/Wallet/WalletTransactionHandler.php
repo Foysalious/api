@@ -42,7 +42,7 @@ class WalletTransactionHandler extends WalletTransaction
                 $extras = $this->withCreateModificationField((new RequestIdentification())->set($extras));
             }
             if ($this->type == Types::debit() && $this->model instanceof Partner) {
-                $this->isDebitTransactionAllowed();
+                self::isDebitTransactionAllowed($this->model, $this->amount);
             }
             $transaction = $this->storeTransaction($extras);
             try {
@@ -250,13 +250,13 @@ class WalletTransactionHandler extends WalletTransaction
         return strtolower($this->type) == 'credit' ? $last_inserted_balance + $this->amount : $last_inserted_balance - $this->amount;
     }
 
-    private function isDebitTransactionAllowed()
+    public static function isDebitTransactionAllowed(Partner $partner, $amount)
     {
-        $withdrawalRequests = WithdrawalRequest::where('requester_id', $this->model->id)
+        $withdrawalRequests = WithdrawalRequest::where('requester_id', $partner->id)
             ->whereIn('status', ['pending', 'approval_pending'])
             ->sum('amount');
-        $remainingAmount = $this->model->wallet - (int) $withdrawalRequests;
-        if ($this->amount > $remainingAmount) {
+        $remainingAmount = $partner->wallet - (int) $withdrawalRequests;
+        if ($amount > $remainingAmount) {
             $message = sprintf("আপনি %s টাকা উত্তোলনের জন্য আবেদন করেছেন, একারনে আপনার একাউন্টে পর্যাপ্ত ব্যালেন্স নেই। অনুগ্রহ করে সেবা ক্রেডিট রিচার্জ করে পুনরায় চেষ্টা করুন।", $withdrawalRequests);
             throw new WalletDebitForbiddenException($message, 403);
         }
