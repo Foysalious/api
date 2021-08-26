@@ -1,12 +1,10 @@
 <?php
 
 
-namespace Sheba\Payment\Methods\Nagad;
+namespace Sheba\TPProxy;
 
 
-use Sheba\TPProxy\TPRequest;
-
-class NagadHttpClient
+class TPProxyTestClient extends TPProxyClient
 {
     public function call(TPRequest $request)
     {
@@ -22,17 +20,9 @@ class NagadHttpClient
         curl_setopt($url, CURLOPT_SSL_VERIFYPEER, 0);
         $resultData  = curl_exec($url);
         $ResultArray = json_decode($resultData, true);
+        $error = curl_error($url);
         curl_close($url);
+        if ($error) dd($error);
         return $ResultArray;
     }
-
-    private function makeHeaders(array $getHeaders)
-    {
-        $headers = [];
-        foreach ($getHeaders as $key => $header) {
-            array_push($headers, "$key:$header");
-        }
-        return $headers;
-    }
-
 }

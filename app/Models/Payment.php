@@ -10,7 +10,6 @@ class Payment extends BaseModel
     protected $guarded = ['id'];
 
     /**
-     *
      * Relationships
      */
     public function payable()
@@ -29,7 +28,6 @@ class Payment extends BaseModel
     }
 
     /**
-     *
      * Scope functions
      */
     public function scopeNotCompleted($query)
@@ -98,12 +96,12 @@ class Payment extends BaseModel
         return $this->status == Statuses::VALIDATED || $this->status == Statuses::FAILED;
     }
 
-    public function isReturnedFrom()
+    public function isReturnedFrom(): bool
     {
         return true;
     }
 
-    public function getFormattedPayment()
+    public function getFormattedPayment(): array
     {
         return [
             'transaction_id' => $this->transaction_id,

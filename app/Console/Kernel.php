@@ -2,6 +2,7 @@
 
 use App\Console\Commands\ProductUpload;
 use App\Console\Commands\SetReleaseVersion;
+use App\Console\Commands\TestCommand;
 use App\Console\Commands\TopUpTestCommand;
 use App\Console\Commands\Payslip;
 use Illuminate\Console\Scheduling\Schedule;
@@ -21,6 +22,7 @@ class Kernel extends ConsoleKernel
         AlgoliaSync::class,
         TopUpTestCommand::class,
         Payslip::class,
+        TestCommand::class,
     ];
 
     /**
