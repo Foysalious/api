@@ -175,7 +175,7 @@ return [
         Sheba\Dal\Providers\DalEventsListenerProvider::class,
         Sheba\Report\Listeners\ReportUpdateProvider::class,
         Sheba\Logistics\Listeners\EventsProvider::class,
-        Sheba\Database\DatabaseServiceProvider::class,
+        // Sheba\Database\DatabaseServiceProvider::class,
         Sheba\Elasticsearch\ServiceProvider::class
     ],
 
