@@ -65,7 +65,7 @@ class AuthUser
 
     public static function authenticate()
     {
-        JWTAuth::getPayload(JWTAuth::getToken());
+        JWTAuth::setToken(JWTAuth::getToken())->getPayload();
     }
 
     /**
