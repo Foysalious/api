@@ -24,6 +24,7 @@ class TaxCalculator
     private $taxDeduction;
     private $monthlyTaxAmount;
     private $yearlyTaxAmount;
+    private $businessMemberTaxHistoryData = [];
 
 
     public function __construct()
@@ -62,8 +63,9 @@ class TaxCalculator
         $this->calculateTaxForGrossComponents();
         $this->calculateTaxForPayrollComponents();
         $this->yearlyTaxAmount = $this->taxDeduction->setBusinessMember($this->businessMember)->setTaxableIncome($this->taxableIncome)->calculate();
+        $this->businessMemberTaxHistoryData = [];
         if ($this->yearlyTaxAmount > 0)
-        $tax_history_data = [
+        $this->businessMemberTaxHistoryData = [
             'business_member_id' => $this->businessMember->id,
             'generated_at' => Carbon::now(),
             'gross_components' => json_encode($this->grossTaxableComponents),
@@ -72,13 +74,18 @@ class TaxCalculator
             'remaining_taxable_income' => $this->taxDeduction->getNetTaxableIncomeAmount(),
             'slabs_amount' => json_encode($this->taxDeduction->getSlabAmount()),
             'yearly_amount' => $this->yearlyTaxAmount,
-            'monthly_amount' => $this->yearlyTaxAmount / 12
+            'monthly_amount' => $this->getMonthlyTaxAmount()
         ];
     }
 
     public function getMonthlyTaxAmount()
     {
         return ($this->yearlyTaxAmount / 12);
+    }
+
+    public function getBusinessMemberTaxHistoryData()
+    {
+        return $this->businessMemberTaxHistoryData;
     }
 
     private function calculateTaxForGrossComponents()
@@ -114,7 +121,7 @@ class TaxCalculator
                 $this->yearlyAmount[] = $yearly_medical_allowance;
                 $yearly_medical_allowance_tax = ($yearly_medical_allowance - min(PayrollConstGetter::MEDICAL_ALLOWANCE_EXEMPTION, $this->medicalAllowanceTaxExemptionAmount)) <= 0 ? 0 : ($yearly_medical_allowance - min(PayrollConstGetter::MEDICAL_ALLOWANCE_EXEMPTION, $this->medicalAllowanceTaxExemptionAmount));
                 $this->taxableIncome += $yearly_medical_allowance_tax;
-                $this->grossTaxableComponents[PayrollConstGetter::CONVEYANCE] = $yearly_medical_allowance_tax;
+                $this->grossTaxableComponents[PayrollConstGetter::MEDICAL_ALLOWANCE] = $yearly_medical_allowance_tax;
                 continue;
             }
             if($gross_breakdown['is_taxable']) {
