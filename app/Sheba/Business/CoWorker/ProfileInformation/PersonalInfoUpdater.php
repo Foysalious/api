@@ -59,21 +59,19 @@ class PersonalInfoUpdater
 
     private function makeProfileData()
     {
-        return [
-          'dob' => $this->profileRequester->getDateOfBirth(),
-          'address' => $this->profileRequester->getAddress(),
-          'nationality' => $this->profileRequester->getNationality(),
-          'nid_no' => $this->profileRequester->getNidNo(),
-          'passport_no' => $this->profileRequester->getPassportNo(),
-          'blood_group' => $this->profileRequester->getBloodGroup()
-        ];
+        $data = [];
+        if ($this->profileRequester->getDateOfBirth()) $data['dob'] = $this->profileRequester->getDateOfBirth();
+        if ($this->profileRequester->getAddress()) $data['address'] = $this->profileRequester->getAddress();
+        if ($this->profileRequester->getNationality()) $data['nationality'] = $this->profileRequester->getNationality();
+        if ($this->profileRequester->getNidNo()) $data['nid_no'] = $this->profileRequester->getNidNo();
+        if ($this->profileRequester->getPassportNo()) $data['passport_no'] = $this->profileRequester->getPassportNo();
+        if ($this->profileRequester->getBloodGroup()) $data['blood_group'] = $this->profileRequester->getBloodGroup();
+        return $data;
     }
 
     private function makeMemberData()
     {
-        return [
-          'social_links' =>   $this->profileRequester->getSocialLinks()
-        ];
+        return $this->profileRequester->getSocialLinks() ? ['social_links' =>   $this->profileRequester->getSocialLinks()] : null;
     }
 
     private function makeBusinessMemberData()
