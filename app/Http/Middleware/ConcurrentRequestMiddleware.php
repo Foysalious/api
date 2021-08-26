@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Job;
 use Carbon\Carbon;
 use Closure;
 use Illuminate\Cache\RateLimiter;
@@ -18,7 +19,11 @@ class ConcurrentRequestMiddleware
         if (!in_array($paramName, $this->paramNames) || !in_array($action, $this->actions)) return $next($request);
 
         $duration = constants('MAX_CONCURRENT_MIDDLEWARE_TIME');
-        $key = 'job_' . $this->getJobId($request, $paramName);
+        try {
+            $key = 'job_' . $this->getJobId($request, $paramName);
+        } catch (\Exception $e) {
+            return response()->json(['code' => 400, 'message' => 'Invalid parameters']);
+        }
 
         if ($data = Redis::get($key)){
             $data = json_decode($data, true);
@@ -34,7 +39,8 @@ class ConcurrentRequestMiddleware
     private function getJobId($request, $paramName)
     {
         if ($paramName === 'job') {
-            return $request->route($paramName)->id;
+            if(gettype($request->route($paramName)) == 'object') return $request->route($paramName)->id;
+            return (int)$request->route($paramName);
         }
     }
 
