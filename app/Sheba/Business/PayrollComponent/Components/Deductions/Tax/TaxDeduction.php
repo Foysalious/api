@@ -15,7 +15,7 @@ class TaxDeduction
     public function setBusinessMember(BusinessMember $business_member)
     {
         $this->businessMember = $business_member;
-        $this->gender = $this->businessMember->member->profile->gender;
+        $this->gender = $this->businessMember->profile()->gender;
         return $this;
     }
 
