@@ -22,6 +22,7 @@ class PolicyActionTaker
     /*** @var BusinessMember */
     private $businessMember;
     private $businessMemberLeaveTypeRepo;
+    /*** @var ProrateRequester $prorateRequester */
     private $prorateRequester;
     /*** @var ProrateCreator $prorateCreator */
     private $prorateCreator;
@@ -131,7 +132,7 @@ class PolicyActionTaker
             $penalty_type = $this->policyRules->penalty_type;
             $penalty_amount = floatValFormat($this->policyRules->penalty_amount);
             $gross_component = $this->payrollSetting->components->where('name', $penalty_type)->where('type', PayrollComponentType::GROSS)->where('target_type', TargetType::EMPLOYEE)->where('target_id', $this->businessMember->id)->first();
-            if (!$gross_component) $gross_component = $this->payrollSetting->components->where('name', $penalty_type)->where('type', PayrollComponentType::GROSS)->where(function($query) {
+            if (!$gross_component) $gross_component = $this->payrollSetting->components()->where('name', $penalty_type)->where('type', PayrollComponentType::GROSS)->where(function($query) {
                 return $query->where('target_type', null)->orWhere('target_type', TargetType::GENERAL);
             })->first();
             if ($gross_component) {
