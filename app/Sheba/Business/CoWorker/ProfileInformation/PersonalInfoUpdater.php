@@ -52,8 +52,8 @@ class PersonalInfoUpdater
         $business_member_data = $this->makeBusinessMemberData();
         $image_data = $this->storeImage($profile);
         if ($image_data) $profile_data = array_merge($profile_data, $image_data);
-        $this->memberRepository->update($member, $member_data);
-        $this->profileRepository->update($profile, $profile_data);
+        if ($member_data) $this->memberRepository->update($member, $member_data);
+        if ($profile_data) $this->profileRepository->update($profile, $profile_data);
         if ($business_member_data) $this->businessMemberRepository->update($business_member, $business_member_data);
     }
 
