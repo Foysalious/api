@@ -42,8 +42,6 @@ class TaxHistoryController extends Controller
         $this->validate($request, [
             'show_banner' => 'required'
         ]);
-        /** @var Business $business */
-        $business = $request->business;
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
