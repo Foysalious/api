@@ -34,7 +34,7 @@ class TaxHistoryController extends Controller
         $total_report_count = $tax_report->count();
         $total_tax_amount = $tax_report->sum('total_tax_amount_monthly');
         $tax_report = collect($tax_report)->splice($offset, $limit);
-        return api_response($request, null, 200, ['tax_history' => $tax_report, 'total_tax_amount' => $total_tax_amount, 'show_download_report_banner' => 1, 'total' => $total_report_count]);
+        return api_response($request, null, 200, ['tax_history' => $tax_report, 'total_tax_amount' => $total_tax_amount, 'show_download_report_banner' => $business->payrollSetting->show_tax_report_download_banner, 'total' => $total_report_count]);
     }
 
     public function updateReportShowBanner(Request $request)
