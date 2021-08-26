@@ -86,6 +86,7 @@ class GrossSalaryBreakdownCalculate
     {
         $payroll_setting = $business_member->business->payrollSetting;
         $gross_components = $this->getBusinessMemberGrossComponent($payroll_setting, $business_member);
+        $data = [];
         $breakdown_data = [];
         foreach ($gross_components as $payroll_component) {
             $percentage = floatValFormat(json_decode($payroll_component->setting, 1)['percentage']);
