@@ -380,7 +380,7 @@ class BusinessRoute
                     $api->post('/gross-component/{payroll_settings}', 'B2b\PayrollController@grossComponentAddUpdate');
                     $api->get('/pay-day', 'B2b\PayrollController@checkPayDayConflicting');
                     $api->get('/tax-report', 'B2b\TaxHistoryController@index');
-                    $api->post('show-tax-report-download-banner/{payroll_settings_id}', 'B2b\TaxHistoryController@updateReportShowBanner');
+                    $api->post('show-tax-report-download-banner', 'B2b\TaxHistoryController@updateReportShowBanner');
                 });
             });
         });
