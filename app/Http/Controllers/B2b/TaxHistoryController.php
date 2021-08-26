@@ -37,7 +37,7 @@ class TaxHistoryController extends Controller
         return api_response($request, null, 200, ['tax_history' => $tax_report, 'total_tax_amount' => $total_tax_amount, 'show_download_report_banner' => 1, 'total' => $total_report_count]);
     }
 
-    public function updateReportShowBanner($payroll_settings_id, Request $request)
+    public function updateReportShowBanner($business, $payroll_settings_id, Request $request)
     {
         $this->validate($request, [
             'show_banner' => 'required'
