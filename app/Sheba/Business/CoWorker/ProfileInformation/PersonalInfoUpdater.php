@@ -71,7 +71,7 @@ class PersonalInfoUpdater
 
     private function makeMemberData()
     {
-        return $this->profileRequester->getSocialLinks() ? ['social_links' =>   $this->profileRequester->getSocialLinks()] : null;
+        return ['social_links' =>   $this->profileRequester->getSocialLinks()];
     }
 
     private function makeBusinessMemberData()
