@@ -17,7 +17,7 @@ class ConcurrentRequestMiddleware
     {
         if (!in_array($paramName, $this->paramNames) || !in_array($action, $this->actions)) return $next($request);
 
-        $duration = constants('MAX_CONCURRENT_TIME');
+        $duration = constants('MAX_CONCURRENT_MIDDLEWARE_TIME');
         $key = 'job_' . $this->getJobId($request, $paramName);
 
         if ($data = Redis::get($key)){
