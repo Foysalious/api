@@ -35,8 +35,8 @@ class AccessManagerController extends Controller
         $accessManager = $this->accessManager->setFeature($request->feature)->setAccessRules($partner->subscription->getAccessRules());
         if ($request->has('product_published_count')) $accessManager = $accessManager->setProductPublishedCount($request->product_published_count);
         $canAccess = $accessManager->checkAccess();
-        if ($canAccess) return http_response($request, null, 200, ["code" => 200, "message" => "Successful"]);
-        return http_response($request, null, 200, ["code" => 403, "message" => "Your package doesn't have access to this feature please upgrade"]);
+        if ($canAccess) return http_response($request, null, 200, ["message" => "Successful"]);
+        return http_response($request, null, 403, ["message" => "Your package doesn't have access to this feature please upgrade"]);
 
 
     }
