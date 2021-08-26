@@ -156,6 +156,7 @@ class OrderController extends Controller
             'payment_link_amount' => 'sometimes|numeric',
             'sales_channel' => 'sometimes|string'
         ]);
+        Log::info(['services', $request->services]);
         $link = null;
         if ($request->manager_resource) {
             $partner = $request->partner;
