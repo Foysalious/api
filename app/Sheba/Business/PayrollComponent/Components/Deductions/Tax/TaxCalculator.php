@@ -80,19 +80,19 @@ class TaxCalculator
             if ($gross_breakdown['name'] == PayrollConstGetter::HOUSE_RENT) {
                 $yearly_house_rent = $this->yearlyTotalGrossAmount($gross_breakdown['percentage']);
                 $this->yearlyAmount[] = $yearly_house_rent;
-                $this->taxableIncome += $yearly_house_rent - min(PayrollConstGetter::HOUSE_RENT_EXEMPTION, $this->houseRentTaxExemptionAmount) <= 0 ? 0 : $yearly_house_rent - min(PayrollConstGetter::HOUSE_RENT_EXEMPTION, $this->houseRentTaxExemptionAmount);
+                $this->taxableIncome += ($yearly_house_rent - min(PayrollConstGetter::HOUSE_RENT_EXEMPTION, $this->houseRentTaxExemptionAmount)) <= 0 ? 0 : ($yearly_house_rent - min(PayrollConstGetter::HOUSE_RENT_EXEMPTION, $this->houseRentTaxExemptionAmount));
                 continue;
             }
             if ($gross_breakdown['name'] == PayrollConstGetter::CONVEYANCE) {
                 $yearly_conveyance = $this->yearlyTotalGrossAmount($gross_breakdown['percentage']);
                 $this->yearlyAmount[] = $yearly_conveyance;
-                $this->taxableIncome += $yearly_conveyance > PayrollConstGetter::CONVEYANCE_EXEMPTION ? $yearly_conveyance - PayrollConstGetter::CONVEYANCE_EXEMPTION : 0;
+                $this->taxableIncome += ($yearly_conveyance > PayrollConstGetter::CONVEYANCE_EXEMPTION ) ? ($yearly_conveyance - PayrollConstGetter::CONVEYANCE_EXEMPTION) : 0;
                 continue;
             }
             if ($gross_breakdown['name'] == PayrollConstGetter::MEDICAL_ALLOWANCE) {
                 $yearly_medical_allowance = $this->yearlyTotalGrossAmount($gross_breakdown['percentage']);
                 $this->yearlyAmount[] = $yearly_medical_allowance;
-                $this->taxableIncome += $yearly_medical_allowance - min(PayrollConstGetter::MEDICAL_ALLOWANCE_EXEMPTION, $this->medicalAllowanceTaxExemptionAmount) <= 0 ? 0 : $yearly_medical_allowance - min(PayrollConstGetter::MEDICAL_ALLOWANCE_EXEMPTION, $this->medicalAllowanceTaxExemptionAmount);
+                $this->taxableIncome += ($yearly_medical_allowance - min(PayrollConstGetter::MEDICAL_ALLOWANCE_EXEMPTION, $this->medicalAllowanceTaxExemptionAmount)) <= 0 ? 0 : ($yearly_medical_allowance - min(PayrollConstGetter::MEDICAL_ALLOWANCE_EXEMPTION, $this->medicalAllowanceTaxExemptionAmount));
                 continue;
             }
             if($gross_breakdown['is_taxable']) {

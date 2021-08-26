@@ -66,8 +66,8 @@ class BusinessMemberPolicyRulesCalculator
         $office_end_time = Carbon::parse($business_office->end_time);
         $start_grace_time = $business_office->start_grace_time;
         $end_grace_time = $business_office->end_grace_time;
-        $office_start_time_with_grace = $office_start_time->addMinutes(intval($start_grace_time))->format('h:i:s');
-        $office_end_time_with_grace = $office_end_time->addMinutes(intval($end_grace_time))->format('h:i:s');
+        $office_start_time_with_grace = $office_start_time->addMinutes(intval($start_grace_time))->format('H:i:s');
+        $office_end_time_with_grace = $office_end_time->subMinutes(intval($end_grace_time))->format('H:i:s');
         $is_grace_period_policy_enable = $business_office->is_grace_period_policy_enable;
         $is_late_checkin_early_checkout_policy_enable = $business_office->is_late_checkin_early_checkout_policy_enable;
         $is_for_late_checkin = $business_office->is_for_late_checkin;
@@ -96,18 +96,20 @@ class BusinessMemberPolicyRulesCalculator
         $total_working_days = 0;
         $grace_time_over = 0;
         $total_policy_working_days = $period->count();
-        $weekend_or_holiday_count = 0;
+        $weekend_or_holiday_count = $weekend_count = 0;
         $business_member_attendance = $this->getBusinessMemberAttendanceTime($attendances, $business_office);
         foreach ($period as $date) {
             $is_weekend_or_holiday = $this->isWeekendHoliday($date, $business_weekend, $dates_of_holidays_formatted);
             $weekend_or_holiday_count = $is_weekend_or_holiday ? ($weekend_or_holiday_count + 1) : $weekend_or_holiday_count;
+            $is_weekend = $this->isWeekend($date, $business_weekend);
+            $weekend_count = $is_weekend ? ($weekend_count + 1) : $weekend_count;
             $is_on_leave = $this->isLeave($date, $leaves);
             if (!$is_weekend_or_holiday && !$is_on_leave) {
                 $total_working_days++;
                 if (array_key_exists($date->format('Y-m-d'), $business_member_attendance)) {
-                    if ($business_member_attendance[$date->format('Y-m-d')]['checkin_time'] > $office_start_time || $business_member_attendance[$date->format('Y-m-d')]['checkout_time'] < $office_end_time) $total_late_checkin_or_early_checkout++;
-                    if ($business_member_attendance[$date->format('Y-m-d')]['checkin_time'] > $office_start_time) $total_late_checkin++;
-                    if ($business_member_attendance[$date->format('Y-m-d')]['checkout_time'] < $office_end_time) $total_early_checkout++;
+                    if ($business_member_attendance[$date->format('Y-m-d')]['checkin_time'] > $office_start_time->format('H:i:s') || $business_member_attendance[$date->format('Y-m-d')]['checkout_time'] < $office_end_time->format('H:i:s')) $total_late_checkin_or_early_checkout++;
+                    if ($business_member_attendance[$date->format('Y-m-d')]['checkin_time'] > $office_start_time->format('H:i:s')) $total_late_checkin++;
+                    if ($business_member_attendance[$date->format('Y-m-d')]['checkout_time'] < $office_end_time->format('H:i:s')) $total_early_checkout++;
                     if ($business_member_attendance[$date->format('Y-m-d')]['checkin_time'] > $office_start_time_with_grace || $business_member_attendance[$date->format('Y-m-d')]['checkout_time'] < $office_end_time_with_grace) $grace_time_over++;
                     $total_present++;
                 }
@@ -118,7 +120,7 @@ class BusinessMemberPolicyRulesCalculator
         elseif ($is_for_late_checkin && !$is_for_early_checkout) $late_checkin_early_checkout_days = $total_late_checkin;
         elseif (!$is_for_late_checkin && $is_for_early_checkout) $late_checkin_early_checkout_days = $total_early_checkout;
         if ($working_days_type === WorkingDaysType::FIXED) $total_policy_working_days = $number_of_days;
-        elseif ($working_days_type === WorkingDaysType::AS_PER_CALENDAR && !$is_weekend_included) $total_policy_working_days = ($total_policy_working_days - $weekend_or_holiday_count);
+        elseif ($working_days_type === WorkingDaysType::AS_PER_CALENDAR && !$is_weekend_included) $total_policy_working_days = ($total_policy_working_days - $weekend_count);
         $total_absent = ($total_working_days - $total_present);
         $attendance_adjustment = 0;
         $leave_adjustment = 0;

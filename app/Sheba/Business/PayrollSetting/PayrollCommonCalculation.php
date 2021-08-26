@@ -47,7 +47,7 @@ trait PayrollCommonCalculation
         })->first();
         $percentage = json_decode($component->setting, 1)['percentage'];
         $component_amount = ($business_member_salary * $percentage) / 100;
-        return (( $component_amount * $amount ) / 100);
+        return (($component_amount * $amount) / 100);
     }
 
     public function lastWorkingDayOfMonth($business, $last_day_of_month)
