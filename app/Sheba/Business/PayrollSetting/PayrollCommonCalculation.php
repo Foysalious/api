@@ -76,6 +76,13 @@ trait PayrollCommonCalculation
         return ($taxable_income - PayrollConstGetter::SPECIAL_TAX_EXEMPTED) <= 0 ? 0 : ($taxable_income - PayrollConstGetter::SPECIAL_TAX_EXEMPTED);
     }
 
+    public function getGenderExemptionAmount($gender)
+    {
+        if ($gender === 'Male' ||  $gender === null) return PayrollConstGetter::MALE_TAX_EXEMPTED;
+        if ($gender === 'Female') return PayrollConstGetter::FEMALE_TAX_EXEMPTED;
+        return PayrollConstGetter::SPECIAL_TAX_EXEMPTED;
+    }
+
     public function getTotalBusinessWorkingDays($period, $business_office)
     {
         $working_days_type = $business_office->type;
