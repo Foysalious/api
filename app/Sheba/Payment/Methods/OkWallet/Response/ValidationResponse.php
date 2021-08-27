@@ -1,6 +1,5 @@
-<?php
+<?php namespace Sheba\Payment\Methods\OkWallet\Response;
 
-namespace Sheba\Payment\Methods\OkWallet\Response;
 use Sheba\Payment\Methods\Response\PaymentMethodErrorResponse;
 use Sheba\Payment\Methods\Response\PaymentMethodResponse;
 use Sheba\Payment\Methods\Response\PaymentMethodSuccessResponse;
@@ -9,10 +8,10 @@ class ValidationResponse extends PaymentMethodResponse
 {
     public function hasSuccess()
     {
-        return $this->response && $this->response['RESCODE']==2000;
+        return $this->response && $this->response['RESCODE'] == 2000;
     }
 
-    public function  getSuccess(): PaymentMethodSuccessResponse
+    public function getSuccess(): PaymentMethodSuccessResponse
     {
         $success = new PaymentMethodSuccessResponse();
         $success->id = $this->response['TRXNNO'];
@@ -27,5 +26,4 @@ class ValidationResponse extends PaymentMethodResponse
         $error->details = $this->response;
         return $error;
     }
-
 }

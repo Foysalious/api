@@ -8,6 +8,7 @@ use App\Transformers\Business\CoWorkerMinimumTransformer;
 use App\Transformers\BusinessEmployeeDetailsTransformer;
 use App\Transformers\BusinessEmployeesTransformer;
 use App\Transformers\CustomSerializer;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
@@ -145,11 +146,19 @@ class EmployeeController extends Controller
 
         /** @var Attendance $attendance */
         $attendance = $business_member->attendanceOfToday();
-        $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
+        /** @var Attendance $last_attendance */
+        $last_attendance = $business_member->lastAttendance();
+        $last_attendance_log = $last_attendance ? $last_attendance->actions()->get()->sortByDesc('id')->first() : null;
+        $is_note_required = 0;
+        $note_action = null;
+        if ($last_attendance_log && !$last_attendance_log['note']) {
+           $note_data = $this->checkNoteRequired($last_attendance, $last_attendance_log, $action_processor);
+           $is_note_required = $note_data['is_note_required'];
+           $note_action = $note_data['note_action'];
+        }
 
         $approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMember($business_member);
-        $pending_approval_requests = $this->approvalRequestRepo->getPendingApprovalRequestByBusinessMember($business_member);
-        $pending_approval_requests_count = $this->countPendingApprovalRequests($pending_approval_requests);
+        $pending_approval_requests_count = $this->approvalRequestRepo->countPendingLeaveApprovalRequests($business_member);
         $profile_completion_score = $completion_calculator->setBusinessMember($business_member)->getDigiGoScore();
 
         $data = [
@@ -158,7 +167,11 @@ class EmployeeController extends Controller
             'attendance' => [
                 'can_checkin' => !$attendance ? 1 : ($attendance->canTakeThisAction(Actions::CHECKIN) ? 1 : 0),
                 'can_checkout' => $attendance && $attendance->canTakeThisAction(Actions::CHECKOUT) ? 1 : 0,
-                'is_left_early_note_required' => 0
+            ],
+            'note_data' => [
+               'date' => $last_attendance ? Carbon::parse($last_attendance['date'])->format('jS F Y') : null,
+               'is_note_required' => $is_note_required,
+               'note_action' => $note_action
             ],
             'is_remote_enable' => $business->isRemoteAttendanceEnable($business_member->id),
             'is_approval_request_required' => $approval_requests->count() > 0 ? 1 : 0,
@@ -170,10 +183,6 @@ class EmployeeController extends Controller
             'is_sheba_platform' => in_array($business->id, config('b2b.BUSINESSES_IDS_FOR_REFERRAL') ) ? 1 : 0,
             'is_payroll_enable' => $business->payrollSetting->is_enable
         ];
-
-        if ($data['attendance']['can_checkout']) {
-            $data['attendance']['is_left_early_note_required'] = $checkout->isLeftEarlyNoteRequired();
-        }
 
         return api_response($request, $business_member, 200, ['info' => $data]);
     }
@@ -365,5 +374,33 @@ class EmployeeController extends Controller
             }
         }
         return $pending_leave_count;
+    }
+
+    /**
+     * @param $last_attendance
+     * @param $last_attendance_log
+     * @param ActionProcessor $action_processor
+     * @return array
+     */
+    private function checkNoteRequired($last_attendance, $last_attendance_log, ActionProcessor $action_processor)
+    {
+        $is_note_required = 0;
+        $note_action = null;
+
+        $checkin = $action_processor->setActionName(Actions::CHECKIN)->getAction();
+        $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
+        if ($last_attendance_log['action'] == Actions::CHECKIN && $checkin->isLateNoteRequiredForSpecificDate($last_attendance['date'], $last_attendance['checkin_time'])) {
+            $is_note_required = 1;
+            $note_action = Actions::CHECKIN;
+        }
+        if ($last_attendance_log['action'] == Actions::CHECKOUT && $checkout->isLeftEarlyNoteRequiredForSpecificDate($last_attendance['date'], $last_attendance['checkout_time'])) {
+            $is_note_required = 1;
+            $note_action = Actions::CHECKOUT;
+        }
+
+        return [
+            'is_note_required' => $is_note_required,
+            'note_action' => $note_action
+        ];
     }
 }
