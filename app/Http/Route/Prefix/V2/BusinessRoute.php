@@ -43,6 +43,7 @@ class BusinessRoute
                 $api->get('/transactions', 'B2b\BusinessTransactionController@index');
                 $api->get('/dept-role', 'B2b\CoWorkerController@departmentRole');
 
+
                 $api->group(['prefix' => 'departments'], function ($api) {
                     $api->post('/', 'B2b\DepartmentController@store');
                     $api->get('/', 'B2b\DepartmentController@index');
@@ -92,8 +93,9 @@ class BusinessRoute
                     $api->get('/', 'B2b\CoWorkerController@index');
                     $api->post('/', 'B2b\CoWorkerController@basicInfoStore');
                     $api->get('/roles', 'B2b\CoWorkerController@getRoles');
-                    $api->post('/change-status', 'B2b\CoWorkerController@bulkStatusUpdate');
-                    $api->post('/invite', 'B2b\CoWorkerController@sendInvitation');
+                    $api->post('/change-status', 'B2b\CoWorkerStatusController@bulkStatusUpdate');
+                    $api->post('/invite', 'B2b\CoWorkerInviteController@sendInvitation');
+                    $api->post('/single-invite', 'B2b\CoWorkerInviteController@sendSingleInvitation');
                     $api->get('/report', 'B2b\CoWorkerController@downloadEmployeesReport');
                     $api->group(['prefix' => '{employee}'], function ($api) {
                         $api->post('/basic-info', 'B2b\CoWorkerController@basicInfoEdit');
@@ -102,7 +104,8 @@ class BusinessRoute
                         $api->post('/financial-info', 'B2b\CoWorkerController@financialInfoEdit');
                         $api->post('/emergency-info', 'B2b\CoWorkerController@emergencyInfoEdit');
                         $api->post('/salary-info', 'B2b\CoWorkerController@salaryInfoEdit');
-                        $api->post('/status', 'B2b\CoWorkerController@statusUpdate');
+                        $api->post('/status', 'B2b\CoWorkerStatusController@statusUpdate');
+                        $api->post('/active', 'B2b\CoWorkerStatusController@activeFromInvited');
                         $api->get('/', 'B2b\CoWorkerController@show');
                         $api->post('/', 'B2b\CoWorkerController@update');
                         $api->get('/expense/pdf', 'B2b\CoWorkerController@show');
@@ -345,7 +348,7 @@ class BusinessRoute
                 $api->group(['prefix' => 'expense'], function ($api) {
                     $api->get('/', 'B2b\ExpenseController@index');
                     $api->get('/download-pdf', 'B2b\ExpenseController@downloadPdf');
-                    $api->get('/filter-month', 'B2b\ExpenseController@filterMonth');
+                    $api->get('/filter-month/{business_member_id}', 'B2b\ExpenseController@filterMonth');
                     $api->group(['prefix' => '{expense}'], function ($api) {
                         $api->get('/', 'B2b\ExpenseController@show');
                         $api->post('/', 'B2b\ExpenseController@update');
@@ -372,12 +375,13 @@ class BusinessRoute
 
                 });
                 $api->group(['prefix' => 'payroll'], function ($api) {
-                    $api->get('/components', 'B2b\PayrollController@getPayrollcomponents');
+                    $api->get('/components', 'B2b\PayrollController@getPayrollComponents');
                     $api->get('/settings', 'B2b\PayrollController@getPayrollSettings');
                     $api->post('/pay-schedule/{id}', 'B2b\PayrollController@updatePaySchedule');
                     $api->post('/salary-breakdown/{id}', 'B2b\PayrollController@updateSalaryBreakdown');
                     $api->post('/component/{payroll_settings}', 'B2b\PayrollController@addComponent');
                     $api->post('/gross-component/{payroll_settings}', 'B2b\PayrollController@grossComponentAddUpdate');
+                    $api->get('/pay-day', 'B2b\PayrollController@checkPayDayConflicting');
                 });
                 $api->group(['prefix' => 'employee-visit'], function ($api) {
                     $api->post('settings', 'B2b\VisitSettingController@settings');

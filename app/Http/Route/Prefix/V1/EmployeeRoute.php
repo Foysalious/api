@@ -15,6 +15,18 @@ class EmployeeRoute
                 $api->get('payslip', 'Employee\PayrollController@downloadPayslip');
                 $api->get('disbursed-month', 'Employee\PayrollController@disbursedMonth');
             });
+            $api->group(['prefix' => 'profile'], function ($api) {
+                $api->group(['prefix' => '{business_member}'], function ($api) {
+                    $api->get('financial', 'Employee\EmployeeController@getFinancialInfo');
+                    $api->get('official', 'Employee\EmployeeController@getOfficialInfo');
+                    $api->post('official', 'Employee\EmployeeController@updateOfficialInfo');
+                    $api->post('update', 'Employee\EmployeeController@updateEmployee');
+                    $api->post('emergency', 'Employee\EmployeeController@updateEmergencyInfo');
+                    $api->get('emergency', 'Employee\EmployeeController@getEmergencyContactInfo');
+                    $api->get('personal', 'Employee\EmployeeController@getPersonalInfo');
+                    $api->post('personal', 'Employee\EmployeeController@updatePersonalInfo');
+                });
+            });
             $api->get('subordinate-employee-list', 'Employee\VisitController@getManagerSubordinateEmployeeList');
             $api->group(['prefix' => 'employee-visit'], function ($api) {
                 $api->post('create', 'Employee\VisitController@create');
@@ -64,6 +76,7 @@ class EmployeeRoute
                 $api->get('/info', 'Employee\AttendanceController@attendanceInfo');
                 $api->post('action', 'Employee\AttendanceController@takeAction');
                 $api->get('today', 'Employee\AttendanceController@getTodaysInfo');
+                $api->post('note', 'Employee\AttendanceController@storeNote');
             });
             $api->group(['prefix' => 'leaves'], function ($api) {
                 $api->get('/', 'Employee\LeaveController@index');
