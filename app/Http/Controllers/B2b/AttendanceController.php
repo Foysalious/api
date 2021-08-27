@@ -84,8 +84,11 @@ class AttendanceController extends Controller
         $selected_date = $time_frame->forADay($date);
 
         $checkin_location = $checkout_location = null;
+        $checkin_remote_mode = $checkout_remote_mode = null;
         if ($request->checkin_location) $checkin_location = $this->getIpById($request->checkin_location, $business_office_repo);
         if ($request->checkout_location) $checkout_location = $this->getIpById($request->checkout_location, $business_office_repo);
+        if ($request->checkin_remote_mode) $checkin_remote_mode = $request->checkin_remote_mode;
+        if ($request->checkout_remote_mode) $checkout_remote_mode = $request->checkout_remote_mode;
 
         /** @var array $attendances */
         $attendances = $stat->setBusiness($request->business)
@@ -101,7 +104,13 @@ class AttendanceController extends Controller
             ->setOfficeOrRemoteCheckout($request->checkout_office_or_remote)
             ->setCheckinLocation($checkin_location)
             ->setCheckoutLocation($checkout_location)
+            ->setCheckInRemoteMode($checkin_remote_mode)
+            ->setCheckOutRemoteMode($checkout_remote_mode)
             ->get();
+
+        if ($request->sort && $request->sort_column === 'overtime') {
+            $attendances = $this->attendanceSortOnOvertime( collect($attendances), $request->sort)->values()->toArray();
+        }
 
         $count = count($attendances);
         if ($request->file == 'excel') return (new DailyExcel())->setDate($date->format('Y-m-d'))->setData($attendances)->download();
@@ -130,7 +139,7 @@ class AttendanceController extends Controller
         /** @var Business $business */
         $business = Business::where('id', (int)$business)->select('id', 'name', 'phone', 'email', 'type')->first();
 
-        $business_members = $business->getAccessibleBusinessMember();
+        $business_members = $business->getAllBusinessMemberExceptInvited();
 
         if ($request->has('department_id')) {
             $business_members = $business_members->whereHas('role', function ($q) use ($request) {
@@ -138,6 +147,10 @@ class AttendanceController extends Controller
                     $q->where('business_departments.id', $request->department_id);
                 });
             });
+        }
+
+        if($request->has('status')) {
+            $business_members = $business_members->where('status', $request->status);
         }
 
         $all_employee_attendance = [];
@@ -161,11 +174,12 @@ class AttendanceController extends Controller
             $time_frame = $time_frame->forDateRange($start_date, $end_date);
             $business_member_leave = $business_member->leaves()->accepted()->startDateBetween($time_frame)->endDateBetween($time_frame)->get();
             $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
-            $employee_attendance = (new MonthlyStat($time_frame, $business_holiday, $business_weekend, $business_member_leave, false))->transform($attendances);
+            $employee_attendance = (new MonthlyStat($time_frame, $business, $business_holiday, $business_weekend, $business_member_leave, false))->transform($attendances);
 
             array_push($all_employee_attendance, [
                 'business_member_id' => $business_member->id,
                 'employee_id' => $business_member->employee_id ? $business_member->employee_id : 'N/A',
+                'status' => $business_member->status,
                 'member' => [
                     'id' => $business_member->member->id,
                     'name' => $member_name,
@@ -181,11 +195,14 @@ class AttendanceController extends Controller
 
         $all_employee_attendance = collect($all_employee_attendance);
 
+        $all_employee_attendance = $this->filterInactiveCoWorkersWithData($all_employee_attendance);
+
         if ($request->has('search')) $all_employee_attendance = $this->searchWithEmployeeName($all_employee_attendance, $request);
         if ($request->has('sort_on_absent')) $all_employee_attendance = $this->attendanceSortOnAbsent($all_employee_attendance, $request->sort_on_absent);
         if ($request->has('sort_on_present')) $all_employee_attendance = $this->attendanceSortOnPresent($all_employee_attendance, $request->sort_on_present);
         if ($request->has('sort_on_leave')) $all_employee_attendance = $this->attendanceSortOnLeave($all_employee_attendance, $request->sort_on_leave);
         if ($request->has('sort_on_late')) $all_employee_attendance = $this->attendanceSortOnLate($all_employee_attendance, $request->sort_on_late);
+        if ($request->has('sort_on_overtime')) $all_employee_attendance = $this->attendanceCustomSortOnOvertime($all_employee_attendance, $request->sort_on_overtime);
 
         $total_members = $all_employee_attendance->count();
         if ($request->has('limit')) $all_employee_attendance = $all_employee_attendance->splice($offset, $limit);
@@ -261,6 +278,47 @@ class AttendanceController extends Controller
     }
 
     /**
+     * @param $attendances
+     * @param string $sort
+     * @return mixed
+     */
+    private function attendanceSortOnOvertime($attendances, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return $attendances->$sort_by(function ($attendance, $key) {
+            return $attendance['overtime_in_minutes'];
+        });
+    }
+
+    /**
+     * @param $attendances
+     * @param string $sort
+     * @return mixed
+     */
+    private function attendanceCustomSortOnOvertime($attendances, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return $attendances->$sort_by(function ($attendance, $key) {
+            return $attendance['attendance']['overtime_in_minutes'];
+        });
+    }
+
+    /**
+     * @param $employee_attendance
+     * @return mixed
+     */
+    private function filterInactiveCoWorkersWithData($employee_attendance)
+    {
+        return $employee_attendance->filter(function ($attendance) {
+            if ($attendance['status'] === 'inactive') {
+                return $attendance['attendance']['present'] || $attendance['attendance']['on_leave'];
+            } else {
+                return true;
+            }
+        });
+    }
+
+    /**
      * @param $month
      * @param $year
      * @return bool
@@ -302,7 +360,7 @@ class AttendanceController extends Controller
         $business_holiday = $business_holiday_repo->getAllByBusiness($business);
         $business_weekend = $business_weekend_repo->getAllByBusiness($business);
 
-        $employee_attendance = (new MonthlyStat($time_frame, $business_holiday, $business_weekend, $business_member_leave))->transform($attendances);
+        $employee_attendance = (new MonthlyStat($time_frame, $business, $business_holiday, $business_weekend, $business_member_leave))->transform($attendances);
         $daily_breakdowns = collect($employee_attendance['daily_breakdown']);
         $daily_breakdowns = $daily_breakdowns->filter(function ($breakdown) {
             return Carbon::parse($breakdown['date'])->lessThanOrEqualTo(Carbon::today());
@@ -312,6 +370,7 @@ class AttendanceController extends Controller
         if ($request->has('sort_on_hour')) $daily_breakdowns = $this->attendanceSortOnHour($daily_breakdowns, $request->sort_on_hour)->values();
         if ($request->has('sort_on_checkin')) $daily_breakdowns = $this->attendanceSortOnCheckin($daily_breakdowns, $request->sort_on_checkin)->values();
         if ($request->has('sort_on_checkout')) $daily_breakdowns = $this->attendanceSortOnCheckout($daily_breakdowns, $request->sort_on_checkout)->values();
+        if ($request->has('sort_on_overtime')) $daily_breakdowns = $this->attendanceCustomSortOnOvertime($daily_breakdowns, $request->sort_on_overtime)->values();
         if ($request->file == 'excel') {
             return $details_excel->setBreakDownData($daily_breakdowns->toArray())
                 ->setBusinessMember($business_member)
