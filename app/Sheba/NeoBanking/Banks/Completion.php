@@ -44,15 +44,18 @@ class Completion
         return $this;
     }
 
-    /**
-     * @throws InvalidBankCode
-     * @throws InvalidListInsertion|ReflectionException
-     */
     public function getAll(): BankCompletion
     {
         $completion = $this->completionPercentage();
         $this->setGigaTechData()->setApply($completion);
-        return (new BankCompletion())->setGigaTechStatusInfo($this->gigatech_data)->setCompletion($completion)->setCanApply($this->can_apply)->setBankDetailTitle(BankStatics::AccountDetailsTitle())->setBankDetailLink(BankStatics::AccountDetailsURL())->setPblTermsAndCondition(BankStatics::PblTermsAndCondition())->setPepIpDefinition(BankStatics::PepIpDefinition())->setMessage(BankStatics::completionMessage($this->can_apply))->setMessageType(BankStatics::completionType($this->can_apply));
+        return (new BankCompletion())->setGigaTechStatusInfo($this->gigatech_data)
+            ->setCompletion($completion)->setCanApply($this->can_apply)
+            ->setBankDetailTitle(BankStatics::AccountDetailsTitle())
+            ->setBankDetailLink(BankStatics::AccountDetailsURL())
+            ->setPblTermsAndCondition(BankStatics::PblTermsAndCondition())
+            ->setPepIpDefinition(BankStatics::PepIpDefinition())
+            ->setMessage(BankStatics::completionMessage($this->can_apply))
+            ->setMessageType(BankStatics::completionType($this->can_apply));
     }
 
     public function completionPercentage()

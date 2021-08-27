@@ -5,7 +5,7 @@ class NeoBankingRoute
     public function set($api)
     {
         $api->group(['prefix' => 'partners'], function ($api) {
-            $api->group(['prefix' => '{partner}', 'middleware' => ['manager.auth']], function ($api) {
+            $api->group(['prefix' => '{partner}', 'middleware' => ['jwtGlobalAuth']], function ($api) {
                 $api->group(['prefix' => 'neo-banking'], function ($api) {
                     $api->get('/information-completion', 'NeoBanking\\NeoBankingController@getAccountInformationCompletion');
                     $api->get('/business-information', 'NeoBanking\\NeoBankingController@getBusinessInformation');
