@@ -599,6 +599,22 @@ class EmployeeController extends Controller
     }
 
     /**
+     * @param $approval_requests
+     * @return int
+     */
+    private function countPendingApprovalRequests($approval_requests)
+    {
+        $pending_leave_count = 0;
+        foreach($approval_requests as $approval_request) {
+            $requestable = $approval_request->requestable;
+            if ($requestable->status === 'pending') {
+                $pending_leave_count++;
+            }
+        }
+        return $pending_leave_count;
+    }
+
+    /**
      * @param $last_attendance
      * @param $last_attendance_log
      * @param ActionProcessor $action_processor
