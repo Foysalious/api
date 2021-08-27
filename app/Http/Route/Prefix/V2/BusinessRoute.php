@@ -372,12 +372,13 @@ class BusinessRoute
 
                 });
                 $api->group(['prefix' => 'payroll'], function ($api) {
-                    $api->get('/components', 'B2b\PayrollController@getPayrollcomponents');
+                    $api->get('/components', 'B2b\PayrollController@getPayrollComponents');
                     $api->get('/settings', 'B2b\PayrollController@getPayrollSettings');
                     $api->post('/pay-schedule/{id}', 'B2b\PayrollController@updatePaySchedule');
                     $api->post('/salary-breakdown/{id}', 'B2b\PayrollController@updateSalaryBreakdown');
                     $api->post('/component/{payroll_settings}', 'B2b\PayrollController@addComponent');
                     $api->post('/gross-component/{payroll_settings}', 'B2b\PayrollController@grossComponentAddUpdate');
+                    $api->get('/pay-day', 'B2b\PayrollController@checkPayDayConflicting');
                 });
             });
         });
