@@ -4,6 +4,7 @@ use App\Models\Partner;
 use App\Models\PosCustomer;
 use App\Sheba\PosCustomerService\PosCustomerService;
 use Exception;
+use Sheba\Subscription\Partner\Access\RulesDescriber\Pos;
 use Sheba\Voucher\DTO\Params\CheckParamsForPosOrder;
 
 class VoucherValidate
@@ -100,7 +101,7 @@ class VoucherValidate
             $this->posCustomerInfo->setCustomerMobile($this->getPosCustomer()['mobile']);
         $pos_order_params = (new CheckParamsForPosOrder());
         $pos_order_params->setOrderAmount($this->amount);
-        $pos_order_params = $pos_order_params->setApplicant($this->posCustomerInfo->getCustomer());
+        $pos_order_params = $pos_order_params->setApplicant($this->posCustomerInfo);
         $pos_order_params = $pos_order_params->setPartnerPosService($this->posServices);
         $result = voucher($this->code)->checkForPosOrder($pos_order_params);
         $customer_mobile = $this->posCustomerInfo->getCustomerMobile();
@@ -121,8 +122,18 @@ class VoucherValidate
 
     private function resolvePosCustomer()
     {
-        $this->posCustomer = $this->posCustomerId ? PosCustomer::find($this->posCustomerId) : new PosCustomer();
-        $this->posCustomerInfo = $this->posCustomerInfo->setCustomer($this->posCustomer);
+        if(!$this->posCustomerId)
+            $this->posCustomer = (new PosCustomer());
+        else if (!$this->partner->is_migration_completed)
+        {
+            $this->posCustomer = PosCustomer::find($this->posCustomerId);
+            $this->posCustomerInfo->setCustomer($this->posCustomer)->setCustomerMobile($this->posCustomer->profile->mobile);
+        }
+        else
+        {
+            $this->posCustomer = $this->getPosCustomer();
+            $this->posCustomerInfo->setCustomer($this->posCustomer)->setCustomerMobile($this->posCustomer['mobile']);
+        }
     }
 
     private function getPosCustomer()

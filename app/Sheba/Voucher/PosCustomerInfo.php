@@ -1,13 +1,11 @@
 <?php namespace App\Sheba\Voucher;
 
-
 use App\Models\PosCustomer;
+use Sheba\Voucher\Contracts\CanApplyVoucher;
 
-class PosCustomerInfo
+class PosCustomerInfo implements CanApplyVoucher
 {
-    /**
-     * @var PosCustomer
-     */
+
     private $customer;
     /**
      * @var null
@@ -15,21 +13,20 @@ class PosCustomerInfo
 
     private $mobile;
 
-    /**
-     * @param $customer
-     * @return $this
-     */
-    public function setCustomer(PosCustomer $customer): PosCustomerInfo
+    public $profile;
+    public $movieTicketOrders;
+
+
+    public function setCustomer($customer)
     {
         $this->customer = $customer;
         return $this;
     }
 
-
     /**
      * @return PosCustomer
      */
-    public function getCustomer(): PosCustomer
+    public function getCustomer()
     {
         return $this->customer;
     }
