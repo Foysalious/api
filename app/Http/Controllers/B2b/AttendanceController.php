@@ -139,7 +139,7 @@ class AttendanceController extends Controller
         /** @var Business $business */
         $business = Business::where('id', (int)$business)->select('id', 'name', 'phone', 'email', 'type')->first();
 
-        $business_members = $business->getAccessibleBusinessMember();
+        $business_members = $business->getAllBusinessMemberExceptInvited();
 
         if ($request->has('department_id')) {
             $business_members = $business_members->whereHas('role', function ($q) use ($request) {
@@ -147,6 +147,10 @@ class AttendanceController extends Controller
                     $q->where('business_departments.id', $request->department_id);
                 });
             });
+        }
+
+        if($request->has('status')) {
+            $business_members = $business_members->where('status', $request->status);
         }
 
         $all_employee_attendance = [];
@@ -175,6 +179,7 @@ class AttendanceController extends Controller
             array_push($all_employee_attendance, [
                 'business_member_id' => $business_member->id,
                 'employee_id' => $business_member->employee_id ? $business_member->employee_id : 'N/A',
+                'status' => $business_member->status,
                 'member' => [
                     'id' => $business_member->member->id,
                     'name' => $member_name,
@@ -189,6 +194,8 @@ class AttendanceController extends Controller
         }
 
         $all_employee_attendance = collect($all_employee_attendance);
+
+        $all_employee_attendance = $this->filterInactiveCoWorkersWithData($all_employee_attendance);
 
         if ($request->has('search')) $all_employee_attendance = $this->searchWithEmployeeName($all_employee_attendance, $request);
         if ($request->has('sort_on_absent')) $all_employee_attendance = $this->attendanceSortOnAbsent($all_employee_attendance, $request->sort_on_absent);
@@ -293,6 +300,21 @@ class AttendanceController extends Controller
         $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
         return $attendances->$sort_by(function ($attendance, $key) {
             return $attendance['attendance']['overtime_in_minutes'];
+        });
+    }
+
+    /**
+     * @param $employee_attendance
+     * @return mixed
+     */
+    private function filterInactiveCoWorkersWithData($employee_attendance)
+    {
+        return $employee_attendance->filter(function ($attendance) {
+            if ($attendance['status'] === 'inactive') {
+                return $attendance['attendance']['present'] || $attendance['attendance']['on_leave'];
+            } else {
+                return true;
+            }
         });
     }
 
