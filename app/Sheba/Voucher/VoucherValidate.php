@@ -1,18 +1,15 @@
 <?php namespace App\Sheba\Voucher;
 
 use App\Models\Partner;
-use App\Models\PosCustomer;
+use App\Models\PosCustomer as PosCustomerModel;
 use App\Sheba\PosCustomerService\PosCustomerService;
 use Exception;
-use Sheba\Subscription\Partner\Access\RulesDescriber\Pos;
 use Sheba\Voucher\DTO\Params\CheckParamsForPosOrder;
 
 class VoucherValidate
 {
-    /**
-     * @var PosCustomerInfo
-     */
-    private $posCustomerInfo;
+
+    private $posCustomer;
     /**
      * @var PosCustomerService
      */
@@ -25,19 +22,12 @@ class VoucherValidate
     protected $posServices;
     protected $code;
     private $posCustomerId;
-    /**
-     * @var PosCustomer
-     */
-    private $posCustomer;
 
-
-
-    public function __construct(PosCustomerInfo $posCustomerInfo, PosCustomerService $posCustomerService)
+    public function __construct(PosCustomer $posCustomer, PosCustomerService $posCustomerService)
     {
-        $this->posCustomerInfo = $posCustomerInfo;
+        $this->posCustomer = $posCustomer;
         $this->posCustomerService = $posCustomerService;
     }
-
 
     /**
      * @param $partnerId
@@ -95,18 +85,8 @@ class VoucherValidate
     public function validate()
     {
         $this->resolvePosCustomer();
-        if ($this->posCustomerId && !$this->partner->is_migration_completed)
-            $this->posCustomerInfo->setCustomerMobile($this->posCustomer->profile->mobile);
-        else
-            $this->posCustomerInfo->setCustomerMobile($this->getPosCustomer()['mobile']);
-        $pos_order_params = (new CheckParamsForPosOrder());
-        $pos_order_params->setOrderAmount($this->amount);
-        $pos_order_params = $pos_order_params->setApplicant($this->posCustomerInfo);
-        $pos_order_params = $pos_order_params->setPartnerPosService($this->posServices);
-        $result = voucher($this->code)->checkForPosOrder($pos_order_params);
-        $customer_mobile = $this->posCustomerInfo->getCustomerMobile();
-        $result = $customer_mobile  ? $result->checkMobile($customer_mobile)->reveal() : $result->reveal();
-
+        $pos_order_params = $this->setPosOrderParams();
+        $result = $this->reveal($pos_order_params);
         $response = [];
         if ($result['is_valid']) {
             $voucher = $result['voucher'];
@@ -122,18 +102,41 @@ class VoucherValidate
 
     private function resolvePosCustomer()
     {
-        if(!$this->posCustomerId)
-            $this->posCustomer = (new PosCustomer());
-        else if (!$this->partner->is_migration_completed)
-        {
-            $this->posCustomer = PosCustomer::find($this->posCustomerId);
-            $this->posCustomerInfo->setCustomer($this->posCustomer)->setCustomerMobile($this->posCustomer->profile->mobile);
-        }
+        if (!$this->posCustomerId && !$this->partner->isMigrationCompleted())
+            $customer = (new PosCustomerModel());
+        else if ($this->posCustomerId && !$this->partner->isMigrationCompleted())
+            $customer = PosCustomerModel::find($this->posCustomerId);
         else
-        {
-            $this->posCustomer = $this->getPosCustomer();
-            $this->posCustomerInfo->setCustomer($this->posCustomer)->setCustomerMobile($this->posCustomer['mobile']);
-        }
+            $customer = $this->getPosCustomer();
+
+        if (!$this->partner->isMigrationCompleted())
+            $this->posCustomer
+                ->setMobile(($profile = $customer->profile) ? $profile->mobile : null)
+                ->setId($customer->id)
+                ->setMovieTicketOrders($customer->movieTicketOrders)
+                ->setProfile($customer->profile);
+        else
+            $this->posCustomer
+                ->setMobile($this->getPosCustomer()['mobile'])
+                ->setId()
+                ->setMovieTicketOrders(collect())
+                ->setProfile();
+
+    }
+
+    private function setPosOrderParams()
+    {
+        $pos_order_params = (new CheckParamsForPosOrder());
+        $pos_order_params->setOrderAmount($this->amount);
+        $pos_order_params = $pos_order_params->setApplicant($this->posCustomer);
+        return $pos_order_params->setPartnerPosService($this->posServices);
+    }
+
+    private function reveal($pos_order_params)
+    {
+        $result = voucher($this->code)->checkForPosOrder($pos_order_params);
+        $customer_mobile = $this->posCustomer->mobile;
+        return $customer_mobile ? $result->checkMobile($customer_mobile)->reveal() : $result->reveal();
     }
 
     private function getPosCustomer()
