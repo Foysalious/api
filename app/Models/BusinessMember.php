@@ -1,9 +1,11 @@
 <?php namespace App\Models;
 
+use Sheba\Dal\BusinessMemberStatusChangeLog\Model as BusinessMemberStatusChangeLog;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
@@ -18,8 +20,10 @@ use Sheba\Business\BusinessMember\Events\BusinessMemberDeleted;
 
 class BusinessMember extends Model
 {
+    use SoftDeletes;
+
     protected $guarded = ['id',];
-    protected $dates = ['join_date'];
+    protected $dates = ['join_date', 'deleted_at'];
     protected $casts = ['is_super' => 'int'];
 
     protected $dispatchesEvents = [
@@ -98,6 +102,11 @@ class BusinessMember extends Model
     public function manager()
     {
         return $this->belongsTo(BusinessMember::class, 'manager_id');
+    }
+
+    public function statusChangeLogs()
+    {
+        return $this->hasMany(BusinessMemberStatusChangeLog::class);
     }
 
     public function scopeActive($query)
