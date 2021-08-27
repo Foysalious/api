@@ -84,8 +84,11 @@ class AttendanceController extends Controller
         $selected_date = $time_frame->forADay($date);
 
         $checkin_location = $checkout_location = null;
+        $checkin_remote_mode = $checkout_remote_mode = null;
         if ($request->checkin_location) $checkin_location = $this->getIpById($request->checkin_location, $business_office_repo);
         if ($request->checkout_location) $checkout_location = $this->getIpById($request->checkout_location, $business_office_repo);
+        if ($request->checkin_remote_mode) $checkin_remote_mode = $request->checkin_remote_mode;
+        if ($request->checkout_remote_mode) $checkout_remote_mode = $request->checkout_remote_mode;
 
         /** @var array $attendances */
         $attendances = $stat->setBusiness($request->business)
@@ -101,6 +104,8 @@ class AttendanceController extends Controller
             ->setOfficeOrRemoteCheckout($request->checkout_office_or_remote)
             ->setCheckinLocation($checkin_location)
             ->setCheckoutLocation($checkout_location)
+            ->setCheckInRemoteMode($checkin_remote_mode)
+            ->setCheckOutRemoteMode($checkout_remote_mode)
             ->get();
 
         $count = count($attendances);
