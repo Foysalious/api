@@ -289,7 +289,8 @@ class ShebaController extends Controller
     {
         $version_code  = (int)$request->header('Version-Code');
         $platform_name = $request->header('Platform-Name');
-        $user_type     = $request->type;
+        $user_type = $request->type;
+        $payable_type = $request->payable_type;
         if (!$user_type) $user_type = getUserTypeFromRequestHeader($request);
         if (!$user_type) $user_type = "customer";
 
@@ -300,8 +301,8 @@ class ShebaController extends Controller
             ->where('status', 'Published')
             ->get();
 
-        $payments = array_map(function (PaymentMethodDetails $details) use ($dbGateways, $user_type) {
-            return (new PresentableDTOPresenter($details, $dbGateways))->mergeWithDbGateways($user_type);
+        $payments = array_map(function (PaymentMethodDetails $details) use ($dbGateways, $user_type, $payable_type){
+            return (new PresentableDTOPresenter($details, $dbGateways))->mergeWithDbGateways($user_type, $payable_type);
         }, AvailableMethods::getDetails($request->payable_type, $request->payable_type_id, $version_code, $platform_name, $user_type));
 
         if ($user_type == 'partner') {

@@ -83,8 +83,8 @@ class RateController extends Controller
         $data = json_decode(preg_replace("/\r|\n/", " ", $request->data));
         try {
             DB::transaction(function () use ($data, $review, $request) {
-                $quesAns = $data->quesAns;
-                $quesAnsText = $data->quesAnsText;
+                $quesAns = $data->quesAns ?? [];
+                $quesAnsText = $data->quesAnsText ?? [];
                 $old_review_answer_ids = $review->rates->pluck('id')->toArray();
                 if (count($quesAns) > 0) {
                     foreach ($quesAns as $qa) {
