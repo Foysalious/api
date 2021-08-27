@@ -40,9 +40,9 @@ class PayrollSettingsTransformer extends TransformerAbstract
     private function grossSalaryBreakdown($payroll_setting)
     {
         $payroll_components = $payroll_setting->components()->where('type', Type::GROSS)->where(function($query) {
-            return $query->where('target_type', null)->orWhere('target_type', 'global');
-        });
-        foreach ($payroll_components->get() as $payroll_component) {
+            return $query->where('target_type', null)->orWhere('target_type', TargetType::GENERAL);
+        })->orderBy('type')->get();
+        foreach ($payroll_components as $payroll_component) {
             $salary_percentage = json_decode($payroll_component->setting, 1);
             $percentage_value = $salary_percentage['percentage'];
             if ($payroll_component->is_active) $this->totalGrossPercentage += $percentage_value;

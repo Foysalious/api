@@ -89,6 +89,11 @@ class BusinessMember extends Model
         return $this->hasMany(Attendance::class)->where('date', (Carbon::now())->toDateString())->first();
     }
 
+    public function lastAttendance()
+    {
+        return $this->hasMany(Attendance::class)->orderBy('id', 'desc')->first();
+    }
+
     public function leaves()
     {
         return $this->hasMany(Leave::class);
@@ -147,6 +152,18 @@ class BusinessMember extends Model
     public function getCountOfUsedLeaveDaysByFiscalYear(Collection $leaves, array $business_holiday, array $business_weekend)
     {
         $time_frame = $this->getBusinessFiscalPeriod();
+        return $this->getCountOfUsedDays($leaves, $time_frame, $business_holiday, $business_weekend);
+    }
+
+    /**
+     * @param Collection $leaves
+     * @param $time_frame
+     * @param array $business_holiday
+     * @param array $business_weekend
+     * @return float
+     */
+    public function getCountOfUsedLeaveDaysByDateRange(Collection $leaves, $time_frame, array $business_holiday, array $business_weekend)
+    {
         return $this->getCountOfUsedDays($leaves, $time_frame, $business_holiday, $business_weekend);
     }
 

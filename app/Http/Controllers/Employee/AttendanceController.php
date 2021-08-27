@@ -3,6 +3,7 @@
 use App\Sheba\Business\BusinessBasicInformation;
 use Illuminate\Support\Facades\Log;
 use Sheba\Business\Attendance\AttendanceCommonInfo;
+use Sheba\Dal\AttendanceActionLog\RemoteMode;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
@@ -10,6 +11,7 @@ use Sheba\Business\AttendanceActionLog\ActionChecker\ActionChecker;
 use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
 use Sheba\Business\AttendanceActionLog\AttendanceAction;
 use App\Transformers\Business\AttendanceTransformer;
+use App\Sheba\Business\Attendance\Note\Updater as AttendanceNoteUpdater;
 use Illuminate\Validation\ValidationException;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
@@ -40,7 +42,7 @@ class AttendanceController extends Controller
      * @param BusinessWeekendRepoInterface $business_weekend_repo
      * @return JsonResponse
      */
-    public function index(Request $request, AttendanceRepoInterface $attendance_repo, TimeFrame $time_frame, BusinessHolidayRepoInterface $business_holiday_repo,
+    public function index(Request                      $request, AttendanceRepoInterface $attendance_repo, TimeFrame $time_frame, BusinessHolidayRepoInterface $business_holiday_repo,
                           BusinessWeekendRepoInterface $business_weekend_repo)
     {
         $this->validate($request, ['year' => 'required|string', 'month' => 'required|string']);
@@ -76,7 +78,8 @@ class AttendanceController extends Controller
         $validation_data = [
             'action' => 'required|string|in:' . implode(',', Actions::get()),
             'device_id' => 'string',
-            'user_agent' => 'string'
+            'user_agent' => 'string',
+            'is_in_wifi_area' => 'required|numeric'
         ];
 
         $business_member = $this->getBusinessMember($request);
@@ -86,30 +89,33 @@ class AttendanceController extends Controller
 
         Log::info("Attendance for Employee#$business_member->id, Request#" . json_encode($request->except(['profile', 'auth_info', 'auth_user', 'access_token'])));
 
-        $checkin = $action_processor->setActionName(Actions::CHECKIN)->getAction();
-        $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
-        if ($request->action == Actions::CHECKIN && $checkin->isLateNoteRequired()) {
-            $validation_data += ['note' => 'string|required_if:action,' . Actions::CHECKIN];
-        }
-        if ($request->action == Actions::CHECKOUT && $checkout->isLeftEarlyNoteRequired()) {
-            $validation_data += ['note' => 'string|required_if:action,' . Actions::CHECKOUT];
-        }
-        if ($business->isRemoteAttendanceEnable($business_member->id)) {
+        if ($business->isRemoteAttendanceEnable($business_member->id) && !$request->is_in_wifi_area) {
             $validation_data += ['lat' => 'required|numeric', 'lng' => 'required|numeric'];
+            $validation_data += ['remote_mode' => 'required|string|in:' . implode(',', RemoteMode::get())];
         }
         $this->validate($request, $validation_data);
         $this->setModifier($business_member->member);
 
+        $checkin = $action_processor->setActionName(Actions::CHECKIN)->getAction();
+        $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
+
+        $is_note_required = 0;
+        if ($request->action == Actions::CHECKIN && $checkin->isLateNoteRequired()) $is_note_required = 1;
+        if ($request->action == Actions::CHECKOUT && $checkout->isLeftEarlyNoteRequired()) $is_note_required = 1;
+
         $attendance_action->setBusinessMember($business_member)
             ->setAction($request->action)
             ->setBusiness($business_member->business)
-            ->setNote($request->note)
             ->setDeviceId($request->device_id)
+            ->setRemoteMode($request->remote_mode)
             ->setLat($request->lat)
             ->setLng($request->lng);
         $action = $attendance_action->doAction();
 
-        return response()->json(['code' => $action->getResultCode(), 'message' => $action->getResultMessage()]);
+        return response()->json(['code' => $action->getResultCode(),
+            'is_note_required' => $is_note_required,
+            'date' => Carbon::now()->format('jS F Y'),
+            'message' => $action->getResultMessage()]);
     }
 
     /**
@@ -129,29 +135,17 @@ class AttendanceController extends Controller
         if (!$business_member) return api_response($request, null, 404);
         /** @var Attendance $attendance */
         $attendance = $business_member->attendanceOfToday();
-        /** @var ActionChecker $checkin */
-        $checkin = $action_processor->setActionName(Actions::CHECKIN)->getAction();
-        /** @var ActionChecker $checkout */
-        $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
         /** @var Business $business */
         $business = $this->getBusiness($request);
         $is_remote_enable = $business->isRemoteAttendanceEnable($business_member->id);
         $data = [
             'can_checkin' => !$attendance ? 1 : ($attendance->canTakeThisAction(Actions::CHECKIN) ? 1 : 0),
             'can_checkout' => $attendance && $attendance->canTakeThisAction(Actions::CHECKOUT) ? 1 : 0,
-            'is_late_note_required' => 0,
-            'is_left_early_note_required' => 0,
             'checkin_time' => $attendance ? $attendance->checkin_time : null,
             'checkout_time' => $attendance ? $attendance->checkout_time : null,
             'is_geo_required' => $is_remote_enable ? 1 : 0,
             'is_remote_enable' => $is_remote_enable
         ];
-        if ($data['can_checkin']) {
-            $data['is_late_note_required'] = $checkin->isLateNoteRequired();
-        }
-        if ($data['can_checkout']) {
-            $data['is_left_early_note_required'] = $checkout->isLeftEarlyNoteRequired();
-        }
         return api_response($request, null, 200, ['attendance' => $data]);
     }
 
@@ -168,6 +162,30 @@ class AttendanceController extends Controller
         ];
 
         return api_response($request, null, 200, ['info' => $data]);
+    }
+
+    /**
+     * @param Request $request
+     * @param AttendanceNoteUpdater $note_updater
+     * @return JsonResponse
+     */
+    public function storeNote(Request $request, AttendanceNoteUpdater $note_updater)
+    {
+        $validation_data = [
+            'action' => 'required|string|in:' . implode(',', Actions::get()),
+            'note' => 'required|string'
+        ];
+        $this->validate($request, $validation_data);
+
+        /** @var BusinessMember $business_member */
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+
+        $note_updater->setBusinessMember($business_member)
+            ->setAction($request->action)
+            ->setNote($request->note)
+            ->updateNote();
+        return api_response($request, null, 200);
     }
 
 }
