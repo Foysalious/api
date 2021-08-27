@@ -173,9 +173,9 @@ class EmployeeController extends Controller
         $is_note_required = 0;
         $note_action = null;
         if ($last_attendance_log && !$last_attendance_log['note']) {
-           $note_data = $this->checkNoteRequired($last_attendance, $last_attendance_log, $action_processor);
-           $is_note_required = $note_data['is_note_required'];
-           $note_action = $note_data['note_action'];
+            $note_data = $this->checkNoteRequired($last_attendance, $last_attendance_log, $action_processor);
+            $is_note_required = $note_data['is_note_required'];
+            $note_action = $note_data['note_action'];
         }
 
         $approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMember($business_member);
@@ -191,9 +191,9 @@ class EmployeeController extends Controller
                 'can_checkout' => $attendance && $attendance->canTakeThisAction(Actions::CHECKOUT) ? 1 : 0,
             ],
             'note_data' => [
-               'date' => $last_attendance ? Carbon::parse($last_attendance['date'])->format('jS F Y') : null,
-               'is_note_required' => $is_note_required,
-               'note_action' => $note_action
+                'date' => $last_attendance ? Carbon::parse($last_attendance['date'])->format('jS F Y') : null,
+                'is_note_required' => $is_note_required,
+                'note_action' => $note_action
             ],
             'is_remote_enable' => $business->isRemoteAttendanceEnable($business_member->id),
             'is_approval_request_required' => $approval_requests->count() > 0 ? 1 : 0,
@@ -311,17 +311,12 @@ class EmployeeController extends Controller
         /** @var Business $business */
         $business = $this->getBusiness($request);
 
-        $members = $business->membersWithProfileAndAccessibleBusinessMember();
-        $members = $members->get()->unique();
+        $business_members = $business->getActiveBusinessMember()->where('id', '<>', $business_member->id);
 
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
-        $employees = new Collection($members, new CoWorkerMinimumTransformer());
+        $employees = new Collection($business_members->get(), new CoWorkerMinimumTransformer());
         $employees = collect($manager->createData($employees)->toArray()['data']);
-
-        $employees = $employees->reject(function ($employee) use ($business_member) {
-            return $employee['id'] == $business_member->id;
-        });
 
         if (count($employees) > 0) return api_response($request, $employees, 200, ['managers' => $employees->values()]);
         return api_response($request, null, 404);
@@ -590,7 +585,7 @@ class EmployeeController extends Controller
     private function countPendingApprovalRequests($approval_requests)
     {
         $pending_leave_count = 0;
-        foreach($approval_requests as $approval_request) {
+        foreach ($approval_requests as $approval_request) {
             $requestable = $approval_request->requestable;
             if ($requestable->status === 'pending') {
                 $pending_leave_count++;
