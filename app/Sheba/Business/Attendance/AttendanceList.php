@@ -293,7 +293,7 @@ class AttendanceList
         if ($this->businessMemberId) $business_member_ids = [$this->businessMemberId];
         elseif ($this->business) $business_member_ids = $this->getBusinessMemberIds();
         $attendances = $this->attendanceRepositoryInterface->builder()
-            ->select('id', 'business_member_id', 'checkin_time', 'checkout_time', 'staying_time_in_minutes', 'status', 'date')
+            ->select('id', 'business_member_id', 'checkin_time', 'checkout_time', 'staying_time_in_minutes', 'overtime_in_minutes', 'status', 'date')
             ->whereIn('business_member_id', $business_member_ids)
             ->where('date', '>=', $this->startDate->toDateString())
             ->where('date', '<=', $this->endDate->toDateString())
@@ -470,6 +470,8 @@ class AttendanceList
                         'check_in' => $checkin_data,
                         'check_out' => $checkout_data,
                         'active_hours' => $attendance->staying_time_in_minutes ? $this->formatMinute($attendance->staying_time_in_minutes) : null,
+                        'overtime_in_minutes' => (int) $attendance->overtime_in_minutes ?: 0,
+                        'overtime' => (int) $attendance->overtime_in_minutes ? $this->formatMinute((int) $attendance->overtime_in_minutes) : null,
                         'date' => $attendance->date,
                         'is_absent' => $attendance->status == Statuses::ABSENT ? 1 : 0,
                         'is_on_leave' => 0,
@@ -771,4 +773,5 @@ class AttendanceList
 
         return $this->isWeekend($this->startDate, $weekend_day) ? 'weekend' : 'holiday';
     }
+
 }
