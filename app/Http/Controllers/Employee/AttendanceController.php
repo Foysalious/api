@@ -79,7 +79,7 @@ class AttendanceController extends Controller
             'action' => 'required|string|in:' . implode(',', Actions::get()),
             'device_id' => 'string',
             'user_agent' => 'string',
-            'is_in_wifi_area' => 'required|numeric'
+            #'is_in_wifi_area' => 'required|numeric'
         ];
 
         $business_member = $this->getBusinessMember($request);
@@ -89,7 +89,7 @@ class AttendanceController extends Controller
 
         Log::info("Attendance for Employee#$business_member->id, Request#" . json_encode($request->except(['profile', 'auth_info', 'auth_user', 'access_token'])));
 
-        if ($business->isRemoteAttendanceEnable($business_member->id) && !$request->is_in_wifi_area) {
+        if ($business->isRemoteAttendanceEnable($business_member->id) /*&& !$request->is_in_wifi_area*/) {
             $validation_data += ['lat' => 'required|numeric', 'lng' => 'required|numeric'];
             $validation_data += ['remote_mode' => 'required|string|in:' . implode(',', RemoteMode::get())];
         }
