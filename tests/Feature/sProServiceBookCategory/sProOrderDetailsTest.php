@@ -184,6 +184,22 @@ class sProOrderDetailsTest extends FeatureTestCase
 
     }
 
+    public function testSProOrderDetailsAPIWithInvalidUrl()
+    {
+        //arrange
+
+        //act
+        $response = $this->get('v3/spro/services/' . $this->service->id . '/instructions', [
+            'Authorization' => "Bearer $this->token"
+        ]);
+
+        $data = $response->decodeResponseJson();
+
+        //assert
+        $this->assertEquals('404 Not Found', $data["message"]);
+
+    }
+
     //Failed
     public function testSProOrderDetailsAPIWithAlphabeticCharacterAsServiceId()
     {
@@ -197,8 +213,7 @@ class sProOrderDetailsTest extends FeatureTestCase
         $data = $response->decodeResponseJson();
 
         //assert
-        $this->assertEquals(500, $data["code"]);
-        $this->assertEquals('Something went wrong.', $data["message"]);
+        $this->assertEquals('404 Not Found', $data["message"]);
 
     }
 
@@ -215,8 +230,7 @@ class sProOrderDetailsTest extends FeatureTestCase
         $data = $response->decodeResponseJson();
 
         //assert
-        $this->assertEquals(500, $data["code"]);
-        $this->assertEquals('Something went wrong.', $data["message"]);
+        $this->assertEquals('404 Not Found', $data["message"]);
 
     }
 

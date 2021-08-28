@@ -76,7 +76,7 @@ class CustomerTransactionWalletTest extends FeatureTestCase
         $this->shebaCredit -> update(['discount_message' => '10% discount on Sheba Credit!']);
 
         //act
-        $response_main = $this->get('/v2/payments?payable_type=order&type=customer');
+        $response_main = $this->get('/v2/payments?payable_type=order');
 
         $data_main = $response_main->decodeResponseJson();
 
@@ -92,7 +92,7 @@ class CustomerTransactionWalletTest extends FeatureTestCase
         $this->bkash -> update(['discount_message' => 'Hi Pay with your bkash app Get upto 50% cashback!']);
 
         //act
-        $response_main = $this->get('/v2/payments?payable_type=order&type=customer');
+        $response_main = $this->get('/v2/payments?payable_type=order');
 
         $data_main = $response_main->decodeResponseJson();
 
@@ -108,7 +108,7 @@ class CustomerTransactionWalletTest extends FeatureTestCase
         $this->nagad -> update(['discount_message' => 'Hi Pay with your nagad app Get upto 30% cashback!']);
 
         //act
-        $response_main = $this->get('/v2/payments?payable_type=order&type=customer');
+        $response_main = $this->get('/v2/payments?payable_type=order');
 
         $data_main = $response_main->decodeResponseJson();
 
@@ -124,7 +124,7 @@ class CustomerTransactionWalletTest extends FeatureTestCase
         $this->cityBank -> update(['discount_message' => '১০ হাজার টাকার মধ্যে ভালো মোবাইল ২০২১  ২০২১!']);
 
         //act
-        $response_main = $this->get('/v2/payments?payable_type=order&type=customer');
+        $response_main = $this->get('/v2/payments?payable_type=order');
 
         $data_main = $response_main->decodeResponseJson();
 
@@ -140,7 +140,7 @@ class CustomerTransactionWalletTest extends FeatureTestCase
         $this->otherCards -> update(['discount_message' => 'Hi Pay with your card to Get upto 70% cashback']);
 
         //act
-        $response_main = $this->get('/v2/payments?payable_type=order&type=customer');
+        $response_main = $this->get('/v2/payments?payable_type=order');
 
         $data_main = $response_main->decodeResponseJson();
 
@@ -155,7 +155,7 @@ class CustomerTransactionWalletTest extends FeatureTestCase
         //arrange
 
         //act
-        $response_main = $this->get('/v2/payments?payable_type=order&type=customer');
+        $response_main = $this->get('/v2/payments?payable_type=order');
 
         $data_main = $response_main->decodeResponseJson();
 
@@ -170,7 +170,7 @@ class CustomerTransactionWalletTest extends FeatureTestCase
         //arrange
 
         //act
-        $response_main = $this->get('/v2/payments?payable_type=order&type=customer');
+        $response_main = $this->get('/v2/payments?payable_type=order');
 
         $data_main = $response_main->decodeResponseJson();
 
@@ -185,7 +185,7 @@ class CustomerTransactionWalletTest extends FeatureTestCase
         //arrange
 
         //act
-        $response_main = $this->get('/v2/payments?payable_type=order&type=customer');
+        $response_main = $this->get('/v2/payments?payable_type=order');
 
         $data_main = $response_main->decodeResponseJson();
 
@@ -200,7 +200,7 @@ class CustomerTransactionWalletTest extends FeatureTestCase
         //arrange
 
         //act
-        $response_main = $this->get('/v2/payments?payable_type=order&type=customer');
+        $response_main = $this->get('/v2/payments?payable_type=order');
 
         $data_main = $response_main->decodeResponseJson();
 
@@ -215,7 +215,7 @@ class CustomerTransactionWalletTest extends FeatureTestCase
         //arrange
 
         //act
-        $response_main = $this->get('/v2/payments?payable_type=order&type=customer');
+        $response_main = $this->get('/v2/payments?payable_type=order');
 
         $data_main = $response_main->decodeResponseJson();
 
@@ -223,6 +223,19 @@ class CustomerTransactionWalletTest extends FeatureTestCase
         $this->assertEquals(200, $data_main["code"]);
         $this->assertEquals('Successful', $data_main["message"]);
         $this->assertEquals('', $data_main["payments"][4]["discount_message"]);
+    }
+
+    public function testCustomerTransactionWalletAPIWithInvalidUrl()
+    {
+        //arrange
+
+        //act
+        $response_main = $this->get('/v2/paymentss?payable_type=order');
+
+        $data_main = $response_main->decodeResponseJson();
+
+        //assert
+        $this->assertEquals('404 Not Found', $data_main["message"]);
     }
 
 }

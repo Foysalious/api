@@ -47,6 +47,9 @@ use Factory\InfoCallStatusLogFactory;
 use Factory\ResourceTransactionFactory;
 use \Factory\SubscriptionWisePaymentGatewaysFactory;
 use Factory\PaymentGatewayFactory;
+use Factory\ThanaFactory;
+use Factory\DistrictFactory;
+use Factory\DivisionFactory;
 
 
 
@@ -98,7 +101,10 @@ $factory_classes = [
     InfoCallStatusLogFactory::class,
     ResourceTransactionFactory::class,
     SubscriptionWisePaymentGatewaysFactory::class,
-    PaymentGatewayFactory::class
+    PaymentGatewayFactory::class,
+    ThanaFactory::class,
+    DistrictFactory::class,
+    DivisionFactory::class
 
 ];
 
