@@ -52,28 +52,26 @@ class PersonalInfoUpdater
         $business_member_data = $this->makeBusinessMemberData();
         $image_data = $this->storeImage($profile);
         if ($image_data) $profile_data = array_merge($profile_data, $image_data);
-        $this->memberRepository->update($member, $member_data);
-        $this->profileRepository->update($profile, $profile_data);
+        if ($member_data) $this->memberRepository->update($member, $member_data);
+        if ($profile_data) $this->profileRepository->update($profile, $profile_data);
         if ($business_member_data) $this->businessMemberRepository->update($business_member, $business_member_data);
     }
 
     private function makeProfileData()
     {
-        return [
-          'dob' => $this->profileRequester->getDateOfBirth(),
-          'address' => $this->profileRequester->getAddress(),
-          'nationality' => $this->profileRequester->getNationality(),
-          'nid_no' => $this->profileRequester->getNidNo(),
-          'passport_no' => $this->profileRequester->getPassportNo(),
-          'blood_group' => $this->profileRequester->getBloodGroup()
-        ];
+        $data = [];
+        if ($this->profileRequester->getDateOfBirth()) $data['dob'] = $this->profileRequester->getDateOfBirth();
+        if ($this->profileRequester->getAddress()) $data['address'] = $this->profileRequester->getAddress();
+        if ($this->profileRequester->getNationality()) $data['nationality'] = $this->profileRequester->getNationality();
+        if ($this->profileRequester->getNidNo()) $data['nid_no'] = $this->profileRequester->getNidNo();
+        if ($this->profileRequester->getPassportNo()) $data['passport_no'] = $this->profileRequester->getPassportNo();
+        if ($this->profileRequester->getBloodGroup()) $data['blood_group'] = $this->profileRequester->getBloodGroup();
+        return $data;
     }
 
     private function makeMemberData()
     {
-        return [
-          'social_links' =>   $this->profileRequester->getSocialLinks()
-        ];
+        return ['social_links' =>   $this->profileRequester->getSocialLinks()];
     }
 
     private function makeBusinessMemberData()

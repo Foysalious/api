@@ -1,22 +1,54 @@
 <?php namespace App\Sheba\Business\PayrollComponent\Components;
 
 use App\Models\BusinessMember;
+use App\Sheba\Business\Attendance\AttendanceBasicInfo;
+use App\Sheba\Business\PayrollSetting\PayrollCommonCalculation;
 use Sheba\Dal\PayrollComponent\Components;
 use Sheba\Dal\PayrollComponent\TargetType;
 use Sheba\Dal\PayrollComponent\Type;
 
 class GrossSalaryBreakdownCalculate
 {
+    use PayrollCommonCalculation, AttendanceBasicInfo;
     private $componentPercentage;
     private $totalAmountPerComponent;
     private $grossSalaryBreakdownWithTotalAmount;
     private $breakdownData = [];
+    private $joiningDate = null;
+    private $timeFrame;
+    private $business;
+    private $businessPayCycleStart;
+    private $businessPayCycleEnd;
 
     public function __construct()
     {
         $this->componentPercentage = new GrossSalaryComponent();
         $this->totalAmountPerComponent = new GrossSalaryComponent();
         $this->grossSalaryBreakdownWithTotalAmount = [];
+    }
+
+    public function setBusiness($business)
+    {
+        $this->business = $business;
+        return $this;
+    }
+
+    public function setJoiningDate($joining_date)
+    {
+        $this->joiningDate = $joining_date;
+        return $this;
+    }
+
+    public function setBusinessPayCycleStart($pay_cycle_start)
+    {
+        $this->businessPayCycleStart = $pay_cycle_start;
+        return $this;
+    }
+
+    public function setBusinessPayCycleEnd($pay_cycle_end)
+    {
+        $this->businessPayCycleEnd = $pay_cycle_end;
+        return $this;
     }
 
     /**
@@ -63,16 +95,19 @@ class GrossSalaryBreakdownCalculate
         $payroll_setting = $business_member->business->payrollSetting;
         $gross_components = $this->getBusinessMemberGrossComponent($payroll_setting, $business_member);
         $data = [];
+        $breakdown_data = [];
         foreach ($gross_components as $payroll_component) {
             $percentage = floatValFormat(json_decode($payroll_component->setting, 1)['percentage']);
             $data[$payroll_component->name] = $percentage;
-            array_push($this->breakdownData, [
+            array_push($breakdown_data, [
                 'name' => $payroll_component->name,
                 'is_default' => $payroll_component->is_default,
                 'is_taxable' => $payroll_component->is_taxable,
                 'percentage' => $percentage
             ]);
+            $this->breakdownData = $breakdown_data;
         }
+
         return $data;
     }
 
@@ -84,6 +119,14 @@ class GrossSalaryBreakdownCalculate
 
     public function totalAmountPerComponent($gross_salary, $gross_salary_breakdown_percentage)
     {
+        $total_prorated_gross_salary = $gross_salary;
+        if($this->joiningDate){
+            $period = $this->createPeriodByTime($this->businessPayCycleStart, $this->businessPayCycleEnd);
+            $total_working_days = $this->getTotalBusinessWorkingDays($period, $this->business->officeHour);
+            $total_days_after_joining = $this->getTotalBusinessWorkingDays($this->createPeriodByTime($this->joiningDate, $this->businessPayCycleEnd), $this->business->officeHour);
+            $total_prorated_gross_salary = floatValFormat($this->oneWorkingDayAmount($gross_salary, $total_working_days) * $total_days_after_joining);
+        }
+        $gross_salary = $total_prorated_gross_salary;
         $data = ['gross_salary' => $gross_salary];
         foreach ($gross_salary_breakdown_percentage as $breakdown_name => $breakdown_value) {
             $data[$breakdown_name] = floatValFormat(($gross_salary * $breakdown_value) / 100);
@@ -109,7 +152,9 @@ class GrossSalaryBreakdownCalculate
 
     private function getBusinessMemberGrossComponent($payroll_setting, $business_member)
     {
-        $payroll_components = $payroll_setting->components()->where('type', Type::GROSS)->where('target_type', TargetType::GENERAL)->where(function($query) {
+        $payroll_components = $payroll_setting->components()->where('type', Type::GROSS)->where(function($query) {
+            return $query->where('target_type', null)->orWhere('target_type', TargetType::GENERAL);
+        })->where(function($query) {
             return $query->where('is_default', 1)->orWhere('is_active',1);
         })->orderBy('type')->get();
         $gross_components = $payroll_components;

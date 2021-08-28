@@ -25,14 +25,13 @@ class TeamVisitListTransformer extends TransformerAbstract
             'id' => $visit->id,
             'title' => $visit->title,
             'description' => $visit->description,
-            'schedule_date' => $visit->schedule_date,
+            'schedule_date' => $visit->schedule_date->format('d M, Y'),
             'status' => $visit->status,
             'profile' => [
                 'id' => $profile->id,
                 'name' => $profile->name ?: null,
                 'pro_pic' => $profile->pro_pic,
-                'department' => $department ? $department->name : null,
-                'department_id' => $department ? $department->id : null
+                'department' => $department ? $department->name : null
             ]
         ];
     }

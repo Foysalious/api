@@ -15,7 +15,7 @@ trait AttendanceBasicInfo
         $business_member_leaves_date = [];
         $business_member_leaves_date_with_half_and_full_day = [];
         $business_member_leave->each(function ($leave) use (&$business_member_leaves_date, &$business_member_leaves_date_with_half_and_full_day) {
-            $leave_period = CarbonPeriod::create($leave->start_date, $leave->end_date);
+            $leave_period = $this->createPeriodByTime($leave->start_date, $leave->end_date);
             foreach ($leave_period as $date) {
                 array_push($business_member_leaves_date, $date->toDateString());
                 $business_member_leaves_date_with_half_and_full_day[$date->toDateString()] = [
@@ -50,5 +50,10 @@ trait AttendanceBasicInfo
             }
         }
         return $data;
+    }
+
+    public function createPeriodByTime($start_date, $end_date)
+    {
+        return CarbonPeriod::create($start_date, $end_date);
     }
 }

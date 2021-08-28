@@ -5,15 +5,18 @@ use App\Models\BusinessMember;
 use App\Sheba\Business\CoWorker\ManagerSubordinateEmployeeList;
 use App\Transformers\Business\MyVisitListTransformer;
 use App\Transformers\Business\TeamVisitListTransformer;
+use App\Transformers\Business\VisitDetailsTransformer;
+use App\Transformers\CustomSerializer;
 use Illuminate\Http\JsonResponse;
+use League\Fractal\Resource\Item;
 use League\Fractal\Serializer\ArraySerializer;
 use League\Fractal\Resource\Collection;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
-use Sheba\Dal\Visit\Visit;
 use Sheba\Dal\Visit\VisitRepository;
 use Illuminate\Support\Arr;
+use Sheba\Helpers\TimeFrame;
 
 class VisitController extends Controller
 {
@@ -36,7 +39,7 @@ class VisitController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function getTeamVisits(Request $request)
+    public function getTeamVisits(Request $request, TimeFrame $time_frame)
     {
         /** @var Business $business */
         $business = $request->business;
@@ -44,28 +47,9 @@ class VisitController extends Controller
         $business_member = $request->business_member;
 
         list($offset, $limit) = calculatePagination($request);
-        $visits = $this->visitRepository->builder()->with([
-            'visitor' => function ($q) {
-                $q->with([
-                    'member' => function ($q) {
-                        $q->select('members.id', 'profile_id')->with([
-                            'profile' => function ($q) {
-                                $q->select('profiles.id', 'name', 'mobile', 'email', 'pro_pic');
-                            }
-                        ]);
-                    },
-                    'role' => function ($q) {
-                        $q->select('business_roles.id', 'business_department_id', 'name')->with([
-                            'businessDepartment' => function ($q) {
-                                $q->select('business_departments.id', 'business_id', 'name');
-                            }
-                        ]);
-                    }]);
-            }
-        ])->orderBy('id', 'DESC');
-
+        #$visits = $this->visitRepository->getAllVisitsWithRelations()->where('visitor_id', '<>', $business_member->id)->orderBy('id', 'DESC');
+        $visits = $this->visitRepository->getAllVisitsWithRelations()->orderBy('id', 'DESC');
         $visits = $visits->whereIn('visitor_id', $this->getBusinessMemberIds($business, $business_member));
-
 
         /** Department Filter */
         if ($request->has('department_id')) {
@@ -84,10 +68,9 @@ class VisitController extends Controller
         }
 
         /** Month Filter */
-        $start_date = $request->has('start_date') ? $request->start_date : null;
-        $end_date = $request->has('end_date') ? $request->end_date : null;
-        if ($start_date && $end_date) {
-            $visits->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $time_frame = $time_frame->forDateRange($request->start_date, $request->end_date);
+            $visits = $visits->whereBetween('schedule_date', [$time_frame->start, $time_frame->end]);
         }
 
         $manager = new Manager();
@@ -97,22 +80,23 @@ class VisitController extends Controller
 
         if ($request->has('search')) $visits = $this->searchWithEmployeeName($visits, $request);
 
-
         $total_visits = count($visits);
         #$limit = $this->getLimit($request, $limit, $total_visits);
         $visits = collect($visits)->splice($offset, $limit);
         if (count($visits) > 0) return api_response($request, $visits, 200, [
             'employees' => $visits,
-            'total_employees' => $total_visits
+            'total_visits' => $total_visits
         ]);
+
         return api_response($request, null, 404);
     }
 
     /**
      * @param Request $request
+     * @param TimeFrame $time_frame
      * @return JsonResponse
      */
-    public function getMyVisits(Request $request)
+    public function getMyVisits(Request $request, TimeFrame $time_frame)
     {
         /** @var Business $business */
         $business = $request->business;
@@ -120,25 +104,7 @@ class VisitController extends Controller
         $business_member = $request->business_member;
 
         list($offset, $limit) = calculatePagination($request);
-        $visits = $this->visitRepository->builder()->with([
-            'visitor' => function ($q) {
-                $q->with([
-                    'member' => function ($q) {
-                        $q->select('members.id', 'profile_id')->with([
-                            'profile' => function ($q) {
-                                $q->select('profiles.id', 'name', 'mobile', 'email', 'pro_pic');
-                            }
-                        ]);
-                    },
-                    'role' => function ($q) {
-                        $q->select('business_roles.id', 'business_department_id', 'name')->with([
-                            'businessDepartment' => function ($q) {
-                                $q->select('business_departments.id', 'business_id', 'name');
-                            }
-                        ]);
-                    }]);
-            }
-        ])->where('visitor_id', $business_member->id)->orderBy('id', 'DESC');
+        $visits = $this->visitRepository->getAllVisitsWithRelations()->where('visitor_id', $business_member->id)->orderBy('id', 'DESC');
 
         /** Status Filter */
         if ($request->has('status')) {
@@ -146,12 +112,10 @@ class VisitController extends Controller
         }
 
         /** Month Filter */
-        $start_date = $request->has('start_date') ? $request->start_date : null;
-        $end_date = $request->has('end_date') ? $request->end_date : null;
-        if ($start_date && $end_date) {
-            $visits->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $time_frame = $time_frame->forDateRange($request->start_date, $request->end_date);
+            $visits = $visits->whereBetween('schedule_date', [$time_frame->start, $time_frame->end]);
         }
-
 
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
@@ -165,9 +129,29 @@ class VisitController extends Controller
         $visits = collect($visits)->splice($offset, $limit);
         if (count($visits) > 0) return api_response($request, $visits, 200, [
             'employees' => $visits,
-            'total_employees' => $total_visits
+            'total_visits' => $total_visits
         ]);
+
         return api_response($request, null, 404);
+    }
+
+    /**
+     * @param $business
+     * @param $visit
+     * @param Request $request
+     * @return JsonResponse|void
+     */
+    public function show($business, $visit, Request $request)
+    {
+        $visit = $this->visitRepository->find($visit);
+        if (!$visit) return api_response($request, null, 404);
+
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Item($visit, new VisitDetailsTransformer());
+        $visit = $manager->createData($resource)->toArray()['data'];
+
+        if (count($visit) > 0) return api_response($request, $visit, 200, ['visit' => $visit]);
     }
 
     /**

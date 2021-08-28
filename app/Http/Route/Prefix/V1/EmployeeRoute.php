@@ -28,12 +28,17 @@ class EmployeeRoute
                 });
             });
             $api->get('subordinate-employee-list', 'Employee\VisitController@getManagerSubordinateEmployeeList');
-            $api->group(['prefix' => 'employee-tracking'], function ($api) {
+            $api->group(['prefix' => 'employee-visit'], function ($api) {
                 $api->post('create', 'Employee\VisitController@create');
                 $api->post('update/{visit_id}', 'Employee\VisitController@update');
-                $api->get('own-visit-list', 'Employee\VisitController@ownVisitList');
+                $api->get('own-ongoing-visits', 'Employee\VisitController@ownOngoingVisits');
                 $api->get('own-visit-history', 'Employee\VisitController@ownVisitHistory');
                 $api->get('team-visits', 'Employee\VisitController@teamVisitsList');
+                $api->group(['prefix' => '{visit_id}'], function ($api) {
+                    $api->get('/', 'Employee\VisitController@show');
+                    $api->post('note', 'Employee\VisitController@storeNote');
+                    $api->post('photo', 'Employee\VisitController@storePhoto');
+                });
             });
             //$api->post('password', 'Employee\EmployeeController@updateMyPassword');
             $api->get('dashboard', 'Employee\EmployeeController@getDashboard');

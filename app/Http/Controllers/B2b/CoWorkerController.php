@@ -104,13 +104,13 @@ class CoWorkerController extends Controller
      * @param CoWorkerInfoSort $co_worker_info_sort
      * @param CoWorkerExistenceCheck $co_worker_existence_check
      */
-    public function __construct(FileRepository $file_repository, ProfileRepository $profile_repository, BasicRequest $basic_request,
-                                EmergencyRequest $emergency_request, FinancialRequest $financial_request,
-                                OfficialRequest $official_request, PersonalRequest $personal_request,
-                                CoWorkerCreator $co_worker_creator, CoWorkerUpdater $co_worker_updater,
-                                CoWorkerRequester $coWorker_requester, CoWorkerSalaryRequester $co_worker_salary_requester,
-                                SalaryRepository $salary_repository, BusinessMemberRepositoryInterface $business_member_repo,
-                                CoWorkerInfoFilter $co_worker_info_filter, CoWorkerInfoSort $co_worker_info_sort,
+    public function __construct(FileRepository         $file_repository, ProfileRepository $profile_repository, BasicRequest $basic_request,
+                                EmergencyRequest       $emergency_request, FinancialRequest $financial_request,
+                                OfficialRequest        $official_request, PersonalRequest $personal_request,
+                                CoWorkerCreator        $co_worker_creator, CoWorkerUpdater $co_worker_updater,
+                                CoWorkerRequester      $coWorker_requester, CoWorkerSalaryRequester $co_worker_salary_requester,
+                                SalaryRepository       $salary_repository, BusinessMemberRepositoryInterface $business_member_repo,
+                                CoWorkerInfoFilter     $co_worker_info_filter, CoWorkerInfoSort $co_worker_info_sort,
                                 CoWorkerExistenceCheck $co_worker_existence_check)
     {
         $this->fileRepository = $file_repository;
@@ -587,7 +587,7 @@ class CoWorkerController extends Controller
         foreach ($business_departments as $business_department) {
             $members = $business->membersWithProfileAndAccessibleBusinessMember();
             $members = $members->whereHas('businessMember', function ($q) use ($business_department) {
-                $q->whereHas('role', function ($q) use ($business_department) {
+                $q->where('status', Statuses::ACTIVE)->whereHas('role', function ($q) use ($business_department) {
                     $q->whereHas('businessDepartment', function ($q) use ($business_department) {
                         $q->where('business_departments.id', $business_department->id);
                     });

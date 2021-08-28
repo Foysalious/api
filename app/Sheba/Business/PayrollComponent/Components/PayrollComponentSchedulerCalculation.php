@@ -19,8 +19,9 @@ class PayrollComponentSchedulerCalculation
     private $packageCalculator;
     /*** @var BusinessMemberPolicyRulesCalculator */
     private $businessMemberPolicyRulesCalculator;
-    private $packageGenerateData;
     private $taxComponentData = [];
+    private $timeFrame;
+    private $joiningDate;
 
     /**
      * PayrollComponentSchedulerCalculation constructor.
@@ -53,6 +54,12 @@ class PayrollComponentSchedulerCalculation
         $this->department = $role? $role->businessDepartment : null;
         return $this;
     }
+    public function setTimeFrame($time_frame)
+    {
+        $this->timeFrame = $time_frame;
+        return $this;
+    }
+
     public function getPayrollComponentCalculationBreakdown()
     {
         $addition = $this->getAdditionComponent();

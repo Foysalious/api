@@ -102,7 +102,7 @@ class PayRunController extends Controller
         if (!$business_member) return api_response($request, null, 401);
         $payroll_setting = $business->payrollSetting;
         $get_pending_months = $pending_months->setBusiness($business)->get();
-        return api_response($request, null, 200, ['is_enable' => $payroll_setting->is_enable, 'pending_months' => $get_pending_months]);
+        return api_response($request, null, 200, ['is_enable' => $payroll_setting->is_enable, 'pending_months' => $get_pending_months, 'last_tax_report_generated_at' => $pending_months->getLastGeneratedTaxReport()]);
     }
 
     /**

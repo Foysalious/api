@@ -1,6 +1,8 @@
 <?php namespace Sheba\Transactions\Wallet;
 
+use App\Models\Partner;
 use App\Models\Resource;
+use App\Models\WithdrawalRequest;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
@@ -33,10 +35,15 @@ class WalletTransactionHandler extends WalletTransaction
     public function store($extras = [], $isJob = false)
     {
         try {
-            if (empty($this->type) || empty($this->amount) || empty($this->model))
+            if (empty($this->type) || empty($this->amount) || empty($this->model)) {
                 throw new InvalidWalletTransaction();
-            if (!$isJob)
+            }
+            if (!$isJob) {
                 $extras = $this->withCreateModificationField((new RequestIdentification())->set($extras));
+            }
+            if ($this->type == Types::debit() && $this->model instanceof Partner) {
+                self::isDebitTransactionAllowed($this->model, $this->amount);
+            }
             $transaction = $this->storeTransaction($extras);
             try {
                 $this->storeFraudDetectionTransaction(!$isJob);
@@ -44,7 +51,11 @@ class WalletTransactionHandler extends WalletTransaction
                 WalletTransaction::throwException($e);
             }
             return $transaction;
-        } catch (\Throwable $e) {
+        }
+        catch (WalletDebitForbiddenException $e) {
+            throw new WalletDebitForbiddenException($e->getMessage(), $e->getCode());
+        }
+        catch (\Throwable $e) {
             WalletTransaction::throwException($e);
         }
         return null;
@@ -237,5 +248,17 @@ class WalletTransactionHandler extends WalletTransaction
         $last_inserted_transaction = $this->model->transactions()->orderBy('id', 'desc')->first();
         $last_inserted_balance = $last_inserted_transaction ? $last_inserted_transaction->balance : 0.00;
         return strtolower($this->type) == 'credit' ? $last_inserted_balance + $this->amount : $last_inserted_balance - $this->amount;
+    }
+
+    public static function isDebitTransactionAllowed(Partner $partner, $amount)
+    {
+        $withdrawalRequests = WithdrawalRequest::where('requester_id', $partner->id)
+            ->whereIn('status', ['pending', 'approval_pending'])
+            ->sum('amount');
+        $remainingAmount = $partner->wallet - (int) $withdrawalRequests;
+        if ($amount > $remainingAmount) {
+            $message = sprintf("আপনি %s টাকা উত্তোলনের জন্য আবেদন করেছেন, একারনে আপনার একাউন্টে পর্যাপ্ত ব্যালেন্স নেই। অনুগ্রহ করে সেবা ক্রেডিট রিচার্জ করে পুনরায় চেষ্টা করুন।", $withdrawalRequests);
+            throw new WalletDebitForbiddenException($message, 403);
+        }
     }
 }

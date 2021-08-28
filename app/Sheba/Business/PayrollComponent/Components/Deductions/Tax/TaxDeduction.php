@@ -11,11 +11,13 @@ class TaxDeduction
     private $businessMember;
     private $taxableIncome;
     private $gender;
+    private $slabAmount;
+    private $netTaxableIncome;
 
     public function setBusinessMember(BusinessMember $business_member)
     {
         $this->businessMember = $business_member;
-        $this->gender = $this->businessMember->member->profile->gender;
+        $this->gender = $this->businessMember->profile()->gender;
         return $this;
     }
 
@@ -27,9 +29,26 @@ class TaxDeduction
 
     public function calculate()
     {
-        $net_taxable_income = $this->getNetTaxableIncome($this->taxableIncome, $this->gender);
-        $tax_slab = new TaxSlabCalculator($net_taxable_income);
-        return $tax_slab->calculate();
+        $this->netTaxableIncome = $this->getNetTaxableIncome($this->taxableIncome, $this->gender);
+        $tax_slab = new TaxSlabCalculator($this->netTaxableIncome);
+        $yearly_tax = $tax_slab->calculate();
+        $this->slabAmount = $tax_slab->getSlabAmount();
+        return $yearly_tax;
+    }
+
+    public function getSlabAmount()
+    {
+        return $this->slabAmount;
+    }
+
+    public function getGenderExemption()
+    {
+        return $this->getGenderExemptionAmount($this->gender);
+    }
+
+    public function getNetTaxableIncomeAmount()
+    {
+        return $this->netTaxableIncome;
     }
 
 }

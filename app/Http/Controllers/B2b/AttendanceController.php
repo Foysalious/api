@@ -179,6 +179,7 @@ class AttendanceController extends Controller
             array_push($all_employee_attendance, [
                 'business_member_id' => $business_member->id,
                 'employee_id' => $business_member->employee_id ? $business_member->employee_id : 'N/A',
+                'status' => $business_member->status,
                 'member' => [
                     'id' => $business_member->member->id,
                     'name' => $member_name,
@@ -194,9 +195,7 @@ class AttendanceController extends Controller
 
         $all_employee_attendance = collect($all_employee_attendance);
 
-        if($request->has('status') && $request->status === 'inactive') {
-            $all_employee_attendance = $this->filterInactiveCoWorkersWithData($all_employee_attendance);
-        }
+        $all_employee_attendance = $this->filterInactiveCoWorkersWithData($all_employee_attendance);
 
         if ($request->has('search')) $all_employee_attendance = $this->searchWithEmployeeName($all_employee_attendance, $request);
         if ($request->has('sort_on_absent')) $all_employee_attendance = $this->attendanceSortOnAbsent($all_employee_attendance, $request->sort_on_absent);
@@ -311,7 +310,11 @@ class AttendanceController extends Controller
     private function filterInactiveCoWorkersWithData($employee_attendance)
     {
         return $employee_attendance->filter(function ($attendance) {
-            return $attendance['attendance']['present'] || $attendance['attendance']['on_leave'];
+            if ($attendance['status'] === 'inactive') {
+                return $attendance['attendance']['present'] || $attendance['attendance']['on_leave'];
+            } else {
+                return true;
+            }
         });
     }
 

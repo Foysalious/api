@@ -97,7 +97,7 @@ abstract class Bank
 
     abstract public function accountCreate();
 
-    abstract public function storeAccountNumber($account_no);
+    abstract public function accountNumberNotification($account_no);
 
     abstract public function completion(): BankCompletion;
 
