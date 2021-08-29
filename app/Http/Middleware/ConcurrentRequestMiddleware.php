@@ -12,9 +12,9 @@ use Illuminate\Support\Facades\Redis;
 class ConcurrentRequestMiddleware
 {
     private $paramNames = ['job'];
-    private $actions = ['collect', 'pay'];
+    private $actions = ['collect', 'pay', 'update'];
 
-    public function handle($request, Closure $next, $user='resource', $paramName = 'job', $action = 'collect')
+    public function handle($request, Closure $next, $user='resource', $action = 'collect', $paramName = 'job')
     {
         if (!in_array($paramName, $this->paramNames) || !in_array($action, $this->actions)) return $next($request);
 
@@ -25,7 +25,7 @@ class ConcurrentRequestMiddleware
             return response()->json(['code' => 400, 'message' => 'Invalid parameters']);
         }
 
-        if ($data = Redis::get($key)){
+        if (($data = Redis::get($key)) && ($action === 'collect' || $action === 'pay')){
             $data = json_decode($data, true);
             return response()->json(['code' => 429, 'message' =>  $this->generateMsg($data) . ' You need to wait at least ' . $duration/60 . ' minutes before requesting again.']);
         }
