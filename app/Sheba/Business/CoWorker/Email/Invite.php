@@ -37,8 +37,7 @@ class Invite
         try {
             config()->set('services.mailgun.domain', config('services.mailgun.business_domain'));
             $coworker_invite_email = new SendBusinessRequestEmail($this->profile->email);
-            if ($this->profile->password) $coworker_invite_email->setPassword($this->profile->password);
-            if (!$this->profile->password) $coworker_invite_email->setPassword($this->updatePassword());
+            $coworker_invite_email->setPassword($this->updatePassword());
             $coworker_invite_email->setSubject("Invitation from your co-worker to join digiGO")->setTemplate('emails.co-worker-invitation-v3');
             dispatch($coworker_invite_email);
         } catch (Throwable $e) {
