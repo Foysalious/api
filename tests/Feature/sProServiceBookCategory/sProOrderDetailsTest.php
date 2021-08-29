@@ -230,7 +230,8 @@ class sProOrderDetailsTest extends FeatureTestCase
         $data = $response->decodeResponseJson();
 
         //assert
-        $this->assertEquals('404 Not Found', $data["message"]);
+        $this->assertEquals(404, $data["code"]);
+        $this->assertEquals('Service not found', $data["message"]);
 
     }
 
