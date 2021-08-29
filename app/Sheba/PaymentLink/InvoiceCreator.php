@@ -70,6 +70,6 @@ class InvoiceCreator
                 'delivery_charge' => $pos_order->delivery_charge] : null
         ];
 
-        return $pdf_handler->setData($info)->setName($this->payment->transaction_id)->setViewFile('transaction_invoice')->save();
+        return $pdf_handler->setData($info)->setName($this->payment->transaction_id)->setViewFile('transaction_invoice')->save(true);
     }
 }
