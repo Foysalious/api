@@ -51,8 +51,8 @@ class Invite
      */
     private function updatePassword()
     {
-        $this->password = str_random(6);
-        $this->profileRepository->updateRaw($this->profile, ['password' => bcrypt($this->password)]);
+        $this->password = $password = str_random(6);
+        $this->profileRepository->updateRaw($this->profile, ['password' => bcrypt($password)]);
         return $this->password;
     }
 }
