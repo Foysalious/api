@@ -85,12 +85,12 @@ class AttendanceList
      * @param BusinessHolidayRepoInterface $business_holiday_repo
      * @param BusinessWeekendRepoInterface $business_weekend_repo
      */
-    public function __construct(AttendanceRepositoryInterface $attendance_repository_interface,
+    public function __construct(AttendanceRepositoryInterface          $attendance_repository_interface,
                                 AttendanceActionLogRepositoryInterface $attendance_action_log_repository_interface,
-                                BusinessMemberRepositoryInterface $business_member_repository,
-                                LeaveRepositoryInterface $leave_repository_interface,
-                                BusinessHolidayRepoInterface $business_holiday_repo,
-                                BusinessWeekendRepoInterface $business_weekend_repo)
+                                BusinessMemberRepositoryInterface      $business_member_repository,
+                                LeaveRepositoryInterface               $leave_repository_interface,
+                                BusinessHolidayRepoInterface           $business_holiday_repo,
+                                BusinessWeekendRepoInterface           $business_weekend_repo)
     {
         $this->attendanceRepositoryInterface = $attendance_repository_interface;
         $this->attendanceActionLogRepositoryInterface = $attendance_action_log_repository_interface;
@@ -264,6 +264,7 @@ class AttendanceList
         $this->checkOutRemoteMode = $checkout_remote_mode;
         return $this;
     }
+
     /**
      * @return array
      */
@@ -326,25 +327,25 @@ class AttendanceList
 
         if ($this->checkinOfficeOrRemote) {
             $attendances = $attendances->whereHas('actions', function ($q) {
-                $q->where([['is_remote', $this->checkinOfficeOrRemote == 'remote' ? 1 : 0],['action', Actions::CHECKIN]]);
+                $q->where([['is_remote', $this->checkinOfficeOrRemote == 'remote' ? 1 : 0], ['action', Actions::CHECKIN]]);
             });
         }
 
         if ($this->checkoutOfficeOrRemote) {
             $attendances = $attendances->whereHas('actions', function ($q) {
-                $q->where([['is_remote', $this->checkoutOfficeOrRemote == 'remote' ? 1 : 0],['action', Actions::CHECKOUT]]);
+                $q->where([['is_remote', $this->checkoutOfficeOrRemote == 'remote' ? 1 : 0], ['action', Actions::CHECKOUT]]);
             });
         }
 
         if ($this->checkinLocation) {
             $attendances = $attendances->whereHas('actions', function ($q) {
-                $q->where([['ip', $this->checkinLocation],['action', Actions::CHECKIN]]);
+                $q->where([['ip', $this->checkinLocation], ['action', Actions::CHECKIN]]);
             });
         }
 
         if ($this->checkoutLocation) {
             $attendances = $attendances->whereHas('actions', function ($q) {
-                $q->where([['ip', $this->checkoutLocation],['action', Actions::CHECKOUT]]);
+                $q->where([['ip', $this->checkoutLocation], ['action', Actions::CHECKOUT]]);
             });
         }
 
@@ -357,7 +358,7 @@ class AttendanceList
             }
             if ($this->checkInRemoteMode === RemoteMode::FIELD) {
                 $attendances = $attendances->whereHas('actions', function ($q) {
-                    $q->where([['remote_mode', RemoteMode::FIELD],['action', Actions::CHECKIN]]);
+                    $q->where([['remote_mode', RemoteMode::FIELD], ['action', Actions::CHECKIN]]);
                 });
             }
             if ($this->checkInRemoteMode === RemoteMode::NO_LOCATION) {
@@ -377,7 +378,7 @@ class AttendanceList
             }
             if ($this->checkOutRemoteMode === RemoteMode::FIELD) {
                 $attendances = $attendances->whereHas('actions', function ($q) {
-                    $q->where([['remote_mode', RemoteMode::FIELD],['action', Actions::CHECKOUT]]);
+                    $q->where([['remote_mode', RemoteMode::FIELD], ['action', Actions::CHECKOUT]]);
                 });
             }
             if ($this->checkOutRemoteMode === RemoteMode::NO_LOCATION) {
@@ -459,7 +460,9 @@ class AttendanceList
                         $checkin_data = collect([
                             'status' => $this->getStatusBasedOnLeaveAction($action, $is_weekend_or_holiday, $is_on_leave, $is_on_half_day_leave),
                             'is_remote' => $action->is_remote ?: 0,
-                            'address' => $action->is_remote && $action->location ? json_decode($action->location)->address : null,
+                            'address' => $action->is_remote ?
+                                $action->location ? json_decode($action->location)->address : null
+                                : null,
                             'checkin_time' => Carbon::parse($attendance->date . ' ' . $attendance->checkin_time)->format('g:i a'),
                             'note' => $action->note,
                             'remote_mode' => $action->remote_mode ?: null
@@ -469,7 +472,9 @@ class AttendanceList
                         $checkout_data = collect([
                             'status' => $this->getStatusBasedOnLeaveAction($action, $is_weekend_or_holiday, $is_on_leave, $is_on_half_day_leave),
                             'is_remote' => $action->is_remote ?: 0,
-                            'address' => $action->is_remote && $action->location ? json_decode($action->location)->address : null,
+                            'address' => $action->is_remote ?
+                                $action->location ? json_decode($action->location)->address : null
+                                : null,
                             'checkout_time' => $attendance->checkout_time ? Carbon::parse($attendance->date . ' ' . $attendance->checkout_time)->format('g:i a') : null,
                             'note' => $action->note,
                             'remote_mode' => $action->remote_mode ?: null
@@ -482,8 +487,8 @@ class AttendanceList
                         'check_in' => $checkin_data,
                         'check_out' => $checkout_data,
                         'active_hours' => $attendance->staying_time_in_minutes ? $this->formatMinute($attendance->staying_time_in_minutes) : null,
-                        'overtime_in_minutes' => (int) $attendance->overtime_in_minutes ?: 0,
-                        'overtime' => (int) $attendance->overtime_in_minutes ? $this->formatMinute((int) $attendance->overtime_in_minutes) : null,
+                        'overtime_in_minutes' => (int)$attendance->overtime_in_minutes ?: 0,
+                        'overtime' => (int)$attendance->overtime_in_minutes ? $this->formatMinute((int)$attendance->overtime_in_minutes) : null,
                         'date' => $attendance->date,
                         'is_absent' => $attendance->status == Statuses::ABSENT ? 1 : 0,
                         'is_on_leave' => 0,
@@ -569,7 +574,7 @@ class AttendanceList
 
         $data = [];
         foreach ($business_members as $business_member) {
-                array_push($data, $this->getBusinessMemberData($business_member) + [
+            array_push($data, $this->getBusinessMemberData($business_member) + [
                     'id' => $business_member->id,
                     'check_in' => null,
                     'check_out' => null,

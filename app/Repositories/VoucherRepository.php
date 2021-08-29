@@ -3,8 +3,6 @@
 use App\Models\Customer;
 use App\Models\Profile;
 use App\Models\Voucher;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Collection;
 use Sheba\Repositories\BaseRepository;
 
 class VoucherRepository extends BaseRepository

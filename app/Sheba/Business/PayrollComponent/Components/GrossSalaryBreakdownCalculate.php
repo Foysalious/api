@@ -17,6 +17,8 @@ class GrossSalaryBreakdownCalculate
     private $joiningDate = null;
     private $timeFrame;
     private $business;
+    private $businessPayCycleStart;
+    private $businessPayCycleEnd;
 
     public function __construct()
     {
@@ -37,9 +39,15 @@ class GrossSalaryBreakdownCalculate
         return $this;
     }
 
-    public function setTimeFrame($time_frame)
+    public function setBusinessPayCycleStart($pay_cycle_start)
     {
-        $this->timeFrame = $time_frame;
+        $this->businessPayCycleStart = $pay_cycle_start;
+        return $this;
+    }
+
+    public function setBusinessPayCycleEnd($pay_cycle_end)
+    {
+        $this->businessPayCycleEnd = $pay_cycle_end;
         return $this;
     }
 
@@ -86,6 +94,7 @@ class GrossSalaryBreakdownCalculate
     {
         $payroll_setting = $business_member->business->payrollSetting;
         $gross_components = $this->getBusinessMemberGrossComponent($payroll_setting, $business_member);
+        $data = [];
         $breakdown_data = [];
         foreach ($gross_components as $payroll_component) {
             $percentage = floatValFormat(json_decode($payroll_component->setting, 1)['percentage']);
@@ -112,9 +121,9 @@ class GrossSalaryBreakdownCalculate
     {
         $total_prorated_gross_salary = $gross_salary;
         if($this->joiningDate){
-            $period = $this->createPeriodByTime($this->timeFrame->start, $this->timeFrame->end);
+            $period = $this->createPeriodByTime($this->businessPayCycleStart, $this->businessPayCycleEnd);
             $total_working_days = $this->getTotalBusinessWorkingDays($period, $this->business->officeHour);
-            $total_days_after_joining = $this->getTotalBusinessWorkingDays($this->createPeriodByTime($this->joiningDate, $this->timeFrame->end), $this->business->officeHour);
+            $total_days_after_joining = $this->getTotalBusinessWorkingDays($this->createPeriodByTime($this->joiningDate, $this->businessPayCycleEnd), $this->business->officeHour);
             $total_prorated_gross_salary = floatValFormat($this->oneWorkingDayAmount($gross_salary, $total_working_days) * $total_days_after_joining);
         }
         $gross_salary = $total_prorated_gross_salary;
