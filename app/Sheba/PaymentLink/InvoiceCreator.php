@@ -57,7 +57,8 @@ class InvoiceCreator
             ],
             'user' => [
                 'name' => $this->payment->payable->getName(),
-                'mobile' => $this->payment->payable->getMobile()
+                'mobile' => $this->payment->payable->getMobile(),
+                'address' => null,
             ],
             'pos_order' => $pos_order ? [
                 'items' => $pos_order->items,
