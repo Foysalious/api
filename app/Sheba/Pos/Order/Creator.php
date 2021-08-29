@@ -203,10 +203,7 @@ class Creator
                     throw new DoNotReportException("Service not found with provided ID", 400);
                 if ($original_service->is_published_for_shop && isset($service['quantity']) && !empty($service['quantity']) && $service['quantity'] > $original_service->getStock())
                     throw new NotEnoughStockException("Not enough stock", 403);
-                $is_stock_maintainable = $this->stockManager->setPosService($original_service)->isStockMaintainable();
-                if ($is_stock_maintainable) {
-                    $servicesStockDecreasingInfo[$original_service->id] = $this->stockManager->decrease($service['quantity']);
-                }
+
                 // $is_service_discount_applied = $original_service->discount();
                 $service_wholesale_applicable = $original_service->wholesale_price ? true : false;
 
@@ -221,7 +218,10 @@ class Creator
                 $service = array_except($service, ['id', 'name', 'is_vat_applicable', 'updated_price']);
 
                 $pos_order_item = $this->itemRepo->save($service);
-
+                $is_stock_maintainable = $this->stockManager->setPosService($original_service)->isStockMaintainable();
+                if ($is_stock_maintainable) {
+                    $servicesStockDecreasingInfo[$original_service->id] = $this->stockManager->decrease($service['quantity']);
+                }
 
                 $this->discountHandler->setOrder($order)->setPosService($original_service)->setType(DiscountTypes::SERVICE)->setData($service);
                 if ($this->discountHandler->hasDiscount()) $this->discountHandler->setPosOrderItem($pos_order_item)->create($order);
