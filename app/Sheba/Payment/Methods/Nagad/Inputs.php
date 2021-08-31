@@ -70,7 +70,7 @@ class Inputs
             'merchantCallbackURL' => $call_back_url,
             'additionalMerchantInfo' => json_decode($merchant_additional_info)
         ];
-
+        Log::info(["returned data", [$payment_data, $store_data]]);
         return [$payment_data, $store_data];
     }
 
