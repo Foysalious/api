@@ -341,7 +341,7 @@ class PartnerSubscriptionController extends Controller
                 [
                     'auto_billing_activated' => 'boolean',
                     'subscription_renewal_warning' => 'boolean',
-                    'renewal_warning_days' => 'numeric|min:0'
+                    'renewal_warning_days' => 'numeric|min:0|max:29'
                 ]
             );
             /** @var Partner $partner */
