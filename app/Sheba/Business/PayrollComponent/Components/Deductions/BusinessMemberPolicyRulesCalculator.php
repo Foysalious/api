@@ -76,9 +76,9 @@ class BusinessMemberPolicyRulesCalculator
         $working_days_type = $business_office->type;
         $is_weekend_included = $business_office->is_weekend_included;
         $number_of_days = $business_office->number_of_days;
-
         if (!$is_grace_period_policy_enable && !$is_late_checkin_early_checkout_policy_enable && !$is_unpaid_leave_policy_enable) return ['attendance_adjustment' => 0, 'leave_adjustment' => 0, 'tax' => 0];
-        $start_date = Carbon::now()->subMonth()->format('Y-m-d');
+        $last_pay_day = $this->payrollSetting->last_pay_day;
+        $start_date = $last_pay_day ? Carbon::parse($last_pay_day)->format('Y-m-d') : Carbon::now()->subMonth()->format('Y-m-d');
         $end_date = Carbon::now()->subDay()->format('Y-m-d');
         $time_frame = $this->timeFrame->forDateRange($start_date, $end_date);
         $attendances = $this->attendanceRepositoryInterface->getAllAttendanceByBusinessMemberFilteredWithYearMonth($this->businessMember, $time_frame);
