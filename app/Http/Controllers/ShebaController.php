@@ -488,6 +488,7 @@ class ShebaController extends Controller
         $info                           = $this->getPaymentInfo($payment);
         $info['gateway_transaction_id'] = $payment->gateway_transaction_id;
         $info['gateway_account_name']   = $payment->gateway_account_name;
+        $info['payment_purpose']        = $payment->payable->description;
         if (!isset($info['payer'])) {
             /** @var Payable $payer */
             $payer = $payment->payable;
