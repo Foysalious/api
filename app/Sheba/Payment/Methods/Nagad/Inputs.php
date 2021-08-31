@@ -54,7 +54,7 @@ class Inputs
         $merchant_additional_info = json_encode(
             [
                 "Service Name" =>"Sheba.xyz",
-                "Purpose" =>  $description
+                "Purpose" =>  null
             ]
         );
 //        $merchant_additional_info = '{"Service Name": "Sheba.xyz"}';
