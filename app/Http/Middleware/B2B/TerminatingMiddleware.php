@@ -1,8 +1,10 @@
 <?php namespace App\Http\Middleware\B2B;
 
+use Carbon\Carbon;
 use Illuminate\Http\Response;
 use Illuminate\Http\Request;
 use Closure;
+use Illuminate\Support\Facades\Log;
 
 class TerminatingMiddleware
 {
@@ -36,11 +38,13 @@ class TerminatingMiddleware
     public function terminate($request, $response)
     {
         if (defined('LARAVEL_START') and $request instanceof Request) {
-            app('log')->debug('Response time', [
-                'method' => $request->getMethod(),
-                'uri' => $request->url(),
-                'seconds' => microtime(true) - LARAVEL_START,
-            ]);
+            $method = $request->getMethod();
+            $full_url = $request->fullUrl();
+            $port = $request->getPort();
+            $response_time = microtime(true) - LARAVEL_START;
+           # $req = $request->except(['token', 'access_token', 'auth_user', 'manager_member', 'business', 'business_member']);
+            $res = $response->getContent();
+            app('log')->debug("'Response time', 'method: '$method, 'full_url: '$full_url,  'port: '$port, 'response_time: '$response_time, 'res: '$res");
         }
     }
 }
