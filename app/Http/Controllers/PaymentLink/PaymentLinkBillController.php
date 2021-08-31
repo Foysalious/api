@@ -89,6 +89,7 @@ class PaymentLinkBillController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (InitiateFailedException $e) {
+            logError($e);
             return api_response($request, null, $e->getCode(),['message'=>$e->getMessage()]);
         } catch (\Throwable $e) {
             logError($e);
