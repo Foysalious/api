@@ -38,6 +38,7 @@ class EmployeeRoute
                     $api->get('/', 'Employee\VisitController@show');
                     $api->post('note', 'Employee\VisitController@storeNote');
                     $api->post('photo', 'Employee\VisitController@storePhoto');
+                    $api->post('status-update', 'Employee\VisitController@updateStatus');
                 });
             });
             //$api->post('password', 'Employee\EmployeeController@updateMyPassword');
