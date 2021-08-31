@@ -79,7 +79,7 @@ class Payslip extends Command
         foreach ($payroll_settings as $payroll_setting) {
             $business = $payroll_setting->business;
             if ($this->isPayDay($payroll_setting)) {
-                $business_members = $business->getAccessibleBusinessMember()->get();
+                $business_members = $business->getActiveBusinessMember()->get();
                 foreach ($business_members as $business_member) {
                     $joining_date = $business_member->join_date;
                     if ($joining_date <= Carbon::now()->subMonth()) $joining_date = null;
