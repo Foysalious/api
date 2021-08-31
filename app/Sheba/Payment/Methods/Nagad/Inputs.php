@@ -50,11 +50,10 @@ class Inputs
      */
     public static function complete($transaction_id, Initialize $init, $amount, $call_back_url, NagadStore $store, $description): array
     {
-        Log::info(["description", $description]);
         $merchant_additional_info = json_encode(
             [
                 "Service Name" =>"Sheba.xyz",
-                "Purpose" =>  null
+                "Purpose" =>  $description
             ]
         );
 //        $merchant_additional_info = '{"Service Name": "Sheba.xyz"}';
