@@ -57,7 +57,7 @@ class Inputs
                 "Purpose" =>  $description
             ]
         );
-        $merchant_additional_info = '{"Service Name": "Sheba.xyz"}';
+//        $merchant_additional_info = '{"Service Name": "Sheba.xyz"}';
         $payment_data = [
             'merchantId' => $store->getMerchantId(),
             'orderId' => $transaction_id,
