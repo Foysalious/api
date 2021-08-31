@@ -118,11 +118,6 @@ class VoucherValidate
                 ->setMovieTicketOrders(collect())
                 ->setProfile();
         }
-
-
-
-
-
     }
 
     private function setPosOrderParams()
@@ -137,7 +132,7 @@ class VoucherValidate
     {
         $result = voucher($this->code)->checkForPosOrder($pos_order_params);
         $customer_mobile = $this->posCustomer->mobile;
-        return $customer_mobile ? $result->checkMobile($customer_mobile)->reveal() : $result->reveal();
+        return $customer_mobile && $this->partner->isMigrationCompleted() ? $result->checkMobile($customer_mobile)->reveal() : $result->reveal();
     }
 
     private function getPosCustomer()
