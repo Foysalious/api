@@ -1,23 +1,25 @@
 <?php namespace App\Transformers\Business;
 
+use App\Models\BusinessMember;
 use League\Fractal\TransformerAbstract;
-use App\Models\Member;
 
 class CoWorkerMinimumTransformer extends TransformerAbstract
 {
-    public function transform(Member $member)
+    public function transform(BusinessMember $business_member)
     {
-        $profile = $member->profile;
-        $role = $member->businessMember->role;
+        $profile = $business_member->profile();
+        $role = $business_member ? $business_member->role : null;
+        $business_department = $role ? $role->businessDepartment : null;
+
         return [
-            'id' => $member->businessMember->id,
+            'id' => $business_member ? $business_member->id : null,
             'profile' => [
                 'name' => $profile->name,
                 'pro_pic' => $profile->pro_pic
             ],
             'department' => $role ? [
-                'id' => $role->businessDepartment->id ,
-                'name' => $role->businessDepartment->name
+                'id' => $business_department ? $business_department->id : null,
+                'name' => $business_department ? $business_department->name : null
             ] : null,
             'designation' => $role ? $role->name : null
         ];

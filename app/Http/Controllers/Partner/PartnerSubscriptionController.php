@@ -4,8 +4,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Models\PartnerSubscriptionPackage;
 use App\Models\PartnerSubscriptionUpdateRequest;
-use App\Repositories\NotificationRepository;
 use App\Sheba\Subscription\Partner\PartnerSubscriptionChange;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +14,6 @@ use Sheba\Dal\PartnerSubscription\Status;
 use Sheba\ModificationFields;
 use Sheba\Partner\PartnerStatuses;
 use Sheba\Partner\StatusChanger;
-use Sheba\Subscription\Exceptions\AlreadyRunningSubscriptionRequestException;
 use Sheba\Subscription\Exceptions\HasAlreadyCollectedFeeException;
 use Sheba\Subscription\Partner\BillingType;
 use Sheba\Subscription\Partner\PartnerSubscription;
@@ -334,15 +333,45 @@ class PartnerSubscriptionController extends Controller
         }
     }
 
+    public function updateSubscriptionRenewalInfo(Request $request, PartnerSubscription $partnerSubscription)
+    {
+        try {
+            $this->validate(
+                $request,
+                [
+                    'auto_billing_activated' => 'boolean',
+                    'subscription_renewal_warning' => 'boolean',
+                    'renewal_warning_days' => 'numeric|min:0'
+                ]
+            );
+            /** @var Partner $partner */
+            $partner = $request->partner;
+            $updatePartner = $partnerSubscription->updateRenewSubscription($request->all(), $partner);
+            if ($updatePartner) {
+                $message = 'Subscription auto renewal updated';
+                return api_response($request, $message, 200, ['message' => $message]);
+            }
+        } catch (Exception $e) {
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
+        }
+    }
+
     private function createSubscriptionRequest(PartnerSubscriptionPackage $requested_package)
     {
-        $request          = \request();
-        $partner          = $request->partner;
+        $request = \request();
+        $partner = $request->partner;
         $running_discount = $requested_package->runningDiscount($request->billing_type);
         $this->setModifier($request->manager_resource);
-        $update_request_data = $this->withCreateModificationField([
-            'partner_id' => $partner->id, 'old_package_id' => $partner->package_id ?: 1, 'new_package_id' => $request->package_id, 'old_billing_type' => $partner->billing_type ?: BillingType::MONTHLY, 'new_billing_type' => $request->billing_type, 'discount_id' => $running_discount ? $running_discount->id : null
-        ]);
+        $update_request_data = $this->withCreateModificationField(
+            [
+                'partner_id' => $partner->id,
+                'old_package_id' => $partner->package_id ?: 1,
+                'new_package_id' => $request->package_id,
+                'old_billing_type' => $partner->billing_type ?: BillingType::MONTHLY,
+                'new_billing_type' => $request->billing_type,
+                'discount_id' => $running_discount ? $running_discount->id : null
+            ]
+        );
         return PartnerSubscriptionUpdateRequest::create($update_request_data);
     }
 
