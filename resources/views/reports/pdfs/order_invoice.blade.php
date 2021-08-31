@@ -48,7 +48,8 @@
                                     <div style="padding: 10px 20px;">
                                         <span style="">Bill to</span><br>
                                         <span style="">{{ucfirst($user['name'])}}</span><br>
-                                        <span style="">{{$user['mobile']}}</span>
+                                        <span style="">{{$user['mobile']}}</span><br>
+                                        <span style="">{{$user['address']}}</span>
                                     </div>
                                 @endif
                             </td>
