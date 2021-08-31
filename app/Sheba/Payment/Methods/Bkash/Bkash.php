@@ -112,7 +112,6 @@ class Bkash extends PaymentMethod
             'currency' => 'BDT',
             'intent' => $intent,
             'merchantInvoiceNumber' => $payment->gateway_transaction_id,
-            'merchantAssociationInfo' => $payment->payable->description
         ));
         $url = curl_init($this->url . '/checkout/payment/create');
         $header = array(
