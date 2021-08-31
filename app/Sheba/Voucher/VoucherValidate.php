@@ -102,25 +102,26 @@ class VoucherValidate
 
     private function resolvePosCustomer()
     {
-        if (!$this->posCustomerId && !$this->partner->isMigrationCompleted())
-            $customer = (new PosCustomerModel());
-        else if ($this->posCustomerId && !$this->partner->isMigrationCompleted())
-            $customer = PosCustomerModel::find($this->posCustomerId);
-        else
-            $customer = $this->getPosCustomer();
-
-        if (!$this->partner->isMigrationCompleted())
+        if (!$this->partner->isMigrationCompleted()) {
+            if (!$this->posCustomerId) $customer = (new PosCustomerModel());
+            else $customer = PosCustomerModel::find($this->posCustomerId);
             $this->posCustomer
                 ->setMobile(($profile = $customer->profile) ? $profile->mobile : null)
                 ->setId($customer->id)
                 ->setMovieTicketOrders($customer->movieTicketOrders)
                 ->setProfile($customer->profile);
-        else
+        } else {
+            $customer = $this->getPosCustomer();
             $this->posCustomer
-                ->setMobile($this->getPosCustomer()['mobile'])
+                ->setMobile($customer['mobile'])
                 ->setId()
                 ->setMovieTicketOrders(collect())
                 ->setProfile();
+        }
+
+
+
+
 
     }
 
