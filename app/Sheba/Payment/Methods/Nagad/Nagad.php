@@ -63,7 +63,7 @@ class Nagad extends PaymentMethod
 
             $resp = $this->client
                 ->setStore($this->store)
-                ->placeOrder($payment->gateway_transaction_id, $initResponse, $payable->amount, $this->VALIDATE_URL);
+                ->placeOrder($payment->gateway_transaction_id, $initResponse, $payable->amount, $this->VALIDATE_URL, $payable->description);
 
             if ($resp->hasError()) throw new Exception($resp->toString());
 
