@@ -54,7 +54,7 @@ class Updater
     private function makeData()
     {
         if ($this->requester->getLeaveTypeId()) $this->data['leave_type_id'] = $this->requester->getLeaveTypeId();
-        if ($this->requester->getTotalDays()) $this->data['total_days'] = $this->requester->getTotalDays();
+        if ($this->requester->getTotalDays() !== null) $this->data['total_days'] = $this->requester->getTotalDays();
         if ($this->requester->getNote()) $this->data['note'] = $this->requester->getNote();
     }
 }
