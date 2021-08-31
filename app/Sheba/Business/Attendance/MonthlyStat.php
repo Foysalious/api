@@ -89,7 +89,7 @@ class MonthlyStat
 
             if ($is_weekend_or_holiday || $is_on_leave) {
                 if ($this->forOneEmployee) $breakdown_data['weekend_or_holiday_tag'] = $this->isWeekendHolidayLeaveTag($date, $leaves_date_with_half_and_full_day, $dates_of_holidays_formatted);
-                if (!$this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day))$statistics['working_days']--;
+                if (!$this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['working_days']--;
                 if ($this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['full_day_leave']++;
                 if ($this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['half_day_leave'] += 0.5;
             }
@@ -98,9 +98,10 @@ class MonthlyStat
             $attendance = $attendances->where('date', $date->toDateString())->first();
 
             if ($attendance) {
-                $overtime_in_minutes = (int) $attendance->overtime_in_minutes;
+                $overtime_in_minutes = (int)$attendance->overtime_in_minutes;
                 $attendance_checkin_action = $attendance->checkinAction();
                 $attendance_checkout_action = $attendance->checkoutAction();
+
                 if ($this->forOneEmployee) {
                     $breakdown_data['show_attendance'] = 1;
                     $breakdown_data['attendance'] = [
@@ -110,14 +111,18 @@ class MonthlyStat
                             'time' => Carbon::parse($attendance->checkin_time)->format('h:i a'),
                             'is_remote' => $attendance_checkin_action->is_remote ?: 0,
                             'remote_mode' => $attendance_checkin_action->remote_mode ?: null,
-                            'address' => $attendance_checkin_action->is_remote ? json_decode($attendance_checkin_action->location)->address : null
+                            'address' => $attendance_checkin_action->is_remote ?
+                                $attendance_checkin_action->location ? json_decode($attendance_checkin_action->location)->address : null
+                                : null
                         ] : null,
                         'check_out' => $attendance_checkout_action ? [
                             'status' => $is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day) ? null : $attendance_checkout_action->status,
                             'time' => Carbon::parse($attendance->checkout_time)->format('h:i a'),
                             'is_remote' => $attendance_checkout_action->is_remote ?: 0,
                             'remote_mode' => $attendance_checkout_action->remote_mode ?: null,
-                            'address' => $attendance_checkout_action->is_remote ? json_decode($attendance_checkout_action->location)->address : null
+                            'address' => $attendance_checkout_action->is_remote ?
+                                $attendance_checkout_action->location ? json_decode($attendance_checkout_action->location)->address : null
+                                : null
                         ] : null,
                         'late_note' => (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance->hasLateCheckin()) ? $attendance->checkinAction()->note : null,
                         'left_early_note' => (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance->hasEarlyCheckout()) ? $attendance->checkoutAction()->note : null,

@@ -492,7 +492,7 @@ class OrderController extends Controller
                 ];
             }
             $invoice_name = 'pos_order_invoice_' . $pos_order->id;
-            $link         = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save(true);
+            $link         = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
             return api_response($request, null, 200, [
                 'message' => 'Successfully Download receipt',
                 'link'    => $link
@@ -539,7 +539,7 @@ class OrderController extends Controller
                 ];
             }
             $invoice_name = 'pos_order_invoice_' . $pos_order->id;
-            $link         = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save(true);
+            $link         = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
             return api_response($request, null, 200, [
                 'message' => 'Successfully Download receipt',
                 'link'    => $link
