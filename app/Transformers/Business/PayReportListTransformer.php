@@ -20,11 +20,10 @@ class PayReportListTransformer extends TransformerAbstract
      */
     public function transform(Payslip $payslip)
     {
-        $this->grossSalary = $this->getGrossSalary($payslip->businessMember);
         $business_member = $payslip->businessMember;
         $department = $business_member->department();
         $salary_breakdown = $payslip->salaryBreakdown();
-
+        $gross_salary_breakdown = $this->getGrossBreakdown($salary_breakdown);
         return [
             'id' => $payslip->id,
             'business_member_id' => $payslip->business_member_id,
@@ -32,24 +31,14 @@ class PayReportListTransformer extends TransformerAbstract
             'employee_name' => $business_member->profile()->name,
             'department' => $department ? $department->name : 'N/A',
             'schedule_date' => Carbon::parse($payslip->schedule_date)->format('Y-m-d'),
-            'gross_salary' => floatValFormat($this->grossSalary),
+            'gross_salary' => $this->grossSalary,
             'addition' => $this->getTotal($salary_breakdown, Type::ADDITION),
             'deduction' => $this->getTotal($salary_breakdown, Type::DEDUCTION),
             'net_payable' => $this->getTotal($salary_breakdown, self::NET_PAYABLE),
-            'gross_salary_breakdown' => $this->getGrossBreakdown($salary_breakdown),
+            'gross_salary_breakdown' => $gross_salary_breakdown,
             'addition_breakdown' => $this->getPayrollComponentBreakdown($salary_breakdown, Type::ADDITION),
             'deduction_breakdown' => $this->getPayrollComponentBreakdown($salary_breakdown, Type::DEDUCTION)
         ];
-    }
-
-
-    /**
-     * @param BusinessMember $business_member
-     * @return bool|DateTimeZone|float|int|string
-     */
-    private function getGrossSalary(BusinessMember $business_member)
-    {
-        return $business_member->salary ? $business_member->salary->gross_salary : 0;
     }
 
     /**
@@ -93,7 +82,10 @@ class PayReportListTransformer extends TransformerAbstract
 
         $final_data = [];
         foreach ($gross_salary_breakdown as $component => $component_value) {
-            if ($component == self::GROSS_SALARY) continue;
+            if ($component == self::GROSS_SALARY) {
+                $this->grossSalary = floatValFormat($component_value);
+                continue;
+            }
             $final_data[] = $this->componentBreakdown($component, $component_value);
         }
 
