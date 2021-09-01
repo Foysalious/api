@@ -25,6 +25,7 @@ class StatusUpdater
     private $note;
     private $date;
     private $geo;
+    private $oldStatus;
 
     public function __construct(VisitRepository $visit_repository,
                                 VisitNoteRepository $visit_note_repository, VisitStatusChangeLogRepo $status_change_log_repo)
@@ -41,6 +42,7 @@ class StatusUpdater
     public function setVisit(Visit $visit)
     {
         $this->visit = $visit;
+        $this->oldStatus = $visit->status;
         return $this;
     }
 
@@ -158,7 +160,7 @@ class StatusUpdater
     {
         $data = [
             'visit_id' => $this->visit->id,
-            'old_status' => $this->visit->status,
+            'old_status' => $this->oldStatus,
             'new_status' => $this->status,
         ];
 
