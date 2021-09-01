@@ -30,7 +30,8 @@ class TaxHistoryController extends Controller
         if (!$business_member) return api_response($request, null, 401);
         list($offset, $limit) = calculatePagination($request);
         $time_period = $this->timeFrame->forAMonth($request->month, $request->year);
-        $tax_report = $tax_history_list->setBusiness($business)->setTimePeriod($time_period)->get();
+        $tax_report = $tax_history_list->setBusiness($business)->setTimePeriod($time_period)
+                                       ->setSortKey($request->sort)->setSortColumn($request->sort_column)->get();
         $total_report_count = $tax_report->count();
         $total_tax_amount = $tax_report->sum('total_tax_amount_monthly');
         $tax_report = collect($tax_report)->splice($offset, $limit);
