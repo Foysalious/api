@@ -15,6 +15,11 @@ class UserMigrationRepository
         $this->repo = $repo;
     }
 
+    public function create(array $data)
+    {
+        return $this->repo->create($data);
+    }
+
     public function show($userId, $userType = UserType::PARTNER)
     {
         return $this->repo->where('user_id', $userId)->where('user_type', $userType)->first();
