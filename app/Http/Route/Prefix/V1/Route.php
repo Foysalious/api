@@ -236,7 +236,7 @@ class Route
 
                         $api->group(['prefix' => 'materials'], function ($api) {
                             $api->get('/', 'PartnerJobController@getMaterials');
-                            $api->post('/', 'PartnerJobController@addMaterial');
+                            $api->post('/', 'PartnerJobController@addMaterial')->middleware('concurrent_request:partner,update');
                             $api->put('/', 'PartnerJobController@updateMaterial');
                         });
                     });
