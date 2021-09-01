@@ -41,7 +41,7 @@ class TerminatingMiddleware
             $req = $request->getContent();
             $res = $response->getContent();
 
-            app('log')->debug(" 'method': $method, 'host': $host, 'full_url': $full_url,  'response_time': $response_time, 'req': $req, 'res': $res");
+            app('log')->debug(" method:$method host:$host full_url:$full_url response_time:$response_time req:$req res:$res");
         }
     }
 }
