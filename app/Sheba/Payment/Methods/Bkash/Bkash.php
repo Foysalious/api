@@ -108,11 +108,11 @@ class Bkash extends PaymentMethod
         $token = $token ? $token : $this->grantToken();
         $intent = 'sale';
         $create_pay_body = json_encode(array(
-            'amount' => $payment->payable->amount,
-            'currency' => 'BDT',
-            'intent' => $intent,
-            'merchantInvoiceNumber' => $payment->gateway_transaction_id
-        ));
+               'amount' => $payment->payable->amount,
+               'currency' => 'BDT',
+               'intent' => $intent,
+               'merchantInvoiceNumber' => $payment->gateway_transaction_id
+           ));
         $url = curl_init($this->url . '/checkout/payment/create');
         $header = array(
             'Content-Type:application/json',

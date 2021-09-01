@@ -79,7 +79,7 @@ class AttendanceController extends Controller
             'action' => 'required|string|in:' . implode(',', Actions::get()),
             'device_id' => 'string',
             'user_agent' => 'string',
-            'is_in_wifi_area' => 'required|numeric'
+            #'is_in_wifi_area' => 'required|numeric'
         ];
 
         $business_member = $this->getBusinessMember($request);
@@ -93,7 +93,7 @@ class AttendanceController extends Controller
             $validation_data += ['lat' => 'required|numeric', 'lng' => 'required|numeric'];
             $validation_data += ['remote_mode' => 'required|string|in:' . implode(',', RemoteMode::get())];
         }
-        $this->validate($request, $validation_data);
+        #$this->validate($request, $validation_data);
         $this->setModifier($business_member->member);
 
         $checkin = $action_processor->setActionName(Actions::CHECKIN)->getAction();
