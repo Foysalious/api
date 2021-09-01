@@ -35,15 +35,13 @@ class TerminatingMiddleware
     {
         if (defined('LARAVEL_START') and $request instanceof Request) {
             $method = $request->getMethod();
-            $url = $request->url();
             $full_url = $request->fullUrl();
-            $port = $request->getPort();
             $host = $request->getHost();
             $response_time = microtime(true) - LARAVEL_START;
             $req = $request->getContent();
             $res = $response->getContent();
 
-            app('log')->debug("'Response time', 'method': $method, 'url': $url, 'host': $host, 'full_url': $full_url, 'port': $port, 'response_time': $response_time, 'req': $req, 'res': $res");
+            app('log')->debug(" 'method': $method, 'host': $host, 'full_url': $full_url,  'response_time': $response_time, 'req': $req, 'res': $res");
         }
     }
 }
