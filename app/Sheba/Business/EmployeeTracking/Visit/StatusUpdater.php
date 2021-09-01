@@ -90,7 +90,7 @@ class StatusUpdater
      */
     public function setDate($date)
     {
-        $this->date = $date;
+        $this->date = $date. ' ' . Carbon::now()->format('H:i:s');
         return $this;
     }
 
@@ -139,7 +139,7 @@ class StatusUpdater
            'status' => $this->status
         ];
         if ($this->status === Status::STARTED) {
-            $data['start_date_time'] = Carbon::now()->format('Y-m-d H:i:s');
+            $data['start_date_time'] = Carbon::now()->format('Y-m-d H:i') . ':00';
         }
         if ($this->status === Status::RESCHEDULED) {
             $data['status'] = Status::CREATED;
@@ -147,8 +147,8 @@ class StatusUpdater
             $data['start_date_time'] = null;
         }
         if ($this->status === Status::COMPLETED) {
-            $data['end_date_time'] = Carbon::now()->format('Y-m-d H:i:s');
-            $data['total_time_in_minutes'] = Carbon::now()->diffInMinutes($this->visit->start_date_time);
+            $data['end_date_time'] = Carbon::now()->format('Y-m-d H:i') . ':59';
+            $data['total_time_in_minutes'] = Carbon::parse($data['end_date_time'])->diffInMinutes($this->visit->start_date_time);
         }
 
         $this->visitRepository->update($this->visit, $data);
@@ -158,6 +158,7 @@ class StatusUpdater
     {
         $data = [
             'visit_id' => $this->visit->id,
+            'old_status' => $this->visit->status,
             'new_status' => $this->status,
         ];
 
