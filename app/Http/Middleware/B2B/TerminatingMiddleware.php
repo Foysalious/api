@@ -38,7 +38,7 @@ class TerminatingMiddleware
             $full_url = $request->fullUrl();
             $host = $request->getHost();
             $response_time = microtime(true) - LARAVEL_START;
-            $req = $request->getContent();
+            $req = str_replace(array("\r\n", "\n", "\r", " "), '', $request->getContent());
             $res = $response->getContent();
 
             app('log')->debug(" method:$method host:$host full_url:$full_url response_time:$response_time req:$req res:$res");
