@@ -31,7 +31,7 @@ class UserMigrationController extends Controller
         $data = [
           'status'      => $request->status,
           'user_id'     => $request->user_id,
-          'user_type'   => $request->user_type,
+          'user_type'   => strtolower($request->user_type),
         ];
         $user = $this->userMigrationRepo->create($data);
         return api_response($request, $user, 200, ['data' => $user]);
