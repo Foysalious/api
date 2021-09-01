@@ -206,9 +206,11 @@ class AttendanceController extends Controller
 
         $total_members = $all_employee_attendance->count();
         if ($request->has('limit')) $all_employee_attendance = $all_employee_attendance->splice($offset, $limit);
+
+        if ($request->file == 'excel') {
+            return $monthly_excel->setMonthlyData($all_employee_attendance->toArray())->setStartDate($request->start_date)->setEndDate($request->end_date)->get();
+        }
         if ($all_employee_attendance->isEmpty()) return api_response($request, null, 404);
-        if ($request->file == 'excel') return $monthly_excel->setMonthlyData($all_employee_attendance->toArray())->setStartDate($request->start_date)
-            ->setEndDate($request->end_date)->get();
 
         return api_response($request, $all_employee_attendance, 200, ['all_employee_attendance' => $all_employee_attendance, 'total_members' => $total_members]);
     }
