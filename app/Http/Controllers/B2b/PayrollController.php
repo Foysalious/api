@@ -266,4 +266,40 @@ class PayrollController extends Controller
         return api_response($request, null, 200, ['pay_day_details' => $pay_day_details]);
     }
 
+    public function getMonthlyPayCycle(Request $request)
+    {
+        /** @var Business $business */
+        $business = $request->business;
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        /** @var PayrollSetting $payroll_setting */
+        $payroll_setting = $business->payrollSetting;
+        $pay_day_type = $request->pay_day_type;
+        if ($pay_day_type == PayDayType::FIXED_DATE){
+            $current_pay_day_start = Carbon::now()->subMonth()->day($request->pay_day);
+            $current_pay_day_end = Carbon::now()->day($request->pay_day)->subDay();
+            $prev_pay_day_start = Carbon::now()->subMonths(2)->day($request->pay_day);
+            $prev_pay_day_end = Carbon::now()->subMonth()->day($request->pay_day)->subDay();
+            $next_pay_day_start = Carbon::now()->day($request->pay_day);
+            $next_pay_day_end = Carbon::now()->addMonth()->day($request->pay_day)->subDay();
+        }
+        else if ($pay_day_type == PayDayType::LAST_WORKING_DAY){
+            $current_pay_day_start = $this->lastWorkingDayOfMonth($business, Carbon::now()->subMonth()->lastOfMonth());
+            $current_pay_day_end = $this->lastWorkingDayOfMonth($business, Carbon::now()->lastOfMonth()->subDay());
+            $prev_pay_day_start = $this->lastWorkingDayOfMonth($business, Carbon::now()->subMonths(2)->lastOfMonth());
+            $prev_pay_day_end = $current_pay_day_start->subDay();
+            $next_pay_day_start = $current_pay_day_end->addDay();
+            $next_pay_day_end = $this->lastWorkingDayOfMonth($business, Carbon::now()->addMonth()->lastOfMonth())->subDay();
+        }
+        $pay_day_cycle = [
+            'current_start' => $current_pay_day_start,
+            'current_end' => $current_pay_day_end,
+            'previous_start' => $prev_pay_day_start,
+            'previous_end' => $prev_pay_day_end,
+            'next_start' => $next_pay_day_start,
+            'next_end' => $next_pay_day_end
+        ];
+        return api_response($request, null, 200, ['pay_day_cycle' => $pay_day_cycle]);
+    }
+
 }
