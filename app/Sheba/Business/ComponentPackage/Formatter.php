@@ -82,11 +82,16 @@ class Formatter
         $current_time = Carbon::now();
         $business_pay_day = $payroll_setting->pay_day;
         $current_package_pay_generate_date = null;
-        if (!empty($last_generated_date)) $current_package_pay_generate_date = Carbon::parse($last_generated_date)->addMonths($period)->format('Y-m-d');
+        if (!empty($last_generated_date)) {
+            if ($payroll_setting->pay_day_type == PayDayType::FIXED_DATE) $current_package_pay_generate_date = Carbon::parse($last_generated_date)->addMonths($period)->format('Y-m-d');
+            else {
+                $last_day_of_month = Carbon::parse($last_generated_date)->lastOfMonth()->next()->lastOfMonth();
+                $current_package_pay_generate_date = $this->lastWorkingDayOfMonth($payroll_setting->business, $last_day_of_month)->format('Y-m-d');
+            }
+        }
         else if ($payroll_setting->pay_day_type == PayDayType::FIXED_DATE && $current_time->day < $business_pay_day) $current_package_pay_generate_date = $current_time->day($business_pay_day)->format('Y-m-d');
         else if ($payroll_setting->pay_day_type == PayDayType::FIXED_DATE && ($current_time->day > $business_pay_day || $current_time->day == $business_pay_day)) $current_package_pay_generate_date = $current_time->addMonth()->day($business_pay_day)->format('Y-m-d');
         else if ($payroll_setting->pay_day_type == PayDayType::LAST_WORKING_DAY) $current_package_pay_generate_date = $this->nextPayDay($payroll_setting, Carbon::now());
-
         return ['generated_at' => $current_package_pay_generate_date];
     }
 
