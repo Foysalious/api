@@ -38,7 +38,8 @@ class TerminatingMiddleware
             $full_url = $request->fullUrl();
             $host = $request->getHost();
             $response_time = microtime(true) - LARAVEL_START;
-            $req = str_replace(array("\r\n", "\n", "\r", " "), '', $request->getContent());
+            #$req = str_replace(array("\r\n", "\n", "\r", " "), '', $request->getContent());
+            $req = json_encode($request->except('access_token', 'auth_user', 'manager_member', 'business', 'business_member', 'token'));
             $res = $response->getContent();
 
             app('log')->debug(" method:$method host:$host full_url:$full_url response_time:$response_time req:$req res:$res");
