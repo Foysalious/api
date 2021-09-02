@@ -5,8 +5,9 @@ use Sheba\Pos\Order\PosOrderTypes;
 
 class PosOrderObject
 {
-    protected $id;
-    protected $sales_channel;
+    public $id;
+    public $sales_channel;
+    public $customer;
     protected $type = PosOrderTypes::OLD_SYSTEM;
 
     /**
@@ -38,6 +39,17 @@ class PosOrderObject
         $this->type = $type;
         return $this;
     }
+
+    /**
+     * @param mixed $customer
+     * @return PosOrderObject
+     */
+    public function setCustomer($customer): PosOrderObject
+    {
+        $this->customer = $customer;
+        return $this;
+    }
+
 
     public function get(): PosOrderObject
     {
