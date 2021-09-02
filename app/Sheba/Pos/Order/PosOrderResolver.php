@@ -2,6 +2,7 @@
 
 
 use App\Models\PosOrder;
+use App\Sheba\Pos\Order\PosOrderObject;
 use App\Sheba\PosOrderService\PosOrderServerClient;
 
 class PosOrderResolver
@@ -9,13 +10,15 @@ class PosOrderResolver
     private $orderId;
     /**  @var PosOrderServerClient */
     private $client;
+    /** @var PosOrderObject $order */
     private $order;
-    private $posOrderType;
+    /** @var PosOrderObject */
+    private $posOrderObject;
 
-    public function __construct(PosOrderServerClient $client)
+    public function __construct(PosOrderServerClient $client, PosOrderObject $posOrderObject)
     {
         $this->client = $client;
-        $this->posOrderType = PosOrderTypes::OLD_SYSTEM;
+        $this->posOrderObject = $posOrderObject;
     }
 
     /**
@@ -27,12 +30,11 @@ class PosOrderResolver
         $this->orderId = $orderId;
         $oldPosOrder = PosOrder::find($orderId);
         if ($oldPosOrder && !$oldPosOrder->is_migrated) {
-            $this->order = $oldPosOrder;
-            $this->posOrderType = PosOrderTypes::OLD_SYSTEM;
+            $this->order = $this->posOrderObject->setId($oldPosOrder->id)->setSalesChannel($oldPosOrder->sales_channel)->setType(PosOrderTypes::OLD_SYSTEM)->get();
         } else {
             $response = $this->client->get('api/v1/order-channel/' . $this->orderId);
-            $this->order = json_decode(json_encode($response['order']), FALSE);
-            $this->posOrderType = PosOrderTypes::NEW_SYSTEM;
+            $newPosOrder = json_decode(json_encode($response['order']), FALSE);
+            $this->order = $this->posOrderObject->setId($newPosOrder->id)->setSalesChannel($newPosOrder->sales_channel)->setType(PosOrderTypes::NEW_SYSTEM)->get();
         }
         return $this;
     }
@@ -40,10 +42,5 @@ class PosOrderResolver
     public function get()
     {
         return $this->order;
-    }
-
-    public function getPosOrderType()
-    {
-        return $this->posOrderType;
     }
 }
