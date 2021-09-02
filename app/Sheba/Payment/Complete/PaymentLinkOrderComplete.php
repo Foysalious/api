@@ -5,6 +5,7 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PosOrder;
 use App\Models\Profile;
+use App\Sheba\Pos\Order\PosOrderObject;
 use DB;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
@@ -182,9 +183,9 @@ class PaymentLinkOrderComplete extends PaymentComplete
     private function clearTarget()
     {
         $this->target = $this->paymentLink->getTarget();
-        if ($this->target instanceof PosOrder) {
+        if ($this->target instanceof PosOrderObject) {
             $payment_data    = [
-                'pos_order_id' => $this->target->id,
+                'pos_order_id' => $this->target->getId(),
                 'amount'       => $this->payment->payable->amount,
                 'method'       => $this->payment->payable->type,
                 'emi_month'    => $this->payment->payable->emi_month,
@@ -192,7 +193,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             ];
             /** @var PaymentCreator $payment_creator */
             $payment_creator = app(PaymentCreator::class);
-            $payment_creator->credit($payment_data);
+            $payment_creator->credit($payment_data, $this->target->getType());
         }
         if ($this->target instanceof ExternalPayment) {
             $this->target->payment_id = $this->payment->id;
@@ -228,12 +229,12 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $channel          = config('sheba.push_notification_channel_name.manager');
         $sound            = config('sheba.push_notification_sound.manager');
         $formatted_amount = number_format($payment_link->getAmount(), 2);
-        $event_type       = $this->target && $this->target instanceof PosOrder && $this->target->sales_channel == SalesChannels::WEBSTORE ? 'WebstoreOrder' : class_basename($this->target);
+        $event_type       = $this->target && $this->target instanceof PosOrderObject && $this->target->getSalesChannel() == SalesChannels::WEBSTORE ? 'WebstoreOrder' : (class_basename($this->target) instanceof PosOrderObject ? 'PosOrder' : class_basename($this->target));
         (new PushNotificationHandler())->send([
             "title"      => 'Order Successful',
             "message"    => "$formatted_amount Tk has been collected from {$payment_link->getPayer()->name} by order link- {$payment_link->getLinkID()}",
             "event_type" => $event_type,
-            "event_id"   => $this->target->id,
+            "event_id"   => $this->target->getId(),
             "sound"      => "notification_sound",
             "channel_id" => $channel
         ], $topic, $channel, $sound);
