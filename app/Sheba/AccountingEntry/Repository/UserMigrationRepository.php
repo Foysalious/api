@@ -34,4 +34,13 @@ class UserMigrationRepository
             ]
         );
     }
+
+    public function userStatus($userId, $userType = UserType::PARTNER)
+    {
+        $data = $this->show($userId, $userType);
+        if ($data && $data->status) {
+            return $data->status;
+        }
+        return null;
+    }
 }
