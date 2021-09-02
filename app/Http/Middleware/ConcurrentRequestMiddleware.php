@@ -29,13 +29,12 @@ class ConcurrentRequestMiddleware
 
         if (($data = Redis::get($key)) && ($action === 'collect' || $action === 'pay')){
             $data = json_decode($data, true);
-            return response()->json(['code' => 429, 'message' =>  $this->generateMsg($data) . ' You need to wait at least ' . $duration/60 . ' minutes before requesting again.']);
+            return response()->json(['code' => 429, 'message' =>  $this->generateMsg($data, $user) . ' You need to wait at least ' . $duration/60 . ' minutes before requesting again.']);
         }
 
         $value = ['created_at' => Carbon::now(), 'action' => $action, 'created_by' => $user];
         Redis::set($key, json_encode($value));
         Redis::expire($key, $duration);
-        dd('reached end');
         return $next($request);
     }
 
@@ -59,11 +58,15 @@ class ConcurrentRequestMiddleware
         }
     }
 
-    private function generateMsg($data)
+    private function generateMsg($data, $user)
     {
-        if ($data['action'] === 'pay' || $data['action'] === 'collect'){
-            return $data['created_by'] . ' requested to ' . $data['action'] . ' for this order a few seconds ago.';
+        if ($data['created_by'] === 'admin') $createdBy = 'An admin';
+        elseif ($data['created_by'] === $user) $createdBy = 'You';
+        else $createdBy = $data['created_by'];
+
+        if ($data['action'] === 'pay' || $data['action'] === 'collect' || $data['action'] === 'refund'){
+            return $createdBy . ' requested to ' . $data['action'] . ' for this order a few seconds ago.';
         }
-        return $data['created_by'] . ' requested to update the order a few seconds ago.';
+        return $createdBy . ' requested to update the order a few seconds ago.';
     }
 }
