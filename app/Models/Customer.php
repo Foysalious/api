@@ -2,6 +2,7 @@
 
 use App\Models\Transport\TransportTicketOrder;
 use App\Sheba\Payment\Rechargable;
+use Sheba\Dal\Customer\Events\CustomerCreated;
 use Sheba\Dal\Customer\Events\CustomerSaved;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Transactions\Types;
@@ -23,17 +24,19 @@ use Sheba\Transport\TransportAgent;
 use Sheba\Transport\TransportTicketTransaction;
 use Sheba\Voucher\Contracts\CanApplyVoucher;
 use Sheba\Voucher\VoucherGeneratorTrait;
+use Sheba\Dal\InfoCall\InfoCall;
 
 class Customer extends Authenticatable implements Rechargable, Rewardable, TopUpAgent, MovieAgent, TransportAgent, CanApplyVoucher, PayableUser, HasWalletTransaction, HasWallet
 {
     use TopUpTrait, MovieTicketTrait, Wallet, ReportUpdater, VoucherGeneratorTrait;
 
-    protected $fillable = ['name', 'mobile', 'email', 'password', 'fb_id', 'mobile_verified', 'email_verified', 'address', 'gender', 'dob', 'pro_pic', 'wallet', 'created_by', 'created_by_name', 'updated_by', 'updated_by_name', 'remember_token', 'reference_code', 'referrer_id', 'profile_id', 'has_rated_customer_app'];
+    protected $fillable = ['name', 'mobile', 'email', 'password', 'fb_id', 'mobile_verified', 'email_verified', 'address', 'gender', 'dob', 'pro_pic', 'wallet', 'created_by', 'created_by_name', 'updated_by', 'updated_by_name', 'remember_token', 'reference_code', 'referrer_id', 'profile_id', 'has_rated_customer_app','is_completed'];
     protected $hidden = ['password', 'remember_token',];
     protected $casts = ['wallet' => 'double'];
     private $firstOrder;
 
     public static $savedEventClass = CustomerSaved::class;
+    public static $createdEventClass = CustomerCreated::class;
 
     public function mobiles()
     {
@@ -283,5 +286,16 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
     public function getMobile()
     {
         return $this->profile->mobile;
+    }
+
+    public function getName()
+    {
+        return $this->profile->name;
+    }
+
+    public function isCompleted()
+    {
+        $profile = $this->profile;
+        return $profile->name && $profile->gender && $profile->dob;
     }
 }

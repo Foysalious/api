@@ -2,6 +2,7 @@
 
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\VoucherController;
 use App\Sheba\PosOrderService\Services\OrderService;
 use Illuminate\Http\Request;
 
@@ -38,6 +39,7 @@ class OrderController extends Controller
     {
         $partner = $request->auth_user->getPartner();
         $response = $this->orderService
+            ->setToken(bearerToken($request))
             ->setPartnerId($partner->id)
             ->setCustomerId($request->customer_id)
             ->setDeliveryAddress($request->delivery_address)
@@ -45,6 +47,11 @@ class OrderController extends Controller
             ->setDeliveryCharge($request->delivery_charge)
             ->setStatus($request->status)
             ->setSkus($request->skus)
+            ->setDiscount($request->discount)
+            ->setPaymentMethod($request->payment_method)
+            ->setPaymentLinkAmount($request->payment_link_amount)
+            ->setPaidAmount($request->paid_amount)
+            ->setVoucherId($request->voucher_id)
             ->store();
         return http_response($request, null, 200, $response);
 
@@ -66,9 +73,7 @@ class OrderController extends Controller
         $partner = $request->auth_user->getPartner();
         $response = $this->orderService
             ->setPartnerId($partner->id)
-            ->setCustomerId($request->customer_id)
             ->setOrderId($order_id)
-            ->setStatus($request->status)
             ->setSalesChannelId($request->sales_channel_id)
             ->setSkus($request->skus)
             ->setEmiMonth($request->emi_month)
@@ -80,6 +85,8 @@ class OrderController extends Controller
             ->setDeliveryAddress($request->delivery_address)
             ->setNote($request->note)
             ->setVoucherId($request->voucher_id)
+            ->setDiscount($request->discount)
+            ->setToken($request->header('Authorization'))
             ->update();
         return http_response($request, null, 200, $response);
     }
@@ -89,6 +96,16 @@ class OrderController extends Controller
         $partner = $request->auth_user->getPartner();
         $response = $this->orderService->setPartnerId($partner->id)->setOrderId($order_id)->delete();
         return http_response($request, null, 200, $response);
+    }
+
+    public function validatePromo(Request $request)
+    {
+        $this->validate($request, [
+            'code' => 'required|string',
+        ]);
+        /** @var VoucherController $promoValidator */
+        $promoValidator = app(VoucherController::class);
+        return $promoValidator->validateVoucher($request);
     }
 
 }

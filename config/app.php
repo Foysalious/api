@@ -110,7 +110,7 @@ return [
     |
     */
 
-    'log' => env('APP_LOG', 'single'),
+    'log' => env('APP_LOG', 'daily'),
 
     /*
     |--------------------------------------------------------------------------
@@ -178,7 +178,8 @@ return [
         Sheba\Pos\Repositories\PosRepositoryServiceProvider::class,
         Sheba\Dal\Providers\DalEventsListenerProvider::class,
         Sheba\Report\Listeners\ReportUpdateProvider::class,
-        Sheba\Logistics\Listeners\EventsProvider::class
+        Sheba\Logistics\Listeners\EventsProvider::class,
+        Sheba\Elasticsearch\ServiceProvider::class
     ],
 
     /*
@@ -233,5 +234,6 @@ return [
         'Image' => Intervention\Image\Facades\Image::class,
         'Excel' => Maatwebsite\Excel\Facades\Excel::class,
         'PDF' => Barryvdh\DomPDF\Facade::class,
+        'Elasticsearch' => Sheba\Elasticsearch\Facade::class
     ]
 ];

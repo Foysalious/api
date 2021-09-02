@@ -11,6 +11,7 @@ use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessMember;
 use Sheba\Attachments\FilesAttachment;
+use Sheba\FileManagers\FileManager;
 use Sheba\Business\BusinessCommonInformationCreator;
 use Sheba\Business\BusinessCreator;
 use Sheba\Business\BusinessCreatorRequest;
@@ -18,16 +19,19 @@ use Sheba\Business\BusinessMember\Requester as BusinessMemberRequester;
 use Sheba\Business\BusinessMember\Creator as BusinessMemberCreator;
 use Sheba\Business\BusinessUpdater;
 use Sheba\Business\CoWorker\Statuses;
+use Sheba\Business\CoWorker\UpdaterV2 as Updater;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use App\Models\Member;
 use Carbon\Carbon;
+use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
 use Throwable;
 use DB;
 
 class MemberController extends Controller
 {
-    use ModificationFields, FilesAttachment;
+    use ModificationFields, FilesAttachment, FileManager;
+
     /** BusinessMemberRequester $businessMemberRequester */
     private $businessMemberRequester;
     /** BusinessMemberCreator $businessMemberCreator */
@@ -65,10 +69,12 @@ class MemberController extends Controller
                 'no_employee' => 'sometimes|required|integer',
                 'lat' => 'sometimes|required|numeric',
                 'lng' => 'sometimes|required|numeric',
-                'address' => 'required|string',
+                'address' => 'string',
                 'mobile' => 'sometimes|required|string|mobile:bd',
+                'company_logo' => 'file',
             ]);
             $member = Member::find($member);
+
             $this->setModifier($member);
             $business_creator_request = $business_creator_request->setName($request->name)
                 ->setEmployeeSize($request->no_employee)
@@ -83,6 +89,13 @@ class MemberController extends Controller
                 $business = $business_creator->setBusinessCreatorRequest($business_creator_request)->create();
                 $common_info_creator->setBusiness($business)->setMember($member)->create();
                 $this->createBusinessMember($business, $member);
+            }
+            if ($request->hasFile('company_logo')) {
+                $file = $request->company_logo;
+                $filename = $file->getClientOriginalName();
+                $url = $this->saveFileToCDN($file, getBusinessLogoFolder(), $filename);
+                $business_creator_request = $business_creator_request->setLogoUrl($url);
+                $business_updater->setBusiness($business)->setBusinessCreatorRequest($business_creator_request)->updateLogo();
             }
             DB::commit();
             return api_response($request, null, 200, ['business_id' => $business->id]);
@@ -132,8 +145,9 @@ class MemberController extends Controller
             "sub_domain" => $business->sub_domain,
             "tagline" => $business->tagline,
             "company_type" => $business->type,
+            'company_logo' => $this->isDefaultImage($business->logo) ? null : $business->logo,
             "address" => $business->address,
-            "area" => $location->name,
+            "area" => $location ? $location->name : null,
             "geo_informations" => $geo_information,
             "wallet" => (double)$business->wallet,
             "employee_size" => $business->employee_size
@@ -161,23 +175,24 @@ class MemberController extends Controller
             });
             if (!$business_members->count()) return api_response($request, null, 420, ['message' => 'You account deactivated from this company']);
         }
-
+        $business_member = $member->businessMember;
         $profile = $member->profile;
-        $access_control->setBusinessMember($member->businessMember);
+        $access_control->setBusinessMember($business_member);
         $info = [
             'profile_id' => $profile->id,
             'name' => $profile->name,
-            'mobile' => $profile->mobile,
+            'mobile' => $business_member->mobile,
             'email' => $profile->email,
             'pro_pic' => $profile->pro_pic,
-            'designation' => ($member->businessMember && $member->businessMember->role) ? $member->businessMember->role->name : null,
+            'designation' => ($business_member && $business_member->role) ? $business_member->role->name : null,
             'gender' => $profile->gender,
             'date_of_birth' => $profile->dob ? Carbon::parse($profile->dob)->format('M-j, Y') : null,
             'nid_no' => $profile->nid_no,
             'address' => $profile->address,
             'business_id' => $business ? $business->id : null,
             'remember_token' => $member->remember_token,
-            'is_super' => $member->businessMember ? $member->businessMember->is_super : null,
+            'is_super' => $business_member ? $business_member->is_super : null,
+            'is_payroll_enable' => $business->is_payroll_enable,
             'access' => [
                 'support' => $business ? (in_array($business->id, config('business.WHITELISTED_BUSINESS_IDS')) && $access_control->hasAccess('support.rw') ? 1 : 0) : 0,
                 'expense' => $business ? (in_array($business->id, config('business.WHITELISTED_BUSINESS_IDS')) && $access_control->hasAccess('expense.rw') ? 1 : 0) : 0,
@@ -279,5 +294,41 @@ class MemberController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function updateMemberInfo($business, $member, Request $request, MemberRepositoryInterface $member_repository, Updater $profile_updater)
+    {
+        $validation_rules = [
+            'name' => 'required|string',
+            'email' => 'required|email|string'
+        ];
+        if ($request->has('mobile')) $validation_rules['mobile'] = 'string|mobile:bd';
+        $this->validate($request, $validation_rules);
+
+        /** @var Member $member */
+        $member = $member_repository->find((int)$member);
+        if (!$member) return api_response($request, null, 404);
+        $business_member = $member->businessMember;
+        if (!$business_member) return api_response($request, null, 404);
+        $business = $business_member ? $business_member->business : null;
+        if (!$business) return api_response($request, null, 404);
+
+        $profile_updater->setBusinessMember($business_member)
+            ->setName($request->name)
+            ->setMobile($request->mobile)
+            ->setEmail($request->email);
+
+        if ($profile_updater->hasError()) return api_response($request, null, $profile_updater->getErrorCode(), ['message' => $profile_updater->getErrorMessage()]);
+
+        $profile_updater->update();
+
+        return api_response($request, null, 200);
+    }
+
+    public function isDefaultImage($logo_url)
+    {
+        $path_info = pathinfo($logo_url);
+        if (!in_array($path_info['extension'], ['png', 'jpg', 'jpeg', 'svg', 'gif']) || strtolower($path_info['filename']) == 'default') return 1;
+        return 0;
     }
 }

@@ -73,7 +73,7 @@ class ProrateController extends Controller
                             }
                         ]);
                 }, 'leaveType' => function ($query) {
-                    $query->select('id', 'business_id', 'title');
+                    $query->withTrashed()->select('id', 'business_id', 'title');
                 }
             ]);
             $prorates = $prorates->whereHas('businessMember', function ($q) use ($business_department) {

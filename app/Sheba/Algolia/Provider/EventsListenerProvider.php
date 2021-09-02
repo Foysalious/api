@@ -2,7 +2,7 @@
 
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Support\ServiceProvider;
-use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceSaved as PartnerPosServiceSavedEvent;
+use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceSaved as PartnerPosServiceSaved;
 use App\Sheba\Algolia\Listeners\PartnerPosServiceSaved as PartnerPosServiceSavedListener;
 
 class EventsListenerProvider extends ServiceProvider
@@ -23,8 +23,8 @@ class EventsListenerProvider extends ServiceProvider
     public function boot(Dispatcher $events)
     {
         parent::boot($events);
-        $events->listen(PartnerPosServiceSavedEvent::class, PartnerPosServiceSavedListener::class);
+        $events->listen(PartnerPosServiceSaved::class, PartnerPosServiceSavedListener::class);
     }
 
 
-    }
+}

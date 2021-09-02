@@ -30,6 +30,7 @@ class ProductService
     protected $discountAmount;
     protected $discountEndDate;
     protected $productDetails;
+    protected $offset;
 
     public function __construct(InventoryServerClient $client)
     {
@@ -204,9 +205,14 @@ class ProductService
         return $this;
     }
 
-    public function getAllProducts($partner_id)
+    public function getAllProducts($partnerId)
     {
-        $url = 'api/v1/partners/' . $partner_id . '/products';
+        $url = 'api/v1/partners/' . $partnerId . '/products?';
+        if (isset($this->limit)) $url .= 'offset='.$this->offset.'&limit='.$this->limit.'&';
+        if (isset($this->category_ids)) $url .= 'category_ids='.$this->category_ids.'&';
+        if (isset($this->sub_category_ids)) $url .= 'sub_category_ids='.$this->sub_category_ids.'&';
+        if (isset($this->updated_after)) $url .= 'updated_after='.$this->updated_after . '&';
+        if (isset($this->is_published_for_webstore)) $url .= 'is_published_for_webstore=' . $this->is_published_for_webstore;
         return $this->client->get($url);
     }
 
@@ -277,6 +283,11 @@ class ProductService
     public function delete()
     {
         return $this->client->delete('api/v1/partners/'.$this->partnerId.'/products/'.$this->productId);
+    }
+
+    public function getLogs()
+    {
+        return $this->client->get('api/v1/partners/'. $this->partnerId . '/products/' .  $this->productId . '/logs');
     }
 
 }

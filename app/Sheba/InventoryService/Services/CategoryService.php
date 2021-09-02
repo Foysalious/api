@@ -12,7 +12,9 @@ class CategoryService
     public $categoryId;
     public $parentId;
     public $client;
+    public $subCategories;
     protected $thumb;
+    private $updatedAfter;
 
     public function __construct(InventoryServerClient $client)
     {
@@ -60,9 +62,30 @@ class CategoryService
         return $this;
     }
 
+    /**
+     * @param mixed $subCategories
+     */
+    public function setSubCategories($subCategories)
+    {
+        $this->subCategories = $subCategories;
+        return $this;
+    }
+
+    /**
+     * @param mixed $updatedAfter
+     * @return CategoryService
+     */
+    public function setUpdatedAfter($updatedAfter)
+    {
+        $this->updatedAfter = $updatedAfter;
+        return $this;
+    }
+
+
     public function getAllMasterCategories($partner_id)
     {
-        $url = 'api/v1/partners/'.$partner_id.'/categories';
+        $url = 'api/v1/partners/'.$partner_id.'/categories?';
+        if($this->updatedAfter) $url .= 'updated_after='.$this->updatedAfter;
         return $this->client->get($url);
     }
 
@@ -105,6 +128,12 @@ class CategoryService
         return $this->client->put('api/v1/partners/'.$this->partnerId.'/categories/'.$this->categoryId, $data, true);
     }
 
+    public function storeCategoryWithSubCategory()
+    {
+        $data = $this->makeStoreDataForCategoryWithSubCategory();
+        return $this->client->post('api/v1/partners/'.$this->partnerId.'/category-with-sub-category', $data, true);
+    }
+
     public function delete()
     {
         $data = $this->makeUpdateData();
@@ -113,9 +142,33 @@ class CategoryService
 
     public function getallcategory($partner_id)
     {
-        $url = 'api/v1/partners/'.$partner_id.'/category-tree';
+        $url = 'api/v1/partners/'.$partner_id.'/category-tree?';
+        if($this->updatedAfter) $url .= 'updated_after='.$this->updatedAfter;
 
         return $this->client->get($url);
     }
 
+    public function makeStoreDataForCategoryWithSubCategory()
+    {
+        $data =  [
+            ['name' => 'category_name', 'contents' => $this->categoryName],
+            ['name' => 'modifier', 'contents' => $this->modifier],
+            [
+                'name' => 'category_thumb',
+                'contents' => $this->thumb ? File::get($this->thumb->getRealPath()) : null,
+                'filename' => $this->thumb ? $this->thumb->getClientOriginalName() : ''
+            ],
+        ];
+        $sub_category = [];
+        foreach ( $this->subCategories as $key=>$value) {
+            $sub_category [] =  ['name' => "sub_category[$key][name]", 'contents' => $value['name']];
+            $this->thumb = $value['thumb'];
+            $sub_category [] = [
+                'name' => "sub_category[$key][thumb]",
+                'contents' => $this->thumb ? File::get($this->thumb->getRealPath()) : null,
+                'filename' => $this->thumb ? $this->thumb->getClientOriginalName() : ''
+            ];
+        }
+        return array_merge_recursive($data,$sub_category);
+    }
 }

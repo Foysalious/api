@@ -96,7 +96,7 @@ class SmsCampaign
             $this->receiverRepo->create([
                 'sms_campaign_order_id' => $campaign_order->id,
                 'receiver_number' => $message->to,
-                'receiver_name' => $this->customers ? $this->customers[$index]['name'] : null,
+                'receiver_name' => $this->customers && $this->customers[$index] && $this->customers[$index]['name'] ? $this->customers[$index]['name'] : null,
                 'message_id' => $message->messageId,
                 'status' => Status::PENDING,
                 'sms_count' => $this->smsCount

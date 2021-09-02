@@ -3,6 +3,8 @@
 use App\Exceptions\MailgunClientException;
 use App\Http\Controllers\Controller;
 use App\Models\Profile;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Cache;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -79,7 +81,9 @@ class PasswordController extends Controller
     private function sendPasswordResetSms($mobile, $reset_token)
     {
         $sms = new Sms(); //app(Sms::class);
-        $sms->shoot($mobile, 'Your password reset code is ' . $reset_token . ' . This code will be valid for only 10 minutes.');
+        $sms->setFeatureType(FeatureType::COMMON)
+            ->setBusinessType(BusinessType::COMMON)
+            ->shoot($mobile, 'Your password reset code is ' . $reset_token . ' . This code will be valid for only 10 minutes.');
     }
 
     public function validatePasswordResetCode(Request $request)

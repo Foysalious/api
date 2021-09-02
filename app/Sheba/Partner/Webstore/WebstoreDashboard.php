@@ -84,6 +84,8 @@ class WebstoreDashboard
         $stats['order_stats'] = $this->getOrderStats();
         $stats['sales_stats'] = $this->getSalesStats();
         $stats['is_inventory_empty'] = !$this->partner->posServices()->count() ? 1 : 0;
+        $stats['is_registered_for_delivery'] = $this->partner->deliveryInformation ? 1 :0;
+        $stats['delivery_charge'] = $this->partner->delivery_charge;
         return $stats;
     }
 }

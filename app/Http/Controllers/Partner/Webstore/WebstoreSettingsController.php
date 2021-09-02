@@ -42,25 +42,26 @@ class WebstoreSettingsController extends Controller
      */
     public function update($partner, Request $request, WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest)
     {
+
         $this->validate($request, [
-                'is_webstore_published' => 'sometimes|numeric|between:0,1', 'name' => 'sometimes|string',
-                'sub_domain' => 'sometimes|string', 'delivery_charge' => 'sometimes|numeric'
-        ]);
-        $is_webstore_published = 0 ;
+            'is_webstore_published' => 'sometimes|numeric|between:0,1', 'name' => 'sometimes|string',
+            'sub_domain' => 'sometimes|string', 'delivery_charge' => 'sometimes|numeric|digits_between:1,5'
+        ],
+            [
+                'delivery_charge.digits_between' => 'ডেলিভারি চার্জ ৫ সংখ্যার মধ্যে হওয়া আবশ্যক।'
+            ]);
+
+        $is_webstore_published = 0;
         $partner_id = $request->partner->id;
         $this->setModifier($request->manager_resource);
         $webstoreSettingsUpdateRequest->setPartner($request->partner);
         if ($request->has('is_webstore_published')) {
             if ($request->is_webstore_published) AccessManager::checkAccess(AccessManager::Rules()->POS->ECOM->WEBSTORE_PUBLISH, $request->partner->subscription->getAccessRules());
-
             $webstoreSettingsUpdateRequest->setIsWebstorePublished($request->is_webstore_published);
             $is_webstore_published = 1;
         }
         if ($request->has('name')) $webstoreSettingsUpdateRequest->setName($request->name);
-        if ($request->has('sub_domain')) {
-            if ($this->subDomainAlreadyExist($request->sub_domain)) return api_response($request, null,400, ['message' => 'এই লিংক-টি ইতোমধ্যে ব্যবহৃত হয়েছে!']);
-            $webstoreSettingsUpdateRequest->setSubDomain($request->sub_domain);
-        }
+        if ($request->has('sub_domain')) $webstoreSettingsUpdateRequest->setSubDomain($request->sub_domain);
         if ($request->has('delivery_charge')) $webstoreSettingsUpdateRequest->setDeliveryCharge($request->delivery_charge);
         if ($request->has('has_webstore')) $webstoreSettingsUpdateRequest->setHasWebstore($request->has_webstore);
         $webstoreSettingsUpdateRequest->update();
@@ -77,15 +78,10 @@ class WebstoreSettingsController extends Controller
                 ]));
             }
         }
-        return api_response($request, null,200, ['message' => 'Successful']);
+        return api_response($request, null, 200, ['message' => 'Successful']);
 
     }
 
-    private function subDomainAlreadyExist($sub_domain)
-    {
-        if (Partner::where('sub_domain', $sub_domain)->exists()) return true;
-        return false;
-    }
 
     /**
      * @param Request $request
@@ -108,12 +104,12 @@ class WebstoreSettingsController extends Controller
      */
     public function updateBanner(Request $request, $partner, WebstoreBannerSettings $webstoreBannerSettings)
     {
-            $partner_id = $request->partner->id;
-            $this->setModifier($request->manager_resource);
-            $banner_settings = PartnerWebstoreBanner::where('partner_id', $partner_id)->first();
-            if (!$banner_settings)
-                return api_response($request, null, 400, ['message' => 'Banner Settings not found']);
-            $webstoreBannerSettings->setBannerSettings($banner_settings)->setData($request->all())->update();
-            return api_response($request, null, 200, ['message' => 'Banner Settings Updated Successfully']);
+        $partner_id = $request->partner->id;
+        $this->setModifier($request->manager_resource);
+        $banner_settings = PartnerWebstoreBanner::where('partner_id', $partner_id)->first();
+        if (!$banner_settings)
+            return api_response($request, null, 400, ['message' => 'Banner Settings not found']);
+        $webstoreBannerSettings->setBannerSettings($banner_settings)->setData($request->all())->update();
+        return api_response($request, null, 200, ['message' => 'Banner Settings Updated Successfully']);
     }
 }

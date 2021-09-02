@@ -114,12 +114,14 @@ class Creator
             if ($upsell_unit_price) $this->priceCalculation->setUpsellUnitPrice($upsell_unit_price);
             $unit_price = $upsell_unit_price ? $upsell_unit_price : $this->priceCalculation->getUnitPrice();
             $total_original_price = $this->priceCalculation->getTotalOriginalPrice();
+            $this->discountCalculation->setService($service)->setLocationService($location_service)->setOriginalPrice($unit_price*$selected_service->getQuantity())->calculate();
             $service_data = [
                 'service_id' => $service->id,
                 'job_id' => $this->job->id,
                 'quantity' => $selected_service->getQuantity(),
                 'unit_price' => $unit_price,
                 'min_price' => $selected_service->getCategory()->isRentACarOutsideCity() ? 0 : $this->priceCalculation->getMinPrice(),
+                'discount' => $this->discountCalculation->getJobServiceDiscount(),
                 'sheba_contribution' => $this->discountCalculation->getShebaContribution(),
                 'partner_contribution' => $this->discountCalculation->getPartnerContribution(),
                 'location_service_discount_id' => $this->discountCalculation->getDiscountId(),

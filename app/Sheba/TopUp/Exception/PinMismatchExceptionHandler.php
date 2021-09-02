@@ -9,7 +9,7 @@ class PinMismatchExceptionHandler extends Handler
 
     public function render()
     {
-        /** @var  $exception PinMismatchException */
+        /** @var $exception PinMismatchException */
         $exception = $this->exception;
         $response = [
             'code' => $this->getCode(),

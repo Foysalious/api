@@ -6,9 +6,9 @@ use GuzzleHttp\Exception\GuzzleException;
 
 class TPProxyClient
 {
+    protected $proxyUrl;
     /** @var HttpClient */
     private $httpClient;
-    protected $proxyUrl;
 
     public function __construct(HttpClient $client)
     {

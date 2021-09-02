@@ -1,24 +1,72 @@
 <?php namespace App\Models;
 
-use AlgoliaSearch\Laravel\AlgoliaEloquentTrait;
+use Sheba\Dal\PartnerPosServiceBatch\Model as PartnerPosServiceBatch;
+use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceCreated;
 use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceSaved;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Sheba\Dal\BaseModel;
+use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceUpdated;
 use Sheba\Dal\PartnerPosServiceImageGallery\Model as PartnerPosServiceImageGallery;
+use Sheba\Elasticsearch\ElasticsearchTrait;
 
 
 class PartnerPosService extends BaseModel
 {
-    use SoftDeletes, AlgoliaEloquentTrait;
+    use SoftDeletes, ElasticsearchTrait;
 
     protected $guarded = ['id'];
     protected $casts = ['cost' => 'double', 'price' => 'double', 'stock' => 'double', 'vat_percentage' => 'double', 'show_image' => 'int'];
     protected $dates = ['deleted_at'];
 
     public static $savedEventClass = PartnerPosServiceSaved::class;
+    public static $updatedEventClass = PartnerPosServiceUpdated::class;
+    public static $createdEventClass = PartnerPosServiceCreated::class;
+
     public static $autoIndex = false;
+    protected $indexSettings = [
+        'analysis' => [
+            "analyzer" => [
+                "pos_service_search_analyzer" => [
+                    "type" => "standard",
+                    "filter" => ["lowercase", "asciifolding"],
+                    "max_token_length" => 2,
+                ]
+            ]
+        ],
+    ];
+    protected $mappingProperties = [
+        'id' => ['type' => 'integer'],
+        'partner_id' => ['type' => 'integer'],
+        'pos_category_id' => ['type' => 'integer'],
+        'name' => ['type' => 'text', 'analyzer' => 'pos_service_search_analyzer'],
+        'description' => ['type' => 'text', 'analyzer' => 'pos_service_search_analyzer'],
+        'stock' => ['type' => 'double'],
+        'is_published_for_shop' => ['type' => 'integer'],
+        'created_at' => ['type' => 'date', "format" => "yyyy-MM-dd HH:mm:ss"],
+        'updated_at' => ['type' => 'date', "format" => "yyyy-MM-dd HH:mm:ss"]
+    ];
+
+    public function getIndexDocumentData(): array
+    {
+        return [
+            'id' => $this->id,
+            'partner_id' => $this->partner_id,
+            'pos_category_id' => $this->pos_category_id,
+            'name' => $this->name,
+            'description' => $this->description,
+            'stock' => (double)$this->stock,
+            'is_published_for_shop' => +$this->is_published_for_shop,
+            'created_at' => $this->created_at->toDateTimeString(),
+            'updated_at' => $this->updated_at->toDateTimeString(),
+        ];
+    }
+
+    public function getIndexName(): string
+    {
+        return $this->getTable();
+    }
 
     public $algoliaSettings = [
         'searchableAttributes' => [
@@ -118,7 +166,7 @@ class PartnerPosService extends BaseModel
 
     public function getDiscountPercentage()
     {
-        if($this->price == 0)
+        if ($this->price == 0)
             return 0;
         $discount = $this->discount();
         if ($discount->is_amount_percentage)
@@ -149,9 +197,9 @@ class PartnerPosService extends BaseModel
     public function getAlgoliaRecord()
     {
         return [
-            'id' => (int) $this->id,
-            'partner_id' => (int) $this->partner_id,
-            'category_id' => (int) $this->pos_category_id,
+            'id' => (int)$this->id,
+            'partner_id' => (int)$this->partner_id,
+            'category_id' => (int)$this->pos_category_id,
             'category_name' => $this->category->name,
             'name' => $this->name,
             'stock' => (double)$this->stock,
@@ -164,6 +212,19 @@ class PartnerPosService extends BaseModel
 
     public function scopeWebstorePublishedServiceByPartner($query, $partner_id)
     {
-        return $query->where('partner_id', $partner_id)->where('publication_status',1)->where('is_published_for_shop',1);
+        return $query->where('partner_id', $partner_id)->where('publication_status', 1)->where('is_published_for_shop', 1);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isWebstorePublished(): bool
+    {
+        return $this->is_published_for_shop == 1;
+    }
+
+    public function stock()
+    {
+        return $this->hasMany(PartnerPosServiceBatch::class);
     }
 }

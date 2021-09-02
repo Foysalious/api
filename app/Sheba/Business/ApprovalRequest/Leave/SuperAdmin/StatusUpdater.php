@@ -1,14 +1,18 @@
 <?php namespace Sheba\Business\ApprovalRequest\Leave\SuperAdmin;
 
 use App\Models\BusinessMember;
+use Illuminate\Support\Facades\DB;
+use Sheba\Business\LeaveRejection\Requester as LeaveRejectionRequester;
 use Sheba\Dal\ApprovalRequest\Status;
 use Sheba\Dal\Leave\Contract as LeaveRepository;
 use Sheba\Dal\Leave\Model as Leave;
+use Sheba\Dal\LeaveRejection\LeaveRejectionRepository;
 use Sheba\ModificationFields;
 use Sheba\Dal\LeaveLog\Contract as LeaveLogRepo;
 use Sheba\Business\Leave\SuperAdmin\LeaveEditType as EditType;
 use Sheba\PushNotificationHandler;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface as BusinessMemberRepo;
+use Throwable;
 
 class StatusUpdater
 {
@@ -26,16 +30,22 @@ class StatusUpdater
     private $businessMemberRepo;
     /** @var PushNotificationHandler $pushNotificationHandler */
     private $pushNotificationHandler;
+    /*** @var LeaveRejectionRequester */
+    private $leaveRejectionRequester;
+    private $leaveRejectionData;
+    /*** @var LeaveRejectionRepository */
+    private $leaveRejectionRepository;
 
 
     public function __construct(LeaveRepository $leave_repository, BusinessMemberRepo $business_member_repo,
-                                LeaveLogRepo $leave_log_repo, PushNotificationHandler $push_notification_handler)
+                                LeaveLogRepo $leave_log_repo, PushNotificationHandler $push_notification_handler, LeaveRejectionRepository $leave_rejection_repository)
     {
         $this->leaveRepository = $leave_repository;
         $this->leaveLogRepo = $leave_log_repo;
         $this->isLeaveAdjustment = false;
         $this->businessMemberRepo = $business_member_repo;
         $this->pushNotificationHandler = $push_notification_handler;
+        $this->leaveRejectionRepository = $leave_rejection_repository;
     }
 
     public function setLeave(Leave $leave)
@@ -47,6 +57,12 @@ class StatusUpdater
     public function setStatus($status)
     {
         $this->status = $status;
+        return $this;
+    }
+
+    public function setLeaveRejectionRequester(LeaveRejectionRequester $leave_rejection_requester)
+    {
+        $this->leaveRejectionRequester = $leave_rejection_requester;
         return $this;
     }
 
@@ -71,16 +87,32 @@ class StatusUpdater
     public function updateStatus()
     {
         $this->previousStatus = $this->leave->status;
-        $this->leaveRepository->update($this->leave, $this->withUpdateModificationField(['status' => $this->status]));
-        $this->createLog();
+       DB::transaction(function () {
+            $left_leave_days = $this->calculateDays($this->status);
+            $this->leaveRepository->update($this->leave, $this->withUpdateModificationField(['status' => $this->status, 'left_days' => $left_leave_days]));
+            $this->makeLeaveRejectionData();
+            $this->leaveRejectionRepository->create($this->leaveRejectionData);
+            $this->createLog();
+        });
         try {
             if ($this->status === Status::CANCELED) {
                 $this->sendPushNotification();
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return;
         }
+    }
+
+    /**
+     * @return mixed
+     */
+    private function makeLeaveRejectionData()
+    {
+        if ($this->leaveRejectionRequester->getNote()) $this->leaveRejectionData['note'] = $this->leaveRejectionRequester->getNote();
+        $this->leaveRejectionData['leave_id'] = $this->leave->id;
+        $this->leaveRejectionData['is_rejected_by_super_admin'] = 1;
+        return $this->leaveRejectionData;
     }
 
     private function createLog()
@@ -122,7 +154,7 @@ class StatusUpdater
     {
         $topic = config('sheba.push_notification_topic_name.employee') . (int)$business_member->member->id;
         $channel = config('sheba.push_notification_channel_name.employee');
-        $sound  = config('sheba.push_notification_sound.employee');
+        $sound = config('sheba.push_notification_sound.employee');
         $start_date = $this->leave->start_date->format('d/m/Y');
         $end_date = $this->leave->end_date->format('d/m/Y');
         $notification_data = [
@@ -136,5 +168,15 @@ class StatusUpdater
         ];
 
         $this->pushNotificationHandler->send($notification_data, $topic, $channel, $sound);
+    }
+
+    private function calculateDays($type)
+    {
+        $business_member = $this->leave->businessMember;
+        $used_leave_days = $business_member->getCountOfUsedLeaveDaysByTypeOnAFiscalYear($this->leave->leave_type_id);
+        $leave_type_total_days = $business_member->getTotalLeaveDaysByLeaveTypes($this->leave->leave_type_id);
+        $leave_days = $this->leave->total_days;
+        if ($type == Status::ACCEPTED) return (($leave_type_total_days - $used_leave_days) - $leave_days);
+        if ($type == Status::REJECTED || $type == Status::CANCELED) return (($leave_type_total_days - $used_leave_days) + $leave_days);
     }
 }

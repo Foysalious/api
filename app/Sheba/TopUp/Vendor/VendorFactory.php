@@ -13,6 +13,7 @@ class VendorFactory
     const GP = 4;
     const BANGLALINK = 5;
     const TELETALK = 6;
+    const SKITTO = 7;
 
     private $classes = [
         Mock::class,
@@ -21,6 +22,7 @@ class VendorFactory
         Gp::class,
         Banglalink::class,
         Teletalk::class,
+        Skitto::class,
     ];
 
     /**

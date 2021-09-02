@@ -4,6 +4,8 @@ use App\Models\Affiliate;
 use App\Models\Profile;
 use App\Repositories\FileRepository;
 use App\Repositories\ProfileRepository;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use App\Transformers\Affiliate\ProfileDetailPersonalInfoTransformer;
 use App\Transformers\CustomSerializer;
 use App\Transformers\NidInfoTransformer;
@@ -198,7 +200,9 @@ class ProfileController extends Controller
         $profile = Profile::where('mobile', $mobile)->first();
         if (!$profile) return api_response($request, null, 404, ['message' => 'Profile not found with this number']);
         $password = str_random(6);
-        $sms->shoot($mobile, "আপনার পাসওয়ার্ডটি পরিবর্তিত হয়েছে $password ,দয়া করে লগইন করতে এই পাসওয়ার্ডটি ব্যবহার করুন");
+        $sms->setFeatureType(FeatureType::COMMON)
+            ->setBusinessType(BusinessType::COMMON)
+            ->shoot($mobile, "আপনার পাসওয়ার্ডটি পরিবর্তিত হয়েছে $password ,দয়া করে লগইন করতে এই পাসওয়ার্ডটি ব্যবহার করুন");
         $profile->update(['password' => bcrypt($password)]);
         event(new ProfilePasswordUpdated($profile));
         return api_response($request, true, 200, ['message' => 'Your password is sent to your mobile number. Please use that password to login']);

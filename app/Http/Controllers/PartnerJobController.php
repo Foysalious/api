@@ -318,11 +318,13 @@ class PartnerJobController extends Controller
             'old_resource_id' => $old_resource,
             'new_resource_id' => $new_resource
         ];
+
         $job->resource_id = $resource_id;
         $job->update();
         if (empty($old_resource)) {
             scheduler($job->resource)->book($job);
         } else {
+            scheduler(Resource::find($old_resource))->release($job);
             scheduler($job->resource)->reAssign($job);
         }
         $this->jobUpdateLog($job->id, json_encode($updatedData), $manager_resource);

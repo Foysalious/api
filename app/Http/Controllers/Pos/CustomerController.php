@@ -22,6 +22,7 @@ use Sheba\ModificationFields;
 use Sheba\Pos\Customer\Creator;
 use Sheba\Pos\Customer\Updater;
 use Sheba\Pos\Discount\DiscountTypes;
+use Sheba\Pos\Repositories\PosCustomerRepository;
 use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Usage\Usage;
 use Throwable;
@@ -59,7 +60,7 @@ class CustomerController extends Controller
      * @param DueTrackerRepository $dueTrackerRepository
      * @return JsonResponse
      */
-    public function show($partner, $customer, Request $request, EntryRepository $entry_repo,DueTrackerRepository $dueTrackerRepository)
+    public function show($partner, $customer, Request $request, EntryRepository $entry_repo,DueTrackerRepository $dueTrackerRepository, PosCustomerRepository $posCustomerRepository)
     {
         try {
             /** @var PosCustomer $customer */
@@ -83,11 +84,12 @@ class CustomerController extends Controller
                 $total_purchase_amount += $order->getNetBill();
                 $total_used_promo += !empty($order->voucher_id) ? $this->getVoucherAmount($order) : 0;
             });
+            $customerAmount = $posCustomerRepository->getDueAmountFromDueTracker($request->partner, $customer->id);
+            $data['total_due_amount']      = $customerAmount['due'];
+            $data['total_payable_amount']  = $customerAmount['payable'];
             $data['total_purchase_amount'] = $total_purchase_amount;
-            $data['total_due_amount']      = $this->getDueAmountFromDueTracker($dueTrackerRepository,$request->partner,$customer);
             $data['total_used_promo']      = $total_used_promo;
-            $data['total_payable_amount']  = $entry_repo->setPartner($request->partner)->getTotalPayableAmountByCustomer($customer->profile_id)['total_payables'];
-//            $data['is_customer_editable']  = $customer->isEditable();
+            $data['is_customer_editable']  = $customer->isEditable();
             $data['is_customer_editable']  = true;
             $data['note']                  = $partner_pos_customer->note;
             $data['is_supplier']                  = $partner_pos_customer->is_supplier;
@@ -113,12 +115,12 @@ class CustomerController extends Controller
                 'is_supplier' => 'sometimes|required|in:1,0'
             ]);
             $this->setModifier($request->manager_resource);
-            $creator = $creator->setData($request->except([
-                'partner_id',
+            $creator = $creator->setData($request->except(['partner_id',
                 'remember_token'
             ]));
             if ($error = $creator->hasError())
                 return api_response($request, null, 400, ['message' => $error['msg']]);
+
             $customer = $creator->setPartner($request->partner)->create();
             /**
              * USAGE LOG
@@ -143,28 +145,16 @@ class CustomerController extends Controller
      */
     public function update(Request $request, $partner, PosCustomer $customer, Updater $updater)
     {
-        try {
-            $this->validate($request, ['mobile' => 'required|mobile:bd']);
-            $this->setModifier($request->manager_resource);
-            $updater->setCustomer($customer)->setData($request->except([
-                'partner_id',
-                'remember_token',
-                'email'
-            ]));
-            if ($error = $updater->hasError())
-                return api_response($request, null, 400, ['message' => $error['msg']]);
-            $customer = $updater->update();
-            $customerDetails = $customer->details();
-            $customerDetails['name'] = isset($customer['name']) && !empty($customer['name']) ? $customer['name'] : $customerDetails['name'];
-            $customerDetails['is_supplier'] = isset($customer['is_supplier']) && !is_null($customer['is_supplier']) ? $customer['is_supplier'] : 0;
-            return api_response($request, $customer, 200, ['customer' => $customerDetails]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $this->validate($request, ['mobile' => 'required|mobile:bd']);
+        $this->setModifier($request->manager_resource);
+        $updater->setCustomer($customer)->setPartner($request->partner)->setData($request->except(['partner_id', 'remember_token']));
+        if ($error = $updater->hasError())
+            return api_response($request, null, 400, ['message' => $error['msg']]);
+        $customer = $updater->update();
+        $customerDetails = $customer->details();
+        $customerDetails['name'] = isset($customer['name']) && !empty($customer['name']) ? $customer['name'] : $customerDetails['name'];
+        $customerDetails['is_supplier'] = isset($customer['is_supplier']) && !is_null($customer['is_supplier']) ? $customer['is_supplier'] : 0;
+        return api_response($request, $customer, 200, ['customer' => $customerDetails]);
     }
 
     /**

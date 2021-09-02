@@ -1,9 +1,13 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\Customer;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Models\PosOrderDiscount;
 use App\Models\Voucher;
+use App\Sheba\PosOrderService\Services\OrderService;
+use App\Repositories\VoucherRepository;
+use App\Sheba\Voucher\VoucherService;
 use App\Transformers\CustomSerializer;
 use App\Transformers\VoucherDetailTransformer;
 use App\Transformers\VoucherTransformer;
@@ -24,6 +28,18 @@ class VoucherController extends Controller
 {
     use ModificationFields;
 
+    protected $orderService;
+    /**
+     * @var VoucherService
+     */
+    private $voucherService;
+
+    public function __construct(OrderService $orderService, VoucherService $voucherService)
+    {
+        $this->orderService = $orderService;
+        $this->voucherService = $voucherService;
+    }
+
     /**
      * @param Request $request
      * @return JsonResponse
@@ -42,15 +58,15 @@ class VoucherController extends Controller
             $cloned_partner_voucher_query = clone $partner_voucher_query;
 
             $data = [
-                'total_voucher'     => $cloned_partner_voucher_query->count(),
-                'active_voucher'    => $cloned_partner_voucher_query->valid()->count(),
+                'total_voucher' => $cloned_partner_voucher_query->count(),
+                'active_voucher' => $cloned_partner_voucher_query->valid()->count(),
                 'total_sale_with_voucher' => $total_sale_with_voucher
             ];
 
             $partner_voucher_query->orderBy('created_at', 'desc')->take(3)->each(function ($voucher) use (&$latest_vouchers, $manager) {
                 $resource = new Item($voucher, new VoucherTransformer());
                 $voucher = $manager->createData($resource)->toArray();
-                array_push($latest_vouchers, $voucher['data']) ;
+                array_push($latest_vouchers, $voucher['data']);
             });
 
             return api_response($request, null, 200, ['data' => $data, 'latest_vouchers' => $latest_vouchers]);
@@ -100,7 +116,7 @@ class VoucherController extends Controller
 
                 $resource = new Item($voucher, new VoucherTransformer());
                 $voucher = $manager->createData($resource)->toArray();
-                array_push($vouchers, $voucher['data']) ;
+                array_push($vouchers, $voucher['data']);
             });
             return api_response($request, null, 200, ['vouchers' => $vouchers]);
         } catch (ValidationException $e) {
@@ -285,37 +301,30 @@ class VoucherController extends Controller
         return $rule;
     }
 
+
     /**
-     * @param Request $request
-     * @return JsonResponse
      * @throws Exception
      */
-    public function validateVoucher(Request $request)
+    public function validateVoucher(Request $request, $partner)
     {
-        try {
-            $pos_customer = $request->pos_customer ? PosCustomer::find($request->pos_customer) : new PosCustomer();
-            $pos_order_params = (new CheckParamsForPosOrder());
-            $pos_order_params->setOrderAmount($request->amount)->setApplicant($pos_customer)->setPartnerPosService($request->pos_services);
-            $result = voucher($request->code)->checkForPosOrder($pos_order_params)->reveal();
-
-            if ($result['is_valid']) {
-                $voucher = $result['voucher'];
-                $voucher = [
-                    'amount' => (double)$result['amount'],
-                    'code' => $voucher->code,
-                    'id' => $voucher->id,
-                    'title' => $voucher->title
-                ];
-
-                return api_response($request, null, 200, ['voucher' => $voucher]);
-            } else {
-                return api_response($request, null, 403, ['message' => 'Invalid Promo']);
-            }
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $response = $this->voucherService->validateVoucher($partner, $request);
+        if (empty($response))
+            return api_response($request, null, 403, ['message' => 'Invalid Promo']);
+        return api_response($request, null, 200, ['voucher' => $response]);
     }
+
+
+    public function getVoucherDetails(Request $request)
+    {
+        $voucher_id = $request->voucher_id;
+        $voucher = Voucher::findOrFail($voucher_id);
+//        dd($voucher);
+//        app(VoucherDiscount::class)->setVoucher($voucher)->
+//        $voucher_id = $request->voucher_id;
+        return $voucher;
+    }
+
+
 
     /**
      * @param Request $request
@@ -379,5 +388,67 @@ class VoucherController extends Controller
         });
 
         return $total_sale;
+    }
+
+    public function voucherAgainstVendor(Request $request, VoucherRepository $voucherRepository)
+    {
+        if (!isset($request['start_date'])) return api_response($request, null, 403, ['message' => 'Start Date field is required']);
+        $this->validate($request, [
+            'mobile' => 'mobile:bd',
+            'amount' => 'required|numeric',
+            'cap' => 'numeric|required_if:is_percentage,==,1',
+            'is_percentage' => 'required|numeric|in:0,1',
+            'start_date' => 'required|date_format:Y-m-d',
+            'end_date' => 'required|date_format:Y-m-d|after_or_equal:start_date',
+            'title' => 'string'
+        ], [
+            'required' => 'The :attribute field is required.',
+            'end_date.after_or_equal' => 'The end date should be after start date'
+        ]);
+
+        $vendor_contribution_in_percentage = 96;
+
+        $customer = Customer::whereHas('profile', function ($query) use ($request) {
+            return $query->where('mobile', '+88' . $request->mobile);
+        })->first();
+
+
+        $rules = [
+            'mobile' => '+88' . $request->mobile
+        ];
+
+        $voucher = [
+            'code' => strtoupper(($request->channel ? $request->channel : 'PROMO')
+                . ($customer ? explode(' ', trim($customer->getName()))[0] : $request->mobile)
+                . $request->amount . $this->generateRandomString(2)
+            ),
+            'start_date' => Carbon::parse($request->start_date)->format('Y-m-d h:i:s'),
+            'end_date' => Carbon::parse($request->end_date)->format('Y-m-d h:i:s'),
+            'amount' => $request->amount,
+            'is_amount_percentage' => $request->is_percentage,
+            'cap' => $request->cap,
+            'rules' => json_encode($rules),
+            'title' => $request->title ? $request->title : '',
+            'max_order' => 1,
+            'max_customer' => 1,
+            'is_created_by_sheba' => 1,
+            'sheba_contribution' => 100 - $vendor_contribution_in_percentage,
+            'vendor_contribution' => $vendor_contribution_in_percentage,
+        ];
+
+        $voucher = $voucherRepository->create($voucher);
+
+        return api_response($request, null, 200, ['code' => $voucher->code]);
+    }
+
+    private function generateRandomString($length = 10)
+    {
+        $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $charactersLength = strlen($characters);
+        $randomString = '';
+        for ($i = 0; $i < $length; $i++) {
+            $randomString .= $characters[rand(0, $charactersLength - 1)];
+        }
+        return $randomString;
     }
 }

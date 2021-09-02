@@ -1,15 +1,14 @@
 <?php namespace Sheba\TopUp\Vendor\Response\Ipn;
 
-use App\Models\TopUpOrder;
-
-abstract class SuccessResponse
+abstract class SuccessResponse extends IpnResponse
 {
-    /** @var array $response */
-    protected $response;
+    public function isFailed()
+    {
+        return false;
+    }
 
-    abstract public function setResponse($response);
-
-    abstract public function getTopUpOrder(): TopUpOrder;
-
-    abstract public function getSuccessfulTransactionDetails();
+    protected function _handleTopUp()
+    {
+        $this->topUp->success($this);
+    }
 }

@@ -1,6 +1,7 @@
 <?php namespace Sheba\Reports\Pos;
 
 use App\Models\Partner;
+use App\Sheba\PosOrderService\PosOrderServerClient;
 use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
@@ -9,6 +10,8 @@ use Illuminate\Validation\ValidationException;
 use Sheba\Reports\ExcelHandler;
 use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Reports\PdfHandler;
+use Sheba\Reports\Pos\Sales\CustomerWise;
+use Sheba\Reports\Pos\Sales\ProductWise;
 
 abstract class PosReport
 {
@@ -25,11 +28,15 @@ abstract class PosReport
     private $pdfHandler;
     private $defaultOrderBy, $orderByAccessors;
 
+    /** @var $client PosOrderServerClient */
+    private $client;
+
     public function __construct()
     {
         $this->excelHandler = app(ExcelHandler::class);
         $this->pdfHandler = app(PdfHandler::class);
         $this->setDefaults();
+        $this->client = app(PosOrderServerClient::class);
     }
 
     /**
@@ -157,4 +164,18 @@ abstract class PosReport
     abstract public function prepareData($paginate = true);
 
     abstract public function prepareQuery(Request $request, Partner $partner);
+
+    public function getReportDataFromPosServer(string $report_for)
+    {
+        if ($report_for == CustomerWise::class){
+            $uri = 'api/v1/partners/' . $this->partner->id . '/reports/customer-wise?from='. $this->from .'&to=' . $this->to;
+            $report = $this->client->get($uri);
+            return $report['data'];
+        }
+        elseif ($report_for == ProductWise::class){
+            $uri = 'api/v1/partners/' . $this->partner->id . '/reports/product-wise?from='. $this->from .'&to=' . $this->to . '&order=' . $this->order .'&orderBy=' . $this->orderBy;
+            $report = $this->client->get($uri);
+            return $report['data'];
+        }
+    }
 }

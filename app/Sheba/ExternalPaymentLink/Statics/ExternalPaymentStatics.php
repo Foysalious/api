@@ -8,8 +8,10 @@ class ExternalPaymentStatics
 {
     public static function getPaymentInitiateValidator()
     {
+        $min = self::minimumAmount();
+        $max = self::maximumAmount();
         return [
-            'amount'          => 'required|numeric|min:10|max:100000',
+            'amount'          => "required|numeric|min:$min|max:$max",
             'transaction_id'  => 'required',
             'success_url'     => 'required|url',
             'fail_url'        => 'required|url',
@@ -24,6 +26,16 @@ class ExternalPaymentStatics
     public static function dataFields()
     {
         return array_keys(self::getPaymentInitiateValidator());
+    }
+
+    public static function minimumAmount()
+    {
+        return config('external_payment_link.minimum_amount');
+    }
+
+    public static function maximumAmount()
+    {
+        return config('external_payment_link.maximum_amount');
     }
 
     public static function getPurpose($data,$client){

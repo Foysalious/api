@@ -64,7 +64,8 @@ class MonthlyStat
             'full_day_leave' => 0,
             'half_day_leave' => 0,
             'present' => 0,
-            'left_early_note' => 0
+            'left_early_note' => 0,
+            'total_hours' => 0
         ];
 
         $daily_breakdown = [];
@@ -80,7 +81,6 @@ class MonthlyStat
             $is_weekend_or_holiday = $this->isWeekendHoliday($date, $weekend_day, $dates_of_holidays_formatted);
             $is_on_leave = $this->isLeave($date, $leaves);
 
-//            dd($is_weekend_or_holiday);
 
             if ($is_weekend_or_holiday || $is_on_leave) {
                 if ($this->forOneEmployee) $breakdown_data['weekend_or_holiday_tag'] = $this->isWeekendHolidayLeaveTag($date, $leaves_date_with_half_and_full_day, $dates_of_holidays_formatted);
@@ -118,6 +118,7 @@ class MonthlyStat
                 if (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance_checkin_action) $statistics[$attendance_checkin_action->status]++;
                 if (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance_checkout_action) $statistics[$attendance_checkout_action->status]++;
                 $statistics['left_early_note'] = (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance->hasEarlyCheckout()) ? $attendance->checkoutAction()->note : null;
+                $statistics['total_hours'] += $attendance->staying_time_in_minutes;
             }
 
             if ($this->isAbsent($attendance, ($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)), $date)) {
@@ -131,6 +132,8 @@ class MonthlyStat
 
         $statistics['present'] = $statistics[Statuses::ON_TIME] + $statistics[Statuses::LATE];
         $statistics['on_leave'] = $statistics['full_day_leave'] + $statistics['half_day_leave'];
+        $statistics['total_hours'] = $statistics['total_hours'] ? $this->formatMinute($statistics['total_hours']) : 0;
+
 
         return $this->forOneEmployee ? ['statistics' => $statistics, 'daily_breakdown' => $daily_breakdown] : ['statistics' => $statistics];
     }

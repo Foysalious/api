@@ -16,7 +16,7 @@ class Creator
     public function credit(array $data, $pos_order_type = PosOrderTypes::OLD_SYSTEM)
     {
         $data['transaction_type'] = 'Credit';
-        $this->create($data, $pos_order_type);
+        return $this->create($data, $pos_order_type);
     }
 
     public function debit(array $data, $pos_order_type = PosOrderTypes::OLD_SYSTEM)
@@ -27,6 +27,6 @@ class Creator
 
     private function create(array $data, $pos_order_type)
     {
-        $pos_order_type == PosOrderTypes::NEW_SYSTEM ? $this->paymentRepo->saveToNewPosOrderSystem($data) : $this->paymentRepo->save($data);
+       return $pos_order_type == PosOrderTypes::NEW_SYSTEM ? $this->paymentRepo->saveToNewPosOrderSystem($data) : $this->paymentRepo->save($data);
     }
 }
