@@ -1,11 +1,14 @@
 <?php namespace App\Sheba\Business\PayrollSetting;
 
 use App\Models\Business;
+use App\Models\BusinessMember;
 use Carbon\Carbon;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepo;
 use Sheba\Dal\BusinessOffice\Type as WorkingDaysType;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepo;
+use Sheba\Dal\PayrollComponent\TargetType;
 use Sheba\Dal\PayrollComponent\TargetType as ComponentTargetType;
+use Sheba\Dal\PayrollComponent\Type as PayrollComponentType;
 use Sheba\Dal\PayrollSetting\PayDayType;
 use Sheba\Dal\PayrollSetting\PayrollSetting;
 
@@ -96,5 +99,31 @@ trait PayrollCommonCalculation
     public function totalPenaltyAmountByOneWorkingDay($one_working_day_amount, $penalty_amount)
     {
         return ($one_working_day_amount * $penalty_amount);
+    }
+
+    public function getOneWorkingDayAmountForGrossComponent(PayrollSetting $payroll_setting, BusinessMember $business_member, $component)
+    {
+        $one_working_day_amount = 0;
+        $gross_component = $payroll_setting->components->where('name', $component)->where('type', PayrollComponentType::GROSS)->where('target_type', TargetType::EMPLOYEE)->where('target_id', $business_member->id)->first();
+        if (!$gross_component) $gross_component = $this->payrollSetting->components()->where('name', $component)->where('type', PayrollComponentType::GROSS)->where(function($query) {
+            return $query->where('target_type', null)->orWhere('target_type', TargetType::GENERAL);
+        })->first();
+        if ($gross_component) {
+            $percentage = floatValFormat(json_decode($gross_component->setting, 1)['percentage']);
+            $amount = ($this->businessMemberSalay * $percentage) / 100;
+            $one_working_day_amount = $this->oneWorkingDayAmount($amount,  floatValFormat($this->totalWorkingDays));
+        }
+        return $one_working_day_amount;
+    }
+
+    public function getOneWorkingDayAmountForAdditionComponent(PayrollSetting $payroll_setting, $component)
+    {
+        $one_working_day_amount = null;
+        $addition_component = $payroll_setting->components->where('name', $component)->where('type', 'addition')->first();
+        if ($addition_component) {
+            $amount = $this->additionBreakdown['addition'][$component];
+            $one_working_day_amount = $this->oneWorkingDayAmount($amount,  floatValFormat($this->totalWorkingDays));
+        }
+        return $one_working_day_amount;
     }
 }
