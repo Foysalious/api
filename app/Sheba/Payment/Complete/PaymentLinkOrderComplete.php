@@ -18,8 +18,6 @@ use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
 use Sheba\PaymentLink\InvoiceCreator;
 use Sheba\PaymentLink\PaymentLinkTransformer;
-use Sheba\Pos\Order\PosOrderResolver;
-use Sheba\Pos\Order\PosOrderTypes;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\PushNotificationHandler;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
