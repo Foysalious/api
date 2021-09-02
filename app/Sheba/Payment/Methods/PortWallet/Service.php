@@ -104,7 +104,7 @@ class Service
             ],
             'product' => [
                 'name' => normalizeStringCases($payable->readable_type),
-                'description' => $payable->description ?? 'Sheba Platform Limited',
+                'description' => 'Sheba Platform Limited',
             ],
             'billing' => [
                 // they are not happy with invalid/null data
