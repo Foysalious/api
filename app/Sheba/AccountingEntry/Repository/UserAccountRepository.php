@@ -22,6 +22,7 @@ class UserAccountRepository extends BaseRepository
 
     /**
      * @param mixed $name
+     * @return UserAccountRepository
      */
     public function setName($name)
     {
@@ -31,6 +32,7 @@ class UserAccountRepository extends BaseRepository
 
     /**
      * @param mixed $name_bn
+     * @return UserAccountRepository
      */
     public function setNameBn($name_bn)
     {
@@ -40,6 +42,7 @@ class UserAccountRepository extends BaseRepository
 
     /**
      * @param mixed $root_account
+     * @return UserAccountRepository
      */
     public function setRootAccount($root_account)
     {
@@ -49,6 +52,7 @@ class UserAccountRepository extends BaseRepository
 
     /**
      * @param mixed $account_type
+     * @return UserAccountRepository
      */
     public function setAccountType($account_type)
     {
@@ -58,6 +62,7 @@ class UserAccountRepository extends BaseRepository
 
     /**
      * @param mixed $icon
+     * @return UserAccountRepository
      */
     public function setIcon($icon)
     {
@@ -67,14 +72,17 @@ class UserAccountRepository extends BaseRepository
 
     /**
      * @param mixed $openingBalance
+     * @return UserAccountRepository
      */
     public function setOpeningBalance($openingBalance)
     {
         $this->openingBalance = $openingBalance;
         return $this;
     }
+
     /**
      * @param mixed $balanceType
+     * @return UserAccountRepository
      */
     public function setBalanceType($balanceType)
     {
@@ -84,6 +92,7 @@ class UserAccountRepository extends BaseRepository
 
     /**
      * @param mixed $editable
+     * @return UserAccountRepository
      */
     public function setEditable($editable)
     {
@@ -93,6 +102,7 @@ class UserAccountRepository extends BaseRepository
 
     /**
      * @param mixed $deletable
+     * @return UserAccountRepository
      */
     public function setDeletable($deletable)
     {
@@ -102,6 +112,7 @@ class UserAccountRepository extends BaseRepository
 
     /**
      * @param mixed $visible
+     * @return UserAccountRepository
      */
     public function setVisible($visible)
     {

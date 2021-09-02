@@ -22,6 +22,9 @@ class AccountingRepository extends BaseRepository
     {
         $this->getCustomer($request);
         $partner = $this->getPartner($request);
+        if (!$this->isMigratedToAccounting($partner->id)) {
+            return true;
+        }
         $this->setModifier($partner);
         $data = $this->createEntryData($request, $type, $request->source_id);
         $url = "api/entries/";
@@ -48,6 +51,9 @@ class AccountingRepository extends BaseRepository
     {
         $this->getCustomer($request);
         $partner = $this->getPartner($request);
+        if (!$this->isMigratedToAccounting($partner->id)) {
+            return true;
+        }
         $this->setModifier($partner);
         $data = $this->createEntryData($request, $type, $request->source_id);
         $url = "api/entries/" . $entry_id;
@@ -69,6 +75,9 @@ class AccountingRepository extends BaseRepository
     {
         $this->getCustomer($request);
         $partner = $this->getPartner($request);
+        if (!$this->isMigratedToAccounting($partner->id)) {
+            return true;
+        }
         $this->setModifier($partner);
         $data = $this->createEntryData($request, $sourceType, $sourceId);
         $url = "api/entries/source/" . $sourceType . '/' . $sourceId;
@@ -88,6 +97,9 @@ class AccountingRepository extends BaseRepository
     public function deleteEntryBySource(Partner $partner, $sourceType, $sourceId)
     {
         $url = "api/entries/source/" . $sourceType . '/' . $sourceId;
+        if (!$this->isMigratedToAccounting($partner->id)) {
+            return true;
+        }
         try {
             return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->delete($url);
         } catch (AccountingEntryServerError $e) {

@@ -3,6 +3,7 @@
 use App\Models\Profile;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Repository\UserMigrationRepository;
 use Sheba\Dal\src\AccountingMigratedUser\UserStatus;
 use Sheba\ExpenseTracker\AutomaticExpense;
@@ -363,6 +364,9 @@ class AutomaticEntryRepository extends BaseRepository
         }
     }
 
+    /**
+     * @return bool
+     */
     private function isMigratedToAccounting()
     {
         /** @var UserMigrationRepository $userMigrationRepo */
