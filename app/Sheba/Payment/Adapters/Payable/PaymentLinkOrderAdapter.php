@@ -2,6 +2,7 @@
 
 use App\Models\Payable;
 use App\Models\PosOrder;
+use App\Sheba\Pos\Order\PosOrderObject;
 use Carbon\Carbon;
 use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\Payment\Adapters\Payable\PayableAdapter;
@@ -58,8 +59,8 @@ class PaymentLinkOrderAdapter implements PayableAdapter
         $payable->amount = $this->getAmount();
         $payable->description = $this->description;
         $payable->completion_type = "payment_link";
-        $payable->success_url = $this->resolveSuccessUrl();
-        $payable->fail_url = $this->resolveFailUrl();
+        $payable->success_url = $this->resolveSuccessOrFailUrl();
+        $payable->fail_url = $this->resolveSuccessOrFailUrl();
         $payable->created_at = Carbon::now();
         $payable->emi_month = $this->paymentLink->getEmiMonth();
         $payable->save();
@@ -93,21 +94,11 @@ class PaymentLinkOrderAdapter implements PayableAdapter
         return true;
     }
 
-    private function resolveSuccessUrl()
+    private function resolveSuccessOrFailUrl(): string
     {
         $target = $this->paymentLink->getTarget();
-        if ($target && $target instanceof PosOrder && $target->sales_channel == SalesChannels::WEBSTORE) {
-            return config('sheba.webstore_url') . '/' . $target->partner->sub_domain .'/redirect-after-payment/' . $target->id;
-        } else {
-            return config('sheba.payment_link_web_url') . '/' . $this->paymentLink->getLinkIdentifier() . '/success';
-        }
-    }
-
-    private function resolveFailUrl()
-    {
-        $target = $this->paymentLink->getTarget();
-        if ($target && $target instanceof PosOrder && $target->sales_channel == SalesChannels::WEBSTORE) {
-            return config('sheba.webstore_url') . '/' . $target->partner->sub_domain .'/redirect-after-payment/' . $target->id;
+        if ($target && $target instanceof PosOrderObject && $target->sales_channel == SalesChannels::WEBSTORE) {
+            return ($target->is_migrated ? config('sheba.new_webstore_url') : config('sheba.webstore_url')) . '/' . $target->partner->sub_domain .'/redirect-after-payment/' . $target->id;
         } else {
             return config('sheba.payment_link_web_url') . '/' . $this->paymentLink->getLinkIdentifier() . '/success';
         }
