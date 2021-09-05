@@ -491,7 +491,7 @@ class AttendanceList
                         'overtime' => (int)$attendance->overtime_in_minutes ? $this->formatMinute((int)$attendance->overtime_in_minutes) : null,
                         'date' => $attendance->date,
                         'is_absent' => $attendance->status == Statuses::ABSENT ? 1 : 0,
-                        'is_on_leave' => 0,
+                        'is_on_leave' => $is_on_leave ? 1 : 0,
                         'is_holiday' => $is_weekend_or_holiday ? 1 : 0,
                         'weekend_or_holiday' => $is_weekend_or_holiday ? $this->isWeekendOrHoliday() : null,
                         'is_half_day_leave' => $is_on_half_day_leave,
@@ -594,8 +594,6 @@ class AttendanceList
 
     private function getBusinessMemberWhoAreOnLeave()
     {
-        if (!($this->statusFilter == self::ON_LEAVE || $this->statusFilter == self::ABSENT || $this->statusFilter == self::ALL)) return [];
-
         $business_member_ids = [];
         if ($this->businessMemberId) $business_member_ids = [$this->businessMemberId];
         elseif ($this->business) $business_member_ids = $this->getBusinessMemberIds();

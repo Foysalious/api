@@ -21,6 +21,7 @@ use Sheba\ModificationFields;
 use Sheba\Business\EmployeeTracking\Visit\VisitList;
 use Sheba\Business\EmployeeTracking\Visit\NoteCreator;
 use Sheba\Business\EmployeeTracking\Visit\PhotoCreator;
+use Sheba\Business\EmployeeTracking\Visit\StatusUpdater;
 
 class VisitController extends Controller
 {
@@ -246,30 +247,38 @@ class VisitController extends Controller
         return api_response($request, null, 200);
     }
 
+
     /**
      * @param Request $request
      * @param $visit
+     * @param StatusUpdater $status_updater
      * @return JsonResponse
      */
-    public function changeStatus(Request $request, $visit)
+    public function updateStatus(Request $request, $visit, StatusUpdater $status_updater)
     {
         $validation_data = [
             'status' => 'required|string',
             'lat' => 'required|numeric',
             'lng' => 'required|numeric'
         ];
-        if ($request->status === Status::RESCHEDULED) {
-            $validation_data += ['note' => 'string|required', 'date' => 'required|date_format:Y-m-d'];
-        }
-        $this->validate($request, $validation_data);
 
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
+
+        if ($request->status === Status::RESCHEDULED) {
+            $validation_data += ['note' => 'string', 'date' => 'required|date_format:Y-m-d'];
+        }
+        if ($request->status === Status::CANCELLED) {
+            $validation_data += ['note' => 'string|required'];
+        }
+        $this->validate($request, $validation_data);
         $member = $this->getMember($request);
         $this->setModifier($member);
-        $visit = $this->visitRepository->find($visit);
 
+        $visit = $this->visitRepository->find($visit);
         if (!$visit) return api_response($request, null, 404);
+        $status_updater->setVisit($visit)->setStatus($request->status)->setLat($request->lat)->setLng($request->lng)
+                       ->setNote($request->note)->setDate($request->date)->update();
         return api_response($request, null, 200);
     }
 

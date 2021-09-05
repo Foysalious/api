@@ -4,6 +4,7 @@ use App\Models\PosOrder;
 use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Reports\PdfHandler;
+use Sheba\Subscription\Partner\Access\RulesDescriber\Pos;
 
 class InvoiceService
 {
@@ -38,8 +39,8 @@ class InvoiceService
 
     public function isAlreadyGenerated()
     {
-       $this->invoiceLink = PosOrder::find($this->posOrder->id)->invoice;
-       return $this;
+        $this->invoiceLink = PosOrder::find($this->posOrder->id)->invoice;
+        return $this;
     }
 
     public function getInvoiceLink()

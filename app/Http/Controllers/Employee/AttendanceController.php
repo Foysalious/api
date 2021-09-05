@@ -42,7 +42,7 @@ class AttendanceController extends Controller
      * @param BusinessWeekendRepoInterface $business_weekend_repo
      * @return JsonResponse
      */
-    public function index(Request                      $request, AttendanceRepoInterface $attendance_repo, TimeFrame $time_frame, BusinessHolidayRepoInterface $business_holiday_repo,
+    public function index(Request $request, AttendanceRepoInterface $attendance_repo, TimeFrame $time_frame, BusinessHolidayRepoInterface $business_holiday_repo,
                           BusinessWeekendRepoInterface $business_weekend_repo)
     {
         $this->validate($request, ['year' => 'required|string', 'month' => 'required|string']);
@@ -86,7 +86,7 @@ class AttendanceController extends Controller
             'action' => 'required|string|in:' . implode(',', Actions::get()),
             'device_id' => 'string',
             'user_agent' => 'string',
-            'is_in_wifi_area' => 'required|numeric'
+            'is_in_wifi_area' => 'required|numeric|in:0,1'
         ];
 
         $business_member = $this->getBusinessMember($request);

@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\B2B\TerminatingMiddleware;
 use App\Sheba\Algolia\Provider\EventsListenerProvider;
+use App\Sheba\Pos\Order\Providers\EventsListenerProvider as PosOrderInvoiceGenerationEventsListenerProvider;
 use Exception;
 use Illuminate\Support\ServiceProvider;
 use Sheba\Dal\Providers\CustomMigrationServiceProvider;
@@ -15,7 +16,6 @@ use Sheba\Voucher\VoucherSuggesterServiceProvider;
 use Sheba\Analysis\PartnerPerformance\Providers\ServiceProvider as PartnerPerformanceServiceProvider;
 use Sheba\Analysis\PartnerSale\Providers\ServiceProvider as PartnerSaleServiceProvider;
 use Sheba\AppSettings\HomePageSetting\Getters\Provider as HomePageSettingGettersProvider;
-use App\Sheba\Pos\Order\Providers\EventsListenerProvider as PosOrderInvoiceGenerationEventsListenerProvider;
 
 class AppServiceProvider extends ServiceProvider
 {

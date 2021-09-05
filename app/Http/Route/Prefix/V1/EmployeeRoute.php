@@ -6,6 +6,7 @@ class EmployeeRoute
     {
         $api->post('employee/login', 'Employee\EmployeeController@login');
         $api->group(['prefix' => 'employee', 'middleware' => ['jwtAuth']], function ($api) {
+
             $api->group(['prefix' => 'me'], function ($api) {
                 $api->get('/', 'Employee\EmployeeController@me');
                 $api->post('/', 'Employee\EmployeeController@updateMe');
@@ -38,10 +39,16 @@ class EmployeeRoute
                     $api->get('/', 'Employee\VisitController@show');
                     $api->post('note', 'Employee\VisitController@storeNote');
                     $api->post('photo', 'Employee\VisitController@storePhoto');
+                    $api->post('status-update', 'Employee\VisitController@updateStatus');
                 });
+            });
+            $api->group(['prefix' => 'my-team'], function ($api) {
+                $api->get('/', 'Employee\MyTeamController@myTeam');
+                $api->get('{employee_id}', 'Employee\MyTeamController@employeeDetails');
             });
             //$api->post('password', 'Employee\EmployeeController@updateMyPassword');
             $api->get('dashboard', 'Employee\EmployeeController@getDashboard');
+            $api->get('dashboard-menu', 'Employee\DashboardController@index');
             $api->get('notifications', 'Employee\NotificationController@index');
             $api->get('last-notifications', 'Employee\NotificationController@lastNotificationCount');
             $api->get('test-notification', 'Employee\NotificationController@test');

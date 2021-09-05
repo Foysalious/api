@@ -64,7 +64,8 @@ class ProfileUpdater
         $business_role = $this->getBusinessRole($department, $designation);
         return [
             'business_role_id' => $business_role->id,
-            'join_date' => $this->profileRequester->getJoiningDate()
+            'join_date' => $this->profileRequester->getJoiningDate(),
+            'status' => 'active'
         ];
     }
 

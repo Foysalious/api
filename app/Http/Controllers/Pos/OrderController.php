@@ -498,6 +498,7 @@ class OrderController extends Controller
         ]);
     }
 
+
     /**
      * @throws NotAssociativeArray
      */
@@ -512,6 +513,7 @@ class OrderController extends Controller
             'link' => $invoiceLink
         ]);
     }
+
 
     /**
      * @param Request $request

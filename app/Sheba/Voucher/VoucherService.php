@@ -17,10 +17,10 @@ class VoucherService
     /**
      * @throws Exception
      */
-    public function validateVoucher($partner, $request)
+    public function validateVoucher($partnerId, $request)
     {
         return $this->voucherValidate
-            ->setPartnerId($partner)
+            ->setPartnerId($partnerId)
             ->setPosCustomerId($request->pos_customer)
             ->setAmount($request->amount)
             ->setCode($request->code)
