@@ -12,6 +12,11 @@ class PersonalRequest
     private $nidNumber;
     private $nidFront;
     private $nidBack;
+    private $gender;
+    private $passportNo;
+    private $passportImage;
+    private $bloodGroup;
+    private $socialLinks;
 
     /**
      * @param $business_member
@@ -155,6 +160,92 @@ class PersonalRequest
     public function getNidBack()
     {
         return $this->nidBack;
+    }
+
+    /**
+     * @param $passport_no
+     * @return $this
+     */
+    public function setPassportNo($passport_no)
+    {
+        $this->passportNo = $passport_no;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getPassportNo()
+    {
+        return $this->passportNo;
+    }
+
+    /**
+     * @param $passport_image
+     * @return $this
+     */
+    public function setPassportImage($passport_image)
+    {
+        $this->passportImage = $passport_image;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getPassportImage()
+    {
+        return $this->passportImage;
+    }
+
+    /**
+     * @param $gender
+     * @return $this
+     */
+    public function setGender($gender)
+    {
+        $this->gender = ucfirst($gender);
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getGender()
+    {
+        return $this->gender;
+    }
+
+    /**
+     * @param $blood_group
+     * @return $this
+     */
+    public function setBloodGroup($blood_group)
+    {
+        $this->bloodGroup = $blood_group;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getBloodGroup()
+    {
+        return $this->bloodGroup;
+    }
+
+    public function setSocialLinks($social_links)
+    {
+        $this->socialLinks = $social_links;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getSocialLinks()
+    {
+        return $this->socialLinks;
     }
 
     /**

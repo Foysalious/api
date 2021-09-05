@@ -1,27 +1,32 @@
 <?php namespace Sheba\Business\CoWorker\SalaryCertificate;
 
-use App\Sheba\Business\BusinessBasicInformation;
+use App\Models\Business;
+use App\Models\BusinessMember;
+use App\Models\Member;
+use App\Models\Profile;
 use App\Sheba\Business\PayrollComponent\Components\GrossSalaryBreakdownCalculate;
 use Carbon\Carbon;
 use NumberFormatter;
 
 class SalaryCertificateInfo
 {
-    use BusinessBasicInformation;
-
+    /** @var Business $business */
     private $business;
+    /** @var Member $member */
     private $member;
-    private $businessMember;
+    /** @var Profile $profile */
     private $profile;
+    /** @var BusinessMember $businessMember */
+    private $businessMember;
 
     /**
-     * @param $business_member
+     * @param BusinessMember $business_member
      * @return $this
      */
-    public function setBusinessMember($business_member)
+    public function setBusinessMember(BusinessMember $business_member)
     {
         $this->businessMember = $business_member;
-        $this->business = $this->businessMember->business;
+        $this->business = $business_member->business;
         $this->member = $business_member->member;
         $this->profile = $this->member->profile;
         return $this;
@@ -35,7 +40,7 @@ class SalaryCertificateInfo
         return [
             'created_date' => Carbon::parse(Carbon::now())->format('F d, Y'),
             'business_name' => $this->business->name,
-            'business_logo' => $this->isDefaultImageByUrl($this->business->logo) ? null : $this->business->logo,
+            'business_logo' => $this->business->logo,
             'employee_info' => $this->getEmployeeInfo(),
             'salary_info' => $this->getSalaryInfo(),
         ];
@@ -63,10 +68,10 @@ class SalaryCertificateInfo
         $salary = $this->businessMember->salary;
 
         return [
-            'salary_breakdown' => array_map( function ($salary) {
+            'salary_breakdown' => array_map(function ($salary) {
                 return [
-                  'title' => $salary['title'],
-                  'amount' => $this->parseSalary($salary['amount'])
+                    'title' => $salary['title'],
+                    'amount' => $this->parseSalary($salary['amount'])
                 ];
             }, $payroll_percentage_breakdown['breakdown']),
             'gross_salary' => $salary ? $this->parseSalary($salary->gross_salary) : null,
@@ -88,7 +93,8 @@ class SalaryCertificateInfo
      * @param $value
      * @return string
      */
-    private function parseSalary($value) {
+    private function parseSalary($value)
+    {
         return number_format($value, 2, ".", ",");
     }
 

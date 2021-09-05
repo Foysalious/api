@@ -1,6 +1,8 @@
 <?php namespace App\Transformers;
 
 use App\Models\Member;
+use App\Sheba\Business\CoWorker\ProfileInformation\SocialLink;
+use Carbon\Carbon;
 use League\Fractal\TransformerAbstract;
 
 class BusinessEmployeeDetailsTransformer extends TransformerAbstract
@@ -21,7 +23,10 @@ class BusinessEmployeeDetailsTransformer extends TransformerAbstract
             'email'         => $profile->email,
             'image'         => $profile->pro_pic,
             'designation'   => $role ? $role->name : null,
-            'department'    => $role ? $role->businessDepartment->name : null
+            'department'    => $role ? $role->businessDepartment->name : null,
+            'blood_group'   => $profile->blood_group,
+            'dob'           => Carbon::parse($profile->dob)->format('jS F'),
+            'social_link'   => (new SocialLink($member))->get()
         ];
     }
 }

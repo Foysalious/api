@@ -11,6 +11,7 @@ use App\Sheba\Business\SalaryLog\Creator;
 
 class Updater
 {
+    /** @var SalaryRequester $salaryRequest */
     private $salaryRequest;
     /** @var SalaryRepository */
     private $salaryRepository;
