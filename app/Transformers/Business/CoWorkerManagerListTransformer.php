@@ -28,6 +28,7 @@ class CoWorkerManagerListTransformer extends TransformerAbstract
             'id' => $business_member->id,
             'name' => $profile->name,
             'pro_pic' => $profile->pro_pic,
+            'phone' => $business_member->mobile,
             'designation' => $role ? $role->name : null,
             'department' => $department ? $department->name : null,
             'manager_id' => $business_member->manager_id,
