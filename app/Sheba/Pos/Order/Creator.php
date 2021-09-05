@@ -10,6 +10,7 @@ use App\Models\PartnerPosService;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Models\Profile;
+use App\Sheba\Pos\Order\OrderEmiChecker;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Dal\POSOrder\SalesChannels;
@@ -53,10 +54,13 @@ class Creator
     private $paymentMethod;
     /** @var OrderStatuses $status */
     protected $status;
+    /** @var $orderEmiChecker OrderEmiChecker */
+    protected $orderEmiChecker;
 
     public function __construct(PosOrderRepository   $order_repo, PosOrderItemRepository $item_repo,
                                 PaymentCreator       $payment_creator, StockManager $stock_manager,
-                                OrderCreateValidator $create_validator, DiscountHandler $discount_handler, PosServiceRepositoryInterface $posServiceRepo)
+                                OrderCreateValidator $create_validator, DiscountHandler $discount_handler, PosServiceRepositoryInterface $posServiceRepo,
+                                OrderEmiChecker $orderEmiChecker)
     {
         $this->orderRepo = $order_repo;
         $this->itemRepo = $item_repo;
@@ -65,6 +69,7 @@ class Creator
         $this->createValidator = $create_validator;
         $this->discountHandler = $discount_handler;
         $this->posServiceRepo = $posServiceRepo;
+        $this->orderEmiChecker = $orderEmiChecker;
     }
 
     /**
@@ -153,6 +158,7 @@ class Creator
                 // $is_service_discount_applied = $original_service->discount();
                 $service_wholesale_applicable = $original_service->wholesale_price ? true : false;
 
+                $service['is_emi_applied'] = $this->isEmiApplicable($original_service) ? 1 : 0;
                 $service['service_id'] = $original_service->id;
                 $service['service_name'] = isset($service['name']) ? $service['name'] : $original_service->name;
                 $service['pos_order_id'] = $order->id;
@@ -163,6 +169,11 @@ class Creator
                 $service['note'] = isset($service['note']) ? $service['note'] : null;
                 $service = array_except($service, ['id', 'name', 'is_vat_applicable', 'updated_price']);
 
+                if($this->data['payment_method'] == 'emi' && $service['is_emi_applied'] == false) {
+                    $id =  is_null($original_service->id) ? 'NULL, price: ' . $original_service->price : $original_service->id;
+                    $message = 'EMI is not available for service id# ' . $id;
+                    throw new DoNotReportException($message , 400);
+                }
                 $pos_order_item = $this->itemRepo->save($service);
                 $is_stock_maintainable = $this->stockManager->setPosService($original_service)->isStockMaintainable();
                 if ($is_stock_maintainable) $this->stockManager->decrease($service['quantity']);
@@ -343,5 +354,14 @@ class Creator
     private function getDiscountAmount($discount)
     {
         return (isset($discount) && isset($discount['amount'])) ? $discount['amount'] : 0;
+    }
+
+    private function isEmiApplicable($service)
+    {
+       if($this->data['payment_method'] == 'emi' ) {
+           if(is_null($service->id) && $service->price >= 5000) return true;
+           elseif ($service->id && $service->price >= 5000 && $service->is_emi_available) return true;
+       }
+       return false;
     }
 }
