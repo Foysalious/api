@@ -35,7 +35,6 @@ class sProOrderDetailsTest extends FeatureTestCase
 
         $data = $response->decodeResponseJson();
 
-
         //assert
         $this->assertEquals(200, $data["code"]);
         $this->assertEquals('Successful', $data["message"]);
@@ -200,7 +199,6 @@ class sProOrderDetailsTest extends FeatureTestCase
 
     }
 
-    //Failed
     public function testSProOrderDetailsAPIWithAlphabeticCharacterAsServiceId()
     {
         //arrange
@@ -217,7 +215,6 @@ class sProOrderDetailsTest extends FeatureTestCase
 
     }
 
-    //Failed
     public function testSProOrderDetailsAPIWithInvalidServiceId()
     {
         //arrange
@@ -234,5 +231,45 @@ class sProOrderDetailsTest extends FeatureTestCase
         $this->assertEquals('Service not found', $data["message"]);
 
     }
+
+//    public function testSProOrderDetailsAPIWithServiceDetailsUnpublished()
+//    {
+//        //arrange
+//        $this->service->update([
+//            'publication_status' => 0
+//        ]);
+//
+//        //act
+//        $response = $this->get('v3/spro/service/' . $this->service->id . '/instructions', [
+//            'Authorization' => "Bearer $this->token"
+//        ]);
+//
+//        $data = $response->decodeResponseJson();
+//        dd($data);
+//
+//        //assert
+//        $this->assertEquals(200, $data["code"]);
+//        $this->assertEquals('Successful', $data["message"]);
+//        $this->assertEquals('work_start', $data["data"]["instruction_keys"][0]);
+//        $this->assertEquals('service_details', $data["data"]["instruction_keys"][1]);
+//        $this->assertEquals('work_end', $data["data"]["instruction_keys"][2]);
+//        $this->assertEquals('কাজের শুরুতে', $data["data"]["instructions"]["work_start"]["header"]);
+//        $this->assertEquals('কাজের শুরুতে কি কি করণীয়', $data["data"]["instructions"]["work_start"]["title"]);
+//        $this->assertEquals("সেবার টি-শার্ট পরে কাজে যেতে হবে", $data["data"]["instructions"]["work_start"]["list"][0]);
+//        $this->assertEquals("পরিষ্কার পরিচ্ছন্ন হয়ে যেতে হবে", $data["data"]["instructions"]["work_start"]["list"][1]);
+//        $this->assertEquals("মাস্ক এন্ড হ্যান্ড গ্লোভস পরিধান করতে হবে", $data["data"]["instructions"]["work_start"]["list"][2]);
+//        $this->assertEquals("সার্ভিসের জন্য প্রয়োজনীয় সরঞ্জাম সাথে নিতে হবে", $data["data"]["instructions"]["work_start"]["list"][3]);
+//        $this->assertEquals("কাস্টমারের সাথে সময় এবং স্থান প্রয়োজন হলে কনফার্ম করে নিতে হবে", $data["data"]["instructions"]["work_start"]["list"][4]);
+//        $this->assertEquals("কাজের বিবরণ", $data["data"]["instructions"]["service_details"]["header"]);
+//        $this->assertEquals("কাজের বিবরণ", $data["data"]["instructions"]["service_details"]["title"]);
+//        $this->assertEquals("গরু একটি গৃহপালিত পশু।  গরু একটি গৃহপালিত পশু।", $data["data"]["instructions"]["service_details"]["list"][0]);
+//        $this->assertEquals("কাজের শেষে", $data["data"]["instructions"]["work_end"]["header"]);
+//        $this->assertEquals("কাজের শেষে কি কি করণীয়", $data["data"]["instructions"]["work_end"]["title"]);
+//        $this->assertEquals("ওয়ারেন্টিযুক্ত সার্ভিসের ক্ষেত্রে কাস্টমারকে সার্ভিস ওয়ারেন্টি সম্পর্কে জানতে হবে", $data["data"]["instructions"]["work_end"]["list"][0]);
+//        $this->assertEquals("সার্ভিস রিভিউ এন্ড রেটিং এর জন্য অনুরোধ করতে পারেন, কিন্তু ৫ স্টার দেয়ার জন্যে জোর দেয়া যাবে না", $data["data"]["instructions"]["work_end"]["list"][1]);
+//        $this->assertEquals("কাস্টমারের যদি অন্য কোন সেবার সার্ভিস প্রয়োজন হয়, তাহলে  অর্ডার তৈরি অথবা সার্ভিস রিকোয়েস্ট করে দিতে পারেন", $data["data"]["instructions"]["work_end"]["list"][2]);
+//        $this->assertEquals("বের হওয়ার আগে কাস্টমারকে সালাম দিতে হবে", $data["data"]["instructions"]["work_end"]["list"][3]);
+//
+//    }
 
 }

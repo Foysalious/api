@@ -50,6 +50,7 @@ use Factory\PaymentGatewayFactory;
 use Factory\ThanaFactory;
 use Factory\DistrictFactory;
 use Factory\DivisionFactory;
+use Factory\LocationServiceFactory;
 
 
 
@@ -104,7 +105,8 @@ $factory_classes = [
     PaymentGatewayFactory::class,
     ThanaFactory::class,
     DistrictFactory::class,
-    DivisionFactory::class
+    DivisionFactory::class,
+    LocationServiceFactory::class
 
 ];
 

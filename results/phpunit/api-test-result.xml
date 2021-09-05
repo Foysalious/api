@@ -1,24 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="Application Test Suite" tests="1" assertions="0" failures="0" errors="1" time="0.130160">
-    <testsuite name="Tests\Feature\sProServiceBookCategory\sProOrderDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProOrderDetailsTest.php" tests="1" assertions="0" failures="0" errors="1" time="0.130160">
-      <testcase name="testSProOrderDetailsAPIWithServiceDetails" class="Tests\Feature\sProServiceBookCategory\sProOrderDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProOrderDetailsTest.php" line="27" assertions="0" time="0.130160">
-        <error type="ReflectionException">Tests\Feature\sProServiceBookCategory\sProOrderDetailsTest::testSProOrderDetailsAPIWithServiceDetails
-ReflectionException: Class Sheba\Dal\TaxHistory\TaxHistoryRepository does not exist
+  <testsuite name="Application Test Suite" tests="1" assertions="0" failures="0" errors="1" time="0.000000">
+    <testsuite name="Tests\Feature\sProOrderCreate\sProOrderCreateTimeTest" file="/var/www/tests/Feature/sProOrderCreate/sProOrderCreateTimeTest.php" tests="1" assertions="0" failures="0" errors="1" time="0.000000">
+      <testcase name="testSProTimeAPIWithValidPhoneNumber" class="Tests\Feature\sProOrderCreate\sProOrderCreateTimeTest" file="/var/www/tests/Feature/sProOrderCreate/sProOrderCreateTimeTest.php" line="50" assertions="0" time="0.000000">
+        <error type="PHPUnit_Framework_Exception">Tests\Feature\sProOrderCreate\sProOrderCreateTimeTest::testSProTimeAPIWithValidPhoneNumber
+PHPUnit_Framework_Exception: array:2 [
+  "code" =&gt; 400
+  "message" =&gt; null
+]
 
-/var/www/vendor/laravel/framework/src/Illuminate/Container/Container.php:794
-/var/www/vendor/laravel/framework/src/Illuminate/Container/Container.php:774
-/var/www/vendor/laravel/framework/src/Illuminate/Container/Container.php:629
-/var/www/vendor/laravel/framework/src/Illuminate/Foundation/Application.php:697
-/var/www/vendor/laravel/framework/src/Illuminate/Console/Application.php:115
-/var/www/vendor/laravel/framework/src/Illuminate/Console/Application.php:129
-/var/www/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php:237
-/var/www/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php:170
-/var/www/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/InteractsWithConsole.php:25
-/var/www/tests/TestCase.php:28
-/var/www/vendor/laravel/framework/src/Illuminate/Foundation/Testing/TestCase.php:70
-/var/www/tests/Feature/FeatureTestCase.php:110
-/var/www/tests/Feature/sProServiceBookCategory/sProOrderDetailsTest.php:13
 </error>
       </testcase>
     </testsuite>
