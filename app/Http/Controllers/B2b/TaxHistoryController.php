@@ -61,7 +61,7 @@ class TaxHistoryController extends Controller
         return api_response($request, null, 200);
     }
 
-    public function downloadBusinessMemberTaxCertificate($business_member_id, $id, Request $request)
+    public function downloadBusinessMemberTaxCertificate($business, $business_member_id, $id, Request $request)
     {
         /** @var Business $business */
         $business = $request->business;
@@ -70,7 +70,7 @@ class TaxHistoryController extends Controller
         if (!$business_member) return api_response($request, null, 401);
         $tax_report_history = $this->taxHistoryRepo->find($id);
         if (!$tax_report_history) return api_response($request, null, 404);
-        if ($tax_report_history->business_member_id !== $business_member_id) return api_response($request, null, 404);
+        if ($tax_report_history->business_member_id !== intval($business_member_id)) return api_response($request, null, 404);
     }
 
 }
