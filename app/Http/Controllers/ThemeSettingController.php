@@ -65,21 +65,7 @@ class ThemeSettingController extends Controller
           "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg",
           "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
         },
-         {
-          "name": "Men Fashion",
-          "id": 10,
-          "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
-          "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg",
-          "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
-        },
-
-        {
-          "name": "Men Fashion",
-          "id": 2,
-          "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
-          "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg",
-          "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
-        },
+        
         {
           "name": "Men Fashion",
           "id": 10050,
