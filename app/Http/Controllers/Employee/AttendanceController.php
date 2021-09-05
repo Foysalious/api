@@ -42,7 +42,7 @@ class AttendanceController extends Controller
      * @param BusinessWeekendRepoInterface $business_weekend_repo
      * @return JsonResponse
      */
-    public function index(Request                      $request, AttendanceRepoInterface $attendance_repo, TimeFrame $time_frame, BusinessHolidayRepoInterface $business_holiday_repo,
+    public function index(Request $request, AttendanceRepoInterface $attendance_repo, TimeFrame $time_frame, BusinessHolidayRepoInterface $business_holiday_repo,
                           BusinessWeekendRepoInterface $business_weekend_repo)
     {
         $this->validate($request, ['year' => 'required|string', 'month' => 'required|string']);

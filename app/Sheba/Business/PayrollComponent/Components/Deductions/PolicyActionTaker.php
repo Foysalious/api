@@ -10,8 +10,6 @@ use Sheba\Business\Prorate\Updater as ProrateUpdater;
 use Sheba\Dal\BusinessMemberLeaveType\Contract as BusinessMemberLeaveTypeInterface;
 use Sheba\Dal\OfficePolicy\Type;
 use Sheba\Dal\OfficePolicyRule\ActionType;
-use Sheba\Dal\PayrollComponent\TargetType;
-use Sheba\Dal\PayrollComponent\Type as PayrollComponentType;
 
 class PolicyActionTaker
 {
@@ -35,6 +33,10 @@ class PolicyActionTaker
     private $policyType;
     private $isUnpaidLeavePolicyEnable;
     private $businessMemberSalay;
+    /**
+     * @var bool|\Carbon\Carbon|float|\Illuminate\Support\Collection|int|mixed|string|null
+     */
+    private $businessOfficeHour;
 
     public function __construct()
     {
@@ -47,6 +49,7 @@ class PolicyActionTaker
     public function setBusiness(Business $business)
     {
         $this->business = $business;
+        $this->businessOfficeHour = $this->business->officeHour;
         return $this;
     }
 
@@ -95,7 +98,11 @@ class PolicyActionTaker
 
     public function takeAction()
     {
-        if ($this->policyType === Type::UNPAID_LEAVE && !$this->isUnpaidLeavePolicyEnable) return $this->totalPenaltyAmountByOneWorkingDay($this->oneWorkingDayAmount($this->businessMemberSalay,  floatValFormat($this->totalWorkingDays)), $this->penaltyDays);
+        if ($this->policyType === Type::UNPAID_LEAVE && !$this->isUnpaidLeavePolicyEnable) {
+            $component = $this->businessOfficeHour->unauthorised_leave_penalty_component;
+            $one_working_day_amount = $component === PayrollConstGetter::GROSS_SALARY ? $this->oneWorkingDayAmount($this->businessMemberSalay,  floatValFormat($this->totalWorkingDays)) : $this->getOneWorkingDayAmountForGrossComponent($this->payrollSetting, $this->businessMember, $component);
+            return $this->totalPenaltyAmountByOneWorkingDay($one_working_day_amount, $this->penaltyDays);
+        }
         $this->policyRules = $this->business->policy()->where('policy_type', $this->policyType)->where(function ($query) {
             $query->where('from_days', '<=', $this->penaltyDays);
             $query->where('to_days', '>=', $this->penaltyDays);
@@ -125,34 +132,20 @@ class PolicyActionTaker
                 ->setLeaveTypeId($penalty_type)
                 ->setTotalDays($total_leave_type_days_after_penalty)
                 ->setNote(PayrollConstGetter::LEAVE_PRORATE_NOTE_FOR_POLICY_ACTION);
-            if ($existing_prorate) $this->prorateUpdater->setRequester($this->prorateRequester)->setBusinessMemberLeaveType($existing_prorate)->update();
-            else $this->prorateCreator->setRequester($this->prorateRequester)->create();
+            //if ($existing_prorate) $this->prorateUpdater->setRequester($this->prorateRequester)->setBusinessMemberLeaveType($existing_prorate)->update();
+            //else $this->prorateCreator->setRequester($this->prorateRequester)->create();
 
             return $policy_total;
         }
         if ($action === ActionType::SALARY_ADJUSTMENT) {
             $penalty_type = $this->policyRules->penalty_type;
             $penalty_amount = floatValFormat($this->policyRules->penalty_amount);
-            $gross_component = $this->payrollSetting->components->where('name', $penalty_type)->where('type', PayrollComponentType::GROSS)->where('target_type', TargetType::EMPLOYEE)->where('target_id', $this->businessMember->id)->first();
-            if (!$gross_component) $gross_component = $this->payrollSetting->components()->where('name', $penalty_type)->where('type', PayrollComponentType::GROSS)->where(function($query) {
-                return $query->where('target_type', null)->orWhere('target_type', TargetType::GENERAL);
-            })->first();
-            if ($gross_component) {
-                $percentage = floatValFormat(json_decode($gross_component->setting, 1)['percentage']);
-                $amount = ($business_member_salary * $percentage) / 100;
-                $one_working_day_amount = $this->oneWorkingDayAmount($amount,  floatValFormat($this->totalWorkingDays));
-                return $this->totalPenaltyAmountByOneWorkingDay($one_working_day_amount, $penalty_amount);
-            }
-            $addition_component = $this->payrollSetting->components->where('name', $penalty_type)->where('type', 'addition')->first();
-            if ($addition_component) {
-                $amount = $this->additionBreakdown['addition'][$penalty_type];
-                $one_working_day_amount = $this->oneWorkingDayAmount($amount,  floatValFormat($this->totalWorkingDays));
-                return ($one_working_day_amount * $penalty_amount);
-            }
-            if (!$gross_component && !$addition_component){
-                $one_working_day_amount = $this->oneWorkingDayAmount($business_member_salary,  floatValFormat($this->totalWorkingDays));
-                return $this->totalPenaltyAmountByOneWorkingDay($one_working_day_amount, $penalty_amount);
-            }
+            $one_working_day_amount_for_gross = $this->getOneWorkingDayAmountForGrossComponent($this->payrollSetting, $this->businessMember, $penalty_type);
+            if ($one_working_day_amount_for_gross !== null) return $this->totalPenaltyAmountByOneWorkingDay($one_working_day_amount_for_gross, $penalty_amount);
+            $one_working_day_amount_for_addition = $this->getOneWorkingDayAmountForAdditionComponent($this->payrollSetting, $penalty_type);
+            if ($one_working_day_amount_for_addition !== null) return ($one_working_day_amount_for_addition * $penalty_amount);
+            $one_working_day_amount = $this->oneWorkingDayAmount($business_member_salary,  floatValFormat($this->totalWorkingDays));
+            return $this->totalPenaltyAmountByOneWorkingDay($one_working_day_amount, $penalty_amount);
         }
         return $policy_total;
     }

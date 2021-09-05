@@ -38,7 +38,12 @@ class EmployeeRoute
                     $api->get('/', 'Employee\VisitController@show');
                     $api->post('note', 'Employee\VisitController@storeNote');
                     $api->post('photo', 'Employee\VisitController@storePhoto');
+                    $api->post('status-update', 'Employee\VisitController@updateStatus');
                 });
+            });
+            $api->group(['prefix' => 'my-team'], function ($api) {
+                $api->get('/', 'Employee\MyTeamController@myTeam');
+                $api->get('{employee_id}', 'Employee\MyTeamController@employeeDetails');
             });
             //$api->post('password', 'Employee\EmployeeController@updateMyPassword');
             $api->get('dashboard', 'Employee\EmployeeController@getDashboard');
