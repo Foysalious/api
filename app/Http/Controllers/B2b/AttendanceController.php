@@ -206,9 +206,10 @@ class AttendanceController extends Controller
 
         $total_members = $all_employee_attendance->count();
         if ($request->has('limit')) $all_employee_attendance = $all_employee_attendance->splice($offset, $limit);
-
+        if ($request->file == 'excel') {
+            return $monthly_excel->setMonthlyData($all_employee_attendance->toArray())->setStartDate($request->start_date)->setEndDate($request->end_date)->get();
+        }
         if ($all_employee_attendance->isEmpty()) return api_response($request, null, 404);
-        if ($request->file == 'excel') return $monthly_excel->setMonthlyData($all_employee_attendance->toArray())->setStartDate($request->start_date)->setEndDate($request->end_date)->get();
 
         return api_response($request, $all_employee_attendance, 200, ['all_employee_attendance' => $all_employee_attendance, 'total_members' => $total_members]);
     }
@@ -948,10 +949,10 @@ class AttendanceController extends Controller
         $manager->setSerializer(new CustomSerializer());
         $resource = new Collection($unpaid_leave_policy, new PolicyTransformer());
         $unpaid_leave_policy_rules = $manager->createData($resource)->toArray()['data'];
-
+        $unauthorised_leave_penalty_component = $office_time->unauthorised_leave_penalty_component;
         return api_response($request, $unpaid_leave_policy_rules, 200, [
             'is_unpaid_leave_policy_enable' => $office_time->is_unpaid_leave_policy_enable,
-            'unauthorised_leave_penalty_component' => $office_time->unauthorised_leave_penalty_component,
+            'unauthorised_leave_penalty_component' => is_numeric($unauthorised_leave_penalty_component) ? intval($unauthorised_leave_penalty_component) : $unauthorised_leave_penalty_component,
             'unpaid_leave_policy_rules' => $unpaid_leave_policy_rules
         ]);
     }
