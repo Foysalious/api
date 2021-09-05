@@ -14,6 +14,7 @@ use App\Transformers\Business\LeaveBalanceTransformer;
 use App\Transformers\Business\LeaveListTransformer;
 use App\Transformers\Business\LeaveRequestDetailsTransformer;
 use App\Transformers\CustomSerializer;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -643,11 +644,25 @@ class LeaveController extends Controller
     }
 
     private function filterByPeriod($leave_approval_requests, Request $request) {
-        return $leave_approval_requests->filter(function ($approval_request) use ($request) {
+        $period_data = [
+            'period_start' => Carbon::parse($request->period_start),
+            'period_end' => Carbon::parse($request->period_end)->endOfDay()
+        ];
+        return $leave_approval_requests->filter(function ($approval_request) use ($period_data) {
             $requestable = $approval_request->requestable;
             $start_date = $requestable ? $requestable->start_date : null;
             $end_date = $requestable ? $requestable->end_date : null;
-            return $start_date >= $request->period_start.' 00:00:00' && $end_date <= $request->period_end.' 23:59:59';
+            if ($start_date && $end_date) {
+                $date_exists_between_period = false;
+                for ($date = $start_date; $date < $end_date; $date->addDay()) {
+                    if ($date->between($period_data['period_start'], $period_data['period_end'])) {
+                        $date_exists_between_period = true;
+                    }
+                }
+                return $date_exists_between_period;
+            } else {
+                return false;
+            }
         });
     }
 
