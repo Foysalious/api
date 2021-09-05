@@ -321,6 +321,7 @@ class Route
 
             $api->group(['prefix'=>'ekyc'], function ($api) {
                 $api->post('nid-ocr-data', 'EKYC\NidOcrController@storeNidOcrData');
+                $api->post('face-verification', 'EKYC\FaceVerificationController@faceVerification');
             });
         });
         return $api;
