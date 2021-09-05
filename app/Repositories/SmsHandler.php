@@ -72,7 +72,7 @@ class SmsHandler
 
     public function getCost()
     {
-        return $this->sms->getCost();
+        return $this->sms->estimateCharge();
     }
 
     public function setMobile($mobile)

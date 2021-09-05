@@ -22,12 +22,14 @@ class OrderBillSms extends Job implements ShouldQueue
     /**
      * @var array
      */
-    private $data;
+    private $data = [];
 
     /**
      * @var Partner
      */
     private $partner;
+    private $service_break_down = [];
+    private $due_amount;
 
     public function __construct($partner,$orderId)
     {
@@ -44,14 +46,7 @@ class OrderBillSms extends Job implements ShouldQueue
     {
         if ($this->attempts() > 2) return;
         $this->resolvePosOrder();
-        if(!$this->partner->isMigrationCompleted())
-            $this->generateDataForOldSystem();
-        else{
-
-            $this->generateDataForNewSystem();
-        }
-
-
+        $this->generateData();
         $handler->setData($this->data)->handle();
     }
 
@@ -71,68 +66,71 @@ class OrderBillSms extends Job implements ShouldQueue
         return $orderService->setPartnerId($this->partner->id)->setOrderId($this->orderId)->getDetails()['order'];
     }
 
+    private function generateData()
+    {
+        if(!$this->partner->isMigrationCompleted())
+            $this->generateDataForOldSystem();
+        else
+            $this->generateDataForNewSystem();
+        $this->partner->reload();
+        $this->data['template'] = $this->due_amount > 0 ? 'pos-due-order-bills' : 'pos-order-bills';
+        $this->data['feature_type'] = FeatureType::POS;
+        $this->data['business_type'] = BusinessType::SMANAGER;
+        $this->data['wallet'] = $this->partner->wallet;
+    }
+
     private function generateDataForOldSystem()
     {
-        $partner = $this->order->partner;
-        $partner->reload();
-        $service_break_down = [];
         $this->order->items->each(function ($item) use (&$service_break_down) {
-            $service_break_down[$item->id] = $item->service_name . ': ' . $item->getTotal();
+            $this->service_break_down[$item->id] = $item->service_name . ': ' . $item->getTotal();
         });
-        $due_amount = $this->order->getDue();
-        $service_break_down = implode(',', $service_break_down);
-        $data = [];
-        $data['mobile'] = $this->order->customer->profile->mobile;
-        $data['order_id'] = $this->order->partner_wise_order_id;
-        $data['service_break_down'] = $service_break_down;
-        $data['template'] = $due_amount > 0 ? 'pos-due-order-bills' : 'pos-order-bills';
-        $data['vendor'] = 'infobip';
-        $data['feature_type'] = FeatureType::POS;
-        $data['business_type'] = BusinessType::SMANAGER;
-        $data['wallet'] = $this->partner->wallet;
-        $data['log'] = " BDT has been deducted for sending pos order details sms (order id: {$this->order->id})";
-        $message_data = $this->getMessageData($service_break_down,$due_amount);
-        array_push($data,$message_data);
-        return $this->data = $data;
+        $this->data['service_break_down'] = implode(',', $this->service_break_down);
+        $this->due_amount = $this->order->getDue();
+        $this->data['mobile'] = $this->order->customer->profile->mobile;
+        $this->data['order_id'] = $this->order->id;
+        $this->data['log'] = " BDT has been deducted for sending pos order details sms (order id: {$this->order->id})";
+        $this->getMessageDataForOldSystem();
+
     }
 
     private function generateDataForNewSystem()
     {
-        $partner = Partner::find($);
-        $partner->reload();
-        $service_break_down = [];
-        $this->order->items->each(function ($item) use (&$service_break_down) {
-            $service_break_down[$item->id] = $item->service_name . ': ' . $item->getTotal();
-        });
-        $due_amount = $this->order->getDue();
-        $service_break_down = implode(',', $service_break_down);
-        $data = [];
-        $data['mobile'] = $this->order->customer->profile->mobile;
-        $data['order_id'] = $this->order->partner_wise_order_id;
-        $data['service_break_down'] = $service_break_down;
-        $data['template'] = $due_amount > 0 ? 'pos-due-order-bills' : 'pos-order-bills';
-        $data['vendor'] = 'infobip';
-        $data['feature_type'] = FeatureType::POS;
-        $data['business_type'] = BusinessType::SMANAGER;
-        $data['wallet'] = $this->partner->wallet;
-        $data['log'] = " BDT has been deducted for sending pos order details sms (order id: {$this->order->id})";
-        $message_data = $this->getMessageData($service_break_down,$due_amount);
-        array_push($data,$message_data);
-        return $this->data = $data;
-
-
+        $items = $this->order['items'];
+        foreach ($items as $item)
+            $this->service_break_down[$item['id']] = $item['name'] . ': ' . ($item['quantity'] * $item['unit_price']);
+        $this->data['service_break_down'] = $this->service_break_down = implode(',', $this->service_break_down);
+        $this->due_amount = $this->order['price']['due'];
+        $this->data['mobile'] = $this->order['customer']['mobile'];
+        $this->data['order_id'] = $this->order['partner_wise_order_id'];
+        $this->data['log'] = " BDT has been deducted for sending pos order details sms (order id: {$this->order['id']})";
+        $this->getMessageDataForNewSystem($this->service_break_down,$this->due_amount);
     }
 
-    private function getMessageData($service_break_down,$due_amount)
+
+    private function getMessageDataForOldSystem()
     {
         $data = [
             'order_id' => $this->order->partner_wise_order_id,
-            'service_break_down' => $service_break_down,
+            'service_break_down' => $this->service_break_down,
             'total_amount' => $this->order->getNetBill(),
-            'partner_name' => $this->order->partner->name,
+            'partner_name' => $this->partner->name,
+            'invoice_link' => $this->order->invoice
         ];
-        if($due_amount > 0 )
-            array_push($data, ['total_due_amount' => $due_amount]);
-        return $data;
+        if($this->due_amount > 0 )
+            $data['total_due_amount'] = $this->due_amount;
+        $this->data['message'] = $data;
+    }
+
+    private function getMessageDataForNewSystem()
+    {
+        $data = [
+            'order_id' => $this->order['partner_wise_order_id'],
+            'service_break_down' => $this->service_break_down,
+            'total_amount' => $this->order['price']['original_price'],
+            'partner_name' => $this->partner->name,
+            'invoice_link' => 'static'
+        ];
+        if($this->due_amount > 0 )  $data['total_due_amount'] = $this->due_amount;
+        return $this->data['message'] = $data;
     }
 }
