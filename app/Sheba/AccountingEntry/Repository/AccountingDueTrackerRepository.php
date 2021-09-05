@@ -46,10 +46,14 @@ class AccountingDueTrackerRepository extends BaseRepository
      * @param Request $request
      * @param $type
      * @param bool $with_update
+     * @return bool
      * @throws AccountingEntryServerError
      */
     public function storeEntry(Request $request, $type, $with_update = false)
     {
+        if (!$this->isMigratedToAccounting($this->partner->id)) {
+            return true;
+        }
         $this->getCustomer($request);
         $this->setModifier($request->partner);
         $data = $this->createEntryData($request, $type);
@@ -76,6 +80,9 @@ class AccountingDueTrackerRepository extends BaseRepository
      */
     public function deleteCustomer($customerId)
     {
+        if (!$this->isMigratedToAccounting($this->partner->id)) {
+            return true;
+        }
         $url = "api/due-list/" . $customerId;
         return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->delete($url);
     }
