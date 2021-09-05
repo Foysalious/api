@@ -60,7 +60,7 @@ class OrderBillSms extends Job implements ShouldQueue
         if(!$this->partner->isMigrationCompleted())
             $this->order = PosOrder::find($this->orderId);
         else
-            $this->order =$this->getOrderDetailsFromPosOrderService();
+            $this->order = $this->getOrderDetailsFromPosOrderService();
     }
 
 
@@ -98,6 +98,28 @@ class OrderBillSms extends Job implements ShouldQueue
 
     private function generateDataForNewSystem()
     {
+        $partner = $this->order->partner;
+        $partner->reload();
+        $service_break_down = [];
+        $this->order->items->each(function ($item) use (&$service_break_down) {
+            $service_break_down[$item->id] = $item->service_name . ': ' . $item->getTotal();
+        });
+        $due_amount = $this->order->getDue();
+        $service_break_down = implode(',', $service_break_down);
+        $data = [];
+        $data['mobile'] = $this->order->customer->profile->mobile;
+        $data['order_id'] = $this->order->partner_wise_order_id;
+        $data['service_break_down'] = $service_break_down;
+        $data['template'] = $due_amount > 0 ? 'pos-due-order-bills' : 'pos-order-bills';
+        $data['vendor'] = 'infobip';
+        $data['feature_type'] = FeatureType::POS;
+        $data['business_type'] = BusinessType::SMANAGER;
+        $data['wallet'] = $this->partner->wallet;
+        $data['log'] = " BDT has been deducted for sending pos order details sms (order id: {$this->order->id})";
+        $message_data = $this->getMessageData($service_break_down,$due_amount);
+        array_push($data,$message_data);
+        return $this->data = $data;
+
 
     }
 

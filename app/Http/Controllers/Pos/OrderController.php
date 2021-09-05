@@ -362,7 +362,7 @@ class OrderController extends Controller
     {
         $partner = $request->partner;
         $this->setModifier($request->manager_resource);
-        dispatch(new OrderBillSms($partner, $request->order));
+        $this->dispatch(new OrderBillSms($partner, $request->order));
         return api_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
     }
 
