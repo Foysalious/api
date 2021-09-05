@@ -41,6 +41,9 @@ class EmployeeRoute
                     $api->post('status-update', 'Employee\VisitController@updateStatus');
                 });
             });
+            $api->group(['prefix' => 'my-team'], function ($api) {
+                $api->get('/', 'Employee\MyTeamController@myTeam');
+            });
             //$api->post('password', 'Employee\EmployeeController@updateMyPassword');
             $api->get('dashboard', 'Employee\EmployeeController@getDashboard');
             $api->get('notifications', 'Employee\NotificationController@index');
