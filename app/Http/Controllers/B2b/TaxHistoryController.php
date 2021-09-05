@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Http\Controllers\Controller;
+use App\Sheba\Business\Payslip\TaxHistory\TaxHistoryExcel;
 use Illuminate\Http\Request;
 use App\Models\Business;
 use App\Models\BusinessMember;
@@ -25,7 +26,7 @@ class TaxHistoryController extends Controller
         $this->taxHistoryRepo = $tax_history_repo;
     }
 
-    public function index(Request $request, TaxHistoryList $tax_history_list)
+    public function index(Request $request, TaxHistoryList $tax_history_list, TaxHistoryExcel $tax_history_excel)
     {
         /** @var Business $business */
         $business = $request->business;
@@ -38,9 +39,10 @@ class TaxHistoryController extends Controller
                                        ->setDepartmentID($request->department_id)->setSearch($request->search)
                                        ->setSortKey($request->sort)->setSortColumn($request->sort_column)
                                        ->get();
+
         $total_report_count = $tax_report->count();
         $total_tax_amount = $tax_report->sum('total_tax_amount_monthly');
-        
+        if ($request->file == 'excel') return $tax_history_excel->setTaxHistoryData($tax_report->toArray())->get();
         $tax_report = collect($tax_report)->splice($offset, $limit);
         return api_response($request, null, 200, ['tax_history' => $tax_report, 'total_tax_amount' => $total_tax_amount, 'show_download_report_banner' => $business->payrollSetting->show_tax_report_download_banner, 'total' => $total_report_count]);
     }

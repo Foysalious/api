@@ -112,6 +112,7 @@ class PayrollComponentSchedulerCalculation
         foreach ($packages as $package) {
             $employee_target = $package->packageTargets->where('effective_for', PackageTargetType::EMPLOYEE)->where('target_id', $this->businessMember->id);
             $department_target = $this->department ? $package->packageTargets->where('effective_for', PackageTargetType::DEPARTMENT)->where('target_id', $this->department->id) : null;
+            if ($department_target === null) continue;
             $global_target =  $package->packageTargets->where('effective_for', PackageTargetType::GENERAL);
             $target_amount = 0;
             if (!$employee_target->isEmpty() || !$department_target->isEmpty() || !$global_target->isEmpty()) {
