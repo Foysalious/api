@@ -80,10 +80,12 @@ class Payslip extends Command
             $business = $payroll_setting->business;
             if ($this->isPayDay($payroll_setting)) {
                 $business_members = $business->getActiveBusinessMember()->get();
+                $last_pay_day = $payroll_setting->last_pay_day;
+                $start_date = $last_pay_day ? Carbon::parse($last_pay_day)->format('Y-m-d') : Carbon::now()->subMonth()->format('Y-m-d');
                 foreach ($business_members as $business_member) {
                     $joining_date = $business_member->join_date;
                     if ($joining_date <= Carbon::now()->subMonth()) $joining_date = null;
-                    $start_date = $joining_date ? Carbon::parse($joining_date) : Carbon::now()->subMonth()->format('Y-m-d');
+                    $start_date = $joining_date ? Carbon::parse($joining_date) : $start_date;
                     $end_date = Carbon::now()->subDay()->format('Y-m-d');
                     $time_frame = $this->timeFrame->forDateRange($start_date, $end_date);
                     $gross_salary_breakdown_percentage = $this->grossSalaryBreakdownCalculate->payslipComponentPercentageBreakdown($business_member);
