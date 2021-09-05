@@ -6,6 +6,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Redis;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategoryRepository;
 use Sheba\Dal\PartnerPosService\PartnerPosServiceRepository;
+use Sheba\Dal\PartnerPosServiceBatch\PartnerPosServiceBatchRepositoryInterface;
 use Sheba\Dal\PosCategory\PosCategoryRepository;
 use Sheba\Partner\DataMigration\Jobs\PartnerDataMigrationToInventoryJob;
 use DB;
@@ -34,13 +35,23 @@ class InventoryDataMigration
     private $partnerPosCategories;
     private $partnerPosServices;
     private $posCategories;
+    private $partnerPosServiceBatches;
+    /**
+     * @var PartnerPosServiceBatchRepositoryInterface
+     */
+    private $partnerPosServiceBatchRepository;
 
 
-    public function __construct(PosCategoryRepository $posCategoryRepository, PartnerPosCategoryRepository $partnerPosCategoryRepository, PartnerPosServiceRepository $partnerPosServiceRepository)
+    public function __construct(
+        PosCategoryRepository $posCategoryRepository,
+        PartnerPosCategoryRepository $partnerPosCategoryRepository,
+        PartnerPosServiceRepository $partnerPosServiceRepository,
+        PartnerPosServiceBatchRepositoryInterface $partnerPosServiceBatchRepository)
     {
         $this->posCategoryRepository = $posCategoryRepository;
         $this->partnerPosCategoryRepository = $partnerPosCategoryRepository;
         $this->partnerPosServiceRepository = $partnerPosServiceRepository;
+        $this->partnerPosServiceBatchRepository = $partnerPosServiceBatchRepository;
         $this->categoriesData = collect();
     }
 
@@ -56,9 +67,9 @@ class InventoryDataMigration
 
     private function generatePosCategoriesData($pos_category)
     {
-        if ($pos_category->parent_id && !$this->categoriesData->contains('id', $pos_category->parent_id)) {
+        if (($pos_category && $pos_category->parent_id) && !$this->categoriesData->contains('id', $pos_category->parent_id)) {
             $parent_category = $this->posCategoriesData->find($pos_category->parent_id);
-            $this->generatePosCategoriesData($parent_category);
+            if ($parent_category) $this->generatePosCategoriesData($parent_category);
         }
         $this->categoriesData->push($pos_category);
     }
@@ -66,9 +77,9 @@ class InventoryDataMigration
     public function migrate()
     {
         $this->generateMigrationData();
-        $this->migratePartner($this->partnerInfo);
-        $this->migrateCategories($this->posCategories);
-        $this->migrateCategoryPartner($this->partnerPosCategories);
+//        $this->migratePartner($this->partnerInfo);
+//        $this->migrateCategories($this->posCategories);
+//        $this->migrateCategoryPartner($this->partnerPosCategories);
         $this->migrateProducts($this->partnerPosServices);
     }
 
@@ -78,6 +89,7 @@ class InventoryDataMigration
         $this->posCategories  = $this->generatePosCategoriesMigrationData();
         $this->partnerPosCategories = $this->generatePartnerPosCategoriesMigrationData();
         $this->partnerPosServices = $this->generatePartnerPosServicesMigrationData();
+        $this->partnerPosServiceBatches = collect($this->generatePartnerPosServiceBatchesData());
         $this->partnerPosServiceImages = collect($this->generatePartnerPosServiceImageGalleryData());
         $this->partnerPosServiceLogs = collect($this->generatePartnerPosServiceLogsMigrationData());
         $this->partnerPosServiceDiscounts = collect($this->generatePartnerPosServiceDiscountsMigrationData());
@@ -112,13 +124,16 @@ class InventoryDataMigration
 
     private function migrateProducts($data)
     {
-        $chunks = array_chunk($data, self::CHUNK_SIZE);
+        $chunks = array_chunk($data, 1);
         foreach ($chunks as $chunk) {
             $productIds = array_column($chunk, 'id');
-            list($images, $logs, $discounts) = $this->getProductsRelatedData($productIds);
+            list($images, $logs, $discounts, $batches) = $this->getProductsRelatedData($productIds);
+            dd(json_encode($chunk), $images, $logs, $discounts, json_encode($batches));
+//            dd(json_encode($chunk), json_encode($images), json_encode($logs), json_encode($discounts), json_encode($batches));
             $this->setRedisKey();
             dispatch(new PartnerDataMigrationToInventoryJob($this->partner, [
                 'products' => $chunk,
+                'partner_pos_service_batches' => $batches,
                 'partner_pos_service_image_gallery' => $images,
                 'partner_pos_services_logs' => $logs,
                 'partner_pos_service_discounts' => $discounts,
@@ -155,12 +170,22 @@ class InventoryDataMigration
     private function generatePartnerPosServicesMigrationData()
     {
         $products = $this->partnerPosServiceRepository->where('partner_id', $this->partner->id)
-            ->where('is_migrated', '<>', 1)->withTrashed()->select('id', 'partner_id', 'pos_category_id AS category_id',
-            'name', 'app_thumb', 'description', 'cost', 'price', 'unit', 'wholesale_price', 'stock', 'warranty', 'warranty_unit',
+            ->where(function ($q) {
+                $q->where('is_migrated', null)->orWhere('is_migrated', 0);
+            })->withTrashed()->select('id', 'partner_id', 'pos_category_id AS category_id',
+            'name', 'app_thumb', 'description', 'price', 'unit', 'wholesale_price', 'warranty', 'warranty_unit',
             'vat_percentage', 'publication_status', 'is_published_for_shop', 'created_by_name', 'updated_by_name',
             'created_at', 'updated_at', 'deleted_at')->get()->toArray();
         $this->partnerPosServiceIds = array_column($products, 'id');
         return $products;
+    }
+
+    private function generatePartnerPosServiceBatchesData()
+    {
+        return $this->partnerPosServiceBatchRepository
+            ->whereIn('partner_pos_service_id', $this->partnerPosServiceIds)
+            ->withTrashed()->select('partner_pos_service_id AS product_id', 'supplier_id', 'from_account', 'cost', 'stock',
+                'deleted_at', 'created_by_name', 'created_at', 'updated_by_name', 'updated_at')->get();
     }
 
     private function generatePartnerPosServiceImageGalleryData()
@@ -193,7 +218,8 @@ class InventoryDataMigration
         $images = $this->partnerPosServiceImages->whereIn('product_id', $productIds)->toArray();
         $logs = $this->partnerPosServiceLogs->whereIn('product_id', $productIds)->toArray();
         $discounts = $this->partnerPosServiceDiscounts->whereIn('type_id', $productIds)->toArray();
-        return [$images, $logs, $discounts];
+        $batches = $this->partnerPosServiceBatches->whereIn('product_id', $productIds)->toArray();
+        return [$images, $logs, $discounts, $batches];
     }
 
     private function setRedisKey()
