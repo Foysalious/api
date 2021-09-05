@@ -10,6 +10,7 @@ class PosOrderObject
     public $customer;
     public $partner;
     public $is_migrated;
+    public $created_at;
     protected $type = PosOrderTypes::OLD_SYSTEM;
 
     /**
@@ -91,6 +92,16 @@ class PosOrderObject
     public function getSalesChannel()
     {
         return $this->sales_channel;
+    }
+
+    /**
+     * @param mixed $created_at
+     * @return PosOrderObject
+     */
+    public function setCreatedAt($created_at): PosOrderObject
+    {
+        $this->created_at = $created_at;
+        return $this;
     }
 
     /**
