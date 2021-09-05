@@ -363,17 +363,4 @@ class AutomaticEntryRepository extends BaseRepository
             return false;
         }
     }
-
-    /**
-     * @return bool
-     */
-    private function isMigratedToAccounting()
-    {
-        /** @var UserMigrationRepository $userMigrationRepo */
-        $userMigrationRepo = app(UserMigrationRepository::class);
-        $userStatus = $userMigrationRepo->userStatus($this->partnerId);
-        if (!$userStatus) return false;
-        if ($userStatus == UserStatus::PENDING) return false;
-        return true;
-    }
 }

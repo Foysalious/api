@@ -1,6 +1,8 @@
 <?php namespace Sheba\ExpenseTracker\Repository;
 
 use App\Models\Partner;
+use Sheba\AccountingEntry\Repository\UserMigrationRepository;
+use Sheba\Dal\src\AccountingMigratedUser\UserStatus;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ModificationFields;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
@@ -46,5 +48,18 @@ class BaseRepository
         $this->accountId = $partner->expense_account_id;
         $this->partnerId = $partner->id;
         return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    protected function isMigratedToAccounting()
+    {
+        /** @var UserMigrationRepository $userMigrationRepo */
+        $userMigrationRepo = app(UserMigrationRepository::class);
+        $userStatus = $userMigrationRepo->userStatus($this->partnerId);
+        if (!$userStatus) return false;
+        if ($userStatus == UserStatus::PENDING) return false;
+        return true;
     }
 }
