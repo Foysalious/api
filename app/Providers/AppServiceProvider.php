@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\B2B\TerminatingMiddleware;
 use App\Sheba\Algolia\Provider\EventsListenerProvider;
+use App\Sheba\Pos\Order\Providers\EventsListenerProvider as PosOrderInvoiceGenerationEventsListenerProvider;
 use Exception;
 use Illuminate\Support\ServiceProvider;
 use Sheba\Dal\Providers\CustomMigrationServiceProvider;
