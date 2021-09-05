@@ -128,6 +128,42 @@ class ThemeSettingController extends Controller
           "thumb": "https://s3.ap-shttps://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg",
           "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
         },
+         {
+          "id": 1,
+          "name": "Jacket",
+          "original_price": 550,
+          "vat_included_price": 550,
+          "vat_percentage": 0,
+          "unit": "piece",
+          "stock": 16,
+          "category_id": 225,
+          "discount_applicable": 0,
+          "discounted_amount": 0,
+          "discount_percentage": 0,
+          "rating": 4,
+          "count_rating": 7,
+          "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
+          "thumb": "https://s3.ap-shttps://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg",
+          "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
+        },
+         {
+          "id": 1,
+          "name": "Jacket",
+          "original_price": 550,
+          "vat_included_price": 550,
+          "vat_percentage": 0,
+          "unit": "piece",
+          "stock": 16,
+          "category_id": 225,
+          "discount_applicable": 0,
+          "discounted_amount": 0,
+          "discount_percentage": 0,
+          "rating": 4,
+          "count_rating": 7,
+          "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
+          "thumb": "https://s3.ap-shttps://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg",
+          "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
+        },
          
          {
           "id": 10,
