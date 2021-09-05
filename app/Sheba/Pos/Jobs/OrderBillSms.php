@@ -68,7 +68,7 @@ class OrderBillSms extends Job implements ShouldQueue
     {
         /** @var OrderService $orderService */
         $orderService  = app(OrderService::class);
-        return $orderService->setPartnerId($this->partner->id)->setOrderId($this->orderId)->getDetails();
+        return $orderService->setPartnerId($this->partner->id)->setOrderId($this->orderId)->getDetails()['order'];
     }
 
     private function generateDataForOldSystem()
@@ -98,7 +98,7 @@ class OrderBillSms extends Job implements ShouldQueue
 
     private function generateDataForNewSystem()
     {
-        $partner = $this->order->partner;
+        $partner = Partner::find($);
         $partner->reload();
         $service_break_down = [];
         $this->order->items->each(function ($item) use (&$service_break_down) {
