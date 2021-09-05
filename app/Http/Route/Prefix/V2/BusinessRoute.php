@@ -384,6 +384,7 @@ class BusinessRoute
                     $api->get('/pay-day', 'B2b\PayrollController@checkPayDayConflicting');
                     $api->get('/tax-report', 'B2b\TaxHistoryController@index');
                     $api->post('show-tax-report-download-banner', 'B2b\TaxHistoryController@updateReportShowBanner');
+                    $api->get('download-tax-certificate/{business_member_id}/tax-report/{id}', 'B2b\TaxHistoryController@downloadBusinessMemberTaxCertificate');
                 });
             });
         });
