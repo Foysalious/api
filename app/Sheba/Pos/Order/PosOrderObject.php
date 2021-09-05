@@ -8,6 +8,8 @@ class PosOrderObject
     public $id;
     public $sales_channel;
     public $customer;
+    public $partner;
+    public $is_migrated;
     protected $type = PosOrderTypes::OLD_SYSTEM;
 
     /**
@@ -41,6 +43,16 @@ class PosOrderObject
     }
 
     /**
+     * @param mixed $is_migrated
+     * @return PosOrderObject
+     */
+    public function setIsMigrated($is_migrated): PosOrderObject
+    {
+        $this->is_migrated = $is_migrated;
+        return $this;
+    }
+
+    /**
      * @param mixed $customer
      * @return PosOrderObject
      */
@@ -50,6 +62,15 @@ class PosOrderObject
         return $this;
     }
 
+    /**
+     * @param mixed $partner
+     * @return PosOrderObject
+     */
+    public function setPartner($partner): PosOrderObject
+    {
+        $this->partner = $partner;
+        return $this;
+    }
 
     public function get(): PosOrderObject
     {

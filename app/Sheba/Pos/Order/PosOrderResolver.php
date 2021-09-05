@@ -3,6 +3,7 @@
 
 use App\Models\PosOrder;
 use App\Sheba\Pos\Order\Customer\CustomerObject;
+use App\Sheba\Pos\Order\Partner\PartnerObject;
 use App\Sheba\Pos\Order\PosOrderObject;
 use App\Sheba\PosOrderService\PosOrderServerClient;
 
@@ -19,12 +20,17 @@ class PosOrderResolver
      * @var CustomerObject
      */
     private $customerObject;
+    /**
+     * @var PartnerObject
+     */
+    private $partnerObject;
 
-    public function __construct(PosOrderServerClient $client, PosOrderObject $posOrderObject, CustomerObject $customerObject)
+    public function __construct(PosOrderServerClient $client, PosOrderObject $posOrderObject, CustomerObject $customerObject, PartnerObject $partnerObject)
     {
         $this->client = $client;
         $this->posOrderObject = $posOrderObject;
         $this->customerObject = $customerObject;
+        $this->partnerObject = $partnerObject;
     }
 
     /**
@@ -34,17 +40,21 @@ class PosOrderResolver
     public function setOrderId($orderId)
     {
         $this->orderId = $orderId;
-        $oldPosOrder = PosOrder::where('id', $orderId)->select('id', 'sales_channel', 'customer_id')->first();
+        $oldPosOrder = PosOrder::where('id', $orderId)->select('id', 'sales_channel', 'customer_id', 'partner_id', 'is_migrated')->first();
         if ($oldPosOrder && !$oldPosOrder->is_migrated) {
             $customer = $oldPosOrder->customer->profile;
+            $partner = $oldPosOrder->partner;
+            $partnerObject = $this->partnerObject->setId($partner->id)->setSubDomain($partner->sub_domain)->get();
             $customerObject = $this->customerObject->setId($customer->id)->setName($customer->name)->setMobile($customer->mobile)->get();
-            $this->order = $this->posOrderObject->setId($oldPosOrder->id)->setSalesChannel($oldPosOrder->sales_channel)->setCustomer($customerObject)->setType(PosOrderTypes::OLD_SYSTEM)->get();
+            $this->order = $this->posOrderObject->setId($oldPosOrder->id)->setSalesChannel($oldPosOrder->sales_channel)->setIsMigrated(0)->setCustomer($customerObject)->setPartner($partnerObject)->setType(PosOrderTypes::OLD_SYSTEM)->get();
         } else {
-            $response = $this->client->get('api/v1/order-channel/' . $this->orderId);
+            $response = $this->client->get('api/v1/order-info-for-payment-link/' . $this->orderId);
             $newPosOrder = json_decode(json_encode($response['order']), FALSE);
             $customer = $newPosOrder->customer;
+            $partner = $newPosOrder->partner;
+            $partnerObject = $this->partnerObject->setId($partner->id)->setSubDomain($partner->sub_domain)->get();
             $customerObject = $this->customerObject->setId(null)->setName($customer->name)->setMobile($customer->mobile)->get();
-            $this->order = $this->posOrderObject->setId($newPosOrder->id)->setSalesChannel($newPosOrder->sales_channel)->setCustomer($customerObject)->setType(PosOrderTypes::NEW_SYSTEM)->get();
+            $this->order = $this->posOrderObject->setId($newPosOrder->id)->setSalesChannel($newPosOrder->sales_channel)->setIsMigrated(1)->setCustomer($customerObject)->setPartner($partnerObject)->setType(PosOrderTypes::NEW_SYSTEM)->get();
         }
         return $this;
     }
@@ -52,12 +62,5 @@ class PosOrderResolver
     public function get()
     {
         return $this->order;
-    }
-
-    private function setCustomer()
-    {
-        /** @var CustomerObject $customerObject */
-        $customerObject = app(CustomerObject::class);
-        return $customerObject->setId()->setName()->setMobile()->get();
     }
 }
