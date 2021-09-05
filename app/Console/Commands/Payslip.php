@@ -86,14 +86,20 @@ class Payslip extends Command
             $business = $payroll_setting->business;
             if ($this->isPayDay($payroll_setting)) {
                 $business_members = $business->getActiveBusinessMember()->get();
+                $last_pay_day = $payroll_setting->last_pay_day;
                 foreach ($business_members as $business_member) {
                     $joining_date = $business_member->join_date;
                     if ($joining_date <= Carbon::now()->subMonth()) $joining_date = null;
-                    $start_date = $joining_date ? Carbon::parse($joining_date) : Carbon::now()->subMonth()->format('Y-m-d');
+                    $prorated_time_frame = null;
+                    $start_date = $last_pay_day ? Carbon::parse($last_pay_day)->format('Y-m-d') : Carbon::now()->subMonth()->format('Y-m-d');
                     $end_date = Carbon::now()->subDay()->format('Y-m-d');
-                    $prorated_time_frame = $this->timeFrame->forDateRange($start_date, $end_date);
+                    $time_frame = $this->timeFrame->forDateRange($start_date, $end_date);
+                    if($joining_date) {
+                        $prorated_time_frame = app(TimeFrame::class);
+                        $prorated_time_frame = $prorated_time_frame->forDateRange($joining_date, $end_date);
+                    }
                     $gross_salary_breakdown_percentage = $this->grossSalaryBreakdownCalculate->payslipComponentPercentageBreakdown($business_member);
-                    $payroll_component_calculation = $this->payrollComponentSchedulerCalculation->setBusiness($business)->setBusinessMember($business_member)->setTimeFrame($prorated_time_frame)->getPayrollComponentCalculationBreakdown();
+                    $payroll_component_calculation = $this->payrollComponentSchedulerCalculation->setBusiness($business)->setBusinessMember($business_member)->setProratedTimeFrame($prorated_time_frame)->setTimeFrame($time_frame)->getPayrollComponentCalculationBreakdown();
                     $gross_salary = 0.0;
                     $salary = $business_member->salary;
                     if ($salary) $gross_salary = floatValFormat($salary->gross_salary);

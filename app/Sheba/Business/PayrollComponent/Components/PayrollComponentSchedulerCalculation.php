@@ -21,7 +21,7 @@ class PayrollComponentSchedulerCalculation
     private $businessMemberPolicyRulesCalculator;
     private $taxComponentData = [];
     private $timeFrame;
-    private $joiningDate;
+    private $proratedTimeFrame;
 
     /**
      * PayrollComponentSchedulerCalculation constructor.
@@ -54,6 +54,13 @@ class PayrollComponentSchedulerCalculation
         $this->department = $role? $role->businessDepartment : null;
         return $this;
     }
+
+    public function setProratedTimeFrame($prorate_time_frame)
+    {
+        $this->proratedTimeFrame = $prorate_time_frame;
+        return $this;
+    }
+
     public function setTimeFrame($time_frame)
     {
         $this->timeFrame = $time_frame;
@@ -85,7 +92,7 @@ class PayrollComponentSchedulerCalculation
         $components = $this->payrollSetting->components()->where('type', Type::DEDUCTION)->where(function($query) {
             return $query->where('is_default', 1)->orWhere('is_active',1);
         })->orderBy('type')->get();
-        $default_deduction_component_data = $this->businessMemberPolicyRulesCalculator->setBusiness($this->business)->setBusinessMember($this->businessMember)->setTimeFrame($this->timeFrame)->setAdditionBreakdown($this->additionData)->calculate();
+        $default_deduction_component_data = $this->businessMemberPolicyRulesCalculator->setBusiness($this->business)->setBusinessMember($this->businessMember)->setProratedTimeFrame($this->proratedTimeFrame)->setTimeFrame($this->timeFrame)->setAdditionBreakdown($this->additionData)->calculate();
         $total_deduction = 0;
         foreach ($components as $component) {
             if (!$component->is_default) {
@@ -105,6 +112,7 @@ class PayrollComponentSchedulerCalculation
         foreach ($packages as $package) {
             $employee_target = $package->packageTargets->where('effective_for', PackageTargetType::EMPLOYEE)->where('target_id', $this->businessMember->id);
             $department_target = $this->department ? $package->packageTargets->where('effective_for', PackageTargetType::DEPARTMENT)->where('target_id', $this->department->id) : null;
+            if ($department_target === null) continue;
             $global_target =  $package->packageTargets->where('effective_for', PackageTargetType::GENERAL);
             $target_amount = 0;
             if (!$employee_target->isEmpty() || !$department_target->isEmpty() || !$global_target->isEmpty()) {
