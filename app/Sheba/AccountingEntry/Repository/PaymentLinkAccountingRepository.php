@@ -165,6 +165,10 @@ class PaymentLinkAccountingRepository extends AccountingRepository
         return $this;
     }
 
+    /**
+     * @param $userId
+     * @return bool|mixed
+     */
     public function store($userId)
     {
         try {
@@ -175,6 +179,10 @@ class PaymentLinkAccountingRepository extends AccountingRepository
         }
     }
 
+    /**
+     * @param $userId
+     * @return bool|mixed
+     */
     public function updatePaymentLinkEntry($userId)
     {
         try {
@@ -185,6 +193,10 @@ class PaymentLinkAccountingRepository extends AccountingRepository
         }
     }
 
+    /**
+     * @param $userId
+     * @return mixed
+     */
     private function makeData($userId)
     {
         if ($this->debit_account_key == null && $this->credit_account_key == null) {

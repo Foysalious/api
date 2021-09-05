@@ -42,6 +42,12 @@ class AccountingDueTrackerRepository extends BaseRepository
         return $this;
     }
 
+    /**
+     * @param Request $request
+     * @param $type
+     * @param bool $with_update
+     * @throws AccountingEntryServerError
+     */
     public function storeEntry(Request $request, $type, $with_update = false)
     {
         $this->getCustomer($request);
@@ -63,7 +69,11 @@ class AccountingDueTrackerRepository extends BaseRepository
         }
     }
 
-
+    /**
+     * @param $customerId
+     * @return mixed
+     * @throws AccountingEntryServerError
+     */
     public function deleteCustomer($customerId)
     {
         $url = "api/due-list/" . $customerId;
@@ -137,6 +147,11 @@ class AccountingDueTrackerRepository extends BaseRepository
         }
     }
 
+    /**
+     * @param $request
+     * @return array
+     * @throws AccountingEntryServerError
+     */
     public function getDuelistBalance($request)
     {
         try {
@@ -195,6 +210,12 @@ class AccountingDueTrackerRepository extends BaseRepository
         }
     }
 
+    /**
+     * @param $customerId
+     * @return array
+     * @throws AccountingEntryServerError
+     * @throws InvalidPartnerPosCustomer
+     */
     public function dueListBalanceByCustomer($customerId)
     {
         try {

@@ -158,7 +158,6 @@ class JournalCreateRepository
 
     /**
      * @throws InvalidSourceException
-     * @throws ReflectionException
      * @throws KeyNotFoundException
      */
     public function toData()
@@ -182,7 +181,6 @@ class JournalCreateRepository
      * @throws AccountingEntryServerError
      * @throws InvalidSourceException
      * @throws KeyNotFoundException
-     * @throws ReflectionException
      */
     public function store()
     {

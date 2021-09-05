@@ -127,6 +127,13 @@ class UserAccountRepository extends BaseRepository
         $this->api = 'api/accounts/';
     }
 
+    /**
+     * @param $userId
+     * @param array $request
+     * @param string $userType
+     * @return mixed
+     * @throws AccountingEntryServerError
+     */
     public function getAccountType($userId, array $request = [], $userType = UserType::PARTNER)
     {
         $query = '';
@@ -142,6 +149,13 @@ class UserAccountRepository extends BaseRepository
         }
     }
 
+    /**
+     * @param $userId
+     * @param array $request
+     * @param string $userTYpe
+     * @return mixed
+     * @throws AccountingEntryServerError
+     */
     public function getAccounts($userId, array $request = [], $userTYpe = UserType::PARTNER)
     {
         $query = '?';
@@ -160,6 +174,12 @@ class UserAccountRepository extends BaseRepository
         }
     }
 
+    /**
+     * @param $userId
+     * @param string $userType
+     * @return mixed
+     * @throws AccountingEntryServerError
+     */
     public function getCashAccounts($userId, $userType = UserType::PARTNER)
     {
         try {
@@ -170,6 +190,12 @@ class UserAccountRepository extends BaseRepository
         }
     }
 
+    /**
+     * @param $userId
+     * @param string $userType
+     * @return mixed
+     * @throws AccountingEntryServerError
+     */
     public function storeAccount($userId, $userType = UserType::PARTNER)
     {
         try {
@@ -192,6 +218,13 @@ class UserAccountRepository extends BaseRepository
         }
     }
 
+    /**
+     * @param $accountId
+     * @param $userId
+     * @param string $userType
+     * @return mixed
+     * @throws AccountingEntryServerError
+     */
     public function deleteAccount($accountId, $userId, $userType = UserType::PARTNER)
     {
         try {
