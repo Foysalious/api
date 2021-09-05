@@ -11,6 +11,7 @@ use ReflectionException;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Exceptions\InvalidSourceException;
 use Sheba\AccountingEntry\Exceptions\KeyNotFoundException;
+use Sheba\Dal\src\AccountingMigratedUser\UserStatus;
 use Sheba\ModificationFields;
 use Sheba\NeoBanking\Traits\ProtectedGetterTrait;
 use Sheba\RequestIdentification;
@@ -157,7 +158,6 @@ class JournalCreateRepository
 
     /**
      * @throws InvalidSourceException
-     * @throws ReflectionException
      * @throws KeyNotFoundException
      */
     public function toData()
@@ -181,11 +181,27 @@ class JournalCreateRepository
      * @throws AccountingEntryServerError
      * @throws InvalidSourceException
      * @throws KeyNotFoundException
-     * @throws ReflectionException
      */
     public function store()
     {
+        if(!$this->isMigratedToAccounting($this->typeId)) {
+            return true;
+        }
         $data = $this->toData();
         return $this->client->setUserId($this->typeId)->setUserType($this->type)->post($this->end_point, $data);
+    }
+
+    /**
+     * @param $userId
+     * @return bool
+     */
+    protected function isMigratedToAccounting($userId)
+    {
+        /** @var UserMigrationRepository $userMigrationRepo */
+        $userMigrationRepo = app(UserMigrationRepository::class);
+        $userStatus = $userMigrationRepo->userStatus($userId);
+        if (!$userStatus) return false;
+        if ($userStatus == UserStatus::PENDING) return false;
+        return true;
     }
 }

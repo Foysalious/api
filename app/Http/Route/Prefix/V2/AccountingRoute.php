@@ -33,6 +33,7 @@ class AccountingRoute
                 $api->get('income-expense-entries', 'Accounting\\HomepageController@getIncomeExpenseEntries');
                 $api->get('due-collection-balance', 'Accounting\\HomepageController@getDueCollectionBalance');
                 $api->get('account-list-balance', 'Accounting\\HomepageController@getAccountListBalance');
+                $api->get('homepage-reports', 'Accounting\\HomepageController@getHomepageReportList');
                 $api->get('cash-accounts-entries/{accountKey}', 'Accounting\\HomepageController@getEntriesByAccountKey');
                 $api->get('time-filter', 'Accounting\\HomepageController@getTimeFilters');
                 $api->get('training-video', 'Accounting\\HomepageController@getTrainingVideo');
@@ -48,6 +49,7 @@ class AccountingRoute
                 $api->get('/', 'Accounting\\ReportsController@getAccountingReportsList');
             });
             $api->group(['prefix' => 'user-migration'], function ($api) {
+                $api->post('/', 'Accounting\\UserMigrationController@create');
                 $api->get('/{userId}', 'Accounting\\UserMigrationController@show');
                 $api->put('/{userId}', 'Accounting\\UserMigrationController@update');
             });
