@@ -950,10 +950,10 @@ class AttendanceController extends Controller
         $manager->setSerializer(new CustomSerializer());
         $resource = new Collection($unpaid_leave_policy, new PolicyTransformer());
         $unpaid_leave_policy_rules = $manager->createData($resource)->toArray()['data'];
-
+        $unauthorised_leave_penalty_component = $office_time->unauthorised_leave_penalty_component;
         return api_response($request, $unpaid_leave_policy_rules, 200, [
             'is_unpaid_leave_policy_enable' => $office_time->is_unpaid_leave_policy_enable,
-            'unauthorised_leave_penalty_component' => $office_time->unauthorised_leave_penalty_component,
+            'unauthorised_leave_penalty_component' => is_numeric($unauthorised_leave_penalty_component) ? intval($unauthorised_leave_penalty_component) : $unauthorised_leave_penalty_component,
             'unpaid_leave_policy_rules' => $unpaid_leave_policy_rules
         ]);
     }
