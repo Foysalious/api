@@ -14,8 +14,10 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\DueTracker\DueTrackerRepository;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
+use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\EntryRepository;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
@@ -229,7 +231,7 @@ class CustomerController extends Controller
      * @param AccountingDueTrackerRepository $accDueTrackerRepository
      * @return JsonResponse
      * @throws InvalidPartnerPosCustomer
-     * @throws \Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError
+     * @throws ExpenseTrackingServerError|AccountingEntryServerError
      */
     public function delete(
         Request $request,

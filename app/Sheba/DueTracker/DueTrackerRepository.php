@@ -249,11 +249,14 @@ class DueTrackerRepository extends BaseRepository
     /**
      * @param Partner $partner
      * @param Request $request
-     * @return array
+     * @return array|bool
      * @throws ExpenseTrackingServerError
      */
     public function store(Partner $partner, Request $request)
     {
+        if ($this->isMigratedToAccounting()) {
+            return true;
+        }
         $partner_pos_customer = PartnerPosCustomer::byPartner($partner->id)->where('customer_id', $request->customer_id)->with(['customer'])->first();
         if (empty($partner_pos_customer))
             $partner_pos_customer = PartnerPosCustomer::create(['partner_id' => $partner->id, 'customer_id' => $request->customer_id]);
@@ -271,10 +274,12 @@ class DueTrackerRepository extends BaseRepository
      * @param Request $request
      * @return mixed
      * @throws ExpenseTrackingServerError
-     * @throws InvalidPartnerPosCustomer
      */
     public function update(Partner $partner, Request $request)
     {
+        if ($this->isMigratedToAccounting()) {
+            return true;
+        }
         $partner_pos_customer = PartnerPosCustomer::byPartner($partner->id)->where('customer_id', $request->customer_id)->with(['customer'])->first();
         if (empty($partner_pos_customer))
             $partner_pos_customer = PartnerPosCustomer::create(['partner_id' => $partner->id, 'customer_id' => $request->customer_id]);
@@ -298,6 +303,37 @@ class DueTrackerRepository extends BaseRepository
             $this->$this->posOrderPaymentRepository->createPosOrderPayment($data['amount_cleared'], $response['data']['source_id'], 'cod');
 
         return $response['data'];
+    }
+
+    public function createPosOrderPayment($amount_cleared, $pos_order_id, $payment_method)
+    {
+        if ($this->isMigratedToAccounting()) {
+            return true;
+        }
+        /** @var PosOrder $order */
+        $order = PosOrder::find($pos_order_id);
+        if(isset($order)) {
+            $order->calculate();
+            if ($order->getDue() > 0) {
+                $payment_data['pos_order_id'] = $pos_order_id;
+                $payment_data['amount']       = $amount_cleared;
+                $payment_data['method']       = $payment_method;
+                $this->paymentCreator->credit($payment_data);
+            }
+        }
+    }
+
+    public function removePosOrderPayment($pos_order_id, $amount)
+    {
+        if ($this->isMigratedToAccounting()) {
+            return true;
+        }
+        $payment = PosOrderPayment::where('pos_order_id', $pos_order_id)
+            ->where('amount', $amount)
+            ->where('transaction_type', 'Credit')
+            ->first();
+
+        return $payment ? $payment->delete() : false;
     }
 
     private function createStoreData(Request $request)
