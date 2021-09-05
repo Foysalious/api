@@ -318,6 +318,10 @@ class Route
             $api->get('profiles', 'Profile\ProfileController@getDetail')->middleware('jwtGlobalAuth');
 
             $api->post('register-mobile', 'ShebaController@registerCustomer');
+
+            $api->group(['prefix'=>'ekyc'], function ($api) {
+                $api->post('nid-ocr-data', 'EKYC\NidOcrController@storeNidOcrData');
+            });
         });
         return $api;
     }
