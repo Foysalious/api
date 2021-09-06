@@ -9,6 +9,8 @@ use App\Models\PosOrder;
 use App\Models\PosOrderPayment;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
+use Sheba\AccountingEntry\Repository\UserMigrationRepository;
+use Sheba\Dal\src\AccountingMigratedUser\UserStatus;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
@@ -123,5 +125,19 @@ class BaseRepository
             ->first();
 
         return $payment ? $payment->delete() : false;
+    }
+
+    /**
+     * @param $userId
+     * @return bool
+     */
+    protected function isMigratedToAccounting($userId)
+    {
+        /** @var UserMigrationRepository $userMigrationRepo */
+        $userMigrationRepo = app(UserMigrationRepository::class);
+        $userStatus = $userMigrationRepo->userStatus($userId);
+        if (!$userStatus) return false;
+        if ($userStatus == UserStatus::PENDING) return false;
+        return true;
     }
 }

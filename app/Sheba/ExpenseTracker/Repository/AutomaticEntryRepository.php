@@ -3,6 +3,9 @@
 use App\Models\Profile;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Facades\Log;
+use Sheba\AccountingEntry\Repository\UserMigrationRepository;
+use Sheba\Dal\src\AccountingMigratedUser\UserStatus;
 use Sheba\ExpenseTracker\AutomaticExpense;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\EntryType;
@@ -221,6 +224,9 @@ class AutomaticEntryRepository extends BaseRepository
     public function store()
     {
         try {
+            if ($this->isMigratedToAccounting()) {
+                return true;
+            }
             $data = $this->getData();
             if (empty($data['head_name']))
                 throw new Exception('Head is not found');
@@ -285,6 +291,9 @@ class AutomaticEntryRepository extends BaseRepository
     public function updateFromSrc()
     {
         try {
+            if ($this->isMigratedToAccounting()) {
+                return true;
+            }
             $data = $this->getData();
             if (empty($data['source_type']) || empty($data['source_id']))
                 throw new Exception('Source Type or Source id is not present');
@@ -302,6 +311,9 @@ class AutomaticEntryRepository extends BaseRepository
     public function updatePartyFromSource()
     {
         try {
+            if ($this->isMigratedToAccounting()) {
+                return true;
+            }
             $data = [
                 'source_type' => $this->sourceType,
                 'source_id'   => $this->sourceId,
@@ -323,6 +335,9 @@ class AutomaticEntryRepository extends BaseRepository
     public function deduct()
     {
         try {
+            if ($this->isMigratedToAccounting()) {
+                return true;
+            }
             $data = $this->getData();
             if (empty($data['source_type']) || empty($data['source_id']))
                 throw new Exception('Source Type or Source id is not present');
@@ -336,6 +351,9 @@ class AutomaticEntryRepository extends BaseRepository
     public function delete()
     {
         try {
+            if ($this->isMigratedToAccounting()) {
+                return true;
+            }
             $data = $this->getData();
             if (empty($data['source_type']) || empty($data['source_id']))
                 throw new Exception('Source Type or Source id is not present');

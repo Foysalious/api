@@ -62,6 +62,9 @@ class EntriesRepository extends BaseRepository
     public function deleteEntry()
     {
         try {
+            if (!$this->isMigratedToAccounting($this->partner->id)) {
+                return true;
+            }
             $url = "api/entries/" . $this->entry_id;
             return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->delete($url);
         } catch (AccountingEntryServerError $e) {
