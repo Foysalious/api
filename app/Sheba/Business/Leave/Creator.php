@@ -235,7 +235,6 @@ class Creator
                 ->setApproverId($this->approvers)
                 ->setRequestable($leave)
                 ->setIsLeaveAdjustment($this->isLeaveAdjustment)
-                ->setCreatedBy($this->createdBy)
                 ->create();
             $this->createAttachments($leave);
         });
