@@ -6,13 +6,15 @@ use Throwable;
 
 class EkycClient
 {
+    protected $userId;
+    protected $userType;
     protected $client;
     protected $baseUrl;
 
     public function __construct()
     {
         $this->client = (new Client());
-        $this->baseUrl = rtrim(config('sheba.ekyc_url') . '/api/v1');
+        $this->baseUrl = rtrim(config('sheba.ekyc_url', 'https://ekyc.dev-sheba.xyz') . '/api/v1');
     }
 
     public function get($uri)
@@ -20,9 +22,15 @@ class EkycClient
         return $this->call('get', $uri);
     }
 
+    public function post($uri, $data)
+    {
+        return $this->call('post', $uri, $data);
+    }
+
     private function call($method, $uri, $data = null)
     {
-        $res = $this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data));
+//        dd(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data));
+        $res = $this->client->requcleast(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data));
         $res = json_decode($res->getBody()->getContents(), true);
         if ($res['code'] != 200)
             throw new Exception($res['message']);
@@ -37,14 +45,32 @@ class EkycClient
 
     private function getOptions($data = null)
     {
-        $options = [];
-        if ($data)
-            $options['form_params'] = $data;
+        $options['headers'] = [
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+            'CLIENT-ID' => $data['client_id'],
+            'CLIENT-SECRET' => $data['client_secret']
+        ];
+
+        $nidData = [
+            'id_front' => $data['id_front'],
+            'id_back' => $data['id_back']
+        ];
+        if ($nidData) {
+            $options['json'] = $nidData;
+        }
         return $options;
     }
 
-    public function post($uri, $data)
+    public function setUserType($userType)
     {
-        return $this->call('post', $uri, $data);
+        $this->userType = $userType;
+        return $this;
+    }
+
+    public function setUserId($userId)
+    {
+        $this->userId = $userId;
+        return $this;
     }
 }

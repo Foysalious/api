@@ -319,7 +319,7 @@ class Route
 
             $api->post('register-mobile', 'ShebaController@registerCustomer');
 
-            $api->group(['prefix'=>'ekyc'], function ($api) {
+            $api->group(['prefix'=>'ekyc', 'middleware' => 'jwtGlobalAuth'], function ($api) {
                 $api->post('nid-ocr-data', 'EKYC\NidOcrController@storeNidOcrData');
                 $api->post('face-verification', 'EKYC\FaceVerificationController@faceVerification');
             });
