@@ -44,7 +44,7 @@ class PartnerDataMigrationToInventoryJob extends Job implements ShouldQueue
             } else {
                 $data_type = isset($this->data['partner_info']) ? 'partner_info' : key($this->data);
                 $ids = array_column($this->data[key($this->data)], 'id');
-                $this->storeFailedLogs($data_type, $ids);
+//                $this->storeFailedLogs($data_type, $ids);
             }
 
         }
