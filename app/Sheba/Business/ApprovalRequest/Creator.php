@@ -15,6 +15,7 @@ use Sheba\PushNotificationHandler;
 class Creator
 {
     use ModificationFields;
+    const WHICH_PERSON_GET_NOTIFICATION_IN_THE_ORDER = 1;
 
     /** @var ApprovalRequestRepositoryInterface $approvalRequestRepo */
     private $approvalRequestRepo;
@@ -60,7 +61,7 @@ class Creator
      * @param array $approver_id
      * @return $this
      */
-    public function setApprover($approver_id)
+    public function setApproverId(array $approver_id)
     {
         $this->approverId = $approver_id;
         return $this;
@@ -80,18 +81,24 @@ class Creator
 
     public function create()
     {
-        $data = $this->withCreateModificationField([
-            'requestable_type' => $this->requestableType,
-            'requestable_id' => $this->requestableId,
-            'status' => $this->isLeaveAdjustment ? Status::ACCEPTED : Status::PENDING,
-            'approver_id' => $this->approverId
-        ]);
-        $approval_request = $this->approvalRequestRepo->create($data);
-        if (!$this->isLeaveAdjustment) {
-            try {
-                $this->sendPushToApprover($approval_request);
-                $this->sendShebaNotificationToApprover($approval_request);
-            } catch (Exception $e) {
+        foreach ($this->approverId as $order => $approver_id) {
+            $data = $this->withCreateModificationField([
+                'requestable_type' => $this->requestableType,
+                'requestable_id' => $this->requestableId,
+                'status' => $this->isLeaveAdjustment ? Status::ACCEPTED : Status::PENDING,
+                'approver_id' => $approver_id,
+                'order' => $order,
+                'is_notified' => $order == self::WHICH_PERSON_GET_NOTIFICATION_IN_THE_ORDER ? 1 : 0
+            ]);
+
+            $approval_request = $this->approvalRequestRepo->create($data);
+            # First approver will get notification this the order
+            if (!$this->isLeaveAdjustment && $order == self::WHICH_PERSON_GET_NOTIFICATION_IN_THE_ORDER) {
+                try {
+                    $this->sendPushToApprover($approval_request);
+                    $this->sendShebaNotificationToApprover($approval_request);
+                } catch (Exception $e) {
+                }
             }
         }
     }
