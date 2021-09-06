@@ -24,6 +24,7 @@ class TaxHistoryExcel
                 $sheet->cell('A1:R1', function ($cells) {
                     $cells->setFontWeight('bold');
                 });
+                $sheet->freezePane('D2');
                 $sheet->getDefaultStyle()->getAlignment()->applyFromArray(
                     array('horizontal' => 'left')
                 );
