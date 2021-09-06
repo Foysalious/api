@@ -109,7 +109,8 @@ class CategoryController extends Controller
             $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
             if (!is_null($hyperLocation)) $location = $hyperLocation->location;
         }
-        $categories = Category::where('parent_id', $category)->where('publication_status',1)->whereHas('locations', function ($q) use($location) {
+        $published_parent_check = count(Category::where('id', $category)->where('publication_status',1)->get());
+        $categories = $published_parent_check ? Category::where('parent_id', $category)->where('publication_status',1)->whereHas('locations', function ($q) use($location) {
             $location ? $q->published()->where('category_location.location_id', $location->toArray()['id']) : $q->published();
         })->whereHas('locations', function ($q) use ($location) {
                     $location ? $q->where('locations.id', $location->toArray()['id']) : $q;
@@ -117,7 +118,7 @@ class CategoryController extends Controller
                     $q->published()->whereHas('locations', function ($q) use ($location) {
                         $location ? $q->where('locations.id', $location->toArray()['id']) : $q ;
                     });
-                })->select('id', 'name', 'bn_name', 'thumb','app_thumb','icon','icon_png','icon_svg')->get();
+                })->select('id', 'name', 'bn_name', 'thumb','app_thumb','icon','icon_png','icon_svg')->get() : null;
 
         return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $categories]) : api_response($request, null, 404);
     }
