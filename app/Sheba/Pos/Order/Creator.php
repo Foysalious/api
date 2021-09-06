@@ -207,6 +207,7 @@ class Creator
                 // $is_service_discount_applied = $original_service->discount();
                 $service_wholesale_applicable = $original_service->wholesale_price ? true : false;
 
+                $service['is_emi_applied'] = $this->isEmiApplicable($original_service) ? 1 : 0;
                 $service['service_id'] = $original_service->id;
                 $service['service_name'] = isset($service['name']) ? $service['name'] : $original_service->name;
                 $service['pos_order_id'] = $order->id;
@@ -217,6 +218,11 @@ class Creator
                 $service['note'] = isset($service['note']) ? $service['note'] : null;
                 $service = array_except($service, ['id', 'name', 'is_vat_applicable', 'updated_price']);
 
+                if($this->data['payment_method'] == 'emi' && $service['is_emi_applied'] == false) {
+                    $id =  is_null($original_service->id) ? 'NULL, price: ' . $original_service->price : $original_service->id;
+                    $message = 'EMI is not available for service id# ' . $id;
+                    throw new DoNotReportException($message , 400);
+                }
                 $pos_order_item = $this->itemRepo->save($service);
                 $is_stock_maintainable = $this->stockManager->setPosService($original_service)->isStockMaintainable();
                 if ($is_stock_maintainable) {
@@ -437,5 +443,14 @@ class Creator
             "total_vat"          => $order->getTotalVat(),
             "delivery_charge"    => $order->delivery_charge ?? 0
         ]);
+    }
+    
+    private function isEmiApplicable($service)
+    {
+       if($this->data['payment_method'] == 'emi' ) {
+           if(is_null($service->id) && $service->price >= 5000) return true;
+           elseif ($service->id && $service->price >= 5000 && $service->is_emi_available) return true;
+       }
+       return false;
     }
 }

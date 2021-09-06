@@ -77,7 +77,7 @@ class PolicyRuleUpdater
         if ($this->policyType == Type::GRACE_PERIOD) $data ['is_grace_period_policy_enable'] = $is_enable;
         if ($this->policyType == Type::UNPAID_LEAVE) {
             $data ['is_unpaid_leave_policy_enable'] = $is_enable;
-            if ($this->policyRuleRequester->getPenaltyComponent()) $data ['is_unpaid_leave_policy_enable'] = $this->policyRuleRequester->getPenaltyComponent();
+            if ($this->policyRuleRequester->getPenaltyComponent()) $data ['unauthorised_leave_penalty_component'] = $this->policyRuleRequester->getPenaltyComponent();
         }
         if ($this->policyType == Type::LATE_CHECKIN_EARLY_CHECKOUT) {
             $data ['is_late_checkin_early_checkout_policy_enable'] = $is_enable;

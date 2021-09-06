@@ -80,7 +80,7 @@ class TaxCalculator
 
     public function getMonthlyTaxAmount()
     {
-        return ($this->yearlyTaxAmount / 12);
+        return floatValFormat($this->yearlyTaxAmount / 12);
     }
 
     public function getBusinessMemberTaxHistoryData()

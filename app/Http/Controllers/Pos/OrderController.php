@@ -498,6 +498,7 @@ class OrderController extends Controller
         ]);
     }
 
+
     /**
      * @throws NotAssociativeArray
      */
@@ -512,6 +513,7 @@ class OrderController extends Controller
             'link' => $invoiceLink
         ]);
     }
+
 
     /**
      * @param Request $request
@@ -569,6 +571,7 @@ class OrderController extends Controller
         if (!$requested_customer)
             return api_response($request, null, 401, ['msg' => 'Customer not found']);
         $updater->setOrder($order)->setData(['customer_id' => $requested_customer->id])->update();
+        /** @var AutomaticEntryRepository $entry */
         $entry  = app(AutomaticEntryRepository::class);
         $entry->setPartner($order->partner)->setFor(EntryType::INCOME)->setSourceType(class_basename($order))->setSourceId($order->id)->setParty($requested_customer->profile)->updatePartyFromSource();
         return api_response($request, null, 200, ['msg' => 'Customer tagged Successfully']);
