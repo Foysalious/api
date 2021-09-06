@@ -22,10 +22,7 @@ class FaceVerificationController extends Controller
         try {
             $data = $this->toData($request);
             $userId = isset($request->user_id) ? $request->user_id : 1;
-            $clientId = $request->header('client-id');
-            $clientSecret = $request->header('client-secret');
-            return $this->client->setUserId($userId)->setClientId($clientId)
-                ->setClientSecret($clientSecret)->post($this->api, $data);
+            return $this->client->setUserId($userId)->post($this->api, $data);
         } catch (EkycServerError $e) {
             throw new EkycServerError($e->getMessage(), $e->getCode());
         }

@@ -6,7 +6,6 @@ return [
     'api_url' => env('SHEBA_API_URL'),
     'logistic_url' => env('SHEBA_LOGISTIC_URL'),
     'business_url' => env('SHEBA_BUSINESS_URL'),
-    'ekyc_url' => env('SHEBA_EKYC_URL'),
     'wallet_url' => env('SHEBA_WALLET_URL', 'https://wallet.sheba.xyz'),
     'payment_link_url' => env('SHEBA_PAYMENT_LINK_URL'),
     'payment_link_web_url' => env('SHEBA_PAYMENT_LINK_WEB_URL', 'https://payments.sheba.xyz'),

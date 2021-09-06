@@ -16,7 +16,9 @@ class EkycClient
     public function __construct()
     {
         $this->client = (new Client());
-        $this->baseUrl = rtrim(config('sheba.ekyc_url', 'https://ekyc.dev-sheba.xyz') . '/api/v1');
+        $this->baseUrl = rtrim(config('ekyc.url', 'https://ekyc.dev-sheba.xyz') . '/api/v1');
+        $this->clientId = config('ekyc.client_id');
+        $this->clientSecret = config('ekyc.client_secret');
     }
 
     public function get($uri)
@@ -68,18 +70,6 @@ class EkycClient
     public function setUserId($userId)
     {
         $this->userId = $userId;
-        return $this;
-    }
-
-    public function setClientId($clientId)
-    {
-        $this->clientId = $clientId;
-        return $this;
-    }
-
-    public function setClientSecret($clientSecret)
-    {
-        $this->clientSecret = $clientSecret;
         return $this;
     }
 }
