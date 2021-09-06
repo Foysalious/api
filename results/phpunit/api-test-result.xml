@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="Application Test Suite" tests="9" assertions="70" failures="0" errors="0" time="34.983545">
-    <testsuite name="Tests\Feature\sProServiceBookCategory\sProOrderDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProOrderDetailsTest.php" tests="9" assertions="70" failures="0" errors="0" time="34.983545">
-      <testcase name="testSProOrderDetailsAPIWithServiceDetails" class="Tests\Feature\sProServiceBookCategory\sProOrderDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProOrderDetailsTest.php" line="27" assertions="21" time="4.228850"/>
-      <testcase name="testSProOrderDetailsAPIWithoutServiceDetails" class="Tests\Feature\sProServiceBookCategory\sProOrderDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProOrderDetailsTest.php" line="63" assertions="17" time="3.697655"/>
-      <testcase name="testSProOrderDetailsAPIWithMultipleServiceDetails" class="Tests\Feature\sProServiceBookCategory\sProOrderDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProOrderDetailsTest.php" line="96" assertions="23" time="3.585132"/>
-      <testcase name="testSProOrderDetailsAPIWithInvalidAuthToken" class="Tests\Feature\sProServiceBookCategory\sProOrderDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProOrderDetailsTest.php" line="137" assertions="2" time="3.327267"/>
-      <testcase name="testSProOrderDetailsAPIWithoutAuthToken" class="Tests\Feature\sProServiceBookCategory\sProOrderDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProOrderDetailsTest.php" line="155" assertions="2" time="3.539742"/>
-      <testcase name="testSProOrderDetailsAPIWithSpecialCharacterAsServiceId" class="Tests\Feature\sProServiceBookCategory\sProOrderDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProOrderDetailsTest.php" line="170" assertions="1" time="3.659600"/>
-      <testcase name="testSProOrderDetailsAPIWithInvalidUrl" class="Tests\Feature\sProServiceBookCategory\sProOrderDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProOrderDetailsTest.php" line="186" assertions="1" time="5.079947"/>
-      <testcase name="testSProOrderDetailsAPIWithAlphabeticCharacterAsServiceId" class="Tests\Feature\sProServiceBookCategory\sProOrderDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProOrderDetailsTest.php" line="202" assertions="1" time="3.675642"/>
-      <testcase name="testSProOrderDetailsAPIWithInvalidServiceId" class="Tests\Feature\sProServiceBookCategory\sProOrderDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProOrderDetailsTest.php" line="218" assertions="2" time="4.189710"/>
+  <testsuite name="Application Test Suite" tests="9" assertions="70" failures="0" errors="0" time="34.122287">
+    <testsuite name="Tests\Feature\sProServiceBookCategory\sProOrderDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProOrderDetailsTest.php" tests="9" assertions="70" failures="0" errors="0" time="34.122287">
+      <testcase name="testSProOrderDetailsAPIWithServiceDetails" class="Tests\Feature\sProServiceBookCategory\sProOrderDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProOrderDetailsTest.php" line="27" assertions="21" time="3.668940"/>
+      <testcase name="testSProOrderDetailsAPIWithoutServiceDetails" class="Tests\Feature\sProServiceBookCategory\sProOrderDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProOrderDetailsTest.php" line="63" assertions="17" time="3.296830"/>
+      <testcase name="testSProOrderDetailsAPIWithMultipleServiceDetails" class="Tests\Feature\sProServiceBookCategory\sProOrderDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProOrderDetailsTest.php" line="96" assertions="23" time="3.516712"/>
+      <testcase name="testSProOrderDetailsAPIWithInvalidAuthToken" class="Tests\Feature\sProServiceBookCategory\sProOrderDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProOrderDetailsTest.php" line="137" assertions="2" time="3.484723"/>
+      <testcase name="testSProOrderDetailsAPIWithoutAuthToken" class="Tests\Feature\sProServiceBookCategory\sProOrderDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProOrderDetailsTest.php" line="155" assertions="2" time="3.886578"/>
+      <testcase name="testSProOrderDetailsAPIWithSpecialCharacterAsServiceId" class="Tests\Feature\sProServiceBookCategory\sProOrderDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProOrderDetailsTest.php" line="170" assertions="1" time="4.388193"/>
+      <testcase name="testSProOrderDetailsAPIWithInvalidUrl" class="Tests\Feature\sProServiceBookCategory\sProOrderDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProOrderDetailsTest.php" line="186" assertions="1" time="4.021855"/>
+      <testcase name="testSProOrderDetailsAPIWithAlphabeticCharacterAsServiceId" class="Tests\Feature\sProServiceBookCategory\sProOrderDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProOrderDetailsTest.php" line="202" assertions="1" time="3.938840"/>
+      <testcase name="testSProOrderDetailsAPIWithInvalidServiceId" class="Tests\Feature\sProServiceBookCategory\sProOrderDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProOrderDetailsTest.php" line="218" assertions="2" time="3.919616"/>
     </testsuite>
   </testsuite>
 </testsuites>

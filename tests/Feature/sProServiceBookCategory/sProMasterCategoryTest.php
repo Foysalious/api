@@ -344,7 +344,6 @@ class sProMasterCategoryTest extends FeatureTestCase
 
     }
 
-    //Failed
     public function testSProMasterCategoryAPIWithMasterCategoryPublishedAndSubCategoryUnpublishedAndServicePublished()
     {
         //arrange
@@ -365,7 +364,6 @@ class sProMasterCategoryTest extends FeatureTestCase
 
     }
 
-    //Failed
     public function testSProMasterCategoryAPIWithMasterCategoryPublishedAndSubCategoryUnpublishedAndServiceUnpublished()
     {
         //arrange
@@ -386,7 +384,6 @@ class sProMasterCategoryTest extends FeatureTestCase
 
     }
 
-    //Failed
     public function testSProMasterCategoryAPIWithMasterCategoryPublishedAndSubCategoryPublishedAndServiceUnpublished()
     {
         //arrange
@@ -407,7 +404,6 @@ class sProMasterCategoryTest extends FeatureTestCase
 
     }
 
-    //Failed
     public function testSProMasterCategoryAPIWithLatLngOfLocationNotAvailableForThisCategory()
     {
         //arrange
