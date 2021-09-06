@@ -8,6 +8,8 @@ class Location extends Model
 {
     use HybridRelations;
 
+    protected $connection = 'mysql';
+
     protected $fillable = [
         'name',
         'city_id',
