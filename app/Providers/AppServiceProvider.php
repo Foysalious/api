@@ -1,6 +1,8 @@
 <?php namespace App\Providers;
 
 use App\Http\Middleware\B2B\TerminatingMiddleware;
+use Illuminate\Support\Carbon;
+// use Carbon\Carbon;
 use Sheba\Algolia\Provider\EventsListenerProvider as AlgoliaProvider;
 use Exception;
 use Illuminate\Support\ServiceProvider;
@@ -20,6 +22,17 @@ use Sheba\AppSettings\HomePageSetting\Getters\Provider as HomePageSettingGetters
 
 class AppServiceProvider extends ServiceProvider
 {
+    public function boot()
+    {
+        Carbon::serializeUsing(function ($date) {
+            return [
+                'date' => $date->toDateTimeString(),
+                "timezone_type" => ((array) $date->tz)['timezone_type'],
+                'timezone' => $date->tzName,
+            ];
+        });
+    }
+
     /**
      * Register any application services.
      *
