@@ -1,8 +1,4 @@
-<?php
-
-
-namespace Sheba\Reward\Event\Affiliate\Campaign\Topup;
-
+<?php namespace Sheba\Reward\Event\Affiliate\Campaign\Topup;
 
 use App\Models\Affiliate;
 use App\Models\TopUpOrder;
@@ -29,10 +25,8 @@ class Event extends Campaign
             ->where('topup_orders.agent_type', 'App\\Models\\Affiliate')
             ->where('topup_orders.created_at', '>=', $from)
             ->where('topup_orders.created_at', '<', $to)
-            ->whereIn('topup_orders.agent_id', array_column($rewards_for_affiliates, 'affiliate'))
-            ->groupBy('topup_orders.agent_id')
-        ;
-
+            ->whereIn('topup_orders.agent_id', array_column($rewards_for_affiliates->toArray(), 'affiliate'))
+            ->groupBy('topup_orders.agent_id');
     }
 
     public function setRule(Rule $rule)
@@ -103,6 +97,4 @@ class Event extends Campaign
     {
         $this->query->where('agent_id', $rewardable->id );
     }
-
-
 }
