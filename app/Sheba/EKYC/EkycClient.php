@@ -7,6 +7,8 @@ use Throwable;
 class EkycClient
 {
     protected $userId;
+    protected $clientId;
+    protected $clientSecret;
     protected $userType;
     protected $client;
     protected $baseUrl;
@@ -29,9 +31,9 @@ class EkycClient
 
     private function call($method, $uri, $data = null)
     {
-//        dd(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data));
         $res = $this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data));
         $res = json_decode($res->getBody()->getContents(), true);
+//        dd($res);
         if ($res['code'] != 200)
             throw new Exception($res['message']);
         unset($res['code'], $res['message']);
@@ -48,16 +50,11 @@ class EkycClient
         $options['headers'] = [
             'Content-Type' => 'application/json',
             'Accept' => 'application/json',
-            'CLIENT-ID' => $data['client_id'],
-            'CLIENT-SECRET' => $data['client_secret']
+            'CLIENT-ID' => $this->clientId,
+            'CLIENT-SECRET' => $this->clientSecret
         ];
-
-        $nidData = [
-            'id_front' => $data['id_front'],
-            'id_back' => $data['id_back']
-        ];
-        if ($nidData) {
-            $options['json'] = $nidData;
+        if ($data) {
+            $options['json'] = $data;
         }
         return $options;
     }
@@ -71,6 +68,18 @@ class EkycClient
     public function setUserId($userId)
     {
         $this->userId = $userId;
+        return $this;
+    }
+
+    public function setClientId($clientId)
+    {
+        $this->clientId = $clientId;
+        return $this;
+    }
+
+    public function setClientSecret($clientSecret)
+    {
+        $this->clientSecret = $clientSecret;
         return $this;
     }
 }
