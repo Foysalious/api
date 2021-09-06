@@ -1,16 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="Application Test Suite" tests="1" assertions="0" failures="0" errors="1" time="0.000000">
-    <testsuite name="Tests\Feature\sProOrderCreate\sProOrderCreateTimeTest" file="/var/www/tests/Feature/sProOrderCreate/sProOrderCreateTimeTest.php" tests="1" assertions="0" failures="0" errors="1" time="0.000000">
-      <testcase name="testSProTimeAPIWithValidPhoneNumber" class="Tests\Feature\sProOrderCreate\sProOrderCreateTimeTest" file="/var/www/tests/Feature/sProOrderCreate/sProOrderCreateTimeTest.php" line="50" assertions="0" time="0.000000">
-        <error type="PHPUnit_Framework_Exception">Tests\Feature\sProOrderCreate\sProOrderCreateTimeTest::testSProTimeAPIWithValidPhoneNumber
-PHPUnit_Framework_Exception: array:2 [
-  "code" =&gt; 400
-  "message" =&gt; null
-]
-
-</error>
-      </testcase>
+  <testsuite name="Application Test Suite" tests="19" assertions="62" failures="0" errors="0" time="106.371476">
+    <testsuite name="Tests\Feature\sProServiceBookCategory\sProMasterCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProMasterCategoryTest.php" tests="19" assertions="62" failures="0" errors="0" time="106.371476">
+      <testcase name="testSProMasterCategoryAPIWithoutLocationParameter" class="Tests\Feature\sProServiceBookCategory\sProMasterCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProMasterCategoryTest.php" line="66" assertions="8" time="4.589533"/>
+      <testcase name="testSProMasterCategoryAPIWithValidLatLngParameter" class="Tests\Feature\sProServiceBookCategory\sProMasterCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProMasterCategoryTest.php" line="87" assertions="8" time="4.102304"/>
+      <testcase name="testSProMasterCategoryAPIWithValidLocationParameter" class="Tests\Feature\sProServiceBookCategory\sProMasterCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProMasterCategoryTest.php" line="108" assertions="8" time="4.782063"/>
+      <testcase name="testSProMasterCategoryAPIWithInvalidLatAndValidLngParameter" class="Tests\Feature\sProServiceBookCategory\sProMasterCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProMasterCategoryTest.php" line="130" assertions="2" time="5.371162"/>
+      <testcase name="testSProMasterCategoryAPIWithValidLatAndInvalidLngParameter" class="Tests\Feature\sProServiceBookCategory\sProMasterCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProMasterCategoryTest.php" line="145" assertions="2" time="5.364163"/>
+      <testcase name="testSProMasterCategoryAPIWithInvalidLatLngParameter" class="Tests\Feature\sProServiceBookCategory\sProMasterCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProMasterCategoryTest.php" line="160" assertions="2" time="6.864915"/>
+      <testcase name="testSProMasterCategoryAPIWithInvalidLocationParameter" class="Tests\Feature\sProServiceBookCategory\sProMasterCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProMasterCategoryTest.php" line="175" assertions="2" time="6.182703"/>
+      <testcase name="testSProMasterCategoryAPIWithLatAndWithoutLngParameter" class="Tests\Feature\sProServiceBookCategory\sProMasterCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProMasterCategoryTest.php" line="190" assertions="2" time="7.722796"/>
+      <testcase name="testSProMasterCategoryAPIWithoutLatAndWithLngParameter" class="Tests\Feature\sProServiceBookCategory\sProMasterCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProMasterCategoryTest.php" line="205" assertions="2" time="7.301528"/>
+      <testcase name="testSProMasterCategoryAPIWithLocationNotAvailableForThisCategory" class="Tests\Feature\sProServiceBookCategory\sProMasterCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProMasterCategoryTest.php" line="220" assertions="2" time="4.734088"/>
+      <testcase name="testSProMasterCategoryAPIWithMasterCategoryUnpublishedAndSubCategoryPublishedAndServicePublished" class="Tests\Feature\sProServiceBookCategory\sProMasterCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProMasterCategoryTest.php" line="240" assertions="2" time="4.558127"/>
+      <testcase name="testSProMasterCategoryAPIWithMasterCategoryUnpublishedAndSubCategoryUnpublishedAndServicePublished" class="Tests\Feature\sProServiceBookCategory\sProMasterCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProMasterCategoryTest.php" line="260" assertions="2" time="4.973380"/>
+      <testcase name="testSProMasterCategoryAPIWithMasterCategoryUnpublishedAndSubCategoryUnpublishedAndServiceUnpublished" class="Tests\Feature\sProServiceBookCategory\sProMasterCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProMasterCategoryTest.php" line="280" assertions="2" time="6.855055"/>
+      <testcase name="testSProMasterCategoryAPIWithMasterCategoryUnpublishedAndSubCategoryPublishedAndServiceUnpublished" class="Tests\Feature\sProServiceBookCategory\sProMasterCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProMasterCategoryTest.php" line="300" assertions="2" time="5.735087"/>
+      <testcase name="testSProMasterCategoryAPIWithMasterCategoryPublishedAndSubCategoryPublishedAndServicePublished" class="Tests\Feature\sProServiceBookCategory\sProMasterCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProMasterCategoryTest.php" line="320" assertions="8" time="5.077088"/>
+      <testcase name="testSProMasterCategoryAPIWithMasterCategoryPublishedAndSubCategoryUnpublishedAndServicePublished" class="Tests\Feature\sProServiceBookCategory\sProMasterCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProMasterCategoryTest.php" line="348" assertions="2" time="6.490339"/>
+      <testcase name="testSProMasterCategoryAPIWithMasterCategoryPublishedAndSubCategoryUnpublishedAndServiceUnpublished" class="Tests\Feature\sProServiceBookCategory\sProMasterCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProMasterCategoryTest.php" line="369" assertions="2" time="5.649432"/>
+      <testcase name="testSProMasterCategoryAPIWithMasterCategoryPublishedAndSubCategoryPublishedAndServiceUnpublished" class="Tests\Feature\sProServiceBookCategory\sProMasterCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProMasterCategoryTest.php" line="390" assertions="2" time="5.142830"/>
+      <testcase name="testSProMasterCategoryAPIWithLatLngOfLocationNotAvailableForThisCategory" class="Tests\Feature\sProServiceBookCategory\sProMasterCategoryTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProMasterCategoryTest.php" line="411" assertions="2" time="4.874883"/>
     </testsuite>
   </testsuite>
 </testsuites>
