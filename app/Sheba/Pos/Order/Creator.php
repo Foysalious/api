@@ -10,7 +10,6 @@ use App\Models\PartnerPosService;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Models\Profile;
-use App\Sheba\Pos\Order\OrderEmiChecker;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Dal\POSOrder\SalesChannels;
@@ -54,13 +53,10 @@ class Creator
     private $paymentMethod;
     /** @var OrderStatuses $status */
     protected $status;
-    /** @var $orderEmiChecker OrderEmiChecker */
-    protected $orderEmiChecker;
 
     public function __construct(PosOrderRepository   $order_repo, PosOrderItemRepository $item_repo,
                                 PaymentCreator       $payment_creator, StockManager $stock_manager,
-                                OrderCreateValidator $create_validator, DiscountHandler $discount_handler, PosServiceRepositoryInterface $posServiceRepo,
-                                OrderEmiChecker $orderEmiChecker)
+                                OrderCreateValidator $create_validator, DiscountHandler $discount_handler, PosServiceRepositoryInterface $posServiceRepo)
     {
         $this->orderRepo = $order_repo;
         $this->itemRepo = $item_repo;
@@ -69,7 +65,6 @@ class Creator
         $this->createValidator = $create_validator;
         $this->discountHandler = $discount_handler;
         $this->posServiceRepo = $posServiceRepo;
-        $this->orderEmiChecker = $orderEmiChecker;
     }
 
     /**

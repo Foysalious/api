@@ -10,6 +10,7 @@ class OrderEmiChecker
 
     /**
      * @param mixed $pos_order
+     * @return OrderEmiChecker
      */
     public function setOrder(PosOrder $pos_order)
     {
@@ -18,22 +19,27 @@ class OrderEmiChecker
         return $this;
     }
 
-    public function isEmiValidForOrder()
+    /**
+     * @return bool
+     */
+    public function isEmiValidForOrder(): bool
     {
        if (!$this->isOrderedItemsValidForEmi()) {
             return false;
-        }
-        return true;
+        } else {
+           return true;
+       }
     }
 
-    private function isOrderedItemsValidForEmi()
+    /**
+     * @return bool
+     */
+    private function isOrderedItemsValidForEmi(): bool
     {
         $order_items = $this->pos_order->items;
         foreach ($order_items as $item)
         {
-            if($item->unit_price < 5000) {
-                return false;
-            } elseif ($item->is_emi_applied == false){
+            if($item->unit_price < 5000 || $item->is_emi_applied == false ) {
                 return false;
             }
         }
