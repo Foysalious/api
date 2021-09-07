@@ -88,33 +88,28 @@ class ApprovalRequestTransformer extends TransformerAbstract
                     'pro_pic' => $leave_substitute->pro_pic,
                     'mobile' => $leave_substitute->mobile ? $leave_substitute->mobile : null,
                     'email' => $leave_substitute->email,
-                    'department' => $leave_substitute_department? $leave_substitute_department->name : null,
+                    'department' => $leave_substitute_department ? $leave_substitute_department->name : null,
                     'designation' => $leave_substitute_role ? $leave_substitute_role->name : null,
                 ] : null,
                 'is_leave_days_exceeded' => $requestable->isLeaveDaysExceeded(),
                 'leave_date' => ($requestable->start_date->format('M d, Y') == $requestable->end_date->format('M d, Y')) ? $requestable->start_date->format('M d, Y') : $requestable->start_date->format('M d, Y') . ' - ' . $requestable->end_date->format('M d, Y'),
                 'status' => LeaveStatusPresenter::statuses()[$requestable->status],
                 'note' => $requestable->note,
-                'period' => $requestable->start_date->format('M d, Y') == $requestable->end_date->format('M d, Y') ? $requestable->start_date->format('M d') :$requestable->start_date->format('M d') . ' - ' . $requestable->end_date->format('M d'),
+                'period' => $requestable->start_date->format('M d, Y') == $requestable->end_date->format('M d, Y') ? $requestable->start_date->format('M d') : $requestable->start_date->format('M d') . ' - ' . $requestable->end_date->format('M d'),
                 'total_leave_days' => $leave_type->total_days,
-                'super_admin_action_reason' =>(new ApproverWithReason())->getRejectReason($this->approvalRequest, self::SUPER_ADMIN, null)
+                'super_admin_action_reason' => (new ApproverWithReason())->getRejectReason($this->approvalRequest, self::SUPER_ADMIN, null)
             ],
             'approvers' => $approvers
         ];
     }
 
+    /**
+     * @param $requestable
+     * @return array
+     */
     private function getApprover($requestable)
     {
         $approvers = [];
-        $all_approvers = [];
-        /** @var BusinessMember $leave_business_member */
-        $this->requestableType = ApprovalRequestType::getByModel($requestable);
-        $requestable_business_member = $requestable->businessMember;
-        $approval_setting = (new FindApprovalSettings())->getApprovalSetting($requestable_business_member, $this->requestableType);
-        $find_approvers = (new FindApprovers())->calculateApprovers($approval_setting, $requestable_business_member);
-        $requestable_approval_request_ids = $requestable->requests()->pluck('approver_id', 'id')->toArray();
-        $remainingApprovers = array_diff($find_approvers, $requestable_approval_request_ids);
-        $default_approvers = (new FindApprovers())->getApproversInfo($remainingApprovers);
         foreach ($requestable->requests as $approval_request) {
             $business_member = $approval_request->approver;
             $member = $business_member->member;
@@ -125,17 +120,8 @@ class ApprovalRequestTransformer extends TransformerAbstract
                 'reject_reason' => (new ApproverWithReason())->getRejectReason($this->approvalRequest, self::APPROVER, $business_member->id)
             ]);
         }
-        $all_approvers = array_merge($approvers, $default_approvers);
 
-        return $all_approvers;
-        /*$requestable->requests->each(function ($approval_request) use (&$approvers) {
-            $business_member = $this->getBusinessMemberById($approval_request->approver_id);
-            $member = $business_member->member;
-            $profile = $member->profile;
-            $approvers[] = $this->approvarWithStatus($approval_request, $profile);
-
-        });
-        return $approvers;*/
+        return $approvers;
     }
 
     /**
@@ -145,7 +131,7 @@ class ApprovalRequestTransformer extends TransformerAbstract
      */
     private function getApproverStatus($requestable, $approval_request)
     {
-        if (ApprovalRequestPresenter::statuses()[$approval_request->status] !== Status::PENDING ) {
+        if (ApprovalRequestPresenter::statuses()[$approval_request->status] !== Status::PENDING && $approval_request->is_notified) {
             return ApprovalRequestPresenter::statuses()[$approval_request->status];
         } else {
             if ($requestable->status !== Status::CANCELED) {
@@ -154,17 +140,5 @@ class ApprovalRequestTransformer extends TransformerAbstract
                 return null;
             }
         }
-    }
-
-    /**
-     * @param $approval_request
-     * @param $profile
-     * @return array
-     */
-    private function approvarWithStatus($approval_request, $profile)
-    {
-        if ($approval_request->status == Status::ACCEPTED) return ['name' => $profile->name, 'status' => ApprovalRequestPresenter::statuses()[$approval_request->status]];
-        if ($approval_request->status == Status::REJECTED) return ['name' => $profile->name, 'status' => ApprovalRequestPresenter::statuses()[$approval_request->status]];
-        return ['name' => $profile->name, 'status' => ApprovalRequestPresenter::statuses()[$approval_request->status]];
     }
 }
