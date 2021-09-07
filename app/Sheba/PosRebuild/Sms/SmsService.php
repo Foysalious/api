@@ -1,5 +1,6 @@
 <?php namespace App\Sheba\PosRebuild\Sms;
 
+use App\Models\Partner;
 use App\Sheba\PosRebuild\Sms\Types\OrderBill;
 use App\Sheba\PosRebuild\Sms\Types\WebStoreOrder;
 
@@ -7,11 +8,11 @@ class SmsService
 {
     private $type;
     private $typeId;
-    private $partner;
+    private $partnerId;
 
-    public function setPartner($partner)
+    public function setPartnerId($partnerId)
     {
-        $this->partner = $partner;
+        $this->partnerId = $partnerId;
         return $this;
     }
 
@@ -29,8 +30,9 @@ class SmsService
 
     public function sendSMS()
     {
+        $partner = Partner::find($this->partnerId);
         $class = $this->generateClass();
-        return $class->send($this->partner, $this->typeId);
+        return $class->send($partner, $this->typeId);
     }
 
     /**

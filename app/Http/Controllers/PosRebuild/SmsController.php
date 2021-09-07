@@ -12,10 +12,10 @@ class SmsController extends Controller
     {
         $this->validate($request, [
             'type' => 'required|in:' . implode(',', Types::get()),
-            'type_id' => 'required'
+            'type_id' => 'required',
+            'partner_id' => 'required'
         ]);
-        $partner = $request->auth_user->getPartner();
-        $smsService->setPartner($partner)->setType($request->type)->setTypeId($request->type_id)->sendSMS();
+        $smsService->setPartnerId($request->partnerId)->setType($request->type)->setTypeId($request->type_id)->sendSMS();
         return http_response($request, null, 200, ['message' => 'Sms sent successfully']);
     }
 }
