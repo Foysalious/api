@@ -27,7 +27,6 @@ use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\ExpenseTracker\EntryType;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
-use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 use Sheba\PartnerStatusAuthentication;
 use Sheba\PaymentLink\Creator as PaymentLinkCreator;
@@ -89,7 +88,6 @@ class OrderController extends Controller
 
     /**
      * @param Request $request
-     * @param PosOrderRepo $posOrder
      * @param PaymentLinkTransformer $payment_link
      * @return JsonResponse
      */
@@ -136,6 +134,11 @@ class OrderController extends Controller
      * @throws NotEnoughStockException
      * @throws AccountingEntryServerError|ExpenseTrackingServerError
      * @throws \Sheba\Authentication\Exceptions\AuthenticationFailedException
+     * @return array|false|JsonResponse
+     * @throws ExpenseTrackingServerError
+     * @throws NotAssociativeArray
+     * @throws DoNotReportException
+     * @throws InvalidDiscountType
      */
     public function store($partner, Request $request, Creator $creator, ProfileCreator $profileCreator, PosCustomerCreator $posCustomerCreator, PartnerRepository $partnerRepository, PaymentLinkCreator $paymentLinkCreator)
     {
@@ -196,7 +199,7 @@ class OrderController extends Controller
          */
         try {
             if ($order->sales_channel == SalesChannels::WEBSTORE) {
-                if ($partner->is_webstore_sms_active && $partner->wallet >= 1) $this->sendOrderPlaceSmsToCustomer($order);
+                if ($partner->is_webstore_sms_active) dispatch(new WebstoreOrderSms($partner, $order->id));
                 $this->sendOrderPlacePushNotificationToPartner($order);
             }
         } catch (Throwable $e) {
@@ -289,6 +292,7 @@ class OrderController extends Controller
         $this->sendCustomerEmail($order);
         $order->payment_status        = $order->getPaymentStatus();
         $order["client_pos_order_id"] = $request->has('client_pos_order_id') ? $request->client_pos_order_id : null;
+
         return api_response($request, null, 200, [
             'msg'   => 'Order Created Successfully',
             'order' => $order
@@ -337,7 +341,7 @@ class OrderController extends Controller
         $statusChanger->setOrder($order)->setStatus($request->status)->setModifier($request->manager_resource)->changeStatus();
         if ($order->partner->is_webstore_sms_active && $order->partner->wallet >= 1 && $order->sales_channel == SalesChannels::WEBSTORE) {
             try {
-                dispatch(new WebstoreOrderSms($order));
+                dispatch(new WebstoreOrderSms($order->partner,$order->id));
             } catch (Throwable $e) {
                 app('sentry')->captureException($e);
             }
@@ -382,26 +386,8 @@ class OrderController extends Controller
     {
         $partner = $request->partner;
         $this->setModifier($request->manager_resource);
-        /** @var PosOrder $order */
-        $order = PosOrder::with('items')->find($request->order);
-        if (empty($order)) return api_response($request, null, 404, ['msg' => 'Order not found']);
-        $order=$order->calculate();
-        if ($request->has('customer_id') && is_null($order->customer_id)) {
-            $requested_customer = PosCustomer::find($request->customer_id);
-            $order              = $updater->setOrder($order)->setData(['customer_id' => $requested_customer->id])->update();
-        }
-        if (!$order->customer)
-            return api_response($request, null, 404, ['msg' => 'Customer not found']);
-        if (!$order->customer->profile->mobile)
-            return api_response($request, null, 404, ['msg' => 'Customer mobile not found']);
-        // checking at least 1 tk is available.
-        if ($partner->wallet >= 1) {
-            WalletTransactionHandler::isDebitTransactionAllowed($partner, 1);
-            dispatch(new OrderBillSms($order));
-            return api_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
-        } else {
-            return api_response($request, null, 404, ['msg' => 'Insufficient Wallet']);
-        }
+        $this->dispatch(new OrderBillSms($partner, $request->order));
+        return api_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
     }
 
     /**
@@ -498,7 +484,6 @@ class OrderController extends Controller
         ]);
     }
 
-
     /**
      * @throws NotAssociativeArray
      */
@@ -513,7 +498,6 @@ class OrderController extends Controller
             'link' => $invoiceLink
         ]);
     }
-
 
     /**
      * @param Request $request
@@ -533,18 +517,10 @@ class OrderController extends Controller
         ]);
     }
 
-    private function sendCustomerSms(PosOrder $order)
-    {
-        if ($order->customer && $order->customer->profile->mobile)
-            dispatch(new OrderBillSms($order));
-    }
 
-    private function sendOrderPlaceSmsToCustomer(PosOrder $order)
-    {
-        if ($order->customer && $order->customer->profile->mobile)
-            dispatch(new WebstoreOrderSms($order));
-    }
-
+    /**
+     * @param PosOrder $order
+     */
     private function sendOrderPlacePushNotificationToPartner(PosOrder $order)
     {
         dispatch(new WebstoreOrderPushNotification($order));

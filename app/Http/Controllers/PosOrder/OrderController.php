@@ -1,6 +1,5 @@
 <?php namespace App\Http\Controllers\PosOrder;
 
-
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\VoucherController;
 use App\Sheba\PosOrderService\Services\OrderService;
