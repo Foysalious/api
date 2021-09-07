@@ -82,7 +82,7 @@ class LeaveController extends Controller
      */
     public function index(Request $request, LeaveRequestExcel $leave_request_report)
     {
-        $this->validate($request, ['list_type' => 'required|string', 'sort' => 'sometimes|required|string|in:asc,desc']);
+        $this->validate($request, ['list_type' => 'required|string|in:own,all', 'sort' => 'sometimes|required|string|in:asc,desc']);
 
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
@@ -99,6 +99,11 @@ class LeaveController extends Controller
         if ($request->has('search')) $leave_approval_requests = $this->searchWithEmployeeName($leave_approval_requests, $request);
         if ($request->has('period_start') && $request->has('period_end')) $leave_approval_requests = $this->filterByPeriod($leave_approval_requests, $request);
 
+        // Differ new & old approval request
+        $leave_approval_requests_without_order = $leave_approval_requests->where('order', null);
+        $leave_approval_requests_with_order = $leave_approval_requests->where('is_notified', 1);
+        $leave_approval_requests = $leave_approval_requests_with_order->merge($leave_approval_requests_without_order);
+
         // Grouped approval requests by leave_id and then taken the latest approval request
         $leave_approval_requests = $leave_approval_requests->groupBy('requestable_id');
         $leave_approval_requests = $leave_approval_requests->map(function ($item) {
@@ -107,6 +112,7 @@ class LeaveController extends Controller
 
         $total_leave_approval_requests = $leave_approval_requests->count();
         $leave_approval_requests = $this->sortByStatus($leave_approval_requests);
+
         if ($request->has('limit') && !$request->has('file')) $leave_approval_requests = $leave_approval_requests->splice($offset, $limit);
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
