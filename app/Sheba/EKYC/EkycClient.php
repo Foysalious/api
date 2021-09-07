@@ -2,6 +2,8 @@
 
 use GuzzleHttp\Client;
 use Exception;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\File;
 use Throwable;
 
 class EkycClient
@@ -35,7 +37,6 @@ class EkycClient
     {
         $res = $this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data));
         $res = json_decode($res->getBody()->getContents(), true);
-//        dd($res);
         if ($res['code'] != 200)
             throw new Exception($res['message']);
         unset($res['code'], $res['message']);
@@ -50,13 +51,27 @@ class EkycClient
     private function getOptions($data = null)
     {
         $options['headers'] = [
-            'Content-Type' => 'application/json',
             'Accept' => 'application/json',
             'CLIENT-ID' => $this->clientId,
             'CLIENT-SECRET' => $this->clientSecret
         ];
-        if ($data) {
-            $options['json'] = $data;
+        if (isset($data['id_front']) && $data['id_back']) {
+            /** @var UploadedFile $id_front */
+            /** @var UploadedFile $id_back */
+            $id_front               = $data['id_front'];
+            $id_back                = $data['id_back'];
+
+            $options['http_errors'] = false;
+            $options=array_merge($options, [
+                'read_timeout'    => 300,
+                'connect_timeout' => 120, 'timeout' => 120
+            ]);
+
+            $options['multipart'] = [
+                ['name' => 'id_front', 'contents' => File::get($id_front->getRealPath()), 'filename' => $id_front->getClientOriginalName()],
+                ['name' => 'id_back', 'contents' => File::get($id_back->getRealPath()), 'filename' => $id_back->getClientOriginalName()]
+            ];
+
         }
         return $options;
     }

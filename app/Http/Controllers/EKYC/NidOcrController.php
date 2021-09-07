@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Sheba\EKYC\EkycClient;
 use Sheba\EKYC\Exceptions\EkycServerError;
 
@@ -30,8 +31,8 @@ class NidOcrController extends Controller
 
     private function toData($request)
     {
-        $data['id_front'] = $request->id_front;
-        $data['id_back'] = $request->id_back;
+        $data['id_front'] = $request->file('id_front');
+        $data['id_back'] = $request->file('id_back');
         return $data;
     }
 }
