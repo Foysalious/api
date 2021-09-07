@@ -28,6 +28,9 @@ class UserMigrationController extends Controller
         if (!in_array($request->status, UserStatus::get())) {
             throw new Exception('Invalid Status', 404);
         }
+        if ($request->partner->id != $request->user_id) {
+            throw new Exception('You are not a admin of this partner', 401);
+        }
         $data = [
           'status'      => $request->status,
           'user_id'     => $request->user_id,
