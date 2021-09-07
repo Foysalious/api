@@ -6,7 +6,6 @@ class Route
     public function set($api)
     {
         $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
-            $api->post('/send-sms', "PosRebuild\SmsController@sendSms");
             $api->get('/channels', "Inventory\ChannelController@index");
             $api->get('/units', "Inventory\UnitController@index");
             $api->group(['prefix' => 'partners/{partner_id}/vouchers'], function ($api) {
@@ -16,6 +15,9 @@ class Route
             $api->post('/usages', 'PosRebuild\UsageController@store');
             $api->post('/check-access', 'PosRebuild\AccessManagerController@checkAccess');
             $api->get('voucher-details/{voucher_id}', 'VoucherController@getVoucherDetails');
+        });
+        $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers', 'middleware' => ['shebaServer']], function ($api) {
+            $api->post('/send-sms', "PosRebuild\SmsController@sendSms");
         });
 
         $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers', 'middleware' => ['jwtAccessToken']], function ($api) {
