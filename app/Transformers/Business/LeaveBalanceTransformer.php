@@ -27,31 +27,32 @@ class LeaveBalanceTransformer extends TransformerAbstract
      * @param $leave_types
      * @param Business $business
      */
-    public function __construct($leave_types, Business $business)
+    public function __construct($leave_types, Business $business, $time_frame)
     {
         $this->leave_types = $leave_types;
         $this->businessHoliday = app(BusinessHolidayRepoInterface::class)->getAllDateArrayByBusiness($business);
         $this->businessWeekend = app(BusinessWeekendRepoInterface::class)->getAllByBusiness($business)->pluck('weekday_name')->toArray();
         $this->business = $business;
         $this->business_member_leave_prorate = $this->business->getBusinessMemberProrate();
+        $this->timeFrame = $time_frame;
     }
 
     /**
-     * @param Collection $members
+     * @param Collection $business_members
      * @return array
      */
-    public function transform(Collection $members)
+    public function transform(Collection $business_members)
     {
         $employee_wise_leave_balance = [];
-        $members->each(function ($member) use (&$employee_wise_leave_balance) {
+        $business_members->each(function ($business_member) use (&$employee_wise_leave_balance) {
             /** @var BusinessMember $business_member */
-            $this->businessMember = $member->businessMemberWithoutStatusCheck();
+            $this->businessMember = $business_member;
 
             array_push($employee_wise_leave_balance, [
                 'id' => $this->businessMember->id,
-                'employee_id' => $this->businessMember->employee_id ? $this->businessMember->employee_id : null,
+                'employee_id' => $this->businessMember->employee_id ?: null,
                 'department' => $this->businessMember->role ? $this->businessMember->role->businessDepartment->name : null,
-                'employee_name' => $member->profile->name,
+                'employee_name' => $business_member->member->profile->name,
                 'leave_balance' => $this->calculate()
             ]);
         });
@@ -65,7 +66,7 @@ class LeaveBalanceTransformer extends TransformerAbstract
 
         foreach ($this->leave_types as $leave_type) {
             $leaves_filtered_by_type = $this->businessMember->leaves->where('leave_type_id', $leave_type['id'])->where('status', Status::ACCEPTED);
-            $used_leave_days = $this->businessMember->getCountOfUsedLeaveDaysByFiscalYear($leaves_filtered_by_type, $this->businessHoliday, $this->businessWeekend);
+            $used_leave_days = $this->businessMember->getCountOfUsedLeaveDaysByDateRange($leaves_filtered_by_type, $this->timeFrame, $this->businessHoliday, $this->businessWeekend);
             $total_days = $this->getTotalDays($leave_type);
             array_push($single_employee_leave_balance, [
                 'id' => $leave_type['id'],
