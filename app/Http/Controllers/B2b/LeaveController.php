@@ -15,6 +15,7 @@ use App\Transformers\Business\LeaveListTransformer;
 use App\Transformers\Business\LeaveRequestDetailsTransformer;
 use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -27,14 +28,12 @@ use Sheba\Business\ApprovalSetting\FindApprovalSettings;
 use Sheba\Business\ApprovalSetting\FindApprovers;
 use Sheba\Business\CoWorker\Statuses;
 use Sheba\Business\Leave\Balance\Excel as BalanceExcel;
-use Sheba\Business\Leave\RejectReason\Reason;
 use Sheba\Business\Leave\RejectReason\RejectReason;
 use Sheba\Business\LeaveRejection\Requester as LeaveRejectionRequester;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\ApprovalRequest\Status;
-use Sheba\Dal\Leave\Status as LeaveStatus;
 use Sheba\Dal\ApprovalRequest\Type as ApprovalRequestType;
 use Sheba\Dal\Leave\Contract as LeaveRepoInterface;
 use Sheba\Dal\LeaveLog\Contract as LeaveLogRepo;
@@ -166,8 +165,6 @@ class LeaveController extends Controller
         $resource = new Item($approval_request, new LeaveRequestDetailsTransformer($business, $business_member, $profile, $role, $leave_log_repo, $leave_status_change_log_repo));
         $approval_request = $manager->createData($resource)->toArray()['data'];
 
-        $approvers = $this->getApprover($requestable);
-        $approval_request = $approval_request + ['approvers' => $approvers];
         return api_response($request, null, 200, ['approval_details' => $approval_request]);
     }
 
@@ -175,6 +172,7 @@ class LeaveController extends Controller
      * @param Request $request
      * @param UpdaterV2 $updater
      * @return JsonResponse
+     * @throws Exception
      */
     public function updateStatus(Request $request, UpdaterV2 $updater)
     {
@@ -266,60 +264,6 @@ class LeaveController extends Controller
             if ($request->has('employee')) return $member->id == $request->employee;
             if ($request->has('search')) return str_contains(strtoupper($profile->name), strtoupper($request->search));
         });
-    }
-
-    /**
-     * @param $requestable
-     * @return array
-     */
-    private function getApprover($requestable)
-    {
-        $approvers = [];
-        $all_approvers = [];
-        /** @var BusinessMember $leave_business_member */
-        $this->requestableType = ApprovalRequestType::getByModel($requestable);
-        $requestable_business_member = $requestable->businessMember;
-        $approval_setting = (new FindApprovalSettings())->getApprovalSetting($requestable_business_member, $this->requestableType);
-        $find_approvers = (new FindApprovers())->calculateApprovers($approval_setting, $requestable_business_member);
-        $requestable_approval_request_ids = $requestable->requests()->pluck('approver_id', 'id')->toArray();
-        $remainingApprovers = array_diff($find_approvers, $requestable_approval_request_ids);
-        $default_approvers = (new FindApprovers())->getApproversAllInfo($remainingApprovers);
-
-        foreach ($requestable->requests as $approval_request) {
-            $business_member = $this->getBusinessMemberById($approval_request->approver_id);
-            $member = $business_member->member;
-            $profile = $member->profile;
-            $role = $business_member->role;
-            array_push($approvers, [
-                'name' => $profile->name,
-                'designation' => $role ? $role->name : null,
-                'department' => $role ? $role->businessDepartment->name : null,
-                'phone' => $profile->mobile,
-                'profile_pic' => $profile->pro_pic,
-                'status' => $this->getApproverStatus($requestable, $approval_request),
-                'reject_reason' => (new ApproverWithReason())->getRejectReason($approval_request, self::APPROVER, $business_member->id)
-            ]);
-        }
-        $all_approvers = array_merge($approvers, $default_approvers);
-        return $all_approvers;
-    }
-
-    /**
-     * @param $requestable
-     * @param $approval_request
-     * @return string|null
-     */
-    private function getApproverStatus($requestable, $approval_request)
-    {
-        if (ApprovalRequestPresenter::statuses()[$approval_request->status] !== Status::PENDING ) {
-            return ApprovalRequestPresenter::statuses()[$approval_request->status];
-        } else {
-            if ($requestable->status !== Status::CANCELED) {
-                return ApprovalRequestPresenter::statuses()[$approval_request->status];
-            } else {
-                return null;
-            }
-        }
     }
 
     /**
