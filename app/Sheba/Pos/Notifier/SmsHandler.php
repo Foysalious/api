@@ -3,6 +3,8 @@
 use App\Models\Partner;
 use App\Models\PosOrder;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
+use App\Sheba\Pos\Order\Invoice\InvoiceService;
+use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Sms\BusinessType;
 use Sheba\Sms\FeatureType;
 use Exception;
@@ -62,7 +64,7 @@ class SmsHandler
             'order_id'           => $this->order->partner_wise_order_id,
             'total_amount'       => $this->order->getNetBill(),
             'partner_name'       => $this->order->partner->name,
-            'invoice_link'       => $this->order->invoice
+            'invoice_link'       => $invoice_link
         ];
 
         if ($this->order->getDue() > 0) {
@@ -79,8 +81,13 @@ class SmsHandler
             ->setMessage($message_data);
     }
 
+    /**
+     * @throws NotAssociativeArray
+     */
     private function resolveInvoiceLink()
     {
-     // $invoiceService =
+        /** @var InvoiceService $invoiceService */
+        $invoiceService = app(InvoiceService::class)->setPosOrder($this->order);
+        return $invoiceService->generateInvoice()->saveInvoiceLink()->getInvoiceLink();
     }
 }
