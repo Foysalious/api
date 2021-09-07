@@ -22,7 +22,6 @@ class PosServiceTransformer extends TransformerAbstract
         /** @var PartnerPosService $service */
         $service_discount = $service->discount();
 
-
         return [
             'id' => $service->id,
             'name' => $name,
@@ -70,7 +69,9 @@ class PosServiceTransformer extends TransformerAbstract
                     'id' => $image->id,
                     'image_link' => $image->image_link
                 ];
+
             }) : [],
+            'is_emi_available' => (bool)$service->is_emi_available
         ];
     }
 }
