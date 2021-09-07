@@ -164,7 +164,8 @@ class PosCustomerService
     {
         $this->deleteCustomerFromSmanagerUserService();
         $this->deleteCustomerFromPosOrderService();
-        $this->deleteUserFromAccountingService();
+        //todo: have to add support for new customer module
+//        $this->deleteUserFromAccountingService();
         return true;
     }
 
