@@ -39,12 +39,8 @@ class OrderBillSms extends Job implements ShouldQueue
         if ($this->attempts() > 2) return;
         $this->resolvePosOrder();
         $this->generateCommonData();
-        if (!$this->partner->isMigrationCompleted())
-            $this->generateDataForOldSystem();
-        else {
-            $this->generateCommonData();
-            $this->generateDataForNewSystem();
-        }
+        if (!$this->partner->isMigrationCompleted()) $this->generateDataForOldSystem();
+        else $this->generateDataForNewSystem();
         $handler->setData($this->data)->handle();
     }
 
