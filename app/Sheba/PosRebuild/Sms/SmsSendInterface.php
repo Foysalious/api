@@ -2,5 +2,5 @@
 
 interface SmsSendInterface
 {
-  public function send();
+  public function send($partner,$typeId);
 }
