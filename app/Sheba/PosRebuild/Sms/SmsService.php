@@ -1,10 +1,20 @@
 <?php namespace App\Sheba\PosRebuild\Sms;
 
+use App\Models\Partner;
+use App\Sheba\PosRebuild\Sms\Types\OrderBill;
+use App\Sheba\PosRebuild\Sms\Types\WebStoreOrder;
+
 class SmsService
 {
-
     private $type;
     private $typeId;
+    private $partnerId;
+
+    public function setPartnerId($partnerId)
+    {
+        $this->partnerId = $partnerId;
+        return $this;
+    }
 
     public function setType($type)
     {
@@ -20,11 +30,21 @@ class SmsService
 
     public function sendSMS()
     {
-        $type = $this->type;
-        $class = $type.'::class';
-        (new ($class))->send();
+        $partner = Partner::find($this->partnerId);
+        $class = $this->generateClass();
+        return $class->send($partner, $this->typeId);
     }
 
+    /**
+     * @return SmsSendInterface
+     */
+    private function generateClass()
+    {
+        if ($this->type == Types::WEB_STORE_ORDER_SMS)
+            return app(WebStoreOrder::class);
+        elseif ($this->type == Types::ORDER_BILL_SMS)
+            return app(OrderBill::class);
+    }
 
 
 }

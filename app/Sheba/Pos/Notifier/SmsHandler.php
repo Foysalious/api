@@ -23,11 +23,14 @@ class SmsHandler {
         if ((double)$this->data['wallet'] > (double)$sms_cost) {
             /** @var WalletTransactionHandler $walletTransactionHandler */
             try {
-                $sms->setBusinessType($this->data['business_type'])->setFeatureType($this->data['feature_type'])->shoot();
+                $sms->setBusinessType($this->data['business_type'])->setFeatureType($this->data['feature_type'])
+                    ->shoot();
             } catch (Throwable $e) {
             }
-            (new WalletTransactionHandler())->setModel($this->data['model'])->setAmount($sms_cost)->setType(Types::debit())
-                ->setLog($sms_cost . $this->data['log'])->setTransactionDetails([])->setSource(TransactionSources::SMS)->store();
+            (new WalletTransactionHandler())->setModel($this->data['model'])->setAmount($sms_cost)
+                ->setType(Types::debit())
+                ->setLog($sms_cost . $this->data['log'])->setTransactionDetails([])
+                ->setSource(TransactionSources::SMS)->store();
         }
     }
 
@@ -37,8 +40,7 @@ class SmsHandler {
      */
     private function getSms()
     {
-        return (new SmsHandlerRepo($this->data['template']))
-            ->setVendor($this->data['vendor'])->setMobile($this->data['mobile'])->setFeatureType($this->data['feature_type'])
+        return (new SmsHandlerRepo($this->data['template']))->setMobile($this->data['mobile'])->setFeatureType($this->data['feature_type'])
             ->setBusinessType($this->data['business_type'])->setMessage($this->data['message']);
     }
 }
