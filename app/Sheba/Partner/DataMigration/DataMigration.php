@@ -42,11 +42,11 @@ class DataMigration
      */
     public function migrate()
     {
-//        if ($this->partner->isMigrationRunningOrCompleted()) throw new DataMigrationException();
+        if ($this->partner->isMigrationRunningOrCompleted()) throw new DataMigrationException();
         dispatch(new PartnerMigrationStartJob($this->partner));
         $this->inventoryDataMigration->setPartner($this->partner)->migrate();
-//        $this->posOrderDataMigration->setPartner($this->partner)->migrate();
-//        $this->smanagerUserDataMigration->setPartner($this->partner)->migrate();
-//        dispatch(new PartnerMigrationCompleteJob($this->partner));
+        $this->posOrderDataMigration->setPartner($this->partner)->migrate();
+        $this->smanagerUserDataMigration->setPartner($this->partner)->migrate();
+        dispatch(new PartnerMigrationCompleteJob($this->partner));
     }
 }

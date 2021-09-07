@@ -128,6 +128,7 @@ class InventoryDataMigration
         foreach ($chunks as $chunk) {
             $productIds = array_column($chunk, 'id');
             list($images, $logs, $discounts, $batches) = $this->getProductsRelatedData($productIds);
+            $this->setRedisKey();
             dispatch(new PartnerDataMigrationToInventoryJob($this->partner, [
                 'products' => $chunk,
                 'partner_pos_service_batches' => $batches,
