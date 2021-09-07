@@ -1,21 +1,17 @@
 <?php namespace App\Transformers\Business;
 
 use App\Models\Business;
-use App\Models\BusinessMember;
 use App\Models\Profile;
 use App\Sheba\Business\BusinessBasicInformation;
 use App\Sheba\Business\Leave\ApproverWithReason;
 use League\Fractal\TransformerAbstract;
-use Sheba\Business\ApprovalSetting\FindApprovalSettings;
-use Sheba\Business\ApprovalSetting\FindApprovers;
-use Sheba\Business\Leave\RejectReason\Reason;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
-use Sheba\Dal\ApprovalRequest\Status;
-use Sheba\Dal\ApprovalRequest\Type as ApprovalRequestType;
+use Sheba\Dal\ApprovalRequest\Status as ApprovalRequestStatus;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
 use Sheba\Dal\Leave\LeaveStatusPresenter as LeaveStatusPresenter;
+use Sheba\Dal\Leave\Status as LeaveStatus;
 use Sheba\Dal\LeaveLog\Contract as LeaveLogRepo;
 use Sheba\Dal\LeaveStatusChangeLog\Contract as LeaveStatusChangeLogRepo;
 
@@ -151,15 +147,11 @@ class ApprovalRequestTransformer extends TransformerAbstract
      */
     private function getApproverStatus($requestable, $approval_request)
     {
-        if (ApprovalRequestPresenter::statuses()[$approval_request->status] !== Status::PENDING && $approval_request->is_notified) {
+        if (ApprovalRequestPresenter::statuses()[$approval_request->status] !== ApprovalRequestStatus::PENDING)
             return ApprovalRequestPresenter::statuses()[$approval_request->status];
-        } else {
-            if ($requestable->status !== Status::CANCELED) {
-                return ApprovalRequestPresenter::statuses()[$approval_request->status];
-            } else {
-                return null;
-            }
-        }
+        if ($requestable->status !== LeaveStatus::CANCELED && $approval_request->is_notified)
+            return ApprovalRequestPresenter::statuses()[$approval_request->status];
+        return null;
     }
 
     /**

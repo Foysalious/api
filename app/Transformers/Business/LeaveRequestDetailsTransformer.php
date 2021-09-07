@@ -101,16 +101,16 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
                     'id' => $leave_type->id,
                     'title' => $leave_type->title,
                     'total_leave_days' => $leave_type->total_days,
-                    ],
-                    'total_days' => (int)$requestable->total_days,
-                    'left' => $requestable->left_days < 0 ? abs($requestable->left_days) : $requestable->left_days,
-                    'is_leave_days_exceeded' => $requestable->isLeaveDaysExceeded(),
-                    'period' => $requestable->start_date->format('M d, Y') == $requestable->end_date->format('M d, Y') ? $requestable->start_date->format('M d, Y') : $requestable->start_date->format('M d, Y') . ' - ' . $requestable->end_date->format('M d, Y'),
-                    'start_date' => $requestable->start_date->format('Y-m-d'),
-                    'end_date' => $requestable->end_date->format('Y-m-d'),
-                    'note' => $requestable->note,
-                    'status' => LeaveStatusPresenter::statuses()[$requestable->status], 'is_half_day' => $requestable->is_half_day,
-                    'half_day_configuration' => $requestable->is_half_day ? [
+                ],
+                'total_days' => (int)$requestable->total_days,
+                'left' => $requestable->left_days < 0 ? abs($requestable->left_days) : $requestable->left_days,
+                'is_leave_days_exceeded' => $requestable->isLeaveDaysExceeded(),
+                'period' => $requestable->start_date->format('M d, Y') == $requestable->end_date->format('M d, Y') ? $requestable->start_date->format('M d, Y') : $requestable->start_date->format('M d, Y') . ' - ' . $requestable->end_date->format('M d, Y'),
+                'start_date' => $requestable->start_date->format('Y-m-d'),
+                'end_date' => $requestable->end_date->format('Y-m-d'),
+                'note' => $requestable->note,
+                'status' => LeaveStatusPresenter::statuses()[$requestable->status], 'is_half_day' => $requestable->is_half_day,
+                'half_day_configuration' => $requestable->is_half_day ? [
                     'half_day' => $requestable->half_day_configuration,
                     'half_day_time' => $this->business->halfDayStartEnd($requestable->half_day_configuration),
                 ] : null,
@@ -121,7 +121,7 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
                     'pro_pic' => $leave_substitute->pro_pic,
                     'mobile' => $leave_substitute->mobile ? $leave_substitute->mobile : null,
                     'email' => $leave_substitute->email,
-                    'department' => $leave_substitute_department? $leave_substitute_department->name : null,
+                    'department' => $leave_substitute_department ? $leave_substitute_department->name : null,
                     'designation' => $leave_substitute_role ? $leave_substitute_role->name : null,
                 ] : null,
             ],
@@ -162,10 +162,10 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
     {
         $result = $this->approvalRequestRepo
             ->where('requestable_id', $requestable->id)
-            ->where('approver_id',$this->businessMember->id)
+            ->where('approver_id', $this->businessMember->id)
             ->where('status', ApprovalRequestStatus::PENDING)
             ->first();
-        return $result ? 1: 0;
+        return $result ? 1 : 0;
     }
 
     private function getLeaveLogDetails($requestable)
@@ -224,14 +224,10 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
      */
     private function getApproverStatus($requestable, $approval_request)
     {
-        if (ApprovalRequestPresenter::statuses()[$approval_request->status] !== ApprovalRequestStatus::PENDING  && $approval_request->is_notified) {
+        if (ApprovalRequestPresenter::statuses()[$approval_request->status] !== ApprovalRequestStatus::PENDING)
             return ApprovalRequestPresenter::statuses()[$approval_request->status];
-        } else {
-            if ($requestable->status !== LeaveStatus::CANCELED) {
-                return ApprovalRequestPresenter::statuses()[$approval_request->status];
-            } else {
-                return null;
-            }
-        }
+        if ($requestable->status !== LeaveStatus::CANCELED && $approval_request->is_notified)
+            return ApprovalRequestPresenter::statuses()[$approval_request->status];
+        return null;
     }
 }
