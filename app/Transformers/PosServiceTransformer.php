@@ -54,7 +54,8 @@ class PosServiceTransformer extends TransformerAbstract
                     'image_link' => $image->image_link
                 ];
 
-            }) : []
+            }) : [],
+            'is_emi_available' => (bool)$service->is_emi_available
         ];
     }
 }
