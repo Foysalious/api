@@ -1,6 +1,7 @@
 <?php namespace Sheba\Pos\Product;
 
 use App\Models\PartnerPosService;
+use App\Models\PartnerPosServiceDiscount;
 use App\Repositories\FileRepository;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
@@ -223,9 +224,24 @@ class Updater
                 $this->updatedData['is_published_for_shop'] = $this->data['is_published_for_shop'];
             }
         }
+        if((isset($this->data['is_emi_available'])) && $this->data['is_emi_available'] == 1)
+        $this->updatedData['is_emi_available'] =  $this->isEmiAvailable();
 
+    }
 
-
+    private function isEmiAvailable()
+    {
+        $discount_amount = 0;
+        if (isset($this->data['discount_id'])) {
+            $discount = PartnerPosServiceDiscount::find($this->data['discount_id']);
+            if ($this->data['is_discount_off'] && $this->data['is_discount_off'] == 'true') {
+                $discount_amount = 0;
+            } else if (isset($this->data['discount_amount']) && $this->data['discount_amount'] != $discount->amount) {
+                $discount_amount = (double)$this->data['discount_amount'];
+            }
+        }
+        $price = ((isset($this->updatedData['price'])) ? $this->updatedData['price'] : $this->service->price)- $discount_amount;
+        return $price > config('emi.manager.minimum_emi_amount') ? 1 : 0;
     }
 
     /**

@@ -115,7 +115,16 @@ class Creator
         } else {
             $this->data['is_published_for_shop'] = 0;
         }
+        $this->data['is_emi_available'] = (int) $this->isEmiAvailable();
+    }
 
+    private function isEmiAvailable()
+    {
+        if ($this->data['price']) {
+            $price = $this->data['price'] - (((isset($this->data['discount_amount'])) && $this->data['discount_amount'] > 0) ? $this->data['discount_amount'] : 0);
+            return ((isset($this->data['is_emi_available'])) && $this->data['is_emi_available'] == 1 && $price > config('emi.manager.minimum_emi_amount'));
+        }
+        return 0;
     }
 
     private function getPartner($partner_id)
