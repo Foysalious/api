@@ -12,7 +12,7 @@ class OrderEmiChecker
      * @param mixed $pos_order
      * @return OrderEmiChecker
      */
-    public function setOrder(PosOrder $pos_order)
+    public function setOrder(PosOrder $pos_order): OrderEmiChecker
     {
         $this->pos_order = $pos_order;
         $this->pos_order->calculate();
@@ -39,7 +39,7 @@ class OrderEmiChecker
         $order_items = $this->pos_order->items;
         foreach ($order_items as $item)
         {
-            if($item->unit_price < 5000 || $item->is_emi_applied == false ) {
+            if($item->unit_price < config('emi.minimum_emi_amount') || $item->is_emi_applied == false ) {
                 return false;
             }
         }
