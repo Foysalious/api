@@ -3,15 +3,17 @@
 namespace Sheba\AccountingEntry\Repository;
 
 use App\Sheba\AccountingEntry\Constants\UserType;
+use App\Sheba\AccountingEntry\Repository\BaseRepository;
 use Sheba\Dal\AccountingMigratedUser\EloquentImplementation;
 
-class UserMigrationRepository
+class UserMigrationRepository extends BaseRepository
 {
     /** @var EloquentImplementation  */
     private $repo;
 
-    public function __construct(EloquentImplementation $repo)
+    public function __construct(EloquentImplementation $repo, AccountingEntryClient $client)
     {
+        parent::__construct($client);
         $this->repo = $repo;
     }
 
