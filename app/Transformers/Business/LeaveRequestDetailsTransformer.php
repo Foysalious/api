@@ -8,16 +8,16 @@ use App\Models\Profile;
 use App\Sheba\Business\Leave\ApproverWithReason;
 use App\Transformers\AttachmentTransformer;
 use League\Fractal\TransformerAbstract;
-use Sheba\Business\Leave\RejectReason\Reason;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
 use Sheba\Dal\Leave\LeaveStatusPresenter as LeaveStatusPresenter;
-use Sheba\Dal\Leave\Status;
+use Sheba\Dal\Leave\Status as LeaveStatus;
 use Sheba\Dal\LeaveLog\Contract as LeaveLogRepo;
 use Sheba\Dal\LeaveStatusChangeLog\Contract as LeaveStatusChangeLogRepo;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepository;
+use Sheba\Dal\ApprovalRequest\Status as ApprovalRequestStatus;
 
 class LeaveRequestDetailsTransformer extends TransformerAbstract
 {
@@ -86,7 +86,7 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
             'super_admin_section_show' => $this->isLeaveCancelled($requestable),
             'show_approve_reject_buttons' => $this->isLeaveApprovedOrRejected($requestable),
             'super_admin_action_reason' => (new ApproverWithReason())->getRejectReason($approval_request, self::SUPER_ADMIN, null),
-            'show_normal_approver_approve_reject_buttons' => $requestable->status == Status::PENDING ? $this->isApproverButtonShow($requestable) : 0,
+            'show_normal_approver_approve_reject_buttons' => $requestable->status == LeaveStatus::PENDING ? $this->isApproverButtonShow($requestable) : 0,
             'leave' => [
                 'id' => $requestable->id,
                 'business_member_id' => $business_member->id,
@@ -131,6 +131,7 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
                 'designation' => $this->role ? $this->role->name : null
             ],
             'leave_log_details' => $this->getLeaveLog($requestable),
+            'approvers' => $this->getApprover($requestable)
         ];
     }
 
@@ -145,7 +146,7 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
     private function isLeaveCancelled($requestable)
     {
         /** @var Leave $requestable */
-        if ($requestable->status === Status::CANCELED) return 0;
+        if ($requestable->status === LeaveStatus::CANCELED) return 0;
         if (($this->leaveLogRepo->statusUpdatedBySuperAdmin($requestable->id))) return 0;
         return 1;
     }
@@ -153,7 +154,7 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
     private function isLeaveApprovedOrRejected($requestable)
     {
         /** @var Leave $requestable */
-        $result = $requestable->where('id', $requestable->id)->whereIn('status', [Status::ACCEPTED, Status::REJECTED])->first();
+        $result = $requestable->where('id', $requestable->id)->whereIn('status', [LeaveStatus::ACCEPTED, LeaveStatus::REJECTED])->first();
         return $result ? 0 : 1;
     }
 
@@ -162,7 +163,7 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
         $result = $this->approvalRequestRepo
             ->where('requestable_id', $requestable->id)
             ->where('approver_id',$this->businessMember->id)
-            ->where('status', Status::PENDING)
+            ->where('status', ApprovalRequestStatus::PENDING)
             ->first();
         return $result ? 1: 0;
     }
@@ -189,5 +190,48 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
         $update_log = $this->getLeaveLogDetails($requestable) ? $this->getLeaveLogDetails($requestable) : [];
 
         return array_merge($cancel_log, $update_log);
+    }
+
+    /**
+     * @param $requestable
+     * @return array
+     */
+    private function getApprover($requestable)
+    {
+        $approvers = [];
+        foreach ($requestable->requests as $approval_request) {
+            $business_member = $approval_request->approver;
+            $member = $business_member->member;
+            $profile = $member->profile;
+            $role = $business_member->role;
+            array_push($approvers, [
+                'name' => $profile->name,
+                'designation' => $role ? $role->name : null,
+                'department' => $role ? $role->businessDepartment->name : null,
+                'phone' => $profile->mobile,
+                'profile_pic' => $profile->pro_pic,
+                'status' => $this->getApproverStatus($requestable, $approval_request),
+                'reject_reason' => (new ApproverWithReason())->getRejectReason($approval_request, self::APPROVER, $business_member->id)
+            ]);
+        }
+        return $approvers;
+    }
+
+    /**
+     * @param $requestable
+     * @param $approval_request
+     * @return string|null
+     */
+    private function getApproverStatus($requestable, $approval_request)
+    {
+        if (ApprovalRequestPresenter::statuses()[$approval_request->status] !== ApprovalRequestStatus::PENDING  && $approval_request->is_notified) {
+            return ApprovalRequestPresenter::statuses()[$approval_request->status];
+        } else {
+            if ($requestable->status !== LeaveStatus::CANCELED) {
+                return ApprovalRequestPresenter::statuses()[$approval_request->status];
+            } else {
+                return null;
+            }
+        }
     }
 }
