@@ -44,7 +44,7 @@ class PosCustomerController extends Controller
         }
 
 
-        return http_response($request, null, 200, ["code"=> 200,'message' => 'Successful', 'customers' => $customer_list]);
+        return http_response($request, null, 200, ["code" => 200, 'message' => 'Successful', 'customers' => $customer_list]);
     }
 
     public function storePosCustomer(Request $request)
@@ -54,7 +54,7 @@ class PosCustomerController extends Controller
         if ($request->input('pro_pic')) {
             $image = base64_encode(file_get_contents($request->file('pro_pic')->path()));
         }
-        $customer= $this->posCustomerService->setPartner($partner)->setNote($request->note)->setName($request->name)->setBnName($request->bnName)->setMobile($request->mobile)
+        $customer = $this->posCustomerService->setPartner($partner)->setNote($request->note)->setName($request->name)->setBnName($request->bnName)->setMobile($request->mobile)
             ->setEmail($request->email)->setAddress($request->address)->setGender($request->gender)->setBloodGroup($request->blood_group)->setDob($request->dob)->setproPic($image)
             ->storePosCustomer();
         return http_response($request, null, 200, ['message' => 'Successful', 'data' => $customer]);

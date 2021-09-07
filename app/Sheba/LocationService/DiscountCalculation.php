@@ -67,7 +67,8 @@ class DiscountCalculation
      */
     public function getDiscount()
     {
-        return (double)$this->discount;
+        $discount = $this->isDiscountPercentage ? (double)$this->originalPrice * ((double)$this->discount / 100) : (double)$this->discount;
+        return $discount;
     }
 
     /**

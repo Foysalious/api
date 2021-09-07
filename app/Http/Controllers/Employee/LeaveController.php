@@ -75,6 +75,7 @@ class LeaveController extends Controller
     public function show($leave, Request $request, LeaveRepoInterface $leave_repo, LogFormatter $log_formatter)
     {
         $leave = $leave_repo->find($leave);
+        if (!$leave) return api_response($request, null, 404);
         /** @var Business $business */
         $business = $this->getBusiness($request);
         /** @var BusinessMember $business_member */
