@@ -1,71 +1,293 @@
 <?php namespace Tests\Feature\sProOrderCreate;
 
 use App\Models\ScheduleSlot;
-use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+use Sheba\Dal\Category\Category;
+use Sheba\Dal\CategoryScheduleSlot\CategoryScheduleSlot;
+use Sheba\Dal\Service\Service;
+use Sheba\Services\Type as ServiceType;
 use Tests\Feature\FeatureTestCase;
+use Illuminate\Support\Facades\DB;
 
 class sProOrderCreateTimeTest extends FeatureTestCase
 {
 
-    private $schedule_slot;
+    private $scheduleSlot1;
+    private $today;
 
     public function setUp()
     {
+
         parent::setUp();
 
-        DB::table('schedule_slots')->delete();
+        $this->truncateTable(Service::class);
 
-        $this->logIn();
+        $this->truncateTable(Category::class);
 
         $this->truncateTable(ScheduleSlot::class);
 
-        DB::insert('insert into schedule_slots(start,end) values (?, ?)', ['00:00:00', '01:00:00']);
-        DB::insert('insert into schedule_slots(start,end) values (?, ?)', ['01:00:00', '02:00:00']);
-        DB::insert('insert into schedule_slots(start,end) values (?, ?)', ['02:00:00', '03:00:00']);
-        DB::insert('insert into schedule_slots(start,end) values (?, ?)', ['03:00:00', '04:00:00']);
-        DB::insert('insert into schedule_slots(start,end) values (?, ?)', ['04:00:00', '05:00:00']);
-        DB::insert('insert into schedule_slots(start,end) values (?, ?)', ['05:00:00', '06:00:00']);
-        DB::insert('insert into schedule_slots(start,end) values (?, ?)', ['06:00:00', '07:00:00']);
-        DB::insert('insert into schedule_slots(start,end) values (?, ?)', ['07:00:00', '08:00:00']);
-        DB::insert('insert into schedule_slots(start,end) values (?, ?)', ['08:00:00', '09:00:00']);
-        DB::insert('insert into schedule_slots(start,end) values (?, ?)', ['09:00:00', '10:00:00']);
-        DB::insert('insert into schedule_slots(start,end) values (?, ?)', ['10:00:00', '11:00:00']);
-        DB::insert('insert into schedule_slots(start,end) values (?, ?)', ['11:00:00', '12:00:00']);
-        DB::insert('insert into schedule_slots(start,end) values (?, ?)', ['12:00:00', '13:00:00']);
-        DB::insert('insert into schedule_slots(start,end) values (?, ?)', ['13:00:00', '14:00:00']);
-        DB::insert('insert into schedule_slots(start,end) values (?, ?)', ['14:00:00', '15:00:00']);
-        DB::insert('insert into schedule_slots(start,end) values (?, ?)', ['15:00:00', '16:00:00']);
-        DB::insert('insert into schedule_slots(start,end) values (?, ?)', ['16:00:00', '17:00:00']);
-        DB::insert('insert into schedule_slots(start,end) values (?, ?)', ['17:00:00', '18:00:00']);
-        DB::insert('insert into schedule_slots(start,end) values (?, ?)', ['18:00:00', '19:00:00']);
-        DB::insert('insert into schedule_slots(start,end) values (?, ?)', ['19:00:00', '20:00:00']);
-        DB::insert('insert into schedule_slots(start,end) values (?, ?)', ['20:00:00', '21:00:00']);
-        DB::insert('insert into schedule_slots(start,end) values (?, ?)', ['21:00:00', '22:00:00']);
-        DB::insert('insert into schedule_slots(start,end) values (?, ?)', ['22:00:00', '23:00:00']);
-        DB::insert('insert into schedule_slots(start,end) values (?, ?)', ['23:00:00', '24:00:00']);
+        $this->truncateTable(CategoryScheduleSlot::class);
 
+        $this->logIn();
+
+        $master_category = factory(Category::class)->create();
+
+        $this->secondaryCategory = factory(Category::class)->create([
+            'parent_id' => $master_category->id,
+            'publication_status' => 1
+        ]);
+
+        factory(Service::class)->create([
+            'category_id' => $this->secondaryCategory->id,
+            'variable_type' => ServiceType::FIXED,
+            'variables' => '{"price":"1700","min_price":"1000","max_price":"2500","description":""}',
+            'publication_status' => 1
+        ]);
+
+        for ($x = 0; $x < 24; $x++) {
+
+            $y = $x + 1;
+
+            $this->scheduleSlot1 = factory(ScheduleSlot::class)->create([
+                'start' => "$x:00:00",
+                'end' => "$y:00:00",
+            ]);
+
+            if($x > 7 && $x < 22){
+
+                for($z = 0; $z < 7; $z++){
+                    DB::insert('insert into category_schedule_slot(category_id,schedule_slot_id,day) values (?, ?, ?)', [$this->secondaryCategory->id, $this->scheduleSlot1->id, $z]);
+                }
+            }
+        }
 
     }
 
-    public function testSProTimeAPIWithValidPhoneNumber()
+    public function testSProTimeAPIWithValidCategoryIdPartnerIdLimit()
     {
         //arrange
+        $this->today = Carbon::now()->toDateString();
 
         //act
-        $response = $this->get('/v2/times?category=2&partner=1&limit=14');
+        $response = $this->get('/v2/times?category='. $this->secondaryCategory->id . '&partner=' . $this->partner->id . '&limit=1');
 
         $data = $response->decodeResponseJson();
-        dd($data);
 
         //assert
         $this->assertEquals(200, $data["code"]);
         $this->assertEquals('Successful', $data["message"]);
-        $this->assertEquals(2, $data["categories"][0]["id"]);
-        $this->assertEquals(2, $data["categories"][0]["name"]);
-        $this->assertEquals(2, $data["categories"][0]["bn_name"]);
-        $this->assertEquals(2, $data["categories"][0]["is_vat_applicable"]);
-        $this->assertEquals(2, $data["categories"][0]["is_car_rental"]);
-        $this->assertEquals(2, $data["categories"][0]["vat_percentage"]);
+        $this->assertEquals($this->today, $data["dates"][0]["value"]);
+        $this->assertEquals(9, $data["dates"][0]["slots"][0]["id"]);
+
+    }
+
+    public function testSProTimeAPIWithValidCategoryIdPartnerIdAndInvalidAlphabeticCharacterLimit()
+    {
+        //arrange
+
+        //act
+        $response = $this->get('/v2/times?category='. $this->secondaryCategory->id . '&partner=' . $this->partner->id . '&limit=abcde');
+
+        $data = $response->decodeResponseJson();
+
+        //assert
+        $this->assertEquals(400, $data["code"]);
+        $this->assertEquals('The limit must be a number.', $data["message"]);
+
+    }
+
+    public function testSProTimeAPIWithValidCategoryIdPartnerIdAndInvalidSpecialCharacterLimit()
+    {
+        //arrange
+
+        //act
+        $response = $this->get('/v2/times?category='. $this->secondaryCategory->id . '&partner=' . $this->partner->id . '&limit=!@#$%^');
+
+        $data = $response->decodeResponseJson();
+
+        //assert
+        $this->assertEquals(400, $data["code"]);
+        $this->assertEquals('The limit must be a number.', $data["message"]);
+
+    }
+
+    public function testSProTimeAPIWithValidCategoryIdPartnerIdAndNoLimit()
+    {
+        //arrange
+        $this->today = Carbon::now()->toDateString();
+
+        //act
+        $response = $this->get('/v2/times?category='. $this->secondaryCategory->id . '&partner=' . $this->partner->id);
+
+        $data = $response->decodeResponseJson();
+
+        //assert
+        $this->assertEquals(200, $data["code"]);
+        $this->assertEquals('Successful', $data["message"]);
+        $this->assertEquals($this->today, $data["dates"][0]["value"]);
+        $this->assertEquals(9, $data["dates"][0]["slots"][0]["id"]);
+
+    }
+
+    public function testSProTimeAPIWithValidCategoryIdLimitAndInvalidAlphabeticCharacterPartnerId()
+    {
+        //arrange
+
+        //act
+        $response = $this->get('/v2/times?category='. $this->secondaryCategory->id . '&partner=abcde&limit=1');
+
+        $data = $response->decodeResponseJson();
+
+        //assert
+        $this->assertEquals(400, $data["code"]);
+        $this->assertEquals('The partner must be a number.', $data["message"]);
+
+    }
+
+    public function testSProTimeAPIWithValidCategoryIdLimitAndInvalidSpecialCharacterPartnerId()
+    {
+        //arrange
+
+        //act
+        $response = $this->get('/v2/times?category='. $this->secondaryCategory->id . '&partner=!@#$%^&limit=1');
+
+        $data = $response->decodeResponseJson();
+
+        //assert
+        $this->assertEquals(400, $data["code"]);
+        $this->assertEquals('The partner must be a number.', $data["message"]);
+
+    }
+
+    public function testSProTimeAPIWithValidCategoryIdLimitAndNoPartnerId()
+    {
+        //arrange
+
+        //act
+        $response = $this->get('/v2/times?category='. $this->secondaryCategory->id . '&limit=1');
+
+        $data = $response->decodeResponseJson();
+
+        //assert
+        $this->assertEquals(200, $data["code"]);
+        $this->assertEquals('Successful', $data["message"]);
+        $this->assertNotEmpty($data["times"]);
+        $this->assertNotEmpty($data["valid_times"]);
+
+    }
+
+    public function testSProTimeAPIWithValidPartnerIdLimitAndInvalidAlphabeticCharacterCategoryId()
+    {
+        //arrange
+
+        //act
+        $response = $this->get('/v2/times?category=abcde&partner=' . $this->partner->id . '&limit=1');
+
+        $data = $response->decodeResponseJson();
+
+        //assert
+        $this->assertEquals(400, $data["code"]);
+        $this->assertEquals('The category must be a number.', $data["message"]);
+
+    }
+
+    public function testSProTimeAPIWithValidPartnerIdLimitAndInvalidSpecialCharacterCategoryId()
+    {
+        //arrange
+
+        //act
+        $response = $this->get('/v2/times?category=!@#$%^&partner=' . $this->partner->id . '&limit=1');
+
+        $data = $response->decodeResponseJson();
+
+        //assert
+        $this->assertEquals(400, $data["code"]);
+        $this->assertEquals('The category must be a number.', $data["message"]);
+
+    }
+
+    public function testSProTimeAPIWithValidPartnerIdLimitAndNoCategoryId()
+    {
+        //arrange
+
+        //act
+        $response = $this->get('/v2/times?partner=' . $this->partner->id . '&limit=1');
+
+        $data = $response->decodeResponseJson();
+
+        //assert
+        $this->assertEquals(200, $data["code"]);
+        $this->assertEquals('Successful', $data["message"]);
+        $this->assertNotEmpty($data["times"]);
+        $this->assertNotEmpty($data["valid_times"]);
+
+    }
+
+    public function testSProTimeAPIWithNoPartnerIdLimitCategoryId()
+    {
+        //arrange
+
+        //act
+        $response = $this->get('/v2/times');
+
+        $data = $response->decodeResponseJson();
+
+        //assert
+        $this->assertEquals(200, $data["code"]);
+        $this->assertEquals('Successful', $data["message"]);
+        $this->assertNotEmpty($data["times"]);
+        $this->assertNotEmpty($data["valid_times"]);
+
+    }
+
+    public function testSProTimeAPIWithOnlyValidCategoryIdParameter()
+    {
+        //arrange
+
+        //act
+        $response = $this->get('/v2/times?category='. $this->secondaryCategory->id);
+
+        $data = $response->decodeResponseJson();
+
+        //assert
+        $this->assertEquals(200, $data["code"]);
+        $this->assertEquals('Successful', $data["message"]);
+        $this->assertNotEmpty($data["times"]);
+        $this->assertNotEmpty($data["valid_times"]);
+
+    }
+
+    public function testSProTimeAPIWithOnlyValidPartnerIdParameter()
+    {
+        //arrange
+
+        //act
+        $response = $this->get('/v2/times?partner=' . $this->partner->id);
+
+        $data = $response->decodeResponseJson();
+
+        //assert
+        $this->assertEquals(200, $data["code"]);
+        $this->assertEquals('Successful', $data["message"]);
+        $this->assertNotEmpty($data["times"]);
+        $this->assertNotEmpty($data["valid_times"]);
+
+    }
+
+    public function testSProTimeAPIWithOnlyValidLimitParameter()
+    {
+        //arrange
+
+        //act
+        $response = $this->get('/v2/times?limit=1');
+
+        $data = $response->decodeResponseJson();
+
+        //assert
+        $this->assertEquals(200, $data["code"]);
+        $this->assertEquals('Successful', $data["message"]);
+        $this->assertNotEmpty($data["times"]);
+        $this->assertNotEmpty($data["valid_times"]);
 
     }
 

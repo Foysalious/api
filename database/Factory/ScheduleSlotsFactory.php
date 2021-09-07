@@ -6,7 +6,7 @@ class ScheduleSlotsFactory extends Factory
 
     protected function getModelClass()
     {
-        return ScheduleSlotsFactory::class;// TODO: Implement getModelClass() method.
+        return ScheduleSlot::class;// TODO: Implement getModelClass() method.
     }
 
     protected function getData()

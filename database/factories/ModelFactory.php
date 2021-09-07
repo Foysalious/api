@@ -51,6 +51,7 @@ use Factory\ThanaFactory;
 use Factory\DistrictFactory;
 use Factory\DivisionFactory;
 use Factory\LocationServiceFactory;
+use Factory\CategoryScheduleSlotFactory;
 
 
 
@@ -106,7 +107,8 @@ $factory_classes = [
     ThanaFactory::class,
     DistrictFactory::class,
     DivisionFactory::class,
-    LocationServiceFactory::class
+    LocationServiceFactory::class,
+    CategoryScheduleSlotFactory::class
 
 ];
 
