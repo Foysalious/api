@@ -82,7 +82,7 @@ class LeaveController extends Controller
      */
     public function index(Request $request, LeaveRequestExcel $leave_request_report)
     {
-        $this->validate($request, ['sort' => 'sometimes|required|string|in:asc,desc']);
+        $this->validate($request, ['list_type' => 'required|string', 'sort' => 'sometimes|required|string|in:asc,desc']);
 
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
@@ -91,7 +91,7 @@ class LeaveController extends Controller
         $business = $request->business;
 
         list($offset, $limit) = calculatePagination($request);
-        $leave_approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMemberFilterBy($business_member, Type::LEAVE);
+        $leave_approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMemberFilterBy($business_member, Type::LEAVE, $request->list_type);
         if ($request->has('status')) $leave_approval_requests = $leave_approval_requests->where('status', $request->status);
         if ($request->has('department')) $leave_approval_requests = $this->filterWithDepartment($leave_approval_requests, $request);
         if ($request->has('employee')) $leave_approval_requests = $this->filterWithEmployee($leave_approval_requests, $request);
