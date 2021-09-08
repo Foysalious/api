@@ -76,7 +76,6 @@ class PaymentLinkOrderComplete extends PaymentComplete
                 $payable = $this->payment->payable;
                 $payableUser = $payable->user;
                 $this->target = $this->paymentLink->getTarget();
-                Log::info(["payment link target check", $this->target]);
                 if ($this->target instanceof PosOrder) {
                     $payableUser = null;
                 }
@@ -86,7 +85,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             });
         } catch (Throwable $e) {
             $this->failPayment();
-            Log::info(["error while completing payment link", $e->getMessage(), $e->getCode()]);
+            Log::debug(["error while completing payment link", $e->getMessage(), $e->getCode()]);
             throw $e;
         }
         try {
@@ -98,7 +97,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $this->notify();
 
         } catch (Throwable $e) {
-            Log::info(["error while storing payment link entry", $e->getMessage(), $e->getCode()]);
+            Log::debug(["error while storing payment link entry", $e->getMessage(), $e->getCode()]);
             logError($e);
         }
         $this->payment->reload();

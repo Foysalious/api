@@ -4,8 +4,6 @@ namespace App\Sheba\AccountingEntry\Repository;
 
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use Carbon\Carbon;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;

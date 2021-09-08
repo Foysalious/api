@@ -6,8 +6,6 @@ namespace Sheba\PaymentLink;
 use App\Models\Payment;
 use App\Models\PosCustomer;
 use App\Sheba\AccountingEntry\Repository\PaymentLinkAccountingRepository;
-use App\Sheba\AccountingEntry\Repository\PaymentLinkRepository;
-use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Transactions\Types;
@@ -240,7 +238,6 @@ class PaymentLinkTransaction
      * @param $amount
      * @param $feeTransaction
      * @param $interest
-     * @throws AccountingEntryServerError
      */
     private function storePaymentLinkEntry($amount, $feeTransaction, $interest) {
         $customer = null;
