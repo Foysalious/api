@@ -55,17 +55,17 @@ class EkycClient
             'CLIENT-ID' => $this->clientId,
             'CLIENT-SECRET' => $this->clientSecret
         ];
+        $options['http_errors'] = false;
+        $options=array_merge($options, [
+            'read_timeout'    => 300,
+            'connect_timeout' => 120, 'timeout' => 120
+        ]);
+
         if (isset($data['id_front']) && $data['id_back']) {
             /** @var UploadedFile $id_front */
             /** @var UploadedFile $id_back */
             $id_front               = $data['id_front'];
             $id_back                = $data['id_back'];
-
-            $options['http_errors'] = false;
-            $options=array_merge($options, [
-                'read_timeout'    => 300,
-                'connect_timeout' => 120, 'timeout' => 120
-            ]);
 
             $options['multipart'] = [
                 ['name' => 'id_front', 'contents' => File::get($id_front->getRealPath()), 'filename' => $id_front->getClientOriginalName()],
@@ -77,16 +77,10 @@ class EkycClient
             $person_photo = $data['person_photo'];
             $dob = $data['dob'];
 
-            $options['http_errors'] = false;
-            $options=array_merge($options, [
-                'read_timeout'    => 300,
-                'connect_timeout' => 120, 'timeout' => 120
-            ]);
-
-            $options['multipart'] = [
-                ['name' => 'nid', 'contents' => $nid],
-                ['name' => 'person_photo', 'contents' => $person_photo],
-                ['name' => 'dob', 'contents' => $dob]
+            $options['form_params'] = [
+                'nid' => $nid,
+                'person_photo' => $person_photo,
+                'dob' => $dob
             ];
         }
 
