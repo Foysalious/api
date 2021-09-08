@@ -18,7 +18,7 @@ class EkycClient
     public function __construct()
     {
         $this->client = (new Client());
-        $this->baseUrl = rtrim(config('ekyc.url', 'https://ekyc.dev-sheba.xyz') . '/api/v1');
+        $this->baseUrl = rtrim(config('ekyc.url', 'http://ekyc.sheba.test:8181') . '/api/v1');
         $this->clientId = config('ekyc.client_id');
         $this->clientSecret = config('ekyc.client_secret');
     }
@@ -72,7 +72,24 @@ class EkycClient
                 ['name' => 'id_back', 'contents' => File::get($id_back->getRealPath()), 'filename' => $id_back->getClientOriginalName()]
             ];
 
+        } else {
+            $nid = $data['nid'];
+            $person_photo = $data['person_photo'];
+            $dob = $data['dob'];
+
+            $options['http_errors'] = false;
+            $options=array_merge($options, [
+                'read_timeout'    => 300,
+                'connect_timeout' => 120, 'timeout' => 120
+            ]);
+
+            $options['multipart'] = [
+                ['name' => 'nid', 'contents' => $nid],
+                ['name' => 'person_photo', 'contents' => $person_photo],
+                ['name' => 'dob', 'contents' => $dob]
+            ];
         }
+
         return $options;
     }
 
