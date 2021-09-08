@@ -127,7 +127,7 @@ class InfoCallController extends Controller
         ];
         $resource_transaction = DB::table('resource_transactions')->where('resource_id',$auth_user_array['resource']['id'])->where('job_id','<>',null);
         if (!($request->has('year')) && !($request->has('month'))) {
-            $filtered_reward = ($resource_transaction != null) ? array_sum(array_column($resource_transaction->get(), 'amount')) : 0;
+            $filtered_reward = ($resource_transaction != null) ? array_sum(array_column($resource_transaction->get()->toArray(), 'amount')) : 0;
             $filtered_info_calls = $query->get();
             $total_orders = $filtered_info_calls->where('status', Statuses::CONVERTED)->count();
             $month_wise_service_requests = $filtered_info_calls->count();
