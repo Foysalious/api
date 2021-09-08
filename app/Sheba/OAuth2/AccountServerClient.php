@@ -83,7 +83,7 @@ class AccountServerClient
             $res = $this->httpClient->request(strtoupper($method), $this->makeUrl($uri), $options);
             $res = decodeGuzzleResponse($res);
             if ($res == null) return [];
-
+            if (!is_array($res)) return $res;
             if (!array_key_exists('code', $res)) return $res;
             
             if ($res['code'] == 403 && in_array('login_wrong_pin_count', $res)) throw new WrongPinError($res['login_wrong_pin_count'], $res['remaining_hours_to_unblock'], $res['message'], $res['code']);
