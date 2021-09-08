@@ -62,7 +62,7 @@ class ConcurrentRequestMiddleware
     {
         if ($data['created_by'] === 'admin') $createdBy = 'An admin';
         elseif ($data['created_by'] === $user) $createdBy = 'You';
-        else $createdBy = $data['created_by'];
+        else $createdBy = ucfirst($data['created_by']);
 
         if ($data['action'] === 'pay' || $data['action'] === 'collect' || $data['action'] === 'refund'){
             return $createdBy . ' requested to ' . $data['action'] . ' for this order a few seconds ago.';
