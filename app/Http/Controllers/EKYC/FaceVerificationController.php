@@ -30,7 +30,9 @@ class FaceVerificationController extends Controller
 
     private function toData($request)
     {
+        $data['nid'] = $request->nid;
         $data['person_photo'] = $request->person_photo;
+        $data['dob'] = $request->dob;
         return $data;
     }
 }
