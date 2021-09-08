@@ -37,6 +37,12 @@ class JournalCreateRepository extends BaseRepository
     private   $amountCleared;
     private   $note;
 
+    public function __construct()
+    {
+        $client = app(AccountingEntryClient::class);
+        parent::__construct($client);
+    }
+
     /**
      * @param string $type
      */
