@@ -80,4 +80,11 @@ class MyTeamController extends Controller
             return str_contains(strtoupper($team['name']), strtoupper($request->search));
         });
     }
+
+    public function attendanceSummary(Request $request)
+    {
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $my_team = $this->subordinateEmployeeList->get($business_member);
+    }
 }
