@@ -35,7 +35,9 @@ $api = app('Dingo\Api\Routing\Router');
 */
 
 $api->version('v1', function ($api) {
-    (new App\Http\Route\Prefix\V1\Route())->set($api);
-    (new App\Http\Route\Prefix\V2\Route())->set($api);
-    (new App\Http\Route\Prefix\V3\Route())->set($api);
+    $api->group(['middleware' => 'bindings'], function ($api) {
+        (new App\Http\Route\Prefix\V1\Route())->set($api);
+        (new App\Http\Route\Prefix\V2\Route())->set($api);
+        (new App\Http\Route\Prefix\V3\Route())->set($api);
+    });
 });
