@@ -23,11 +23,7 @@ class UserMigrationController extends Controller
         try{
             $this->validate($request, [
                 'status' => 'required',
-<<<<<<< HEAD
-                'user_id' => 'required',
-=======
                 'user_id' => 'required|unique:accounting_migrated_users,user_id',
->>>>>>> 7d282a5ea7638bf03077e6f8dc71dc40644af5b3
                 'user_type' => 'required'
             ]);
             if (!in_array($request->status, UserStatus::get())) {
