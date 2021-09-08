@@ -2,6 +2,7 @@
 
 namespace Sheba\AccountingEntry\Repository;
 
+use Exception;
 use App\Sheba\AccountingEntry\Constants\UserType;
 use App\Sheba\AccountingEntry\Repository\BaseRepository;
 use Sheba\Dal\AccountingMigratedUser\EloquentImplementation;
@@ -30,6 +31,9 @@ class UserMigrationRepository extends BaseRepository
     public function update(array $data, $userId, $userType = UserType::PARTNER)
     {
         $user = $this->show($userId, $userType);
+        if (!$user) {
+            throw new Exception('User not Found!', 404);
+        }
         return $user->update(
             [
                 'status' => $data['status']
