@@ -36,21 +36,51 @@ class AccountServerClient
      */
     public function get($uri, $headers = null)
     {
-        return $this->call('get', $uri, null, $headers);
+        $options = $this->addHeadersToOption([], $headers);
+        return $this->call('get', $uri, $options);
+    }
+
+    /**
+     * @param $uri
+     * @param $data
+     * @param $headers
+     * @return array
+     * @throws AccountServerNotWorking|AccountServerAuthenticationError|WrongPinError
+     */
+    public function post($uri, $data, $headers = null)
+    {
+        $options = $this->addHeadersToOption([ 'form_params' => $data ], $headers);
+        return $this->call('post', $uri, $options);
+    }
+
+    /**
+     * @param $uri
+     * @param $data
+     * @param $headers
+     * @return array
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     * @throws WrongPinError
+     */
+    public function put($uri, $data, $headers = null)
+    {
+        $options = $this->addHeadersToOption([ 'query' => $data ], $headers);
+        return $this->call('put', $uri, $options);
     }
 
     /**
      * @param $method
      * @param $uri
-     * @param null $data
-     * @param null $headers
+     * @param array $options
      * @return array
-     * @throws AccountServerNotWorking|AccountServerAuthenticationError|WrongPinError
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     * @throws WrongPinError
      */
-    private function call($method, $uri, $data = null, $headers = null)
+    private function call($method, $uri, $options = [])
     {
         try {
-            $res = $this->httpClient->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data, $headers));
+            $res = $this->httpClient->request(strtoupper($method), $this->makeUrl($uri), $options);
             $res = decodeGuzzleResponse($res);
             if ($res == null) return [];
 
@@ -78,36 +108,20 @@ class AccountServerClient
         return $this->baseUrl . '/' . trim($uri, '/');
     }
 
-    /**
-     * @param null $data
-     * @param null $headers
-     * @return mixed
-     */
-    private function getOptions($data = null, $headers = null)
+    private function addHeadersToOption($options, $headers)
     {
-        $sheba_headers = getShebaRequestHeader();
-        $options = [];
-
-        if ($data) $options['form_params'] = $data;
-
-        $options['headers'] = [];
-        if ($this->token)  $options['headers'] += ['Authorization' => 'Bearer ' . $this->token];
-        if ($headers) $options['headers'] += $headers;
-        if (!$sheba_headers->isEmpty()) $options['headers'] += $sheba_headers->toArray();
+        $options['headers'] = $this->getHeaders($headers);
         if (empty($options['headers'])) unset($options['headers']);
-
         return $options;
     }
 
-    /**
-     * @param $uri
-     * @param $data
-     * @param $headers
-     * @return array
-     * @throws AccountServerNotWorking|AccountServerAuthenticationError|WrongPinError
-     */
-    public function post($uri, $data, $headers = null)
+    private function getHeaders($extra_headers = null)
     {
-        return $this->call('post', $uri, $data, $headers);
+        $sheba_headers = getShebaRequestHeader();
+        $headers = [];
+        if ($this->token) $headers += ['Authorization' => 'Bearer ' . $this->token];
+        if ($extra_headers) $headers += $extra_headers;
+        if (!$sheba_headers->isEmpty())$headers += $sheba_headers->toArray();
+        return $headers;
     }
 }
