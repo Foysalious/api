@@ -224,7 +224,14 @@ class LeaveController extends Controller
             }
         }
 
-        return api_response($request, null, 200, ['leave_types' => $leave_types, 'half_day_configuration' => $half_day_configuration]);
+        $fiscal_year_time_frame = $business_member->getBusinessFiscalPeriod();
+
+        $fiscal_year = [
+            'start_date' => $fiscal_year_time_frame->start->format('Y-m-d'),
+            'end_date' => $fiscal_year_time_frame->end->format('Y-m-d')
+        ];
+
+        return api_response($request, null, 200, ['leave_types' => $leave_types, 'half_day_configuration' => $half_day_configuration, 'fiscal_year' => $fiscal_year]);
     }
 
     /**
