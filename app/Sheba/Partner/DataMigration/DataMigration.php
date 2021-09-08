@@ -31,7 +31,7 @@ class DataMigration
      * @param mixed $partner
      * @return DataMigration
      */
-    public function setPartner(Partner $partner)
+    public function setPartner(Partner $partner): DataMigration
     {
         $this->partner = $partner;
         return $this;

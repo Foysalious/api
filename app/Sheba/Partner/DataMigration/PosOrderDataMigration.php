@@ -26,6 +26,7 @@ class PosOrderDataMigration
     private $posOrderPayments;
     private $posOrderDiscounts;
     private $posOrderLogs;
+    private $posCustomers;
 
 
     public function __construct(InventoryServerClient $inventoryServerClient)
@@ -55,6 +56,7 @@ class PosOrderDataMigration
         $this->partnerInfo = $this->generatePartnerMigrationData();
         $this->posOrders = $this->generatePosOrdersMigrationData();
         $this->posOrderItems = $this->generatePosOrderItemsData();
+        $this->posCustomers = collect($this->generatePosCustomersData());
         $this->posOrderPayments = collect($this->generatePosOrderPaymentsData());
         $this->posOrderDiscounts = collect($this->generatePartnerPosOrderDiscountsMigrationData());
         $this->posOrderLogs = $this->generatePosOrderLogsMigrationData();
@@ -72,15 +74,16 @@ class PosOrderDataMigration
         $chunks = array_chunk($data, self::CHUNK_SIZE);
         foreach ($chunks as $chunk) {
             $posOrderIds = array_column($chunk, 'id');
-            list($pos_order_items, $pos_order_payments, $pos_order_discounts, $pos_order_logs) = $this->getPosOrderRelatedData($posOrderIds);
+            $posCustomerIds = array_column($chunk, 'customer_id');
+            list($pos_order_items, $pos_order_payments, $pos_order_discounts, $pos_order_logs, $pos_customers) = $this->getPosOrderRelatedData($posOrderIds, $posCustomerIds);
             $this->setRedisKey();
             dispatch(new PartnerDataMigrationToPosOrderJob($this->partner, [
                 'pos_orders' => $chunk,
                 'pos_order_items' => $pos_order_items,
                 'pos_order_payments' => $pos_order_payments,
                 'pos_order_discounts' => $pos_order_discounts,
-                'pos_order_logs' => $pos_order_logs
-
+                'pos_order_logs' => $pos_order_logs,
+                'pos_customers' => $pos_customers
             ], $this->currentQueue));
             $this->increaseCurrentQueueValue();
         }
@@ -101,14 +104,16 @@ class PosOrderDataMigration
 
     private function generatePosOrdersMigrationData()
     {
-        $pos_orders = PosOrder::where('partner_id', $this->partner->id)->where('is_migrated', '<>', 1)
-            ->select('id', 'partner_wise_order_id', 'partner_id', 'customer_id', DB::raw('(CASE 
+        $pos_orders = PosOrder::where('partner_id', $this->partner->id)->where(function ($q) {
+            $q->where('is_migrated', null)->orWhere('is_migrated', 0);
+        })->select('id', 'partner_wise_order_id', 'partner_id', 'customer_id', DB::raw('(CASE 
                         WHEN pos_orders.sales_channel = "pos" THEN "1" 
                         ELSE "2" 
                         END) AS sales_channel_id'), 'emi_month',
                 'bank_transaction_charge', 'interest', 'delivery_charge', 'address AS delivery_address', 'note',
                 'voucher_id')->get()->toArray();
         $this->partnerPosOrderIds = array_column($pos_orders, 'id');
+
         return $pos_orders;
     }
 
@@ -163,6 +168,16 @@ class PosOrderDataMigration
          return $data;
     }
 
+    public function generatePosCustomersData()
+    {
+        return DB::table('partner_pos_customers')
+            ->where('partner_id', $this->partner->id)
+            ->join('pos_customers', 'partner_pos_customers.customer_id', '=', 'pos_customers.id')
+            ->join('profiles', 'pos_customers.profile_id', '=', 'profiles.id')
+            ->select('partner_pos_customers.customer_id as id', 'partner_pos_customers.partner_id', 'profiles.name',
+                'profiles.mobile', 'profiles.email', 'profiles.pro_pic', 'profiles.created_at', 'profiles.updated_at')->get();
+    }
+
     private function getSkuIdsForProducts($productIds)
     {
         $data = [];
@@ -170,13 +185,14 @@ class PosOrderDataMigration
         return $this->inventoryServerClient->post('api/v1/get-skus-by-product-ids', $data);
     }
 
-    private function getPosOrderRelatedData($orderIds): array
+    private function getPosOrderRelatedData($orderIds, $posCustomerIds): array
     {
         $pos_order_items = $this->posOrderItems->whereIn('order_id', $orderIds)->toArray();
         $pos_order_payments = $this->posOrderPayments->whereIn('order_id', $orderIds)->toArray();
         $pos_order_discounts = $this->posOrderDiscounts->whereIn('order_id', $orderIds)->toArray();
         $pos_order_logs = $this->posOrderLogs->whereIn('order_id', $orderIds)->toArray();
-        return [$pos_order_items, $pos_order_payments, $pos_order_discounts, $pos_order_logs];
+        $pos_customers = $this->posCustomers->whereIn('id', $posCustomerIds)->toArray();
+        return [$pos_order_items, $pos_order_payments, $pos_order_discounts, $pos_order_logs, $pos_customers];
     }
 
     private function setRedisKey()
