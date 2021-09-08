@@ -23,7 +23,7 @@ class UserMigrationController extends Controller
         try{
             $this->validate($request, [
                 'status' => 'required',
-                'user_id' => 'required',
+                'user_id' => 'required|unique:accounting_migrated_users,user_id',
                 'user_type' => 'required'
             ]);
             if (!in_array($request->status, UserStatus::get())) {
@@ -61,7 +61,6 @@ class UserMigrationController extends Controller
             $data = ['status' => $request->status];
             $user = $this->userMigrationRepo->update($data, $userId);
             return api_response($request, $user, 200, ['data' => $user]);
-
         } catch (Exception $e) {
             return api_response($request, null, $e->getCode() == 0 ? 400 : $e->getCode(), ['message' => $e->getMessage()]);
         }
