@@ -61,14 +61,21 @@ class FaceVerificationController extends Controller
     {
         $profile_id = $request->auth_user->getProfile()->id;
         $submitted_by = get_class($request->auth_user->getResource());
-        $faceVerify = $faceVerificationData['data'];
+        $faceVerify = array_except($faceVerificationData['data'], ['message', 'verification_percentage']);
         $faceVerify = json_encode($faceVerify);
         $log = "NID submitted by the user";
+
+        $requestedData = [
+            'nid' => $request->nid,
+            'person_photo' => $request->person_photo,
+            'dob' => $request->dob,
+        ];
+        $requestedData = json_encode($requestedData);
 
         $data = [
             'profile_id' => $profile_id,
             'submitted_by' => $submitted_by,
-            'porichoy_request' => 'Porichoy Request??',
+            'porichoy_request' => $requestedData,
             'porichy_data' => $faceVerify,
             'log' => $log
         ];
