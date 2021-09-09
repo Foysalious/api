@@ -1,17 +1,14 @@
 <?php namespace App\Http\Controllers\EKYC;
 
 use App\Http\Controllers\Controller;
-use App\Sheba\DigitalKYC\Partner\ProfileUpdateRepository;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\EKYC\EkycClient;
-use Sheba\Dal\ProfileNIDSubmissionLog\Contact as ProfileNIDSubmissionRepo;
 use Sheba\EKYC\Exceptions\EKycException;
 use Sheba\EKYC\NidOcr;
 use Sheba\EKYC\Statics;
-use Sheba\Repositories\ProfileRepository as ShebaProfileRepository;
 
 
 class NidOcrController extends Controller

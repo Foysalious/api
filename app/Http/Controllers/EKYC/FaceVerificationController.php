@@ -10,6 +10,7 @@ use Sheba\Dal\ProfileNIDSubmissionLog\Contact as ProfileNIDSubmissionRepo;
 use Sheba\EKYC\EkycClient;
 use Sheba\EKYC\Exceptions\EKycException;
 use Sheba\EKYC\Exceptions\EkycServerError;
+use Sheba\EKYC\NidFaceVerification;
 use Sheba\EKYC\Statics;
 
 
@@ -17,10 +18,12 @@ class FaceVerificationController extends Controller
 {
     private $client;
     private $api;
+    private $nidFaceVerification;
 
-    public function __construct(EkycClient $client)
+    public function __construct(EkycClient $client, NidFaceVerification $verification)
     {
         $this->client = $client;
+        $this->nidFaceVerification = $verification;
         $this->api = 'face-verification';
     }
 
@@ -36,9 +39,13 @@ class FaceVerificationController extends Controller
             $this->validate($request, Statics::faceVerificationValidate());
             $data = $this->toData($request);
             $faceVerificationData = $this->client->post($this->api, $data);
+            $status = ($faceVerificationData['data']['status']);
+            if($status === Statics::ALREADY_VERIFIED || $status === Statics::VERIFIED) {
+                $status = Statics::VERIFIED;
+                $this->nidFaceVerification->verifiedChanges($faceVerificationData['data'], $request->auth_user->getProfile());
+            }
             $this->storeData($request, $faceVerificationData, $profileNIDSubmissionRepo);
-            $faceVerificationData = array_except($faceVerificationData['data'], ['porichoy_data', 'verification_percentage']);
-            return api_response($request, null, 200, ['data' => $faceVerificationData]);
+            return api_response($request, null, 200, ['data' => Statics::faceVerificationResponse($status, $faceVerificationData['data']['message'])]);
         } catch (ValidationException $exception) {
             $msg = getValidationErrorMessage($exception->validator->errors()->all());
             return api_response($request, null, 400, ['message' => $msg]);
