@@ -134,7 +134,7 @@ class InfoCallController extends Controller
             $rejected_requests = $filtered_info_calls->where('status', Statuses::REJECTED)->count();
         }
         else {
-            $filtered_reward_check = $resource_transaction ? $info_calls->getFilteredInfoCalls($resource_transaction)->get() : null;
+            $filtered_reward_check = $resource_transaction ? $info_calls->getFilteredInfoCalls($resource_transaction)->get()->toArray() : null;
             $filtered_reward = $filtered_reward_check ? array_sum(array_column($filtered_reward_check, 'amount')) : 0;
             $filtered_info_calls = $info_calls->getFilteredInfoCalls($query)->get();
             $converted_info_call_ids = $info_calls->getFilteredInfoCalls($query)->where('status',Statuses::CONVERTED)->pluck('id')->toArray();

@@ -111,7 +111,7 @@ class ServiceList
 
     private function filterExistingServicesAndOptions($services)
     {
-        $services = $services->filter(function ($service) {
+        return $services->filter(function ($service) {
             if ($service->variable_type == 'Fixed') {
                 $jobService = $this->job->jobServices()->where('service_id', $service->id)->first();
                 if ($jobService) {
@@ -123,7 +123,6 @@ class ServiceList
                 return $service;
             }
         })->values();
-        return $services;
     }
 
     public function setResource($resource)
