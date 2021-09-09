@@ -239,7 +239,7 @@ class ThemeSettingController extends Controller
       "name": "New Arrival",
       "product": [
         {
-          "id": 1,
+          "id": 1000674,
           "name": "Product Name 1",
           "original_price": 2990,
           "vat_included_price": 2990,
@@ -257,7 +257,7 @@ class ThemeSettingController extends Controller
           "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
         },
         {
-          "id": 2,
+          "id": 1000473,
           "name": "Product Name 2",
           "original_price": 2990,
           "vat_included_price": 2990,
