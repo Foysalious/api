@@ -5,6 +5,7 @@ namespace Sheba\AccountingEntry\Repository;
 use App\Sheba\AccountingEntry\Constants\UserType;
 use App\Sheba\AccountingEntry\Repository\BaseRepository;
 use Exception;
+use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\AccountingMigratedUser\EloquentImplementation;
 
@@ -83,7 +84,9 @@ class UserMigrationRepository extends BaseRepository
     private function migrateInAccounting($userId, $userType = UserType::PARTNER)
     {
         try {
-            return $this->client->setUserType($userType)->setUserId($userId)->get($this->api . $userId);
+            $res = $this->client->setUserType($userType)->setUserId($userId)->get($this->api . $userId);
+            Log::info(["successful", $res]);
+            return $res;
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }

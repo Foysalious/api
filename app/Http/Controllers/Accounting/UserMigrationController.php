@@ -88,8 +88,8 @@ class UserMigrationController extends Controller
     public function updateFromAccounting(Request $request)
     {
         try {
-            if (!$request->header('accounting_key') || $request->header('accounting_key') != config('accounting_entry.api_key')) {
-                return false;
+            if (!$request->header('accounting-key') || $request->header('accounting-key') != config('accounting_entry.api_key')) {
+                throw new Exception('Something went wrong!', 404);
             }
             $this->validate($request, ['status' => 'required', 'user_id' => 'required|exists:accounting_migrated_users,user_id']);
 
