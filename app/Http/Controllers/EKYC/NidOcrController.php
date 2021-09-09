@@ -29,19 +29,17 @@ class NidOcrController extends Controller
 
     /**
      * @param Request $request
-     * @param ProfileNIDSubmissionRepo $profileNIDSubmissionRepo
      * @return JsonResponse
      * @throws GuzzleException
      */
-    public function storeNidOcrData(Request $request, ProfileNIDSubmissionRepo $profileNIDSubmissionRepo): JsonResponse
+    public function storeNidOcrData(Request $request): JsonResponse
     {
         try {
             $this->validate($request, Statics::storeNidOcrDataValidation());
             $profile = $request->auth_user->getProfile();
-//            dd($profile);
             $data = $this->toData($request);
             $nidOcrData = $this->client->post($this->api, $data);
-            $this->storeData($request, $nidOcrData, $profileNIDSubmissionRepo);
+            $this->nidOCR->storeData($request, $nidOcrData);
             $this->nidOCR->makeProfileAdjustment($profile, $request->id_front, $request->id_back, $nidOcrData['data']['nid_no']);
             return api_response($request, null, 200, ["data" => $nidOcrData['data']]);
 
@@ -51,7 +49,6 @@ class NidOcrController extends Controller
         } catch (EKycException $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         } catch (\Throwable $e) {
-            dd($e);
             return api_response($request, null, 500);
         }
     }
@@ -61,23 +58,5 @@ class NidOcrController extends Controller
         $data['id_front'] = $request->file('id_front');
         $data['id_back'] = $request->file('id_back');
         return $data;
-    }
-
-    private function storeData($request, $nidOcrData, $profileNIDSubmissionRepo)
-    {
-        $profile_id = $request->auth_user->getProfile()->id;
-        $submitted_by = get_class($request->auth_user->getResource());
-        $ocrData = $nidOcrData['data'];
-        $ocrData = json_encode(array_except($ocrData, ['id_front_image', 'id_back_image', 'id_front_name', 'id_back_name']));
-        $log = "NID submitted by the user";
-
-        $data = [
-            'profile_id' => $profile_id,
-            'submitted_by' => $submitted_by,
-            'nid_ocr_data' => $ocrData,
-            'log' => $log
-        ];
-
-        $profileNIDSubmissionRepo->create($data);
     }
 }
