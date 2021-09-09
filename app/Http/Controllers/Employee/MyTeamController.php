@@ -1,5 +1,9 @@
 <?php namespace App\Http\Controllers\Employee;
 
+use App\Models\Business;
+use App\Models\BusinessMember;
+use Carbon\Carbon;
+use Sheba\Helpers\TimeFrame;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use App\Sheba\Business\CoWorker\ManagerSubordinateEmployeeList;
 use App\Transformers\Business\MySubordinateDetailsTransformer;
@@ -12,6 +16,7 @@ use League\Fractal\Resource\Item;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
+use Sheba\Business\MyTeamDashboard\AttendanceSummary;
 
 class MyTeamController extends Controller
 {
@@ -81,10 +86,28 @@ class MyTeamController extends Controller
         });
     }
 
-    public function attendanceSummary(Request $request)
+    public function attendanceSummary(Request $request, TimeFrame $time_frame, AttendanceSummary $attendance_summary)
     {
+        $this->validate($request, [
+            'date' => 'date|date_format:Y-m-d'
+        ]);
+
+        /** @var Business $business */
+        $business = $this->getBusiness($request);
+        /** @var BusinessMember $business_member */
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
+
+        $date = $request->has('date') ? Carbon::parse($request->date) : Carbon::now();
+        $selected_date = $time_frame->forADay($date);
+
         $my_team = $this->subordinateEmployeeList->get($business_member);
+
+        $attendances = $attendance_summary->setBusiness($business)
+                                          ->setSelectedDate($selected_date)
+                                          ->setMyTeam($my_team)
+                                          ->getSummary();
+        return api_response($request, $attendances, 200, [ 'attendance_summary' => $attendances ]);
     }
+
 }
