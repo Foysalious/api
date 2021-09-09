@@ -1,12 +1,14 @@
 <?php namespace App\Http\Controllers\EKYC;
 
 use App\Http\Controllers\Controller;
+use GuzzleHttp\Exception\GuzzleException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\ValidationException;
 use Sheba\EKYC\EkycClient;
 use Sheba\Dal\ProfileNIDSubmissionLog\Contact as ProfileNIDSubmissionRepo;
-use Sheba\EKYC\Exceptions\EkycServerError;
+use Sheba\EKYC\Exceptions\EKycException;
+use Sheba\EKYC\Statics;
 
 
 class NidOcrController extends Controller
@@ -20,21 +22,27 @@ class NidOcrController extends Controller
         $this->api = 'nid-ocr-data';
     }
 
-    public function storeNidOcrData(Request $request, ProfileNIDSubmissionRepo $profileNIDSubmissionRepo)
+    /**
+     * @param Request $request
+     * @param ProfileNIDSubmissionRepo $profileNIDSubmissionRepo
+     * @return JsonResponse
+     * @throws GuzzleException
+     */
+    public function storeNidOcrData(Request $request, ProfileNIDSubmissionRepo $profileNIDSubmissionRepo): JsonResponse
     {
         try {
-            $this->validate($request, ['id_front' => 'required', 'id_back' => 'required']);
+            $this->validate($request, Statics::storeNidOcrDataValidation());
             $data = $this->toData($request);
-            $userId = isset($request->user_id) ? $request->user_id : 1;
-            $nidOcrData = $this->client->setUserId($userId)
-                ->post($this->api, $data);
+            $nidOcrData = $this->client->post($this->api, $data);
 
             $this->storeData($request, $nidOcrData, $profileNIDSubmissionRepo);
-            return $nidOcrData;
+            return api_response($request, null, 200, ["data" => $nidOcrData['data']]);
 
         } catch (ValidationException $exception) {
             $msg = getValidationErrorMessage($exception->validator->errors()->all());
             return api_response($request, null, 400, ['message' => $msg]);
+        } catch (EKycException $e) {
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }
