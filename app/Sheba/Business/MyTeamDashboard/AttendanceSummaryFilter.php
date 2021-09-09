@@ -287,7 +287,7 @@ class AttendanceSummaryFilter
                     $q->select('id', 'profile_id')
                         ->with([
                             'profile' => function ($q) {
-                                $q->select('id', 'name');
+                                $q->select('id', 'name', 'pro_pic');
                             }]);
                 },
                 'role' => function ($q) {
@@ -334,7 +334,7 @@ class AttendanceSummaryFilter
                             $q->select('id', 'profile_id')
                                 ->with([
                                     'profile' => function ($q) {
-                                        $q->select('id', 'name');
+                                        $q->select('id', 'name', 'pro_pic');
                                     }]);
                         },
                         'role' => function ($q) {
@@ -383,11 +383,11 @@ class AttendanceSummaryFilter
     {
         return [
             'business_member_id' => $business_member->id,
-            'member' => [
-                'id' => $business_member->member->id,
-                'name' => $business_member->member->profile->name
-            ],
-            'designation' => $business_member->role ? $business_member->role->name : null
+            'profile' => [
+                'name' => $business_member->member->profile->name,
+                'pro_pic' => $business_member->member->profile->pro_pic,
+                'designation' => $business_member->role ? $business_member->role->name : null
+            ]
         ];
     }
 
