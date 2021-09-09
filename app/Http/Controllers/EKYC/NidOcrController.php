@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\EKYC;
 
 use App\Http\Controllers\Controller;
+use App\Sheba\DigitalKYC\Partner\ProfileUpdateRepository;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -8,34 +9,38 @@ use Illuminate\Validation\ValidationException;
 use Sheba\EKYC\EkycClient;
 use Sheba\Dal\ProfileNIDSubmissionLog\Contact as ProfileNIDSubmissionRepo;
 use Sheba\EKYC\Exceptions\EKycException;
+use Sheba\EKYC\NidOcr;
 use Sheba\EKYC\Statics;
+use Sheba\Repositories\ProfileRepository as ShebaProfileRepository;
 
 
 class NidOcrController extends Controller
 {
     private $client;
     private $api;
+    private $nidOCR;
 
-    public function __construct(EkycClient $client)
+    public function __construct(EkycClient $client, NidOcr $ocr)
     {
         $this->client = $client;
+        $this->nidOCR = $ocr;
         $this->api = 'nid-ocr-data';
     }
 
     /**
      * @param Request $request
-     * @param ProfileNIDSubmissionRepo $profileNIDSubmissionRepo
      * @return JsonResponse
      * @throws GuzzleException
      */
-    public function storeNidOcrData(Request $request, ProfileNIDSubmissionRepo $profileNIDSubmissionRepo): JsonResponse
+    public function storeNidOcrData(Request $request): JsonResponse
     {
         try {
             $this->validate($request, Statics::storeNidOcrDataValidation());
+            $profile = $request->auth_user->getProfile();
             $data = $this->toData($request);
             $nidOcrData = $this->client->post($this->api, $data);
-
-            $this->storeData($request, $nidOcrData, $profileNIDSubmissionRepo);
+            $this->nidOCR->storeData($request, $nidOcrData);
+            $this->nidOCR->makeProfileAdjustment($profile, $request->id_front, $request->id_back, $nidOcrData['data']['nid_no']);
             return api_response($request, null, 200, ["data" => $nidOcrData['data']]);
 
         } catch (ValidationException $exception) {
@@ -53,23 +58,5 @@ class NidOcrController extends Controller
         $data['id_front'] = $request->file('id_front');
         $data['id_back'] = $request->file('id_back');
         return $data;
-    }
-
-    private function storeData($request, $nidOcrData, $profileNIDSubmissionRepo)
-    {
-        $profile_id = $request->auth_user->getProfile()->id;
-        $submitted_by = get_class($request->auth_user->getResource());
-        $ocrData = $nidOcrData['data'];
-        $ocrData = json_encode(array_except($ocrData, ['id_front_image', 'id_back_image', 'id_front_name', 'id_back_name']));
-        $log = "NID submitted by the user";
-
-        $data = [
-            'profile_id' => $profile_id,
-            'submitted_by' => $submitted_by,
-            'nid_ocr_data' => $ocrData,
-            'log' => $log
-        ];
-
-        $profileNIDSubmissionRepo->create($data);
     }
 }
