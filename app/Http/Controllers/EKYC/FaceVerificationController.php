@@ -2,11 +2,15 @@
 
 use App\Http\Controllers\Controller;
 use App\Sheba\NID\Validations\NidValidation;
+use GuzzleHttp\Exception\GuzzleException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Dal\ProfileNIDSubmissionLog\Contact as ProfileNIDSubmissionRepo;
 use Sheba\EKYC\EkycClient;
+use Sheba\EKYC\Exceptions\EKycException;
 use Sheba\EKYC\Exceptions\EkycServerError;
+use Sheba\EKYC\Statics;
 
 
 class FaceVerificationController extends Controller
@@ -20,20 +24,26 @@ class FaceVerificationController extends Controller
         $this->api = 'face-verification';
     }
 
-    public function faceVerification(Request $request, ProfileNIDSubmissionRepo $profileNIDSubmissionRepo)
+    /**
+     * @param Request $request
+     * @param ProfileNIDSubmissionRepo $profileNIDSubmissionRepo
+     * @return JsonResponse
+     * @throws GuzzleException
+     */
+    public function faceVerification(Request $request, ProfileNIDSubmissionRepo $profileNIDSubmissionRepo): JsonResponse
     {
         try {
-            $this->validate($request, ['nid' => 'required|digits_between:10,17', 'person_photo' => 'required', 'dob' => 'required|date_format:Y/m/d']);
+            $this->validate($request, Statics::faceVerificationValidate());
             $data = $this->toData($request);
-            $userId = isset($request->user_id) ? $request->user_id : 1;
-            $faceVerificationData = $this->client->setUserId($userId)->post($this->api, $data);
-
+            $faceVerificationData = $this->client->post($this->api, $data);
             $this->storeData($request, $faceVerificationData, $profileNIDSubmissionRepo);
-            return $faceVerificationData;
-
+            $faceVerificationData = array_except($faceVerificationData['data'], ['porichoy_data', 'verification_percentage']);
+            return api_response($request, null, 200, ['data' => $faceVerificationData]);
         } catch (ValidationException $exception) {
             $msg = getValidationErrorMessage($exception->validator->errors()->all());
             return api_response($request, null, 400, ['message' => $msg]);
+        } catch (EKycException $e) {
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
         }

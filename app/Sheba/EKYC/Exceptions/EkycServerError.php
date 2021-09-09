@@ -3,7 +3,7 @@
 use Exception;
 use Throwable;
 
-class EkycServerError extends Exception
+class EkycServerError extends EKycException
 {
     public function __construct($message = "", $code = 406, Throwable $previous = null)
     {
