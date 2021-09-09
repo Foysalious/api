@@ -203,7 +203,7 @@ class HomepageController extends Controller
             [
                 'key' => 'other_report',
                 'report_bangla_name' => 'অন্যান্য রিপোর্ট',
-                'url' => null,
+                'url' => "",
                 'icon' =>  config('accounting_entry.icon_url') . '/' . 'investments.png'
             ],
         ];
