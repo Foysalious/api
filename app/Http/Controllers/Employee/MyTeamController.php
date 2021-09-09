@@ -118,6 +118,12 @@ class MyTeamController extends Controller
     }
 
 
+    /**
+     * @param Request $request
+     * @param TimeFrame $time_frame
+     * @param AttendanceSummaryFilter $attendance_summary_filter
+     * @return JsonResponse
+     */
     public function attendanceSummaryDetails(Request $request, TimeFrame $time_frame, AttendanceSummaryFilter $attendance_summary_filter)
     {
         /** @var BusinessMember $business_member */
