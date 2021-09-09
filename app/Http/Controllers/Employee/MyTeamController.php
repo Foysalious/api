@@ -17,6 +17,7 @@ use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use Sheba\Business\MyTeamDashboard\AttendanceSummary;
+use Sheba\Business\MyTeamDashboard\AttendanceSummaryFilter;
 
 class MyTeamController extends Controller
 {
@@ -114,6 +115,34 @@ class MyTeamController extends Controller
                                           ->setMyTeam($my_team)
                                           ->getSummary();
         return api_response($request, $attendances, 200, [ 'attendance_summary' => $attendances ]);
+    }
+
+
+    public function attendanceSummaryDetails(Request $request, TimeFrame $time_frame, AttendanceSummaryFilter $attendance_summary_filter)
+    {
+        /** @var BusinessMember $business_member */
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+
+        $this->validate($request, [
+            'date' => 'date|date_format:Y-m-d',
+            'status' => 'required|string'
+        ]);
+
+        /** @var Business $business */
+        $business = $this->getBusiness($request);
+
+        $date = $request->has('date') ? Carbon::parse($request->date) : Carbon::now();
+        $selected_date = $time_frame->forADay($date);
+
+        $my_team = $this->subordinateEmployeeList->get($business_member);
+
+        $attendances = $attendance_summary_filter->setBusiness($business)
+                                                 ->setSelectedDate($selected_date)
+                                                 ->setStatusFilter($request->status)
+                                                 ->setMyTeam($my_team)
+                                                 ->get();
+        return api_response($request, $attendances, 200, [ 'attendances' => $attendances ]);
     }
 
 }
