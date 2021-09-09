@@ -74,7 +74,7 @@ class UserMigrationController extends Controller
                 throw new Exception('Invalid Status', 404);
             }
             $data = ['status' => $request->status];
-            $user = $this->userMigrationRepo->update($data, $userId);
+            $user = $this->userMigrationRepo->updateStatus($data, $userId);
             return api_response($request, $user, 200, ['data' => $user]);
         } catch (Exception $e) {
             return api_response($request, null, $e->getCode() == 0 ? 400 : $e->getCode(), ['message' => $e->getMessage()]);

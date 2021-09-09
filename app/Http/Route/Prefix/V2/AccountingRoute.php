@@ -54,7 +54,7 @@ class AccountingRoute
                 $api->put('/{userId}', 'Accounting\\UserMigrationController@update');
             });
         });
-        $api->group(['prefix' => 'accounting'], function ($api) {
+        $api->group(['prefix' => 'accounting/user-migration'], function ($api) {
             $api->post('/update', 'Accounting\\UserMigrationController@updateFromAccounting');
         });
     }
