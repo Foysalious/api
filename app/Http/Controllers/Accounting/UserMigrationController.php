@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Accounting;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\AccountingEntry\Repository\UserMigrationRepository;
 use Exception;
@@ -18,6 +19,10 @@ class UserMigrationController extends Controller
         $this->userMigrationRepo = $userMigrationRepo;
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function create(Request $request)
     {
         try{
@@ -44,12 +49,22 @@ class UserMigrationController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @param $userId
+     * @return JsonResponse
+     */
     public function show(Request $request, $userId)
     {
         $user = $this->userMigrationRepo->show($userId);
         return api_response($request, $user, 200, ['data' => $user]);
     }
 
+    /**
+     * @param $userId
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function update($userId, Request $request)
     {
         try {
@@ -60,6 +75,29 @@ class UserMigrationController extends Controller
             }
             $data = ['status' => $request->status];
             $user = $this->userMigrationRepo->update($data, $userId);
+            return api_response($request, $user, 200, ['data' => $user]);
+        } catch (Exception $e) {
+            return api_response($request, null, $e->getCode() == 0 ? 400 : $e->getCode(), ['message' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @return bool|JsonResponse
+     */
+    public function updateFromAccounting(Request $request)
+    {
+        try {
+            if (!$request->header('accounting_key') || $request->header('accounting_key') != config('accounting_entry.api_key')) {
+                return false;
+            }
+            $this->validate($request, ['status' => 'required', 'user_id' => 'required|exists:accounting_migrated_users,user_id']);
+
+            if (!in_array($request->status, UserStatus::get())) {
+                throw new Exception('Invalid Status', 404);
+            }
+            $data = ['status' => $request->status, 'user_id' => $request->user_id];
+            $user = $this->userMigrationRepo->update($data, $request->user_id);
             return api_response($request, $user, 200, ['data' => $user]);
         } catch (Exception $e) {
             return api_response($request, null, $e->getCode() == 0 ? 400 : $e->getCode(), ['message' => $e->getMessage()]);
