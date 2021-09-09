@@ -634,6 +634,7 @@ class AttendanceList
                     'which_half_day' => $leave->is_half_day ? $leave->half_day_configuration : null
                 ]
             ];
+            if (!($this->statusFilter == self::ON_LEAVE || $this->statusFilter == self::ABSENT || $this->statusFilter == self::ALL)) continue;
             if (!!$this->checkinStatus || !!$this->checkoutStatus) continue;
             array_push($data, $this->getBusinessMemberData($leave->businessMember) + [
                     'id' => $leave->id,
