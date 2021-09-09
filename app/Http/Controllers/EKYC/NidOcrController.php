@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\EKYC;
 
 use App\Http\Controllers\Controller;
+use App\Sheba\DigitalKYC\Partner\ProfileUpdateRepository;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -8,17 +9,21 @@ use Illuminate\Validation\ValidationException;
 use Sheba\EKYC\EkycClient;
 use Sheba\Dal\ProfileNIDSubmissionLog\Contact as ProfileNIDSubmissionRepo;
 use Sheba\EKYC\Exceptions\EKycException;
+use Sheba\EKYC\NidOcr;
 use Sheba\EKYC\Statics;
+use Sheba\Repositories\ProfileRepository as ShebaProfileRepository;
 
 
 class NidOcrController extends Controller
 {
     private $client;
     private $api;
+    private $nidOCR;
 
-    public function __construct(EkycClient $client)
+    public function __construct(EkycClient $client, NidOcr $ocr)
     {
         $this->client = $client;
+        $this->nidOCR = $ocr;
         $this->api = 'nid-ocr-data';
     }
 
@@ -32,10 +37,12 @@ class NidOcrController extends Controller
     {
         try {
             $this->validate($request, Statics::storeNidOcrDataValidation());
+            $profile = $request->auth_user->getProfile();
+//            dd($profile);
             $data = $this->toData($request);
             $nidOcrData = $this->client->post($this->api, $data);
-
             $this->storeData($request, $nidOcrData, $profileNIDSubmissionRepo);
+            $this->nidOCR->makeProfileAdjustment($profile, $request->id_front, $request->id_back, $nidOcrData['data']['nid_no']);
             return api_response($request, null, 200, ["data" => $nidOcrData['data']]);
 
         } catch (ValidationException $exception) {
@@ -44,6 +51,7 @@ class NidOcrController extends Controller
         } catch (EKycException $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         } catch (\Throwable $e) {
+            dd($e);
             return api_response($request, null, 500);
         }
     }
