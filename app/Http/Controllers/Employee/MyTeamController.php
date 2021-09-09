@@ -86,6 +86,12 @@ class MyTeamController extends Controller
         });
     }
 
+    /**
+     * @param Request $request
+     * @param TimeFrame $time_frame
+     * @param AttendanceSummary $attendance_summary
+     * @return JsonResponse
+     */
     public function attendanceSummary(Request $request, TimeFrame $time_frame, AttendanceSummary $attendance_summary)
     {
         $this->validate($request, [

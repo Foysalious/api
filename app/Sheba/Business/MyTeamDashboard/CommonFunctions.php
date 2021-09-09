@@ -19,19 +19,31 @@ class CommonFunctions
     /** @var BusinessWeekendRepoInterface $businessWeekend */
     private $businessWeekend;
 
-    public function __construct(BusinessHolidayRepoInterface  $business_holiday_repo,
-                                BusinessWeekendRepoInterface  $business_weekend_repo)
+    /**
+     * @param BusinessHolidayRepoInterface $business_holiday_repo
+     * @param BusinessWeekendRepoInterface $business_weekend_repo
+     */
+    public function __construct(BusinessHolidayRepoInterface $business_holiday_repo,
+                                BusinessWeekendRepoInterface $business_weekend_repo)
     {
         $this->businessHoliday = $business_holiday_repo;
         $this->businessWeekend = $business_weekend_repo;
     }
 
+    /**
+     * @param Business $business
+     * @return $this
+     */
     public function setBusiness(Business $business)
     {
         $this->business = $business;
         return $this;
     }
 
+    /**
+     * @param TimeFrame $selected_date
+     * @return $this
+     */
     public function setSelectedDate(TimeFrame $selected_date)
     {
         $this->startDate = $selected_date->start;
@@ -39,6 +51,9 @@ class CommonFunctions
         return $this;
     }
 
+    /**
+     * @return bool
+     */
     public function isWeekendHoliday()
     {
         $business_weekend = $this->businessWeekend->getAllByBusiness($this->business);
@@ -58,11 +73,21 @@ class CommonFunctions
             || $this->isHoliday($this->startDate, $dates_of_holidays_formatted);
     }
 
+    /**
+     * @param Carbon $date
+     * @param $weekend_day
+     * @return bool
+     */
     private function isWeekend(Carbon $date, $weekend_day)
     {
         return in_array(strtolower($date->format('l')), $weekend_day);
     }
 
+    /**
+     * @param Carbon $date
+     * @param $holidays
+     * @return bool
+     */
     private function isHoliday(Carbon $date, $holidays)
     {
         return in_array($date->format('Y-m-d'), $holidays);

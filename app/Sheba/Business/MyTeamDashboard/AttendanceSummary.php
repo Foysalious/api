@@ -28,21 +28,34 @@ class AttendanceSummary
     private $leftTimely = 0;
     private $leftEarly = 0;
 
-    public function __construct(AttendanceRepositoryInterface  $attendance_repository_interface,
-                                LeaveRepositoryInterface       $leave_repository_interface,
-                                CommonFunctions $common_functions)
+    /**
+     * @param AttendanceRepositoryInterface $attendance_repository_interface
+     * @param LeaveRepositoryInterface $leave_repository_interface
+     * @param CommonFunctions $common_functions
+     */
+    public function __construct(AttendanceRepositoryInterface $attendance_repository_interface,
+                                LeaveRepositoryInterface      $leave_repository_interface,
+                                CommonFunctions               $common_functions)
     {
         $this->attendanceRepositoryInterface = $attendance_repository_interface;
         $this->leaveRepositoryInterface = $leave_repository_interface;
         $this->commonFunctions = $common_functions;
     }
 
+    /**
+     * @param Business $business
+     * @return $this
+     */
     public function setBusiness(Business $business)
     {
         $this->business = $business;
         return $this;
     }
 
+    /**
+     * @param TimeFrame $selected_date
+     * @return $this
+     */
     public function setSelectedDate(TimeFrame $selected_date)
     {
         $this->selectedDate = $selected_date;
@@ -51,12 +64,19 @@ class AttendanceSummary
         return $this;
     }
 
+    /**
+     * @param $my_team
+     * @return $this
+     */
     public function setMyTeam($my_team)
     {
         $this->myTeam = $my_team;
         return $this;
     }
 
+    /**
+     * @return array
+     */
     public function getSummary()
     {
         $business_member_ids = array_column($this->myTeam, 'id');
@@ -96,6 +116,11 @@ class AttendanceSummary
         if (Statuses::LEFT_EARLY === $status) $this->leftEarly++;
     }
 
+    /**
+     * @param $business_member_ids
+     * @param $attendances
+     * @return int
+     */
     private function getOnLeaveAndAbsentCount($business_member_ids, $attendances) {
         $present_ids = [];
         $counter = 0;
@@ -112,6 +137,10 @@ class AttendanceSummary
         return $counter;
     }
 
+    /**
+     * @param $business_member_ids
+     * @return mixed
+     */
     private function getAttendanceInfo($business_member_ids) {
         return $this->attendanceRepositoryInterface->builder()
             ->select('id', 'business_member_id', 'checkin_time', 'checkout_time', 'status', 'date')
@@ -144,6 +173,10 @@ class AttendanceSummary
         }
     }
 
+    /**
+     * @param $business_member_id
+     * @return bool
+     */
     private function isOnLeave($business_member_id)
     {
         return in_array($business_member_id, $this->usersWhoOnLeave);
