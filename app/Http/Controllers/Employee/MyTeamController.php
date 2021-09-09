@@ -110,11 +110,11 @@ class MyTeamController extends Controller
 
         $my_team = $this->subordinateEmployeeList->get($business_member);
 
-        $attendances = $attendance_summary->setBusiness($business)
-                                          ->setSelectedDate($selected_date)
-                                          ->setMyTeam($my_team)
-                                          ->getSummary();
-        return api_response($request, $attendances, 200, [ 'attendance_summary' => $attendances ]);
+        $summary = $attendance_summary->setBusiness($business)
+                                      ->setSelectedDate($selected_date)
+                                      ->setMyTeam($my_team)
+                                      ->getSummary();
+        return api_response($request, $summary, 200, [ 'attendance_summary' => $summary ]);
     }
 
 
