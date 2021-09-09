@@ -148,7 +148,12 @@ class MyTeamController extends Controller
                                                  ->setStatusFilter($request->status)
                                                  ->setMyTeam($my_team)
                                                  ->get();
-        return api_response($request, $attendances, 200, [ 'attendances' => $attendances ]);
+        $count = count($attendances);
+        if ($count > 0) return api_response($request, $attendances, 200, [
+            'attendances' => $attendances,
+            'total' => $count
+        ]);
+        return api_response($request, null, 404);
     }
 
 }
