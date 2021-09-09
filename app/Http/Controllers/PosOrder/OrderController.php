@@ -21,7 +21,9 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         $partner = $request->auth_user->getPartner();
-        $order = $this->orderService->setPartnerId($partner->id)->getOrderList();
+        $hasQueryStr = strpos($request->getRequestUri(), '?');
+        $queryStr = $hasQueryStr ? '?'.substr($request->getRequestUri(), strpos($request->getRequestUri(), "?") + 1) : '';
+        $order = $this->orderService->setPartnerId($partner->id)->setFilterParams($queryStr)->getOrderList();
         if(!$order) return api_response($request, "অর্ডারটি পাওয়া যায় নি", 404, $order);
         else return api_response($request, null, 200, $order);
     }

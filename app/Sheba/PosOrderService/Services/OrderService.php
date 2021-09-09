@@ -20,6 +20,7 @@ class OrderService
     private $skus, $discount, $paymentMethod, $paymentLinkAmount, $paidAmount;
     protected $emi_month, $interest, $bank_transaction_charge, $delivery_name, $delivery_mobile, $note, $voucher_id;
     protected $userId;
+    protected $filter_params;
 
     public function __construct(PosOrderServerClient $client, SmanagerUserServerClient $smanagerUserClient)
     {
@@ -90,6 +91,16 @@ class OrderService
     public function setPartnerId($partnerId)
     {
         $this->partnerId = $partnerId;
+        return $this;
+    }
+
+    /**
+     * @param mixed $filter_params
+     * @return OrderService
+     */
+    public function setFilterParams($filter_params)
+    {
+        $this->filter_params = $filter_params;
         return $this;
     }
 
@@ -207,7 +218,7 @@ class OrderService
 
     public function getOrderList()
     {
-        return $this->client->get('api/v1/partners/' . $this->partnerId . '/orders');
+        return $this->client->get('api/v1/partners/' . $this->partnerId . '/orders' . $this->filter_params);
     }
 
     public function getDetails()
