@@ -2,8 +2,10 @@
 
 use GuzzleHttp\Client;
 use Exception;
+use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
+use Sheba\EKYC\Exceptions\EkycServerError;
 use Throwable;
 
 class EkycClient
@@ -28,22 +30,37 @@ class EkycClient
         return $this->call('get', $uri);
     }
 
+    /**
+     * @param $uri
+     * @param $data
+     * @return mixed
+     * @throws EkycServerError
+     * @throws GuzzleException
+     */
     public function post($uri, $data)
     {
         return $this->call('post', $uri, $data);
     }
 
+    /**
+     * @param $method
+     * @param $uri
+     * @param null $data
+     * @return mixed
+     * @throws EkycServerError
+     * @throws GuzzleException
+     */
     private function call($method, $uri, $data = null)
     {
         $res = $this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data));
         $res = json_decode($res->getBody()->getContents(), true);
         if ($res['code'] != 200)
-            throw new Exception($res['message']);
+            throw new EkycServerError($res['message'], $res['code']);
         unset($res['code'], $res['message']);
         return $res;
     }
 
-    private function makeUrl($uri)
+    private function makeUrl($uri): string
     {
         return $this->baseUrl . "/" . $uri;
     }
