@@ -114,7 +114,7 @@ class ServiceList
         $services = $services->filter(function ($service) {
             if ($service->variable_type == 'Fixed') {
                 $jobService = $this->job->jobServices()->where('service_id', $service->id)->first();
-                if (count($jobService) > 0) {
+                if ($jobService) {
                     return $service->id !== $jobService->service_id;
                 } else {
                     return $service;
