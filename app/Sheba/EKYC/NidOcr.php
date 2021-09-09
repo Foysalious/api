@@ -3,6 +3,7 @@
 namespace Sheba\EKYC;
 
 use App\Sheba\DigitalKYC\Partner\ProfileUpdateRepository;
+use Illuminate\Http\Request;
 use Sheba\Dal\ProfileNIDSubmissionLog\Contact as ProfileNIDSubmissionRepo;
 use Sheba\Repositories\ProfileRepository as ShebaProfileRepository;
 
@@ -26,7 +27,13 @@ class NidOcr
         return $this->profileRepo->update($profile, $data);
     }
 
-    public function storeData($request, $nidOcrData)
+    public function formatToData(Request $request)
+    {
+        $data['id_front'] = $request->file('id_front');
+        $data['id_back'] = $request->file('id_back');
+        return $data;    }
+
+    public function storeData($request, $nidOcrData, $nid_no)
     {
         $profile_id = $request->auth_user->getProfile()->id;
         $submitted_by = get_class($request->auth_user->getResource());
@@ -36,6 +43,7 @@ class NidOcr
 
         $data = [
             'profile_id' => $profile_id,
+            "nid_no"     => $nid_no,
             'submitted_by' => $submitted_by,
             'nid_ocr_data' => $ocrData,
             'log' => $log

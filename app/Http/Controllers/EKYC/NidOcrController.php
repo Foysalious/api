@@ -37,10 +37,11 @@ class NidOcrController extends Controller
         try {
             $this->validate($request, Statics::storeNidOcrDataValidation());
             $profile = $request->auth_user->getProfile();
-            $data = $this->toData($request);
+            $data = $this->nidOCR->formatToData($request);
             $nidOcrData = $this->client->post($this->api, $data);
-            $this->nidOCR->storeData($request, $nidOcrData);
-            $this->nidOCR->makeProfileAdjustment($profile, $request->id_front, $request->id_back, $nidOcrData['data']['nid_no']);
+            $nid_no = $nidOcrData['data']['nid_no'];
+            $this->nidOCR->storeData($request, $nidOcrData, $nid_no);
+            $this->nidOCR->makeProfileAdjustment($profile, $request->id_front, $request->id_back, $nid_no);
             return api_response($request, null, 200, ["data" => $nidOcrData['data']]);
 
         } catch (ValidationException $exception) {
@@ -53,10 +54,4 @@ class NidOcrController extends Controller
         }
     }
 
-    private function toData($request)
-    {
-        $data['id_front'] = $request->file('id_front');
-        $data['id_back'] = $request->file('id_back');
-        return $data;
-    }
 }
