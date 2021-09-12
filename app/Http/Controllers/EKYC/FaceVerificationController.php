@@ -13,6 +13,7 @@ use Sheba\EKYC\Exceptions\EKycException;
 use Sheba\EKYC\Exceptions\EkycServerError;
 use Sheba\EKYC\NidFaceVerification;
 use Sheba\EKYC\Statics;
+use Sheba\NeoBanking\NeoBanking;
 
 
 class FaceVerificationController extends Controller
@@ -94,5 +95,16 @@ class FaceVerificationController extends Controller
 //                });
 //            });
 //        })->update(['commission_rate' => $commissions->getServiceCommission(), 'material_commission_rate' => $commissions->getMaterialCommission()]);
+    }
+
+    public function getLivelinessCredentials(Request $request)
+    {
+        try {
+            $data = Statics::getLivelinessConfigurations();
+            return api_response($request, null, 200, ['data' => $data]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
     }
 }
