@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Sheba\NID\Validations\NidValidation;
+use Carbon\Carbon;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -80,15 +81,20 @@ class FaceVerificationController extends Controller
         ];
         $requestedData = json_encode($requestedData);
 
-        $data = [
-            'profile_id' => $profile_id,
-            'submitted_by' => $submitted_by,
-            'porichoy_request' => $requestedData,
-            'porichy_data' => $faceVerify,
-            'log' => $log
-        ];
+        $porichoyNIDSubmission = $profileNIDSubmissionRepo->where('profile_id', $profile_id)
+                ->where('submitted_by', $submitted_by)
+                ->where('nid_no', $request->nid)
+                ->orderBy('id', 'desc')->first();
 
-        $profileNIDSubmissionRepo->create($data);
+        $porichoyNIDSubmission->update(['porichoy_request' => $requestedData, 'porichy_data' => $faceVerify, 'created_at' => Carbon::now()->toDateTimeString()]);
+
+//        Job::whereHas('partnerOrder', function ($q) {
+//            $q->whereHas('order', function ($q) {
+//                $q->whereHas('subscription', function ($q) {
+//                    $q->where('subscription_orders.id', $this->subscriptionOrder->id);
+//                });
+//            });
+//        })->update(['commission_rate' => $commissions->getServiceCommission(), 'material_commission_rate' => $commissions->getMaterialCommission()]);
     }
 
     public function getLivelinessCredentials(Request $request)
