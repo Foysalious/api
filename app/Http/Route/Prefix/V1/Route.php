@@ -322,6 +322,7 @@ class Route
             $api->group(['prefix'=>'ekyc', 'middleware' => 'jwtGlobalAuth'], function ($api) {
                 $api->post('nid-ocr-data', 'EKYC\NidOcrController@storeNidOcrData');
                 $api->post('face-verification', 'EKYC\FaceVerificationController@faceVerification');
+                $api->get('get-liveliness-credentials', 'EKYC\FaceVerificationController@getLivelinessCredentials');
             });
         });
         return $api;

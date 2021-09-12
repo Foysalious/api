@@ -33,4 +33,24 @@ class Statics
             'message' => $message
         ];
     }
+
+    public static function getLivelinessToken()
+    {
+        return config('ekyc.liveliness_token');
+    }
+
+    public static function getLivelinessBaseUrl()
+    {
+        return config('ekyc.liveliness_base_url');
+    }
+
+    public static function getLivelinessConfigurations(): array
+    {
+        return [
+            'liveliness_base_url' => self::getLivelinessBaseUrl(),
+            'liveliness_token' => self::getLivelinessToken(),
+            'liveliness_duration' => config('ekyc.liveliness_duration'),
+            'liveliness_rotation' => config('ekyc.liveliness_rotation')
+        ];
+    }
 }
