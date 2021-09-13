@@ -39,7 +39,7 @@ class AccountingDueTrackerController extends Controller
                 'date' => 'required|date_format:Y-m-d H:i:s'
             ]);
             $request->merge(['customer_id' => $request->customer_id]);
-            $response = $this->dueTrackerRepo->storeEntry($request, $request->entry_type);
+            $response = $this->dueTrackerRepo->setPartner($request->partner)->storeEntry($request, $request->entry_type);
             (new Usage())->setUser($request->partner)->setType(Usage::Partner()::DUE_TRACKER_TRANSACTION)->create($request->auth_user);
             return api_response($request, $response, 200, ['data' => $response]);
         } catch (AccountingEntryServerError $e) {
@@ -65,7 +65,7 @@ class AccountingDueTrackerController extends Controller
                 'attachment_should_remove' => 'sometimes|array'
             ]);
             $request->merge(['entry_id' => $entry_id]);
-            $response = $this->dueTrackerRepo->storeEntry($request, $request->entry_type, true);
+            $response = $this->dueTrackerRepo->setPartner($request->partner)->storeEntry($request, $request->entry_type, true);
             return api_response($request, $response, 200, ['data' => $response]);
         } catch (AccountingEntryServerError $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);

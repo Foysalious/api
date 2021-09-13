@@ -12,6 +12,7 @@ use App\Sheba\AccountingEntry\Constants\UserType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
@@ -51,6 +52,7 @@ class AccountingDueTrackerRepository extends BaseRepository
      */
     public function storeEntry(Request $request, $type, $with_update = false)
     {
+        Log::info("showing partner", $this->partner);
         if (!$this->isMigratedToAccounting($this->partner->id)) {
             return true;
         }
