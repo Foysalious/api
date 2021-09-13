@@ -68,6 +68,7 @@ class AccountingDueTrackerRepository extends BaseRepository
                     }
                 }
             }
+            return $data;
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
