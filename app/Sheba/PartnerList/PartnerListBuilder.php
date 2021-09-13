@@ -24,12 +24,12 @@ class PartnerListBuilder implements Builder
     private $partners;
     /** @var ServiceRequestObject[] */
     private $serviceRequestObject;
-    private $partnerIds;
-    private $partnerIdsToIgnore;
+    private $partnerIds = [];
+    private $partnerIdsToIgnore = [];
     /** @var Geo */
     private $geo;
     /** @var array */
-    private $categoryIdsOfMasterCategory;
+    private $categoryIdsOfMasterCategory = [];
 
     public function __construct()
     {
@@ -69,10 +69,16 @@ class PartnerListBuilder implements Builder
 
     protected function buildServiceQuery(EloquentBuilder $query)
     {
-        $query->whereHas('category', function ($q) {
-            $q->publishedForAny();
-        })->select(DB::raw('count(*) as c'))->whereIn('services.id', $this->getServiceIds())->where('partner_service.is_published', 1)->publishedForAll()->groupBy('partner_id')->havingRaw('c=' . count($this->getServiceIds()));
-        $query->where('partner_service.is_verified', 1);
+        $query
+            ->whereHas('category', function ($q) {
+                $q->publishedForAny();
+            })->select(DB::raw('count(*) as c'))
+            ->whereIn('services.id', $this->getServiceIds())
+            ->where('partner_service.is_published', 1)
+            ->publishedForAll()
+            ->groupBy('partner_id')
+            ->havingRaw('c=' . count($this->getServiceIds()))
+            ->where('partner_service.is_verified', 1);
     }
 
     private function getServiceIds()

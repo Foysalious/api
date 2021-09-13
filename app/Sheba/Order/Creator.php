@@ -115,7 +115,7 @@ class Creator
             'address_id' => $this->addressId,
             'partner' => $this->partnerId
         ];
-        if($this->resource) {
+        if ($this->resource) {
             $form_params['created_by_type'] = 'App\Models\Resource';
             $form_params['created_by'] = $this->resource->id;
         }
