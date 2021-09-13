@@ -84,7 +84,7 @@ class InfoCallController extends Controller
                 }
                 elseif ($partner_order['closed_and_paid_at'] != null) {
                     $job = $partner_order ? Job::where('partner_order_id', $partner_order['id'])->get()->last()->toArray() : null;
-                    $resource_transaction = $job ? DB::table('resource_transactions')->where('resource_id',$auth_user_array['resource']['id'])->where('job_id', $job['id'])->get() : null;
+                    $resource_transaction = $job ? DB::table('resource_transactions')->where('resource_id',$auth_user_array['resource']['id'])->where('job_id', $job['id'])->get()->toArray() : null;
                     $reward_amount = ($resource_transaction != null) ? array_sum(array_column($resource_transaction, 'amount')) : 0;
                     $order_status = 'শেষ';
                     $reward = $reward_amount;
