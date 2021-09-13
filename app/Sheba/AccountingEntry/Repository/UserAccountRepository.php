@@ -20,6 +20,12 @@ class UserAccountRepository extends BaseRepository
     private $deletable = true;
     private $visible = true;
 
+    public function __construct(AccountingEntryClient $client)
+    {
+        parent::__construct($client);
+        $this->api = 'api/accounts/';
+    }
+
     /**
      * @param mixed $name
      * @return UserAccountRepository
@@ -118,13 +124,6 @@ class UserAccountRepository extends BaseRepository
     {
         $this->visible = $visible;
         return $this;
-    }
-
-
-    public function __construct(AccountingEntryClient $client)
-    {
-        parent::__construct($client);
-        $this->api = 'api/accounts/';
     }
 
     /**

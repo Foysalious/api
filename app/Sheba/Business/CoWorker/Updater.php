@@ -483,7 +483,11 @@ class Updater
         DB::beginTransaction();
         try {
             $business_member_data['status'] = $this->coWorkerRequester->getStatus();
-            if ($this->coWorkerRequester->getStatus() == Statuses::INACTIVE) $business_member_data['is_super'] = 0;
+            if ($this->coWorkerRequester->getStatus() == Statuses::INACTIVE) {
+                $business_member_data['is_super'] = 0;
+                $business_member_data['is_payroll_enable'] = 0;
+                (new InvalidToken())->invalidTheTokens($this->profile->email);
+            }
             $this->businessMember = $this->businessMemberUpdater->setBusinessMember($this->businessMember)->update($business_member_data);
             DB::commit();
             return $this->businessMember;

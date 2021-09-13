@@ -44,6 +44,8 @@ class EmployeeRoute
             });
             $api->group(['prefix' => 'my-team'], function ($api) {
                 $api->get('/', 'Employee\MyTeamController@myTeam');
+                $api->get('attendance-summary', 'Employee\MyTeamController@attendanceSummary');
+                $api->get('attendance-summary-details', 'Employee\MyTeamController@attendanceSummaryDetails');
                 $api->get('{employee_id}', 'Employee\MyTeamController@employeeDetails');
             });
             //$api->post('password', 'Employee\EmployeeController@updateMyPassword');

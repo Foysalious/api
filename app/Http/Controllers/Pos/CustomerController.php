@@ -85,7 +85,8 @@ class CustomerController extends Controller
                 $total_purchase_amount += $order->getNetBill();
                 $total_used_promo += !empty($order->voucher_id) ? $this->getVoucherAmount($order) : 0;
             });
-            $customerAmount = $posCustomerRepository->getDueAmountFromDueTracker($request->partner, $customer->id);
+            $customerAmount = $posCustomerRepository->getDueAmountFromDueTracker($request->partner, $customer->id, $request);
+            $data['total_purchase_amount'] = $total_purchase_amount;
             $data['total_due_amount']      = $customerAmount['due'];
             $data['total_payable_amount']  = $customerAmount['payable'];
             $data['total_purchase_amount'] = $total_purchase_amount;
@@ -249,8 +250,12 @@ class CustomerController extends Controller
             throw new InvalidPartnerPosCustomer();
             }
         $customer = $partner_pos_customer->customer;
-        $dueTrackerRepository->setPartner($request->partner)->removeCustomer($customer->profile_id);
-        $accDueTrackerRepository->setPartner($request->partner)->deleteCustomer($customer->id);
+        // checking the partner is migrated to accounting
+        if ($accDueTrackerRepository->isMigratedToAccounting($request->partner->id)) {
+            $accDueTrackerRepository->setPartner($request->partner)->deleteCustomer($customer->id);
+        } else {
+            $dueTrackerRepository->setPartner($request->partner)->removeCustomer($customer->profile_id);
+        }
         $this->deletePosOrder($request->partner->id, $customer->id);
         $partner_pos_customer->delete();
         return api_response($request, true, 200);

@@ -132,11 +132,10 @@ class PosCustomerService
         $customer_info = $this->getCustomerInfoFromSmanagerUserService();
         list($total_purchase_amount,$total_used_promo) = $this->getPurchaseAmountAndTotalUsedPromo();
         list($total_due_amount,$total_payable_amount) = $this->getDueAndPayableAmount();
-
         $customer_details = [];
         $customer_details['id'] = $customer_info['_id'] ?? null;
         $customer_details['name'] = $customer_info['name'] ?? null;
-        $customer_details['phone'] = $customer_info['phone'] ?? null;
+        $customer_details['phone'] = $customer_info['mobile'] ?? null;
         $customer_details['email'] = $customer_info['email'] ?? null;
         $customer_details['address'] = $customer_info['address'] ?? null;
         $customer_details['image'] = $customer_info['pro_pic'] ?? null;
@@ -165,7 +164,8 @@ class PosCustomerService
     {
         $this->deleteCustomerFromSmanagerUserService();
         $this->deleteCustomerFromPosOrderService();
-        $this->deleteUserFromAccountingService();
+        //todo: have to add support for new customer module
+//        $this->deleteUserFromAccountingService();
         return true;
     }
 
@@ -264,7 +264,7 @@ class PosCustomerService
      */
     private function getDueAndPayableAmount(): array
     {
-        $customer_amount =  $this->posCustomerRepository->getDueAmountFromDueTracker($this->partner, $this->customerId);
+       // $customer_amount =  $this->posCustomerRepository->getDueAmountFromDueTracker($this->partner, $this->customerId);
         return [100,0];
     }
 

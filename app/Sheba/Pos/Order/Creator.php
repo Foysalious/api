@@ -206,7 +206,6 @@ class Creator
 
                 // $is_service_discount_applied = $original_service->discount();
                 $service_wholesale_applicable = $original_service->wholesale_price ? true : false;
-
                 $service['is_emi_applied'] = $this->isEmiApplicable($original_service) ? 1 : 0;
                 $service['service_id'] = $original_service->id;
                 $service['service_name'] = isset($service['name']) ? $service['name'] : $original_service->name;
@@ -445,11 +444,12 @@ class Creator
         ]);
     }
     
-    private function isEmiApplicable($service)
+
+    private function isEmiApplicable(PartnerPosService $service): bool
     {
        if($this->data['payment_method'] == 'emi' ) {
-           if(is_null($service->id) && $service->price >= 5000) return true;
-           elseif ($service->id && $service->price >= 5000 && $service->is_emi_available) return true;
+           if(is_null($service->id) && $service->price >= config('emi.minimum_emi_amount')) return true;
+           elseif ($service->id && $service->price >= config('emi.minimum_emi_amount') && $service->is_emi_available) return true;
        }
        return false;
     }

@@ -1,30 +1,26 @@
 <?php
 
-
 namespace Sheba\AccountingEntry\Repository;
 
 
 use App\Sheba\AccountingEntry\Constants\UserType;
+use App\Sheba\AccountingEntry\Repository\BaseRepository;
 use Carbon\Carbon;
-use GuzzleHttp\Client;
-use ReflectionException;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Exceptions\InvalidSourceException;
 use Sheba\AccountingEntry\Exceptions\KeyNotFoundException;
-use Sheba\Dal\src\AccountingMigratedUser\UserStatus;
 use Sheba\ModificationFields;
 use Sheba\NeoBanking\Traits\ProtectedGetterTrait;
 use Sheba\RequestIdentification;
 
-class JournalCreateRepository
+class JournalCreateRepository extends BaseRepository
 {
     use ModificationFields, ProtectedGetterTrait;
 
     /**
      * @var AccountingEntryClient
      */
-    private   $client;
-    private   $type;
+    private   $type = UserType::PARTNER;
     private   $typeId;
     protected $details = "";
     private   $source;
@@ -43,9 +39,8 @@ class JournalCreateRepository
 
     public function __construct()
     {
-        $this->client = app(AccountingEntryClient::class);
-        $this->type   = UserType::PARTNER;
-
+        $client = app(AccountingEntryClient::class);
+        parent::__construct($client);
     }
 
     /**
@@ -189,19 +184,5 @@ class JournalCreateRepository
         }
         $data = $this->toData();
         return $this->client->setUserId($this->typeId)->setUserType($this->type)->post($this->end_point, $data);
-    }
-
-    /**
-     * @param $userId
-     * @return bool
-     */
-    protected function isMigratedToAccounting($userId)
-    {
-        /** @var UserMigrationRepository $userMigrationRepo */
-        $userMigrationRepo = app(UserMigrationRepository::class);
-        $userStatus = $userMigrationRepo->userStatus($userId);
-        if (!$userStatus) return false;
-        if ($userStatus == UserStatus::PENDING) return false;
-        return true;
     }
 }

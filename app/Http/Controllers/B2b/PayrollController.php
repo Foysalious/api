@@ -326,8 +326,8 @@ class PayrollController extends Controller
                     'cycle' => $after_next_pay_day_start->format('M d') . ' - ' . $after_next_pay_day_end->format('M d'),
                 ],
             ],
-            'conflict_type' => $type,
-            'conflict_day' => $day_difference
+            'conflict_type' => $day_difference > 0 && $last_pay_day && $next_pay_day ? $type : null,
+            'conflict_day' => $day_difference > 0 && $last_pay_day && $next_pay_day ? $day_difference : null
         ];
         return api_response($request, null, 200, ['pay_day_cycle' => $pay_day_cycle]);
     }

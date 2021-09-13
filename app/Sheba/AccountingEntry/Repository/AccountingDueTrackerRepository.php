@@ -12,6 +12,7 @@ use App\Sheba\AccountingEntry\Constants\UserType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
@@ -68,6 +69,7 @@ class AccountingDueTrackerRepository extends BaseRepository
                     }
                 }
             }
+            return $data;
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
@@ -76,15 +78,19 @@ class AccountingDueTrackerRepository extends BaseRepository
     /**
      * @param $customerId
      * @return mixed
-     * @throws AccountingEntryServerError
      */
     public function deleteCustomer($customerId)
     {
-        if (!$this->isMigratedToAccounting($this->partner->id)) {
-            return true;
+        try{
+            if (!$this->isMigratedToAccounting($this->partner->id)) {
+                return true;
+            }
+            $url = "api/due-list/" . $customerId;
+            $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->delete($url);
+        } catch (AccountingEntryServerError $e) {
+            logError($e);
         }
-        $url = "api/due-list/" . $customerId;
-        return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->delete($url);
+
     }
 
     /**

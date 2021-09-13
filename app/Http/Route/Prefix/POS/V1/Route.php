@@ -18,6 +18,9 @@ class Route
             $api->post('/check-access', 'PosRebuild\AccessManagerController@checkAccess');
             $api->get('voucher-details/{voucher_id}', 'VoucherController@getVoucherDetails');
         });
+        $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers', 'middleware' => ['shebaServer']], function ($api) {
+            $api->post('/send-sms', "PosRebuild\SmsController@sendSms");
+        });
 
         $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers', 'middleware' => ['jwtAccessToken']], function ($api) {
             $api->group(['prefix' => 'collections'], function ($api) {

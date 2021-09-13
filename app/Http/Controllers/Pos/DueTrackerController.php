@@ -174,15 +174,20 @@ class DueTrackerController extends Controller
         DueTrackerRepository $dueTrackerRepository,
         AccountingDueTrackerRepository $accountingDueTrackerRepository
     ) {
-//        try {
+        try {
             $request->merge(['balance_type' => 'due']);
-            $dueList = $accountingDueTrackerRepository->setPartner($request->partner)->getDueList($request, false);
+            // checking the partner is migrated to accounting
+            if ($accountingDueTrackerRepository->isMigratedToAccounting($request->partner->id)) {
+                $dueList = $accountingDueTrackerRepository->setPartner($request->partner)->getDueList($request, false);
+            } else {
+                $dueList = $dueTrackerRepository->setPartner($request->partner)->getDueList($request, false);
+            }
             $response = $dueTrackerRepository->generateDueReminders($dueList, $request->partner);
             return api_response($request, null, 200, ['data' => $response]);
-//        } catch (\Throwable $e) {
-//            logError($e);
-//            return api_response($request, null, 500);
-//        }
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
     }
 
     /**
@@ -199,7 +204,12 @@ class DueTrackerController extends Controller
         try {
             $this->validate($request, ['month' => 'required', 'year' => 'required']);
             $request->merge(['balance_type' => 'due']);
-            $dueList = $accountingDueTrackerRepository->setPartner($request->partner)->getDueList($request, false);
+            // checking the partner is migrated to accounting
+            if ($accountingDueTrackerRepository->isMigratedToAccounting($request->partner->id)) {
+                $dueList = $accountingDueTrackerRepository->setPartner($request->partner)->getDueList($request, false);
+            } else {
+                $dueList = $dueTrackerRepository->setPartner($request->partner)->getDueList($request, false);
+            }
             $response = $dueTrackerRepository->generateDueCalender($dueList, $request);
             return api_response($request, null, 200, ['data' => $response]);
         } catch (ValidationException $e) {
