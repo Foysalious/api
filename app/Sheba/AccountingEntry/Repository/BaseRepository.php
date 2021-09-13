@@ -131,7 +131,7 @@ class BaseRepository
      * @param $userId
      * @return bool
      */
-    protected function isMigratedToAccounting($userId)
+    public function isMigratedToAccounting($userId)
     {
         /** @var UserMigrationRepository $userMigrationRepo */
         $userMigrationRepo = app(UserMigrationRepository::class);

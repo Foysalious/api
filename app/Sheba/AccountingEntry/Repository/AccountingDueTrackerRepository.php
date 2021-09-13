@@ -52,7 +52,6 @@ class AccountingDueTrackerRepository extends BaseRepository
      */
     public function storeEntry(Request $request, $type, $with_update = false)
     {
-        Log::info("showing partner", $this->partner);
         if (!$this->isMigratedToAccounting($this->partner->id)) {
             return true;
         }

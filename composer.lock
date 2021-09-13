@@ -812,7 +812,7 @@
             ],
             "authors": [
                 {
-                    "name": "Fabien Ménager",
+                    "name": "Fabien MÃ©nager",
                     "email": "fabien.menager@gmail.com"
                 },
                 {
@@ -967,7 +967,7 @@
             ],
             "authors": [
                 {
-                    "name": "Friedrich Große",
+                    "name": "Friedrich GroÃŸe",
                     "email": "friedrich.grosse@gmail.com",
                     "homepage": "https://github.com/FGrosse",
                     "role": "Author"
@@ -2573,7 +2573,7 @@
             ],
             "authors": [
                 {
-                    "name": "Matěj Humpál",
+                    "name": "MatÄ›j HumpÃ¡l",
                     "role": "Developer, maintainer"
                 },
                 {
@@ -2987,7 +2987,7 @@
             ],
             "authors": [
                 {
-                    "name": "Fabien Ménager",
+                    "name": "Fabien MÃ©nager",
                     "email": "fabien.menager@gmail.com"
                 }
             ],
@@ -3027,7 +3027,7 @@
             ],
             "authors": [
                 {
-                    "name": "Fabien Ménager",
+                    "name": "Fabien MÃ©nager",
                     "email": "fabien.menager@gmail.com"
                 }
             ],
@@ -3298,7 +3298,7 @@
                     "role": "Developer"
                 },
                 {
-                    "name": "Hans-Jürgen Petrich",
+                    "name": "Hans-JÃ¼rgen Petrich",
                     "email": "petrich@tronic-media.com",
                     "role": "Developer"
                 },
@@ -3683,7 +3683,7 @@
             ],
             "authors": [
                 {
-                    "name": "Bjørn Rosell",
+                    "name": "BjÃ¸rn Rosell",
                     "homepage": "https://www.bitwise-it.dk/contact",
                     "role": "Project Author"
                 }
@@ -3748,7 +3748,7 @@
             ],
             "authors": [
                 {
-                    "name": "Bjørn Rosell",
+                    "name": "BjÃ¸rn Rosell",
                     "homepage": "https://www.bitwise-it.dk/contact",
                     "role": "Project Author"
                 },
@@ -4667,7 +4667,7 @@
             ],
             "authors": [
                 {
-                    "name": "Jean-François Simon",
+                    "name": "Jean-FranÃ§ois Simon",
                     "email": "jeanfrancois.simon@sensiolabs.com"
                 },
                 {
@@ -5921,7 +5921,7 @@
             ],
             "authors": [
                 {
-                    "name": "François Zaninotto"
+                    "name": "FranÃ§ois Zaninotto"
                 }
             ],
             "description": "Faker is a PHP library that generates fake data for you.",
@@ -6075,7 +6075,7 @@
             ],
             "authors": [
                 {
-                    "name": "Pádraic Brady",
+                    "name": "PÃ¡draic Brady",
                     "email": "padraic.brady@gmail.com",
                     "homepage": "http://blog.astrumfutura.com"
                 },
