@@ -4,8 +4,8 @@
 namespace Sheba\PaymentLink;
 
 use App\Models\Payment;
+use App\Models\PosCustomer;
 use App\Sheba\AccountingEntry\Repository\PaymentLinkAccountingRepository;
-use App\Sheba\AccountingEntry\Repository\PaymentLinkRepository;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Transactions\Types;
@@ -23,6 +23,7 @@ class PaymentLinkTransaction
     private $formattedRechargeAmount;
     /** @var HasWalletTransaction $receiver */
     private $receiver;
+    private $customer;
     private $tax;
     private $walletTransactionHandler;
     /**
@@ -45,6 +46,9 @@ class PaymentLinkTransaction
      */
     private $entryAmount = 0;
 
+    /*** @var SubscriptionWisePaymentLinkCharges */
+    private $paymentLinkCharge;
+
     /**
      * @param Payment                $payment
      * @param PaymentLinkTransformer $linkTransformer
@@ -60,6 +64,7 @@ class PaymentLinkTransaction
         $this->paidByTypes              = PaymentLinkStatics::paidByTypes();
         $this->partnerProfit            = $this->paymentLink->getPartnerProfit();
         $this->interest                 = $this->paymentLink->getInterest();
+        $this->paymentLinkCharge        = (new SubscriptionWisePaymentLinkCharges());
     }
 
     public function isOld()
@@ -118,6 +123,12 @@ class PaymentLinkTransaction
         return $this;
     }
 
+    public function setCustomer($customer)
+    {
+        $this->customer = $customer;
+        return $this;
+    }
+
     public function getFee()
     {
         return $this->fee;
@@ -131,7 +142,7 @@ class PaymentLinkTransaction
     public function create()
     {
         $this->walletTransactionHandler->setModel($this->receiver);
-        $paymentLinkTransaction = $this->amountTransaction()->interestTransaction()->feeTransaction()->setEntryAmount();
+        $paymentLinkTransaction = $this->amountTransaction()->interestTransaction()->configurePaymentLinkCharge()->feeTransaction()->setEntryAmount();
         $this->storePaymentLinkEntry($this->amount, $this->fee, $this->interest);
         return $paymentLinkTransaction;
 
@@ -156,6 +167,22 @@ class PaymentLinkTransaction
         return $this;
     }
 
+    private function configurePaymentLinkCharge(): PaymentLinkTransaction
+    {
+        if($this->paymentLinkCharge->isPartner($this->receiver) && !$this->paymentLink->isEmi()) {
+            $this->paymentLinkCharge->setPartner($this->receiver)->setPaymentConfigurations($this->getPaymentMethod());
+            $this->tax = $this->paymentLinkCharge->getFixedTaxAmount();
+            $this->linkCommission = $this->paymentLinkCharge->getGatewayChargePercentage();
+        }
+        return $this;
+    }
+
+    private function getPaymentMethod()
+    {
+        $payment_details = $this->payment->paymentDetails()->orderBy('id', 'DESC')->first();
+        return isset($payment_details) ? $payment_details->method : null;
+    }
+
     public function isPaidByPartner()
     {
         return $this->paymentLink->getPaidBy() == $this->paidByTypes[0];
@@ -171,7 +198,7 @@ class PaymentLinkTransaction
         if ($this->paymentLink->isEmi()) {
             $this->fee = $this->paymentLink->isOld() || $this->isPaidByPartner() ? $this->paymentLink->getBankTransactionCharge() + $this->tax : $this->paymentLink->getBankTransactionCharge() - $this->paymentLink->getPartnerProfit();
         } else {
-            $realAmount = ($this->amount - $this->tax - $this->getPartnerProfit()) / (100 + $this->linkCommission) * 100;
+            $realAmount = $this->paymentLink->getRealAmount() !== null ? $this->paymentLink->getRealAmount() : $this->calculateRealAmount();
             $this->fee  = $this->paymentLink->isOld() || $this->isPaidByPartner() ? round(($this->amount * $this->linkCommission / 100) + $this->tax, 2) : round(($realAmount * $this->linkCommission / 100) + $this->tax, 2);
 
         }
@@ -197,21 +224,36 @@ class PaymentLinkTransaction
         return $this;
     }
 
+    /**
+     * @return float
+     */
+    private function calculateRealAmount(): float
+    {
+        $amount_after_tax_profit = $this->amount - $this->getPartnerProfit() - 3;
+        $real_amount = ( 100 * $amount_after_tax_profit) / 102;
+        return round($real_amount, 2);
+    }
 
     /**
      * @param $amount
      * @param $feeTransaction
      * @param $interest
-     * @throws AccountingEntryServerError
      */
     private function storePaymentLinkEntry($amount, $feeTransaction, $interest) {
+        $customer = null;
+        if (isset($this->customer)) {
+            $customer = PosCustomer::where('profile_id', $this->customer->profile->id)->first();
+        }
         /** @var PaymentLinkAccountingRepository $paymentLinkRepo */
         $paymentLinkRepo =  app(PaymentLinkAccountingRepository::class);
-        $paymentLinkRepo->setAmount($amount)
+        $transaction = $paymentLinkRepo->setAmount($amount)
             ->setBankTransactionCharge($feeTransaction)
             ->setInterest($interest)
-            ->setAmountCleared($amount)
-            ->store($this->receiver->id);
+            ->setAmountCleared($amount);
+        if ($customer) {
+            $transaction = $transaction->setCustomerId(isset($customer) ? $customer->id: null)
+                    ->setCustomerName(isset($this->customer) ? $this->customer->profile->name: null);
+        }
+        $transaction->store($this->receiver->id);
     }
-
 }

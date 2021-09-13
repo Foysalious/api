@@ -1,7 +1,5 @@
 <?php namespace Sheba\Business\AttendanceActionLog\StatusCalculator;
 
-use App\Sheba\Business\Attendance\HalfDaySetting\HalfDayType;
-use Sheba\Business\AttendanceActionLog\TimeByBusiness;
 use Sheba\Dal\Attendance\Statuses;
 use Carbon\Carbon;
 

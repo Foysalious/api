@@ -19,7 +19,7 @@ class EmployeeTransformer extends TransformerAbstract
         return [
             'id' => $member->id,
             'name' => $profile->name,
-            'mobile' => $profile->mobile,
+            'mobile' => $business_member ? $business_member->mobile : null,
             'email' => $profile->email,
             'date_of_birth' => $profile->dob,
             'profile_picture' => $profile->pro_pic,

@@ -214,11 +214,12 @@ class Creator
         $order = $order->calculate();
         $this->discountHandler->setOrder($order)->setType(DiscountTypes::ORDER)->setData($this->data);
         if ($this->discountHandler->hasDiscount()) $this->discountHandler->create($order);
-
         $this->voucherCalculation($order);
         $this->resolvePaymentMethod();
         $this->storeIncome($order);
-        $this->storeJournal($order);
+        if (!$this->request->has('refund_nature')) {
+            $this->storeJournal($order);
+        }
         return $order;
     }
 
@@ -394,14 +395,15 @@ class Creator
     {
         $order_discount = $order->discounts->count() > 0 ? $order->discounts()->sum('amount') : 0;
         $this->request->merge([
-            "from_account_key"   => (new Accounts())->income->sales::SALES_FROM_POS,
+            "from_account_key"   => $order->sales_channel == SalesChannels::WEBSTORE ? (new Accounts())->income->sales::SALES_FROM_ECOM : (new Accounts())->income->sales::SALES_FROM_POS,
             "to_account_key"     => $order->sales_channel == SalesChannels::WEBSTORE ? (new Accounts())->asset->sheba::SHEBA_ACCOUNT : (new Accounts())->asset->cash::CASH,
             "amount"             => (double)$order->getNetBill(),
             "amount_cleared"     => $order->getPaid(),
             "total_discount"     => $order_discount,
             "note"               => $order->sales_channel == SalesChannels::WEBSTORE ? SalesChannels::WEBSTORE : SalesChannels::POS,
             "source_id"          => $order->id,
-            "total_vat"          => $order->getTotalVat()
+            "total_vat"          => $order->getTotalVat(),
+            "delivery_charge"    => $order->delivery_charge ?? 0
         ]);
     }
 }

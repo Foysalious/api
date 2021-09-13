@@ -3,9 +3,9 @@
 namespace App\Sheba\AccountingEntry\Repository;
 
 use App\Models\Partner;
+use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Constants\UserType;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Statics\IncomeExpenseStatics;
 use Sheba\RequestIdentification;
@@ -22,16 +22,23 @@ class AccountingRepository extends BaseRepository
     {
         $this->getCustomer($request);
         $partner = $this->getPartner($request);
+        if (!$this->isMigratedToAccounting($partner->id)) {
+            return true;
+        }
         $this->setModifier($partner);
         $data = $this->createEntryData($request, $type, $request->source_id);
         $url = "api/entries/";
         try {
-            return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->post($url, $data);
+            $datum = $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->post($url, $data);
+            // May need pos order reconcile while storing entry
+            if ($type != EntryTypes::POS && $datum['source_type'] == 'pos' && $datum['amount_cleared'] > 0) {
+                $this->createPosOrderPayment($datum['amount_cleared'], $datum['source_id'], 'cod');
+            }
+            return $datum;
         } catch (AccountingEntryServerError $e) {
-            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+            logError($e);
         }
     }
-
 
     /**
      * @param $request
@@ -44,13 +51,16 @@ class AccountingRepository extends BaseRepository
     {
         $this->getCustomer($request);
         $partner = $this->getPartner($request);
+        if (!$this->isMigratedToAccounting($partner->id)) {
+            return true;
+        }
         $this->setModifier($partner);
         $data = $this->createEntryData($request, $type, $request->source_id);
         $url = "api/entries/" . $entry_id;
         try {
             return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->post($url, $data);
         } catch (AccountingEntryServerError $e) {
-            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+            logError($e);
         }
     }
 
@@ -65,13 +75,16 @@ class AccountingRepository extends BaseRepository
     {
         $this->getCustomer($request);
         $partner = $this->getPartner($request);
+        if (!$this->isMigratedToAccounting($partner->id)) {
+            return true;
+        }
         $this->setModifier($partner);
         $data = $this->createEntryData($request, $sourceType, $sourceId);
         $url = "api/entries/source/" . $sourceType . '/' . $sourceId;
         try {
             return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->post($url, $data);
         } catch (AccountingEntryServerError $e) {
-            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+            logError($e);
         }
     }
 
@@ -80,15 +93,17 @@ class AccountingRepository extends BaseRepository
      * @param $sourceType
      * @param $sourceId
      * @return mixed
-     * @throws AccountingEntryServerError
      */
     public function deleteEntryBySource(Partner $partner, $sourceType, $sourceId)
     {
         $url = "api/entries/source/" . $sourceType . '/' . $sourceId;
+        if (!$this->isMigratedToAccounting($partner->id)) {
+            return true;
+        }
         try {
             return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->delete($url);
         } catch (AccountingEntryServerError $e) {
-            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+            logError($e);
         }
     }
 
@@ -118,7 +133,7 @@ class AccountingRepository extends BaseRepository
         $requested_service = json_decode($requestedService, true);
         $inventory_products = [];
         foreach ($services as $key => $service) {
-            $original_service = ($service->service);
+            $original_service = isset($service->service) ? $service->service : null;
             if ($original_service) {
                 $sellingPrice = isset($requested_service[$key]['updated_price']) && $requested_service[$key]['updated_price'] ? $requested_service[$key]['updated_price'] : $original_service->price;
                 $unitPrice = $original_service->cost ?: $sellingPrice;
@@ -159,19 +174,21 @@ class AccountingRepository extends BaseRepository
         $data['amount'] = (double)$request->amount;
         $data['source_type'] = $type;
         $data['source_id'] = $type_id;
-        $data['note'] = isset($request->note) ? $request->note : null;
-        $data['amount_cleared'] = $request->amount_cleared;
         $data['debit_account_key'] = $request->to_account_key; // to = debit = je account e jabe
         $data['credit_account_key'] = $request->from_account_key; // from = credit = je account theke jabe
+        $data['note'] = isset($request->note) ? $request->note : null;
+        $data['amount_cleared'] = isset($request->amount_cleared) ? $request->amount_cleared : 0;
+        $data['reconcile_amount'] = isset($request->reconcile_amount) ? $request->reconcile_amount : 0;
         $data['customer_id'] = isset($request->customer_id) ? $request->customer_id : null;
         $data['customer_name'] = isset($request->customer_id) ? $request->customer_name : null;
         $data['inventory_products'] = isset($request->inventory_products) ? $request->inventory_products : null;
         $data['entry_at'] = isset($request->date) ? $request->date : Carbon::now()->format('Y-m-d H:i:s');
         $data['attachments'] = $this->uploadAttachments($request);
-        $data['total_discount'] = isset($request->total_discount) ? (double)$request->total_discount : null;
-        $data['total_vat'] = isset($request->total_vat) ? (double)$request->total_vat : null;
-        $data['bank_transaction_charge'] = isset($request->bank_transaction_charge) ? $request->bank_transaction_charge : null;
-        $data['interest'] = isset($request->interest) ? $request->interest : null;
+        $data['total_discount'] = isset($request->total_discount) ? (double)$request->total_discount : 0;
+        $data['total_vat'] = isset($request->total_vat) ? (double)$request->total_vat : 0;
+        $data['delivery_charge'] = isset($request->delivery_charge) ? (double)$request->delivery_charge : 0;
+        $data['bank_transaction_charge'] = isset($request->bank_transaction_charge) ? $request->bank_transaction_charge : 0;
+        $data['interest'] = isset($request->interest) ? $request->interest : 0;
         $data['details'] = isset($request->details) ? $request->details : null;
         $data['reference'] = isset($request->reference) ? $request->reference : null;
         return $data;

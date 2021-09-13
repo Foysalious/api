@@ -302,10 +302,7 @@ class OrderController extends Controller
             $return_nature = $is_returned ? $this->getReturnType($request, $order) : null;
             /** @var RefundNature $refund */
             $refund = NatureFactory::getRefundNature($order, $request->all(), $refund_nature, $return_nature);
-            $request->merge([
-                'refund_nature' => $refund_nature,
-                'return_nature' => $return_nature
-                            ]);
+            $request->merge(['refund_nature' => $refund_nature]);
             $refund->setNew($new)->update();
             $order->payment_status = $order->calculate()->getPaymentStatus();
             return api_response($request, null, 200, [
@@ -502,11 +499,12 @@ class OrderController extends Controller
                 $customer     = $pos_order->customer->profile;
                 $info['user'] = [
                     'name'   => $customer->name,
-                    'mobile' => $customer->mobile
+                    'mobile' => $customer->mobile,
+                    'address' => !$pos_order->address?$customer->address:$pos_order->address
                 ];
             }
             $invoice_name = 'pos_order_invoice_' . $pos_order->id;
-            $link         = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
+            $link         = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save(true);
             return api_response($request, null, 200, [
                 'message' => 'Successfully Download receipt',
                 'link'    => $link
@@ -548,11 +546,12 @@ class OrderController extends Controller
                 $customer     = $pos_order->customer->profile;
                 $info['user'] = [
                     'name'   => $customer->name,
-                    'mobile' => $customer->mobile
+                    'mobile' => $customer->mobile,
+                    'address' => !$pos_order->address?$customer->address:$pos_order->address
                 ];
             }
             $invoice_name = 'pos_order_invoice_' . $pos_order->id;
-            $link         = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
+            $link         = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save(true);
             return api_response($request, null, 200, [
                 'message' => 'Successfully Download receipt',
                 'link'    => $link
@@ -618,6 +617,7 @@ class OrderController extends Controller
         if (!$requested_customer)
             return api_response($request, null, 401, ['msg' => 'Customer not found']);
         $updater->setOrder($order)->setData(['customer_id' => $requested_customer->id])->update();
+        /** @var AutomaticEntryRepository $entry */
         $entry  = app(AutomaticEntryRepository::class);
         $entry->setPartner($order->partner)->setFor(EntryType::INCOME)->setSourceType(class_basename($order))->setSourceId($order->id)->setParty($requested_customer->profile)->updatePartyFromSource();
         return api_response($request, null, 200, ['msg' => 'Customer tagged Successfully']);

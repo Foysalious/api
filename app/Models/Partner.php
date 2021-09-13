@@ -661,9 +661,9 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function topUpTransaction(TopUpTransaction $transaction)
     {
-        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())
+        return (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())
             ->setSource(TransactionSources::TOP_UP)->setType(Types::debit())->setLog($transaction->getLog())
-            ->dispatch();
+            ->store();
     }
 
     public function todayJobs($jobs = null)
@@ -1043,5 +1043,10 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function deliveryInformation()
     {
         return $this->hasOne(PartnerDeliveryInformation::class);
+    }
+
+    public function getGatewayChargesId()
+    {
+        return $this->subscription_rules->payment_gateway_configuration_id;
     }
 }

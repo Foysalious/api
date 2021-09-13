@@ -1,9 +1,10 @@
 <?php namespace App\Http\Controllers\Accounting;
 
+use App\Http\Controllers\Controller;
+use App\Sheba\AccountingEntry\Constants\AccountingReport;
+use App\Sheba\AccountingEntry\Repository\HomepageRepository;
 use Carbon\Carbon;
 use Exception;
-use App\Http\Controllers\Controller;
-use App\Sheba\AccountingEntry\Repository\HomepageRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -69,8 +70,11 @@ class HomepageController extends Controller
     {
         $limit = $request->limit ?? 10;
         $nextCursor = $request->next_cursor ?? null;
+        $startDate = $request->has('start_date') ? $this->convertStartDate($request->start_date) : null;
+        $endDate = $request->has('start_date') ? $this->convertEndDate($request->end_date) : null;
+        $sourceType = $request->has('source_type') ? $request->source_type : null;
         try {
-            $response = $this->homepageRepo->getIncomeExpenseEntries($request->partner->id, $limit, $nextCursor);
+            $response = $this->homepageRepo->getIncomeExpenseEntries($request->partner->id, $limit, $nextCursor, $startDate, $endDate, $sourceType);
             return api_response($request, $response, 200, ['data' => $response]);
         } catch (Exception $e) {
             return api_response(
@@ -175,6 +179,37 @@ class HomepageController extends Controller
         }
     }
 
+    public function getHomepageReportList(Request $request)
+    {
+        $data = [
+            [
+                'key' => AccountingReport::JOURNAL_REPORT,
+                'report_bangla_name' => 'জার্নাল রিপোর্ট',
+                'url' => config('sheba.api_url') . '/v2/accounting/reports/journal_report',
+                'icon' => config('accounting_entry.icon_url') . '/' . 'journal_report.png'
+            ],
+            [
+                'key' => AccountingReport::GENERAL_LEDGER_REPORT,
+                'report_bangla_name' => 'জেনারেল লেজার রিপোর্ট',
+                'url' => config('sheba.api_url') . '/v2/accounting/reports/general_ledger_report',
+                'icon' => config('accounting_entry.icon_url') . '/' . 'general_ledger_report.png'
+            ],
+            [
+                'key' => AccountingReport::PROFIT_LOSS_REPORT,
+                'report_bangla_name' => 'লাভ-ক্ষতি রিপোর্ট',
+                'url' => config('sheba.api_url') . '/v2/accounting/reports/profit_loss_report',
+                'icon' => config('accounting_entry.icon_url') . '/' . 'loss_profit_report.png'
+            ],
+            [
+                'key' => 'other_report',
+                'report_bangla_name' => 'অন্যান্য রিপোর্ট',
+                'url' => "",
+                'icon' =>  config('accounting_entry.icon_url') . '/' . 'investments.png'
+            ],
+        ];
+        return api_response($request, $data, 200, ['data' => $data]);
+    }
+
     public function getTimeFilters(Request $request)
     {
         Carbon::setWeekStartsAt(Carbon::SATURDAY);
@@ -196,7 +231,7 @@ class HomepageController extends Controller
             [
                 'title' => 'এই সপ্তাহ (' .
                     convertNumbersToBangla($startOfWeek->day, false) .
-                    ($startOfWeek->month === $endOfWeek->month ?: ' '.banglaMonth($startOfWeek->month)). ' - ' .
+                    ($startOfWeek->month === $endOfWeek->month ? '' : banglaMonth($startOfWeek->month)). ' - ' .
                     convertNumbersToBangla($endOfWeek->day, false) .' '.
                     banglaMonth($endOfWeek->month) . ')',
                 'start_date' => $startOfWeek->format('Y-m-d'),
@@ -224,7 +259,7 @@ class HomepageController extends Controller
     private function convertStartDate($date) {
         return $date ?
             Carbon::createFromFormat('Y-m-d H:i:s', $date . ' 0:00:00')->timestamp :
-            strtotime('today midnight');
+            strtotime('1 January 1971');
     }
 
     private function convertEndDate($date) {

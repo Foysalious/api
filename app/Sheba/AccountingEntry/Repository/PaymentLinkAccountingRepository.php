@@ -4,8 +4,6 @@ namespace App\Sheba\AccountingEntry\Repository;
 
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use Carbon\Carbon;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
@@ -165,26 +163,38 @@ class PaymentLinkAccountingRepository extends AccountingRepository
         return $this;
     }
 
+    /**
+     * @param $userId
+     * @return bool|mixed
+     */
     public function store($userId)
     {
         try {
             $payload = $this->makeData($userId);
             return $this->storeEntry((object)$payload, EntryTypes::PAYMENT_LINK);
         } catch (AccountingEntryServerError $e) {
-            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+            logError($e);
         }
     }
 
+    /**
+     * @param $userId
+     * @return bool|mixed
+     */
     public function updatePaymentLinkEntry($userId)
     {
         try {
             $payload = $this->makeData($userId);
             return $this->updateEntryBySource((object)$payload, $this->source_id, $this->source_type);
         } catch (AccountingEntryServerError $e) {
-            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+            logError($e);
         }
     }
 
+    /**
+     * @param $userId
+     * @return mixed
+     */
     private function makeData($userId)
     {
         if ($this->debit_account_key == null && $this->credit_account_key == null) {

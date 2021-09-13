@@ -20,13 +20,12 @@ class AccountingRoute
             $api->delete('/accounts/{id}', 'Accounting\\AccountController@deleteAccount');
             $api->get('/icons', 'Accounting\\IconsController@getIcons');
             $api->group(['prefix' => 'due-tracker'], function ($api) {
-                $api->get('/due-list', 'Accounting\\DueTrackerController@dueList');
-                $api->get('/due-list-balance', 'Accounting\\DueTrackerController@dueListBalance');
-                $api->get('/due-list/{customerId}', 'Accounting\\DueTrackerController@dueListByCustomerId');
-                $api->get('/due-list/{customerId}/balance', 'Accounting\\DueTrackerController@dueListBalanceByCustomer');
-                $api->post('/', 'Accounting\\DueTrackerController@store');
-                $api->post('/{entry_id}', 'Accounting\\DueTrackerController@update');
-                $api->delete('/{entry_id}', 'Accounting\\DueTrackerController@delete');
+                $api->get('/due-list', 'Accounting\\AccountingDueTrackerController@dueList');
+                $api->get('/due-list-balance', 'Accounting\\AccountingDueTrackerController@dueListBalance');
+                $api->get('/due-list/{customerId}', 'Accounting\\AccountingDueTrackerController@dueListByCustomerId');
+                $api->get('/due-list/{customerId}/balance', 'Accounting\\AccountingDueTrackerController@dueListBalanceByCustomer');
+                $api->post('/', 'Accounting\\AccountingDueTrackerController@store');
+                $api->post('/{entry_id}', 'Accounting\\AccountingDueTrackerController@update');
             });
             $api->group(['prefix' => 'home'], function ($api) {
                 $api->get('/asset-balance', 'Accounting\\HomepageController@getAssetAccountBalance');
@@ -34,12 +33,14 @@ class AccountingRoute
                 $api->get('income-expense-entries', 'Accounting\\HomepageController@getIncomeExpenseEntries');
                 $api->get('due-collection-balance', 'Accounting\\HomepageController@getDueCollectionBalance');
                 $api->get('account-list-balance', 'Accounting\\HomepageController@getAccountListBalance');
+                $api->get('homepage-reports', 'Accounting\\HomepageController@getHomepageReportList');
                 $api->get('cash-accounts-entries/{accountKey}', 'Accounting\\HomepageController@getEntriesByAccountKey');
                 $api->get('time-filter', 'Accounting\\HomepageController@getTimeFilters');
                 $api->get('training-video', 'Accounting\\HomepageController@getTrainingVideo');
             });
             $api->group(['prefix' => 'entries'], function ($api) {
-                $api->get('/{entry_id}', 'Accounting\\DueTrackerController@details');
+                $api->get('/{entry_id}', 'Accounting\\EntriesController@details');
+                $api->delete('/{entry_id}', 'Accounting\\EntriesController@delete');
             });
             $api->group(['prefix' => 'reports'], function ($api) {
                 $api->get('/pos/customer-wise', 'Accounting\\ReportsController@getCustomerWiseReport');
@@ -47,6 +48,14 @@ class AccountingRoute
                 $api->get('/{reportType}', 'Accounting\\ReportsController@getAccountingReport');
                 $api->get('/', 'Accounting\\ReportsController@getAccountingReportsList');
             });
+            $api->group(['prefix' => 'user-migration'], function ($api) {
+                $api->post('/', 'Accounting\\UserMigrationController@create');
+                $api->get('/{userId}', 'Accounting\\UserMigrationController@show');
+                $api->put('/{userId}', 'Accounting\\UserMigrationController@update');
+            });
+        });
+        $api->group(['prefix' => 'accounting/user-migration'], function ($api) {
+            $api->post('/update', 'Accounting\\UserMigrationController@updateFromAccounting');
         });
     }
 }
