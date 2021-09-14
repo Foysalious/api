@@ -812,7 +812,7 @@
             ],
             "authors": [
                 {
-                    "name": "Fabien MÃ©nager",
+                    "name": "Fabien Ménager",
                     "email": "fabien.menager@gmail.com"
                 },
                 {
@@ -967,7 +967,7 @@
             ],
             "authors": [
                 {
-                    "name": "Friedrich GroÃŸe",
+                    "name": "Friedrich Große",
                     "email": "friedrich.grosse@gmail.com",
                     "homepage": "https://github.com/FGrosse",
                     "role": "Author"
@@ -1864,7 +1864,7 @@
             "time": "2017-03-12T09:23:10+00:00"
         },
         {
-            "name": "jeremeamia/SuperClosure",
+            "name": "jeremeamia/superclosure",
             "version": "2.3.0",
             "source": {
                 "type": "git",
@@ -2573,7 +2573,7 @@
             ],
             "authors": [
                 {
-                    "name": "MatÄ›j HumpÃ¡l",
+                    "name": "Matěj Humpál",
                     "role": "Developer, maintainer"
                 },
                 {
@@ -2987,7 +2987,7 @@
             ],
             "authors": [
                 {
-                    "name": "Fabien MÃ©nager",
+                    "name": "Fabien Ménager",
                     "email": "fabien.menager@gmail.com"
                 }
             ],
@@ -3027,7 +3027,7 @@
             ],
             "authors": [
                 {
-                    "name": "Fabien MÃ©nager",
+                    "name": "Fabien Ménager",
                     "email": "fabien.menager@gmail.com"
                 }
             ],
@@ -3298,7 +3298,7 @@
                     "role": "Developer"
                 },
                 {
-                    "name": "Hans-JÃ¼rgen Petrich",
+                    "name": "Hans-Jürgen Petrich",
                     "email": "petrich@tronic-media.com",
                     "role": "Developer"
                 },
@@ -3683,7 +3683,7 @@
             ],
             "authors": [
                 {
-                    "name": "BjÃ¸rn Rosell",
+                    "name": "Bjørn Rosell",
                     "homepage": "https://www.bitwise-it.dk/contact",
                     "role": "Project Author"
                 }
@@ -3748,7 +3748,7 @@
             ],
             "authors": [
                 {
-                    "name": "BjÃ¸rn Rosell",
+                    "name": "Bjørn Rosell",
                     "homepage": "https://www.bitwise-it.dk/contact",
                     "role": "Project Author"
                 },
@@ -4012,8 +4012,8 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
-                "reference": "2de033361051d1db835517d4ba03ced7d11649a5"
+                "url": "https://bitbucket.org/startern/sheba_dal.git",
+                "reference": "6c201519d32a5c88a3edb7714920dec802a0c176"
             },
             "require": {
                 "php": ">=5.4"
@@ -4040,7 +4040,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2021-09-08T04:55:17+00:00"
+            "time": "2021-09-12T08:02:48+00:00"
         },
         {
             "name": "sheba/elasticsearch",
@@ -4667,7 +4667,7 @@
             ],
             "authors": [
                 {
-                    "name": "Jean-FranÃ§ois Simon",
+                    "name": "Jean-François Simon",
                     "email": "jeanfrancois.simon@sensiolabs.com"
                 },
                 {
@@ -5921,7 +5921,7 @@
             ],
             "authors": [
                 {
-                    "name": "FranÃ§ois Zaninotto"
+                    "name": "François Zaninotto"
                 }
             ],
             "description": "Faker is a PHP library that generates fake data for you.",
@@ -6075,7 +6075,7 @@
             ],
             "authors": [
                 {
-                    "name": "PÃ¡draic Brady",
+                    "name": "Pádraic Brady",
                     "email": "padraic.brady@gmail.com",
                     "homepage": "http://blog.astrumfutura.com"
                 },
@@ -7040,7 +7040,7 @@
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
-        "php": ">=7.0",
+        "php": ">=5.5.9",
         "ext-json": "*",
         "ext-curl": "*",
         "ext-soap": "*",
