@@ -91,7 +91,7 @@ class EkycClient
 
         } else {
             $nid = $data['nid'];
-            $person_photo = $data['person_photo'];
+            $person_photo = $data['pro_pic'];
             $dob = $data['dob'];
 
             $options['form_params'] = [

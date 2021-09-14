@@ -37,6 +37,12 @@ class ProfileUpdateRepository
         return $data;
     }
 
+//    public function createDataForPorichoyEkyc($person_photo)
+//    {
+//        $data['pro_pic'] = $person_photo;
+//        return $data;
+//    }
+
     /**
      * @param Request $request
      * @return array
