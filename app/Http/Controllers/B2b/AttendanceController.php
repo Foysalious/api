@@ -354,6 +354,14 @@ class AttendanceController extends Controller
         $business_member = $business_member_repository->where('business_id', $business->id)->where('member_id', $member)->first();
 
         $time_frame = $time_frame->forDateRange($request->start_date, $request->end_date);
+        $business_member_joining_date = $business_member->join_date;
+        $joining_date = null;
+        if ($business_member_joining_date->format('Y-m-d') >= $request->start_date && $business_member_joining_date->format('Y-m-d') <= $request->end_date){
+            $joining_date = $business_member_joining_date->format('d F');
+            $start_date = $business_member_joining_date;
+            $end_date = $request->end_date;
+            $time_frame = $time_frame->forDateRange($start_date, $end_date);
+        }
 
         $business_member_leave = $business_member->leaves()->accepted()->between($time_frame)->get();
 
