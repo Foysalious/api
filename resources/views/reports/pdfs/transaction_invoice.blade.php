@@ -56,19 +56,19 @@
         }
         @if(isset($method))
             footer {
-                position: fixed;
-                background-color: #F1F1F1;
-                bottom: 0cm;
-                left: 0cm;
-                right: 0cm;
-                height: 1.5cm;
-                background-color: #F1F1F1;
-            }
-            @page {
-                /*size: a4 landscape;*/
-                margin:0.9;
-                padding:0.9;
-            }
+            position: fixed;
+            background-color: #F1F1F1;
+            bottom: 0cm;
+            left: 0cm;
+            right: 0cm;
+            height: 1.5cm;
+            background-color: #F1F1F1;
+        }
+        @page {
+            /*size: a4 landscape;*/
+            margin:0.9;
+            padding:0.9;
+        }
         @endif
     </style>
 </head>
@@ -208,89 +208,89 @@
     @endif
 
     @if(isset($method))
-    <tr>
-        <td>
-            <table style="width: 100%; padding:10px; background-color: #F1F1F1; color: #9b9b9b;">
-                <tr>
-                    <td style="padding-left: 25px" colspan="3">
-                        <div>
-                            Payment ID : @if(isset($payment_id))<span style="padding-top: 10px; color: #383D46;">#P-{{$payment_id}}</span> @endif
-                        </div>
-                    </td>
-                    <td style="padding-right: 20px" align="right">
-                        <div style="text-align: right">
-                            Date: <span style="color: #383D46;">{{$created_at_date}}</span>
-                        </div>
-                    </td>
-                </tr>
-            </table>
-        </td>
-    </tr>
+        <tr>
+            <td>
+                <table style="width: 100%; padding:10px; background-color: #F1F1F1; color: #9b9b9b;">
+                    <tr>
+                        <td style="padding-left: 25px" colspan="3">
+                            <div>
+                                Payment ID : @if(isset($payment_id))<span style="padding-top: 10px; color: #383D46;">#P-{{$payment_id}}</span> @endif
+                            </div>
+                        </td>
+                        <td style="padding-right: 20px" align="right">
+                            <div style="text-align: right">
+                                Date: <span style="color: #383D46;">{{$created_at_date}}</span>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
 
-    <tr>
-        <td align="center; padding: 20px;"><span style="font-style: normal; font-weight: 500; font-size: 20px; color: #000000;">Money Receipt</span></td>
-    </tr>
+        <tr>
+            <td align="center; padding: 20px;"><span style="font-style: normal; font-weight: 500; font-size: 20px; color: #000000;">Money Receipt</span></td>
+        </tr>
 
 
-    <tr>
-        <td style="padding: 0px 40px;">
-            <table class="payment-table" cellpadding="5">
-                <tr>
-                    <td>Collection Time</td>
-                    <td style="color: #383d46;">{{$created_at}}</td>
-                </tr>
-                <tr>
-                    <td>Payment type</td>
-                    <td style="color: #383d46;">{{$method}}</td>
-                </tr>
-                <tr>
-                    <td>Amount</td>
-                    <td style="color: #383d46;" align="left"><span style="width: 13px; font-weight: bold">
+        <tr>
+            <td style="padding: 0px 40px;">
+                <table class="payment-table" cellpadding="5">
+                    <tr>
+                        <td>Collection Time</td>
+                        <td style="color: #383d46;">{{$created_at}}</td>
+                    </tr>
+                    <tr>
+                        <td>Payment type</td>
+                        <td style="color: #383d46;">{{$method}}</td>
+                    </tr>
+                    <tr>
+                        <td>Amount</td>
+                        <td style="color: #383d46;" align="left"><span style="width: 13px; font-weight: bold">
                             @include('reports.pdfs.taka_sign'){{number_format($amount,2)}}</span>
-                    </td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
+                        </td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
 
-                </tr>
-                <tr>
-                    <td>Purpose of Payment</td>
-                    <td style="color: #383d46;">{{$description}}</td>
-                </tr>
-                <tr>
-                    <td>Collection Time</td>
-                    <td style="color: #383d46;">{{$created_at}}</td>
-                </tr>
-                <tr>
-                    <td>Payment Option</td>
-                    <td style="color: #383d46;">{{$method}}</td>
-                </tr>
-                <tr>
-                    <td>Payment ID</td>
-                    <td style="color: #383d46;font-weight: 500;">
-                        @if(isset($payment_id)) #P-{{$payment_id}} @endif
-                    </td>
-                </tr>
+                    </tr>
+                    <tr>
+                        <td>Purpose of Payment</td>
+                        <td style="color: #383d46;">{{$description}}</td>
+                    </tr>
+                    <tr>
+                        <td>Collection Time</td>
+                        <td style="color: #383d46;">{{$created_at}}</td>
+                    </tr>
+                    <tr>
+                        <td>Payment Option</td>
+                        <td style="color: #383d46;">{{$method}}</td>
+                    </tr>
+                    <tr>
+                        <td>Payment ID</td>
+                        <td style="color: #383d46;font-weight: 500;">
+                            @if(isset($payment_id)) #P-{{$payment_id}} @endif
+                        </td>
+                    </tr>
 
-            </table>
-        </td>
-    </tr>
+                </table>
+            </td>
+        </tr>
 
-    <tr>
-        <td>
-            <p class="note">
-                Note: It can take upto 15 days to get refund in context to your application. Refund will be made through the same gateway you have used for payment.
-            </p>
-        </td>
-    </tr>
-    <tr>
-        <td>
-            <footer style="padding-top: 10px">
-                <div style="text-align: center;"><span style="position: absolute; left:300px; padding: 10px; color: #6F6F6F;">Powered by </span> <img alt="no-image" style="top:15px; position: absolute; left: 430px;" width="106.4px" height="27.59px" src="https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/employees_avatar/1586691331_arafat.png"/></div>
-            </footer>
-        </td>
-    </tr>
+        <tr>
+            <td>
+                <p class="note">
+                    Note: It can take upto 15 days to get refund in context to your application. Refund will be made through the same gateway you have used for payment.
+                </p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <footer style="padding-top: 10px">
+                    <div style="text-align: center;"><span style="position: absolute; left:300px; padding: 10px; color: #6F6F6F;">Powered by </span> <img alt="no-image" style="top:15px; position: absolute; left: 430px;" width="106.4px" height="27.59px" src="https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/employees_avatar/1586691331_arafat.png"/></div>
+                </footer>
+            </td>
+        </tr>
 
     @endif
 

@@ -1,11 +1,10 @@
 <?php namespace Sheba\Business\BusinessMember;
 
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
-use Carbon\Carbon;
 
 class Creator
 {
-    /** BusinessMemberRepositoryInterface $businessMemberRepository */
+    /** @var BusinessMemberRepositoryInterface $businessMemberRepository */
     private $businessMemberRepository;
     /** @var Requester $requester */
     private $requester;
