@@ -30,7 +30,7 @@ class NidFaceVerification
     public function formatToData($request)
     {
         $data['nid'] = $request->nid;
-        $data['pro_pic'] = $request->person_photo;
+        $data['pro_pic'] = $request->file('person_photo');
         $data['dob'] = $request->dob;
         return $data;
     }
