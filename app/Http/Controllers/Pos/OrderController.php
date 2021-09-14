@@ -488,7 +488,6 @@ class OrderController extends Controller
         ]);
     }
 
-
     /**
      * @param Request $request
      * @param $partner
