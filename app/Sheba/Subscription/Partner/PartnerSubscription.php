@@ -21,7 +21,7 @@ class PartnerSubscription
 
     public function setRequestedPackage($id = null)
     {
-        $package_id = $id ? $id : config('sheba.partner_basic_packages_id');
+        $package_id = $id ? $id : config('sheba.partner_registration_package_id');
         $this->requested_package = PartnerSubscriptionPackage::find($package_id);
         return $this;
     }
