@@ -19,7 +19,6 @@ class OrderService
     private $token;
     private $skus, $discount, $paymentMethod, $paymentLinkAmount, $paidAmount;
     protected $emi_month, $interest, $bank_transaction_charge, $delivery_name, $delivery_mobile, $note, $voucher_id;
-    protected $filter_params;
     /**
      * @var mixed
      */
@@ -90,16 +89,6 @@ class OrderService
     public function setDiscount($discount)
     {
         $this->discount = $discount;
-        return $this;
-    }
-
-    /**
-     * @param mixed $filter_params
-     * @return OrderService
-     */
-    public function setFilterParams($filter_params)
-    {
-        $this->filter_params = $filter_params;
         return $this;
     }
 
