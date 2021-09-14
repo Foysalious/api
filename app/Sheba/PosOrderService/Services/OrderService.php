@@ -25,6 +25,7 @@ class OrderService
      */
     private $isDiscountPercentage;
     protected $userId;
+    protected $filter_params;
 
     public function __construct(PosOrderServerClient $client, SmanagerUserServerClient $smanagerUserClient)
     {
@@ -105,6 +106,16 @@ class OrderService
     public function setPartnerId($partnerId)
     {
         $this->partnerId = $partnerId;
+        return $this;
+    }
+
+    /**
+     * @param mixed $filter_params
+     * @return OrderService
+     */
+    public function setFilterParams($filter_params)
+    {
+        $this->filter_params = $filter_params;
         return $this;
     }
 
