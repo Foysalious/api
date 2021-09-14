@@ -235,7 +235,7 @@ pipeline {
                                     cleanRemote: false,
                                     excludes: '',
                                     execCommand: 'cd /var/www/api && ./bin/deploy.sh release',
-                                    execTimeout: 300000,
+                                    execTimeout: 600000,
                                     flatten: false,
                                     makeEmptyDirs: false,
                                     noDefaultExcludes: false,
@@ -248,7 +248,7 @@ pipeline {
                             ],
                             usePromotionTimestamp: false,
                             useWorkspaceInPromotion: false,
-                            verbose: false
+                            verbose: true
                         )]
                     )
                 }
