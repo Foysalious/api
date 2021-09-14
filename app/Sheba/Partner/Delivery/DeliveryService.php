@@ -427,6 +427,7 @@ class DeliveryService
         $data = [
             'name' => $info['contact_info']['name'],
             'partner_id' => $this->partner->id,
+            'merchant_id' =>  $info['uid'],
             'mobile' => $info['phone'],
             'email' => $info['contact_info']['email'],
             'business_type' => $info['product_nature'],
