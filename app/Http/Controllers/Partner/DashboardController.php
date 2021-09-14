@@ -477,8 +477,8 @@ class DashboardController extends Controller
                     'billing_type'  => $partner->billing_type,
                     'rules'         => $partner->subscription->getAccessRules(),
                     'is_light'      => $partner->subscription->id == (int)config('sheba.partner_lite_packages_id'),
-                    'auto_billing_activated' => (bool)$partner->auto_billing_activated,
-                    'subscription_renewal_warning' => (bool)$partner->subscription_renewal_warning,
+                    'auto_billing_activated' => (bool)($partner->auto_billing_activated),
+                    'subscription_renewal_warning' => (bool)($partner->subscription_renewal_warning),
                     'renewal_warning_days' => $partner->renewal_warning_days,
                 ],
                 "status" => $partner->getStatusToCalculateAccess()
