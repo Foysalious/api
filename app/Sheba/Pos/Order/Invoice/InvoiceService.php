@@ -54,7 +54,7 @@ class InvoiceService
     {
         $data = $this->generateData();
         $invoice_name = 'pos_order_invoice_' . $this->posOrder->id;
-        $this->invoiceLink         =  (new PdfHandler())->setData($data)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
+        $this->invoiceLink         =  (new PdfHandler())->setData($data)->setName($invoice_name)->setViewFile('order_invoice')->save(true);
         return $this;
     }
 
