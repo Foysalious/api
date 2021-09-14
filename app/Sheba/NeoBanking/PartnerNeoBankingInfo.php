@@ -37,15 +37,21 @@ class PartnerNeoBankingInfo
                 'father_name' => $nidSelfie->father_name,
                 'mother_name' => $nidSelfie->mother_name,
                 'nid_passport_birth_cer_number' => $nidSelfie->nid_no,
+//                'company_name' => strtoupper($this->partner->name)
             ];
         }
-        return [];
+        return [
+//            'company_name' => strtoupper($this->partner->name)
+        ];
     }
 
     public function institution()
     {
         if (!empty($this->information_for_bank_account) && isset($this->information_for_bank_account['institution'])) return $this->information_for_bank_account['institution'];
-        return ["mobile" => $this->partner->getManagerMobile()];
+        return [
+            "mobile"       => $this->partner->getManagerMobile(),
+//            'company_name' => strtoupper($this->partner->name)
+        ];
     }
 
     public function account()
