@@ -225,6 +225,36 @@ pipeline {
                 }
             }
         }
+        stage('DEPLOY TO RELEASE') {
+            when { branch 'release' }
+            steps {
+                script {
+                    sshPublisher(publishers: [
+                        sshPublisherDesc(configName: 'stage-server',
+                            transfers: [
+                                sshTransfer(
+                                    cleanRemote: false,
+                                    excludes: '',
+                                    execCommand: 'cd /var/www/api && ./bin/deploy.sh release',
+                                    execTimeout: 600000,
+                                    flatten: false,
+                                    makeEmptyDirs: false,
+                                    noDefaultExcludes: false,
+                                    patternSeparator: '[, ]+',
+                                    remoteDirectory: '',
+                                    remoteDirectorySDF: false,
+                                    removePrefix: '',
+                                    sourceFiles: ''
+                                )
+                            ],
+                            usePromotionTimestamp: false,
+                            useWorkspaceInPromotion: false,
+                            verbose: true
+                        )]
+                    )
+                }
+            }
+        }
         stage('CLEAN UP BUILD') {
             when { branch 'master' }
             steps {
