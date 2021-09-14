@@ -37,11 +37,13 @@ class ProfileUpdateRepository
         return $data;
     }
 
-//    public function createDataForPorichoyEkyc($person_photo)
-//    {
-//        $data['pro_pic'] = $person_photo;
-//        return $data;
-//    }
+    public function createDataForPorichoyEkyc($requestedData)
+    {
+        $data['nid_no'] = $requestedData['nid'];
+        $data['pro_pic'] = $requestedData['pro_pic'];
+        $data['dob'] = $requestedData['dob'];
+        return $data;
+    }
 
     /**
      * @param Request $request

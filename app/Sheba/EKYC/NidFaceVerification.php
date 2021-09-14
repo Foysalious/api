@@ -27,6 +27,22 @@ class NidFaceVerification
         $this->profileRepo->updateRaw($profile, $data);
     }
 
+    public function imageUpload($request, $profile)
+    {
+        $photo = $request->file('person_photo');
+        if (basename($profile->pro_pic) != 'default.jpg') {
+            $filename = substr($profile->pro_pic, strlen(env('S3_URL')));
+            $this->fileRepo->deleteFileFromCDN($filename);
+        }
+
+        $filename = Carbon::now()->timestamp . '_profile_image_' . $profile->id . '.' . $photo->extension();
+        $picture_link = $this->fileRepo->uploadToCDN($filename, $photo, 'images/profiles/');
+        if ($picture_link == false) return response()->json(['code' => 404, 'message' => 'fail', 'picture' => null]);
+
+        $profile->pro_pic = $picture_link;
+        $profile->update();
+    }
+
     public function formatToData($request)
     {
         $data['nid'] = $request->nid;
@@ -35,11 +51,11 @@ class NidFaceVerification
         return $data;
     }
 
-//    public function makeProfileAdjustment($profile, $person_photo)
-//    {
-//        $data = $this->profileUpdate->createDataForPorichoyEkyc($person_photo);
-//        return $this->profileRepo->update($profile, $data);
-//    }
+    public function makeProfileAdjustment($profile, $requestedData)
+    {
+        $data = $this->profileUpdate->createDataForPorichoyEkyc($requestedData);
+        return $this->profileRepo->update($profile, $data);
+    }
 
     public function storeData($request, $faceVerificationData, $profileNIDSubmissionRepo)
     {

@@ -39,17 +39,17 @@ class FaceVerificationController extends Controller
     {
         try {
             $this->validate($request, Statics::faceVerificationValidate());
-//            $profile = $request->auth_user->getProfile();
-            $data = $this->nidFaceVerification->formatToData($request);
-            $faceVerificationData = $this->client->post($this->api, $data);
+            $profile = $request->auth_user->getProfile();
+            $requestedData = $this->nidFaceVerification->formatToData($request);
+            $faceVerificationData = $this->client->post($this->api, $requestedData);
             $status = ($faceVerificationData['data']['status']);
             if($status === Statics::ALREADY_VERIFIED || $status === Statics::VERIFIED) {
                 $status = Statics::VERIFIED;
                 $this->nidFaceVerification->verifiedChanges($faceVerificationData['data'], $request->auth_user->getProfile());
             }
-//            $personPhoto = $this->nidFaceVerification->imageUpload($profile, $request->person_photo);
+            $personPhoto = $this->nidFaceVerification->imageUpload($request, $profile);
             $this->nidFaceVerification->storeData($request, $faceVerificationData, $profileNIDSubmissionRepo);
-//            $this->nidFaceVerification->makeProfileAdjustment($profile, $personPhoto);
+//            $this->nidFaceVerification->makeProfileAdjustment($profile, $requestedData);
             return api_response($request, null, 200, ['data' => Statics::faceVerificationResponse($status, $faceVerificationData['data']['message'])]);
         } catch (ValidationException $exception) {
             $msg = getValidationErrorMessage($exception->validator->errors()->all());
