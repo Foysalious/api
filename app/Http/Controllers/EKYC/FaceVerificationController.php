@@ -56,15 +56,15 @@ class FaceVerificationController extends Controller
                     return api_response($request, null, 403, ['message' => ['title' => 'এই NID তে সেবা অ্যাকাউন্ট খোলা হয়েছে!','en'=> 'This NID is used by another sBondhu account' , 'bn' => 'এই NID ব্যবহার করে '. scramble_string(substr($profile_by_given_nid->mobile,-11)) .' নাম্বারে একটি সেবা অ্যাকাউন্ট খোলা আছে। দয়া করে উল্লেখিত নাম্বার দিয়ে লগ ইন করুন অথবা আমাদের কাস্টমার কেয়ার-এ কথা বলুন।','existing_no' =>  scramble_string(substr($profile_by_given_nid->mobile,-11))]]);
             }
             $this->nidFaceVerification->beforePorichoyCallChanges($profile);
-            $data = $this->toData($request);
-            $faceVerificationData = $this->client->post($this->api, $data);
+            $requestedData = $this->nidFaceVerification->formatToData($request);
+            $faceVerificationData = $this->client->post($this->api, $requestedData);
             $status = ($faceVerificationData['data']['status']);
             if($status === Statics::ALREADY_VERIFIED || $status === Statics::VERIFIED) {
                 $status = Statics::VERIFIED;
                 $this->nidFaceVerification->verifiedChanges($faceVerificationData['data'], $profile);
             }
             elseif($status === Statics::UNVERIFIED) $this->nidFaceVerification->unverifiedChanges($profile);
-
+            $personPhoto = $this->nidFaceVerification->imageUpload($request, $profile);
             $this->storeData($request, $faceVerificationData, $profileNIDSubmissionRepo);
             return api_response($request, null, 200, ['data' => Statics::faceVerificationResponse($status, $faceVerificationData['data']['message'])]);
         } catch (ValidationException $exception) {
@@ -77,53 +77,26 @@ class FaceVerificationController extends Controller
         }
     }
 
-    private function toData($request)
+    public function getLivelinessCredentials(Request $request)
     {
-        $data['nid'] = $request->nid;
-        $data['person_photo'] = $request->person_photo;
-        $data['dob'] = $request->dob;
-        return $data;
-    }
-
-    private function storeData($request, $faceVerificationData, $profileNIDSubmissionRepo)
-    {
-        $profile_id = $request->auth_user->getProfile()->id;
-        $submitted_by = get_class($request->auth_user->getResource());
-        $faceVerify = array_except($faceVerificationData['data'], ['message', 'verification_percentage']);
-        $faceVerify = json_encode($faceVerify);
-        $log = "NID submitted by the user";
-
-        $requestedData = [
-            'nid' => $request->nid,
-            'person_photo' => $request->person_photo,
-            'dob' => $request->dob,
-        ];
-        $requestedData = json_encode($requestedData);
-
-        $porichoyNIDSubmission = $profileNIDSubmissionRepo->where('profile_id', $profile_id)
-                ->where('submitted_by', $submitted_by)
-                ->where('nid_no', $request->nid)
-                ->orderBy('id', 'desc')->first();
-
-        $porichoyNIDSubmission->update(['porichoy_request' => $requestedData, 'porichy_data' => $faceVerify, 'created_at' => Carbon::now()->toDateTimeString()]);
-
-//        Job::whereHas('partnerOrder', function ($q) {
-//            $q->whereHas('order', function ($q) {
-//                $q->whereHas('subscription', function ($q) {
-//                    $q->where('subscription_orders.id', $this->subscriptionOrder->id);
-//                });
-//            });
-//        })->update(['commission_rate' => $commissions->getServiceCommission(), 'material_commission_rate' => $commissions->getMaterialCommission()]);
+        try {
+            $data = Statics::getLivelinessConfigurations();
+            return api_response($request, null, 200, ['data' => $data]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
     }
 
     /**
      * @param Request $request
      * @return JsonResponse
      */
-    public function getLivelinessCredentials(Request $request): JsonResponse
+    public function getUserNidData(Request $request)
     {
         try {
-            $data = Statics::getLivelinessConfigurations();
+            $api = 'user-nid-data?nid=' . $request->nid;
+            $data = $this->client->get($api);
             return api_response($request, null, 200, ['data' => $data]);
         } catch (\Throwable $e) {
             logError($e);
