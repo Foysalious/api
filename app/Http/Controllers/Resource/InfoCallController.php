@@ -224,7 +224,7 @@ class InfoCallController extends Controller
                 $info_call_details['order_created_at'] = $order[0]->created_at->toDateTimeString();
                 $partner_order = PartnerOrder::where('order_id', $order[0]->id)->get()->last()->toArray();
                 $job = $partner_order ? Job::where('partner_order_id', $partner_order['id'])->get()->last()->toArray() : null;
-                $resource_transaction = $job ? DB::table('resource_transactions')->where('resource_id',$resource_id)->where('job_id', $job['id'])->get() : null;
+                $resource_transaction = $job ? DB::table('resource_transactions')->where('resource_id',$resource_id)->where('job_id', $job['id'])->get()->toArray() : null;
                 if ($resource_transaction!=null) $reward_amount = array_sum(array_column($resource_transaction, 'amount'));
                 else $reward_amount = 0;
                 if ($partner_order['closed_and_paid_at'] != null) {
