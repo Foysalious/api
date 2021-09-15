@@ -81,6 +81,13 @@ return [
             'queue' => 'business_notification',
             'expire' => 60
         ],
+        'invoice_generation' => [
+            'driver' => 'redis',
+            'connection' => 'default',
+            'queue' => 'invoice_generation',
+            'expire' => 60
+        ]
+        ],
         'pos_rebuild_data_migration' => [
             'driver' => 'redis',
             'connection' => 'default',
