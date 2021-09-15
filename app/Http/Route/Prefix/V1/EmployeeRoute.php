@@ -96,6 +96,7 @@ class EmployeeRoute
                 $api->get('/settings', 'Employee\LeaveController@getLeaveSettings');
                 $api->post('/', 'Employee\LeaveController@store');
                 $api->get('/reject-reasons', 'Employee\LeaveController@rejectReasons');
+                $api->get('policy-settings', 'Employee\LeaveController@getPolicySettings');
                 $api->group(['prefix' => '{leave}'], function ($api) {
                     $api->get('/', 'Employee\LeaveController@show');
                     $api->post('/', 'Employee\LeaveController@updateStatus');
