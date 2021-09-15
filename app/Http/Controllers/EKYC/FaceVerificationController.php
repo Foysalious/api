@@ -71,4 +71,20 @@ class FaceVerificationController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getUserNidData(Request $request)
+    {
+        try {
+            $api = 'user-nid-data?nid=' . $request->nid;
+            $data = $this->client->get($api);
+            return api_response($request, null, 200, ['data' => $data]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
+    }
 }
