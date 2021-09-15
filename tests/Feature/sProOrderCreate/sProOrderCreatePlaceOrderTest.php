@@ -23,6 +23,8 @@ class sProOrderCreatePlaceOrderTest extends FeatureTestCase
 
         DB::table('salesman')->truncate();
 
+        DB::table('partner_service')->delete();
+
         $this->truncateTable(Category::class);
 
         $this->truncateTable(Service::class);
@@ -70,7 +72,13 @@ class sProOrderCreatePlaceOrderTest extends FeatureTestCase
             'resource_id' => $this->resource->id,
         ]);
 
+        $this->partner_resource ->update([
+            'resource_type' => 'Handyman'
+        ]);
+
         DB::insert('insert into salesman(partner_id) values (?)', [$this->partner->id]);
+
+        DB::insert('insert into partner_service(partner_id, service_id, is_verified) values (?, ?, ?)', [$this->partner->id, $this->service->id, 1]);
 
     }
 
@@ -88,7 +96,7 @@ class sProOrderCreatePlaceOrderTest extends FeatureTestCase
             'mobile' => "01835559988",
             'sales_channel' => "Web",
             'payment_method' => "cod",
-            'date' => '2021-09-14',
+            'date' => '2021-09-16',
             'time' => '15:00:00-16:00:00',
             'location_id' => 4,
             'address' => 'Michael road',

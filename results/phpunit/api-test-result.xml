@@ -2,7 +2,7 @@
 <testsuites>
   <testsuite name="Application Test Suite" tests="1" assertions="0" failures="0" errors="1" time="0.000000">
     <testsuite name="Tests\Feature\sProOrderCreate\sProOrderCreatePlaceOrderTest" file="/var/www/tests/Feature/sProOrderCreate/sProOrderCreatePlaceOrderTest.php" tests="1" assertions="0" failures="0" errors="1" time="0.000000">
-      <testcase name="testSProPlaceOrderAPIWithValidBody" class="Tests\Feature\sProOrderCreate\sProOrderCreatePlaceOrderTest" file="/var/www/tests/Feature/sProOrderCreate/sProOrderCreatePlaceOrderTest.php" line="77" assertions="0" time="0.000000">
+      <testcase name="testSProPlaceOrderAPIWithValidBody" class="Tests\Feature\sProOrderCreate\sProOrderCreatePlaceOrderTest" file="/var/www/tests/Feature/sProOrderCreate/sProOrderCreatePlaceOrderTest.php" line="85" assertions="0" time="0.000000">
         <error type="PHPUnit_Framework_Exception">Tests\Feature\sProOrderCreate\sProOrderCreatePlaceOrderTest::testSProPlaceOrderAPIWithValidBody
 PHPUnit_Framework_Exception: array:3 [
   "code" =&gt; 403
@@ -51,7 +51,7 @@ PHPUnit_Framework_Exception: array:3 [
       "/var/www/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php(515)" =&gt; "Illuminate\Foundation\Http\Kernel-&gt;handle(Object(Illuminate\Http\Request))"
       "/var/www/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php(127)" =&gt; "Illuminate\Foundation\Testing\TestCase-&gt;call('POST', 'http://api.sheb...', Array, Array, Array, Array)"
       "/var/www/tests/Feature/FeatureTestCase.php(125)" =&gt; "Illuminate\Foundation\Testing\TestCase-&gt;post('http://api.sheb...', Array, Array)"
-      "/var/www/tests/Feature/sProOrderCreate/sProOrderCreatePlaceOrderTest.php(97)" =&gt; "Tests\Feature\FeatureTestCase-&gt;post('http://api.sheb...', Array, Array)"
+      "/var/www/tests/Feature/sProOrderCreate/sProOrderCreatePlaceOrderTest.php(105)" =&gt; "Tests\Feature\FeatureTestCase-&gt;post('http://api.sheb...', Array, Array)"
       "/var/www/vendor/phpunit/phpunit/src/Framework/TestCase.php(908)" =&gt; "ReflectionMethod-&gt;invokeArgs(Object(Tests\Feature\sProOrderCreate\sProOrderCreatePlaceOrderTest), Array)"
       "/var/www/vendor/phpunit/phpunit/src/Framework/TestCase.php(768)" =&gt; "PHPUnit_Framework_TestCase-&gt;runTest()"
       "/var/www/vendor/phpunit/phpunit/src/Framework/TestResult.php(612)" =&gt; "PHPUnit_Framework_TestCase-&gt;runBare()"
