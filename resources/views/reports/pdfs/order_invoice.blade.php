@@ -49,7 +49,7 @@
                                         <span style="">Bill to</span><br>
                                         <span style="">{{ucfirst($user['name'])}}</span><br>
                                         <span style="">{{$user['mobile']}}</span><br>
-                                        @if($user['address'])
+                                        @if(isset($user['address']))
                                         <span style="">{{$user['address']}}</span>
                                         @endif
                                     </div>

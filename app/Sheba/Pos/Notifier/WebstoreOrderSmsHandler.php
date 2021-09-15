@@ -3,6 +3,8 @@
 use App\Models\Partner;
 use App\Models\PosOrder;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
+use App\Sheba\Pos\Order\Invoice\InvoiceService;
+use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Sms\BusinessType;
 use Sheba\Sms\FeatureType;
 use Sheba\Dal\POSOrder\OrderStatuses;
@@ -58,6 +60,7 @@ class WebstoreOrderSmsHandler
         $message_data = [
             'order_id' => $this->order->partner_wise_order_id
         ];
+        $invoice_link =   $this->order->invoice ? : $this->resolveInvoiceLink() ;
 
         if ($this->order->status == OrderStatuses::PROCESSING) {
             $sms_handler = (new SmsHandlerRepo('pos-order-accept-customer'));
@@ -71,7 +74,9 @@ class WebstoreOrderSmsHandler
             $sms_handler = (new SmsHandlerRepo('pos-order-place-customer'));
             $message_data += [
                 'net_bill' => $this->order->getNetBill(),
-                'payment_status' => $this->order->getPaid() ? 'প্রদত্ত' : 'বকেয়া'
+                'payment_status' => $this->order->getPaid() ? 'প্রদত্ত' : 'বকেয়া',
+                'store_name' => $this->order->partner->name,
+                'invoice_link' => $invoice_link
             ];
         }
         return $sms_handler
@@ -79,5 +84,15 @@ class WebstoreOrderSmsHandler
             ->setFeatureType(FeatureType::WEB_STORE)
             ->setBusinessType(BusinessType::SMANAGER)
             ->setMessage($message_data);
+    }
+
+    /**
+     * @throws NotAssociativeArray
+     */
+    private function resolveInvoiceLink()
+    {
+        /** @var InvoiceService $invoiceService */
+        $invoiceService = app(InvoiceService::class)->setPosOrder($this->order);
+        return $invoiceService->generateInvoice()->saveInvoiceLink()->getInvoiceLink();
     }
 }
