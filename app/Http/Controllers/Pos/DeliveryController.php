@@ -2,10 +2,12 @@
 
 use App\Exceptions\DoNotReportException;
 use App\Http\Controllers\Controller;
+use App\Models\PosOrder;
 use App\Sheba\Partner\Delivery\DeliveryService;
 use App\Sheba\Partner\Delivery\Exceptions\DeliveryCancelRequestError;
 use App\Sheba\Partner\Delivery\Methods;
 use App\Sheba\Partner\Delivery\OrderPlace;
+use App\Sheba\Partner\Delivery\Statuses;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -266,6 +268,28 @@ class DeliveryController extends Controller
             return Str::substr($header, 7);
         }
         return false;
+    }
+
+    public function deliveryStatusUpdate(Request $request, DeliveryService $delivery_service)
+    {
+        $this->validate($request, [
+            'order_ref_no' => 'required',
+            'status' => "required|string" ,
+            'merchant_code' => "required|string"
+        ]);
+
+        $delivery_service->setToken($this->bearerToken($request))->updateDeliveryStatus($request->merchant_code, $request->order_ref_no);
+
+
+        /** @var PosOrder $pos_order */
+        $pos_order  = $delivery_service->getPosOrderByDeliveryReqId($request->order_ref_no, $request->merchant_code);
+        if($pos_order) {
+            $delivery_service->setPartner($pos_order->partner)->setToken($this->bearerToken($request))->updateDeliveryStatus($pos_order);
+        } else {
+            return api_response($request, null, 200, ['message' => 'Order not found by delivery tracking id']);
+        }
+        return api_response($request, null, 200, ['message' => 'successful']);
+
     }
 
 }
