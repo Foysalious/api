@@ -154,23 +154,26 @@ class AttendanceController extends Controller
         }
 
         $all_employee_attendance = [];
-        if ($request->has('start_date') && $request->has('end_date')) {
-            $start_date = $request->start_date;
-            $end_date = $request->end_date;
-        } else {
-            $start_date = Carbon::now()->startOfMonth()->toDateString();
-            $end_date = Carbon::now()->endOfMonth()->toDateString();
-        }
-
         $business_holiday = $business_holiday_repo->getAllByBusiness($business);
         $business_weekend = $business_weekend_repo->getAllByBusiness($business);
         foreach ($business_members->get() as $business_member) {
+            if ($request->has('start_date') && $request->has('end_date')) {
+                $start_date = $request->start_date;
+                $end_date = $request->end_date;
+            } else {
+                $start_date = Carbon::now()->startOfMonth()->toDateString();
+                $end_date = Carbon::now()->endOfMonth()->toDateString();
+            }
             $member_name = $business_member->member->profile->name;
             /** @var BusinessMember $business_member */
             $member_department = $business_member->role ? $business_member->role->businessDepartment : null;
             $department_name = $member_department ? $member_department->name : 'N/S';
             $department_id = $member_department ? $member_department->id : 'N/S';
-
+            $business_member_joining_date = $business_member->join_date;
+            if ($business_member_joining_date >= $start_date && $business_member_joining_date <= $end_date) {
+                $start_date = $business_member_joining_date;
+                $end_date = $request->end_date;
+            }
             $time_frame = $time_frame->forDateRange($start_date, $end_date);
             $business_member_leave = $business_member->leaves()->accepted()->startDateBetween($time_frame)->endDateBetween($time_frame)->get();
             $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
@@ -352,6 +355,14 @@ class AttendanceController extends Controller
         $business_member = $business_member_repository->where('business_id', $business->id)->where('member_id', $member)->first();
 
         $time_frame = $time_frame->forDateRange($request->start_date, $request->end_date);
+        $business_member_joining_date = $business_member->join_date;
+        $joining_date = null;
+        if ($business_member_joining_date->format('Y-m-d') >= $request->start_date && $business_member_joining_date->format('Y-m-d') <= $request->end_date){
+            $joining_date = $business_member_joining_date->format('d F');
+            $start_date = $business_member_joining_date;
+            $end_date = $request->end_date;
+            $time_frame = $time_frame->forDateRange($start_date, $end_date);
+        }
 
         $business_member_leave = $business_member->leaves()->accepted()->between($time_frame)->get();
 
@@ -389,7 +400,8 @@ class AttendanceController extends Controller
                 'mobile' => $business_member->member->profile->mobile ?: 'N/S',
                 'designation' => $business_member->role ? $business_member->role->name : null,
                 'department' => $business_member->role && $business_member->role->businessDepartment ? $business_member->role->businessDepartment->name : null,
-            ]
+            ],
+            'joining_date' =>   $joining_date
         ]);
     }
 
