@@ -76,9 +76,15 @@ class ApprovalRequestController extends Controller
         else
             $approval_requests = $approval_request_repo->getApprovalRequestByBusinessMember($requester_business_member);
 
-        if ($request->has('limit')) $approval_requests = $approval_requests->splice($offset, $limit);
+        // Differ new & old approval request
+        $approval_requests_without_order = $approval_requests->where('order', null);
+        $approval_requests_with_order = $approval_requests->where('is_notified', 1);
+        $merged_approval_requests = $approval_requests_with_order->merge($approval_requests_without_order);
 
-        foreach ($approval_requests as $approval_request) {
+
+        if ($request->has('limit')) $merged_approval_requests = $merged_approval_requests->splice($offset, $limit);
+
+        foreach ($merged_approval_requests as $approval_request) {
             if (!$approval_request->requestable) continue;
             /** @var Leave $requestable */
             $requestable = $approval_request->requestable;
