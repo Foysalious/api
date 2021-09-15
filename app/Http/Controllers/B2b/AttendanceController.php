@@ -170,7 +170,9 @@ class AttendanceController extends Controller
             $department_name = $member_department ? $member_department->name : 'N/S';
             $department_id = $member_department ? $member_department->id : 'N/S';
             $business_member_joining_date = $business_member->join_date;
+            $joining_prorated = null;
             if ($business_member_joining_date >= $start_date && $business_member_joining_date <= $end_date) {
+                $joining_prorated = 1;
                 $start_date = $business_member_joining_date;
                 $end_date = $request->end_date;
             }
@@ -191,7 +193,8 @@ class AttendanceController extends Controller
                     'id' => $department_id,
                     'name' => $department_name,
                 ],
-                'attendance' => $employee_attendance['statistics']
+                'attendance' => $employee_attendance['statistics'],
+                'joining_prorated' => $joining_prorated ? 'Yes' : 'No'
             ]);
 
         }

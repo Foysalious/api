@@ -68,12 +68,13 @@ class Excel
                 'absent' => $employee['attendance']['absent'],
                 'total_hours' => $employee['attendance']['total_hours'],
                 'overtime' => $employee['attendance']['overtime'],
+                'joining_prorated' => $employee['joining_prorated']
             ]);
         }
     }
 
     private function getHeaders()
     {
-        return ['Employee ID', 'Employee Name', 'Department', 'Working Days', 'Present', 'On time', 'Late', 'Left Timely', 'Left early', 'On leave', 'Absent', 'Total Hours', 'Overtime'];
+        return ['Employee ID', 'Employee Name', 'Department', 'Working Days', 'Present', 'On time', 'Late', 'Left Timely', 'Left early', 'On leave', 'Absent', 'Total Hours', 'Overtime', 'Joining Prorated'];
     }
 }
