@@ -112,6 +112,7 @@ class NidFaceVerification
         $new_data['nid_address'] = $porichoy_data['permanent_address'];
         $new_data['nid_verified'] = 1;
         $new_data['nid_verification_date'] = Carbon::now()->toDateTimeString();
+        $new_data['dob'] = Carbon::parse($porichoy_data['dob'])->format("Y-m-d");
         return $new_data;
     }
 }
