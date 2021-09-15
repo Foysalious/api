@@ -65,7 +65,7 @@ class FaceVerificationController extends Controller
             }
             elseif($status === Statics::UNVERIFIED) $this->nidFaceVerification->unverifiedChanges($profile);
             $personPhoto = $this->nidFaceVerification->imageUpload($request, $profile);
-            $this->storeData($request, $faceVerificationData, $profileNIDSubmissionRepo);
+            $this->nidFaceVerification->storeData($request, $faceVerificationData, $profileNIDSubmissionRepo);
             return api_response($request, null, 200, ['data' => Statics::faceVerificationResponse($status, $faceVerificationData['data']['message'])]);
         } catch (ValidationException $exception) {
             $msg = getValidationErrorMessage($exception->validator->errors()->all());
@@ -73,6 +73,7 @@ class FaceVerificationController extends Controller
         } catch (EKycException $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         } catch (\Throwable $e) {
+            dd($e);
             return api_response($request, null, 500);
         }
     }
