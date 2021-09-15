@@ -278,11 +278,11 @@ class DeliveryController extends Controller
             'merchant_code' => "required|string"
         ]);
         /** @var PosOrder $pos_order */
-        $pos_order  = $delivery_service->getPosOrderByDeliveryReqId($request->merchant_code,$request->order_ref_no);
-        if($pos_order && $request->status == Statuses::DELIVERED) {
+        $pos_order  = $delivery_service->getPosOrderByDeliveryReqId($request->order_ref_no);
+        if($pos_order) {
             $delivery_service->setPartner($pos_order->partner)->setToken($this->bearerToken($request))->updateDeliveryStatus($pos_order);
         } else {
-            return api_response($request, null, 200, ['message' => 'Order not found']);
+            return api_response($request, null, 200, ['message' => 'Order not found by delivery tracking id']);
         }
         return api_response($request, null, 200, ['message' => 'successful']);
 

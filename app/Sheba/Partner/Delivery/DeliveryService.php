@@ -530,25 +530,19 @@ class DeliveryService
     }
 
     /**
-     * @param string $merchant_id
      * @param string $delivery_req_id
      * @return false | PosOrder
      */
-    public function getPosOrderByDeliveryReqId(string $merchant_id,string $delivery_req_id)
+    public function getPosOrderByDeliveryReqId(string $delivery_req_id)
     {
-        $partner_delivery = $this->partnerDeliveryInfoRepositoryInterface->where('merchant_id',$merchant_id)->first();
-        $pos_order  = $partner_delivery ? PosOrder::where('delivery_request_id', $delivery_req_id)->where('partner_id',$partner_delivery->partner_id)->first() : null;
-        return $pos_order ?: false;
+        $pos_order  = PosOrder::where('delivery_request_id', $delivery_req_id)->first();
+        return $pos_order;
     }
 
-    /**
-     * @throws DoNotReportException
-     */
     public function updateDeliveryStatus(PosOrder $pos_order)
     {
         $this->posOrder = $pos_order;
         $data = $this->getDeliveryStatus();
-        $data['status'] = Statuses::DELIVERED;
         if($data['status'] == Statuses::DELIVERED) {
             $pos_order->delivery_status = $data['status'];
             $pos_order->status = OrderStatuses::COMPLETED;
