@@ -86,7 +86,6 @@ return [
             'connection' => 'default',
             'queue' => 'invoice_generation',
             'expire' => 60
-        ]
         ],
         'pos_rebuild_data_migration' => [
             'driver' => 'redis',
