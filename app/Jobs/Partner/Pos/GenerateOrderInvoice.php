@@ -36,6 +36,6 @@ class GenerateOrderInvoice extends MonitoredJob implements ShouldQueue
 
     protected function getTitle()
     {
-        return "Invoice Generation Job. Pos Order Id #" . $this->model->id;
+        return "Invoice Generation Job";
     }
 }
