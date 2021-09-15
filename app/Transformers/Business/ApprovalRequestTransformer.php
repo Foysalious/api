@@ -60,7 +60,6 @@ class ApprovalRequestTransformer extends TransformerAbstract
 
         return [
             'id' => $approval_request->id,
-            'id44' => $this->requesterBusinessMember->id,
             'type' => Type::LEAVE,
             'status' => ApprovalRequestPresenter::statuses()[$approval_request->status],
             'created_at' => $approval_request->created_at->format('M d, Y'),
