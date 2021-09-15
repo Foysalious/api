@@ -163,6 +163,7 @@ class Payable extends Model
         } elseif ($this->user instanceof Business) {
             return $this->user->email;
         }
+        return '';
     }
 
     public function getName()
