@@ -279,9 +279,11 @@ class ShebaController extends Controller
                 'address'  => $receiver->address
             ],
             'payer'            => [
-                'id'     => $payer->id,
-                'name'   => $payer->name,
-                'mobile' => $payer->mobile
+                'id'        => $payer->id,
+                'name'      => $payer->name,
+                'mobile'    => $payer->mobile,
+                'address'   => $payer->address,
+                'email'     => $payer->email
             ]
         ];
     }
