@@ -13,7 +13,8 @@ use Sheba\EKYC\Exceptions\EKycException;
 use Sheba\EKYC\Exceptions\EkycServerError;
 use Sheba\EKYC\NidFaceVerification;
 use Sheba\EKYC\Statics;
-use Sheba\NeoBanking\NeoBanking;
+use Sheba\Repositories\AffiliateRepository;
+use Sheba\Repositories\ProfileRepository;
 
 
 class FaceVerificationController extends Controller
@@ -32,10 +33,11 @@ class FaceVerificationController extends Controller
     /**
      * @param Request $request
      * @param ProfileNIDSubmissionRepo $profileNIDSubmissionRepo
+     * @param ProfileRepository $profileRepository
      * @return JsonResponse
      * @throws GuzzleException
      */
-    public function faceVerification(Request $request, ProfileNIDSubmissionRepo $profileNIDSubmissionRepo): JsonResponse
+    public function faceVerification(Request $request, ProfileNIDSubmissionRepo $profileNIDSubmissionRepo, ProfileRepository $profileRepository): JsonResponse
     {
         try {
             $this->validate($request, Statics::faceVerificationValidate());
@@ -45,7 +47,7 @@ class FaceVerificationController extends Controller
             $status = ($faceVerificationData['data']['status']);
             if($status === Statics::ALREADY_VERIFIED || $status === Statics::VERIFIED) {
                 $status = Statics::VERIFIED;
-                $this->nidFaceVerification->verifiedChanges($faceVerificationData['data'], $request->auth_user->getProfile());
+                $this->nidFaceVerification->verifiedChanges($faceVerificationData['data'], $profile);
             }
             $this->nidFaceVerification->makeProfileAdjustment($request, $profile);
             $this->nidFaceVerification->storeData($request, $faceVerificationData, $profileNIDSubmissionRepo);

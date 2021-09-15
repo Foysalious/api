@@ -2,10 +2,12 @@
 
 namespace Sheba\EKYC;
 
+use App\Repositories\ResourceRepository;
+use Carbon\Carbon;
+use Sheba\Repositories\AffiliateRepository;
 use App\Http\Requests\Request;
 use App\Repositories\FileRepository;
 use App\Sheba\DigitalKYC\Partner\ProfileUpdateRepository;
-use Carbon\Carbon;
 use Sheba\Repositories\ProfileRepository;
 use Sheba\Repositories\ProfileRepository as ShebaProfileRepository;
 
@@ -26,6 +28,24 @@ class NidFaceVerification
     {
         $data = $this->makeData($data);
         $this->profileRepo->updateRaw($profile, $data);
+        if(isset($profile->resource)) (new ResourceRepository($profile->resource))->update([
+            "status" => 'verified',
+            "is_verified" => 1,
+            "verified_at" => Carbon::now()->toDateTimeString(),
+        ]);
+    }
+
+    public function unverifiedChanges($profile) {
+        if(isset($profile->resource)) (new ResourceRepository($profile->resource))->update([
+            "status" => 'rejected'
+        ]);
+    }
+
+    public function beforePorichoyCallChanges($profile)
+    {
+        $this->profileRepo->increase_verification_request_count($profile);
+        if(isset($profile->resource)) (new ResourceRepository($profile->resource))->setToPendingStatus();
+        elseif(isset($profile->affiliate)) (new AffiliateRepository())->updateVerificationStatus($profile->affiliate);
     }
 
     /**
@@ -82,7 +102,7 @@ class NidFaceVerification
 
     }
 
-    private function makeData($data)
+    private function makeData($data): array
     {
         $porichoy_data = $data['porichoy_data'];
         $new_data['name'] = $porichoy_data['name_en'];
@@ -92,6 +112,8 @@ class NidFaceVerification
         $new_data['address'] = $porichoy_data['present_address'];
         $new_data['permanent_address'] = $porichoy_data['permanent_address'];
         $new_data['nid_address'] = $porichoy_data['permanent_address'];
+        $new_data['nid_verified'] = 1;
+        $new_data['nid_verification_date'] = Carbon::now()->toDateTimeString();
         return $new_data;
     }
 }
