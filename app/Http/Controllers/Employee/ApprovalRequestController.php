@@ -58,16 +58,19 @@ class ApprovalRequestController extends Controller
         $this->validate($request, ['type' => 'sometimes|string|in:' . implode(',', Type::get())]);
         /** @var Business $business */
         $business = $this->getBusiness($request);
-        /** @var BusinessMember $business_member */
-        $business_member = $this->getBusinessMember($request);
+        /**
+         * @var BusinessMember $requester_business_member
+         * means who is request for the approval list
+         */
+        $requester_business_member = $this->getBusinessMember($request);
         $approval_requests_list = [];
 
         list($offset, $limit) = calculatePagination($request);
 
         if ($request->has('type'))
-            $approval_requests = $approval_request_repo->getApprovalRequestByBusinessMemberFilterBy($business_member, $request->type);
+            $approval_requests = $approval_request_repo->getApprovalRequestByBusinessMemberFilterBy($requester_business_member, $request->type);
         else
-            $approval_requests = $approval_request_repo->getApprovalRequestByBusinessMember($business_member);
+            $approval_requests = $approval_request_repo->getApprovalRequestByBusinessMember($requester_business_member);
 
         if ($request->has('limit')) $approval_requests = $approval_requests->splice($offset, $limit);
 
@@ -82,7 +85,7 @@ class ApprovalRequestController extends Controller
 
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($approval_request, new ApprovalRequestTransformer($profile, $business));
+            $resource = new Item($approval_request, new ApprovalRequestTransformer($profile, $business, $requester_business_member));
             $approval_request = $manager->createData($resource)->toArray()['data'];
 
             array_push($approval_requests_list, $approval_request);

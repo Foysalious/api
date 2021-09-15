@@ -1,6 +1,7 @@
 <?php namespace App\Transformers\Business;
 
 use App\Models\Business;
+use App\Models\BusinessMember;
 use App\Models\Profile;
 use App\Sheba\Business\BusinessBasicInformation;
 use App\Sheba\Business\Leave\ApproverWithReason;
@@ -30,11 +31,13 @@ class ApprovalRequestTransformer extends TransformerAbstract
     private $requestableType;
     /*** @var ApprovalRequest */
     private $approvalRequest;
+    private $requesterBusinessMember;
 
-    public function __construct(Profile $profile, Business $business)
+    public function __construct(Profile $profile, Business $business , BusinessMember $requester_business_member)
     {
         $this->profile = $profile;
         $this->business = $business;
+        $this->requesterBusinessMember = $requester_business_member;
     }
 
     /**
@@ -47,7 +50,6 @@ class ApprovalRequestTransformer extends TransformerAbstract
         /** @var Leave $requestable */
         $requestable = $approval_request->requestable;
         $leave_type = $requestable->leaveType()->withTrashed()->first();
-        $approvers = $this->getApprover($requestable);
         $business_member = $requestable->businessMember;
         $substitute_business_member = $requestable->substitute;
         $substitute_member = $substitute_business_member ? $substitute_business_member->member : null;
@@ -58,6 +60,7 @@ class ApprovalRequestTransformer extends TransformerAbstract
 
         return [
             'id' => $approval_request->id,
+            'id44' => $this->requesterBusinessMember->id,
             'type' => Type::LEAVE,
             'status' => ApprovalRequestPresenter::statuses()[$approval_request->status],
             'created_at' => $approval_request->created_at->format('M d, Y'),
@@ -95,7 +98,7 @@ class ApprovalRequestTransformer extends TransformerAbstract
                 'total_leave_days' => $leave_type->total_days,
                 'super_admin_action_reason' => (new ApproverWithReason())->getRejectReason($this->approvalRequest, self::SUPER_ADMIN, null)
             ],
-            'approvers' => $approvers
+            'approvers' => $this->getApprover($requestable)
         ];
     }
 
@@ -112,7 +115,7 @@ class ApprovalRequestTransformer extends TransformerAbstract
             $profile = $member->profile;
             array_push($approvers, [
                 'name' => $profile->name,
-                'status' => $this->getApproverStatus($requestable, $approval_request),
+                'status' => $this->getApproverStatus($requestable, $approval_request, $business_member),
                 'reject_reason' => (new ApproverWithReason())->getRejectReason($this->approvalRequest, self::APPROVER, $business_member->id)
             ]);
         }
@@ -123,13 +126,14 @@ class ApprovalRequestTransformer extends TransformerAbstract
     /**
      * @param $requestable
      * @param $approval_request
+     * @param $business_member
      * @return string|null
      */
-    private function getApproverStatus($requestable, $approval_request)
+    private function getApproverStatus($requestable, $approval_request, $business_member)
     {
         if (ApprovalRequestPresenter::statuses()[$approval_request->status] !== ApprovalRequestStatus::PENDING)
             return ApprovalRequestPresenter::statuses()[$approval_request->status];
-        if ($requestable->status !== LeaveStatus::CANCELED && $approval_request->is_notified)
+        if ($requestable->status !== LeaveStatus::CANCELED && $approval_request->is_notified && ($this->requesterBusinessMember->id = $business_member->id))
             return ApprovalRequestPresenter::statuses()[$approval_request->status];
         return null;
     }
