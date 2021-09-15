@@ -44,7 +44,6 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
     {
         $profile_data = $this->profileDataFormat($data);
         unset($profile_data['remember_token']);
-        dd($profile_data);
         return $profile->update($this->withUpdateModificationField($profile_data));
     }
 
