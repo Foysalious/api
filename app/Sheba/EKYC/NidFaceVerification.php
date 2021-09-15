@@ -6,6 +6,7 @@ use App\Http\Requests\Request;
 use App\Repositories\FileRepository;
 use App\Sheba\DigitalKYC\Partner\ProfileUpdateRepository;
 use Carbon\Carbon;
+use Sheba\Repositories\ProfileRepository;
 use Sheba\Repositories\ProfileRepository as ShebaProfileRepository;
 
 class NidFaceVerification
@@ -27,34 +28,36 @@ class NidFaceVerification
         $this->profileRepo->updateRaw($profile, $data);
     }
 
-    public function imageUpload($request, $profile)
+    /**
+     * @param $request
+     * @param $profile
+     */
+    public function makeProfileAdjustment($request, $profile)
     {
         $photo = $request->file('person_photo');
+        /** @var ProfileRepository $profile_repo */
+        $profile_repo  = app()->make(ProfileRepository::class);
         if (basename($profile->pro_pic) != 'default.jpg') {
             $filename = substr($profile->pro_pic, strlen(env('S3_URL')));
             $this->fileRepo->deleteFileFromCDN($filename);
         }
-
-        $filename = Carbon::now()->timestamp . '_profile_image_' . $profile->id . '.' . $photo->extension();
-        $picture_link = $this->fileRepo->uploadToCDN($filename, $photo, 'images/profiles/');
-        if ($picture_link == false) return response()->json(['code' => 404, 'message' => 'fail', 'picture' => null]);
-
+        $filename = Carbon::now()->timestamp . '_profile_image_' . $profile->id;
+        $picture_link = $profile_repo->saveProPic($photo, $filename);
         $profile->pro_pic = $picture_link;
-        $profile->update();
+        $profile->nid_no = $request->nid;
+        $profile->save();
     }
 
+    /**
+     * @param $request
+     * @return array
+     */
     public function formatToData($request)
     {
         $data['nid'] = $request->nid;
         $data['pro_pic'] = $request->file('person_photo');
         $data['dob'] = $request->dob;
         return $data;
-    }
-
-    public function makeProfileAdjustment($profile, $requestedData)
-    {
-        $data = $this->profileUpdate->createDataForPorichoyEkyc($requestedData);
-        return $this->profileRepo->update($profile, $data);
     }
 
     public function storeData($request, $faceVerificationData, $profileNIDSubmissionRepo)
@@ -66,7 +69,6 @@ class NidFaceVerification
 
         $requestedData = [
             'nid' => $request->nid,
-            'person_photo' => $request->person_photo,
             'dob' => $request->dob,
         ];
         $requestedData = json_encode($requestedData);
