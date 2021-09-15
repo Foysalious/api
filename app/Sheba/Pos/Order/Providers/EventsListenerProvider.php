@@ -1,11 +1,11 @@
 <?php namespace App\Sheba\Pos\Order\Providers;
 
 use App\Sheba\Pos\Order\Listeners\PosOrderSaved as PosOrderSavedListener;
-use Illuminate\Contracts\Events\Dispatcher;
-use Illuminate\Support\ServiceProvider;
+use Illuminate\Foundation\Support\Providers\EventServiceProvider;
+use Illuminate\Support\Facades\Event;
 use Sheba\Dal\POSOrder\Events\PosOrderSaved as PosOrderSavedEvent;
 
-class EventsListenerProvider extends ServiceProvider
+class EventsListenerProvider extends EventServiceProvider
 {
     /**
      * Register the service provider.
@@ -17,13 +17,9 @@ class EventsListenerProvider extends ServiceProvider
         // TODO: Implement register() method.DalEventsListenerProvider
     }
 
-    /**
-     * @param Dispatcher $events
-     */
-    public function boot(Dispatcher $events)
+    public function boot()
     {
-        parent::boot($events);
-        $events->listen(PosOrderSavedEvent::class, PosOrderSavedListener::class);
-
+        parent::boot();
+        Event::listen(PosOrderSavedEvent::class, PosOrderSavedListener::class);
     }
 }
