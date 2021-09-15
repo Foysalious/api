@@ -36,8 +36,14 @@ class NidFaceVerification
     }
 
     public function unverifiedChanges($profile) {
+        $this->profileRepo->updateRaw($profile, [
+            'nid_verified' => 0,
+            'nid_verification_date' => null
+        ]);
         if(isset($profile->resource)) (new ResourceRepository($profile->resource))->update([
-            "status" => 'rejected'
+            "status" => 'rejected',
+            "is_verified" => 0,
+            "verified_at" => null
         ]);
     }
 
@@ -98,7 +104,13 @@ class NidFaceVerification
             ->where('nid_no', $request->nid)
             ->orderBy('id', 'desc')->first();
 
-        $porichoyNIDSubmission->update(['porichoy_request' => $requestedData, 'porichy_data' => $faceVerify, 'created_at' => Carbon::now()->toDateTimeString()]);
+        $porichoyNIDSubmission->update([
+            'porichoy_request'    => $requestedData,
+            'porichy_data'        => $faceVerify,
+            "verification_status" => ($faceVerificationData['data']['status'] === "verified" || $faceVerificationData['data']['status'] === "already_verified") ? "approved" : "rejected",
+            "rejection_reasons"   => $faceVerificationData['data']['reject_reason'] ?? json_encode($faceVerificationData['data']['reject_reason']),
+            'created_at'          => Carbon::now()->toDateTimeString()
+        ]);
 
     }
 
