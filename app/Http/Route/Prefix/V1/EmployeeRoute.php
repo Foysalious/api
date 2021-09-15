@@ -87,6 +87,7 @@ class EmployeeRoute
                 $api->post('action', 'Employee\AttendanceController@takeAction');
                 $api->get('today', 'Employee\AttendanceController@getTodaysInfo');
                 $api->post('note', 'Employee\AttendanceController@storeNote');
+                $api->get('policy', 'Employee\AttendanceController@getAttendancePolicy');
             });
             $api->group(['prefix' => 'leaves'], function ($api) {
                 $api->get('/', 'Employee\LeaveController@index');
