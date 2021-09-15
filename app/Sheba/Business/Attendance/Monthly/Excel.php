@@ -40,7 +40,7 @@ class Excel
                 $sheet->fromArray($this->data, null, 'A1', true, false);
                 $sheet->prependRow($this->getHeaders());
                 $sheet->freezeFirstRow();
-                $sheet->cell('A1:M1', function ($cells) {
+                $sheet->cell('A1:N1', function ($cells) {
                     $cells->setFontWeight('bold');
                 });
                 $sheet->getDefaultStyle()->getAlignment()->applyFromArray(
