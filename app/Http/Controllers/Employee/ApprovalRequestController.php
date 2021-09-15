@@ -113,9 +113,12 @@ class ApprovalRequestController extends Controller
         $requestable = $approval_request->requestable;
         /** @var Business $business */
         $business = $this->getBusiness($request);
-        /** @var BusinessMember $business_member */
-        $business_member = $this->getBusinessMember($request);
-        if ($business_member->id != $approval_request->approver_id)
+        /**
+         * @var BusinessMember $requester_business_member
+         * means who is request for the approval list
+         */
+        $requester_business_member = $this->getBusinessMember($request);
+        if ($requester_business_member->id != $approval_request->approver_id)
             return api_response($request, null, 403, ['message' => 'You Are not authorized to show this request']);
 
         /** @var BusinessMember $leave_requester_business_member */
@@ -129,7 +132,7 @@ class ApprovalRequestController extends Controller
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($approval_request, new ApprovalRequestTransformer($profile, $business));
+        $resource = new Item($approval_request, new ApprovalRequestTransformer($profile, $business,$requester_business_member));
         $approval_request = $manager->createData($resource)->toArray()['data'];
 
         $attachments = $this->getAttachments($requestable);
