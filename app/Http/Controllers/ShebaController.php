@@ -499,7 +499,7 @@ class ShebaController extends Controller
         if (!isset($info['payer'])) {
             /** @var Payable $payer */
             $payer = $payment->payable;
-            $info  = array_merge($info, ['payer' => ['name' => $payer->getName(), 'id' => $payer->user->id, 'mobile' => $payer->getMobile()]]);
+            $info  = array_merge($info, ['payer' => ['name' => $payer->getName(), 'id' => $payer->user->id, 'mobile' => $payer->getMobile(), 'address' => $payer->getAddress()]]);
         }
         return api_response($request, $info, 200, ['data' => $info]);
     }

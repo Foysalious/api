@@ -174,6 +174,15 @@ class Payable extends Model
         return '';
     }
 
+    public function getAddress()
+    {
+        if ($this->user instanceof Customer) return $this->user->profile->address;
+        if ($this->user instanceof Business) return $this->user->address;
+        if ($this->user instanceof Partner) return $this->user->address;
+        if ($this->user instanceof Affiliate) return $this->user->profile->address;
+        return '';
+    }
+
     public function payments()
     {
         return $this->hasMany(Payment::class);
