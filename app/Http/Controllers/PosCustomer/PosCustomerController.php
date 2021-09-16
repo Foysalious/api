@@ -28,7 +28,7 @@ class PosCustomerController extends Controller
     {
         $partner = $request->auth_user->getPartner();
         $customer_details = $this->posCustomerService->setPartner($partner)->setCustomerId($customerId)->getDetails();
-        return http_response($request, null, 200, ['message' => 'Successful', 'data' => $customer_details]);
+        return http_response($request, null, 200, ['message' => 'Successful', 'customers' => $customer_details]);
     }
 
     public function showCustomerByPartnerId(Request $request)
