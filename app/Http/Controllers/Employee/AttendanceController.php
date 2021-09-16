@@ -15,15 +15,16 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Business\Attendance\AttendanceCommonInfo;
 use Sheba\Business\Attendance\Setting\AttendanceSettingTransformer;
+use Sheba\Business\AttendanceActionLog\ActionChecker\ActionResultCodes;
+use Sheba\Dal\AttendanceActionLog\RemoteMode;
+use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
+use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
 use Sheba\Business\AttendanceActionLog\AttendanceAction;
 use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
-use Sheba\Dal\AttendanceActionLog\RemoteMode;
-use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Dal\BusinessOffice\Contract as BusinessOfficeRepoInterface;
-use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 
@@ -120,10 +121,20 @@ class AttendanceController extends Controller
             ->setLng($request->lng);
         $action = $attendance_action->doAction();
 
-        return response()->json(['code' => $action->getResultCode(),
-            'is_note_required' => $is_note_required,
-            'date' => Carbon::now()->format('jS F Y'),
-            'message' => $action->getResultMessage()]);
+        $response_data = $action->getResultCode() != ActionResultCodes::ALREADY_DEVICE_USED ?
+            [
+                'code' => $action->getResultCode(),
+                'is_note_required' => $is_note_required,
+                'date' => Carbon::now()->format('jS F Y'),
+                'message' => $action->getResultMessage()
+            ] : [
+                'code' => $action->getResultCode(),
+                'is_note_required' => 0,
+                'date' => Carbon::now()->format('jS F Y'),
+                'message' => $action->getResultMessage()
+            ];
+
+        return response()->json($response_data);
     }
 
     public function getTodaysInfo(Request $request, ActionProcessor $action_processor)
