@@ -336,8 +336,7 @@ class PartnerSubscriptionController extends Controller
     public function updateSubscriptionRenewalInfo(Request $request, PartnerSubscription $partnerSubscription)
     {
         try {
-            $this->validate(
-                $request,
+            $this->validate($request,
                 [
                     'auto_billing_activated' => 'boolean',
                     'subscription_renewal_warning' => 'boolean',
@@ -352,6 +351,7 @@ class PartnerSubscriptionController extends Controller
                 return api_response($request, $message, 200, ['message' => $message]);
             }
         } catch (Exception $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         }
     }
