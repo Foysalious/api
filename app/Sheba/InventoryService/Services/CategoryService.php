@@ -159,6 +159,7 @@ class CategoryService
                 'filename' => $this->thumb ? $this->thumb->getClientOriginalName() : ''
             ],
         ];
+        if (!$this->subCategories) return $data;
         $sub_category = [];
         foreach ( $this->subCategories as $key=>$value) {
             $sub_category [] =  ['name' => "sub_category[$key][name]", 'contents' => $value['name']];
