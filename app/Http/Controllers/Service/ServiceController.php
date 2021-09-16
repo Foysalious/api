@@ -50,20 +50,16 @@ class ServiceController extends Controller
         $service = Service::select('id', 'name', 'description_bn')->find($serviceId);
         if (!$service) return api_response($request, '', 404, ['message' => 'Service not found']);
 
-        $instructions = config('spro.instructions');
-        $instructions['service_details']['list'] = json_decode($service->description_bn);
-        $instructionKeys = config('spro.instruction_keys');
+        $instructions[] = config('spro.instructions.work_start');
 
-//        remove service instruction key, if the list is null or empty
-        if($instructions['service_details']['list'] === null || count($instructions['service_details']['list']) === 0){
-            unset($instructions['service_details']);
-            if (($key = array_search('service_details', $instructionKeys)) !== false) {
-                array_splice($instructionKeys, $key, 1);
-            }
+        $serviceDescriptionBn = json_decode($service->description_bn);
+        if (count($serviceDescriptionBn) > 0) {
+            config()->set('spro.instructions.service_details.list', $serviceDescriptionBn);
+            $instructions[] = config('spro.instructions.service_details');
         }
+        $instructions[] = config('spro.instructions.work_end');
 
         $data = [
-            'instruction_keys' => $instructionKeys,
             'instructions' => $instructions
         ];
         return api_response($request, $data, 200, ['data' => $data]);
