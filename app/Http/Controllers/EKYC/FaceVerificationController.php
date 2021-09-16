@@ -9,10 +9,8 @@ use Illuminate\Validation\ValidationException;
 use Sheba\Dal\ProfileNIDSubmissionLog\Contact as ProfileNIDSubmissionRepo;
 use Sheba\EKYC\EkycClient;
 use Sheba\EKYC\Exceptions\EKycException;
-use Sheba\EKYC\Exceptions\EkycServerError;
 use Sheba\EKYC\NidFaceVerification;
 use Sheba\EKYC\Statics;
-use Sheba\Repositories\AffiliateRepository;
 use Sheba\Repositories\ProfileRepository;
 
 
