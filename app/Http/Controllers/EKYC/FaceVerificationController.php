@@ -89,6 +89,11 @@ class FaceVerificationController extends Controller
 
     public function resubmitToPorichoy(Request $request, $id)
     {
-        return $id;
+        /**
+         * From line 44 the rest should be same
+         */
+        return $this->nidFaceVerification->resubmit($id);
+
+//        return $id;
     }
 }

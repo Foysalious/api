@@ -325,6 +325,9 @@ class Route
                 $api->get('get-liveliness-credentials', 'EKYC\FaceVerificationController@getLivelinessCredentials');
                 $api->get('get-user-data', 'EKYC\FaceVerificationController@getUserNidData');
             });
+            $api->group(['prefix'=>'ekyc', 'middleware' => 'shebaServer'], function ($api) {
+                $api->get('resubmit-nid/{id}', 'EKYC\FaceVerificationController@resubmitToPorichoy');
+            });
         });
         return $api;
     }

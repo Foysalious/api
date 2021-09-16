@@ -4,6 +4,7 @@ namespace Sheba\EKYC;
 
 use App\Repositories\ResourceRepository;
 use Carbon\Carbon;
+use Sheba\Dal\ProfileNIDSubmissionLog\Model as ProfileNIDSubmissionLog;
 use Sheba\Repositories\AffiliateRepository;
 use App\Http\Requests\Request;
 use App\Repositories\FileRepository;
@@ -134,5 +135,13 @@ class NidFaceVerification
         $new_data['nid_verification_date'] = Carbon::now()->toDateTimeString();
         $new_data['dob'] = Carbon::parse($porichoy_data['dob'])->format("Y-m-d");
         return $new_data;
+    }
+
+    public function resubmit($id)
+    {
+        $log = ProfileNIDSubmissionLog::find($id);
+        $nid = $log->nid_no;
+        dd($nid);
+        return ($log);
     }
 }
