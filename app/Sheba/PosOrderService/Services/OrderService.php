@@ -19,12 +19,12 @@ class OrderService
     private $token;
     private $skus, $discount, $paymentMethod, $paymentLinkAmount, $paidAmount;
     protected $emi_month, $interest, $bank_transaction_charge, $delivery_name, $delivery_mobile, $note, $voucher_id;
-    protected $filter_params;
     /**
      * @var mixed
      */
     private $isDiscountPercentage;
     protected $userId;
+    protected $filter_params;
 
     public function __construct(PosOrderServerClient $client, SmanagerUserServerClient $smanagerUserClient)
     {
@@ -92,6 +92,12 @@ class OrderService
         return $this;
     }
 
+    public function setPartnerId($partnerId)
+    {
+        $this->partnerId = $partnerId;
+        return $this;
+    }
+
     /**
      * @param mixed $filter_params
      * @return OrderService
@@ -99,12 +105,6 @@ class OrderService
     public function setFilterParams($filter_params)
     {
         $this->filter_params = $filter_params;
-        return $this;
-    }
-
-    public function setPartnerId($partnerId)
-    {
-        $this->partnerId = $partnerId;
         return $this;
     }
 

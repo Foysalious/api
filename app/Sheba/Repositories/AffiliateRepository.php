@@ -3,6 +3,7 @@
 use App\Models\Affiliate;
 use App\Models\AffiliateStatusChangeLog;
 use App\Models\AffiliateTransaction;
+use Sheba\Affiliate\VerificationStatus;
 use Sheba\Voucher\Creator\BroadcastPromo;
 use Sheba\Voucher\VoucherCodeGenerator;
 
@@ -34,5 +35,23 @@ class AffiliateRepository extends BaseRepository
     public function saveStatusChangeLog(Affiliate $affiliate, $data)
     {
         $affiliate->statusChangeLogs()->save(new AffiliateStatusChangeLog($this->withCreateModificationField($data)));
+    }
+
+    public function updateVerificationStatus(Affiliate $affiliate)
+    {
+        $previous_status = $affiliate->verification_status;
+        $pending_status = VerificationStatus::PENDING;
+
+        if ($previous_status != $pending_status) {
+            $affiliate->update($this->withUpdateModificationField(['verification_status' => $pending_status]));
+
+            $log_data = [
+                'from' => $previous_status,
+                'to' => $pending_status,
+                'log' => null,
+                'reason' => 're-submitted NID',
+            ];
+            $this->saveStatusChangeLog($affiliate, $log_data);
+        }
     }
 }

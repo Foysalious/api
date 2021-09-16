@@ -33,6 +33,20 @@ run_on_development() {
   ./bin/config_clear.sh
 }
 
+# USE ON STAGE
+run_on_stage() {
+  git fetch origin
+  reset="sudo git reset --hard origin/"
+  reset_branch="$reset$1"
+  eval "${reset_branch}"
+
+  . ./bin/parse_env.sh
+  ./bin/dcup.sh stage -d
+
+  ./bin/composer.sh install --no-interaction --ignore-platform-reqs
+  ./bin/config_clear.sh
+}
+
 branch=$1
 if [ -z "${branch}" ]; then
   branch="$(get_git_branch)"
@@ -42,6 +56,8 @@ if [ "${branch}" = "master" ]; then
   pull_from_docker_registry
 elif [ "${branch}" = "development" ]; then
   run_on_development "${branch}"
+elif [ "${branch}" = "release" ]; then
+  run_on_stage "${branch}"
 elif [ "${branch}" = "local" ]; then
   run_on_local
 fi

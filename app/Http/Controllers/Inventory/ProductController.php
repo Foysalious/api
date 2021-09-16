@@ -89,6 +89,8 @@ class ProductController extends Controller
             ->setVatPercentage($request->vat_percentage)
             ->setUnitId($request->unit_id)
             ->setProductDetails($request->product_details)
+            ->setDeletedImages($request->deleted_images)
+            ->setImages($request->file('images'))
             ->update();
         return http_response($request, null, 200, $product);
     }

@@ -13,7 +13,7 @@ class Statics
     {
         return [
             'nid' => 'required|digits_between:10,17',
-            'person_photo' => 'required | string',
+            'person_photo' => 'required | mimes:jpeg,jpg,png',
             'dob' => 'required|date_format:Y/m/d'
         ];
     }

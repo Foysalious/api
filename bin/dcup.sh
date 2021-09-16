@@ -8,6 +8,8 @@ if [[ $1 = "prod" ]]; then
   extra="-f $compose_folder/docker-compose.prod.yml"
 elif [[ $1 = "dev" ]]; then
   extra="-f $compose_folder/docker-compose.dev.yml"
+elif [[ $1 = "stage" ]]; then
+  extra="-f $compose_folder/docker-compose.stage.yml"
 elif [[ $1 = "local" ]]; then
   extra="-f $compose_folder/docker-compose.local.yml"
 fi
