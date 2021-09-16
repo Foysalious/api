@@ -9,7 +9,6 @@ use App\Http\Requests\Request;
 use App\Repositories\FileRepository;
 use App\Sheba\DigitalKYC\Partner\ProfileUpdateRepository;
 use Sheba\Repositories\ProfileRepository;
-use Sheba\Repositories\ProfileRepository as ShebaProfileRepository;
 
 class NidFaceVerification
 {
@@ -17,7 +16,7 @@ class NidFaceVerification
     private $profileRepo;
     private $fileRepo;
 
-    public function __construct(ProfileUpdateRepository $profileUpdate, ShebaProfileRepository $profileRepo, FileRepository $file_repository)
+    public function __construct(ProfileUpdateRepository $profileUpdate, ProfileRepository $profileRepo, FileRepository $file_repository)
     {
         $this->profileUpdate = $profileUpdate;
         $this->profileRepo = $profileRepo;
@@ -55,34 +54,41 @@ class NidFaceVerification
     }
 
     /**
-     * @param $request
+     * @param $photoLink
      * @param $profile
+     * @param $nid
      */
-    public function makeProfileAdjustment($request, $profile)
+    public function makeProfileAdjustment($photoLink, $profile, $nid)
     {
-        $photo = $request->file('person_photo');
-        /** @var ProfileRepository $profile_repo */
-        $profile_repo  = app()->make(ProfileRepository::class);
         if (basename($profile->pro_pic) != 'default.jpg') {
             $filename = substr($profile->pro_pic, strlen(env('S3_URL')));
             $this->fileRepo->deleteFileFromCDN($filename);
         }
-        $filename = Carbon::now()->timestamp . '_profile_image_' . $profile->id;
-        $picture_link = $profile_repo->saveProPic($photo, $filename);
-        $profile->pro_pic = $picture_link;
-        $profile->nid_no = $request->nid;
+        $profile->pro_pic = $photoLink;
+        $profile->nid_no = $nid;
         $profile->save();
+    }
+
+    public function getPersonPhotoLink($request, $profile): string
+    {
+        $photo = $request->file('person_photo');
+        /** @var ProfileRepository $profile_repo */
+        $profile_repo  = app()->make(ProfileRepository::class);
+        $filename = Carbon::now()->timestamp . '_profile_image_' . $profile->id;
+        return $profile_repo->saveProPic($photo, $filename);
     }
 
     /**
      * @param $request
+     * @param $photoLink
      * @return array
      */
-    public function formatToData($request)
+    public function formatToData($request, $photoLink): array
     {
         $data['nid'] = $request->nid;
         $data['pro_pic'] = $request->file('person_photo');
         $data['dob'] = $request->dob;
+        $data['selfie_photo'] = $photoLink;
         return $data;
     }
 
@@ -90,7 +96,7 @@ class NidFaceVerification
     {
         $profile_id = $request->auth_user->getProfile()->id;
         $submitted_by = get_class($request->auth_user->getResource());
-        $faceVerify = array_except($faceVerificationData['data'], ['message', 'verification_percentage']);
+        $faceVerify = array_except($faceVerificationData['data'], ['message', 'verification_percentage', 'reject_reason']);
         $faceVerify = json_encode($faceVerify);
 
         $requestedData = [
