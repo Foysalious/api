@@ -90,7 +90,7 @@ class NidFaceVerification
     {
         $profile_id = $request->auth_user->getProfile()->id;
         $submitted_by = get_class($request->auth_user->getResource());
-        $faceVerify = array_except($faceVerificationData['data'], ['message', 'verification_percentage']);
+        $faceVerify = array_except($faceVerificationData['data'], ['message', 'verification_percentage', 'reject_reason']);
         $faceVerify = json_encode($faceVerify);
 
         $requestedData = [
