@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\Controller;
 use App\Sheba\NID\Validations\NidValidation;
-use Carbon\Carbon;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -77,7 +76,7 @@ class FaceVerificationController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function getUserNidData(Request $request)
+    public function getUserNidData(Request $request): JsonResponse
     {
         try {
             $api = 'user-nid-data?nid=' . $request->nid;
