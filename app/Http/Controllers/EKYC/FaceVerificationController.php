@@ -48,7 +48,7 @@ class FaceVerificationController extends Controller
             if($status === Statics::ALREADY_VERIFIED || $status === Statics::VERIFIED) {
                 $status = Statics::VERIFIED;
                 $this->nidFaceVerification->verifiedChanges($faceVerificationData['data'], $profile);
-            }
+            } elseif($status === Statics::UNVERIFIED) $this->nidFaceVerification->unverifiedChanges($profile);
             $this->nidFaceVerification->makeProfileAdjustment($request, $profile);
             $this->nidFaceVerification->storeData($request, $faceVerificationData, $profileNIDSubmissionRepo);
             return api_response($request, null, 200, ['data' => Statics::faceVerificationResponse($status, $faceVerificationData['data']['message'])]);
