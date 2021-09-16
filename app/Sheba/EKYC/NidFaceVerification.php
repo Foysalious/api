@@ -108,7 +108,7 @@ class NidFaceVerification
             'porichoy_request'    => $requestedData,
             'porichy_data'        => $faceVerify,
             "verification_status" => ($faceVerificationData['data']['status'] === "verified" || $faceVerificationData['data']['status'] === "already_verified") ? "approved" : "rejected",
-            "rejection_reasons"   => $faceVerificationData['data']['reject_reason'] ?? json_encode($faceVerificationData['data']['reject_reason']),
+            "rejection_reasons"   => $faceVerificationData['data']['reject_reason'] ?? null,
             'created_at'          => Carbon::now()->toDateTimeString()
         ]);
 
