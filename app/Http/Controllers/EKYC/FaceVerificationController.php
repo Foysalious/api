@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\Controller;
 use App\Sheba\NID\Validations\NidValidation;
-use Carbon\Carbon;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -10,10 +9,8 @@ use Illuminate\Validation\ValidationException;
 use Sheba\Dal\ProfileNIDSubmissionLog\Contact as ProfileNIDSubmissionRepo;
 use Sheba\EKYC\EkycClient;
 use Sheba\EKYC\Exceptions\EKycException;
-use Sheba\EKYC\Exceptions\EkycServerError;
 use Sheba\EKYC\NidFaceVerification;
 use Sheba\EKYC\Statics;
-use Sheba\Repositories\AffiliateRepository;
 use Sheba\Repositories\ProfileRepository;
 
 
@@ -77,7 +74,7 @@ class FaceVerificationController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function getUserNidData(Request $request)
+    public function getUserNidData(Request $request): JsonResponse
     {
         try {
             $api = 'user-nid-data?nid=' . $request->nid;

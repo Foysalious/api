@@ -33,7 +33,7 @@ class NidOcr
         $data['id_back'] = $request->file('id_back');
         return $data;    }
 
-    public function storeData($request, $nidOcrData, $nid_no)
+    public function storeData($request, $nidOcrData, $nid_no, $business_name = "sManager", $feature_name = "NID Verification")
     {
         $profile_id = $request->auth_user->getProfile()->id;
         $submitted_by = get_class($request->auth_user->getResource());
@@ -46,6 +46,8 @@ class NidOcr
             "nid_no"     => $nid_no,
             'submitted_by' => $submitted_by,
             'nid_ocr_data' => $ocrData,
+            'business_name' => $business_name,
+            'feature_name' => $feature_name,
             'log' => $log
         ];
 
