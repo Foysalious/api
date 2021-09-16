@@ -163,12 +163,14 @@ class CategoryService
         $sub_category = [];
         foreach ( $this->subCategories as $key=>$value) {
             $sub_category [] =  ['name' => "sub_category[$key][name]", 'contents' => $value['name']];
-            $this->thumb = $value['thumb'];
-            $sub_category [] = [
-                'name' => "sub_category[$key][thumb]",
-                'contents' => $this->thumb ? File::get($this->thumb->getRealPath()) : null,
-                'filename' => $this->thumb ? $this->thumb->getClientOriginalName() : ''
-            ];
+            if(isset($value['thumb'])) {
+                $this->thumb = $value['thumb'];
+                $sub_category [] = [
+                    'name' => "sub_category[$key][thumb]",
+                    'contents' => $this->thumb ? File::get($this->thumb->getRealPath()) : null,
+                    'filename' => $this->thumb ? $this->thumb->getClientOriginalName() : ''
+                ];
+            }
         }
         return array_merge_recursive($data,$sub_category);
     }
