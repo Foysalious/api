@@ -97,7 +97,8 @@ class EkycClient
             $options['form_params'] = [
                 'nid' => $nid,
                 'person_photo' => $person_photo,
-                'dob' => $dob
+                'dob' => $dob,
+                'selfie_photo' => $data['selfie_photo']
             ];
         }
 
