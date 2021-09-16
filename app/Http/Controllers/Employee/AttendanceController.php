@@ -3,6 +3,7 @@
 use App\Sheba\Business\BusinessBasicInformation;
 use Illuminate\Support\Facades\Log;
 use Sheba\Business\Attendance\AttendanceCommonInfo;
+use Sheba\Business\AttendanceActionLog\ActionChecker\ActionResultCodes;
 use Sheba\Dal\AttendanceActionLog\RemoteMode;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
@@ -112,10 +113,20 @@ class AttendanceController extends Controller
             ->setLng($request->lng);
         $action = $attendance_action->doAction();
 
-        return response()->json(['code' => $action->getResultCode(),
-            'is_note_required' => $is_note_required,
-            'date' => Carbon::now()->format('jS F Y'),
-            'message' => $action->getResultMessage()]);
+        $response_data = $action->getResultCode() != ActionResultCodes::ALREADY_DEVICE_USED ?
+            [
+                'code' => $action->getResultCode(),
+                'is_note_required' => $is_note_required,
+                'date' => Carbon::now()->format('jS F Y'),
+                'message' => $action->getResultMessage()
+            ] : [
+                'code' => $action->getResultCode(),
+                'is_note_required' => 0,
+                'date' => Carbon::now()->format('jS F Y'),
+                'message' => $action->getResultMessage()
+            ];
+
+        return response()->json($response_data);
     }
 
     /**
