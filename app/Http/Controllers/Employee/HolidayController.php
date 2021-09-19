@@ -13,6 +13,8 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
+use Sheba\Helpers\TimeFrame;
+use App\Sheba\Business\Leave\MonthlyLeaveDates;
 
 class HolidayController extends Controller
 {
@@ -45,5 +47,36 @@ class HolidayController extends Controller
         $holidays = $holidays ? call_user_func_array('array_merge', $holidays) : [];
 
         return api_response($request, null, 200, ['holidays' => $holidays, 'weekends' => $weekend, 'is_sandwich_leave_enable' => $business->is_sandwich_leave_enable]);
+    }
+
+    /**
+     * @param Request $request
+     * @param MonthlyLeaveDates $leave_dates
+     * @param BusinessHolidayRepoInterface $business_holiday_repo
+     * @param BusinessWeekendRepoInterface $business_weekend_repo
+     * @param TimeFrame $time_frame
+     * @return JsonResponse
+     */
+    public function getMonthlyLeavesHolidays(Request $request, MonthlyLeaveDates $leave_dates, BusinessHolidayRepoInterface $business_holiday_repo, BusinessWeekendRepoInterface $business_weekend_repo, TimeFrame $time_frame)
+    {
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $business = $business_member->business;
+        if(!$business) return api_response($request, null, 404);
+        $this->validate($request, ['year' => 'required|string', 'month' => 'required|string']);
+
+        $time_frame = $time_frame->forAMonth($request->month, $request->year);
+
+        $business_holidays = $business_holiday_repo->getAllByBusiness($business);
+        $leaves = $leave_dates->setBusinessMember($business_member)->getLeaveDates();
+        //get all weekends from new weekend store table
+
+        $fractal = new Manager();
+        $resource = new Collection($business_holidays, new HolidayListTransformer($time_frame->start, $time_frame->end));
+        $holidays = $fractal->createData($resource)->toArray()['data'];
+
+        $holidays = $holidays ? call_user_func_array('array_merge', $holidays) : [];
+
+        return api_response($request, null, 200, ['holidays' => $holidays, 'leave_dates' => $leaves, 'is_sandwich_leave_enable' => $business->is_sandwich_leave_enable]);
     }
 }
