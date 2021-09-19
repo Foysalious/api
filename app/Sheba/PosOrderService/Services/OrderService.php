@@ -281,6 +281,8 @@ class OrderService
         if (isset($this->salesChannelId)) $data['sales_channel_id']                     = $this->salesChannelId;
         if (isset($this->skus)) $data['skus']                                           = $this->skus;
         if (isset($this->discount)) $data['discount']                                   = $this->discount;
+        if (isset($this->paidAmount)) $data['paid_amount']                              = $this->paidAmount;
+        if (isset($this->paymentMethod)) $data['payment_method']                        = $this->paymentMethod;
         return $data;
     }
 

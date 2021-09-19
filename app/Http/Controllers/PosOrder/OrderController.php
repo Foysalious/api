@@ -87,6 +87,8 @@ class OrderController extends Controller
             ->setNote($request->note)
             ->setVoucherId($request->voucher_id)
             ->setDiscount($request->discount)
+            ->setPaymentMethod($request->payment_method)
+            ->setPaidAmount($request->paid_amount)
             ->setToken($request->header('Authorization'))
             ->update();
         return http_response($request, null, 200, $response);
