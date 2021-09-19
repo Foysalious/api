@@ -172,16 +172,16 @@
 </table>
 <table class="footer">
     <tr>
-        <td>Name of Authorized Person</td>
+        <td>Name of Authorized Person:</td>
     </tr>
     <tr>
-        <td>Designation of Authorized Person</td>
+        <td>Designation of Authorized Person:</td>
     </tr>
     <tr>
-        <td>Company Name</td>
+        <td>{{$business_name}}</td>
     </tr>
     <tr>
-        <td> Mobile No :</td>
+        <td> Mobile No:</td>
     </tr>
 </table>
 <div class="main_content">
@@ -198,7 +198,7 @@
         <tr>
             <td>
                 <span style="line-height: 1.2">
-                    This is to certify that {{$employee_profile->name}}, {{$employee_role->name}}), {{$business_name}} was paid {{$total_gross_salary}} ({{$gross_amount_in_word}}) only from ({{$period}}) as salary and benefits, break up of which  is as follows:
+                    This is to certify that {{$employee_profile->name}}, {{$employee_role->name}}, {{$business_name}} was paid Tk. {{$total_gross_salary}}, {{$gross_amount_in_word}} Taka only from {{$period}} as salary and benefits, break up of which  is as follows:
                 </span>
             </td>
         </tr>
@@ -217,14 +217,13 @@
         </thead>
 
         <tbody>
-        @foreach($gross_salary_breakdown as $key => $value)
-            @if($key == 'gross_salary') @continue @endif
+        @foreach($gross_salary_breakdown as $salary_breakdown)
             <tr style="width: 100%">
                 <td style="font-size: 12px; opacity: 0.8; font-weight: normal; font-family: 'Poppins', sans-serif; padding: 5px 10px;border: solid 1px #d2d8e6;width:500px">
-                    {{$key}}
+                    {{$salary_breakdown['value']}}
                 </td>
                 <td style="font-size: 12px; opacity: 0.8; font-weight: normal; font-family: 'Poppins', sans-serif; padding: 5px;border: solid 1px #d2d8e6;width:120px;text-align: right">
-                    {{$value}}
+                    {{$salary_breakdown['amount']}}
                 </td>
             </tr>
         @endforeach
@@ -247,7 +246,7 @@
         <tr>
             <td>
                 <span style="line-height: 1.2">
-                    During the income year ......................... an amount of TK. {{$yearly_tax}} ({{$yearly_tax_in_word}}) only was deducted at source from his salary as income tax as per following details:
+                    During the income year ......................... an amount of TK. {{$yearly_tax}}, {{$yearly_tax_in_word}} Taka only was deducted at source from his salary as income tax as per following details:
                 </span>
             </td>
         </tr>
@@ -296,20 +295,13 @@
             <td style="font-size: 12px; opacity: 0.8; font-weight: normal; font-family: 'Poppins', sans-serif; padding: 5px;border: solid 1px #d2d8e6;width:20%; height:22px;text-align: right"></td>
             <td style="font-size: 12px; opacity: 0.8; font-weight: normal; font-family: 'Poppins', sans-serif; padding: 5px 10px;border: solid 1px #d2d8e6;width:20%; height:22px;"></td>
         </tr>
-        <tr style="width: 100%">
-            <td style="font-size: 12px; opacity: 0.8; font-weight: normal; font-family: 'Poppins', sans-serif; padding: 5px 10px;border: solid 1px #d2d8e6;width:20%; height:22px;"></td>
-            <td style="font-size: 12px; opacity: 0.8; font-weight: normal; font-family: 'Poppins', sans-serif; padding: 5px;border: solid 1px #d2d8e6;width:20%; height:22px;text-align: right"></td>
-            <td style="font-size: 12px; opacity: 0.8; font-weight: normal; font-family: 'Poppins', sans-serif; padding: 5px 10px;border: solid 1px #d2d8e6;width:20%; height:22px;"></td>
-            <td style="font-size: 12px; opacity: 0.8; font-weight: normal; font-family: 'Poppins', sans-serif; padding: 5px;border: solid 1px #d2d8e6;width:20%; height:22px;text-align: right"></td>
-            <td style="font-size: 12px; opacity: 0.8; font-weight: normal; font-family: 'Poppins', sans-serif; padding: 5px 10px;border: solid 1px #d2d8e6;width:20%; height:22px;"></td>
-        </tr>
         </tbody>
     </table>
     <table class="employee__info">
         <tr>
             <td>
                 <span style="line-height: 1.2">
-                    This certificate is given by us, being responsible for accounting function of ({{$business_name}}) without any risk and responsibility.
+                    This certificate is given by us, being responsible for accounting function of {{$business_name}} without any risk and responsibility.
                 </span>
             </td>
         </tr>
