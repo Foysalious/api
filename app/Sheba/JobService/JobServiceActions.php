@@ -57,7 +57,7 @@ class JobServiceActions
             'quantity' => (float)$request->quantity,
             'unit_price' => (float)$request->unit_price
         ];
-        if ($request->has('discount') && (float)$request->discount != $job_service->discount) $data['discount'] = (float)$request->discount;
+//        if ($request->has('discount') && (float)$request->discount != $job_service->discount) $data['discount'] = (float)$request->discount;
         $this->getNewDiscount($job_service, $data);
         return $data;
     }
