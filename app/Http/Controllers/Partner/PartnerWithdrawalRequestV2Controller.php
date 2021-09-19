@@ -224,6 +224,17 @@ class PartnerWithdrawalRequestV2Controller extends Controller
         return $bank_info;
     }
 
+    public function getBankInfo(Request $request, $partner): JsonResponse
+    {
+        try {
+            $bank_info = $this->getBankInformation($request->partner);
+            return api_response($request, null, 200, ['data' => ['bank_info' => $bank_info]]);
+        } catch (Throwable $exception) {
+            logError($exception);
+            return api_response($request, null, 500);
+        }
+    }
+
     public function storeBankInfo($partner, Request $request)
     {
         try {
