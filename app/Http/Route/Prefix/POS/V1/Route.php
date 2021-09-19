@@ -100,6 +100,7 @@ class Route
                     $api->group(['prefix' => '{order}'], function ($api) {
                         $api->post('/update-status', 'PosOrder\OrderController@updateStatus');
                         $api->post('/validate-promo', 'PosOrder\OrderController@validatePromo');
+                        $api->get('/logs', 'PosOrder\OrderController@logs');
                     });
                     $api->put('/{order}/update-customer', 'PosOrder\OrderController@updateCustomer');
                     $api->put('/{order}', 'PosOrder\OrderController@update');

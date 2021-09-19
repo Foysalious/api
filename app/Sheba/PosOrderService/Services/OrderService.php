@@ -226,6 +226,11 @@ class OrderService
         return $this->client->get('api/v1/partners/' . $this->partnerId . '/orders/' . $this->orderId);
     }
 
+    public function getLogs()
+    {
+        return $this->client->get('api/v1/partners/' . $this->partnerId . '/orders/' . $this->orderId . '/logs');
+    }
+
     public function getUser()
     {
         return $this->smanagerUserClient->get('api/v1/partners/' . $this->partnerId . '/users/' . $this->userId);
