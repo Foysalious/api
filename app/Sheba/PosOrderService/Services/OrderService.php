@@ -298,7 +298,7 @@ class OrderService
 
     public function updateStatusByDeliveryReqId($delivery_req_id, $data)
     {
-        return $this->client->setToken($this->token)->put('api/v1/partners/' . $this->partnerId. '/delivery_req_id/' . $delivery_req_id, $data);
+        return $this->client->setToken($this->token)->put('api/v1/partners/' . $this->partnerId. '/delivery_req_id/' . $delivery_req_id .'/update-status', $data);
     }
 
     private function makeDeliveryData()

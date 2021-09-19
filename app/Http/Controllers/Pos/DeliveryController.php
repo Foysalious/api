@@ -279,17 +279,7 @@ class DeliveryController extends Controller
         ]);
 
         $delivery_service->setToken($this->bearerToken($request))->updateDeliveryStatus($request->merchant_code, $request->order_ref_no);
-
-
-        /** @var PosOrder $pos_order */
-        $pos_order  = $delivery_service->getPosOrderByDeliveryReqId($request->order_ref_no, $request->merchant_code);
-        if($pos_order) {
-            $delivery_service->setPartner($pos_order->partner)->setToken($this->bearerToken($request))->updateDeliveryStatus($pos_order);
-        } else {
-            return api_response($request, null, 200, ['message' => 'Order not found by delivery tracking id']);
-        }
         return api_response($request, null, 200, ['message' => 'successful']);
-
     }
 
 }

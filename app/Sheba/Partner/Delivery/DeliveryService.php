@@ -573,37 +573,15 @@ class DeliveryService
         return true;
     }
 
-    /**
-     * @param string $delivery_req_id
-     * @return false | PosOrder
-     */
-    public function getPosOrderByDeliveryReqId(string $delivery_req_id, string $merchant_id)
-    {
-        $pos_order  = PosOrder::where('delivery_request_id', $delivery_req_id)->first();
-        $this->posOrder = $pos_order;
-        if($this->isOrderMigrated()) {
-            $partner_delivery_info = $this->partnerDeliveryInfoRepositoryInterface->where('merchant_id', $merchant_id )->first();
-            $this->partner = $partner_delivery_info->partner;
-            $pos_order = $this->posOrderClient->get('api/v1/partners/' . $this->partner->id . '/delivery_req_id/' . $delivery_req_id);
-            dd($pos_order);
-        }
-        dd('here after');
-    }
-
     public function updateDeliveryStatus($merchant_id, $delivery_req_id)
     {
         $status = $this->getDeliveryStatusByReqId($delivery_req_id);
-        $status = Statuses::DELIVERED;
         if($status == Statuses::DELIVERED) {
             $pos_order = PosOrder::where('delivery_request_id', $delivery_req_id)->first();
             $this->posOrder = $pos_order;
-            if($this->isOrderMigrated() || is_null($pos_order) || true) {
+            if($this->isOrderMigrated() || is_null($pos_order)) {
                 $partner_delivery_info = $this->partnerDeliveryInfoRepositoryInterface->where('merchant_id',$merchant_id)->first();
-                $data = [
-                  'status' => 'Completed',
-                ];
-                $this->orderService->setPartnerId($partner_delivery_info->partner->id)->setStatus(OrderStatuses::COMPLETED)->updateStatusByDeliveryReqId($delivery_req_id, $data);
-
+                $this->orderService->setPartnerId($partner_delivery_info->partner->id)->setStatus(OrderStatuses::COMPLETED)->updateStatusByDeliveryReqId($delivery_req_id, ['status' => 'Completed']);
             } else {
                 $pos_order->delivery_status = Statuses::DELIVERED;
                 $pos_order->status = OrderStatuses::COMPLETED;
