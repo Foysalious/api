@@ -247,39 +247,40 @@ class PartnerWithdrawalRequestV2Controller extends Controller
     public function updateBankInfo(Request $request, $partner): JsonResponse
     {
         try {
-        $this->validate($request, [
-            'bank_name' => 'required',
-            'account_no' => 'required',
-            'account_name' => 'required',
-            'branch_name' => 'required',
-            'cheque_book_receipt' => 'sometimes|required|file|mimes:jpg,jpeg,png',
-        ]);
+            $this->validate($request, [
+                'bank_name' => 'required',
+                'account_no' => 'required',
+                'account_name' => 'required',
+                'branch_name' => 'required',
+                'cheque_book_receipt' => 'sometimes|required|file|mimes:jpg,jpeg,png',
+            ]);
 
-        $bank_information = Partner::find($partner)->withdrawalBankInformations->first();
-        if(!$bank_information) {
-            return api_response($request, null, 400, ["message" => "No bank information found for this partner."]);
-        }
+            $bank_information = Partner::find($partner)->withdrawalBankInformations->first();
+            if(!$bank_information) {
+                return api_response($request, null, 400, ["message" => "No bank information found for this partner."]);
+            }
 
-        if($request->hasFile('cheque_book_receipt')){
-            if(isset($bank_information->cheque_book_receipt)) $this->deleteFile($bank_information->cheque_book_receipt);
-            list($cheque_book_receipt, $cheque_book_receipt_filename) = $this->makeChequeBookReceipt($request->cheque_book_receipt, $request->partner->id.'cheque_book_receipt');
-            $cheque_book_receipt = $this->saveImageToCDN($cheque_book_receipt, getPartnerChequeBookImageFolder(), $cheque_book_receipt_filename);
-            $bank_information->cheque_book_receipt = $cheque_book_receipt;
-        }
-        $manager_resource = $request->manager_resource;
-        $this->setModifier($manager_resource);
+            if($request->hasFile('cheque_book_receipt')){
+                if(isset($bank_information->cheque_book_receipt)) $this->deleteFile($bank_information->cheque_book_receipt);
+                list($cheque_book_receipt, $cheque_book_receipt_filename) = $this->makeChequeBookReceipt($request->cheque_book_receipt, $request->partner->id.'cheque_book_receipt');
+                $cheque_book_receipt = $this->saveImageToCDN($cheque_book_receipt, getPartnerChequeBookImageFolder(), $cheque_book_receipt_filename);
+                $bank_information->cheque_book_receipt = $cheque_book_receipt;
+            }
+            $manager_resource = $request->manager_resource;
+            $this->setModifier($manager_resource);
 
-        $bank_information->partner_id  = $partner;
-        $bank_information->bank_name = $request->bank_name;
-        $bank_information->acc_no = $request->account_no;
-        $bank_information->acc_name= $request->account_name;
-        $bank_information->branch_name = $request->branch_name;
-        $bank_information->routing_no = $request->routing_no;
-        $bank_information->purpose = Purposes::PARTNER_WALLET_WITHDRAWAL;
+            $bank_information->partner_id  = $partner;
+            $bank_information->bank_name = $request->bank_name;
+            $bank_information->acc_no = $request->account_no;
+            $bank_information->acc_name= $request->account_name;
+            $bank_information->branch_name = $request->branch_name;
+            $bank_information->routing_no = $request->routing_no;
+            $bank_information->purpose = Purposes::PARTNER_WALLET_WITHDRAWAL;
 
-        $this->withUpdateModificationField($bank_information);
-        $bank_information->save();
-        return api_response($request, null, 200,['message' => 'Bank Information updated successfully']);
+            $this->withUpdateModificationField($bank_information);
+            $bank_information->save();
+
+            return api_response($request, null, 200,['message' => 'Bank Information updated successfully']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
