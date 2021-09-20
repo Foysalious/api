@@ -39,7 +39,7 @@ class PresentableDTOPresenter extends Presenter
             $dto['cash_in_charge'] = $maxCashInCharge;
             $dto['asset'] = $method->asset_name;
             $dto['order'] = $method['order'];
-            $dto['name_bn'] = 'ভিসা/মাস্টার ও অন্যান্য';
+            $dto['name_bn'] =$dto['name'] =='City Bank (American Express)'?'City Bank ': 'ভিসা/মাস্টার ও অন্যান্য';
             return $dto;
         }
 
