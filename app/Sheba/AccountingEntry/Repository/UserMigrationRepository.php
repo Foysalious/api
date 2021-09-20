@@ -55,7 +55,7 @@ class UserMigrationRepository extends BaseRepository
         if (!$user) {
             throw new Exception('User not Found!', 404);
         }
-        if ($user->status == UserStatus::UPGRADED || UserStatus::UPGRADING) {
+        if (($user->status == UserStatus::UPGRADED) || ($user->status == UserStatus::UPGRADING)) {
             throw new Exception('Sorry! Already migrated', 404);
         }
         return $user->update(
