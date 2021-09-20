@@ -35,7 +35,7 @@ class PriceCalculation extends PriceCalculationAbstract
      * @return float|int|null
      * @throws CorruptedPriceStructureException
      */
-    public function getTotalOriginalPrice()
+    public function getTotalOriginalPrice($compareOriginalAndMinPrice = true)
     {
         $unit_price = $this->upsellUnitPrice ? $this->upsellUnitPrice : $this->getUnitPrice();
         $surcharge = $this->getSurcharge();
@@ -53,7 +53,7 @@ class PriceCalculation extends PriceCalculationAbstract
         } else {
             $original_price = $unit_price_with_surcharge * $this->quantity;
         }
-        if ($original_price < $min_price) {
+        if ($compareOriginalAndMinPrice && $original_price < $min_price) {
             $original_price = $min_price;
         } elseif ($rent_a_car_price_applied) {
             $this->setMinPrice($original_price);
