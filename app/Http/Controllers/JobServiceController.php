@@ -21,6 +21,8 @@ class JobServiceController extends Controller
     public function update($partner, $job_service, Request $request)
     {
         try {
+            if ($request->has('discount')) return api_response($request, null, 400, ['message' => 'Discount can not be updated']);
+
             $job_service = JobService::find($job_service);
             $invalid_job_statuses = [constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Declined'], constants('JOB_STATUSES')['Not_Responded'], constants('JOB_STATUSES')['Served'], constants('JOB_STATUSES')['Cancelled']];
             $old_job = clone $job_service->job;
