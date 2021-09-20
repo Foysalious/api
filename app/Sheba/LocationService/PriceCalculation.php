@@ -53,8 +53,9 @@ class PriceCalculation extends PriceCalculationAbstract
         } else {
             $original_price = $unit_price_with_surcharge * $this->quantity;
         }
-
-        if ($rent_a_car_price_applied) {
+        if ($original_price < $min_price) {
+            $original_price = $min_price;
+        } elseif ($rent_a_car_price_applied) {
             $this->setMinPrice($original_price);
         }
         return $original_price;
