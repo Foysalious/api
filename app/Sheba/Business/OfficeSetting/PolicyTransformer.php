@@ -25,15 +25,27 @@ class PolicyTransformer extends TransformerAbstract
         ];
     }
 
+    /**
+     * @param $leave_type_id
+     * @return mixed
+     */
     private function getLeavePenaltyName($leave_type_id)
     {
         $leave_type = LeaveType::withTrashed()->findOrFail($leave_type_id);
         return $leave_type->title;
     }
 
-    private function getSalaryPenaltyName($component)
+    /**
+     * @param $component_id
+     * @return string
+     */
+    private function getSalaryPenaltyName($component_id)
     {
-        return ucwords(str_replace('_', ' ', $component));
+        if ($component_id === 'gross') {
+            return ucfirst($component_id);
+        }
+        $component = PayrollComponent::withTrashed()->findOrFail($component_id);
+        return ucwords(str_replace('_', ' ', $component->name));
     }
 
 }
