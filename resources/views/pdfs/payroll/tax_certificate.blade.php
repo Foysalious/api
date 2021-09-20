@@ -87,8 +87,8 @@
             font-family: 'Poppins', sans-serif;
             opacity: 0.8;
             font-size: 18px;
-            font-weight: 500;
             color: #000000;
+            font-weight: bold;
         }
 
         .salary-certificate__text {
@@ -172,16 +172,16 @@
 </table>
 <table class="footer">
     <tr>
-        <td>Name of Authorized Person:</td>
+        <td>Name of Authorized Person :</td>
     </tr>
     <tr>
-        <td>Designation of Authorized Person:</td>
+        <td>Designation of Authorized Person :</td>
     </tr>
     <tr>
         <td>{{$business_name}}</td>
     </tr>
     <tr>
-        <td> Mobile No:</td>
+        <td> Mobile No :</td>
     </tr>
 </table>
 <div class="main_content">
@@ -267,7 +267,7 @@
             <td style="width:20%; font-size: 12px; text-align: center; opacity: 0.8; font-weight: bold; font-family: 'Poppins', sans-serif; padding: 5px;border: solid 1px #d2d8e6;">
                 Total Challan Amount
             </td>
-            <td style="width:20%; font-size: 12px; text-align: center; opacity: 0.8; font-weight: bold; font-family: 'Poppins', sans-serif; padding: 5px;border: solid 1px #d2d8e6;">
+            <td style="width:20%; font-size: 12px; text-align: center; opacity: 1; font-weight: bold; font-family: 'Poppins', sans-serif; padding: 5px;border: solid 1px #d2d8e6;">
                 Employee Tax Amount
             </td>
         </tr>
