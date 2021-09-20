@@ -93,6 +93,25 @@ class NidFaceVerification
         return $data;
     }
 
+    public function storeResubmitData($profile, $nid, $faceVerificationData, $profileNIDSubmissionRepo)
+    {
+        $profile_id = $profile->id;
+        $faceVerify = array_except($faceVerificationData['data'], ['message', 'verification_percentage', 'reject_reason']);
+        $faceVerify = json_encode($faceVerify);
+
+        $porichoyNIDSubmission = $profileNIDSubmissionRepo->where('profile_id', $profile_id)
+            ->where('nid_no', $nid)
+            ->orderBy('id', 'desc')->first();
+
+        $porichoyNIDSubmission->update([
+            'porichy_data' => $faceVerify,
+            "verification_status" => ($faceVerificationData['data']['status'] === "verified" || $faceVerificationData['data']['status'] === "already_verified") ? "approved" : "rejected",
+            "rejection_reasons" => $faceVerificationData['data']['reject_reason'] ? json_encode($faceVerificationData['data']['reject_reason']) : null,
+            'created_at' => Carbon::now()->toDateTimeString()
+        ]);
+
+    }
+
     public function storeData($request, $faceVerificationData, $profileNIDSubmissionRepo)
     {
         $profile_id = $request->auth_user->getProfile()->id;
@@ -115,7 +134,7 @@ class NidFaceVerification
             'porichoy_request'    => $requestedData,
             'porichy_data'        => $faceVerify,
             "verification_status" => ($faceVerificationData['data']['status'] === "verified" || $faceVerificationData['data']['status'] === "already_verified") ? "approved" : "rejected",
-            "rejection_reasons"   => $faceVerificationData['data']['reject_reason'] ?? null,
+            "rejection_reasons"   => $faceVerificationData['data']['reject_reason'] ? json_encode($faceVerificationData['data']['reject_reason']) : null,
             'created_at'          => Carbon::now()->toDateTimeString()
         ]);
 
@@ -137,11 +156,4 @@ class NidFaceVerification
         return $new_data;
     }
 
-    public function resubmit($id)
-    {
-        $log = ProfileNIDSubmissionLog::find($id);
-        $nid = $log->nid_no;
-        dd($nid);
-        return ($log);
-    }
 }
