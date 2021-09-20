@@ -19,12 +19,12 @@ class OrderService
     private $token;
     private $skus, $discount, $paymentMethod, $paymentLinkAmount, $paidAmount;
     protected $emi_month, $interest, $bank_transaction_charge, $delivery_name, $delivery_mobile, $note, $voucher_id;
-    protected $filter_params;
     /**
      * @var mixed
      */
     private $isDiscountPercentage;
     protected $userId;
+    protected $filter_params;
 
     public function __construct(PosOrderServerClient $client, SmanagerUserServerClient $smanagerUserClient)
     {
@@ -92,6 +92,12 @@ class OrderService
         return $this;
     }
 
+    public function setPartnerId($partnerId)
+    {
+        $this->partnerId = $partnerId;
+        return $this;
+    }
+
     /**
      * @param mixed $filter_params
      * @return OrderService
@@ -99,12 +105,6 @@ class OrderService
     public function setFilterParams($filter_params)
     {
         $this->filter_params = $filter_params;
-        return $this;
-    }
-
-    public function setPartnerId($partnerId)
-    {
-        $this->partnerId = $partnerId;
         return $this;
     }
 
@@ -240,6 +240,11 @@ class OrderService
         return $this->client->get('api/v1/partners/' . $this->partnerId . '/orders/' . $this->orderId);
     }
 
+    public function getLogs()
+    {
+        return $this->client->get('api/v1/partners/' . $this->partnerId . '/orders/' . $this->orderId . '/logs');
+    }
+
     public function getUser()
     {
         return $this->smanagerUserClient->get('api/v1/partners/' . $this->partnerId . '/users/' . $this->userId);
@@ -302,6 +307,8 @@ class OrderService
         if (isset($this->salesChannelId)) $data['sales_channel_id']                     = $this->salesChannelId;
         if (isset($this->skus)) $data['skus']                                           = $this->skus;
         if (isset($this->discount)) $data['discount']                                   = $this->discount;
+        if (isset($this->paidAmount)) $data['paid_amount']                              = $this->paidAmount;
+        if (isset($this->paymentMethod)) $data['payment_method']                        = $this->paymentMethod;
         return $data;
     }
 

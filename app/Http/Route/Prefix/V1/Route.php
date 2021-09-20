@@ -356,6 +356,7 @@ class Route
                 $api->post('nid-ocr-data', 'EKYC\NidOcrController@storeNidOcrData');
                 $api->post('face-verification', 'EKYC\FaceVerificationController@faceVerification');
                 $api->get('get-liveliness-credentials', 'EKYC\FaceVerificationController@getLivelinessCredentials');
+                $api->get('get-user-data', 'EKYC\FaceVerificationController@getUserNidData');
             });
         });
         return $api;

@@ -44,7 +44,7 @@ class PosCustomerRepository extends BaseRepository
         } else {
             /** @var DueTrackerRepository $dueTrackerRepo */
             $dueTrackerRepo = app(DueTrackerRepository::class);
-            $data = $dueTrackerRepo->getDueListByProfile($partner, $request);
+            $data = $dueTrackerRepo->setPartner($partner)->getDueListByProfile($partner, $request);
         }
         if ($data['balance']['type'] == 'receivable') {
             $response['due'] = $data['balance']['amount'];

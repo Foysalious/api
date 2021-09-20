@@ -22,6 +22,7 @@ class ProductService
     protected $vatPercentage;
     protected $unitId;
     protected $images;
+    protected $deletedImages;
     protected $wholesalePrice;
     protected $cost;
     protected $price;
@@ -141,6 +142,16 @@ class ProductService
     public function setImages($images)
     {
         $this->images = $images;
+        return $this;
+    }
+
+    /**
+     * @param mixed $deletedImages
+     * @return ProductService
+     */
+    public function setDeletedImages($deletedImages)
+    {
+        $this->deletedImages = $deletedImages;
         return $this;
     }
 
@@ -309,6 +320,7 @@ class ProductService
         if (isset($this->discountAmount))array_push($data, ['name' => 'discount_amount', 'contents' => $this->discountAmount]);
         if (isset($this->discountEndDate))array_push($data, ['name' => 'discount_end_date', 'contents' => $this->discountEndDate]);
         if (isset($this->productDetails))  array_push($data, ['name' => 'product_details', 'contents' => $this->productDetails]);
+        if (isset($this->deletedImages))  array_push($data, ['name' => 'deleted_images', 'contents' => $this->deletedImages]);
         if (isset($this->images)) $data = array_merge($data, $this->makeImagesData());
         return $data;
     }

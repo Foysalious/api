@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\Controller;
 use App\Sheba\NID\Validations\NidValidation;
-use Carbon\Carbon;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -10,10 +9,9 @@ use Illuminate\Validation\ValidationException;
 use Sheba\Dal\ProfileNIDSubmissionLog\Contact as ProfileNIDSubmissionRepo;
 use Sheba\EKYC\EkycClient;
 use Sheba\EKYC\Exceptions\EKycException;
-use Sheba\EKYC\Exceptions\EkycServerError;
 use Sheba\EKYC\NidFaceVerification;
 use Sheba\EKYC\Statics;
-use Sheba\NeoBanking\NeoBanking;
+use Sheba\Repositories\ProfileRepository;
 
 
 class FaceVerificationController extends Controller
@@ -32,21 +30,25 @@ class FaceVerificationController extends Controller
     /**
      * @param Request $request
      * @param ProfileNIDSubmissionRepo $profileNIDSubmissionRepo
+     * @param ProfileRepository $profileRepository
      * @return JsonResponse
      * @throws GuzzleException
      */
-    public function faceVerification(Request $request, ProfileNIDSubmissionRepo $profileNIDSubmissionRepo): JsonResponse
+    public function faceVerification(Request $request, ProfileNIDSubmissionRepo $profileNIDSubmissionRepo, ProfileRepository $profileRepository): JsonResponse
     {
         try {
             $this->validate($request, Statics::faceVerificationValidate());
-            $data = $this->toData($request);
-            $faceVerificationData = $this->client->post($this->api, $data);
+            $profile = $request->auth_user->getProfile();
+            $photoLink = $this->nidFaceVerification->getPersonPhotoLink($request, $profile);
+            $requestedData = $this->nidFaceVerification->formatToData($request, $photoLink);
+            $faceVerificationData = $this->client->post($this->api, $requestedData);
             $status = ($faceVerificationData['data']['status']);
             if($status === Statics::ALREADY_VERIFIED || $status === Statics::VERIFIED) {
                 $status = Statics::VERIFIED;
-                $this->nidFaceVerification->verifiedChanges($faceVerificationData['data'], $request->auth_user->getProfile());
-            }
-            $this->storeData($request, $faceVerificationData, $profileNIDSubmissionRepo);
+                $this->nidFaceVerification->verifiedChanges($faceVerificationData['data'], $profile);
+            } elseif($status === Statics::UNVERIFIED) $this->nidFaceVerification->unverifiedChanges($profile);
+            $this->nidFaceVerification->makeProfileAdjustment($photoLink, $profile, $request->nid);
+            $this->nidFaceVerification->storeData($request, $faceVerificationData, $profileNIDSubmissionRepo);
             return api_response($request, null, 200, ['data' => Statics::faceVerificationResponse($status, $faceVerificationData['data']['message'])]);
         } catch (ValidationException $exception) {
             $msg = getValidationErrorMessage($exception->validator->errors()->all());
@@ -58,45 +60,6 @@ class FaceVerificationController extends Controller
         }
     }
 
-    private function toData($request)
-    {
-        $data['nid'] = $request->nid;
-        $data['person_photo'] = $request->person_photo;
-        $data['dob'] = $request->dob;
-        return $data;
-    }
-
-    private function storeData($request, $faceVerificationData, $profileNIDSubmissionRepo)
-    {
-        $profile_id = $request->auth_user->getProfile()->id;
-        $submitted_by = get_class($request->auth_user->getResource());
-        $faceVerify = array_except($faceVerificationData['data'], ['message', 'verification_percentage']);
-        $faceVerify = json_encode($faceVerify);
-        $log = "NID submitted by the user";
-
-        $requestedData = [
-            'nid' => $request->nid,
-            'person_photo' => $request->person_photo,
-            'dob' => $request->dob,
-        ];
-        $requestedData = json_encode($requestedData);
-
-        $porichoyNIDSubmission = $profileNIDSubmissionRepo->where('profile_id', $profile_id)
-                ->where('submitted_by', $submitted_by)
-                ->where('nid_no', $request->nid)
-                ->orderBy('id', 'desc')->first();
-
-        $porichoyNIDSubmission->update(['porichoy_request' => $requestedData, 'porichy_data' => $faceVerify, 'created_at' => Carbon::now()->toDateTimeString()]);
-
-//        Job::whereHas('partnerOrder', function ($q) {
-//            $q->whereHas('order', function ($q) {
-//                $q->whereHas('subscription', function ($q) {
-//                    $q->where('subscription_orders.id', $this->subscriptionOrder->id);
-//                });
-//            });
-//        })->update(['commission_rate' => $commissions->getServiceCommission(), 'material_commission_rate' => $commissions->getMaterialCommission()]);
-    }
-
     public function getLivelinessCredentials(Request $request)
     {
         try {
@@ -106,5 +69,26 @@ class FaceVerificationController extends Controller
             logError($e);
             return api_response($request, null, 500);
         }
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getUserNidData(Request $request): JsonResponse
+    {
+        try {
+            $api = 'user-nid-data?nid=' . $request->nid;
+            $data = $this->client->get($api);
+            return api_response($request, null, 200, ['data' => $data]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function resubmitToPorichoy(Request $request, $id)
+    {
+        return $id;
     }
 }

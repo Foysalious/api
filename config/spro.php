@@ -1,10 +1,9 @@
 <?php
 
 return [
-    'instruction_keys' => ['work_start', 'service_details', 'work_end'],
-
     'instructions' => [
         'work_start' => [
+            'key' => 'work_start',
             'header' => 'কাজের শুরুতে',
             'title' => 'কাজের শুরুতে কি কি করণীয়',
             'list' => [
@@ -16,12 +15,14 @@ return [
             ]
         ],
         'service_details' => [
+            'key' => 'service_details',
             'header' => 'কাজের বিবরণ',
             'title' => 'কাজের বিবরণ',
 //            list will come from db
             'list' => [],
         ],
         'work_end' => [
+            'key' => 'work_end',
             'header' => 'কাজের শেষে',
             'title' => 'কাজের শেষে কি কি করণীয়',
             'list' => [

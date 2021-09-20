@@ -24,17 +24,16 @@ class OrderController extends Controller
         $hasQueryStr = strpos($request->getRequestUri(), '?');
         $queryStr = $hasQueryStr ? '?'.substr($request->getRequestUri(), strpos($request->getRequestUri(), "?") + 1) : '';
         $order = $this->orderService->setPartnerId($partner->id)->setFilterParams($queryStr)->getOrderList();
-        if(!$order) return api_response($request, "অর্ডারটি পাওয়া যায় নি", 404, $order);
-        else return api_response($request, null, 200, $order);
-
+        if(!$order) return http_response($request, "অর্ডারটি পাওয়া যায় নি", 404, $order);
+        else return http_response($request, null, 200, $order);
     }
 
     public function show(Request $request, $order_id)
     {
         $partner = $request->auth_user->getPartner();
         $orderDetails = $this->orderService->setPartnerId($partner->id)->setOrderId($order_id)->getDetails();
-        if(!$orderDetails) return api_response($request, "অর্ডারটি পাওয়া যায় নি", 404, $orderDetails);
-        else return api_response($request, null, 200, $orderDetails);
+        if(!$orderDetails) return http_response($request, "অর্ডারটি পাওয়া যায় নি", 404, $orderDetails);
+        else return http_response($request, null, 200, $orderDetails);
     }
 
     public function store(Request $request)
@@ -88,6 +87,8 @@ class OrderController extends Controller
             ->setNote($request->note)
             ->setVoucherId($request->voucher_id)
             ->setDiscount($request->discount)
+            ->setPaymentMethod($request->payment_method)
+            ->setPaidAmount($request->paid_amount)
             ->setToken($request->header('Authorization'))
             ->update();
         return http_response($request, null, 200, $response);
@@ -119,6 +120,14 @@ class OrderController extends Controller
         /** @var VoucherController $promoValidator */
         $promoValidator = app(VoucherController::class);
         return $promoValidator->validateVoucher($request);
+    }
+
+    public function logs(Request $request, $order_id)
+    {
+        $partner = $request->auth_user->getPartner();
+        $orderLogs = $this->orderService->setPartnerId($partner->id)->setOrderId($order_id)->getLogs();
+        if(!$orderLogs) return http_response($request, "অর্ডারটি পাওয়া যায় নি", 404, $orderLogs);
+        else return http_response($request, null, 200, $orderLogs);
     }
 
 }

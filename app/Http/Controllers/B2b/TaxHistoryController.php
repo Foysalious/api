@@ -113,19 +113,50 @@ class TaxHistoryController extends Controller
     private function getGrossSalaryBreakdown($gross_salary_breakdown, $payroll_setting)
     {
         $data = [];
+        $x = 0;
         foreach ($gross_salary_breakdown as $component_name => $component_value) {
             if ($component_name == 'gross_salary') continue;
-            else if ($component_name == PayrollConstGetter::MEDICAL_ALLOWANCE) $data[Components::getComponents($component_name)['value']] = $component_value;
-            else if ($component_name == PayrollConstGetter::BASIC_SALARY) $data[Components::getComponents($component_name)['value']] = $component_value;
-            else if ($component_name == PayrollConstGetter::CONVEYANCE) $data[Components::getComponents($component_name)['value']] = $component_value;
-            else if ($component_name == PayrollConstGetter::HOUSE_RENT) $data[Components::getComponents($component_name)['value']] = $component_value;
+            else if ($component_name == PayrollConstGetter::MEDICAL_ALLOWANCE){
+                $data[$x]['value'] = Components::getComponents($component_name)['value'];
+                $data[$x]['display_index'] = 3;
+                $data[$x]['amount'] = $component_value;
+            }
+            else if ($component_name == PayrollConstGetter::BASIC_SALARY) {
+                $data[$x]['value'] = Components::getComponents($component_name)['value'];
+                $data[$x]['display_index'] = 1;
+                $data[$x]['amount'] = $component_value;
+
+            }
+            else if ($component_name == PayrollConstGetter::CONVEYANCE) {
+                $data[$x]['value'] = Components::getComponents($component_name)['value'];
+                $data[$x]['display_index'] = 4;
+                $data[$x]['amount'] = $component_value;
+
+            }
+            else if ($component_name == PayrollConstGetter::HOUSE_RENT) {
+
+                $data[$x]['value'] = Components::getComponents($component_name)['value'];
+                $data[$x]['display_index'] = 2;
+                $data[$x]['amount'] = $component_value;
+            }
             else {
                 $custom_component = $this->payrollComponentRepo->where('name', $component_name)->where('payroll_setting_id', $payroll_setting->id)->first();
                 $name = $custom_component->value;
-                $data[$name] = $component_value;
+                $data[$x]['value'] = $name;
+                $data[$x]['display_index'] = 9;
+                $data[$x]['amount'] = $component_value;
+
             }
+            $x++;
         }
+        usort($data, array($this,'componentSortByDisplayIndex'));
         return $data;
+    }
+
+    private function componentSortByDisplayIndex($a, $b)
+    {
+        if ($a['display_index'] < $b['display_index']) return 0;
+        return 1;
     }
 
     private function getAmountInWord($amount)

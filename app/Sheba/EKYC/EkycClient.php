@@ -91,13 +91,14 @@ class EkycClient
 
         } else {
             $nid = $data['nid'];
-            $person_photo = $data['person_photo'];
+            $person_photo = base64_encode($data['pro_pic']);
             $dob = $data['dob'];
 
             $options['form_params'] = [
                 'nid' => $nid,
                 'person_photo' => $person_photo,
-                'dob' => $dob
+                'dob' => $dob,
+                'selfie_photo' => $data['selfie_photo']
             ];
         }
 

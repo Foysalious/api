@@ -497,6 +497,7 @@ class DeliveryService
 
     /**
      * @return mixed
+     * @throws DoNotReportException
      */
     public function getDeliveryStatus()
     {
@@ -578,5 +579,26 @@ class DeliveryService
         if ($this->posOrder && !$this->posOrder->is_migrated) return false;
         return true;
     }
+    /**
+     * @param string $delivery_req_id
+     * @return false | PosOrder
+     */
+    public function getPosOrderByDeliveryReqId(string $delivery_req_id)
+    {
+        $pos_order  = PosOrder::where('delivery_request_id', $delivery_req_id)->first();
+        return $pos_order;
+    }
+
+    public function updateDeliveryStatus(PosOrder $pos_order)
+    {
+        $this->posOrder = $pos_order;
+        $data = $this->getDeliveryStatus();
+        if($data['status'] == Statuses::DELIVERED) {
+            $pos_order->delivery_status = $data['status'];
+            $pos_order->status = OrderStatuses::COMPLETED;
+            $pos_order->save();
+        }
+    }
+
 
 }

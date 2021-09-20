@@ -8,12 +8,13 @@ class Statics
     CONST VERIFIED         = "verified";
     CONST UNVERIFIED       = "unverified";
     CONST PENDING          = "pending";
+    CONST REJECTED         = "rejected";
 
     public static function faceVerificationValidate(): array
     {
         return [
             'nid' => 'required|digits_between:10,17',
-            'person_photo' => 'required | string',
+            'person_photo' => 'required | mimes:jpeg,jpg,png',
             'dob' => 'required|date_format:Y/m/d'
         ];
     }
@@ -28,9 +29,12 @@ class Statics
 
     public static function faceVerificationResponse($status, $message)
     {
+        if($status === self::UNVERIFIED) $status = self::REJECTED;
         return [
             'status'  => $status,
-            'message' => $message
+            'title'   => $status === self::VERIFIED ? "আবেদন সফল হয়েছে !" : "আবেদন সফল হয়নি !",
+            'message' => $status === self::VERIFIED ? "আপনার NID-এর তথ্য সফলভাবে sManager কর্তৃপক্ষের নিকট পাঠানো হয়েছে। আপনাকে ৭২ ঘণ্টার মধ্যে জানানো হবে। যেকোনো তথ্যের জন্য কল করুন ১৬৫১৬ নাম্বারে।"
+                : "দুঃখিত! আপনার আবেদনটি সফল হয়নি। যেকোনো তথ্যের জন্য কল করুন ১৬৫১৬ নাম্বারে।"
         ];
     }
 

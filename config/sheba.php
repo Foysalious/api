@@ -106,8 +106,10 @@ return [
     'screen' => ['home', 'eshop', 'payment_link', 'pos', 'inventory', 'referral', 'due'],
     'partner_lite_packages_id'  => env('LITE_PACKAGE_ID', 1),
     'partner_basic_packages_id' => env('BASIC_PACKAGE_ID', 2),
+    'partner_registration_package_id' => env('PARTNER_REGISTRATION_PACKAGE_ID',18),
     'lite_package_message'      => 'প্রিমিয়াম প্যাকেজ গুলোর দুর্দান্ত সব ফিচার ব্যাবহার করে ২ গুন ব্যবসা বৃদ্ধি করুন কোন বাড়তি ঝামেলা ছাড়াই!',
     'partner_subscription_vat'  => 5.00,
+    'welcome_message_image' => env('WELCOME_MSG_IMAGE','images/manager_app/welcome.jpg'),
     'rent_a_car' => [
         'inside_city' => [
             'category' => [222]

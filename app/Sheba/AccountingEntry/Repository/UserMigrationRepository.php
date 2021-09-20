@@ -8,6 +8,7 @@ use Exception;
 use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\AccountingMigratedUser\EloquentImplementation;
+use Sheba\Dal\src\AccountingMigratedUser\UserStatus;
 
 class UserMigrationRepository extends BaseRepository
 {
@@ -53,6 +54,9 @@ class UserMigrationRepository extends BaseRepository
         $user = $this->show($userId, $userType);
         if (!$user) {
             throw new Exception('User not Found!', 404);
+        }
+        if ($user->status == UserStatus::UPGRADED || UserStatus::UPGRADING) {
+            throw new Exception('Sorry! Already migrated', 404);
         }
         return $user->update(
             [
