@@ -535,8 +535,7 @@ class DeliveryService
      */
     public function getPosOrderByDeliveryReqId(string $delivery_req_id)
     {
-        $pos_order  = PosOrder::where('delivery_request_id', $delivery_req_id)->first();
-        return $pos_order;
+        return PosOrder::where('delivery_request_id', $delivery_req_id)->first();
     }
 
     public function updateDeliveryStatus(PosOrder $pos_order)
