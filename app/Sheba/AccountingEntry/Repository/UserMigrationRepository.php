@@ -55,15 +55,16 @@ class UserMigrationRepository extends BaseRepository
         if (!$user) {
             throw new Exception('User not Found!', 404);
         }
-        if ($user->status == UserStatus::PENDING) {
-            $data['status'] = 'upgrading';
-        }
-        if ($user->status == UserStatus::UPGRADING) {
-            $data['status'] = 'upgraded';
-        }
-        if (($user->status == UserStatus::UPGRADED)) {
-            throw new Exception('Sorry! Already migrated', 404);
-        }
+//        TODO: Open it after test complete from Razoan.
+//        if ($user->status == UserStatus::PENDING) {
+//            $data['status'] = 'upgrading';
+//        }
+//        if ($user->status == UserStatus::UPGRADING) {
+//            $data['status'] = 'upgraded';
+//        }
+//        if (($user->status == UserStatus::UPGRADED)) {
+//            throw new Exception('Sorry! Already migrated', 404);
+//        }
         return $user->update(
             [
                 'status' => $data['status']
@@ -81,7 +82,8 @@ class UserMigrationRepository extends BaseRepository
     public function updateStatus(array $data, $userId, $userType = UserType::PARTNER)
     {
         $user = $this->update($data, $userId, $userType);
-        $this->migrateInAccounting($userId);
+//        TODO: Open it after test complete from Razoan.
+//        $this->migrateInAccounting($userId);
         return $user;
     }
 
