@@ -1,5 +1,6 @@
 <?php namespace Sheba\Business\CoWorker;
 
+use Exception;
 use App\Helper\BangladeshiMobileValidator;
 use Sheba\Business\BusinessMemberStatusChangeLog\Creator as BusinessMemberStatusChangeLogCreator;
 use Sheba\Business\BusinessMember\Requester as BusinessMemberRequester;
@@ -112,12 +113,12 @@ class Updater
      * @param BusinessRoleRepositoryInterface $business_role_repository
      * @param BusinessMemberStatusChangeLogCreator $business_member_status_change_log_creator
      */
-    public function __construct(FileRepository $file_repository, ProfileRepository $profile_repository,
-                                BusinessMemberRepositoryInterface $business_member_repository,
-                                RoleRequester $role_requester, RoleCreator $role_creator, RoleUpdater $role_updater,
-                                BusinessMemberRequester $business_member_requester, BusinessMemberCreator $business_member_creator,
-                                BusinessMemberUpdater $business_member_updater, ProfileBankInfoInterface $profile_bank_information,
-                                MemberRepositoryInterface $member_repository, BusinessRoleRepositoryInterface $business_role_repository,
+    public function __construct(FileRepository                       $file_repository, ProfileRepository $profile_repository,
+                                BusinessMemberRepositoryInterface    $business_member_repository,
+                                RoleRequester                        $role_requester, RoleCreator $role_creator, RoleUpdater $role_updater,
+                                BusinessMemberRequester              $business_member_requester, BusinessMemberCreator $business_member_creator,
+                                BusinessMemberUpdater                $business_member_updater, ProfileBankInfoInterface $profile_bank_information,
+                                MemberRepositoryInterface            $member_repository, BusinessRoleRepositoryInterface $business_role_repository,
                                 BusinessMemberStatusChangeLogCreator $business_member_status_change_log_creator)
     {
         $this->fileRepository = $file_repository;
@@ -535,11 +536,20 @@ class Updater
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function delete()
     {
-        $this->businessMember->delete();
+        DB::beginTransaction();
+        try {
+            $this->businessMember->delete();
+            (new InvalidToken())->invalidTheTokens($this->profile->email);
+            DB::commit();
+        } catch (Throwable $e) {
+            DB::rollback();
+            app('sentry')->captureException($e);
+            return null;
+        }
     }
 
     /**
