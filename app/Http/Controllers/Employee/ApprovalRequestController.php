@@ -3,6 +3,8 @@
 use App\Transformers\Business\LeaveListTransformer;
 use Exception;
 use League\Fractal\Resource\Collection;
+use Sheba\Business\ApprovalSetting\FindApprovalSettings;
+use Sheba\Business\ApprovalSetting\FindApprovers;
 use Sheba\Business\LeaveRejection\Requester as LeaveRejectionRequester;
 use App\Models\Attachment;
 use App\Models\Business;
@@ -217,6 +219,21 @@ class ApprovalRequestController extends Controller
         $resource = new Collection($leaves, new LeaveListTransformer());
         $leaves = $fractal->createData($resource)->toArray()['data'];
         return api_response($request, null, 200, ['leaves' => $leaves]);
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getApprovers(Request $request)
+    {
+        /** @var BusinessMember $business_member */
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $approval_setting = (new FindApprovalSettings())->getApprovalSetting($business_member, 'leave');
+        $find_approvers = (new FindApprovers())->calculateApprovers($approval_setting, $business_member);
+        $approvers_info = (new FindApprovers())->getApproversAllInfo($find_approvers);
+        return api_response($request, null, 200, ['approvers' => $approvers_info]);
     }
 }
 
