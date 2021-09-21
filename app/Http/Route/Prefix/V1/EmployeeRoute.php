@@ -15,6 +15,9 @@ class EmployeeRoute
             $api->group(['prefix' => 'payroll'], function ($api) {
                 $api->get('payslip', 'Employee\PayrollController@downloadPayslip');
                 $api->get('disbursed-month', 'Employee\PayrollController@disbursedMonth');
+                $api->get('grace-policy', 'Employee\PayrollController@getGracePolicy');
+                $api->get('checkin-checkout-policy', 'Employee\PayrollController@getCheckinCheckoutPolicy');
+                $api->get('unpaid-leave-policy', 'Employee\PayrollController@getUnpaidLeavePolicy');
             });
             $api->group(['prefix' => 'profile'], function ($api) {
                 $api->group(['prefix' => '{business_member}'], function ($api) {
@@ -106,6 +109,7 @@ class EmployeeRoute
             });
             $api->group(['prefix' => 'approval-requests'], function ($api) {
                 $api->get('/', 'Employee\ApprovalRequestController@index');
+                $api->get('/approvers', 'Employee\ApprovalRequestController@getApprovers');
                 $api->get('/leaves/{business_member}', 'Employee\ApprovalRequestController@leaveHistory');
                 $api->get('/{approval_request}', 'Employee\ApprovalRequestController@show');
                 $api->post('/status', 'Employee\ApprovalRequestController@updateStatus');
