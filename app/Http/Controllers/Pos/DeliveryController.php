@@ -279,7 +279,7 @@ class DeliveryController extends Controller
         ]);
 
         $delivery_service->setToken($this->bearerToken($request))->updateDeliveryStatus($request->merchant_code, $request->order_ref_no);
-        return api_response($request, null, 200, ['message' => 'successful']);
+        return api_response($request, null, 200);
     }
 
 }
