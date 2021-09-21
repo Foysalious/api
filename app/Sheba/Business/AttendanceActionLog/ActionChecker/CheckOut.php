@@ -55,7 +55,7 @@ class CheckOut extends ActionChecker
 
         $today_checkout_time_without_second = Carbon::parse($date->format('Y-m-d H:i'));
 
-        if ($today_checkout_time_without_second->lessThan($today_last_checkout_time)) {
+        if ($today_checkout_time_without_second->lessThan(Carbon::parse($today_last_checkout_time))) {
             if ($weekendHoliday->isWeekendByBusiness($date) || $weekendHoliday->isHolidayByBusiness($date)) {
                 $this->setResult(ActionResultCodes::SUCCESSFUL, ActionResultCodeMessages::SUCCESSFUL_CHECKOUT);
             } else {
