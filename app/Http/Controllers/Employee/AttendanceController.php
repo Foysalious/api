@@ -79,10 +79,9 @@ class AttendanceController extends Controller
     /**
      * @param Request $request
      * @param AttendanceAction $attendance_action
-     * @param ActionProcessor $action_processor
      * @return JsonResponse
      */
-    public function takeAction(Request $request, AttendanceAction $attendance_action, ActionProcessor $action_processor)
+    public function takeAction(Request $request, AttendanceAction $attendance_action)
     {
         $validation_data = [
             'action' => 'required|string|in:' . implode(',', Actions::get()),
@@ -105,13 +104,6 @@ class AttendanceController extends Controller
         $this->validate($request, $validation_data);
         $this->setModifier($business_member->member);
 
-        $checkin = $action_processor->setActionName(Actions::CHECKIN)->getAction();
-        $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
-
-        $is_note_required = 0;
-        if ($request->action == Actions::CHECKIN && $checkin->isLateNoteRequired()) $is_note_required = 1;
-        if ($request->action == Actions::CHECKOUT && $checkout->isLeftEarlyNoteRequired()) $is_note_required = 1;
-
         $attendance_action->setBusinessMember($business_member)
             ->setAction($request->action)
             ->setBusiness($business_member->business)
@@ -121,20 +113,12 @@ class AttendanceController extends Controller
             ->setLng($request->lng);
         $action = $attendance_action->doAction();
 
-        $response_data = $action->getResultCode() != ActionResultCodes::ALREADY_DEVICE_USED ?
-            [
-                'code' => $action->getResultCode(),
-                'is_note_required' => $is_note_required,
-                'date' => Carbon::now()->format('jS F Y'),
-                'message' => $action->getResultMessage()
-            ] : [
-                'code' => $action->getResultCode(),
-                'is_note_required' => 0,
-                'date' => Carbon::now()->format('jS F Y'),
-                'message' => $action->getResultMessage()
-            ];
+        $is_note_required = in_array($action->getResultCode(), [ActionResultCodes::LATE_TODAY, ActionResultCodes::LEFT_EARLY_TODAY]) ? 1 : 0;
 
-        return response()->json($response_data);
+        return response()->json(['code' => $action->getResultCode(),
+            'is_note_required' => $is_note_required,
+            'date' => Carbon::now()->format('jS F Y'),
+            'message' => $action->getResultMessage()]);
     }
 
     public function getTodaysInfo(Request $request, ActionProcessor $action_processor)

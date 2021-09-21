@@ -1,5 +1,8 @@
 <?php namespace Sheba\Business\AttendanceActionLog\ActionChecker;
 
+use Carbon\Carbon;
+use Sheba\Business\AttendanceActionLog\WeekendHolidayByBusiness;
+use Sheba\Business\Leave\HalfDay\HalfDayLeaveCheck;
 use Sheba\Dal\AttendanceActionLog\Actions;
 
 class CheckOut extends ActionChecker
@@ -41,6 +44,23 @@ class CheckOut extends ActionChecker
 
     protected function checkLeftEarly()
     {
-        // TODO: Implement checkForLateAction() method.
+        $date = Carbon::now();
+        $weekendHoliday = new WeekendHolidayByBusiness();
+
+        $which_half_day = (new HalfDayLeaveCheck())->setBusinessMember($this->businessMember)->checkHalfDayLeave();
+        $today_last_checkout_time = $this->business->calculationTodayLastCheckOutTime($which_half_day);
+
+        if (is_null($today_last_checkout_time)) return;
+        if (!$this->isSuccess()) return;
+
+        $today_checkout_time_without_second = Carbon::parse($date->format('Y-m-d H:i'));
+
+        if ($today_checkout_time_without_second->lessThan($today_last_checkout_time)) {
+            if ($weekendHoliday->isWeekendByBusiness($date) || $weekendHoliday->isHolidayByBusiness($date)) {
+                $this->setResult(ActionResultCodes::SUCCESSFUL, ActionResultCodeMessages::SUCCESSFUL_CHECKOUT);
+            } else {
+                $this->setResult(ActionResultCodes::LEFT_EARLY_TODAY, ActionResultCodeMessages::LEFT_EARLY_TODAY);
+            }
+        }
     }
 }
