@@ -66,34 +66,36 @@ class PayrollController extends Controller
         return api_response($request, null, 200, ['disbursed_months' => $disbursed_months_data]);
     }
 
-    public function getGracePolicy(Request $request)
+    public function getGracePolicy(Request $request, BusinessOfficeHoursRepoInterface $office_hours)
     {
         $business = $this->getBusiness($request);
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
         $grace_policy = $business->gracePolicy;
+        $office_time = $office_hours->getOfficeTime($business);
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
         $resource = new Collection($grace_policy, new PolicyTransformer());
         $grace_policy_rules = $manager->createData($resource)->toArray()['data'];
 
-        return api_response($request, $grace_policy_rules, 200, ['grace_policy_rules' => $grace_policy_rules]);
+        return api_response($request, $grace_policy_rules, 200, ['is_grace_policy_enable' => $office_time->is_grace_period_policy_enable, 'grace_policy_rules' => $grace_policy_rules]);
     }
 
-    public function getCheckinCheckoutPolicy(Request $request)
+    public function getCheckinCheckoutPolicy(Request $request, BusinessOfficeHoursRepoInterface $office_hours)
     {
         $business = $this->getBusiness($request);
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
         $checkin_checkout_policy = $business->checkinCheckoutPolicy;
+        $office_time = $office_hours->getOfficeTime($business);
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
         $resource = new Collection($checkin_checkout_policy, new PolicyTransformer());
         $checkin_checkout_policy_rules = $manager->createData($resource)->toArray()['data'];
 
-        return api_response($request, $checkin_checkout_policy_rules, 200, ['checkin_checkout_policy_rules' => $checkin_checkout_policy_rules]);
+        return api_response($request, $checkin_checkout_policy_rules, 200, ['is_checkin_checkout_policy_enable' => $office_time->is_late_checkin_early_checkout_policy_enable, 'checkin_checkout_policy_rules' => $checkin_checkout_policy_rules]);
     }
 
     public function getUnpaidLeavePolicy(Request $request, BusinessOfficeHoursRepoInterface $office_hours)
