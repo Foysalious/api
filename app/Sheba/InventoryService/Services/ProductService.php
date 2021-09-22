@@ -256,44 +256,39 @@ class ProductService
 
     private function makeCreateData()
     {
-        $data = [
-            ['name' => 'partner_id', 'contents' => $this->partnerId],
-            ['name' => 'category_id', 'contents' => $this->categoryId],
-            ['name' => 'name','contents' => $this->name],
-            ['name' => 'description','contents' => $this->description],
-            ['name' => 'warranty','contents' => $this->warranty ?: 0],
-            ['name' => 'warranty_unit','contents' => $this->warrantyUnit ?: 'day'],
-            ['name' => 'vat_percentage','contents' => $this->vatPercentage ?: 0],
-            ['name' => 'unit_id', 'contents' => $this->unitId],
-            ['name' => 'discount_amount', 'contents' => $this->discountAmount],
-            ['name' => 'discount_end_date', 'contents' => $this->discountEndDate],
-            ['name' => 'product_details', 'contents' => $this->productDetails],
-            ['name' => 'accounting_info', 'contents' => $this->accountingInfo],
-        ];
+        $data = [];
+        $data = array_merge($data, $this->makeCommonData());
         if (isset($this->images)) $data = array_merge($data, $this->makeImagesData());
         return $data;
     }
 
-    private function makeUpdateData()
+    private function makeUpdateData(): array
     {
         $data = [];
-        if (isset($this->categoryId)) array_push($data, ['name' => 'category_id', 'contents' => $this->categoryId]);
-        if (isset($this->name)) array_push($data, ['name' => 'name','contents' => $this->name]);
-        if (isset($this->description)) array_push($data, ['name' => 'description','contents' => $this->description]);
-        if (isset($this->warranty)) array_push($data, ['name' => 'warranty','contents' => $this->warranty ?: 0]);
-        if (isset($this->warrantyUnit)) array_push($data, ['name' => 'warranty_unit','contents' => $this->warrantyUnit ?: 'day']);
-        if (isset($this->vatPercentage))  array_push($data, ['name' => 'vat_percentage','contents' => $this->vatPercentage ?: 0]);
-        if (isset($this->unitId))  array_push($data, ['name' => 'unit_id', 'contents' => $this->unitId]);
-        if (isset($this->accountingInfo))  array_push($data, ['name' => 'accounting_info', 'contents' => $this->accountingInfo]);
-        if (isset($this->discountAmount))array_push($data, ['name' => 'discount_amount', 'contents' => $this->discountAmount]);
-        if (isset($this->discountEndDate))array_push($data, ['name' => 'discount_end_date', 'contents' => $this->discountEndDate]);
-        if (isset($this->productDetails))  array_push($data, ['name' => 'product_details', 'contents' => $this->productDetails]);
+        $data = array_merge($data, $this->makeCommonData());
         if (isset($this->deletedImages))  array_push($data, ['name' => 'deleted_images', 'contents' => $this->deletedImages]);
+        return $data;
+    }
+
+    private function makeCommonData(): array
+    {
+        $data = [];
+        if (isset($this->categoryId)) array_push($data, [ 'name' => 'category_id', 'contents' => $this->categoryId]);
+        if (isset($this->name)) array_push($data, [ 'name' => 'name', 'contents' => $this->name]);
+        if (isset($this->description)) array_push($data, [ 'name' => 'description', 'contents' => $this->description]);
+        if (isset($this->warranty)) array_push($data, [ 'name' => 'warranty', 'contents' => $this->warranty]);
+        if (isset($this->warrantyUnit)) array_push($data, [ 'name' => 'warranty_unit', 'contents' => $this->warrantyUnit ?: 'day']);
+        if (isset($this->vatPercentage)) array_push($data, [ 'name' => 'vat_percentage', 'contents' => $this->vatPercentage ?: 0]);
+        if (isset($this->unitId)) array_push($data, [ 'name' => 'unit_id', 'contents' => $this->unitId]);
+        if (isset($this->discountAmount)) array_push($data, [ 'name' => 'discount_amount', 'contents' => $this->discountAmount]);
+        if (isset($this->discountEndDate)) array_push($data, [ 'name' => 'discount_end_date', 'contents' => $this->discountEndDate]);
+        if (isset($this->productDetails)) array_push($data, [ 'name' => 'product_details', 'contents' => $this->productDetails]);
+        if (isset($this->accountingInfo)) array_push($data, [ 'name' => 'accounting_info', 'contents' => $this->accountingInfo]);
         if (isset($this->images)) $data = array_merge($data, $this->makeImagesData());
         return $data;
     }
 
-    private function makeImagesData()
+    private function makeImagesData(): array
     {
         $images = [];
         foreach ($this->images as $key => $image)
