@@ -4,6 +4,7 @@ namespace Sheba\EKYC;
 
 use App\Repositories\ResourceRepository;
 use Carbon\Carbon;
+use Sheba\Dal\ProfileNIDSubmissionLog\Model as ProfileNIDSubmissionLog;
 use Sheba\Repositories\AffiliateRepository;
 use App\Http\Requests\Request;
 use App\Repositories\FileRepository;
@@ -92,6 +93,25 @@ class NidFaceVerification
         return $data;
     }
 
+    public function storeResubmitData($profile, $nid, $faceVerificationData, $profileNIDSubmissionRepo)
+    {
+        $profile_id = $profile->id;
+        $faceVerify = array_except($faceVerificationData['data'], ['message', 'verification_percentage', 'reject_reason']);
+        $faceVerify = json_encode($faceVerify);
+
+        $porichoyNIDSubmission = $profileNIDSubmissionRepo->where('profile_id', $profile_id)
+            ->where('nid_no', $nid)
+            ->orderBy('id', 'desc')->first();
+
+        $porichoyNIDSubmission->update([
+            'porichy_data' => $faceVerify,
+            "verification_status" => ($faceVerificationData['data']['status'] === "verified" || $faceVerificationData['data']['status'] === "already_verified") ? "approved" : "rejected",
+            "rejection_reasons" => $faceVerificationData['data']['reject_reason'] ? json_encode($faceVerificationData['data']['reject_reason']) : null,
+            'created_at' => Carbon::now()->toDateTimeString()
+        ]);
+
+    }
+
     public function storeData($request, $faceVerificationData, $profileNIDSubmissionRepo)
     {
         $profile_id = $request->auth_user->getProfile()->id;
@@ -114,7 +134,7 @@ class NidFaceVerification
             'porichoy_request'    => $requestedData,
             'porichy_data'        => $faceVerify,
             "verification_status" => ($faceVerificationData['data']['status'] === "verified" || $faceVerificationData['data']['status'] === "already_verified") ? "approved" : "rejected",
-            "rejection_reasons"   => $faceVerificationData['data']['reject_reason'] ?? null,
+            "rejection_reasons"   => $faceVerificationData['data']['reject_reason'] ? json_encode($faceVerificationData['data']['reject_reason']) : null,
             'created_at'          => Carbon::now()->toDateTimeString()
         ]);
 
@@ -135,4 +155,5 @@ class NidFaceVerification
         $new_data['dob'] = Carbon::parse($porichoy_data['dob'])->format("Y-m-d");
         return $new_data;
     }
+
 }

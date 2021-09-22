@@ -206,7 +206,7 @@ abstract class ActionChecker
 
     public function isSuccess()
     {
-        return $this->resultCode ? in_array($this->resultCode, [ActionResultCodes::SUCCESSFUL, ActionResultCodes::LATE_TODAY]) : true;
+        return $this->resultCode ? in_array($this->resultCode, [ActionResultCodes::SUCCESSFUL, ActionResultCodes::LATE_TODAY, ActionResultCodes::LEFT_EARLY_TODAY]) : true;
     }
 
     public function isLateNoteRequired()

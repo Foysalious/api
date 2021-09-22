@@ -158,7 +158,9 @@ class GrossSalaryBreakdownCalculate
             return $query->where('is_default', 1)->orWhere('is_active',1);
         })->orderBy('type')->get();
         $gross_components = $payroll_components;
-        $payroll_component_by_target = $payroll_setting->components()->where('type', Type::GROSS)->where('target_id', $business_member->id)->where('is_active', 1)->orderBy('name')->get();
+        $payroll_component_by_target = $payroll_setting->components()->where('type', Type::GROSS)->where('target_id', $business_member->id)->where(function($query) {
+            return $query->where('is_default', 1)->orWhere('is_active',1);
+        })->orderBy('name')->get();
         if ($payroll_component_by_target) $gross_components = $this->filterGrossComponentForSpecificBusinessMember($payroll_components, $payroll_component_by_target);
 
         return $gross_components;

@@ -5,6 +5,7 @@ use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Sheba\EKYC\Exceptions\EkycServerError;
 use Throwable;
 
@@ -52,12 +53,16 @@ class EkycClient
      */
     private function call($method, $uri, $data = null)
     {
-        $res = $this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data));
-        $res = json_decode($res->getBody()->getContents(), true);
-        if ($res['code'] != 200)
-            throw new EkycServerError($res['message'], $res['code']);
-        unset($res['code'], $res['message']);
-        return $res;
+        try {
+            $res = $this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data));
+            $res = json_decode($res->getBody()->getContents(), true);
+            if ($res['code'] != 200)
+                throw new EkycServerError($res['message'], $res['code']);
+            unset($res['code'], $res['message']);
+            return $res;
+        } catch (EkycServerError $exception) {
+            Log::info($exception);
+        }
     }
 
     private function makeUrl($uri): string

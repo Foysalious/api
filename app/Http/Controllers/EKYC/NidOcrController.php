@@ -33,14 +33,16 @@ class NidOcrController extends Controller
     {
         try {
             $this->validate($request, Statics::storeNidOcrDataValidation());
-            $profile = $request->auth_user->getProfile();
-            $data = $this->nidOCR->formatToData($request);
-            $nidOcrData = $this->client->post($this->api, $data);
-            $nid_no = $nidOcrData['data']['nid_no'];
-            $this->nidOCR->storeData($request, $nidOcrData, $nid_no);
-            $this->nidOCR->makeProfileAdjustment($profile, $request->id_front, $request->id_back, $nid_no);
-            return api_response($request, null, 200, ["data" => $nidOcrData['data']]);
-
+            if ($request->hasFile('id_front') && $request->hasFile('id_front')) {
+                $profile = $request->auth_user->getProfile();
+                $data = $this->nidOCR->formatToData($request);
+                $nidOcrData = $this->client->post($this->api, $data);
+                $nid_no = $nidOcrData['data']['nid_no'];
+                $this->nidOCR->storeData($request, $nidOcrData, $nid_no);
+                $this->nidOCR->makeProfileAdjustment($profile, $request->id_front, $request->id_back, $nid_no);
+                return api_response($request, null, 200, ["data" => $nidOcrData['data']]);
+            }
+            return api_response($request, null, 400, ['message' => 'Please provide image file.']);
         } catch (ValidationException $exception) {
             $msg = getValidationErrorMessage($exception->validator->errors()->all());
             return api_response($request, null, 400, ['message' => $msg]);

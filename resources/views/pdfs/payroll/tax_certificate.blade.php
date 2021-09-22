@@ -129,6 +129,18 @@
             color: #000000;
         }
 
+        .under_line {
+            display: flex;
+        }
+
+        .under_line:after {
+            display: block;
+            content: " ";
+            border-bottom: 1px solid;
+            flex: 1 1 auto;
+            width: 30px;
+        }
+
         /* Footer */
         .footer {
             width: 100%;
@@ -198,7 +210,7 @@
         <tr>
             <td>
                 <span style="line-height: 1.2">
-                    This is to certify that {{$employee_profile->name}}, {{$employee_role->name}}, {{$business_name}} was paid Tk. {{$total_gross_salary}}, {{$gross_amount_in_word}} Taka only from {{$period}} as salary and benefits, break up of which  is as follows:
+                    This is to certify that {{$employee_profile->name}}, {{$employee_role->name}}, {{$business_name}} was paid Tk. {{$total_gross_salary}}, ({{$gross_amount_in_word}} Taka only) from {{$period}} as salary and benefits, break up of which  is as follows:
                 </span>
             </td>
         </tr>
@@ -246,7 +258,7 @@
         <tr>
             <td>
                 <span style="line-height: 1.2">
-                    During the income year ......................... an amount of TK. {{$yearly_tax}}, {{$yearly_tax_in_word}} Taka only was deducted at source from his salary as income tax as per following details:
+                    During the income year <span style="text-decoration: underline; text-underline-offset: 0.2em;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> an amount of TK. {{$yearly_tax}}, ({{$yearly_tax_in_word}} Taka only) was deducted at source from his salary as income tax as per following details:
                 </span>
             </td>
         </tr>
