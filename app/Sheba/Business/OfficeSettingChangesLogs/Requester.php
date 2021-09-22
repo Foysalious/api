@@ -17,6 +17,9 @@ class Requester
     private $newWorkingDaysType;
     private $newNumberOfDays;
     private $newIsWeekendIncluded;
+    private $officeName;
+    private $officeIp;
+    private $previousOfficeIp;
 
     public function setBusiness(Business $business)
     {
@@ -123,5 +126,38 @@ class Requester
     public function getNewIsWeekendIncluded()
     {
         return $this->newIsWeekendIncluded;
+    }
+
+    public function setPreviousOfficeIp($previous_office_ip)
+    {
+        $this->previousOfficeIp = $previous_office_ip;
+        return $this;
+    }
+
+    public function getPreviousOfficeIp()
+    {
+        return $this->previousOfficeIp;
+    }
+
+    public function setOfficeName($office_name)
+    {
+        $this->officeName = $office_name;
+        return $this;
+    }
+
+    public function getOfficeName()
+    {
+        return $this->officeName;
+    }
+
+    public function setOfficeIp($office_ip)
+    {
+        $this->officeIp = $office_ip;
+        return $this;
+    }
+
+    public function getOfficeIp()
+    {
+        return $this->officeIp;
     }
 }

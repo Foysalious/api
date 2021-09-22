@@ -26,6 +26,7 @@ use Sheba\Business\OfficeSetting\OperationalSetting;
 use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
 use Sheba\Dal\Attendance\Statuses;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
+use Sheba\Dal\BusinessOffice\Contract as BusinessOfficeRepositoryInterface;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\BusinessOfficeHours\Contract as BusinessOfficeHoursRepoInterface;
 use Sheba\Dal\BusinessAttendanceTypes\Contract as BusinessAttendanceTypesRepoInterface;
@@ -62,18 +63,22 @@ class AttendanceController extends Controller
     /*** @var Creator */
     private $officeSettingChangesLogsCreator;
     private $businessWeekendRepo;
+    /*** @var BusinessOfficeRepoInterface $businessOfficeRepo*/
+    private $businessOfficeRepo;
 
     /**
      * AttendanceController constructor.
      * @param BusinessHolidayRepoInterface $business_holidays_repo
      */
-    public function __construct(BusinessHolidayRepoInterface $business_holidays_repo, BusinessWeekendRepoInterface $business_weekend_repo)
+    public function __construct(BusinessHolidayRepoInterface $business_holidays_repo, BusinessWeekendRepoInterface $business_weekend_repo, BusinessOfficeRepositoryInterface $business_office_repo)
     {
         $this->holidayRepository = $business_holidays_repo;
         $this->officeSettingChangesLogsRepo = app(OfficeSettingChangesLogsRepository::class);
         $this->officeSettingChangesLogsRequester = new Requester();
         $this->officeSettingChangesLogsCreator = new Creator();
         $this->businessWeekendRepo =  $business_weekend_repo;
+        $this->businessOfficeRepo = $business_office_repo;
+
         return $this;
     }
 
@@ -779,6 +784,7 @@ class AttendanceController extends Controller
         $previous_attendance_type = $business->attendanceTypes->pluck('attendance_type')->toArray();
         $attendance_types = json_decode($request->attendance_types);
         $new_attendance_type = [];
+        $this->officeSettingChangesLogsRequester->setBusiness($business);
         if (!is_null($attendance_types)) {
             foreach ($attendance_types as $attendance_type) {
                 $attendance_type_id = isset($attendance_type->id) ? $attendance_type->id : null;
@@ -789,9 +795,8 @@ class AttendanceController extends Controller
                     ->setAction($attendance_type->action)
                     ->update();
                 if($attendance_type->action == 'checked') $new_attendance_type[] = $attendance_type->type;
-
             }
-            $this->officeSettingChangesLogsRequester->setBusiness($business)->setPreviousAttendanceType($previous_attendance_type)->setNewAttendanceType($new_attendance_type);
+            $this->officeSettingChangesLogsRequester->setPreviousAttendanceType($previous_attendance_type)->setNewAttendanceType($new_attendance_type);
             $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createAttendanceTypeLogs();
         }
 
@@ -801,12 +806,15 @@ class AttendanceController extends Controller
             $offices = collect($business_offices);
             $deleted_offices = $offices->where('action', ActionType::DELETE);
             $deleted_offices->each(function ($deleted_office) use ($setting_deleter) {
+                $this->officeSettingChangesLogsRequester->setOfficeName($deleted_office->office_name)->setOfficeIp($deleted_office->ip);
                 $setting_deleter->setBusinessOfficeId($deleted_office->id);
                 $setting_deleter->delete();
+                $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createDeleteOfficeIpLogs();
             });
 
             $added_offices = $offices->where('action', ActionType::ADD);
             $added_offices->each(function ($added_office) use ($setting_creator, $business, &$errors) {
+                $this->officeSettingChangesLogsRequester->setOfficeName($added_office->office_name)->setOfficeIp($added_office->ip);
                 $setting_creator->setBusiness($business)->setName($added_office->office_name)->setIp($added_office->ip);
                 if ($setting_creator->hasError()) {
                     array_push($errors, $setting_creator->getErrorMessage());
@@ -814,10 +822,14 @@ class AttendanceController extends Controller
                     return;
                 }
                 $setting_creator->create();
+                $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createCreatedOfficeIpLogs();
             });
 
             $edited_offices = $offices->where('action', ActionType::EDIT);
             $edited_offices->each(function ($edited_office) use ($setting_updater, $business, &$errors) {
+
+                $previous_office_ip = $this->businessOfficeRepo->builder()->withTrashed()->find($edited_office->id);
+                $this->officeSettingChangesLogsRequester->setPreviousOfficeIp($previous_office_ip)->setOfficeName($edited_office->office_name)->setOfficeIp($edited_office->ip);
                 $setting_updater->setBusinessOfficeId($edited_office->id)->setName($edited_office->office_name)->setIp($edited_office->ip);
                 if ($setting_updater->hasError()) {
                     array_push($errors, $setting_updater->getErrorMessage());
@@ -825,6 +837,7 @@ class AttendanceController extends Controller
                     return;
                 }
                 $setting_updater->update();
+                $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createEditedOfficeIpLogs();
             });
         }
 
