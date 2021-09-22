@@ -97,4 +97,12 @@ class ProductController extends Controller
         return http_response($request, null, 200, $product);
     }
 
+    public function addStock(Request $request, $productId)
+    {
+        $partner = $request->auth_user->getPartner();
+        $product = $this->productService->setPartnerId($partner->id)->setProductId($productId)->setStock($request->stock)
+            ->setSkuId($request->sku_id)->setAccountingInfo($request->accounting_info)->setCost($request->cost)->addStock();
+        return http_response($request, null, 200, $product);
+    }
+
 }
