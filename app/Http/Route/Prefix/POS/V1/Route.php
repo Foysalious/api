@@ -58,6 +58,7 @@ class Route
                 $api->delete('/value1/{valueId}', "Inventory\ValueController@destroy");
             });
 
+<<<<<<< HEAD
             $api->group(['prefix' => 'products'], function ($api) {
                 $api->get('/', 'Inventory\ProductController@index');
                 $api->post('/', 'Inventory\ProductController@store');
@@ -66,6 +67,29 @@ class Route
                     $api->put('/', 'Inventory\ProductController@update');
                     $api->delete('/', 'Inventory\ProductController@destroy');
                     $api->get('/logs', 'Inventory\ProductController@getLogs');
+=======
+                $api->group(['prefix' => 'products'], function ($api) {
+                    $api->get('/', 'Inventory\ProductController@index');
+                    $api->post('/', 'Inventory\ProductController@store');
+                    $api->group(['prefix' => '{products}'], function ($api) {
+                        $api->get('/', 'Inventory\ProductController@show');
+                        $api->put('/', 'Inventory\ProductController@update');
+                        $api->delete('/', 'Inventory\ProductController@destroy');
+                        $api->get('/logs', 'Inventory\ProductController@getLogs');
+                        $api->post('/add-stock', 'Inventory\ProductController@addStock');
+                    });
+                });
+                $api->group(['prefix' => 'category-products'], function ($api) {
+                    $api->get('/', 'Inventory\CategoryProductController@getProducts');
+                });
+                $api->group(['prefix' => 'categories'], function ($api) {
+                    $api->get('/', 'Inventory\CategoryController@index');
+                    $api->get('/allCategory', 'Inventory\CategoryController@allCategory');
+                    $api->post('/', 'Inventory\CategoryController@store');
+                    $api->post('/category-with-sub-category', 'Inventory\CategoryController@createCategoryWithSubCategory');
+                    $api->put('/{category_id}', 'Inventory\CategoryController@update');
+                    $api->delete('/{category_id}', 'Inventory\CategoryController@delete');
+>>>>>>> feature/pos-rebuild
                 });
             });
             $api->group(['prefix' => 'category-products'], function ($api) {

@@ -31,13 +31,15 @@ class ProductService
     protected $discountAmount;
     protected $discountEndDate;
     protected $productDetails;
-    private $offset;
     private $limit;
     private $searchKey;
     private $sub_category_ids;
     private $category_ids;
     private $updated_after;
     private $is_published_for_webstore;
+    protected $offset;
+    protected $accountingInfo;
+    protected $skuId;
 
 
     public function __construct(InventoryServerClient $client)
@@ -265,6 +267,19 @@ class ProductService
         return $this;
     }
 
+    public function setAccountingInfo($accountingInfo)
+    {
+        $this->accountingInfo = $accountingInfo;
+        return $this;
+    }
+
+
+    public function setSkuId($skuId)
+    {
+        $this->skuId = $skuId;
+        return $this;
+    }
+
     public function getProducts($partnerId)
     {
         $url = 'api/v1/partners/' . $partnerId . '/products?';
@@ -302,6 +317,7 @@ class ProductService
             ['name' => 'discount_amount', 'contents' => $this->discountAmount],
             ['name' => 'discount_end_date', 'contents' => $this->discountEndDate],
             ['name' => 'product_details', 'contents' => $this->productDetails],
+            ['name' => 'accounting_info', 'contents' => $this->accountingInfo],
         ];
         if (isset($this->images)) $data = array_merge($data, $this->makeImagesData());
         return $data;
@@ -317,6 +333,7 @@ class ProductService
         if (isset($this->warrantyUnit)) array_push($data, ['name' => 'warranty_unit','contents' => $this->warrantyUnit ?: 'day']);
         if (isset($this->vatPercentage))  array_push($data, ['name' => 'vat_percentage','contents' => $this->vatPercentage ?: 0]);
         if (isset($this->unitId))  array_push($data, ['name' => 'unit_id', 'contents' => $this->unitId]);
+        if (isset($this->accountingInfo))  array_push($data, ['name' => 'accounting_info', 'contents' => $this->accountingInfo]);
         if (isset($this->discountAmount))array_push($data, ['name' => 'discount_amount', 'contents' => $this->discountAmount]);
         if (isset($this->discountEndDate))array_push($data, ['name' => 'discount_end_date', 'contents' => $this->discountEndDate]);
         if (isset($this->productDetails))  array_push($data, ['name' => 'product_details', 'contents' => $this->productDetails]);
@@ -355,6 +372,23 @@ class ProductService
     public function getLogs()
     {
         return $this->client->get('api/v1/partners/'. $this->partnerId . '/products/' .  $this->productId . '/logs');
+    }
+
+    public function addStock()
+    {
+        $data = $this->makeAddStockData();
+        return $this->client->post('api/v1/partners/'. $this->partnerId . '/products/' .  $this->productId . '/add-stock', $data, true);
+    }
+
+    private function makeAddStockData(): array
+    {
+        return [
+            ['name' => 'sku_id', 'contents' => (int) $this->skuId ],
+            ['name' => 'stock', 'contents' => (float) $this->stock],
+            ['name' => 'accounting_info','contents' => $this->accountingInfo ],
+            ['name' => 'cost','contents' => (float) $this->cost ],
+        ];
+
     }
 
 }
