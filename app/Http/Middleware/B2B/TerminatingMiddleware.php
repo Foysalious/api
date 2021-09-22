@@ -6,7 +6,6 @@ use Closure;
 
 class TerminatingMiddleware
 {
-
     /**
      * Handle an incoming request.
      *
@@ -17,7 +16,6 @@ class TerminatingMiddleware
     public function handle($request, Closure $next)
     {
         $response = $next($request);
-
         // Add response time as an HTTP header. For better accuracy ensure this middleware
         if (defined('LARAVEL_START') and $response instanceof Response) {
             $response->headers->add(['X-RESPONSE-TIME' => microtime(true) - LARAVEL_START]);
@@ -36,11 +34,15 @@ class TerminatingMiddleware
     public function terminate($request, $response)
     {
         if (defined('LARAVEL_START') and $request instanceof Request) {
-            app('log')->debug('Response time', [
-                'method' => $request->getMethod(),
-                'uri' => $request->url(),
-                'seconds' => microtime(true) - LARAVEL_START,
-            ]);
+            $method = $request->getMethod();
+            $full_url = $request->fullUrl();
+            $host = $request->getHost();
+            $response_time = microtime(true) - LARAVEL_START;
+            #$req = str_replace(array("\r\n", "\n", "\r", " "), '', $request->getContent());
+            $req = json_encode($request->except('access_token', 'auth_user', 'manager_member', 'business', 'business_member', 'token'));
+            $res = $response->getContent();
+
+            app('log')->debug(" method:$method host:$host full_url:$full_url response_time:$response_time req:$req res:$res");
         }
     }
 }
