@@ -542,6 +542,7 @@ class Updater
     {
         DB::beginTransaction();
         try {
+            $this->businessMemberUpdater->setBusinessMember($this->businessMember)->update(['status'=>'inactive']);
             $this->businessMember->delete();
             (new InvalidToken())->invalidTheTokens($this->profile->email);
             DB::commit();
