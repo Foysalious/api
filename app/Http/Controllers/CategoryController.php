@@ -577,7 +577,6 @@ class CategoryController extends Controller
                 ] : null;
                 $category['slug'] = $category_slug;
                 $category['max_order_amount'] = $category['max_order_amount'] ? (double)$category['max_order_amount'] : null;
-                $category['service_count'] = $services->count();
 
                 if ($subscriptions->count()) {
                     $category['subscription_faq'] = $subscription_faq;
