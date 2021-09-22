@@ -8,6 +8,7 @@ use App\Sheba\Business\BusinessBasicInformation;
 use App\Sheba\Business\OfficeSetting\PolicyRuleRequester;
 use App\Sheba\Business\OfficeSetting\PolicyRuleUpdater;
 use App\Sheba\Business\OfficeSetting\PolicyTransformer;
+use App\Sheba\Business\OfficeSettingChangesLogs\ChangesLogsTransformer;
 use App\Sheba\Business\OfficeSettingChangesLogs\Creator;
 use App\Sheba\Business\OfficeSettingChangesLogs\Requester;
 use App\Transformers\CustomSerializer;
@@ -1003,5 +1004,17 @@ class AttendanceController extends Controller
         $checkin_checkout_policy_rules = $manager->createData($resource)->toArray()['data'];
 
         return api_response($request, $checkin_checkout_policy_rules, 200, ['checkin_checkout_policy_rules' => $checkin_checkout_policy_rules]);
+    }
+
+    public function getOfficeSettingChangesLogs(Request $request, OfficeSettingChangesLogsRepository $office_setting_changes_logs)
+    {
+        $business = $request->business;
+        if (!$business) return api_response($request, null, 403, ['message' => 'You Are not authorized to show this logs']);
+        $operational_changes_logs = $office_setting_changes_logs->where('business_id', $business->id)->orderBy('created_at', 'DESC')->get();
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Collection($operational_changes_logs, new ChangesLogsTransformer());
+        $operational_changes_logs = $manager->createData($resource)->toArray()['data'];
+        return api_response($request, $operational_changes_logs, 200, ['operational_changes_logs' => $operational_changes_logs]);
     }
 }
