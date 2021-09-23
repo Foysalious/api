@@ -10,6 +10,7 @@ class MonthlyLeaveDates
     private $leaveRepo;
     private $leaveBreakdown;
     private $businessMember;
+    private $timeFrame;
 
     /**
      * @param LeaveRepoInterface $leave_repo
@@ -31,13 +32,19 @@ class MonthlyLeaveDates
         return $this;
     }
 
+    public function setTimeFrame($time_frame)
+    {
+        $this->timeFrame = $time_frame;
+        return $this;
+    }
+
     /**
      * @return array
      */
     public function getLeaveDates()
     {
-        $month_start = Carbon::now()->startOfMonth()->toDateString();
-        $month_end = Carbon::now()->endOfMonth()->toDateString();
+        $month_start = $this->timeFrame->start;
+        $month_end = $this->timeFrame->end;
         $leaves = $this->leaveRepo->builder()
             ->select('id', 'title', 'business_member_id', 'leave_type_id', 'start_date', 'end_date', 'is_half_day', 'half_day_configuration', 'status')
             ->where('business_member_id', $this->businessMember->id)
