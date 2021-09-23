@@ -853,6 +853,7 @@ class AttendanceController extends Controller
         $previous_is_weekend_included = $business_office->is_weekend_included;
         $office_timing = $operational_setting_updater->setBusiness($request->business)
             ->setMember($business_member->member)
+            ->setPreviousWeekends($business_weekend)
             ->setWeekends($request->weekends)
             ->setTotalWorkingDaysType($request->working_days_type)
             ->setNumberOfDays($request->days)
