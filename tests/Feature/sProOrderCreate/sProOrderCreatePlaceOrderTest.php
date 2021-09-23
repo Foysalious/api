@@ -54,7 +54,8 @@ class sProOrderCreatePlaceOrderTest extends FeatureTestCase
             'category_id' => $this->secondaryCategory->id,
             'variable_type' => ServiceType::FIXED,
             'variables' => '{"price":"1700","min_price":"1000","max_price":"2500","description":""}',
-            'publication_status' => 1
+            'publication_status' => 1,
+            'stock_left' => 100
         ]);
 
         $this->categoryPartner = factory(CategoryPartner::class)->create([
@@ -86,7 +87,7 @@ class sProOrderCreatePlaceOrderTest extends FeatureTestCase
     {
         //arrange
         $services = json_encode([
-            ['id' => 1, 'option' => [0,0], 'quantity' => 1]
+            ['id' => 1, 'option' => [], 'quantity' => 1]
         ]);
 
         //act
@@ -96,7 +97,7 @@ class sProOrderCreatePlaceOrderTest extends FeatureTestCase
             'mobile' => "01835559988",
             'sales_channel' => "Web",
             'payment_method' => "cod",
-            'date' => '2021-09-16',
+            'date' => '2021-09-22',
             'time' => '15:00:00-16:00:00',
             'location_id' => 4,
             'address' => 'Michael road',
