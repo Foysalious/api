@@ -40,7 +40,7 @@ class ServiceController extends Controller
 
     public function getSuggestions(Request $request)
     {
-        $categories = Service::where('publication_status', 1)->select('id', 'name', 'bn_name')->get();
+        $categories = Service::published()->select('id', 'name', 'bn_name')->get();
 
         return count($categories) > 0 ? api_response($request, $categories, 200, ['service' => $categories]) : api_response($request, null, 404);
     }
