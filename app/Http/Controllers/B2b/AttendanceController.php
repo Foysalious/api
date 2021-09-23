@@ -1026,8 +1026,11 @@ class AttendanceController extends Controller
 
     public function getOfficeSettingChangesLogs(Request $request, OfficeSettingChangesLogsRepository $office_setting_changes_logs)
     {
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
         $business = $request->business;
-        if (!$business) return api_response($request, null, 403, ['message' => 'You Are not authorized to show this logs']);
+        if (!$business) return api_response($request, null, 401);
         $operational_changes_logs = $office_setting_changes_logs->where('business_id', $business->id)->orderBy('created_at', 'DESC')->get();
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
