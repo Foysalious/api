@@ -11,6 +11,7 @@ class Route
             (new UserRoute())->set($api);
             (new CategoryRoute())->set($api);
             (new PaymentLinkRoute())->set($api);
+            (new AccountingRoute())->set($api);
             (new CustomerRoute())->set($api);
             (new AffiliateRoute())->set($api);
             (new PartnerRoute())->set($api);

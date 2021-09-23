@@ -2,6 +2,8 @@
 
 use App\Models\Partner;
 use App\Models\PartnerOrder;
+use Exception;
+use Illuminate\Database\Eloquent\Model;
 use Sheba\Repositories\PartnerTransactionRepository;
 
 class PartnerTransactionHandler
@@ -18,13 +20,13 @@ class PartnerTransactionHandler
      * @param $log
      * @param PartnerOrder|null $partner_order
      * @param null $tags
-     * @throws \Exception
+     * @throws Exception
      */
     public function credit($amount, $log, PartnerOrder $partner_order = null, $tags = null)
     {
         $data = $this->formatData($amount, $log, $partner_order);
         $data['type'] = 'Credit';
-        $this->partnerTransactionRepo->save($data, $tags);
+        return $this->partnerTransactionRepo->save($data, $tags);
     }
 
     /**
@@ -32,13 +34,14 @@ class PartnerTransactionHandler
      * @param $log
      * @param PartnerOrder|null $partner_order
      * @param null $tags
-     * @throws \Exception
+     * @return Model|null
+     * @throws Exception
      */
     public function debit($amount, $log, PartnerOrder $partner_order = null, $tags = null)
     {
         $data = $this->formatData($amount, $log, $partner_order);
         $data['type'] = 'Debit';
-        $this->partnerTransactionRepo->save($data, $tags);
+        return $this->partnerTransactionRepo->save($data, $tags);
     }
 
     private function formatData($amount, $log, PartnerOrder $partner_order = null)

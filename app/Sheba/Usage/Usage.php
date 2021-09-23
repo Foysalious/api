@@ -2,6 +2,9 @@
 
 namespace Sheba\Usage;
 
+use ReflectionClass;
+use Sheba\AccountingEntry\Accounts\Accounts;
+use Sheba\AccountingEntry\Repository\JournalCreateRepository;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
 use Sheba\Transactions\Types;
@@ -82,8 +85,24 @@ class Usage
             $this->user->referrer_income += $amount;
             $this->user->save();
             if ($amount > 0) {
-                (new WalletTransactionHandler())->setModel($this->user->referredBy)->setSource(TransactionSources::SHEBA_WALLET)->setType(Types::credit())->setAmount($amount)->setLog("$amount BDT has been credited for partner referral from usage of name: " . $this->user->name . ', ID: ' . $this->user->id)->store();
+                $transaction = (new WalletTransactionHandler())->setModel($this->user->referredBy)->setSource(TransactionSources::SHEBA_WALLET)->setType(Types::credit())->setAmount($amount)->setLog("$amount BDT has been credited for partner referral from usage of name: " . $this->user->name . ', ID: ' . $this->user->id)->store();
+                try {
+                    $reference = (new \ReflectionClass($this->user->referredBy))->getShortName() ?? 'referral';
+                } catch (\ReflectionException $e) {
+                    $reference = 'referral';
+                }
+                $this->storeJournal($this->user->id, $transaction, $amount, $reference);
             }
         }
+    }
+
+    private function storeJournal($typeId, $sourceType, $amount, $reference) {
+        return (new JournalCreateRepository())->setTypeId($typeId)->setSource($sourceType)
+            ->setAmount($amount)
+            ->setDebitAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
+            ->setCreditAccountKey((new Accounts())->income->reffer::REFFER)
+            ->setDetails("Referral Bonus")
+            ->setReference($reference)
+            ->store();
     }
 }
