@@ -86,7 +86,7 @@ class VisitController extends Controller
 
         $total_visits = count($visits);
         #$limit = $this->getLimit($request, $limit, $total_visits);
-        $visits = collect($visits)->splice($offset, $limit);
+        if ($request->has('limit') && !$request->has('file')) $visits = collect($visits)->splice($offset, $limit);
 
         if ($request->has('file') && $request->file == 'excel') return $employee_visit_excel->setEmployeeVisitData($visits->toArray())->get();
 
@@ -101,6 +101,7 @@ class VisitController extends Controller
     /**
      * @param Request $request
      * @param TimeFrame $time_frame
+     * @param MyVisitExcel $my_visit_excel
      * @return JsonResponse
      */
     public function getMyVisits(Request $request, TimeFrame $time_frame, MyVisitExcel $my_visit_excel)
@@ -133,7 +134,7 @@ class VisitController extends Controller
 
         $total_visits = count($visits);
         #$limit = $this->getLimit($request, $limit, $total_visits);
-        $visits = collect($visits)->splice($offset, $limit);
+        if ($request->has('limit') && !$request->has('file')) $visits = collect($visits)->splice($offset, $limit);
 
         if ($request->has('file') && $request->file == 'excel') return $my_visit_excel->setMyVisitData($visits->toArray())->get();
 
