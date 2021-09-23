@@ -3,9 +3,6 @@
 use App\Models\Profile;
 use Carbon\Carbon;
 use Exception;
-use Illuminate\Support\Facades\Log;
-use Sheba\AccountingEntry\Repository\UserMigrationRepository;
-use Sheba\Dal\src\AccountingMigratedUser\UserStatus;
 use Sheba\ExpenseTracker\AutomaticExpense;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\EntryType;

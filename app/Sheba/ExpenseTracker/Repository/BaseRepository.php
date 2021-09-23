@@ -2,7 +2,7 @@
 
 use App\Models\Partner;
 use Sheba\AccountingEntry\Repository\UserMigrationRepository;
-use Sheba\Dal\src\AccountingMigratedUser\UserStatus;
+use Sheba\Dal\AccountingMigratedUser\UserStatus;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ModificationFields;
 use Sheba\Pos\Payment\Creator as PaymentCreator;

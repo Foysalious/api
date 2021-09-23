@@ -8,7 +8,7 @@ use Exception;
 use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\AccountingMigratedUser\EloquentImplementation;
-use Sheba\Dal\src\AccountingMigratedUser\UserStatus;
+use Sheba\Dal\AccountingMigratedUser\UserStatus;
 
 class UserMigrationRepository extends BaseRepository
 {
