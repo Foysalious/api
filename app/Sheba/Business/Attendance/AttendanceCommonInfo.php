@@ -35,6 +35,7 @@ class AttendanceCommonInfo
 
     public function isInWifiArea(Business $business)
     {
+        dump($this->getIp());
         return in_array($this->getIp(), $business->offices->pluck('ip')->toArray());
     }
 
