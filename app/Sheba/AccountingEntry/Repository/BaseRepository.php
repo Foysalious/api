@@ -10,7 +10,7 @@ use App\Models\PosOrderPayment;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
 use Sheba\AccountingEntry\Repository\UserMigrationRepository;
-use Sheba\Dal\src\AccountingMigratedUser\UserStatus;
+use Sheba\Dal\AccountingMigratedUser\UserStatus;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
