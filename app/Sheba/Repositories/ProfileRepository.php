@@ -205,7 +205,6 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
                 $name = $image->getClientOriginalName() . '_' . ImageSide::FRONT;
                 $image = $this->_saveNIdImage($image, $name);
             }
-
             $profile_data['nid_image_front'] = $image;
         }
         if (isset($data['nid_image_back'])) {
@@ -215,6 +214,9 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
                 $image = $this->_saveNIdImage($image, $name);
             }
             $profile_data['nid_image_back'] = $image;
+        }
+        if (isset($data['passport_image'])) {
+            $profile_data['passport_image'] = $data['passport_image'];
         }
 
         return $profile_data;

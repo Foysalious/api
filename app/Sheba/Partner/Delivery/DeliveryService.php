@@ -427,6 +427,7 @@ class DeliveryService
         $data = [
             'name' => $info['contact_info']['name'],
             'partner_id' => $this->partner->id,
+            'merchant_id' =>  $info['uid'],
             'mobile' => $info['phone'],
             'email' => $info['contact_info']['email'],
             'business_type' => $info['product_nature'],
@@ -489,17 +490,22 @@ class DeliveryService
     public function getDeliveryStatus()
     {
         $delivery_order_id = $this->posOrder->delivery_request_id;
-        if(!$delivery_order_id)
-            throw new DoNotReportException('Delivery tracking id not found',404);
+        if (!$delivery_order_id)
+            throw new DoNotReportException('Delivery tracking id not found', 404);
         $data = [
             'uid' => $delivery_order_id
         ];
-        return $this->client->setToken($this->token)->post('orders/track', $data);
+        $response = $this->client->setToken($this->token)->post('orders/track', $data);
+        return [
+            'status' => $response['data']['status'],
+            'delivery_order_id' => $delivery_order_id,
+            'merchant_id' => $this->partner->deliveryInformation ? $this->partner->deliveryInformation->merchant_id : null
+        ];
     }
 
     public function cancelOrder()
     {
-        $status = $this->getDeliveryStatus()['data']['status'];
+        $status = $this->getDeliveryStatus()['status'];
         $data = [
             'uid' => $this->posOrder->delivery_request_id
         ];

@@ -30,7 +30,7 @@ $cbl            = [
     'name'           => 'City Bank (American Express)',
     'name_bn'        => null,
     'asset'          => 'cbl',
-    'method_name'    => 'cbl',
+    'method_name'    => 'online',
     'icon'           => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/payments/City+Bank.png',
     'cash_in_charge' => 0,
 ];
@@ -59,7 +59,7 @@ $nagad          = [
     'cash_in_charge' => 0,
 ];
 $ebl            = [
-    'name'           => 'Visa/Master',
+    'name'           => 'Visa, Mastercard',
     'name_bn'        => null,
     'asset'          => 'ebl',
     'method_name'    => 'ebl',

@@ -203,24 +203,26 @@ class ShebaController extends Controller
         return api_response($request, $butcher_info, 200, ['info' => $butcher_info]);
     }
 
-    public function checkTransactionStatus(Request $request, $transaction_id)
+    /**
+     * @param \Illuminate\Http\Request $request
+     * @param $transaction_id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function checkTransactionStatus(Request $request, $transaction_id): JsonResponse
     {
         /** @var Payment $payment */
         $payment = Payment::where('transaction_id', $transaction_id)->first();
         if (!$payment) return api_response($request, null, 404, ['message' => 'No Payment found']);
         $external_payment = $payment->externalPayments;
+
         if (!$payment->isComplete() && !$payment->isPassed()) {
-            if ($error = $payment->getErrorMessage()) {
-                $message = 'Your payment has been failed due to ' . $error;
-            } else {
-                $message = 'Payment Failed.';
-            }
+            if ($error = $payment->getErrorMessage()) $message = 'Your payment has been failed due to ' . $error;
+            else $message = 'Payment Failed.';
+
             $fail_url = null;
-            if ($external_payment) {
-                $fail_url = $external_payment->fail_url;
-            }
-            return api_response($request, null, 404,
-                ['message' => $message, 'external_payment_redirection_url' => $fail_url]);
+            if ($external_payment) $fail_url = $external_payment->fail_url;
+
+            return api_response($request, null, 404, ['message' => $message, 'external_payment_redirection_url' => $fail_url]);
         }
         $info = $this->getPaymentInfo($payment, $external_payment);
 
@@ -279,14 +281,16 @@ class ShebaController extends Controller
 
     /**
      * @param Request $request
+     * @param \Sheba\Dal\PaymentGateway\Contract $paymentGateWayRepository
      * @return JsonResponse
-     * @throws Exception
+     * @throws \Exception
      */
     public function getPayments(Request $request, PaymentGatewayRepository $paymentGateWayRepository)
     {
         $version_code  = (int)$request->header('Version-Code');
         $platform_name = $request->header('Platform-Name');
-        $user_type     = $request->type;
+        $user_type = $request->type;
+        $payable_type = $request->payable_type;
         if (!$user_type) $user_type = getUserTypeFromRequestHeader($request);
         if (!$user_type) $user_type = "customer";
 
@@ -297,8 +301,8 @@ class ShebaController extends Controller
             ->where('status', 'Published')
             ->get();
 
-        $payments = array_map(function (PaymentMethodDetails $details) use ($dbGateways, $user_type) {
-            return (new PresentableDTOPresenter($details, $dbGateways))->mergeWithDbGateways($user_type);
+        $payments = array_map(function (PaymentMethodDetails $details) use ($dbGateways, $user_type, $payable_type){
+            return (new PresentableDTOPresenter($details, $dbGateways))->mergeWithDbGateways($user_type, $payable_type);
         }, AvailableMethods::getDetails($request->payable_type, $request->payable_type_id, $version_code, $platform_name, $user_type));
 
         if ($user_type == 'partner') {
@@ -484,6 +488,7 @@ class ShebaController extends Controller
         $info                           = $this->getPaymentInfo($payment);
         $info['gateway_transaction_id'] = $payment->gateway_transaction_id;
         $info['gateway_account_name']   = $payment->gateway_account_name;
+        $info['payment_purpose']        = $payment->payable->description;
         if (!isset($info['payer'])) {
             /** @var Payable $payer */
             $payer = $payment->payable;

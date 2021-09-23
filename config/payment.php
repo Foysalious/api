@@ -50,35 +50,33 @@ return [
         ]
     ],
     'ok_wallet'   => [
-        'base_url'   => env('OK_WALLET_BASE_URL'),
-        'account'    => env('OK_WALLET_ACCOUNT'),
-        'api_key'    => env('OK_WALLET_API_KEY'),
-        'api_secret' => env('OK_WALLET_API_SECRET'),
-        'format'     => env('OK_WALLET_API_FORMAT', 'json'),
-        'key_path'   => env('OK_WALLET_KEY_PATH', 'assets/ok-wallet/public.key'),
-        'merchant'   => env('OK_WALLET_MERCHANT', 'sheba.xyz')
+        'base_url'      => env('OK_WALLET_BASE_URL'),
+        'api_user'      => env('OK_WALLET_API_USER'),
+        'api_password'  => env('OK_WALLET_API_PASSWORD'),
+        'merchant_id'   => env('OK_WALLET_MERCHANT_ID'),
+        'access_key'    => env('OK_WALLET_ACCESS_KEY'),
+        'web_client_base_url' => env('OK_WALLET_WEB_CLIENT_BASE_URL'),
+        'urls'          => [
+            'approve' => env('SHEBA_API_URL') . '/v2/payments/ok-wallet/success',
+            'decline' => env('SHEBA_API_URL') . '/v2/payments/ok-wallet/fail',
+            'cancel'  => env('SHEBA_API_URL') . '/v2/payments/ok-wallet/cancel',
+        ]
     ],
     'nagad'       => [
         'stores' => [
             'default'     => [
                 'base_url'         => env('NAGAD_BASE_URL', 'http://sandbox.mynagad.com:10080/remote-payment-gateway-1.0'),
                 'merchant_id'      => env('NAGAD_MERCHANT_ID', '683002007104225'),
-                'private_key_path' => resource_path(env('NAGAD_MERCHANT_PRIVATE_KEY', 'assets/nagad/merchantPrivate.key')),
-                'public_key_path'  => resource_path(env('NAGAD_PUBLIC_KEY_PATH', 'assets/nagad/pgPublic.key')),
                 'context_path'     => 'remote-payment-gateway-1.0'
             ],
             'affiliate'   => [
                 'base_url'         => env('NAGAD_BASE_URL', 'http://sandbox.mynagad.com:10080/remote-payment-gateway-1.0'),
                 'merchant_id'      => env('NAGAD_AFFILIATE_MERCHANT_ID', '683002007104225'),
-                'private_key_path' => resource_path(env('NAGAD_AFFILIATE_MERCHANT_PRIVATE_KEY', 'assets/nagad/Bondhu.merchantPrivate.key')),
-                'public_key_path'  => resource_path(env('NAGAD_AFFILIATE_PUBLIC_KEY_PATH', 'assets/nagad/Bondhu.pgPublic.key')),
                 'context_path'     => 'remote-payment-gateway-1.0'
             ],
             'marketplace' => [
                 'base_url'         => env('NAGAD_BASE_URL', 'http://sandbox.mynagad.com:10080/remote-payment-gateway-1.0'),
                 'merchant_id'      => env('NAGAD_MARKETPLACE_MERCHANT_ID', '686200110675045'),
-                'private_key_path' => resource_path(env('NAGAD_MARKETPLACE_MERCHANT_PRIVATE_KEY', 'assets/nagad/Marketplace.merchantPrivate.key')),
-                'public_key_path'  => resource_path(env('NAGAD_MARKETPLACE_PUBLIC_KEY_PATH', 'assets/nagad/Marketplace.pgPublic.key')),
                 'context_path'     => 'remote-payment-gateway-1.0'
             ],
         ]

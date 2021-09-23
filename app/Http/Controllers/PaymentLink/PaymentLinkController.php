@@ -140,7 +140,8 @@ class PaymentLinkController extends Controller
         try {
             $this->validate($request, [
                 'amount'             => 'required',
-                'purpose'            => 'required', 'customer_id' => 'sometimes|integer|exists:pos_customers,id',
+                'purpose'            => 'required',
+                'customer_id'        => 'sometimes|integer|exists:pos_customers,id',
                 'emi_month'          => 'sometimes|integer|in:' . implode(',', config('emi.valid_months')),
                 'interest_paid_by'   => 'sometimes|in:' . implode(',', PaymentLinkStatics::paidByTypes()),
                 'transaction_charge' => 'sometimes|numeric|min:' . PaymentLinkStatics::get_payment_link_commission()
