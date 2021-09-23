@@ -1864,7 +1864,7 @@
             "time": "2017-03-12T09:23:10+00:00"
         },
         {
-            "name": "jeremeamia/SuperClosure",
+            "name": "jeremeamia/superclosure",
             "version": "2.3.0",
             "source": {
                 "type": "git",
@@ -4012,10 +4012,6 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-<<<<<<< HEAD
-                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
-                "reference": "cb7436f9566486e0d00aeba1591ed18d96b68eb6"
-=======
                 "url": "https://bitbucket.org/startern/sheba_dal.git",
                 "reference": "6c201519d32a5c88a3edb7714920dec802a0c176"
             },

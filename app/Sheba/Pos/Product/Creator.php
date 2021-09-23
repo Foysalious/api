@@ -5,12 +5,12 @@ use App\Models\PartnerPosService;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
+use Sheba\Dal\PartnerPosServiceBatch\Model as PartnerPosServiceBatch;
 use Sheba\Dal\PartnerPosServiceImageGallery\Model as PartnerPosServiceImageGallery;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
 use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
-use Sheba\Pos\Repositories\PosServiceRepository;
 use Sheba\RequestIdentification;
 use Sheba\Subscription\Partner\Access\AccessManager;
 
@@ -39,13 +39,17 @@ class Creator
         $this->saveImages();
         $this->data['partner_id'] = $this->data['partner']['id'];
         $this->data['pos_category_id'] = $this->data['category_id'];
-        $this->data['cost'] = (double)$this->data['cost'];
+        $cost = $this->data['cost'];
+        $stock = $this->data['stock'];
+        $this->data['cost'] = 0.0;
+        $this->data['stock'] = null;
         $this->format();
         $image_gallery = null;
         if (isset($this->data['image_gallery']))
             $image_gallery = $this->data['image_gallery'];
         $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'image_gallery']);
         $partner_pos_service = $this->serviceRepo->save($this->data + (new RequestIdentification())->get());
+        $this->savePartnerPosServiceBatch($partner_pos_service->id, $stock, $cost);
         $this->storeImageGallery($partner_pos_service, json_decode($image_gallery,true));
         return $partner_pos_service;
     }
@@ -103,7 +107,6 @@ class Creator
      */
     private function format()
     {
-        $this->data['stock']            = (isset($this->data['stock']) && $this->data['stock'] > 0) ? (double)$this->data['stock'] : null;
         $this->data['vat_percentage']   = (isset($this->data['vat_percentage']) && $this->data['vat_percentage'] > 0) ? (double)$this->data['vat_percentage'] : 0.00;
         $this->data['warranty_unit']    = (isset($this->data['warranty_unit']) && in_array($this->data['warranty_unit'], array_keys(config('pos.warranty_unit')))) ? $this->data['warranty_unit'] : config('pos.warranty_unit.day.en');
         $this->data['wholesale_price']  = (isset($this->data['wholesale_price']) && $this->data['wholesale_price'] > 0) ? (double)$this->data['wholesale_price'] : 0.00;
@@ -154,5 +157,15 @@ class Creator
 
         if(!empty($data))
             PartnerPosCategory::insert($data);
+    }
+
+    public function savePartnerPosServiceBatch($service_id, $stock = null, $cost = null)
+    {
+        $batchData = [];
+        $batchData['partner_pos_service_id'] = $service_id;
+        $batchData['stock'] = $stock;
+        $batchData['cost']  = $cost;
+
+        return PartnerPosServiceBatch::create($batchData);
     }
 }

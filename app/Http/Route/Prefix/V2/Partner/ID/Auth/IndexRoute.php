@@ -87,6 +87,7 @@ class IndexRoute
                         $api->delete('/', 'Pos\ServiceController@destroy');
                         $api->post('/toggle-publish-for-shop', 'Pos\ServiceController@togglePublishForShopStatus');
                         $api->post('/copy', 'Pos\ServiceController@copy');
+                        $api->post('/add-new-stock', 'Pos\ServiceController@addNewStock');
                     });
                 });
                 $api->group(['prefix' => 'categories'], function ($api) {
