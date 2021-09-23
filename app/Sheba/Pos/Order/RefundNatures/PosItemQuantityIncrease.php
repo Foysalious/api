@@ -32,7 +32,7 @@ class PosItemQuantityIncrease extends ReturnPosItem
     {
         $payment_data['pos_order_id'] = $this->order->id;
         $payment_data['amount']       = $this->data['paid_amount'];
-        $payment_data['method']       = $this->data['payment_method'];
+        $payment_data['method']       = $this->data['payment_method'] ?? 'cod';
         if ($this->data['paid_amount'] > 0) {
             $this->paymentCreator->credit($payment_data);
         } else {
