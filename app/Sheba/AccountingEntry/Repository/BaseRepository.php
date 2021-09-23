@@ -54,8 +54,8 @@ class BaseRepository
         if ($partner_pos_customer) {
             $request->customer_id = $partner_pos_customer->customer_id;
             $request->customer_name = $partner_pos_customer->details()["name"];
-            $request->cutomer_mobile = $partner_pos_customer->details()["phone"];
-            $request->cutomer_pro_pic = $partner_pos_customer->details()["image"];
+            $request->customer_mobile = $partner_pos_customer->details()["phone"];
+            $request->customer_pro_pic = $partner_pos_customer->details()["image"];
         }
         Log::info(['customer', $partner_pos_customer->details(), $request->cutomer_mobile, $request->cutomer_pro_pic]);
         return $request;
