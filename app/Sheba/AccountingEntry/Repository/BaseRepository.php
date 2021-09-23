@@ -56,6 +56,7 @@ class BaseRepository
             $request->customer_name = $partner_pos_customer->details()["name"];
             $request->customer_mobile = $partner_pos_customer->details()["phone"];
             $request->customer_pro_pic = $partner_pos_customer->details()["image"];
+            $request->customer_is_supplier = $partner_pos_customer->is_supplier;
         }
         Log::info(['customer', $partner_pos_customer->details(), $request->cutomer_mobile, $request->cutomer_pro_pic]);
         return $request;
