@@ -7,6 +7,7 @@ use App\Models\PosCustomer;
 use App\Repositories\FileRepository;
 use App\Models\PosOrder;
 use App\Models\PosOrderPayment;
+use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
 use Sheba\AccountingEntry\Repository\UserMigrationRepository;
@@ -56,6 +57,7 @@ class BaseRepository
             $request->cutomer_mobile = $partner_pos_customer->details()["phone"];
             $request->cutomer_pro_pic = $partner_pos_customer->details()["image"];
         }
+        Log::info(['customer', $partner_pos_customer->details(), $request->cutomer_mobile, $request->cutomer_pro_pic]);
         return $request;
     }
 
