@@ -4,9 +4,9 @@ namespace Sheba\EKYC;
 
 use App\Repositories\ResourceRepository;
 use Carbon\Carbon;
+use Intervention\Image\Facades\Image;
 use Sheba\Dal\ProfileNIDSubmissionLog\Model as ProfileNIDSubmissionLog;
 use Sheba\Repositories\AffiliateRepository;
-use App\Http\Requests\Request;
 use App\Repositories\FileRepository;
 use App\Sheba\DigitalKYC\Partner\ProfileUpdateRepository;
 use Sheba\Repositories\ProfileRepository;
@@ -72,11 +72,18 @@ class NidFaceVerification
 
     public function getPersonPhotoLink($request, $profile): string
     {
-        $photo = $request->file('person_photo');
+        $image = $request->person_photo;
+        $image=explode(",",$image);
+        $image=base64_decode($image['1']);
+        $png_url = "user-".time().".jpg";
+        $path = public_path($png_url);
+        Image::make($image)->save($path);
         /** @var ProfileRepository $profile_repo */
         $profile_repo  = app()->make(ProfileRepository::class);
         $filename = Carbon::now()->timestamp . '_profile_image_' . $profile->id;
-        return $profile_repo->saveProPic($photo, $filename);
+        $saveProPic = $profile_repo->saveProPic($path, $filename);
+        unlink($path);
+        return $saveProPic;
     }
 
     /**
@@ -86,8 +93,12 @@ class NidFaceVerification
      */
     public function formatToData($request, $photoLink): array
     {
+        $image = $request->person_photo;
+        $image=explode(",",$image);
+        $image=$image['1'];
+
         $data['nid'] = $request->nid;
-        $data['pro_pic'] = $request->file('person_photo');
+        $data['pro_pic'] = $image;
         $data['dob'] = $request->dob;
         $data['selfie_photo'] = $photoLink;
         return $data;
