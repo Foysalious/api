@@ -93,7 +93,7 @@ class AttendanceController extends Controller
             #$validation_data += ['lat' => 'required|numeric', 'lng' => 'required|numeric'];
             $validation_data += ['remote_mode' => 'required|string|in:' . implode(',', RemoteMode::get())];
         }
-        $this->validate($request, $validation_data);
+        #$this->validate($request, $validation_data);
         $this->setModifier($business_member->member);
 
         $attendance_action->setBusinessMember($business_member)
