@@ -1018,6 +1018,6 @@ class AttendanceController extends Controller
         $manager->setSerializer(new CustomSerializer());
         $resource = new Collection($operational_changes_logs, new ChangesLogsTransformer());
         $operational_changes_logs = $manager->createData($resource)->toArray()['data'];
-        return api_response($request, $operational_changes_logs, 200, ['operational_changes_logs' => $operational_changes_logs]);
+        return api_response($request, $operational_changes_logs, 200, ['office_setting_changes_logs' => $operational_changes_logs]);
     }
 }
