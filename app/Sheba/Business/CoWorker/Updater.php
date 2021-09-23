@@ -417,7 +417,7 @@ class Updater
 
             $profile_bank_data = [];
 
-            if ($this->isNull($this->financialRequest->getBankName())) {
+            if (!$this->isNull($this->financialRequest->getBankName())) {
                 $profile_bank_data['bank_name'] = $this->financialRequest->getBankName();
             }
             if ($this->financialRequest->getBankAccNumber() == 'null') {
@@ -542,6 +542,7 @@ class Updater
     {
         DB::beginTransaction();
         try {
+            $this->businessMemberUpdater->setBusinessMember($this->businessMember)->update(['status'=>'inactive']);
             $this->businessMember->delete();
             (new InvalidToken())->invalidTheTokens($this->profile->email);
             DB::commit();

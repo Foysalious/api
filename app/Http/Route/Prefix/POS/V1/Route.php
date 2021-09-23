@@ -8,8 +8,6 @@ class Route
         $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
             $api->get('/channels', "Inventory\ChannelController@index");
             $api->get('/units', "Inventory\UnitController@index");
-            $api->get('/partners/{sub_domain}', "Webstore\PartnerController@show");
-            $api->get('voucher-details/{voucher_id}', 'VoucherController@getVoucherDetails');
             $api->group(['prefix' => 'partners/{partner_id}/vouchers'], function ($api) {
                 $api->post('validity-check', 'VoucherController@validateVoucher');
             });
@@ -24,11 +22,11 @@ class Route
 
         $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers', 'middleware' => ['jwtAccessToken']], function ($api) {
             $api->group(['prefix' => 'collections'], function ($api) {
-                    $api->get('/', 'Inventory\CollectionController@index');
-                    $api->post('/', 'Inventory\CollectionController@store');
-                    $api->get('/{collection}', 'Inventory\CollectionController@show');
-                    $api->put('/{collection}', 'Inventory\CollectionController@update');
-                    $api->delete('/{collection}', 'Inventory\CollectionController@destroy');
+                $api->get('/', 'Inventory\CollectionController@index');
+                $api->post('/', 'Inventory\CollectionController@store');
+                $api->get('/{collection}', 'Inventory\CollectionController@show');
+                $api->put('/{collection}', 'Inventory\CollectionController@update');
+                $api->delete('/{collection}', 'Inventory\CollectionController@destroy');
             });
 
             $api->group(['prefix' => 'customers'], function ($api) {
@@ -40,7 +38,7 @@ class Route
                 $api->delete('/{customer_id}', 'PosCustomer\PosCustomerController@delete');
             });
 
-                $api->get('warranty-units', 'Inventory\WarrantyUnitController@getWarrantyList');
+            $api->get('warranty-units', 'Inventory\WarrantyUnitController@getWarrantyList');
 
             $api->get('/category-tree', 'Inventory\CategoryController@allCategory');
             $api->group(['prefix' => 'products'], function ($api) {
@@ -66,6 +64,7 @@ class Route
                     $api->put('/', 'Inventory\ProductController@update');
                     $api->delete('/', 'Inventory\ProductController@destroy');
                     $api->get('/logs', 'Inventory\ProductController@getLogs');
+                    $api->post('/add-stock', 'Inventory\ProductController@addStock');
                 });
             });
             $api->group(['prefix' => 'category-products'], function ($api) {
@@ -95,21 +94,22 @@ class Route
             });
             $api->post('migrate', 'Partner\DataMigrationController@migrate');
 
-                $api->group(['prefix' => 'orders'], function ($api) {
-                    $api->get('/', 'PosOrder\OrderController@index');
-                    $api->get('/{order}', 'PosOrder\OrderController@show');
-                    $api->post('/', 'PosOrder\OrderController@store');
-                    $api->group(['prefix' => '{order}'], function ($api) {
-                        $api->post('/update-status', 'PosOrder\OrderController@updateStatus');
-                        $api->post('/validate-promo', 'PosOrder\OrderController@validatePromo');
-                        $api->get('/logs', 'PosOrder\OrderController@logs');
-                    });
-                    $api->put('/{order}/update-customer', 'PosOrder\OrderController@updateCustomer');
-                    $api->put('/{order}', 'PosOrder\OrderController@update');
-                    $api->delete('/{order}', 'PosOrder\OrderController@destroy');
+            $api->group(['prefix' => 'orders'], function ($api) {
+                $api->get('/', 'PosOrder\OrderController@index');
+                $api->get('/{order}', 'PosOrder\OrderController@show');
+                $api->post('/', 'PosOrder\OrderController@store');
+                $api->group(['prefix' => '{order}'], function ($api) {
+                    $api->post('/update-status', 'PosOrder\OrderController@updateStatus');
+                    $api->post('/validate-promo', 'PosOrder\OrderController@validatePromo');
+                    $api->get('/logs', 'PosOrder\OrderController@logs');
                 });
+                $api->put('/{order}/update-customer', 'PosOrder\OrderController@updateCustomer');
+                $api->put('/{order}', 'PosOrder\OrderController@update');
+                $api->delete('/{order}', 'PosOrder\OrderController@destroy');
+            });
 
         });
+
         $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
             $api->post('test-migrate', 'Partner\DataMigrationController@testMigration');
         });
