@@ -51,4 +51,9 @@ trait AttendanceBasicInfo
         }
         return $data;
     }
+    public function getFormattedWeekendsString($weekends)
+    {
+        sort($weekends);
+        return implode(', ', array_map('ucfirst', $weekends));
+    }
 }
