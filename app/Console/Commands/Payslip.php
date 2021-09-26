@@ -89,7 +89,7 @@ class Payslip extends Command
                 $last_pay_day = $payroll_setting->last_pay_day;
                 foreach ($business_members as $business_member) {
                     $joining_date = $business_member->join_date;
-                    if ($joining_date <= Carbon::now()->subMonth()) $joining_date = null;
+                    if ($joining_date <= Carbon::parse($last_pay_day)) $joining_date = null;
                     $prorated_time_frame = null;
                     $start_date = $last_pay_day ? Carbon::parse($last_pay_day)->format('Y-m-d') : Carbon::now()->subMonth()->format('Y-m-d');
                     $end_date = Carbon::now()->subDay()->format('Y-m-d');
@@ -103,7 +103,7 @@ class Payslip extends Command
                     $gross_salary = 0.0;
                     $salary = $business_member->salary;
                     if ($salary) $gross_salary = floatValFormat($salary->gross_salary);
-                    $gross_salary_breakdown = $this->grossSalaryBreakdownCalculate->setBusiness($business)->setJoiningDate($joining_date)->setBusinessPayCycleStart(Carbon::now()->subMonth()->format('Y-m-d'))->setBusinessPayCycleEnd($end_date)->totalAmountPerComponent($gross_salary, $gross_salary_breakdown_percentage);
+                    $gross_salary_breakdown = $this->grossSalaryBreakdownCalculate->setBusiness($business)->setJoiningDate($joining_date)->setBusinessPayCycleStart($start_date)->setBusinessPayCycleEnd($end_date)->totalAmountPerComponent($gross_salary, $gross_salary_breakdown_percentage);
                     $tax_gross_breakdown = $this->grossSalaryBreakdownCalculate->getGrossBreakdown();
                     $taxable_payroll_component = $this->payrollComponentSchedulerCalculation->getTaxComponentData();
                     $this->taxCalculator->setBusinessMember($business_member)->setGrossSalary($gross_salary)->setGrossSalaryBreakdown($tax_gross_breakdown)->setTaxableComponent($taxable_payroll_component)->calculate();

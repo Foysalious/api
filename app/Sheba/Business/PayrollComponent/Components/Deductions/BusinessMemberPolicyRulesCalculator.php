@@ -80,11 +80,10 @@ class BusinessMemberPolicyRulesCalculator
         $attendances = $this->attendanceRepositoryInterface->getAllAttendanceByBusinessMemberFilteredWithYearMonth($this->businessMember, $time_frame);
         $business_member_leave = $this->businessMember->leaves()->accepted()->between($time_frame)->get();
         list($leaves, $leaves_date_with_half_and_full_day) = $this->formatLeaveAsDateArray($business_member_leave);
-        $period = $this->createPeriodByTime($this->timeFrame->start, $this->timeFrame->end);
-        $prorated_period = $this->createPeriodByTime($time_frame->start, $this->timeFrame->end);
-        $total_policy_working_days = $this->getTotalBusinessWorkingDays($period, $business_office);
+        $period = $this->createPeriodByTime($time_frame->start, $this->timeFrame->end);
+        $total_policy_working_days = $this->getTotalBusinessWorkingDays($this->createPeriodByTime($this->timeFrame->start, $this->timeFrame->end), $business_office);
         $business_member_attendance = $this->getBusinessMemberAttendanceTime($attendances, $business_office);
-        $period_wise_information = $this->periodWiseInformation->setPeriod($prorated_period)->setBusinessOffice($business_office)->setBusinessMemberLeave($leaves)->setAttendance($business_member_attendance)->setIsCalculateAttendanceInfo(1)->get();
+        $period_wise_information = $this->periodWiseInformation->setPeriod($period)->setBusinessOffice($business_office)->setBusinessMemberLeave($leaves)->setAttendance($business_member_attendance)->setIsCalculateAttendanceInfo(1)->get();
         $late_checkin_early_checkout_days = 0;
         if ($is_for_late_checkin && $is_for_early_checkout) $late_checkin_early_checkout_days = $period_wise_information->total_late_checkin_or_early_checkout;
         elseif ($is_for_late_checkin && !$is_for_early_checkout) $late_checkin_early_checkout_days = $period_wise_information->total_late_checkin;
