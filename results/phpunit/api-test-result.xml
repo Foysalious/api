@@ -1,70 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="Application Test Suite" tests="1" assertions="0" failures="0" errors="1" time="0.000000">
-    <testsuite name="Tests\Feature\sProOrderCreate\sProOrderCreatePlaceOrderTest" file="/var/www/tests/Feature/sProOrderCreate/sProOrderCreatePlaceOrderTest.php" tests="1" assertions="0" failures="0" errors="1" time="0.000000">
-      <testcase name="testSProPlaceOrderAPIWithValidBody" class="Tests\Feature\sProOrderCreate\sProOrderCreatePlaceOrderTest" file="/var/www/tests/Feature/sProOrderCreate/sProOrderCreatePlaceOrderTest.php" line="86" assertions="0" time="0.000000">
-        <error type="PHPUnit_Framework_Exception">Tests\Feature\sProOrderCreate\sProOrderCreatePlaceOrderTest::testSProPlaceOrderAPIWithValidBody
-PHPUnit_Framework_Exception: array:3 [
-  "code" =&gt; 403
-  "message" =&gt; "Partner Not Available"
-  "exception" =&gt; array:4 [
-    "message" =&gt; "Partner Not Available"
-    "file" =&gt; "/var/www/app/Sheba/Order/OrderCreateRequestPolicy.php"
-    "line" =&gt; 94
-    "trace" =&gt; array:47 [
-      "/var/www/app/Sheba/Order/OrderCreateRequest.php(288)" =&gt; "Sheba\Order\OrderCreateRequestPolicy-&gt;canCreate()"
-      "/var/www/app/Sheba/Order/OrderCreateRequest.php(258)" =&gt; "Sheba\Order\OrderCreateRequest-&gt;canCreate()"
-      "/var/www/app/Http/Controllers/Resource/ResourceOrderController.php(35)" =&gt; "Sheba\Order\OrderCreateRequest-&gt;create()"
-      "[internal function]" =&gt; "Tests\Feature\sProOrderCreate\sProOrderCreatePlaceOrderTest-&gt;testSProPlaceOrderAPIWithValidBody()"
-      "/var/www/vendor/laravel/framework/src/Illuminate/Routing/Controller.php(80)" =&gt; "call_user_func_array(Array, Array)"
-      "/var/www/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php(146)" =&gt; "Illuminate\Routing\Controller-&gt;callAction('placeOrder', Array)"
-      "/var/www/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php(94)" =&gt; "Illuminate\Routing\ControllerDispatcher-&gt;call(Object(App\Http\Controllers\Resource\ResourceOrderController), Object(Illuminate\Routing\Route), 'placeOrder')"
-      "/var/www/vendor/laravel/framework/src/Illuminate/Routing/Pipeline.php(52)" =&gt; "call_user_func(Object(Closure), Object(Dingo\Api\Http\Request))"
-      "/var/www/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(102)" =&gt; "call_user_func(Object(Closure), Object(Illuminate\Http\Request))"
-      "/var/www/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php(96)" =&gt; "Illuminate\Pipeline\Pipeline-&gt;then(Object(Closure))"
-      "/var/www/vendor/laravel/framework/src/Illuminate/Routing/ControllerDispatcher.php(54)" =&gt; "Illuminate\Routing\ControllerDispatcher-&gt;callWithinStack(Object(App\Http\Controllers\Resource\ResourceOrderController), Object(Illuminate\Routing\Route), Object(Dingo\Api\Http\Request), 'placeOrder')"
-      "/var/www/vendor/laravel/framework/src/Illuminate/Routing/Route.php(174)" =&gt; "Illuminate\Routing\ControllerDispatcher-&gt;dispatch(Object(Illuminate\Routing\Route), Object(Dingo\Api\Http\Request), 'App\\Http\\Contro...', 'placeOrder')"
-      "/var/www/vendor/laravel/framework/src/Illuminate/Routing/Route.php(140)" =&gt; "Illuminate\Routing\Route-&gt;runController(Object(Dingo\Api\Http\Request))"
-      "/var/www/vendor/laravel/framework/src/Illuminate/Routing/Router.php(724)" =&gt; "Illuminate\Routing\Route-&gt;run(Object(Dingo\Api\Http\Request))"
-      "/var/www/app/Http/Middleware/AccessTokenMiddleware.php(66)" =&gt; "Illuminate\Routing\Pipeline-&gt;Illuminate\Routing\{closure}(Object(Dingo\Api\Http\Request))"
-      "/var/www/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(136)" =&gt; "call_user_func_array(Array, Array)"
-      "/var/www/vendor/laravel/framework/src/Illuminate/Routing/Pipeline.php(32)" =&gt; "call_user_func(Object(Closure), Object(Illuminate\Http\Request))"
-      "/var/www/vendor/dingo/api/src/Http/Middleware/PrepareController.php(45)" =&gt; "Illuminate\Routing\Pipeline-&gt;Illuminate\Routing\{closure}(Object(Dingo\Api\Http\Request))"
-      "/var/www/vendor/laravel/framework/src/Illuminate/Routing/Router.php(726)" =&gt; "Illuminate\Pipeline\Pipeline-&gt;then(Object(Closure))"
-      "/var/www/vendor/laravel/framework/src/Illuminate/Routing/Router.php(699)" =&gt; "Illuminate\Routing\Router-&gt;runRouteWithinStack(Object(Illuminate\Routing\Route), Object(Dingo\Api\Http\Request))"
-      "/var/www/vendor/laravel/framework/src/Illuminate/Routing/Router.php(675)" =&gt; "Illuminate\Routing\Router-&gt;dispatchToRoute(Object(Dingo\Api\Http\Request))"
-      "/var/www/vendor/dingo/api/src/Routing/Adapter/Laravel.php(81)" =&gt; "Illuminate\Routing\Router-&gt;dispatch(Object(Dingo\Api\Http\Request))"
-      "/var/www/vendor/dingo/api/src/Routing/Router.php(513)" =&gt; "Dingo\Api\Routing\Adapter\Laravel-&gt;dispatch(Object(Dingo\Api\Http\Request), 'v1')"
-      "/var/www/vendor/dingo/api/src/Http/Middleware/Request.php(126)" =&gt; "Dingo\Api\Routing\Router-&gt;dispatch(Object(Dingo\Api\Http\Request))"
-      "/var/www/vendor/laravel/framework/src/Illuminate/Pipeline/Pipeline.php(150)" =&gt; "call_user_func(Object(Closure), Object(Dingo\Api\Http\Request))"
-      "/var/www/app/Http/Middleware/SetRequestToJwtWhileTesting.php(23)" =&gt; "Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Dingo\Api\Http\Request))"
-      "/var/www/vendor/fideloper/proxy/src/TrustProxies.php(56)" =&gt; "Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Dingo\Api\Http\Request))"
-      "/var/www/app/Http/Middleware/XSS.php(74)" =&gt; "Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Dingo\Api\Http\Request))"
-      "/var/www/app/Http/Middleware/CriticalAppVersionMiddleware.php(37)" =&gt; "Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Dingo\Api\Http\Request))"
-      "/var/www/app/Http/Middleware/CheckForMaintenanceMode.php(24)" =&gt; "Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Dingo\Api\Http\Request))"
-      "/var/www/app/Http/Middleware/Cors2MiddleWare.php(139)" =&gt; "Illuminate\Pipeline\Pipeline-&gt;Illuminate\Pipeline\{closure}(Object(Dingo\Api\Http\Request))"
-      "/var/www/vendor/dingo/api/src/Http/Middleware/Request.php(127)" =&gt; "Illuminate\Pipeline\Pipeline-&gt;then(Object(Closure))"
-      "/var/www/vendor/dingo/api/src/Http/Middleware/Request.php(103)" =&gt; "Dingo\Api\Http\Middleware\Request-&gt;sendRequestThroughRouter(Object(Dingo\Api\Http\Request))"
-      "/var/www/vendor/itsgoingd/clockwork/Clockwork/Support/Laravel/ClockworkMiddleware.php(27)" =&gt; "Illuminate\Routing\Pipeline-&gt;Illuminate\Routing\{closure}(Object(Illuminate\Http\Request))"
-      "/var/www/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(132)" =&gt; "Illuminate\Pipeline\Pipeline-&gt;then(Object(Closure))"
-      "/var/www/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(99)" =&gt; "Illuminate\Foundation\Http\Kernel-&gt;sendRequestThroughRouter(Object(Illuminate\Http\Request))"
-      "/var/www/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php(515)" =&gt; "Illuminate\Foundation\Http\Kernel-&gt;handle(Object(Illuminate\Http\Request))"
-      "/var/www/vendor/laravel/framework/src/Illuminate/Foundation/Testing/Concerns/MakesHttpRequests.php(127)" =&gt; "Illuminate\Foundation\Testing\TestCase-&gt;call('POST', 'http://api.sheb...', Array, Array, Array, Array)"
-      "/var/www/tests/Feature/FeatureTestCase.php(125)" =&gt; "Illuminate\Foundation\Testing\TestCase-&gt;post('http://api.sheb...', Array, Array)"
-      "/var/www/tests/Feature/sProOrderCreate/sProOrderCreatePlaceOrderTest.php(106)" =&gt; "Tests\Feature\FeatureTestCase-&gt;post('http://api.sheb...', Array, Array)"
-      "/var/www/vendor/phpunit/phpunit/src/Framework/TestCase.php(908)" =&gt; "ReflectionMethod-&gt;invokeArgs(Object(Tests\Feature\sProOrderCreate\sProOrderCreatePlaceOrderTest), Array)"
-      "/var/www/vendor/phpunit/phpunit/src/Framework/TestCase.php(768)" =&gt; "PHPUnit_Framework_TestCase-&gt;runTest()"
-      "/var/www/vendor/phpunit/phpunit/src/Framework/TestResult.php(612)" =&gt; "PHPUnit_Framework_TestCase-&gt;runBare()"
-      "/var/www/vendor/phpunit/phpunit/src/Framework/TestCase.php(724)" =&gt; "PHPUnit_Framework_TestResult-&gt;run(Object(Tests\Feature\sProOrderCreate\sProOrderCreatePlaceOrderTest))"
-      "-(237)" =&gt; "PHPUnit_Framework_TestCase-&gt;run(Object(PHPUnit_Framework_TestResult))"
-      "-(979)" =&gt; "__phpunit_run_isolated_test()"
-      "{main}" =&gt; ""
-    ]
-  ]
-]
-
-</error>
-      </testcase>
+  <testsuite name="Application Test Suite" tests="1" assertions="2" failures="0" errors="0" time="1.832141">
+    <testsuite name="Tests\Feature\sProServiceBookCategory\sProServiceListTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProServiceListTest.php" tests="1" assertions="2" failures="0" errors="0" time="1.832141">
+      <testcase name="testSProServiceListAPIWithNoLatValidLng" class="Tests\Feature\sProServiceBookCategory\sProServiceListTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProServiceListTest.php" line="287" assertions="2" time="1.832141"/>
     </testsuite>
   </testsuite>
 </testsuites>
