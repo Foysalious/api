@@ -81,7 +81,8 @@ class UserMigrationRepository extends BaseRepository
     public function updateStatus(array $data, $userId, $userType = UserType::PARTNER)
     {
         $user = $this->update($data, $userId, $userType);
-        $this->migrateInAccounting($userId);
+        //TODO: commented for Razoan
+//        $this->migrateInAccounting($userId);
         return $user;
     }
 
