@@ -73,6 +73,16 @@ class DiscountCalculation
     /**
      * @return mixed
      */
+    public function getCalculatedDiscount()
+    {
+        $discount = $this->isDiscountPercentage ?
+            (double)$this->originalPrice * ((double)$this->discount / 100) : (double)$this->discount;
+        return $discount;
+    }
+
+    /**
+     * @return mixed
+     */
     public function getIsDiscountPercentage()
     {
         return $this->isDiscountPercentage;
