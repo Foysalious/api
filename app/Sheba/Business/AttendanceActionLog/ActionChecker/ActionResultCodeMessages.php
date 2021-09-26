@@ -4,6 +4,7 @@
 class ActionResultCodeMessages
 {
     const LATE_TODAY = "Oops! You’re late today!";
+    const LEFT_EARLY_TODAY = "Good Bye! You're early check-out today!";
     const OUT_OF_WIFI_AREA = "You are not inside our wi-fi coverage area!";
     const DEVICE_UNAUTHORIZED = "You can not check-out from this phone. Please use the same phone you checked-in with";
     const ALREADY_CHECKED_IN = "You've already checked in";
