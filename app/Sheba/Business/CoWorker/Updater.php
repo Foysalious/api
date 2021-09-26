@@ -416,7 +416,7 @@ class Updater
 
             $profile_bank_data = [];
 
-            if ($this->isNull($this->financialRequest->getBankName())) {
+            if (!$this->isNull($this->financialRequest->getBankName())) {
                 $profile_bank_data['bank_name'] = $this->financialRequest->getBankName();
             }
             if ($this->financialRequest->getBankAccNumber() == 'null') {
