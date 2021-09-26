@@ -39,6 +39,7 @@ class JournalCreateRepository extends BaseRepository
 
     public function __construct()
     {
+        /** @var AccountingEntryClient $client */
         $client = app(AccountingEntryClient::class);
         parent::__construct($client);
     }
