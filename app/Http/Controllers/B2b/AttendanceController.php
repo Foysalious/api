@@ -210,7 +210,6 @@ class AttendanceController extends Controller
         if ($request->file == 'excel') {
             return $monthly_excel->setMonthlyData($all_employee_attendance->toArray())->setStartDate($request->start_date)->setEndDate($request->end_date)->get();
         }
-        if ($all_employee_attendance->isEmpty()) return api_response($request, null, 404);
 
         return api_response($request, $all_employee_attendance, 200, ['all_employee_attendance' => $all_employee_attendance, 'total_members' => $total_members]);
     }
