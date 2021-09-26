@@ -3,6 +3,8 @@
 use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Sheba\Business\CoWorker\ManagerSubordinateEmployeeList;
+use Sheba\Business\EmployeeTracking\EmployeeVisit\Excel as EmployeeVisitExcel;
+use Sheba\Business\EmployeeTracking\MyVisit\Excel as MyVisitExcel;
 use App\Transformers\Business\MyVisitListTransformer;
 use App\Transformers\Business\TeamVisitListTransformer;
 use App\Transformers\Business\VisitDetailsTransformer;
@@ -37,9 +39,11 @@ class VisitController extends Controller
 
     /**
      * @param Request $request
+     * @param TimeFrame $time_frame
+     * @param EmployeeVisitExcel $employee_visit_excel
      * @return JsonResponse
      */
-    public function getTeamVisits(Request $request, TimeFrame $time_frame)
+    public function getTeamVisits(Request $request, TimeFrame $time_frame, EmployeeVisitExcel $employee_visit_excel)
     {
         /** @var Business $business */
         $business = $request->business;
@@ -82,7 +86,10 @@ class VisitController extends Controller
 
         $total_visits = count($visits);
         #$limit = $this->getLimit($request, $limit, $total_visits);
-        $visits = collect($visits)->splice($offset, $limit);
+        if ($request->has('limit') && !$request->has('file')) $visits = collect($visits)->splice($offset, $limit);
+
+        if ($request->has('file') && $request->file == 'excel') return $employee_visit_excel->setEmployeeVisitData($visits->toArray())->get();
+
         if (count($visits) > 0) return api_response($request, $visits, 200, [
             'employees' => $visits,
             'total_visits' => $total_visits
@@ -94,9 +101,10 @@ class VisitController extends Controller
     /**
      * @param Request $request
      * @param TimeFrame $time_frame
+     * @param MyVisitExcel $my_visit_excel
      * @return JsonResponse
      */
-    public function getMyVisits(Request $request, TimeFrame $time_frame)
+    public function getMyVisits(Request $request, TimeFrame $time_frame, MyVisitExcel $my_visit_excel)
     {
         /** @var Business $business */
         $business = $request->business;
@@ -126,7 +134,10 @@ class VisitController extends Controller
 
         $total_visits = count($visits);
         #$limit = $this->getLimit($request, $limit, $total_visits);
-        $visits = collect($visits)->splice($offset, $limit);
+        if ($request->has('limit') && !$request->has('file')) $visits = collect($visits)->splice($offset, $limit);
+
+        if ($request->has('file') && $request->file == 'excel') return $my_visit_excel->setMyVisitData($visits->toArray())->get();
+
         if (count($visits) > 0) return api_response($request, $visits, 200, [
             'employees' => $visits,
             'total_visits' => $total_visits

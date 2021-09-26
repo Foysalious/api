@@ -28,7 +28,7 @@ class ServiceController extends Controller
 
         $hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
 
-        if($hyper_location) $location_service = LocationService::where('location_id', $hyper_location->location_id)->where('service_id', $service->id)->first();
+        $location_service = $hyper_location ? LocationService::where('location_id', $hyper_location->location_id)->where('service_id', $service->id)->first() : null;
 
         $fractal = new Manager();
         if($location_service) $service_transformer->setLocationService($location_service);
@@ -40,7 +40,7 @@ class ServiceController extends Controller
 
     public function getSuggestions(Request $request)
     {
-        $categories = Service::where('publication_status', 1)->select('id', 'name', 'bn_name')->get();
+        $categories = Service::published()->select('id', 'name', 'bn_name')->get();
 
         return count($categories) > 0 ? api_response($request, $categories, 200, ['service' => $categories]) : api_response($request, null, 404);
     }

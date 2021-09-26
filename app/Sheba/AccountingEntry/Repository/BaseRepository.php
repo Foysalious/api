@@ -7,10 +7,11 @@ use App\Models\PosCustomer;
 use App\Repositories\FileRepository;
 use App\Models\PosOrder;
 use App\Models\PosOrderPayment;
+use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
 use Sheba\AccountingEntry\Repository\UserMigrationRepository;
-use Sheba\Dal\src\AccountingMigratedUser\UserStatus;
+use Sheba\Dal\AccountingMigratedUser\UserStatus;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
@@ -53,6 +54,9 @@ class BaseRepository
         if ($partner_pos_customer) {
             $request->customer_id = $partner_pos_customer->customer_id;
             $request->customer_name = $partner_pos_customer->details()["name"];
+            $request->customer_mobile = $partner_pos_customer->details()["phone"];
+            $request->customer_pro_pic = $partner_pos_customer->details()["image"];
+            $request->customer_is_supplier = $partner_pos_customer->is_supplier;
         }
         return $request;
     }

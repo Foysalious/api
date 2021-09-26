@@ -116,6 +116,7 @@ class EmployeeRoute
             });
             $api->group(['prefix' => 'holidays'], function ($api) {
                 $api->get('/', 'Employee\HolidayController@getHolidays');
+                $api->get('/monthly', 'Employee\HolidayController@getMonthlyLeavesHolidays');
             });
             $api->group(['prefix' => 'departments'], function ($api) {
                 $api->get('/', 'Employee\DepartmentController@index');

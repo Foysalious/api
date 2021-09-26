@@ -98,7 +98,7 @@ class AttendanceController extends Controller
         Log::info("Attendance for Employee#$business_member->id, Request#" . json_encode($request->except(['profile', 'auth_info', 'auth_user', 'access_token'])));
 
         if ($business->isRemoteAttendanceEnable($business_member->id) && !$request->is_in_wifi_area) {
-            $validation_data += ['lat' => 'sometimes|required|numeric', 'lng' => 'sometimes|required|numeric'];
+            #$validation_data += ['lat' => 'required|numeric', 'lng' => 'required|numeric'];
             $validation_data += ['remote_mode' => 'required|string|in:' . implode(',', RemoteMode::get())];
         }
         $this->validate($request, $validation_data);
@@ -147,7 +147,8 @@ class AttendanceController extends Controller
         /** @var Business $business */
         $business = $this->getBusiness($request);
         $attendance_common_info->setLat($request->lat)->setLng($request->lng);
-        $is_in_wifi_area = $attendance_common_info->isInWifiArea($business) ? 1 : 0;
+        $is_ip_attendance_enable = $business->isIpBasedAttendanceEnable();
+        $is_in_wifi_area = $is_ip_attendance_enable ? $attendance_common_info->isInWifiArea($business) ? 1 : 0 : 0;
         $data = [
             'is_in_wifi_area' => $is_in_wifi_area,
             'which_office' => $is_in_wifi_area ? $attendance_common_info->whichOffice($business) : null,

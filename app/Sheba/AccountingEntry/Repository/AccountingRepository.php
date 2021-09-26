@@ -190,6 +190,9 @@ class AccountingRepository extends BaseRepository
         $data['reconcile_amount'] = isset($request->reconcile_amount) ? $request->reconcile_amount : 0;
         $data['customer_id'] = isset($request->customer_id) ? $request->customer_id : null;
         $data['customer_name'] = isset($request->customer_id) ? $request->customer_name : null;
+        $data['customer_mobile'] = isset($request->customer_mobile) ? $request->customer_mobile : null;
+        $data['customer_pro_pic'] = isset($request->customer_pro_pic) ? $request->customer_pro_pic : null;
+        $data['customer_is_supplier'] = isset($request->customer_is_supplier) ? $request->customer_is_supplier : null;
         $data['inventory_products'] = isset($request->inventory_products) ? $request->inventory_products : null;
         $data['entry_at'] = isset($request->date) ? $request->date : Carbon::now()->format('Y-m-d H:i:s');
         $data['attachments'] = $this->uploadAttachments($request);

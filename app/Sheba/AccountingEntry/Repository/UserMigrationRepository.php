@@ -8,7 +8,7 @@ use Exception;
 use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\AccountingMigratedUser\EloquentImplementation;
-use Sheba\Dal\src\AccountingMigratedUser\UserStatus;
+use Sheba\Dal\AccountingMigratedUser\UserStatus;
 
 class UserMigrationRepository extends BaseRepository
 {
@@ -55,16 +55,15 @@ class UserMigrationRepository extends BaseRepository
         if (!$user) {
             throw new Exception('User not Found!', 404);
         }
-//        TODO: Open it after test complete from Razoan.
-//        if ($user->status == UserStatus::PENDING) {
-//            $data['status'] = 'upgrading';
-//        }
-//        if ($user->status == UserStatus::UPGRADING) {
-//            $data['status'] = 'upgraded';
-//        }
-//        if (($user->status == UserStatus::UPGRADED)) {
-//            throw new Exception('Sorry! Already migrated', 404);
-//        }
+        if ($user->status == UserStatus::PENDING) {
+            $data['status'] = 'upgrading';
+        }
+        if ($user->status == UserStatus::UPGRADING) {
+            $data['status'] = 'upgraded';
+        }
+        if (($user->status == UserStatus::UPGRADED)) {
+            throw new Exception('Sorry! Already migrated', 404);
+        }
         return $user->update(
             [
                 'status' => $data['status']
@@ -82,7 +81,7 @@ class UserMigrationRepository extends BaseRepository
     public function updateStatus(array $data, $userId, $userType = UserType::PARTNER)
     {
         $user = $this->update($data, $userId, $userType);
-//        TODO: Open it after test complete from Razoan.
+        //TODO: commented for Razoan
 //        $this->migrateInAccounting($userId);
         return $user;
     }
