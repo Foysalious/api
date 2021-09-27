@@ -81,7 +81,7 @@ class Cors2MiddleWare
             "http://0.0.0.0:3333",
             "http://b2b.sheba.test",
             "https://b2b.dev-sheba.xyz",
-            "https://b2b-upgrade.dev-sheba.xyz/",
+            "https://b2b-upgrade.dev-sheba.xyz",
             "https://business.sheba.xyz",
             "https://pl.dev-sheba.xyz",
             "https://pl.sheba.xyz",
