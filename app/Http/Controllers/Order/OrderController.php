@@ -73,7 +73,7 @@ class OrderController extends Controller
             'remember_token' => 'required|string',
             'mobile' => 'required|string|mobile:bd',
             'email' => 'sometimes|email',
-            'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
+            'date' => 'required|date|after:yesterday',
             'time' => 'required|string',
             'payment_method' => 'required|string|in:cod,online,wallet,bkash,cbl,partner_wallet,bondhu_balance',
             'address' => 'required_without:address_id',
@@ -110,7 +110,7 @@ class OrderController extends Controller
             ->setCrmId($request->crm_id)
             ->setVoucherId($request->voucher)
             ->setServices($request->services)
-            ->setScheduleDate($request->date)
+            ->setScheduleDate(Carbon::parse($request->date)->toDateString())
             ->setScheduleTime($request->time)
             ->setVendorId($request->vendor_id)
             ->setUserAgentInformation($userAgentInformation)
