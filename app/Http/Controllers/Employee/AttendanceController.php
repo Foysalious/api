@@ -79,6 +79,7 @@ class AttendanceController extends Controller
 
     private function checkJoiningDate($business_member_joining_date, $month, $year)
     {
+        if (!$business_member_joining_date) return false;
         if ($business_member_joining_date->format('d') == self::FIRST_DAY_OF_MONTH) return false;
         return $business_member_joining_date->format('m-Y') === Carbon::now()->month($month)->year($year)->format('m-Y');
     }
