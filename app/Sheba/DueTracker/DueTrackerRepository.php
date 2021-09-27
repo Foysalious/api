@@ -118,7 +118,6 @@ class DueTrackerRepository extends BaseRepository
     /**
      * @param Partner $partner
      * @param Request $request
-     * @param bool    $paginate
      * @return array
      * @throws ExpenseTrackingServerError
      * @throws InvalidPartnerPosCustomer
@@ -135,7 +134,7 @@ class DueTrackerRepository extends BaseRepository
         $url    = $this->updateRequestParam($request, $url);
         $result = $this->client->get($url);
         $due_list = collect($result['data']['list']);
-        if(isset($request['offset']) && isset($request['limit'])) {
+        if ($request->has('limit') && $request->has('offset')) {
             list($offset, $limit) = calculatePagination($request);
             $due_list               = $due_list->slice($offset)->take($limit)->values();
         }
