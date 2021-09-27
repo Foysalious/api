@@ -361,7 +361,7 @@ class AttendanceController extends Controller
         $time_frame = $time_frame->forDateRange($request->start_date, $request->end_date);
         $business_member_joining_date = $business_member->join_date;
         $joining_date = null;
-        if ($business_member_joining_date->format('Y-m-d') >= $request->start_date && $business_member_joining_date->format('Y-m-d') <= $request->end_date){
+        if ($this->checkJoiningDate($business_member_joining_date, $request->start_date, $request->end_date)){
             $joining_date = $business_member_joining_date->format('d F');
             $start_date = $business_member_joining_date;
             $end_date = $request->end_date;
@@ -407,6 +407,12 @@ class AttendanceController extends Controller
             ],
             'joining_date' =>   $joining_date
         ]);
+    }
+
+    private function checkJoiningDate($business_member_joining_date, $start_date, $end_date)
+    {
+        if (!$business_member_joining_date) return false;
+        return $business_member_joining_date->format('Y-m-d') >= $start_date && $business_member_joining_date->format('Y-m-d') <= $end_date;
     }
 
     /**
