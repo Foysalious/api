@@ -3,9 +3,11 @@
 use App\Sheba\Business\Attendance\HalfDaySetting\HalfDayType;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
+use Sheba\Business\Attendance\CheckWeekend;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\Attendance\Statuses;
 use Sheba\Dal\AttendanceActionLog\Actions;
+use Sheba\Dal\BusinessWeekendSettings\BusinessWeekendSettingsRepo;
 use Sheba\Helpers\TimeFrame;
 
 class MonthlyStat
@@ -13,26 +15,25 @@ class MonthlyStat
     /** @var TimeFrame $timeFrame */
     private $timeFrame;
     private $businessHoliday;
-    private $businessWeekend;
+    private $businessWeekendSettings;
     private $forOneEmployee;
     private $businessMemberLeave;
     private $business;
 
     /**
-     * MonthlyStat constructor.
      * @param TimeFrame $time_frame
      * @param $business
      * @param $business_holiday
-     * @param $business_weekend
+     * @param $weekend_settings
      * @param $business_member_leave
      * @param bool $for_one_employee
      */
-    public function __construct(TimeFrame $time_frame, $business, $business_holiday, $business_weekend, $business_member_leave, $for_one_employee = true)
+    public function __construct(TimeFrame $time_frame, $business, $business_holiday, $weekend_settings, $business_member_leave, $for_one_employee = true)
     {
         $this->timeFrame = $time_frame;
         $this->business = $business;
         $this->businessHoliday = $business_holiday;
-        $this->businessWeekend = $business_weekend;
+        $this->businessWeekendSettings = $weekend_settings;
         $this->businessMemberLeave = $business_member_leave;
         $this->forOneEmployee = $for_one_employee;
     }
@@ -44,7 +45,7 @@ class MonthlyStat
     public function transform($attendances)
     {
         $data = [];
-        $weekend_day = $this->businessWeekend->pluck('weekday_name')->toArray();
+        $check_weekend = new CheckWeekend();
         list($leaves, $leaves_date_with_half_and_full_day) = $this->formatLeaveAsDateArray();
 
         foreach ($this->businessHoliday as $holiday) {
@@ -83,9 +84,9 @@ class MonthlyStat
                 'is_absent' => 0,
             ];
 
+            $weekend_day = $check_weekend->getWeekendDays($date, $this->businessWeekendSettings);
             $is_weekend_or_holiday = $this->isWeekendHoliday($date, $weekend_day, $dates_of_holidays_formatted);
             $is_on_leave = $this->isLeave($date, $leaves);
-
 
             if ($is_weekend_or_holiday || $is_on_leave) {
                 if ($this->forOneEmployee) $breakdown_data['weekend_or_holiday_tag'] = $this->isWeekendHolidayLeaveTag($date, $leaves_date_with_half_and_full_day, $dates_of_holidays_formatted);
