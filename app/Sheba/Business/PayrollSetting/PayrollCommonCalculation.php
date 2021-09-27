@@ -32,7 +32,7 @@ trait PayrollCommonCalculation
         if ($pay_day_type == PayDayType::FIXED_DATE) {
             $next_pay_day = Carbon::now()->addMonth()->day($payroll_setting->pay_day)->format('Y-m-d');
         } elseif ($pay_day_type == PayDayType::LAST_WORKING_DAY){
-            $last_day_of_month = Carbon::now()->next()->lastOfMonth();
+            $last_day_of_month = Carbon::now()->addMonth()->lastOfMonth();
             $last_day_of_month = $this->lastWorkingDayOfMonth($business, $last_day_of_month);
             $next_pay_day = $last_day_of_month->format('Y-m-d');
         }
@@ -76,6 +76,13 @@ trait PayrollCommonCalculation
         if ($gender === 'Female') return ($taxable_income - PayrollConstGetter::FEMALE_TAX_EXEMPTED) <= 0 ? 0 : ($taxable_income - PayrollConstGetter::FEMALE_TAX_EXEMPTED);
 
         return ($taxable_income - PayrollConstGetter::SPECIAL_TAX_EXEMPTED) <= 0 ? 0 : ($taxable_income - PayrollConstGetter::SPECIAL_TAX_EXEMPTED);
+    }
+
+    public function getGenderExemptionAmount($gender)
+    {
+        if ($gender === 'Male' ||  $gender === null) return PayrollConstGetter::MALE_TAX_EXEMPTED;
+        if ($gender === 'Female') return PayrollConstGetter::FEMALE_TAX_EXEMPTED;
+        return PayrollConstGetter::SPECIAL_TAX_EXEMPTED;
     }
 
     public function getTotalBusinessWorkingDays($period, $business_office)
