@@ -14,6 +14,7 @@ use Sheba\Dal\OfficePolicyRule\ActionType;
 class PolicyActionTaker
 {
     use PayrollCommonCalculation;
+
     /*** @var Business */
     private $business;
     private $penaltyDays;
@@ -118,13 +119,13 @@ class PolicyActionTaker
         if ($action === ActionType::NO_PENALTY) return $policy_total;
         if ($action === ActionType::CASH_PENALTY) return floatValFormat($this->policyRules->penalty_amount);
         $business_member_salary = $this->businessMember->salary ? floatValFormat($this->businessMember->salary->gross_salary) : 0;
-        if ($action === ActionType::LEAVE_ADJUSTMENT){
+        if ($action === ActionType::LEAVE_ADJUSTMENT) {
             $penalty_type = intval($this->policyRules->penalty_type);
             $penalty_amount = floatValFormat($this->policyRules->penalty_amount);
             $existing_prorate = $this->businessMemberLeaveTypeRepo->where('business_member_id', $this->businessMember->id)->where('leave_type_id', $penalty_type)->first();
             $total_leave_type_days = $existing_prorate ? floatValFormat($existing_prorate->total_days) : floatValFormat($this->business->leaveTypes->find($penalty_type)->total_days);
             if ($total_leave_type_days < $penalty_amount) {
-                $one_working_day_amount = $this->oneWorkingDayAmount($business_member_salary,  floatValFormat($this->totalWorkingDays));
+                $one_working_day_amount = $this->oneWorkingDayAmount($business_member_salary, floatValFormat($this->totalWorkingDays));
                 return $this->totalPenaltyAmountByOneWorkingDay($one_working_day_amount, $penalty_amount);
             }
             $total_leave_type_days_after_penalty = $total_leave_type_days - $penalty_amount;
