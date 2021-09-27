@@ -1,6 +1,7 @@
 <?php namespace Sheba\Resource\Service;
 
 
+use App\Models\CrosssaleService;
 use App\Models\HyperLocal;
 use App\Models\Job;
 use Illuminate\Http\Request;
@@ -48,20 +49,20 @@ class ServiceList
 
     public function getServicesList()
     {
-        $cs_service_ids = DB::table('crosssale_services')->whereIn('service_id', $this->serviceIds)->get();
         $is_published_for_backend = $this->request->is_published_for_backend;
         $location = $this->job->partnerOrder->order->location->id;
-        $services = $cs_service_ids ? $this->job->partnerOrder->partner->services()->whereHas('locations', function ($q) use ($location) {
+        $services = $this->job->partnerOrder->partner->services()->whereHas('locations', function ($q) use ($location) {
             $q->where('location_id', $location);
         })->select($this->getSelectColumnsOfService())->where('category_id', $this->job->category_id)->where(function ($q) use ($is_published_for_backend) {
             if (!$is_published_for_backend) $q->where('publication_status', 1);
             $q->orWhere('is_published_for_backend', 1);
-        })->get() : $this->job->partnerOrder->partner->services()->whereHas('locations', function ($q) use ($location) {
-            $q->where('location_id', $location);
-        })->select($this->getSelectColumnsOfService())->where('category_id', $this->job->category_id)->where('is_add_on', 0)->where(function ($q) use ($is_published_for_backend) {
-            if (!$is_published_for_backend) $q->where('publication_status', 1);
-            $q->orWhere('is_published_for_backend', 1);
         })->get();
+        $cs_add_on_service_ids = CrosssaleService::whereIn('service_id', $this->serviceIds)->pluck('add_on_service_id')->toArray();
+        if ($cs_add_on_service_ids) {
+            $services = $services->filter(function ($service) use ($cs_add_on_service_ids){
+                return $service->is_add_on == 0 || in_array($service->id, $cs_add_on_service_ids);
+            });
+        }
         if (count($services) > 0) {
             $services->each(function (&$service) {
                 $variables = json_decode($service->variables);
