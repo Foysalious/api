@@ -238,11 +238,6 @@ class PartnerPosService extends BaseModel
         return $this->batches()->get()->sum('stock');
     }
 
-    public function cost()
-    {
-        return $this->hasMany(PartnerPosServiceBatch::class);
-    }
-
     public function getLastCost()
     {
         return $this->batches()->latest()->first()->cost ? $this->batches()->latest()->first()->cost : 0.0;
