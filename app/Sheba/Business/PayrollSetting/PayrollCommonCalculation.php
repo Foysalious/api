@@ -1,11 +1,13 @@
 <?php namespace App\Sheba\Business\PayrollSetting;
 
 use App\Models\Business;
+use App\Models\BusinessMember;
 use Carbon\Carbon;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepo;
 use Sheba\Dal\BusinessOffice\Type as WorkingDaysType;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepo;
 use Sheba\Dal\PayrollComponent\TargetType as ComponentTargetType;
+use Sheba\Dal\PayrollComponent\Type;
 use Sheba\Dal\PayrollSetting\PayDayType;
 use Sheba\Dal\PayrollSetting\PayrollSetting;
 
@@ -103,5 +105,29 @@ trait PayrollCommonCalculation
     public function totalPenaltyAmountByOneWorkingDay($one_working_day_amount, $penalty_amount)
     {
         return ($one_working_day_amount * $penalty_amount);
+    }
+
+    public function getOneWorkingDayAmountForGrossComponent(PayrollSetting $payroll_setting, BusinessMember $business_member, $component)
+    {
+        $one_working_day_amount = null;
+        if ($component === Type::GROSS) return $this->oneWorkingDayAmount($business_member->salary->gross_salary,  floatValFormat($this->totalWorkingDays));
+        $gross_component = $payroll_setting->components->find($component);
+        if ($gross_component) {
+            $percentage = floatValFormat(json_decode($gross_component->setting, 1)['percentage']);
+            $amount = ($this->businessMemberSalay * $percentage) / 100;
+            $one_working_day_amount = $this->oneWorkingDayAmount($amount,  floatValFormat($this->totalWorkingDays));
+        }
+        return $one_working_day_amount;
+    }
+
+    public function getOneWorkingDayAmountForAdditionComponent(PayrollSetting $payroll_setting, $addition_breakdown_amount, $component)
+    {
+        $one_working_day_amount = null;
+        $addition_component = $payroll_setting->components->find($component);
+        if ($addition_component) {
+            $amount = $addition_breakdown_amount['addition'][$component];
+            $one_working_day_amount = $this->oneWorkingDayAmount($amount,  floatValFormat($this->totalWorkingDays));
+        }
+        return $one_working_day_amount;
     }
 }
