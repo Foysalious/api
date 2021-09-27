@@ -75,12 +75,12 @@ class PeriodWiseInformation
             $weekend_or_holiday_count = $is_weekend_or_holiday ? ($weekend_or_holiday_count + 1) : $weekend_or_holiday_count;
             $weekend_count = $is_weekend ? ($weekend_count + 1) : $weekend_count;
             if ($this->isCalculateAttendanceInfo){
-                $office_start_time = Carbon::parse($this->businessOffice->start_time);
-                $office_end_time = Carbon::parse($this->businessOffice->end_time);
+                $office_start_time = Carbon::parse($this->businessOffice->start_time)->format('H:i:s');
+                $office_end_time = Carbon::parse($this->businessOffice->end_time)->format('H:i:s');
                 $start_grace_time = $this->businessOffice->start_grace_time;
                 $end_grace_time = $this->businessOffice->end_grace_time;
-                $office_start_time_with_grace = Carbon::parse($this->businessOffice->start_time)->addMinutes(intval($start_grace_time))->format('h:i:s');
-                $office_end_time_with_grace = Carbon::parse($this->businessOffice->end_time)->subMinutes(intval($end_grace_time))->format('h:i:s');
+                $office_start_time_with_grace = Carbon::parse($this->businessOffice->start_time)->addMinutes(intval($start_grace_time))->format('H:i:s');
+                $office_end_time_with_grace = Carbon::parse($this->businessOffice->end_time)->subMinutes(intval($end_grace_time))->format('H:i:s');
                 $is_on_leave = $this->isLeave($date, $this->businessMemberLeave);
                 if (!$is_weekend_or_holiday && !$is_on_leave) {
                     $total_working_days++;
