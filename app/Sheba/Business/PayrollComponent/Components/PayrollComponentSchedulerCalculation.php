@@ -20,6 +20,8 @@ class PayrollComponentSchedulerCalculation
     /*** @var BusinessMemberPolicyRulesCalculator */
     private $businessMemberPolicyRulesCalculator;
     private $taxComponentData = [];
+    private $timeFrame;
+    private $proratedTimeFrame;
 
     /**
      * PayrollComponentSchedulerCalculation constructor.
@@ -52,6 +54,19 @@ class PayrollComponentSchedulerCalculation
         $this->department = $role? $role->businessDepartment : null;
         return $this;
     }
+
+    public function setProratedTimeFrame($prorate_time_frame)
+    {
+        $this->proratedTimeFrame = $prorate_time_frame;
+        return $this;
+    }
+
+    public function setTimeFrame($time_frame)
+    {
+        $this->timeFrame = $time_frame;
+        return $this;
+    }
+
     public function getPayrollComponentCalculationBreakdown()
     {
         $addition = $this->getAdditionComponent();
@@ -77,7 +92,7 @@ class PayrollComponentSchedulerCalculation
         $components = $this->payrollSetting->components()->where('type', Type::DEDUCTION)->where(function($query) {
             return $query->where('is_default', 1)->orWhere('is_active',1);
         })->orderBy('type')->get();
-        $default_deduction_component_data = $this->businessMemberPolicyRulesCalculator->setBusiness($this->business)->setBusinessMember($this->businessMember)->setAdditionBreakdown($this->additionData)->calculate();
+        $default_deduction_component_data = $this->businessMemberPolicyRulesCalculator->setBusiness($this->business)->setBusinessMember($this->businessMember)->setProratedTimeFrame($this->proratedTimeFrame)->setTimeFrame($this->timeFrame)->setAdditionBreakdown($this->additionData)->calculate();
         $total_deduction = 0;
         foreach ($components as $component) {
             if (!$component->is_default) {

@@ -1,22 +1,46 @@
 <?php namespace App\Sheba\Business\PayrollComponent\Components;
 
 use App\Models\BusinessMember;
+use App\Sheba\Business\Attendance\AttendanceBasicInfo;
+use App\Sheba\Business\PayrollSetting\PayrollCommonCalculation;
 use Sheba\Dal\PayrollComponent\Components;
 use Sheba\Dal\PayrollComponent\TargetType;
 use Sheba\Dal\PayrollComponent\Type;
 
 class GrossSalaryBreakdownCalculate
 {
+    use PayrollCommonCalculation, AttendanceBasicInfo;
     private $componentPercentage;
     private $totalAmountPerComponent;
     private $grossSalaryBreakdownWithTotalAmount;
     private $breakdownData = [];
+    private $joiningDate = null;
+    private $timeFrame;
+    private $business;
 
     public function __construct()
     {
         $this->componentPercentage = new GrossSalaryComponent();
         $this->totalAmountPerComponent = new GrossSalaryComponent();
         $this->grossSalaryBreakdownWithTotalAmount = [];
+    }
+
+    public function setBusiness($business)
+    {
+        $this->business = $business;
+        return $this;
+    }
+
+    public function setJoiningDate($joining_date)
+    {
+        $this->joiningDate = $joining_date;
+        return $this;
+    }
+
+    public function setTimeFrame($time_frame)
+    {
+        $this->timeFrame = $time_frame;
+        return $this;
     }
 
     /**
@@ -86,6 +110,14 @@ class GrossSalaryBreakdownCalculate
 
     public function totalAmountPerComponent($gross_salary, $gross_salary_breakdown_percentage)
     {
+        $total_prorated_gross_salary = $gross_salary;
+        if($this->joiningDate){
+            $period = $this->createPeriodByTime($this->timeFrame->start, $this->timeFrame->end);
+            $total_working_days = $this->getTotalBusinessWorkingDays($period, $this->business->officeHour);
+            $total_days_after_joining = $this->getTotalBusinessWorkingDays($this->createPeriodByTime($this->joiningDate, $this->timeFrame->end), $this->business->officeHour);
+            $total_prorated_gross_salary = floatValFormat($this->oneWorkingDayAmount($gross_salary, $total_working_days) * $total_days_after_joining);
+        }
+        $gross_salary = $total_prorated_gross_salary;
         $data = ['gross_salary' => $gross_salary];
         foreach ($gross_salary_breakdown_percentage as $breakdown_name => $breakdown_value) {
             $data[$breakdown_name] = floatValFormat(($gross_salary * $breakdown_value) / 100);
