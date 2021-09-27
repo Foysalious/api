@@ -25,57 +25,57 @@ use Throwable;
 
 class PartnerWithdrawalRequestV2Controller extends Controller
 {
-
     use CdnFileManager, FileManager, ModificationFields;
+
     public function index($partner, Request $request)
     {
-        try {
-            $is_partner_blacklisted = false;
-            $withdrawalRequests = $request->partner->withdrawalRequests->each(function ($item, $key) {
-                $item['amount']       = (double)$item->amount;
-                $item['requested_by'] = $item->created_by_name;
-                removeSelectedFieldsFromModel($item);
-            })->sortByDesc('id')->values()->all();
-            $withdrawable_amount = $this->calculateWithdrawableAmount($request->partner);
-            $bank_information = ($this->getBankInformation($request->partner));
-            $limitBkash = constants('WITHDRAW_LIMIT')['bkash'];
-            $limitBank  = constants('WITHDRAW_LIMIT')['bank'];
-            $withdraw_limit = [
-                'bkash' => [
-                    'min' => $limitBkash['min'],
-                    'max' => $limitBkash['max']
-                ],
-                'bank' => [
-                    'min' => $limitBank['min'],
-                    'max' => $limitBank['max']
-                ]
-            ];
-            $security_money = ($request->partner->walletSetting->security_money ? floatval($request->partner->walletSetting->security_money) : 0);
+        $is_partner_blacklisted = false;
+        $withdrawalRequests = $request->partner->withdrawalRequests->each(function ($item, $key) {
+            $item['amount']       = (double)$item->amount;
+            $item['requested_by'] = $item->created_by_name;
+            removeSelectedFieldsFromModel($item);
+        })->sortByDesc('id')->values()->all();
+        $withdrawable_amount = $this->calculateWithdrawableAmount($request->partner);
+        $bank_information = $this->getBankInformation($request->partner);
+        $limitBkash = constants('WITHDRAW_LIMIT')['bkash'];
+        $limitBank  = constants('WITHDRAW_LIMIT')['bank'];
+        $withdraw_limit = [
+            'bkash' => [
+                'min' => $limitBkash['min'],
+                'max' => $limitBkash['max']
+            ],
+            'bank' => [
+                'min' => $limitBank['min'],
+                'max' => $limitBank['max']
+            ]
+        ];
+        $security_money = ($request->partner->walletSetting->security_money ? floatval($request->partner->walletSetting->security_money) : 0);
 
-            if($request->partner->withdrawalRequests()->active()->count() > 0){
-                $active_request_amount =  $request->partner->withdrawalRequests()->active()->sum('amount') ;
-                if($withdrawable_amount > $limitBank['min']) {
-                    $error_message = 'আপনার '. convertNumbersToBangla($active_request_amount,true, 0) . ' টাকার উত্তোলনের আবেদন প্রক্রিয়াধীন রয়েছে। আপনি '.  convertNumbersToBangla($withdrawable_amount,true, 0). ' টাকা উত্তোলন করার জন্য আবেদন করতে পারবেন।';
-                }
-                else {
-                    $error_message = 'আপনার '.convertNumbersToBangla($active_request_amount,true, 0) . ' টাকার উত্তোলনের আবেদন প্রক্রিয়াধীন রয়েছে। পর্যাপ্ত ব্যালান্স না থাকার কারণে আপনি পুনরায় উত্তোলন করার জন্য আবেদন করতে পারবেন না। আপনার সিকিউরিটি মানি ৳'. convertNumbersToBangla($security_money, true, 0). '।';
-                }
+        if($request->partner->withdrawalRequests()->active()->count() > 0){
+            $active_request_amount =  $request->partner->withdrawalRequests()->active()->sum('amount') ;
+            if($withdrawable_amount > $limitBank['min']) {
+                $error_message = 'আপনার '. convertNumbersToBangla($active_request_amount,true, 0) . ' টাকার উত্তোলনের আবেদন প্রক্রিয়াধীন রয়েছে। আপনি '.  convertNumbersToBangla($withdrawable_amount,true, 0). ' টাকা উত্তোলন করার জন্য আবেদন করতে পারবেন।';
+            } else {
+                $error_message = 'আপনার '.convertNumbersToBangla($active_request_amount,true, 0) . ' টাকার উত্তোলনের আবেদন প্রক্রিয়াধীন রয়েছে। পর্যাপ্ত ব্যালান্স না থাকার কারণে আপনি পুনরায় উত্তোলন করার জন্য আবেদন করতে পারবেন না। আপনার সিকিউরিটি মানি ৳'. convertNumbersToBangla($security_money, true, 0). '।';
             }
-            else
-            {
-                $error_message = 'পর্যাপ্ত ব্যালান্স না থাকার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে পারবেন না। আপনার সিকিউরিটি মানি ৳'. convertNumbersToBangla($security_money, true, 0). '।';
-            }
-
-            if($request->partner->status === PartnerStatuses::BLACKLISTED || $request->partner->status === PartnerStatuses::PAUSED) {
-                $error_message = 'ব্ল্যাক লিস্ট হওয়ার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে পারবেন না।';
-                $is_partner_blacklisted = true;
-            }
-            return api_response($request, $withdrawalRequests, 200,
-                                ['withdrawalRequests' => $withdrawalRequests, 'wallet' => $request->partner->wallet, 'withdrawable_amount' => $withdrawable_amount,  'bank_info' => $bank_information , 'withdraw_limit' => $withdraw_limit,'security_money' => $security_money, 'status_message' => $error_message, 'is_black_listed' => $is_partner_blacklisted]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        } else {
+            $error_message = 'পর্যাপ্ত ব্যালান্স না থাকার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে পারবেন না। আপনার সিকিউরিটি মানি ৳'. convertNumbersToBangla($security_money, true, 0). '।';
         }
+
+        if($request->partner->status === PartnerStatuses::BLACKLISTED || $request->partner->status === PartnerStatuses::PAUSED) {
+            $error_message = 'ব্ল্যাক লিস্ট হওয়ার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে পারবেন না।';
+            $is_partner_blacklisted = true;
+        }
+        return api_response($request, $withdrawalRequests, 200, [
+            'withdrawalRequests' => $withdrawalRequests,
+            'wallet' => $request->partner->wallet,
+            'withdrawable_amount' => $withdrawable_amount,
+            'bank_info' => $bank_information ,
+            'withdraw_limit' => $withdraw_limit,
+            'security_money' => $security_money,
+            'status_message' => $error_message,
+            'is_black_listed' => $is_partner_blacklisted
+        ]);
     }
 
     /**
@@ -169,17 +169,15 @@ class PartnerWithdrawalRequestV2Controller extends Controller
         $this->validate($request, ['status' => 'required|in:cancelled']);
         $partner                  = $request->partner;
         $partnerWithdrawalRequest = WithdrawalRequest::find($withdrawals);
-        if (($partner->id == $partnerWithdrawalRequest->requester->id) && ($partnerWithdrawalRequest->requester_type=='partner') && ($partnerWithdrawalRequest->status == 'pending')) {
-            $withdrawal_update = $partnerWithdrawalRequest->update([
-                                                                       'status'          => $request->status,
-                                                                       'reject_reason'   => $request->reject_reason,
-                                                                       'updated_by'      => $request->manager_resource->id,
-                                                                       'updated_by_name' => 'Resource - ' . $request->manager_resource->profile->name,
-                                                                   ]);
-            return api_response($request, $withdrawal_update, 200);
-        } else {
-            return api_response($request, '', 403, ['result' => 'You can not update this withdraw request']);
-        }
+        if (!$partnerWithdrawalRequest->isUpdateableByPartner($partner)) return api_response($request, '', 403, ['result' => 'You can not update this withdraw request']);
+
+        $withdrawal_update = $partnerWithdrawalRequest->update([
+            'status'          => $request->status,
+            'reject_reason'   => $request->reject_reason,
+            'updated_by'      => $request->manager_resource->id,
+            'updated_by_name' => 'Resource - ' . $request->manager_resource->profile->name
+        ]);
+        return api_response($request, $withdrawal_update, 200);
     }
 
     public function cancel($partner, $withdrawals, Request $request)
@@ -187,16 +185,14 @@ class PartnerWithdrawalRequestV2Controller extends Controller
         $partner = $request->partner;
         /** @var WithdrawalRequest $partnerWithdrawalRequest */
         $partnerWithdrawalRequest = WithdrawalRequest::find($withdrawals);
-        if (($partner->id == $partnerWithdrawalRequest->requester->id) && ($partnerWithdrawalRequest->requester_type=='partner') && ($partnerWithdrawalRequest->status == 'pending')) {
-            $withdrawal_update = $partnerWithdrawalRequest->update([
-                                                                       'status'          => 'cancelled',
-                                                                       'updated_by'      => $request->manager_resource->id,
-                                                                       'updated_by_name' => 'Resource - ' . $request->manager_resource->profile->name,
-                                                                   ]);
-            return api_response($request, $withdrawal_update, 200);
-        } else {
-            return api_response($request, '', 403, ['result' => 'You can not update this withdraw request']);
-        }
+        if (!$partnerWithdrawalRequest->isUpdateableByPartner($partner)) return api_response($request, '', 403, ['result' => 'You can not update this withdraw request']);
+
+        $withdrawal_update = $partnerWithdrawalRequest->update([
+            'status'          => 'cancelled',
+            'updated_by'      => $request->manager_resource->id,
+            'updated_by_name' => 'Resource - ' . $request->manager_resource->profile->name
+        ]);
+        return api_response($request, $withdrawal_update, 200);
     }
 
     private function calculateWithdrawableAmount(Partner $partner)
@@ -208,64 +204,51 @@ class PartnerWithdrawalRequestV2Controller extends Controller
     private function getBankInformation(Partner $partner)
     {
         $info = $partner->withdrawalBankInformations->first();
-        $bank_info = null;
+        if (!$info) return null;
 
-        if($info){
-            $bank_info =  [
-                'bank_name' => $info->bank_name,
-                'account_name' => $info->acc_name,
-                'account_no' => $info->acc_no,
-                'account_type' => $info->acc_type,
-                'branch_name' =>  $info->branch_name,
-                'routing_no' =>  $info->routing_no,
-                'cheque_book_receipt' => $info->cheque_book_receipt,
-            ];
-        }
-        return $bank_info;
+        return [
+            'bank_name' => $info->bank_name,
+            'account_name' => $info->acc_name,
+            'account_no' => $info->acc_no,
+            'account_type' => $info->acc_type,
+            'branch_name' =>  $info->branch_name,
+            'routing_no' =>  $info->routing_no,
+            'cheque_book_receipt' => $info->cheque_book_receipt,
+        ];
     }
 
     public function storeBankInfo($partner, Request $request)
     {
-        try {
-            $this->validate($request, [
-                'bank_name' => 'required',
-                'account_no' => 'required',
-                'account_name' => 'required',
-                'branch_name' => 'required',
-                'cheque_book_receipt' => 'sometimes|required|file|mimes:jpg,jpeg,png',
+        $this->validate($request, [
+            'bank_name' => 'required',
+            'account_no' => 'required',
+            'account_name' => 'required',
+            'branch_name' => 'required',
+            'cheque_book_receipt' => 'sometimes|required|file|mimes:jpg,jpeg,png',
 
-            ]);
-            $cheque_book_receipt = null;
-            if($request->hasFile('cheque_book_receipt')){
-                list($cheque_book_receipt, $cheque_book_receipt_filename) = $this->makeChequeBookReceipt($request->cheque_book_receipt, $request->partner->id.'cheque_book_receipt');
-                $cheque_book_receipt = $this->saveImageToCDN($cheque_book_receipt, getPartnerChequeBookImageFolder(), $cheque_book_receipt_filename);
-            }
-            $manager_resource = $request->manager_resource;
-            $this->setModifier($manager_resource);
-
-            $bank_information              = new PartnerBankInformation();
-            $bank_information->partner_id  = $partner;
-            $bank_information->bank_name = $request->bank_name;
-            $bank_information->acc_no = $request->account_no;
-            $bank_information->acc_name= $request->account_name;
-            $bank_information->acc_type = null;
-            $bank_information->branch_name = $request->branch_name;
-            $bank_information->routing_no = $request->routing_no;
-            $bank_information->cheque_book_receipt = $cheque_book_receipt;
-            $bank_information->purpose = Purposes::PARTNER_WALLET_WITHDRAWAL;
-
-            $this->withCreateModificationField($bank_information);
-            $bank_information->save();
-            return api_response($request, null, 200,['message' => 'Bank Information stored successfully']);
-
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        ]);
+        $cheque_book_receipt = null;
+        if($request->hasFile('cheque_book_receipt')){
+            list($cheque_book_receipt, $cheque_book_receipt_filename) = $this->makeChequeBookReceipt($request->cheque_book_receipt, $request->partner->id.'cheque_book_receipt');
+            $cheque_book_receipt = $this->saveImageToCDN($cheque_book_receipt, getPartnerChequeBookImageFolder(), $cheque_book_receipt_filename);
         }
+        $manager_resource = $request->manager_resource;
+        $this->setModifier($manager_resource);
 
+        $bank_information              = new PartnerBankInformation();
+        $bank_information->partner_id  = $partner;
+        $bank_information->bank_name = $request->bank_name;
+        $bank_information->acc_no = $request->account_no;
+        $bank_information->acc_name= $request->account_name;
+        $bank_information->acc_type = null;
+        $bank_information->branch_name = $request->branch_name;
+        $bank_information->routing_no = $request->routing_no;
+        $bank_information->cheque_book_receipt = $cheque_book_receipt;
+        $bank_information->purpose = Purposes::PARTNER_WALLET_WITHDRAWAL;
+
+        $this->withCreateModificationField($bank_information);
+        $bank_information->save();
+        return api_response($request, null, 200,['message' => 'Bank Information stored successfully']);
     }
 
     public function checkWithdrawRequestPendingStatus(Request $request)
@@ -276,19 +259,21 @@ class PartnerWithdrawalRequestV2Controller extends Controller
 
         if ($status_check  && $status_check->payment_method == 'bkash') {
             $message = 'ইতিমধ্যে আপনার ১ টি বিকাশের মাধ্যমে টাকা উত্তোলনের আবেদন প্রক্রিয়াধীন রয়েছে, অনুগ্রহ করে আবেদনটি সম্পূর্ণ হওয়া পর্যন্ত অপেক্ষা করুন অথবা ব্যাংকের মাধ্যমে টাকা উত্তোলনের আবেদন করুন।';
-            return api_response($request, null, 200,
-                ['data' => [
+            return api_response($request, null, 200, [
+                'data' => [
                     'bkash_pending_status' => true,
                     'message' => $message,
                     'current_balance' => $partner->wallet
-                ]]);
+                ]
+            ]);
         }
 
-        return api_response($request, null, 200,
-            ['data' => [
+        return api_response($request, null, 200, [
+            'data' => [
                 'bkash_pending_status' => false,
                 'message' => 'বিকাশের মাধ্যমে একই সাথে একের অধিক টাকা উত্তোলনের আবেদন করা যাবে না। একটি আবেদন সম্পন্ন হবার পর আপনি পরবর্তী আবেদন করতে পারবেন।',
                 'current_balance' => $partner->wallet
-            ]]);
+            ]
+        ]);
     }
 }

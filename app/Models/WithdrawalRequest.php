@@ -57,4 +57,12 @@ class WithdrawalRequest extends Model
     {
         return $query->whereIn('status', ['pending', 'approval_pending', 'approved']);
     }
+
+    public function isUpdateableByPartner(Partner $partner)
+    {
+        return
+            $partner->id == $this->requester->id &&
+            $this->requester_type=='partner' &&
+            $this->status == 'pending';
+    }
 }
