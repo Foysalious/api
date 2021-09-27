@@ -657,6 +657,7 @@ class LeaveController extends Controller
                 for ($date = $start_date; $date < $end_date; $date->addDay()) {
                     if ($date->between($period_data['period_start'], $period_data['period_end'])) {
                         $date_exists_between_period = true;
+                        break;
                     }
                 }
                 return $date_exists_between_period;

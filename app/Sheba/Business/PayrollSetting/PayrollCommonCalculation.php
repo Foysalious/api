@@ -1,10 +1,13 @@
 <?php namespace App\Sheba\Business\PayrollSetting;
 
 use App\Models\Business;
+use App\Models\BusinessMember;
 use Carbon\Carbon;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepo;
+use Sheba\Dal\BusinessOffice\Type as WorkingDaysType;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepo;
 use Sheba\Dal\PayrollComponent\TargetType as ComponentTargetType;
+use Sheba\Dal\PayrollComponent\Type;
 use Sheba\Dal\PayrollSetting\PayDayType;
 use Sheba\Dal\PayrollSetting\PayrollSetting;
 
@@ -73,5 +76,58 @@ trait PayrollCommonCalculation
         if ($gender === 'Female') return ($taxable_income - PayrollConstGetter::FEMALE_TAX_EXEMPTED) <= 0 ? 0 : ($taxable_income - PayrollConstGetter::FEMALE_TAX_EXEMPTED);
 
         return ($taxable_income - PayrollConstGetter::SPECIAL_TAX_EXEMPTED) <= 0 ? 0 : ($taxable_income - PayrollConstGetter::SPECIAL_TAX_EXEMPTED);
+    }
+
+    public function getGenderExemptionAmount($gender)
+    {
+        if ($gender === 'Male' ||  $gender === null) return PayrollConstGetter::MALE_TAX_EXEMPTED;
+        if ($gender === 'Female') return PayrollConstGetter::FEMALE_TAX_EXEMPTED;
+        return PayrollConstGetter::SPECIAL_TAX_EXEMPTED;
+    }
+
+    public function getTotalBusinessWorkingDays($period, $business_office)
+    {
+        $working_days_type = $business_office->type;
+        $is_weekend_included = $business_office->is_weekend_included;
+        $number_of_days = $business_office->number_of_days;
+        $total_policy_working_days = $period->count();
+        if ($working_days_type === WorkingDaysType::FIXED) return $number_of_days;
+        $period_wise_information = new PeriodWiseInformation();
+        $period_wise_information = $period_wise_information->setPeriod($period)->setBusinessOffice($business_office)->setIsCalculateAttendanceInfo(0)->get();
+        if ($working_days_type === WorkingDaysType::AS_PER_CALENDAR && !$is_weekend_included) return ($total_policy_working_days - $period_wise_information->weekend_count);
+        return $total_policy_working_days;
+    }
+
+    public function oneWorkingDayAmount($amount, $total_working_days)
+    {
+        return ($amount / $total_working_days);
+    }
+    public function totalPenaltyAmountByOneWorkingDay($one_working_day_amount, $penalty_amount)
+    {
+        return ($one_working_day_amount * $penalty_amount);
+    }
+
+    public function getOneWorkingDayAmountForGrossComponent(PayrollSetting $payroll_setting, BusinessMember $business_member, $component)
+    {
+        $one_working_day_amount = null;
+        if ($component === Type::GROSS) return $this->oneWorkingDayAmount($business_member->salary->gross_salary,  floatValFormat($this->totalWorkingDays));
+        $gross_component = $payroll_setting->components->find($component);
+        if ($gross_component) {
+            $percentage = floatValFormat(json_decode($gross_component->setting, 1)['percentage']);
+            $amount = ($this->businessMemberSalay * $percentage) / 100;
+            $one_working_day_amount = $this->oneWorkingDayAmount($amount,  floatValFormat($this->totalWorkingDays));
+        }
+        return $one_working_day_amount;
+    }
+
+    public function getOneWorkingDayAmountForAdditionComponent(PayrollSetting $payroll_setting, $addition_breakdown_amount, $component)
+    {
+        $one_working_day_amount = null;
+        $addition_component = $payroll_setting->components->find($component);
+        if ($addition_component) {
+            $amount = $addition_breakdown_amount['addition'][$component];
+            $one_working_day_amount = $this->oneWorkingDayAmount($amount,  floatValFormat($this->totalWorkingDays));
+        }
+        return $one_working_day_amount;
     }
 }
