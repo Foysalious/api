@@ -65,7 +65,7 @@ class PartnerRegistrationController extends Controller
     public function getWelcomeMessage(Request $request)
     {
         $data = [
-            'image' => config('s3.url') . "images/manager_app/welcome.svg",
+            'image' => config('s3.url') .config('sheba.welcome_message_image'),
             'message' => 'বোনাস ব্যবহার করে sManager অ্যাপ  সাবস্ক্রাইব করুন, পুরো এক মাসের জন্য  সম্পুর্ন ফ্রি'
         ];
         return api_response($request, null, 200, ['info' => $data]);
