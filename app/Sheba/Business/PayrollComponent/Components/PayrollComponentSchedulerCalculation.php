@@ -19,7 +19,6 @@ class PayrollComponentSchedulerCalculation
     private $packageCalculator;
     /*** @var BusinessMemberPolicyRulesCalculator */
     private $businessMemberPolicyRulesCalculator;
-    private $packageGenerateData;
     private $taxComponentData = [];
 
     /**

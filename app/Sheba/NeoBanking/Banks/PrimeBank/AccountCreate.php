@@ -61,7 +61,6 @@ class AccountCreate
     {
         if (!isset($this->neoBankingData->information_for_bank_account)) throw new InvalidPartnerInformationException();
         $application = json_decode($this->neoBankingData->information_for_bank_account, 1);
-        if (!isset($application['personal']) || !isset($application['institution']) || !isset($application['nid_selfie'])) throw new InvalidPartnerInformationException();
         $application['account'] = NeoBankingGeneralStatics::primeBankDefaultAccountData();
         $branchCode = $application['personal']['branch_code'] ?? null;
         if (!$branchCode) {
@@ -177,8 +176,8 @@ class AccountCreate
             "owner_title"   => $this->removeSpecialCharacters($application['personal']['applicant_name']),
             "gender"        => $gender,
             "dob"           => (isset($application['personal']['birth_date'])) ? Carbon::parse($application['personal']['birth_date'])->format('Ymd') : null,
-            "father"        => isset($application['personal']['father_name']) ? $this->removeSpecialCharacters($application['personal']['father_name']) : null,
-            "mother"        => isset($application['personal']['mother_name']) ? $this->removeSpecialCharacters($application['personal']['mother_name']) : null,
+            "father"        => isset($application['personal']['father_name_en']) ? $this->removeSpecialCharacters($application['personal']['father_name_en']) : null,
+            "mother"        => isset($application['personal']['mother_name_en']) ? $this->removeSpecialCharacters($application['personal']['mother_name_en']) : null,
             "spouse"        => isset($application['personal']['husband_or_wife_name']) ? $this->removeSpecialCharacters($application['personal']['husband_or_wife_name']) : null,
             "nid"           => $application['nid_selfie']['nid_no'] ?? null,
             'tin'           => $application['personal']["etin_number"] ?? null,
@@ -209,13 +208,13 @@ class AccountCreate
             "issue_authority" => $application['institution']['issue_authority'] ?? null,
             "exp_date" => (isset($application['institution']['trade_license_expire_date'])) ? Carbon::parse($application['institution']['trade_license_expire_date'])->format('Ymd') : null,
             "risk_type" => 'REGULAR',
-            "onboarding_type" => 'Internet',
+            "onboarding_type" => PBLStatics::ONBOARD_TYPE,
             "nationality" => 'BD',
             "country_residence" => 'BD',
             'customer_pep_ip' => strtoupper($pepIpStatus),
             'associate_pep_ip' => strtoupper($pepIpRelation),
             "occupation_type" => 'BUSINESS',
-            "occupation_nature" => explode(',', $application['institution']['business_type_list'])[0] ?? null,
+            "occupation_nature" => (int)explode(',', $application['institution']['business_type_list'])[0] ?? null,
             "nominee_name_1" => isset($application['nominee']["nominee_name"]) ? $this->removeSpecialCharacters($application['nominee']["nominee_name"]) : null,
             "nominee_relation_1" => $application['nominee']["nominee_relation"] ?? null,
             "nominee_share_percent_1" => 100,
