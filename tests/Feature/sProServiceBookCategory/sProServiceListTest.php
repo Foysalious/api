@@ -83,7 +83,7 @@ class sProServiceListTest extends FeatureTestCase
 
     }
 
-    public function testSProServiceListAPIWithValidParameter()
+    public function testSProServiceListAPIWithValidLocationId()
     {
         //arrange
 
@@ -211,6 +211,20 @@ class sProServiceListTest extends FeatureTestCase
 
     }
 
+    public function testSProServiceListAPIWithoutLocationId()
+    {
+        //arrange
+
+        //act
+        $response = $this->get("/v3/categories/" . $this->secondaryCategory->id . "/services");
+        $data = $response->decodeResponseJson();
+
+        //assert
+        $this->assertEquals(404, $data["code"]);
+        $this->assertEquals('Not found', $data["message"]);
+
+    }
+
     public function testSProServiceListAPIWithValidLatInvalidLng()
     {
         //arrange
@@ -253,21 +267,6 @@ class sProServiceListTest extends FeatureTestCase
 
     }
 
-    public function testSProServiceListAPIWithoutLocationId()
-    {
-        //arrange
-
-        //act
-        $response = $this->get("/v3/categories/" . $this->secondaryCategory->id . "/services");
-        $data = $response->decodeResponseJson();
-
-        //assert
-        $this->assertEquals(404, $data["code"]);
-        $this->assertEquals('Not found', $data["message"]);
-
-    }
-
-    //Failed
     public function testSProServiceListAPIWithValidLatNoLng()
     {
         //arrange
@@ -275,7 +274,6 @@ class sProServiceListTest extends FeatureTestCase
         //act
         $response = $this->get("/v3/categories/" . $this->secondaryCategory->id . "/services?lat=23.788099544655");
         $data = $response->decodeResponseJson();
-        dd($data);
 
         //assert
         $this->assertEquals(404, $data["code"]);
@@ -283,7 +281,6 @@ class sProServiceListTest extends FeatureTestCase
 
     }
 
-    //Failed
     public function testSProServiceListAPIWithNoLatValidLng()
     {
         //arrange
@@ -369,6 +366,45 @@ class sProServiceListTest extends FeatureTestCase
         //assert
         $this->assertEquals(404, $data["code"]);
         $this->assertEquals('Not found', $data["message"]);
+
+    }
+
+    public function testSProServiceListAPIWithPostMethod()
+    {
+        //arrange
+
+        //act
+        $response = $this->post("/v3/categories/" . $this->secondaryCategory->id . "/services?location_id=" . $this->location->id);
+        $data = $response->decodeResponseJson();
+
+        //assert
+        $this->assertEquals('405 Method Not Allowed', $data["message"]);
+
+    }
+
+    public function testSProServiceListAPIWithPutMethod()
+    {
+        //arrange
+
+        //act
+        $response = $this->put("/v3/categories/" . $this->secondaryCategory->id . "/services?location_id=" . $this->location->id);
+        $data = $response->decodeResponseJson();
+
+        //assert
+        $this->assertEquals('405 Method Not Allowed', $data["message"]);
+
+    }
+
+    public function testSProServiceListAPIWithDeleteMethod()
+    {
+        //arrange
+
+        //act
+        $response = $this->delete("/v3/categories/" . $this->secondaryCategory->id . "/services?location_id=" . $this->location->id);
+        $data = $response->decodeResponseJson();
+
+        //assert
+        $this->assertEquals('405 Method Not Allowed', $data["message"]);
 
     }
 
@@ -487,24 +523,24 @@ class sProServiceListTest extends FeatureTestCase
     }
 
     //Failed
-//    public function testSProServiceListAPIWithSubCategoryPublishedAndMasterCategoryUnpublishedAndServicePublished()
-//    {
-//        //arrange
-//        $this->masterCategory -> update(["publication_status" => 0]);
-//
-//        $this->secondaryCategory -> update(["publication_status" => 1]);
-//
-//        $this->service -> update(["publication_status" => 1]);
-//
-//        //act
-//        $response = $this->get("/v3/categories/" . $this->secondaryCategory->id . "/services?location_id=" . $this->location->id);
-//        $data = $response->decodeResponseJson();
-//
-//        //assert
-//        $this->assertEquals(404, $data["code"]);
-//        $this->assertEquals('Not found', $data["message"]);
-//
-//    }
+    public function testSProServiceListAPIWithSubCategoryPublishedAndMasterCategoryUnpublishedAndServicePublished()
+    {
+        //arrange
+        $this->masterCategory -> update(["publication_status" => 0]);
+
+        $this->secondaryCategory -> update(["publication_status" => 1]);
+
+        $this->service -> update(["publication_status" => 1]);
+
+        //act
+        $response = $this->get("/v3/categories/" . $this->secondaryCategory->id . "/services?location_id=" . $this->location->id);
+        $data = $response->decodeResponseJson();
+
+        //assert
+        $this->assertEquals(404, $data["code"]);
+        $this->assertEquals('Not found', $data["message"]);
+
+    }
 
     public function testSProServiceListAPIWithSubCategoryPublishedAndMasterCategoryPublishedAndServiceUnpublished()
     {
