@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\Helpers\TimeFrame;
+use Sheba\Jobs\JobStatuses;
 use Sheba\Manager\JobList;
 use Sheba\ModificationFields;
 use Sheba\Partner\LeaveStatus;
@@ -30,15 +31,19 @@ class PartnerRepository
     private $partner;
     private $serviceRepo;
     private $features;
+
     public function __construct($partner)
     {
         $this->partner     = $partner instanceof Partner ? $partner : Partner::find($partner);
         $this->serviceRepo = new ServiceRepository();
         $this->features=['payment_link', 'pos', 'inventory', 'referral', 'due'];
     }
-    public function getFeatures(){
+
+    public function getFeatures()
+    {
         return $this->features;
     }
+
     /**
      * @param null $verify
      * @param null $category_id
@@ -53,7 +58,7 @@ class PartnerRepository
         $resources = $this->partner->resources()->get()->unique();
         $resources->load([
             'jobs'    => function ($q) {
-                $q->where('status', '<>', constants('JOB_STATUSES')['Cancelled']);
+                $q->where('status', '<>', JobStatuses::CANCELLED);
             },
             'profile' => function ($q) {
                 $q->select('id', 'name', 'mobile', 'pro_pic');
@@ -69,7 +74,7 @@ class PartnerRepository
         };
         $job = null;
         if ($category_id != null) {
-            $resources = $resources->map(function ($resource) use ($category_id) {
+            $resources = $resources->map(function (Resource $resource) use ($category_id) {
                 $resource_categories = $resource->categoriesIn($this->partner->id);
                 $is_tagged           = $resource_categories->pluck('id')->contains($category_id);
                 array_add($resource, 'is_tagged', $is_tagged ? 1 : 0);
@@ -81,14 +86,9 @@ class PartnerRepository
             $data                            = [];
             $data['id']                      = $resource->id;
             $data['profile_id']              = $resource->profile_id;
-            $ongoing_jobs                    = $resource->jobs->whereIn('status', [
-                constants('JOB_STATUSES')['Serve_Due'],
-                constants('JOB_STATUSES')['Accepted'],
-                constants('JOB_STATUSES')['Process'],
-                constants('JOB_STATUSES')['Schedule_Due']
-            ]);
+            $ongoing_jobs                    = $resource->jobs->whereIn('status', JobStatuses::getOngoingWithoutServed());
             $data['ongoing']                 = $ongoing_jobs->count();
-            $data['completed']               = $resource->jobs->where('status', constants('JOB_STATUSES')['Served'])->count();
+            $data['completed']               = $resource->jobs->where('status', JobStatuses::SERVED)->count();
             $data['name']                    = $resource->profile->name;
             $data['mobile']                  = $resource->profile->mobile;
             $data['picture']                 = $resource->profile->pro_pic;
@@ -100,7 +100,7 @@ class PartnerRepository
             $data['is_available']            = $resource->is_tagged;
             $data['booked_jobs']             = [];
             $data['is_tagged']               = $resource->is_tagged;
-            $data['total_tagged_categories'] = isset($resource->total_tagged_categories) ? count($resource->total_tagged_categories) : count($resource->categoriesIn($this->partner->id));
+            $data['total_tagged_categories'] = $resource->total_tagged_categories ?? count($resource->categoriesIn($this->partner->id));
             if ($category_id) {
                 $category = Category::find($category_id);
                 if (in_array($category_id, array_map('intval', explode(',', env('RENT_CAR_IDS'))))) {
