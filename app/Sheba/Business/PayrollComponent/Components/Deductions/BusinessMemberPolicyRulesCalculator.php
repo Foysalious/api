@@ -76,9 +76,9 @@ class BusinessMemberPolicyRulesCalculator
         $working_days_type = $business_office->type;
         $is_weekend_included = $business_office->is_weekend_included;
         $number_of_days = $business_office->number_of_days;
-
         if (!$is_grace_period_policy_enable && !$is_late_checkin_early_checkout_policy_enable && !$is_unpaid_leave_policy_enable) return ['attendance_adjustment' => 0, 'leave_adjustment' => 0, 'tax' => 0];
-        $start_date = Carbon::now()->subMonth()->format('Y-m-d');
+        $last_pay_day = $this->payrollSetting->last_pay_day;
+        $start_date = $last_pay_day ? Carbon::parse($last_pay_day)->format('Y-m-d') : Carbon::now()->subMonth()->format('Y-m-d');
         $end_date = Carbon::now()->subDay()->format('Y-m-d');
         $time_frame = $this->timeFrame->forDateRange($start_date, $end_date);
         $attendances = $this->attendanceRepositoryInterface->getAllAttendanceByBusinessMemberFilteredWithYearMonth($this->businessMember, $time_frame);
@@ -106,10 +106,12 @@ class BusinessMemberPolicyRulesCalculator
             if (!$is_weekend_or_holiday && !$is_on_leave) {
                 $total_working_days++;
                 if (array_key_exists($date->format('Y-m-d'), $business_member_attendance)) {
-                    if ($business_member_attendance[$date->format('Y-m-d')]['checkin_time'] > $office_start_time->format('H:i:s') || $business_member_attendance[$date->format('Y-m-d')]['checkout_time'] < $office_end_time->format('H:i:s')) $total_late_checkin_or_early_checkout++;
-                    if ($business_member_attendance[$date->format('Y-m-d')]['checkin_time'] > $office_start_time->format('H:i:s')) $total_late_checkin++;
-                    if ($business_member_attendance[$date->format('Y-m-d')]['checkout_time'] < $office_end_time->format('H:i:s')) $total_early_checkout++;
-                    if ($business_member_attendance[$date->format('Y-m-d')]['checkin_time'] > $office_start_time_with_grace || $business_member_attendance[$date->format('Y-m-d')]['checkout_time'] < $office_end_time_with_grace) $grace_time_over++;
+                    $checkin_time = $business_member_attendance[$date->format('Y-m-d')]['checkin_time'];
+                    $checkout_time = $business_member_attendance[$date->format('Y-m-d')]['checkout_time'];
+                    if ($checkin_time > $office_start_time_with_grace || $checkout_time < $office_end_time_with_grace) $total_late_checkin_or_early_checkout++;
+                    if ($checkin_time > $office_start_time_with_grace) $total_late_checkin++;
+                    if ($checkout_time < $office_end_time_with_grace) $total_early_checkout++;
+                    if ($checkin_time < $office_start_time_with_grace && $checkin_time > $office_start_time || $checkout_time > $office_end_time_with_grace && $checkout_time < $office_end_time ) $grace_time_over++;
                     $total_present++;
                 }
             }
