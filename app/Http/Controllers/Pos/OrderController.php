@@ -451,7 +451,7 @@ class OrderController extends Controller
         if ($request->has('emi_month')) {
             $payment_data['emi_month'] = $request->emi_month;
         }
-
+        Log::info(["amount is gonna clear", $order->id, $order->calculate(), $order->payment_status, $payment_data]);
         $payment_creator->credit($payment_data);
         $order                 = $order->calculate();
         $order->payment_status = $order->getPaymentStatus();
