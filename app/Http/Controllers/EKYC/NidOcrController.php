@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Sheba\EKYC\EkycClient;
 use Sheba\EKYC\Exceptions\EKycException;
@@ -13,6 +14,9 @@ use Sheba\EKYC\Statics;
 
 class NidOcrController extends Controller
 {
+    /**
+     * @var EkycClient
+     */
     private $client;
     private $api;
     private $nidOCR;
@@ -49,6 +53,7 @@ class NidOcrController extends Controller
         } catch (EKycException $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         } catch (\Throwable $e) {
+            Log::info($e);
             return api_response($request, null, 500);
         }
     }

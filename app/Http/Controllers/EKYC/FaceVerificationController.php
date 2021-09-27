@@ -61,7 +61,6 @@ class FaceVerificationController extends Controller
         } catch (EKycException $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         } catch (\Throwable $e) {
-            Log::info($e);
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         }
     }
