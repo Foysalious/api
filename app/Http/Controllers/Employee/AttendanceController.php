@@ -32,6 +32,8 @@ class AttendanceController extends Controller
 {
     use ModificationFields, BusinessBasicInformation;
 
+    const FIRST_DAY_OF_MONTH = 1;
+
     const REMOTE_MESSAGE = "Give attendance from anywhere by providing GPS access";
     const WIFI_MESSAGE = "Give attendance under your Office WiFi Network only";
     const WIFI_AND_REMOTE_MESSAGE = "Give attendance under office IP when you are in office and from GPS when you are are outside office";
@@ -55,7 +57,7 @@ class AttendanceController extends Controller
         $time_frame = $time_frame->forAMonth($month, $year);
         $business_member_joining_date = $business_member->join_date;
         $joining_date = null;
-        if ($business_member_joining_date->format('m-Y') === Carbon::now()->month($month)->year($year)->format('m-Y')){
+        if ($this->checkJoiningDate($business_member_joining_date, $month, $year)){
             $joining_date = $business_member_joining_date->format('d F');
             $start_date = $business_member_joining_date;
             $end_date = Carbon::now()->month($month)->year($year)->lastOfMonth();
@@ -74,6 +76,12 @@ class AttendanceController extends Controller
         $attendances_data = $manager->createData($resource)->toArray()['data'];
 
         return api_response($request, null, 200, ['attendance' => $attendances_data, 'joining_date' => $joining_date]);
+    }
+
+    private function checkJoiningDate($business_member_joining_date, $month, $year)
+    {
+        if ($business_member_joining_date->format('d') == self::FIRST_DAY_OF_MONTH) return false;
+        return $business_member_joining_date->format('m-Y') === Carbon::now()->month($month)->year($year)->format('m-Y');
     }
 
     /**
