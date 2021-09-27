@@ -1,11 +1,10 @@
 <?php namespace App\Http\Route\Prefix\V2;
+
 class PaymentLinkRoute
 {
     public function set($api)
     {
-        $api->group(['prefix'     => 'payment-links',
-                     'middleware' => ['paymentLink.auth']
-        ], function ($api) {
+        $api->group(['prefix' => 'payment-links', 'middleware' => ['paymentLink.auth']], function ($api) {
             $api->get('/', 'PaymentLink\PaymentLinkController@index');
             $api->get('/partner-payment-links', 'PaymentLink\PaymentLinkController@partnerPaymentLinks');
             $api->post('/', 'PaymentLink\PaymentLinkController@store');
