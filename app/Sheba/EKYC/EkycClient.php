@@ -52,11 +52,10 @@ class EkycClient
      */
     private function call($method, $uri, $data = null)
     {
-//        dd(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data));
         $res = $this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data));
         $res = json_decode($res->getBody()->getContents(), true);
-        if ($res['code'] != 200)
-            throw new EkycServerError($res['message'], $res['code']);
+        if (!isset($res['code']) || $res['code'] != 200)
+            throw new EkycServerError($res['message']);
         unset($res['code'], $res['message']);
         return $res;
     }

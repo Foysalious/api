@@ -14,6 +14,9 @@ use Sheba\EKYC\Statics;
 
 class NidOcrController extends Controller
 {
+    /**
+     * @var EkycClient
+     */
     private $client;
     private $api;
     private $nidOCR;
