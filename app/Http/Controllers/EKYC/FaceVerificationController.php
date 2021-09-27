@@ -89,7 +89,7 @@ class FaceVerificationController extends Controller
         try {
             $api = 'user-nid-data?nid=' . $request->nid;
             $data = $this->client->get($api);
-            return api_response($request, null, 200, ['data' => $data]);
+            return api_response($request, null, 200, $data);
         } catch (\Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
