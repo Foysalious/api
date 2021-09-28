@@ -21,11 +21,6 @@ class AccountingUserMigration extends UserMigrationRepository
         // TODO: Implement getFooter() method.
     }
 
-    public function getStatus()
-    {
-        return 'pending';
-    }
-
     public function getBanner()
     {
         return 'accounting-banner';
