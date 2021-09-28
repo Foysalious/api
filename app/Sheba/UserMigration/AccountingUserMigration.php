@@ -3,7 +3,7 @@
 namespace App\Sheba\UserMigration;
 
 
-class AccountingUserMigration extends UserMigrationStrategy
+class AccountingUserMigration extends UserMigrationRepository
 {
 
     public function getHeader()

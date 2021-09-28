@@ -5,7 +5,7 @@ namespace App\Http\Controllers\UserMigration;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Sheba\UserMigration\UserMigrationService;
-use App\Sheba\UserMigration\UserMigrationStrategy;
+use App\Sheba\UserMigration\UserMigrationRepository;
 
 class UserMigrationController extends Controller
 {
@@ -23,7 +23,7 @@ class UserMigrationController extends Controller
         $banner = null;
         $modules = $this->modules;
         foreach ($modules as $key => $value) {
-            /** @var UserMigrationStrategy $class */
+            /** @var UserMigrationRepository $class */
             $class = $this->userMigrationSvc->resolveClass($value['key']);
             $modules[$key]['status'] = $class->getStatus();
             if ($value['priority'] == 1) {

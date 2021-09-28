@@ -2,7 +2,7 @@
 
 namespace App\Sheba\UserMigration;
 
-class PosUserMigration extends UserMigrationStrategy
+class PosUserMigration extends UserMigrationRepository
 {
 
     public function getHeader()
