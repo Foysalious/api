@@ -6,7 +6,7 @@ class UserMigrationService
 {
     public function resolveClass($name)
     {
-        if ($name == 'accounting') {
+        if ($name == 'expense') {
             return app(AccountingUserMigration::class);
         }
         if ($name == 'pos') {
