@@ -22,10 +22,11 @@ class UserMigrationController extends Controller
     {
         $banner = null;
         $modules = $this->modules;
+        $userId = $request->partner->id;
         foreach ($modules as $key => $value) {
             /** @var UserMigrationRepository $class */
             $class = $this->userMigrationSvc->resolveClass($value['key']);
-            $modules[$key]['status'] = $class->getStatus();
+            $modules[$key]['status'] = $class->getStatus($userId, $value['key']);
             if ($value['priority'] == 1) {
                 $banner = $class->getBanner();
             }

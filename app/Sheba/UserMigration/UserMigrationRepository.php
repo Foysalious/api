@@ -2,15 +2,18 @@
 
 namespace App\Sheba\UserMigration;
 
+use phpDocumentor\Reflection\Types\Self_;
 use Sheba\Dal\UserMigration\EloquentImplementation;
 
 abstract class UserMigrationRepository
 {
+    const NOT_ELIGIBLE = 'not_eligible';
     /** @var EloquentImplementation */
     private $repo;
 
-    public function __construct()
+    public function __construct(EloquentImplementation $repo)
     {
+        $this->repo = $repo;
     }
 
     abstract public function getHeader();
@@ -21,9 +24,18 @@ abstract class UserMigrationRepository
 
     abstract public function getBanner();
 
-    public function getStatus($moduleName)
+    /**
+     * @param $userId
+     * @param $moduleName
+     * @return string
+     */
+    public function getStatus($userId ,$moduleName)
     {
-
+        $info = $this->repo->builder()->where('user_id', $userId)->where('module_name', $moduleName)->first();
+        if ($info) {
+            return $info->status;
+        }
+        return self::NOT_ELIGIBLE;
     }
 
 }
