@@ -110,10 +110,11 @@ class UserMigrationRepository extends BaseRepository
      */
     public function userStatus($userId, $userType = UserType::PARTNER)
     {
-        $data = $this->show($userId, $userType);
-        if ($data && $data->status) {
-            return $data->status;
-        }
-        return null;
+        return 'upgraded';
+//        $data = $this->show($userId, $userType);
+//        if ($data && $data->status) {
+//            return $data->status;
+//        }
+//        return null;
     }
 }
