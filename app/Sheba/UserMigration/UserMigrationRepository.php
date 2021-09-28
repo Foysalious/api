@@ -30,10 +30,12 @@ abstract class UserMigrationRepository
      */
     public function getStatus($userId ,$moduleName)
     {
-        $info = $this->repo->builder()->where('user_id', $userId)->where('module_name', $moduleName)->first();
-        if ($info) {
-            return $info->status;
-        }
-        return self::NOT_ELIGIBLE;
+        //todo: static data for razoan
+        return 'upgrading';
+//        $info = $this->repo->builder()->where('user_id', $userId)->where('module_name', $moduleName)->first();
+//        if ($info) {
+//            return $info->status;
+//        }
+//        return self::NOT_ELIGIBLE;
     }
 }
