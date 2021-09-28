@@ -2573,7 +2573,7 @@
             ],
             "authors": [
                 {
-                    "name": "Matěj Humpál",
+                    "name": "MatÄ›j HumpÃ¡l",
                     "role": "Developer, maintainer"
                 },
                 {
@@ -3695,6 +3695,10 @@
                 "mime",
                 "mime type"
             ],
+            "support": {
+                "issues": "https://github.com/rosell-dk/image-mime-type-guesser/issues",
+                "source": "https://github.com/rosell-dk/image-mime-type-guesser/tree/0.3"
+            },
             "time": "2019-03-29T09:33:28+00:00"
         },
         {
@@ -3771,6 +3775,10 @@
                 "png",
                 "png2webp"
             ],
+            "support": {
+                "issues": "https://github.com/rosell-dk/webp-convert/issues",
+                "source": "https://github.com/rosell-dk/webp-convert/tree/2.4.0"
+            },
             "time": "2020-11-10T11:24:50+00:00"
         },
         {
@@ -4040,7 +4048,11 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
+<<<<<<< HEAD
             "time": "2021-09-28T09:20:15+00:00"
+=======
+            "time": "2021-09-21T14:20:28+00:00"
+>>>>>>> 8701883bfdb8ee7a37e74f1f23af14d1581afede
         },
         {
             "name": "sheba/elasticsearch",
