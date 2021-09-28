@@ -4048,11 +4048,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-<<<<<<< HEAD
             "time": "2021-09-28T09:20:15+00:00"
-=======
-            "time": "2021-09-21T14:20:28+00:00"
->>>>>>> 8701883bfdb8ee7a37e74f1f23af14d1581afede
         },
         {
             "name": "sheba/elasticsearch",
