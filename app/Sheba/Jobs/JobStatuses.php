@@ -42,6 +42,11 @@ class JobStatuses
         return [self::ACCEPTED, self::SCHEDULE_DUE, self::PROCESS, self::SERVE_DUE];
     }
 
+    public static function getOngoingWithoutServedAndServeDue()
+    {
+        return [self::ACCEPTED, self::SCHEDULE_DUE, self::PROCESS];
+    }
+
     public static function getClosedString($glue = ",")
     {
         return self::getString('closed', $glue);

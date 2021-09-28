@@ -1,27 +1,21 @@
 <?php namespace App\Http\Controllers\Partner;
 
-
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\FacebookAccountKit;
 use App\Models\Partner;
 use App\Models\PartnerBankInformation;
-use App\Models\Profile;
 use App\Models\WithdrawalRequest;
-use App\Sheba\BankingInfo\GeneralBanking;
 use App\Sheba\UserRequestInformation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 use Sheba\Dal\PartnerBankInformation\Purposes;
 use Sheba\Dal\WithdrawalRequest\RequesterTypes;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
 use Sheba\Partner\PartnerStatuses;
-use Sheba\Repositories\Interfaces\ProfileBankingRepositoryInterface;
 use Sheba\ShebaAccountKit\Requests\AccessTokenRequest;
 use Sheba\ShebaAccountKit\ShebaAccountKit;
-use Throwable;
 
 class PartnerWithdrawalRequestV2Controller extends Controller
 {
@@ -51,7 +45,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
         ];
         $security_money = ($request->partner->walletSetting->security_money ? floatval($request->partner->walletSetting->security_money) : 0);
 
-        if($request->partner->withdrawalRequests()->active()->count() > 0){
+        if ($request->partner->withdrawalRequests()->active()->count() > 0) {
             $active_request_amount =  $request->partner->withdrawalRequests()->active()->sum('amount') ;
             if($withdrawable_amount > $limitBank['min']) {
                 $error_message = 'আপনার '. convertNumbersToBangla($active_request_amount,true, 0) . ' টাকার উত্তোলনের আবেদন প্রক্রিয়াধীন রয়েছে। আপনি '.  convertNumbersToBangla($withdrawable_amount,true, 0). ' টাকা উত্তোলন করার জন্য আবেদন করতে পারবেন।';

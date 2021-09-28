@@ -17,6 +17,7 @@ use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
 use Sheba\FraudDetection\TransactionSources;
+use Sheba\Jobs\JobStatuses;
 use Sheba\Payment\PayableUser;
 use Sheba\Transactions\Types;
 use Sheba\Wallet\HasWallet;
@@ -444,7 +445,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function withdrawalRequests()
     {
-        Relation::morphMap(['partner' => 'App\Models\Partner']);
+        Relation::morphMap(['partner' => Partner::class]);
         return $this->morphMany(WithdrawalRequest::class, 'requester');
     }
 
@@ -460,11 +461,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function onGoingJobs()
     {
-        return $this->jobs()->whereIn('status', [
-            constants('JOB_STATUSES')['Accepted'],
-            constants('JOB_STATUSES')['Process'],
-            constants('JOB_STATUSES')['Schedule_Due']
-        ])->count();
+        return $this->jobs()->whereIn('status', JobStatuses::getOngoingWithoutServedAndServeDue())->count();
     }
 
     public function resourcesInCategory($category)

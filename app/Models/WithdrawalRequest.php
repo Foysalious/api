@@ -1,15 +1,15 @@
 <?php namespace App\Models;
 
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Sheba\Dal\BaseModel;
 
 Relation::morphMap([
-    'partner' => 'App\Models\Partner',
-    'resource' => 'App\Models\Resource'
+    'partner' => Partner::class,
+    'resource' => Resource::class
 ]);
 
-class WithdrawalRequest extends Model
+class WithdrawalRequest extends BaseModel
 {
     protected $guarded = ['id'];
     private $deadline = Carbon::SATURDAY;
