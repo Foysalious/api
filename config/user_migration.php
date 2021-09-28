@@ -3,7 +3,7 @@
 return [
     'modules' => [
         [
-            'key'           => 'accounting',
+            'key'           => 'expense', //accounting - expense given by mobile team
             'app_version'   => '2.3.0.0',
             'status'        => null,
             'priority'      => 1

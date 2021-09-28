@@ -38,6 +38,5 @@ class UserMigrationController extends Controller
 
     public function updateMigration($moduleKey)
     {
-
     }
 }
