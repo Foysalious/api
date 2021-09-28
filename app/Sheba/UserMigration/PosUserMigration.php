@@ -20,11 +20,6 @@ class PosUserMigration extends UserMigrationRepository
         // TODO: Implement getFooter() method.
     }
 
-    public function getStatus()
-    {
-        return 'upgrading';
-    }
-
     public function getBanner()
     {
         return 'pos-banner';
