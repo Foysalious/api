@@ -4,24 +4,18 @@ namespace App\Sheba\UserMigration;
 
 class PosUserMigration extends UserMigrationRepository
 {
-
-    public function getHeader()
-    {
-        // TODO: Implement getHeader() method.
-    }
-
-    public function getBody()
-    {
-        // TODO: Implement getBody() method.
-    }
-
-    public function getFooter()
-    {
-        // TODO: Implement getFooter() method.
-    }
-
     public function getBanner()
     {
         return 'pos-banner';
+    }
+
+    public function getStatusWiseResponse()
+    {
+        // TODO: Implement getStatusWiseResponse() method.
+    }
+
+    public function updateStatus(array $data)
+    {
+        // TODO: Implement updateStatus() method.
     }
 }

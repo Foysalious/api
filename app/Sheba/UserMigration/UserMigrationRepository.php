@@ -9,26 +9,36 @@ abstract class UserMigrationRepository
     const NOT_ELIGIBLE = 'not_eligible';
     /** @var EloquentImplementation */
     private $repo;
+    protected $userId;
+    protected $moduleKey;
 
     public function __construct(EloquentImplementation $repo)
     {
         $this->repo = $repo;
     }
 
-    abstract public function getHeader();
+    public function setUserId($userId)
+    {
+        $this->userId = $userId;
+        return $this;
+    }
 
-    abstract public function getBody();
+    public function setModuleKey($moduleKey)
+    {
+        $this->moduleKey = $moduleKey;
+        return $this;
+    }
 
-    abstract public function getFooter();
+    abstract public function getStatusWiseResponse();
+
+    abstract public function updateStatus(array $data);
 
     abstract public function getBanner();
 
     /**
-     * @param $userId
-     * @param $moduleName
      * @return string
      */
-    public function getStatus($userId ,$moduleName)
+    public function getStatus()
     {
         //todo: static data for razoan
         return 'upgrading';

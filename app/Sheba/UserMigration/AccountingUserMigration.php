@@ -2,27 +2,30 @@
 
 namespace App\Sheba\UserMigration;
 
+use Sheba\Dal\UserMigration\UserStatus;
 
 class AccountingUserMigration extends UserMigrationRepository
 {
-
-    public function getHeader()
-    {
-        // TODO: Implement getHeader() method.
-    }
-
-    public function getBody()
-    {
-        // TODO: Implement getBody() method.
-    }
-
-    public function getFooter()
-    {
-        // TODO: Implement getFooter() method.
-    }
-
     public function getBanner()
     {
         return 'accounting-banner';
+    }
+
+    public function getStatusWiseResponse()
+    {
+        $status = $this->getStatus();
+        if ($status == UserStatus::PENDING) {
+            return $this->getPendingResponse();
+        }
+    }
+
+    public function updateStatus(array $data)
+    {
+        // TODO: Implement updateStatus() method.
+    }
+
+    private function getPendingResponse()
+    {
+        
     }
 }
