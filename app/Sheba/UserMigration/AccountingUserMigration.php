@@ -1,7 +1,6 @@
 <?php
 
-
-namespace Sheba\UserMigration;
+namespace App\Sheba\UserMigration;
 
 
 class AccountingUserMigration extends UserMigrationStrategy

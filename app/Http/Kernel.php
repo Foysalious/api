@@ -31,6 +31,7 @@ use App\Http\Middleware\SetRequestToJwtWhileTesting;
 use App\Http\Middleware\Sheba\ShebaNetworkMiddleware;
 use App\Http\Middleware\ThrottleRequests;
 use App\Http\Middleware\TopUpAuthMiddleware;
+use App\Http\Middleware\UserMigrationMiddleware;
 use App\Http\Middleware\VendorMiddleware;
 use App\Http\Middleware\VerifyCsrfToken;
 use App\Http\Middleware\XSS;
@@ -119,6 +120,6 @@ class Kernel extends HttpKernel
         'apiRequestLog' => ApiRequestMiddleware::class,
         'shebaServer' => ShebaNetworkMiddleware::class,
         'terminate' => TerminatingMiddleware::class,
-
+        'userMigration.auth' => UserMigrationMiddleware::class,
     ];
 }

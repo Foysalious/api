@@ -1,7 +1,6 @@
 <?php
 
-
-namespace Sheba\UserMigration;
+namespace App\Sheba\UserMigration;
 
 
 abstract class UserMigrationStrategy

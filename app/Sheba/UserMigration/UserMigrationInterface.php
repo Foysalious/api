@@ -1,6 +1,6 @@
 <?php
 
-namespace Sheba\UserMigration;
+namespace App\Sheba\UserMigration;
 
 interface UserMigrationInterface
 {

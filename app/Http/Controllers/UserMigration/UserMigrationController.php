@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\UserMigration;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Request;
-use Sheba\UserMigration\UserMigrationService;
-use Sheba\UserMigration\UserMigrationStrategy;
+use Illuminate\Http\Request;
+use App\Sheba\UserMigration\UserMigrationService;
+use App\Sheba\UserMigration\UserMigrationStrategy;
 
 class UserMigrationController extends Controller
 {
@@ -20,19 +20,23 @@ class UserMigrationController extends Controller
 
     public function getMigrationList(Request $request)
     {
-        $modules = [
-            'modules' => $this->modules
-        ];
         $banner = null;
-        foreach ($modules as $module) {
+        $modules = $this->modules;
+        foreach ($modules as $key => $value) {
             /** @var UserMigrationStrategy $class */
-            $class = $this->userMigrationSvc->resolveClass($module['key']);
-            $module['status'] = $class->getStatus();
-            if ($module['priority'] == 1) {
+            $class = $this->userMigrationSvc->resolveClass($value['key']);
+            $modules[$key]['status'] = $class->getStatus();
+            if ($value['priority'] == 1) {
                 $banner = $class->getBanner();
             }
         }
-        $modules['banner'] = $banner;
-        return api_response($request, $modules, 200, ['data' => $modules]);
+        $res['modules'] = $modules;
+        $res['banner'] = $banner;
+        return api_response($request, $res, 200, ['data' => $res]);
+    }
+
+    public function updateMigration($moduleKey)
+    {
+
     }
 }
