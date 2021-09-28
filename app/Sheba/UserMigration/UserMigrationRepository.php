@@ -2,7 +2,6 @@
 
 namespace App\Sheba\UserMigration;
 
-use phpDocumentor\Reflection\Types\Self_;
 use Sheba\Dal\UserMigration\EloquentImplementation;
 
 abstract class UserMigrationRepository
@@ -37,5 +36,4 @@ abstract class UserMigrationRepository
         }
         return self::NOT_ELIGIBLE;
     }
-
 }
