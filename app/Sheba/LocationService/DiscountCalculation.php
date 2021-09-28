@@ -75,8 +75,11 @@ class DiscountCalculation
      */
     public function getCalculatedDiscount()
     {
-        $discount = $this->isDiscountPercentage ?
-            (double)$this->originalPrice * ((double)$this->discount / 100) : (double)$this->discount;
+        if (!$this->serviceDiscount->isPercentage())
+            return $this->originalPrice - ($this->discount * $this->quantity);
+        $this->cap = (double)$this->serviceDiscount->cap;
+        $discount = ($this->originalPrice * $this->discount) / 100;
+        $discount = ($this->cap && $discount > $this->cap) ? $this->cap : $discount;
         return $discount;
     }
 
@@ -161,11 +164,7 @@ class DiscountCalculation
         $this->isDiscountPercentage = $this->serviceDiscount->is_percentage;
         $this->shebaContribution = $this->serviceDiscount->sheba_contribution;
         $this->partnerContribution = $this->serviceDiscount->partner_contribution;
-        if (!$this->serviceDiscount->isPercentage())
-            return $this->originalPrice - ($this->discount * $this->quantity);
-        $this->cap = (double)$this->serviceDiscount->cap;
-        $discount = ($this->originalPrice * $this->discount) / 100;
-        $discount = ($this->cap && $discount > $this->cap) ? $this->cap : $discount;
+        $discount = $this->getCalculatedDiscount();
         return $this->originalPrice - $discount;
     }
 
