@@ -22,9 +22,10 @@ class BusinessMember extends Model
 {
     use SoftDeletes;
 
-    protected $guarded = ['id',];
+    protected $guarded = ['id'];
     protected $dates = ['join_date', 'deleted_at'];
     protected $casts = ['is_super' => 'int'];
+    protected $table = "business_member";
 
     protected $dispatchesEvents = [
         'created' => BusinessMemberCreated::class,
