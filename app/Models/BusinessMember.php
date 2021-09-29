@@ -26,6 +26,7 @@ class BusinessMember extends Model
     protected $dates = ['join_date', 'deleted_at'];
     protected $casts = ['is_super' => 'int'];
     protected $table = "business_member";
+    protected $connection = 'mysql';
 
     protected $dispatchesEvents = [
         'created' => BusinessMemberCreated::class,
@@ -38,11 +39,6 @@ class BusinessMember extends Model
         parent::__construct($attributes);
         $table = config('database.connections.mysql.database') . '.business_member';
         $this->setTable($table);
-    }
-    
-    public function setTable($table)
-    {
-        $this->table = $table;
     }
 
     public function member()
