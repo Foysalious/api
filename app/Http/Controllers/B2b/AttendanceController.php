@@ -44,7 +44,8 @@ use Sheba\Business\Holiday\Updater as HolidayUpdater;
 use Sheba\Business\Holiday\CreateRequest as HolidayCreatorRequest;
 use Sheba\Business\Attendance\HalfDaySetting\Updater as HalfDaySettingUpdater;
 use Sheba\Business\Attendance\Detail\DetailsExcel as DetailsExcel;
-use Throwable;
+use Maatwebsite\Excel\Facades\Excel as MaatwebsiteExcel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class AttendanceController extends Controller
 {
@@ -69,7 +70,7 @@ class AttendanceController extends Controller
      * @param AttendanceList $stat
      * @param TimeFrame $time_frame
      * @param BusinessOfficeRepoInterface $business_office_repo
-     * @return JsonResponse
+     * @return JsonResponse|BinaryFileResponse
      */
     public function getDailyStats($business, Request $request, AttendanceList $stat, TimeFrame $time_frame,
                                   BusinessOfficeRepoInterface $business_office_repo)
@@ -113,7 +114,12 @@ class AttendanceController extends Controller
         }
 
         $count = count($attendances);
-        if ($request->file == 'excel') return (new DailyExcel())->setDate($date->format('Y-m-d'))->setData($attendances)->download();
+
+        if ($request->file == 'excel') {
+            $excel = new DailyExcel($attendances, $date->format('Y-m-d'));
+            return MaatwebsiteExcel::download($excel, 'Daily_attendance_report.xlsx');
+        }
+
         return api_response($request, null, 200, ['attendances' => $attendances, 'total' => $count]);
     }
 

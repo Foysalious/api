@@ -1,11 +1,15 @@
 <?php namespace Sheba\Business\Attendance\Daily;
 
-use Excel;
+use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class DailyExcel
+class DailyExcel implements FromCollection, WithHeadings, ShouldAutoSize, WithStyles
 {
     private $dailyData;
-    private $data = [];
     private $date;
     private $employeeId;
     private $employeeName;
@@ -23,6 +27,12 @@ class DailyExcel
     private $lateNote;
     private $leftEarlyNote;
     private $overtime;
+
+    public function __construct(array $daily_data, $date)
+    {
+        $this->dailyData = $daily_data;
+        $this->date = $date;
+    }
 
     private function initializeData()
     {
@@ -44,40 +54,9 @@ class DailyExcel
         $this->leftEarlyNote = '-';
     }
 
-    public function setData(array $daily_data)
+    public function collection()
     {
-        $this->dailyData = $daily_data;
-        return $this;
-    }
-
-    public function setDate($date)
-    {
-        $this->date = $date;
-        return $this;
-    }
-
-    public function download()
-    {
-        $this->makeData();
-        $file_name = 'Daily_attendance_report';
-        Excel::create($file_name, function ($excel) {
-            $excel->sheet('data', function ($sheet) {
-                $sheet->fromArray($this->data, null, 'A1', false, false);
-                $sheet->prependRow($this->getHeaders());
-                $sheet->freezeFirstRow();
-                $sheet->cell('A1:Q1', function ($cells) {
-                    $cells->setFontWeight('bold');
-                });
-                $sheet->getDefaultStyle()->getAlignment()->applyFromArray(
-                    array('horizontal' => 'left')
-                );
-                $sheet->setAutoSize(true);
-            });
-        })->export('xlsx');
-    }
-
-    private function makeData()
-    {
+        $data = [];
         foreach ($this->dailyData as $attendance) {
             $this->initializeData();
             if (!is_null($attendance['check_in']) && !$attendance['is_absent']) {
@@ -135,7 +114,7 @@ class DailyExcel
                 }
             }
 
-            array_push($this->data, [
+            array_push($data, [
                 'date' => $attendance['date'] ? $attendance['date'] : $this->date,
                 'employee_id' => $attendance['employee_id'],
                 'employee_name' => $attendance['member']['name'],
@@ -157,13 +136,28 @@ class DailyExcel
                 'left_early_note' => $this->leftEarlyNote,
             ]);
         }
+
+        return collect($data);
     }
 
-    private function getHeaders()
+    public function headings(): array
     {
-        return ['Date', 'Employee ID', 'Employee Name', 'Department',
+        return [
+            'Date', 'Employee ID', 'Employee Name', 'Department',
             'Status', 'Check in time', 'Check in status', 'Check in location',
             'Check in address', 'Check out time', 'Check out status',
-            'Check out location', 'Check out address', 'Total Hours', 'Overtime', 'Late check in note', 'Left early note'];
+            'Check out location', 'Check out address', 'Total Hours', 'Overtime',
+            'Late check in note', 'Left early note'
+        ];
+    }
+
+    /**
+     * @throws \PhpOffice\PhpSpreadsheet\Exception
+     */
+    public function styles(Worksheet $sheet)
+    {
+        $sheet->freezePane('A1');
+        $sheet->getStyle('A1:Q1')->getFont()->setBold(true);
+        $sheet->getStyle('A:Q')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
     }
 }

@@ -4,6 +4,7 @@ use Dingo\Api\Http\Middleware\Request;
 use Dingo\Api\Http\Request as HttpRequest;
 use Dingo\Api\Http\Response;
 use Illuminate\Pipeline\Pipeline;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class CustomDingoRequestMiddleware extends Request
 {
@@ -12,9 +13,9 @@ class CustomDingoRequestMiddleware extends Request
      *
      * @param \Dingo\Api\Http\Request $request
      *
-     * @return \Dingo\Api\Http\Response
+     * @return Response | BinaryFileResponse
      */
-    protected function sendRequestThroughRouter(HttpRequest $request): Response
+    protected function sendRequestThroughRouter(HttpRequest $request)
     {
         $this->app->instance('request', $request);
 
