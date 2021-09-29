@@ -95,6 +95,6 @@ class PaymentStrategy
 
         if ($user instanceof Customer) return self::SSL;
         else if ($user instanceof Partner) return self::PORT_WALLET;
-
+        else return self::SSL;
     }
 }
