@@ -21,14 +21,14 @@ class UserMigrationController extends Controller
 
     public function getMigrationList(Request $request)
     {
-        try{
+        try {
             $banner = null;
             $modules = $this->modules;
             $userId = $request->partner->id;
             foreach ($modules as $key => $value) {
                 /** @var UserMigrationRepository $class */
                 $class = $this->userMigrationSvc->resolveClass($value['key']);
-                $modules[$key]['status'] = $class->setUserId($userId)->setModuleKey($value['key'])->getStatus();
+                $modules[$key]['status'] = $class->setUserId($userId)->setModuleName($value['key'])->getStatus();
                 if ($value['priority'] == 1) {
                     $banner = $class->getBanner();
                 }
@@ -41,19 +41,43 @@ class UserMigrationController extends Controller
         }
     }
 
-    public function migrationStatusByModuleKey(Request $request, $moduleKey)
+    public function migrationStatusByModuleName(Request $request, $moduleName)
     {
         try {
+            $userId = $request->partner->id;
             /** @var UserMigrationRepository $class */
-            $class = $this->userMigrationSvc->resolveClass($moduleKey);
-
+            $class = $this->userMigrationSvc->resolveClass($moduleName);
+            $res = $class->setUserId($userId)->setModuleName($moduleName)->getStatusWiseResponse();
+            return api_response($request, $res, 200, ['data' => $res]);
         } catch (Exception $e) {
             return api_response($request, null, 404, ['message' => $e->getMessage(), 'code' => 404]);
         }
     }
 
-    public function updateMigration($moduleKey)
+    public function updateMigrationStatus(Request $request)
     {
+        try {
+            $this->validate($request, ['status' => 'required|string', 'module_name' => 'required|string']);
+            $userId = $request->partner->id;
+            /** @var UserMigrationRepository $class */
+            $class = $this->userMigrationSvc->resolveClass($request->module_name);
+            $res = $class->setUserId($userId)->setModuleName($request->module_name)->updateStatus($request->status);
+            return api_response($request, $res, 200, ['data' => $res]);
+        } catch (Exception $e) {
+            return api_response($request, null, 404, ['message' => $e->getMessage(), 'code' => 404]);
+        }
+    }
 
+    public function updateStatusWebHook(Request $request)
+    {
+        try {
+            $this->validate($request, ['status' => 'required|string', 'module_name' => 'required|string', 'user_id' => 'required']);
+            /** @var UserMigrationRepository $class */
+            $class = $this->userMigrationSvc->resolveClass($request->module_name);
+            $res = $class->setUserId($request->user_id)->setModuleName($request->module_name)->updateStatus($request->status);
+            return api_response($request, $res, 200, ['data' => $res]);
+        } catch (Exception $e) {
+            return api_response($request, null, 404, ['message' => $e->getMessage(), 'code' => 404]);
+        }
     }
 }

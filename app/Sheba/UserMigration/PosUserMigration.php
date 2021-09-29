@@ -9,12 +9,12 @@ class PosUserMigration extends UserMigrationRepository
         return 'pos-banner';
     }
 
-    public function getStatusWiseResponse()
+    public function getStatusWiseResponse(): array
     {
         // TODO: Implement getStatusWiseResponse() method.
     }
 
-    public function updateStatus(array $data)
+    public function updateStatus($status)
     {
         // TODO: Implement updateStatus() method.
     }

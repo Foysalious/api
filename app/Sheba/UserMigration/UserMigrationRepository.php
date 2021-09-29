@@ -3,6 +3,7 @@
 namespace App\Sheba\UserMigration;
 
 use Sheba\Dal\UserMigration\EloquentImplementation;
+use Exception;
 
 abstract class UserMigrationRepository
 {
@@ -10,12 +11,18 @@ abstract class UserMigrationRepository
     /** @var EloquentImplementation */
     private $repo;
     protected $userId;
-    protected $moduleKey;
+    protected $moduleName;
 
     public function __construct(EloquentImplementation $repo)
     {
         $this->repo = $repo;
     }
+
+    abstract public function getStatusWiseResponse(): array;
+
+    abstract public function updateStatus($status);
+
+    abstract public function getBanner();
 
     public function setUserId($userId)
     {
@@ -23,29 +30,33 @@ abstract class UserMigrationRepository
         return $this;
     }
 
-    public function setModuleKey($moduleKey)
+    public function setModuleName($moduleName)
     {
-        $this->moduleKey = $moduleKey;
+        $this->moduleName = $moduleName;
         return $this;
     }
-
-    abstract public function getStatusWiseResponse();
-
-    abstract public function updateStatus(array $data);
-
-    abstract public function getBanner();
 
     /**
      * @return string
      */
     public function getStatus()
     {
-        //todo: static data for razoan
-        return 'upgrading';
-//        $info = $this->repo->builder()->where('user_id', $userId)->where('module_name', $moduleName)->first();
-//        if ($info) {
-//            return $info->status;
-//        }
-//        return self::NOT_ELIGIBLE;
+//        //todo: static data for razoan
+//        return 'upgrading';
+        $info = $this->repo->builder()->where('user_id', $this->userId)->where('module_name', $this->moduleName)->first();
+        if ($info) {
+            return $info->status;
+        }
+        return self::NOT_ELIGIBLE;
+    }
+
+    protected function updateMigrationStatus($status)
+    {
+        $info = $this->repo->builder()->where('user_id', $this->userId)->where('module_name', $this->moduleName)->first();
+        if (!$info) {
+            throw new Exception('Sorry! Not Found');
+        }
+        $info->status = $status;
+        return $info->save();
     }
 }
