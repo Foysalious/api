@@ -2,6 +2,8 @@
 
 namespace Sheba\ComplianceInfo;
 
+use Carbon\Carbon;
+
 class Statics
 {
     public static function complianceInfoUpdateValidation(): array
@@ -9,7 +11,8 @@ class Statics
         return [
             "shop_type"         => 'in:virtual,both,physical',
             "tin_licence_image" => 'file|mimes:jpeg,png,jpg',
-            "electricity_bill_image" => 'file|mimes:jpeg,png,jpg'
+            "electricity_bill_image" => 'file|mimes:jpeg,png,jpg',
+            'registration_year' => 'date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d')
         ];
     }
 

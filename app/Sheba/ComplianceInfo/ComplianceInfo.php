@@ -68,29 +68,16 @@ class ComplianceInfo
 
     public function updateData($data)
     {
-        $data = $this->getNotNullKeys($data);
-        if(isset($data['email'])) $this->updateEmail($data['email']);
+        $this->updateEmail($data['email']);
         $data = array_except($data, 'email');
 
         if(isset($data['tin_licence_photo'])) $this->getImageUrl('tin_licence_photo', $data);
-
+        else $data['tin_licence_photo'] = $this->partner->basicInformations->tin_licence_photo;
         if(isset($data['electricity_bill_image'])) $this->getImageUrl('electricity_bill_image',$data);
+        else $data['electricity_bill_image'] = $this->partner->basicInformations->electricity_bill_image;
 
+        if(empty($data['registration_year'])) $data = array_except($data, 'registration_year');
         $this->partner->basicInformations->update($this->withUpdateModificationField($data));
-    }
-
-    /**
-     * @param $data
-     * @return array
-     */
-    private function getNotNullKeys($data): array
-    {
-        $not_null_data = array();
-        foreach ($data as $key=> $value)
-            if($value !== null)
-                $not_null_data[$key] = $value;
-        return $not_null_data;
-
     }
 
     private function getImageUrl($key, &$data)
