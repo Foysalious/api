@@ -3,7 +3,6 @@
 namespace App\Sheba\UserMigration;
 
 use Sheba\Dal\UserMigration\UserStatus;
-use Exception;
 
 class AccountingUserMigration extends UserMigrationRepository
 {
@@ -32,7 +31,9 @@ class AccountingUserMigration extends UserMigrationRepository
     public function updateStatus($status)
     {
         if ($status == UserStatus::UPGRADING) {
-            //todo: run accounting migration
+            /** @var \Sheba\AccountingEntry\Repository\UserMigrationRepository $accUpgradeRepo */
+            $accUpgradeRepo = app(\Sheba\AccountingEntry\Repository\UserMigrationRepository::class);
+            $accUpgradeRepo->migrateInAccounting($this->userId);
         }
         return $this->updateMigrationStatus($status);
     }
