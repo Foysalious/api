@@ -4,10 +4,12 @@ namespace App\Sheba\UserMigration;
 
 use Sheba\Dal\UserMigration\EloquentImplementation;
 use Exception;
+use Sheba\Dal\UserMigration\UserStatus;
 
 abstract class UserMigrationRepository
 {
     const NOT_ELIGIBLE = 'not_eligible';
+
     /** @var EloquentImplementation */
     private $repo;
     protected $userId;
@@ -41,8 +43,6 @@ abstract class UserMigrationRepository
      */
     public function getStatus()
     {
-//        //todo: static data for razoan
-//        return 'upgrading';
         $info = $this->repo->builder()->where('user_id', $this->userId)->where('module_name', $this->moduleName)->first();
         if ($info) {
             return $info->status;
@@ -55,6 +55,12 @@ abstract class UserMigrationRepository
         $info = $this->repo->builder()->where('user_id', $this->userId)->where('module_name', $this->moduleName)->first();
         if (!$info) {
             throw new Exception('Sorry! Not Found');
+        }
+        if ($info->status == UserStatus::UPGRADED) {
+            throw new Exception('Sorry! already migrated.');
+        }
+        if ($info->status == UserStatus::UPGRADING && $status == UserStatus::UPGRADING) {
+            throw new Exception('Sorry! Already Migrating.');
         }
         $info->status = $status;
         return $info->save();

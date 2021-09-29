@@ -2,7 +2,7 @@
 
 use App\Models\Partner;
 use Sheba\AccountingEntry\Repository\UserMigrationRepository;
-use Sheba\Dal\AccountingMigratedUser\UserStatus;
+use Sheba\Dal\UserMigration\UserStatus;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ModificationFields;
 use Sheba\TopUp\TopUpAgent;
@@ -10,6 +10,8 @@ use Sheba\TopUp\TopUpAgent;
 class BaseRepository
 {
     use ModificationFields;
+
+    CONST NOT_ELIGIBLE = 'not_eligible';
 
     /** @var ExpenseTrackerClient $client */
     protected $client;
@@ -50,11 +52,11 @@ class BaseRepository
      */
     protected function isMigratedToAccounting()
     {
+        $arr = [self::NOT_ELIGIBLE, UserStatus::PENDING, UserStatus::FAILED];
         /** @var UserMigrationRepository $userMigrationRepo */
         $userMigrationRepo = app(UserMigrationRepository::class);
         $userStatus = $userMigrationRepo->userStatus($this->partnerId);
-        if (!$userStatus) return false;
-        if ($userStatus == UserStatus::PENDING) return false;
+        if (in_array($userStatus, $arr)) return false;
         return true;
     }
 }

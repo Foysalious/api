@@ -7,11 +7,10 @@ use App\Models\PosCustomer;
 use App\Repositories\FileRepository;
 use App\Models\PosOrder;
 use App\Models\PosOrderPayment;
-use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
 use Sheba\AccountingEntry\Repository\UserMigrationRepository;
-use Sheba\Dal\AccountingMigratedUser\UserStatus;
+use Sheba\Dal\UserMigration\UserStatus;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
@@ -20,6 +19,8 @@ use Sheba\Pos\Payment\Creator as PaymentCreator;
 class BaseRepository
 {
     use ModificationFields, CdnFileManager, FileManager;
+
+    CONST NOT_ELIGIBLE = 'not_eligible';
 
     /** @var AccountingEntryClient $client */
     protected $client;
@@ -137,11 +138,11 @@ class BaseRepository
      */
     public function isMigratedToAccounting($userId)
     {
+        $arr = [self::NOT_ELIGIBLE, UserStatus::PENDING, UserStatus::FAILED];
         /** @var UserMigrationRepository $userMigrationRepo */
         $userMigrationRepo = app(UserMigrationRepository::class);
         $userStatus = $userMigrationRepo->userStatus($userId);
-        if (!$userStatus) return false;
-        if ($userStatus == UserStatus::PENDING) return false;
+        if (in_array($userStatus, $arr)) return false;
         return true;
     }
 }
