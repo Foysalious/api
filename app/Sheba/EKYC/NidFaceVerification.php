@@ -13,13 +13,11 @@ use Sheba\Repositories\ProfileRepository;
 
 class NidFaceVerification
 {
-    private $profileUpdate;
     private $profileRepo;
     private $fileRepo;
 
     public function __construct(ProfileUpdateRepository $profileUpdate, ProfileRepository $profileRepo, FileRepository $file_repository)
     {
-        $this->profileUpdate = $profileUpdate;
         $this->profileRepo = $profileRepo;
         $this->fileRepo = $file_repository;
     }
@@ -28,11 +26,16 @@ class NidFaceVerification
     {
         $data = $this->makeData($data);
         $this->profileRepo->updateRaw($profile, $data);
-        if(isset($profile->resource)) (new ResourceRepository($profile->resource))->update([
-            "status" => 'verified',
-            "is_verified" => 1,
-            "verified_at" => Carbon::now()->toDateTimeString(),
-        ]);
+        if(isset($profile->resource)) {
+            $resourceRepo = (new ResourceRepository($profile->resource));
+            $resourceRepo->update([
+                "status" => 'verified',
+                "is_verified" => 1,
+                "verified_at" => Carbon::now()->toDateTimeString(),
+            ]);
+
+            $resourceRepo->storeStatusUpdateLog('verified', 'ekyc_verified', "status changed to verified through ekyc");
+        }
     }
 
     public function unverifiedChanges($profile) {
@@ -40,11 +43,16 @@ class NidFaceVerification
             'nid_verified' => 0,
             'nid_verification_date' => null
         ]);
-        if(isset($profile->resource)) (new ResourceRepository($profile->resource))->update([
-            "status" => 'rejected',
-            "is_verified" => 0,
-            "verified_at" => null
-        ]);
+        if(isset($profile->resource)) {
+            $resourceRepo = (new ResourceRepository($profile->resource));
+            $resourceRepo->update([
+                "status" => 'rejected',
+                "is_verified" => 0,
+                "verified_at" => null
+            ]);
+
+            $resourceRepo->storeStatusUpdateLog('rejected', 'ekyc_rejected', "status changed to rejected through ekyc");
+        }
     }
 
     public function beforePorichoyCallChanges($profile)

@@ -46,13 +46,14 @@ class FaceVerificationController extends Controller
             $profile = $request->auth_user->getProfile();
             $photoLink = $this->nidFaceVerification->getPersonPhotoLink($request, $profile);
             $requestedData = $this->nidFaceVerification->formatToData($request, $photoLink);
+            $this->nidFaceVerification->makeProfileAdjustment($photoLink, $profile, $request->nid);
+            $this->nidFaceVerification->beforePorichoyCallChanges($profile);
             $faceVerificationData = $this->client->post($this->api, $requestedData);
             $status = ($faceVerificationData['data']['status']);
             if($status === Statics::ALREADY_VERIFIED || $status === Statics::VERIFIED) {
                 $status = Statics::VERIFIED;
                 $this->nidFaceVerification->verifiedChanges($faceVerificationData['data'], $profile);
             } elseif($status === Statics::UNVERIFIED) $this->nidFaceVerification->unverifiedChanges($profile);
-            $this->nidFaceVerification->makeProfileAdjustment($photoLink, $profile, $request->nid);
             $this->nidFaceVerification->storeData($request, $faceVerificationData, $profileNIDSubmissionRepo);
             return api_response($request, null, 200, ['data' => Statics::faceVerificationResponse($status, $faceVerificationData['data']['message'])]);
         } catch (ValidationException $exception) {
