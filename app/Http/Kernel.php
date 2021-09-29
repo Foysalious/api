@@ -17,6 +17,7 @@ use App\Http\Middleware\DLSApiVersioning;
 use App\Http\Middleware\EncryptCookies;
 use App\Http\Middleware\ExternalPaymentLinkAuthMiddleware;
 use App\Http\Middleware\GeoAuthMiddleware;
+use App\Http\Middleware\IpWhitelistMiddleware;
 use App\Http\Middleware\JWT\ResourceAuthMiddleware;
 use App\Http\Middleware\JwtAccessTokenMiddleware;
 use App\Http\Middleware\JWTAuthentication;
@@ -128,5 +129,6 @@ class Kernel extends HttpKernel
         'partner.status'=>PartnerStatusAuthMiddleware::class,
         'concurrent_request' => ConcurrentRequestMiddleware::class,
         'userMigration.auth' => UserMigrationMiddleware::class,
+        'ip.whitelist' => IpWhitelistMiddleware::class,
     ];
 }

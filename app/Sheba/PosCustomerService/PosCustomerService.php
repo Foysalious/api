@@ -140,7 +140,7 @@ class PosCustomerService
         $customer_details['address'] = $customer_info['address'] ?? null;
         $customer_details['image'] = $customer_info['pro_pic'] ?? null;
         $customer_details['customer_since'] = $customer_info['created_at'] ?? null;
-        $customer_details['customer_since_formatted'] = isset($customer_info['created_at']) ? Carbon::parse($customer_info['created_at'])->diffForHumans(): null;
+        $customer_details['customer_since_formatted'] = isset($customer_info['created_at']) ? convertTimezone($this->created_at)->format('Y-m-d H:i:s'): null;
         $customer_details['total_purchase_amount'] = $total_purchase_amount;
         $customer_details['total_used_promo'] = $total_used_promo;
         $customer_details['total_due_amount'] = $total_due_amount;
