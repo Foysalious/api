@@ -793,9 +793,19 @@ class AttendanceList
         return $this->isWeekend($this->startDate, $weekend_day) ? 'weekend' : 'holiday';
     }
 
+    /**
+     * @return null
+     */
     private function getHolidayName()
     {
         $business_holiday = $this->businessHoliday->getAllByBusiness($this->business);
+        $holiday_name = null;
+        foreach ($business_holiday as $holiday) {
+            if (!$this->startDate->between($holiday->start_date, $holiday->end_date)) continue;
+            $holiday_name = $holiday->title;
+            break;
+        }
+        return $holiday_name;
     }
 
 }
