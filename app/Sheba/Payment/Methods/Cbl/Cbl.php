@@ -111,7 +111,7 @@ class Cbl extends PaymentMethod
         $data .= "<Merchant>$this->merchantId</Merchant>";
         $data .= "<Amount>" . ($payable->amount * 100) . "</Amount>";
         $data .= "<Currency>050</Currency>";
-        $data .= "<Description>The City Bank Limited</Description>";
+        $data .= "<Description>. ($payable->description) .</Description>";
         $data .= "<ApproveURL>" . htmlentities($this->acceptUrl) . "</ApproveURL>";
         $data .= "<CancelURL>" . htmlentities($this->cancelUrl) . "</CancelURL>";
         $data .= "<DeclineURL>" . htmlentities($this->declineUrl) . "</DeclineURL>";

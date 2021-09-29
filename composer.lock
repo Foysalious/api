@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7d6142475fe3c22dc90370a7549980c7",
+    "content-hash": "e5bf7a134f3b09c9bf2d9235ade3ea7a",
     "packages": [
         {
             "name": "algolia/algoliasearch-client-php",
@@ -3695,10 +3695,6 @@
                 "mime",
                 "mime type"
             ],
-            "support": {
-                "issues": "https://github.com/rosell-dk/image-mime-type-guesser/issues",
-                "source": "https://github.com/rosell-dk/image-mime-type-guesser/tree/0.3"
-            },
             "time": "2019-03-29T09:33:28+00:00"
         },
         {
@@ -4016,13 +4012,8 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-<<<<<<< HEAD
-                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
-                "reference": "cb7436f9566486e0d00aeba1591ed18d96b68eb6"
-=======
                 "url": "https://bitbucket.org/startern/sheba_dal.git",
-                "reference": "979ba8f98dc3b60f4f04b2e9eedbef2732be67b6"
->>>>>>> 54f58f59e59ffd47f89a1a158247e6a62ce61a40
+                "reference": "47c120e29d6d6160d44a3f5f903cc6c431a86517"
             },
             "require": {
                 "php": ">=5.4"
@@ -4049,7 +4040,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2021-08-25T15:52:23+00:00"
+            "time": "2021-09-26T09:36:49+00:00"
         },
         {
             "name": "sheba/elasticsearch",
