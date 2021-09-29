@@ -51,7 +51,7 @@ class BaseRepository
      */
     protected function isMigratedToAccounting()
     {
-        $arr = [self::NOT_ELIGIBLE, UserStatus::PENDING, UserStatus::FAILED];
+        $arr = [self::NOT_ELIGIBLE, UserStatus::PENDING, UserStatus::UPGRADING, UserStatus::FAILED];
         /** @var UserMigrationRepository $userMigrationRepo */
         $userMigrationRepo = app(UserMigrationRepository::class);
         $userStatus = $userMigrationRepo->userStatus($this->partnerId);
