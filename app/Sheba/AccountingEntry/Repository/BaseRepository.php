@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Sheba\AccountingEntry\Repository;
 
 use App\Models\Partner;
@@ -138,7 +139,7 @@ class BaseRepository
      */
     public function isMigratedToAccounting($userId)
     {
-        $arr = [self::NOT_ELIGIBLE, UserStatus::PENDING, UserStatus::FAILED];
+        $arr = [self::NOT_ELIGIBLE, UserStatus::PENDING, UserStatus::UPGRADING, UserStatus::FAILED];
         /** @var UserMigrationRepository $userMigrationRepo */
         $userMigrationRepo = app(UserMigrationRepository::class);
         $userStatus = $userMigrationRepo->userStatus($userId);
