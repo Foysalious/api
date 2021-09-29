@@ -2,6 +2,8 @@
 
 namespace App\Sheba\UserMigration;
 
+use Exception;
+
 class UserMigrationService
 {
     public function resolveClass($name)
@@ -12,6 +14,6 @@ class UserMigrationService
         if ($name == 'pos') {
             return app(PosUserMigration::class);
         }
-        throw new \Exception('No Class found!');
+        throw new Exception('No Class found!');
     }
 }
