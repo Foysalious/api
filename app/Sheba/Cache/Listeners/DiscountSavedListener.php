@@ -4,9 +4,8 @@ use Sheba\Cache\CacheAside;
 use Sheba\Cache\Category\Children\Services\ServicesCacheRequest;
 use Sheba\Dal\Discount\Discount;
 use Sheba\Dal\Discount\Events\DiscountSaved;
-use Sheba\Report\Listeners\BaseSavedListener;
 
-class DiscountSavedListener extends BaseSavedListener
+class DiscountSavedListener
 {
     public function handle(DiscountSaved $event)
     {

@@ -1,12 +1,10 @@
 <?php namespace Sheba\Cache\Listeners;
 
-
 use Sheba\Cache\CacheAside;
 use Sheba\Cache\Sitemap\SitemapCacheRequest;
 use Sheba\Dal\UniversalSlug\Events\UniversalSlugSaved as UniversalSlugSavedEvent;
-use Sheba\Report\Listeners\BaseSavedListener;
 
-class UniversalSlugSavedListener extends BaseSavedListener
+class UniversalSlugSavedListener
 {
     public function handle(UniversalSlugSavedEvent $event)
     {
