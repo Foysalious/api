@@ -21,5 +21,12 @@ class IndexRoute
             });
             $api->post('push-notification-monitoring', 'Partner\\PushNotificationMonitoringController@store');
         });
+
+        $api->group(['prefix' => '{partner}', 'middleware' => ['jwtGlobalAuth']], function ($api) {
+            $api->group(['prefix' => 'compliance-info'], function ($api) {
+                $api->get('/show', 'ComplianceInfoController@show');
+                $api->post('/update', 'ComplianceInfoController@update');
+            });
+        });
     }
 }
