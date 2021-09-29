@@ -25,6 +25,8 @@ class BaseRepository
     /** @var AccountingEntryClient $client */
     protected $client;
 
+    CONST NOT_ELIGIBLE = 'not_eligible';
+
     /**
      * BaseRepository constructor.
      * @param AccountingEntryClient $client
