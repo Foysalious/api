@@ -57,9 +57,9 @@ abstract class UserMigrationRepository
             throw new Exception('Sorry! Not Found');
         }
         if ($info->status == UserStatus::UPGRADED) {
-            throw new Exception('Sorry! already migrated.');
+            throw new Exception('Sorry! Already Migrated.');
         }
-        if ($info->status == UserStatus::UPGRADING && $status == UserStatus::UPGRADING) {
+        if ($info->status == UserStatus::UPGRADING && ($status == UserStatus::UPGRADING || $status == UserStatus::PENDING)) {
             throw new Exception('Sorry! Already Migrating.');
         }
         $info->status = $status;
