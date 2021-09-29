@@ -10,6 +10,8 @@ use Exception;
 
 class UserMigrationController extends Controller
 {
+    CONST X_API_KEY = 'sheba_user_migration';
+
     private $modules;
     private $userMigrationSvc;
 
@@ -54,23 +56,26 @@ class UserMigrationController extends Controller
         }
     }
 
-    public function updateMigrationStatus(Request $request)
+    public function updateMigrationStatus(Request $request, $moduleName)
     {
         try {
-            $this->validate($request, ['status' => 'required|string', 'module_name' => 'required|string']);
+            $this->validate($request, ['status' => 'required|string']);
             $userId = $request->partner->id;
             /** @var UserMigrationRepository $class */
-            $class = $this->userMigrationSvc->resolveClass($request->module_name);
-            $res = $class->setUserId($userId)->setModuleName($request->module_name)->updateStatus($request->status);
+            $class = $this->userMigrationSvc->resolveClass($moduleName);
+            $res = $class->setUserId($userId)->setModuleName($moduleName)->updateStatus($request->status);
             return api_response($request, $res, 200, ['data' => $res]);
         } catch (Exception $e) {
-            return api_response($request, null, 404, ['message' => $e->getMessage(), 'code' => 404]);
+            return api_response($request, null, 400, ['message' => $e->getMessage(), 'code' => 400]);
         }
     }
 
     public function updateStatusWebHook(Request $request)
     {
         try {
+            if(!$request->hasHeader('X-API-KEY') || $request->header('X-API-KEY') != self::X_API_KEY) {
+                throw new Exception('Invalid Request!', 400);
+            }
             $this->validate($request, ['status' => 'required|string', 'module_name' => 'required|string', 'user_id' => 'required']);
             /** @var UserMigrationRepository $class */
             $class = $this->userMigrationSvc->resolveClass($request->module_name);
