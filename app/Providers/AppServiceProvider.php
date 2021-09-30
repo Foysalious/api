@@ -7,6 +7,7 @@ use App\Sheba\Algolia\Provider\EventsListenerProvider;
 use App\Sheba\Pos\Order\Providers\EventsListenerProvider as PosOrderInvoiceGenerationEventsListenerProvider;
 use Illuminate\Support\ServiceProvider;
 use Sheba\Dal\Providers\CustomMigrationServiceProvider;
+use Sheba\Dal\Providers\SearchServiceProvider;
 use Sheba\Partner\HomePageSetting\Providers\ServiceProvider as PartnerHomeSettingServiceProvider;
 use Sheba\Partner\HomePageSettingV3\Providers\ServiceProvider as PartnerHomeSettingServiceProviderV3;
 use Sheba\PartnerOrder\ConcurrentUpdateRestriction\CURServiceProvider;
@@ -52,5 +53,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->register(AlgoliaProvider::class);
         $this->app->singleton(TerminatingMiddleware::class);
         $this->app->register(PosOrderInvoiceGenerationEventsListenerProvider::class);
+        $this->app->register(SearchServiceProvider::class);
     }
 }
