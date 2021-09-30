@@ -6,6 +6,7 @@ use App\Models\PosOrder;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\AccountingRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\JournalCreateRepository;
@@ -151,8 +152,10 @@ abstract class ReturnPosItem extends RefundNature
             [
                 "from_account_key" => (new Accounts())->asset->cash::CASH,
                 "to_account_key" => (new Accounts())->income->sales::SALES_FROM_POS,
-                "amount" => isset($this->data['is_refunded']) && $this->data['is_refunded'] ? (double)$this->data['paid_amount'] : 0,
-                // might have negative value
+                "amount" => (double)$this->order->calculate()->getNetBill(),
+                "amount_cleared" => (double)($this->order->calculate()->getPaid() + $this->data['paid_amount']),
+                // amount in negative if refund
+                "reconcile_amount" => (double)$this->data['paid_amount'],
                 "note" => $refundType,
                 "source_id" => $order->id,
                 "customer_id" => isset($order->customer) ? $order->customer->id : null,
@@ -200,7 +203,8 @@ abstract class ReturnPosItem extends RefundNature
                     $sellingPrice = $product->unit_price;
                     $unitPrice = $product->unit_price;
                     $qty = isset($requested_service[$key]['quantity']) && $requested_service[$key]['quantity'] > 0 ? $requested_service[$key]['quantity'] - $product->quantity : $product->quantity;
-                    $inventory_products[] = $this->makeInventoryData($originalSvc, $unitPrice, $sellingPrice, $qty);
+                    $type = ($requested_service[$key]['quantity'] > $product->quantity) ? 'quantity_increase' : 'refund';
+                    $inventory_products[] = $this->makeInventoryData($originalSvc, $unitPrice, $sellingPrice, $qty, $type);
                 }
             }
         }

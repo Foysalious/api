@@ -62,14 +62,11 @@ class Index
         $query = $this->posServiceRepository
             ->where('publication_status', $this->isPublished)
             ->where('is_published_for_shop', $this->isPublishedForShop)
-            ->select('id', 'name', 'thumb', 'app_thumb', 'price', 'unit', 'pos_category_id', 'vat_percentage','weight','weight_unit');
+            ->select('id', 'name', 'thumb', 'app_thumb', 'price', 'unit', 'pos_category_id', 'vat_percentage','weight','weight_unit','is_emi_available');
 
         $query = $query->whereHas('batches', function($q) {
-            $q->select(DB::raw('SUM(stock) as stock'))
-                ->havingRaw('stock > 0');
+            $q->select(DB::raw('SUM(stock) as stock'));
         });
-
-
 
         if ($this->partnerId) $query = $query->where('partner_id', $this->partnerId);
         else {
@@ -77,7 +74,6 @@ class Index
                 $q->where('sub_domain', $this->partnerSlug);
             });
         }
-
         return $query->get();
     }
 }

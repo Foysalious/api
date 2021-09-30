@@ -1,9 +1,13 @@
 <?php namespace App\Repositories;
 
 use App\Models\Resource;
+use Sheba\Dal\ResourceStatusChangeLog\Model as ResourceStatusChangeLog;
+use Sheba\ModificationFields;
 
 class ResourceRepository
 {
+    use ModificationFields;
+
     private $resource;
 
     public function __construct($resource)
@@ -30,5 +34,42 @@ class ResourceRepository
             }
         }
         return null;
+    }
+
+    public function setToPendingStatus()
+    {
+        $this->shootStatusChangeLog();
+        $this->resource->update($this->withUpdateModificationField(['status' => 'pending']));
+    }
+
+    private function shootStatusChangeLog()
+    {
+        $data = [
+            'from' => $this->resource->status,
+            'to' => 'pending',
+            'resource_id' => $this->resource->id,
+            'reason' => 'nid_info_and_selfie_photo_submit',
+            'log' => 'status changed to pending as resource submit profile info for verification'
+        ];
+
+        ResourceStatusChangeLog::create($this->withCreateModificationField($data));
+    }
+
+    public function storeStatusUpdateLog($new_status, $reason, $log)
+    {
+        $data = [
+            'from' => $this->resource->status,
+            'to' => $new_status,
+            'resource_id' => $this->resource->id,
+            'reason' => $reason,
+            'log' => $log
+        ];
+
+        ResourceStatusChangeLog::create($this->withCreateModificationField($data));
+    }
+
+    public function update($data)
+    {
+        $this->resource->update($this->withUpdateModificationField($data));
     }
 }

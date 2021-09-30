@@ -137,15 +137,15 @@ class AccountCreate
      * @return array
      * @throws Exception
      */
-    private function makeApplicationData($application)
+    private function makeApplicationData($application): array
     {
-        $account_title = null;
         $gender = null;
         $nominee_legal_doc_1 = null;
         $nominee_legal_doc_no_1 = null;
         $pepIpStatus = null;
         $pepIpRelation = null;
         $fatcaInformation = null;
+
         foreach ($application['personal']['gender'] as $key => $data)
             if($data == 1) $gender = $key;
         foreach ($application['personal']['pep_ip_status'] as $key => $data){
@@ -159,8 +159,6 @@ class AccountCreate
         }
         if (strtolower($fatcaInformation) == 'yes') throw new NeoBankingException('আপনি প্রাইম ব্যাংকের ব্রাঞ্চে গিয়ে, FATCA সম্পৃক্ত ডকুমেন্ট সহ যোগাযোগ করুন।');
 
-        foreach ($application['account']['type_of_account'] as $key => $data)
-            if($data == 1) $account_title = $key;
         foreach ($application['nominee']['identification_number_type'] as $key => $data){
             if($data !== ''){
                 $nominee_legal_doc_1 = $key;
@@ -168,31 +166,31 @@ class AccountCreate
             }
         }
 
-        $data = [
-            "channel"       => PBLStatics::CHANNEL,
+        return [
+            "channel"       => substr(PBLStatics::CHANNEL, 0, 20),
             "tid"           => PBLStatics::uniqueTransactionId(),
             "requester_id"  => $this->partner->id,
-            "account_title" => $account_title,
-            "owner_title"   => $this->removeSpecialCharacters($application['personal']['applicant_name']),
+            "account_title" => substr($this->removeSpecialCharacters($application['institution']['company_name']), 0, 35),
+            "owner_title"   => substr($this->removeSpecialCharacters($application['personal']['applicant_name']), 0, 35),
             "gender"        => $gender,
             "dob"           => (isset($application['personal']['birth_date'])) ? Carbon::parse($application['personal']['birth_date'])->format('Ymd') : null,
-            "father"        => isset($application['personal']['father_name_en']) ? $this->removeSpecialCharacters($application['personal']['father_name_en']) : null,
-            "mother"        => isset($application['personal']['mother_name_en']) ? $this->removeSpecialCharacters($application['personal']['mother_name_en']) : null,
-            "spouse"        => isset($application['personal']['husband_or_wife_name']) ? $this->removeSpecialCharacters($application['personal']['husband_or_wife_name']) : null,
+            "father"        => isset($application['personal']['father_name_en']) ? substr($this->removeSpecialCharacters($application['personal']['father_name_en']), 0, 35) : null,
+            "mother"        => isset($application['personal']['mother_name_en']) ? substr($this->removeSpecialCharacters($application['personal']['mother_name_en']), 0, 35) : null,
+            "spouse"        => isset($application['personal']['husband_or_wife_name']) ? substr($this->removeSpecialCharacters($application['personal']['husband_or_wife_name']), 0, 35) : null,
             "nid"           => $application['nid_selfie']['nid_no'] ?? null,
-            'tin'           => $application['personal']["etin_number"] ?? null,
-            "street"        => $application['personal']['present_address']["street_village_present_address"] ?? null,
-            "town"          => $application['personal']['present_address']["sub_district_present_address"] ?? null,
-            "post_code"     => $application['personal']['present_address']['postcode_present_address'] ?? null,
-            "district"      => $application['personal']['present_address']["district_present_address"] ?? null,
-            "street_business" => $application['institution']['business_office_address']['street_village_office_address'] ?? null,
-            "town_business" => $application['institution']['business_office_address']['sub_district_office_address'] ?? null,
-            "post_code_business" => $application['institution']['business_office_address']['postcode_office_address'] ?? null,
-            "district_business" => $application['institution']['business_office_address']['district_office_address'] ?? null,
-            "street_permanent" => $application['personal']['permanent_address']['street_village_permanent_address'] ?? null,
-            "town_permanent" => $application['personal']['permanent_address']['sub_district_permanent_address'] ?? null,
-            "post_code_permanent" => $application['personal']['permanent_address']['postcode_permanent_address'] ?? null,
-            "district_permanent" => $application['personal']['permanent_address']['district_permanent_address'] ?? null,
+            'tin'           => isset($application['personal']["etin_number"]) ? substr($application['personal']["etin_number"],0, 35) : null,
+            "street"        => isset($application['personal']['present_address']["street_village_present_address"]) ? substr($application['personal']['present_address']["street_village_present_address"], 0, 35) : null,
+            "town"          => isset($application['personal']['present_address']["sub_district_present_address"]) ? substr($application['personal']['present_address']["sub_district_present_address"], 0, 35) : null,
+            "post_code"     => isset($application['personal']['present_address']['postcode_present_address']) ? substr($this->removeSpecialCharacters($application['personal']['present_address']['postcode_present_address']), 0, 35) : null,
+            "district"      => isset($application['personal']['present_address']["district_present_address"]) ? substr($this->removeSpecialCharacters($application['personal']['present_address']["district_present_address"]), 0, 35) : null,
+            "street_business" => isset($application['institution']['business_office_address']['street_village_office_address']) ? substr($application['institution']['business_office_address']['street_village_office_address'], 0, 35) : null,
+            "town_business" => isset($application['institution']['business_office_address']['sub_district_office_address']) ? substr(($application['institution']['business_office_address']['sub_district_office_address']), 0, 35) : null,
+            "post_code_business" => isset($application['institution']['business_office_address']['postcode_office_address']) ? substr($this->removeSpecialCharacters($application['institution']['business_office_address']['postcode_office_address']), 0, 35) : null,
+            "district_business" => isset($application['institution']['business_office_address']['district_office_address']) ? substr($this->removeSpecialCharacters($application['institution']['business_office_address']['district_office_address']), 0, 35) : null,
+            "street_permanent" => isset($application['personal']['permanent_address']['street_village_permanent_address']) ? substr($this->removeSpecialCharacters($application['personal']['permanent_address']['street_village_permanent_address']), 0, 35) : null,
+            "town_permanent" => isset($application['personal']['permanent_address']['sub_district_permanent_address']) ? substr($this->removeSpecialCharacters($application['personal']['permanent_address']['sub_district_permanent_address']), 0, 35) : null,
+            "post_code_permanent" => isset($application['personal']['permanent_address']['postcode_permanent_address']) ? substr($this->removeSpecialCharacters($application['personal']['permanent_address']['postcode_permanent_address']), 0, 35) : null,
+            "district_permanent" => $application['personal']['permanent_address']['district_permanent_address'] ? substr($this->removeSpecialCharacters($application['personal']['permanent_address']['district_permanent_address']), 0, 35) : null,
             "mobile_no"     => $this->mobile,
             "email"         => isset($application['institution']["email"]) ? substr($application['institution']["email"],0,35) : null,
             "branch_code"   => $this->branchCode,
@@ -205,33 +203,32 @@ class AccountCreate
             "legal_doc_name"  => PBLStatics::LEGAL_DOC_NAME,
             "legal_doc_no"   => $application['institution']['trade_licence_number'] ?? null,
             "issue_date"     => (isset($application['institution']['trade_licence_date'])) ? Carbon::parse($application['institution']['trade_licence_date'])->format('Ymd') : null,
-            "issue_authority" => isset($application['institution']['issue_authority']) ? substr($application['institution']['issue_authority'],0,20) : null,
+            "issue_authority" => $application['institution']['issue_authority'] ? substr($this->removeSpecialCharacters($application['institution']['issue_authority']), 0, 35) : null,
             "exp_date" => (isset($application['institution']['trade_license_expire_date'])) ? Carbon::parse($application['institution']['trade_license_expire_date'])->format('Ymd') : null,
             "risk_type" => 'REGULAR',
-            "onboarding_type" => 'Internet',
+            "onboarding_type" => PBLStatics::ONBOARD_TYPE,
             "nationality" => 'BD',
             "country_residence" => 'BD',
             'customer_pep_ip' => strtoupper($pepIpStatus),
             'associate_pep_ip' => strtoupper($pepIpRelation),
             "occupation_type" => 'BUSINESS',
-            "occupation_nature" => explode(',', $application['institution']['business_type_list'])[0] ?? null,
-            "nominee_name_1" => isset($application['nominee']["nominee_name"]) ? $this->removeSpecialCharacters($application['nominee']["nominee_name"]) : null,
-            "nominee_relation_1" => $application['nominee']["nominee_relation"] ?? null,
+            "occupation_nature" => (int)explode(',', $application['institution']['business_type_list'])[0] ?? null,
+            "nominee_name_1" => isset($application['nominee']["nominee_name"]) ? substr($this->removeSpecialCharacters($application['nominee']["nominee_name"]), 0, 35) : null,
+            "nominee_relation_1" => isset($application['nominee']["nominee_relation"]) ? substr($application['nominee']["nominee_relation"], 0, 35) : null,
             "nominee_share_percent_1" => 100,
             "nominee_legal_doc_1" => PBLStatics::fromKey($nominee_legal_doc_1),
             "nominee_legal_doc_no_1" => $nominee_legal_doc_no_1,
-            "nominee_father_1" => isset($application['nominee']["nominee_father_name"]) ? $this->removeSpecialCharacters($application['nominee']["nominee_father_name"]) : null,
-            "nominee_mother_1" => isset($application['nominee']["nominee_mother_name"]) ? $this->removeSpecialCharacters($application['nominee']["nominee_mother_name"]) : null,
+            "nominee_father_1" => isset($application['nominee']["nominee_father_name"]) ? substr($this->removeSpecialCharacters($application['nominee']["nominee_father_name"]), 0, 35) : null,
+            "nominee_mother_1" => isset($application['nominee']["nominee_mother_name"]) ? substr($this->removeSpecialCharacters($application['nominee']["nominee_mother_name"]), 0, 35) : null,
             "nominee_dob_1" => (isset($application['nominee']['nominee_birth_date'])) ? Carbon::parse($application['nominee']['nominee_birth_date'])->format('Ymd') : null,
-            "minor_guardian_name" => isset($application['nominee']["nominee_guardian"]) ? substr($this->removeSpecialCharacters($application['nominee']["nominee_guardian"]),0,35) : null,
+            "minor_guardian_name" => isset($application['nominee']["nominee_guardian"]) ? substr($this->removeSpecialCharacters($application['nominee']["nominee_guardian"]), 0, 35) : null,
             "minor_guardian_doc" => PBLStatics::NATIONAL_ID,
-            "minor_guardian_doc_no" => isset($application['nominee']["nominee_guardian_nid"]) ? substr($application['nominee']["nominee_guardian_nid"],0,35) : null,
+            "minor_guardian_doc_no" => isset($application['nominee']["nominee_guardian_nid"]) ? substr($application['nominee']["nominee_guardian_nid"], 0, 35) : null,
             "ekyc_verified" => PBLStatics::EKYC_VERIFIED,
             'key'           => $this->key,
             'fatca' => strtoupper($fatcaInformation),
         ];
 
-        return $data;
     }
 
 

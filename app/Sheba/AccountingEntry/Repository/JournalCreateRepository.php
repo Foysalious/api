@@ -1,13 +1,11 @@
 <?php
 
-
 namespace Sheba\AccountingEntry\Repository;
 
 
 use App\Sheba\AccountingEntry\Constants\UserType;
+use App\Sheba\AccountingEntry\Repository\BaseRepository;
 use Carbon\Carbon;
-use GuzzleHttp\Client;
-use ReflectionException;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Exceptions\InvalidSourceException;
 use Sheba\AccountingEntry\Exceptions\KeyNotFoundException;
@@ -15,15 +13,14 @@ use Sheba\ModificationFields;
 use Sheba\NeoBanking\Traits\ProtectedGetterTrait;
 use Sheba\RequestIdentification;
 
-class JournalCreateRepository
+class JournalCreateRepository extends BaseRepository
 {
     use ModificationFields, ProtectedGetterTrait;
 
     /**
      * @var AccountingEntryClient
      */
-    private   $client;
-    private   $type;
+    private   $type = UserType::PARTNER;
     private   $typeId;
     protected $details = "";
     private   $source;
@@ -42,9 +39,9 @@ class JournalCreateRepository
 
     public function __construct()
     {
-        $this->client = new AccountingEntryClient(new Client());
-        $this->type   = UserType::PARTNER;
-
+        /** @var AccountingEntryClient $client */
+        $client = app(AccountingEntryClient::class);
+        parent::__construct($client);
     }
 
     /**
@@ -157,7 +154,6 @@ class JournalCreateRepository
 
     /**
      * @throws InvalidSourceException
-     * @throws ReflectionException
      * @throws KeyNotFoundException
      */
     public function toData()
@@ -181,10 +177,12 @@ class JournalCreateRepository
      * @throws AccountingEntryServerError
      * @throws InvalidSourceException
      * @throws KeyNotFoundException
-     * @throws ReflectionException
      */
     public function store()
     {
+        if(!$this->isMigratedToAccounting($this->typeId)) {
+            return true;
+        }
         $data = $this->toData();
         return $this->client->setUserId($this->typeId)->setUserType($this->type)->post($this->end_point, $data);
     }

@@ -49,10 +49,10 @@ class PartnerStatusAuthMiddleware
     protected function generateException($status)
     {
         if($status === $this->access['blacklisted'][0])
-            throw new AuthenticationFailedException("You are not allowed to access this url");
+            throw new AuthenticationFailedException("আপনাকে sManager থেকে স্থায়ী ভাবে বরখাস্ত করা হয়েছে। আরও জানতে কল করুন ১৬৫১৬।");
 
         elseif ($status === $this->access['paused'][0])
-            throw new AuthenticationFailedException("You are temporarily suspended to access this url", 403);
+            throw new AuthenticationFailedException("আপনাকে sManager থেকে সাময়িক ভাবে বরখাস্ত করা হয়েছে। আরও জানতে কল করুন ১৬৫১৬।", 403);
 
     }
 }

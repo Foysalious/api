@@ -37,7 +37,7 @@ class Cars
             $option = [$key];
             $price_calculation->setService($service_model)->setOption($option)->setQuantity($this->service->getQuantity());
             $service_model->category->isRentACarOutsideCity() ? $price_calculation->setPickupThanaId($this->service->getPickupThana()->id)->setDestinationThanaId($this->service->getDestinationThana()->id) : $price_calculation->setLocationService($this->location_service);
-            $original_price = $price_calculation->getTotalOriginalPrice();
+            $original_price = $price_calculation->getTotalOriginalPrice(false);
             $this->discount_calculation->setService($service_model)->setLocationService($this->location_service)->setOriginalPrice($original_price)->calculate();
             $discounted_price =  $this->discount_calculation->getDiscountedPrice();
             $unit_price = $price_calculation->getUnitPrice();
@@ -55,6 +55,7 @@ class Cars
                 'discounted_price' => $discounted_price,
                 'original_price' => $original_price,
                 'discount' => $this->discount_calculation->getDiscount(),
+                'calculated_discount_amount' => $this->discount_calculation->getCalculatedDiscount(),
                 'quantity' => $this->service->getQuantity(),
                 'is_surcharge_applied' => !!($surcharge) ? 1 : 0,
                 'is_vat_applicable' => $service_model->category->is_vat_applicable ? 1 : 0,

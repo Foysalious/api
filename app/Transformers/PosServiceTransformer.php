@@ -22,7 +22,6 @@ class PosServiceTransformer extends TransformerAbstract
         /** @var PartnerPosService $service */
         $service_discount = $service->discount();
 
-
         return [
             'id' => $service->id,
             'name' => $name,
@@ -33,10 +32,10 @@ class PosServiceTransformer extends TransformerAbstract
             'weight' => $service->weight,
             'weight_unit' => $service->weight_unit ? array_merge(config('weight.weight_unit')[$service->weight_unit], ['key' => $service->weight_unit]) : null,
             'is_published_for_shop' => (int)$service->is_published_for_shop,
-            'price' => $service->price,
-            'original_price' => $service->price,
-            'wholesale_price' => $service->wholesale_price,
-            'cost' => $service->getLastCost(),
+            'price' => (double) $service->price,
+            'original_price' => (double) $service->price,
+            'wholesale_price' => (double) $service->wholesale_price,
+            'cost' => (double) $service->getLastCost(),
             'category_id' => $service->subCategory->parent->id,
             'master_category_id' => $service->subCategory->parent->id,
             'category_name' => $service->subCategory->parent->name,
@@ -70,7 +69,9 @@ class PosServiceTransformer extends TransformerAbstract
                     'id' => $image->id,
                     'image_link' => $image->image_link
                 ];
+
             }) : [],
+            'is_emi_available' => (bool)$service->is_emi_available
         ];
     }
 }

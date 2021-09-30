@@ -64,15 +64,17 @@ class NagadClient
      * @param Initialize $resp
      * @param $amount
      * @param $call_back_url
+     * @param null $description
      * @return CheckoutComplete
      * @throws TPProxyServerError
+     * @throws \Sheba\TPProxy\TPProxyServerTimeout
      */
-    public function placeOrder($transaction_id, Initialize $resp, $amount, $call_back_url): CheckoutComplete
+    public function placeOrder($transaction_id, Initialize $resp, $amount, $call_back_url, $description = null): CheckoutComplete
     {
         ini_set('max_execution_time', self::TIMEOUT + self::TIMEOUT);
         $payment_ref_id = $resp->getPaymentReferenceId();
         $url = "$this->baseUrl/api/dfs/check-out/complete/$payment_ref_id";
-        list($payment_data, $store_data) = Inputs::complete($transaction_id, $resp, $amount, $call_back_url, $this->store);
+        list($payment_data, $store_data) = Inputs::complete($transaction_id, $resp, $amount, $call_back_url, $this->store, $description);
 
         $request = (new NagadRequest())
             ->setUrl($url)

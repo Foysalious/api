@@ -15,9 +15,11 @@ use Sheba\ExpenseTracker\Repository\EntryRepository;
 use Sheba\ModificationFields;
 use Sheba\PaymentLink\Creator as PaymentLinkCreator;
 use Sheba\Pos\Repositories\PartnerPosCustomerRepository;
+use Sheba\Pos\Repositories\PosOrderPaymentRepository;
 use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Reports\PdfHandler;
 use Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
+use Sheba\Transactions\Wallet\WalletDebitForbiddenException;
 use Sheba\Usage\Usage;
 
 class DueTrackerController extends Controller
@@ -172,15 +174,20 @@ class DueTrackerController extends Controller
         DueTrackerRepository $dueTrackerRepository,
         AccountingDueTrackerRepository $accountingDueTrackerRepository
     ) {
-//        try {
+        try {
             $request->merge(['balance_type' => 'due']);
-            $dueList = $accountingDueTrackerRepository->setPartner($request->partner)->getDueList($request, false);
+            // checking the partner is migrated to accounting
+            if ($accountingDueTrackerRepository->isMigratedToAccounting($request->partner->id)) {
+                $dueList = $accountingDueTrackerRepository->setPartner($request->partner)->getDueList($request, false);
+            } else {
+                $dueList = $dueTrackerRepository->setPartner($request->partner)->getDueList($request, false);
+            }
             $response = $dueTrackerRepository->generateDueReminders($dueList, $request->partner);
             return api_response($request, null, 200, ['data' => $response]);
-//        } catch (\Throwable $e) {
-//            logError($e);
-//            return api_response($request, null, 500);
-//        }
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
     }
 
     /**
@@ -197,7 +204,12 @@ class DueTrackerController extends Controller
         try {
             $this->validate($request, ['month' => 'required', 'year' => 'required']);
             $request->merge(['balance_type' => 'due']);
-            $dueList = $accountingDueTrackerRepository->setPartner($request->partner)->getDueList($request, false);
+            // checking the partner is migrated to accounting
+            if ($accountingDueTrackerRepository->isMigratedToAccounting($request->partner->id)) {
+                $dueList = $accountingDueTrackerRepository->setPartner($request->partner)->getDueList($request, false);
+            } else {
+                $dueList = $dueTrackerRepository->setPartner($request->partner)->getDueList($request, false);
+            }
             $response = $dueTrackerRepository->generateDueCalender($dueList, $request);
             return api_response($request, null, 200, ['data' => $response]);
         } catch (ValidationException $e) {
@@ -251,8 +263,13 @@ class DueTrackerController extends Controller
         } catch (InsufficientBalance $e) {
             $message = "Insufficient Balance";
             return api_response($request, $message, 402, ['message' => $message]);
-        } catch (\Throwable $e) {
-            dd($e->getMessage());
+        }
+        catch (WalletDebitForbiddenException $e) {
+            $message = $e->getMessage() ?? null;
+            $code = $e->getCode() ?? 500;
+            return api_response($request, $message, $code, ['message' => $message]);
+        }
+        catch (\Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
         }
@@ -271,43 +288,37 @@ class DueTrackerController extends Controller
 
     /**
      * @param Request $request
-     * @param DueTrackerRepository $dueTrackerRepository
+     * @param PosOrderPaymentRepository $posOrderPaymentRepository
      * @return JsonResponse
-     * @throws UnauthorizedRequestFromExpenseTrackerException
      */
-    public function createPosOrderPayment(Request $request, DueTrackerRepository $dueTrackerRepository)
+    public function createPosOrderPayment(Request $request, PosOrderPaymentRepository $posOrderPaymentRepository): JsonResponse
     {
         $this->validate($request, [
             'amount' => 'required',
             'pos_order_id' => 'required',
             'payment_method'    => 'required|string|in:' . implode(',', config('pos.payment_method')),
-            'api_key' => 'required'
+            'api_key' => 'required',
+            'expense_account_id' => 'sometimes'
         ]);
-        if($request->api_key != config('expense_tracker.api_key')) {
+        if($request->api_key != config('expense_tracker.api_key'))
             throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
-        }
-
-        $dueTrackerRepository->createPosOrderPayment($request->amount, $request->pos_order_id,$request->payment_method);
+        $posOrderPaymentRepository->setExpenseAccountId($request->expense_account_id)->createPosOrderPayment($request->amount, $request->pos_order_id,$request->payment_method);
         return api_response($request, true, 200, ['message' => 'Pos Order Payment created successfully']);
     }
 
     /**
-     * @param Request $request
-     * @param DueTrackerRepository $dueTrackerRepository
-     * @param $pos_order_id
-     * @return JsonResponse
      * @throws UnauthorizedRequestFromExpenseTrackerException
      */
-    public function removePosOrderPayment(Request $request, DueTrackerRepository $dueTrackerRepository, $pos_order_id)
+    public function removePosOrderPayment(Request $request, $pos_order_id, PosOrderPaymentRepository $posOrderPaymentRepository)
     {
         $this->validate($request, [
-            'api_key' => 'required'
+            'api_key' => 'required',
+            'expense_account_id' => 'sometimes'
         ]);
-        if($request->api_key != config('expense_tracker.api_key')) {
+        if($request->api_key != config('expense_tracker.api_key'))
             throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
-        }
-        $result = $dueTrackerRepository->removePosOrderPayment($pos_order_id, $request->amount);
-
+        $result = $posOrderPaymentRepository->setExpenseAccountId($request->expense_account_id)->removePosOrderPayment($pos_order_id, $request->amount);
+        $message = null;
         if($result) $message = 'Pos Order Payment remove successfully';
         else $message = 'There is no Pos Order Payment';
         return api_response($request, true, 200, ['message' => $message]);

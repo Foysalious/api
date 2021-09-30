@@ -68,7 +68,7 @@ class CategoryController extends Controller
     public function allCategory(Request $request)
     {
         $partner = $request->auth_user->getPartner();
-        $categories = $this->categoryService->getallcategory($partner->id);
+        $categories = $this->categoryService->setUpdatedAfter($request->updated_after)->getallcategory($partner->id);
         return http_response($request, null, 200, $categories);
     }
 

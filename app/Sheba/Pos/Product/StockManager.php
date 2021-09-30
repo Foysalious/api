@@ -25,6 +25,7 @@ class StockManager
 
     public function isStockMaintainable()
     {
+        if (is_null($this->service->id)) return false;
         return !is_null($this->service->getStock());
     }
 

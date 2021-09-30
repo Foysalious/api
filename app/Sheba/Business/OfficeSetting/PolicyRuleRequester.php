@@ -15,6 +15,7 @@ class PolicyRuleRequester
     private $forEarlyCheckOut;
     private $deleteRules;
     private $errorMessage;
+    private $penaltyComponent;
 
     public function setBusiness(Business $business)
     {
@@ -31,6 +32,17 @@ class PolicyRuleRequester
     {
         $this->isEnable = $is_enable;
         return $this;
+    }
+
+    public function setPenaltyComponent($penalty_component)
+    {
+        $this->penaltyComponent = $penalty_component;
+        return $this;
+    }
+
+    public function getPenaltyComponent()
+    {
+        return $this->penaltyComponent;
     }
 
     public function getIsEnable()

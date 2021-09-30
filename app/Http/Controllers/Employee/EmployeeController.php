@@ -3,6 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
+use App\Models\Member;
 use App\Sheba\Business\BusinessBasicInformation;
 use App\Sheba\Business\CoWorker\ProfileInformation\EmergencyInfoUpdater;
 use App\Sheba\Business\CoWorker\ProfileInformation\EmployeeType;
@@ -35,6 +36,8 @@ use Sheba\Business\CoWorker\UpdaterV2 as Updater;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
+use Sheba\Dal\Visit\Status;
+use Sheba\Dal\Visit\VisitRepository;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\ModificationFields;
 use Sheba\OAuth2\AccountServer;
@@ -42,10 +45,12 @@ use Sheba\OAuth2\AccountServerAuthenticationError;
 use Sheba\OAuth2\AccountServerNotWorking;
 use Sheba\OAuth2\AuthUser;
 use Sheba\OAuth2\SomethingWrongWithToken;
+use Sheba\OAuth2\WrongPinError;
 use Sheba\Repositories\ProfileRepository;
 use App\Transformers\Business\EmployeeTransformer;
 use Illuminate\Http\Request;
 use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
+use Throwable;
 
 class EmployeeController extends Controller
 {
@@ -59,7 +64,7 @@ class EmployeeController extends Controller
     private $accounts;
     /*** @var BusinessMember */
     private $businessMember;
-    /*** @var ProfileRequester $profileRequester*/
+    /*** @var ProfileRequester $profileRequester */
     private $profileRequester;
 
     /**
@@ -68,9 +73,9 @@ class EmployeeController extends Controller
      * @param ApprovalRequestRepositoryInterface $approval_request_repository
      * @param AccountServer $accounts
      */
-    public function __construct(MemberRepositoryInterface $member_repository,
+    public function __construct(MemberRepositoryInterface          $member_repository,
                                 ApprovalRequestRepositoryInterface $approval_request_repository,
-                                AccountServer $accounts)
+                                AccountServer                      $accounts)
     {
         $this->repo = $member_repository;
         $this->approvalRequestRepo = $approval_request_repository;
@@ -150,7 +155,7 @@ class EmployeeController extends Controller
      * @return JsonResponse
      */
     public function getDashboard(Request $request, ActionProcessor $action_processor,
-                                 ProfileCompletionCalculator $completion_calculator)
+                                 ProfileCompletionCalculator $completion_calculator, VisitRepository $visit_repository)
     {
         /** @var Business $business */
         $business = $this->getBusiness($request);
@@ -170,15 +175,20 @@ class EmployeeController extends Controller
         $is_note_required = 0;
         $note_action = null;
         if ($last_attendance_log && !$last_attendance_log['note']) {
-           $note_data = $this->checkNoteRequired($last_attendance, $last_attendance_log, $action_processor);
-           $is_note_required = $note_data['is_note_required'];
-           $note_action = $note_data['note_action'];
+            $note_data = $this->checkNoteRequired($last_attendance, $last_attendance_log, $action_processor);
+            $is_note_required = $note_data['is_note_required'];
+            $note_action = $note_data['note_action'];
         }
 
         $approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMember($business_member);
-        $pending_approval_requests = $this->approvalRequestRepo->getPendingApprovalRequestByBusinessMember($business_member);
-        $pending_approval_requests_count = $this->countPendingApprovalRequests($pending_approval_requests);
+        $pending_approval_requests_count = $this->approvalRequestRepo->countPendingLeaveApprovalRequests($business_member);
         $profile_completion_score = $completion_calculator->setBusinessMember($business_member)->getDigiGoScore();
+        $pending_visit = $visit_repository->where('assignee_id', $business_member->id)->whereIn('status', [Status::CREATED, Status::STARTED]);
+        $all_pending_visit_count = $pending_visit->count();
+        $today = Carbon::now()->format('Y-m-d');
+        $today_visit = $pending_visit->whereBetween('schedule_date', [$today.' 00:00:00', $today.' 23:59:59']);
+        $today_visit_count = $today_visit->count();
+        $current_visit = $visit_repository->where('assignee_id', $business_member->id)->where('status', Status::STARTED)->whereBetween('start_date_time', [$today.' 00:00:00', $today.' 23:59:59'])->count();
 
         $data = [
             'id' => $member->id,
@@ -190,9 +200,9 @@ class EmployeeController extends Controller
                 'can_checkout' => $attendance && $attendance->canTakeThisAction(Actions::CHECKOUT) ? 1 : 0,
             ],
             'note_data' => [
-               'date' => $last_attendance ? Carbon::parse($last_attendance['date'])->format('jS F Y') : null,
-               'is_note_required' => $is_note_required,
-               'note_action' => $note_action
+                'date' => $last_attendance ? Carbon::parse($last_attendance['date'])->format('jS F Y') : null,
+                'is_note_required' => $is_note_required,
+                'note_action' => $note_action
             ],
             'is_remote_enable' => $business->isRemoteAttendanceEnable($business_member->id),
             'is_approval_request_required' => $approval_requests->count() > 0 ? 1 : 0,
@@ -202,8 +212,13 @@ class EmployeeController extends Controller
                 'link' => config('b2b.BUSINESSES_LUNCH_LINK'),
             ] : null,
             'is_sheba_platform' => in_array($business->id, config('b2b.BUSINESSES_IDS_FOR_REFERRAL') ) ? 1 : 0,
+            'location_fetch_waiting_time' => 3,
             'is_payroll_enable' => $business->payrollSetting->is_enable,
-            'location_fetch_waiting_time' => 3
+            'is_enable_employee_visit' => $business->is_enable_employee_visit,
+            'pending_visit_count' => $all_pending_visit_count,
+            'today_visit_count' => $today_visit_count,
+            'single_visit_title' => $today_visit_count === 1 ? $today_visit->first()->title : null,
+            'currently_on_visit' => $current_visit ? true : false
         ];
 
         return api_response($request, $business_member, 200, ['info' => $data]);
@@ -311,17 +326,12 @@ class EmployeeController extends Controller
         /** @var Business $business */
         $business = $this->getBusiness($request);
 
-        $members = $business->membersWithProfileAndAccessibleBusinessMember();
-        $members = $members->get()->unique();
+        $business_members = $business->getActiveBusinessMember()->where('id', '<>', $business_member->id);
 
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
-        $employees = new Collection($members, new CoWorkerMinimumTransformer());
+        $employees = new Collection($business_members->get(), new CoWorkerMinimumTransformer());
         $employees = collect($manager->createData($employees)->toArray()['data']);
-
-        $employees = $employees->reject(function ($employee) use ($business_member) {
-            return $employee['id'] == $business_member->id;
-        });
 
         if (count($employees) > 0) return api_response($request, $employees, 200, ['managers' => $employees->values()]);
         return api_response($request, null, 404);
@@ -333,7 +343,7 @@ class EmployeeController extends Controller
      * @return JsonResponse
      * @throws SomethingWrongWithToken
      * @throws AccountServerAuthenticationError
-     * @throws AccountServerNotWorking
+     * @throws AccountServerNotWorking|WrongPinError
      */
     public function login(Request $request, ProfileRepository $profile_repo)
     {
@@ -341,6 +351,12 @@ class EmployeeController extends Controller
 
         $profile = $profile_repo->checkExistingEmail($request->email);
         if (!$profile) return response()->json(['code' => 404, 'message' => 'Profile not found']);
+
+        /** @var Member $member */
+        $member = $profile->member;
+        /** @var BusinessMember $business_member */
+        $business_member = $member->businessMember;
+        if (!$business_member) return api_response($request, null, 420, ['message' => 'You are not eligible employee']);
 
         $token = $this->accounts->getTokenByEmailAndPasswordV2($request->email, $request->password);
         $auth_user = AuthUser::createFromToken($token);
@@ -383,22 +399,6 @@ class EmployeeController extends Controller
     }
 
     /**
-     * @param $approval_requests
-     * @return int
-     */
-    private function countPendingApprovalRequests($approval_requests)
-    {
-        $pending_leave_count = 0;
-        foreach($approval_requests as $approval_request) {
-            $requestable = $approval_request->requestable;
-            if ($requestable->status === 'pending') {
-                $pending_leave_count++;
-            }
-        }
-        return $pending_leave_count;
-    }
-
-    /**
      * @param $business_member_id
      * @param Request $request
      * @return JsonResponse
@@ -437,38 +437,38 @@ class EmployeeController extends Controller
             'department' => 'required|string',
             'designation' => 'required|string',
             'joining_date' => 'required|date',
-            'gender' => 'required|string|in::Female,Male,Other'
+            'gender' => 'required|string|in:Female,Male,Other'
         ]);
 
-        $business_member = $this->getBusinessMember($request);
-        if (!$business_member) return api_response($request, null, 404);
-        $employee = $this->businessMember->find($business_member_id);
-        if (!$employee) return api_response($request, null, 404);
-        $member = $this->repo->find($business_member['member_id']);
-        $this->setModifier($member);
+        try {
+            $business_member = $this->getBusinessMember($request);
+            if (!$business_member) return api_response($request, null, 404);
+            $member = $this->getMember($request);
+            $this->setModifier($member);
 
-        $this->profileRequester
-            ->setBusinessMember($employee)
-            ->setName($request->name)
-            ->setEmail($request->email)
-            ->setDepartment($request->department)
-            ->setDesignation($request->designation)
-            ->setJoiningDate($request->joining_date)
-            ->setGender($request->gender);
+            $this->profileRequester->setBusinessMember($business_member)
+                ->setName($request->name)
+                ->setEmail($request->email)
+                ->setDepartment($request->department)
+                ->setDesignation($request->designation)
+                ->setJoiningDate($request->joining_date)
+                ->setGender($request->gender);
 
-        if ($this->profileRequester->hasError()) return api_response($request, null, $this->profileRequester->getErrorCode(), ['message' => $this->profileRequester->getErrorMessage()]);
+            if ($this->profileRequester->hasError()) return api_response($request, null, $this->profileRequester->getErrorCode(), ['message' => $this->profileRequester->getErrorMessage()]);
 
-        $profile_updater->setProfileRequester($this->profileRequester)->update();
+            $profile_updater->setProfileRequester($this->profileRequester)->update();
 
-        return api_response($request, null, 200);
-
+            return api_response($request, null, 200);
+        } catch (Throwable $e) {
+            return api_response($request, null, 420, ['message' => 'You are not eligible employee']);
+        }
     }
 
     public function updateOfficialInfo($business_member_id, Request $request, OfficialInfoUpdater $official_info_updater)
     {
         $this->validate($request, [
             'manager' => 'required|numeric',
-            'employee_type' => 'required|string|in:'.implode(',', EmployeeType::get()),
+            'employee_type' => 'required|string|in:' . implode(',', EmployeeType::get()),
             'employee_id' => 'required',
             'grade' => 'required'
         ]);
@@ -557,9 +557,9 @@ class EmployeeController extends Controller
         $validation_data['nid_back'] = $this->isFile($request->nid_back) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
         $validation_data['passport_image'] = $this->isFile($request->passport_image) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
 
-        $this->validate($request,$validation_data);
+        $this->validate($request, $validation_data);
 
-            $business_member = $this->getBusinessMember($request);
+        $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
         $employee = $this->businessMember->find($business_member_id);
         if (!$employee) return api_response($request, null, 404);
@@ -591,6 +591,22 @@ class EmployeeController extends Controller
     {
         if ($file instanceof Image || $file instanceof UploadedFile) return true;
         return false;
+    }
+
+    /**
+     * @param $approval_requests
+     * @return int
+     */
+    private function countPendingApprovalRequests($approval_requests)
+    {
+        $pending_leave_count = 0;
+        foreach ($approval_requests as $approval_request) {
+            $requestable = $approval_request->requestable;
+            if ($requestable->status === 'pending') {
+                $pending_leave_count++;
+            }
+        }
+        return $pending_leave_count;
     }
 
     /**

@@ -10,7 +10,7 @@
   "minimum-stability": "dev",
   "prefer-stable": true,
   "require": {
-    "php": ">=7.1",
+    "php": ">=7.0",
     "laravel/framework": "5.2.*",
     "league/flysystem-aws-s3-v3": "~1.0",
     "dingo/api": "1.0.*@dev",
@@ -47,7 +47,6 @@
     "algolia/algoliasearch-laravel": "^1.7",
     "fideloper/proxy": "^3.3",
     "rosell-dk/webp-convert": "^2.4",
-    "symfony/polyfill-mbstring": "1.5.0",
     "spomky-labs/jose": "6.1.7",
     "fgrosse/phpasn1": "1.5",
     "setasign/fpdi": "^2.3",
@@ -59,7 +58,8 @@
     "phpunit/phpunit": "~4.0",
     "symfony/css-selector": "2.8.*|3.0.*",
     "symfony/dom-crawler": "2.8.*|3.0.*",
-    "itsgoingd/clockwork": "^4.0"
+    "itsgoingd/clockwork": "^4.0",
+    "johnkary/phpunit-speedtrap": "v1.0.0"
   },
   "autoload": {
     "classmap": [

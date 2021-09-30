@@ -18,6 +18,7 @@ use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
 use Sheba\Partner\PartnerStatuses;
+use Sheba\PartnerWithdrawal\PartnerWithdrawalService;
 use Sheba\Repositories\Interfaces\ProfileBankingRepositoryInterface;
 use Sheba\ShebaAccountKit\Requests\AccessTokenRequest;
 use Sheba\ShebaAccountKit\ShebaAccountKit;
@@ -148,7 +149,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
             $message = 'পর্যাপ্ত ব্যালান্স না থাকার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে  পারবেন না।আপনার সিকিউরিটি মানি ৳'. convertNumbersToBangla($security_money, true, 0). '।';
             return api_response($request, null, 403, ['message' => $message]);
         }
-        $new_withdrawal = WithdrawalRequest::create(array_merge((new UserRequestInformation($request))->getInformationArray(), [
+        $data = array_merge((new UserRequestInformation($request))->getInformationArray(), [
             'requester_id'    => $partner->id,
             'requester_type'  => RequesterTypes::PARTNER,
             'amount'          => $request->amount,
@@ -159,7 +160,10 @@ class PartnerWithdrawalRequestV2Controller extends Controller
             'created_by_name' => 'Resource - ' . $request->manager_resource->profile->name,
             'api_request_id' => $request->api_request ? $request->api_request->id : null,
             'wallet_balance' => $partner->wallet
-        ]));
+        ]);
+        /** @var PartnerWithdrawalService $partnerWithdrawalSvc */
+        $partnerWithdrawalSvc = app(PartnerWithdrawalService::class);
+        $new_withdrawal = $partnerWithdrawalSvc->store($partner, $data);
 
         return api_response($request, $new_withdrawal, 200);
     }
@@ -212,16 +216,79 @@ class PartnerWithdrawalRequestV2Controller extends Controller
 
         if($info){
             $bank_info =  [
-                'bank_name' => $info->bank_name,
-                'account_name' => $info->acc_name,
+                'bank_name' => $info->bank_name ?? '',
+                'account_name' => $info->acc_name ?? '',
                 'account_no' => $info->acc_no,
-                'account_type' => $info->acc_type,
+                'account_type' => $info->acc_type ?? '',
                 'branch_name' =>  $info->branch_name,
-                'routing_no' =>  $info->routing_no,
+                'routing_no' =>  $info->routing_no ?? '',
                 'cheque_book_receipt' => $info->cheque_book_receipt,
             ];
         }
         return $bank_info;
+    }
+
+    public function getBankInfo(Request $request, $partner): JsonResponse
+    {
+        try {
+            $bank_info = $this->getBankInformation($request->partner);
+            return api_response($request, null, 200, ['data' => ['bank_info' => $bank_info]]);
+        } catch (Throwable $exception) {
+            logError($exception);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @param $partner
+     * @return JsonResponse
+     */
+    public function updateBankInfo(Request $request, $partner): JsonResponse
+    {
+        try {
+            $this->validate($request, [
+                'bank_name' => 'required',
+                'account_no' => 'required',
+                'account_name' => 'required',
+                'branch_name' => 'required',
+                'cheque_book_receipt' => 'sometimes|required|file|mimes:jpg,jpeg,png',
+            ]);
+
+            $bank_information = Partner::find($partner)->withdrawalBankInformations->first();
+            if(!$bank_information) {
+                return api_response($request, null, 400, ["message" => "No bank information found for this partner."]);
+            }
+
+            if($request->hasFile('cheque_book_receipt')){
+                if(isset($bank_information->cheque_book_receipt)) $this->deleteFile($bank_information->cheque_book_receipt);
+                list($cheque_book_receipt, $cheque_book_receipt_filename) = $this->makeChequeBookReceipt($request->cheque_book_receipt, $request->partner->id.'cheque_book_receipt');
+                $cheque_book_receipt = $this->saveImageToCDN($cheque_book_receipt, getPartnerChequeBookImageFolder(), $cheque_book_receipt_filename);
+                $bank_information->cheque_book_receipt = $cheque_book_receipt;
+            }
+            $manager_resource = $request->manager_resource;
+            $this->setModifier($manager_resource);
+
+            $bank_information->partner_id  = $partner;
+            $bank_information->bank_name = $request->bank_name;
+            $bank_information->acc_no = $request->account_no;
+            $bank_information->acc_name= $request->account_name;
+            $bank_information->branch_name = $request->branch_name;
+            $bank_information->routing_no = $request->routing_no;
+            $bank_information->purpose = Purposes::PARTNER_WALLET_WITHDRAWAL;
+
+            $this->withUpdateModificationField($bank_information);
+            $bank_information->save();
+
+            return api_response($request, null, 200,['message' => 'Bank Information updated successfully']);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
     }
 
     public function storeBankInfo($partner, Request $request)

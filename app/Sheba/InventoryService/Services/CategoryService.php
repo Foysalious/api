@@ -14,6 +14,7 @@ class CategoryService
     public $client;
     public $subCategories;
     protected $thumb;
+    private $updatedAfter;
 
     public function __construct(InventoryServerClient $client)
     {
@@ -70,10 +71,21 @@ class CategoryService
         return $this;
     }
 
+    /**
+     * @param mixed $updatedAfter
+     * @return CategoryService
+     */
+    public function setUpdatedAfter($updatedAfter)
+    {
+        $this->updatedAfter = $updatedAfter;
+        return $this;
+    }
+
 
     public function getAllMasterCategories($partner_id)
     {
-        $url = 'api/v1/partners/'.$partner_id.'/categories';
+        $url = 'api/v1/partners/'.$partner_id.'/categories?';
+        if($this->updatedAfter) $url .= 'updated_after='.$this->updatedAfter;
         return $this->client->get($url);
     }
 
@@ -130,7 +142,8 @@ class CategoryService
 
     public function getallcategory($partner_id)
     {
-        $url = 'api/v1/partners/'.$partner_id.'/category-tree';
+        $url = 'api/v1/partners/'.$partner_id.'/category-tree?';
+        if($this->updatedAfter) $url .= 'updated_after='.$this->updatedAfter;
 
 
         return $this->client->get($url);
@@ -147,17 +160,19 @@ class CategoryService
                 'filename' => $this->thumb ? $this->thumb->getClientOriginalName() : ''
             ],
         ];
+        if (!$this->subCategories) return $data;
         $sub_category = [];
         foreach ( $this->subCategories as $key=>$value) {
             $sub_category [] =  ['name' => "sub_category[$key][name]", 'contents' => $value['name']];
-            $this->thumb = $value['thumb'];
-            $sub_category [] = [
-                'name' => "sub_category[$key][thumb]",
-                'contents' => $this->thumb ? File::get($this->thumb->getRealPath()) : null,
-                'filename' => $this->thumb ? $this->thumb->getClientOriginalName() : ''
-            ];
+            if(isset($value['thumb'])) {
+                $this->thumb = $value['thumb'];
+                $sub_category [] = [
+                    'name' => "sub_category[$key][thumb]",
+                    'contents' => $this->thumb ? File::get($this->thumb->getRealPath()) : null,
+                    'filename' => $this->thumb ? $this->thumb->getClientOriginalName() : ''
+                ];
+            }
         }
         return array_merge_recursive($data,$sub_category);
     }
-
 }

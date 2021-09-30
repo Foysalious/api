@@ -19,6 +19,7 @@ use App\Models\Member;
 class CoWorkerDetailTransformer extends TransformerAbstract
 {
     use BusinessBasicInformation;
+
     const THRESHOLD = 17;
 
     /** @var Business $business */
@@ -66,7 +67,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
             'status' => $business_member->status,
             'profile' => [
                 'id' => $this->profile->id,
-                'name' => $this->profile->name,
+                'name' => !$this->isNull($this->profile->name) ? $this->profile->name : null,
                 'profile_picture_name' => $this->profile->pro_pic ? array_last(explode('/', $this->profile->pro_pic)) : null,
                 'profile_picture' => $this->profile->pro_pic,
                 'email' => $this->profile->email,
@@ -227,11 +228,11 @@ class CoWorkerDetailTransformer extends TransformerAbstract
         return [
             'id' => $manager_member->id,
             'business_member' => $manager_business_member->id,
-            'name' => $manager_profile->name,
+            'name' => $manager_profile->name ?: null,
             'employee_id' => $manager_business_member->employee_id,
             'profile' => [
                 'id' => $manager_profile->id,
-                'name' => $manager_profile->name,
+                'name' => $manager_profile->name ?: null,
                 'pro_pic' => $manager_profile->pro_pic,
                 'mobile' => $manager_business_member->mobile,
                 'email' => $manager_profile->email
@@ -253,8 +254,10 @@ class CoWorkerDetailTransformer extends TransformerAbstract
 
     private function getGlobalGrossSalaryComponent($payroll_setting)
     {
-        $global_gross_components = $payroll_setting->components()->where('type', Type::GROSS)->where('target_type', TargetType::GENERAL)->where(function ($query) {
-            return $query->where('is_default', 1)->orWhere('is_active', 1);
+        $global_gross_components = $payroll_setting->components()->where('type', Type::GROSS)->where(function($query) {
+            return $query->where('target_type', null)->orWhere('target_type', TargetType::GENERAL);
+        })->where(function($query) {
+            return $query->where('is_default', 1)->orWhere('is_active',1);
         })->orderBy('type')->get();
         $global_gross_component_data = [];
         foreach ($global_gross_components as $component) {
@@ -289,11 +292,21 @@ class CoWorkerDetailTransformer extends TransformerAbstract
      */
     private function getPdfInfo($business_member)
     {
-       return [
-           'company_name' => $this->business->name,
-           'company_logo' => $this->isDefaultImageByUrl($this->business->logo) ? null : $this->business->logo,
-           'joining_date' => $business_member->join_date ? Carbon::parse($business_member->join_date)->format('d.m.y') : 'N/A',
-           'date_of_birth' => $this->profile->dob ? Carbon::parse($this->profile->dob)->format('d.m.y') : 'N/A'
-       ];
+        return [
+            'company_name' => $this->business->name,
+            'company_logo' => $this->isDefaultImageByUrl($this->business->logo) ? null : $this->business->logo,
+            'joining_date' => $business_member->join_date ? Carbon::parse($business_member->join_date)->format('d.m.y') : 'N/A',
+            'date_of_birth' => $this->profile->dob ? Carbon::parse($this->profile->dob)->format('d.m.y') : 'N/A'
+        ];
+    }
+
+    /**
+     * @param $data
+     * @return bool
+     */
+    private function isNull($data)
+    {
+        if ($data == " ") return true;
+        return false;
     }
 }

@@ -2,13 +2,16 @@
 
 use App\Exceptions\DoNotReportException;
 use App\Http\Controllers\Controller;
+use App\Models\PosOrder;
 use App\Sheba\Partner\Delivery\DeliveryService;
 use App\Sheba\Partner\Delivery\Exceptions\DeliveryCancelRequestError;
 use App\Sheba\Partner\Delivery\Methods;
 use App\Sheba\Partner\Delivery\OrderPlace;
+use App\Sheba\Partner\Delivery\Statuses;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\ModificationFields;
 use Throwable;
 
@@ -265,6 +268,18 @@ class DeliveryController extends Controller
             return Str::substr($header, 7);
         }
         return false;
+    }
+
+    public function deliveryStatusUpdate(Request $request, DeliveryService $delivery_service)
+    {
+        $this->validate($request, [
+            'order_ref_no' => 'required',
+            'status' => "required|string" ,
+            'merchant_code' => "required|string"
+        ]);
+        
+        $delivery_service->setToken($this->bearerToken($request))->updateDeliveryStatus($request->merchant_code, $request->order_ref_no);
+        return api_response($request, null, 200);
     }
 
 }

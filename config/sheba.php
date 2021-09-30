@@ -106,8 +106,10 @@ return [
     'screen' => ['home', 'eshop', 'payment_link', 'pos', 'inventory', 'referral', 'due'],
     'partner_lite_packages_id'  => env('LITE_PACKAGE_ID', 1),
     'partner_basic_packages_id' => env('BASIC_PACKAGE_ID', 2),
+    'partner_registration_package_id' => env('PARTNER_REGISTRATION_PACKAGE_ID',18),
     'lite_package_message'      => 'প্রিমিয়াম প্যাকেজ গুলোর দুর্দান্ত সব ফিচার ব্যাবহার করে ২ গুন ব্যবসা বৃদ্ধি করুন কোন বাড়তি ঝামেলা ছাড়াই!',
     'partner_subscription_vat'  => 5.00,
+    'welcome_message_image' => env('WELCOME_MSG_IMAGE','images/manager_app/welcome.jpg'),
     'rent_a_car' => [
         'inside_city' => [
             'category' => [222]
@@ -165,6 +167,8 @@ return [
     'mission_save_bangladesh_partner_id' => env('MISSION_SAVE_BANGLADESH_PARTNER_ID'),
     'topup_special_amount_get_url_by_ssl' => env('TOPUP_SPECIAL_AMOUNT_GET_URL_BY_SSL', 'http://vrapi.sslwireless.com/rest/specialAmount/v2/'),
     'webstore_url' => env('SHEBA_WEBSTORE_URL'),
+    'new_webstore_url' => env('SHEBA_NEW_WEBSTORE_URL'),
     'last_job_before_commission' => env('LAST_JOB_BEFORE_PARTNER_COMMISSION_DEPLOY'),
-    'category_vat_in_percentage' => 5
+    'category_vat_in_percentage' => 5,
+    'whitelisted_ip_redis_key_name' => env('WHITELISTED_IP_REDIS_KEY_NAME','')
 ];

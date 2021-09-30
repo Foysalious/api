@@ -298,4 +298,5 @@ class AccountServer
     {
         return $this->client->setToken($token)->put("/api/v1/partners/$partner_id/pos-customers/$customer_id", $data);
     }
+
 }

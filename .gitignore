@@ -17,3 +17,4 @@ results/phpunit/
 .DS_Store
 resources/assets/ebl/*
 resources/assets/ebl/*
+.composer/

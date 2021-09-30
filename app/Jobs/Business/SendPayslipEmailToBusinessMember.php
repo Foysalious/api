@@ -14,12 +14,15 @@ class SendPayslipEmailToBusinessMember extends Job implements ShouldQueue
     private $payslipPdfFile;
     private $businessMember;
     private $timePeriod;
-    private $profile;
+    private $employeeEmail;
+    private $employeeName;
+    private $business;
 
-    public function __construct($business_member, $time_period, $payslip_pdf_file)
+    public function __construct($business, $employee_email, $employee_name, $time_period, $payslip_pdf_file)
     {
-        $this->businessMember = $business_member;
-        $this->profile = $business_member->member->profile;
+        $this->business = $business;
+        $this->employeeEmail = $employee_email;
+        $this->employeeName = $employee_name;
         $this->timePeriod = $time_period;
         $this->payslipPdfFile = $payslip_pdf_file;
     }
@@ -30,12 +33,12 @@ class SendPayslipEmailToBusinessMember extends Job implements ShouldQueue
             $subject = 'Payslip of '.$this->timePeriod->start->format('F Y');
             Mail::send('emails.payslip-email', [
                 'title' => $subject,
-                'employee_name' => $this->profile->name,
+                'employee_name' => $this->employeeName,
                 'time_period' => $this->timePeriod->start->format('F Y'),
-                'business_name' => $this->businessMember->business->name
+                'business_name' => $this->business->name
             ], function ($m) use ($subject) {
                 $m->from('b2b@sheba.xyz', 'sBusiness.xyz');
-                $m->to($this->profile->email)->subject($subject);
+                $m->to($this->employeeEmail)->subject($subject);
                 $m->attach($this->payslipPdfFile);
             });
         }

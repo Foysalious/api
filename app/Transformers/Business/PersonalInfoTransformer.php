@@ -16,9 +16,10 @@ class PersonalInfoTransformer extends TransformerAbstract
 
         return [
             'gender' => $profile->gender,
+            'id' => $profile->id,
             'mobile' => $business_member->mobile,
             'profile_picture' => $profile->pro_pic,
-            'dob' => Carbon::parse($profile->dob)->format('d F, Y'),
+            'dob' => $profile->dob ? Carbon::parse($profile->dob)->format('d F, Y') : null,
             'address' => $profile->address,
             'nationality' => $profile->nationality,
             'nid_no' => $profile->nid_no,

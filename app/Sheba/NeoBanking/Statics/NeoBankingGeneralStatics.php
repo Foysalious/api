@@ -70,7 +70,7 @@ class NeoBankingGeneralStatics
         $data = [
             'organization_type_list' => ['list' => config('occupation_nature.organization_type'), 'title' => 'প্রতিষ্ঠানের ধরণ সিলেক্ট করুন'],
             'business_type_list'=> ['list' => config('occupation_nature.data'),'title'=>'ব্যবসার ধরণ সিলেক্ট করুন'],
-            'branch_code'=> ['list' => config('branch_code.data'),'title'=>'ব্রাঞ্চ কোড সিলেক্ট করুন']
+            'branch_code'=> ['list' => config('branch_code.data'),'title'=>'ব্রাঞ্চ সিলেক্ট করুন']
         ];
         try {
             return  $data[$type];

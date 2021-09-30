@@ -3,6 +3,7 @@
 use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
 use App\Models\PosOrder;
+use App\Sheba\PosOrderService\PosOrderServerClient;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Validator;
@@ -39,29 +40,34 @@ class CustomerWise extends PosReport
      */
     public function prepareData($paginate = true)
     {
+
         $customer_sales = [];
-        $this->query->get()->each(function (PosOrder $pos_order) use (&$customer_sales) {
-            $customer_id = $pos_order->customer_id;
-            $partner_id  = $pos_order->partner_id;
-            $pos_order->calculate();
-            $is_customer_already_exist = (array_key_exists($customer_id, $customer_sales));
-            if (!$is_customer_already_exist) {
-                $posProfile = PartnerPosCustomer::byPartner($partner_id)->where('customer_id', $customer_id)->first();
-                $customer_sales[$customer_id] = [
-                    'customer_id'   => $customer_id,
-                    'customer_name' => $posProfile ? $posProfile->nick_name ? $posProfile->nick_name : $pos_order->customer->profile->name : $pos_order->customer->profile->name,
-                    'order_count'   => 0,
-                    'sales_amount'  => 0.00
-                ];
-            }
-            $customer_sales[$customer_id]['order_count']    =  $is_customer_already_exist ? $customer_sales[$customer_id]['order_count']+=1 : 1;
-            $customer_sales[$customer_id]['sales_amount']   =  $is_customer_already_exist ? $customer_sales[$customer_id]['sales_amount'] + $pos_order->getNetBill() : $pos_order->getNetBill();
-            $customer_sales[$customer_id]['sales_due']      =  $is_customer_already_exist ? $customer_sales[$customer_id]['sales_due'] + $pos_order->getDue() : $pos_order->getDue();
-        });
+        if($this->partner->isMigrationCompleted()){
+            $customer_sales =  $this->getReportDataFromPosServer(self::class);
+        } else {
+            $this->query->get()->each(function (PosOrder $pos_order) use (&$customer_sales) {
+                $customer_id = $pos_order->customer_id;
+                $partner_id  = $pos_order->partner_id;
+                $pos_order->calculate();
+                $is_customer_already_exist = (array_key_exists($customer_id, $customer_sales));
+                if (!$is_customer_already_exist) {
+                    $posProfile = PartnerPosCustomer::byPartner($partner_id)->where('customer_id', $customer_id)->first();
+                    $customer_sales[$customer_id] = [
+                        'customer_id'   => $customer_id,
+                        'customer_name' => $posProfile ? $posProfile->nick_name ? $posProfile->nick_name : $pos_order->customer->profile->name : $pos_order->customer->profile->name,
+                        'order_count'   => 0,
+                        'sales_amount'  => 0.00
+                    ];
+                }
+                $customer_sales[$customer_id]['order_count']    =  $is_customer_already_exist ? $customer_sales[$customer_id]['order_count']+=1 : 1;
+                $customer_sales[$customer_id]['sales_amount']   =  $is_customer_already_exist ? $customer_sales[$customer_id]['sales_amount'] + $pos_order->getNetBill() : $pos_order->getNetBill();
+                $customer_sales[$customer_id]['sales_due']      =  $is_customer_already_exist ? $customer_sales[$customer_id]['sales_due'] + $pos_order->getDue() : $pos_order->getDue();
+            });
+        }
 
         $customer_sales = collect($customer_sales);
         $this->setDefaultOrderBy('customer_name')->setOrderByAccessors('customer_name,order_count,sales_amount');
-        $is_desc =  $this->order == 'DESC' ? true : false;
+        $is_desc = $this->order == 'DESC';
         $customer_sales = $customer_sales->sortBy($this->orderBy, SORT_REGULAR, $is_desc);
         $total = $customer_sales->count();
         $total_order_count = $customer_sales->sum('order_count');

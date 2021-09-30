@@ -6,6 +6,7 @@ use App\Models\Payable;
 use App\Models\Payment;
 use App\Models\PosOrder;
 use App\Models\Profile;
+use App\Sheba\Pos\Order\PosOrderObject;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\PaymentLinkAccountingRepository;
 use DB;
@@ -75,13 +76,17 @@ class PaymentLinkOrderComplete extends PaymentComplete
                 $this->paymentRepository->setPayment($this->payment);
                 $payable = $this->payment->payable;
                 $payableUser = $payable->user;
+                $this->target = $this->paymentLink->getTarget();
+                if ($this->target instanceof PosOrder) {
+                    $payableUser = null;
+                }
                 $this->setModifier($customer = $payable->user);
                 $this->completePayment();
                 $this->processTransactions($this->payment_receiver, $payableUser);
             });
         } catch (Throwable $e) {
             $this->failPayment();
-            Log::info(["error while completing payment link", $e->getMessage(), $e->getCode()]);
+            Log::debug(["error while completing payment link", $e->getMessage(), $e->getCode()]);
             throw $e;
         }
         try {
@@ -93,7 +98,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $this->notify();
 
         } catch (Throwable $e) {
-            Log::info(["error while storing payment link entry", $e->getMessage(), $e->getCode()]);
+            Log::debug(["error while storing payment link entry", $e->getMessage(), $e->getCode()]);
             logError($e);
         }
         $this->payment->reload();
@@ -189,9 +194,9 @@ class PaymentLinkOrderComplete extends PaymentComplete
     private function clearTarget()
     {
         $this->target = $this->paymentLink->getTarget();
-        if ($this->target instanceof PosOrder) {
+        if ($this->target instanceof PosOrderObject) {
             $payment_data    = [
-                'pos_order_id' => $this->target->id,
+                'pos_order_id' => $this->target->getId(),
                 'amount'       => $this->transaction->getEntryAmount(),
                 'method'       => $this->payment->payable->type,
                 'emi_month'    => $this->transaction->getEmiMonth(),
@@ -199,7 +204,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             ];
             /** @var PaymentCreator $payment_creator */
             $payment_creator = app(PaymentCreator::class);
-            $payment_creator->credit($payment_data);
+            $payment_creator->credit($payment_data, $this->target->getType());
             if ($this->transaction->isPaidByCustomer()) {
                 $this->target->update(['interest' => 0, 'bank_transaction_charge' => 0]);
             }
@@ -262,16 +267,16 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $channel          = config('sheba.push_notification_channel_name.manager');
         $sound            = config('sheba.push_notification_sound.manager');
         $formatted_amount = number_format($this->transaction->getAmount(), 2);
-        $event_type       = $this->target && $this->target instanceof PosOrder && $this->target->sales_channel == SalesChannels::WEBSTORE ? 'WebstoreOrder' : class_basename($this->target);
+        $event_type       = $this->target && $this->target instanceof PosOrderObject && $this->target->getSalesChannel() == SalesChannels::WEBSTORE ? 'WebstoreOrder' : (class_basename($this->target) instanceof PosOrderObject ? 'PosOrder' : class_basename($this->target));
         /** @var Payable $payable */
         $payable = Payable::find($this->payment->payable_id);
         (new PushNotificationHandler())->send([
-          "title"      => 'Order Successful',
-          "message"    => "$formatted_amount Tk has been collected from {$payable->getName() } by order link- {$payment_link->getLinkID()}",
-          "event_type" => $event_type,
-          "event_id"   => $this->target->id,
-          "sound"      => "notification_sound",
-          "channel_id" => $channel
+            "title"      => 'Order Successful',
+            "message"    => "$formatted_amount Tk has been collected from {$payable->getName() } by order link- {$payment_link->getLinkID()}",
+            "event_type" => $event_type,
+            "event_id"   => $this->target->getId(),
+            "sound"      => "notification_sound",
+            "channel_id" => $channel
         ], $topic, $channel, $sound);
     }
 }

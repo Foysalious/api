@@ -3,11 +3,9 @@
 use App\Models\BusinessMember;
 use App\Models\Member;
 use App\Sheba\Business\Leave\Updater as LeaveUpdater;
-use Sheba\Business\ApprovalRequest\Creator as ApprovalRequestCreator;
-use Sheba\Business\ApprovalSetting\FindApprovalSettings;
-use Sheba\Business\ApprovalSetting\FindApprovers;
+use Exception;
 use Sheba\Business\LeaveRejection\Requester as LeaveRejectionRequester;
-use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
+use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepo;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use Sheba\Dal\ApprovalRequest\Status;
 use Sheba\Dal\ApprovalRequest\Type as ApprovalRequestType;
@@ -30,36 +28,20 @@ class UpdaterV2
     private $requestableType;
     /** @var LeaveUpdater $leaveUpdater */
     private $leaveUpdater;
-
-    /** @var FindApprovalSettings $findApprovalSetting */
-    private $findApprovalSetting;
-    /** @var FindApprovers $findApprovers */
-    private $findApprovers;
-    private $approvers = [];
-    /** @var ApprovalRequestCreator approvalRequestCreator */
-    private $approvalRequestCreator;
-    /**
-     * @var array
-     */
-    private $remainingApprovers;
-    private $requestableBusinessMember;
     /** @var LeaveRejectionRequester $leaveRejectionRequester */
     private $leaveRejectionRequester;
+    private $notification;
 
-    /**
-     * Updater constructor.
-     * @param ApprovalRequestRepositoryInterface $approval_request_repo
-     * @param LeaveUpdater $leave_updater
-     */
-    public function __construct(ApprovalRequestRepositoryInterface $approval_request_repo, LeaveUpdater $leave_updater)
+    private $requestableBusinessMember;
+    private $requestableMember;
+    private $requestableProfile;
+
+
+    public function __construct(ApprovalRequestRepo $approval_request_repo, LeaveUpdater $leave_updater, Notification $notification)
     {
         $this->approvalRequestRepo = $approval_request_repo;
         $this->leaveUpdater = $leave_updater;
-        $this->findApprovalSetting = app(FindApprovalSettings::class);
-        $this->findApprovers = app(FindApprovers::class);
-        $this->approvalRequestCreator = app(ApprovalRequestCreator::class);
-        $this->approvers = [];
-        $this->remainingApprovers = [];
+        $this->notification = $notification;
     }
 
     public function hasError()
@@ -88,12 +70,9 @@ class UpdaterV2
         $this->requestable = $this->approvalRequest->requestable;
         $this->requestableType = ApprovalRequestType::getByModel($this->requestable);
 
-        /** @var BusinessMember */
         $this->requestableBusinessMember = $this->requestable->businessMember;
-        $approval_setting = $this->findApprovalSetting->getApprovalSetting($this->requestableBusinessMember, $this->requestableType);
-        $this->approvers = $this->findApprovers->calculateApprovers($approval_setting, $this->requestableBusinessMember);
-        $requestable_approval_request_ids = $this->requestable->requests()->pluck('approver_id', 'id')->toArray();
-        $this->remainingApprovers = array_diff($this->approvers, $requestable_approval_request_ids);
+        $this->requestableMember = $this->requestableBusinessMember->member;
+        $this->requestableProfile = $this->requestableMember->profile;
         return $this;
     }
 
@@ -109,26 +88,30 @@ class UpdaterV2
         return $this;
     }
 
+    /**
+     * @throws Exception
+     */
     public function change()
     {
         $this->setModifier($this->member);
         $data = ['status' => $this->status];
         $this->approvalRequestRepo->update($this->approvalRequest, $this->withUpdateModificationField($data));
         $this->approvalRequest->fresh();
+
         $leave = $this->requestable;
 
         if ($this->requestableType == ApprovalRequestType::LEAVE && $this->approvalRequest->status == Status::ACCEPTED) {
+            $remaining_approval_request = $leave->requests()->orderBy('order', 'ASC')->where('is_notified', 0)->first();
 
-            if (count($this->remainingApprovers) > 0) {
-                /** $first_approver */
-                $first_approver = reset($this->remainingApprovers);
-                $this->approvalRequestCreator->setBusinessMember($this->requestableBusinessMember)
-                    ->setApprover($first_approver)
-                    ->setRequestable($this->requestable)
-                    ->create();
+            if ($remaining_approval_request) {
+                $this->approvalRequestRepo->update($remaining_approval_request, $this->withUpdateModificationField(['is_notified' => 1]));
+                try {
+                    $this->notification->sendPushToApprover($remaining_approval_request, $this->requestableProfile);
+                    $this->notification->sendShebaNotificationToApprover($remaining_approval_request, $this->requestableProfile);
+                } catch (Exception $e) {
+                }
             }
-
-            if (count($this->remainingApprovers) == 0 && $leave->status == LeaveStatus::PENDING) {
+            if (!$remaining_approval_request && $leave->status == LeaveStatus::PENDING) {
                 $this->leaveUpdater->setLeave($leave)->setStatus(LeaveStatus::ACCEPTED)->setBusinessMember($this->businessMember)->updateStatus();
             }
         }

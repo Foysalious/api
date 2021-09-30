@@ -282,4 +282,18 @@ if (!function_exists('array_push_on_array')) {
 
         $array[$key][] = $value;
     }
+
+    if (!function_exists('convertTimezone')) {
+
+        /**
+         * @param Carbon|null $datetime
+         * @param string $timezone
+         * @return Carbon|null
+         */
+        function convertTimezone(Carbon $datetime,  $timezone = 'Asia/Dhaka')
+        {
+            return $datetime->timezone($timezone);
+
+        }
+    }
 }

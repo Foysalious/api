@@ -68,7 +68,7 @@ class CoWorkerStatusController extends Controller
     {
         $this->validate($request, ['status' => 'required|string|in:' . implode(',', Statuses::get())]);
         $requester_business_member = $request->business_member;
-        if ($requester_business_member == $business_member_id) return api_response($request, null, 404, ['message' => 'Sorry, You cannot deactivated yourself as super admin.']);
+        if ($requester_business_member->id == $business_member_id) return api_response($request, null, 404, ['message' => 'Sorry, You cannot deactivated yourself as super admin.']);
 
         $business = $request->business;
         $manager_member = $request->manager_member;
@@ -131,8 +131,10 @@ class CoWorkerStatusController extends Controller
             if ($this->isActive($request->status)) {
                 $this->coWorkerExistenceCheck->setBusiness($business)->setBusinessMember($business_member)
                     ->isActiveOrInvitedInAnotherBusiness()->isEssentialInfoAvailableForActivate();
+
                 if ($this->coWorkerExistenceCheck->hasError()) {
                     array_push($errors, ['email' => $this->coWorkerExistenceCheck->getEmail(), 'message' => $this->coWorkerExistenceCheck->getErrorMessage()]);
+                    $this->coWorkerExistenceCheck->resetError();
                     continue;
                 }
             }
@@ -190,7 +192,7 @@ class CoWorkerStatusController extends Controller
 
         $business_member = $this->businessMemberRepository->find($business_member_id);
 
-        $basic_request = $this->basicRequest->setFirstName($request->first_name)
+        $basic_request = $this->basicRequest->setFirstName($request->name)
             ->setDepartment($request->department)
             ->setRole($request->role)
             ->setGender($request->gender)

@@ -1,6 +1,7 @@
 <?php namespace Sheba\Payment\Methods\Nagad;
 
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 use Sheba\Payment\Methods\Nagad\Response\Initialize;
 use Sheba\Payment\Methods\Nagad\Stores\NagadStore;
 
@@ -44,11 +45,18 @@ class Inputs
      * @param $amount
      * @param $call_back_url
      * @param NagadStore $store
+     * @param $description
      * @return array
      */
-    public static function complete($transaction_id, Initialize $init, $amount, $call_back_url, NagadStore $store): array
+    public static function complete($transaction_id, Initialize $init, $amount, $call_back_url, NagadStore $store, $description): array
     {
-        $merchant_additional_info = '{"Service Name": "Sheba.xyz"}';
+        $merchant_additional_info = json_encode(
+            [
+                "Service Name" =>"Sheba.xyz",
+                "Purpose" =>  $description
+            ]
+        );
+//        $merchant_additional_info = '{"Service Name": "Sheba.xyz"}';
         $payment_data = [
             'merchantId' => $store->getMerchantId(),
             'orderId' => $transaction_id,
@@ -61,7 +69,7 @@ class Inputs
             'merchantCallbackURL' => $call_back_url,
             'additionalMerchantInfo' => json_decode($merchant_additional_info)
         ];
-
+        Log::info(["returned data", [$payment_data, $store_data]]);
         return [$payment_data, $store_data];
     }
 
