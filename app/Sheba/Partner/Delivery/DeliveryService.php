@@ -531,7 +531,7 @@ class DeliveryService
     private function updatePosOrder()
     {
         $data = [
-          'status' => OrderStatuses::CANCELLED
+            'status' => OrderStatuses::CANCELLED
         ];
         !$this->isOrderMigrated() ? $this->posOrderRepository->update($this->posOrder, $data) :
             $this->orderService->setPartnerId($this->partner->id)->setOrderId($this->posOrderId)->setStatus(OrderStatuses::CANCELLED)->updateStatus();

@@ -292,7 +292,6 @@ class OrderController extends Controller
         $this->sendCustomerEmail($order);
         $order->payment_status        = $order->getPaymentStatus();
         $order["client_pos_order_id"] = $request->has('client_pos_order_id') ? $request->client_pos_order_id : null;
-
         return api_response($request, null, 200, [
             'msg'   => 'Order Created Successfully',
             'order' => $order
