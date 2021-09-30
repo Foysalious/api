@@ -64,6 +64,6 @@ class PartnerTransactionRepository
     {
         $start_date = Carbon::now()->startOfMonth()->toDateTimeString();
         $end_date   = Carbon::now()->toDateTimeString();
-        return PartnerTransaction::paymentLinkCredit()->whereBetween('created_at', [$start_date, $end_date])->sum('amount');
+        return PartnerTransaction::paymentLinkCredit($this->partner->id)->whereBetween('created_at', [$start_date, $end_date])->sum('amount');
     }
 }
