@@ -16,7 +16,7 @@ class GenerateOrderInvoice  extends Job implements ShouldQueue
     {
         $this->model = $model;
         $this->connection = 'invoice_generation';
-        $this->queue = 'invoice_generation';
+        $this->queue = 'pos';
     }
 
     public function handle()
