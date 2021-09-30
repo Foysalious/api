@@ -17,7 +17,7 @@ use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\Dal\POSOrder\OrderStatuses;
 
 
-class PosOrder  extends BaseModel
+class PosOrder extends BaseModel
 {
     use SoftDeletes;
 

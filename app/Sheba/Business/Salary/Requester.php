@@ -1,5 +1,6 @@
 <?php namespace App\Sheba\Business\Salary;
 
+use App\Models\BusinessMember;
 use App\Models\Member;
 use App\Sheba\Business\Salary\Creator as CoWorkerSalaryCreator;
 use App\Sheba\Business\Salary\Updater as CoWorkerSalaryUpdater;
@@ -18,6 +19,8 @@ class Requester
     private $creator;
     private $updater;
     private $managerMember;
+    private $breakdownPercentage;
+    private $removeOverwritten;
 
     public function __construct(BusinessMemberRepositoryInterface $business_member_repository,
                                 CoWorkerSalaryCreator $salary_creator,
@@ -28,27 +31,15 @@ class Requester
         $this->updater = $salary_updater;
     }
 
-    public function setMember($member)
+    /**
+     * @param BusinessMember $business_member
+     * @return $this
+     */
+    public function setBusinessMember(BusinessMember $business_member)
     {
-        $this->member = Member::findOrFail($member);
+        $this->businessMember = $business_member;
+        $this->member = $this->businessMember->member;
         $this->profile = $this->member->profile;
-        $this->businessMember = $this->member->businessMember;
-
-        if (!$this->businessMember) {
-            $this->businessMember = $this->businessMemberRepository->builder()
-                ->where('business_id', $this->business->id)
-                ->where('member_id', $this->member->id)
-                ->where('status', Statuses::INACTIVE)
-                ->first();
-        }
-
-        return $this;
-    }
-
-    public function setBusinessMember($business_member)
-    {
-        $this->businessMember = $this->businessMemberRepository->find($business_member);
-        $this->profile = $this->businessMember->profile();
         return $this;
     }
 
@@ -76,6 +67,28 @@ class Requester
         $this->grossSalary = $gross_salary;
         if (!$this->grossSalary) $this->grossSalary = 0;
         return $this;
+    }
+
+    public function setBreakdownPercentage($breakdown_percentage)
+    {
+        $this->breakdownPercentage = json_decode($breakdown_percentage, 1);
+        return $this;
+    }
+
+    public function getBreakdownPercentage()
+    {
+        return $this->breakdownPercentage;
+    }
+
+    public function setRemoveOverwritten($remove_overwritten)
+    {
+        $this->removeOverwritten = json_decode($remove_overwritten, 1);
+        return $this;
+    }
+
+    public function getRemoveOverwritten()
+    {
+        return $this->removeOverwritten;
     }
 
     public function getGrossSalary()

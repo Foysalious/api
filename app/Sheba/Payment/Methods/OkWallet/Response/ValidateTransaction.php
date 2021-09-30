@@ -110,6 +110,4 @@ class ValidateTransaction
         $ok_wallet = app(OkWalletClient::class);
         return  $ok_wallet->validationRequest($transaction_id);
     }
-
-
 }

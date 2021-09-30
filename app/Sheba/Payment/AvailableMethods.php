@@ -170,11 +170,12 @@ class AvailableMethods
          */
 
         return [
-            PaymentStrategy::CBL,
             PaymentStrategy::BKASH,
+            PaymentStrategy::NAGAD,
+            PaymentStrategy::CBL,
+            PaymentStrategy::EBL,
             PaymentStrategy::ONLINE,
             PaymentStrategy::SSL_DONATION,
-            PaymentStrategy::NAGAD
         ];
     }
 
@@ -190,7 +191,8 @@ class AvailableMethods
     {
         return [
             PaymentStrategy::NAGAD,
-            PaymentStrategy::BKASH
+            PaymentStrategy::BKASH,
+            PaymentStrategy::ONLINE
         ];
     }
 

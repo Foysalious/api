@@ -13,7 +13,7 @@ class PosOrderSaved
      */
     public function handle(BaseEvent $event)
     {
-         $this->dispatch((new GenerateOrderInvoice($event->model)));
+        $this->dispatch((new GenerateOrderInvoice($event->model)));
     }
 
 }

@@ -11,8 +11,8 @@ use App\Models\PartnerOrder;
 use App\Sheba\Affiliate\PushNotification\MovieTicketPurchaseFailed;
 use App\Sheba\Affiliate\PushNotification\TopUpFailed;
 use App\Sheba\Affiliate\PushNotification\TransportTicketPurchaseFailed;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use App\Sheba\Subscription\Partner\PartnerSubscriptionChange;
 use Carbon\Carbon;
 use LaravelFCM\Message\Exceptions\InvalidOptionsException;
@@ -303,10 +303,10 @@ class NotificationRepository
                 ->setBusinessType(BusinessType::SMANAGER)
                 ->setFeatureType(FeatureType::PARTNER_SUBSCRIPTION)
                 ->send($partner->getContactNumber(), [
-                'package_type_bn' => $type,
-                'package_name'    => $package->show_name_bn,
-                'grade_text'      => $gradeType
-            ]);
+                    'package_type_bn' => $type,
+                    'package_name'    => $package->show_name_bn,
+                    'grade_text'      => $gradeType
+                ]);
         }
     }
 

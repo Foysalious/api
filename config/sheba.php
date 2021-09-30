@@ -11,6 +11,7 @@ return [
     'payment_link_web_url' => env('SHEBA_PAYMENT_LINK_WEB_URL', 'https://payments.sheba.xyz'),
     's3_url' => env('S3_URL'),
     'socket_url' => env('SHEBA_SOCKET_URL'),
+    'ebl_url'=>env('EBL_URL'),
     'socket_on' => env('SHEBA_SOCKET_ON', true),
     'send_push_notifications' => env('SHEBA_SEND_PUSH_NOTIFICATIONS', true),
     'partners_url' => env('SHEBA_PARTNER_END_URL') . '/' . env('SHEBA_PARTNERS_URL_PREFIX'),
@@ -102,8 +103,10 @@ return [
     'screen' => ['home', 'eshop', 'payment_link', 'pos', 'inventory', 'referral', 'due'],
     'partner_lite_packages_id'  => env('LITE_PACKAGE_ID', 1),
     'partner_basic_packages_id' => env('BASIC_PACKAGE_ID', 2),
+    'partner_registration_package_id' => env('PARTNER_REGISTRATION_PACKAGE_ID',18),
     'lite_package_message'      => 'প্রিমিয়াম প্যাকেজ গুলোর দুর্দান্ত সব ফিচার ব্যাবহার করে ২ গুন ব্যবসা বৃদ্ধি করুন কোন বাড়তি ঝামেলা ছাড়াই!',
     'partner_subscription_vat'  => 5.00,
+    'welcome_message_image' => env('WELCOME_MSG_IMAGE','images/manager_app/welcome.jpg'),
     'rent_a_car' => [
         'inside_city' => [
             'category' => [222]
@@ -153,7 +156,8 @@ return [
     'tender_landing_categories_id' => explode(',', env('TENDER_LANDING_CATEGORIES_ID', '14,15,17,18,19,20,21,22')),
     'resource_max_withdraw_limit' => 1000,
     'tp_proxy_url' => env('TP_PROXY_URL'),
-    'sbs_proxy_url' => env('SBS_PROXY_URL','https://sbs-proxy.dev-sheba.xyz'),
+    'sbs_proxy_url' => env('SBS_PROXY_URL', 'https://sbs-proxy.dev-sheba.xyz'),
+    'nagad_proxy_url' => env('NAGAD_PROXY_URL'),
     'address' => 'House #63 (1st Floor), Road #04, Block-C, Banani, Dhaka 1213',
     'email' => 'info@sheba.xyz',
     'lpg_service_id' => env('LPG_SERVICE_ID'),

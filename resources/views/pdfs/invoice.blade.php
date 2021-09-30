@@ -298,9 +298,8 @@
                 Service Provider Order Statement
             </td>
             <td class="text-right" style="background: #FFFFFF;">
-                <div class="logo">
-                    <img src="https://s3.ap-south-1.amazonaws.com/cdn-shebadev/admin_assets/assets/images/login-logo.png" class="img-responsive">
-                </div>
+                <img width="150px" style="float:right;padding: 10px;" class="logo"
+                     src="{{asset('assets/images/logo_coloured.png')}}" alt="Logo"/>
             </td>
         </tr>
     </table>
@@ -394,13 +393,13 @@
         {{--<div>NOTICE:</div>--}}
         {{--<div class="notice">A finance charge of 1.5% will be made on unpaid balances after 30 days.</div>--}}
     {{--</div>--}}
-    @if($job->status !== 'Served')
-        <div class="quote">
-            <br>*** Total cost may be changed due to the nature of the service.</div>
-    @endif
+{{--    @if($job->status !== 'Served')--}}
+{{--        <div class="quote">--}}
+{{--            <br>*** Total cost may be changed due to the nature of the service.</div>--}}
+{{--    @endif--}}
 </main>
 <footer>
-    This was created on a computer and is valid without the signature and seal.
+    This is a system generated statement. No signature is required.
 </footer>
 </body>
 </html>

@@ -1,9 +1,11 @@
 <?php namespace App\Models;
 
+use Sheba\Dal\BusinessMemberStatusChangeLog\Model as BusinessMemberStatusChangeLog;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
@@ -18,9 +20,10 @@ use Sheba\Business\BusinessMember\Events\BusinessMemberDeleted;
 
 class BusinessMember extends Model
 {
+    use SoftDeletes;
+
     protected $guarded = ['id',];
-    protected $table = 'business_member';
-    protected $dates = ['join_date'];
+    protected $dates = ['join_date', 'deleted_at'];
     protected $casts = ['is_super' => 'int'];
 
     protected $dispatchesEvents = [
@@ -28,6 +31,18 @@ class BusinessMember extends Model
         'updated' => BusinessMemberUpdated::class,
         'deleted' => BusinessMemberDeleted::class,
     ];
+
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $table = config('database.connections.mysql.database') . '.business_member';
+        $this->setTable($table);
+    }
+    
+    public function setTable($table)
+    {
+        $this->table = $table;
+    }
 
     public function member()
     {
@@ -74,6 +89,11 @@ class BusinessMember extends Model
         return $this->hasMany(Attendance::class)->where('date', (Carbon::now())->toDateString())->first();
     }
 
+    public function lastAttendance()
+    {
+        return $this->hasMany(Attendance::class)->orderBy('id', 'desc')->first();
+    }
+
     public function leaves()
     {
         return $this->hasMany(Leave::class);
@@ -82,6 +102,11 @@ class BusinessMember extends Model
     public function manager()
     {
         return $this->belongsTo(BusinessMember::class, 'manager_id');
+    }
+
+    public function statusChangeLogs()
+    {
+        return $this->hasMany(BusinessMemberStatusChangeLog::class);
     }
 
     public function scopeActive($query)
@@ -127,6 +152,18 @@ class BusinessMember extends Model
     public function getCountOfUsedLeaveDaysByFiscalYear(Collection $leaves, array $business_holiday, array $business_weekend)
     {
         $time_frame = $this->getBusinessFiscalPeriod();
+        return $this->getCountOfUsedDays($leaves, $time_frame, $business_holiday, $business_weekend);
+    }
+
+    /**
+     * @param Collection $leaves
+     * @param $time_frame
+     * @param array $business_holiday
+     * @param array $business_weekend
+     * @return float
+     */
+    public function getCountOfUsedLeaveDaysByDateRange(Collection $leaves, $time_frame, array $business_holiday, array $business_weekend)
+    {
         return $this->getCountOfUsedDays($leaves, $time_frame, $business_holiday, $business_weekend);
     }
 

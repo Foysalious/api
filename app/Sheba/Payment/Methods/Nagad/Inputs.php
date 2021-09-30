@@ -1,38 +1,25 @@
-<?php
-
-
-namespace Sheba\Payment\Methods\Nagad;
-
+<?php namespace Sheba\Payment\Methods\Nagad;
 
 use Carbon\Carbon;
-use Sheba\Payment\Methods\Nagad\Exception\EncryptionFailed;
 use Sheba\Payment\Methods\Nagad\Response\Initialize;
 use Sheba\Payment\Methods\Nagad\Stores\NagadStore;
 
 class Inputs
 {
-    /**
-     * @var NagadStore
-     */
+    /** @var NagadStore $store */
     private $store;
 
-    public function setStore(NagadStore $store)
-    {
-        $this->store = $store;
-        return $this;
-    }
-
-    public static function headers()
+    public static function headers(): array
     {
         return self::makeHeaders([
-            'Content-Type'     => 'application/json',
+            'Content-Type' => 'application/json',
             'X-KM-Api-Version' => 'v-0.2.0',
-            'X-KM-IP-V4'       => request()->ip(),
+            'X-KM-IP-V4' => request()->ip(),
             'X-KM-Client-Type' => 'MOBILE_WEB'
         ]);
     }
 
-    static function makeHeaders(array $getHeaders)
+    private static function makeHeaders(array $getHeaders): array
     {
         $headers = [];
         foreach ($getHeaders as $key => $header) {
@@ -41,103 +28,97 @@ class Inputs
         return $headers;
     }
 
-    static function get_client_ip()
-    {
-        $ipaddress = '';
-        if (isset($_SERVER['HTTP_CLIENT_IP']))
-            $ipaddress = $_SERVER['HTTP_CLIENT_IP'];
-        else if (isset($_SERVER['HTTP_X_FORWARDED_FOR']))
-            $ipaddress = $_SERVER['HTTP_X_FORWARDED_FOR'];
-        else if (isset($_SERVER['HTTP_X_FORWARDED']))
-            $ipaddress = $_SERVER['HTTP_X_FORWARDED'];
-        else if (isset($_SERVER['HTTP_FORWARDED_FOR']))
-            $ipaddress = $_SERVER['HTTP_FORWARDED_FOR'];
-        else if (isset($_SERVER['HTTP_FORWARDED']))
-            $ipaddress = $_SERVER['HTTP_FORWARDED'];
-        else if (isset($_SERVER['REMOTE_ADDR']))
-            $ipaddress = $_SERVER['REMOTE_ADDR'];
-        else
-            $ipaddress = 'UNKNOWN';
-        return $ipaddress;
-    }
-
     /**
-     * @param            $transactionID
+     * @param $transaction_id
      * @param NagadStore $store
      * @return array
-     * @throws EncryptionFailed
      */
-    public static function init($transactionID, NagadStore $store)
+    public static function init($transaction_id, NagadStore $store): array
     {
-        return self::data($transactionID, $store);
+        return self::data($transaction_id, $store);
     }
 
     /**
-     * @param            $transactionId
+     * @param $transaction_id
      * @param Initialize $init
-     * @param            $amount
-     * @param            $callbackUrl
+     * @param $amount
+     * @param $call_back_url
      * @param NagadStore $store
+     * @param $description
      * @return array
-     * @throws EncryptionFailed
      */
-    public static function complete($transactionId, Initialize $init, $amount, $callbackUrl, NagadStore $store)
+    public static function complete($transaction_id, Initialize $init, $amount, $call_back_url, NagadStore $store, $description): array
     {
-        $merchantAdditionalInfo = '{"Service Name": "Sheba.xyz"}';
-        $data                   = json_encode(['merchantId' => $store->getMerchantId(), 'orderId' => $transactionId, 'amount' => $amount, 'currencyCode' => '050', 'challenge' => $init->getChallenge()]);
-        return ['sensitiveData' => self::getEncoded($data, $store), 'signature' => self::generateSignature($data, $store), 'merchantCallbackURL' => $callbackUrl, 'additionalMerchantInfo' => json_decode($merchantAdditionalInfo)];
+//        $merchant_additional_info = json_encode(
+//            [
+//                "Service Name" =>"Sheba.xyz",
+//                "Purpose" =>  $description
+//            ]
+//        );
+        $merchant_additional_info = '{"Service Name": "Sheba.xyz"}';
+        $payment_data = [
+            'merchantId' => $store->getMerchantId(),
+            'orderId' => $transaction_id,
+            'amount' => $amount,
+            'currencyCode' => '050',
+            'challenge' => $init->getChallenge()
+        ];
+        $store_data = [
+            'storeType' => class_basename($store),
+            'merchantCallbackURL' => $call_back_url,
+            'additionalMerchantInfo' => json_decode($merchant_additional_info)
+        ];
+
+        return [$payment_data, $store_data];
     }
 
     /**
-     * @param string     $data
-     * @param NagadStore $store
-     * @return string
-     * @throws EncryptionFailed
-     */
-    static function getEncoded($data, NagadStore $store)
-    {
-        $key = openssl_get_publickey($store->getPublicKey());
-        if (!openssl_public_encrypt($data, $encrypted, $key)) throw new EncryptionFailed();
-        return base64_encode($encrypted);
-    }
-
-    /**
-     * @param            $transactionId
+     * @param $transaction_id
      * @param NagadStore $store
      * @return array
-     * @throws EncryptionFailed
      */
-    private static function data($transactionId, NagadStore $store)
+    private static function data($transaction_id, NagadStore $store): array
     {
         $date = Carbon::now()->format('YmdHis');
-        $data = json_encode(['merchantId' => $store->getMerchantId(), 'orderId' => $transactionId, 'datetime' => $date, 'challenge' => self::generateRandomString(40)]);
-        return ['sensitiveData' => self::getEncoded($data, $store), 'signature' => self::generateSignature($data, $store), 'dateTime' => $date];
+        $payment_data = [
+            'merchantId' => $store->getMerchantId(),
+            'orderId' => $transaction_id,
+            'datetime' => $date,
+            'challenge' => self::generateRandomString(40)
+        ];
+        $store_data = ['storeType' => class_basename($store)];
+
+        return [$payment_data, $store_data];
     }
 
-    private static function generateRandomString($length = 40)
+    /**
+     * @param int $length
+     * @return string
+     */
+    private static function generateRandomString(int $length = 40): string
     {
-        $characters       = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $charactersLength = strlen($characters);
-        $randomString     = '';
+        $randomString = '';
         for ($i = 0; $i < $length; $i++) {
             $randomString .= $characters[rand(0, $charactersLength - 1)];
         }
+
         return $randomString;
     }
 
-    static function generateSignature($data, NagadStore $store)
-    {
-        $private_key = $store->getPrivateKey();
-        openssl_sign($data, $signature, $private_key, OPENSSL_ALGO_SHA256);
-        return base64_encode($signature);
-    }
-
-    static function orderID()
+    public static function orderID(): string
     {
         try {
             return 'S' . time() . randomString(4, 1, 1);
         } catch (\Exception $e) {
             return 'SHEBA' . time();
         }
+    }
+
+    public function setStore(NagadStore $store): Inputs
+    {
+        $this->store = $store;
+        return $this;
     }
 }

@@ -194,6 +194,7 @@ class DeliveryService
             throw new DoNotReportException("Order does not belongs to this partner", 400);
         }
         $customer_delivery_info = $this->resolveDeliveryInfo();
+        $payment_info = $this->paymentInfo($this->posOrder->id);
         return [
             'partner_pickup_information' => [
                 'merchant_name' => $this->partner->name,
@@ -437,6 +438,7 @@ class DeliveryService
         $data = [
             'name' => $info['contact_info']['name'],
             'partner_id' => $this->partner->id,
+            'merchant_id' =>  $info['uid'],
             'mobile' => $info['phone'],
             'email' => $info['contact_info']['email'],
             'business_type' => $info['product_nature'],
@@ -472,8 +474,7 @@ class DeliveryService
     {
         $data = $this->makeDeliveryChargeData();
         $response =  $this->client->post('price-check', $data);
-        return $response['data'][0]['package_price'] - ((config('pos_delivery.cash_on_delivery_charge_percentage')/100) *  $this->cashOnDelivery);
-
+        return ceil($response['data'][0]['package_price']);
     }
 
 
@@ -496,6 +497,7 @@ class DeliveryService
 
     /**
      * @return mixed
+     * @throws DoNotReportException
      */
     public function getDeliveryStatus()
     {
@@ -505,12 +507,17 @@ class DeliveryService
         $data = [
             'uid' => $delivery_order_id
         ];
-        return $this->client->setToken($this->token)->post('orders/track', $data);
+        $response = $this->client->setToken($this->token)->post('orders/track', $data);
+        return [
+            'status' => $response['data']['status'],
+            'delivery_order_id' => $delivery_order_id,
+            'merchant_id' => $this->partner->deliveryInformation ? $this->partner->deliveryInformation->merchant_id : null
+        ];
     }
 
     public function cancelOrder()
     {
-        $status = $this->getDeliveryStatus()['data']['status'];
+        $status = $this->getDeliveryStatus()['status'];
         $data = [
             'uid' => $this->resolveDeliveryRequestId()
         ];
@@ -524,7 +531,7 @@ class DeliveryService
     private function updatePosOrder()
     {
         $data = [
-          'status' => OrderStatuses::CANCELLED
+            'status' => OrderStatuses::CANCELLED
         ];
         !$this->isOrderMigrated() ? $this->posOrderRepository->update($this->posOrder, $data) :
             $this->orderService->setPartnerId($this->partner->id)->setOrderId($this->posOrderId)->setStatus(OrderStatuses::CANCELLED)->updateStatus();

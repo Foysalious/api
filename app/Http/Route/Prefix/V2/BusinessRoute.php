@@ -43,6 +43,7 @@ class BusinessRoute
                 $api->get('/transactions', 'B2b\BusinessTransactionController@index');
                 $api->get('/dept-role', 'B2b\CoWorkerController@departmentRole');
 
+
                 $api->group(['prefix' => 'departments'], function ($api) {
                     $api->post('/', 'B2b\DepartmentController@store');
                     $api->get('/', 'B2b\DepartmentController@index');
@@ -92,8 +93,10 @@ class BusinessRoute
                     $api->get('/', 'B2b\CoWorkerController@index');
                     $api->post('/', 'B2b\CoWorkerController@basicInfoStore');
                     $api->get('/roles', 'B2b\CoWorkerController@getRoles');
-                    $api->post('/change-status', 'B2b\CoWorkerController@bulkStatusUpdate');
-                    $api->post('/invite', 'B2b\CoWorkerController@sendInvitation');
+                    $api->post('/change-status', 'B2b\CoWorkerStatusController@bulkStatusUpdate');
+                    $api->post('/invite', 'B2b\CoWorkerInviteController@sendInvitation');
+                    $api->post('/single-invite', 'B2b\CoWorkerInviteController@sendSingleInvitation');
+                    $api->get('/report', 'B2b\CoWorkerController@downloadEmployeesReport');
                     $api->group(['prefix' => '{employee}'], function ($api) {
                         $api->post('/basic-info', 'B2b\CoWorkerController@basicInfoEdit');
                         $api->post('/official-info', 'B2b\CoWorkerController@officialInfoEdit');
@@ -101,10 +104,12 @@ class BusinessRoute
                         $api->post('/financial-info', 'B2b\CoWorkerController@financialInfoEdit');
                         $api->post('/emergency-info', 'B2b\CoWorkerController@emergencyInfoEdit');
                         $api->post('/salary-info', 'B2b\CoWorkerController@salaryInfoEdit');
-                        $api->post('/status', 'B2b\CoWorkerController@statusUpdate');
+                        $api->post('/status', 'B2b\CoWorkerStatusController@statusUpdate');
+                        $api->post('/active', 'B2b\CoWorkerStatusController@activeFromInvited');
                         $api->get('/', 'B2b\CoWorkerController@show');
                         $api->post('/', 'B2b\CoWorkerController@update');
                         $api->get('/expense/pdf', 'B2b\CoWorkerController@show');
+                        $api->get('/salary-certificate/pdf', 'B2b\CoWorkerController@salaryCertificatePdf');
                     });
                 });
                 $api->group(['prefix' => 'leaves'], function ($api) {
@@ -343,7 +348,7 @@ class BusinessRoute
                 $api->group(['prefix' => 'expense'], function ($api) {
                     $api->get('/', 'B2b\ExpenseController@index');
                     $api->get('/download-pdf', 'B2b\ExpenseController@downloadPdf');
-                    $api->get('/filter-month', 'B2b\ExpenseController@filterMonth');
+                    $api->get('/filter-month/{business_member_id}', 'B2b\ExpenseController@filterMonth');
                     $api->group(['prefix' => '{expense}'], function ($api) {
                         $api->get('/', 'B2b\ExpenseController@show');
                         $api->post('/', 'B2b\ExpenseController@update');
@@ -370,10 +375,17 @@ class BusinessRoute
 
                 });
                 $api->group(['prefix' => 'payroll'], function ($api) {
+                    $api->get('/components', 'B2b\PayrollController@getPayrollComponents');
                     $api->get('/settings', 'B2b\PayrollController@getPayrollSettings');
                     $api->post('/pay-schedule/{id}', 'B2b\PayrollController@updatePaySchedule');
                     $api->post('/salary-breakdown/{id}', 'B2b\PayrollController@updateSalaryBreakdown');
                     $api->post('/component/{payroll_settings}', 'B2b\PayrollController@addComponent');
+                    $api->post('/gross-component/{payroll_settings}', 'B2b\PayrollController@grossComponentAddUpdate');
+                    $api->get('/pay-day', 'B2b\PayrollController@checkPayDayConflicting');
+                    $api->get('/monthly-pay-cycle', 'B2b\PayrollController@getMonthlyPayCycle');
+                    $api->get('/tax-report', 'B2b\TaxHistoryController@index');
+                    $api->post('show-tax-report-download-banner', 'B2b\TaxHistoryController@updateReportShowBanner');
+                    $api->get('download-tax-certificate/{business_member_id}/tax-report/{id}', 'B2b\TaxHistoryController@downloadBusinessMemberTaxCertificate');
                 });
             });
         });
