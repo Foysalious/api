@@ -292,7 +292,7 @@ class Updater
             return [$this->businessMember, $profile_pic_name, $profile_pic];
         } catch (Throwable $e) {
             DB::rollback();
-            app('sentry')->captureException($e);
+            logError($e);
             return null;
         }
     }

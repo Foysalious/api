@@ -279,7 +279,10 @@ class CoWorkerController extends Controller
 
         $this->coWorkerExistenceCheck->setBusiness($business)->setEmail($email)->checkEmailUsability();
         if ($this->coWorkerExistenceCheck->hasError()) {
-            return api_response($request, null, $this->coWorkerExistenceCheck->getErrorCode(), ['message' => $this->coWorkerExistenceCheck->getErrorMessage(), 'business_member_id' => $this->coWorkerExistenceCheck->getBusinessMemberId()]);
+            return api_response($request, null, $this->coWorkerExistenceCheck->getErrorCode(), [
+                'message' => $this->coWorkerExistenceCheck->getErrorMessage(),
+                'business_member_id' => $this->coWorkerExistenceCheck->getBusinessMemberId()
+            ]);
         }
 
         $basic_request = $this->basicRequest->setProPic($request->pro_pic)
@@ -296,10 +299,12 @@ class CoWorkerController extends Controller
         $this->coWorkerUpdater->setBasicRequest($basic_request)->setBusiness($business)->setBusinessMember($business_member);
         list($business_member, $profile_pic_name, $profile_pic) = $this->coWorkerUpdater->basicInfoUpdate();
 
-        if ($business_member)
-            return api_response($request, null, 200, ['profile_pic_name' => $profile_pic_name, 'profile_pic' => $profile_pic]);
+        if (!$business_member) return api_response($request, null, 404);
 
-        return api_response($request, null, 404);
+        return api_response($request, null, 200, [
+            'profile_pic_name' => $profile_pic_name,
+            'profile_pic' => $profile_pic
+        ]);
     }
 
     /**

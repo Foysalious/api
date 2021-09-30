@@ -34,13 +34,6 @@ class BusinessMember extends Model
         'deleted' => BusinessMemberDeleted::class,
     ];
 
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct($attributes);
-        $table = config('database.connections.mysql.database') . '.business_member';
-        $this->setTable($table);
-    }
-
     public function member()
     {
         return $this->belongsTo(Member::class);
