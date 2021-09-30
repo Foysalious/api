@@ -46,6 +46,7 @@ use Factory\InfoCallRejectReasonFactory;
 use Factory\InfoCallStatusLogFactory;
 use Factory\ResourceTransactionFactory;
 use \Factory\SubscriptionWisePaymentGatewaysFactory;
+use Factory\AttendanceFactory;
 
 
 
@@ -96,7 +97,8 @@ $factory_classes = [
     InfoCallRejectReasonFactory::class,
     InfoCallStatusLogFactory::class,
     ResourceTransactionFactory::class,
-    SubscriptionWisePaymentGatewaysFactory::class
+    SubscriptionWisePaymentGatewaysFactory::class,
+    AttendanceFactory::class
 
 ];
 
