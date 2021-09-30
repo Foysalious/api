@@ -74,7 +74,7 @@ class CategoryController extends Controller
 
     public function getSuggestions(Request $request)
     {
-        $categories = Category::where('parent_id', '<>', 'null')->select('id', 'name', 'bn_name')->get();
+        $categories = Category::where('parent_id', '<>', 'null')->published()->select('id', 'name', 'bn_name')->get();
 
         return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $categories]) : api_response($request, null, 404);
     }

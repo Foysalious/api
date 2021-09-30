@@ -17,6 +17,8 @@ class GiftCardPurchaseComplete extends PaymentComplete
     public function complete()
     {
         try {
+            $this->payment->reload();
+            if ($this->payment->isComplete()) return $this->payment;
             $this->paymentRepository->setPayment($this->payment);
             DB::transaction(function () {
                 $gift_card_purchase = GiftCardPurchase::find($this->payment->payable->type_id);

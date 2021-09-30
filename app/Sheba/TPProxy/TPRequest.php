@@ -2,13 +2,29 @@
 
 class TPRequest
 {
-    const METHOD_GET  = "get";
+    const METHOD_GET = "get";
     const METHOD_POST = "post";
 
     private $url;
     private $method;
-    private $input   = [];
+    private $input = [];
     private $headers = [];
+    private $read_timeout = 60;
+    private $connect_timeout = 60;
+    private $timeout = 60;
+
+    /**
+     * @return array
+     */
+    public function toArray(): array
+    {
+        return [
+            'url' => $this->getUrl(),
+            'headers' => $this->getHeaders(),
+            'input' => $this->getInput(),
+            'method' => $this->getMethod()
+        ];
+    }
 
     /**
      * @return mixed
@@ -22,30 +38,27 @@ class TPRequest
      * @param mixed $url
      * @return TPRequest
      */
-    public function setUrl($url)
+    public function setUrl($url): TPRequest
     {
         $this->url = $url;
         return $this;
     }
 
     /**
-     * @return mixed
+     * @return array
      */
-    public function getMethod()
+    public function getHeaders(): array
     {
-        return strtoupper($this->method);
+        return $this->headers;
     }
 
     /**
-     * @param string $method = "get" | "post"
+     * @param array $headers
      * @return TPRequest
      */
-    public function setMethod($method)
+    public function setHeaders(array $headers): TPRequest
     {
-        if (!in_array($method, [self::METHOD_GET, self::METHOD_POST])) {
-            throw new \InvalidArgumentException("$method not supported by tp client");
-        }
-        $this->method = $method;
+        $this->headers = $headers;
         return $this;
     }
 
@@ -62,37 +75,68 @@ class TPRequest
      * @param array $input
      * @return TPRequest
      */
-    public function setInput(array $input)
+    public function setInput(array $input): TPRequest
     {
         $this->input = $input;
         return $this;
     }
 
     /**
-     * @return array
+     * @return string
      */
-    public function getHeaders()
+    public function getMethod(): string
     {
-        return $this->headers;
+        return strtoupper($this->method);
     }
 
     /**
-     * @param array $headers
+     * @param string $method = "get" | "post"
      * @return TPRequest
      */
-    public function setHeaders(array $headers)
+    public function setMethod(string $method): TPRequest
     {
-        $this->headers = $headers;
+        if (!in_array($method, [self::METHOD_GET, self::METHOD_POST])) {
+            throw new \InvalidArgumentException("$method not supported by tp client");
+        }
+        $this->method = $method;
+
         return $this;
     }
 
-    public function toArray()
+    /**
+     * @return int
+     */
+    public function getReadTimeout(): int
     {
-        return [
-            'url' => $this->getUrl(),
-            'headers' => $this->getHeaders(),
-            'input' => $this->getInput(),
-            'method' => $this->getMethod()
-        ];
+        return $this->read_timeout;
+    }
+
+    /**
+     * @return int
+     */
+    public function getConnectTimeout(): int
+    {
+        return $this->connect_timeout;
+    }
+
+    /**
+     * @return int
+     */
+    public function getTimeout(): int
+    {
+        return $this->timeout;
+    }
+
+    /**
+     * @param int $timeout
+     * @return TPRequest
+     */
+    public function setTimeout(int $timeout): TPRequest
+    {
+        $this->timeout = $timeout;
+        $this->read_timeout = $timeout;
+        $this->connect_timeout = $timeout;
+
+        return $this;
     }
 }

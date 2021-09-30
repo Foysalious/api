@@ -57,6 +57,12 @@ return [
                 'queue' => 'api_queue',
                 'expire' => 60
             ],
+            'test' => [
+                'driver' => 'redis',
+                'connection' => 'default',
+                'queue' => 'test',
+                'expire' => 60
+            ],
             'sms_campaign' => [
                 'driver' => 'redis',
                 'connection' => 'default',
@@ -75,12 +81,19 @@ return [
                 'queue' => 'business_notification',
                 'expire' => 60
             ],
+            'invoice_generation' => [
+                'driver' => 'redis',
+                'connection' => 'default',
+                'queue' => 'invoice_generation',
+                'expire' => 60
+            ],
             'pos_rebuild_data_migration' => [
                 'driver' => 'redis',
                 'connection' => 'default',
                 'queue' => 'pos_rebuild_data_migration',
                 'expire' => 60
             ],
+
         ] + $top_up_queues,
 
     /*

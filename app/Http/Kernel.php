@@ -44,6 +44,7 @@ use Illuminate\Foundation\Http\Kernel as HttpKernel;
 use Illuminate\Foundation\Http\Middleware\Authorize;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Fideloper\Proxy\TrustProxies;
 
 class Kernel extends HttpKernel
 {
@@ -58,6 +59,7 @@ class Kernel extends HttpKernel
         CheckForMaintenanceMode::class,
         CriticalAppVersionMiddleware::class,
         XSS::class,
+        TrustProxies::class,
         SetRequestToJwtWhileTesting::class
     ];
 
@@ -74,10 +76,9 @@ class Kernel extends HttpKernel
             ShareErrorsFromSession::class,
             VerifyCsrfToken::class,
         ],
-
         'api' => [
             'throttle:60,1',
-        ],
+        ]
     ];
 
     /**

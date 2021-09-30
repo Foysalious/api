@@ -224,22 +224,15 @@ class CustomerController extends Controller
 
     public function delete(Request $request, $partner, $customer, DueTrackerRepository $dueTrackerRepository)
     {
-        try {
-            $partner_pos_customer = PartnerPosCustomer::byPartner($request->partner->id)->where('customer_id', $customer)->with(['customer'])->first();
-            /** @var PosCustomer $customer */
-            if (empty($partner_pos_customer) || empty($partner_pos_customer->customer))
-                throw new InvalidPartnerPosCustomer();
-            $customer = $partner_pos_customer->customer;
-            $dueTrackerRepository->setPartner($request->partner)->removeCustomer($customer->profile_id);
-            $this->deletePosOrder($request->partner->id,$customer->id);
-            $partner_pos_customer->delete();
-            return api_response($request, true, 200);
-        } catch (InvalidPartnerPosCustomer $e) {
-            return api_response($request, null, 500, ['message' => $e->getMessage()]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $partner_pos_customer = PartnerPosCustomer::byPartner($request->partner->id)->where('customer_id', $customer)->with(['customer'])->first();
+        /** @var PosCustomer $customer */
+        if (empty($partner_pos_customer) || empty($partner_pos_customer->customer))
+            throw new InvalidPartnerPosCustomer();
+        $customer = $partner_pos_customer->customer;
+        $dueTrackerRepository->setPartner($request->partner)->removeCustomer($customer->profile_id);
+        $this->deletePosOrder($request->partner->id,$customer->id);
+        $partner_pos_customer->delete();
+        return api_response($request, true, 200);
     }
 
     private function deletePosOrder($partner_id,$customer)

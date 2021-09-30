@@ -1,19 +1,20 @@
 <?php namespace App\Sheba\Business\Salary;
 
-use App\Models\BusinessMember;
-use App\Models\Member;
+use App\Sheba\Business\Salary\Component\Maker;
 use Illuminate\Support\Facades\DB;
+use Sheba\Dal\PayrollComponent\PayrollComponentRepository;
 use Sheba\Dal\Salary\SalaryRepository;
 use Sheba\Dal\SalaryLog\SalaryLogRepository;
 use App\Sheba\Business\SalaryLog\Requester;
+use App\Sheba\Business\Salary\Requester as SalaryRequester;
 use App\Sheba\Business\SalaryLog\Creator;
 
 class Updater
 {
+    /** @var SalaryRequester $salaryRequest */
     private $salaryRequest;
     /** @var SalaryRepository */
     private $salaryRepository;
-    private $businessMember;
     private $salaryData = [];
     private $salary;
     /** @var SalaryLogRepository */
@@ -24,8 +25,9 @@ class Updater
     private $salaryLogRequester;
     /** @var Creator */
     private $salaryLogCreator;
-    private $managerMember;
     private $oldSalary;
+    /*** @var PayrollComponentRepository */
+    private $payrollComponentRepository;
 
     /**
      * Updater constructor.
@@ -40,10 +42,14 @@ class Updater
         $this->SalaryLogRepository = $salary_log_repository;
         $this->salaryLogRequester = $salary_log_requester;
         $this->salaryLogCreator = $salary_log_creator;
+        $this->payrollComponentRepository = app(PayrollComponentRepository::class);
     }
 
-    /** @param $salary_request */
-    public function setSalaryRequester($salary_request)
+    /**
+     * @param SalaryRequester $salary_request
+     * @return $this
+     */
+    public function setSalaryRequester(SalaryRequester $salary_request)
     {
         $this->salaryRequest = $salary_request;
         return $this;
@@ -60,8 +66,11 @@ class Updater
     {
         $this->makeData();
         DB::transaction(function () {
-            $this->salaryRepository->update($this->salary, $this->salaryData);
-            $this->salaryLogCreate();
+            if ($this->oldSalary != $this->salaryRequest->getGrossSalary()) {
+                $this->salaryRepository->update($this->salary, $this->salaryData);
+                $this->salaryLogCreate();
+            }
+            $this->createComponentPercentage();
         });
         return true;
     }
@@ -81,5 +90,15 @@ class Updater
             ->setSalary($this->salary);
         $this->salaryLogCreator->setSalaryLogRequester($this->salaryLogRequester)->create();
     }
-
+    private function createComponentPercentage()
+    {
+        $business_member = $this->salaryRequest->getBusinessMember();
+        $breakdown_percentage = $this->salaryRequest->getBreakdownPercentage();
+        if (empty($breakdown_percentage)) return true;
+        foreach ($breakdown_percentage as $component) {
+            $gross_salary_breakdown_maker = new Maker($component, $business_member, $this->salary, $this->oldSalary);
+            $gross_salary_breakdown_maker->setManager($this->salaryRequest->getManagerMember());
+            $gross_salary_breakdown_maker->runComponent();
+        }
+    }
 }

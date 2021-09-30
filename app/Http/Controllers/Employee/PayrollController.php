@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\Employee;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\Business\SendPayslipEmailToBusinessMember;
 use App\Sheba\Business\Payslip\PayReport\PayReportPdfHandler;
 use Illuminate\Http\Request;
 use App\Sheba\Business\BusinessBasicInformation;
@@ -28,9 +29,16 @@ class PayrollController extends Controller
         $time_period = $time_frame->forAMonth($request->month, $request->year);
         $payslip = $this->payslipRepository->where('business_member_id', $business_member->id)->where('status', Status::DISBURSED)->whereBetween('schedule_date', [$time_period->start, $time_period->end])->first();
         if (!$payslip) return api_response($request, null, 404);
+        if ($request->send_email) {
+            $pdf_link = $request->pdf_link;
+            $profile = $business_member->member->profile;
+            $employee_email = $profile->email;
+            $employee_name = $profile->name;
+            dispatch(new SendPayslipEmailToBusinessMember($business_member->business, $employee_email, $employee_name, $time_period, $pdf_link));
+            return api_response($request, null, 200, ['employee_email' => $employee_email]);
+        }
         $pay_report_detail = $pay_report_details->setPayslip($payslip)->get();
-
-        $pay_report_pdf = $pay_report_pdf_handler->setPayReportDetails($pay_report_detail)->setTimePeriod($time_period)->generate();
+        $pay_report_pdf = $pay_report_pdf_handler->setBusinessMember($business_member)->setPayReportDetails($pay_report_detail)->setTimePeriod($time_period)->generate();
         return api_response($request, null, 200, ['payslip_pdf_link' => $pay_report_pdf]);
     }
 

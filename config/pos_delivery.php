@@ -1,6 +1,5 @@
 <?php
 
-
 return [
     'mobile_banking_providers' => ['bkash', 'rocket'],
     'payment_method_for_bank' => ['beftn'],
@@ -20,7 +19,8 @@ return [
             'minimum' => 110,
             'kg_wise' => 30
         ],
-        'note' => 'ক্যাশ অন ডেলিভারি চার্জঃ ১% চার্জ প্রযোজ্য হবে বিলের উপর'
+        'note' => 'ক্যাশ অন ডেলিভারির ক্ষেত্রে বিলের উপর ১%  চার্জ প্রযোজ্য।সিটির মধ্যে পরের দিন ডেলিভারি ও সপ্তাহে ৫ দিন মার্চেন্ট পেমেন্ট।'
     ],
-    'cash_on_delivery_charge_percentage' => 1
+    'cash_on_delivery_charge_percentage' => 1,
+    'terms_and_condition_link' => 'https://www.paperfly.com.bd/faq.php'
 ];

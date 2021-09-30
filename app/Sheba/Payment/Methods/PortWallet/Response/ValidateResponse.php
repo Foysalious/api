@@ -30,6 +30,9 @@ class ValidateResponse extends PaymentMethodResponse
 
     public function getOrderStatus()
     {
-        return $this->response->data->order->status;
+        if (isset($this->response->data)){
+            return $this->response->data->order->status;
+        }
+        return 'VALIDATION FAILED';
     }
 }

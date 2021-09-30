@@ -5,7 +5,7 @@ class NeoBankingRoute
     public function set($api)
     {
         $api->group(['prefix' => 'partners'], function ($api) {
-            $api->group(['prefix' => '{partner}', 'middleware' => ['manager.auth']], function ($api) {
+            $api->group(['prefix' => '{partner}', 'middleware' => ['jwtGlobalAuth']], function ($api) {
                 $api->group(['prefix' => 'neo-banking'], function ($api) {
                     $api->get('/information-completion', 'NeoBanking\\NeoBankingController@getAccountInformationCompletion');
                     $api->get('/business-information', 'NeoBanking\\NeoBankingController@getBusinessInformation');
@@ -24,6 +24,7 @@ class NeoBankingRoute
                     $api->get('/select-types', 'NeoBanking\\NeoBankingController@selectTypes');
                     $api->post('/account-apply', 'NeoBanking\\NeoBankingController@accountApply');
                     $api->post('/gigatech-liveliness-log', 'NeoBanking\\NeoBankingGigatechController@storeLivelinessLog');
+                    $api->get('/partner-acknowledgment', 'NeoBanking\\NeoBankingController@partnerAcknowledgment');
                 });
             });
         });
