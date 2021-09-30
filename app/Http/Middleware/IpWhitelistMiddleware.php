@@ -21,7 +21,8 @@ class IpWhitelistMiddleware
         if ($this->runningUnitTests()) return $next($request);
         $whitelisted_ips = Redis::get(config('sheba.whitelisted_ip_redis_key_name'));
         if ((config('app.env') == 'local') || $whitelisted_ips &&
-            in_array(getIp(), json_decode($whitelisted_ips))) {
+                in_array(getIp(), json_decode($whitelisted_ips)))
+        {
             return $next($request);
         }
         throw new AuthorizationException;

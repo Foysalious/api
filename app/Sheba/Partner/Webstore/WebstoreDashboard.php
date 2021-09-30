@@ -130,12 +130,12 @@ class WebstoreDashboard
 
     private function getOrderStatsFromPosOrderService($status): array
     {
-        $order_stats['pending_order'] = $status['Pending'];
-        $order_stats['processing_order'] = $status['Processing'];
-        $order_stats['shipped_order'] = $status['Shipped'];
-        $order_stats['completed_order'] = $status['Completed'];
-        $order_stats['declined_order'] = $status['Declined'];
-        $order_stats['cancelled_order'] = $status['Cancelled'];
+        $order_stats['pending_order'] = $status['Pending'] ?? 0;
+        $order_stats['processing_order'] = $status['Processing'] ?? 0;
+        $order_stats['shipped_order'] = $status['Shipped'] ?? 0;
+        $order_stats['completed_order'] = $status['Completed'] ?? 0;
+        $order_stats['declined_order'] = $status['Declined'] ?? 0;
+        $order_stats['cancelled_order'] = $status['Cancelled'] ?? 0;
         return $order_stats;
     }
 
