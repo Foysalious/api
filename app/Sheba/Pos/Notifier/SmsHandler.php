@@ -36,14 +36,7 @@ class SmsHandler
         $partner = $this->order->partner;
         $partner->reload();
         if (empty($this->order->customer)) return;
-
-        $service_break_down = [];
-        $this->order->items->each(function ($item) use (&$service_break_down) {
-            $service_break_down[$item->id] = $item->service_name . ': ' . $item->getTotal();
-        });
-
-        $service_break_down = implode(',', $service_break_down);
-        $sms                = $this->getSms($service_break_down);
+        $sms                = $this->getSms();
         $sms_cost           = $sms->getCost();
         if ((double)$partner->wallet > (double)$sms_cost) {
             /** @var WalletTransactionHandler $walletTransactionHandler */

@@ -224,6 +224,7 @@ class Creator
             if (!$this->request->has('refund_nature')) {
                 $this->storeJournal($order);
             }
+            DB::commit();
             return $order;
         } catch (Throwable $e) {
             DB::rollback();
@@ -349,7 +350,7 @@ class Creator
             /** @var PartnerPosService $original_service */
             $original_service = isset($service['id']) && !empty($service['id']) ? $this->posServiceRepo->find($service['id']) : $this->posServiceRepo->defaultInstance($service, $this->partner);
             if (is_null($original_service)) $original_service = $this->posServiceRepo->defaultInstance($service, $this->partner);
-            $service_id[]                 = isset($service['id']) && !empty($service['id']) ? $service['id'] : 0;
+            $service_id[] = isset($service['id']) && !empty($service['id']) ? $service['id'] : 0;
             $service_wholesale_applicable = $original_service->wholesale_price ? true : false;
             $service['unit_price'] = (isset($service['updated_price']) && $service['updated_price']) ? $service['updated_price'] : ($this->isWholesalePriceApplicable($service_wholesale_applicable) ? $original_service->wholesale_price : $original_service->price);
             $total_price += ($service['unit_price'] * $service['quantity']);

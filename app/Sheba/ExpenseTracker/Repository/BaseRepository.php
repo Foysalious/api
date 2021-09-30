@@ -2,33 +2,29 @@
 
 use App\Models\Partner;
 use Sheba\AccountingEntry\Repository\UserMigrationRepository;
-use Sheba\Dal\AccountingMigratedUser\UserStatus;
+use Sheba\Dal\UserMigration\UserStatus;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ModificationFields;
-use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\TopUp\TopUpAgent;
 
 class BaseRepository
 {
     use ModificationFields;
 
+    CONST NOT_ELIGIBLE = 'not_eligible';
+
     /** @var ExpenseTrackerClient $client */
     protected $client;
     /** @var int $accountId */
     protected $accountId;
-
-    protected $paymentCreator;
-
     protected $partnerId;
-
     /**
      * BaseRepository constructor.
      * @param ExpenseTrackerClient $client
      */
-    public function __construct(ExpenseTrackerClient $client,PaymentCreator $payment_creator)
+    public function __construct(ExpenseTrackerClient $client)
     {
         $this->client = $client;
-        $this->paymentCreator = $payment_creator;
     }
 
     /**
@@ -55,11 +51,11 @@ class BaseRepository
      */
     protected function isMigratedToAccounting()
     {
+        $arr = [self::NOT_ELIGIBLE, UserStatus::PENDING, UserStatus::UPGRADING, UserStatus::FAILED];
         /** @var UserMigrationRepository $userMigrationRepo */
         $userMigrationRepo = app(UserMigrationRepository::class);
         $userStatus = $userMigrationRepo->userStatus($this->partnerId);
-        if (!$userStatus) return false;
-        if ($userStatus == UserStatus::PENDING) return false;
+        if (in_array($userStatus, $arr)) return false;
         return true;
     }
 }

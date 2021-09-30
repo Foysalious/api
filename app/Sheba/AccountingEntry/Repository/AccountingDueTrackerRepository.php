@@ -99,57 +99,53 @@ class AccountingDueTrackerRepository extends BaseRepository
         try {
             $url = "api/due-list?";
             $url = $this->updateRequestParam($request, $url);
-            $customerProfiles = null;
-            if($request->has('q') && !empty($request->q)) {
-                $profiles = PartnerPosCustomer::with([
-                 'customer' => function($q) {
-                     $q->select('id', 'profile_id');
-                 },
-                 'customer.profile' => function($q) {
-                     $q->select('name', 'mobile', 'id', 'pro_pic');
-                 }])->where('partner_id', $this->partner->id);
-
-                if (is_numeric($request->q)) {
-                    $profiles->whereHas('customer.profile', function ($query) use ($request) {
-                        $query->where('mobile', 'like', '%'.$request->q.'%');
-                    });
-                }
-                else {
-                    $profiles->whereHas('customer.profile', function ($query) use ($request) {
-                        $query->where('name', 'like', '%'.$request->q.'%');
-                    });
-                }
-                $customerProfiles = $profiles->get();
-                if ($customerProfiles->isEmpty()) {
-                    return ['list' => []];
-                }
-                $ids = $profiles->get()->pluck('customer_id');
-                $ids = implode(",", $ids->toArray());
-                $url .= "&q=$ids";
-            }
-            $result = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
-            if ($customerProfiles) {
-                $list = $this->attachCustomerProfile(collect($result['list']), $customerProfiles);
-            } else {
-                $list = $this->attachProfile(collect($result['list']));
-            }
-            $list = $list->reject(function ($value) {
-                return $value == null;
-            });
-
-            if ($request->has('filter_by_supplier') && $request->filter_by_supplier == 1) {
-                $list = $list->where('is_supplier', 1)->values();
-            }
+            $list = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
             if (!empty($order_by) && $order_by == "name") {
                 $order = ($request->order == 'desc') ? 'sortByDesc' : 'sortBy';
                 $list = $list->$order('customer_name', SORT_NATURAL | SORT_FLAG_CASE)->values();
             }
-            $new_data = array();
-            foreach ($list as $l)
-                $new_data[] = $l;
-            return [
-                'list' => $new_data
-            ];
+            return $list;
+//            $customerProfiles = null;
+//            if($request->has('q') && !empty($request->q)) {
+//                $profiles = PartnerPosCustomer::with([
+//                 'customer' => function($q) {
+//                     $q->select('id', 'profile_id');
+//                 },
+//                 'customer.profile' => function($q) {
+//                     $q->select('name', 'mobile', 'id', 'pro_pic');
+//                 }])->where('partner_id', $this->partner->id);
+//
+//                if (is_numeric($request->q)) {
+//                    $profiles->whereHas('customer.profile', function ($query) use ($request) {
+//                        $query->where('mobile', 'like', '%'.$request->q.'%');
+//                    });
+//                }
+//                else {
+//                    $profiles->whereHas('customer.profile', function ($query) use ($request) {
+//                        $query->where('name', 'like', '%'.$request->q.'%');
+//                    });
+//                }
+//                $customerProfiles = $profiles->get();
+//                if ($customerProfiles->isEmpty()) {
+//                    return ['list' => []];
+//                }
+//                $ids = $profiles->get()->pluck('customer_id');
+//                $ids = implode(",", $ids->toArray());
+//                $url .= "&q=$ids";
+//            }
+//            if ($customerProfiles) {
+//                $list = $this->attachCustomerProfile(collect($result['list']), $customerProfiles);
+//            } else {
+//                $list = $this->attachProfile(collect($result['list']));
+//            }
+//            $list = $list->reject(function ($value) {
+//                return $value == null;
+//            });
+
+//            if ($request->has('filter_by_supplier') && $request->filter_by_supplier == 1) {
+//                $list = $list->where('is_supplier', 1)->values();
+//            }
+
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
@@ -349,6 +345,14 @@ class AccountingDueTrackerRepository extends BaseRepository
         if (($request->has('download_pdf')) && ($request->download_pdf == 1) ||
             ($request->has('share_pdf')) && ($request->share_pdf == 1)) {
             return $url;
+        }
+
+        if ($request->has('filter_by_supplier') && $request->filter_by_supplier == 1) {
+            $url .= "&filter_by_supplier=$request->filter_by_supplier";
+        }
+
+        if ($request->has('q')) {
+            $url .= "&q=$request->q";
         }
 
         if ($request->has('limit') && $request->has('offset')) {
