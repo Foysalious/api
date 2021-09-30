@@ -4,7 +4,6 @@ use App\Models\PosOrder;
 use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Reports\PdfHandler;
-use Sheba\Subscription\Partner\Access\RulesDescriber\Pos;
 
 class InvoiceService
 {
