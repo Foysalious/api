@@ -19,9 +19,9 @@ class IpWhitelistMiddleware
     public function handle(Request $request, Closure $next)
     {
         if ($this->runningUnitTests()) return $next($request);
-        $key = config('sheba.whitelisted_ip_redis_key_name');
-        if ((config('app.env') == 'local') || $key &&
-                in_array(getIp(), json_decode($key)))
+        $whitelisted_ips = Redis::get(config('sheba.whitelisted_ip_redis_key_name'));
+        if ((config('app.env') == 'local') || $whitelisted_ips &&
+                in_array(getIp(), json_decode($whitelisted_ips)))
         {
             return $next($request);
         }
