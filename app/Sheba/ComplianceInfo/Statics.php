@@ -6,6 +6,10 @@ use Carbon\Carbon;
 
 class Statics
 {
+    const VERIFIED = "verified";
+    const REJECTED = "rejected";
+
+
     public static function complianceInfoUpdateValidation(): array
     {
         return [
@@ -20,7 +24,7 @@ class Statics
     {
         return [
             'shop_type', 'monthly_transaction_volume', 'registration_year', 'email', 'trade_license',
-            'tin_licence_photo', 'electricity_bill_image'
+            'tin_licence_photo', 'electricity_bill_image', 'tin_no'
         ];
     }
 }

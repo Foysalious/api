@@ -57,4 +57,21 @@ class ComplianceInfoController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function statusCheck(Request $request): JsonResponse
+    {
+        try {
+            /** @var Partner $partner */
+            $partner = $request->partner;
+            $status = $this->compliance->setPartner($partner)->getComplianceStatus();
+            return api_response($request, null, 200, ['data' => ["status" => $status]]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
+    }
 }
