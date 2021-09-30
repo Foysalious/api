@@ -26,6 +26,7 @@ class IndexRoute
             $api->group(['prefix' => 'compliance-info'], function ($api) {
                 $api->get('/show', 'ComplianceInfoController@show');
                 $api->post('/update', 'ComplianceInfoController@update');
+                $api->get('/status-check', 'ComplianceInfoController@statusCheck');
             });
         });
     }

@@ -5,10 +5,10 @@ namespace Sheba\ComplianceInfo;
 use App\Models\Partner;
 use App\Repositories\FileRepository;
 use Carbon\Carbon;
-use Illuminate\Http\UploadedFile;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
+use Sheba\Repositories\PartnerTransactionRepository;
 
 class ComplianceInfo
 {
@@ -27,25 +27,33 @@ class ComplianceInfo
     }
 
     /**
+     * @param int $additional_fields
      * @return array
      */
-    public function get(): array
+    public function get($additional_fields = 0): array
     {
-        return $this->formatData();
+        return $this->formatData($additional_fields);
     }
 
-    private function formatData(): array
+    private function formatData($additional_fields): array
     {
-        return [
+        $data = [
             "shop_type" => $this->partner->basicInformations->shop_type ?? '',
             "monthly_transaction_volume" => $this->partner->basicInformations->monthly_transaction_volume ?? '',
-            "registration_year" => Carbon::parse($this->partner->basicInformations->registration_year)->toDateString() ?? '',
+            "registration_year" => $this->partner->basicInformations->registration_year ? Carbon::parse($this->partner->basicInformations->registration_year)->toDateString() : '',
             "email" => $this->partner->email ?? '',
             "bank_account" => $this->formatBankAccount($this->partner->withdrawalBankInformations()->first()),
             "trade_license" => $this->partner->basicInformations->trade_license ?? "",
+            "tin_no"        => $this->partner->basicInformations->tin_no ?? "",
             "tin_licence_photo" => $this->partner->basicInformations->tin_licence_photo ?? "",
             "electricity_bill_image" => $this->partner->basicInformations->electricity_bill_image ?? ""
         ];
+
+        return $additional_fields ? array_merge($data, [
+            "cpv_status"         => $this->partner->basicInformations->cpv_status,
+            "grantor"            => $this->partner->basicInformations->grantor,
+            "security_cheque"    => $this->partner->basicInformations->security_cheque
+        ]) : $data;
     }
 
     /**
@@ -105,5 +113,43 @@ class ComplianceInfo
     private function _saveDocumentImage($image, $name): string
     {
         return $this->saveFileToCDN($image, getComplianceFolder(), $name);
+    }
+
+    /**
+     * @return string
+     */
+    public function getComplianceStatus(): string
+    {
+        $total = (new PartnerTransactionRepository($this->partner))->thisMonthTotalPaymentLinkCredit();
+
+        if ($total >= config('compliance_info.third_transaction_limit')) return $this->getStatusByCondition('third_limit_required_fields', 1);
+
+        elseif ($total >= config('compliance_info.second_transaction_limit')) return $this->getStatusByCondition('second_limit_required_fields', 1);
+
+        elseif ($total >= config('compliance_info.first_transaction_limit')) return $this->getStatusByCondition('first_limit_required_fields', 0);
+
+        return Statics::REJECTED;
+    }
+
+    private function getStatusByCondition($required_fields_key, $additional_fields): string
+    {
+        $data = $this->get($additional_fields);
+        $required_fields = config("compliance_info.$required_fields_key");
+        if($this->allValuesExist($data, $required_fields)) return Statics::VERIFIED;
+        return Statics::REJECTED;
+    }
+
+    /**
+     * @param $data
+     * @param $fields
+     * @return bool
+     */
+    private function allValuesExist($data, $fields): bool
+    {
+        foreach ($fields as $field) {
+            if(empty($data[$field])) return false;
+            elseif($field === "cpv_status" && $data[$field] !== "verified") return false;
+        }
+        return true;
     }
 }
