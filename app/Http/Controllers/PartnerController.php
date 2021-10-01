@@ -1053,11 +1053,19 @@ class PartnerController extends Controller
      */
     public function addVatRegistrationNumber(Request $request)
     {
-        $this->validate($request, ['vat_registration_number' => 'required']);
+        $this->validate($request, [
+            'vat_registration_number' => 'required',
+            'is_show_vat_reg_number' => 'sometimes|required|in:1,0'
+        ]);
         /** @var Partner $partner */
         $partner = $request->partner;
         $this->setModifier($request->manager_resource);
-        $partner->basicInformations()->update($this->withUpdateModificationField(['vat_registration_number' => $request->vat_registration_number]));
+        $partner->basicInformations()->update($this->withUpdateModificationField(
+            [
+                'vat_registration_number' => $request->vat_registration_number,
+                'is_show_vat_reg_number' => $request->is_show_vat_reg_number ?: 0
+            ]
+        ));
         return api_response($request, null, 200, ['msg' => 'Vat Registration Number Update Successfully']);
     }
 
