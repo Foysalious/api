@@ -62,7 +62,7 @@ class OrderController extends Controller
         ini_set('memory_limit', '4096M');
         ini_set('max_execution_time', 420);
         $status  = $request->status;
-        $partner = $request->partner;
+        $partner = resolvePartnerFromAuthMiddleware($request);
         list($offset, $limit) = calculatePagination($request);
         $posOrderList = $posOrderList->setPartner($partner)->setStatus($status)->setOffset($offset)->setLimit($limit);
         if ($request->has('sales_channel')) $posOrderList = $posOrderList->setSalesChannel($request->sales_channel);

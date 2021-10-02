@@ -1,18 +1,14 @@
 <?php namespace App\Http\Controllers\Partner\Webstore;
 
-use App\Models\Partner;
 use App\Sheba\Partner\Webstore\WebstoreBannerSettings;
 use App\Transformers\CustomSerializer;
 use App\Transformers\Partner\WebstoreSettingsTransformer;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Http\Requests;
 use App\Http\Controllers\Controller;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
-use Sheba\Dal\WebstoreBanner\Model as WebstoreBanner;
 use Sheba\ModificationFields;
 use Sheba\Partner\Webstore\WebstoreSettingsUpdateRequest;
 use Sheba\Subscription\Partner\Access\AccessManager;
@@ -25,7 +21,7 @@ class WebstoreSettingsController extends Controller
 
     public function index($partner, Request $request)
     {
-        $partner = $request->partner;
+        $partner = resolvePartnerFromAuthMiddleware($request);
         $fractal = new Manager();
         $fractal->setSerializer(new CustomSerializer());
         $resource = new Item($partner, new WebstoreSettingsTransformer());
@@ -42,7 +38,7 @@ class WebstoreSettingsController extends Controller
      */
     public function update($partner, Request $request, WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest)
     {
-
+        $partner = resolvePartnerFromAuthMiddleware($request);
         $this->validate($request, [
             'is_webstore_published' => 'sometimes|numeric|between:0,1', 'name' => 'sometimes|string',
             'sub_domain' => 'sometimes|string', 'delivery_charge' => 'sometimes|numeric|digits_between:1,5'
@@ -50,13 +46,12 @@ class WebstoreSettingsController extends Controller
             [
                 'delivery_charge.digits_between' => 'ডেলিভারি চার্জ ৫ সংখ্যার মধ্যে হওয়া আবশ্যক।'
             ]);
-
         $is_webstore_published = 0;
-        $partner_id = $request->partner->id;
+        $partner_id = $partner->id;
         $this->setModifier($request->manager_resource);
-        $webstoreSettingsUpdateRequest->setPartner($request->partner);
+        $webstoreSettingsUpdateRequest->setPartner($partner);
         if ($request->has('is_webstore_published')) {
-            if ($request->is_webstore_published) AccessManager::checkAccess(AccessManager::Rules()->POS->ECOM->WEBSTORE_PUBLISH, $request->partner->subscription->getAccessRules());
+            if ($request->is_webstore_published) AccessManager::checkAccess(AccessManager::Rules()->POS->ECOM->WEBSTORE_PUBLISH, $partner->subscription->getAccessRules());
             $webstoreSettingsUpdateRequest->setIsWebstorePublished($request->is_webstore_published);
             $is_webstore_published = 1;
         }
@@ -79,7 +74,6 @@ class WebstoreSettingsController extends Controller
             }
         }
         return api_response($request, null, 200, ['message' => 'Successful']);
-
     }
 
 
@@ -104,8 +98,10 @@ class WebstoreSettingsController extends Controller
      */
     public function updateBanner(Request $request, $partner, WebstoreBannerSettings $webstoreBannerSettings)
     {
-        $partner_id = $request->partner->id;
-        $this->setModifier($request->manager_resource);
+        $partner = resolvePartnerFromAuthMiddleware($request);
+        $partner_id = $partner->id;
+        $manager_resource = resolveManagerResourceFromAuthMiddleware($request);
+        $this->setModifier($manager_resource);
         $banner_settings = PartnerWebstoreBanner::where('partner_id', $partner_id)->first();
         if (!$banner_settings)
             return api_response($request, null, 400, ['message' => 'Banner Settings not found']);
