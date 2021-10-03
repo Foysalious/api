@@ -434,6 +434,7 @@ class AttendanceList
         if ($this->statusFilter != self::ABSENT) {
             foreach ($this->attendances as $attendance) {
                 $checkin_data = $checkout_data = null;
+                $check_in_overridden = $check_out_overridden = 0;
                 $is_on_leave = $this->isOnLeave($attendance->businessMember->member->id);
                 $is_on_half_day_leave = 0;
                 $which_half_day = null;
@@ -480,6 +481,13 @@ class AttendanceList
                     }
                 }
 
+                if ($attendance->overrideLogs) {
+                    foreach ($attendance->overrideLogs as $override_log) {
+                        if ($override_log->action == Actions::CHECKIN ) $check_in_overridden = 1;
+                        if ($override_log->action == Actions::CHECKOUT) $check_out_overridden = 1;
+                    }
+                }
+
                 array_push($data, $this->getBusinessMemberData($attendance->businessMember) + [
                         'id' => $attendance->id,
                         'check_in' => $checkin_data,
@@ -495,7 +503,11 @@ class AttendanceList
                         'is_half_day_leave' => $is_on_half_day_leave,
                         'which_half_day_leave' => $which_half_day,
                         'leave_type' => $is_on_leave ? $leave_type : null,
-                        'holiday_name' => $is_weekend_or_holiday ? $this->getHolidayName() : null
+                        'holiday_name' => $is_weekend_or_holiday ? $this->getHolidayName() : null,
+                        'override' => [
+                            'is_check_in_overridden' => $check_in_overridden,
+                            'is_check_out_overridden' => $check_out_overridden
+                        ]
                     ]);
             }
         }
