@@ -137,6 +137,12 @@ class MonthlyStat
                         'overtime_in_minutes' => $overtime_in_minutes ?: 0,
                         'overtime' => $overtime_in_minutes ? $this->formatMinute($overtime_in_minutes) : null,
                     ];
+                    if ($attendance->overrideLogs) {
+                        foreach ($attendance->overrideLogs as $override_log) {
+                            if ($override_log->action == Actions::CHECKIN ) $breakdown_data['check_in_overridden'] = 1;
+                            if ($override_log->action == Actions::CHECKOUT) $breakdown_data['check_out_overridden'] = 1;
+                        }
+                    }
                 }
                 if (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance_checkin_action) $statistics[$attendance_checkin_action->status]++;
                 if (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance_checkout_action) $statistics[$attendance_checkout_action->status]++;
