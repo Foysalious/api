@@ -6,6 +6,7 @@ use App\Sheba\AccountingEntry\Constants\UserType;
 use App\Sheba\AccountingEntry\Repository\BaseRepository;
 use App\Sheba\UserMigration\AccountingUserMigration;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\Pos\Product\StockToBatchMigration;
 
 class UserMigrationRepository extends BaseRepository
 {
@@ -26,6 +27,9 @@ class UserMigrationRepository extends BaseRepository
     public function migrateInAccounting($userId, $userType = UserType::PARTNER)
     {
         try {
+            /** @var StockToBatchMigration $inventoryMigration */
+            $inventoryMigration = app(StockToBatchMigration::class);
+            $inventoryMigration->setPartnerId($userId)->migrateStock();
             return $this->client->setUserType($userType)->setUserId($userId)->get($this->api . $userId);
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
