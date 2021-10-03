@@ -3,6 +3,7 @@
 namespace App\Sheba\UserMigration;
 
 use Sheba\Dal\UserMigration\Contract;
+use Sheba\Dal\UserMigration\EloquentImplementation;
 use Exception;
 use Sheba\Dal\UserMigration\UserStatus;
 
@@ -10,12 +11,12 @@ abstract class UserMigrationRepository
 {
     const NOT_ELIGIBLE = 'not_eligible';
 
-    /** @var Contract */
+    /** @var EloquentImplementation */
     private $repo;
     protected $userId;
     protected $moduleName;
 
-    public function __construct(Contract $repo)
+    public function __construct(EloquentImplementation $repo)
     {
         $this->repo = $repo;
     }
