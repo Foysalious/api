@@ -6,12 +6,13 @@ use App\Sheba\AccountingEntry\Constants\UserType;
 use App\Sheba\AccountingEntry\Repository\BaseRepository;
 use App\Sheba\UserMigration\AccountingUserMigration;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\Pos\Product\StockToBatchMigration;
 
 class UserMigrationRepository extends BaseRepository
 {
     /** @var string */
     private $api = 'api/user-migration/';
-    CONST MODULE_NAME = 'expense';
+    const MODULE_NAME = 'expense';
 
     public function __construct(AccountingEntryClient $client)
     {
@@ -19,14 +20,20 @@ class UserMigrationRepository extends BaseRepository
     }
     /**
      * @param $userId
+     * @param $status
      * @param string $userType
      * @return mixed
      * @throws AccountingEntryServerError
      */
-    public function migrateInAccounting($userId, $userType = UserType::PARTNER)
+    public function migrateInAccounting($userId, $status, $userType = UserType::PARTNER)
     {
         try {
-            return $this->client->setUserType($userType)->setUserId($userId)->get($this->api . $userId);
+            /** @var StockToBatchMigration $inventoryMigration */
+            $inventoryMigration = app(StockToBatchMigration::class);
+            $inventoryMigration->setPartnerId($userId)->migrateStock();
+            return $this->client->setUserType($userType)->setUserId($userId)->get(
+                $this->api . $userId . '?status=' . $status
+            );
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
