@@ -13,6 +13,8 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
+use Sheba\ComplianceInfo\ComplianceInfo;
+use Sheba\ComplianceInfo\Statics;
 use Sheba\ModificationFields;
 use Sheba\Partner\PartnerStatuses;
 use Sheba\PaymentLink\Creator;
@@ -115,6 +117,11 @@ class PaymentLinkController extends Controller
             $link = $paymentLinkRepository->findByIdentifier($identifier);
             if ($link) {
                 $receiver = $link->getPaymentReceiver();
+                if($receiver instanceof Partner) {
+                    $status = (new ComplianceInfo())->setPartner($receiver)->getComplianceStatus();
+                    if ($status === Statics::REJECTED)
+                        return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
+                }
                 if ($receiver instanceof Partner && $receiver->status == PartnerStatuses::BLACKLISTED) {
                     return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
                 }
