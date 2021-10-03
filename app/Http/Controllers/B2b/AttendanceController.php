@@ -616,7 +616,9 @@ class AttendanceController extends Controller
             ->setHolidayRepo($this->holidayRepository)
             ->setStartDate($request->start_date)
             ->setEndDate($request->end_date)
-            ->setHolidayName($request->title)->create();
+            ->setHolidayName($request->title)
+            ->create();
+        $this->officeSettingChangesLogsRequester->setBusiness($request->business)->setHolidayStartDate($request->start_date)->setHolidayStartDate($request->start_date);
         return api_response($request, null, 200, ['holiday' => $holiday]);
     }
 

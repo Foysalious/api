@@ -20,6 +20,8 @@ class Requester
     private $officeName;
     private $officeIp;
     private $previousOfficeIp;
+    private $holidayStartDate;
+    private $holidayEndDate;
 
     public function setBusiness(Business $business)
     {
@@ -159,5 +161,27 @@ class Requester
     public function getOfficeIp()
     {
         return $this->officeIp;
+    }
+
+    public function setHolidayStartDate($holiday_start_date)
+    {
+        $this->holidayStartDate = $holiday_start_date;
+        return $this;
+    }
+
+    public function getHolidayStartDate()
+    {
+        return $this->holidayStartDate;
+    }
+
+    public function setHolidayEndDate($holiday_end_date)
+    {
+        $this->holidayEndDate = $holiday_end_date;
+        return $this;
+    }
+
+    public function getHolidayEndDate()
+    {
+        return $this->holidayEndDate;
     }
 }
