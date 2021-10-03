@@ -2,13 +2,16 @@
 
 use App\Models\Business;
 use App\Models\Member;
+use App\Sheba\Business\Attendance\AttendanceBasicInfo;
+use Carbon\Carbon;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\BusinessOfficeHours\Contract as BusinessOfficeHoursRepoInterface;
+use Sheba\Dal\BusinessWeekendSettings\BusinessWeekendSettingsRepo;
 use Sheba\ModificationFields;
 
 class OperationalSetting
 {
-    use ModificationFields;
+    use ModificationFields, AttendanceBasicInfo;
 
     private $business;
     private $member;
@@ -19,6 +22,9 @@ class OperationalSetting
     private $totalWorkingDaysType;
     private $numberOfDays;
     private $isWeekendIncluded;
+    /*** @var BusinessWeekendSettingsRepo $businessWeekendSettingsRepo*/
+    private $businessWeekendSettingsRepo;
+    private $previousWeekends;
 
     /**
      * Updater constructor.
@@ -26,10 +32,11 @@ class OperationalSetting
      * @param BusinessOfficeHoursRepoInterface $office_hour_repo
      */
     public function __construct(BusinessWeekendRepoInterface $weekend_repo,
-                                BusinessOfficeHoursRepoInterface $office_hour_repo)
+                                BusinessOfficeHoursRepoInterface $office_hour_repo, BusinessWeekendSettingsRepo $business_weekend_settings_repo)
     {
         $this->weekend_repo = $weekend_repo;
         $this->office_hour_repo = $office_hour_repo;
+        $this->businessWeekendSettingsRepo = $business_weekend_settings_repo;
     }
 
     public function setBusiness(Business $business)
@@ -44,10 +51,16 @@ class OperationalSetting
         return $this;
     }
 
+    public function setPreviousWeekends($previous_weekends)
+    {
+        $this->previousWeekends = $previous_weekends;
+        return $this;
+    }
+
     public function setWeekends($weekends)
     {
-       $this->weekends = json_decode($weekends,1);
-       return $this;
+        $this->weekends = json_decode($weekends,1);
+        return $this;
     }
 
     private function updateWeekends()
@@ -60,7 +73,10 @@ class OperationalSetting
         foreach ($this->weekends as $weekend) {
             $this->createWeekend($this->business->id, $weekend);
         }
-
+        $previous_weekend_string = $this->getFormattedWeekendsString($this->previousWeekends);
+        $new_weekend_string = $this->getFormattedWeekendsString($this->weekends);
+        if ($previous_weekend_string == $new_weekend_string) return true;
+        $this->updateWeekendSettings();
         return true;
     }
 
@@ -103,5 +119,18 @@ class OperationalSetting
         $this->office_hour_repo->update($office_time, $this->withUpdateModificationField($data));
 
         return true;
+    }
+
+    private function updateWeekendSettings()
+    {
+        $business_id = $this->business->id;
+        $existing_weekend_setting = $this->businessWeekendSettingsRepo->where('business_id', $business_id)->where('end_date', null)->first();
+        $this->businessWeekendSettingsRepo->update($existing_weekend_setting, ['end_date' => Carbon::now()->subDay()->format('Y-m-d')]);
+        $new_setting_data = [
+            'business_id' => $business_id,
+            'start_date' => Carbon::now()->format('Y-m-d'),
+            'weekday_name' => json_encode($this->weekends)
+        ];
+        $this->businessWeekendSettingsRepo->create($new_setting_data);
     }
 }

@@ -62,6 +62,7 @@ class ComplianceInfo
      */
     private function formatBankAccount($account): array
     {
+        if(empty($account)) return [];
         return [
             "id" => $account->id,
             "purpose" => $account->purpose,
@@ -128,7 +129,7 @@ class ComplianceInfo
 
         elseif ($total >= config('compliance_info.first_transaction_limit')) return $this->getStatusByCondition('first_limit_required_fields', 0);
 
-        return Statics::REJECTED;
+        return Statics::VERIFIED;
     }
 
     private function getStatusByCondition($required_fields_key, $additional_fields): string

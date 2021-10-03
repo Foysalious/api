@@ -29,8 +29,8 @@ class PartnerTransaction extends Model
         $query->where('transaction_details', 'LIKE', '%"id":"' . $transactionId . '"%')->orWhere('transaction_details','LIKE','%"trxID":"' . $transactionId . '"%');
     }
 
-    public function scopePaymentLinkCredit($query)
+    public function scopePaymentLinkCredit($query, $partner_id)
     {
-        $query->where('log', 'LIKE', '%has been collected from%')->where('type', Types::CREDIT);
+        $query->where('log', 'LIKE', '%has been collected from%')->where('partner_id', $partner_id)->where('type', Types::CREDIT);
     }
 }

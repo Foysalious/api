@@ -17,6 +17,8 @@ use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\JsonResponse;
 use Jose\Factory\JWEFactory;
 use Jose\Factory\JWKFactory;
+use Sheba\ComplianceInfo\ComplianceInfo;
+use Sheba\ComplianceInfo\Statics;
 use Sheba\Dal\AuthenticationRequest\Purpose;
 use Sheba\Dal\SubscriptionWisePaymentGateway\Model as SubscriptionWisePaymentGateway;
 use Sheba\Dal\TopUpBulkRequest\Statuses;
@@ -131,6 +133,10 @@ class TopUpController extends Controller
         $this->validate($request, $validation_data);
 
         if ($user == 'partner') {
+            $status = (new ComplianceInfo())->setPartner($agent)->getComplianceStatus();
+            if ($status === Statics::REJECTED)
+                return api_response($request, null, 412, ["message" => "Precondition Failed", "error_message" => Statics::complianceRejectedMessage()]);
+
             $token = $request->topup_token;
             if ($token) {
                 try {

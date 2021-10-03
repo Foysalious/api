@@ -26,6 +26,14 @@ use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
 use Sheba\Dal\BusinessOffice\Contract as BusinessOfficeRepoInterface;
 use Sheba\Helpers\TimeFrame;
+use App\Transformers\CustomSerializer;
+use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
+use League\Fractal\Resource\Item;
+use App\Models\BusinessMember;
+use Sheba\Dal\BusinessWeekendSettings\BusinessWeekendSettingsRepo;
+use Sheba\Location\Geo;
+use Sheba\Map\Client\BarikoiClient;
 use Sheba\ModificationFields;
 
 class AttendanceController extends Controller
@@ -43,11 +51,11 @@ class AttendanceController extends Controller
      * @param AttendanceRepoInterface $attendance_repo
      * @param TimeFrame $time_frame
      * @param BusinessHolidayRepoInterface $business_holiday_repo
-     * @param BusinessWeekendRepoInterface $business_weekend_repo
+     * @param BusinessWeekendSettingsRepo $business_weekend_settings_repo
      * @return JsonResponse
      */
-    public function index(Request $request, AttendanceRepoInterface $attendance_repo, TimeFrame $time_frame, BusinessHolidayRepoInterface $business_holiday_repo,
-                          BusinessWeekendRepoInterface $business_weekend_repo)
+    public function index(Request                     $request, AttendanceRepoInterface $attendance_repo, TimeFrame $time_frame, BusinessHolidayRepoInterface $business_holiday_repo,
+                          BusinessWeekendSettingsRepo $business_weekend_settings_repo)
     {
         $this->validate($request, ['year' => 'required|string', 'month' => 'required|string']);
         $year = $request->year;
@@ -68,11 +76,11 @@ class AttendanceController extends Controller
         $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
 
         $business_holiday = $business_holiday_repo->getAllByBusiness($business_member->business);
-        $business_weekend = $business_weekend_repo->getAllByBusiness($business_member->business);
+        $weekend_settings = $business_weekend_settings_repo->getAllByBusiness($business_member->business);
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($attendances, new AttendanceTransformer($time_frame, $business_holiday, $business_weekend, $business_member_leave));
+        $resource = new Item($attendances, new AttendanceTransformer($time_frame, $business_holiday, $weekend_settings, $business_member_leave));
         $attendances_data = $manager->createData($resource)->toArray()['data'];
 
         return api_response($request, null, 200, ['attendance' => $attendances_data, 'joining_date' => $joining_date]);

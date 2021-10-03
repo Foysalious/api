@@ -27,4 +27,15 @@ class Statics
             'tin_licence_photo', 'electricity_bill_image', 'tin_no'
         ];
     }
+
+    /**
+     * @return string[]
+     */
+    public static function complianceRejectedMessage(): array
+    {
+        return [
+            "title" => "তথ্য দিয়ে সহায়তা করুন।",
+            "message" => "চলতি মাসে আপনার ১ লক্ষ টাকার বেশি লেনদেন হয়েছে। কিছু এককালীন তথ্য দিয়ে আমদের সহ্যটা করুন।"
+        ];
+    }
 }

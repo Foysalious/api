@@ -1,9 +1,11 @@
 <?php namespace App\Sheba\Business\OfficeSettingChangesLogs;
 
+use App\Sheba\Business\Attendance\AttendanceBasicInfo;
 use Sheba\Dal\OfficeSettingChangesLogs\OfficeSettingChangesLogsRepository;
 
 class Creator
 {
+    use AttendanceBasicInfo;
     /*** @var Requester */
     private $officeSettingChangesLogsRequester;
     /*** @var OfficeSettingChangesLogsRepository */
@@ -79,11 +81,9 @@ class Creator
     public function createWeekendLogs()
     {
         $previous_weekend = $this->officeSettingChangesLogsRequester->getPreviousWeekends();
-        sort($previous_weekend);
         $new_weekend = $this->officeSettingChangesLogsRequester->getNewWeekends();
-        sort($new_weekend);
-        $previous_weekend_string = implode(', ', array_map('ucfirst', $previous_weekend));
-        $new_weekend_string = implode(', ', array_map('ucfirst', $new_weekend));
+        $previous_weekend_string = $this->getFormattedWeekendsString($previous_weekend);
+        $new_weekend_string = $this->getFormattedWeekendsString($new_weekend);
         if ($previous_weekend_string == $new_weekend_string) return;
         $log_data = [
             'business_id' => $this->officeSettingChangesLogsRequester->getBusiness()->id,
