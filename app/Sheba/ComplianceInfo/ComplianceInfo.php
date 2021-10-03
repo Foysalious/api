@@ -62,6 +62,7 @@ class ComplianceInfo
      */
     private function formatBankAccount($account): array
     {
+        if(empty($account)) return [];
         return [
             "id" => $account->id,
             "purpose" => $account->purpose,
