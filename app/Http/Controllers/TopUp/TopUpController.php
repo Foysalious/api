@@ -134,7 +134,7 @@ class TopUpController extends Controller
             $status = (new ComplianceInfo())->setPartner($agent)->getComplianceStatus();
             if ($status === Statics::REJECTED)
                 return api_response($request, null, 412, ["message" => "Precondition Failed", "error_message" => Statics::complianceRejectedMessage()]);
-            
+
             $token = $request->topup_token;
             if ($token) {
                 try {
