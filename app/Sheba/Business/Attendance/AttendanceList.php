@@ -446,11 +446,14 @@ class AttendanceList
         if ($this->statusFilter != self::ABSENT) {
             foreach ($this->attendances as $attendance) {
                 $checkin_data = $checkout_data = null;
+                $check_in_overridden = $check_out_overridden = 0;
                 $is_on_leave = $this->isOnLeave($attendance->businessMember->member->id);
                 $is_on_half_day_leave = 0;
                 $which_half_day = null;
+                $leave_type = null;
                 if ($is_on_leave) {
                     $leave = $this->usersLeaveIds[$attendance->businessMember->member->id];
+                    $leave_type = $leave['leave']['type'];
                     $is_on_half_day_leave = $leave['leave']['is_half_day_leave'];
                     $which_half_day = $leave['leave']['which_half_day'];
                 }
@@ -490,6 +493,13 @@ class AttendanceList
                     }
                 }
 
+                if ($attendance->overrideLogs) {
+                    foreach ($attendance->overrideLogs as $override_log) {
+                        if ($override_log->action == Actions::CHECKIN ) $check_in_overridden = 1;
+                        if ($override_log->action == Actions::CHECKOUT) $check_out_overridden = 1;
+                    }
+                }
+
                 array_push($data, $this->getBusinessMemberData($attendance->businessMember) + [
                         'id' => $attendance->id,
                         'check_in' => $checkin_data,
@@ -503,7 +513,13 @@ class AttendanceList
                         'is_holiday' => $is_weekend_or_holiday ? 1 : 0,
                         'weekend_or_holiday' => $is_weekend_or_holiday ? $this->isWeekendOrHoliday() : null,
                         'is_half_day_leave' => $is_on_half_day_leave,
-                        'which_half_day_leave' => $which_half_day
+                        'which_half_day_leave' => $which_half_day,
+                        'leave_type' => $is_on_leave ? $leave_type : null,
+                        'holiday_name' => $is_weekend_or_holiday ? $this->getHolidayName() : null,
+                        'override' => [
+                            'is_check_in_overridden' => $check_in_overridden,
+                            'is_check_out_overridden' => $check_out_overridden
+                        ]
                     ]);
             }
         }
@@ -607,7 +623,7 @@ class AttendanceList
         elseif ($this->business) $business_member_ids = $this->getBusinessMemberIds();
 
         $leaves = $this->leaveRepositoryInterface->builder()
-            ->select('id', 'business_member_id', 'end_date', 'status', 'is_half_day', 'half_day_configuration')
+            ->select('id', 'business_member_id', 'leave_type_id', 'end_date', 'status', 'is_half_day', 'half_day_configuration')
             ->whereIn('business_member_id', $business_member_ids)
             ->accepted()
             ->where('start_date', '<=', $this->startDate->toDateString())->where('end_date', '>=', $this->endDate->toDateString())
@@ -629,6 +645,8 @@ class AttendanceList
                             ]);
                         }
                     ]);
+            }, 'leaveType' => function ($query) {
+                $query->withTrashed()->select('id', 'business_id', 'title');
             }]);
 
         if ($this->businessDepartmentId) {
@@ -650,6 +668,7 @@ class AttendanceList
                 'business_member_id' => $leave->businessMember->id,
                 'leave' => [
                     'id' => $leave->id,
+                    'type' => $leave->leaveType->title,
                     'is_half_day_leave' => (int)$leave->is_half_day,
                     'which_half_day' => $leave->is_half_day ? $leave->half_day_configuration : null
                 ]
@@ -796,6 +815,21 @@ class AttendanceList
         $weekend_day = $this->checkWeekend->getWeekendDays($this->startDate, $weekend_settings);
 
         return $this->isWeekend($this->startDate, $weekend_day) ? 'weekend' : 'holiday';
+    }
+
+    /**
+     * @return null
+     */
+    private function getHolidayName()
+    {
+        $business_holiday = $this->businessHoliday->getAllByBusiness($this->business);
+        $holiday_name = null;
+        foreach ($business_holiday as $holiday) {
+            if (!$this->startDate->between($holiday->start_date, $holiday->end_date)) continue;
+            $holiday_name = $holiday->title;
+            break;
+        }
+        return $holiday_name;
     }
 
 }
