@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\Partner\Webstore;
 
+use App\Exceptions\DoNotReportException;
 use App\Sheba\Partner\Webstore\WebstoreBannerSettings;
 use App\Transformers\CustomSerializer;
 use App\Transformers\Partner\WebstoreSettingsTransformer;
@@ -34,7 +35,7 @@ class WebstoreSettingsController extends Controller
      * @param Request $request
      * @param WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest
      * @return JsonResponse
-     * @throws AccessRestrictedExceptionForPackage
+     * @throws AccessRestrictedExceptionForPackage|DoNotReportException
      */
     public function update($partner, Request $request, WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest)
     {
