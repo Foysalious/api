@@ -32,6 +32,7 @@ use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\BusinessOfficeHours\Contract as BusinessOfficeHoursRepoInterface;
 use Sheba\Dal\BusinessAttendanceTypes\Contract as BusinessAttendanceTypesRepoInterface;
 use Sheba\Dal\BusinessOffice\Contract as BusinessOfficeRepoInterface;
+use Sheba\Dal\BusinessWeekendSettings\BusinessWeekendSettingsRepo;
 use Sheba\Dal\OfficePolicy\Type;
 use Sheba\Dal\OfficeSettingChangesLogs\OfficeSettingChangesLogsRepository;
 use Sheba\Helpers\TimeFrame;
@@ -137,19 +138,20 @@ class AttendanceController extends Controller
         return api_response($request, null, 200, ['attendances' => $attendances, 'total' => $count]);
     }
 
+
     /**
      * @param $business
      * @param Request $request
      * @param AttendanceRepoInterface $attendance_repo
      * @param TimeFrame $time_frame
      * @param BusinessHolidayRepoInterface $business_holiday_repo
-     * @param BusinessWeekendRepoInterface $business_weekend_repo
+     * @param BusinessWeekendSettingsRepo $business_weekend_settings_repo
      * @param Excel $monthly_excel
      * @return JsonResponse|void
      */
     public function getMonthlyStats($business, Request $request, AttendanceRepoInterface $attendance_repo,
                                     TimeFrame $time_frame, BusinessHolidayRepoInterface $business_holiday_repo,
-                                    BusinessWeekendRepoInterface $business_weekend_repo, Excel $monthly_excel)
+                                    BusinessWeekendSettingsRepo $business_weekend_settings_repo, Excel $monthly_excel)
     {
         ini_set('memory_limit', '6096M');
         ini_set('max_execution_time', 480);
@@ -175,7 +177,7 @@ class AttendanceController extends Controller
 
         $all_employee_attendance = [];
         $business_holiday = $business_holiday_repo->getAllByBusiness($business);
-        $business_weekend = $business_weekend_repo->getAllByBusiness($business);
+        $weekend_settings = $business_weekend_settings_repo->getAllByBusiness($business);
         foreach ($business_members->get() as $business_member) {
             if ($request->has('start_date') && $request->has('end_date')) {
                 $start_date = $request->start_date;
@@ -199,7 +201,7 @@ class AttendanceController extends Controller
             $time_frame = $time_frame->forDateRange($start_date, $end_date);
             $business_member_leave = $business_member->leaves()->accepted()->startDateBetween($time_frame)->endDateBetween($time_frame)->get();
             $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
-            $employee_attendance = (new MonthlyStat($time_frame, $business, $business_holiday, $business_weekend, $business_member_leave, false))->transform($attendances);
+            $employee_attendance = (new MonthlyStat($time_frame, $business, $business_holiday, $weekend_settings, $business_member_leave, false))->transform($attendances);
 
             array_push($all_employee_attendance, [
                 'business_member_id' => $business_member->id,
@@ -359,7 +361,7 @@ class AttendanceController extends Controller
      * @param $member
      * @param Request $request
      * @param BusinessHolidayRepoInterface $business_holiday_repo
-     * @param BusinessWeekendRepoInterface $business_weekend_repo
+     * @param BusinessWeekendSettingsRepo $business_weekend_settings_repo
      * @param AttendanceRepoInterface $attendance_repo
      * @param BusinessMemberRepositoryInterface $business_member_repository
      * @param TimeFrame $time_frame
@@ -368,7 +370,7 @@ class AttendanceController extends Controller
      * @return JsonResponse|void
      */
     public function showStat($business, $member, Request $request, BusinessHolidayRepoInterface $business_holiday_repo,
-                             BusinessWeekendRepoInterface $business_weekend_repo, AttendanceRepoInterface $attendance_repo,
+                             BusinessWeekendSettingsRepo $business_weekend_settings_repo, AttendanceRepoInterface $attendance_repo,
                              BusinessMemberRepositoryInterface $business_member_repository,
                              TimeFrame $time_frame, AttendanceList $list, DetailsExcel $details_excel)
     {
@@ -392,9 +394,9 @@ class AttendanceController extends Controller
         $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
 
         $business_holiday = $business_holiday_repo->getAllByBusiness($business);
-        $business_weekend = $business_weekend_repo->getAllByBusiness($business);
+        $weekend_settings = $business_weekend_settings_repo->getAllByBusiness($business);
 
-        $employee_attendance = (new MonthlyStat($time_frame, $business, $business_holiday, $business_weekend, $business_member_leave))->transform($attendances);
+        $employee_attendance = (new MonthlyStat($time_frame, $business, $business_holiday, $weekend_settings, $business_member_leave))->transform($attendances);
         $daily_breakdowns = collect($employee_attendance['daily_breakdown']);
         $daily_breakdowns = $daily_breakdowns->filter(function ($breakdown) {
             return Carbon::parse($breakdown['date'])->lessThanOrEqualTo(Carbon::today());
@@ -872,6 +874,7 @@ class AttendanceController extends Controller
         $previous_is_weekend_included = $business_office->is_weekend_included;
         $office_timing = $operational_setting_updater->setBusiness($request->business)
             ->setMember($business_member->member)
+            ->setPreviousWeekends($business_weekend)
             ->setWeekends($request->weekends)
             ->setTotalWorkingDaysType($request->working_days_type)
             ->setNumberOfDays($request->days)
