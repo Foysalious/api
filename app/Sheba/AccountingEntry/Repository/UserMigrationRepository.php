@@ -19,14 +19,17 @@ class UserMigrationRepository extends BaseRepository
     }
     /**
      * @param $userId
+     * @param $status
      * @param string $userType
      * @return mixed
      * @throws AccountingEntryServerError
      */
-    public function migrateInAccounting($userId, $userType = UserType::PARTNER)
+    public function migrateInAccounting($userId, $status, $userType = UserType::PARTNER)
     {
         try {
-            return $this->client->setUserType($userType)->setUserId($userId)->get($this->api . $userId);
+            return $this->client->setUserType($userType)->setUserId($userId)->get(
+                $this->api . $userId . '?status=' . $status
+            );
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
