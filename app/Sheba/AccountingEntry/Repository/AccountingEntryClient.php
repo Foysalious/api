@@ -80,6 +80,7 @@ class AccountingEntryClient
             if (!$this->userType || !$this->userId ) {
                 throw new AccountingEntryServerError('Set user type and user id', 0);
             }
+            Log::info(['accounting details', strtoupper($method), $this->makeUrl($uri), $this->getOptions($data)]);
             $res = decodeGuzzleResponse(
                 $this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data))
             );
