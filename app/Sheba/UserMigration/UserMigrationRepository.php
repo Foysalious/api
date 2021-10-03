@@ -2,19 +2,19 @@
 
 namespace App\Sheba\UserMigration;
 
-use Sheba\Dal\UserMigration\EloquentImplementation;
+use Sheba\Dal\UserMigration\Contract;
 use Exception;
 use Sheba\Dal\UserMigration\UserStatus;
 
 abstract class UserMigrationRepository
 {
     const NOT_ELIGIBLE = 'not_eligible';
-    /** @var EloquentImplementation */
+    /** @var  Contract */
     private $repo;
     protected $userId;
     protected $moduleName;
 
-    public function __construct(EloquentImplementation $repo)
+    public function __construct(Contract $repo)
     {
         $this->repo = $repo;
     }
@@ -42,8 +42,6 @@ abstract class UserMigrationRepository
      */
     public function getStatus()
     {
-//        //todo: static data for razoan
-//        return 'upgrading';
         $info = $this->repo->builder()->where('user_id', $this->userId)->where('module_name', $this->moduleName)->first();
         if ($info) {
             return $info->status;
