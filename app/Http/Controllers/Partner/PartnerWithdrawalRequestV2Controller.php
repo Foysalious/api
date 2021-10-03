@@ -100,7 +100,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
         $partner = $request->partner;
         $status = (new ComplianceInfo())->setPartner($partner)->getComplianceStatus();
         if ($status === Statics::REJECTED)
-            return api_response($request, null, 402, ["error_message" => Statics::complianceRejectedMessage()]);
+            return api_response($request, null, 412, ["message" => "Precondition Failed", "error_message" => Statics::complianceRejectedMessage()]);
 
         if($partner->status === PartnerStatuses::BLACKLISTED || $partner->status === PartnerStatuses::PAUSED) {
             return api_response($request, null, 402, ['message' => 'ব্ল্যাক লিস্ট হওয়ার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে পারবেন না।']);

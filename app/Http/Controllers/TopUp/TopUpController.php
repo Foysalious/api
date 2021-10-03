@@ -13,6 +13,8 @@ use Carbon\Carbon;
 use Elasticsearch\Common\Exceptions\Missing404Exception;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Sheba\ComplianceInfo\ComplianceInfo;
+use Sheba\ComplianceInfo\Statics;
 use Sheba\Dal\AuthenticationRequest\Purpose;
 use Sheba\Dal\SubscriptionWisePaymentGateway\Model as SubscriptionWisePaymentGateway;
 use Sheba\Dal\TopUpBulkRequest\Statuses;
@@ -129,6 +131,10 @@ class TopUpController extends Controller
         elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
         elseif ($user == 'partner') {
             $agent = $auth_user->getPartner();
+            $status = (new ComplianceInfo())->setPartner($agent)->getComplianceStatus();
+            if ($status === Statics::REJECTED)
+                return api_response($request, null, 412, ["message" => "Precondition Failed", "error_message" => Statics::complianceRejectedMessage()]);
+            
             $token = $request->topup_token;
             if ($token) {
                 try {
@@ -164,7 +170,7 @@ class TopUpController extends Controller
         if ($top_up_request->hasError()) {
             return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
         }
-        
+
         $topup_order = $creator->setTopUpRequest($top_up_request)->create();
         if ($topup_order) {
             dispatch((new TopUpJob($topup_order)));
