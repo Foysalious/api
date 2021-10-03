@@ -4,6 +4,7 @@ namespace Sheba\AccountingEntry\Repository;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\GuzzleException;
+use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 
 class AccountingEntryClient
@@ -88,7 +89,7 @@ class AccountingEntryClient
             return isset($res['data']) ? $res['data'] : $res['message'];
 
         } catch (GuzzleException $e) {
-            dd($e);
+            Log::info($e);
             $response = $e->getResponse() ? json_decode($e->getResponse()->getBody()->getContents(), true): null;
             $message = null;
             if (isset($response['message']) ) {
