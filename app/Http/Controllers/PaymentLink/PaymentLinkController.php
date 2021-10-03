@@ -156,6 +156,12 @@ class PaymentLinkController extends Controller
             if (!$request->user) return api_response($request, null, 404, ['message' => 'User not found']);
             $emi_month_invalidity = Creator::validateEmiMonth($request->all());
             if ($emi_month_invalidity !== false) return api_response($request, null, 400, ['message' => $emi_month_invalidity]);
+            if ($request->user instanceof Partner) {
+                $status = (new ComplianceInfo())->setPartner($request->user)->getComplianceStatus();
+                if ($status === Statics::REJECTED)
+                    return api_response($request, null, 412, ["message" => "Precondition Failed", "error_message" => Statics::complianceRejectedMessage()]);
+
+            }
             $this->creator
                 ->setIsDefault($request->isDefault)
                 ->setAmount($request->amount)

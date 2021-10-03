@@ -46,7 +46,8 @@ class ComplianceInfo
             "trade_license" => $this->partner->basicInformations->trade_license ?? "",
             "tin_no"        => $this->partner->basicInformations->tin_no ?? "",
             "tin_licence_photo" => $this->partner->basicInformations->tin_licence_photo ?? "",
-            "electricity_bill_image" => $this->partner->basicInformations->electricity_bill_image ?? ""
+            "electricity_bill_image" => $this->partner->basicInformations->electricity_bill_image ?? "",
+            "website"       => $this->partner->basicInformations->website_url ?? "",
         ];
 
         return $additional_fields ? array_merge($data, [

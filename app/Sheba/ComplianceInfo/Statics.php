@@ -24,7 +24,7 @@ class Statics
     {
         return [
             'shop_type', 'monthly_transaction_volume', 'registration_year', 'email', 'trade_license',
-            'tin_licence_photo', 'electricity_bill_image', 'tin_no'
+            'tin_licence_photo', 'electricity_bill_image', 'tin_no', 'website_url'
         ];
     }
 
