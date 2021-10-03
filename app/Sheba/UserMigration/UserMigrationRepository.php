@@ -53,15 +53,16 @@ abstract class UserMigrationRepository
     protected function updateMigrationStatus($status)
     {
         $info = $this->repo->builder()->where('user_id', $this->userId)->where('module_name', $this->moduleName)->first();
-        if (!$info) {
-            throw new Exception('Sorry! Not Found');
-        }
-        if ($info->status == UserStatus::UPGRADED) {
-            throw new Exception('Sorry! Already Migrated.');
-        }
-        if ($info->status == UserStatus::UPGRADING && ($status == UserStatus::UPGRADING || $status == UserStatus::PENDING)) {
-            throw new Exception('Sorry! Already Migrating.');
-        }
+        //TODO: user migration off for Razoan
+//        if (!$info) {
+//            throw new Exception('Sorry! Not Found');
+//        }
+//        if ($info->status == UserStatus::UPGRADED) {
+//            throw new Exception('Sorry! Already Migrated.');
+//        }
+//        if ($info->status == UserStatus::UPGRADING && ($status == UserStatus::UPGRADING || $status == UserStatus::PENDING)) {
+//            throw new Exception('Sorry! Already Migrating.');
+//        }
         $info->status = $status;
         return $info->save();
     }
