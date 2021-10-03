@@ -36,6 +36,7 @@ class AccountingRepository extends BaseRepository
             }
             return $datum;
         } catch (AccountingEntryServerError $e) {
+            Log::info(['checking accounting error', $e->getMessage(), $e]);
             logError($e);
         }
     }
