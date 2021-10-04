@@ -15,11 +15,13 @@ use App\Transformers\PosOrderTransformer;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\Discount\InvalidDiscountType;
+use League\Fractal\Resource\ResourceAbstract;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\ExpenseTracker\EntryType;
@@ -103,15 +105,15 @@ class OrderController extends Controller
 
         $order['data']['payment_method'] = empty($order['data']['payments']) ? 'cod' : collect($order['data']['payments'])->where('transaction_type',Types::CREDIT)->sortByDesc('created_at')->first()['method'];
 
-       if (array_key_exists('payment_link_target', $order['data'])) {
+        if (array_key_exists('payment_link_target', $order['data'])) {
 
-           $payment_link_target = $order['data']['payment_link_target'];
-           $link = app(PaymentLinkRepositoryInterface::class)->getActivePaymentLinkByPosOrder($payment_link_target);
-           if($link)
-           {
-               (new PosOrderTransformer())->addPaymentLinkDataToOrder($order, $link);
-               unset($order['data']['payment_link_target']);
-           }
+            $payment_link_target = $order['data']['payment_link_target'];
+            $link = app(PaymentLinkRepositoryInterface::class)->getActivePaymentLinkByPosOrder($payment_link_target);
+            if($link)
+            {
+                (new PosOrderTransformer())->addPaymentLinkDataToOrder($order, $link);
+                unset($order['data']['payment_link_target']);
+            }
         }
         return api_response($request, null, 200, ['order' => $order]);
     }

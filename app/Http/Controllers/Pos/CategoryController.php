@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use App\Sheba\Pos\Category\Category;
 use Sheba\Dal\PartnerPosServiceBatch\Model as PosServiceBatch;
+use Illuminate\Support\Facades\DB;
 
 
 class CategoryController extends Controller
@@ -96,6 +97,7 @@ class CategoryController extends Controller
                     $service->pos_category_id = $category_id;
                     $service->unit = $service->unit ? constants('POS_SERVICE_UNITS')[$service->unit] : null;
                     $service->warranty_unit = $service->warranty_unit ? config('pos.warranty_unit')[$service->warranty_unit] : null;
+                    $service->stock = $service->batches->sum('stock');
                     $service->image_gallery = $service->imageGallery ? $service->imageGallery->map(function($image){
                         return [
                             'id' =>   $image->id,
