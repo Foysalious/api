@@ -617,7 +617,10 @@ class AttendanceController extends Controller
             ->setHolidayRepo($this->holidayRepository)
             ->setStartDate($request->start_date)
             ->setEndDate($request->end_date)
-            ->setHolidayName($request->title)->create();
+            ->setHolidayName($request->title)
+            ->create();
+        $this->officeSettingChangesLogsRequester->setBusiness($request->business)->setHolidayStartDate($request->start_date)->setHolidayEndDate($request->end_date)->setHolidayName($request->title);
+        $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createHolidayStoreLogs();
         return api_response($request, null, 200, ['holiday' => $holiday]);
     }
 
@@ -638,12 +641,23 @@ class AttendanceController extends Controller
         ]);
         $manager_member = $request->manager_member;
         $holiday = $this->holidayRepository->find((int)$holiday);
+
+        $this->officeSettingChangesLogsRequester->setBusiness($request->business)
+                                                ->setExistingHolidayStart($holiday->start_date)
+                                                ->setExistingHolidayEnd($holiday->end_date)
+                                                ->setExistingHolidayName($holiday->title)
+                                                ->setHolidayStartDate($request->start_date)
+                                                ->setHolidayEndDate($request->end_date)
+                                                ->setHolidayName($request->title);
+        
         $updater_request = $creator_request->setBusiness($request->business)
             ->setMember($manager_member)
             ->setStartDate($request->start_date)
             ->setEndDate($request->end_date)
             ->setHolidayName($request->title);
+
         $updater->setHoliday($holiday)->setBusinessHolidayCreatorRequest($updater_request)->update();
+        $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createHolidayUpdateLogs();
         return api_response($request, null, 200);
     }
 
@@ -657,7 +671,9 @@ class AttendanceController extends Controller
     {
         $holiday = $this->holidayRepository->find((int)$holiday);
         if (!$holiday) return api_response($request, null, 404);
+        $this->officeSettingChangesLogsRequester->setBusiness($request->business)->setExistingHoliday($holiday);
         $this->holidayRepository->delete($holiday);
+        $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createHolidayDeleteLogs();
         return api_response($request, null, 200);
     }
 
