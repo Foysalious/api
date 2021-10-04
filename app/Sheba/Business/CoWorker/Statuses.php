@@ -9,6 +9,7 @@ class Statuses
     const INVITED = 'invited';
     const ACTIVE = 'active';
     const INACTIVE = 'inactive';
+    const DELETE = 'delete';
 
     public static function getAccessible()
     {

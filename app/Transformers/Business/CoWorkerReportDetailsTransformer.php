@@ -1,41 +1,36 @@
 <?php namespace App\Transformers\Business;
 
 use App\Models\BusinessMember;
+use App\Models\BusinessRole;
+use App\Models\Profile;
 use Carbon\Carbon;
 use League\Fractal\TransformerAbstract;
 use App\Models\Member;
 
 class CoWorkerReportDetailsTransformer extends TransformerAbstract
 {
-    private $isInactiveFilterApplied;
-
-    public function __construct($is_inactive_filter_applied)
-    {
-        $this->isInactiveFilterApplied = $is_inactive_filter_applied;
-    }
-
     /**
-     * @param Member $member
+     * @param BusinessMember $business_member
      * @return array
      */
-    public function transform(Member $member)
+    public function transform(BusinessMember $business_member)
     {
+        /** @var Member $member */
+        $member = $business_member->member;
+        /** @var Profile $profile */
         $profile = $member->profile;
+        /** @var BusinessRole $role */
+        $role = $business_member->role;
         $profile_bank_info = $profile->banks->last();
-
-        $business_member = ($this->isInactiveFilterApplied) ? $member->businessMemberGenerated : $member->businessMember;
-
         $bank_name = $profile_bank_info ? ucwords(str_replace('_', ' ', $profile_bank_info->bank_name)) : null;
         $account_no = $profile_bank_info ? $profile_bank_info->account_no : null;
-
-        $role = $business_member->role;
 
         return [
             'id' => $member->id,
             'employee_id' => $business_member->employee_id,
             'profile' => [
                 'name' => $profile->name,
-                'mobile' => $profile->mobile,
+                'mobile' => $business_member->mobile,
                 'email' => $profile->email,
             ],
             'status' => $business_member->status,

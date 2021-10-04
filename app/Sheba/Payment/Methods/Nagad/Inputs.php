@@ -44,10 +44,17 @@ class Inputs
      * @param $amount
      * @param $call_back_url
      * @param NagadStore $store
+     * @param $description
      * @return array
      */
-    public static function complete($transaction_id, Initialize $init, $amount, $call_back_url, NagadStore $store): array
+    public static function complete($transaction_id, Initialize $init, $amount, $call_back_url, NagadStore $store, $description): array
     {
+//        $merchant_additional_info = json_encode(
+//            [
+//                "Service Name" =>"Sheba.xyz",
+//                "Purpose" =>  $description
+//            ]
+//        );
         $merchant_additional_info = '{"Service Name": "Sheba.xyz"}';
         $payment_data = [
             'merchantId' => $store->getMerchantId(),

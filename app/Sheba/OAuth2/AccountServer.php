@@ -259,14 +259,18 @@ class AccountServer
         return $this->client->setToken($token)->get("/api/v1/authenticate/password/requests?purpose=$purpose");
     }
 
+    /**
+     * @param $partner_id
+     * @param $customer_id
+     * @param $data
+     * @param $token
+     * @return array
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     * @throws WrongPinError
+     */
     public function updatePosCustomer($partner_id, $customer_id, $data, $token)
     {
-        return (new Client())->put(config('account.account_url') . "/api/v1/partners/$partner_id/pos-customers/$customer_id", [
-            'query' => $data,
-            'headers' => [
-                'Authorization' => 'Bearer ' . $token
-            ]
-        ]);
+        return $this->client->setToken($token)->put("/api/v1/partners/$partner_id/pos-customers/$customer_id", $data);
     }
-
 }
