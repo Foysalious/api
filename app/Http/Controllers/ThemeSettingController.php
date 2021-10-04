@@ -124,7 +124,7 @@ class ThemeSettingController extends Controller
       "collection_banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
       "product": [
         {
-          "id": 1,
+          "id": 1000674,
           "name": "Jacket",
           "original_price": 550,
           "vat_included_price": 550,
@@ -142,7 +142,7 @@ class ThemeSettingController extends Controller
           "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
         },
          {
-          "id": 1,
+          "id": 1000674,
           "name": "Jacket",
           "original_price": 550,
           "vat_included_price": 550,
@@ -160,7 +160,7 @@ class ThemeSettingController extends Controller
           "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
         },
          {
-          "id": 1,
+          "id": 1000674,
           "name": "Jacket",
           "original_price": 550,
           "vat_included_price": 550,

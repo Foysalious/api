@@ -46,7 +46,8 @@ class ComplianceInfo
             "trade_license" => $this->partner->basicInformations->trade_license ?? "",
             "tin_no"        => $this->partner->basicInformations->tin_no ?? "",
             "tin_licence_photo" => $this->partner->basicInformations->tin_licence_photo ?? "",
-            "electricity_bill_image" => $this->partner->basicInformations->electricity_bill_image ?? ""
+            "electricity_bill_image" => $this->partner->basicInformations->electricity_bill_image ?? "",
+            "website"       => $this->partner->basicInformations->website_url ?? "",
         ];
 
         return $additional_fields ? array_merge($data, [
@@ -62,6 +63,7 @@ class ComplianceInfo
      */
     private function formatBankAccount($account): array
     {
+        if(empty($account)) return [];
         return [
             "id" => $account->id,
             "purpose" => $account->purpose,
@@ -128,7 +130,7 @@ class ComplianceInfo
 
         elseif ($total >= config('compliance_info.first_transaction_limit')) return $this->getStatusByCondition('first_limit_required_fields', 0);
 
-        return Statics::REJECTED;
+        return Statics::VERIFIED;
     }
 
     private function getStatusByCondition($required_fields_key, $additional_fields): string

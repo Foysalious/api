@@ -19,6 +19,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
+use Sheba\ComplianceInfo\ComplianceInfo;
+use Sheba\ComplianceInfo\Statics;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use League\Fractal\Resource\ResourceAbstract;
@@ -212,6 +214,10 @@ class OrderController extends Controller
         $payment_link_amount = $request->has('payment_link_amount') ? $request->payment_link_amount : $order->net_bill;
         if ($request->payment_method == 'payment_link' || $request->payment_method == 'emi') {
             (new PartnerStatusAuthentication())->handleInside($partner);
+            $status = (new ComplianceInfo())->setPartner($partner)->getComplianceStatus();
+            if ($status === Statics::REJECTED)
+                return api_response($request, null, 412, ["message" => "Precondition Failed", "error_message" => Statics::complianceRejectedMessage()]);
+
             $paymentLink = $paymentLinkCreator->setAmount($payment_link_amount)->setReason("PosOrder ID: $order->id Due payment")
                 ->setUserName($partner->name)->setUserId($partner->id)
                 ->setUserType('partner')
