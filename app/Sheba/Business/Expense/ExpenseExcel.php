@@ -26,7 +26,7 @@ class ExpenseExcel implements FromCollection, WithHeadings, ShouldAutoSize, With
         $data = collect([]);
         foreach ($this->expenseData as $expense) {
             $data->push([
-                'month' => Carbon::parse(date('Y-m-0'.$expense['month']))->format('F'),
+                'month' => Carbon::now()->month(($expense['month']))->format('F'),
                 'employee_id' => $expense['employee_id'] ?: 'N/A',
                 'employee_name' => $expense['employee_name'],
                 'employee_department' => $expense['employee_department'],
