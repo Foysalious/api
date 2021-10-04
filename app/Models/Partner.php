@@ -1065,4 +1065,9 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     {
         return $this->hasOne(PartnerDeliveryInformation::class);
     }
+
+    public function getGatewayChargesId()
+    {
+        return $this->subscription_rules->payment_gateway_configuration_id;
+    }
 }

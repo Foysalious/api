@@ -1,7 +1,4 @@
-<?php
-
-
-namespace App\Sheba\Payment\Methods\Nagad;
+<?php namespace App\Sheba\Payment\Methods\Nagad;
 
 use App\Models\Affiliate;
 use App\Models\Customer;
@@ -14,12 +11,11 @@ use Sheba\Payment\PayableUser;
 
 class NagadBuilder
 {
-
     /**
      * @param Payable $payable
      * @return Nagad
      */
-    public static function get(Payable $payable)
+    public static function get(Payable $payable): Nagad
     {
         /** @var Nagad $nagad */
         $nagad = app(Nagad::class);
@@ -41,12 +37,11 @@ class NagadBuilder
         return new DefaultStore();
     }
 
-
     /**
      * @param $store_name
      * @return Nagad
      */
-    public static function getByStoreName($store_name)
+    public static function getByStoreName($store_name): Nagad
     {
         /** @var Nagad $nagad */
         $nagad = app(Nagad::class);
@@ -61,18 +56,16 @@ class NagadBuilder
     public static function getStoreByName($name)
     {
         if ($name == AffiliateStore::NAME) return new AffiliateStore();
-        if ($name==MarketplaceStore::NAME) return new MarketplaceStore();
+        if ($name == MarketplaceStore::NAME) return new MarketplaceStore();
         return new DefaultStore();
     }
-
 
     /**
      * @param Payable $payable
      * @return bool
      */
-    public static function isPortWalletFailed(Payable $payable)
+    public static function isPortWalletFailed(Payable $payable): bool
     {
         return $payable->payments()->initiationFailed()->count() > 0;
     }
-
 }

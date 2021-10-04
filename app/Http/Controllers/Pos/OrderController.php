@@ -61,7 +61,8 @@ class OrderController extends Controller
         ini_set('memory_limit', '4096M');
         ini_set('max_execution_time', 420);
         $status  = $request->status;
-        $partner = $request->partner;
+
+        $partner = resolvePartnerFromAuthMiddleware($request);
         list($offset, $limit) = calculatePagination($request);
         $posOrderList = $posOrderList->setPartner($partner)->setStatus($status)->setOffset($offset)->setLimit($limit);
         if ($request->has('sales_channel')) $posOrderList = $posOrderList->setSalesChannel($request->sales_channel);
@@ -104,7 +105,6 @@ class OrderController extends Controller
         }
         return api_response($request, null, 200, ['order' => $order]);
     }
-
 
     /**
      * @param $partner
@@ -271,7 +271,6 @@ class OrderController extends Controller
         $this->sendCustomerEmail($order);
         $order->payment_status        = $order->getPaymentStatus();
         $order["client_pos_order_id"] = $request->has('client_pos_order_id') ? $request->client_pos_order_id : null;
-
         return api_response($request, null, 200, [
             'msg'   => 'Order Created Successfully',
             'order' => $order
@@ -360,8 +359,8 @@ class OrderController extends Controller
      */
     public function sendSms(Request $request, Updater $updater)
     {
-        $partner = $request->partner;
-        $this->setModifier($request->manager_resource);
+        $partner = resolvePartnerFromAuthMiddleware($request);
+        $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
         $this->dispatch(new OrderBillSms($partner, $request->order));
         return api_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
     }
@@ -375,7 +374,7 @@ class OrderController extends Controller
      */
     public function sendEmail(Request $request, Updater $updater)
     {
-        $this->setModifier($request->manager_resource);
+        $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
         /** @var PosOrder $order */
         $order = PosOrder::with('items')->find($request->order)->calculate();
         if ($request->has('customer_id') && is_null($order->customer_id)) {

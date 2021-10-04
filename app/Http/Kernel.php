@@ -15,6 +15,7 @@ use App\Http\Middleware\DLSApiVersioning;
 use App\Http\Middleware\EncryptCookies;
 use App\Http\Middleware\ExternalPaymentLinkAuthMiddleware;
 use App\Http\Middleware\GeoAuthMiddleware;
+use App\Http\Middleware\IpWhitelistMiddleware;
 use App\Http\Middleware\JWT\ResourceAuthMiddleware;
 use App\Http\Middleware\JwtAccessTokenMiddleware;
 use App\Http\Middleware\JWTAuthentication;
@@ -43,6 +44,7 @@ use Illuminate\Foundation\Http\Kernel as HttpKernel;
 use Illuminate\Foundation\Http\Middleware\Authorize;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Fideloper\Proxy\TrustProxies;
 
 class Kernel extends HttpKernel
 {
@@ -57,6 +59,7 @@ class Kernel extends HttpKernel
         CheckForMaintenanceMode::class,
         CriticalAppVersionMiddleware::class,
         XSS::class,
+        TrustProxies::class,
         SetRequestToJwtWhileTesting::class
     ];
 
@@ -73,10 +76,9 @@ class Kernel extends HttpKernel
             ShareErrorsFromSession::class,
             VerifyCsrfToken::class,
         ],
-
         'api' => [
             'throttle:60,1',
-        ],
+        ]
     ];
 
     /**
@@ -121,5 +123,6 @@ class Kernel extends HttpKernel
         'terminate' => TerminatingMiddleware::class,
         'apiRequestLog' => ApiRequestMiddleware::class,
         'jwtAccessToken' => JwtAccessTokenMiddleware::class,
+        'ip.whitelist' => IpWhitelistMiddleware::class,
     ];
 }

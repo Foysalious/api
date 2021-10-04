@@ -18,12 +18,14 @@ class DetailsExcel
     private $checkOutLocation;
     private $checkOutAddress;
     private $totalHours;
+    private $lateNote;
     private $leftEarlyNote;
     private $businessMember;
     private $department;
     private $profile;
     private $startDate;
     private $endDate;
+    private $overtime;
 
     public function __construct()
     {
@@ -76,7 +78,7 @@ class DetailsExcel
                 $sheet->fromArray($this->data, null, 'A1', false, false);
                 $sheet->prependRow($this->getHeaders());
                 $sheet->freezeFirstRow();
-                $sheet->cell('A1:L1', function ($cells) {
+                $sheet->cell('A1:N1', function ($cells) {
                     $cells->setFontWeight('bold');
                 });
                 $sheet->setAutoSize(true);
@@ -101,6 +103,8 @@ class DetailsExcel
             $this->checkOutAddress = '-';
 
             $this->totalHours = '-';
+            $this->overtime = '-';
+            $this->lateNote = null;
             $this->leftEarlyNote = null;
             if (!$attendance['weekend_or_holiday_tag']) {
                 if ($attendance['show_attendance'] == 1) {
@@ -145,6 +149,8 @@ class DetailsExcel
                 'check_out_address' => $this->checkOutAddress,
 
                 'total_hours' => $this->totalHours,
+                'overtime' => $this->overtime,
+                'late_check_in_note' => $this->lateNote,
                 'left_early_note' => $this->leftEarlyNote,
             ]);
         }
@@ -154,7 +160,7 @@ class DetailsExcel
     {
         return ['Date', 'Status', 'Check in time', 'Check in status', 'Check in location',
             'Check in address', 'Check out time', 'Check out status',
-            'Check out location', 'Check out address', 'Total Hours', 'Left early note'];
+            'Check out location', 'Check out address', 'Total Hours', 'Overtime', 'Late check in note', 'Left early note'];
     }
 
     private function checkInOutLogics($attendance)
@@ -202,6 +208,12 @@ class DetailsExcel
         if ($attendance['attendance']['active_hours']) {
             $this->totalHours = $attendance['attendance']['active_hours'];
         }
-        $this->leftEarlyNote = $attendance['attendance']['note'];
+
+        if ($attendance['attendance']['overtime_in_minutes']) {
+            $this->overtime = $attendance['attendance']['overtime'];
+        }
+
+        $this->lateNote = $attendance['attendance']['late_note'];
+        $this->leftEarlyNote = $attendance['attendance']['left_early_note'];
     }
 }

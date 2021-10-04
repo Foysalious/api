@@ -16,10 +16,9 @@ class Route
             $api->post('/check-access', 'PosRebuild\AccessManagerController@checkAccess');
             $api->get('voucher-details/{voucher_id}', 'VoucherController@getVoucherDetails');
         });
-        $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers', 'middleware' => ['shebaServer']], function ($api) {
+        $api->group(['prefix' => 'pos/v1/', 'namespace' => 'App\Http\Controllers', 'middleware' => ['ip.whitelist']], function ($api) {
             $api->post('/send-sms', "PosRebuild\SmsController@sendSms");
         });
-
         $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers', 'middleware' => ['jwtAccessToken']], function ($api) {
             $api->group(['prefix' => 'collections'], function ($api) {
                     $api->get('/', 'Inventory\CollectionController@index');
@@ -109,9 +108,25 @@ class Route
                 });
 
         });
-
         $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
             $api->post('test-migrate', 'Partner\DataMigrationController@testMigration');
+        });
+        $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers', 'middleware' => ['jwtAccessToken']], function ($api) {
+            $api->get('webstore-settings', 'Partner\Webstore\WebstoreSettingsController@index');
+            $api->post('webstore-settings', 'Partner\Webstore\WebstoreSettingsController@update');
+            $api->get('webstore-dashboard', 'Partner\Webstore\WebstoreDashboardController@getDashboard');
+            $api->post('toggle-webstore-sms-activation', 'PartnerController@toggleSmsActivation');
+            $api->get('webstore/banner-list', 'Partner\Webstore\WebstoreSettingsController@bannerList');
+            $api->post('webstore/update-banner', 'Partner\Webstore\WebstoreSettingsController@updateBanner');
+            $api->get('/settings', 'Pos\SettingController@getSettings');
+            $api->post('/settings', 'Pos\SettingController@storePosSetting');
+            $api->get('settings/printer', 'Pos\SettingController@getPrinterSettings');
+            $api->post('vat-registration-number', 'PartnerController@addVatRegistrationNumber');
+            $api->get('slider-details-and-account-types', 'PartnerController@getSliderDetailsAndAccountTypes');
+            $api->get('qr-code', 'PartnerController@getQRCode');
+            $api->post('qr-code', 'PartnerController@setQRCode');
+            $api->get('orders/{order}/send-sms', 'Pos\OrderController@sendSms');
+            $api->get('orders/{order}/send-email', 'Pos\OrderController@sendEmail');
         });
     }
 }
