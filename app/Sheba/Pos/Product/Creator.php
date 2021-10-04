@@ -63,7 +63,7 @@ class Creator
         $partner_pos_service = $this->serviceRepo->save($this->data + (new RequestIdentification())->get());
         /** @var Partner $partner */
         $partner = $partner_pos_service->partner;
-        if($partner->isMigratedToAccounting()) $this->savePartnerPosServiceBatch($partner_pos_service->id, $this->data['stock'], $this->data['cost']);
+        if($partner->isMigratedToAccounting()) $this->savePartnerPosServiceBatch($partner_pos_service, $this->data['stock'], $this->data['cost']);
         $this->storeImageGallery($partner_pos_service, json_decode($image_gallery,true));
         return $partner_pos_service;
     }

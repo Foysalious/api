@@ -86,7 +86,7 @@ class Updater
     {
         $this->saveImages();
         $this->format();
-        $this->formatBatchData();
+        if($this->service->partner->isMigratedToAccounting()) $this->formatBatchData();
         $image_gallery = [];
         if (isset($this->updatedData['image_gallery'])) $image_gallery = json_decode($this->updatedData['image_gallery'], true);
         $cloned_data = $this->data;
@@ -203,6 +203,14 @@ class Updater
 
     private function format()
     {
+        if ((isset($this->data['is_stock_off']) && ($this->data['is_stock_off'] == 'true' && $this->service->stock != null))) {
+            $this->updatedData['stock'] = null;
+        }
+
+        if (isset($this->data['is_stock_off']) && $this->data['is_stock_off'] == 'false') {
+            $this->updatedData['stock'] = (double)$this->data['stock'];
+        }
+
         if ((isset($this->data['is_vat_percentage_off']) && $this->data['is_vat_percentage_off'] == 'true')) {
             $this->updatedData['vat_percentage'] = null;
         } else if (isset($this->data['vat_percentage']) && $this->data['vat_percentage'] != $this->service->vat_percentage) {

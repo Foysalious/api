@@ -203,26 +203,23 @@ class Creator
                     throw new NotEnoughStockException("Not enough stock", 403);
                 // $is_service_discount_applied = $original_service->discount();
                 $service_wholesale_applicable = $original_service->wholesale_price ? true : false;
-
-                    $service['service_id'] = $original_service->id;
-                    $service['service_name'] = isset($service['name']) ? $service['name'] : $original_service->name;
-                    $service['pos_order_id'] = $order->id;
-                    $service['unit_price'] = (isset($service['updated_price']) && $service['updated_price']) ? $service['updated_price'] : ($this->isWholesalePriceApplicable($service_wholesale_applicable) ? $original_service->wholesale_price : $original_service->price);
-                    $service['warranty'] = $original_service->warranty;
-                    $service['warranty_unit'] = $original_service->warranty_unit;
-                    $service['vat_percentage'] = (!isset($service['is_vat_applicable']) || $service['is_vat_applicable']) ? $original_service->vat_percentage : 0.00;
-                    $service['note'] = isset($service['note']) ? $service['note'] : null;
-                    $service = array_except($service, ['id', 'name', 'is_vat_applicable', 'updated_price']);
-
-            $pos_order_item        = $this->itemRepo->save($service);
-            $is_stock_maintainable = $this->stockManager->setPosService($original_service)->isStockMaintainable();
-            if ($is_stock_maintainable) {
-                $servicesStockDecreasingInfo[$original_service->id] = $this->stockManager->decrease($service['quantity']);
-            }
-
-                    $this->discountHandler->setOrder($order)->setPosService($original_service)->setType(DiscountTypes::SERVICE)->setData($service);
-                    if ($this->discountHandler->hasDiscount()) $this->discountHandler->setPosOrderItem($pos_order_item)->create($order);
+                $service['service_id'] = $original_service->id;
+                $service['service_name'] = isset($service['name']) ? $service['name'] : $original_service->name;
+                $service['pos_order_id'] = $order->id;
+                $service['unit_price'] = (isset($service['updated_price']) && $service['updated_price']) ? $service['updated_price'] : ($this->isWholesalePriceApplicable($service_wholesale_applicable) ? $original_service->wholesale_price : $original_service->price);
+                $service['warranty'] = $original_service->warranty;
+                $service['warranty_unit'] = $original_service->warranty_unit;
+                $service['vat_percentage'] = (!isset($service['is_vat_applicable']) || $service['is_vat_applicable']) ? $original_service->vat_percentage : 0.00;
+                $service['note'] = isset($service['note']) ? $service['note'] : null;
+                $service = array_except($service, ['id', 'name', 'is_vat_applicable', 'updated_price']);
+                $pos_order_item        = $this->itemRepo->save($service);
+                $is_stock_maintainable = $this->stockManager->setPosService($original_service)->isStockMaintainable();
+                if ($is_stock_maintainable) {
+                    $servicesStockDecreasingInfo[$original_service->id] = $this->stockManager->decrease($service['quantity']);
                 }
+                $this->discountHandler->setOrder($order)->setPosService($original_service)->setType(DiscountTypes::SERVICE)->setData($service);
+                if ($this->discountHandler->hasDiscount()) $this->discountHandler->setPosOrderItem($pos_order_item)->create($order);
+            }
 
                 if (isset($this->data['paid_amount']) && $this->data['paid_amount'] > 0) {
                     $payment_data['pos_order_id'] = $order->id;
@@ -411,7 +408,7 @@ class Creator
         /** @var AccountingRepository $accounting_repo */
         $accounting_repo = app()->make(AccountingRepository::class);
         $this->request->merge([
-            "inventory_products" => $accounting_repo->getInventoryProducts($order->items, $this->data['services']),
+            "inventory_products" => $accounting_repo->getInventoryProducts($order->items, $this->data['services'], $this->allServicesStockDecreasingArray),
         ]);
         if (isset($this->customer->id)) {
             $this->request["customer_id"] = $this->customer->id;
