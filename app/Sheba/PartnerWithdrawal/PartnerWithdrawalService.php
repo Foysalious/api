@@ -18,19 +18,21 @@ class PartnerWithdrawalService
 
     public function store(Partner $partner, array $data)
     {
-        $creditLimitAmount = $partner->walletSetting->min_wallet_threshold;
-        if ($creditLimitAmount < 0) {
-            $creditLimitAmount = $data['amount']; // assuming min_wallet_threshold is less than 0 so we converted it to zero.
-        } else {
-            $creditLimitAmount = $creditLimitAmount + $data['amount'];
-        }
-        $creditLimitData = [
-            'min_wallet_threshold' => $creditLimitAmount,
-            'reset_credit_limit_after' => null,
-            'log' => 'automatically updated credit limit because of withdrawal request'
-        ];
+        $pendingAmount = $partner->walletSetting->pending_withdrawal_amount;
+        $pendingAmount = $pendingAmount + $data['amount'];
+//        if ($creditLimitAmount < 0) {
+//            $creditLimitAmount = $data['amount']; // assuming min_wallet_threshold is less than 0 so we converted it to zero.
+//        } else {
+//            $creditLimitAmount = $creditLimitAmount + $data['amount'];
+//        }
+//        $creditLimitData = [
+//            'min_wallet_threshold' => $creditLimitAmount,
+//            'reset_credit_limit_after' => null,
+//            'log' => 'automatically updated credit limit because of withdrawal request'
+//        ];
+
         $newWithdrawal = WithdrawalRequest::create($data);
-//        $this->updateSetting($partner, $creditLimitData);
+        $this->updateSetting($partner, ['pending_withdrawal_amount'=> $pendingAmount]);
         return $newWithdrawal;
     }
 
