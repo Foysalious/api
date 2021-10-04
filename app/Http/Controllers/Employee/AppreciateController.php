@@ -197,6 +197,6 @@ class AppreciateController extends Controller
                 ]
             ],
         ];
-        return api_response($request, $stickers, 400, ['stickers' => $stickers]);
+        return api_response($request, $stickers, 200, ['stickers' => $stickers]);
     }
 }
