@@ -193,8 +193,8 @@ class IndexRoute
                 $api->group(['prefix' => '{order}', 'middleware' => ['partner_order.auth']], function ($api) {
                     $api->get('/', 'PartnerOrderController@showV2');
                     $api->get('bills', 'PartnerOrderController@getBillsV2');
-                    $api->post('services', 'PartnerOrderController@addService');
-                    $api->post('collect', 'PartnerOrderController@collectMoney');
+                    $api->post('services', 'PartnerOrderController@addService')->middleware('concurrent_request:partner,update,order');
+                    $api->post('collect', 'PartnerOrderController@collectMoney')->middleware('concurrent_request:partner,collect,order');
                     $api->get('retry-rider-search/{logistic_order_id}', 'PartnerOrderController@retryRiderSearch');
                 });
             });
@@ -212,8 +212,8 @@ class IndexRoute
                 $api->get('/cancel-request', 'PartnerJobController@cancelRequests');
             });
             $api->group(['prefix' => 'job_service/{job_service}'], function ($api) {
-                $api->post('/update', 'JobServiceController@update');
-                $api->delete('/', 'JobServiceController@destroy');
+                $api->post('/update', 'JobServiceController@update')->middleware('concurrent_request:partner,update,job_service');
+                $api->delete('/', 'JobServiceController@destroy')->middleware('concurrent_request:partner,update,job_service');
             });
             $api->group(['prefix' => 'complains'], function ($api) {
                 $api->get('/', 'ComplainController@index');
