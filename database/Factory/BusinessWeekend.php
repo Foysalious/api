@@ -1,9 +1,8 @@
 <?php namespace Factory;
 
-use App\Models\BusinessMember;
-use Sheba\Dal\Attendance\Model;
+use Sheba\Dal\BusinessWeekend\Model;
 
-class AttendanceFactory extends Factory
+class BusinessWeekend extends Factory
 {
     protected function getModelClass()
     {
@@ -12,6 +11,6 @@ class AttendanceFactory extends Factory
 
     protected function getData()
     {
-        return array_merge($this->commonSeeds, []);
+        return [];
     }
 }
