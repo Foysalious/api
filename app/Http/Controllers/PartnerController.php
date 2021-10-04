@@ -12,6 +12,7 @@ use App\Models\PartnerOrder;
 use App\Models\PartnerPosCustomer;
 use App\Models\PartnerServicePricesUpdate;
 use App\Models\Resource;
+use Sheba\Dal\Service\Service;
 use App\Models\SubscriptionOrder;
 use App\Repositories\DiscountRepository;
 use App\Repositories\FileRepository;
@@ -1118,9 +1119,8 @@ class PartnerController extends Controller
             'vat_registration_number' => 'required',
             'is_show_vat_reg_number' => 'sometimes|required|in:1,0'
         ]);
-        /** @var Partner $partner */
-        $partner = $request->partner;
-        $this->setModifier($request->manager_resource);
+        $partner = resolvePartnerFromAuthMiddleware($request);
+        $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
         $partner->basicInformations()->update($this->withUpdateModificationField(
             [
                 'vat_registration_number' => $request->vat_registration_number,
@@ -1133,7 +1133,6 @@ class PartnerController extends Controller
     public function changeLogo($partner, Request $request)
     {
         ini_set('max_execution_time', 0);
-
         $this->validate($request, ['logo' => 'required|file|image']);
         $partner = Partner::find($partner);
         $repo    = new PartnerRepository($partner);
@@ -1228,7 +1227,7 @@ class PartnerController extends Controller
             'image'        => "required|mimes:jpeg,png,jpg",
         ]);
         $image   = $request->file('image');
-        $partner = $request->partner;
+        $partner = resolvePartnerFromAuthMiddleware($request);
         if ($partner->qr_code_image) {
             $file_name = substr($partner->qr_code_image, strlen(env('S3_URL')));
             $this->fileRepository->deleteFileFromCDN($file_name);
@@ -1245,7 +1244,7 @@ class PartnerController extends Controller
 
     public function getQRCode(Request $request)
     {
-        $partner = $request->partner;
+        $partner = resolvePartnerFromAuthMiddleware($request);
         $data    = [
             'account_type' => $partner->qr_code_account_type ? config('partner.qr_code.account_types')[$partner->qr_code_account_type] : null,
             'image'        => $partner->qr_code_image ?: null
@@ -1300,8 +1299,7 @@ class PartnerController extends Controller
 
     public function toggleSmsActivation(Request $request, $partner, Updater $updater)
     {
-        /** @var Partner $partner */
-        $partner             = $request->partner;
+        $partner = resolvePartnerFromAuthMiddleware($request);
         $isWebstoreSmsActive = !(int)$partner->is_webstore_sms_active;
         $updater->setPartner($partner)->setIsWebstoreSmsActive($isWebstoreSmsActive)->update();
         return api_response($request, null, 200, ['message' => 'SMS Settings Updated Successfully']);
