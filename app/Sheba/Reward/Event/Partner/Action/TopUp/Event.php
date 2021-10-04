@@ -37,7 +37,20 @@ class Event extends Action implements AmountCalculator
 
     public function isEligible()
     {
-        return $this->rule->check($this->params);
+        return $this->rule->check($this->params) && $this->filterConstraints();
+    }
+
+    private function filterConstraints()
+    {
+        foreach ($this->reward->constraints->groupBy('constraint_type') as $key => $type) {
+            $ids = $type->pluck('constraint_id')->toArray();
+
+            if ($key == 'App\Models\PartnerSubscriptionPackage') {
+                return in_array($this->partner->package_id, $ids);
+            }
+        }
+
+        return true;
     }
 
     /**
