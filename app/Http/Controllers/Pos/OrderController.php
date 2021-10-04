@@ -385,13 +385,12 @@ class OrderController extends Controller
      * @param Request $request
      * @param Updater $updater
      * @return JsonResponse
-     * @throws \Sheba\Transactions\Wallet\WalletDebitForbiddenException
      */
     public function sendSms(Request $request, Updater $updater)
     {
         $partner = resolvePartnerFromAuthMiddleware($request);
         $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
-        $this->dispatch(new OrderBillSms($partner, $request->order));
+        $this->dispatch(new OrderBillSms($request->order));
         return api_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
     }
 
