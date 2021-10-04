@@ -41,6 +41,11 @@ class DashboardController extends Controller
                 'target_type' => 'payslip',
 
             ],
+            [
+                'title' => 'Feedback',
+                'target_type' => 'feedback',
+                'link' => "https://sheba.freshdesk.com/support/tickets/new"
+            ],
         ];
 
         return api_response($request, $dashboard, 200, ['dashboard' => $dashboard]);
