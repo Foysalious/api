@@ -9,64 +9,42 @@ class DashboardController extends Controller
     {
         $dashboard = [
             [
-                'title' => 'Notice',
-                'target_type' => 'notice',
-                'is_published' => 1,
-                'order' => 1,
+                'title' => 'Support',
+                'target_type' => 'support',
             ],
             [
                 'title' => 'Attendance',
                 'target_type' => 'attendance',
-                'is_published' => 1,
-                'order' => 2,
             ],
             [
-                'title' => 'Approval',
-                'target_type' => 'approval',
-                'is_published' => 1,
-                'order' => 3,
+                'title' => 'Notice',
+                'target_type' => 'notice',
+            ],
+            [
+                'title' => 'Expense',
+                'target_type' => 'expense',
             ],
             [
                 'title' => 'Leave',
                 'target_type' => 'leave',
-                'is_published' => 1,
-                'order' => 4,
             ],
             [
-                'title' => 'My Team',
-                'target_type' => 'my_team',
-                'is_published' => 1,
-                'order' => 5,
-            ],
-            [
-                'title' => 'Visits',
-                'target_type' => 'visits',
-                'is_published' => 1,
-                'order' => 6,
-            ],
-            [
-                'title' => 'Support',
-                'target_type' => 'support',
-                'is_published' => 1,
-                'order' => 7
+                'title' => 'Approval',
+                'target_type' => 'approval',
             ],
             [
                 'title' => 'Phonebook',
                 'target_type' => 'phonebook',
-                'is_published' => 1,
-                'order' => 8
             ],
             [
                 'title' => 'Payslip',
                 'target_type' => 'payslip',
-                'is_published' => 1,
-                'order' => 9
+
             ],
             [
-                'title' => 'Policy',
-                'target_type' => 'policy',
-                'is_published' => 1,
-                'order' => 10
+                'title' => 'Feedback',
+                'target_type' => 'feedback',
+                'link' => "https://sheba.freshdesk.com/support/tickets/new"
             ],
         ];
 

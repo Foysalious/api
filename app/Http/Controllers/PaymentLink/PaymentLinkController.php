@@ -13,6 +13,8 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
+use Sheba\ComplianceInfo\ComplianceInfo;
+use Sheba\ComplianceInfo\Statics;
 use Sheba\ModificationFields;
 use Sheba\Partner\PartnerStatuses;
 use Sheba\PaymentLink\Creator;
@@ -121,6 +123,11 @@ class PaymentLinkController extends Controller
             $link = $paymentLinkRepository->findByIdentifier($identifier);
             if ($link) {
                 $receiver = $link->getPaymentReceiver();
+                if($receiver instanceof Partner) {
+                    $status = (new ComplianceInfo())->setPartner($receiver)->getComplianceStatus();
+                    if ($status === Statics::REJECTED)
+                        return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
+                }
                 if ($receiver instanceof Partner && in_array($receiver->status, [PartnerStatuses::BLACKLISTED, PartnerStatuses::PAUSED])) {
                     return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
                 }
@@ -156,6 +163,12 @@ class PaymentLinkController extends Controller
             if ($userStatusCheck !== true) return $userStatusCheck;
             $emi_month_invalidity = Creator::validateEmiMonth($request->all());
             if ($emi_month_invalidity !== false) return api_response($request, null, 400, ['message' => $emi_month_invalidity]);
+            if ($request->user instanceof Partner) {
+                $status = (new ComplianceInfo())->setPartner($request->user)->getComplianceStatus();
+                if ($status === Statics::REJECTED)
+                    return api_response($request, null, 412, ["message" => "Precondition Failed", "error_message" => Statics::complianceRejectedMessage()]);
+
+            }
             $this->creator
                 ->setIsDefault($request->isDefault)
                 ->setAmount($request->amount)

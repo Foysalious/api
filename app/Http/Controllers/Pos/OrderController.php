@@ -19,6 +19,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
+use Sheba\ComplianceInfo\ComplianceInfo;
+use Sheba\ComplianceInfo\Statics;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use League\Fractal\Resource\ResourceAbstract;
@@ -74,7 +76,7 @@ class OrderController extends Controller
         ini_set('memory_limit', '4096M');
         ini_set('max_execution_time', 420);
         $status  = $request->status;
-        $partner = $request->partner;
+        $partner = resolvePartnerFromAuthMiddleware($request);
         list($offset, $limit) = calculatePagination($request);
         $posOrderList = $posOrderList->setPartner($partner)->setStatus($status)->setOffset($offset)->setLimit($limit);
         if ($request->has('sales_channel')) $posOrderList = $posOrderList->setSalesChannel($request->sales_channel);
@@ -212,6 +214,10 @@ class OrderController extends Controller
         $payment_link_amount = $request->has('payment_link_amount') ? $request->payment_link_amount : $order->net_bill;
         if ($request->payment_method == 'payment_link' || $request->payment_method == 'emi') {
             (new PartnerStatusAuthentication())->handleInside($partner);
+            $status = (new ComplianceInfo())->setPartner($partner)->getComplianceStatus();
+            if ($status === Statics::REJECTED)
+                return api_response($request, null, 412, ["message" => "Precondition Failed", "error_message" => Statics::complianceRejectedMessage()]);
+
             $paymentLink = $paymentLinkCreator->setAmount($payment_link_amount)->setReason("PosOrder ID: $order->id Due payment")
                 ->setUserName($partner->name)->setUserId($partner->id)
                 ->setUserType('partner')
@@ -379,31 +385,17 @@ class OrderController extends Controller
      * @param Request $request
      * @param Updater $updater
      * @return JsonResponse
-     * @throws \Sheba\Transactions\Wallet\WalletDebitForbiddenException
      */
     public function sendSms(Request $request, Updater $updater)
     {
-        $partner = $request->partner;
-        $this->setModifier($request->manager_resource);
+        $partner = resolvePartnerFromAuthMiddleware($request);
+        $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
         /** @var PosOrder $order */
         $order = PosOrder::with('items')->find($request->order);
         if (empty($order)) return api_response($request, null, 404, ['msg' => 'Order not found']);
         $order=$order->calculate();
-        if ($request->has('customer_id') && is_null($order->customer_id)) {
-            $requested_customer = PosCustomer::find($request->customer_id);
-            if(!$requested_customer) return api_response($request, null, 404, ['msg' => 'Customer not found']);
-            $order = $updater->setOrder($order)->setData(['customer_id' => $requested_customer->id])->update();
-        }
-        if (!$order->customer)
-            return api_response($request, null, 404, ['msg' => 'Customer not found']);
-        if (!$order->customer->profile->mobile)
-            return api_response($request, null, 404, ['msg' => 'Customer mobile not found']);
-        if ($partner->wallet >= 1) {
-            dispatch(new OrderBillSms($order));
-            return api_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
-        } else {
-            return api_response($request, null, 404, ['msg' => 'Insufficient Wallet']);
-        }
+        $this->dispatch(new OrderBillSms($order));
+        return api_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
     }
 
     /**
@@ -415,7 +407,7 @@ class OrderController extends Controller
      */
     public function sendEmail(Request $request, Updater $updater)
     {
-        $this->setModifier($request->manager_resource);
+        $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
         /** @var PosOrder $order */
         $order = PosOrder::with('items')->find($request->order)->calculate();
         if ($request->has('customer_id') && is_null($order->customer_id)) {
