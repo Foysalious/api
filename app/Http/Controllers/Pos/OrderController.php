@@ -374,7 +374,6 @@ class OrderController extends Controller
             return api_response($request, null, 404, ['msg' => 'Customer mobile not found']);
         // checking at least 1 tk is available.
         if ($partner->wallet >= 1) {
-            WalletTransactionHandler::isDebitTransactionAllowed($partner, 1);
             dispatch(new OrderBillSms($order));
             return api_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
         } else {

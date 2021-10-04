@@ -35,6 +35,8 @@ class SmsHandler
         $sms                = $this->getSms();
         $sms_cost           = $sms->estimateCharge();
         if ((double)$partner->wallet < $sms_cost) return;
+        //freeze money amount check
+        WalletTransactionHandler::isDebitTransactionAllowed($partner, $sms_cost, 'এস-এম-এস পাঠানোর');
 
         try {
             $sms->setBusinessType(BusinessType::SMANAGER)

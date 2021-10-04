@@ -439,6 +439,7 @@ class DueTrackerRepository extends BaseRepository
      * @param Request $request
      * @return mixed
      * @throws InvalidPartnerPosCustomer|InsufficientBalance
+     * @throws \Sheba\Transactions\Wallet\WalletDebitForbiddenException
      */
     public function sendSMS(Request $request)
     {
@@ -461,7 +462,8 @@ class DueTrackerRepository extends BaseRepository
         list($sms, $log) = $this->getSms($data);
         $sms_cost = $sms->estimateCharge();
         if ((double)$request->partner->wallet < $sms_cost) throw new InsufficientBalance();
-
+        //freeze money amount check
+        WalletTransactionHandler::isDebitTransactionAllowed($request->partner, $sms_cost, 'এস-এম-এস পাঠানোর');
         $sms->setBusinessType(BusinessType::SMANAGER)->setFeatureType(FeatureType::DUE_TRACKER);
         $sms->shoot();
 
