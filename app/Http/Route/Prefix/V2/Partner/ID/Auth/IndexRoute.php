@@ -166,6 +166,7 @@ class IndexRoute
                 $api->post('/upgrade', 'Partner\PartnerSubscriptionController@update');
                 $api->post('/purchase', 'Partner\PartnerSubscriptionController@purchase');
                 $api->post('/auto-billing-toggle', 'Partner\PartnerSubscriptionController@toggleAutoBillingActivation');
+                $api->put('/subscription-renewal', 'Partner\PartnerSubscriptionController@updateSubscriptionRenewalInfo');
             });
             $api->group(['prefix' => 'customer-subscriptions'], function ($api) {
                 $api->get('order-lists', 'Partner\CustomerSubscriptionController@index');
