@@ -127,7 +127,7 @@ class Route
             $api->get('qr-code', 'PartnerController@getQRCode');
             $api->post('qr-code', 'PartnerController@setQRCode');
             $api->get('orders/{order}/send-sms', 'Pos\OrderController@sendSms');
-            $api->get('partners/{partner}/orders/{order}/send-email', 'Pos\OrderController@sendEmail');
+            $api->get('orders/{order}/send-email', 'Pos\OrderController@sendEmail');
         });
     }
 }
