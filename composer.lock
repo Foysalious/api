@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e5bf7a134f3b09c9bf2d9235ade3ea7a",
+    "content-hash": "7d6142475fe3c22dc90370a7549980c7",
     "packages": [
         {
             "name": "algolia/algoliasearch-client-php",
@@ -1864,7 +1864,7 @@
             "time": "2017-03-12T09:23:10+00:00"
         },
         {
-            "name": "jeremeamia/SuperClosure",
+            "name": "jeremeamia/superclosure",
             "version": "2.3.0",
             "source": {
                 "type": "git",
@@ -2573,7 +2573,7 @@
             ],
             "authors": [
                 {
-                    "name": "MatÄ›j HumpÃ¡l",
+                    "name": "Matěj Humpál",
                     "role": "Developer, maintainer"
                 },
                 {
@@ -3695,10 +3695,6 @@
                 "mime",
                 "mime type"
             ],
-            "support": {
-                "issues": "https://github.com/rosell-dk/image-mime-type-guesser/issues",
-                "source": "https://github.com/rosell-dk/image-mime-type-guesser/tree/0.3"
-            },
             "time": "2019-03-29T09:33:28+00:00"
         },
         {
@@ -3775,10 +3771,6 @@
                 "png",
                 "png2webp"
             ],
-            "support": {
-                "issues": "https://github.com/rosell-dk/webp-convert/issues",
-                "source": "https://github.com/rosell-dk/webp-convert/tree/2.4.0"
-            },
             "time": "2020-11-10T11:24:50+00:00"
         },
         {
@@ -4021,7 +4013,7 @@
             "source": {
                 "type": "git",
                 "url": "https://bitbucket.org/startern/sheba_dal.git",
-                "reference": "adb91f0a48fe3360952baad31031f12289b3de13"
+                "reference": "c8e5aa5e5e53895fa97d11c4361d770966b1cdf8"
             },
             "require": {
                 "php": ">=5.4"
@@ -4048,7 +4040,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2021-09-28T09:20:15+00:00"
+            "time": "2021-10-03T12:21:48+00:00"
         },
         {
             "name": "sheba/elasticsearch",

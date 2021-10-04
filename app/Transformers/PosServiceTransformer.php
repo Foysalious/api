@@ -1,9 +1,14 @@
 <?php namespace App\Transformers;
 
+use App\Models\PartnerPosService;
 use League\Fractal\TransformerAbstract;
 
 class PosServiceTransformer extends TransformerAbstract
 {
+    /**
+     * @param PartnerPosService $service
+     * @return array
+     */
     public function transform($service)
     {
         $service_discount = $service->discount();

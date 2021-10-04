@@ -7,6 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use App\Sheba\Pos\Category\Category;
+use Sheba\Dal\PartnerPosServiceBatch\PartnerPosServiceBatchRepositoryInterface;
 use Sheba\Dal\PartnerPosServiceBatch\Model as PosServiceBatch;
 use Illuminate\Support\Facades\DB;
 
@@ -106,7 +107,7 @@ class CategoryController extends Controller
                     }) : [];
                     $total_items++;
                     if ($service->cost) $items_with_buying_price++;
-                    $total_buying_price += $this->getBuyingPriceOfService($service->id);
+                    $total_buying_price += $this->getBuyingPriceOfService($service);
                 });
             });
 
@@ -266,18 +267,26 @@ class CategoryController extends Controller
         return api_response($request, null, 200, ['message' => 'Category Updated Successfully']);
     }
 
-    public function getBuyingPriceOfService($service_id)
+    public function getBuyingPriceOfService($service)
     {
-        $all_batches_of_service = $this->getAllBatchesOfService($service_id);
-        $total_batch_price = 0.0;
-        foreach ($all_batches_of_service as $batch) {
-            $total_batch_price += $batch->cost * $batch->stock;
+        /** @var Partner $partner */
+        $partner = $service->partner;
+        if($partner->isMigratedToAccounting()) {
+            $batches = $this->getBatches($service->id);
+            $total_buying_price = 0.0;
+            foreach ($batches as $batch) {
+                $total_buying_price += $batch->cost * $batch->stock;
+            }
+            return $total_buying_price;
         }
-        return $total_batch_price;
+        return $service->cost * $service->stock;
+
     }
 
-    public function getAllBatchesOfService($service_id)
+    public function getBatches($service_id)
     {
-        return PosServiceBatch::where('partner_pos_service_id', $service_id)->get();
+        /** @var PartnerPosServiceBatchRepositoryInterface $partnerPosServiceBatchRepository */
+        $partnerPosServiceBatchRepository = app(PartnerPosServiceBatchRepositoryInterface::class);
+        return $partnerPosServiceBatchRepository->where('partner_pos_service_id', $service_id)->get();
     }
 }

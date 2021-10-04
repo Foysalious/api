@@ -49,6 +49,7 @@ class ServiceController extends Controller
             $base_query->select($this->getSelectColumnsOfService())
                 ->partner($partner->id)->get()
                 ->each(function ($service) use (&$services) {
+                    /** @var PartnerPosService $service */
                     $services[] = [
                         'id' => $service->id,
                         'name' => $service->name,
@@ -87,7 +88,7 @@ class ServiceController extends Controller
 
     private function getSelectColumnsOfService()
     {
-        return ['id', 'name', 'app_thumb', 'app_banner', 'price', 'stock', 'vat_percentage', 'is_published_for_shop', 'warranty', 'warranty_unit', 'unit', 'wholesale_price', 'show_image', 'shape', 'color'];
+        return ['id', 'partner_id', 'name', 'app_thumb', 'app_banner', 'price', 'stock', 'vat_percentage', 'is_published_for_shop', 'warranty', 'warranty_unit', 'unit', 'wholesale_price', 'show_image', 'shape', 'color'];
     }
 
     /**
