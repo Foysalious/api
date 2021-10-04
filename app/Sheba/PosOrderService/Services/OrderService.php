@@ -319,6 +319,7 @@ class OrderService
         if ($this->customerId) array_push($data, ['name' => 'customer_id', 'contents' => $this->customerId]);
         if ($this->deliveryAddress) array_push($data, ['name' => 'delivery_address','contents' => $this->deliveryAddress]);
         if ($this->deliveryCharge) array_push($data, ['name' => 'delivery_charge','contents' => $this->deliveryCharge]);
+        if ($this->delivery_mobile) array_push($data, ['name' => 'delivery_mobile','contents' => $this->delivery_mobile]);
         if ($this->salesChannelId) array_push($data, ['name' => 'sales_channel_id','contents' => $this->salesChannelId ?: 0]);
         if ($this->skus) array_push($data, ['name' => 'skus','contents' => $this->skus]);
         if ($this->discount) array_push($data, ['name' => 'discount','contents' => $this->discount]);
