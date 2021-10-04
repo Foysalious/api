@@ -32,11 +32,6 @@ class DashboardController extends Controller
                 'title' => 'Approval',
                 'target_type' => 'approval',
             ],
-
-            [
-                'title' => 'My Team',
-                'target_type' => 'my_team',
-            ],
             [
                 'title' => 'Phonebook',
                 'target_type' => 'phonebook',
