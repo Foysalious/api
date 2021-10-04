@@ -114,7 +114,6 @@ class Route
         $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers', 'middleware' => ['jwtAccessToken']], function ($api) {
             $api->get('webstore-settings', 'Partner\Webstore\WebstoreSettingsController@index');
             $api->post('webstore-settings', 'Partner\Webstore\WebstoreSettingsController@update');
-            $api->get('orders/', 'Pos\OrderController@index');
             $api->get('webstore-dashboard', 'Partner\Webstore\WebstoreDashboardController@getDashboard');
             $api->post('toggle-webstore-sms-activation', 'PartnerController@toggleSmsActivation');
             $api->get('webstore/banner-list', 'Partner\Webstore\WebstoreSettingsController@bannerList');
