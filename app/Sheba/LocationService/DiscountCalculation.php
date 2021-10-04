@@ -67,9 +67,7 @@ class DiscountCalculation
      */
     public function getDiscount()
     {
-        $discount = $this->isDiscountPercentage ? (double)$this->originalPrice * ((double)$this->discount / 100) : (double)$this->discount;
-        $discount = ($this->cap && $discount > $this->cap) ? $this->cap : $discount;
-        return $discount;
+        return (double)$this->discount;
     }
 
     /**
