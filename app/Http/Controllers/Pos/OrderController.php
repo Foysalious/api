@@ -390,7 +390,11 @@ class OrderController extends Controller
     {
         $partner = resolvePartnerFromAuthMiddleware($request);
         $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
-        $this->dispatch(new OrderBillSms($request->order));
+        /** @var PosOrder $order */
+        $order = PosOrder::with('items')->find($request->order);
+        if (empty($order)) return api_response($request, null, 404, ['msg' => 'Order not found']);
+        $order=$order->calculate();
+        $this->dispatch(new OrderBillSms($order));
         return api_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
     }
 
