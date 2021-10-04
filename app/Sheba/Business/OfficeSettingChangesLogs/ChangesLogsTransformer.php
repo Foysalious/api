@@ -5,7 +5,7 @@ use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
 
 class ChangesLogsTransformer extends TransformerAbstract
 {
-    private $type = ['operational' => 'Operational', 'additional' => 'Additional'];
+    private $type = ['operational' => 'Operational', 'additional' => 'Additional', 'holiday' => 'Holiday'];
     /*** @var MemberRepositoryInterface $memberRepository*/
     private $memberRepository;
 
