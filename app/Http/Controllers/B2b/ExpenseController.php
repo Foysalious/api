@@ -9,12 +9,15 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
+use Maatwebsite\Excel\Facades\Excel as MaatwebsiteExcel;
 use Sheba\Attachments\FilesAttachment;
+use Sheba\Business\Attendance\Daily\DailyExcel;
 use Sheba\Business\Expense\ExpenseExcel;
 use Sheba\Employee\ExpensePdf;
 use Sheba\ModificationFields;
 use Sheba\Employee\ExpenseRepo;
 use Sheba\Business\Expense\ExpenseList as ExpenseList;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Throwable;
 use DB;
 
@@ -35,9 +38,9 @@ class ExpenseController extends Controller
 
     /**
      * @param Request $request
-     * @return JsonResponse
+     * @return JsonResponse|BinaryFileResponse
      */
-    public function index(Request $request, ExpenseExcel $excel, ExpenseList $expenseList)
+    public function index(Request $request, ExpenseList $expenseList)
     {
         $this->validate($request, ['date' => 'string']);
         list($offset, $limit) = calculatePagination($request);
@@ -86,9 +89,10 @@ class ExpenseController extends Controller
             $expenses = $this->sortByAmount($expenses, $request->sort_amount)->values();
         }
 
-        if ($request->file == 'excel') return $excel->setData(is_array($expenses) ? $expenses : $expenses->toArray())
-            ->setName('Expense Report')
-            ->get();
+        if ($request->file == 'excel') {
+             $excel = new ExpenseExcel(is_array($expenses) ? $expenses : $expenses->toArray());
+             return MaatwebsiteExcel::download($excel, 'Expense_Report.xlsx');
+        }
 
         return api_response($request, $expenses, 200, ['expenses' => $expenses, 'total_expenses_count' => $total_expense_count, 'total_calculation' => $total_calculation]);
     }
