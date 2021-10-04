@@ -20,7 +20,7 @@ class WebstoreSettingsController extends Controller
 {
     use ModificationFields;
 
-    public function index($partner, Request $request)
+    public function index(Request $request)
     {
         $partner = resolvePartnerFromAuthMiddleware($request);
         $fractal = new Manager();
@@ -37,7 +37,7 @@ class WebstoreSettingsController extends Controller
      * @return JsonResponse
      * @throws AccessRestrictedExceptionForPackage|DoNotReportException
      */
-    public function update($partner, Request $request, WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest)
+    public function update(Request $request, WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest)
     {
         $partner = resolvePartnerFromAuthMiddleware($request);
         $this->validate($request, [

@@ -42,7 +42,6 @@ use Sheba\Pos\Order\Updater;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\Profile\Creator as ProfileCreator;
 use Sheba\Reports\Exceptions\NotAssociativeArray;
-use Sheba\Reports\PdfHandler;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PartnerRepository;
 use Sheba\RequestIdentification;
@@ -62,6 +61,7 @@ class OrderController extends Controller
         ini_set('memory_limit', '4096M');
         ini_set('max_execution_time', 420);
         $status  = $request->status;
+
         $partner = resolvePartnerFromAuthMiddleware($request);
         list($offset, $limit) = calculatePagination($request);
         $posOrderList = $posOrderList->setPartner($partner)->setStatus($status)->setOffset($offset)->setLimit($limit);
@@ -359,8 +359,8 @@ class OrderController extends Controller
      */
     public function sendSms(Request $request, Updater $updater)
     {
-        $partner = $request->partner;
-        $this->setModifier($request->manager_resource);
+        $partner = resolvePartnerFromAuthMiddleware($request);
+        $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
         $this->dispatch(new OrderBillSms($partner, $request->order));
         return api_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
     }
@@ -374,7 +374,7 @@ class OrderController extends Controller
      */
     public function sendEmail(Request $request, Updater $updater)
     {
-        $this->setModifier($request->manager_resource);
+        $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
         /** @var PosOrder $order */
         $order = PosOrder::with('items')->find($request->order)->calculate();
         if ($request->has('customer_id') && is_null($order->customer_id)) {

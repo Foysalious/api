@@ -16,7 +16,7 @@ class Route
             $api->post('/check-access', 'PosRebuild\AccessManagerController@checkAccess');
             $api->get('voucher-details/{voucher_id}', 'VoucherController@getVoucherDetails');
         });
-        $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers', 'middleware' => ['ip.whitelist']], function ($api) {
+        $api->group(['prefix' => 'pos/v1/', 'namespace' => 'App\Http\Controllers', 'middleware' => ['ip.whitelist']], function ($api) {
             $api->post('/send-sms', "PosRebuild\SmsController@sendSms");
         });
         $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers', 'middleware' => ['jwtAccessToken']], function ($api) {
@@ -127,7 +127,7 @@ class Route
             $api->get('qr-code', 'PartnerController@getQRCode');
             $api->post('qr-code', 'PartnerController@setQRCode');
             $api->get('orders/{order}/send-sms', 'Pos\OrderController@sendSms');
-            $api->get('orders/{order}/send-email', 'Pos\OrderController@sendEmail');
+            $api->get('partners/{partner}/orders/{order}/send-email', 'Pos\OrderController@sendEmail');
         });
     }
 }
