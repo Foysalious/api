@@ -47,6 +47,7 @@ class OrderController extends Controller
             ->setSalesChannelId($request->sales_channel_id)
             ->setDeliveryCharge($request->delivery_charge)
             ->setDeliveryMobile($request->delivery_mobile)
+            ->setDeliveryName($request->delivery_name)
             ->setStatus($request->status)
             ->setSkus($request->skus)
             ->setDiscount($request->discount)
