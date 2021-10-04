@@ -21,6 +21,7 @@ use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use Sheba\Business\Leave\Breakdown\LeaveBreakdown;
 use Sheba\Business\Leave\RejectReason\RejectReason;
+use Sheba\Business\LeaveType\OtherSettings\BasicInfo as OthersInfo;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\LeaveType\Contract as LeaveTypesRepoInterface;
@@ -32,6 +33,7 @@ use Sheba\Helpers\TimeFrame;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\Dal\ApprovalFlow\Model as ApprovalFlow;
 use Sheba\ModificationFields;
+use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Throwable;
 use DB;
 
@@ -57,9 +59,11 @@ class LeaveController extends Controller
         $resource = new Collection($leaves, new LeaveListTransformer());
         $leaves = $fractal->createData($resource)->toArray()['data'];
         $pending_approval_requests = $approval_request_repository->getPendingApprovalRequestByBusinessMember($business_member);
+        $pending_approval_requests_count = $approval_request_repository->countPendingLeaveApprovalRequests($business_member);
         return api_response($request, null, 200, [
             'leaves' => $leaves,
-            'pending_approval_request' => $pending_approval_requests
+            'pending_approval_request' => $pending_approval_requests,
+            'approval_requests' => ['pending_request' => $pending_approval_requests_count]
         ]);
     }
 
@@ -73,6 +77,7 @@ class LeaveController extends Controller
     public function show($leave, Request $request, LeaveRepoInterface $leave_repo, LogFormatter $log_formatter)
     {
         $leave = $leave_repo->find($leave);
+        if (!$leave) return api_response($request, null, 404);
         /** @var Business $business */
         $business = $this->getBusiness($request);
         /** @var BusinessMember $business_member */
@@ -221,7 +226,14 @@ class LeaveController extends Controller
             }
         }
 
-        return api_response($request, null, 200, ['leave_types' => $leave_types, 'half_day_configuration' => $half_day_configuration]);
+        $fiscal_year_time_frame = $business_member->getBusinessFiscalPeriod();
+
+        $fiscal_year = [
+            'start_date' => $fiscal_year_time_frame->start->format('Y-m-d'),
+            'end_date' => $fiscal_year_time_frame->end->format('Y-m-d')
+        ];
+
+        return api_response($request, null, 200, ['leave_types' => $leave_types, 'half_day_configuration' => $half_day_configuration, 'fiscal_year' => $fiscal_year]);
     }
 
     /**
@@ -268,21 +280,6 @@ class LeaveController extends Controller
         $reject_reasons = $reject_reason->reasons();
 
         return api_response($request, $reject_reasons, 200, ['reject_reasons' => $reject_reasons]);
-    }
-
-
-    /**
-     * @param BusinessMember $business_member
-     * @return bool
-     */
-    private function isNeedSubstitute(BusinessMember $business_member)
-    {
-        $leave_approvers = [];
-        ApprovalFlow::with('approvers')->where('type', Type::LEAVE)->get()->each(function ($approval_flow) use (&$leave_approvers) {
-            $leave_approvers = array_unique(array_merge($leave_approvers, $approval_flow->approvers->pluck('id')->toArray()));
-        });
-        if (in_array($business_member->id, $leave_approvers)) return true;
-        return false;
     }
 
     /**
@@ -333,5 +330,29 @@ class LeaveController extends Controller
         $leave_updater->setLeave($leave)->setBusinessMember($business_member)->setStatus($request->status)->statusUpdate();
 
         return api_response($request, null, 200);
+    }
+
+    public function getPolicySettings(Request $request, LeaveTypesRepoInterface $leave_types_repo, BusinessMemberRepositoryInterface $business_member_repo, OthersInfo $info)
+    {
+        $business = $this->getBusiness($request);
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $leave_types = $leave_types_repo->getAllLeaveTypesByBusiness($business);
+        $others_info = $info->setBusiness($business)->getInfo();
+        return api_response($request, null, 200, ['leave_types' => $leave_types, 'is_sandwich_enable' => $others_info['sandwich_leave']]);
+    }
+
+    /**
+     * @param BusinessMember $business_member
+     * @return bool
+     */
+    private function isNeedSubstitute(BusinessMember $business_member)
+    {
+        $leave_approvers = [];
+        ApprovalFlow::with('approvers')->where('type', Type::LEAVE)->get()->each(function ($approval_flow) use (&$leave_approvers) {
+            $leave_approvers = array_unique(array_merge($leave_approvers, $approval_flow->approvers->pluck('id')->toArray()));
+        });
+        if (in_array($business_member->id, $leave_approvers)) return true;
+        return false;
     }
 }

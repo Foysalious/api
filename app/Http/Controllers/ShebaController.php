@@ -279,9 +279,11 @@ class ShebaController extends Controller
                 'address'  => $receiver->address
             ],
             'payer'            => [
-                'id'     => $payer->id,
-                'name'   => $payer->name,
-                'mobile' => $payer->mobile
+                'id'        => $payer->id,
+                'name'      => $payer->name,
+                'mobile'    => $payer->mobile,
+                'address'   => $payer->address,
+                'email'     => $payer->email
             ]
         ];
     }
@@ -495,10 +497,11 @@ class ShebaController extends Controller
         $info                           = $this->getPaymentInfo($payment);
         $info['gateway_transaction_id'] = $payment->gateway_transaction_id;
         $info['gateway_account_name']   = $payment->gateway_account_name;
+        $info['payment_purpose']        = $payment->payable->description;
         if (!isset($info['payer'])) {
             /** @var Payable $payer */
             $payer = $payment->payable;
-            $info  = array_merge($info, ['payer' => ['name' => $payer->getName(), 'id' => $payer->user->id, 'mobile' => $payer->getMobile()]]);
+            $info  = array_merge($info, ['payer' => ['name' => $payer->getName(), 'id' => $payer->user->id, 'mobile' => $payer->getMobile(), 'address' => $payer->getAddress(), 'email' => $payer->getEmail()]]);
         }
         return api_response($request, $info, 200, ['data' => $info]);
     }

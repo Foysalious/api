@@ -54,7 +54,7 @@ class CustomerController extends Controller
     public function update($customer, Request $request)
     {
         $this->validate($request, [
-            'field' => 'required|string|in:name,birthday,gender,address',
+            'field' => 'required|string|in:name,birthday,gender,address,mobile',
             'value' => 'required|string'
         ]);
         $customer = $request->customer;
@@ -70,6 +70,11 @@ class CustomerController extends Controller
                 'value' => 'required|string|in:Male,Female,Other',
             ]);
             $profile->gender = $request->value;
+        } elseif ($field == 'mobile') {
+            $this->validate($request, [
+                'value' => 'required|string|mobile:bd',
+            ]);
+            $profile->mobile = formatMobile($request->value);
         } else {
             $this->validate($request, [
                 'value' => 'required|string'
@@ -92,6 +97,7 @@ class CustomerController extends Controller
         /** @var Customer $customer */
         $customer = $request->customer;
         $profile = $customer->profile;
+        $request['email'] = trim($request->email);
         $this->validate($request, [
             'name' => 'string',
             'gender'=>'string|in:Male,Female,Other',

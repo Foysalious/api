@@ -27,14 +27,14 @@ class ThemeSettingController extends Controller
           }
         },
         {
-          "url": "https://cdn-shebadev.s3.ap-south-1.amazonaws.com/1019.jpg",
+          "url": "https://cdn-shebadev.s3.amazonaws.com/548.4495706096466user261629964306657",
           "target": {
             "type": "category",
             "type_id": null
           }
         },
         {
-          "url": "https://cdn-shebadev.s3.ap-south-1.amazonaws.com/theme_slide.jpg",
+          "url": "https://cdn-shebadev.s3.ap-south-1.amazonaws.com/227.81362452631916user261629964345377",
           "target": null
         }
       ]
@@ -43,9 +43,46 @@ class ThemeSettingController extends Controller
       "type": "all_categories",
       "name": "All Categories",
       "category": [
+        
+         {
+          "name": "Men Fashion",
+          "id": 10,
+          "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
+          "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg",
+          "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
+        },
+      
+         {
+          "name": "Men Fashion",
+          "id": 10,
+          "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
+          "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg",
+          "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
+        },
         {
-          "id": 1,
-          "name": "Women Fashion",
+          "name": "Men Fashion",
+          "id": 2,
+          "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
+          "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg",
+          "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
+        },
+         {
+          "name": "Men Fashion",
+          "id": 10,
+          "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
+          "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg",
+          "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
+        },
+         {
+          "name": "Men Fashion",
+          "id": 10,
+          "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
+          "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg",
+          "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
+        },
+         {
+          "name": "Men Fashion",
+          "id": 10,
           "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
           "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg",
           "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
@@ -53,6 +90,27 @@ class ThemeSettingController extends Controller
         {
           "name": "Men Fashion",
           "id": 10,
+          "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
+          "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg",
+          "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
+        },
+          {
+          "name": "Men Fashion",
+          "id": 10,
+          "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
+          "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg",
+          "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
+        },
+         {
+          "name": "Men Fashion",
+          "id": 10,
+          "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
+          "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg",
+          "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
+        },
+        {
+          "name": "Men Fashion",
+          "id": 10052,
           "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
           "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg",
           "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
@@ -66,6 +124,60 @@ class ThemeSettingController extends Controller
       "collection_banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
       "product": [
         {
+          "id": 1000674,
+          "name": "Jacket",
+          "original_price": 550,
+          "vat_included_price": 550,
+          "vat_percentage": 0,
+          "unit": "piece",
+          "stock": 16,
+          "category_id": 225,
+          "discount_applicable": 0,
+          "discounted_amount": 0,
+          "discount_percentage": 0,
+          "rating": 4,
+          "count_rating": 7,
+          "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
+          "thumb": "https://s3.ap-shttps://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg",
+          "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
+        },
+         {
+          "id": 1000674,
+          "name": "Jacket",
+          "original_price": 550,
+          "vat_included_price": 550,
+          "vat_percentage": 0,
+          "unit": "piece",
+          "stock": 16,
+          "category_id": 225,
+          "discount_applicable": 0,
+          "discounted_amount": 0,
+          "discount_percentage": 0,
+          "rating": 4,
+          "count_rating": 7,
+          "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
+          "thumb": "https://s3.ap-shttps://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg",
+          "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
+        },
+         {
+          "id": 1000674,
+          "name": "Jacket",
+          "original_price": 550,
+          "vat_included_price": 550,
+          "vat_percentage": 0,
+          "unit": "piece",
+          "stock": 16,
+          "category_id": 225,
+          "discount_applicable": 0,
+          "discounted_amount": 0,
+          "discount_percentage": 0,
+          "rating": 4,
+          "count_rating": 7,
+          "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
+          "thumb": "https://s3.ap-shttps://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg",
+          "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
+        },
+         {
           "id": 1,
           "name": "Jacket",
           "original_price": 550,
@@ -83,7 +195,26 @@ class ThemeSettingController extends Controller
           "thumb": "https://s3.ap-shttps://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg",
           "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
         },
-        {
+         {
+          "id": 1,
+          "name": "Jacket",
+          "original_price": 550,
+          "vat_included_price": 550,
+          "vat_percentage": 0,
+          "unit": "piece",
+          "stock": 16,
+          "category_id": 225,
+          "discount_applicable": 0,
+          "discounted_amount": 0,
+          "discount_percentage": 0,
+          "rating": 4,
+          "count_rating": 7,
+          "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
+          "thumb": "https://s3.ap-shttps://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg",
+          "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
+        },
+         
+         {
           "id": 10,
           "name": "Product Name 2",
           "original_price": 550,
@@ -108,7 +239,7 @@ class ThemeSettingController extends Controller
       "name": "New Arrival",
       "product": [
         {
-          "id": 1,
+          "id": 1000674,
           "name": "Product Name 1",
           "original_price": 2990,
           "vat_included_price": 2990,
@@ -126,7 +257,7 @@ class ThemeSettingController extends Controller
           "banner": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_slide.jpg"
         },
         {
-          "id": 2,
+          "id": 1000473,
           "name": "Product Name 2",
           "original_price": 2990,
           "vat_included_price": 2990,

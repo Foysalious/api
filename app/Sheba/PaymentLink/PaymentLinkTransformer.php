@@ -2,6 +2,7 @@
 
 use App\Models\Partner;
 use App\Models\PosCustomer;
+use App\Sheba\Pos\Order\PosOrderObject;
 use Carbon\Carbon;
 use Sheba\Pos\Order\PosOrderResolver;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
@@ -110,6 +111,7 @@ class PaymentLinkTransformer
     {
         $order = $this->getTarget();
         if ($order && $order instanceof ExternalPayment) return $this->getPaymentLinkPayer();
+        if ($order && $order instanceof PosOrderObject) return $order->customer;
         return $order ? $order->customer->profile : $this->getPaymentLinkPayer();
     }
 
@@ -129,6 +131,9 @@ class PaymentLinkTransformer
         if ($this->response->targetType) {
             $model_name = $this->resolveTargetClass();
             if ($model_name == 'due_tracker') return null;
+            /** @var PosOrderResolver $posOrderResolver */
+            $posOrderResolver = app(PosOrderResolver::class);
+            if ($model_name == 'pos_order') return $posOrderResolver->setOrderId($this->response->targetId)->get();
             $this->target = $model_name::find($this->response->targetId);
             return $this->target;
         } else
@@ -142,9 +147,8 @@ class PaymentLinkTransformer
 
     private function resolveTargetClass()
     {
-        $model_name = "App\\Models\\";
         if ($this->response->targetType == 'pos_order')
-            return $model_name . 'PosOrder';
+            return 'pos_order';
         if ($this->response->targetType == 'external_payment')
             return "Sheba\\Dal\\ExternalPayment\\Model";
         if ($this->response->targetType == 'due_tracker') return 'due_tracker';

@@ -5,6 +5,7 @@ use App\Models\Payable;
 use App\Models\Payment;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Sheba\Payment\Methods\PaymentMethod;
 use Sheba\Payment\Methods\Ssl\Response\InitResponse;
@@ -93,7 +94,6 @@ class Ssl extends PaymentMethod
     {
         /** @var Payable $payable */
         $payable = $payment->payable;
-
         $data = array();
         $data['store_id'] = $this->store->getStoreId();
         $data['store_passwd'] = $this->store->getStorePassword();
@@ -114,7 +114,6 @@ class Ssl extends PaymentMethod
         $data['cus_email']    = $payable->getEmail();
         $data['cus_phone']    = $payable->getMobile();
         $this->setEmi($payable,$data);
-
         $request = (new TPRequest())->setUrl($this->store->getSessionUrl())
             ->setMethod(TPRequest::METHOD_POST)->setInput($data);
         return $this->tpClient->call($request);

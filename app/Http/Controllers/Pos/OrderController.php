@@ -9,6 +9,7 @@ use App\Models\Partner;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Models\Profile;
+use App\Sheba\Pos\Order\Invoice\InvoiceService;
 use App\Transformers\CustomSerializer;
 use App\Transformers\PosOrderTransformer;
 use Carbon\Carbon;
@@ -18,6 +19,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
+use Sheba\ComplianceInfo\ComplianceInfo;
+use Sheba\ComplianceInfo\Statics;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use League\Fractal\Resource\ResourceAbstract;
@@ -26,7 +29,6 @@ use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\ExpenseTracker\EntryType;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
-use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 use Sheba\PartnerStatusAuthentication;
 use Sheba\PaymentLink\Creator as PaymentLinkCreator;
@@ -52,6 +54,7 @@ use Sheba\Pos\Order\Updater;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Profile\Creator as ProfileCreator;
+use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Reports\PdfHandler;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PartnerRepository;
@@ -60,6 +63,7 @@ use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Subscription\Partner\Access\AccessManager;
 use Sheba\Subscription\Partner\Access\Exceptions\AccessRestrictedExceptionForPackage;
 use Sheba\Transactions\Types;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Sheba\Usage\Usage;
 use Throwable;
 
@@ -72,7 +76,7 @@ class OrderController extends Controller
         ini_set('memory_limit', '4096M');
         ini_set('max_execution_time', 420);
         $status  = $request->status;
-        $partner = $request->partner;
+        $partner = resolvePartnerFromAuthMiddleware($request);
         list($offset, $limit) = calculatePagination($request);
         $posOrderList = $posOrderList->setPartner($partner)->setStatus($status)->setOffset($offset)->setLimit($limit);
         if ($request->has('sales_channel')) $posOrderList = $posOrderList->setSalesChannel($request->sales_channel);
@@ -86,7 +90,6 @@ class OrderController extends Controller
 
     /**
      * @param Request $request
-     * @param PosOrderRepo $posOrder
      * @param PaymentLinkTransformer $payment_link
      * @return JsonResponse
      */
@@ -133,9 +136,15 @@ class OrderController extends Controller
      * @throws NotEnoughStockException
      * @throws AccountingEntryServerError|ExpenseTrackingServerError
      * @throws \Sheba\Authentication\Exceptions\AuthenticationFailedException
+     * @return array|false|JsonResponse
+     * @throws ExpenseTrackingServerError
+     * @throws NotAssociativeArray
+     * @throws DoNotReportException
+     * @throws InvalidDiscountType
      */
     public function store($partner, Request $request, Creator $creator, ProfileCreator $profileCreator, PosCustomerCreator $posCustomerCreator, PartnerRepository $partnerRepository, PaymentLinkCreator $paymentLinkCreator)
     {
+
         $this->validate($request, [
             'services' => 'required|string',
             'paid_amount' => 'sometimes|required|numeric',
@@ -192,7 +201,7 @@ class OrderController extends Controller
          */
         try {
             if ($order->sales_channel == SalesChannels::WEBSTORE) {
-                if ($partner->is_webstore_sms_active && $partner->wallet >= 1) $this->sendOrderPlaceSmsToCustomer($order);
+                if ($partner->is_webstore_sms_active) dispatch(new WebstoreOrderSms($partner, $order->id));
                 $this->sendOrderPlacePushNotificationToPartner($order);
             }
         } catch (Throwable $e) {
@@ -205,6 +214,10 @@ class OrderController extends Controller
         $payment_link_amount = $request->has('payment_link_amount') ? $request->payment_link_amount : $order->net_bill;
         if ($request->payment_method == 'payment_link' || $request->payment_method == 'emi') {
             (new PartnerStatusAuthentication())->handleInside($partner);
+            $status = (new ComplianceInfo())->setPartner($partner)->getComplianceStatus();
+            if ($status === Statics::REJECTED)
+                return api_response($request, null, 412, ["message" => "Precondition Failed", "error_message" => Statics::complianceRejectedMessage()]);
+
             $paymentLink = $paymentLinkCreator->setAmount($payment_link_amount)->setReason("PosOrder ID: $order->id Due payment")
                 ->setUserName($partner->name)->setUserId($partner->id)
                 ->setUserType('partner')
@@ -294,9 +307,11 @@ class OrderController extends Controller
     /**
      * @param Request $request
      * @param Updater $updater
+     * @param InvoiceService $invoiceService
      * @return JsonResponse
+     * @throws NotAssociativeArray
      */
-    public function update(Request $request, Updater $updater)
+    public function update(Request $request, Updater $updater,InvoiceService $invoiceService)
     {
         $this->setModifier($request->manager_resource);
             /** @var PosOrder $order */
@@ -310,6 +325,7 @@ class OrderController extends Controller
             $request->merge(['refund_nature' => $refund_nature]);
 
             $refund->setNew($new)->update();
+            $invoiceService->setPosOrder($order)->generateInvoice()->saveInvoiceLink();
             $order->payment_status = $order->calculate()->getPaymentStatus();
             return api_response($request, null, 200, [
                 'msg'   => 'Order Updated Successfully',
@@ -330,7 +346,7 @@ class OrderController extends Controller
         $statusChanger->setOrder($order)->setStatus($request->status)->setModifier($request->manager_resource)->changeStatus();
         if ($order->partner->is_webstore_sms_active && $order->partner->wallet >= 1 && $order->sales_channel == SalesChannels::WEBSTORE) {
             try {
-                dispatch(new WebstoreOrderSms($order));
+                dispatch(new WebstoreOrderSms($order->partner,$order->id));
             } catch (Throwable $e) {
                 app('sentry')->captureException($e);
             }
@@ -372,26 +388,14 @@ class OrderController extends Controller
      */
     public function sendSms(Request $request, Updater $updater)
     {
-        $partner = $request->partner;
-        $this->setModifier($request->manager_resource);
+        $partner = resolvePartnerFromAuthMiddleware($request);
+        $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
         /** @var PosOrder $order */
         $order = PosOrder::with('items')->find($request->order);
         if (empty($order)) return api_response($request, null, 404, ['msg' => 'Order not found']);
         $order=$order->calculate();
-        if ($request->has('customer_id') && is_null($order->customer_id)) {
-            $requested_customer = PosCustomer::find($request->customer_id);
-            $order              = $updater->setOrder($order)->setData(['customer_id' => $requested_customer->id])->update();
-        }
-        if (!$order->customer)
-            return api_response($request, null, 404, ['msg' => 'Customer not found']);
-        if (!$order->customer->profile->mobile)
-            return api_response($request, null, 404, ['msg' => 'Customer mobile not found']);
-        if ($partner->wallet >= 1) {
-            dispatch(new OrderBillSms($order));
-            return api_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
-        } else {
-            return api_response($request, null, 404, ['msg' => 'Insufficient Wallet']);
-        }
+        $this->dispatch(new OrderBillSms($order));
+        return api_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
     }
 
     /**
@@ -403,7 +407,7 @@ class OrderController extends Controller
      */
     public function sendEmail(Request $request, Updater $updater)
     {
-        $this->setModifier($request->manager_resource);
+        $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
         /** @var PosOrder $order */
         $order = PosOrder::with('items')->find($request->order)->calculate();
         if ($request->has('customer_id') && is_null($order->customer_id)) {
@@ -438,7 +442,7 @@ class OrderController extends Controller
         if ($request->has('emi_month')) {
             $payment_data['emi_month'] = $request->emi_month;
         }
-
+        Log::info(["amount is gonna clear", $order->id, $order->calculate(), $order->payment_status, $payment_data]);
         $payment_creator->credit($payment_data);
         $order                 = $order->calculate();
         $order->payment_status = $order->getPaymentStatus();
@@ -470,101 +474,37 @@ class OrderController extends Controller
      * @param Request $request
      * @param $partner
      * @param PosOrder $order
-     * @return JsonResponse|string
+     * @param InvoiceService $invoiceService
+     * @return JsonResponse
+     * @throws AccessRestrictedExceptionForPackage
+     * @throws NotAssociativeArray
      */
-    public function downloadInvoice(Request $request, $partner, PosOrder $order)
+    public function downloadInvoice(Request $request, $partner, PosOrder $order, InvoiceService $invoiceService)
     {
-        try {
-            AccessManager::checkAccess(AccessManager::Rules()->POS->INVOICE->DOWNLOAD, $request->partner->subscription->getAccessRules());
-            $pdf_handler = new PdfHandler();
-            $pos_order   = $order->calculate();
-            $partner     = $pos_order->partner;
-            $info        = [
-                'amount'           => $pos_order->getNetBill(),
-                'created_at'       => $pos_order->created_at->format('jS M, Y, h:i A'),
-                'payment_receiver' => [
-                    'name'                    => $partner->name,
-                    'image'                   => $partner->logo,
-                    'mobile'                  => $partner->getContactNumber(),
-                    'address'                 => $partner->address,
-                    'vat_registration_number' => $partner->vat_registration_number
-                ],
-                'pos_order'        => $pos_order ? [
-                    'items'       => $pos_order->items,
-                    'discount'    => $pos_order->getTotalDiscount(),
-                    'total'       => $pos_order->getTotalPrice(),
-                    'grand_total' => $pos_order->getTotalBill(),
-                    'paid'        => $pos_order->getPaid(),
-                    'due'         => $pos_order->getDue(),
-                    'status'      => $pos_order->getPaymentStatus(),
-                    'vat'         => $pos_order->getTotalVat(),
-                    'delivery_charge' => $pos_order->delivery_charge
-                ] : null
-            ];
-            if ($pos_order->customer) {
-                $customer     = $pos_order->customer->profile;
-                $info['user'] = [
-                    'name'   => $customer->name,
-                    'mobile' => $customer->mobile,
-                    'address' => !$pos_order->address?$customer->address:$pos_order->address
-                ];
-            }
-            $invoice_name = 'pos_order_invoice_' . $pos_order->id;
-            $link         = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save(true);
-            return api_response($request, null, 200, [
-                'message' => 'Successfully Download receipt',
-                'link'    => $link
-            ]);
-        } catch (AccessRestrictedExceptionForPackage $exception) {
-            return api_response($request, $exception, 403, ['message' => $exception->getMessage()]);
-        }
+        AccessManager::checkAccess(AccessManager::Rules()->POS->INVOICE->DOWNLOAD, $request->partner->subscription->getAccessRules());
+        $invoiceService = $invoiceService->setPosOrder($order);
+        $invoiceLink = $invoiceService->isAlreadyGenerated()->getInvoiceLink();
+        if (!$invoiceLink)
+            $invoiceLink = $invoiceService->generateInvoice()->saveInvoiceLink()->getInvoiceLink();
+        return api_response($request, null, 200, [
+            'message' => 'Successfully Download receipt',
+            'link' => $invoiceLink
+        ]);
     }
 
-    public function downloadInvoiceFromWebStore(Request $request, $partner, PosOrder $order)
+    /**
+     * @throws NotAssociativeArray
+     */
+    public function downloadInvoiceFromWebStore(Request $request, $partner, PosOrder $order, InvoiceService $invoiceService)
     {
-        try {
-            $pdf_handler = new PdfHandler();
-            $pos_order   = $order->calculate();
-            $partner     = $pos_order->partner;
-            $info        = [
-                'amount'           => $pos_order->getNetBill(),
-                'created_at'       => $pos_order->created_at->format('jS M, Y, h:i A'),
-                'payment_receiver' => [
-                    'name'                    => $partner->name,
-                    'image'                   => $partner->logo,
-                    'mobile'                  => $partner->getContactNumber(),
-                    'address'                 => $partner->address,
-                    'vat_registration_number' => $partner->vat_registration_number
-                ],
-                'pos_order'        => $pos_order ? [
-                    'items'       => $pos_order->items,
-                    'discount'    => $pos_order->getTotalDiscount(),
-                    'total'       => $pos_order->getTotalPrice(),
-                    'grand_total' => $pos_order->getTotalBill(),
-                    'paid'        => $pos_order->getPaid(),
-                    'due'         => $pos_order->getDue(),
-                    'status'      => $pos_order->getPaymentStatus(),
-                    'vat'         => $pos_order->getTotalVat(),
-                    'delivery_charge' => $pos_order->delivery_charge
-                ] : null
-            ];
-            if ($pos_order->customer) {
-                $customer     = $pos_order->customer->profile;
-                $info['user'] = [
-                    'name'   => $customer->name,
-                    'mobile' => $customer->mobile,
-                    'address' => !$pos_order->address?$customer->address:$pos_order->address
-                ];
-            }
-            $invoice_name = 'pos_order_invoice_' . $pos_order->id;
-            $link         = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save(true);
-            return api_response($request, null, 200, [
-                'message' => 'Successfully Download receipt',
-                'link'    => $link
-            ]);
-        } catch (AccessRestrictedExceptionForPackage $exception) {
-            return api_response($request, $exception, 403, ['message' => $exception->getMessage()]);
-        }
+        $invoiceService = $invoiceService->setPosOrder($order);
+        $invoiceLink = $invoiceService->isAlreadyGenerated()->getInvoiceLink();
+        if (!$invoiceLink)
+            $invoiceLink = $invoiceService->generateInvoice()->saveInvoiceLink()->getInvoiceLink();
+        return api_response($request, null, 200, [
+            'message' => 'Successfully Download receipt',
+            'link' => $invoiceLink
+        ]);
     }
 
     /**
@@ -585,18 +525,10 @@ class OrderController extends Controller
         ]);
     }
 
-    private function sendCustomerSms(PosOrder $order)
-    {
-        if ($order->customer && $order->customer->profile->mobile)
-            dispatch(new OrderBillSms($order));
-    }
 
-    private function sendOrderPlaceSmsToCustomer(PosOrder $order)
-    {
-        if ($order->customer && $order->customer->profile->mobile)
-            dispatch(new WebstoreOrderSms($order));
-    }
-
+    /**
+     * @param PosOrder $order
+     */
     private function sendOrderPlacePushNotificationToPartner(PosOrder $order)
     {
         dispatch(new WebstoreOrderPushNotification($order));
@@ -623,6 +555,7 @@ class OrderController extends Controller
         if (!$requested_customer)
             return api_response($request, null, 401, ['msg' => 'Customer not found']);
         $updater->setOrder($order)->setData(['customer_id' => $requested_customer->id])->update();
+        /** @var AutomaticEntryRepository $entry */
         $entry  = app(AutomaticEntryRepository::class);
         $entry->setPartner($order->partner)->setFor(EntryType::INCOME)->setSourceType(class_basename($order))->setSourceId($order->id)->setParty($requested_customer->profile)->updatePartyFromSource();
         return api_response($request, null, 200, ['msg' => 'Customer tagged Successfully']);

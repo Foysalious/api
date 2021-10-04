@@ -32,7 +32,7 @@ class AuthRoute
                     $api->get('/', 'Resource\ResourceJobController@jobDetails');
                     $api->post('status', 'Resource\ResourceJobController@updateStatus');
                     $api->post('reschedule', 'Resource\ResourceJobController@rescheduleJob');
-                    $api->post('collection', 'Resource\ResourceJobController@collectMoney');
+                    $api->post('collection', 'Resource\ResourceJobController@collectMoney')->middleware('concurrent_request');
                     $api->get('bills', 'Resource\ResourceJobController@getBills');
                     $api->get('rates', 'Resource\ResourceJobRateController@index');
                     $api->post('rating', 'Resource\ResourceJobRateController@storeCustomerRating');
@@ -40,7 +40,7 @@ class AuthRoute
                     $api->post('extend-time', 'Resource\ResourceJobController@extendTime');
                     $api->get('services', 'Resource\ResourceJobController@getServices');
                     $api->get('updated-bill', 'Resource\ResourceJobController@getUpdatedBill');
-                    $api->post('services', 'Resource\ResourceJobController@updateService');
+                    $api->post('services', 'Resource\ResourceJobController@updateService')->middleware('concurrent_request:resource,update');
                     $api->post('partial-pay', 'Resource\ResourceJobController@partialPay');
                 });
             });

@@ -8,6 +8,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Authentication\AuthUser;
+use Sheba\Dal\JobService\JobService;
 use Sheba\ModificationFields;
 use Sheba\Resource\Jobs\BillInfo;
 use Sheba\Resource\Jobs\BillUpdate;
@@ -171,7 +172,8 @@ class ResourceJobController extends Controller
 
     public function getServices(Job $job, Request $request, ServiceList $serviceList)
     {
-        $services = $serviceList->setJob($job)->setRequest($request)->getServicesList();
+        $job_service = JobService::where('job_id',$job->id)->pluck('service_id')->toArray();
+        $services = $serviceList->setJob($job)->setRequest($request)->setServiceIds($job_service)->getServicesList();
         return api_response($request, null, 200, ['services' => $services]);
 
     }

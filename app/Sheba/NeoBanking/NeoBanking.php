@@ -141,10 +141,10 @@ class NeoBanking
      * @param $account_no
      * @throws Exceptions\InvalidBankCode
      */
-    public function storeAccountNumber($account_no)
+    public function accountNumber($account_no)
     {
         $bank = (new BankFactory())->setPartner($this->partner)->setBank($this->bank)->get();
-        $bank->storeAccountNumber($account_no);
+        $bank->accountNumberNotification($account_no);
     }
 
     /**

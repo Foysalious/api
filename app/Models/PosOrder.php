@@ -1,10 +1,10 @@
 <?php namespace App\Models;
 
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Sheba\Dal\BaseModel;
+use Sheba\Dal\POSOrder\Events\PosOrderSaved as PosOrderSavedEvent;
 use Sheba\Dal\POSOrder\OrderStatuses as POSOrderStatuses;
-use Sheba\Dal\POSOrder\SalesChannels as POSOrderSalesChannel;
 use Sheba\EMI\Calculations;
 use Sheba\Helpers\TimeFrame;
 use Sheba\PaymentLink\Target;
@@ -17,7 +17,7 @@ use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\Dal\POSOrder\OrderStatuses;
 
 
-class PosOrder extends Model
+class PosOrder  extends BaseModel
 {
     use SoftDeletes;
 
@@ -46,6 +46,8 @@ class PosOrder extends Model
     /** @var float|int|number */
     private $netBill;
     private $originalTotal;
+
+    public static $createdEventClass = PosOrderSavedEvent::class;
 
     public function calculate()
     {

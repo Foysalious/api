@@ -166,8 +166,8 @@ class PeriodicBillingHandler
                     $value = $fee->price;
                     $duration = $fee->duration;
                 }
-        if (!isset($value) || !isset($duration) || $duration == 0) throw new InvalidPreviousSubscriptionRules();
-        return round(doubleval($value) / $duration, 6);
+        if (!isset($value) || !isset($duration)) throw new InvalidPreviousSubscriptionRules();
+        return $duration > 0 ? round(doubleval($value) / $duration, 6) : round(doubleval($value), 6);
     }
 
 

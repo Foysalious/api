@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Sheba\AccountingEntry\Repository;
 
 use App\Models\Partner;
@@ -9,6 +10,8 @@ use App\Models\PosOrder;
 use App\Models\PosOrderPayment;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
+use Sheba\AccountingEntry\Repository\UserMigrationRepository;
+use Sheba\Dal\UserMigration\UserStatus;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
@@ -17,6 +20,8 @@ use Sheba\Pos\Payment\Creator as PaymentCreator;
 class BaseRepository
 {
     use ModificationFields, CdnFileManager, FileManager;
+
+    CONST NOT_ELIGIBLE = 'not_eligible';
 
     /** @var AccountingEntryClient $client */
     protected $client;
@@ -51,6 +56,9 @@ class BaseRepository
         if ($partner_pos_customer) {
             $request->customer_id = $partner_pos_customer->customer_id;
             $request->customer_name = $partner_pos_customer->details()["name"];
+            $request->customer_mobile = $partner_pos_customer->details()["phone"];
+            $request->customer_pro_pic = $partner_pos_customer->details()["image"];
+            $request->customer_is_supplier = $partner_pos_customer->is_supplier;
         }
         return $request;
     }
@@ -123,5 +131,19 @@ class BaseRepository
             ->first();
 
         return $payment ? $payment->delete() : false;
+    }
+
+    /**
+     * @param $userId
+     * @return bool
+     */
+    public function isMigratedToAccounting($userId)
+    {
+        $arr = [self::NOT_ELIGIBLE, UserStatus::PENDING, UserStatus::UPGRADING, UserStatus::FAILED];
+        /** @var UserMigrationRepository $userMigrationRepo */
+        $userMigrationRepo = app(UserMigrationRepository::class);
+        $userStatus = $userMigrationRepo->userStatus($userId);
+        if (in_array($userStatus, $arr)) return false;
+        return true;
     }
 }

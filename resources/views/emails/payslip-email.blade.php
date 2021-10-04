@@ -9,12 +9,8 @@
     <div class="content">
         <div class="title">
             <p>Dear {{$employee_name}},</p>
-            <br>
-            <p>Please find the attached salary payslip of {{$employee_name}} for {{$time_period}}</p>
-            <br>
-            <p>Regards</p>
-            <p>HR Department</p>
-            <p>{{$business_name}}</p>
+            <p>Please find your salary payslip for the month of {{$time_period}} attached</p>
+            <p>Regards<br>HR Department<br>{{$business_name}}</p>
         </div>
     </div>
 </div>

@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\Partner\Webstore;
 
 use App\Models\Partner;
+use App\Exceptions\DoNotReportException;
 use App\Sheba\Partner\Webstore\WebstoreBannerSettings;
 use App\Transformers\CustomSerializer;
 use App\Transformers\Partner\WebstoreSettingsTransformer;
@@ -39,11 +40,11 @@ class WebstoreSettingsController extends Controller
      * @param Request $request
      * @param WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest
      * @return JsonResponse
-     * @throws AccessRestrictedExceptionForPackage
+     * @throws AccessRestrictedExceptionForPackage|DoNotReportException
      */
     public function update($partner, Request $request, WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest)
     {
-
+        $partner = resolvePartnerFromAuthMiddleware($request);
         $this->validate($request, [
             'is_webstore_published' => 'sometimes|numeric|between:0,1', 'name' => 'sometimes|string',
             'sub_domain' => 'sometimes|string', 'delivery_charge' => 'sometimes|numeric|digits_between:1,5'
@@ -53,11 +54,11 @@ class WebstoreSettingsController extends Controller
         ]
     );
         $is_webstore_published = 0;
-        $partner_id = $request->partner->id;
+        $partner_id = $partner->id;
         $this->setModifier($request->manager_resource);
-        $webstoreSettingsUpdateRequest->setPartner($request->partner);
+        $webstoreSettingsUpdateRequest->setPartner($partner);
         if ($request->has('is_webstore_published')) {
-            if ($request->is_webstore_published) AccessManager::checkAccess(AccessManager::Rules()->POS->ECOM->WEBSTORE_PUBLISH, $request->partner->subscription->getAccessRules());
+            if ($request->is_webstore_published) AccessManager::checkAccess(AccessManager::Rules()->POS->ECOM->WEBSTORE_PUBLISH, $partner->subscription->getAccessRules());
             $webstoreSettingsUpdateRequest->setIsWebstorePublished($request->is_webstore_published);
             $is_webstore_published = 1;
         }
@@ -80,7 +81,6 @@ class WebstoreSettingsController extends Controller
             }
         }
         return api_response($request, null, 200, ['message' => 'Successful']);
-
     }
 
 
@@ -104,8 +104,10 @@ class WebstoreSettingsController extends Controller
      */
     public function updateBanner(Request $request, $partner, WebstoreBannerSettings $webstoreBannerSettings)
     {
-        $partner_id = $request->partner->id;
-        $this->setModifier($request->manager_resource);
+        $partner = resolvePartnerFromAuthMiddleware($request);
+        $partner_id = $partner->id;
+        $manager_resource = resolveManagerResourceFromAuthMiddleware($request);
+        $this->setModifier($manager_resource);
         $banner_settings = PartnerWebstoreBanner::where('partner_id', $partner_id)->first();
         if (!$banner_settings)
             return api_response($request, null, 400, ['message' => 'Banner Settings not found']);

@@ -125,9 +125,9 @@ class Updater
     {
         $profile_data = [
 //            'name'      => $this->data['name'],
-            'mobile' => $this->data['mobile'],
-            'email' => $this->data['email'],
-            'address' => $this->data['address']
+            'mobile' => array_key_exists('mobile', $this->data) ? $this->data['mobile'] : null,
+            'email' => array_key_exists('email', $this->data) ? $this->data['email'] : null,
+            'address' => array_key_exists('address', $this->data) ? $this->data['address'] : null
         ];
         if (isset($this->data['profile_image'])) $profile_data += ['pro_pic' => $this->data['profile_image']];
         if (!$this->profile) {

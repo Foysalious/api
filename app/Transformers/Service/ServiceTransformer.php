@@ -121,6 +121,7 @@ class ServiceTransformer extends TransformerAbstract
             ] : null,
             'usp' => count($usps) > 0 ? $usps->pluck('name')->toArray() : null,
             'overview' => $service->contents ? $service->contents : null,
+            'structured_description_bn' => ($service->structured_description_bn) ? json_decode($service->structured_description_bn) : null,
             'details' => $service->description,
             'partnership' => $partnership ? [
                 'title' => $partnership->title,

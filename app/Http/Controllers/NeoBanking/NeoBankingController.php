@@ -22,24 +22,39 @@ class NeoBankingController extends Controller
     {
     }
 
-    public function getHomepage($partner, Request $request, Home $home)
+    /**
+     * @param $partner
+     * @param Request $request
+     * @param Home $home
+     * @return JsonResponse
+     */
+    public function getHomepage($partner, Request $request, Home $home): JsonResponse
     {
         try {
             $homepage = $home->setPartner($request->partner)->get();
             return api_response($request, $homepage, 200, ['data' => $homepage]);
+        } catch (NeoBankingException $e) {
+            logError($e);
+            return api_response($request,null, $e->getCode(), ['message'=>$e->getMessage()]);
         } catch (\Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
         }
     }
 
-    public function getAccountDetails($partner, Request $request)
+    /**
+     * @param $partner
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getAccountDetails($partner, Request $request): JsonResponse
     {
         try {
             $this->validate($request, ['bank_code' => 'required|string']);
             $bank = $request->bank_code;
-            $partner = $request->partner;
-            $manager_resource = $request->manager_resource;
+            /** @var Partner $partner */
+            $partner = ($request->partner);
+            $manager_resource = $partner->getContactResource();
             $account_details = (new NeoBanking())->setBank($bank)->setPartner($partner)->setResource($manager_resource)->accountDetails();
 
             if (isset($account_details->code) && $account_details->code != 200) {
@@ -52,13 +67,19 @@ class NeoBankingController extends Controller
         }
     }
 
-    public function getTransactionList($partner, Request $request)
+    /**
+     * @param $partner
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getTransactionList($partner, Request $request): JsonResponse
     {
         try {
             $this->validate($request, ['bank_code' => 'required|string']);
             $bank = $request->bank_code;
-            $partner = $request->partner;
-            $manager_resource = $request->manager_resource;
+            /** @var Partner $partner */
+            $partner = ($request->partner);
+            $manager_resource = $partner->getContactResource();
             $account_details = (new NeoBanking())->setBank($bank)->setPartner($partner)->setResource($manager_resource)->transactionList();
 
             if (isset($account_details->code) && $account_details->code != 200) {
@@ -78,8 +99,9 @@ class NeoBankingController extends Controller
                 'amount' => 'required|numeric'
             ]);
             $bank = $request->bank;
-            $partner = $request->partner;
-            $manager_resource = $request->manager_resource;
+            /** @var Partner $partner */
+            $partner = ($request->partner);
+            $manager_resource = $partner->getContactResource();
             $transaction_response = (new NeoBanking())->setBank($bank)->setPartner($partner)->setResource($manager_resource)->createTransaction();
             return api_response($request, $transaction_response, 200, ['data' => $transaction_response]);
         } catch (\Throwable $e) {
@@ -89,7 +111,13 @@ class NeoBankingController extends Controller
 
     }
 
-    public function getAccountInformationCompletion($partner, Request $request, NeoBanking $neoBanking)
+    /**
+     * @param $partner
+     * @param Request $request
+     * @param NeoBanking $neoBanking
+     * @return JsonResponse
+     */
+    public function getAccountInformationCompletion($partner, Request $request, NeoBanking $neoBanking): JsonResponse
     {
         ini_set('max_execution_time', 360);
 
@@ -97,9 +125,10 @@ class NeoBankingController extends Controller
             $this->validate($request, [
                 'bank_code' => 'required|string'
             ]);
-            $partner = $request->partner;
-            $resource = $request->manager_resource;
-            $mobile = $request->mobile;
+            /** @var Partner $partner */
+            $partner = ($request->partner);
+            $resource = $partner->getContactResource();
+            $mobile = $partner->getContactNumber();
 
             $completion = $neoBanking->setPartner($partner)->setResource($resource)->setMobile($mobile)->setBank($request->bank_code)->getCompletion()->toArray();
             return api_response($request, $completion, 200, ['data' => $completion]);
@@ -112,11 +141,18 @@ class NeoBankingController extends Controller
         }
     }
 
-    public function getCategoryWiseDetails(Request $request, NeoBanking $neoBanking)
+    /**
+     * @param Request $request
+     * @param NeoBanking $neoBanking
+     * @return JsonResponse
+     */
+    public function getCategoryWiseDetails(Request $request, NeoBanking $neoBanking): JsonResponse
     {
         try {
             $this->validate($request, ['bank_code' => 'required|string', 'category_code' => 'required|string']);
-            $detail = $neoBanking->setPartner($request->partner)->setBank($request->bank_code)->setResource($request->manager_resource)->getCategoryDetail($request->category_code);
+            /** @var Partner $partner */
+            $partner = ($request->partner);
+            $detail = $neoBanking->setPartner($request->partner)->setBank($request->bank_code)->setResource($partner->getContactResource())->getCategoryDetail($request->category_code);
             return api_response($request, $detail, 200, ['data' => $detail]);
         } catch (NeoBankingException $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
@@ -129,12 +165,20 @@ class NeoBankingController extends Controller
         }
     }
 
-    public function submitCategoryWistDetails(Request $request, NeoBanking $neoBanking)
+    /**
+     * @param Request $request
+     * @param NeoBanking $neoBanking
+     * @return JsonResponse
+     */
+    public function submitCategoryWistDetails(Request $request, NeoBanking $neoBanking): JsonResponse
     {
         try {
             $this->validate($request, ['bank_code' => 'required|string', 'category_code' => 'required|string', 'post_data' => 'required']);
             $data = $request->post_data;
-            $neoBanking->setPartner($request->partner)->setResource($request->manager_resource)->setBank($request->bank_code)->setPostData($data)->postCategoryDetail($request->category_code);
+            /** @var Partner $partner */
+            $partner = ($request->partner);
+            $neoBanking->setPartner($request->partner)->setResource($partner->getContactResource())
+                ->setBank($request->bank_code)->setPostData($data)->postCategoryDetail($request->category_code);
             return api_response($request, null, 200);
         } catch (NeoBankingException $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
@@ -152,11 +196,13 @@ class NeoBankingController extends Controller
      * @param NeoBanking $neoBanking
      * @return JsonResponse
      */
-    public function uploadCategoryWiseDocument(Request $request, NeoBanking $neoBanking)
+    public function uploadCategoryWiseDocument(Request $request, NeoBanking $neoBanking): JsonResponse
     {
         try {
             $this->validate($request, ['bank_code' => 'required|string', 'category_code' => 'required|string', 'file' => 'required', 'key' => 'required']);
-            $neoBanking->setPartner($request->partner)->setResource($request->manager_resource)->setBank($request->bank_code)->uploadDocument($request->file, $request->key)->postCategoryDetail($request->category_code, true);
+            /** @var Partner $partner */
+            $partner = ($request->partner);
+            $neoBanking->setPartner($request->partner)->setResource($partner->getContactResource())->setBank($request->bank_code)->uploadDocument($request->file, $request->key)->postCategoryDetail($request->category_code, true);
             return api_response($request, null, 200);
         } catch (NeoBankingException $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
@@ -195,10 +241,10 @@ class NeoBankingController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function selectTypes(Request $request)
+    public function selectTypes(Request $request): JsonResponse
     {
         try {
-            $type=$request->type?:'organization_type_list';
+            $type= $request->select_type ? : 'organization_type_list';
             $data = NeoBankingGeneralStatics::types($type);
             if ($type == 'branch_code' && isset($request->district)){
                 $data = $this->filterByDistrict($request, $data['list']);
@@ -213,7 +259,7 @@ class NeoBankingController extends Controller
         }
     }
 
-    private function filterByDistrict($request, $values)
+    private function filterByDistrict($request, $values): array
     {
         $data = [];
         foreach ($values as $value) {
@@ -223,14 +269,17 @@ class NeoBankingController extends Controller
         return ['list' => $data,'title'=>'ব্রাঞ্চ কোড সিলেক্ট করুন'];
     }
 
-    public function accountApply(Request $request, NeoBanking $neoBanking)
+    public function accountApply(Request $request, NeoBanking $neoBanking): JsonResponse
     {
         try {
             $this->validate($request, ['bank_code' => 'required|string']);
-            $mobile = ($request->manager_resource->profile->mobile);
-            $data = $neoBanking->setPartner($request->partner)->setResource($request->manager_resource)->setMobile($mobile)->setBank($request->bank_code)->storeAccount();
+            /** @var Partner $partner */
+            $partner = ($request->partner);
+            $mobile = $partner->getContactNumber();
+            $data = $neoBanking->setPartner($request->partner)->setResource($partner->getContactResource())->setMobile($mobile)->setBank($request->bank_code)->storeAccount();
             return api_response($request, $data, 200, ['data' => ["message" => "Account has been created."]]);
         }catch (NeoBankingException $e){
+            logError($e);
             return api_response($request,null,$e->getCode(),['message'=>$e->getMessage()]);
         } catch (\Throwable $e) {
             logError($e);
@@ -244,13 +293,13 @@ class NeoBankingController extends Controller
      * @param NeoBanking $neoBanking
      * @return JsonResponse
      */
-    public function accountNumberStore(Request $request, Partner $partner, NeoBanking $neoBanking)
+    public function accountNumberStore(Request $request, Partner $partner, NeoBanking $neoBanking): JsonResponse
     {
         try {
             if (($request->header('access-key')) !== config('neo_banking.sbs_access_token'))
                 throw new UnauthorizedRequestFromSBSException();
             $account_no = $request->account_no;
-            $neoBanking->setPartner($partner)->setBank(BankStatics::primeBankCode())->storeAccountNumber($account_no);
+            $neoBanking->setPartner($partner)->setBank(BankStatics::primeBankCode())->accountNumber($account_no);
             return api_response($request, null, 200);
         } catch (UnauthorizedRequestFromSBSException $exception) {
             return api_response($request, null, 403);
@@ -268,12 +317,14 @@ class NeoBankingController extends Controller
      * @param NeoBanking $neoBanking
      * @return JsonResponse
      */
-    public function partnerAcknowledgment(Request $request, NeoBanking $neoBanking)
+    public function partnerAcknowledgment(Request $request, NeoBanking $neoBanking): JsonResponse
     {
         try {
             $this->validate($request, ['bank_code' => 'required|string']);
-            $mobile = ($request->manager_resource->profile->mobile);
-            $data = $neoBanking->setPartner($request->partner)->setResource($request->manager_resource)->setMobile($mobile)->setBank($request->bank_code)->getAcknowledgment();
+            /** @var Partner $partner */
+            $partner = ($request->partner);
+            $mobile = $partner->getContactNumber();
+            $data = $neoBanking->setPartner($request->partner)->setResource($partner->getContactResource())->setMobile($mobile)->setBank($request->bank_code)->getAcknowledgment();
             return api_response($request, $data, 200, ['data' => $data]);
         }catch (NeoBankingException $e){
             return api_response($request,null,$e->getCode(),['message'=>$e->getMessage()]);

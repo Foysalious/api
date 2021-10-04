@@ -3,6 +3,7 @@
 use App\Jobs\Business\SendEmailForPublishTenderToBusiness;
 use App\Models\Business;
 use App\Transformers\Business\CoWorkerReportDetailsTransformer;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\App;
@@ -24,6 +25,7 @@ use Sheba\Business\CoWorker\Requests\PersonalRequest;
 use Sheba\Business\CoWorker\Requests\BasicRequest;
 use App\Sheba\Business\Salary\Requester as CoWorkerSalaryRequester;
 use Sheba\Business\CoWorker\Validation\CoWorkerExistenceCheck;
+use Sheba\Dal\Payslip\PayslipRepoImplementation;
 use Sheba\Dal\Salary\SalaryRepository;
 use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
@@ -102,13 +104,13 @@ class CoWorkerController extends Controller
      * @param CoWorkerInfoSort $co_worker_info_sort
      * @param CoWorkerExistenceCheck $co_worker_existence_check
      */
-    public function __construct(FileRepository $file_repository, ProfileRepository $profile_repository, BasicRequest $basic_request,
-                                EmergencyRequest $emergency_request, FinancialRequest $financial_request,
-                                OfficialRequest $official_request, PersonalRequest $personal_request,
-                                CoWorkerCreator $co_worker_creator, CoWorkerUpdater $co_worker_updater,
-                                CoWorkerRequester $coWorker_requester, CoWorkerSalaryRequester $co_worker_salary_requester,
-                                SalaryRepository $salary_repository, BusinessMemberRepositoryInterface $business_member_repo,
-                                CoWorkerInfoFilter $co_worker_info_filter, CoWorkerInfoSort $co_worker_info_sort,
+    public function __construct(FileRepository         $file_repository, ProfileRepository $profile_repository, BasicRequest $basic_request,
+                                EmergencyRequest       $emergency_request, FinancialRequest $financial_request,
+                                OfficialRequest        $official_request, PersonalRequest $personal_request,
+                                CoWorkerCreator        $co_worker_creator, CoWorkerUpdater $co_worker_updater,
+                                CoWorkerRequester      $coWorker_requester, CoWorkerSalaryRequester $co_worker_salary_requester,
+                                SalaryRepository       $salary_repository, BusinessMemberRepositoryInterface $business_member_repo,
+                                CoWorkerInfoFilter     $co_worker_info_filter, CoWorkerInfoSort $co_worker_info_sort,
                                 CoWorkerExistenceCheck $co_worker_existence_check)
     {
         $this->fileRepository = $file_repository;
@@ -172,9 +174,10 @@ class CoWorkerController extends Controller
      * @param $business
      * @param $business_member_id
      * @param Request $request
+     * @param PayslipRepoImplementation $payslip_repository
      * @return JsonResponse
      */
-    public function show($business, $business_member_id, Request $request)
+    public function show($business, $business_member_id, Request $request, PayslipRepoImplementation $payslip_repository)
     {
         if (!is_numeric($business_member_id)) return api_response($request, null, 400);
         $business_member = $this->businessMemberRepository->find($business_member_id);
@@ -188,10 +191,12 @@ class CoWorkerController extends Controller
         if ($request->file === 'pdf') {
             return App::make('dompdf.wrapper')->loadView('pdfs.co_worker_details', compact('employee'))->download("co_worker_details.pdf");
         }
-
+        $generated_payslip = $payslip_repository->where('business_member_id', $business_member_id)->where('schedule_date', 'LIKE', '%' . Carbon::now()->format('Y-m') . '%')->first();
+        $employee_join_date = Carbon::parse($business_member->join_date);
         if (count($employee) > 0) return api_response($request, $employee, 200, [
             'employee' => $employee,
-            'business_member_id' => $business_member->id
+            'business_member_id' => $business_member->id,
+            'joining_prorate' => !$generated_payslip && $employee_join_date->format('Y-m') === Carbon::now()->format('Y-m') ? $employee_join_date->format('F') : null
         ]);
         return api_response($request, null, 404);
     }
@@ -314,7 +319,7 @@ class CoWorkerController extends Controller
         $validation_data = [
             'gender' => 'required|string|in:Female,Male,Other',
             'mobile' => 'sometimes|required',
-            'date_of_birth' => 'sometimes|required|date|date_format:Y-m-d',
+            'date_of_birth' => 'sometimes|required',
             'address' => 'sometimes|required',
             'nationality' => 'sometimes|required',
             'nid_number' => 'sometimes|required',
@@ -582,7 +587,7 @@ class CoWorkerController extends Controller
         foreach ($business_departments as $business_department) {
             $members = $business->membersWithProfileAndAccessibleBusinessMember();
             $members = $members->whereHas('businessMember', function ($q) use ($business_department) {
-                $q->whereHas('role', function ($q) use ($business_department) {
+                $q->where('status', Statuses::ACTIVE)->whereHas('role', function ($q) use ($business_department) {
                     $q->whereHas('businessDepartment', function ($q) use ($business_department) {
                         $q->where('business_departments.id', $business_department->id);
                     });

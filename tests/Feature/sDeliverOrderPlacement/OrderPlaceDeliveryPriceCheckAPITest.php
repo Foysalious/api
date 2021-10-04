@@ -1,29 +1,20 @@
-<?php
+<?php namespace Tests\Feature\sDeliverOrderPlacement;
 
 /**
  * Khairun Nahar
  * 22 May,2021
  */
-
-
-namespace Tests\Feature\sDeliverOrderPlacement;
-
-
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use Tests\Feature\FeatureTestCase;
 
 class OrderPlaceDeliveryPriceCheckAPITest extends FeatureTestCase
 {
-
-
     public function setUp()
     {
         parent::setUp();
 
         $this->logIn();
-
-
     }
 
     public function testSuccessfulResponseToFetchProductPriceAccordingtoWeight()
@@ -36,13 +27,8 @@ class OrderPlaceDeliveryPriceCheckAPITest extends FeatureTestCase
             'partner_id' => '1',
             'pickup_thana' => 'Gulshan',
             "pickup_district"=> 'Dhaka'
-
-        ]/*, [
-            'Authorization' => "Bearer $this->token"
-        ]*/);
+        ]);
         $data = $response->decodeResponseJson();
-        //dd($data);
-
         $this->assertEquals(200, $data['code']);
         $this->assertEquals("Successful", $data['message']);
     }
@@ -73,10 +59,8 @@ class OrderPlaceDeliveryPriceCheckAPITest extends FeatureTestCase
             'partner_id' => '1',
             'pickup_thana' => 'Gulshan',
             "pickup_district"=> 'Dhaka'
-
         ]);
         $data = $response->decodeResponseJson();
-
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The cod amount field is required.", $data['message']);
     }
@@ -90,10 +74,8 @@ class OrderPlaceDeliveryPriceCheckAPITest extends FeatureTestCase
             'delivery_thana' => 'Dhanmondi',
             'pickup_thana' => 'Gulshan',
             "pickup_district"=> 'Dhaka'
-
         ]);
         $data = $response->decodeResponseJson();
-
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The partner id field is required.", $data['message']);
     }
@@ -109,7 +91,6 @@ class OrderPlaceDeliveryPriceCheckAPITest extends FeatureTestCase
 
         ]);
         $data = $response->decodeResponseJson();
-
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The delivery district field is required.The delivery thana field is required.", $data['message']);
     }
@@ -144,12 +125,8 @@ class OrderPlaceDeliveryPriceCheckAPITest extends FeatureTestCase
             'partner_id' => '1',
             'pickup_thana' => 'Gulshan',
             "pickup_district"=> 'Dhaka'
-
         ]);
         $data = $response->decodeResponseJson();
-        //dd($data);
-
         $this->assertEquals(55, $data['delivery_charge']);
-
     }
 }

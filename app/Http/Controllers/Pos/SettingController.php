@@ -31,8 +31,7 @@ class SettingController extends Controller
     public function getSettings(Request $request, Creator $creator, PosSettingRepository $repository)
     {
         try {
-            /** @var Partner $partner */
-            $partner = $request->partner;
+            $partner = resolvePartnerFromAuthMiddleware($request);
             $settings = PartnerPosSetting::byPartner($partner->id)->select('id', 'partner_id', 'vat_percentage', 'auto_printing', 'sms_invoice')->first();
             if (!$settings) {
                 $data = ['partner_id' => $partner->id];
@@ -40,6 +39,7 @@ class SettingController extends Controller
                 $settings = PartnerPosSetting::byPartner($partner->id)->select('id', 'partner_id', 'vat_percentage', 'auto_printing', 'sms_invoice')->first();
             }
             $settings->vat_registration_number = $partner->basicInformations->vat_registration_number;
+            $settings->is_show_vat_reg_number = $partner->basicInformations->is_show_vat_reg_number;
             $settings['has_qr_code'] = ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0;
             removeRelationsAndFields($settings);
             return api_response($request, $settings,200, ['settings' => $settings]);
@@ -52,8 +52,7 @@ class SettingController extends Controller
     public function getPrinterSettings(Request $request, Creator $creator, PosSettingRepository $repository)
     {
         try {
-            /** @var Partner $partner */
-            $partner = $request->partner;
+            $partner = resolvePartnerFromAuthMiddleware($request);
             $settings = PartnerPosSetting::byPartner($partner->id)->select('partner_id', 'printer_model', 'printer_name', 'auto_printing')->first();
             if (!$settings) {
                 $data = ['partner_id' => $partner->id,];
@@ -71,12 +70,11 @@ class SettingController extends Controller
 
     public function storePosSetting(Request $request, Creator $creator) {
         try {
-            /** @var Partner $partner */
-            $partner = $request->partner;
+            $partner = resolvePartnerFromAuthMiddleware($request);
             $partnerPosSetting = PartnerPosSetting::where('partner_id', $partner->id)->first();
-            if (!$partnerPosSetting) $partnerPosSetting = $creator->createPartnerPosSettings($partner);
+            if (!$partnerPosSetting) $partnerPosSetting = $creator->setData(['partner_id' => $partner->id])->create();
             $data = [];
-            $this->setModifier($request->manager_resource);
+            $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
 
             if($request->has('vat_percentage')) $data["vat_percentage"] = $request->vat_percentage;
             if($request->has('sms_invoice')) $data["sms_invoice"] = $request->sms_invoice;

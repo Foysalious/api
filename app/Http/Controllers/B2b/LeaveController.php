@@ -14,6 +14,8 @@ use App\Transformers\Business\LeaveBalanceTransformer;
 use App\Transformers\Business\LeaveListTransformer;
 use App\Transformers\Business\LeaveRequestDetailsTransformer;
 use App\Transformers\CustomSerializer;
+use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -26,14 +28,12 @@ use Sheba\Business\ApprovalSetting\FindApprovalSettings;
 use Sheba\Business\ApprovalSetting\FindApprovers;
 use Sheba\Business\CoWorker\Statuses;
 use Sheba\Business\Leave\Balance\Excel as BalanceExcel;
-use Sheba\Business\Leave\RejectReason\Reason;
 use Sheba\Business\Leave\RejectReason\RejectReason;
 use Sheba\Business\LeaveRejection\Requester as LeaveRejectionRequester;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\ApprovalRequest\Status;
-use Sheba\Dal\Leave\Status as LeaveStatus;
 use Sheba\Dal\ApprovalRequest\Type as ApprovalRequestType;
 use Sheba\Dal\Leave\Contract as LeaveRepoInterface;
 use Sheba\Dal\LeaveLog\Contract as LeaveLogRepo;
@@ -82,7 +82,7 @@ class LeaveController extends Controller
      */
     public function index(Request $request, LeaveRequestExcel $leave_request_report)
     {
-        $this->validate($request, ['sort' => 'sometimes|required|string|in:asc,desc']);
+        $this->validate($request, ['list_type' => 'required|string|in:own,all', 'sort' => 'sometimes|required|string|in:asc,desc']);
 
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
@@ -91,7 +91,7 @@ class LeaveController extends Controller
         $business = $request->business;
 
         list($offset, $limit) = calculatePagination($request);
-        $leave_approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMemberFilterBy($business_member, Type::LEAVE);
+        $leave_approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMemberFilterBy($business_member, Type::LEAVE, $request->list_type);
         if ($request->has('status')) $leave_approval_requests = $leave_approval_requests->where('status', $request->status);
         if ($request->has('department')) $leave_approval_requests = $this->filterWithDepartment($leave_approval_requests, $request);
         if ($request->has('employee')) $leave_approval_requests = $this->filterWithEmployee($leave_approval_requests, $request);
@@ -99,8 +99,20 @@ class LeaveController extends Controller
         if ($request->has('search')) $leave_approval_requests = $this->searchWithEmployeeName($leave_approval_requests, $request);
         if ($request->has('period_start') && $request->has('period_end')) $leave_approval_requests = $this->filterByPeriod($leave_approval_requests, $request);
 
+        // Differ new & old approval request
+        $leave_approval_requests_without_order = $leave_approval_requests->where('order', null);
+        $leave_approval_requests_with_order = $leave_approval_requests->where('is_notified', 1);
+        $leave_approval_requests = $leave_approval_requests_with_order->merge($leave_approval_requests_without_order);
+
+        // Grouped approval requests by leave_id and then taken the latest approval request
+        $leave_approval_requests = $leave_approval_requests->groupBy('requestable_id');
+        $leave_approval_requests = $leave_approval_requests->map(function ($item) {
+            return $item->first();
+        });
+
         $total_leave_approval_requests = $leave_approval_requests->count();
         $leave_approval_requests = $this->sortByStatus($leave_approval_requests);
+
         if ($request->has('limit') && !$request->has('file')) $leave_approval_requests = $leave_approval_requests->splice($offset, $limit);
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
@@ -159,8 +171,6 @@ class LeaveController extends Controller
         $resource = new Item($approval_request, new LeaveRequestDetailsTransformer($business, $business_member, $profile, $role, $leave_log_repo, $leave_status_change_log_repo));
         $approval_request = $manager->createData($resource)->toArray()['data'];
 
-        $approvers = $this->getApprover($requestable);
-        $approval_request = $approval_request + ['approvers' => $approvers];
         return api_response($request, null, 200, ['approval_details' => $approval_request]);
     }
 
@@ -168,6 +178,7 @@ class LeaveController extends Controller
      * @param Request $request
      * @param UpdaterV2 $updater
      * @return JsonResponse
+     * @throws Exception
      */
     public function updateStatus(Request $request, UpdaterV2 $updater)
     {
@@ -259,42 +270,6 @@ class LeaveController extends Controller
             if ($request->has('employee')) return $member->id == $request->employee;
             if ($request->has('search')) return str_contains(strtoupper($profile->name), strtoupper($request->search));
         });
-    }
-
-    /**
-     * @param $requestable
-     * @return array
-     */
-    private function getApprover($requestable)
-    {
-        $approvers = [];
-        $all_approvers = [];
-        /** @var BusinessMember $leave_business_member */
-        $this->requestableType = ApprovalRequestType::getByModel($requestable);
-        $requestable_business_member = $requestable->businessMember;
-        $approval_setting = (new FindApprovalSettings())->getApprovalSetting($requestable_business_member, $this->requestableType);
-        $find_approvers = (new FindApprovers())->calculateApprovers($approval_setting, $requestable_business_member);
-        $requestable_approval_request_ids = $requestable->requests()->pluck('approver_id', 'id')->toArray();
-        $remainingApprovers = array_diff($find_approvers, $requestable_approval_request_ids);
-        $default_approvers = (new FindApprovers())->getApproversAllInfo($remainingApprovers);
-
-        foreach ($requestable->requests as $approval_request) {
-            $business_member = $this->getBusinessMemberById($approval_request->approver_id);
-            $member = $business_member->member;
-            $profile = $member->profile;
-            $role = $business_member->role;
-            array_push($approvers, [
-                'name' => $profile->name,
-                'designation' => $role ? $role->name : null,
-                'department' => $role ? $role->businessDepartment->name : null,
-                'phone' => $profile->mobile,
-                'profile_pic' => $profile->pro_pic,
-                'status' => ApprovalRequestPresenter::statuses()[$approval_request->status],
-                'reject_reason' => (new ApproverWithReason())->getRejectReason($approval_request, self::APPROVER, $business_member->id)
-            ]);
-        }
-        $all_approvers = array_merge($approvers, $default_approvers);
-        return $all_approvers;
     }
 
     /**
@@ -619,11 +594,26 @@ class LeaveController extends Controller
     }
 
     private function filterByPeriod($leave_approval_requests, Request $request) {
-        return $leave_approval_requests->filter(function ($approval_request) use ($request) {
+        $period_data = [
+            'period_start' => Carbon::parse($request->period_start),
+            'period_end' => Carbon::parse($request->period_end)->endOfDay()
+        ];
+        return $leave_approval_requests->filter(function ($approval_request) use ($period_data) {
             $requestable = $approval_request->requestable;
             $start_date = $requestable ? $requestable->start_date : null;
             $end_date = $requestable ? $requestable->end_date : null;
-            return $start_date >= $request->period_start.' 00:00:00' && $end_date <= $request->period_end.' 23:59:59';
+            if ($start_date && $end_date) {
+                $date_exists_between_period = false;
+                for ($date = $start_date; $date < $end_date; $date->addDay()) {
+                    if ($date->between($period_data['period_start'], $period_data['period_end'])) {
+                        $date_exists_between_period = true;
+                        break;
+                    }
+                }
+                return $date_exists_between_period;
+            } else {
+                return false;
+            }
         });
     }
 

@@ -5,25 +5,24 @@ use League\Fractal\TransformerAbstract;
 
 class HolidayListTransformer extends TransformerAbstract
 {
-    private $firstDayOfPreviousMonth;
-    private $lastDayOfNextMonth;
+    private $startDate;
+    private $endDate;
 
     /**
-     * HolidayListTransformer constructor.
-     * @param Carbon $firstDayOfPreviousMonth
-     * @param Carbon $lastDayOfNextMonth
+     * @param Carbon $start_Date
+     * @param Carbon $end_date
      */
-    public function __construct(Carbon $firstDayOfPreviousMonth, Carbon $lastDayOfNextMonth)
+    public function __construct(Carbon $start_Date, Carbon $end_date)
     {
-        $this->firstDayOfPreviousMonth = $firstDayOfPreviousMonth;
-        $this->lastDayOfNextMonth = $lastDayOfNextMonth;
+        $this->startDate = $start_Date;
+        $this->endDate = $end_date;
     }
 
     public function transform($holiday)
     {
         $dates = [];
         for ($d = $holiday->start_date; $d->lte($holiday->end_date); $d->addDay()) {
-            if ($holiday->start_date->between($this->firstDayOfPreviousMonth, $this->lastDayOfNextMonth)) {
+            if ($holiday->start_date->between($this->startDate, $this->endDate)) {
                 $dates[] = $d->format('Y-m-d');
             }
         }

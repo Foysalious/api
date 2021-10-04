@@ -89,6 +89,8 @@ class ProductController extends Controller
             ->setVatPercentage($request->vat_percentage)
             ->setUnitId($request->unit_id)
             ->setProductDetails($request->product_details)
+            ->setDeletedImages($request->deleted_images)
+            ->setImages($request->file('images'))
             ->update();
         return http_response($request, null, 200, $product);
     }
@@ -107,6 +109,14 @@ class ProductController extends Controller
     {
         $partner = $request->auth_user->getPartner();
         $product = $this->productService->setPartnerId($partner->id)->setProductId($productId)->getLogs();
+        return http_response($request, null, 200, $product);
+    }
+
+    public function addStock(Request $request, $productId)
+    {
+        $partner = $request->auth_user->getPartner();
+        $product = $this->productService->setPartnerId($partner->id)->setProductId($productId)->setStock($request->stock)
+            ->setSkuId($request->sku_id)->setAccountingInfo($request->accounting_info)->setCost($request->cost)->addStock();
         return http_response($request, null, 200, $product);
     }
 

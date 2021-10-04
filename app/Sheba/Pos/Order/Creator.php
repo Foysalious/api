@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Illuminate\Database\Eloquent\Model;
+use App\Sheba\Pos\Order\Invoice\InvoiceService;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Dal\POSOrder\SalesChannels;
@@ -31,7 +32,10 @@ use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
 use Sheba\Pos\Repositories\PosOrderItemRepository;
 use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Pos\Validators\OrderCreateValidator;
+use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Voucher\DTO\Params\CheckParamsForPosOrder;
+use DB;
+use Throwable;
 
 class Creator
 {
@@ -168,76 +172,92 @@ class Creator
      */
     public function create()
     {
-        $default_instance = 0;
+        try {
+            DB::beginTransaction();
 
-        $order_data['partner_id']            = $this->partner->id;
-        $order_data['customer_id']           = $this->resolveCustomerId();
-        $order_data['address']               = $this->address;
-        $order_data['previous_order_id']     = (isset($this->data['previous_order_id']) && $this->data['previous_order_id']) ? $this->data['previous_order_id'] : null;
-        $order_data['partner_wise_order_id'] = $this->createPartnerWiseOrderId($this->partner);
-        $order_data['emi_month']             = isset($this->data['emi_month']) ? $this->data['emi_month'] : null;
-        $order_data['sales_channel']         = isset($this->data['sales_channel']) ? $this->data['sales_channel'] : SalesChannels::POS;
-        $order_data['delivery_charge']       = isset($this->data['delivery_charge'])   ? $this->data['delivery_charge'] : 0;
-        $order_data['status']                = $this->status;
-        $order_data['weight']                = isset($this->data['weight'])   ? $this->data['weight'] : 0;
-        $order_data['delivery_district']     = isset($this->data['sales_channel']) && $this->data['sales_channel'] == SalesChannels::WEBSTORE && isset($this->data['delivery_district']) ? $this->data['delivery_district'] : null;
-        $order_data['delivery_thana']        = isset($this->data['sales_channel']) && $this->data['sales_channel'] == SalesChannels::WEBSTORE && isset($this->data['delivery_thana']) ? $this->data['delivery_thana'] : null;
-        $order                               = $this->orderRepo->save($order_data);
+            $default_instance = 0;
 
-        $services                            = json_decode($this->data['services'], true);
-        $servicesStockDecreasingInfo = [];
-        foreach ($services as $service) {
-            /** @var PartnerPosService $original_service */
-            if(isset($service['id']) && !empty($service['id'])) $original_service = $this->posServiceRepo->find($service['id']);
-            else {
-                $vat_percentage = $this->partner->posSetting->vat_percentage;
-                $original_service = $this->posServiceRepo->defaultInstance($service, $this->partner);
+            $order_data['partner_id'] = $this->partner->id;
+            $order_data['customer_id'] = $this->resolveCustomerId();
+            $order_data['address'] = $this->address;
+            $order_data['previous_order_id'] = (isset($this->data['previous_order_id']) && $this->data['previous_order_id']) ? $this->data['previous_order_id'] : null;
+            $order_data['partner_wise_order_id'] = $this->createPartnerWiseOrderId($this->partner);
+            $order_data['emi_month'] = isset($this->data['emi_month']) ? $this->data['emi_month'] : null;
+            $order_data['sales_channel'] = isset($this->data['sales_channel']) ? $this->data['sales_channel'] : SalesChannels::POS;
+            $order_data['delivery_charge'] = isset($this->data['delivery_charge']) ? $this->data['delivery_charge'] : 0;
+            $order_data['status'] = $this->status;
+            $order_data['weight'] = isset($this->data['weight']) ? $this->data['weight'] : 0;
+            $order_data['delivery_district'] = isset($this->data['sales_channel']) && $this->data['sales_channel'] == SalesChannels::WEBSTORE && isset($this->data['delivery_district']) ? $this->data['delivery_district'] : null;
+            $order_data['delivery_thana'] = isset($this->data['sales_channel']) && $this->data['sales_channel'] == SalesChannels::WEBSTORE && isset($this->data['delivery_thana']) ? $this->data['delivery_thana'] : null;
+            $order = $this->orderRepo->save($order_data);
+            $services = json_decode($this->data['services'], true);
+            $servicesStockDecreasingInfo = [];
+            foreach ($services as $service) {
+                /** @var PartnerPosService $original_service */
+                if (isset($service['id']) && !empty($service['id'])) $original_service = $this->posServiceRepo->find($service['id']);
+                else {
+                    $vat_percentage = $this->partner->posSetting->vat_percentage;
+                    $original_service = $this->posServiceRepo->defaultInstance($service, $this->partner);
+                }
+                if (!$original_service)
+                    throw new DoNotReportException("Service not found with provided ID", 400);
+                if ($original_service->is_published_for_shop && isset($service['quantity']) && !empty($service['quantity']) && $service['quantity'] > $original_service->getStock())
+                    throw new NotEnoughStockException("Not enough stock", 403);
+
+                // $is_service_discount_applied = $original_service->discount();
+                $service_wholesale_applicable = $original_service->wholesale_price ? true : false;
+                $service['is_emi_applied'] = $this->isEmiApplicable($original_service) ? 1 : 0;
+                $service['service_id'] = $original_service->id;
+                $service['service_name'] = isset($service['name']) ? $service['name'] : $original_service->name;
+                $service['pos_order_id'] = $order->id;
+                $service['unit_price'] = (isset($service['updated_price']) && $service['updated_price']) ? $service['updated_price'] : ($this->isWholesalePriceApplicable($service_wholesale_applicable) ? $original_service->wholesale_price : $original_service->price);
+                $service['warranty'] = $original_service->warranty;
+                $service['warranty_unit'] = $original_service->warranty_unit;
+                $service['vat_percentage'] = (!isset($service['is_vat_applicable']) || $service['is_vat_applicable']) ? $original_service->vat_percentage : 0.00;
+                $service['note'] = isset($service['note']) ? $service['note'] : null;
+                $service = array_except($service, ['id', 'name', 'is_vat_applicable', 'updated_price']);
+
+                if($this->data['payment_method'] == 'emi' && $service['is_emi_applied'] == false) {
+                    $id =  is_null($original_service->id) ? 'NULL, price: ' . $original_service->price : $original_service->id;
+                    $message = 'EMI is not available for service id# ' . $id;
+                    throw new DoNotReportException($message , 400);
+                }
+                $pos_order_item = $this->itemRepo->save($service);
+                $is_stock_maintainable = $this->stockManager->setPosService($original_service)->isStockMaintainable();
+                if ($is_stock_maintainable) {
+                    $servicesStockDecreasingInfo[$original_service->id] = $this->stockManager->decrease($service['quantity']);
+                }
+
+                $this->discountHandler->setOrder($order)->setPosService($original_service)->setType(DiscountTypes::SERVICE)->setData($service);
+                if ($this->discountHandler->hasDiscount()) $this->discountHandler->setPosOrderItem($pos_order_item)->create($order);
             }
-            if(!$original_service)
-                throw new DoNotReportException("Service not found with provided ID", 400);
-            if($original_service->is_published_for_shop && isset($service['quantity']) && !empty($service['quantity']) && $service['quantity'] > $original_service->getStock())
-                throw new NotEnoughStockException("Not enough stock", 403);
-            // $is_service_discount_applied = $original_service->discount();
-            $service_wholesale_applicable = $original_service->wholesale_price ? true : false;
 
-            $service['service_id']     = $original_service->id;
-            $service['service_name']   = isset($service['name']) ? $service['name'] : $original_service->name;
-            $service['pos_order_id']   = $order->id;
-            $service['unit_price']     = (isset($service['updated_price']) && $service['updated_price']) ? $service['updated_price'] : ($this->isWholesalePriceApplicable($service_wholesale_applicable) ? $original_service->wholesale_price : $original_service->price);
-            $service['warranty']       = $original_service->warranty;
-            $service['warranty_unit']  = $original_service->warranty_unit;
-            $service['vat_percentage'] = (!isset($service['is_vat_applicable']) || $service['is_vat_applicable']) ? $original_service->vat_percentage : 0.00;
-            $service['note']           = isset($service['note']) ? $service['note'] : null;
-            $service                   = array_except($service, ['id', 'name', 'is_vat_applicable', 'updated_price']);
-
-            $pos_order_item        = $this->itemRepo->save($service);
-            $is_stock_maintainable = $this->stockManager->setPosService($original_service)->isStockMaintainable();
-            if ($is_stock_maintainable) {
-                $servicesStockDecreasingInfo[$original_service->id] = $this->stockManager->decrease($service['quantity']);
+            if (isset($this->data['paid_amount']) && $this->data['paid_amount'] > 0) {
+                $payment_data['pos_order_id'] = $order->id;
+                $payment_data['amount'] = $this->data['paid_amount'];
+                $payment_data['method'] = $this->data['payment_method'] ?: 'cod';
+                $this->paymentCreator->credit($payment_data);
             }
 
-            $this->discountHandler->setOrder($order)->setPosService($original_service)->setType(DiscountTypes::SERVICE)->setData($service);
-            if ($this->discountHandler->hasDiscount()) $this->discountHandler->setPosOrderItem($pos_order_item)->create($order);
+            $order = $order->calculate();
+            $this->discountHandler->setOrder($order)->setType(DiscountTypes::ORDER)->setData($this->data);
+            if ($this->discountHandler->hasDiscount()) $this->discountHandler->create($order);
+
+            $this->voucherCalculation($order);
+            $this->resolvePaymentMethod();
+            $this->storeIncome($order);
+            $this->setAllServicesStockDecreasingArray($servicesStockDecreasingInfo);
+            if (!$this->request->has('refund_nature')) {
+                $this->storeJournal($order);
+            }
+            DB::commit();
+            return $order;
+        }catch (Throwable $e) {
+            DB::rollback();
+            app('sentry')->captureException($e);
+            throw $e;
         }
 
-        if (isset($this->data['paid_amount']) && $this->data['paid_amount'] > 0) {
-            $payment_data['pos_order_id'] = $order->id;
-            $payment_data['amount']       = $this->data['paid_amount'];
-            $payment_data['method']       = $this->data['payment_method'] ?: 'cod';
-            $this->paymentCreator->credit($payment_data);
-        }
-
-        $order = $order->calculate();
-        $this->discountHandler->setOrder($order)->setType(DiscountTypes::ORDER)->setData($this->data);
-        if ($this->discountHandler->hasDiscount()) $this->discountHandler->create($order);
-        $this->voucherCalculation($order);
-        $this->resolvePaymentMethod();
-        $this->storeIncome($order);
-        $this->setAllServicesStockDecreasingArray($servicesStockDecreasingInfo);
-        if (!$this->request->has('refund_nature')) {
-            $this->storeJournal($order);
-        }
-        return $order;
     }
 
     /**
@@ -357,6 +377,7 @@ class Creator
             $original_service = isset($service['id']) && !empty($service['id']) ? $this->posServiceRepo->find($service['id']) : $this->posServiceRepo->defaultInstance($service, $this->partner);
             if (is_null($original_service)) $original_service = $this->posServiceRepo->defaultInstance($service, $this->partner);
             $service_id[]                 = isset($service['id']) && !empty($service['id']) ? $service['id'] : 0;
+            $service_id[] = isset($service['id']) && !empty($service['id']) ? $service['id'] : 0;
             $service_wholesale_applicable = $original_service->wholesale_price ? true : false;
             $service['unit_price']        = (isset($service['updated_price']) && $service['updated_price']) ? $service['updated_price'] : ($this->isWholesalePriceApplicable($service_wholesale_applicable) ? $original_service->wholesale_price : $original_service->price);
             $total_price                  += ($service['unit_price'] * $service['quantity']);
@@ -422,5 +443,15 @@ class Creator
             "total_vat"          => $order->getTotalVat(),
             "delivery_charge"    => $order->delivery_charge ?? 0
         ]);
+    }
+
+
+    private function isEmiApplicable(PartnerPosService $service): bool
+    {
+       if($this->data['payment_method'] == 'emi' ) {
+           if(is_null($service->id) && $service->price >= config('emi.minimum_emi_amount')) return true;
+           elseif ($service->id && $service->price >= config('emi.minimum_emi_amount') && $service->is_emi_available) return true;
+       }
+       return false;
     }
 }

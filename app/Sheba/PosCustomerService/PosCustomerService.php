@@ -125,22 +125,22 @@ class PosCustomerService
     /**
      * @return array
      * @throws InvalidPartnerPosCustomer
+     * @throws AccountingEntryServerError
      */
     public function getDetails(): array
     {
         $customer_info = $this->getCustomerInfoFromSmanagerUserService();
         list($total_purchase_amount,$total_used_promo) = $this->getPurchaseAmountAndTotalUsedPromo();
         list($total_due_amount,$total_payable_amount) = $this->getDueAndPayableAmount();
-
         $customer_details = [];
         $customer_details['id'] = $customer_info['_id'] ?? null;
         $customer_details['name'] = $customer_info['name'] ?? null;
-        $customer_details['phone'] = $customer_info['phone'] ?? null;
+        $customer_details['phone'] = $customer_info['mobile'] ?? null;
         $customer_details['email'] = $customer_info['email'] ?? null;
         $customer_details['address'] = $customer_info['address'] ?? null;
         $customer_details['image'] = $customer_info['pro_pic'] ?? null;
         $customer_details['customer_since'] = $customer_info['created_at'] ?? null;
-        $customer_details['customer_since_formatted'] = isset($customer_info['created_at']) ? Carbon::parse($customer_info['created_at'])->diffForHumans(): null;
+        $customer_details['customer_since_formatted'] = isset($customer_info['created_at']) ? convertTimezone($customer_info['created_at'])->format('Y-m-d H:i:s'): null;
         $customer_details['total_purchase_amount'] = $total_purchase_amount;
         $customer_details['total_used_promo'] = $total_used_promo;
         $customer_details['total_due_amount'] = $total_due_amount;
@@ -157,22 +157,29 @@ class PosCustomerService
         return $this->posOrderServerClient->get('api/v1/partners/'.$this->partner->id.'/customers/'.$this->customerId.'/orders');
     }
 
+    /**
+     * @throws Exceptions\SmanagerUserServiceServerError
+     */
     public function deleteUser()
     {
         $this->deleteCustomerFromSmanagerUserService();
         $this->deleteCustomerFromPosOrderService();
-        $this->deleteUserFromAccountingService();
+        //todo: have to add support for new customer module
+//        $this->deleteUserFromAccountingService();
         return true;
     }
 
+    /**
+     * @throws Exceptions\SmanagerUserServiceServerError
+     */
     private function deleteCustomerFromSmanagerUserService()
     {
-        return $this->smanagerUserServerClient->delete('api/v1/partners/'.$this->partner->id.'/pos-users/'.$this->customerId);
+         $this->smanagerUserServerClient->delete('api/v1/partners/'.$this->partner->id.'/pos-users/'.$this->customerId);
     }
 
     private function deleteCustomerFromPosOrderService()
     {
-        return $this->posOrderServerClient->delete('api/v1/partners/'.$this->partner->id.'/customers/'.$this->customerId);
+         $this->posOrderServerClient->delete('api/v1/partners/'.$this->partner->id.'/customers/'.$this->customerId);
     }
 
     private function deleteUserFromAccountingService()
@@ -204,7 +211,7 @@ class PosCustomerService
     public function storePosCustomer()
     {
         $data = $this->makeCreateData();
-        return $this->smanagerUserServerClient->post('api/v1/partners/' . $this->partner->id.'/users', $data);
+        return $this->smanagerUserServerClient->post('api/v1/partners/' . $this->partner->id.'/pos-users', $data);
     }
 
     public function makeUpdateData()
@@ -237,7 +244,7 @@ class PosCustomerService
     /**
      * @return mixed
      */
-    private function getCustomerInfoFromSmanagerUserService()
+    public function getCustomerInfoFromSmanagerUserService()
     {
         return $this->smanagerUserServerClient->get('api/v1/partners/'.$this->partner->id.'/pos-users/'.$this->customerId);
     }
@@ -247,8 +254,8 @@ class PosCustomerService
      */
     private function getPurchaseAmountAndTotalUsedPromo(): array
     {
-        $response = $this->posOrderServerClient->get('api/v1/customers/'.$this->customerId.'/order-amount');
-        return [$response['total_purchase_amount'],$response['total_used_promo']];
+        $response = $this->posOrderServerClient->get('api/v1/partners/'.$this->partner->id.'/customers/'.$this->customerId.'/purchase-amount-promo-usage');
+        return [$response['data']['total_purchase_amount'],$response['data']['total_used_promo']];
     }
 
     /**
@@ -257,8 +264,8 @@ class PosCustomerService
      */
     private function getDueAndPayableAmount(): array
     {
-        $customer_amount =  $this->posCustomerRepository->getDueAmountFromDueTracker($this->partner, $this->customerId);
-        return [$customer_amount['due'],$customer_amount['payable']];
+       // $customer_amount =  $this->posCustomerRepository->getDueAmountFromDueTracker($this->partner, $this->customerId);
+        return [100,0];
     }
 
     private function getCustomerListByPartnerId()

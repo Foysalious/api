@@ -605,6 +605,17 @@ if (!function_exists('getNeoBankingFolder')) {
     }
 }
 
+if (!function_exists('getComplianceFolder')) {
+    function getComplianceFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url) {
+            $url = env('S3_URL');
+        }
+        return $url . 'images/partner/compliance_documents/';
+    }
+}
+
 if (!function_exists('getTradeLicenceDocumentsFolder')) {
 
     /**
@@ -1540,5 +1551,20 @@ if (!function_exists('getAppVersionImageLinkFolder')) {
         if ($with_base_url) $url = config('s3.url');
 
         return $url . 'images/app_version_images/';
+    }
+}
+
+if (!function_exists('getEmployeeVisitFolder')) {
+
+    /**
+     * @param false $with_base_url
+     * @return string
+     */
+    function getEmployeeVisitFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url) $url = env('S3_URL');
+
+        return $url . 'images/employee_visit_images';
     }
 }

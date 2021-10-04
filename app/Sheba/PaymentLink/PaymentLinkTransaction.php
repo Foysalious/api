@@ -6,8 +6,6 @@ namespace Sheba\PaymentLink;
 use App\Models\Payment;
 use App\Models\PosCustomer;
 use App\Sheba\AccountingEntry\Repository\PaymentLinkAccountingRepository;
-use App\Sheba\AccountingEntry\Repository\PaymentLinkRepository;
-use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Transactions\Types;
@@ -205,7 +203,8 @@ class PaymentLinkTransaction
 
         }
         $formatted_minus_amount = number_format($this->fee, 2);
-        $minus_log              = "($this->tax" . "TK + $this->linkCommission%) $formatted_minus_amount TK has been charged as link service fees against of Transc ID: {$this->rechargeTransaction->id}, and Transc amount: $this->formattedRechargeAmount";
+        $rechargeTransactionId = isset($this->rechargeTransaction->id) ? $this->rechargeTransaction->id : null;
+        $minus_log              = "($this->tax" . "TK + $this->linkCommission%) $formatted_minus_amount TK has been charged as link service fees against of Transc ID: {$rechargeTransactionId}, and Transc amount: $this->formattedRechargeAmount";
         $this->walletTransactionHandler->setLog($minus_log)->setType(Types::debit())->setAmount($this->fee)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
         return $this;
     }
@@ -240,7 +239,6 @@ class PaymentLinkTransaction
      * @param $amount
      * @param $feeTransaction
      * @param $interest
-     * @throws AccountingEntryServerError
      */
     private function storePaymentLinkEntry($amount, $feeTransaction, $interest) {
         $customer = null;

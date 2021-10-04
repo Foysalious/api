@@ -9,6 +9,7 @@ class Route
             (new AffiliateRoute())->set($api);
             (new PartnerRoute())->set($api);
             (new EmiRoute())->set($api);
+            (new UserMigrationRoute())->set($api);
 
             $api->group(['middleware' => 'terminate'], function ($api) {
                 (new BusinessRoute())->set($api);
@@ -74,6 +75,9 @@ class Route
             $api->get('payment-gateways/{service_type}', 'PaymentGatewayController@getPaymentGateways');
 //            emi-info with static info
             $api->get('emi-info', 'ShebaController@getEmiInfoV3');
+            $api->group(['prefix' => 'spro', 'middleware' => 'resource.jwt.auth'], function ($api){
+                $api->get('service/{serviceId}/instructions', 'Service\ServiceController@instructions')->where('serviceId', '[0-9]+');
+            });
         });
     }
 }

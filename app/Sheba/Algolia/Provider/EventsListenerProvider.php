@@ -2,10 +2,8 @@
 
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Support\ServiceProvider;
-use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceCreated;
 use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceSaved as PartnerPosServiceSaved;
 use App\Sheba\Algolia\Listeners\PartnerPosServiceSaved as PartnerPosServiceSavedListener;
-use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceUpdated;
 
 class EventsListenerProvider extends ServiceProvider
 {
