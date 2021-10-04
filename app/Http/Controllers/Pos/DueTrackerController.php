@@ -7,6 +7,8 @@ use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\ComplianceInfo\ComplianceInfo;
+use Sheba\ComplianceInfo\Statics;
 use Sheba\DueTracker\DueTrackerRepository;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
 use Sheba\DueTracker\Exceptions\UnauthorizedRequestFromExpenseTrackerException;
@@ -249,6 +251,10 @@ class DueTrackerController extends Controller
         try {
             $request->merge(['customer_id' => $customer_id]);
             $this->validate($request, ['type' => 'required|in:due, deposit, receivable, payable', 'amount' => 'required']);
+            $status = (new ComplianceInfo())->setPartner($request->partner)->getComplianceStatus();
+            if ($status === Statics::REJECTED)
+                return api_response($request, null, 412, ["message" => "Precondition Failed", "error_message" => Statics::complianceRejectedMessage()]);
+
             if ($request->type == 'receivable' || $request->type == 'due') {
                 $request['payment_link'] = $dueTrackerRepository->createPaymentLink($request, $this->paymentLinkCreator);
             }
