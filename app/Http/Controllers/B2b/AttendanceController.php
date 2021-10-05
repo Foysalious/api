@@ -897,7 +897,7 @@ class AttendanceController extends Controller
             ->setIsWeekendIncluded($request->is_weekend_included)
             ->update();
         $this->officeSettingChangesLogsRequester->setPreviousWeekends($business_weekend)->setPreviousTotalWorkingDaysType($previous_working_days_type)->setPreviousNumberOfDays($previous_number_of_days)->setPreviousIsWeekendIncluded($previous_is_weekend_included)->setRequest($request);
-        $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createWeekendLogs();
+        if ($request->weekends) $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createWeekendLogs();
         $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createWorkingDaysTypeLogs();
 
         if ($office_timing) return api_response($request, null, 200, ['msg' => "Update Successful"]);
