@@ -1,11 +1,12 @@
 <?php namespace App\Transformers\Business;
 
-use App\Models\BusinessMember;
+use App\Sheba\Business\Appreciation\EmployeeAppreciations;
 use League\Fractal\TransformerAbstract;
+use App\Models\BusinessMember;
 
 class AppreciationEmployeeTransformer extends TransformerAbstract
 {
-    CONST NO_DEPARTMENT_VALUE = 'OTHER';
+    const NO_DEPARTMENT_VALUE = 'OTHER';
 
     /**
      * @param $business_members
@@ -20,14 +21,15 @@ class AppreciationEmployeeTransformer extends TransformerAbstract
             $profile = $member->profile;
             $is_member_role_present = $this->isMemberRolePresent($business_member);
             $department_name = $is_member_role_present ? $business_member->role->businessDepartment->name : self::NO_DEPARTMENT_VALUE;
-
             array_push($departments_name, $department_name);
+
             $employee_based_on_departments[$department_name][] = [
                 'id' => $business_member->id,
                 'name' => $profile->name,
                 'pro_pic' => $profile->pro_pic,
                 'mobile' => $business_member->mobile,
-                'designation' => $is_member_role_present ? $business_member->role->name : 'N/S'
+                'designation' => $is_member_role_present ? $business_member->role->name : 'N/S',
+                'stickers' => (new EmployeeAppreciations())->getEmployeeStickers($business_member)
             ];
         });
 

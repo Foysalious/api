@@ -49,6 +49,27 @@ class EmployeeAppreciations
     }
 
     /**
+     * @param BusinessMember $business_member
+     * @return array
+     */
+    public function getEmployeeStickers(BusinessMember $business_member)
+    {
+        $employee_appreciations = $business_member->appreciations()->with('sticker')->orderBy('id', 'DESC')->get();
+
+        $all_stickers = [];
+        foreach ($employee_appreciations as $appreciation) {
+            $sticker = $appreciation->sticker;
+            #$all_stickers[] = $sticker->image;
+            array_push($all_stickers, [
+                'id' => $sticker->id,
+                'image' => $sticker->image
+            ]);
+        }
+
+        return $all_stickers;
+    }
+
+    /**
      * @param $business_member_id
      * @return array
      */

@@ -39,7 +39,15 @@ class AppreciateController extends Controller
         if (!$business_member) return api_response($request, null, 404);
         /** @var Business $business */
         $business = $this->getBusiness($request);
-        $business_members = $this->accessibleBusinessMembers($business, $request);
+        $business_members = $business->getActiveBusinessMember();
+
+        if ($request->has('department')) {
+            $business_members = $business_members->whereHas('role', function ($q) use ($request) {
+                $q->whereHas('businessDepartment', function ($q) use ($request) {
+                    $q->where('business_departments.id', $request->department);
+                });
+            });
+        }
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
