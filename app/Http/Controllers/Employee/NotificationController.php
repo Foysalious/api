@@ -71,6 +71,7 @@ class NotificationController extends Controller
             'Sheba\Dal\Leave\Model',
             'Sheba\Dal\Support\Model',
             'Sheba\Dal\Payslip\Payslip',
+            'Sheba\Dal\Appreciation\Appreciation'
         ])->where('created_at', '>=', $request->time)->where('is_seen', 0)->count();
 
         return api_response($request, null, 200, ['notifications' => $notifications_count]);
@@ -104,6 +105,7 @@ class NotificationController extends Controller
             'homepage' => 'sometimes|required',
             'payslip_id' => 'sometimes|required|numeric',
             'schedule_date' => 'sometimes|required',
+            'appreciation' => 'sometimes|required',
         ]);
 
         $auth_info = $request->auth_info;
