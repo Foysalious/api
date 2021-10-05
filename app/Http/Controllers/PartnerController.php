@@ -37,7 +37,6 @@ use Sheba\Dal\Category\Category;
 use Sheba\Dal\CategoryPartner\CategoryPartner;
 use Sheba\Dal\DeliveryChargeUpdateRequest\DeliveryChargeUpdateRequest;
 use Sheba\Dal\PartnerService\PartnerService;
-use Sheba\Dal\Service\Service;
 use Sheba\Logistics\Repository\ParcelRepository;
 use Sheba\Manager\JobList;
 use Sheba\ModificationFields;
