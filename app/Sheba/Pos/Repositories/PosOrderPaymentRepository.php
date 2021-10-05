@@ -4,6 +4,7 @@ use App\Models\Partner;
 use App\Models\PosOrder;
 use App\Models\PosOrderPayment;
 use App\Sheba\PosOrderService\PosOrderServerClient;
+use Illuminate\Support\Facades\Log;
 use Sheba\Repositories\BaseRepository;
 
 class PosOrderPaymentRepository extends BaseRepository
@@ -41,9 +42,10 @@ class PosOrderPaymentRepository extends BaseRepository
         $payment_data['amount']       = $amount_cleared;
         $payment_data['method']       = $payment_method;
         $payment_data['transaction_type'] = 'Credit';
-        if($this->partner->is_migration_completed)
-           return $this->saveToNewPosOrderSystem($payment_data);
-
+        if($this->partner->is_migration_completed) {
+            return $this->saveToNewPosOrderSystem($payment_data);
+        }
+        Log::info(['payment data', $payment_data]);
         /** @var PosOrder $order */
         $order = PosOrder::find($pos_order_id);
         if(isset($order)) {
@@ -52,6 +54,7 @@ class PosOrderPaymentRepository extends BaseRepository
                 return $this->save($payment_data);
             }
         }
+        Log::info(['payment data', $order->id, $order->getDue()]);
     }
 
     /**

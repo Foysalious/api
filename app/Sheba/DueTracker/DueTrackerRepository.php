@@ -9,6 +9,7 @@ use App\Models\Profile;
 use App\Repositories\FileRepository;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
 use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
+use Illuminate\Support\Facades\Log;
 use Sheba\Sms\BusinessType;
 use Sheba\Sms\FeatureType;
 use Carbon\Carbon;
@@ -265,6 +266,7 @@ class DueTrackerRepository extends BaseRepository
         $this->setModifier($partner);
         $data     = $this->createStoreData($request);
         $response = $this->client->post("accounts/$this->accountId/entries/due-store/$customer->profile_id", $data);
+        Log::info(['response from expense server', $response]);
         return $response['data'];
     }
 
