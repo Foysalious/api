@@ -3,11 +3,13 @@
 use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Sheba\Business\Appreciation\EmployeeAppreciations;
+use App\Sheba\Business\Appreciation\Updater;
 use App\Transformers\Business\AppreciationEmployeeTransformer;
 use App\Transformers\Business\StickerCategoryList;
 use App\Sheba\Business\BusinessBasicInformation;
 use App\Transformers\CustomSerializer;
 use League\Fractal\Resource\Item;
+use Sheba\Dal\Appreciation\Appreciation;
 use Sheba\Dal\StickerCategory\StickerCategory;
 use App\Sheba\Business\Appreciation\Creator;
 use League\Fractal\Resource\Collection;
@@ -61,17 +63,6 @@ class AppreciateController extends Controller
     }
 
     /**
-     * @param Business $business
-     * @param Request $request
-     * @return mixed
-     */
-    private function accessibleBusinessMembers(Business $business, Request $request)
-    {
-        if ($request->has('for') && $request->for == 'phone_book') return $business->getActiveBusinessMember();
-        return $business->getAccessibleBusinessMember();
-    }
-
-    /**
      * @param Request $request
      * @param Creator $creator
      * @return JsonResponse
@@ -90,8 +81,30 @@ class AppreciateController extends Controller
         $creator->setSticker($request->sticker)
             ->setReceiver($request->receiver_id)
             ->setGiver($business_member->id)
+            ->setComplement($request->complement);
+
+        $appreciation = $creator->create();
+
+        return api_response($request, null, 200, ['appreciation_id' => $appreciation->id]);
+    }
+
+    /**
+     * @param $appreciation_id
+     * @param Request $request
+     * @param Updater $updater
+     * @return JsonResponse
+     */
+    public function update($appreciation_id, Request $request, Updater $updater)
+    {
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $this->setModifier($business_member->member);
+
+        $appreciation = Appreciation::find((int)$appreciation_id);
+        $updater->setAppreciation($appreciation)
+            ->setSticker($request->sticker)
             ->setComplement($request->complement)
-            ->create();
+            ->update();
 
         return api_response($request, null, 200);
     }
