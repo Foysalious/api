@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use Sheba\Dal\Appreciation\Appreciation;
 use Sheba\Dal\BusinessMemberStatusChangeLog\Model as BusinessMemberStatusChangeLog;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
@@ -107,6 +108,11 @@ class BusinessMember extends Model
     public function statusChangeLogs()
     {
         return $this->hasMany(BusinessMemberStatusChangeLog::class);
+    }
+
+    public function appreciations()
+    {
+        return $this->hasMany(Appreciation::class, 'receiver_id');
     }
 
     public function scopeActive($query)
