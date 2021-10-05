@@ -131,6 +131,7 @@ class EmployeeRoute
             $api->group(['prefix' => 'appreciate'], function ($api) {
                 $api->get('/coworker', 'Employee\AppreciateController@index');
                 $api->post('/', 'Employee\AppreciateController@store');
+                $api->post('/{id}', 'Employee\AppreciateController@update');
                 $api->get('/stickers', 'Employee\AppreciateController@categoryWiseStickers');
                 $api->get('/my-stickers', 'Employee\AppreciateController@myStickers');
                 $api->get('/{id}/coworker-stickers', 'Employee\AppreciateController@coworkerStickers');
