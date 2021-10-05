@@ -309,8 +309,8 @@ class DueTrackerController extends Controller
         ]);
         if($request->api_key != config('expense_tracker.api_key'))
             throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
+        Log::info(['Pos Order payment', $request->amount, $request->pos_order_id, $request->api_key, $request->payment_method, $request->expense_account_id]);
         $posOrderPaymentRepository->setExpenseAccountId($request->expense_account_id)->createPosOrderPayment($request->amount, $request->pos_order_id,$request->payment_method);
-        Log::info(['Pos Order payment', $request->amount, $request->pos_order_id, $request->api_key]);
         return api_response($request, true, 200, ['message' => 'Pos Order Payment created successfully']);
     }
 
