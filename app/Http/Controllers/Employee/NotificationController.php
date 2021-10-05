@@ -71,6 +71,7 @@ class NotificationController extends Controller
             'Sheba\Dal\Leave\Model',
             'Sheba\Dal\Support\Model',
             'Sheba\Dal\Payslip\Payslip',
+            'Sheba\Dal\Appreciation\Appreciation'
         ])->where('created_at', '>=', $request->time)->where('is_seen', 0)->count();
 
         return api_response($request, null, 200, ['notifications' => $notifications_count]);
@@ -104,6 +105,7 @@ class NotificationController extends Controller
             'homepage' => 'sometimes|required',
             'payslip_id' => 'sometimes|required|numeric',
             'schedule_date' => 'sometimes|required',
+            'appreciation' => 'sometimes|required',
         ]);
 
         $auth_info = $request->auth_info;
@@ -126,7 +128,6 @@ class NotificationController extends Controller
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel, $sound);
         }
-
         if ($request->has('support_id')) {
             $pushNotificationHandler->send([
                 "title" => 'New support created',
@@ -194,13 +195,23 @@ class NotificationController extends Controller
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel, $sound);
         }
-
         if ($request->has('payslip')) {
             $pushNotificationHandler->send([
                 "title" => "Payslip Disbursed",
                 "message" => "Payslip Disbursed of month ".Carbon::parse($request->schedule_date)->format('M Y'),
                 "event_type" => 'payslip',
                 "event_id" => $request->payslip_id,
+                "sound" => "notification_sound",
+                "channel_id" => $channel,
+                "click_action" => "FLUTTER_NOTIFICATION_CLICK"
+            ], $topic, $channel, $sound);
+        }
+        if ($request->has('appreciation')) {
+            $pushNotificationHandler->send([
+                "title" => 'Appreciation',
+                "message" => "Test appreciated you",
+                "event_type" => 'appreciation',
+                "event_id" => $request->appreciation_id,
                 "sound" => "notification_sound",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"

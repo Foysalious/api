@@ -6,7 +6,7 @@ use App\Sheba\Pos\Product\Accounting\ExpenseEntry;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
-use Sheba\Dal\PartnerPosServiceBatch\Model as PartnerPosServiceBatch;
+use Sheba\Dal\PartnerPosServiceBatch\PartnerPosServiceBatchRepositoryInterface;
 use Sheba\Dal\PartnerPosServiceImageGallery\Model as PartnerPosServiceImageGallery;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
@@ -55,14 +55,13 @@ class Creator
         $this->saveImages();
         $this->data['partner_id'] = $this->data['partner']['id'];
         $this->data['pos_category_id'] = $this->data['category_id'];
-        $cost = (double)$this->data['cost'] ?? ((double)$this->data['price'] ?? 0.0);
-        $stock = $this->data['stock'];
+        $this->data['cost'] = (double)$this->data['cost'];
         $this->format();
         $image_gallery = null;
         if (isset($this->data['image_gallery'])) $image_gallery = $this->data['image_gallery'];
         $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'image_gallery','accounting_info']);
         $partner_pos_service = $this->serviceRepo->save($this->data + (new RequestIdentification())->get());
-        $this->savePartnerPosServiceBatch($partner_pos_service, $stock, $cost);
+        $this->savePartnerPosServiceBatch($partner_pos_service, $this->data['stock'], $this->data['cost']);
         $this->storeImageGallery($partner_pos_service, json_decode($image_gallery,true));
         return $partner_pos_service;
     }
@@ -195,6 +194,9 @@ class Creator
 
     public function savePartnerPosServiceBatch($service, $stock = null, $cost = null)
     {
+        /** @var Partner $partner */
+        $partner = $service->partner;
+        if($partner->isMigratedToAccounting()) return true;
         $batchData = [];
         $accounting_data = [];
         $batchData['partner_pos_service_id'] = $service->id;
@@ -205,8 +207,9 @@ class Creator
             $batchData['from_account'] = $accounting_data['from_account'];
             $batchData['supplier_id'] = $accounting_data['supplier_id'] ?? null;
         }
-
-        $partner_pos_service_batch = PartnerPosServiceBatch::create($batchData);
+        /** @var PartnerPosServiceBatchRepositoryInterface $partnerPosServiceBatchRepository */
+        $partnerPosServiceBatchRepository = app(PartnerPosServiceBatchRepositoryInterface::class);
+        $partner_pos_service_batch = $partnerPosServiceBatchRepository->create($batchData);
         $batchData = $this->makeReturnDataForBatch($partner_pos_service_batch);
         $this->data['stock'] = $batchData['stock'];
         $this->data['cost'] = $batchData['cost'];
