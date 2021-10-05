@@ -6,6 +6,7 @@ use App\Sheba\AccountingEntry\Repository\AccountingDueTrackerRepository;
 use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Sheba\ComplianceInfo\ComplianceInfo;
 use Sheba\ComplianceInfo\Statics;
@@ -308,6 +309,7 @@ class DueTrackerController extends Controller
         ]);
         if($request->api_key != config('expense_tracker.api_key'))
             throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
+        Log::info(['Pos Order payment', $request->amount, $request->pos_order_id, $request->api_key]);
         $posOrderPaymentRepository->setExpenseAccountId($request->expense_account_id)->createPosOrderPayment($request->amount, $request->pos_order_id,$request->payment_method);
         return api_response($request, true, 200, ['message' => 'Pos Order Payment created successfully']);
     }

@@ -127,9 +127,13 @@ class EmployeeRoute
             $api->get('managers', 'Employee\EmployeeController@getManagersList');
             $api->get('/', 'Employee\EmployeeController@index');
             $api->get('/{employee}', 'Employee\EmployeeController@show');
+
             $api->group(['prefix' => 'appreciate'], function ($api) {
+                $api->get('/coworker', 'Employee\AppreciateController@index');
                 $api->post('/', 'Employee\AppreciateController@store');
                 $api->get('/stickers', 'Employee\AppreciateController@categoryWiseStickers');
+                $api->get('/my-stickers', 'Employee\AppreciateController@myStickers');
+                $api->get('/{id}/coworker-stickers', 'Employee\AppreciateController@coworkerStickers');
             });
         });
     }

@@ -20,6 +20,13 @@ class Requester
     private $officeName;
     private $officeIp;
     private $previousOfficeIp;
+    private $holidayStartDate;
+    private $holidayEndDate;
+    private $holidayName;
+    private $existingHoliday;
+    private $existingHolidayStartDate;
+    private $existingHolidayEndDate;
+    private $existingHolidayName;
 
     public function setBusiness(Business $business)
     {
@@ -159,5 +166,82 @@ class Requester
     public function getOfficeIp()
     {
         return $this->officeIp;
+    }
+
+    public function setHolidayStartDate($holiday_start_date)
+    {
+        $this->holidayStartDate = $holiday_start_date;
+        return $this;
+    }
+
+    public function getHolidayStartDate()
+    {
+        return $this->holidayStartDate;
+    }
+
+    public function setHolidayEndDate($holiday_end_date)
+    {
+        $this->holidayEndDate = $holiday_end_date;
+        return $this;
+    }
+
+    public function getHolidayEndDate()
+    {
+        return $this->holidayEndDate;
+    }
+
+    public function setHolidayName($title)
+    {
+        $this->holidayName = $title;
+        return $this;
+    }
+
+    public function getHolidayName()
+    {
+        return $this->holidayName;
+    }
+
+    public function setExistingHoliday($holiday)
+    {
+        $this->existingHoliday = $holiday;
+        return $this;
+    }
+
+    public function getExistingHoliday()
+    {
+        return $this->existingHoliday;
+    }
+
+    public function setExistingHolidayStart($existing_holiday_start)
+    {
+        $this->existingHolidayStartDate = $existing_holiday_start;
+        return $this;
+    }
+
+    public function setExistingHolidayEnd($existing_holiday_end)
+    {
+        $this->existingHolidayEndDate = $existing_holiday_end;
+        return $this;
+    }
+
+    public function setExistingHolidayName($title)
+    {
+        $this->existingHolidayName = $title;
+        return $this;
+    }
+
+    public function getExistingHolidayStart()
+    {
+        return $this->existingHolidayStartDate;
+    }
+
+    public function getExistingHolidayEnd()
+    {
+        return $this->existingHolidayEndDate;
+    }
+
+    public function getExistingHolidayName()
+    {
+        return $this->existingHolidayName;
     }
 }
