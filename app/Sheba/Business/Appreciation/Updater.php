@@ -1,9 +1,10 @@
 <?php namespace App\Sheba\Business\Appreciation;
 
+use Sheba\Dal\Appreciation\Appreciation;
 use Sheba\Dal\Appreciation\AppreciationRepository;
 use Sheba\ModificationFields;
 
-class Creator
+class Updater
 {
     use ModificationFields;
 
@@ -13,21 +14,16 @@ class Creator
     private $giver;
     private $sticker;
     private $complement;
+    private $appreciation;
 
     public function __construct()
     {
         $this->appreciationRepo = app(AppreciationRepository::class);
     }
 
-    public function setReceiver($receiver)
+    public function setAppreciation(Appreciation $appreciation)
     {
-        $this->receiver = $receiver;
-        return $this;
-    }
-
-    public function setGiver($giver)
-    {
-        $this->giver = $giver;
+        $this->appreciation = $appreciation;
         return $this;
     }
 
@@ -43,15 +39,11 @@ class Creator
         return $this;
     }
 
-    public function create()
+    public function update()
     {
-        $appreciation = $this->appreciationRepo->create([
-            'receiver_id' => $this->receiver,
-            'giver_id' => $this->giver,
+        $this->appreciationRepo->update($this->appreciation, [
             'sticker_id' => $this->sticker,
             'note' => $this->complement,
         ]);
-
-        return $appreciation;
     }
 }
