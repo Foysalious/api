@@ -160,4 +160,53 @@ class Creator
         $this->officeSettingChangesLogsRepo->create($log_data);
     }
 
+    public function createHolidayStoreLogs()
+    {
+        $holiday_start = $this->officeSettingChangesLogsRequester->getHolidayStartDate();
+        $holiday_end = $this->officeSettingChangesLogsRequester->getHolidayEndDate();
+        $holiday_name = $this->officeSettingChangesLogsRequester->getHolidayName();
+        $logs = $holiday_start != $holiday_end ? "New holiday ".$holiday_name." from ".$holiday_start." to ".$holiday_end." has been added" : "New holiday ".$holiday_name." on ".$holiday_start." has been added";
+        $log_data = [
+            'business_id' => $this->officeSettingChangesLogsRequester->getBusiness()->id,
+            'type' => 'holiday',
+            'logs' => $logs
+        ];
+        $this->officeSettingChangesLogsRepo->create($log_data);
+    }
+
+    public function createHolidayDeleteLogs()
+    {
+        $existing_holiday = $this->officeSettingChangesLogsRequester->getExistingHoliday();
+        $holiday_start = $existing_holiday->start_date->format('Y-m-d');
+        $holiday_end = $existing_holiday->end_date->format('Y-m-d');
+        $holiday_name = $existing_holiday->title;
+        $logs = $holiday_start != $holiday_end ? "Holiday ".$holiday_name." from ".$holiday_start." to ".$holiday_end." has been removed" : "Holiday ".$holiday_name." on ".$holiday_start." has been removed";
+        $log_data = [
+            'business_id' => $this->officeSettingChangesLogsRequester->getBusiness()->id,
+            'type' => 'holiday',
+            'logs' => $logs
+        ];
+        $this->officeSettingChangesLogsRepo->create($log_data);
+    }
+
+    public function createHolidayUpdateLogs()
+    {
+        $prev_holiday_start  = $this->officeSettingChangesLogsRequester->getExistingHolidayStart()->format('Y-m-d');
+        $prev_holiday_end  = $this->officeSettingChangesLogsRequester->getExistingHolidayEnd()->format('Y-m-d');
+        $prev_holiday_name = $this->officeSettingChangesLogsRequester->getExistingHolidayName();
+        $new_start_date = $this->officeSettingChangesLogsRequester->getHolidayStartDate();
+        $new_end_date = $this->officeSettingChangesLogsRequester->getHolidayEndDate();
+        $new_holiday_name = $this->officeSettingChangesLogsRequester->getHolidayName();
+        if ($prev_holiday_start == $new_start_date && $prev_holiday_end == $new_end_date && $prev_holiday_name == $new_holiday_name) return;
+        $logs = "Holiday updated from ".$prev_holiday_name." on (".$prev_holiday_start." - ".$prev_holiday_end.") to ".$new_holiday_name." on (".$new_start_date." - ".$new_end_date.")";
+        $log_data = [
+            'business_id' => $this->officeSettingChangesLogsRequester->getBusiness()->id,
+            'from' => $prev_holiday_name.", (".$prev_holiday_start." - ".$prev_holiday_end.")",
+            'to' => $new_holiday_name.", (".$new_start_date." - ".$new_end_date.")",
+            'type' => 'holiday',
+            'logs' => $logs
+        ];
+        $this->officeSettingChangesLogsRepo->create($log_data);
+    }
+
 }

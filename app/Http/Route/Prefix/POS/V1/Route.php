@@ -19,7 +19,14 @@ class Route
         $api->group(['prefix' => 'pos/v1/', 'namespace' => 'App\Http\Controllers', 'middleware' => ['ip.whitelist']], function ($api) {
             $api->post('/send-sms', "PosRebuild\SmsController@sendSms");
         });
+
         $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers', 'middleware' => ['jwtAccessToken']], function ($api) {
+            $api->group(['prefix' => 'webstore-theme-settings'], function ($api) {
+                $api->get('/partner-settings', 'WebstoreSettingController@index');
+                $api->get('/theme-details', 'WebstoreSettingController@getThemeDetails');
+                $api->post('/', 'WebstoreSettingController@store');
+                $api->put('/', 'WebstoreSettingController@update');
+            });
             $api->group(['prefix' => 'collections'], function ($api) {
                 $api->get('/', 'Inventory\CollectionController@index');
                 $api->post('/', 'Inventory\CollectionController@store');
