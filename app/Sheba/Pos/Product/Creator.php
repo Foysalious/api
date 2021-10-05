@@ -61,9 +61,7 @@ class Creator
         if (isset($this->data['image_gallery'])) $image_gallery = $this->data['image_gallery'];
         $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'image_gallery','accounting_info']);
         $partner_pos_service = $this->serviceRepo->save($this->data + (new RequestIdentification())->get());
-        /** @var Partner $partner */
-        $partner = $partner_pos_service->partner;
-        if($partner->isMigratedToAccounting()) $this->savePartnerPosServiceBatch($partner_pos_service->id, $this->data['stock'], $this->data['cost']);
+        $this->savePartnerPosServiceBatch($partner_pos_service, $this->data['stock'], $this->data['cost']);
         $this->storeImageGallery($partner_pos_service, json_decode($image_gallery,true));
         return $partner_pos_service;
     }
@@ -187,6 +185,9 @@ class Creator
 
     public function savePartnerPosServiceBatch($service, $stock = null, $cost = null)
     {
+        /** @var Partner $partner */
+        $partner = $service->partner;
+        if($partner->isMigratedToAccounting()) return true;
         $batchData = [];
         $accounting_data = [];
         $batchData['partner_pos_service_id'] = $service->id;
