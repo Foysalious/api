@@ -9,8 +9,7 @@ use Sheba\Dal\UserMigration\UserStatus;
 abstract class UserMigrationRepository
 {
     const NOT_ELIGIBLE = 'not_eligible';
-
-    /** @var Contract */
+    /** @var  Contract */
     private $repo;
     protected $userId;
     protected $moduleName;
