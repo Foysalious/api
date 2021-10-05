@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\Profile;
+use App\Models\Resource;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -41,6 +42,7 @@ class NidOcrController extends Controller
             if ($request->hasFile('id_front') && $request->hasFile('id_front')) {
                 /** @var Profile $profile */
                 $profile = $request->auth_user->getProfile();
+//                dd($profile->resource);
                 $data = $this->nidOCR->formatToData($request);
                 $nidOcrData = $this->client->post($this->api, $data);
                 $nid_no = $nidOcrData['data']['nid_no'];
@@ -53,6 +55,7 @@ class NidOcrController extends Controller
                 }
                 $this->nidOCR->storeData($request, $nidOcrData, $nid_no);
                 $this->nidOCR->makeProfileAdjustment($profile, $request->id_front, $request->id_back, $nid_no);
+                $this->nidOCR->makeResourceAdjustment($profile->resource, $nidOcrData['data']['father_name'], $nidOcrData['data']['mother_name'], $nidOcrData['data']['spouse_name'], $nid_no);
                 return api_response($request, null, 200, ["data" => $nidOcrData['data']]);
             }
             return api_response($request, null, 400, ['message' => 'Please provide image file.']);
@@ -61,10 +64,11 @@ class NidOcrController extends Controller
             return api_response($request, null, 400, ['message' => $msg]);
         } catch (EKycException $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
-        } catch (\Throwable $e) {
-            Log::info($e);
-            return api_response($request, null, 500);
         }
+//        catch (\Throwable $e) {
+//            Log::info($e);
+//            return api_response($request, null, 500);
+//        }
     }
 
 }
