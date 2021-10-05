@@ -668,10 +668,12 @@ class AttendanceController extends Controller
      */
     public function destroy($business, $holiday, Request $request)
     {
+        $manager_member = $request->manager_member;
         $holiday = $this->holidayRepository->find((int)$holiday);
         if (!$holiday) return api_response($request, null, 404);
         $this->officeSettingChangesLogsRequester->setBusiness($request->business)->setExistingHoliday($holiday);
         $this->holidayRepository->delete($holiday);
+        $this->setModifier($manager_member);
         $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createHolidayDeleteLogs();
         return api_response($request, null, 200);
     }
