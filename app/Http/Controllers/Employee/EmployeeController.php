@@ -165,6 +165,8 @@ class EmployeeController extends Controller
         $business_member = BusinessMember::find($business_member['id']);
         if (!$business_member) return api_response($request, null, 404);
 
+        $department = $business_member->department();
+
         /** @var Attendance $attendance */
         $attendance = $business_member->attendanceOfToday();
         /** @var Attendance $last_attendance */
@@ -185,6 +187,7 @@ class EmployeeController extends Controller
         $data = [
             'id' => $member->id,
             'business_member_id' => $business_member->id,
+            'department_id' => $department ? $department->id : null,
             'notification_count' => $member->notifications()->unSeen()->count(),
             'attendance' => [
                 'can_checkin' => !$attendance ? 1 : ($attendance->canTakeThisAction(Actions::CHECKIN) ? 1 : 0),
