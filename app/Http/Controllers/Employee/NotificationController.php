@@ -126,7 +126,6 @@ class NotificationController extends Controller
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel, $sound);
         }
-
         if ($request->has('support_id')) {
             $pushNotificationHandler->send([
                 "title" => 'New support created',
@@ -181,7 +180,6 @@ class NotificationController extends Controller
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel, $sound);
         }
-
         if ($request->has('cancel_leave_id')) {
             $pushNotificationHandler->send([
                 "title" => "leave cancel",
@@ -193,13 +191,23 @@ class NotificationController extends Controller
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel, $sound);
         }
-
         if ($request->has('payslip')) {
             $pushNotificationHandler->send([
                 "title" => "Payslip Disbursed",
                 "message" => "Payslip Disbursed of month ".Carbon::parse($request->schedule_date)->format('M Y'),
                 "event_type" => 'payslip',
                 "event_id" => $request->payslip_id,
+                "sound" => "notification_sound",
+                "channel_id" => $channel,
+                "click_action" => "FLUTTER_NOTIFICATION_CLICK"
+            ], $topic, $channel, $sound);
+        }
+        if ($request->has('appreciation')) {
+            $pushNotificationHandler->send([
+                "title" => 'Appreciation',
+                "message" => "Test appreciated you",
+                "event_type" => 'appreciation',
+                "event_id" => $request->appreciation_id,
                 "sound" => "notification_sound",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
