@@ -13,6 +13,7 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use League\Fractal\Serializer\ArraySerializer;
 use Sheba\ModificationFields;
+use Sheba\Pos\Category\Constants\CategoryConstants;
 use Sheba\Pos\Product\Creator as ProductCreator;
 use Sheba\Pos\Product\Deleter;
 use Sheba\Pos\Product\Log\FieldType;
@@ -192,7 +193,7 @@ class ServiceController extends Controller
      */
     private function resolveSubcategory($master_category)
     {
-        $default_subcategory = PosCategory::where('name', 'Sub None Category')->where('parent_id', $master_category)->first();
+        $default_subcategory = PosCategory::where('name', CategoryConstants::DEFAULT_SUB_CATEGORY_NAME)->where('parent_id', $master_category)->first();
         if ($default_subcategory)
             return ['category_id' => $default_subcategory->id];
         $sub_category = $this->createSubcategory($master_category);
@@ -207,8 +208,8 @@ class ServiceController extends Controller
     {
         $master_category = PosCategory::where('id', $master_category)->first();
         $master_category->parent_id = $master_category->id;
-        $master_category->name = 'Sub None Category';
-        $master_category->slug = 'sub-none-category';
+        $master_category->name = CategoryConstants::DEFAULT_SUB_CATEGORY_NAME;
+        $master_category->slug = CategoryConstants::DEFAULT_SUB_CATEGORY_SLUG;
 
         $sub_category = collect($master_category)->all();
 
