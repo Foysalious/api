@@ -53,6 +53,7 @@ class PosOrderPaymentRepository extends BaseRepository
                 return $this->save($payment_data);
             }
         }
+        Log::info(['payment data', $order->id, $order->getDue()]);
     }
 
     /**

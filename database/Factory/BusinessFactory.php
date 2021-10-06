@@ -8,7 +8,7 @@ class BusinessFactory extends Factory
 
     protected function getModelClass()
     {
-        return Business::class;// TODO: Implement getModelClass() method.
+        return Business::class;
     }
 
     protected function getData()
