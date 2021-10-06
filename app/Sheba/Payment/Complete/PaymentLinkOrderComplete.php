@@ -67,6 +67,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
     public function complete()
     {
         try {
+            Log::info(['payment link order completed successfully']);
             $this->payment->reload();
             if ($this->payment->isComplete())
                 return $this->payment;
@@ -77,6 +78,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
                 $payable = $this->payment->payable;
                 $payableUser = $payable->user;
                 $this->target = $this->paymentLink->getTarget();
+                Log::info(['payment link order completed successfully', $payable]);
                 if ($this->target instanceof PosOrder) {
                     $payableUser = null;
                 }
@@ -151,6 +153,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
 
     private function notify()
     {
+        Log::info(['payment success notify', $this->target]);
         if ($this->target) {
             $payment      = $this->payment;
             $payment_link = $this->paymentLink;
