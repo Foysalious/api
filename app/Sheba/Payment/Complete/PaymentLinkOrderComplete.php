@@ -5,9 +5,11 @@ use App\Models\Payable;
 use App\Models\Payment;
 use App\Models\PosOrder;
 use App\Models\Profile;
+use Carbon\Carbon;
 use DB;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
+use Illuminate\Support\Facades\Log;
 use LaravelFCM\Message\Exceptions\InvalidOptionsException;
 use Sheba\Dal\ExternalPayment\Model as ExternalPayment;
 use Sheba\Dal\POSOrder\SalesChannels;
@@ -229,6 +231,9 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $channel          = config('sheba.push_notification_channel_name.manager');
         $sound            = config('sheba.push_notification_sound.manager');
         $formatted_amount = number_format($this->transaction->getAmount(), 2);
+        $formatted_fee = number_format($this->transaction->getFee(), 2);
+        $formatted_received_amount = number_format($this->payment, 2);
+        $payment_completion_date = Carbon::parse($this->payment->updated_at)->format('d/m/YY');
         $event_type       = $this->target && $this->target instanceof PosOrder && $this->target->sales_channel == SalesChannels::WEBSTORE ? 'WebstoreOrder' : class_basename($this->target);
         /** @var Payable $payable */
         $payable = Payable::find($this->payment->payable_id);
@@ -241,8 +246,8 @@ class PaymentLinkOrderComplete extends PaymentComplete
             "channel_id" => $channel
         ], $topic, $channel, $sound);
 
-        $message       = "Payment 500 tk from {$payable->getName()} {$payable->getMobile()} completed, Fee 5 tk, Received 495 tk. TrxID: 8BHSU5400  at 8/5/21. sManager (SPL Ltd.)";
-
+        $message       = "Payment {$formatted_amount} tk from {$payable->getName()} {$payable->getMobile()} completed, Fee {$formatted_fee} tk, Received {$formatted_received_amount} tk. TrxID: 8BHSU5400  at {$payment_completion_date}. sManager (SPL Ltd.)";
+        Log::info(["payment link message", $message]);
 //        (new Sms())
 //            ->to($partner->mobile)
 //            ->msg($message)
