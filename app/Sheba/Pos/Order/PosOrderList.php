@@ -79,6 +79,12 @@ class PosOrderList
         return $this;
     }
 
+    public function setPaymentStatus($payment_status)
+    {
+        $this->payment_status = $payment_status;
+        return $this;
+    }
+
     /**
      * @param $type
      * @return PosOrderList
@@ -147,9 +153,6 @@ class PosOrderList
         }
 
         if (!empty($payment_link_targets)) $this->mapPaymentLinkData($final_orders, $payment_link_targets);
-
-        if (!empty($this->status))
-            $final_orders = $final_orders->where('status', $this->status)->slice($this->offset)->take($this->limit);
         $final_orders = $final_orders->groupBy('date')->toArray();
 
         $orders_formatted = [];
@@ -192,7 +195,8 @@ class PosOrderList
         if ($this->type) $orders_query = $this->filteredByType($orders_query, $this->type);
         if ($this->orderStatus) $orders_query = $this->filteredByOrderStatus($orders_query, $this->orderStatus);
         if ($this->q) $orders_query = $this->filteredBySearchQuery($orders_query, $this->q);
-        return empty($this->status) ? $orders_query->orderBy('created_at', 'desc')->skip($this->offset)->take($this->limit)->get() : $orders_query->orderBy('created_at', 'desc')->get();
+        if ($this->status) $orders_query = $this->filteredByStatus($orders_query, $this->status);
+        return  $orders_query->orderBy('created_at', 'desc')->skip($this->offset)->take($this->limit)->get();
     }
 
     private function filteredBySearchQuery($orders_query, $search_query)
@@ -255,4 +259,11 @@ class PosOrderList
         $orders_query = $orders_query->where('status', $orderStatus);
         return $orders_query;
     }
+
+    private function filteredByStatus($orders_query, $status)
+    {
+        return $orders_query->where('payment_status', $status);
+    }
+
+
 }
