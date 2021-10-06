@@ -58,7 +58,7 @@ class AccountingUserMigration extends UserMigrationRepository
     private function getUpgradingResponse()
     {
         return [
-            "icon" => Constants::$accounting_migration_url . "/accounting_upgrading.png",
+            "migrating_icon" => Constants::$accounting_migration_url . "/accounting_upgrading.png",
             "migrating_text" => "হিসাব খাতা আপগ্রেড হচ্ছে। অনুগ্রহ করে কিছুক্ষণ অপেক্ষা করুন।",
             "dialog_cancelable" => false
         ];
