@@ -36,15 +36,15 @@ class WebstoreSettingService
         return $this;
     }
 
-    public function getallunits($partner)
+    public function getallSettings($partner)
     {
-        $url = 'api/v1/partners/' . $partner . '/partner-settings';
+        $url = 'api/v1/partners/' . $partner . '/settings';
         return $this->client->get($url);
     }
 
     public function getThemeDetails($partner)
     {
-        $url = 'api/v1/partners/' . $partner . '/theme-details';
+        $url = 'api/v1/partners/' . $partner . '/setting-details';
         return $this->client->get($url);
     }
 
@@ -60,12 +60,12 @@ class WebstoreSettingService
     public function store()
     {
         $data = $this->makeStoreData();
-        return $this->client->post('api/v1/partners/' . $this->partner, $data);
+        return $this->client->post('api/v1/partners/' . $this->partner.'/settings', $data);
     }
 
     public function update()
     {
         $data = $this->makeStoreData();
-        return $this->client->put('api/v1/partners/' . $this->partner, $data);
+        return $this->client->put('api/v1/partners/' . $this->partner.'/settings', $data);
     }
 }

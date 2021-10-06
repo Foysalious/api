@@ -22,8 +22,8 @@ class Route
 
         $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers', 'middleware' => ['jwtAccessToken']], function ($api) {
             $api->group(['prefix' => 'webstore-theme-settings'], function ($api) {
-                $api->get('/partner-settings', 'WebstoreSettingController@index');
-                $api->get('/theme-details', 'WebstoreSettingController@getThemeDetails');
+                $api->get('/settings', 'WebstoreSettingController@index');
+                $api->get('/setting-details', 'WebstoreSettingController@getThemeDetails');
                 $api->post('/', 'WebstoreSettingController@store');
                 $api->put('/', 'WebstoreSettingController@update');
             });
