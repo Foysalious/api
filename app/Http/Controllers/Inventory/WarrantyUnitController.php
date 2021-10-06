@@ -15,9 +15,8 @@ class WarrantyUnitController extends Controller
         $this->warrantyUnitService = $warrantyUnitService;
     }
 
-    public function getWarrantyList(Request $request)
+    public function getWarrantyList()
     {
-        $partner = $request->auth_user->getPartner();
-        return $this->warrantyUnitService->setPartnerId($partner->id)->getWarrantyUnitList();
+        return $this->warrantyUnitService->getWarrantyUnitList();
     }
 }

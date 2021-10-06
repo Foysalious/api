@@ -1,7 +1,4 @@
-<?php
-
-
-namespace App\Sheba\InventoryService\Services;
+<?php namespace App\Sheba\InventoryService\Services;
 
 
 use App\Sheba\InventoryService\InventoryServerClient;
@@ -15,18 +12,8 @@ class WarrantyUnitService
         $this->client = $client;
     }
 
-    /**
-     * @param mixed $partner_id
-     * @return WarrantyUnitService
-     */
-    public function setPartnerId($partner_id)
-    {
-        $this->partner_id = $partner_id;
-        return $this;
-    }
-
     public function getWarrantyUnitList()
     {
-        return $this->client->get('api/v1/partners/' . $this->partner_id . '/warranty-unit');
+        return $this->client->get('api/v1/warranty-units');
     }
 }
