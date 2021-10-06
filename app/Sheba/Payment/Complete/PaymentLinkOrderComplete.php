@@ -277,8 +277,8 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $formatted_amount = number_format($this->transaction->getAmount(), 2);
         $event_type       = $this->target && $this->target instanceof PosOrderObject && $this->target->getSalesChannel() == SalesChannels::WEBSTORE ? 'WebstoreOrder' : (class_basename($this->target) instanceof PosOrderObject ? 'PosOrder' : class_basename($this->target));
         $formatted_fee = number_format($this->transaction->getFee(), 2);
-        $formatted_received_amount = null;
-        $payment_completion_date = Carbon::parse($this->payment->updated_at)->format('d/m/YY');
+        $formatted_received_amount = number_format($this->payment, 2);
+        $payment_completion_date = Carbon::parse($this->payment->updated_at)->format('d/m/Y');
         $event_type       = $this->target && $this->target instanceof PosOrder && $this->target->sales_channel == SalesChannels::WEBSTORE ? 'WebstoreOrder' : class_basename($this->target);
         /** @var Payable $payable */
         $payable = Payable::find($this->payment->payable_id);
