@@ -23,6 +23,9 @@ use Sheba\PushNotificationHandler;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
 use Sheba\Reward\ActionRewardDispatcher;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
+use Sheba\Sms\Sms;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Usage\Usage;
 use Throwable;
@@ -142,8 +145,8 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $payment      = $this->payment;
             $payment_link = $this->paymentLink;
             dispatch(new SendPaymentLinkSms($payment, $payment_link));
-            $this->notifyManager($this->payment, $this->paymentLink);
         }
+        $this->notifyManager($this->payment, $this->paymentLink);
     }
 
     private function dispatchReward()
@@ -237,5 +240,15 @@ class PaymentLinkOrderComplete extends PaymentComplete
             "sound"      => "notification_sound",
             "channel_id" => $channel
         ], $topic, $channel, $sound);
+
+        $message       = 'Payment  500 tk from Farhanur 01833309509 completed, Fee 5 tk, Received 495 tk. TrxID: 8BHSU5400  at 8/5/21. sManager (SPL Ltd.)';
+        $mobile        = $this->getPayerInfo()['payer']['mobile'];
+
+        (new Sms())
+            ->to($mobile)
+            ->msg($message)
+            ->setFeatureType(FeatureType::PAYMENT_LINK)
+            ->setBusinessType(BusinessType::SMANAGER)
+            ->shoot();
     }
 }
