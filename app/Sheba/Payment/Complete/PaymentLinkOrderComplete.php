@@ -153,7 +153,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
 
     private function notify()
     {
-        Log::info(['payment success notify', $this->target, Log::info(["trx details", $this->transaction->getAmount(), $this->transaction->getFee()])]);
+        Log::info(['payment success notify', $this->target, "trx details", $this->transaction->getAmount(), $this->transaction->getFee()]);
         if ($this->target) {
             $payment      = $this->payment;
             $payment_link = $this->paymentLink;
