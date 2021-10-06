@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Sheba\InventoryService\Services\UnitService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 
@@ -18,10 +19,14 @@ class UnitController extends Controller
 
     public function index(Request $request)
     {
-
         $units = $this->unitService->getallunits();
-        return api_response($request, null, 200, $units);
+        return http_response($request, null, 200, $units);
+    }
 
+    public function weightUnits(Request $request): JsonResponse
+    {
+        $weight_units = $this->unitService->getWeightUnits();
+        return http_response($request, null, 200, $weight_units);
     }
 }
 

@@ -9,6 +9,7 @@ class Route
             $api->get('/channels', "Inventory\ChannelController@index");
             $api->get('/units', "Inventory\UnitController@index");
             $api->get('warranty-units', 'Inventory\WarrantyUnitController@getWarrantyList');
+            $api->get('/weight-units', "Inventory\UnitController@weightUnits");
             $api->group(['prefix' => 'partners/{partner_id}/vouchers'], function ($api) {
                 $api->post('validity-check', 'VoucherController@validateVoucher');
             });

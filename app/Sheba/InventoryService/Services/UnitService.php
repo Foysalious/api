@@ -15,9 +15,16 @@ class UnitService
     {
         $this->client = $client;
     }
+
     public function getallunits()
     {
         $url = 'api/v1/units';
+        return $this->client->get($url);
+    }
+
+    public function getWeightUnits()
+    {
+        $url = 'api/v1/weight-units';
         return $this->client->get($url);
     }
 
