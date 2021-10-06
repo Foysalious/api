@@ -1,12 +1,18 @@
 <?php namespace Sheba\Business\Attendance\Detail;
 
-use Carbon\Carbon;
-use Excel;
+use App\Models\BusinessMember;
+use Illuminate\Support\Collection;
+use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use Maatwebsite\Excel\Concerns\WithTitle;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use Sheba\Helpers\TimeFrame;
 
-class DetailsExcel
+class DetailsExcel implements FromCollection, WithHeadings, ShouldAutoSize, WithStyles, WithTitle
 {
     private $breakdownData;
-    private $data = [];
     private $date;
     private $status;
     private $checkInTime;
@@ -23,71 +29,42 @@ class DetailsExcel
     private $businessMember;
     private $department;
     private $profile;
-    private $startDate;
-    private $endDate;
+    /** @var TimeFrame */
+    private $timeFrame;
     private $overtime;
 
-    public function __construct()
+    public function __construct(BusinessMember $business_member, array $detailed_data, TimeFrame $time_frame)
     {
-    }
-
-    public function setBreakDownData(array $detailed_data)
-    {
+        $this->setBusinessMember($business_member);
         $this->breakdownData = $detailed_data;
-        return $this;
+        $this->timeFrame = $time_frame;
     }
 
-    public function setBusinessMember($business_member)
+    private function setBusinessMember($business_member)
     {
         $this->businessMember = $business_member;
         $this->profile = $this->businessMember->member->profile;
         $this->department = $this->businessMember->department();
-        return $this;
     }
 
-    public function setStartDate($start_date)
+    public function getFilename(): string
     {
-        $this->startDate = $start_date;
-        return $this;
-    }
-
-    public function setEndDate($end_date)
-    {
-        $this->endDate = $end_date;
-        return $this;
-    }
-
-    public function setDepartment($department)
-    {
-        $this->department = $department;
-        return $this;
-    }
-
-    public function download()
-    {
-        $this->makeData();
-
-        $file_name = $this->businessMember->employee_id ?
+        $name =  $this->businessMember->employee_id ?
             $this->profile->name . '_' . $this->department->name . '_' . $this->businessMember->employee_id :
             $this->profile->name . '_' . $this->department->name;
-
-        $sheet_name = $this->startDate . ' - ' . $this->endDate;
-
-        Excel::create($file_name, function ($excel) use ($sheet_name) {
-            $excel->sheet($sheet_name, function ($sheet) {
-                $sheet->fromArray($this->data, null, 'A1', false, false);
-                $sheet->prependRow($this->getHeaders());
-                $sheet->freezeFirstRow();
-                $sheet->cell('A1:N1', function ($cells) {
-                    $cells->setFontWeight('bold');
-                });
-                $sheet->setAutoSize(true);
-            });
-        })->export('xlsx');
+        return $name . ".xlsx";
     }
 
-    private function makeData()
+    public function headings(): array
     {
+        return ['Date', 'Status', 'Check in time', 'Check in status', 'Check in location',
+            'Check in address', 'Check out time', 'Check out status',
+            'Check out location', 'Check out address', 'Total Hours', 'Overtime', 'Late check in note', 'Left early note'];
+    }
+
+    public function collection(): Collection
+    {
+        $data = collect([]);
         foreach ($this->breakdownData as $attendance) {
             $this->date = null;
             $this->status = null;
@@ -134,7 +111,7 @@ class DetailsExcel
                     $this->status = "On leave: half day";
                 }
             }
-            array_push($this->data, [
+            $data->push([
                 'date' => $this->date,
                 'status' => $this->status,
 
@@ -154,13 +131,7 @@ class DetailsExcel
                 'left_early_note' => $this->leftEarlyNote,
             ]);
         }
-    }
-
-    private function getHeaders()
-    {
-        return ['Date', 'Status', 'Check in time', 'Check in status', 'Check in location',
-            'Check in address', 'Check out time', 'Check out status',
-            'Check out location', 'Check out address', 'Total Hours', 'Overtime', 'Late check in note', 'Left early note'];
+        return $data;
     }
 
     private function checkInOutLogics($attendance)
@@ -215,5 +186,19 @@ class DetailsExcel
 
         $this->lateNote = $attendance['attendance']['late_note'];
         $this->leftEarlyNote = $attendance['attendance']['left_early_note'];
+    }
+
+    /**
+     * @throws \PhpOffice\PhpSpreadsheet\Exception
+     */
+    public function styles(Worksheet $sheet)
+    {
+        $sheet->freezePane('A1');
+        $sheet->getStyle('A1:N1')->getFont()->setBold(true);
+    }
+
+    public function title(): string
+    {
+        return $this->timeFrame->toDateString();
     }
 }

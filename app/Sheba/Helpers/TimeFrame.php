@@ -213,4 +213,9 @@ class TimeFrame
 
         return $this;
     }
+
+    public function toDateString($separator = " - "): string
+    {
+        return $this->start->toDateString() . $separator . $this->end->toDateString();
+    }
 }
