@@ -34,6 +34,7 @@ class ProductService
     protected $offset;
     protected $accountingInfo;
     protected $skuId;
+    protected $appThumb;
 
 
     public function __construct(InventoryServerClient $client)
@@ -138,6 +139,16 @@ class ProductService
     public function setImages($images)
     {
         $this->images = $images;
+        return $this;
+    }
+
+    /**
+     * @param mixed $appThumb
+     * @return ProductService
+     */
+    public function setAppThumb($appThumb)
+    {
+        $this->appThumb = $appThumb;
         return $this;
     }
 
@@ -284,6 +295,7 @@ class ProductService
         if (isset($this->discountEndDate)) array_push($data, [ 'name' => 'discount_end_date', 'contents' => $this->discountEndDate]);
         if (isset($this->productDetails)) array_push($data, [ 'name' => 'product_details', 'contents' => $this->productDetails]);
         if (isset($this->accountingInfo)) array_push($data, [ 'name' => 'accounting_info', 'contents' => $this->accountingInfo]);
+        if (isset($this->appThumb)) array_push($data, ['name' => 'app_thumb', 'contents' => File::get($this->appThumb->getRealPath()), 'filename' => $this->appThumb->getClientOriginalName()]);;
         if (isset($this->images)) $data = array_merge($data, $this->makeImagesData());
         return $data;
     }
