@@ -99,6 +99,8 @@ class Creator
     {
         $previous_type = $this->officeSettingChangesLogsRequester->getPreviousAttendanceType();
         $new_type = $this->officeSettingChangesLogsRequester->getNewAttendanceType();
+        sort($previous_type);
+        sort($new_type);
         if ($previous_type == $new_type) return;
         $previous_type_string = implode(", ", $previous_type);
         $new_type_string = implode(", ", $new_type);
