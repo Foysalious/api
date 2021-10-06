@@ -136,11 +136,9 @@ class AccountingRepository extends BaseRepository
         $inventory_products = [];
         foreach ($services as $key => $service) {
             $original_service = ($service->service);
-            if($original_service)
-            {
+            if($original_service) {
                 $serviceBatches = $servicesStockCostInfo[$original_service->id];
-                foreach ($serviceBatches as $serviceBatch)
-                {
+                foreach ($serviceBatches as $serviceBatch) {
                     $sellingPrice = isset($requested_service[$key]['updated_price']) && $requested_service[$key]['updated_price'] ? $requested_service[$key]['updated_price'] : $original_service->price;
                     $unitPrice = $serviceBatch['cost'] ?: $sellingPrice;
                     $inventory_products[] = [
@@ -151,8 +149,7 @@ class AccountingRepository extends BaseRepository
                         "quantity" => $serviceBatch['stock'] ?? ($requested_service[$key]['quantity'] ?? 1)
                     ];
                 }
-            }
-            else {
+            } else {
                 $sellingPrice = $requested_service[$key]['updated_price'] ?? $original_service->price;
                 $inventory_products[] = [
                     "id" => 0,
@@ -163,7 +160,6 @@ class AccountingRepository extends BaseRepository
                 ];
             }
         }
-
         if (count($inventory_products) > 0) {
             return json_encode($inventory_products);
         }

@@ -3,21 +3,27 @@
 namespace Sheba\EKYC;
 
 use App\Sheba\DigitalKYC\Partner\ProfileUpdateRepository;
+use App\Sheba\DigitalKYC\Partner\ResourceUpdateRepository;
 use Illuminate\Http\Request;
 use Sheba\Dal\ProfileNIDSubmissionLog\Contact as ProfileNIDSubmissionRepo;
 use Sheba\Repositories\ProfileRepository as ShebaProfileRepository;
+use Sheba\Repositories\ResourceRepository as ShebaResourceRepository;
 
 class NidOcr
 {
     private $profileUpdate;
+    private $resourceUpdate;
     private $profileRepo;
+    private $resourceRepo;
     private $profileNIDSubmissionRepo;
 
-    public function __construct(ProfileUpdateRepository $profileUpdate, ShebaProfileRepository $profileRepo,
-                                ProfileNIDSubmissionRepo $profileNIDSubmissionRepo)
+    public function __construct(ProfileUpdateRepository $profileUpdate, ResourceUpdateRepository $resourceUpdate, ShebaProfileRepository $profileRepo,
+                                ShebaResourceRepository $resourceRepo, ProfileNIDSubmissionRepo $profileNIDSubmissionRepo)
     {
         $this->profileUpdate = $profileUpdate;
+        $this->resourceUpdate = $resourceUpdate;
         $this->profileRepo = $profileRepo;
+        $this->resourceRepo = $resourceRepo;
         $this->profileNIDSubmissionRepo = $profileNIDSubmissionRepo;
     }
 
@@ -25,6 +31,12 @@ class NidOcr
     {
         $data = $this->profileUpdate->createDataForNidOcr($id_front, $id_back, $nid);
         return $this->profileRepo->update($profile, $data);
+    }
+
+    public function makeResourceAdjustment($resource, $father_name, $mother_name, $spouse_name, $nid_no)
+    {
+        $data = $this->resourceUpdate->createDataForNidOcr($father_name, $mother_name, $spouse_name, $nid_no);
+        return $this->resourceRepo->update($resource, $data);
     }
 
     public function formatToData(Request $request)

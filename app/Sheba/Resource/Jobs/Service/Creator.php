@@ -121,7 +121,7 @@ class Creator
                 'quantity' => $selected_service->getQuantity(),
                 'unit_price' => $unit_price,
                 'min_price' => $selected_service->getCategory()->isRentACarOutsideCity() ? 0 : $this->priceCalculation->getMinPrice(),
-                'discount' => $this->discountCalculation->getJobServiceDiscount(),
+                'discount' => $this->job->discount ? 0 : $this->discountCalculation->getJobServiceDiscount(),
                 'sheba_contribution' => $this->discountCalculation->getShebaContribution(),
                 'partner_contribution' => $this->discountCalculation->getPartnerContribution(),
                 'location_service_discount_id' => $this->discountCalculation->getDiscountId(),

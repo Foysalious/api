@@ -14,6 +14,7 @@ use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Dal\PartnerPosServiceBatch\Model as PartnerPosServiceBatch;
 use Sheba\ModificationFields;
 use Sheba\Pos\Product\Creator;
+use Sheba\Pos\Category\Constants\CategoryConstants;
 use Sheba\Pos\Product\Creator as ProductCreator;
 use Sheba\Pos\Product\Deleter;
 use Sheba\Pos\Product\Log\FieldType;
@@ -49,6 +50,7 @@ class ServiceController extends Controller
             $base_query->select($this->getSelectColumnsOfService())
                 ->partner($partner->id)->get()
                 ->each(function ($service) use (&$services) {
+                    /** @var PartnerPosService $service */
                     $services[] = [
                         'id' => $service->id,
                         'name' => $service->name,
@@ -87,7 +89,7 @@ class ServiceController extends Controller
 
     private function getSelectColumnsOfService()
     {
-        return ['id', 'name', 'app_thumb', 'app_banner', 'price', 'stock', 'vat_percentage', 'is_published_for_shop', 'warranty', 'warranty_unit', 'unit', 'wholesale_price', 'show_image', 'shape', 'color'];
+        return ['id', 'partner_id', 'name', 'app_thumb', 'app_banner', 'price', 'stock', 'vat_percentage', 'is_published_for_shop', 'warranty', 'warranty_unit', 'unit', 'wholesale_price', 'show_image', 'shape', 'color'];
     }
 
     /**
@@ -222,7 +224,7 @@ class ServiceController extends Controller
      */
     private function resolveSubcategory($master_category)
     {
-        $default_subcategory = PosCategory::where('name', 'Sub None Category')->where('parent_id', $master_category)->first();
+        $default_subcategory = PosCategory::where('name', CategoryConstants::DEFAULT_SUB_CATEGORY_NAME)->where('parent_id', $master_category)->first();
         if ($default_subcategory)
             return ['category_id' => $default_subcategory->id];
         $sub_category = $this->createSubcategory($master_category);
@@ -237,8 +239,9 @@ class ServiceController extends Controller
     {
         $master_category = PosCategory::where('id', $master_category)->first();
         $master_category->parent_id = $master_category->id;
-        $master_category->name = 'Sub None Category';
-        $master_category->slug = 'sub-none-category';
+        $master_category->name = CategoryConstants::DEFAULT_SUB_CATEGORY_NAME;
+        $master_category->slug = CategoryConstants::DEFAULT_SUB_CATEGORY_SLUG;
+
         $sub_category = collect($master_category)->all();
         return PosCategory::create($this->withCreateModificationField(array_except($sub_category, ['id', 'created_at', 'created_by', 'created_by_name', 'updated_at', 'updated_by', 'updated_by_name'])));
 

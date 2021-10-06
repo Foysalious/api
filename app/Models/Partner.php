@@ -9,6 +9,7 @@ use DB;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Sheba\AccountingEntry\Repository\UserMigrationRepository;
 use Sheba\Business\Bid\Bidder;
 use Sheba\Checkout\CommissionCalculator;
 use Sheba\Dal\ArtisanLeave\ArtisanLeave;
@@ -20,6 +21,7 @@ use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInformation;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
+use Sheba\Dal\UserMigration\UserStatus;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Payment\PayableUser;
 use Sheba\Transactions\Types;
@@ -55,6 +57,7 @@ use Sheba\Dal\PartnerNeoBankingAccount\Model as PartnerNeoBankingAccount;
 
 class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent, Rechargable, Bidder, HasWalletTransaction, HasReferrals, PayableUser
 {
+    CONST NOT_ELIGIBLE = 'not_eligible';
     use Wallet, TopUpTrait, MovieTicketTrait;
 
     public $totalCreditForSubscription;
@@ -1077,5 +1080,15 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function getGatewayChargesId()
     {
         return $this->subscription_rules->payment_gateway_configuration_id;
+    }
+
+    public function isMigratedToAccounting(): bool
+    {
+        $arr = [self::NOT_ELIGIBLE, UserStatus::PENDING, UserStatus::UPGRADING, UserStatus::FAILED];
+        /** @var UserMigrationRepository $userMigrationRepo */
+        $userMigrationRepo = app(UserMigrationRepository::class);
+        $userStatus = $userMigrationRepo->userStatus($this->id);
+        if (in_array($userStatus, $arr)) return false;
+        return true;
     }
 }

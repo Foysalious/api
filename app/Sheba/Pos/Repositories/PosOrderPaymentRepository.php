@@ -45,7 +45,6 @@ class PosOrderPaymentRepository extends BaseRepository
         if($this->partner->is_migration_completed) {
             return $this->saveToNewPosOrderSystem($payment_data);
         }
-        Log::info(['payment data', $payment_data]);
         /** @var PosOrder $order */
         $order = PosOrder::find($pos_order_id);
         if(isset($order)) {

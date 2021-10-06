@@ -129,8 +129,10 @@ class EmployeeRoute
             $api->get('/{employee}', 'Employee\EmployeeController@show');
 
             $api->group(['prefix' => 'appreciate'], function ($api) {
+                $api->get('/new-joiner', 'Employee\AppreciateController@getNewJoiner');
                 $api->get('/coworker', 'Employee\AppreciateController@index');
                 $api->post('/', 'Employee\AppreciateController@store');
+                $api->post('/{id}', 'Employee\AppreciateController@update');
                 $api->get('/stickers', 'Employee\AppreciateController@categoryWiseStickers');
                 $api->get('/my-stickers', 'Employee\AppreciateController@myStickers');
                 $api->get('/{id}/coworker-stickers', 'Employee\AppreciateController@coworkerStickers');

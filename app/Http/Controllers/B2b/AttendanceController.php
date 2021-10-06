@@ -951,8 +951,19 @@ class AttendanceController extends Controller
 
         $start_time = Carbon::parse($request->start_time)->format('H:i') . ':59';
         $end_time = Carbon::parse($request->end_time)->format('H:i') . ':00';
-
+        $business = $request->business;
+        $business_office_hour = $business->officeHour;
         $business_member = $request->business_member;
+        $this->officeSettingChangesLogsRequester
+            ->setBusiness($business)
+            ->setPreviousOfficeStartTime($business_office_hour->start_time)
+            ->setPreviousOfficeEndTime($business_office_hour->end_time)
+            ->setPreviousIsStartGracePeriodEnable($business_office_hour->is_start_grace_time_enable)
+            ->setPreviousIsEndGracePeriodEnable($business_office_hour->is_end_grace_time_enable)
+            ->setPreviousStartGracePeriodTime($business_office_hour->start_grace_time)
+            ->setPreviousEndGracePeriodTime($business_office_hour->end_grace_time)
+            ->setRequest($request);
+
         $office_timing = $updater->setBusiness($request->business)
             ->setMember($business_member->member)
             ->setOfficeHourType($request->office_hour_type)
@@ -965,6 +976,11 @@ class AttendanceController extends Controller
             ->setHalfDayTimings($request)
             ->update();
 
+        $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester);
+        $this->officeSettingChangesLogsCreator->createAttendanceOfficeStartTimingLogs();
+        $this->officeSettingChangesLogsCreator->createAttendanceOfficeEndTimingLogs();
+        $this->officeSettingChangesLogsCreator->createAttendanceStartGraceTimingLogs();
+        $this->officeSettingChangesLogsCreator->createAttendanceEndGraceTimingLogs();
         if ($office_timing) {
              $requester->setBusiness($request->business)
                             ->setIsEnable($request->is_grace_policy_enable)

@@ -1,6 +1,7 @@
 <?php namespace App\Sheba\Business\OfficeSettingChangesLogs;
 
 use App\Models\Business;
+use Carbon\Carbon;
 
 class Requester
 {
@@ -27,6 +28,16 @@ class Requester
     private $existingHolidayStartDate;
     private $existingHolidayEndDate;
     private $existingHolidayName;
+    private $previousOfficeStartTime;
+    private $previousOfficeEndTime;
+    private $previousIsStartGracePeriodEnable;
+    private $previousIsEndGracePeriodEnable;
+    private $startGraceTime;
+    private $endGraceTime;
+    private $officeStartTime;
+    private $officeEndTime;
+    private $isStartGracePeriodEnable;
+    private $isEndGracePeriodEnable;
 
     public function setBusiness(Business $business)
     {
@@ -112,6 +123,12 @@ class Requester
         $this->newWorkingDaysType = $request->working_days_type;
         $this->newNumberOfDays = $request->days;
         $this->newIsWeekendIncluded = $request->is_weekend_included;
+        $this->officeStartTime = $request->start_time;
+        $this->officeEndTime = $request->end_time;
+        $this->isStartGracePeriodEnable = $request->is_start_grace_period_allow;
+        $this->isEndGracePeriodEnable = $request->is_end_grace_period_allow;
+        $this->startGraceTime = $request->starting_grace_time;
+        $this->endGraceTime = $request->ending_grace_time;
         return $this;
     }
 
@@ -243,5 +260,101 @@ class Requester
     public function getExistingHolidayName()
     {
         return $this->existingHolidayName;
+    }
+
+    public function setPreviousOfficeStartTime($previous_office_start_time)
+    {
+        $this->previousOfficeStartTime = $previous_office_start_time;
+        return $this;
+    }
+
+    public function getPreviousOfficeStartTime()
+    {
+        return $this->previousOfficeStartTime;
+    }
+
+    public function setPreviousOfficeEndTime($previous_office_end_time)
+    {
+        $this->previousOfficeEndTime = $previous_office_end_time;
+        return $this;
+    }
+
+    public function getPreviousOfficeEndTime()
+    {
+        return $this->previousOfficeEndTime;
+    }
+
+    public function setPreviousIsStartGracePeriodEnable($previous_start_grace_period)
+    {
+        $this->previousIsStartGracePeriodEnable = $previous_start_grace_period;
+        return $this;
+    }
+
+    public function getPreviousIsStartGracePeriodEnable()
+    {
+        return $this->previousIsStartGracePeriodEnable;
+    }
+
+    public function setPreviousIsEndGracePeriodEnable($previous_end_grace_period)
+    {
+        $this->previousIsEndGracePeriodEnable = $previous_end_grace_period;
+        return $this;
+    }
+
+    public function getPreviousIsEndGracePeriodEnable()
+    {
+        return $this->previousIsEndGracePeriodEnable;
+    }
+
+    public function setPreviousStartGracePeriodTime($start_grace_time)
+    {
+        $this->startGraceTime = $start_grace_time;
+        return $this;
+    }
+
+    public function getPreviousStartGracePeriodTime()
+    {
+        return $this->startGraceTime;
+    }
+
+    public function setPreviousEndGracePeriodTime($end_grace_time)
+    {
+        $this->endGraceTime = $end_grace_time;
+        return $this;
+    }
+
+    public function getPreviousEndGracePeriodTime()
+    {
+        return $this->endGraceTime;
+    }
+
+    public function getIsStartGracePeriodEnable()
+    {
+        return $this->isStartGracePeriodEnable;
+    }
+
+    public function getIsEndGracePeriodEnable()
+    {
+        return $this->isEndGracePeriodEnable;
+    }
+
+    public function getOfficeStartTime()
+    {
+        return Carbon::parse($this->officeStartTime)->format('H:i').':59';
+    }
+
+    public function getOfficeEndTime()
+    {
+        return Carbon::parse($this->officeEndTime)->format('H:i').':00';
+    }
+
+    public function getStartGraceTime()
+    {
+        return $this->startGraceTime;
+    }
+
+    public function getEndGraceTime()
+    {
+        return $this->startGraceTime;
     }
 }

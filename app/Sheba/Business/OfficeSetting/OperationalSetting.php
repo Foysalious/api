@@ -66,7 +66,7 @@ class OperationalSetting
     private function updateWeekends()
     {
         $weekends = $this->weekend_repo->getAllByBusiness($this->business);
-        if ($weekends->isEmpty()) return "No Weekends";
+        if ($weekends->isEmpty() || empty($this->weekends)) return "No Weekends";
         $weekends->each(function ($weekend) {
             $weekend->delete();
         });

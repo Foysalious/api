@@ -21,6 +21,8 @@ class AppreciationEmployeeTransformer extends TransformerAbstract
             $profile = $member->profile;
             $is_member_role_present = $this->isMemberRolePresent($business_member);
             $department_name = $is_member_role_present ? $business_member->role->businessDepartment->name : self::NO_DEPARTMENT_VALUE;
+            $department_id = $is_member_role_present ? $business_member->role->businessDepartment->id : null;
+
             array_push($departments_name, $department_name);
 
             $employee_based_on_departments[$department_name][] = [
@@ -28,6 +30,7 @@ class AppreciationEmployeeTransformer extends TransformerAbstract
                 'name' => $profile->name,
                 'pro_pic' => $profile->pro_pic,
                 'mobile' => $business_member->mobile,
+                'department_id' => $department_id,
                 'designation' => $is_member_role_present ? $business_member->role->name : 'N/S',
                 'stickers' => (new EmployeeAppreciations())->getEmployeeStickers($business_member)
             ];

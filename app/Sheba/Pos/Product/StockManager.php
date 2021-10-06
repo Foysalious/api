@@ -49,38 +49,46 @@ class StockManager
 
     private function updatedStock($quantity) : array
     {
-        $decreasedBatchesInfo = [];
-        while ($quantity > 0) {
-
-            $firstBatch = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->first();
-            $allBatches = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->get();
-
-            if($quantity >= $firstBatch->stock && count($allBatches) > 1) {
-                $decreasedBatchesInfo[$firstBatch->id] = ['stock' => $firstBatch->stock, 'cost' => $firstBatch->cost];
-                $quantity =  $quantity - $firstBatch->stock;
-                $firstBatch->update(['stock' => 0 ]);
-                $firstBatch->delete();
+        if($this->service->partner->isMigratedToAccounting()) {
+            $decreasedBatchesInfo = [];
+            while ($quantity > 0) {
+                $firstBatch = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->first();
+                $allBatches = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->get();
+                if($quantity >= $firstBatch->stock && count($allBatches) > 1) {
+                    $decreasedBatchesInfo[$firstBatch->id] = ['stock' => $firstBatch->stock, 'cost' => $firstBatch->cost];
+                    $quantity =  $quantity - $firstBatch->stock;
+                    $firstBatch->update(['stock' => 0 ]);
+                    $firstBatch->delete();
+                } else if($quantity >= $firstBatch->stock && count($allBatches) == 1) {
+                    $negativeStock = $firstBatch->stock - $quantity;
+                    $decreasedBatchesInfo[$firstBatch->id] = ['stock' => $quantity, 'cost' => $firstBatch->cost];
+                    $firstBatch->update(['stock' => $negativeStock ]);
+                    $quantity = 0;
+                } else {
+                    $decreasedBatchesInfo[$firstBatch->id] = ['stock' => $quantity, 'cost' => $firstBatch->cost];
+                    $firstBatch->update(['stock' => $firstBatch->stock - $quantity]);
+                    $quantity = 0;
+                }
             }
-            else if($quantity >= $firstBatch->stock && count($allBatches) == 1) {
-                $negativeStock = $firstBatch->stock - $quantity;
-                $decreasedBatchesInfo[$firstBatch->id] = ['stock' => $quantity, 'cost' => $firstBatch->cost];
-                $firstBatch->update(['stock' => $negativeStock ]);
-                $quantity = 0;
-            }
-            else {
-                $decreasedBatchesInfo[$firstBatch->id] = ['stock' => $quantity, 'cost' => $firstBatch->cost];
-                $firstBatch->update(['stock' => $firstBatch->stock - $quantity]);
-                $quantity = 0;
-            }
+            return $decreasedBatchesInfo;
         }
+        $current_stock = $this->service->stock - $quantity;
+        $this->serviceRepo->update($this->service, ['stock' => $current_stock]);
+        $decreasedBatchesInfo[0] = ['stock' => $current_stock, 'cost' => $this->service->cost];
         return $decreasedBatchesInfo;
+
+
     }
 
     private function increaseUpdatedStock($quantity)
     {
-        $lastBatch = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->latest()->first();
-        $lastStock = $lastBatch ? $lastBatch->stock : 0;
-        PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->where('id', $lastBatch->id)->update(['stock' => $lastStock + $quantity]);
-        return $lastStock + $quantity;
+        if($this->service->partner->isMigratedToAccounting) {
+            $lastBatch = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->latest()->first();
+            $lastStock = $lastBatch ? $lastBatch->stock : 0;
+            PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->where('id', $lastBatch->id)->update(['stock' => $lastStock + $quantity]);
+            return $lastStock + $quantity;
+        }
+        return $this->service->stock + $quantity;
+
     }
 }
