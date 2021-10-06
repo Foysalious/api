@@ -76,6 +76,7 @@ class ProductController extends Controller
             ->setUnitId($request->unit_id)
             ->setProductDetails($request->product_details)
             ->setDeletedImages($request->deleted_images)
+            ->setAppThumb($request->file('app_thumb'))
             ->setImages($request->file('images'))
             ->update();
         return http_response($request, null, 200, $product);
