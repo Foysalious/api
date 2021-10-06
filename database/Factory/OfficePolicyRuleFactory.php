@@ -13,4 +13,5 @@ class OfficePolicyRuleFactory extends Factory
     {
         return [];
     }
+    
 }
