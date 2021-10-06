@@ -180,6 +180,9 @@ class PartnerWithdrawalRequestV2Controller extends Controller
                                                                        'updated_by'      => $request->manager_resource->id,
                                                                        'updated_by_name' => 'Resource - ' . $request->manager_resource->profile->name,
                                                                    ]);
+            if ($request->status == 'cancelled') {
+                $partner->walletSetting->update(['pending_withdrawal_amount' => $partner->walletSetting->pending_withdrawal_amount - $partnerWithdrawalRequest->amount]);
+            }
             return api_response($request, $withdrawal_update, 200);
         } else {
             return api_response($request, '', 403, ['result' => 'You can not update this withdraw request']);
