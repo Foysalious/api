@@ -78,7 +78,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
                 $payable = $this->payment->payable;
                 $payableUser = $payable->user;
                 $this->target = $this->paymentLink->getTarget();
-                Log::info(['payment link order completed successfully', $payable]);
+                Log::info(['payment link order completed successfully 2']);
                 if ($this->target instanceof PosOrder) {
                     $payableUser = null;
                 }
