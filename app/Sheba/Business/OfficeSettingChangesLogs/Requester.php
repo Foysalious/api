@@ -13,7 +13,6 @@ class Requester
     private $previousWorkingDaysType;
     private $previousNumberOfDays;
     private $previousIsWeekendIncluded;
-    private $request;
     private $newWeekends;
     private $newWorkingDaysType;
     private $newNumberOfDays;
@@ -38,6 +37,8 @@ class Requester
     private $officeEndTime;
     private $isStartGracePeriodEnable;
     private $isEndGracePeriodEnable;
+    private $previousStartGraceTime;
+    private $previousEndGraceTime;
 
     public function setBusiness(Business $business)
     {
@@ -118,7 +119,6 @@ class Requester
 
     public function setRequest($request)
     {
-        $this->request = $request;
         $this->newWeekends = json_decode($request->weekends,1);
         $this->newWorkingDaysType = $request->working_days_type;
         $this->newNumberOfDays = $request->days;
@@ -308,24 +308,24 @@ class Requester
 
     public function setPreviousStartGracePeriodTime($start_grace_time)
     {
-        $this->startGraceTime = $start_grace_time;
+        $this->previousStartGraceTime = $start_grace_time;
         return $this;
     }
 
     public function getPreviousStartGracePeriodTime()
     {
-        return $this->startGraceTime;
+        return $this->previousStartGraceTime;
     }
 
     public function setPreviousEndGracePeriodTime($end_grace_time)
     {
-        $this->endGraceTime = $end_grace_time;
+        $this->previousEndGraceTime = $end_grace_time;
         return $this;
     }
 
     public function getPreviousEndGracePeriodTime()
     {
-        return $this->endGraceTime;
+        return $this->previousEndGraceTime;
     }
 
     public function getIsStartGracePeriodEnable()
@@ -355,6 +355,6 @@ class Requester
 
     public function getEndGraceTime()
     {
-        return $this->startGraceTime;
+        return $this->endGraceTime;
     }
 }
