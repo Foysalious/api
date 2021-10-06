@@ -73,11 +73,16 @@ class HolidayController extends Controller
         $weekends = $weekend_dates->setBusiness($business)->setTimeFrame($time_frame)->getWeekends();
 
         $fractal = new Manager();
-        $resource = new Collection($business_holidays, new HolidayListTransformer($time_frame->start, $time_frame->end));
+        $resource = new Collection($business_holidays, new HolidayListTransformer(Carbon::now()->startOfMonth(), $time_frame->end));
         $holidays = $fractal->createData($resource)->toArray()['data'];
 
         $holidays = $holidays ? call_user_func_array('array_merge', $holidays) : [];
 
-        return api_response($request, null, 200, ['holidays' => $holidays, 'weekends' => $weekends, 'leave_dates' => $leaves, 'is_sandwich_leave_enable' => $business->is_sandwich_leave_enable]);
+        return api_response($request, null, 200, [
+            'holidays' => $holidays,
+            'weekends' => $weekends,
+            'leave_dates' => $leaves,
+            'is_sandwich_leave_enable' => $business->is_sandwich_leave_enable
+        ]);
     }
 }

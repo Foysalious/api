@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Sheba\AccountingEntry\Repository;
+<?php namespace App\Sheba\AccountingEntry\Repository;
 
 use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
@@ -46,12 +44,8 @@ class BaseRepository
         $partner_pos_customer = PartnerPosCustomer::byPartner($partner->id)->where('customer_id', $request->customer_id)->with(['customer'])->first();
         if ( isset($request->customer_id) && empty($partner_pos_customer)){
             $customer = PosCustomer::find($request->customer_id);
-            if (!$customer) {
-                throw new AccountingEntryServerError('pos customer not available', 404);
-            }
-            $partner_pos_customer = PartnerPosCustomer::create(
-                ['partner_id' => $partner->id, 'customer_id' => $request->customer_id]
-            );
+            if(!$customer) throw new AccountingEntryServerError('pos customer not available', 404);
+            $partner_pos_customer = PartnerPosCustomer::create(['partner_id' => $partner->id, 'customer_id' => $request->customer_id]);
         }
         if ($partner_pos_customer) {
             $request->customer_id = $partner_pos_customer->customer_id;

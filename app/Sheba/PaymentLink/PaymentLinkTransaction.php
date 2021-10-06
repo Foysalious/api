@@ -6,6 +6,7 @@ namespace Sheba\PaymentLink;
 use App\Models\Payment;
 use App\Models\PosCustomer;
 use App\Sheba\AccountingEntry\Repository\PaymentLinkAccountingRepository;
+use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Transactions\Types;
@@ -131,6 +132,7 @@ class PaymentLinkTransaction
 
     public function getFee()
     {
+        Log::info(["gateway charge", $this->paymentLinkCharge->getGatewayChargePercentage()]);
         return $this->fee;
     }
 

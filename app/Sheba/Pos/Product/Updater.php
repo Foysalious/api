@@ -7,6 +7,7 @@ use App\Sheba\Pos\Product\Accounting\ExpenseEntry;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
 use Sheba\Dal\PartnerPosServiceBatch\Model as PartnerPosServiceBatch;
+use Sheba\Dal\PartnerPosServiceBatch\PartnerPosServiceBatchRepositoryInterface;
 use Sheba\Dal\PartnerPosServiceImageGallery\Model as PartnerPosServiceImageGallery;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
@@ -32,17 +33,22 @@ class Updater
      * @var ExpenseEntry
      */
     private $stockExpenseEntry;
+    /** @var PartnerPosServiceBatchRepositoryInterface */
+    private $partnerPosServiceBatchRepository;
 
     /**
      * Updater constructor.
      * @param PosServiceRepositoryInterface $service_repo
      * @param PosServiceLogRepositoryInterface $pos_service_log_repo
+     * @param ExpenseEntry $stockExpenseEntry
+     * @param PartnerPosServiceBatchRepositoryInterface $partnerPosServiceBatchRepository
      */
-    public function __construct(PosServiceRepositoryInterface $service_repo, PosServiceLogRepositoryInterface $pos_service_log_repo, ExpenseEntry $stockExpenseEntry)
+    public function __construct(PosServiceRepositoryInterface $service_repo, PosServiceLogRepositoryInterface $pos_service_log_repo, ExpenseEntry $stockExpenseEntry, PartnerPosServiceBatchRepositoryInterface $partnerPosServiceBatchRepository)
     {
         $this->serviceRepo = $service_repo;
         $this->posServiceLogRepo = $pos_service_log_repo;
         $this->stockExpenseEntry = $stockExpenseEntry;
+        $this->partnerPosServiceBatchRepository = $partnerPosServiceBatchRepository;
     }
 
     public function setService(PartnerPosService $service)
@@ -198,6 +204,14 @@ class Updater
 
     private function format()
     {
+        if ((isset($this->data['is_stock_off']) && ($this->data['is_stock_off'] == 'true' && $this->service->stock != null))) {
+            $this->updatedData['stock'] = null;
+        }
+
+        if (isset($this->data['is_stock_off']) && $this->data['is_stock_off'] == 'false') {
+            $this->updatedData['stock'] = (double)$this->data['stock'];
+        }
+
         if ((isset($this->data['is_vat_percentage_off']) && $this->data['is_vat_percentage_off'] == 'true')) {
             $this->updatedData['vat_percentage'] = null;
         } else if (isset($this->data['vat_percentage']) && $this->data['vat_percentage'] != $this->service->vat_percentage) {
@@ -276,6 +290,7 @@ class Updater
 
     private function formatBatchData()
     {
+        if(!$this->service->partner->isMigratedToAccounting()) return;
         if ((isset($this->data['is_stock_off']) && ($this->data['is_stock_off'] == 'true' && $this->service->getStock() != null))) {
             $this->deleteBatchesFifo();
             return;
@@ -306,12 +321,12 @@ class Updater
     private function deleteBatchesFifo()
     {
         $batchCounter = 0;
-        $allBatches = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->get();
+        $allBatches = $this->partnerPosServiceBatchRepository->where('partner_pos_service_id', $this->service->id)->get();
         foreach ($allBatches as $batch)
         {
             $batchCounter++;
             if($batchCounter == count($allBatches)) {
-                $lastBatch = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->latest()->first();
+                $lastBatch = $this->partnerPosServiceBatchRepository->where('partner_pos_service_id', $this->service->id)->latest()->first();
                 PartnerPosServiceBatch::where('id', $lastBatch->id)->update([
                    'stock' => null
                 ]);

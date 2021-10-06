@@ -1,5 +1,7 @@
 <?php namespace App\Sheba\Business\Appreciation;
 
+use App\Jobs\Business\AppreciationPushNotification;
+use Sheba\Dal\Appreciation\Appreciation;
 use Sheba\Dal\Appreciation\AppreciationRepository;
 use Sheba\ModificationFields;
 
@@ -45,11 +47,18 @@ class Creator
 
     public function create()
     {
-        $this->appreciationRepo->create([
+        $appreciation = $this->appreciationRepo->create([
             'receiver_id' => $this->receiver,
             'giver_id' => $this->giver,
             'sticker_id' => $this->sticker,
             'note' => $this->complement,
         ]);
+        $this->sendPushToAppreciationReceiver($appreciation);
+        return $appreciation;
+    }
+
+    private function sendPushToAppreciationReceiver(Appreciation $appreciation)
+    {
+        (new AppreciationPushNotification($appreciation))->handle();
     }
 }

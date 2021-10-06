@@ -1,9 +1,9 @@
 <?php namespace App\Exceptions\RentACar;
 
-use App\Exceptions\DoNotThrowException;
+use App\Exceptions\DoNotReportException;
 use Illuminate\Support\Facades\Log;
 
-class DestinationCitySameAsPickupException extends DoNotThrowException
+class DestinationCitySameAsPickupException extends DoNotReportException
 {
     public function report()
     {

@@ -5,6 +5,10 @@ use League\Fractal\TransformerAbstract;
 
 class PosServiceTransformer extends TransformerAbstract
 {
+    /**
+     * @param PartnerPosService $service
+     * @return array
+     */
     public function transform($service)
     {
         if (json_decode($service->name) == null) {

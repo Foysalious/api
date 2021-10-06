@@ -669,10 +669,12 @@ class AttendanceController extends Controller
      */
     public function destroy($business, $holiday, Request $request)
     {
+        $manager_member = $request->manager_member;
         $holiday = $this->holidayRepository->find((int)$holiday);
         if (!$holiday) return api_response($request, null, 404);
         $this->officeSettingChangesLogsRequester->setBusiness($request->business)->setExistingHoliday($holiday);
         $this->holidayRepository->delete($holiday);
+        $this->setModifier($manager_member);
         $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createHolidayDeleteLogs();
         return api_response($request, null, 200);
     }
@@ -897,7 +899,7 @@ class AttendanceController extends Controller
             ->setIsWeekendIncluded($request->is_weekend_included)
             ->update();
         $this->officeSettingChangesLogsRequester->setPreviousWeekends($business_weekend)->setPreviousTotalWorkingDaysType($previous_working_days_type)->setPreviousNumberOfDays($previous_number_of_days)->setPreviousIsWeekendIncluded($previous_is_weekend_included)->setRequest($request);
-        $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createWeekendLogs();
+        if ($request->weekends) $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createWeekendLogs();
         $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createWorkingDaysTypeLogs();
 
         if ($office_timing) return api_response($request, null, 200, ['msg' => "Update Successful"]);
@@ -949,8 +951,19 @@ class AttendanceController extends Controller
 
         $start_time = Carbon::parse($request->start_time)->format('H:i') . ':59';
         $end_time = Carbon::parse($request->end_time)->format('H:i') . ':00';
-
+        $business = $request->business;
+        $business_office_hour = $business->officeHour;
         $business_member = $request->business_member;
+        $this->officeSettingChangesLogsRequester
+            ->setBusiness($business)
+            ->setPreviousOfficeStartTime($business_office_hour->start_time)
+            ->setPreviousOfficeEndTime($business_office_hour->end_time)
+            ->setPreviousIsStartGracePeriodEnable($business_office_hour->is_start_grace_time_enable)
+            ->setPreviousIsEndGracePeriodEnable($business_office_hour->is_end_grace_time_enable)
+            ->setPreviousStartGracePeriodTime($business_office_hour->start_grace_time)
+            ->setPreviousEndGracePeriodTime($business_office_hour->end_grace_time)
+            ->setRequest($request);
+
         $office_timing = $updater->setBusiness($request->business)
             ->setMember($business_member->member)
             ->setOfficeHourType($request->office_hour_type)
@@ -963,6 +976,11 @@ class AttendanceController extends Controller
             ->setHalfDayTimings($request)
             ->update();
 
+        $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester);
+        $this->officeSettingChangesLogsCreator->createAttendanceOfficeStartTimingLogs();
+        $this->officeSettingChangesLogsCreator->createAttendanceOfficeEndTimingLogs();
+        $this->officeSettingChangesLogsCreator->createAttendanceStartGraceTimingLogs();
+        $this->officeSettingChangesLogsCreator->createAttendanceEndGraceTimingLogs();
         if ($office_timing) {
              $requester->setBusiness($request->business)
                             ->setIsEnable($request->is_grace_policy_enable)
