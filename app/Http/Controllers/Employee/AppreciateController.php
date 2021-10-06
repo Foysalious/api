@@ -204,6 +204,17 @@ class AppreciateController extends Controller
         /** @var Business $business */
         $business = $this->getBusiness($request);
 
-        return api_response($request, null, 200);
+        $badge_counter = [
+            'late_lateef' => [
+                'counter' => $business_member->early_bird_counter,
+                'threshold' => 4
+            ],
+            'early_bird' => [
+                'counter' => $business_member->early_bird_counter,
+                'threshold' => 12
+            ]
+        ];
+
+        return api_response($request, null, 200, ['badge_counter'=> $badge_counter]);
     }
 }
