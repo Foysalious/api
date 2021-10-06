@@ -196,7 +196,7 @@ class Creator
     {
         /** @var Partner $partner */
         $partner = $service->partner;
-        if($partner->isMigratedToAccounting()) return true;
+        if(!$partner->isMigratedToAccounting()) return true;
         $batchData = [];
         $accounting_data = [];
         $batchData['partner_pos_service_id'] = $service->id;
