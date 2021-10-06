@@ -194,7 +194,7 @@ class Creator
         $default_image = 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/profiles/avatar/default.jpg';
         $data = [
             '_token' => str_random(255),
-            'name' => $this->basicRequest->getFirstName() . ' ' . $this->basicRequest->getLastName(),
+            'name' => $this->basicRequest->getFirstName(),
             'email' => $this->basicRequest->getEmail(),
             'password' => $this->password,
             'pro_pic' => $this->basicRequest->getProPic() ? $this->profileRepository->saveProPic($this->basicRequest->getProPic(), $this->basicRequest->getProPic()->getClientOriginalName()) : $default_image,
