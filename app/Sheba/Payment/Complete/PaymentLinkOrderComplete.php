@@ -234,21 +234,20 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $payable = Payable::find($this->payment->payable_id);
         (new PushNotificationHandler())->send([
             "title"      => 'Order Successful',
-            "message"    => "$formatted_amount Tk has been collected from {$payable->getName() } by order link- {$payment_link->getLinkID()}",
+            "message"    => "$formatted_amount Tk has been collected from {$payable->getName()} by order link- {$payment_link->getLinkID()}",
             "event_type" => $event_type,
             "event_id"   => $this->target->id,
             "sound"      => "notification_sound",
             "channel_id" => $channel
         ], $topic, $channel, $sound);
 
-        $message       = 'Payment  500 tk from Farhanur 01833309509 completed, Fee 5 tk, Received 495 tk. TrxID: 8BHSU5400  at 8/5/21. sManager (SPL Ltd.)';
-        $mobile        = $this->getPayerInfo()['payer']['mobile'];
+        $message       = "Payment 500 tk from {$payable->getName()} {$payable->getMobile()} completed, Fee 5 tk, Received 495 tk. TrxID: 8BHSU5400  at 8/5/21. sManager (SPL Ltd.)";
 
-        (new Sms())
-            ->to($mobile)
-            ->msg($message)
-            ->setFeatureType(FeatureType::PAYMENT_LINK)
-            ->setBusinessType(BusinessType::SMANAGER)
-            ->shoot();
+//        (new Sms())
+//            ->to($partner->mobile)
+//            ->msg($message)
+//            ->setFeatureType(FeatureType::PAYMENT_LINK)
+//            ->setBusinessType(BusinessType::SMANAGER)
+//            ->shoot();
     }
 }
