@@ -20,6 +20,7 @@ use Sheba\Subscription\Partner\PartnerSubscription;
 use Sheba\Subscription\Partner\PurchaseHandler;
 use Sheba\Subscription\Partner\SubscriptionStatics;
 use Sheba\Transactions\Wallet\WalletDebitForbiddenException;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Throwable;
 
 class PartnerSubscriptionController extends Controller
@@ -307,6 +308,8 @@ class PartnerSubscriptionController extends Controller
                         $handler->notifyForInsufficientBalance();
                         return api_response($request, null, $inside ? 403 : 420, array_merge(['message' => 'আপনার একাউন্টে যথেষ্ট ব্যলেন্স নেই।।', 'required' => $handler->getRequiredBalance()], $handler->getBalance()));
                     }
+                    //freeze money amount check
+                    WalletTransactionHandler::isDebitTransactionAllowed($request->partner, $partner->totalPriceRequiredForSubscription, 'প্যাকেজ কেনার');
                     $handler->purchase();
                     DB::commit();
                     if ($grade === PartnerSubscriptionChange::RENEWED) {
