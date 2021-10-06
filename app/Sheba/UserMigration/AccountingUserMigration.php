@@ -81,7 +81,9 @@ class AccountingUserMigration extends UserMigrationRepository
             "header" => "দুঃখিত",
             "dialog_text" => "হহিসাবখাতা আপগ্রেড হয়নি।",
             "button_text" => "আবার চেষ্টা করুন",
-            "dialog_cancelable" => false
+            "dialog_cancelable" => false,
+            "migrating_icon" => Constants::$accounting_migration_url . "/accounting_upgrading.png",
+            "migrating_text" => "হিসাব খাতা আপগ্রেড হচ্ছে। অনুগ্রহ করে কিছুক্ষণ অপেক্ষা করুন।",
         ];
     }
 
