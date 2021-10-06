@@ -2,11 +2,15 @@
 
 use App\Models\Business;
 use App\Models\BusinessMember;
+use App\Models\Member;
+use App\Models\Profile;
+use App\Sheba\Business\Appreciation\CalculationForBadge;
 use App\Sheba\Business\Appreciation\EmployeeAppreciations;
 use App\Transformers\Business\AppreciationEmployeeTransformer;
 use App\Transformers\Business\StickerCategoryList;
 use App\Sheba\Business\BusinessBasicInformation;
 use App\Transformers\CustomSerializer;
+use Carbon\Carbon;
 use League\Fractal\Resource\Item;
 use Sheba\Dal\StickerCategory\StickerCategory;
 use App\Sheba\Business\Appreciation\Creator;
@@ -143,5 +147,50 @@ class AppreciateController extends Controller
             'stickers' => $employee_appreciations['stickers'],
             'complements' => $employee_appreciations['complements']
         ]);
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getNewJoiner(Request $request)
+    {
+        /** @var BusinessMember $business_member */
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        /** @var Business $business */
+        $business = $this->getBusiness($request);
+        $business_members = $business->getActiveBusinessMember()->get();
+
+        $new_employers = [];
+        foreach ($business_members as $business_member) {
+            if (!$business_member->isNewJoiner()) continue;
+            /** @var Member $member */
+            $member = $business_member->member;
+            /** @var Profile $profile */
+            $profile = $member->profile;
+            array_push($new_employers, [
+                'name' => $profile->name,
+                'pro_pic' => $profile->pro_pic
+            ]);
+        }
+
+        return api_response($request, null, 200, ['new_employees' => $new_employers]);
+    }
+
+    /**
+     * @param Request $request
+     * @param CalculationForBadge $calculation_for_badge
+     * @return JsonResponse
+     */
+    public function badgeCounter(Request $request, CalculationForBadge $calculation_for_badge)
+    {
+        /** @var BusinessMember $business_member */
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        /** @var Business $business */
+        $business = $this->getBusiness($request);
+
+        return api_response($request, null, 200);
     }
 }
