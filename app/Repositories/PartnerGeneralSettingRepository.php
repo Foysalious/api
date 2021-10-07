@@ -31,7 +31,7 @@ class PartnerGeneralSettingRepository
     {
         $setting = $this->partnerGeneralSetting->where('partner_id', $partnerId)->first();
         if ($setting) {
-            return (bool) $setting;
+            return (bool) $setting->payment_completion_sms;
         }
         return false;
     }
