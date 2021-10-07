@@ -286,25 +286,31 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $payment_receiver = $this->paymentLink->getPaymentReceiver();
         $mobile = $payment_receiver->getMobile();
         $message = "$payment_receiver $mobile থেকে $formatted_amount টাকা পেমেন্ট হয়েছে; ফি $fee টাকা; আপনি পাবেন $real_amount টাকা। TrxID:{$payment_link->getLinkID()}  at $payment_completion_date. sManager (SPL Ltd.)";
-        (new PushNotificationHandler())->send([
-            "title"      => 'Order Successful',
-            "message"    => $message,
-            "event_type" => $event_type,
-            "event_id"   => $this->target->getId(),
-            "sound"      => "notification_sound",
-            "channel_id" => $channel
-        ], $topic, $channel, $sound);
+        Log::info("Start");
+        try {
+            (new PushNotificationHandler())->send([
+                "title" => 'Order Successful',
+                "message" => $message,
+                "event_type" => $event_type,
+                "event_id" => $this->target->getId(),
+                "sound" => "notification_sound",
+                "channel_id" => $channel
+            ], $topic, $channel, $sound);
 
-        notify()->partner($partner)->send([
-            "title"       => "Successful Payment",
-            "description" => $message,
-            "type"        => "Info",
-            "event_type"  => "payment_link"
-        ]);
-        /** @var PartnerGeneralSettingRepository $partnerGeneralSetting */
-        $partnerGeneralSetting = app(PartnerGeneralSettingRepository::class);
-        if ($partnerGeneralSetting->getSMSNotificationStatus($partner->id)) {
-            dispatch(new SendPaymentCompleteSms($payment, $payment_link, $this->transaction));
+            notify()->partner($partner)->send([
+                "title" => "Successful Payment",
+                "description" => $message,
+                "type" => "Info",
+                "event_type" => "payment_link"
+            ]);
+
+            /** @var PartnerGeneralSettingRepository $partnerGeneralSetting */
+            $partnerGeneralSetting = app(PartnerGeneralSettingRepository::class);
+            if ($partnerGeneralSetting->getSMSNotificationStatus($partner->id)) {
+                dispatch(new SendPaymentCompleteSms($payment, $payment_link, $this->transaction));
+            }
+        } catch (Throwable $exception) {
+            Log::info($exception->getMessage());
         }
     }
 }
