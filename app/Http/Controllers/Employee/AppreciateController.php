@@ -92,6 +92,7 @@ class AppreciateController extends Controller
             ->setComplement($request->complement);
 
         $appreciation = $creator->create();
+        $appreciation->fresh();
 
         return api_response($request, null, 200, ['appreciation_id' => $appreciation->id]);
     }
