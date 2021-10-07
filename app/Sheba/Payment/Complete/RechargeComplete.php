@@ -1,7 +1,11 @@
-<?php namespace Sheba\Payment\Complete;
+<?php
 
+namespace Sheba\Payment\Complete;
+
+use App\Jobs\Partner\WalletRecharge\SendSmsOnWalletRecharge;
 use App\Models\Partner;
 use App\Models\Payment;
+use App\Repositories\PartnerGeneralSettingRepository;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Database\QueryException;
@@ -21,19 +25,28 @@ class RechargeComplete extends PaymentComplete
     {
         try {
             $this->payment->reload();
-            if ($this->payment->isComplete()) return $this->payment;
+            if ($this->payment->isComplete()) {
+                return $this->payment;
+            }
             $this->paymentRepository->setPayment($this->payment);
-            DB::transaction(function () {
-                $this->storeTransaction();
-                $this->completePayment();
-                $payable      = $this->payment->payable;
-                $payable_user = $payable->user;
-                $this->storeCommissionTransaction();
-                if ($payable_user instanceof Partner) {
-                    $this->notifyManager($this->payment, $payable_user);
-                    app(ActionRewardDispatcher::class)->run('partner_wallet_recharge', $payable_user, $payable_user, $payable);
+            DB::transaction(
+                function () {
+                    $this->storeTransaction();
+                    $this->completePayment();
+                    $payable = $this->payment->payable;
+                    $payable_user = $payable->user;
+                    $this->storeCommissionTransaction();
+                    if ($payable_user instanceof Partner) {
+                        $this->notifyManager($this->payment, $payable_user);
+                        app(ActionRewardDispatcher::class)->run(
+                            'partner_wallet_recharge',
+                            $payable_user,
+                            $payable_user,
+                            $payable
+                        );
+                    }
                 }
-            });
+            );
         } catch (QueryException $e) {
             $this->failPayment();
             throw $e;
@@ -45,7 +58,11 @@ class RechargeComplete extends PaymentComplete
     {
         /** @var HasWalletTransaction $user */
         $user = $this->payment->payable->user;
-        (new WalletTransactionHandler())->setModel($user)->setAmount((double)$this->payment->payable->amount)->setType(Types::credit())->setLog('Credit Purchase')->setTransactionDetails($this->payment->getShebaTransaction()->toArray())->setSource($this->payment->paymentDetails->last()->method)->store();
+        (new WalletTransactionHandler())->setModel($user)->setAmount((double)$this->payment->payable->amount)->setType(
+            Types::credit()
+        )->setLog('Credit Purchase')->setTransactionDetails(
+            $this->payment->getShebaTransaction()->toArray()
+        )->setSource($this->payment->paymentDetails->last()->method)->store();
     }
 
     protected function saveInvoice()
@@ -55,7 +72,9 @@ class RechargeComplete extends PaymentComplete
 
     private function calculateCommission($charge)
     {
-        if ($this->payment->payable->user instanceof Partner) return round(($this->payment->payable->amount / (100 + $charge)) * $charge, 2);
+        if ($this->payment->payable->user instanceof Partner) {
+            return round(($this->payment->payable->amount / (100 + $charge)) * $charge, 2);
+        }
         return (double)round(($charge * $this->payment->payable->amount) / 100, 2);
     }
 
@@ -65,7 +84,7 @@ class RechargeComplete extends PaymentComplete
         $user = $this->payment->payable->user;
 
         $payment_gateways = app(PaymentGatewayRepo::class);
-        $payment_gateway  = $payment_gateways->builder()
+        $payment_gateway = $payment_gateways->builder()
             ->where('service_type', $this->payment->created_by_type)
             ->where('method_name', $this->payment->paymentDetails->last()->method)
             ->where('status', 'Published')
@@ -104,11 +123,18 @@ class RechargeComplete extends PaymentComplete
             ], $topic, $channel, $sound);
 
             notify()->partner($partner)->send([
-                "title" => "ক্রেডিট রিচার্জ ৳" . en2bnNumber($formatted_amount),
-                "description" => $message,
-                "type" => "Info",
-                "event_type" => "wallet_recharge"
+                    "title" => "ক্রেডিট রিচার্জ ৳" . en2bnNumber($formatted_amount),
+                    "description" => $message,
+                    "type" => "Info",
+                    "event_type" => "wallet_recharge"
             ]);
+
+            $smsMessage = "Recharged {$formatted_amount} tk, Fee {$fee} tk, Received {$real_amount} tk. at {$payment_completion_date}. sManager (SPL Ltd.)";
+            /** @var PartnerGeneralSettingRepository $partnerGeneralSetting */
+            $partnerGeneralSetting = app(PartnerGeneralSettingRepository::class);
+            if ($partnerGeneralSetting->getSMSNotificationStatus($partner->id)) {
+                dispatch(new SendSmsOnWalletRecharge($partner, $smsMessage));
+            }
         } catch (\Throwable $exception) {
             Log::info($exception);
         }
