@@ -285,15 +285,14 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $payable = Payable::find($this->payment->payable_id);
         $payment_receiver = $this->paymentLink->getPaymentReceiver();
         $mobile = $payment_receiver->getMobile();
-        $message = "$payment_receiver $mobile থেকে $formatted_amount টাকা পেমেন্ট হয়েছে; ফি $fee টাকা; আপনি পাবেন $real_amount টাকা। TrxID:{$payment_link->getLinkID()}  at $payment_completion_date. sManager (SPL Ltd.)";
-        Log::info("Start");
-        try {
+        $message = "{$payable->getName()} $mobile থেকে $formatted_amount টাকা পেমেন্ট হয়েছে; ফি $fee টাকা; আপনি পাবেন $real_amount টাকা। TrxID:{$payment_link->getLinkID()}  at $payment_completion_date. sManager (SPL Ltd.)";
+        try{
             (new PushNotificationHandler())->send([
-                "title" => 'Order Successful',
-                "message" => "Payment complete push notification",
+                "title"      => 'Order Successful',
+                "message"    => $message,
                 "event_type" => $event_type,
-                "event_id" => $this->target->getId(),
-                "sound" => "notification_sound",
+                "event_id"   => $this->target->id,
+                "sound"      => "notification_sound",
                 "channel_id" => $channel
             ], $topic, $channel, $sound);
 
