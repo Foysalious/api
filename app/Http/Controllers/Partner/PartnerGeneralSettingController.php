@@ -15,6 +15,11 @@ class PartnerGeneralSettingController extends Controller
         $this->partnerGeneralSettingRepo = $partnerGeneralSettingRepo;
     }
 
+    /**
+     * @param Request $request
+     * @param $partner
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function storeSMSNotification(Request $request, $partner)
     {
         try {
@@ -36,6 +41,11 @@ class PartnerGeneralSettingController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @param $partner
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function getSMSNotification(Request $request, $partner)
     {
         $status = $this->partnerGeneralSettingRepo->getSMSNotificationStatus($partner);
