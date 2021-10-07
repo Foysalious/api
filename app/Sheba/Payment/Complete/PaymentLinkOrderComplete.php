@@ -158,6 +158,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
 
     private function notify()
     {
+        Log::info('from notify');
         if ($this->target) {
             $payment      = $this->payment;
             $payment_link = $this->paymentLink;
@@ -279,6 +280,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $event_type       = $this->target && $this->target instanceof PosOrder && $this->target->sales_channel == SalesChannels::WEBSTORE ? 'WebstoreOrder' : class_basename($this->target);
         /** @var Payable $payable */
         $payable = Payable::find($this->payment->payable_id);
+        Log::info('before popup sent');
         (new PushNotificationHandler())->send([
             "title"      => 'Order Successful',
             "message"    => "$formatted_amount Tk has been collected from {$payable->getName()} by order link- {$payment_link->getLinkID()}",
@@ -287,8 +289,10 @@ class PaymentLinkOrderComplete extends PaymentComplete
             "sound"      => "notification_sound",
             "channel_id" => $channel
         ], $topic, $channel, $sound);
+        Log::info('popup sent');
         /** @var PartnerGeneralSettingRepository $partnerGeneralSetting */
         $partnerGeneralSetting = app(PartnerGeneralSettingRepository::class);
+        Log::info(['sms check', $partnerGeneralSetting->getSMSNotificationStatus($partner->id)]);
         if ($partnerGeneralSetting->getSMSNotificationStatus($partner->id)) {
             dispatch(new SendPaymentCompleteSms($payment, $payment_link, $this->transaction));
         }
