@@ -69,6 +69,11 @@ class PaymentLinkTransaction
         return $this->paymentLink->isOld();
     }
 
+    public function getRechargeTransaction()
+    {
+        return $this->rechargeTransaction;
+    }
+
     /**
      * @return double
      */

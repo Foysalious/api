@@ -228,23 +228,36 @@ class PaymentLinkOrderComplete extends PaymentComplete
      */
     private function notifyManager(Payment $payment, PaymentLinkTransformer $payment_link)
     {
+        $transaction_id   = $this->transaction->getRechargeTransaction()->id;
         $partner          = $payment_link->getPaymentReceiver();
         $topic            = config('sheba.push_notification_topic_name.manager') . $partner->id;
         $channel          = config('sheba.push_notification_channel_name.manager');
         $sound            = config('sheba.push_notification_sound.manager');
-        $formatted_amount = number_format($this->transaction->getAmount(), 2);
+        $formatted_amount = number_format($this->payment->payable->amount, 2);
+        $real_amount      = number_format(($this->payment->payable->amount - $this->transaction->getFee()), 2);
+        $fee              = number_format($this->transaction->getFee(), 2);
+        $payment_completion_date = Carbon::parse($this->payment->updated_at)->format('d/m/Y');
 
         $event_type       = $this->target && $this->target instanceof PosOrder && $this->target->sales_channel == SalesChannels::WEBSTORE ? 'WebstoreOrder' : class_basename($this->target);
         /** @var Payable $payable */
         $payable = Payable::find($this->payment->payable_id);
+        $mobile = $payable->getMobile();
+        $message = "{$payable->getName()} $mobile থেকে $formatted_amount টাকা পেমেন্ট হয়েছে; ফি $fee টাকা; আপনি পাবেন $real_amount টাকা। TrxID:{$transaction_id}  at $payment_completion_date. sManager (SPL Ltd.)";
         (new PushNotificationHandler())->send([
             "title"      => 'Order Successful',
-            "message"    => "$formatted_amount Tk has been collected from {$payable->getName()} by order link- {$payment_link->getLinkID()}",
+            "message"    => $message,
             "event_type" => $event_type,
-            "event_id"   => $this->target->id,
+            "event_id"   => $this->target ? $this->target->id : $transaction_id,
             "sound"      => "notification_sound",
             "channel_id" => $channel
         ], $topic, $channel, $sound);
+
+        notify()->partner($partner)->send([
+            "title"       => "Successful Payment",
+            "description" => $message,
+            "type"        => "Info",
+            "event_type"  => "payment_link"
+        ]);
         /** @var PartnerGeneralSettingRepository $partnerGeneralSetting */
         $partnerGeneralSetting = app(PartnerGeneralSettingRepository::class);
         if ($partnerGeneralSetting->getSMSNotificationStatus($partner->id)) {
