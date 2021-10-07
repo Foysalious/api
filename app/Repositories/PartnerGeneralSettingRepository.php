@@ -24,12 +24,15 @@ class PartnerGeneralSettingRepository
     }
 
     /**
-     * @param $partner
+     * @param $partnerId
      * @return mixed
      */
-    public function getSMSNotificationStatus($partner)
+    public function getSMSNotificationStatus($partnerId): bool
     {
-        $status = $this->partnerGeneralSetting->find($partner);
-        return $status;
+        $setting = $this->partnerGeneralSetting->where('partner_id', $partnerId)->first();
+        if ($setting) {
+            return (bool) $setting;
+        }
+        return false;
     }
 }
