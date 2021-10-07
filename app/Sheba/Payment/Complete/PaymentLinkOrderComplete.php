@@ -276,7 +276,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $topic            = config('sheba.push_notification_topic_name.manager') . $partner->id;
         $channel          = config('sheba.push_notification_channel_name.manager');
         $sound            = config('sheba.push_notification_sound.manager');
-        $formatted_amount = number_format($this->transaction->getAmount(), 2);
+        $formatted_amount = number_format($this->payment->payable->amount, 2);
         $real_amount      = number_format(($this->transaction->getAmount() - $this->transaction->getFee()), 2);
         $fee              = number_format($this->transaction->getFee(), 2);
         $payment_completion_date = Carbon::parse($this->payment->updated_at)->format('d/m/Y');
