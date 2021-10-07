@@ -1,6 +1,7 @@
 <?php namespace Sheba\Payment\Complete;
 
 use App\Models\Partner;
+use App\Models\Payment;
 use DB;
 use Illuminate\Database\QueryException;
 use Sheba\Dal\PaymentGateway\Contract as PaymentGatewayRepo;
@@ -26,6 +27,7 @@ class RechargeComplete extends PaymentComplete
                     app(ActionRewardDispatcher::class)->run('partner_wallet_recharge', $payable_user, $payable_user, $payable);
                 }
                 $this->storeCommissionTransaction();
+                $this->notifyManager($this->payment, $payable_user);
             });
         } catch (QueryException $e) {
             $this->failPayment();
@@ -74,5 +76,10 @@ class RechargeComplete extends PaymentComplete
                 ->setSource($this->payment->paymentDetails->last()->method)
                 ->store();
         }
+    }
+
+    private function notifyManager(Payment $payment, $partner)
+    {
+
     }
 }
