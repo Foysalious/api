@@ -177,7 +177,9 @@ class RechargeComplete extends PaymentComplete
             /** @var PartnerGeneralSettingRepository $partnerGeneralSetting */
             $partnerGeneralSetting = app(PartnerGeneralSettingRepository::class);
             if ($partnerGeneralSetting->getSMSNotificationStatus($partner->id)) {
+                Log::info(['before sms']);
                 dispatch(new SendSmsOnWalletRecharge($partner, $smsMessage));
+                Log::info(['before sms']);
             }
         } catch (\Throwable $exception) {
             Log::info($exception);
