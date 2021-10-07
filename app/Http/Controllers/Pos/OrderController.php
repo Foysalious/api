@@ -29,6 +29,7 @@ use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\ExpenseTracker\EntryType;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
+use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 use Sheba\PartnerStatusAuthentication;
 use Sheba\PaymentLink\Creator as PaymentLinkCreator;
@@ -90,6 +91,7 @@ class OrderController extends Controller
 
     /**
      * @param Request $request
+     * @param PosOrderRepo $posOrder
      * @param PaymentLinkTransformer $payment_link
      * @return JsonResponse
      */
