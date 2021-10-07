@@ -7,14 +7,29 @@ class PartnerGeneralSettingRepository
 {
     use ModificationFields;
 
-    public function storeSMSNotificationStatus($data)
+    protected $partnerGeneralSetting;
+
+    public function __construct(PartnerGeneralSetting $partnerGeneralSetting)
     {
-        return PartnerGeneralSetting::create($this->modificationFields($data));
+        $this->partnerGeneralSetting = $partnerGeneralSetting;
     }
 
+    /**
+     * @param $data
+     * @return mixed
+     */
+    public function storeSMSNotificationStatus($data)
+    {
+        return $this->partnerGeneralSetting->create($this->withCreateModificationField($data));
+    }
+
+    /**
+     * @param $partner
+     * @return mixed
+     */
     public function getSMSNotificationStatus($partner)
     {
-        $status = PartnerGeneralSetting::findOrFail($partner);
+        $status = $this->partnerGeneralSetting->find($partner);
         return $status;
     }
 }
