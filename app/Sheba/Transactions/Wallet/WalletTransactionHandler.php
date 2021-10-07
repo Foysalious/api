@@ -261,8 +261,8 @@ class WalletTransactionHandler extends WalletTransaction
         $withdrawalRequests = $partner->walletSetting->pending_withdrawal_amount;
         $remainingAmount = $partner->wallet - (float) $withdrawalRequests;
         if ($withdrawalRequests > 0 && $amount > $remainingAmount) {
-            $message = sprintf("আপনি %s টাকা উত্তোলনের জন্য আবেদন করেছেন, একারনে %s জন্য পর্যাপ্ত ব্যালেন্স নেই। অনুগ্রহ করে সেবা ক্রেডিট রিচার্জ করে পুনরায় চেষ্টা করুন।", $withdrawalRequests, $reason);
-            throw new WalletDebitForbiddenException($message, 403);
+            $message = sprintf("<center>আপনি <b> %s </b> টাকা উত্তোলনের জন্য আবেদন করেছেন, একারনে %s জন্য পর্যাপ্ত ব্যালেন্স নেই। অনুগ্রহ করে সেবা ক্রেডিট রিচার্জ করে পুনরায় চেষ্টা করুন।</center>", $withdrawalRequests, $reason);
+            throw new WalletDebitForbiddenException($message, 406);
         }
     }
 }

@@ -55,12 +55,12 @@ class HandlerFactory
         if ($e instanceof PinMismatchException) return app(PinMismatchExceptionHandler::class);
         if ($e instanceof InvalidTotalAmount) return app(InvalidTotalAmountHandler::class);
         if ($e instanceof InvalidTopupData) return app(InvalidTopupDataHandler::class);
+        if ($e instanceof WalletDebitForbiddenException) return app(WalletDebitTransactionForbiddenHandler::class);
         if ($e instanceof DoNotReportException) return app(ApiValidationExceptionHandler::class);
         if ($e instanceof MethodNotAllowedHttpException) return app(MethodNotAllowedHttpExceptionHandler::class);
         if ($e instanceof NotFoundHttpException) return app(NotFoundHttpExceptionHandler::class);
         if ($e instanceof RouteNotFoundException) return app(RouteNotFoundExceptionHandler::class);
         if ($e instanceof ExceptionForClient) return app(ExceptionForClientHandler::class);
-        if ($e instanceof WalletDebitForbiddenException) return app(WalletDebitTransactionForbiddenHandler::class);
         if ($e instanceof Throwable) return app(ThrowableHandler::class);
         return null;
     }
