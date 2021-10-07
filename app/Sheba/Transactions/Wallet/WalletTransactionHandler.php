@@ -3,6 +3,7 @@
 use App\Models\Partner;
 use App\Models\Resource;
 use App\Models\WithdrawalRequest;
+use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
@@ -254,10 +255,13 @@ class WalletTransactionHandler extends WalletTransaction
      * @param Partner $partner
      * @param $amount
      * @param null $reason
-     * @throws WalletDebitForbiddenException
+     * @throws WalletDebitForbiddenException|InsufficientBalance
      */
     public static function isDebitTransactionAllowed(Partner $partner, $amount, $reason = null)
     {
+        if ((double)$partner->wallet < $amount) {
+            throw new InsufficientBalance();
+        }
         $withdrawalRequests = $partner->walletSetting->pending_withdrawal_amount;
         $remainingAmount = $partner->wallet - (float) $withdrawalRequests;
         $withdrawalRequestsBn = convertNumbersToBangla($withdrawalRequests, true, 0);
