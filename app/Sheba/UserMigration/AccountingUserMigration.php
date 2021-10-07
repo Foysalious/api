@@ -35,7 +35,7 @@ class AccountingUserMigration extends UserMigrationRepository
         if ($status == UserStatus::UPGRADING) {
             /** @var \Sheba\AccountingEntry\Repository\UserMigrationRepository $accUpgradeRepo */
             $accUpgradeRepo = app(\Sheba\AccountingEntry\Repository\UserMigrationRepository::class);
-            $accUpgradeRepo->migrateInAccounting($this->userId);
+            $accUpgradeRepo->migrateInAccounting($this->userId, $status);
         }
         return $this->updateMigrationStatus($status);
     }
