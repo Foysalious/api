@@ -152,27 +152,24 @@ class RechargeComplete extends PaymentComplete
             $fee = number_format($this->fee, 2);
             $real_amount = number_format(($payment->payable->amount - $this->fee), 2);
             $payment_completion_date = Carbon::parse($this->payment->updated_at)->format('d/m/Y');
-            $message = "{$formatted_amount} টাকা রিচারজ হয়েছে; ফি {$fee} টাকা; আপনি পাবেন {$real_amount} টাকা। at {$payment_completion_date}. sManager (SPL Ltd.)";
-            (new PushNotificationHandler())->send(
-                [
-                    "title" => 'Order Successful',
-                    "message" => $message,
-                    "event_type" => "wallet_recharge",
-                    "event_id" => $payment->id,
-                    "sound" => "notification_sound",
-                    "channel_id" => $channel
-                ],
-                $topic, $channel, $sound
-            );
+            $message = "{$formatted_amount} টাকা রিচারজ হয়েছে; ফি {$fee} টাকা; আপনি পাবেন {$real_amount} টাকা। at {$payment_completion_date}. sManager (SPL Ltd.)";
+            (new PushNotificationHandler())->send([
+                "title" => "ক্রেডিট রিচার্জ ৳" . en2bnNumber($formatted_amount),
+                "message" => $message,
+                "event_type" => "wallet_recharge",
+                "event_id" => $payment->id,
+                "sound" => "notification_sound",
+                "channel_id" => $channel
+            ], $topic, $channel, $sound);
 
-            notify()->partner($partner)->send(
-                [
+            notify()->partner($partner)->send([
                     "title" => "ক্রেডিট রিচার্জ ৳" . en2bnNumber($formatted_amount),
                     "description" => $message,
                     "type" => "Info",
                     "event_type" => "wallet_recharge"
                 ]
             );
+
             $smsMessage = "Recharged {$formatted_amount} tk, Fee {$fee} tk, Received {$real_amount} tk. at {$payment_completion_date}. sManager (SPL Ltd.)";
             /** @var PartnerGeneralSettingRepository $partnerGeneralSetting */
             $partnerGeneralSetting = app(PartnerGeneralSettingRepository::class);
