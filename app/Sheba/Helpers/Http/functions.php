@@ -96,7 +96,6 @@ if (!function_exists('decodeGuzzleResponse')) {
      */
     function decodeGuzzleResponse($response, $assoc = true)
     {
-        \Illuminate\Support\Facades\Log::info($response);
         $string = $response->getBody()->getContents();
         $result = json_decode($string, $assoc);
         if (json_last_error() != JSON_ERROR_NONE && $string != "") {
