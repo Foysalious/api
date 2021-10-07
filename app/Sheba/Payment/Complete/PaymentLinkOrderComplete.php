@@ -162,7 +162,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
         if ($this->target) {
             $payment      = $this->payment;
             $payment_link = $this->paymentLink;
-            dispatch(new SendPaymentLinkSms($payment, $payment_link));
+//            dispatch(new SendPaymentLinkSms($payment, $payment_link));
         }
         $this->notifyManager($this->payment, $this->paymentLink);
         Log::info('after sending notification');
