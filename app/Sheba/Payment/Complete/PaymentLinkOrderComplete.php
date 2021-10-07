@@ -253,7 +253,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
         ], $topic, $channel, $sound);
 
         notify()->partner($partner)->send([
-            "title"       => "Successful Payment",
+            "title"       => "পেমেন্ট ৳".en2bnNumber($formatted_amount),
             "description" => $message,
             "type"        => "Info",
             "event_type"  => "payment_link"
