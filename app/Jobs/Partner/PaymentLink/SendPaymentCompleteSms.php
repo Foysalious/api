@@ -39,7 +39,7 @@ class SendPaymentCompleteSms extends Job implements ShouldQueue
      * @param PaymentLinkTransformer $paymentLink
      * @param PaymentLinkTransaction $transaction
      */
-    public function __construct(
+    public function  __construct(
         Payment $payment,
         PaymentLinkTransformer $paymentLink,
         PaymentLinkTransaction $transaction
@@ -49,7 +49,7 @@ class SendPaymentCompleteSms extends Job implements ShouldQueue
         $this->transaction = $transaction;
     }
 
-    public function handle()
+    public function handle(Sms $sms)
     {
         if ($this->attempts() > 2) return;
 
@@ -63,15 +63,15 @@ class SendPaymentCompleteSms extends Job implements ShouldQueue
         $formatted_received_amount = number_format($this->paymentLink->getRealAmount(), 2);
         $payment_completion_date = Carbon::parse($this->payment->updated_at)->format('d/m/Y');
 
-        $message = "Payment {$formatted_amount} tk from {$payable->getName()} {$payable->getMobile()} completed, Fee {$formatted_fee} tk, Received {$formatted_received_amount} tk. TrxID: 8BHSU5400  at {$payment_completion_date}. sManager (SPL Ltd.)";
+        $message = "Payment {$formatted_amount} tk from {$payable->getName()} {$payable->getMobile()} completed, Fee {$formatted_fee} tk, Received {$formatted_received_amount} tk.  at {$payment_completion_date}. sManager (SPL Ltd.)";
 
-        $sms = new Sms();
         $sms->to($partner->mobile)
         ->msg($message)
         ->setFeatureType(FeatureType::PAYMENT_LINK)
         ->setBusinessType(BusinessType::SMANAGER);
 
         $sms_cost = $sms->estimateCharge();
+        Log::info(["sms cost", $partner->wallet, $sms_cost]);
         if ((double)$partner->wallet < $sms_cost) throw new InsufficientBalance();
         Log::info('sending sms');
         $sms->shoot();
