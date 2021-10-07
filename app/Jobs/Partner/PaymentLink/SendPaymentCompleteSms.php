@@ -79,7 +79,7 @@ class SendPaymentCompleteSms extends Job implements ShouldQueue
         Log::info('after sending sms');
         (new WalletTransactionHandler())
             ->setModel($partner)
-            ->setAmount($sms_cost)
+            ->setAmount($sms_cost->getTotalCharge())
             ->setType(Types::debit())
             ->setLog((string) $sms_cost . " BDT has been deducted for sending payment link complete SMS")
             ->setTransactionDetails([])
