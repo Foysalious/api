@@ -12,6 +12,7 @@ use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\PaymentLink\PaymentLinkTransaction;
 use Sheba\PaymentLink\PaymentLinkTransformer;
@@ -72,9 +73,9 @@ class SendPaymentCompleteSms extends Job implements ShouldQueue
 
         $sms_cost = $sms->estimateCharge();
         if ((double)$partner->wallet < $sms_cost) throw new InsufficientBalance();
-
+        Log::info('sending sms');
         $sms->shoot();
-
+        Log::info('after sending sms');
         (new WalletTransactionHandler())
             ->setModel($partner)
             ->setAmount($sms_cost)

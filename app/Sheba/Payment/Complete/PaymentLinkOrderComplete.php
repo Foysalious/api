@@ -165,6 +165,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             dispatch(new SendPaymentLinkSms($payment, $payment_link));
         }
         $this->notifyManager($this->payment, $this->paymentLink);
+        Log::info('after sending notification');
     }
 
     private function dispatchReward()
