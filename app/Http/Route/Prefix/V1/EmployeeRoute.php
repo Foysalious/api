@@ -137,6 +137,7 @@ class EmployeeRoute
                 $api->get('/my-stickers', 'Employee\AppreciateController@myStickers');
                 $api->get('/{id}/coworker-stickers', 'Employee\AppreciateController@coworkerStickers');
                 $api->get('/badge-counter', 'Employee\AppreciateController@badgeCounter');
+                $api->get('/badge-seen', 'Employee\AppreciateController@badgeSeen');
             });
         });
     }
