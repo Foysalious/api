@@ -1,6 +1,8 @@
 <?php namespace Sheba\Payment\Complete;
 
 use App\Models\Partner;
+use App\Models\Payment;
+use Carbon\Carbon;
 use DB;
 use Illuminate\Database\QueryException;
 use ReflectionException;
@@ -17,6 +19,8 @@ use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class RechargeComplete extends PaymentComplete
 {
+    private $fee;
+
     private $transaction;
     private $paymentGateway;
 
@@ -37,6 +41,7 @@ class RechargeComplete extends PaymentComplete
                     $this->storeJournal();
                 }
                 $this->storeCommissionTransaction();
+                $this->notifyManager($this->payment, $payable_user);
             });
         } catch (QueryException $e) {
             $this->failPayment();
@@ -72,6 +77,15 @@ class RechargeComplete extends PaymentComplete
         /** @var HasWalletTransaction $user */
         $user = $this->payment->payable->user;
 
+        $payment_gateways = app(PaymentGatewayRepo::class);
+        $payment_gateway  = $payment_gateways->builder()
+            ->where('service_type', $this->payment->created_by_type)
+            ->where('method_name', $this->payment->paymentDetails->last()->method)
+            ->where('status', 'Published')
+            ->first();
+
+        if ($payment_gateway && $payment_gateway->cash_in_charge > 0) {
+            $this->fee = $amount = $this->calculateCommission($payment_gateway->cash_in_charge);
         if ($this->paymentGateway && $this->paymentGateway->cash_in_charge > 0) {
             $amount = $this->calculateCommission($this->paymentGateway->cash_in_charge);
             (new WalletTransactionHandler())->setModel($user)
@@ -110,5 +124,14 @@ class RechargeComplete extends PaymentComplete
             ->setDetails("Entry For Wallet Transaction")
             ->setCommission($commission)->setEndPoint("api/journals/wallet")
             ->setReference($this->payment->id)->store();
+    }
+
+    private function notifyManager(Payment $payment, $partner)
+    {
+        $formatted_amount = number_format($payment->payable->amount, 2);
+        $fee              = number_format($this->fee, 2);
+        $real_amount      = number_format(($payment->payable->amount - $this->fee), 2);
+        $payment_completion_date = Carbon::parse($this->payment->updated_at)->format('d/m/Y');
+        $message = "{$formatted_amount} টাকা রিচারজ হয়েছে; ফি {$fee} টাকা; আপনি পাবেন {$real_amount} টাকা। at {$payment_completion_date}. sManager (SPL Ltd.)";
     }
 }

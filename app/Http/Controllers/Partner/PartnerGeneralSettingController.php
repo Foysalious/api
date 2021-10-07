@@ -4,15 +4,18 @@ use App\Http\Controllers\Controller;
 use App\Repositories\PartnerGeneralSettingRepository;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Dal\PartnerGeneralSetting\Model as PartnerGeneralSetting;
 
 
 class PartnerGeneralSettingController extends Controller
 {
     protected $partnerGeneralSettingRepo;
+    protected $artnerGeneralSettingModel;
 
-    public function __construct(PartnerGeneralSettingRepository $partnerGeneralSettingRepo)
+    public function __construct(PartnerGeneralSettingRepository $partnerGeneralSettingRepo, PartnerGeneralSetting $artnerGeneralSettingModel)
     {
         $this->partnerGeneralSettingRepo = $partnerGeneralSettingRepo;
+        $this->artnerGeneralSettingModel = $artnerGeneralSettingModel;
     }
 
     /**
