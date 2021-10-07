@@ -22,6 +22,8 @@ class PartnerRoute
             $api->get('subscriptions', 'Partner\PartnerSubscriptionController@getAllPackages');
             $api->post('notification-store', "NeoBanking\\NeoBankingController@sendNotification");
             $api->post('{partner}/account-number-store', "NeoBanking\\NeoBankingController@accountNumberStore");
+            $api->post('{partner}/sms-notification-store', 'Partner\PartnerGeneralSettingController@storeSMSNotification');
+            $api->get('{partner}/sms-notification', 'Partner\PartnerGeneralSettingController@getSMSNotification');
             (new IDNonAuthRoute())->set($api);
             (new IDAuthRoute())->set($api);
             (new PosRoute())->set($api);
