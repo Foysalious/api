@@ -99,6 +99,29 @@ class AppreciateController extends Controller
         $creator->setSticker($request->sticker)
             ->setReceiver($request->receiver_id)
             ->setGiver($business_member->id)
+            ->setComplement($request->complement);
+
+        $appreciation = $creator->create();
+        $appreciation->fresh();
+
+        return api_response($request, null, 200, ['appreciation_id' => $appreciation->id]);
+    }
+
+    /**
+     * @param $appreciation_id
+     * @param Request $request
+     * @param Updater $updater
+     * @return JsonResponse
+     */
+    public function update($appreciation_id, Request $request, Updater $updater)
+    {
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $this->setModifier($business_member->member);
+
+        $appreciation = Appreciation::find((int)$appreciation_id);
+        $updater->setAppreciation($appreciation)
+            ->setSticker($request->sticker)
             ->setComplement($request->complement)
             ->create();
 
