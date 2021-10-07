@@ -307,7 +307,13 @@ class PaymentLinkOrderComplete extends PaymentComplete
             /** @var PartnerGeneralSettingRepository $partnerGeneralSetting */
             $partnerGeneralSetting = app(PartnerGeneralSettingRepository::class);
             if ($partnerGeneralSetting->getSMSNotificationStatus($partner->id)) {
-                dispatch(new SendPaymentCompleteSms($payment, $payment_link, $this->transaction));
+                $data = [
+                    'formatted_amount' => $formatted_amount,
+                    'real_amount' => $real_amount,
+                    'fee' => $fee,
+                    'payment_completion_date' => $payment_completion_date,
+                ];
+                dispatch(new SendPaymentCompleteSms($payment, $payment_link, $data));
             }
         } catch (Throwable $exception) {
             Log::info($exception);

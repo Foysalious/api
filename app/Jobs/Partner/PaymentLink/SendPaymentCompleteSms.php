@@ -37,12 +37,12 @@ class SendPaymentCompleteSms extends Job implements ShouldQueue
      * SendPaymentCompleteSms constructor.
      * @param Payment $payment
      * @param PaymentLinkTransformer $paymentLink
-     * @param PaymentLinkTransaction $transaction
+     * @param array $transaction
      */
     public function  __construct(
         Payment $payment,
         PaymentLinkTransformer $paymentLink,
-        PaymentLinkTransaction $transaction
+        array $transaction
     ) {
         $this->payment = $payment;
         $this->paymentLink = $paymentLink;
@@ -58,10 +58,10 @@ class SendPaymentCompleteSms extends Job implements ShouldQueue
         /** @var Payable $payable */
         $payable = Payable::find($this->payment->payable_id);
 
-        $formatted_amount = number_format($this->transaction->getAmount(), 2);
-        $formatted_fee = number_format($this->transaction->getFee(), 2);
-        $formatted_received_amount = number_format($this->paymentLink->getRealAmount(), 2);
-        $payment_completion_date = Carbon::parse($this->payment->updated_at)->format('d/m/Y');
+        $formatted_amount = $this->transaction['formatted_amount'];
+        $formatted_fee = $this->transaction['fee'];
+        $formatted_received_amount = $this->transaction['real_amount'];
+        $payment_completion_date = $this->transaction['payment_completion_date'];
 
         $message = "Payment {$formatted_amount} tk from {$payable->getName()} {$payable->getMobile()} completed, Fee {$formatted_fee} tk, Received {$formatted_received_amount} tk.  at {$payment_completion_date}. sManager (SPL Ltd.)";
 
