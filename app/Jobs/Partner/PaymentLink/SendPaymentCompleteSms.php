@@ -73,7 +73,7 @@ class SendPaymentCompleteSms extends Job implements ShouldQueue
 
         $sms_cost = $sms->estimateCharge();
         Log::info(["sms cost", $partner->wallet, $sms_cost]);
-        if ((double)$partner->wallet < $sms_cost) throw new InsufficientBalance();
+        if ((double)$partner->wallet < (double)$sms_cost->getTotalCharge()) throw new InsufficientBalance();
         Log::info('sending sms');
         $sms->shoot();
         Log::info('after sending sms');
