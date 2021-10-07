@@ -63,7 +63,7 @@ class CustomerController extends Controller
      */
     public function show($partner, $customer, Request $request, EntryRepository $entry_repo,DueTrackerRepository $dueTrackerRepository, PosCustomerRepository $posCustomerRepository)
     {
-        try {
+//        try {
             /** @var PosCustomer $customer */
             $customer = PosCustomer::find((int)$customer);
             if (!$customer)
@@ -96,10 +96,10 @@ class CustomerController extends Controller
             $data['note']                  = $partner_pos_customer->note;
             $data['is_supplier']                  = $partner_pos_customer->is_supplier;
             return api_response($request, $customer, 200, ['customer' => $data]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+//        } catch (Throwable $e) {
+//            app('sentry')->captureException($e);
+//            return api_response($request, null, 500);
+//        }
     }
 
     /**
