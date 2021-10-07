@@ -18,7 +18,8 @@ class ExpenseRepo
     public function index(Request $request, $member)
     {
         try {
-            $expenses = Expense::where('member_id', $member->id)
+            $business_member = $member->activeBusinessMember;
+            $expenses = Expense::where('member_id', $business_member->id)
                 ->select('id', 'member_id', 'amount', 'status', 'remarks', 'type', 'created_at')
                 ->orderBy('id', 'desc');
 
@@ -70,7 +71,7 @@ class ExpenseRepo
             $expense = new Expense();
             $expense->amount = $request->amount;
             $expense->member_id = $member->id;
-            $expense->business_member_id = $member->businessMember->id;
+            $expense->business_member_id = $member->activeBusinessMember->id;
             $expense->remarks = $request->remarks;
             $expense->type = $request->type;
             $expense->save();
