@@ -37,19 +37,19 @@ class SendPaymentCompleteSms extends Job implements ShouldQueue
      * SendPaymentCompleteSms constructor.
      * @param Payment $payment
      * @param PaymentLinkTransformer $paymentLink
-     * @param PaymentLinkTransaction $transaction
+     * @param array $transaction
      */
     public function  __construct(
         Payment $payment,
         PaymentLinkTransformer $paymentLink,
-        PaymentLinkTransaction $transaction
+        array $transaction
     ) {
         $this->payment = $payment;
         $this->paymentLink = $paymentLink;
         $this->transaction = $transaction;
     }
 
-    public function handle(Sms $sms)
+    public function handle()
     {
         if ($this->attempts() > 2) return;
 
@@ -58,27 +58,28 @@ class SendPaymentCompleteSms extends Job implements ShouldQueue
         /** @var Payable $payable */
         $payable = Payable::find($this->payment->payable_id);
 
-        $formatted_amount = number_format($this->transaction->getAmount(), 2);
-        $formatted_fee = number_format($this->transaction->getFee(), 2);
-        $formatted_received_amount = number_format($this->paymentLink->getRealAmount(), 2);
-        $payment_completion_date = Carbon::parse($this->payment->updated_at)->format('d/m/Y');
+        $formatted_amount = $this->transaction['formatted_amount'];
+        $formatted_fee = $this->transaction['fee'];
+        $formatted_received_amount = $this->transaction['real_amount'];
+        $payment_completion_date = $this->transaction['payment_completion_date'];
 
         $message = "Payment {$formatted_amount} tk from {$payable->getName()} {$payable->getMobile()} completed, Fee {$formatted_fee} tk, Received {$formatted_received_amount} tk.  at {$payment_completion_date}. sManager (SPL Ltd.)";
 
-        $sms->to($partner->mobile)
-        ->msg($message)
-        ->setFeatureType(FeatureType::PAYMENT_LINK)
-        ->setBusinessType(BusinessType::SMANAGER);
+        $sms = (new Sms())
+            ->to($partner->mobile)
+            ->msg($message)
+            ->setFeatureType(FeatureType::PAYMENT_LINK)
+            ->setBusinessType(BusinessType::SMANAGER);
 
         $sms_cost = $sms->estimateCharge();
         Log::info(["sms cost", $partner->wallet, $sms_cost]);
-        if ((double)$partner->wallet < $sms_cost) throw new InsufficientBalance();
+        if ((double)$partner->wallet < (double)$sms_cost->getTotalCharge()) throw new InsufficientBalance();
         Log::info('sending sms');
         $sms->shoot();
         Log::info('after sending sms');
         (new WalletTransactionHandler())
             ->setModel($partner)
-            ->setAmount($sms_cost)
+            ->setAmount($sms_cost->getTotalCharge())
             ->setType(Types::debit())
             ->setLog((string) $sms_cost . " BDT has been deducted for sending payment link complete SMS")
             ->setTransactionDetails([])
