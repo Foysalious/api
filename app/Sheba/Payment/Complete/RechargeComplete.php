@@ -1,7 +1,9 @@
 <?php namespace Sheba\Payment\Complete;
 
+use App\Jobs\Partner\WalletRecharge\SendSmsOnWalletRecharge;
 use App\Models\Partner;
 use App\Models\Payment;
+use App\Repositories\PartnerGeneralSettingRepository;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Database\QueryException;
@@ -88,5 +90,11 @@ class RechargeComplete extends PaymentComplete
         $real_amount      = number_format(($payment->payable->amount - $this->fee), 2);
         $payment_completion_date = Carbon::parse($this->payment->updated_at)->format('d/m/Y');
         $message = "{$formatted_amount} টাকা রিচারজ হয়েছে; ফি {$fee} টাকা; আপনি পাবেন {$real_amount} টাকা। at {$payment_completion_date}. sManager (SPL Ltd.)";
+        $smsMessage = "Recharged {$formatted_amount} tk, Fee {$fee} tk, Received {$real_amount} tk. at {$payment_completion_date}. sManager (SPL Ltd.)";
+        /** @var PartnerGeneralSettingRepository $partnerGeneralSetting */
+        $partnerGeneralSetting = app(PartnerGeneralSettingRepository::class);
+        if ($partnerGeneralSetting->getSMSNotificationStatus($partner->id)) {
+            dispatch(new SendSmsOnWalletRecharge($partner, $message));
+        }
     }
 }
