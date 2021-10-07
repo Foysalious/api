@@ -1,5 +1,6 @@
 <?php namespace Sheba\Payment\Complete;
 
+use App\Jobs\Partner\PaymentLink\SendPaymentCompleteSms;
 use App\Jobs\Partner\PaymentLink\SendPaymentLinkSms;
 use App\Models\PartnerPosCustomer;
 use App\Models\Payable;
@@ -71,7 +72,6 @@ class PaymentLinkOrderComplete extends PaymentComplete
     public function complete()
     {
         try {
-            Log::info(['payment link order completed successfully']);
             $this->payment->reload();
             if ($this->payment->isComplete())
                 return $this->payment;
@@ -157,7 +157,6 @@ class PaymentLinkOrderComplete extends PaymentComplete
 
     private function notify()
     {
-        Log::info(['payment success notify', $this->target, "trx details", $this->transaction->getAmount(), $this->transaction->getFee(), $this->transaction->getPartnerProfit(), $this->transaction->getBankTransactionFee()]);
         if ($this->target) {
             $payment      = $this->payment;
             $payment_link = $this->paymentLink;
@@ -275,10 +274,8 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $channel          = config('sheba.push_notification_channel_name.manager');
         $sound            = config('sheba.push_notification_sound.manager');
         $formatted_amount = number_format($this->transaction->getAmount(), 2);
-        $formatted_fee = number_format($this->transaction->getFee(), 2);
-        $formatted_received_amount = number_format($this->paymentLink->getRealAmount(), 2);
-        $payment_completion_date = Carbon::parse($this->payment->updated_at)->format('d/m/Y');
-        $event_type       = $this->target && $this->target instanceof PosOrderObject && $this->target->getSalesChannel() == SalesChannels::WEBSTORE ? 'WebstoreOrder' : (class_basename($this->target) instanceof PosOrderObject ? 'PosOrder' : class_basename($this->target));
+
+        $event_type       = $this->target && $this->target instanceof PosOrder && $this->target->sales_channel == SalesChannels::WEBSTORE ? 'WebstoreOrder' : class_basename($this->target);
         /** @var Payable $payable */
         $payable = Payable::find($this->payment->payable_id);
         (new PushNotificationHandler())->send([
@@ -290,13 +287,6 @@ class PaymentLinkOrderComplete extends PaymentComplete
             "channel_id" => $channel
         ], $topic, $channel, $sound);
 
-        $message       = "Payment {$formatted_amount} tk from {$payable->getName()} {$payable->getMobile()} completed, Fee {$formatted_fee} tk, Received {$formatted_received_amount} tk. TrxID: 8BHSU5400  at {$payment_completion_date}. sManager (SPL Ltd.)";
-        Log::info(["payment link message", $message]);
-//        (new Sms())
-//            ->to($partner->mobile)
-//            ->msg($message)
-//            ->setFeatureType(FeatureType::PAYMENT_LINK)
-//            ->setBusinessType(BusinessType::SMANAGER)
-//            ->shoot();
+        dispatch(new SendPaymentCompleteSms($payment, $payment_link, $this->transaction));
     }
 }
