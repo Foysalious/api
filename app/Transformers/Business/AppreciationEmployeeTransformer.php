@@ -1,11 +1,12 @@
-<?php namespace App\Transformers;
+<?php namespace App\Transformers\Business;
 
-use App\Models\BusinessMember;
+use App\Sheba\Business\Appreciation\EmployeeAppreciations;
 use League\Fractal\TransformerAbstract;
+use App\Models\BusinessMember;
 
-class BusinessEmployeesTransformer extends TransformerAbstract
+class AppreciationEmployeeTransformer extends TransformerAbstract
 {
-    CONST NO_DEPARTMENT_VALUE = 'OTHER';
+    const NO_DEPARTMENT_VALUE = 'OTHER';
 
     /**
      * @param $business_members
@@ -20,20 +21,23 @@ class BusinessEmployeesTransformer extends TransformerAbstract
             $profile = $member->profile;
             $is_member_role_present = $this->isMemberRolePresent($business_member);
             $department_name = $is_member_role_present ? $business_member->role->businessDepartment->name : self::NO_DEPARTMENT_VALUE;
+            $department_id = $is_member_role_present ? $business_member->role->businessDepartment->id : null;
 
             array_push($departments_name, $department_name);
+
             $employee_based_on_departments[$department_name][] = [
                 'id' => $business_member->id,
                 'name' => $profile->name,
                 'pro_pic' => $profile->pro_pic,
                 'mobile' => $business_member->mobile,
+                'department_id' => $department_id,
                 'designation' => $is_member_role_present ? $business_member->role->name : 'N/S',
-                'is_employee_new_joiner' => $business_member->isNewJoiner()
+                'stickers' => (new EmployeeAppreciations())->getEmployeeStickers($business_member)
             ];
         });
 
         $departments = array_values(array_unique($departments_name));
-        
+
         if (in_array(self::NO_DEPARTMENT_VALUE, $departments_name)) {
             $v = $employee_based_on_departments[self::NO_DEPARTMENT_VALUE];
             unset($employee_based_on_departments[self::NO_DEPARTMENT_VALUE]);
