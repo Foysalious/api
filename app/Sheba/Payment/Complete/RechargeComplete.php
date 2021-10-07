@@ -2,6 +2,7 @@
 
 use App\Models\Partner;
 use App\Models\Payment;
+use Carbon\Carbon;
 use DB;
 use Illuminate\Database\QueryException;
 use Sheba\Dal\PaymentGateway\Contract as PaymentGatewayRepo;
@@ -12,6 +13,8 @@ use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class RechargeComplete extends PaymentComplete
 {
+    private $fee;
+
     public function complete()
     {
         try {
@@ -67,7 +70,7 @@ class RechargeComplete extends PaymentComplete
             ->first();
 
         if ($payment_gateway && $payment_gateway->cash_in_charge > 0) {
-            $amount = $this->calculateCommission($payment_gateway->cash_in_charge);
+            $this->fee = $amount = $this->calculateCommission($payment_gateway->cash_in_charge);
             (new WalletTransactionHandler())->setModel($user)
                 ->setAmount($amount)
                 ->setType(Types::debit())
@@ -80,6 +83,10 @@ class RechargeComplete extends PaymentComplete
 
     private function notifyManager(Payment $payment, $partner)
     {
-
+        $formatted_amount = number_format($payment->payable->amount, 2);
+        $fee              = number_format($this->fee, 2);
+        $real_amount      = number_format(($payment->payable->amount - $this->fee), 2);
+        $payment_completion_date = Carbon::parse($this->payment->updated_at)->format('d/m/Y');
+        $message = "{$formatted_amount} টাকা রিচারজ হয়েছে; ফি {$fee} টাকা; আপনি পাবেন {$real_amount} টাকা। at {$payment_completion_date}. sManager (SPL Ltd.)";
     }
 }
