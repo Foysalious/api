@@ -282,38 +282,34 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $event_type       = $this->target && $this->target instanceof PosOrder && $this->target->sales_channel == SalesChannels::WEBSTORE ? 'WebstoreOrder' : class_basename($this->target);
         /** @var Payable $payable */
         $payable = Payable::find($this->payment->payable_id);
-        try {
-            $mobile = $payable->getMobile();
-            $message = "{$payable->getName()} $mobile থেকে $formatted_amount টাকা পেমেন্ট হয়েছে; ফি $fee টাকা; আপনি পাবেন $real_amount টাকা। TrxID:{$transaction_id}  at $payment_completion_date. sManager (SPL Ltd.)";
-            (new PushNotificationHandler())->send([
-                "title"      => 'Order Successful',
-                "message"    => $message,
-                "event_type" => $event_type,
-                "event_id"   => $this->target ? $this->target->id : $transaction_id,
-                "sound"      => "notification_sound",
-                "channel_id" => $channel
-            ], $topic, $channel, $sound);
+        $mobile = $payable->getMobile();
+        $message = "{$payable->getName()} $mobile থেকে $formatted_amount টাকা পেমেন্ট হয়েছে; ফি $fee টাকা; আপনি পাবেন $real_amount টাকা। TrxID:{$transaction_id}  at $payment_completion_date. sManager (SPL Ltd.)";
+        (new PushNotificationHandler())->send([
+            "title"      => 'Order Successful',
+            "message"    => $message,
+            "event_type" => $event_type,
+            "event_id"   => $this->target ? $this->target->id : $transaction_id,
+            "sound"      => "notification_sound",
+            "channel_id" => $channel
+        ], $topic, $channel, $sound);
 
-            notify()->partner($partner)->send([
-                "title" => "Successful Payment",
-                "description" => $message,
-                "type" => "Info",
-                "event_type" => "payment_link"
-            ]);
+        notify()->partner($partner)->send([
+            "title" => "Successful Payment",
+            "description" => $message,
+            "type" => "Info",
+            "event_type" => "payment_link"
+        ]);
 
-            /** @var PartnerGeneralSettingRepository $partnerGeneralSetting */
-            $partnerGeneralSetting = app(PartnerGeneralSettingRepository::class);
-            if ($partnerGeneralSetting->getSMSNotificationStatus($partner->id)) {
-                $data = [
-                    'formatted_amount' => $formatted_amount,
-                    'real_amount' => $real_amount,
-                    'fee' => $fee,
-                    'payment_completion_date' => $payment_completion_date,
-                ];
-                dispatch(new SendPaymentCompleteSms($payment, $payment_link, $data));
-            }
-        } catch (Throwable $exception) {
-            Log::info($exception);
+        /** @var PartnerGeneralSettingRepository $partnerGeneralSetting */
+        $partnerGeneralSetting = app(PartnerGeneralSettingRepository::class);
+        if ($partnerGeneralSetting->getSMSNotificationStatus($partner->id)) {
+            $data = [
+                'formatted_amount' => $formatted_amount,
+                'real_amount' => $real_amount,
+                'fee' => $fee,
+                'payment_completion_date' => $payment_completion_date,
+            ];
+            dispatch(new SendPaymentCompleteSms($payment, $payment_link, $data));
         }
     }
 }
