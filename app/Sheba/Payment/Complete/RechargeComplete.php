@@ -95,7 +95,7 @@ class RechargeComplete extends PaymentComplete
             $payment_completion_date = Carbon::parse($this->payment->updated_at)->format('d/m/Y');
             $message = "{$formatted_amount} টাকা রিচারজ হয়েছে; ফি {$fee} টাকা; আপনি পাবেন {$real_amount} টাকা। at {$payment_completion_date}. sManager (SPL Ltd.)";
             (new PushNotificationHandler())->send([
-                "title" => 'Order Successful',
+                "title" => "ক্রেডিট রিচার্জ ৳" . en2bnNumber($formatted_amount),
                 "message" => $message,
                 "event_type" => "wallet_recharge",
                 "event_id" => $payment->id,
