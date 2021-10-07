@@ -49,7 +49,7 @@ class SendPaymentCompleteSms extends Job implements ShouldQueue
         $this->transaction = $transaction;
     }
 
-    public function handle(Sms $sms)
+    public function handle()
     {
         if ($this->attempts() > 2) return;
 
@@ -65,10 +65,11 @@ class SendPaymentCompleteSms extends Job implements ShouldQueue
 
         $message = "Payment {$formatted_amount} tk from {$payable->getName()} {$payable->getMobile()} completed, Fee {$formatted_fee} tk, Received {$formatted_received_amount} tk.  at {$payment_completion_date}. sManager (SPL Ltd.)";
 
-        $sms->to($partner->mobile)
-        ->msg($message)
-        ->setFeatureType(FeatureType::PAYMENT_LINK)
-        ->setBusinessType(BusinessType::SMANAGER);
+        $sms = (new Sms())
+            ->to($partner->mobile)
+            ->msg($message)
+            ->setFeatureType(FeatureType::PAYMENT_LINK)
+            ->setBusinessType(BusinessType::SMANAGER);
 
         $sms_cost = $sms->estimateCharge();
         Log::info(["sms cost", $partner->wallet, $sms_cost]);
