@@ -20,12 +20,19 @@ class Route
             $api->post('/usages', 'PosRebuild\UsageController@store');
             $api->post('/check-access', 'PosRebuild\AccessManagerController@checkAccess');
             $api->get('voucher-details/{voucher_id}', 'VoucherController@getVoucherDetails');
-            $api->group(['prefix' => 'send-sms', 'middleware' => ['ip.whitelist']], function ($api) {
-                $api->post('/', "PosRebuild\SmsController@sendSms");
-            });
             $api->post('test-migrate', 'Partner\DataMigrationController@testMigration');
             /**
              * End of No Middleware
+             */
+
+            /**
+             * IP Whitelist Middleware
+             */
+            $api->group(['prefix' => 'send-sms', 'middleware' => ['ip.whitelist']], function ($api) {
+                $api->post('/', "PosRebuild\SmsController@sendSms");
+            });
+            /**
+             * End of IP Whitelist Middleware
              */
 
             /**
