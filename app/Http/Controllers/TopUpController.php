@@ -34,6 +34,7 @@ use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\Ssl\SslSuccessResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\Ssl\SslFailResponse;
 use Sheba\TopUp\Vendor\VendorFactory;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Sheba\UserAgentInformation;
 use Storage;
 use Excel;
@@ -97,7 +98,10 @@ class TopUpController extends Controller
 
         if ($this->hasLastTopupWithinIntervalTime($agent))
             return api_response($request, null, 400, ['message' => 'Wait another minute to topup']);
-
+        if ($agent instanceof Partner) {
+            //freeze money amount check
+            WalletTransactionHandler::isDebitTransactionAllowed($agent, $request->amount, 'টপ আপ করার');
+        }
         $top_up_request->setAmount($request->amount)
             ->setMobile($request->mobile)->setType($request->connection_type)
             ->setAgent($agent)->setVendorId($request->vendor_id)->setRobiTopupWallet($request->is_robi_topup)

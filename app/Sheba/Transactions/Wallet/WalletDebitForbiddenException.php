@@ -2,12 +2,12 @@
 
 namespace Sheba\Transactions\Wallet;
 
-use Exception;
+use App\Exceptions\DoNotReportException;
 use Throwable;
 
-class WalletDebitForbiddenException extends Exception
+class WalletDebitForbiddenException extends DoNotReportException
 {
-    public function __construct($message = "", $code = 403, Throwable $previous = null)
+    public function __construct($message = "", $code = 406, Throwable $previous = null)
     {
         if (empty($message)) $message = 'Invalid wallet transaction';
         parent::__construct($message, $code, $previous);
