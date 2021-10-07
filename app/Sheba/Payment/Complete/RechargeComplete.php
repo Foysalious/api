@@ -11,7 +11,9 @@ use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Exceptions\InvalidSourceException;
 use Sheba\AccountingEntry\Exceptions\KeyNotFoundException;
 use Sheba\AccountingEntry\Repository\JournalCreateRepository;
+use Illuminate\Support\Facades\Log;
 use Sheba\Dal\PaymentGateway\Contract as PaymentGatewayRepo;
+use Sheba\PushNotificationHandler;
 use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
@@ -35,13 +37,13 @@ class RechargeComplete extends PaymentComplete
                 $this->completePayment();
                 $payable      = $this->payment->payable;
                 $payable_user = $payable->user;
+                $this->storeCommissionTransaction();
                 $this->setPaymentGateWay();
                 if ($payable_user instanceof Partner) {
+                    $this->notifyManager($this->payment, $payable_user);
                     app(ActionRewardDispatcher::class)->run('partner_wallet_recharge', $payable_user, $payable_user, $payable);
                     $this->storeJournal();
                 }
-                $this->storeCommissionTransaction();
-                $this->notifyManager($this->payment, $payable_user);
             });
         } catch (QueryException $e) {
             $this->failPayment();
@@ -86,8 +88,6 @@ class RechargeComplete extends PaymentComplete
 
         if ($payment_gateway && $payment_gateway->cash_in_charge > 0) {
             $this->fee = $amount = $this->calculateCommission($payment_gateway->cash_in_charge);
-        if ($this->paymentGateway && $this->paymentGateway->cash_in_charge > 0) {
-            $amount = $this->calculateCommission($this->paymentGateway->cash_in_charge);
             (new WalletTransactionHandler())->setModel($user)
                 ->setAmount($amount)
                 ->setType(Types::debit())
@@ -124,14 +124,37 @@ class RechargeComplete extends PaymentComplete
             ->setDetails("Entry For Wallet Transaction")
             ->setCommission($commission)->setEndPoint("api/journals/wallet")
             ->setReference($this->payment->id)->store();
+
     }
 
     private function notifyManager(Payment $payment, $partner)
     {
-        $formatted_amount = number_format($payment->payable->amount, 2);
-        $fee              = number_format($this->fee, 2);
-        $real_amount      = number_format(($payment->payable->amount - $this->fee), 2);
-        $payment_completion_date = Carbon::parse($this->payment->updated_at)->format('d/m/Y');
-        $message = "{$formatted_amount} টাকা রিচারজ হয়েছে; ফি {$fee} টাকা; আপনি পাবেন {$real_amount} টাকা। at {$payment_completion_date}. sManager (SPL Ltd.)";
+        try {
+            $topic = config('sheba.push_notification_topic_name.manager') . $partner->id;
+            $channel = config('sheba.push_notification_channel_name.manager');
+            $sound = config('sheba.push_notification_sound.manager');
+            $formatted_amount = number_format($payment->payable->amount, 2);
+            $fee = number_format($this->fee, 2);
+            $real_amount = number_format(($payment->payable->amount - $this->fee), 2);
+            $payment_completion_date = Carbon::parse($this->payment->updated_at)->format('d/m/Y');
+            $message = "{$formatted_amount} টাকা রিচারজ হয়েছে; ফি {$fee} টাকা; আপনি পাবেন {$real_amount} টাকা। at {$payment_completion_date}. sManager (SPL Ltd.)";
+            (new PushNotificationHandler())->send([
+                "title" => 'Order Successful',
+                "message" => $message,
+                "event_type" => "wallet_recharge",
+                "event_id" => $payment->id,
+                "sound" => "notification_sound",
+                "channel_id" => $channel
+            ], $topic, $channel, $sound);
+
+            notify()->partner($partner)->send([
+                "title" => "ক্রেডিট রিচার্জ ৳" . en2bnNumber($formatted_amount),
+                "description" => $message,
+                "type" => "Info",
+                "event_type" => "wallet_recharge"
+            ]);
+        } catch (\Throwable $exception) {
+            Log::info($exception);
+        }
     }
 }
