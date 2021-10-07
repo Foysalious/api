@@ -10,6 +10,7 @@ use App\Models\Profile;
 use App\Sheba\Pos\Order\PosOrderObject;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\PaymentLinkAccountingRepository;
+use App\Repositories\PartnerGeneralSettingRepository;
 use Carbon\Carbon;
 use DB;
 use GuzzleHttp\Exception\RequestException;
@@ -286,7 +287,10 @@ class PaymentLinkOrderComplete extends PaymentComplete
             "sound"      => "notification_sound",
             "channel_id" => $channel
         ], $topic, $channel, $sound);
-
-        dispatch(new SendPaymentCompleteSms($payment, $payment_link, $this->transaction));
+        /** @var PartnerGeneralSettingRepository $partnerGeneralSetting */
+        $partnerGeneralSetting = app(PartnerGeneralSettingRepository::class);
+        if ($partnerGeneralSetting->getSMSNotificationStatus($partner->id)) {
+            dispatch(new SendPaymentCompleteSms($payment, $payment_link, $this->transaction));
+        }
     }
 }

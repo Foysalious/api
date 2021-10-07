@@ -54,6 +54,7 @@ use Sheba\Dal\Category\Category;
 use Sheba\Dal\Service\Service;
 use Sheba\Dal\PartnerNeoBankingInfo\Model as PartnerNeoBankingInfo;
 use Sheba\Dal\PartnerNeoBankingAccount\Model as PartnerNeoBankingAccount;
+use Sheba\Dal\PartnerGeneralSetting\Model as PartnerGeneralSetting;
 
 class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent, Rechargable, Bidder, HasWalletTransaction, HasReferrals, PayableUser
 {
@@ -1077,6 +1078,11 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function deliveryInformation()
     {
         return $this->hasOne(PartnerDeliveryInformation::class);
+    }
+
+    public function partnerGeneralSetting()
+    {
+        return $this->hasOne(PartnerGeneralSetting::class);
     }
 
     public function getGatewayChargesId()

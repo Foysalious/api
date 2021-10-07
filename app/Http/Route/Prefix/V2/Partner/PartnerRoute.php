@@ -25,6 +25,8 @@ class PartnerRoute
             $api->get('trade-fair/stores', 'Partner\Webstore\TradeFairController@getStores');
             $api->get('trade-fair/stores-by-business-type', 'Partner\Webstore\TradeFairController@getStoresByBusinessType');
             $api->post('{partner}/account-number-store', "NeoBanking\\NeoBankingController@accountNumberStore");
+            $api->post('{partner}/sms-notification-store', 'Partner\PartnerGeneralSettingController@storeSMSNotification');
+            $api->get('{partner}/sms-notification', 'Partner\PartnerGeneralSettingController@getSMSNotification');
             (new IDNonAuthRoute())->set($api);
             (new IDAuthRoute())->set($api);
             (new PosRoute())->set($api);
