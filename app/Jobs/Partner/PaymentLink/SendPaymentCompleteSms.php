@@ -81,7 +81,7 @@ class SendPaymentCompleteSms extends Job implements ShouldQueue
             ->setModel($partner)
             ->setAmount($sms_cost->getTotalCharge())
             ->setType(Types::debit())
-            ->setLog((string) $sms_cost . " BDT has been deducted for sending payment link complete SMS")
+            ->setLog((string) $sms_cost->getTotalCharge() . " BDT has been deducted for sending payment link complete SMS")
             ->setTransactionDetails([])
             ->setSource(TransactionSources::SMS)
             ->store();
