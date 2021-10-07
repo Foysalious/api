@@ -310,7 +310,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
                 dispatch(new SendPaymentCompleteSms($payment, $payment_link, $this->transaction));
             }
         } catch (Throwable $exception) {
-            Log::info($exception->getMessage());
+            Log::info($exception);
         }
     }
 }
