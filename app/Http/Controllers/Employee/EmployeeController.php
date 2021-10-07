@@ -36,6 +36,7 @@ use Sheba\Business\CoWorker\UpdaterV2 as Updater;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
+use Sheba\Dal\BusinessMemberBadge\BusinessMemberBadgeRepository;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\ModificationFields;
 use Sheba\OAuth2\AccountServer;
@@ -64,6 +65,8 @@ class EmployeeController extends Controller
     private $businessMember;
     /*** @var ProfileRequester $profileRequester */
     private $profileRequester;
+    /** @var BusinessMemberBadgeRepository $badgeRepo */
+    private $badgeRepo;
 
     /**
      * EmployeeController constructor.
@@ -80,6 +83,7 @@ class EmployeeController extends Controller
         $this->accounts = $accounts;
         $this->businessMember = app(BusinessMember::class);
         $this->profileRequester = app(ProfileRequester::class);
+        $this->badgeRepo = app(BusinessMemberBadgeRepository::class);
     }
 
     public function me(Request $request)
@@ -184,6 +188,13 @@ class EmployeeController extends Controller
         $pending_approval_requests_count = $this->approvalRequestRepo->countPendingLeaveApprovalRequests($business_member);
         $profile_completion_score = $completion_calculator->setBusinessMember($business_member)->getDigiGoScore();
 
+        /** Check Employee Already Get a Badge or Not */
+        $start_date = Carbon::now()->startOfMonth();
+        $end_date = Carbon::now()->endOfMonth();
+        $business_member_badge = $this->badgeRepo->where('business_member_id', $business_member->id)
+            ->whereBetween('end_date', [$start_date, $end_date])->first();
+        $is_badge_seen = $business_member_badge ? $business_member_badge->is_seen : 0;
+
         $data = [
             'id' => $member->id,
             'business_member_id' => $business_member->id,
@@ -206,7 +217,8 @@ class EmployeeController extends Controller
                 'link' => config('b2b.BUSINESSES_LUNCH_LINK'),
             ] : null,
             'is_sheba_platform' => in_array($business->id, config('b2b.BUSINESSES_IDS_FOR_REFERRAL')) ? 1 : 0,
-            'is_payroll_enable' => $business->payrollSetting->is_enable
+            'is_payroll_enable' => $business->payrollSetting->is_enable,
+            'is_badge_seen' => $is_badge_seen,
         ];
 
         return api_response($request, $business_member, 200, ['info' => $data]);

@@ -14,6 +14,7 @@ use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
 use League\Fractal\Resource\Item;
 use Sheba\Dal\Appreciation\Appreciation;
+use Sheba\Dal\BusinessMemberBadge\BusinessMemberBadgeRepository;
 use Sheba\Dal\StickerCategory\StickerCategory;
 use App\Sheba\Business\Appreciation\Creator;
 use League\Fractal\Resource\Collection;
@@ -216,6 +217,28 @@ class AppreciateController extends Controller
             ]
         ];
 
-        return api_response($request, null, 200, ['badge_counter'=> $badge_counter]);
+        return api_response($request, null, 200, ['badge_counter' => $badge_counter]);
+    }
+
+    /**
+     * @param Request $request
+     * @param BusinessMemberBadgeRepository $badgeRepository
+     * @return JsonResponse
+     */
+    public function badgeSeen(Request $request, BusinessMemberBadgeRepository $badgeRepository)
+    {
+        /** @var BusinessMember $business_member */
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+
+        /** Check Employee Already Get a Badge or Not */
+        $start_date = Carbon::now()->startOfMonth();
+        $end_date = Carbon::now()->endOfMonth();
+        $business_member_badge = $badgeRepository->where('business_member_id', $business_member->id)
+            ->whereBetween('end_date', [$start_date, $end_date])->first();
+
+        if (!$business_member_badge) return api_response($request, null, 200);
+        $business_member_badge->update(['is_seen' => 1]);
+        return api_response($request, null, 200);
     }
 }
