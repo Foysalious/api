@@ -234,15 +234,14 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $channel          = config('sheba.push_notification_channel_name.manager');
         $sound            = config('sheba.push_notification_sound.manager');
         $formatted_amount = number_format($this->payment->payable->amount, 2);
-        $real_amount      = number_format(($this->transaction->getAmount() - $this->transaction->getFee()), 2);
+        $real_amount      = number_format(($this->payment->payable->amount - $this->transaction->getFee()), 2);
         $fee              = number_format($this->transaction->getFee(), 2);
         $payment_completion_date = Carbon::parse($this->payment->updated_at)->format('d/m/Y');
 
         $event_type       = $this->target && $this->target instanceof PosOrder && $this->target->sales_channel == SalesChannels::WEBSTORE ? 'WebstoreOrder' : class_basename($this->target);
         /** @var Payable $payable */
         $payable = Payable::find($this->payment->payable_id);
-        $payment_receiver = $this->paymentLink->getPaymentReceiver();
-        $mobile = $payment_receiver->getMobile();
+        $mobile = $payable->getMobile();
         $message = "{$payable->getName()} $mobile থেকে $formatted_amount টাকা পেমেন্ট হয়েছে; ফি $fee টাকা; আপনি পাবেন $real_amount টাকা। TrxID:{$transaction_id}  at $payment_completion_date. sManager (SPL Ltd.)";
         (new PushNotificationHandler())->send([
             "title"      => 'Order Successful',
