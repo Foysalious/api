@@ -292,7 +292,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
                 "title"      => 'Order Successful',
                 "message"    => $message,
                 "event_type" => $event_type,
-                "event_id"   => $this->target->id,
+                "event_id"   => $this->target->getId(),
                 "sound"      => "notification_sound",
                 "channel_id" => $channel
             ], $topic, $channel, $sound);
