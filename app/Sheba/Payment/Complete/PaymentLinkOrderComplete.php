@@ -1,5 +1,6 @@
 <?php namespace Sheba\Payment\Complete;
 
+use App\Jobs\Partner\PaymentLink\SendPaymentCompleteSms;
 use App\Jobs\Partner\PaymentLink\SendPaymentLinkSms;
 use App\Models\Payable;
 use App\Models\Payment;
@@ -231,9 +232,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $channel          = config('sheba.push_notification_channel_name.manager');
         $sound            = config('sheba.push_notification_sound.manager');
         $formatted_amount = number_format($this->transaction->getAmount(), 2);
-        $formatted_fee = number_format($this->transaction->getFee(), 2);
-        $formatted_received_amount = number_format($this->payment->realAmount, 2);
-        $payment_completion_date = Carbon::parse($this->payment->updated_at)->format('d/m/Y');
+
         $event_type       = $this->target && $this->target instanceof PosOrder && $this->target->sales_channel == SalesChannels::WEBSTORE ? 'WebstoreOrder' : class_basename($this->target);
         /** @var Payable $payable */
         $payable = Payable::find($this->payment->payable_id);
@@ -246,13 +245,6 @@ class PaymentLinkOrderComplete extends PaymentComplete
             "channel_id" => $channel
         ], $topic, $channel, $sound);
 
-        $message       = "Payment {$formatted_amount} tk from {$payable->getName()} {$payable->getMobile()} completed, Fee {$formatted_fee} tk, Received {$formatted_received_amount} tk. TrxID: 8BHSU5400  at {$payment_completion_date}. sManager (SPL Ltd.)";
-        Log::info(["payment link message", $message]);
-//        (new Sms())
-//            ->to($partner->mobile)
-//            ->msg($message)
-//            ->setFeatureType(FeatureType::PAYMENT_LINK)
-//            ->setBusinessType(BusinessType::SMANAGER)
-//            ->shoot();
+        dispatch(new SendPaymentCompleteSms($payment, $payment_link, $this->transaction));
     }
 }
