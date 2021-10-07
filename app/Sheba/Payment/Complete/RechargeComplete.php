@@ -26,11 +26,11 @@ class RechargeComplete extends PaymentComplete
                 $this->completePayment();
                 $payable      = $this->payment->payable;
                 $payable_user = $payable->user;
+                $this->storeCommissionTransaction();
                 if ($payable_user instanceof Partner) {
+                    $this->notifyManager($this->payment, $payable_user);
                     app(ActionRewardDispatcher::class)->run('partner_wallet_recharge', $payable_user, $payable_user, $payable);
                 }
-                $this->storeCommissionTransaction();
-                $this->notifyManager($this->payment, $payable_user);
             });
         } catch (QueryException $e) {
             $this->failPayment();
