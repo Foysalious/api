@@ -22,6 +22,7 @@ use Illuminate\Http\JsonResponse;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
+use App\Sheba\Business\Appreciation\Updater;
 
 class AppreciateController extends Controller
 {
@@ -123,7 +124,7 @@ class AppreciateController extends Controller
         $updater->setAppreciation($appreciation)
             ->setSticker($request->sticker)
             ->setComplement($request->complement)
-            ->create();
+            ->update();
 
         return api_response($request, null, 200);
     }

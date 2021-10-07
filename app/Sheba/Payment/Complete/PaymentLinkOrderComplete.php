@@ -272,6 +272,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
      */
     private function notifyManager(Payment $payment, PaymentLinkTransformer $payment_link)
     {
+        $transaction_id   = $this->transaction->getRechargeTransaction()->id;
         $partner          = $payment_link->getPaymentReceiver();
         $topic            = config('sheba.push_notification_topic_name.manager') . $partner->id;
         $channel          = config('sheba.push_notification_channel_name.manager');
@@ -286,13 +287,13 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $payable = Payable::find($this->payment->payable_id);
         $payment_receiver = $this->paymentLink->getPaymentReceiver();
         $mobile = $payment_receiver->getMobile();
-        $message = "{$payable->getName()} $mobile থেকে $formatted_amount টাকা পেমেন্ট হয়েছে; ফি $fee টাকা; আপনি পাবেন $real_amount টাকা। TrxID:{$payment_link->getLinkID()}  at $payment_completion_date. sManager (SPL Ltd.)";
-        try{
+        try {
+            $message = "{$payable->getName()} $mobile থেকে $formatted_amount টাকা পেমেন্ট হয়েছে; ফি $fee টাকা; আপনি পাবেন $real_amount টাকা। TrxID:{$transaction_id}  at $payment_completion_date. sManager (SPL Ltd.)";
             (new PushNotificationHandler())->send([
                 "title"      => 'Order Successful',
                 "message"    => $message,
                 "event_type" => $event_type,
-                "event_id"   => $this->target->getId(),
+                "event_id"   => $this->target->id,
                 "sound"      => "notification_sound",
                 "channel_id" => $channel
             ], $topic, $channel, $sound);
