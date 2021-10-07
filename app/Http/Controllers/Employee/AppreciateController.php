@@ -25,6 +25,9 @@ class AppreciateController extends Controller
 {
     use BusinessBasicInformation, ModificationFields;
 
+    const EARLY_BIRD_COUNTER = 12;
+    const LATE_LATEEF_COUNTER = 4;
+
     /** @var EmployeeAppreciations $employeeAppreciations */
     private $employeeAppreciations;
 
@@ -188,17 +191,15 @@ class AppreciateController extends Controller
         /** @var BusinessMember $business_member */
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
-        /** @var Business $business */
-        $business = $this->getBusiness($request);
 
         $badge_counter = [
             'late_lateef' => [
-                'counter' => $business_member->early_bird_counter,
-                'threshold' => 4
+                'counter' => $business_member->late_loteef_counter,
+                'threshold' => self::LATE_LATEEF_COUNTER
             ],
             'early_bird' => [
                 'counter' => $business_member->early_bird_counter,
-                'threshold' => 12
+                'threshold' => self::EARLY_BIRD_COUNTER
             ]
         ];
 
