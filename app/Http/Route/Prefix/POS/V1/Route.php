@@ -13,8 +13,9 @@ class Route
             $api->get('/units', "Inventory\UnitController@index");
             $api->get('warranty-units', 'Inventory\WarrantyUnitController@getWarrantyList');
             $api->get('/weight-units', "Inventory\UnitController@weightUnits");
-            $api->group(['prefix' => 'partners/{partner_id}/vouchers'], function ($api) {
-                $api->post('validity-check', 'VoucherController@validateVoucher');
+            $api->group(['prefix' => 'partners/{partner_id}'], function ($api) {
+                $api->post('vouchers/validity-check', 'VoucherController@validateVoucher');
+                $api->post('/orders/{order}/payment/create', "Pos\OrderController@createPayment");
             });
             $api->post('/reward/action', 'PosRebuild\RewardController@actionReward');
             $api->post('/usages', 'PosRebuild\UsageController@store');
