@@ -164,32 +164,32 @@ class PaymentLinkController extends Controller
                 ->setPaidBy($request->interest_paid_by ?: PaymentLinkStatics::paidByTypes()[($request->has("emi_month") ? 1 : 0)])
                 ->setTransactionFeePercentage($request->transaction_charge)
                 ->calculate();
-
+            $interest = 0;
+            $bank_transaction_charge = 0;
             if ($request->has('pos_order_id')) {
                 $pos_order = PosOrder::find($request->pos_order_id);
                 $this->deActivatePreviousLink($pos_order);
                 $customer = PosCustomer::find($pos_order->customer_id);
                 if (!empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
                 if ($this->creator->getPaidBy() == PaymentLinkStatics::paidByTypes()[1]) {
-                    $pos_order->update(['interest' => $this->creator->getInterest(), 'bank_transaction_charge' => $this->creator->getBankTransactionCharge()]);
-                } else {
-                    $pos_order->update(['interest' => 0, 'bank_transaction_charge' => 0]);
+                    $interest = $this->creator->getInterest();
+                    $bank_transaction_charge = $this->creator->getBankTransactionCharge();
                 }
-
             }
-
             if ($request->has('customer_id')) {
                 $customer = PosCustomer::find($request->customer_id);
                 if (!empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
+                $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
             }
 
             $payment_link_store = $this->creator->save();
-
             if ($payment_link_store) {
                 $payment_link = $this->creator->getPaymentLinkData();
                 if (!$request->has('emi_month')) {
                     $this->creator->sentSms();
                 }
+                $payment_link['interest'] = $interest;
+                $payment_link['bank_transaction_charge'] = $bank_transaction_charge;
                 return api_response($request, $payment_link, 200, array_merge(['payment_link' => $payment_link], $this->creator->getSuccessMessage()));
             } else {
                 return api_response($request, null, 500, $this->creator->getErrorMessage());

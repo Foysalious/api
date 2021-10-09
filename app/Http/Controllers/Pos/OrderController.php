@@ -530,7 +530,7 @@ class OrderController extends Controller
         return api_response($request, null, 200, ['msg' => 'Customer tagged Successfully']);
     }
 
-    public function createPayment(Partner $partner, $order, Request $request)
+    public function createPayment($partner, $order, Request $request)
     {
         /** @var PaymentLinkController $payment_link */
         $payment_link = app(PaymentLinkController::class);
@@ -542,8 +542,9 @@ class OrderController extends Controller
             'interest_paid_by' => $request->interest_paid_by,
             'transaction_charge' => $request->transaction_charge,
             'pos_order_id' => (int)($order),
-            'user' => $partner
+            'user' => Partner::find($partner),
+            'type' => 'partner'
         ));
-       return $payment_link->store($request);
+        return $payment_link->store($request);
     }
 }
