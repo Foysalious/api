@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\VoucherController;
+use App\Models\PosOrder;
 use App\Sheba\PosOrderService\Services\OrderService;
 use Illuminate\Http\Request;
 use Sheba\DueTracker\Exceptions\UnauthorizedRequestFromExpenseTrackerException;
@@ -133,37 +134,44 @@ class OrderController extends Controller
     /**
      * @throws UnauthorizedRequestFromExpenseTrackerException
      */
-    public function onlinePayment($order, Request $request)
+    public function onlinePayment($partner, $order, Request $request)
     {
         $this->validate($request, [
-            'pos_order_type' =>'required|in:' . implode(',', PosOrderTypes::get()),
-            'partner_id' => 'required|int',
             'amount' => 'required|numeric',
-            'payment_method' => 'required|string',
+            'payment_method_en' => 'required|string',
+            'payment_method_bn' => 'required|string',
+            'icon' => 'required|string',
             'emi_month' => 'required|int',
             'interest' => 'required|numeric',
             'is_paid_by_customer' => 'required|boolean',
-            'api_key' => 'required',
         ]);
-        if($request->api_key != config('expense_tracker.api_key'))
+        if($request->header('api-key') != config('expense_tracker.api_key'))
             throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
-        $this->paymentService->setPosOrderId($order)->setPosOrderType($request->pos_order_type)->setPartnerId($request->partner_id)->setAmount($request->amount)
-            ->setMethod($request->payment_method)->setEmiMonth($request->emi_month)->setInterest($request->interest)
+        $posOrder = PosOrder::find($order);
+        $pos_order_type = $posOrder && !$posOrder->is_migrated ? PosOrderTypes::OLD_SYSTEM : PosOrderTypes::NEW_SYSTEM;
+        $this->paymentService->setPosOrderId($order)->setPosOrderType($pos_order_type)->setPartnerId($partner)->setAmount($request->amount)
+            ->setMethod($request->payment_method_en)->setEmiMonth($request->emi_month)->setInterest($request->interest)
             ->onlinePayment();
         return http_response($request, null, 200);
     }
 
-    public function paymentLinkCreated($order, Request $request)
+    public function paymentLinkCreated($partner, $order, Request $request)
     {
         $this->validate($request, [
-            'amount' => 'required',
-            'purpose' => 'required',
-            'customer_id' => 'sometimes',
-            'emi_month' => 'sometimes|integer|in:' . implode(',', config('emi.valid_months')),
-            'interest_paid_by' => 'sometimes|in:' . implode(',', PaymentLinkStatics::paidByTypes()),
-            'transaction_charge' => 'sometimes|numeric|min:' . PaymentLinkStatics::get_payment_link_commission(),
-            'pos_order_id' => 'required'
+            'link_id'                 => 'required|string',
+            'reason'                  => 'required|string',
+            'type'                    => 'required|string',
+            'status'                  => 'required|string',
+            'amount'                  => 'required|numeric',
+            'link'                    => 'required|string',
+            'emi_month'               => 'sometimes|integer|in:' . implode(',', config('emi.valid_months')),
+            'interest'                => 'sometimes|numeric',
+            'bank_transaction_charge' => 'sometimes|numeric',
+            'paid_by'                 => 'sometimes|in:' . implode(',', PaymentLinkStatics::paidByTypes()),
+            'partner_profit'          => 'sometimes'
         ]);
+        if($request->header('api-key') != config('expense_tracker.api_key'))
+            throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
         //TODO: Order Payment Link Created Event
         return http_response($request, null, 200);
     }
