@@ -22,6 +22,11 @@ class Route
             $api->post('/check-access', 'PosRebuild\AccessManagerController@checkAccess');
             $api->get('voucher-details/{voucher_id}', 'VoucherController@getVoucherDetails');
             $api->post('test-migrate', 'Partner\DataMigrationController@testMigration');
+            $api->group(['prefix' => 'orders'], function ($api) {
+                $api->group(['prefix' => '{order}'], function ($api) {
+                    $api->post('online-payment', 'PosOrder\OrderController@onlinePayment');
+                });
+            });
             /**
              * End of No Middleware
              */
