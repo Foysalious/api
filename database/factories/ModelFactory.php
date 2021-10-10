@@ -46,14 +46,19 @@ use Factory\InfoCallRejectReasonFactory;
 use Factory\InfoCallStatusLogFactory;
 use Factory\ResourceTransactionFactory;
 use \Factory\SubscriptionWisePaymentGatewaysFactory;
-use Factory\PaymentGatewayFactory;
-use Factory\ThanaFactory;
-use Factory\DistrictFactory;
-use Factory\DivisionFactory;
-use Factory\LocationServiceFactory;
-use Factory\CategoryScheduleSlotFactory;
-
-
+use Factory\AttendanceFactory;
+use Factory\BusinessOfficeHoursFactory;
+use Factory\BusinessWeekend;
+use Factory\PayrollSettingFactory;
+use Factory\PayrollComponentFactory;
+use Factory\ComponentPackageTargetFactory;
+use Factory\AttendanceActionLogFactory;
+use Factory\PayrollComponentPackageFactory;
+use Factory\LeaveFactory;
+use Factory\LeaveTypeFactory;
+use Factory\BusinessMemberLeaveTypeFactory;
+use Factory\OfficePolicyRuleFactory;
+use Factory\ServiceDiscountFactory;
 
 $factory_classes = [
     CategoryFactory::class,
@@ -103,13 +108,19 @@ $factory_classes = [
     InfoCallStatusLogFactory::class,
     ResourceTransactionFactory::class,
     SubscriptionWisePaymentGatewaysFactory::class,
-    PaymentGatewayFactory::class,
-    ThanaFactory::class,
-    DistrictFactory::class,
-    DivisionFactory::class,
-    LocationServiceFactory::class,
-    CategoryScheduleSlotFactory::class
-
+    AttendanceFactory::class,
+    BusinessOfficeHoursFactory::class,
+    BusinessWeekend::class,
+    PayrollSettingFactory::class,
+    PayrollComponentFactory::class,
+    ComponentPackageTargetFactory::class,
+    AttendanceActionLogFactory::class,
+    PayrollComponentPackageFactory::class,
+    LeaveFactory::class,
+    LeaveTypeFactory::class,
+    BusinessMemberLeaveTypeFactory::class,
+    OfficePolicyRuleFactory::class,
+    ServiceDiscountFactory::class
 ];
 
 foreach ($factory_classes as $factory_class) {
