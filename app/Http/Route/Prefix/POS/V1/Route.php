@@ -15,7 +15,6 @@ class Route
             $api->get('/weight-units', "Inventory\UnitController@weightUnits");
             $api->group(['prefix' => 'partners/{partner_id}'], function ($api) {
                 $api->post('vouchers/validity-check', 'VoucherController@validateVoucher');
-                $api->post('/orders/{order}/payment/create', "Pos\OrderController@createPayment");
             });
             $api->post('/reward/action', 'PosRebuild\RewardController@actionReward');
             $api->post('/usages', 'PosRebuild\UsageController@store');
@@ -114,12 +113,13 @@ class Route
                 $api->post('migrate', 'Partner\DataMigrationController@migrate');
                 $api->group(['prefix' => 'orders'], function ($api) {
                     $api->get('/', 'PosOrder\OrderController@index');
-                    $api->get('/{order}', 'PosOrder\OrderController@show');
                     $api->post('/', 'PosOrder\OrderController@store');
                     $api->group(['prefix' => '{order}'], function ($api) {
+                        $api->get('/', 'PosOrder\OrderController@show');
                         $api->post('/update-status', 'PosOrder\OrderController@updateStatus');
                         $api->post('/validate-promo', 'PosOrder\OrderController@validatePromo');
                         $api->get('/logs', 'PosOrder\OrderController@logs');
+                        $api->post('payment/create', "Pos\OrderController@createPayment");
                     });
                     $api->put('/{order}/update-customer', 'PosOrder\OrderController@updateCustomer');
                     $api->put('/{order}', 'PosOrder\OrderController@update');

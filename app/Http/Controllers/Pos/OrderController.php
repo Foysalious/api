@@ -35,6 +35,7 @@ use Sheba\Pos\Jobs\WebstoreOrderSms;
 use Sheba\Pos\Order\Creator;
 use Sheba\Pos\Order\Deleter as PosOrderDeleter;
 use Sheba\Pos\Order\PosOrderList;
+use Sheba\Pos\Order\PosOrderResolver;
 use Sheba\Pos\Order\QuickCreator;
 use Sheba\Pos\Order\RefundNatures\NatureFactory;
 use Sheba\Pos\Order\RefundNatures\Natures;
@@ -530,20 +531,19 @@ class OrderController extends Controller
         return api_response($request, null, 200, ['msg' => 'Customer tagged Successfully']);
     }
 
-    public function createPayment($partner, $order, Request $request)
+    public function createPayment($order, Request $request, PosOrderResolver $posOrderResolver)
     {
+        $order = $posOrderResolver->setOrderId($order)->get();
         /** @var PaymentLinkController $payment_link */
         $payment_link = app(PaymentLinkController::class);
         $request->merge(array(
             'amount' => (float)$request->amount,
             'purpose' => $request->purpose,
-            'customer_id' => $request->customer_id,
+            'customer_id' => $order,
             'emi_month' => $request->emi_month,
             'interest_paid_by' => $request->interest_paid_by,
             'transaction_charge' => $request->transaction_charge,
-            'pos_order_id' => (int)($order),
-            'user' => Partner::find($partner),
-            'type' => 'partner'
+            'pos_order_id' => (int)$order->getId(),
         ));
         return $payment_link->store($request);
     }
