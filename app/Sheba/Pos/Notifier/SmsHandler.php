@@ -36,6 +36,9 @@ class SmsHandler
         $sms_cost           = $sms->estimateCharge();
         if ((double)$partner->wallet < $sms_cost) return;
 
+        $sms->setBusinessType(BusinessType::SMANAGER)
+            ->setFeatureType(FeatureType::POS)
+            ->shoot();
 
         (new WalletTransactionHandler())
             ->setModel($partner)
