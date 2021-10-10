@@ -38,30 +38,29 @@ class AccessTokenMiddleware
         $now = Carbon::now()->timestamp;
         $key_name = 'digigo:debug:' . $now;
 
-        $token = $this->getToken();
-        if (!$token) {
-            if ($is_digigo) Redis::set($key_name, "1: $now : null");
-            return api_response($request, null, 401, ['message' => "Your session has expired. Try Login"]);
+        try {
+            $token = JWTAuth::getToken();
+            if (!$token) {
+                if ($is_digigo) Redis::set($key_name, "1: $now : null");
+                return $this->formApiResponse($request, null, 401, ['message' => "Your session has expired. Try Login"]);
+            }
+            if ($request->url() != config('sheba.api_url') . '/v2/top-up/get-topup-token') JWTAuth::getPayload($token);
+            $access_token = $this->findAccessToken($token);
+            if (!$access_token) {
+                if ($is_digigo) Redis::set($key_name, "2: $now : $token");
+                throw new AccessTokenDoesNotExist();
+            }
+            if ($request->url() != config('sheba.api_url') . '/v2/top-up/get-topup-token' && !$access_token->isValid()) {
+                if ($is_digigo) Redis::set($key_name, "3: $now : $token");
+                throw new AccessTokenNotValidException();
+            }
+            $this->setAuthorizationToken($access_token);
+            $request->merge(['access_token' => $access_token, 'auth_user' => AuthUser::create()]);
+        } catch (JWTException $e) {
+            if ($is_digigo) Redis::set($key_name, "4 (" . $e->getMessage() . "): $now : " . (isset($token) ? $token : "null"));
+            return $this->formApiResponse($request, null, 401, ['message' => "Your session has expired. Try Login"]);
         }
 
-        if ($this->isNotTopUpTokenRequest($request) && $error = $this->isPayloadInValid($token)) {
-            if ($is_digigo) Redis::set($key_name, "4 ($error): $now : $token");
-            return api_response($request, null, 401, ['message' => "Your session has expired. Try Login"]);
-        }
-
-        $access_token = $this->findAccessToken($token);
-        if (!$access_token) {
-            if ($is_digigo) Redis::set($key_name, "2: $now : $token");
-            throw new AccessTokenDoesNotExist();
-        }
-        if ($this->isNotTopUpTokenRequest($request) && $access_token->isNotValid()) {
-            if ($is_digigo) Redis::set($key_name, "3: $now : $token");
-            throw new AccessTokenNotValidException();
-        }
-
-        $this->setAuthorizationToken($access_token);
-        $this->authUser = AuthUser::create();
-        $request->merge(['access_token' => $access_token, 'auth_user' => $this->authUser]);
         $this->setExtraDataToRequest($request);
         return $next($request);
     }
@@ -103,6 +102,11 @@ class AccessTokenMiddleware
 
     protected function setExtraDataToRequest($request)
     {
+    }
+
+    protected function formApiResponse($request, $internal, $code, array $data)
+    {
+        return api_response($request, $internal, $code, $data);
     }
 
     protected function getAuthorizationToken()

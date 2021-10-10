@@ -46,7 +46,11 @@ class PosOrderResolver
             $customer = $oldPosOrder->customer;
             $partner = $oldPosOrder->partner;
             $partnerObject = $this->partnerObject->setId($partner->id)->setSubDomain($partner->sub_domain);
-            $customerObject = $this->customerObject->setId($customer->id)->setName($customer->nicak_name ?: $customer->profile->name)->setMobile($customer->profile->mobile);
+            if ($oldPosOrder->customer_id) {
+                $customerObject = $this->customerObject->setId($customer->id)->setName($customer->nicak_name ?: $customer->profile->name)->setMobile($customer->profile->mobile);
+            } else {
+                $customerObject = null;
+            }
             $this->order = $this->posOrderObject->setId($oldPosOrder->id)->setCustomerId($oldPosOrder->customer_id)->setPartnerId($oldPosOrder->partner_id)
                 ->setDue($oldPosOrder->getDue())->setSalesChannel($oldPosOrder->sales_channel)->setIsMigrated(0)
                 ->setCustomer($customerObject)->setPartner($partnerObject)->setType(PosOrderTypes::OLD_SYSTEM)
@@ -57,7 +61,11 @@ class PosOrderResolver
             $customer = $newPosOrder->customer;
             $partner = $newPosOrder->partner;
             $partnerObject = $this->partnerObject->setId($partner->id)->setSubDomain($partner->sub_domain);
-            $customerObject = $this->customerObject->setId($customer->id)->setName($customer->name)->setMobile($customer->mobile);
+            if ($newPosOrder->customer_id) {
+                $customerObject = $this->customerObject->setId($customer->id)->setName($customer->name)->setMobile($customer->mobile);
+            } else {
+                $customerObject = null;
+            }
             $this->order = $this->posOrderObject->setId($newPosOrder->id)->setCustomerId($newPosOrder->customer_id)->setPartnerId($newPosOrder->partner_id)
                 ->setDue($newPosOrder->due)->setSalesChannel($newPosOrder->sales_channel)->setIsMigrated(1)
                 ->setCustomer($customerObject)->setPartner($partnerObject)->setType(PosOrderTypes::NEW_SYSTEM)
