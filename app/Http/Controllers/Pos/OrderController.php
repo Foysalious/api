@@ -570,7 +570,7 @@ class OrderController extends Controller
 
     public function createPayment($order, Request $request, PosOrderResolver $posOrderResolver)
     {
-        $order = $posOrderResolver->setOrderId($order)->order;
+        $order = $posOrderResolver->setOrderId($order)->get();
         /** @var PaymentLinkController $payment_link */
         $payment_link = app(PaymentLinkController::class);
         $request->merge(array(
