@@ -14,6 +14,7 @@ use App\Sheba\Pos\Order\Invoice\InvoiceService;
 use App\Transformers\CustomSerializer;
 use App\Transformers\PosOrderTransformer;
 use Carbon\Carbon;
+use Dingo\Api\Routing\Helpers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -569,7 +570,7 @@ class OrderController extends Controller
 
     public function createPayment($order, Request $request, PosOrderResolver $posOrderResolver)
     {
-        $order = $posOrderResolver->setOrderId($order)->order;
+        $order = $posOrderResolver->setOrderId($order)->get();
         /** @var PaymentLinkController $payment_link */
         $payment_link = app(PaymentLinkController::class);
         $request->merge(array(

@@ -200,21 +200,23 @@ class PaymentLinkOrderComplete extends PaymentComplete
     private function clearTarget()
     {
         $this->target = $this->paymentLink->getTarget();
-        if ($this->target instanceof PosOrderObject) {
-            $payment_data    = [
-                'pos_order_id' => $this->target->id,
-                'amount'       => $this->transaction->getEntryAmount(),
-                'method'       => $this->payment->payable->type,
-                'emi_month'    => $this->transaction->getEmiMonth(),
-                'interest'     => $this->transaction->isPaidByPartner() ? $this->transaction->getInterest() : 0
-            ];
-            /** @var PaymentCreator $payment_creator */
-            $payment_creator = app(PaymentCreator::class);
-            $payment_creator->credit($payment_data, $this->target->type);
-            if ($this->transaction->isPaidByCustomer()) {
-                $this->target->update(['interest' => 0, 'bank_transaction_charge' => 0]);
-            }
-        }
+//        TODO: Need to fix error: Call to undefined method App\\Sheba\\Pos\\Order\\PosOrderObject::update()
+//        if ($this->target instanceof PosOrderObject) {
+//            $payment_data    = [
+//                'pos_order_id' => $this->target->id,
+//                'amount'       => $this->transaction->getEntryAmount(),
+//                'method'       => $this->payment->payable->type,
+//                'emi_month'    => $this->transaction->getEmiMonth(),
+//                'interest'     => $this->transaction->isPaidByPartner() ? $this->transaction->getInterest() : 0
+//            ];
+//            /** @var PaymentCreator $payment_creator */
+//            $payment_creator = app(PaymentCreator::class);
+//            $payment_creator->credit($payment_data, $this->target->type);
+//            if ($this->transaction->isPaidByCustomer()) {
+//                $this->target->update(['interest' => 0, 'bank_transaction_charge' => 0]);
+//            }
+////            $this->storeAccountingJournal($payment_data);
+//        }
         if ($this->target instanceof ExternalPayment) {
             $this->target->payment_id = $this->payment->id;
             $this->target->update();
@@ -277,7 +279,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $fee              = number_format($this->transaction->getFee(), 2);
         $payment_completion_date = Carbon::parse($this->payment->updated_at)->format('d/m/Y');
 
-        $event_type       = $this->target && $this->target instanceof PosOrder && $this->target->sales_channel == SalesChannels::WEBSTORE ? 'WebstoreOrder' : class_basename($this->target);
+        $event_type       = $this->target && $this->target instanceof PosOrderObject && $this->target->sales_channel == SalesChannels::WEBSTORE ? 'WebstoreOrder' : class_basename($this->target);
         /** @var Payable $payable */
         $payable = Payable::find($this->payment->payable_id);
         $mobile = $payable->getMobile();

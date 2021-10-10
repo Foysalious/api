@@ -6,8 +6,13 @@ use Sheba\Pos\Order\PosOrderTypes;
 class PosOrderObject
 {
     private $id;
+    private $customer_id;
+    private $partner_id;
     private $sales_channel;
     private $customer;
+    private $partner;
+    private $is_migrated;
+    private $created_at;
     private $due;
     protected $type = PosOrderTypes::OLD_SYSTEM;
 
@@ -18,6 +23,26 @@ class PosOrderObject
     public function setId($id): PosOrderObject
     {
         $this->id = $id;
+        return $this;
+    }
+
+    /**
+     * @param mixed $customer_id
+     * @return PosOrderObject
+     */
+    public function setCustomerId($customer_id)
+    {
+        $this->customer_id = $customer_id;
+        return $this;
+    }
+
+    /**
+     * @param mixed $partner_id
+     * @return PosOrderObject
+     */
+    public function setPartnerId($partner_id)
+    {
+        $this->partner_id = $partner_id;
         return $this;
     }
 
@@ -82,28 +107,6 @@ class PosOrderObject
         return $this;
     }
 
-    public function get(): PosOrderObject
-    {
-        return $this;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getId()
-    {
-        return $this->id;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getSalesChannel()
-    {
-        return $this->sales_channel;
-    }
-
-    public function __get($value)
     /**
      * @param mixed $created_at
      * @return PosOrderObject
@@ -114,10 +117,7 @@ class PosOrderObject
         return $this;
     }
 
-    /**
-     * @return string
-     */
-    public function getType()
+    public function __get($value)
     {
         return $this->{$value};
     }

@@ -43,33 +43,31 @@ class PosOrderResolver
         $oldPosOrder = PosOrder::where('id', $orderId)->select('id', 'sales_channel', 'customer_id', 'partner_id', 'is_migrated', 'created_at')->first();
         if ($oldPosOrder && !$oldPosOrder->is_migrated) {
             $oldPosOrder->calculate();
-            $customer = $oldPosOrder->customer->profile;
-            $customerObject = $this->customerObject->setId($customer->id)->setName($customer->name)->setMobile($customer->mobile);
-            $this->order = $this->posOrderObject->setId($oldPosOrder->id)->setDue($oldPosOrder->getDue())->setSalesChannel($oldPosOrder->sales_channel)->setCustomer($customerObject)->setType(PosOrderTypes::OLD_SYSTEM);
+            $customer = $oldPosOrder->customer;
             $partner = $oldPosOrder->partner;
-            $partnerObject = $this->partnerObject->setId($partner->id)->setSubDomain($partner->sub_domain)->get();
-            $customerObject = $this->customerObject->setId($customer->id)->setName($customer->name)->setMobile($customer->mobile)->get();
-            $this->order = $this->posOrderObject->setId($oldPosOrder->id)->setSalesChannel($oldPosOrder->sales_channel)->setIsMigrated(0)
-                ->setCustomer($customerObject)->setPartner($partnerObject)->setType(PosOrderTypes::OLD_SYSTEM)->setCreatedAt($oldPosOrder->created_at)->get();
+            $partnerObject = $this->partnerObject->setId($partner->id)->setSubDomain($partner->sub_domain);
+            $customerObject = $this->customerObject->setId($customer->id)->setName($customer->nicak_name ?: $customer->profile->name)->setMobile($customer->profile->mobile);
+            $this->order = $this->posOrderObject->setId($oldPosOrder->id)->setCustomerId($oldPosOrder->customer_id)->setPartnerId($oldPosOrder->partner_id)
+                ->setDue($oldPosOrder->getDue())->setSalesChannel($oldPosOrder->sales_channel)->setIsMigrated(0)
+                ->setCustomer($customerObject)->setPartner($partnerObject)->setType(PosOrderTypes::OLD_SYSTEM)
+                ->setCreatedAt($oldPosOrder->created_at);
         } else {
             $response = $this->client->get('api/v1/orders/' . $this->orderId);
-            $response = $this->client->get('api/v1/order-info-for-payment-link/' . $this->orderId);
             $newPosOrder = json_decode(json_encode($response['order']), FALSE);
             $customer = $newPosOrder->customer;
-            $customerObject = $this->customerObject->setId(null)->setName($customer->name)->setMobile($customer->mobile);
-            $this->order = $this->posOrderObject->setId($newPosOrder->id)->setDue($newPosOrder->due)->setSalesChannel($newPosOrder->sales_channel)->setCustomer($customerObject)->setType(PosOrderTypes::NEW_SYSTEM);
             $partner = $newPosOrder->partner;
-            $partnerObject = $this->partnerObject->setId($partner->id)->setSubDomain($partner->sub_domain)->get();
-            $customerObject = $this->customerObject->setId(null)->setName($customer->name)->setMobile($customer->mobile)->get();
-            $this->order = $this->posOrderObject->setId($newPosOrder->id)->setSalesChannel($newPosOrder->sales_channel)
-                ->setIsMigrated(1)->setCustomer($customerObject)->setPartner($partnerObject)->setType(PosOrderTypes::NEW_SYSTEM)
-                ->setCreatedAt($newPosOrder->created_at)->get();
+            $partnerObject = $this->partnerObject->setId($partner->id)->setSubDomain($partner->sub_domain);
+            $customerObject = $this->customerObject->setId($customer->id)->setName($customer->name)->setMobile($customer->mobile);
+            $this->order = $this->posOrderObject->setId($newPosOrder->id)->setCustomerId($newPosOrder->customer_id)->setPartnerId($newPosOrder->partner_id)
+                ->setDue($newPosOrder->due)->setSalesChannel($newPosOrder->sales_channel)->setIsMigrated(1)
+                ->setCustomer($customerObject)->setPartner($partnerObject)->setType(PosOrderTypes::NEW_SYSTEM)
+                ->setCreatedAt($newPosOrder->created_at);
         }
         return $this;
     }
 
-    public function __get($value)
+    public function get(): PosOrderObject
     {
-        return $this->{$value};
+        return $this->order;
     }
 }
