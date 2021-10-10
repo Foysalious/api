@@ -62,6 +62,9 @@ class PosOrderResolver
         return $this;
     }
 
+    /**
+     * @return PosOrderObject
+     */
     public function get()
     {
         return $this->order;
