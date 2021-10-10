@@ -1,26 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="Application Test Suite" tests="19" assertions="71" failures="0" errors="0" time="41.654460">
-    <testsuite name="Tests\Feature\sProServiceBookCategory\sProServiceDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProServiceDetailsTest.php" tests="19" assertions="71" failures="0" errors="0" time="41.654460">
-      <testcase name="testSProServiceDetailsAPIWithValidLatLng" class="Tests\Feature\sProServiceBookCategory\sProServiceDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProServiceDetailsTest.php" line="87" assertions="38" time="2.156681"/>
-      <testcase name="testSProServiceDetailsAPIWithValidLatInvalidLng" class="Tests\Feature\sProServiceBookCategory\sProServiceDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProServiceDetailsTest.php" line="137" assertions="2" time="2.704503"/>
-      <testcase name="testSProServiceDetailsAPIWithInvalidLatValidLng" class="Tests\Feature\sProServiceBookCategory\sProServiceDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProServiceDetailsTest.php" line="151" assertions="2" time="2.529804"/>
-      <testcase name="testSProServiceDetailsAPIWithInvalidLatLng" class="Tests\Feature\sProServiceBookCategory\sProServiceDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProServiceDetailsTest.php" line="165" assertions="2" time="3.525966"/>
-      <testcase name="testSProServiceDetailsAPIWithValidLatNoLng" class="Tests\Feature\sProServiceBookCategory\sProServiceDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProServiceDetailsTest.php" line="179" assertions="2" time="2.617974"/>
-      <testcase name="testSProServiceDetailsAPIWithNoLatValidLng" class="Tests\Feature\sProServiceBookCategory\sProServiceDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProServiceDetailsTest.php" line="193" assertions="2" time="2.517916"/>
-      <testcase name="testSProServiceDetailsAPIWithoutLatLng" class="Tests\Feature\sProServiceBookCategory\sProServiceDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProServiceDetailsTest.php" line="207" assertions="2" time="2.930771"/>
-      <testcase name="testSProServiceDetailsAPIWithInvalidServiceId" class="Tests\Feature\sProServiceBookCategory\sProServiceDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProServiceDetailsTest.php" line="221" assertions="2" time="1.825793"/>
-      <testcase name="testSProServiceDetailsAPIWithoutAnyService" class="Tests\Feature\sProServiceBookCategory\sProServiceDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProServiceDetailsTest.php" line="251" assertions="2" time="1.759232"/>
-      <testcase name="testSProServiceDetailsAPIWithPostMethod" class="Tests\Feature\sProServiceBookCategory\sProServiceDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProServiceDetailsTest.php" line="300" assertions="1" time="1.650504"/>
-      <testcase name="testSProServiceDetailsAPIWithPutMethod" class="Tests\Feature\sProServiceBookCategory\sProServiceDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProServiceDetailsTest.php" line="313" assertions="1" time="2.080418"/>
-      <testcase name="testSProServiceDetailsAPIWithDeleteMethod" class="Tests\Feature\sProServiceBookCategory\sProServiceDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProServiceDetailsTest.php" line="326" assertions="1" time="2.264728"/>
-      <testcase name="testSProServiceDetailsAPIWithSubCategoryUnpublishedAndMasterCategoryPublishedAndServicePublished" class="Tests\Feature\sProServiceBookCategory\sProServiceDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProServiceDetailsTest.php" line="339" assertions="2" time="2.266754"/>
-      <testcase name="testSProServiceDetailsAPIWithSubCategoryUnpublishedAndMasterCategoryUnpublishedAndServiceUnpublished" class="Tests\Feature\sProServiceBookCategory\sProServiceDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProServiceDetailsTest.php" line="358" assertions="2" time="2.274068"/>
-      <testcase name="testSProServiceDetailsAPIWithSubCategoryUnpublishedAndMasterCategoryUnpublishedAndServicePublished" class="Tests\Feature\sProServiceBookCategory\sProServiceDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProServiceDetailsTest.php" line="377" assertions="2" time="1.682314"/>
-      <testcase name="testSProServiceDetailsAPIWithSubCategoryUnpublishedAndMasterCategoryPublishedAndServiceUnpublished" class="Tests\Feature\sProServiceBookCategory\sProServiceDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProServiceDetailsTest.php" line="396" assertions="2" time="1.756133"/>
-      <testcase name="testSProServiceDetailsAPIWithSubCategoryPublishedAndMasterCategoryPublishedAndServicePublished" class="Tests\Feature\sProServiceBookCategory\sProServiceDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProServiceDetailsTest.php" line="415" assertions="2" time="1.857641"/>
-      <testcase name="testSProServiceDetailsAPIWithSubCategoryPublishedAndMasterCategoryUnpublishedAndServiceUnpublished" class="Tests\Feature\sProServiceBookCategory\sProServiceDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProServiceDetailsTest.php" line="434" assertions="2" time="1.692745"/>
-      <testcase name="testSProServiceDetailsAPIWithSubCategoryPublishedAndMasterCategoryPublishedAndServiceUnpublished" class="Tests\Feature\sProServiceBookCategory\sProServiceDetailsTest" file="/var/www/tests/Feature/sProServiceBookCategory/sProServiceDetailsTest.php" line="473" assertions="2" time="1.560515"/>
+  <testsuite name="Application Test Suite" tests="1" assertions="0" failures="0" errors="1" time="0.000000">
+    <testsuite name="Tests\Feature\sProOrderCreate\sProOrderCreatePlaceOrderTest" file="/var/www/tests/Feature/sProOrderCreate/sProOrderCreatePlaceOrderTest.php" tests="1" assertions="0" failures="0" errors="1" time="0.000000">
+      <testcase name="testSProPlaceOrderAPIWithValidBody" class="Tests\Feature\sProOrderCreate\sProOrderCreatePlaceOrderTest" file="/var/www/tests/Feature/sProOrderCreate/sProOrderCreatePlaceOrderTest.php" line="86" assertions="0" time="0.000000">
+        <error type="PHPUnit_Framework_Exception">Tests\Feature\sProOrderCreate\sProOrderCreatePlaceOrderTest::testSProPlaceOrderAPIWithValidBody
+PHPUnit_Framework_Exception: array:1 [
+  0 =&gt; "1"
+]
+
+</error>
+      </testcase>
     </testsuite>
   </testsuite>
 </testsuites>

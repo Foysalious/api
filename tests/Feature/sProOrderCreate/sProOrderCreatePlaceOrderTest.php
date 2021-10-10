@@ -97,7 +97,7 @@ class sProOrderCreatePlaceOrderTest extends FeatureTestCase
             'mobile' => "01835559988",
             'sales_channel' => "Web",
             'payment_method' => "cod",
-            'date' => '2021-09-22',
+            'date' => '2021-10-22',
             'time' => '15:00:00-16:00:00',
             'location_id' => 4,
             'address' => 'Michael road',
