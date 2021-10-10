@@ -121,7 +121,6 @@ class Kernel extends HttpKernel
         'apiRequestLog' => ApiRequestMiddleware::class,
         'shebaServer' => ShebaNetworkMiddleware::class,
         'terminate' => TerminatingMiddleware::class,
-        'apiRequestLog' => ApiRequestMiddleware::class,
         'jwtAccessToken' => JwtAccessTokenMiddleware::class,
         'ip.whitelist' => IpWhitelistMiddleware::class,
     ];
