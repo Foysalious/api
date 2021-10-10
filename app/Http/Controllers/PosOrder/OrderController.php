@@ -4,6 +4,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\VoucherController;
 use App\Sheba\PosOrderService\Services\OrderService;
 use Illuminate\Http\Request;
+use Sheba\DueTracker\Exceptions\UnauthorizedRequestFromExpenseTrackerException;
+use Sheba\PaymentLink\PaymentLinkStatics;
+use Sheba\Pos\Order\PosOrderTypes;
+use Sheba\PosOrderService\Services\PaymentService;
 
 class OrderController extends Controller
 {
@@ -11,20 +15,25 @@ class OrderController extends Controller
      * @var OrderService
      */
     private $orderService;
+    /**
+     * @var PaymentService
+     */
+    private $paymentService;
 
 
-    public function __construct(OrderService $orderService)
+    public function __construct(OrderService $orderService, PaymentService $paymentService)
     {
         $this->orderService = $orderService;
+        $this->paymentService = $paymentService;
     }
 
     public function index(Request $request)
     {
         $partner = $request->auth_user->getPartner();
         $hasQueryStr = strpos($request->getRequestUri(), '?');
-        $queryStr = $hasQueryStr ? '?'.substr($request->getRequestUri(), strpos($request->getRequestUri(), "?") + 1) : '';
+        $queryStr = $hasQueryStr ? '?' . substr($request->getRequestUri(), strpos($request->getRequestUri(), "?") + 1) : '';
         $order = $this->orderService->setPartnerId($partner->id)->setFilterParams($queryStr)->getOrderList();
-        if(!$order) return http_response($request, "অর্ডারটি পাওয়া যায় নি", 404, $order);
+        if (!$order) return http_response($request, "অর্ডারটি পাওয়া যায় নি", 404, $order);
         else return http_response($request, null, 200, $order);
     }
 
@@ -32,7 +41,7 @@ class OrderController extends Controller
     {
         $partner = $request->auth_user->getPartner();
         $orderDetails = $this->orderService->setPartnerId($partner->id)->setOrderId($order_id)->getDetails();
-        if(!$orderDetails) return http_response($request, "অর্ডারটি পাওয়া যায় নি", 404, $orderDetails);
+        if (!$orderDetails) return http_response($request, "অর্ডারটি পাওয়া যায় নি", 404, $orderDetails);
         else return http_response($request, null, 200, $orderDetails);
     }
 
@@ -117,8 +126,46 @@ class OrderController extends Controller
     {
         $partner = $request->auth_user->getPartner();
         $orderLogs = $this->orderService->setPartnerId($partner->id)->setOrderId($order_id)->getLogs();
-        if(!$orderLogs) return http_response($request, "অর্ডারটি পাওয়া যায় নি", 404, $orderLogs);
+        if (!$orderLogs) return http_response($request, "অর্ডারটি পাওয়া যায় নি", 404, $orderLogs);
         else return http_response($request, null, 200, $orderLogs);
+    }
+
+    /**
+     * @throws UnauthorizedRequestFromExpenseTrackerException
+     */
+    public function onlinePayment($order, Request $request)
+    {
+        $this->validate($request, [
+            'pos_order_type' =>'required|in:' . implode(',', PosOrderTypes::get()),
+            'partner_id' => 'required|int',
+            'amount' => 'required|numeric',
+            'payment_method' => 'required|string',
+            'emi_month' => 'required|int',
+            'interest' => 'required|numeric',
+            'is_paid_by_customer' => 'required|boolean',
+            'api_key' => 'required',
+        ]);
+        if($request->api_key != config('expense_tracker.api_key'))
+            throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
+        $this->paymentService->setPosOrderId($order)->setPosOrderType($request->pos_order_type)->setPartnerId($request->partner_id)->setAmount($request->amount)
+            ->setMethod($request->payment_method)->setEmiMonth($request->emi_month)->setInterest($request->interest)
+            ->onlinePayment();
+        return http_response($request, null, 200);
+    }
+
+    public function paymentLinkCreated($order, Request $request)
+    {
+        $this->validate($request, [
+            'amount' => 'required',
+            'purpose' => 'required',
+            'customer_id' => 'sometimes',
+            'emi_month' => 'sometimes|integer|in:' . implode(',', config('emi.valid_months')),
+            'interest_paid_by' => 'sometimes|in:' . implode(',', PaymentLinkStatics::paidByTypes()),
+            'transaction_charge' => 'sometimes|numeric|min:' . PaymentLinkStatics::get_payment_link_commission(),
+            'pos_order_id' => 'required'
+        ]);
+        //TODO: Order Payment Link Created Event
+        return http_response($request, null, 200);
     }
 
 }
