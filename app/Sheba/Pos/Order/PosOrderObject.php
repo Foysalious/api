@@ -6,8 +6,13 @@ use Sheba\Pos\Order\PosOrderTypes;
 class PosOrderObject
 {
     private $id;
+    private $customer_id;
+    private $partner_id;
     private $sales_channel;
     private $customer;
+    private $partner;
+    private $is_migrated;
+    private $created_at;
     private $due;
     protected $type = PosOrderTypes::OLD_SYSTEM;
 
@@ -18,6 +23,26 @@ class PosOrderObject
     public function setId($id): PosOrderObject
     {
         $this->id = $id;
+        return $this;
+    }
+
+    /**
+     * @param mixed $customer_id
+     * @return PosOrderObject
+     */
+    public function setCustomerId($customer_id)
+    {
+        $this->customer_id = $customer_id;
+        return $this;
+    }
+
+    /**
+     * @param mixed $partner_id
+     * @return PosOrderObject
+     */
+    public function setPartnerId($partner_id)
+    {
+        $this->partner_id = $partner_id;
         return $this;
     }
 
@@ -53,6 +78,16 @@ class PosOrderObject
     }
 
     /**
+     * @param mixed $is_migrated
+     * @return PosOrderObject
+     */
+    public function setIsMigrated($is_migrated): PosOrderObject
+    {
+        $this->is_migrated = $is_migrated;
+        return $this;
+    }
+
+    /**
      * @param mixed $customer
      * @return PosOrderObject
      */
@@ -63,11 +98,23 @@ class PosOrderObject
     }
 
     /**
-     * @return mixed
+     * @param mixed $partner
+     * @return PosOrderObject
      */
-    public function getSalesChannel()
+    public function setPartner($partner): PosOrderObject
     {
-        return $this->sales_channel;
+        $this->partner = $partner;
+        return $this;
+    }
+
+    /**
+     * @param mixed $created_at
+     * @return PosOrderObject
+     */
+    public function setCreatedAt($created_at): PosOrderObject
+    {
+        $this->created_at = $created_at;
+        return $this;
     }
 
     public function __get($value)
