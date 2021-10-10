@@ -55,6 +55,7 @@ class OrderController extends Controller
             ->setPaymentLinkAmount($request->payment_link_amount)
             ->setPaidAmount($request->paid_amount)
             ->setVoucherId($request->voucher_id)
+            ->setEmiMonth($request->emi_month)
             ->store();
         return http_response($request, null, 200, $response);
 

@@ -329,6 +329,7 @@ class OrderService
         if ($this->paymentLinkAmount) array_push($data, ['name' => 'payment_link_amount','contents' => $this->paymentLinkAmount]);
         if ($this->paidAmount) array_push($data, ['name' => 'paid_amount','contents' => $this->paidAmount]);
         if($this->voucher_id) array_push($data, ['name' => 'voucher_id', 'contents' => $this->voucher_id]);
+        if($this->emi_month) array_push($data, ['name' => 'emi_month', 'contents' => $this->emi_month]);
         return $data;
     }
 
