@@ -9,6 +9,11 @@ use Illuminate\Http\Request;
 
 class WebstoreSettingController extends Controller
 {
+    /**
+     * @var WebstoreSettingService
+     */
+    private $webstoreSettingService;
+
     public function __construct(WebstoreSettingService $webstoreSettingService)
     {
         $this->webstoreSettingService = $webstoreSettingService;
