@@ -140,7 +140,7 @@ class OrderController extends Controller
             'amount' => 'required|numeric',
             'payment_method_en' => 'required|string',
             'payment_method_bn' => 'required|string',
-            'icon' => 'required|string',
+            'payment_method_icon' => 'required|string',
             'emi_month' => 'required|int',
             'interest' => 'required|numeric',
             'is_paid_by_customer' => 'required|boolean',
@@ -160,9 +160,7 @@ class OrderController extends Controller
         $this->validate($request, [
             'link_id'                 => 'required|string',
             'reason'                  => 'required|string',
-            'type'                    => 'required|string',
             'status'                  => 'required|string',
-            'amount'                  => 'required|numeric',
             'link'                    => 'required|string',
             'emi_month'               => 'sometimes|integer|in:' . implode(',', config('emi.valid_months')),
             'interest'                => 'sometimes|numeric',
