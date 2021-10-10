@@ -7,6 +7,7 @@ use App\Models\Partner;
 use App\Models\PartnerPosService;
 use App\Models\PosOrder;
 use App\Models\PosOrderPayment;
+use App\Sheba\Notification\Customer\Order;
 use App\Sheba\Partner\Delivery\Exceptions\DeliveryCancelRequestError;
 use App\Sheba\PosOrderService\PosOrderServerClient;
 use App\Sheba\PosOrderService\Services\OrderService;
@@ -67,6 +68,8 @@ class DeliveryService
     /** @var OrderService */
     private $orderService;
     private $posOrderId;
+    protected $deliveryStatus;
+    protected $deliveryReqId;
 
 
     public function __construct(DeliveryServerClient $client, PartnerDeliveryInformationRepositoryInterface $partnerDeliveryInfoRepositoryInterface,
@@ -132,6 +135,24 @@ class DeliveryService
     public function setToken($token)
     {
         $this->token = $token;
+        return $this;
+    }
+
+    /**
+     * @param mixed $deliveryReqId
+     */
+    public function setDeliveryReqId($deliveryReqId)
+    {
+        $this->deliveryReqId = $deliveryReqId;
+        return $this;
+    }
+
+    /**
+     * @param mixed $deliveryStatus
+     */
+    public function setDeliveryStatus($deliveryStatus)
+    {
+        $this->deliveryStatus = $deliveryStatus;
         return $this;
     }
 
@@ -580,26 +601,14 @@ class DeliveryService
         return true;
     }
 
-    public function updateDeliveryStatus($merchant_id, $delivery_req_id)
+    public function updateDeliveryStatus()
     {
-        $status = $this->getDeliveryStatusByReqId($delivery_req_id);
-        if($status == Statuses::DELIVERED) {
-            $pos_order = PosOrder::where('delivery_request_id', $delivery_req_id)->first();
-            $this->posOrder = $pos_order;
-            if($this->isOrderMigrated() || is_null($pos_order)) {
-                $partner_delivery_info = $this->partnerDeliveryInfoRepositoryInterface->where('merchant_id',$merchant_id)->first();
-                $this->orderService->setPartnerId($partner_delivery_info->partner->id)->setStatus(OrderStatuses::COMPLETED)->updateStatusByDeliveryReqId($delivery_req_id, ['status' => 'Completed']);
-            } else {
-                $pos_order->delivery_status = Statuses::DELIVERED;
-                $pos_order->status = OrderStatuses::COMPLETED;
-                $pos_order->save();
-            }
+        $pos_order  = PosOrder::where('delivery_request_id', $this->deliveryReqId)->first();
+        if($pos_order) {
+            $pos_order->delivery_status = $this->deliveryStatus;
+            if($this->deliveryStatus == Statuses::DELIVERED) $pos_order->status = OrderStatuses::COMPLETED;
+            $pos_order->save();
         }
     }
-
-    private function getDeliveryStatusByReqId($delivery_req_id)
-    {
-        $res = $this->client->setToken($this->token)->post('orders/track', ['uid' => $delivery_req_id]);
-        return $res['data']['status'];
-    }
+    
 }
