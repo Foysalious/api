@@ -8,6 +8,6 @@ class SmanagerUserServerClient extends PosOrderServerClient
     public function __construct(Client $client)
     {
         parent::__construct($client);
-        $this->baseUrl = rtrim(config('pos_order_service.user_url'), '/');
+        $this->baseUrl = rtrim(config('smanager_user_service.api_url'), '/');
     }
 }
