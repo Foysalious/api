@@ -133,7 +133,7 @@ class PaymentLinkTransformer
             if ($model_name == 'due_tracker') return null;
             /** @var PosOrderResolver $posOrderResolver */
             $posOrderResolver = app(PosOrderResolver::class);
-            if ($model_name == 'pos_order') return $posOrderResolver->setOrderId($this->response->targetId)->get();
+            if ($model_name == 'pos_order') return $posOrderResolver->setOrderId($this->response->targetId)->order;
             $this->target = $model_name::find($this->response->targetId);
             return $this->target;
         } else
