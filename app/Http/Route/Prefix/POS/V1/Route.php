@@ -24,6 +24,7 @@ class Route
             $api->group(['prefix' => 'orders'], function ($api) {
                 $api->group(['prefix' => '{order}'], function ($api) {
                     $api->post('online-payment', 'PosOrder\OrderController@onlinePayment');
+                    $api->post('payment-link-created', 'PosOrder\OrderController@paymentLinkCreated');
                 });
             });
             /**

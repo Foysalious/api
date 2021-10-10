@@ -5,6 +5,7 @@ use App\Http\Controllers\VoucherController;
 use App\Sheba\PosOrderService\Services\OrderService;
 use Illuminate\Http\Request;
 use Sheba\DueTracker\Exceptions\UnauthorizedRequestFromExpenseTrackerException;
+use Sheba\PaymentLink\PaymentLinkStatics;
 use Sheba\Pos\Order\PosOrderTypes;
 use Sheba\PosOrderService\Services\PaymentService;
 
@@ -149,6 +150,21 @@ class OrderController extends Controller
         $this->paymentService->setPosOrderId($order)->setPosOrderType($request->pos_order_type)->setPartnerId($request->partner_id)->setAmount($request->amount)
             ->setMethod($request->payment_method)->setEmiMonth($request->emi_month)->setInterest($request->interest)
             ->onlinePayment();
+        return http_response($request, null, 200);
+    }
+
+    public function paymentLinkCreated($order, Request $request)
+    {
+        $this->validate($request, [
+            'amount' => 'required',
+            'purpose' => 'required',
+            'customer_id' => 'sometimes',
+            'emi_month' => 'sometimes|integer|in:' . implode(',', config('emi.valid_months')),
+            'interest_paid_by' => 'sometimes|in:' . implode(',', PaymentLinkStatics::paidByTypes()),
+            'transaction_charge' => 'sometimes|numeric|min:' . PaymentLinkStatics::get_payment_link_commission(),
+            'pos_order_id' => 'required'
+        ]);
+        //TODO: Order Payment Link Created Event
         return http_response($request, null, 200);
     }
 
