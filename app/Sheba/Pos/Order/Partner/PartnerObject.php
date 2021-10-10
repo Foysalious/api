@@ -3,8 +3,8 @@
 
 class PartnerObject
 {
-    public $id;
-    public $sub_domain;
+    private $id;
+    private $sub_domain;
 
     /**
      * @param mixed $id
@@ -26,9 +26,9 @@ class PartnerObject
         return $this;
     }
 
-    public function get(): PartnerObject
+    public function __get($value)
     {
-        return $this;
+        return $this->{$value};
     }
 
 
