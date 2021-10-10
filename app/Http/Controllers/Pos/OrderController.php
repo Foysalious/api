@@ -533,7 +533,7 @@ class OrderController extends Controller
 
     public function createPayment($order, Request $request, PosOrderResolver $posOrderResolver)
     {
-        $order = $posOrderResolver->setOrderId($order)->get();
+        $order = $posOrderResolver->setOrderId($order)->order;
         /** @var PaymentLinkController $payment_link */
         $payment_link = app(PaymentLinkController::class);
         $request->merge(array(
@@ -543,7 +543,7 @@ class OrderController extends Controller
             'emi_month' => $request->emi_month,
             'interest_paid_by' => $request->interest_paid_by,
             'transaction_charge' => $request->transaction_charge,
-            'pos_order_id' => (int)$order->getId(),
+            'pos_order_id' => (int)$order->id,
         ));
         return $payment_link->store($request);
     }

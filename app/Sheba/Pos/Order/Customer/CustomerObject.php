@@ -3,9 +3,9 @@
 
 class CustomerObject
 {
-    public $id;
-    public $name;
-    public $mobile;
+    private $id;
+    private $name;
+    private $mobile;
 
     /**
      * @param mixed $id
@@ -37,10 +37,9 @@ class CustomerObject
         return $this;
     }
 
-    public function get()
+    public function __get($value)
     {
-        return $this;
+        return $this->{$value};
     }
-
 
 }

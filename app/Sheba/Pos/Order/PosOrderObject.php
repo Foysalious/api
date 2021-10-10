@@ -5,9 +5,10 @@ use Sheba\Pos\Order\PosOrderTypes;
 
 class PosOrderObject
 {
-    public $id;
-    public $sales_channel;
-    public $customer;
+    private $id;
+    private $sales_channel;
+    private $customer;
+    private $due;
     protected $type = PosOrderTypes::OLD_SYSTEM;
 
     /**
@@ -31,6 +32,17 @@ class PosOrderObject
     }
 
     /**
+     * @param mixed $due
+     * @return PosOrderObject
+     */
+    public function setDue($due)
+    {
+        $this->due = $due;
+        return $this;
+    }
+
+
+    /**
      * @param mixed $type
      * @return PosOrderObject
      */
@@ -50,20 +62,6 @@ class PosOrderObject
         return $this;
     }
 
-
-    public function get(): PosOrderObject
-    {
-        return $this;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getId()
-    {
-        return $this->id;
-    }
-
     /**
      * @return mixed
      */
@@ -72,12 +70,9 @@ class PosOrderObject
         return $this->sales_channel;
     }
 
-    /**
-     * @return string
-     */
-    public function getType()
+    public function __get($value)
     {
-        return $this->type;
+        return $this->{$value};
     }
 
 }
