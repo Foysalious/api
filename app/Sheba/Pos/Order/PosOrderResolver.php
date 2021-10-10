@@ -43,10 +43,10 @@ class PosOrderResolver
         $oldPosOrder = PosOrder::where('id', $orderId)->select('id', 'sales_channel', 'customer_id', 'partner_id', 'is_migrated', 'created_at')->first();
         if ($oldPosOrder && !$oldPosOrder->is_migrated) {
             $oldPosOrder->calculate();
-            $customer = $oldPosOrder->customer->profile;
+            $customer = $oldPosOrder->customer;
             $partner = $oldPosOrder->partner;
             $partnerObject = $this->partnerObject->setId($partner->id)->setSubDomain($partner->sub_domain);
-            $customerObject = $this->customerObject->setId($customer->id)->setName($customer->name)->setMobile($customer->mobile);
+            $customerObject = $this->customerObject->setId($customer->id)->setName($customer->nicak_name ?: $customer->profile->name)->setMobile($customer->profile->mobile);
             $this->order = $this->posOrderObject->setId($oldPosOrder->id)->setCustomerId($oldPosOrder->customer_id)->setPartnerId($oldPosOrder->partner_id)
                 ->setDue($oldPosOrder->getDue())->setSalesChannel($oldPosOrder->sales_channel)->setIsMigrated(0)
                 ->setCustomer($customerObject)->setPartner($partnerObject)->setType(PosOrderTypes::OLD_SYSTEM)
