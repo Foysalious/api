@@ -272,16 +272,17 @@ class DeliveryController extends Controller
 
     public function deliveryStatusUpdate(Request $request, DeliveryService $delivery_service)
     {
+        if(config('app.env') == 'production') {
+            if($request->ip() != config('pos_delivery.server_ip')) {
+                return api_response($request, null, 400);
+            }
+        }
         $this->validate($request, [
             'order_ref_no' => 'required',
             'status' => "required|string" ,
             'merchant_code' => "required|string"
         ]);
-        /** @var PosOrder $pos_order */
-        $pos_order  = $delivery_service->getPosOrderByDeliveryReqId($request->order_ref_no);
-        if($pos_order) {
-            $delivery_service->setPartner($pos_order->partner)->setToken($this->bearerToken($request))->updateDeliveryStatus($pos_order);
-        }
+        $delivery_service->setDeliveryReqId($request->order_ref_no)->setDeliveryStatus($request->status)->updateDeliveryStatus();
         return api_response($request, null, 200);
     }
 
