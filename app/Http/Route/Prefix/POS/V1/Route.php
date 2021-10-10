@@ -28,8 +28,8 @@ class Route
             /**
              * IP Whitelist Middleware
              */
-            $api->group(['prefix' => 'send-sms', 'middleware' => ['ip.whitelist']], function ($api) {
-                $api->post('/', "PosRebuild\SmsController@sendSms");
+            $api->group(['middleware' => ['ip.whitelist']], function ($api) {
+                $api->post('send-sms', "PosRebuild\SmsController@sendSms");
             });
             /**
              * End of IP Whitelist Middleware

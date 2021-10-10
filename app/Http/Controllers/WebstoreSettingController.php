@@ -17,7 +17,7 @@ class WebstoreSettingController extends Controller
     public function index(Request $request)
     {
         $partner = $request->auth_user->getPartner();
-        $units = $this->webstoreSettingService->getallunits($partner->id);
+        $units = $this->webstoreSettingService->getallSettings($partner->id);
         return api_response($request, null, 200, $units);
     }
 
