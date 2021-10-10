@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Sheba\UserMigration\UserMigrationService;
 use App\Sheba\UserMigration\UserMigrationRepository;
 use Exception;
+use Sheba\Dal\UserMigration\UserStatus;
 
 class UserMigrationController extends Controller
 {
@@ -61,6 +62,9 @@ class UserMigrationController extends Controller
         try {
             $this->validate($request, ['status' => 'required|string']);
             $userId = $request->partner->id;
+            if (!in_array($request->status, UserStatus::get())) {
+                throw new Exception('Invalid Status');
+            }
             /** @var UserMigrationRepository $class */
             $class = $this->userMigrationSvc->resolveClass($moduleName);
             $res = $class->setUserId($userId)->setModuleName($moduleName)->updateStatus($request->status);
