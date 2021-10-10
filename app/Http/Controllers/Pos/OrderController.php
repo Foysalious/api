@@ -544,7 +544,10 @@ class OrderController extends Controller
             'interest_paid_by' => $request->interest_paid_by,
             'transaction_charge' => $request->transaction_charge,
             'pos_order_id' => $order->id,
+            "type" => 'partner',
+            'user' => $request->auth_user
         ));
-        return $payment_link->store($request);
+        $data = $payment_link->store($request)->getData(true);
+        return http_response($request, null, $data['code'], $data);
     }
 }
