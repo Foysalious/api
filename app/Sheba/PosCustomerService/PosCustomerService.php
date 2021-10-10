@@ -211,7 +211,7 @@ class PosCustomerService
     public function storePosCustomer()
     {
         $data = $this->makeCreateData();
-        return $this->smanagerUserServerClient->post('api/v1/partners/' . $this->partner->id.'/users', $data);
+        return $this->smanagerUserServerClient->post('api/v1/partners/' . $this->partner->id.'/pos-users', $data);
     }
 
     public function makeUpdateData()
