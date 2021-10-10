@@ -63,7 +63,10 @@ abstract class UserMigrationRepository
             throw new Exception('Sorry! Already Migrating.');
         }
         if ($status == UserStatus::UPGRADING) {
-            Redis::set();
+            Redis::set("user-migration:$this->userId", "$this->moduleName");
+        }
+        if ($status == UserStatus::UPGRADED) {
+            Redis::del("user-migration:$this->userId");
         }
         $info->status = $status;
         return $info->save();
