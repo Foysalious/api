@@ -537,13 +537,13 @@ class OrderController extends Controller
         /** @var PaymentLinkController $payment_link */
         $payment_link = app(PaymentLinkController::class);
         $request->merge(array(
-            'amount' => (float)$request->amount,
+            'amount' => $order->due,
             'purpose' => $request->purpose,
-            'customer_id' => $order,
+            'customer_id' => $order->customer_id,
             'emi_month' => $request->emi_month,
             'interest_paid_by' => $request->interest_paid_by,
             'transaction_charge' => $request->transaction_charge,
-            'pos_order_id' => (int)$order->id,
+            'pos_order_id' => $order->id,
         ));
         return $payment_link->store($request);
     }

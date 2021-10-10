@@ -22,7 +22,7 @@ class PosOrderObject
      */
     public function setId($id): PosOrderObject
     {
-        $this->id = $id;
+        $this->id = (int)$id;
         return $this;
     }
 
@@ -62,7 +62,7 @@ class PosOrderObject
      */
     public function setDue($due)
     {
-        $this->due = $due;
+        $this->due = (float)$due;
         return $this;
     }
 
