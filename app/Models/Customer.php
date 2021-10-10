@@ -2,7 +2,6 @@
 
 use App\Models\Transport\TransportTicketOrder;
 use App\Sheba\Payment\Rechargable;
-use Sheba\Dal\Customer\Events\CustomerCreated;
 use Sheba\Dal\Customer\Events\CustomerSaved;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Transactions\Types;
@@ -36,7 +35,6 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
     private $firstOrder;
 
     public static $savedEventClass = CustomerSaved::class;
-    public static $createdEventClass = CustomerCreated::class;
 
     public function mobiles()
     {

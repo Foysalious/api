@@ -94,7 +94,6 @@ class CustomerOrderController extends Controller
             } else {
                 $all_orders = $all_jobs->values()->all();
             }
-
             return count($all_jobs) > 0 ? api_response($request, $all_jobs, 200, ['orders' => $all_orders]) : api_response($request, null, 404);
         } catch (ValidationException $e) {
             app('sentry')->captureException($e);

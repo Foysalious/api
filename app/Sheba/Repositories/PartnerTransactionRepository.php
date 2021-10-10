@@ -59,4 +59,11 @@ class PartnerTransactionRepository
                 ->where('transaction_details', 'LIKE', '%"transaction":{"id":"' . $transaction_id . '"%')
                 ->count() > 0;
     }
+
+    public function thisMonthTotalPaymentLinkCredit()
+    {
+        $start_date = Carbon::now()->startOfMonth()->toDateTimeString();
+        $end_date   = Carbon::now()->toDateTimeString();
+        return PartnerTransaction::paymentLinkCredit($this->partner->id)->whereBetween('created_at', [$start_date, $end_date])->sum('amount');
+    }
 }

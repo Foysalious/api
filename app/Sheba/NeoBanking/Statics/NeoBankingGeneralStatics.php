@@ -79,6 +79,15 @@ class NeoBankingGeneralStatics
         }
     }
 
+    public static function partnerBusinessTypes()
+    {
+        $business_types = [];
+        collect(constants('PARTNER_BUSINESS_TYPE'))->each(function ($type) use (&$business_types) {
+            array_push($business_types, $type['bn']);
+        });
+        return $business_types;
+    }
+
     public static function accountNumberUpdateData($account_no)
     {
         $data = new \stdClass();

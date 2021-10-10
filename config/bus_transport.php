@@ -9,7 +9,8 @@ return [
         'login_email'   => env('BDTICKET_LOGIN_EMAIL', "tp@sheba.xyz"),
         'login_pass'    => env('BDTICKET_LOGIN_PASSWORD', 'NpCzs~Me-3eE7YU4EW99U23^-2e^5DAW'),
         'wallet_secret' => env('BDTICKET_WALLET_SECRET', 'bdtickets'),
-        'authorization_port' => env('BDTICKET_AUTHORIZATION_PORT', '20100')
+        'authorization_port' => env('BDTICKET_AUTHORIZATION_PORT', '20100'),
+        'balance_check_port' => env('BDTICKET_BALANCE_CHECK_PORT','20105')
     ],
     'pekhom' => [
         'is_active'     => env('PEKHOM_IS_ACTIVE', 1),

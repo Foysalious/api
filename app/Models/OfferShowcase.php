@@ -2,6 +2,8 @@
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\Category\Category;
+use Sheba\Dal\Service\Service;
 
 class OfferShowcase extends Model
 {
@@ -72,37 +74,43 @@ class OfferShowcase extends Model
 
     public function type()
     {
-        return strtolower(snake_case(str_replace("App\\Models\\", '', $this->target_type)));
+        return strtolower(snake_case(class_basename($this->target_type)));
     }
 
     public function scopeTargetType($query, $type)
     {
-        return $query->where('target_type', "App\\Models\\$type");
+        if($type == "voucher") $type = Voucher::class;
+        if($type == "reward") $type = Voucher::class;
+        if($type == "category") $type = Voucher::class;
+        if($type == "service") $type = Voucher::class;
+        if($type == "category_group") $type = Voucher::class;
+
+        return $query->where('target_type', $type);
     }
 
     public function isVoucher()
     {
-        return $this->type() == 'voucher' ? 1 : 0;
+        return $this->target_type == Voucher::class ? 1 : 0;
     }
 
     public function isReward()
     {
-        return $this->type() == 'reward' ? 1 : 0;
+        return $this->target_type == Reward::class ? 1 : 0;
     }
 
     public function isCategory()
     {
-        return $this->type() == 'category' ? 1 : 0;
+        return $this->target_type == Category::class ? 1 : 0;
     }
 
     public function isService()
     {
-        return $this->type() == 'service' ? 1 : 0;
+        return $this->target_type == Service::class ? 1 : 0;
     }
 
     public function isCategoryGroup()
     {
-        return $this->type() == 'category_group' ? 1 : 0;
+        return $this->target_type == CategoryGroup::class ? 1 : 0;
     }
 
     public function locations()

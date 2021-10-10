@@ -1,12 +1,14 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\BaseModel;
 use Sheba\Dal\Retailer\Retailer;
 use Sheba\Dal\RetailerMembers\RetailerMember;
 use Sheba\Dal\StrategicPartnerMember\StrategicPartnerMember;
 
-class Profile extends Model {
-    protected $guarded  = ['id'];
+class Profile extends BaseModel
+{
+    protected $guarded = ['id'];
     protected $fillable = [
         'name',
         'bn_name',
@@ -64,35 +66,43 @@ class Profile extends Model {
         'updated_at',
     ];
 
-    public function customer() {
+    public function customer()
+    {
         return $this->hasOne(Customer::class);
     }
 
-    public function resource() {
+    public function resource()
+    {
         return $this->hasOne(Resource::class);
     }
 
-    public function affiliate() {
+    public function affiliate()
+    {
         return $this->hasOne(Affiliate::class);
     }
 
-    public function member() {
+    public function member()
+    {
         return $this->hasOne(Member::class);
     }
 
-    public function driver() {
+    public function driver()
+    {
         return $this->belongsTo(Driver::class);
     }
 
-    public function joinRequests() {
+    public function joinRequests()
+    {
         return $this->hasMany(JoinRequest::class);
     }
 
-    public function posCustomer() {
+    public function posCustomer()
+    {
         return $this->hasOne(PosCustomer::class);
     }
 
-    public function getIdentityAttribute() {
+    public function getIdentityAttribute()
+    {
         if ($this->name != '') {
             return $this->name;
         } elseif ($this->mobile) {
@@ -101,38 +111,53 @@ class Profile extends Model {
         return $this->email;
     }
 
-    public function banks() {
+    public function banks()
+    {
         return $this->hasMany(ProfileBankInformation::class);
     }
 
-    public function mobileBanks() {
+    public function mobileBanks()
+    {
         return $this->hasMany(ProfileMobileBankInformation::class);
     }
 
-    public function nominee() {
+    public function nominee()
+    {
         return $this->hasOne(Profile::class, 'id', 'nominee_id');
     }
 
-    public function granter() {
+    public function granter()
+    {
         return $this->hasOne(Profile::class, 'id', 'grantor_id');
     }
 
-    public function retailers() {
+    public function retailers()
+    {
         return $this->hasMany(Retailer::class, 'mobile', 'mobile');
     }
 
-    public function bankUser() {
+    public function bankUser()
+    {
         return $this->hasOne(BankUser::class);
     }
 
-    public function StrategicPartnerMember() {
+    public function StrategicPartnerMember()
+    {
         return $this->hasOne(StrategicPartnerMember::class);
     }
 
-    public function isBlackListed() {
+    public function isBlackListed()
+    {
         return (int)$this->is_blacklisted;
     }
-    public function searchOtherUsingNid($nid){
-        return self::where('nid_no',$nid)->where('id','!=',$this->id)->first();
+
+    public function searchOtherUsingNid($nid)
+    {
+        return self::where('nid_no', $nid)->where('id', '!=', $this->id)->first();
+    }
+
+    public function searchOtherUsingVerifiedNid($nid)
+    {
+        return self::where('nid_no',$nid)->where('id','!=',$this->id)->where('nid_verified', 1)->first();
     }
 }

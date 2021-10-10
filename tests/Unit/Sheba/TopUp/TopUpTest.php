@@ -61,7 +61,7 @@ class TopUpTest extends UnitTestCase
     }
 
     /**
-     * @return \PHPUnit_Framework_MockObject_MockObject | TopUpValidator
+     * @return PHPUnit_Framework_MockObject_MockObject | TopUpValidator
      */
     private function getValidationWithError()
     {

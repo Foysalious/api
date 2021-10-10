@@ -37,7 +37,8 @@ class ResourceHandler
         $date_time = Carbon::parse($date . ' ' . $time);
 
         return $this->resourceSchedules->filterByDateTime($this->resource, $date_time)->count() == 0 &&
-            $this->resourceSchedules->filterStartAt($this->resource, $date_time)->count() == 0;
+            $this->resourceSchedules->filterStartAt($this->resource, $date_time)->count() == 0 &&
+            !$this->resource->runningLeave($date_time);
     }
 
     /**
@@ -87,7 +88,7 @@ class ResourceHandler
                 return $schedule->job_id == $job->id;
             });
         }
-        return $this->bookedSchedules->count() == 0;
+        return $this->bookedSchedules->count() == 0 && !$this->resource->runningLeave($start_time) && !$this->resource->runningLeave($end_time);
     }
 
     public function getBookedJobs()

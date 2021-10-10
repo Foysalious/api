@@ -36,6 +36,9 @@ use Sheba\Business\CoWorker\UpdaterV2 as Updater;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
+use Sheba\Dal\BusinessMemberBadge\BusinessMemberBadgeRepository;
+use Sheba\Dal\Visit\Status;
+use Sheba\Dal\Visit\VisitRepository;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\ModificationFields;
 use Sheba\OAuth2\AccountServer;
@@ -64,6 +67,8 @@ class EmployeeController extends Controller
     private $businessMember;
     /*** @var ProfileRequester $profileRequester */
     private $profileRequester;
+    /** @var BusinessMemberBadgeRepository $badgeRepo */
+    private $badgeRepo;
 
     /**
      * EmployeeController constructor.
@@ -80,6 +85,7 @@ class EmployeeController extends Controller
         $this->accounts = $accounts;
         $this->businessMember = app(BusinessMember::class);
         $this->profileRequester = app(ProfileRequester::class);
+        $this->badgeRepo = app(BusinessMemberBadgeRepository::class);
     }
 
     public function me(Request $request)
@@ -152,8 +158,8 @@ class EmployeeController extends Controller
      * @param ProfileCompletionCalculator $completion_calculator
      * @return JsonResponse
      */
-    public function getDashboard(Request                     $request, ActionProcessor $action_processor,
-                                 ProfileCompletionCalculator $completion_calculator)
+    public function getDashboard(Request $request, ActionProcessor $action_processor,
+                                 ProfileCompletionCalculator $completion_calculator, VisitRepository $visit_repository)
     {
         /** @var Business $business */
         $business = $this->getBusiness($request);
@@ -164,6 +170,8 @@ class EmployeeController extends Controller
         /** @var BusinessMember $business_member */
         $business_member = BusinessMember::find($business_member['id']);
         if (!$business_member) return api_response($request, null, 404);
+
+        $department = $business_member->department();
 
         /** @var Attendance $attendance */
         $attendance = $business_member->attendanceOfToday();
@@ -181,10 +189,25 @@ class EmployeeController extends Controller
         $approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMember($business_member);
         $pending_approval_requests_count = $this->approvalRequestRepo->countPendingLeaveApprovalRequests($business_member);
         $profile_completion_score = $completion_calculator->setBusinessMember($business_member)->getDigiGoScore();
+        $pending_visit = $visit_repository->where('assignee_id', $business_member->id)->whereIn('status', [Status::CREATED, Status::STARTED]);
+        $all_pending_visit_count = $pending_visit->count();
+        $today = Carbon::now()->format('Y-m-d');
+        $today_visit = $pending_visit->whereBetween('schedule_date', [$today.' 00:00:00', $today.' 23:59:59']);
+        $today_visit_count = $today_visit->count();
+        $current_visit = $visit_repository->where('assignee_id', $business_member->id)->where('status', Status::STARTED)->whereBetween('start_date_time', [$today.' 00:00:00', $today.' 23:59:59'])->count();
+
+        /** Check Employee Already Get a Badge or Not */
+        $start_date = Carbon::now()->startOfMonth();
+        $end_date = Carbon::now()->endOfMonth();
+        $business_member_badge = $this->badgeRepo->where('business_member_id', $business_member->id)
+            ->whereBetween('end_date', [$start_date, $end_date])->first();
+        $is_badge_seen = $business_member_badge ? $business_member_badge->is_seen : 0;
 
         $data = [
             'id' => $member->id,
+            'business_id' => $business->id,
             'business_member_id' => $business_member->id,
+            'department_id' => $department ? $department->id : null,
             'notification_count' => $member->notifications()->unSeen()->count(),
             'attendance' => [
                 'can_checkin' => !$attendance ? 1 : ($attendance->canTakeThisAction(Actions::CHECKIN) ? 1 : 0),
@@ -202,8 +225,15 @@ class EmployeeController extends Controller
             'is_eligible_for_lunch' => in_array($business->id, config('b2b.BUSINESSES_IDS_FOR_LUNCH')) ? [
                 'link' => config('b2b.BUSINESSES_LUNCH_LINK'),
             ] : null,
-            'is_sheba_platform' => in_array($business->id, config('b2b.BUSINESSES_IDS_FOR_REFERRAL')) ? 1 : 0,
-            'is_payroll_enable' => $business->payrollSetting->is_enable
+            'is_sheba_platform' => in_array($business->id, config('b2b.BUSINESSES_IDS_FOR_REFERRAL') ) ? 1 : 0,
+            'location_fetch_waiting_time' => 3,
+            'is_payroll_enable' => $business->payrollSetting->is_enable,
+            'is_enable_employee_visit' => $business->is_enable_employee_visit,
+            'pending_visit_count' => $all_pending_visit_count,
+            'today_visit_count' => $today_visit_count,
+            'single_visit_title' => $today_visit_count === 1 ? $today_visit->first()->title : null,
+            'currently_on_visit' => $current_visit ? true : false,
+            'is_badge_seen' => $is_badge_seen,
         ];
 
         return api_response($request, $business_member, 200, ['info' => $data]);

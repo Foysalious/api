@@ -44,7 +44,7 @@ class SettingController extends Controller
             removeRelationsAndFields($settings);
             return api_response($request, $settings,200, ['settings' => $settings]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -85,7 +85,7 @@ class SettingController extends Controller
             $partnerPosSetting->update($this->withUpdateModificationField($data));
             return api_response($request, null, 200);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -111,6 +111,8 @@ class SettingController extends Controller
             ])
             ->setMobile($customer->profile->mobile);
         $sms_cost = $sms->estimateCharge();
+        //freeze money amount check
+        WalletTransactionHandler::isDebitTransactionAllowed($request->partner, $sms_cost, 'এস-এম-এস পাঠানোর');
         if ((double)$partner->wallet < $sms_cost) throw new InsufficientBalanceException();
         $sms->send($customer->profile->mobile, [
             'partner_name' => $partner->name,

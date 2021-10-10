@@ -2,6 +2,7 @@
 
 use Sheba\Dal\Category\Category;
 use Sheba\Dal\LocationService\LocationService;
+use Sheba\Dal\Partnership\Partnership;
 use Sheba\Dal\Service\Service;
 use Sheba\Service\MinMaxPrice;
 use Sheba\Service\ServiceQuestion;
@@ -15,6 +16,7 @@ use Sheba\JobDiscount\JobDiscountCheckingParams;
 use Sheba\JobDiscount\JobDiscountHandler;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\LocationService\UpsellCalculation;
+use Sheba\Dal\CrosssaleService\Model as CrosssaleServiceModel;
 
 class ServiceTransformer extends TransformerAbstract
 {
@@ -47,10 +49,12 @@ class ServiceTransformer extends TransformerAbstract
         /** @var Category $category */
         $category = $service->category;
         $usps = $service->usps()->select('name')->get();
+        /** @var Partnership $partnership */
         $partnership = $service->partnership;
         $galleries = $service->galleries()->select('id', DB::Raw('thumb as image'))->get();
         $blog_posts = $service->blogPosts()->select('id', 'title', 'short_description', DB::Raw('thumb as image'), 'target_link')->get();
         $this->serviceQuestion->setService($service);
+        /** @var CrosssaleServiceModel $cross_sale_service */
         $cross_sale_service = $category->crossSaleService;
         $cross_sale = $cross_sale_service ? [
             'title' => $cross_sale_service->title,
@@ -106,6 +110,8 @@ class ServiceTransformer extends TransformerAbstract
             'fixed_price' => $service->isFixed() && $this->locationService ? $this->priceCalculation->getUnitPrice() : null,
             'fixed_upsell_price' => $service->isFixed() && $this->locationService ? $this->upsellCalculation->getAllUpsellWithMinMaxQuantity() : null,
             'option_prices' => isset($prices) && $this->locationService ? $service->isOptions() ? $this->formatOptionWithPrice($prices) : null : null,
+            'min_price' => $this->locationService ? $this->minMaxPrice->getMin() : null,
+            'max_price' => $this->locationService ? $this->minMaxPrice->getMax() : null,
             'min_price' => $this->minMaxPrice->getMin(),
             'max_price' => $this->minMaxPrice->getMax(),
             'discount' => isset($discount) && $discount ? [
@@ -115,6 +121,7 @@ class ServiceTransformer extends TransformerAbstract
             ] : null,
             'usp' => count($usps) > 0 ? $usps->pluck('name')->toArray() : null,
             'overview' => $service->contents ? $service->contents : null,
+            'structured_description_bn' => ($service->structured_description_bn) ? json_decode($service->structured_description_bn) : null,
             'details' => $service->description,
             'partnership' => $partnership ? [
                 'title' => $partnership->title,

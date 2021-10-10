@@ -1,11 +1,14 @@
 <?php namespace App\Repositories;
 
+use App\Models\Affiliate;
 use App\Models\HyperLocal;
 use App\Models\Partner;
 use App\Sheba\LightOnBoarding\PartnerModerator;
+use Sheba\ModificationFields;
 
 class AffiliateRepository
 {
+    use ModificationFields;
     /**
      * @param $request
      * @param $agents
@@ -93,5 +96,15 @@ class AffiliateRepository
             });
         }
         return $details;
+    }
+
+    public function createAffiliate($resource)
+    {
+        $affiliate                      = new Affiliate();
+        $affiliate->profile_id          = $resource->profile_id;
+        $affiliate->remember_token      = str_random(255);
+        $affiliate->verification_status = $resource->status == "unverified" ? "pending" : $resource->status;
+        $this->withCreateModificationField($affiliate);
+        $affiliate->save();
     }
 }

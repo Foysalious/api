@@ -1,15 +1,20 @@
 <?php namespace App\Http\Controllers\Partner\Webstore;
 
+use App\Models\Partner;
 use App\Exceptions\DoNotReportException;
 use App\Sheba\Partner\Webstore\WebstoreBannerSettings;
 use App\Transformers\CustomSerializer;
 use App\Transformers\Partner\WebstoreSettingsTransformer;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests;
 use App\Http\Controllers\Controller;
+use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
+use Sheba\Dal\WebstoreBanner\Model as WebstoreBanner;
 use Sheba\ModificationFields;
 use Sheba\Partner\Webstore\WebstoreSettingsUpdateRequest;
 use Sheba\Subscription\Partner\Access\AccessManager;
@@ -20,9 +25,9 @@ class WebstoreSettingsController extends Controller
 {
     use ModificationFields;
 
-    public function index(Request $request)
+    public function index($partner, Request $request)
     {
-        $partner = resolvePartnerFromAuthMiddleware($request);
+        $partner = $request->partner;
         $fractal = new Manager();
         $fractal->setSerializer(new CustomSerializer());
         $resource = new Item($partner, new WebstoreSettingsTransformer());
@@ -37,16 +42,17 @@ class WebstoreSettingsController extends Controller
      * @return JsonResponse
      * @throws AccessRestrictedExceptionForPackage|DoNotReportException
      */
-    public function update(Request $request, WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest)
+    public function update($partner, Request $request, WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest)
     {
         $partner = resolvePartnerFromAuthMiddleware($request);
         $this->validate($request, [
             'is_webstore_published' => 'sometimes|numeric|between:0,1', 'name' => 'sometimes|string',
             'sub_domain' => 'sometimes|string', 'delivery_charge' => 'sometimes|numeric|digits_between:1,5'
         ],
-            [
-                'delivery_charge.digits_between' => 'ডেলিভারি চার্জ ৫ সংখ্যার মধ্যে হওয়া আবশ্যক।'
-            ]);
+        [
+        'delivery_charge.digits_between' =>'ডেলিভারি চার্জ ৫ সংখ্যার মধ্যে হওয়া আবশ্যক'
+        ]
+    );
         $is_webstore_published = 0;
         $partner_id = $partner->id;
         $this->setModifier($request->manager_resource);
@@ -89,7 +95,6 @@ class WebstoreSettingsController extends Controller
         $list = $webstoreBannerSettings->getBannerList();
         return api_response($request, null, 200, ['data' => $list]);
     }
-
 
     /**
      * @param Request $request

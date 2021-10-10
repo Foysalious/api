@@ -22,18 +22,32 @@ class NeoBankingController extends Controller
     {
     }
 
-    public function getHomepage($partner, Request $request, Home $home)
+    /**
+     * @param $partner
+     * @param Request $request
+     * @param Home $home
+     * @return JsonResponse
+     */
+    public function getHomepage($partner, Request $request, Home $home): JsonResponse
     {
         try {
             $homepage = $home->setPartner($request->partner)->get();
             return api_response($request, $homepage, 200, ['data' => $homepage]);
+        } catch (NeoBankingException $e) {
+            logError($e);
+            return api_response($request,null, $e->getCode(), ['message'=>$e->getMessage()]);
         } catch (\Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
         }
     }
 
-    public function getAccountDetails($partner, Request $request)
+    /**
+     * @param $partner
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getAccountDetails($partner, Request $request): JsonResponse
     {
         try {
             $this->validate($request, ['bank_code' => 'required|string']);
@@ -53,7 +67,12 @@ class NeoBankingController extends Controller
         }
     }
 
-    public function getTransactionList($partner, Request $request)
+    /**
+     * @param $partner
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getTransactionList($partner, Request $request): JsonResponse
     {
         try {
             $this->validate($request, ['bank_code' => 'required|string']);
@@ -158,7 +177,8 @@ class NeoBankingController extends Controller
             $data = $request->post_data;
             /** @var Partner $partner */
             $partner = ($request->partner);
-            $neoBanking->setPartner($request->partner)->setResource($partner->getContactResource())->setBank($request->bank_code)->setPostData($data)->postCategoryDetail($request->category_code);
+            $neoBanking->setPartner($request->partner)->setResource($partner->getContactResource())
+                ->setBank($request->bank_code)->setPostData($data)->postCategoryDetail($request->category_code);
             return api_response($request, null, 200);
         } catch (NeoBankingException $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
@@ -273,13 +293,13 @@ class NeoBankingController extends Controller
      * @param NeoBanking $neoBanking
      * @return JsonResponse
      */
-    public function accountNumberStore(Request $request, Partner $partner, NeoBanking $neoBanking)
+    public function accountNumberStore(Request $request, Partner $partner, NeoBanking $neoBanking): JsonResponse
     {
         try {
             if (($request->header('access-key')) !== config('neo_banking.sbs_access_token'))
                 throw new UnauthorizedRequestFromSBSException();
             $account_no = $request->account_no;
-            $neoBanking->setPartner($partner)->setBank(BankStatics::primeBankCode())->storeAccountNumber($account_no);
+            $neoBanking->setPartner($partner)->setBank(BankStatics::primeBankCode())->accountNumber($account_no);
             return api_response($request, null, 200);
         } catch (UnauthorizedRequestFromSBSException $exception) {
             return api_response($request, null, 403);

@@ -17,7 +17,7 @@ class GenerateOrderInvoice extends MonitoredJob implements ShouldQueue
         parent::__construct();
         $this->model = $model;
         $this->connection = 'invoice_generation';
-        $this->queue = 'invoice_generation';
+        $this->queue = 'pos';
     }
 
     public function handle()

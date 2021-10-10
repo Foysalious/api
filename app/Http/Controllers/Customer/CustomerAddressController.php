@@ -1,6 +1,5 @@
 <?php namespace App\Http\Controllers\Customer;
 
-
 use App\Exceptions\HyperLocationNotFoundException;
 use App\Http\Controllers\Controller;
 use App\Models\CustomerDeliveryAddress;
@@ -28,7 +27,6 @@ class CustomerAddressController extends Controller
             'is_available' => $available ? 1 : 0
         ]]);
     }
-
 
     public function store($customer, Request $request, GeoCode $geo_code, Address $address, Creator $creator, Geo $geo_class)
     {
@@ -72,5 +70,4 @@ class CustomerAddressController extends Controller
             return response()->json(['message' => 'Your are out of service area.', 'code' => 402]);
         }
     }
-
 }

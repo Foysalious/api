@@ -1,7 +1,5 @@
 <?php
 
-use Sheba\Logistics\Listeners\EventsProvider;
-
 return [
 
     /*
@@ -169,7 +167,8 @@ return [
         Maatwebsite\Excel\ExcelServiceProvider::class,
         Barryvdh\DomPDF\ServiceProvider::class,
         AlgoliaSearch\Laravel\AlgoliaServiceProvider::class,
-        Fideloper\Proxy\TrustedProxyServiceProvider::class,
+        // Fideloper\Proxy\TrustedProxyServiceProvider::class,
+        // L5Swagger\L5SwaggerServiceProvider::class,
 
         Sheba\Dal\Providers\RepositoriesServiceProvider::class,
         Sheba\Notification\NotificationServiceProvider::class,

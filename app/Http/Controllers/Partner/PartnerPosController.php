@@ -21,14 +21,21 @@ class PartnerPosController extends Controller
             $products = $product_list->setIsPublishedForShop($is_shop);
             $products = is_numeric($partner) ? $products->setPartnerId((int)$partner) : $products->setPartnerSlug($partner);
             $products = $products->getAvailableProducts();
-            if (count($products) > 0) {
 
-                $categories = PosCategory::parents()->published()->select(['id', 'name'])
-                    ->whereHas('children', function ($q) use ($products) {
+            if (count($products) > 0) {
+                $categories = PosCategory::parents()->published()->select(['id','name'])
+                    ->whereHas('children',function ($q) use ($products) {
                         $q->whereIn('id', $products->pluck('pos_category_id')->unique()->toArray());
                     })->get();
 
                 $resource = new Collection($products, new PosServiceTransformer());
+                $category_data= [];
+                foreach ($categories as $key => $value) {
+                    $category['id'] = $value;
+                    $category['name'] = $key;
+                    $category['total_products'] = collect($fractal->createData($resource)->toArray()['data'])->where('category_id',$value)->count();
+                    array_push($category_data, $category);
+                }
                 return api_response($request, $products, 200, ['products' => $fractal->createData($resource)->toArray()['data'],
                     'categories' => $categories->map(function ($category) use ($products) {
                         $category['total_products'] = $products->whereIn('pos_category_id', $category->children->pluck('id')->toArray())->count();

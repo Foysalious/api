@@ -38,6 +38,7 @@ class TopUpRequest
     private $otfAmountCheck;
     private $isOtfAllow;
 
+
     public function __construct(VendorFactory $vendor_factory, Contract $top_up_block_number_repository)
     {
         $this->vendorFactory = $vendor_factory;
@@ -223,7 +224,7 @@ class TopUpRequest
     {
         return ($this->agent instanceof Partner && (!$this->agent->canTopUp()));
     }
-
+    
     /**
      * @param Business $business
      * @return bool

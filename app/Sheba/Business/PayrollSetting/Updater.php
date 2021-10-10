@@ -40,11 +40,10 @@ class Updater
 
     private function payrollSettingData()
     {
-        $pay_day = $this->payrollSettingRequest->getPayDay();
-        $data = [
+        $data =  [
             'is_enable' => $this->payrollSettingRequest->getIsEnable(),
             'pay_day_type' => $this->payrollSettingRequest->getPayDayType(),
-            'pay_day' => $pay_day
+            'pay_day' => $this->payrollSettingRequest->getPayDay()
         ];
         if ($this->payrollSetting->next_pay_day == null) $data['next_pay_day'] = $this->nextPayslipGenerationDay($this->payrollSetting->business);
         return $data;

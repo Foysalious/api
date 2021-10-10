@@ -1,9 +1,16 @@
 <?php namespace Sheba\SmsCampaign;
 
 use App\Models\Partner;
+use ReflectionException;
+use Sheba\AccountingEntry\Accounts\Accounts;
+
+use Sheba\AccountingEntry\Accounts\RootAccounts;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\AccountingEntry\Exceptions\InvalidSourceException;
+use Sheba\AccountingEntry\Exceptions\KeyNotFoundException;
+use Sheba\AccountingEntry\Repository\JournalCreateRepository;
 use Sheba\Dal\SmsCampaignOrder\SmsCampaignOrder;
 use Sheba\Dal\SmsCampaignOrder\SmsCampaignOrderRepository;
-use Sheba\Dal\SmsCampaignOrderReceiver\SmsCampaignOrderReceiver;
 use App\Models\Tag;
 use Sheba\Dal\SmsCampaignOrderReceiver\SmsCampaignOrderReceiverRepository;
 use Sheba\Dal\SmsCampaignOrderReceiver\Status;
@@ -33,9 +40,10 @@ class SmsCampaign
     private $message;
     /** @var Partner $partner */
     private $partner;
+    private $transaction;
 
     public function __construct(SmsHandler $sms, CampaignSmsStatusChanger $sms_status_changer,
-                                SmsCampaignOrderReceiverRepository $receiver_repo, SmsCampaignOrderRepository $order_repo)
+        SmsCampaignOrderReceiverRepository $receiver_repo, SmsCampaignOrderRepository $order_repo)
     {
         $this->smsHandler = $sms;
         $this->smsStatusChanger = $sms_status_changer;
@@ -72,31 +80,39 @@ class SmsCampaign
         return $this;
     }
 
+    /**
+     * @throws AccountingEntryServerError
+     * @throws InvalidSourceException
+     * @throws ReflectionException
+     * @throws KeyNotFoundException
+     */
     public function createOrder()
     {
         if (!$this->partnerHasEnoughBalance()) return false;
 
         $response = $this->smsHandler->sendBulkMessages($this->mobileNumbers, $this->message);
         $campaign_order = $this->orderRepo->create([
-            'title' => $this->title,
-            'message' => $this->message,
-            'partner_id' => $this->partner->id,
-            'rate_per_sms' => $response->getChargePerSms(),
-            'bulk_id' => $response->getSmsId() ?: null
-        ]);
+                                                       'title' => $this->title,
+                                                       'message' => $this->message,
+                                                       'partner_id' => $this->partner->id,
+                                                       'rate_per_sms' => $response->getChargePerSms(),
+                                                       'bulk_id' => $response->getSmsId() ?: null
+                                                   ]);
 
         foreach ($response->getSinglesResponse() as $index => $single) {
             $this->receiverRepo->create([
-                'sms_campaign_order_id' => $campaign_order->id,
-                'receiver_number' => $single->getMobile(),
-                'receiver_name' => $this->getNthCustomerName($index),
-                'message_id' => $single->getSmsId(),
-                'status' => Status::PENDING,
-                'sms_count' => $single->getSmsCount()
-            ]);
+                                            'sms_campaign_order_id' => $campaign_order->id,
+                                            'receiver_number' => $single->getMobile(),
+                                            'receiver_name' => $this->getNthCustomerName($index),
+                                            'message_id' => $single->getSmsId(),
+                                            'status' => Status::PENDING,
+                                            'sms_count' => $single->getSmsCount()
+                                        ]);
         }
 
-        $this->createTransactions($campaign_order, $response->getTotalCharge());
+        $amount_to_be_deducted = $response->getTotalCharge();
+        $this->storeJournal($amount_to_be_deducted, $campaign_order->id);
+        $this->createTransactions($campaign_order, $amount_to_be_deducted);
         $this->smsStatusChanger->processPendingSms();
 
         return true;
@@ -112,6 +128,8 @@ class SmsCampaign
     public function partnerHasEnoughBalance()
     {
         $charge = $this->smsHandler->getBulkCharge($this->mobileNumbers, $this->message);
+        //freeze money amount check
+        WalletTransactionHandler::isDebitTransactionAllowed($this->partner, $charge, 'এস-এম-এস পাঠানোর');
         return $this->partner->wallet >= $charge;
     }
 
@@ -125,6 +143,28 @@ class SmsCampaign
             ->store();
         $tag = Tag::where('name', 'credited sms campaign')->pluck('id')->toArray();
         $partner_transactions->tags()->sync($tag);
+        $this->transaction = $partner_transactions;
+    }
+
+    /**
+     * @param $cost
+     * @param $campaignOrderId
+     * @throws ReflectionException
+     * @throws AccountingEntryServerError
+     * @throws InvalidSourceException
+     * @throws KeyNotFoundException
+     */
+    public function storeJournal($cost, $campaignOrderId){
+        if ($this->transaction){
+            (new JournalCreateRepository())->setTypeId($this->partner->id)
+                ->setSource($this->transaction)
+                ->setAmount($cost)
+                ->setDebitAccountKey((new Accounts())->expense->sms_purchase::SMS_PURCHASE_FROM_SHEBA)
+                ->setCreditAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
+                ->setDetails("SMS marketing")
+                ->setReference($campaignOrderId)
+                ->store();
+        }
     }
 
     private function createExpenseTrackerEntry(SmsCampaignOrder $campaign_order, $amount_to_be_deducted)

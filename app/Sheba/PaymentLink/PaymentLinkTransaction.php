@@ -3,8 +3,11 @@
 
 namespace Sheba\PaymentLink;
 
-
 use App\Models\Payment;
+use App\Models\PosCustomer;
+use App\Sheba\AccountingEntry\Repository\PaymentLinkAccountingRepository;
+use Illuminate\Support\Facades\Log;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
@@ -21,6 +24,7 @@ class PaymentLinkTransaction
     private $formattedRechargeAmount;
     /** @var HasWalletTransaction $receiver */
     private $receiver;
+    private $customer;
     private $tax;
     private $walletTransactionHandler;
     /**
@@ -67,6 +71,11 @@ class PaymentLinkTransaction
     public function isOld()
     {
         return $this->paymentLink->isOld();
+    }
+
+    public function getRechargeTransaction()
+    {
+        return $this->rechargeTransaction;
     }
 
     /**
@@ -120,8 +129,15 @@ class PaymentLinkTransaction
         return $this;
     }
 
+    public function setCustomer($customer)
+    {
+        $this->customer = $customer;
+        return $this;
+    }
+
     public function getFee()
     {
+        Log::info(["gateway charge", $this->paymentLinkCharge->getGatewayChargePercentage()]);
         return $this->fee;
     }
 
@@ -133,7 +149,9 @@ class PaymentLinkTransaction
     public function create()
     {
         $this->walletTransactionHandler->setModel($this->receiver);
-        return $this->amountTransaction()->interestTransaction()->configurePaymentLinkCharge()->feeTransaction()->setEntryAmount();
+        $paymentLinkTransaction = $this->amountTransaction()->interestTransaction()->configurePaymentLinkCharge()->feeTransaction()->setEntryAmount();
+        $this->storePaymentLinkEntry($this->amount, $this->fee, $this->interest);
+        return $paymentLinkTransaction;
 
     }
 
@@ -192,7 +210,8 @@ class PaymentLinkTransaction
 
         }
         $formatted_minus_amount = number_format($this->fee, 2);
-        $minus_log              = "($this->tax" . "TK + $this->linkCommission%) $formatted_minus_amount TK has been charged as link service fees against of Transc ID: {$this->rechargeTransaction->id}, and Transc amount: $this->formattedRechargeAmount";
+        $rechargeTransactionId = isset($this->rechargeTransaction->id) ? $this->rechargeTransaction->id : null;
+        $minus_log              = "($this->tax" . "TK + $this->linkCommission%) $formatted_minus_amount TK has been charged as link service fees against of Transc ID: {$rechargeTransactionId}, and Transc amount: $this->formattedRechargeAmount";
         $this->walletTransactionHandler->setLog($minus_log)->setType(Types::debit())->setAmount($this->fee)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
         return $this;
     }
@@ -223,4 +242,26 @@ class PaymentLinkTransaction
         return round($real_amount, 2);
     }
 
+    /**
+     * @param $amount
+     * @param $feeTransaction
+     * @param $interest
+     */
+    private function storePaymentLinkEntry($amount, $feeTransaction, $interest) {
+        $customer = null;
+        if (isset($this->customer)) {
+            $customer = PosCustomer::where('profile_id', $this->customer->profile->id)->first();
+        }
+        /** @var PaymentLinkAccountingRepository $paymentLinkRepo */
+        $paymentLinkRepo =  app(PaymentLinkAccountingRepository::class);
+        $transaction = $paymentLinkRepo->setAmount($amount)
+            ->setBankTransactionCharge($feeTransaction)
+            ->setInterest($interest)
+            ->setAmountCleared($amount);
+        if ($customer) {
+            $transaction = $transaction->setCustomerId(isset($customer) ? $customer->id: null)
+                    ->setCustomerName(isset($this->customer) ? $this->customer->profile->name: null);
+        }
+        $transaction->store($this->receiver->id);
+    }
 }

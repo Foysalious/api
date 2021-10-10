@@ -1,16 +1,50 @@
 <?php namespace Sheba\TopUp\Commission;
 
+use ReflectionException;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\AccountingEntry\Exceptions\InvalidSourceException;
+use Sheba\AccountingEntry\Exceptions\KeyNotFoundException;
 use Sheba\ExpenseTracker\AutomaticExpense;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
+use Sheba\AccountingEntry\Repository\JournalCreateRepository;
+use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys;
 use Sheba\TopUp\TopUpCommission;
 
 class Partner extends TopUpCommission
 {
+    /**
+     * @throws AccountingEntryServerError
+     * @throws InvalidSourceException
+     * @throws ReflectionException
+     * @throws KeyNotFoundException
+     */
     public function disburse()
     {
         $this->storeAgentsCommission();
         $this->storeExpenseIncome();
+        $this->storeTopUpJournal();
+    }
+
+    /**
+     * @throws ReflectionException
+     * @throws AccountingEntryServerError
+     * @throws InvalidSourceException
+     * @throws KeyNotFoundException
+     */
+    private function storeTopUpJournal()
+    {
+        /** @var \App\Models\Partner $partner */
+        $partner = $this->agent;
+        (new JournalCreateRepository())
+            ->setTypeId($partner->id)
+            ->setSource($this->transaction)
+            ->setAmount($this->transaction->amount)
+            ->setDebitAccountKey(AccountKeys\Asset\Cash::CASH)
+            ->setCreditAccountKey(AccountKeys\Income\TopUp::TOP_UP)
+            ->setDetails("TopUp for sale")
+            ->setReference("TopUp sales amount is" . $this->transaction->amount . " tk.")
+            ->store();
     }
 
     private function storeExpenseIncome()
@@ -30,11 +64,26 @@ class Partner extends TopUpCommission
     {
         $this->refundAgentsCommission();
         $this->deleteExpenseIncome();
+        $this->refundTopUpJournal();
+    }
+
+    private function refundTopUpJournal()
+    {
+        /** @var \App\Models\Partner $partner */
+        $partner = $this->agent;
+        (new JournalCreateRepository())
+            ->setTypeId($partner->id)
+            ->setSource($this->transaction)
+            ->setAmount($this->transaction->amount)
+            ->setDebitAccountKey(AccountKeys\Asset\Sheba::SHEBA_ACCOUNT)
+            ->setCreditAccountKey(AccountKeys\Income\Refund::GENERAL_REFUNDS)
+            ->setDetails("Refund TopUp")
+            ->setReference("TopUp refunds amount is" . $this->transaction->amount . " tk.")
+            ->store();
     }
 
     private function deleteExpenseIncome()
     {
-
         /** @var \App\Models\Partner $partner */
         $partner = $this->agent;
         /** @var AutomaticEntryRepository $entryRepo */

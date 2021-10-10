@@ -142,7 +142,7 @@ class ServiceRepository
                 if ($partner_service->partner == null) {
                     continue;
                 };
-                $min = min((array)json_decode($partner_service->prices));
+                $min = count((array)json_decode($partner_service->prices)) > 0 ? min((array)json_decode($partner_service->prices)) : null;
                 $partner_service['prices'] = (float)$min;
                 if (count($partner_service->discounts) == 0) {
                     $partner_service['discount'] = null;

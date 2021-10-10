@@ -382,10 +382,17 @@ class BusinessRoute
                     $api->post('/component/{payroll_settings}', 'B2b\PayrollController@addComponent');
                     $api->post('/gross-component/{payroll_settings}', 'B2b\PayrollController@grossComponentAddUpdate');
                     $api->get('/pay-day', 'B2b\PayrollController@checkPayDayConflicting');
-                    $api->get('/monthly-pay-cycle', 'B2b\PayrollController@getMonthlyPayCycle');
                     $api->get('/tax-report', 'B2b\TaxHistoryController@index');
                     $api->post('show-tax-report-download-banner', 'B2b\TaxHistoryController@updateReportShowBanner');
+                    $api->get('/monthly-pay-cycle', 'B2b\PayrollController@getMonthlyPayCycle');
                     $api->get('download-tax-certificate/{business_member_id}/tax-report/{id}', 'B2b\TaxHistoryController@downloadBusinessMemberTaxCertificate');
+                });
+                $api->group(['prefix' => 'employee-visit'], function ($api) {
+                    $api->post('settings', 'B2b\VisitSettingController@settings');
+                    $api->get('settings', 'B2b\VisitSettingController@getSettings');
+                    $api->get('team-visits', 'B2b\VisitController@getTeamVisits');
+                    $api->get('my-visits', 'B2b\VisitController@getMyVisits');
+                    $api->get('/{id}', 'B2b\VisitController@show');
                 });
             });
         });

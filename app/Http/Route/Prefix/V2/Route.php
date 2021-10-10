@@ -11,6 +11,7 @@ class Route
             (new UserRoute())->set($api);
             (new CategoryRoute())->set($api);
             (new PaymentLinkRoute())->set($api);
+            (new AccountingRoute())->set($api);
             (new CustomerRoute())->set($api);
             (new AffiliateRoute())->set($api);
             (new PartnerRoute())->set($api);
@@ -40,9 +41,7 @@ class Route
             $api->post('transactions/{transactionID}', 'ShebaController@checkTransactionStatus');
             $api->get('transactions/info/{transactionID}', 'ShebaController@paymentInitiatedInfo');
             $api->get('transactions/{transactionID}', 'ShebaController@checkTransactionStatus');
-            // $api->post('password/email', 'Auth\PasswordController@sendResetPasswordEmail');
             $api->post('password/validate', 'Auth\PasswordController@validatePasswordResetCode');
-            // $api->post('password/reset', 'Auth\PasswordController@reset');
             $api->post('events', 'EventController@store');
             $api->get('top-up/fail/ssl', 'TopUpController@sslFail');
             $api->get('top-up/success/ssl', 'TopUpController@sslSuccess');
@@ -115,6 +114,7 @@ class Route
                 $api->post('partner-by-resource', 'Auth\PartnerRegistrationController@registerByResource');
             });
             $api->get('times', 'ScheduleTimeController@index');
+            $api->get('theme-setting', 'ThemeSettingController@index');
             $api->get('settings', 'HomePageSettingController@index');
             $api->get('settings-new', 'HomePageSettingController@indexNew');
             $api->get('campaigns', 'CampaignController@index');
@@ -157,16 +157,19 @@ class Route
                 $api->get('{location}/partners', 'PartnerController@findPartners');
                 $api->get('current', 'LocationController@getCurrent');
             });
-            $api->group(['prefix' => 'top-up', 'middleware' => ['topUp.auth']], function ($api) {
+            $api->group(['prefix' => 'top-up', 'middleware' => ['accessToken']], function ($api) {
                 $api->get('/vendor/{user?}', 'TopUp\TopUpController@getVendor')->where('user', "(business|partner|affiliate)");
-                $api->post('/get-topup-token', 'TopUp\TopUpController@generateJwt');
-                $api->post('/{user?}', 'TopUp\TopUpController@topUp')->where('user', "(business|partner|affiliate)");
-                $api->post('/bulk', 'TopUp\TopUpController@bulkTopUp');
-                $api->get('/history', 'TopUp\TopUpController@topUpHistory');
-                $api->get('/active-bulk', 'TopUp\TopUpController@activeBulkTopUps');
-                $api->get('/special-amount-data', 'TopUp\TopUpController@specialAmount');
-                $api->get('bulk-list', 'TopUp\TopUpController@bulkList');
-                $api->get('/all-top-up', 'TopUp\TopUpController@allTopUps');
+                $api->post('get-topup-token', 'TopUp\TopUpController@generateJwt');
+                $api->get('special-amount-data', 'TopUp\TopUpController@specialAmount');
+                $api->post('{user?}', 'TopUp\TopUpController@topUp')->where('user', "(business|partner|affiliate)");
+                $api->post('{user?}/bulk', 'TopUp\TopUpController@bulkTopUp');
+                $api->group(['prefix' => '{user}'], function ($api) {
+                    $api->get('vendor', 'TopUp\TopUpController@getVendor');
+                    $api->get('history', 'TopUp\TopUpController@topUpHistory');
+                    $api->get('active-bulk', 'TopUp\TopUpController@activeBulkTopUps');
+                    $api->get('bulk-list', 'TopUp\TopUpController@bulkList');
+                    $api->get('all-top-up', 'TopUp\TopUpController@allTopUps');
+                });
                 /**
                  * FOR TEST
                  * $api->post('top-up-test', 'TopUp\\TopUpController@topUpTest');
@@ -187,15 +190,6 @@ class Route
             });
             $api->get('updates', 'UpdateController@getUpdates');
             $api->get('ek-sheba/authenticate', 'EkshebaController@authenticate');
-            /**
-             * PROFILE EXISTENCE CHECK. PUBLIC API
-             */
-            // $api->get('get-profile-info', 'ProfileController@getProfile')->middleware('sheba_network');
-            // $api->get('get-profile-info-by-mobile', 'ProfileController@getProfileInfoByMobile');
-            // $api->post('profile/{id}/update-profile-document', 'ProfileController@updateProfileDocument')->middleware('profile.auth');
-            // $api->post('profile-update/by/{id}', 'ProfileController@update')->middleware('profile.auth');
-            // $api->get('{id}/get-jwt', 'ProfileController@getJWT')->middleware('profile.auth');
-            // $api->get('{id}/refresh-token', 'ProfileController@refresh');
             $api->post('admin/payout', 'Bkash\\BkashPayoutController@pay');
             $api->post('admin/payout-balance', 'Bkash\\BkashPayoutController@queryPayoutBalance');
             $api->post('admin/bkash-balance', 'Bkash\\BkashPayoutController@queryBalance');
@@ -222,6 +216,7 @@ class Route
                 $api->post('/vendor', 'VoucherController@voucherAgainstVendor');
             });
         });
+
         return $api;
     }
 }

@@ -43,7 +43,6 @@ class NagadClient
      */
     public function init($transaction_id): Initialize
     {
-        ini_set('max_execution_time', self::TIMEOUT + self::TIMEOUT);
         $merchantId = $this->store->getMerchantId();
         $url = "$this->baseUrl/api/dfs/check-out/initialize/$merchantId/$transaction_id";
         list($payment_data, $store_data) = Inputs::init($transaction_id, $this->store);

@@ -69,6 +69,8 @@ class CustomerFavoriteController extends Controller
             $favorite['category_name'] = $favorite->category->name;
             $favorite['category_slug'] = $favorite->category->slug;
             $favorite['category_icon'] = $favorite->category->icon_png;
+            $favorite['master_category_id'] = $favorite->category && $favorite->category->master ? $favorite->category->master->id : null;
+            $favorite['master_category_name'] = $favorite->category && $favorite->category->master ? $favorite->category->master->name : null;
             $favorite['min_order_amount'] = $favorite->category->min_order_amount;
             $favorite['icon_color'] = isset(config('sheba.category_colors')[$favorite->category->parent->id]) ? config('sheba.category_colors')[$favorite->category->parent->id] : null;
             $favorite['rating'] = $favorite->job->review ? $favorite->job->review->rating : 0.00;

@@ -1,7 +1,10 @@
 <?php namespace App\Http\Controllers\Employee;
 
 use App\Transformers\Business\LeaveListTransformer;
+use Exception;
 use League\Fractal\Resource\Collection;
+use Sheba\Business\ApprovalSetting\FindApprovalSettings;
+use Sheba\Business\ApprovalSetting\FindApprovers;
 use Sheba\Business\LeaveRejection\Requester as LeaveRejectionRequester;
 use App\Models\Attachment;
 use App\Models\Business;
@@ -54,23 +57,36 @@ class ApprovalRequestController extends Controller
      */
     public function index(Request $request, ApprovalRequestRepositoryInterface $approval_request_repo)
     {
-        $this->validate($request, ['type' => 'sometimes|string|in:' . implode(',', Type::get())]);
+        $this->validate($request, [
+                'type' => 'sometimes|string|in:' . implode(',', Type::get()),
+                'limit' => 'numeric', 'offset' => 'numeric'
+            ]
+        );
         /** @var Business $business */
         $business = $this->getBusiness($request);
-        /** @var BusinessMember $business_member */
-        $business_member = $this->getBusinessMember($request);
+        /**
+         * @var BusinessMember $requester_business_member
+         * means who is request for the approval list
+         */
+        $requester_business_member = $this->getBusinessMember($request);
         $approval_requests_list = [];
 
         list($offset, $limit) = calculatePagination($request);
 
         if ($request->has('type'))
-            $approval_requests = $approval_request_repo->getApprovalRequestByBusinessMemberFilterBy($business_member, $request->type);
+            $approval_requests = $approval_request_repo->getApprovalRequestByBusinessMemberFilterBy($requester_business_member, $request->type);
         else
-            $approval_requests = $approval_request_repo->getApprovalRequestByBusinessMember($business_member);
+            $approval_requests = $approval_request_repo->getApprovalRequestByBusinessMember($requester_business_member);
 
-        if ($request->has('limit')) $approval_requests = $approval_requests->splice($offset, $limit);
+        // Differ new & old approval request
+        $approval_requests_without_order = $approval_requests->where('order', null);
+        $approval_requests_with_order = $approval_requests->where('is_notified', 1);
+        $merged_approval_requests = $approval_requests_with_order->merge($approval_requests_without_order);
 
-        foreach ($approval_requests as $approval_request) {
+
+        if ($request->has('limit')) $merged_approval_requests = $merged_approval_requests->splice($offset, $limit);
+
+        foreach ($merged_approval_requests as $approval_request) {
             if (!$approval_request->requestable) continue;
             /** @var Leave $requestable */
             $requestable = $approval_request->requestable;
@@ -81,7 +97,7 @@ class ApprovalRequestController extends Controller
 
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($approval_request, new ApprovalRequestTransformer($profile, $business));
+            $resource = new Item($approval_request, new ApprovalRequestTransformer($profile, $business, $requester_business_member));
             $approval_request = $manager->createData($resource)->toArray()['data'];
 
             array_push($approval_requests_list, $approval_request);
@@ -105,9 +121,12 @@ class ApprovalRequestController extends Controller
         $requestable = $approval_request->requestable;
         /** @var Business $business */
         $business = $this->getBusiness($request);
-        /** @var BusinessMember $business_member */
-        $business_member = $this->getBusinessMember($request);
-        if ($business_member->id != $approval_request->approver_id)
+        /**
+         * @var BusinessMember $requester_business_member
+         * means who is request for the approval list
+         */
+        $requester_business_member = $this->getBusinessMember($request);
+        if ($requester_business_member->id != $approval_request->approver_id)
             return api_response($request, null, 403, ['message' => 'You Are not authorized to show this request']);
 
         /** @var BusinessMember $leave_requester_business_member */
@@ -121,7 +140,7 @@ class ApprovalRequestController extends Controller
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($approval_request, new ApprovalRequestTransformer($profile, $business));
+        $resource = new Item($approval_request, new ApprovalRequestTransformer($profile, $business,$requester_business_member));
         $approval_request = $manager->createData($resource)->toArray()['data'];
 
         $attachments = $this->getAttachments($requestable);
@@ -152,6 +171,7 @@ class ApprovalRequestController extends Controller
      * @param Request $request
      * @param UpdaterV2 $updater
      * @return JsonResponse
+     * @throws Exception
      */
     public function updateStatus(Request $request, UpdaterV2 $updater)
     {
@@ -199,6 +219,21 @@ class ApprovalRequestController extends Controller
         $resource = new Collection($leaves, new LeaveListTransformer());
         $leaves = $fractal->createData($resource)->toArray()['data'];
         return api_response($request, null, 200, ['leaves' => $leaves]);
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getApprovers(Request $request)
+    {
+        /** @var BusinessMember $business_member */
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $approval_setting = (new FindApprovalSettings())->getApprovalSetting($business_member, 'leave');
+        $find_approvers = (new FindApprovers())->calculateApprovers($approval_setting, $business_member);
+        $approvers_info = (new FindApprovers())->getApproversAllInfo($find_approvers);
+        return api_response($request, null, 200, ['approvers' => $approvers_info]);
     }
 }
 

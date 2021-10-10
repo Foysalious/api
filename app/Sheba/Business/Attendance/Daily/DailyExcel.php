@@ -1,5 +1,6 @@
 <?php namespace Sheba\Business\Attendance\Daily;
 
+use App\Sheba\Business\Attendance\AttendanceConstGetter;
 use Excel;
 
 class DailyExcel
@@ -84,18 +85,18 @@ class DailyExcel
                 if ($attendance['is_half_day_leave']) {
                     $this->status = "On leave: half day";
                 } else {
-                    $this->status = 'Present';
+                    $this->status = AttendanceConstGetter::PRESENT;
                 }
 
                 $this->checkInTime = $attendance['check_in']['checkin_time'];
-                if ($attendance['check_in']['status'] == 'late') {
+                if ($attendance['check_in']['status'] == AttendanceConstGetter::LATE) {
                     $this->checkInStatus = "Late";
                 }
-                if ($attendance['check_in']['status'] == 'on_time') {
+                if ($attendance['check_in']['status'] == AttendanceConstGetter::ON_TIME) {
                     $this->checkInStatus = "On time";
                 }
                 if ($attendance['check_in']['is_remote']) {
-                    $this->checkInLocation = "Remote";
+                    $this->checkInLocation = AttendanceConstGetter::REMOTE;
                 } else {
                     $this->checkInLocation = "Office IP";
                 }
@@ -104,14 +105,14 @@ class DailyExcel
                 if (!is_null($attendance['check_out'])) {
                     $this->checkOutTime = $attendance['check_out']['checkout_time'];
 
-                    if ($attendance['check_out']['status'] == 'left_early') {
+                    if ($attendance['check_out']['status'] == AttendanceConstGetter::LEFT_EARLY) {
                         $this->checkOutStatus = 'Left early';
                     }
-                    if ($attendance['check_out']['status'] == 'left_timely') {
+                    if ($attendance['check_out']['status'] == AttendanceConstGetter::LEFT_TIMELY) {
                         $this->checkOutStatus = 'Left timely';
                     }
                     if ($attendance['check_out']['is_remote']) {
-                        $this->checkOutLocation = "Remote";
+                        $this->checkOutLocation = AttendanceConstGetter::REMOTE;
                     } else {
                         $this->checkOutLocation = "Office IP";
                     }
@@ -125,7 +126,7 @@ class DailyExcel
             }
 
             if ($attendance['is_absent']) {
-                $this->status = "Absent";
+                $this->status = AttendanceConstGetter::ABSENT;
             }
             if ($attendance['is_on_leave']) {
                 if (!$attendance['is_half_day_leave']) {
@@ -145,11 +146,11 @@ class DailyExcel
                 'check_in_time' => $this->checkInTime,
                 'check_in_status' => $this->checkInStatus,
                 'check_in_location' => $this->checkInLocation,
-                'check_in_address' => $this->checkInAddress,
+                'check_in_address' => $this->checkInLocation === AttendanceConstGetter::REMOTE && empty($this->checkInAddress) ? AttendanceConstGetter::LOCATION_FETCH_ERROR_MESSAGE : $this->checkInAddress,
                 'check_out_time' => $this->checkOutTime,
                 'check_out_status' => $this->checkOutStatus,
                 'check_out_location' => $this->checkOutLocation,
-                'check_out_address' => $this->checkOutAddress,
+                'check_out_address' => $this->checkOutLocation === AttendanceConstGetter::REMOTE && empty($this->checkOutAddress) ? AttendanceConstGetter::LOCATION_FETCH_ERROR_MESSAGE :  $this->checkOutAddress,
 
                 'total_hours' => $this->totalHours,
                 'overtime' => $this->overtime,

@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Middleware;
+<?php namespace App\Http\Middleware;
 
 use App\Models\Job;
 use Closure;

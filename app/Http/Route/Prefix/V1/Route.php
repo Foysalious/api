@@ -2,12 +2,25 @@
 
 use App\Http\Route\Prefix\V1\Partner\PartnerRoute;
 use App\Http\Route\Prefix\V1\Resource\ResourceRoute;
+use Sheba\Dal\SmsCampaignOrder\SmsCampaignOrderRepository;
 
 class Route
 {
     public function set($api)
     {
+        $api->get('test', function (SmsCampaignOrderRepository $orderRepository){
+            $order = $orderRepository->create([
+                'title' => 'title',
+                'message' => 'message',
+                'partner_id' => 216648,
+                'rate_per_sms' => .01,
+                'bulk_id' => null
+            ]);
+            return $order->id;
+        });
         $api->group(['prefix' => 'v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
+            $api->post('webstore-partner-settings','PartnerThemeSettingController@store')->middleware(['accessToken']);;
+
             $api->get('hour-logs', 'ShebaController@getHourLogs');
             $api->group(['middleware' => 'terminate'], function ($api) {
                 (new EmployeeRoute())->set($api);
@@ -39,6 +52,7 @@ class Route
             $api->get('categories/{category}/secondaries', ['uses' => 'CategoryController@get']);
             $api->get('categories/{category}/services', ['uses' => 'CategoryController@getServices']);
             $api->post('register', 'Auth\RegistrationController@register');
+            $api->post('login', 'Auth\LoginController@login');
             $api->group(['prefix' => 'login'], function ($api) {
                 $api->post('facebook', 'FacebookController@login');
             });
@@ -238,8 +252,8 @@ class Route
 
                         $api->group(['prefix' => 'materials'], function ($api) {
                             $api->get('/', 'PartnerJobController@getMaterials');
-                            $api->post('/', 'PartnerJobController@addMaterial');
-                            $api->put('/', 'PartnerJobController@updateMaterial');
+                            $api->post('/', 'PartnerJobController@addMaterial')->middleware('concurrent_request:partner,update');
+                            $api->put('/', 'PartnerJobController@updateMaterial')->middleware('concurrent_request:partner,update');
                         });
                     });
                 });
@@ -306,6 +320,7 @@ class Route
             $api->group(['prefix' => 'profile', 'middleware' => ['profile.auth']], function ($api) {
                 $api->post('change-picture', 'ProfileController@changePicture');
             });
+
             $api->group(['prefix' => 'bank-user', 'middleware' => 'jwtGlobalAuth'], function ($api) {
                 $api->get('/notifications', 'BankUser\NotificationController@index');
                 $api->get('/notification-seen/{id}', 'BankUser\NotificationController@notificationSeen');
@@ -319,7 +334,33 @@ class Route
             });
             $api->get('profiles', 'Profile\ProfileController@getDetail')->middleware('jwtGlobalAuth');
 
+            $api->group(['prefix' => 'partners/{partner}'], function ($api) {
+                $api->group(['prefix' => 'inventory'], function ($api) {
+                    $api->group(['prefix' => 'brands'], function ($api) {
+                        $api->get('/', 'DummyInventoryController@brandList');
+                        $api->post('/', 'DummyInventoryController@brandStore');
+                        $api->post('/{brand}', 'DummyInventoryController@brandUpdate');
+                    });
+                    $api->group(['prefix' => 'units'], function ($api) {
+                        $api->get('/', 'DummyInventoryController@unitList');
+                        $api->post('/', 'DummyInventoryController@unitStore');
+                        $api->post('/{brand}', 'DummyInventoryController@unitUpdate');
+                    });
+                });
+            });
+            $api->get('test/autosp', 'ShebaController@testAutoSpRun');
+
             $api->post('register-mobile', 'ShebaController@registerCustomer');
+
+            $api->group(['prefix'=>'ekyc', 'middleware' => 'jwtGlobalAuth'], function ($api) {
+                $api->post('nid-ocr-data', 'EKYC\NidOcrController@storeNidOcrData');
+                $api->post('face-verification', 'EKYC\FaceVerificationController@faceVerification');
+                $api->get('get-liveliness-credentials', 'EKYC\FaceVerificationController@getLivelinessCredentials');
+                $api->get('get-user-data', 'EKYC\FaceVerificationController@getUserNidData');
+            });
+            $api->group(['prefix'=>'ekyc', 'middleware' => 'shebaServer'], function ($api) {
+                $api->get('resubmit-nid/{id}', 'EKYC\FaceVerificationController@resubmitToPorichoy');
+            });
         });
         return $api;
     }

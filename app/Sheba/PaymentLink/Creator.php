@@ -75,7 +75,6 @@ class Creator
         return $this;
     }
 
-
     /**
      * Creator constructor.
      *
@@ -364,6 +363,24 @@ class Creator
     public function getPaymentLink()
     {
         return $this->paymentLinkCreated->link;
+    }
+
+    private function sendSms($sender_mobile, $message)
+    {
+        /** @var Sms $sms */
+        $sms = app(Sms::class);
+        $sms = $sms->setVendor('infobip')
+            ->to($sender_mobile)
+            ->msg($message)
+            ->setFeatureType(FeatureType::PAYMENT_LINK)
+            ->setBusinessType(BusinessType::SMANAGER);;
+        try {
+            $sms->shoot();
+        } catch (\Throwable $e) {
+            logError($e);
+            return false;
+        }
+        return true;
     }
 
     public function calculate()

@@ -11,9 +11,9 @@ class PartnerRoute
         $api->group(['prefix' => 'partners'], function ($api) {
             (new IDNonAuthRoute())->set($api);
             (new IDAuthRoute())->set($api);
+            (new PartnerJwtAuthRoute())->set($api);
             $api->get('search', 'Partner\PartnerPosController@search');
         });
-
         (new ExternalPaymentLinkRoute())->set($api);
     }
 }

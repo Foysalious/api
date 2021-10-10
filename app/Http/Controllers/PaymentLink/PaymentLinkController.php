@@ -13,6 +13,8 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
+use Sheba\ComplianceInfo\ComplianceInfo;
+use Sheba\ComplianceInfo\Statics;
 use Sheba\ModificationFields;
 use Sheba\Partner\PartnerStatuses;
 use Sheba\PaymentLink\Creator;
@@ -91,7 +93,12 @@ class PaymentLinkController extends Controller
         }
     }
 
-    public function partnerPaymentLinks(Request $request)
+    /**
+     * @param Request $request
+     * @param PaymentLink $paymentLink
+     * @return JsonResponse
+     */
+    public function partnerPaymentLinks(Request $request, PaymentLink $paymentLink): JsonResponse
     {
         try {
             $payment_links_list = $this->paymentLinkRepo->getPartnerPaymentLinkList($request);
@@ -100,6 +107,7 @@ class PaymentLinkController extends Controller
                 $fractal = new Manager();
                 $resources = new Collection($links, new PaymentLinkArrayTransform());
                 $payment_links = $fractal->createData($resources)->toArray()['data'];
+                if(!is_null($request->payment_link_type)) $payment_links = $paymentLink->filterPaymentLinkList($payment_links, $request->payment_link_type);
                 return api_response($request, $payment_links, 200, ['payment_links' => $payment_links]);
             } else {
                 return api_response($request, [], 200, ['payment_links' => []]);
@@ -116,7 +124,12 @@ class PaymentLinkController extends Controller
             $link = $paymentLinkRepository->findByIdentifier($identifier);
             if ($link) {
                 $receiver = $link->getPaymentReceiver();
-                if ($receiver instanceof Partner && $receiver->status == PartnerStatuses::BLACKLISTED) {
+                if($receiver instanceof Partner) {
+                    $status = (new ComplianceInfo())->setPartner($receiver)->getComplianceStatus();
+                    if ($status === Statics::REJECTED)
+                        return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
+                }
+                if ($receiver instanceof Partner && in_array($receiver->status, [PartnerStatuses::BLACKLISTED, PartnerStatuses::PAUSED])) {
                     return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
                 }
             }
@@ -148,9 +161,16 @@ class PaymentLinkController extends Controller
                 'transaction_charge' => 'sometimes|numeric|min:' . PaymentLinkStatics::get_payment_link_commission(),
                 'pos_order_id' => 'sometimes'
             ]);
-            if (!$request->user) return api_response($request, null, 404, ['message' => 'User not found']);
+            $userStatusCheck = $this->userStatusCheck($request);
+            if ($userStatusCheck !== true) return $userStatusCheck;
             $emi_month_invalidity = Creator::validateEmiMonth($request->all());
             if ($emi_month_invalidity !== false) return api_response($request, null, 400, ['message' => $emi_month_invalidity]);
+            if ($request->user instanceof Partner) {
+                $status = (new ComplianceInfo())->setPartner($request->user)->getComplianceStatus();
+                if ($status === Statics::REJECTED)
+                    return api_response($request, null, 412, ["message" => "Precondition Failed", "error_message" => Statics::complianceRejectedMessage()]);
+
+            }
             $this->creator
                 ->setIsDefault($request->isDefault)
                 ->setAmount($request->amount)
@@ -230,6 +250,8 @@ class PaymentLinkController extends Controller
             ]);
             $purpose = 'Due Collection';
             if (!$request->user) return api_response($request, null, 404, ['message' => 'User not found']);
+            $userStatusCheck = $this->userStatusCheck($request);
+            if ($userStatusCheck !== true) return $userStatusCheck;
             if ($request->has('customer_id')) $customer = PosCustomer::find($request->customer_id);
 
             $this->creator->setAmount($request->amount)
@@ -259,6 +281,15 @@ class PaymentLinkController extends Controller
             logError($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function userStatusCheck($request)
+    {
+        if (!$request->user) return api_response($request, null, 404, ['message' => 'User not found']);
+        if ($request->user instanceof Partner && in_array($request->user->status, [PartnerStatuses::BLACKLISTED, PartnerStatuses::PAUSED])) {
+            return api_response($request, null, 401);
+        }
+        return true;
     }
 
     public function statusChange($link, Request $request)

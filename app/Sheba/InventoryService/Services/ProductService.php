@@ -31,6 +31,12 @@ class ProductService
     protected $discountAmount;
     protected $discountEndDate;
     protected $productDetails;
+    private $limit;
+    private $searchKey;
+    private $sub_category_ids;
+    private $category_ids;
+    private $updated_after;
+    private $is_published_for_webstore;
     protected $offset;
     protected $accountingInfo;
     protected $skuId;
@@ -230,25 +236,62 @@ class ProductService
         return $this;
     }
 
-    /**
-     * @param mixed $accountingInfo
-     */
+    public function setOffset($offset)
+    {
+        $this->offset = $offset;
+        return $this;
+    }
+
+    public function setLimit($limit)
+    {
+        $this->limit = $limit;
+        return $this;
+    }
+
+    public function setSearchKey($searchKey)
+    {
+        $this->searchKey = $searchKey;
+        return $this;
+    }
+
+    public function setSubCategoryIds($sub_category_ids)
+    {
+        $this->sub_category_ids = $sub_category_ids;
+        return $this;
+    }
+
+    public function setCategoryIds($category_ids)
+    {
+        $this->category_ids = $category_ids;
+        return $this;
+    }
+
+    public function setUpdatedAfter($updated_after)
+    {
+        $this->updated_after = $updated_after;
+        return $this;
+    }
+
+    public function setIsPublishedForWebstore($is_published_for_webstore)
+    {
+        $this->is_published_for_webstore = $is_published_for_webstore;
+        return $this;
+    }
+
     public function setAccountingInfo($accountingInfo)
     {
         $this->accountingInfo = $accountingInfo;
         return $this;
     }
 
-    /**
-     * @param mixed $skuId
-     */
+
     public function setSkuId($skuId)
     {
         $this->skuId = $skuId;
         return $this;
     }
 
-    public function getAllProducts($partnerId)
+    public function getProducts($partnerId)
     {
         $url = 'api/v1/partners/' . $partnerId . '/products?';
         if (isset($this->limit)) $url .= 'offset='.$this->offset.'&limit='.$this->limit.'&';
@@ -256,6 +299,12 @@ class ProductService
         if (isset($this->sub_category_ids)) $url .= 'sub_category_ids='.$this->sub_category_ids.'&';
         if (isset($this->updated_after)) $url .= 'updated_after='.$this->updated_after . '&';
         if (isset($this->is_published_for_webstore)) $url .= 'is_published_for_webstore=' . $this->is_published_for_webstore;
+        return $this->client->get($url);
+    }
+
+    public function getWebstoreProducts($partner_id)
+    {
+        $url = 'api/v1/partners/' . $partner_id . '/webstore/products?offset='. $this->offset . '&limit='.$this->limit.'&q='. $this->searchKey;
         return $this->client->get($url);
     }
 

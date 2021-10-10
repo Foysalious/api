@@ -8,11 +8,7 @@ class Location extends Model
 {
     use HybridRelations;
 
-    protected $fillable = [
-        'name',
-        'city_id',
-        'publication_status'
-    ];
+    protected $guarded = ['id'];
 
     public function partners()
     {

@@ -1,6 +1,7 @@
 <?php namespace Sheba\Business\CoWorker;
 
 use Exception;
+use App\Helper\BangladeshiMobileValidator;
 use Sheba\Business\BusinessMemberStatusChangeLog\Creator as BusinessMemberStatusChangeLogCreator;
 use Sheba\Business\BusinessMember\Requester as BusinessMemberRequester;
 use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
@@ -608,9 +609,9 @@ class Updater
     public function setMobile($mobile)
     {
         $this->mobile = $mobile;
-        $profile = $this->profileRepository->checkExistingMobile($mobile);
-        if (!$profile) return $this;
-        if ($profile->id != $this->member->profile->id)
+        $business_member = $this->checkExistingMobile($mobile);
+        if (!$business_member) return $this;
+        if ($business_member->id != $this->businessMember->id)
             $this->setError(400, 'This mobile number belongs to another member. Please contact with sheba');
 
         return $this;
@@ -651,5 +652,13 @@ class Updater
         if ($data == 'null') return true;
         if ($data == null) return true;
         return false;
+    }
+
+    public function checkExistingMobile($mobile)
+    {
+        $mobile = $mobile ? formatMobileAux($mobile) : null;
+        $mobile = BangladeshiMobileValidator::validate($mobile) ? $mobile : null;
+        if (!$mobile) return null;
+        return $this->businessMemberRepository->where('mobile', $mobile)->first();
     }
 }

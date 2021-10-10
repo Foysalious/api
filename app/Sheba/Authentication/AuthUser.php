@@ -16,7 +16,6 @@ use Sheba\Portals\Portals;
 use Sheba\Profile\Avatars;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
-
 class AuthUser
 {
     /** @var Profile */
@@ -71,7 +70,6 @@ class AuthUser
         $this->resolveAuthUser();
         return $this;
     }
-
 
     public function getAuthUser()
     {

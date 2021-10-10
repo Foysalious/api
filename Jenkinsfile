@@ -1,5 +1,6 @@
 pipeline {
     agent any
+
     stages {
         stage('LAST COMMIT DETAILS') {
             when { branch 'development' }
@@ -322,42 +323,6 @@ pipeline {
                                     excludes: '',
                                     execCommand: 'cd /var/www/tech_api && ./bin/test_result_send_to_slack.sh',
                                     execTimeout: 3600000,
-                                    flatten: false,
-                                    makeEmptyDirs: false,
-                                    noDefaultExcludes: false,
-                                    patternSeparator: '[, ]+',
-                                    remoteDirectory: '',
-                                    remoteDirectorySDF: false,
-                                    removePrefix: '',
-                                    sourceFiles: ''
-                                )
-                            ],
-                            usePromotionTimestamp: false,
-                            useWorkspaceInPromotion: false,
-                            verbose: true
-                        )]
-                    )
-                }
-            }
-        }
-        stage('DELETE WORKSPACE FILES') {
-            steps {
-                echo 'Deleting current workspace ...'
-                deleteDir() /* clean up our workspace */
-            }
-        }
-        stage('DELETE DOCKER DANGLING IMAGES') {
-            when { branch 'master' }
-            steps {
-                script {
-                    sshPublisher(publishers: [
-                        sshPublisherDesc(configName: 'api-node-03',
-                            transfers: [
-                                sshTransfer(
-                                    cleanRemote: false,
-                                    excludes: '',
-                                    execCommand: 'cd /var/www/api && ./bin/remove_dangling_images.sh',
-                                    execTimeout: 300000,
                                     flatten: false,
                                     makeEmptyDirs: false,
                                     noDefaultExcludes: false,

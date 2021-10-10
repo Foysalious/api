@@ -28,7 +28,7 @@ class TestMailsController extends Controller
         $email = $request->email;
         $subject = "This Is Test Mail";
         if ($request->has('design') && $request->design == 1) {
-            Mail::send('emails.test-mail', [], function ($m) use ($email, $subject) {
+            Mail::send('emails.co-worker-invitation-v2', ['email' => 'miajee@sheba.xyz', 'password' => 123456], function ($m) use ($email, $subject) {
                 $m->to($email)->subject($subject);
             });
         } elseif ($request->has('complex_design') && $request->complex_design == 1) {

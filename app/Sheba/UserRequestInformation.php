@@ -16,7 +16,7 @@ class UserRequestInformation
         return array(
             'portal_name' => $this->request->header('portal-name') != null ? $this->request->header('portal-name') : 'customer-portal',
             'user_agent' => $this->request->header('User-Agent'),
-            'ip' => getIp()
+            'ip' => $this->request->ip()
         );
     }
 }

@@ -6,17 +6,20 @@ use App\Models\Payment;
 use App\Models\Transport\TransportTicketOrder;
 use App\Transformers\BusRouteTransformer;
 use App\Transformers\CustomSerializer;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
+use Sheba\FraudDetection\TransactionSources;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\ModificationFields;
 use Sheba\Payment\Adapters\Payable\TransportTicketPurchaseAdapter;
 use Sheba\Payment\Exceptions\InitiateFailedException;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
 use Sheba\Payment\PaymentManager;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Sheba\Transport\Bus\Exception\InvalidLocationAddressException;
 use Sheba\Transport\Bus\Generators\CompanyList;
 use Sheba\Transport\Bus\Generators\Destinations;
@@ -462,23 +465,49 @@ class BusTicketController extends Controller
      * @return JsonResponse
      * @throws \Exception
      */
-    public function cancelTicket(Request $request, VendorFactory $vendor)
+    public function cancelTicket($affiliate, $order_id, Request $request, VendorFactory $vendor)
     {
         try {
-            $this->validate($request, [
-                'order_id' => 'required'
-            ]);
-
-            $order = TransportTicketOrder::find((int)$request->order_id);
+            $order = TransportTicketOrder::find((int)$order_id);
             if (!$order)
                 return api_response($request, null, 404, ['message' => 'Order Not Found.']);
 
+            if ($order->status === 'cancelled'){
+                return api_response($request, null, 404, ['message' => 'Order has already been cancelled.']);
+            }
+
             $vendor = $vendor->getById($order->vendor_id);
-            if ($vendor->ticketCancellable($order)) {
-                $vendor->cancelTicket($order);;
-                return api_response($request, null, 200, ['message' => 'Ticket cancelled successfully.', 'code' => 200]);
-            } else
-                return api_response($request, null, 200, ['message' => 'Ticket cannot be cancelled.', 'code' => 400]);
+            $ticketCancellableData = $vendor->getTicketCancellableData($order);
+
+            if ($ticketCancellableData['data']['cancelable']) {
+                $ticketCancelRequest = $vendor->cancelTicket($order);
+
+//                if the condition is true. Then the ticket has been cancelled.
+                if ($ticketCancelRequest['message'] === null && $ticketCancelRequest['errors'] === null){
+                    $order->status = 'cancelled';
+                    $order->save();
+
+                    $refundAmount = $order->amount - $ticketCancellableData['data']['fee'];
+//                    refund user
+                    (new WalletTransactionHandler())
+                        ->setModel($order->agent)
+                        ->setAmount($refundAmount)
+                        ->setType('credit')
+                        ->setTransactionDetails([])
+                        ->setLog($refundAmount . ' TK refunded in your account for transport ticket purchase cancellation.')
+                        ->setSource(TransactionSources::SHEBA_WALLET)
+                        ->store();
+
+                    return api_response(
+                        $request,
+                        null,
+                        200,
+                        ['message' => 'Ticket cancelled successfully. User was refunded '. $refundAmount .'tk', 'code' => 200]
+                    );
+                }
+            }
+
+            return api_response($request, null, 200, ['message' => 'Ticket cannot be cancelled.', 'code' => 400]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             logError($e, $request, $message);

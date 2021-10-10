@@ -24,6 +24,5 @@ class EmailHandler
                 $m->to($this->order->customer->profile->email)->subject('Order Bills');
             });
         } catch (Throwable $e){}
-
     }
 }

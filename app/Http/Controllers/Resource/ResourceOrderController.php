@@ -26,7 +26,6 @@ class ResourceOrderController extends Controller
             'address' => 'required|string',
             'partner' => 'required|numeric',
         ], ['mobile' => 'Invalid mobile number!']);
-
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
         $resource = $auth_user->getResource();

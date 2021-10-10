@@ -81,6 +81,7 @@ class Formatter
     {
         $current_time = Carbon::now();
         $business_pay_day = $payroll_setting->pay_day;
+        $current_package_pay_generate_date = null;
         if (!empty($last_generated_date)) {
             if ($payroll_setting->pay_day_type == PayDayType::FIXED_DATE) $current_package_pay_generate_date = Carbon::parse($last_generated_date)->addMonths($period)->format('Y-m-d');
             else {

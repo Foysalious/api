@@ -59,6 +59,6 @@ class Sorter
     public function getSortedPartners()
     {
         $eligible_partners = $this->finder->setPartnerIds($this->partnerIds)->setCategoryId($this->categoryId)->find();
-        return $this->sort->setStrategy($this->strategy)->sort($eligible_partners);
+        return $this->sort->setStrategy($this->strategy)->setCategoryId($this->categoryId)->sort($eligible_partners);
     }
 }

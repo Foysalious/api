@@ -27,6 +27,8 @@ then
 elif [[ $1 = "feature" ]]
 then
     suite="$(get_feature_suite $2)"
+else
+    suite="$1"
 fi
 
-phpunit --filter "${suite}"
+php vendor/bin/phpunit -d memory_limit=4096M --filter "${suite}"

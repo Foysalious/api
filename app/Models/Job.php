@@ -342,6 +342,10 @@ class Job extends BaseModel implements MorphCommentable
         $this->totalDiscountWithoutOtherDiscounts = $this->totalDiscount - $this->otherDiscounts;
         $this->originalDiscount = $this->isCapApplied() ? 0 : $this->original_discount_amount + $this->serviceDiscounts;
         $this->grossPrice = ($this->totalPrice > $this->discount) ? formatTaka($this->totalPrice - $this->discount) : 0;
+        $vat_percentage = (double) config('sheba.category_vat_in_percentage');
+        $this->vat = ($this->grossPrice * $vat_percentage) / 100;
+        $this->vat = $this->category->is_vat_applicable ? ceil($this->vat) : 0;
+        $this->totalPrice += $this->vat;
         $this->service_unit_price = formatTaka($this->service_unit_price);
 
         /**
@@ -1049,6 +1053,11 @@ class Job extends BaseModel implements MorphCommentable
     {
         $discount_threshold_minutes = config('sheba.online_payment_discount_threshold_minutes');
         return $discount_threshold_minutes ? $this->created_at->copy()->addMinutes($discount_threshold_minutes) >= Carbon::now() && $this->online_discount == 0 : 1;
+    }
+
+    public function hasDiscount()
+    {
+        return $this->discount > 0;
     }
 
     public function isCapApplied()

@@ -97,4 +97,25 @@ class PaymentStrategy
         else if ($user instanceof Partner) return self::PORT_WALLET;
 
     }
+
+    /**
+     * @return string[]
+     */
+    public static function getApplicableForDiscount()
+    {
+        return [
+            self::BKASH,
+            self::ONLINE,
+            self::CBL,
+        ];
+    }
+
+    /**
+     * @param $gateway
+     * @return bool
+     */
+    public static function isApplicableForDiscount($gateway)
+    {
+        return in_array($gateway, self::getApplicableForDiscount());
+    }
 }

@@ -80,9 +80,7 @@ class Reward extends Model
 
     public function setActionEvent(array $params)
     {
-        /** @var ActionEventInitiator $initiator */
-        $initiator = app(ActionEventInitiator::class);
-        $this->actionEvent = $initiator
+        $this->actionEvent = app(ActionEventInitiator::class)
             ->setReward($this)
             ->setName($this->detail->event_name)
             ->setRule($this->detail->event_rules)

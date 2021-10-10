@@ -6,6 +6,9 @@ use App\Models\Resource;
 use App\Models\Reward;
 
 use Exception;
+use Sheba\AccountingEntry\Accounts\Accounts;
+use Sheba\AccountingEntry\Accounts\RootAccounts;
+use Sheba\AccountingEntry\Repository\JournalCreateRepository;
 use Sheba\CustomerWallet\CustomerTransactionHandler;
 use Sheba\PartnerWallet\PartnerTransactionHandler;
 use Sheba\Repositories\BonusRepository;
@@ -64,7 +67,7 @@ class DisburseHandler
                 if ($this->reward->isCashType()) {
                     $log = $amount . " BDT credited for " . $this->reward->name . " reward #" . $this->reward->id;
                     $this->cashDisburse->setRewardable($rewardable)->credit($amount, $log);
-
+                    $this->storeJournal($rewardable);
                 } elseif ($this->reward->isPointType()) {
                     $this->pointDisburse->setRewardable($rewardable)->updateRewardPoint($amount);
                 }
@@ -90,5 +93,16 @@ class DisburseHandler
         else $reward_log = $this->reward->amount . ' ' . $this->reward->type . ' credited for ' . $this->reward->name . '(' . $this->reward->id . ') on partner id: ' . $rewardable->id;
 
         return $reward_log;
+    }
+
+    private function storeJournal($rewardable){
+        (new JournalCreateRepository())->setTypeId($rewardable->id)
+            ->setSource($this->cashDisburse->getTransaction())
+            ->setAmount($this->reward->amount)
+            ->setDebitAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
+            ->setCreditAccountKey(\Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Income\Reward::REWARD)
+            ->setDetails("Cash reward")
+            ->setReference($this->reward->id)
+            ->store();
     }
 }

@@ -19,6 +19,8 @@ use Sheba\Subscription\Partner\BillingType;
 use Sheba\Subscription\Partner\PartnerSubscription;
 use Sheba\Subscription\Partner\PurchaseHandler;
 use Sheba\Subscription\Partner\SubscriptionStatics;
+use Sheba\Transactions\Wallet\WalletDebitForbiddenException;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Throwable;
 
 class PartnerSubscriptionController extends Controller
@@ -298,7 +300,7 @@ class PartnerSubscriptionController extends Controller
                     $grade = $handler->getGrade();
                     if ($grade == PartnerSubscriptionChange::DOWNGRADE && $partner->status != PartnerStatuses::INACTIVE) {
                         DB::commit();
-                        return api_response($request, null, $inside ? 200 : 202, ['message' => " আপনার $requestedPackage->show_name_bd  প্যকেজে অবনমনের  অনুরোধ  গ্রহণ  করা  হয়েছে "]);
+                        return api_response($request, null, $inside ? 200 : 202, ['message' => " আপনার $requestedPackage->show_name_bn প্যকেজে ডাউনগ্রেড করার অনুরোধ গ্রহণ করা হয়েছে। মেয়াদ শেষে সয়ঙ্ক্রিয় ভাবে প্যাকেজের ডাউনগ্রেড হয়ে যাবে।"]);
                     }
                     $hasCredit = $handler->hasCredit();
                     if (!$hasCredit) {
@@ -306,6 +308,8 @@ class PartnerSubscriptionController extends Controller
                         $handler->notifyForInsufficientBalance();
                         return api_response($request, null, $inside ? 403 : 420, array_merge(['message' => 'আপনার একাউন্টে যথেষ্ট ব্যলেন্স নেই।।', 'required' => $handler->getRequiredBalance()], $handler->getBalance()));
                     }
+                    //freeze money amount check
+                    WalletTransactionHandler::isDebitTransactionAllowed($request->partner, $partner->totalPriceRequiredForSubscription, 'প্যাকেজ কেনার');
                     $handler->purchase();
                     DB::commit();
                     if ($grade === PartnerSubscriptionChange::RENEWED) {
@@ -326,7 +330,13 @@ class PartnerSubscriptionController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
+        }
+        catch (WalletDebitForbiddenException $e) {
+            $message = $e->getMessage() ?? null;
+            $code = $e->getCode() ?? 500;
+            return api_response($request, $message, $code, ['message' => $message]);
+        }
+        catch (Throwable $e) {
             DB::rollback();
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

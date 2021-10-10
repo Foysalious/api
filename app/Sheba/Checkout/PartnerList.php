@@ -307,6 +307,8 @@ class PartnerList
             $partner['discounts'] = $discounts->filter(function ($discount) use ($partner_service_ids) {
                 return in_array($discount->partner_service_id, $partner_service_ids);
             });
+            $partner['vat_percentage'] = $this->partnerListRequest->selectedCategory->is_vat_applicable ? config('sheba.category_vat_in_percentage') : 0;
+            
             $partner['surcharges'] = $surcharges->filter(function ($surcharge) use ($partner_service_ids) {
                 return in_array($surcharge->partner_service_id, $partner_service_ids);
             });

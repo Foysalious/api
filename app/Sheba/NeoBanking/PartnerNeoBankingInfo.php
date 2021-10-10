@@ -6,6 +6,8 @@ namespace Sheba\NeoBanking;
 
 use App\Models\Partner;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\PartnerNeoBankingInfo\Model as PartnerNeoBanking;
 use Sheba\NeoBanking\Exceptions\CategoryPostDataInvalidException;
 
 class PartnerNeoBankingInfo
@@ -37,11 +39,11 @@ class PartnerNeoBankingInfo
                 'father_name' => $nidSelfie->father_name,
                 'mother_name' => $nidSelfie->mother_name,
                 'nid_passport_birth_cer_number' => $nidSelfie->nid_no,
-//                'company_name' => strtoupper($this->partner->name)
+                'company_name' => $this->isValidString() ? strtoupper($this->partner->name) : '',
             ];
         }
         return [
-//            'company_name' => strtoupper($this->partner->name)
+            'company_name' => $this->isValidString() ? strtoupper($this->partner->name) : '',
         ];
     }
 
@@ -50,7 +52,7 @@ class PartnerNeoBankingInfo
         if (!empty($this->information_for_bank_account) && isset($this->information_for_bank_account['institution'])) return $this->information_for_bank_account['institution'];
         return [
             "mobile"       => $this->partner->getManagerMobile(),
-//            'company_name' => strtoupper($this->partner->name)
+            'company_name' => $this->isValidString() ? strtoupper($this->partner->name) : '',
         ];
     }
 
@@ -88,13 +90,21 @@ class PartnerNeoBankingInfo
         return $this->data;
     }
 
+    /**
+     * @param $code
+     * @param $data
+     * @return Model
+     * @throws CategoryPostDataInvalidException
+     */
     public function postByCode($code, $data)
     {
-        if ($code=== 'personal')
+        if ($code === 'personal')
         {
             if (!isset($this->information_for_bank_account['nid_selfie'])) throw new CategoryPostDataInvalidException('You need to provide nid first');
-
             $data = $this->setNidData($data);
+        }
+        if( $code === 'nid_selfie') {
+            if($this->isDuplicateNid($data['nid_no'])) throw new CategoryPostDataInvalidException("Duplicate nid.");
         }
         $data['updated_at'] = Carbon::now()->format('Y-m-d H:s:i');
         if(isset($data['nominee_birth_date'])) $data['nominee_birth_date'] = Carbon::parse($data['nominee_birth_date'])->format('d-m-Y');
@@ -121,5 +131,18 @@ class PartnerNeoBankingInfo
         $data['mother_name'] = $nidSelfie->mother_name;
         $data['nid_passport_birth_cer_number'] = $nidSelfie->nid_no;
         return $data;
+    }
+
+    private function isValidString(): bool
+    {
+        return (!preg_match('/[^A-Za-z0-9. -]/', $this->partner->name));
+    }
+
+    private function isDuplicateNid($nid): bool
+    {
+        $search_string = '%"nid_no":"'.$nid.'"%';
+        $count = PartnerNeoBanking::query()->where('partner_id', '!=', $this->partner->id)
+            ->where('information_for_bank_account', 'like', $search_string)->count();
+        return $count > 0;
     }
 }

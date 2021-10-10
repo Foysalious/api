@@ -10,6 +10,7 @@ use App\Models\Profile;
 use App\Models\Resource;
 use App\Models\User;
 use App\Repositories\FileRepository;
+use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Expense\LoanService;
 use App\Sheba\Loan\DLSV2\Exceptions\InsufficientWalletCreditForRepayment;
 use App\Sheba\Loan\DLSV2\LoanClaim;
 use App\Sheba\Loan\DLSV2\Repayment;
@@ -22,6 +23,9 @@ use Maatwebsite\Excel\Facades\Excel;
 use RecursiveArrayIterator;
 use RecursiveIteratorIterator;
 use ReflectionException;
+use Sheba\AccountingEntry\Accounts\Accounts;
+use Sheba\AccountingEntry\Accounts\RootAccounts;
+use Sheba\AccountingEntry\Repository\JournalCreateRepository;
 use Sheba\Dal\PartnerBankLoan\Statuses as LoanStatuses;
 use Sheba\Dal\LoanClaimRequest\Statuses;
 use Sheba\Dal\PartnerBankLoan\LoanTypes;
@@ -73,6 +77,7 @@ class Loan
     private $type;
     private $fileRepository;
     private $version;
+    private $transaction;
 
     public function __construct(FileRepository $file_repository = null)
     {
@@ -255,8 +260,9 @@ class Loan
         $this->validate();
         $created = null;
         DB::transaction(function () use (&$created) {
+            $applyFee = false;
             if ($this->version === 2) {
-                $this->applyFee();
+                $applyFee = $this->applyFee();
             }
             if ($this->type === LoanTypes::TERM) {
                 if (!(isset($this->data['month']) && $this->data['month'])) {
@@ -267,6 +273,9 @@ class Loan
             }
             unset($this->data['month']);
             $created = $this->create();
+            if ($applyFee){
+                $this->storeJournal($created->id);
+            }
         });
         return $created;
     }
@@ -915,7 +924,8 @@ class Loan
      */
     private function checkIsRobiRetailer()
     {
-        return $this->partner->retailers->where('strategic_partner_id', 2)->count() ? 1 : 0;
+        $retailers = $this->partner->retailers;
+        return  $retailers ? (($retailers->where('strategic_partner_id', 2)->count() ? 1 : 0)) : 0;
     }
 
     /**
@@ -1050,10 +1060,22 @@ class Loan
         $fee = (double)GeneralStatics::getFee($this->type);
         if ($fee > 0 && (double)$this->partner->wallet >= $fee) {
             $this->setModifier($this->resource);
-            (new WalletTransactionHandler())->setModel($this->partner)->setAmount($fee)->setSource(TransactionSources::LOAN_FEE)->setType(Types::debit())->setLog("$fee BDT has been collected from {$this->resource->profile->name} as Loan Application fee for $this->type loan")->store();
+            $this->transaction = (new WalletTransactionHandler())->setModel($this->partner)->setAmount($fee)->setSource(TransactionSources::LOAN_FEE)->setType(Types::debit())->setLog("$fee BDT has been collected from {$this->resource->profile->name} as Loan Application fee for $this->type loan")->store();
             return true;
         }
         if ($fee > 0) throw  new InsufficientWalletCredit();
         return false;
+    }
+
+    private function storeJournal($loanId){
+        $fee = (double)GeneralStatics::getFee($this->type);
+        (new JournalCreateRepository())->setTypeId($this->partner->id)
+            ->setSource($this->transaction)
+            ->setAmount($fee)
+            ->setDebitAccountKey((new Accounts())->expense->loan_service::LOAN_SERVICE_CHARGE)
+            ->setCreditAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
+            ->setDetails("Loan fee charge")
+            ->setReference($loanId)
+            ->store();
     }
 }

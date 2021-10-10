@@ -10,6 +10,12 @@ use App\Models\PartnerPosService;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Models\Profile;
+use App\Sheba\AccountingEntry\Constants\EntryTypes;
+use App\Sheba\AccountingEntry\Repository\AccountingRepository;
+use Illuminate\Http\Request;
+use Sheba\AccountingEntry\Accounts\Accounts;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Illuminate\Database\Eloquent\Model;
 use App\Sheba\Pos\Order\Invoice\InvoiceService;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Dal\POSOrder\OrderStatuses;
@@ -55,18 +61,26 @@ class Creator
     private $paymentMethod;
     /** @var OrderStatuses $status */
     protected $status;
+    /** @var Request */
+    private $request;
+    public $allServicesStockDecreasingArray;
 
-    public function __construct(PosOrderRepository   $order_repo, PosOrderItemRepository $item_repo,
-                                PaymentCreator       $payment_creator, StockManager $stock_manager,
-                                OrderCreateValidator $create_validator, DiscountHandler $discount_handler, PosServiceRepositoryInterface $posServiceRepo)
-    {
+    public function __construct(
+        PosOrderRepository $order_repo,
+        PosOrderItemRepository $item_repo,
+        PaymentCreator $payment_creator,
+        StockManager $stock_manager,
+        OrderCreateValidator $create_validator,
+        DiscountHandler $discount_handler,
+        PosServiceRepositoryInterface $posServiceRepo
+    ) {
         $this->orderRepo = $order_repo;
         $this->itemRepo = $item_repo;
         $this->paymentCreator = $payment_creator;
         $this->stockManager = $stock_manager;
         $this->createValidator = $create_validator;
         $this->discountHandler = $discount_handler;
-        $this->posServiceRepo = $posServiceRepo;
+        $this->posServiceRepo  = $posServiceRepo;
     }
 
     /**
@@ -77,10 +91,24 @@ class Creator
         return $this->createValidator->hasError();
     }
 
+    /**
+     * @param mixed $allServicesStockDecreasingArray
+     * @return Creator
+     */
+    public function setAllServicesStockDecreasingArray($allServicesStockDecreasingArray)
+    {
+        $this->allServicesStockDecreasingArray = $allServicesStockDecreasingArray;
+        return $this;
+    }
+
     public function hasDueError()
     {
-        if ($this->resolveCustomerId() !== null) return false;
-        if ($this->data['paid_amount'] - $this->getNetPrice() >= 0) return false;
+        if ($this->resolveCustomerId() !== null) {
+            return false;
+        }
+        if ($this->data['paid_amount'] - $this->getNetPrice() >= 0) {
+            return false;
+        }
         return ['code' => 421, 'msg' => 'Can not make due order with out customer'];
     }
 
@@ -92,8 +120,19 @@ class Creator
     {
         $this->data = $data;
         $this->createValidator->setServices(json_decode($this->data['services'], true));
-        if (!isset($this->data['payment_method'])) $this->data['payment_method'] = 'cod';
-        if (isset($this->data['customer_address'])) $this->setAddress($this->data['customer_address']);
+        if (!isset($this->data['payment_method'])) {
+            $this->data['payment_method'] = 'cod';
+        }
+        if (isset($this->data['customer_address'])) {
+            $this->setAddress($this->data['customer_address']);
+        }
+        return $this;
+    }
+
+    public function setRequest(Request $request)
+    {
+        $this->request = $request;
+        $this->setData($request->all());
         return $this;
     }
 
@@ -123,39 +162,47 @@ class Creator
 
     /**
      * @return PosOrder
-     * @throws InvalidDiscountType
-     * @throws ExpenseTrackingServerError
+     * @throws AccountingEntryServerError
      * @throws DoNotReportException
-     * @throws NotAssociativeArray
+     * @throws InvalidDiscountType
+     * @throws NotEnoughStockException
+     * @throws PartnerPosCustomerNotFoundException
+     * @throws PosCustomerNotFoundException|ExpenseTrackingServerError
      */
     public function create()
     {
         try {
             DB::beginTransaction();
-            $order_data['partner_id'] = $this->partner->id;
-            $order_data['customer_id'] = $this->resolveCustomerId();
-            $order_data['address'] = $this->address;
-            $order_data['previous_order_id'] = (isset($this->data['previous_order_id']) && $this->data['previous_order_id']) ? $this->data['previous_order_id'] : null;
+            $default_instance = 0;
+
+            $order_data['partner_id']            = $this->partner->id;
+            $order_data['customer_id']           = $this->resolveCustomerId();
+            $order_data['address']               = $this->address;
+            $order_data['previous_order_id']     = (isset($this->data['previous_order_id']) && $this->data['previous_order_id']) ? $this->data['previous_order_id'] : null;
             $order_data['partner_wise_order_id'] = $this->createPartnerWiseOrderId($this->partner);
-            $order_data['emi_month'] = isset($this->data['emi_month']) ? $this->data['emi_month'] : null;
-            $order_data['sales_channel'] = isset($this->data['sales_channel']) ? $this->data['sales_channel'] : SalesChannels::POS;
-            $order_data['delivery_charge'] = isset($this->data['delivery_charge']) ? $this->data['delivery_charge'] : 0;
-            $order_data['status'] = $this->status;
-            $order_data['weight'] = isset($this->data['weight']) ? $this->data['weight'] : 0;
-            $order_data['delivery_district'] = isset($this->data['sales_channel']) && $this->data['sales_channel'] == SalesChannels::WEBSTORE && isset($this->data['delivery_district']) ? $this->data['delivery_district'] : null;
-            $order_data['delivery_thana'] = isset($this->data['sales_channel']) && $this->data['sales_channel'] == SalesChannels::WEBSTORE && isset($this->data['delivery_thana']) ? $this->data['delivery_thana'] : null;
-            $order = $this->orderRepo->save($order_data);
-            $services = json_decode($this->data['services'], true);
+            $order_data['emi_month']             = isset($this->data['emi_month']) ? $this->data['emi_month'] : null;
+            $order_data['sales_channel']         = isset($this->data['sales_channel']) ? $this->data['sales_channel'] : SalesChannels::POS;
+            $order_data['delivery_charge']       = isset($this->data['delivery_charge'])   ? $this->data['delivery_charge'] : 0;
+            $order_data['status']                = $this->status;
+            $order_data['weight']                = isset($this->data['weight'])   ? $this->data['weight'] : 0;
+            $order_data['delivery_district']     = isset($this->data['sales_channel']) && $this->data['sales_channel'] == SalesChannels::WEBSTORE && isset($this->data['delivery_district']) ? $this->data['delivery_district'] : null;
+            $order_data['delivery_thana']        = isset($this->data['sales_channel']) && $this->data['sales_channel'] == SalesChannels::WEBSTORE && isset($this->data['delivery_thana']) ? $this->data['delivery_thana'] : null;
+            $order                               = $this->orderRepo->save($order_data);
+            $services                            = json_decode($this->data['services'], true);
+            $servicesStockDecreasingInfo = [];
             foreach ($services as $service) {
                 /** @var PartnerPosService $original_service */
-                $original_service = isset($service['id']) && !empty($service['id']) ? $this->posServiceRepo->find($service['id']) : $this->posServiceRepo->defaultInstance($service);
-                if (!$original_service)
+                if(isset($service['id']) && !empty($service['id'])) $original_service = $this->posServiceRepo->find($service['id']);
+                else {
+                    $vat_percentage = $this->partner->posSetting->vat_percentage;
+                    $original_service = $this->posServiceRepo->defaultInstance($service, $this->partner);
+                }
+                if(!$original_service)
                     throw new DoNotReportException("Service not found with provided ID", 400);
-                if ($original_service->is_published_for_shop && isset($service['quantity']) && !empty($service['quantity']) && $service['quantity'] > $original_service->stock)
+                if($original_service->is_published_for_shop && isset($service['quantity']) && !empty($service['quantity']) && $service['quantity'] > $original_service->getStock())
                     throw new NotEnoughStockException("Not enough stock", 403);
                 // $is_service_discount_applied = $original_service->discount();
                 $service_wholesale_applicable = $original_service->wholesale_price ? true : false;
-
                 $service['service_id'] = $original_service->id;
                 $service['service_name'] = isset($service['name']) ? $service['name'] : $original_service->name;
                 $service['pos_order_id'] = $order->id;
@@ -165,11 +212,11 @@ class Creator
                 $service['vat_percentage'] = (!isset($service['is_vat_applicable']) || $service['is_vat_applicable']) ? $original_service->vat_percentage : 0.00;
                 $service['note'] = isset($service['note']) ? $service['note'] : null;
                 $service = array_except($service, ['id', 'name', 'is_vat_applicable', 'updated_price']);
-
-                $pos_order_item = $this->itemRepo->save($service);
+                $pos_order_item        = $this->itemRepo->save($service);
                 $is_stock_maintainable = $this->stockManager->setPosService($original_service)->isStockMaintainable();
-                if ($is_stock_maintainable) $this->stockManager->decrease($service['quantity']);
-
+                if ($is_stock_maintainable) {
+                    $servicesStockDecreasingInfo[$original_service->id] = $this->stockManager->decrease($service['quantity']);
+                }
                 $this->discountHandler->setOrder($order)->setPosService($original_service)->setType(DiscountTypes::SERVICE)->setData($service);
                 if ($this->discountHandler->hasDiscount()) $this->discountHandler->setPosOrderItem($pos_order_item)->create($order);
             }
@@ -181,6 +228,7 @@ class Creator
                 $this->paymentCreator->credit($payment_data);
             }
 
+
             $order = $order->calculate();
             $this->discountHandler->setOrder($order)->setType(DiscountTypes::ORDER)->setData($this->data);
             if ($this->discountHandler->hasDiscount()) $this->discountHandler->create($order);
@@ -188,24 +236,18 @@ class Creator
             $this->voucherCalculation($order);
             $this->resolvePaymentMethod();
             $this->storeIncome($order);
+            $this->setAllServicesStockDecreasingArray($servicesStockDecreasingInfo);
+            if (!$this->request->has('refund_nature')) {
+                $this->storeJournal($order);
+            }
             DB::commit();
             return $order;
-
-        } catch (Throwable $e) {
+        }catch (Throwable $e) {
             DB::rollback();
             app('sentry')->captureException($e);
             throw $e;
         }
-    }
 
-    /**
-     * @throws NotAssociativeArray
-     */
-    private function generateInvoice($order)
-    {
-        /** @var InvoiceService $invoiceService */
-        $invoiceService = app(InvoiceService::class)->setPosOrder($order);
-        $invoiceService->generateInvoice()->saveInvoiceLink();
     }
 
     /**
@@ -236,7 +278,7 @@ class Creator
 
     private function createPartnerWiseOrderId(Partner $partner)
     {
-        $lastOrder = $partner->posOrders()->orderBy('id', 'desc')->first();
+        $lastOrder    = $partner->posOrders()->orderBy('id', 'desc')->first();
         $lastOrder_id = $lastOrder ? $lastOrder->partner_wise_order_id : 0;
         return $lastOrder_id + 1;
     }
@@ -261,7 +303,7 @@ class Creator
             $customer_id = $this->resolveCustomerId();
             $pos_customer = PosCustomer::find($customer_id) ?: new PosCustomer();
             $pos_order_params = (new CheckParamsForPosOrder());
-            $pos_services = $order->items->pluck('service_id')->toArray();
+            $pos_services     = $order->items->pluck('service_id')->toArray();
             $pos_order_params->setOrderAmount($order->getTotalBill())->setApplicant($pos_customer)->setPartnerPosService($pos_services);
             $result = voucher($code)->checkForPosOrder($pos_order_params)->reveal();
 
@@ -285,19 +327,19 @@ class Creator
         $amount = (double)$order->getNetBill();
         $profile = $order->customer ? $order->customer->profile : new Profile();
         $entry->setPartner($this->partner)
-            ->setParty($profile)
-            ->setAmount($amount)
-            ->setAmountCleared($order->getPaid())
-            ->setHead($order->sales_channel == SalesChannels::POS ? AutomaticIncomes::POS : AutomaticIncomes::WEBSTORE_SALES)
-            ->setSourceType(class_basename($order))
-            ->setInterest($order->interest)
-            ->setSourceId($order->id)
-            ->setEmiMonth($order->emi_month)
-            ->setInterest($order->interest)
-            ->setBankTransactionCharge($order->bank_transaction_charge)
-            ->setPaymentMethod($this->paymentMethod)
-            ->setIsWebstoreOrder($order->sales_channel == SalesChannels::WEBSTORE ? 1 : 0)
-            ->store();
+              ->setParty($profile)
+              ->setAmount($amount)
+              ->setAmountCleared($order->getPaid())
+              ->setHead($order->sales_channel == SalesChannels::POS ? AutomaticIncomes::POS : AutomaticIncomes::WEBSTORE_SALES )
+              ->setSourceType(class_basename($order))
+              ->setInterest($order->interest)
+              ->setSourceId($order->id)
+              ->setEmiMonth($order->emi_month)
+              ->setInterest($order->interest)
+              ->setBankTransactionCharge($order->bank_transaction_charge)
+              ->setPaymentMethod($this->paymentMethod)
+              ->setIsWebstoreOrder($order->sales_channel == SalesChannels::WEBSTORE ? 1 : 0)
+              ->store();
     }
 
     /**
@@ -316,18 +358,19 @@ class Creator
         $total_price = 0;
         $service_discount_amount = 0;
         $voucher_discount_amount = 0;
-        $order_discount_amount = 0;
-        $net_price = 0;
-        $service_id = array();
-        $services = json_decode($this->data['services'], true);
+        $order_discount_amount   = 0;
+        $net_price               = 0;
+        $service_id              = array();
+        $services                = json_decode($this->data['services'], true);
         foreach ($services as $service) {
             /** @var PartnerPosService $original_service */
-            $original_service = isset($service['id']) && !empty($service['id']) ? $this->posServiceRepo->find($service['id']) : $this->posServiceRepo->defaultInstance($service);
-            if (is_null($original_service)) $original_service = $this->posServiceRepo->defaultInstance($service);
+            $original_service = isset($service['id']) && !empty($service['id']) ? $this->posServiceRepo->find($service['id']) : $this->posServiceRepo->defaultInstance($service, $this->partner);
+            if (is_null($original_service)) $original_service = $this->posServiceRepo->defaultInstance($service, $this->partner);
+            $service_id[]                 = isset($service['id']) && !empty($service['id']) ? $service['id'] : 0;
             $service_id[] = isset($service['id']) && !empty($service['id']) ? $service['id'] : 0;
             $service_wholesale_applicable = $original_service->wholesale_price ? true : false;
-            $service['unit_price'] = (isset($service['updated_price']) && $service['updated_price']) ? $service['updated_price'] : ($this->isWholesalePriceApplicable($service_wholesale_applicable) ? $original_service->wholesale_price : $original_service->price);
-            $total_price += ($service['unit_price'] * $service['quantity']);
+            $service['unit_price']        = (isset($service['updated_price']) && $service['updated_price']) ? $service['updated_price'] : ($this->isWholesalePriceApplicable($service_wholesale_applicable) ? $original_service->wholesale_price : $original_service->price);
+            $total_price                  += ($service['unit_price'] * $service['quantity']);
 
             $this->discountHandler->setPosService($original_service)->setType(DiscountTypes::SERVICE)->setData($service);
             if ($this->discountHandler->hasDiscount()) $service_discount = $this->discountHandler->getBeforeData();
@@ -338,11 +381,11 @@ class Creator
         if (isset($order_discount)) $order_discount_amount = $this->getDiscountAmount($order_discount);
 
         if (isset($this->data['voucher_code']) && !empty($this->data['voucher_code'])) {
-            $code = strtoupper($this->data['voucher_code']);
-            $customer_id = $this->resolveCustomerId();
-            $pos_customer = PosCustomer::find($customer_id) ?: new PosCustomer();
+            $code             = strtoupper($this->data['voucher_code']);
+            $customer_id      = $this->resolveCustomerId();
+            $pos_customer     = PosCustomer::find($customer_id) ?: new PosCustomer();
             $pos_order_params = (new CheckParamsForPosOrder());
-            $pos_services = $service_id;
+            $pos_services     = $service_id;
             $pos_order_params->setOrderAmount($total_price - $service_discount_amount)->setApplicant($pos_customer)->setPartnerPosService($pos_services);
             $result = voucher($code)->checkForPosOrder($pos_order_params)->reveal();
             $this->discountHandler->setType(DiscountTypes::VOUCHER)->setData($result);
@@ -350,11 +393,55 @@ class Creator
             if (isset($voucher_discount)) $voucher_discount_amount = $this->getDiscountAmount($voucher_discount);
         }
         $net_price = ($total_price - $order_discount_amount - $voucher_discount_amount - $service_discount_amount);
-        return round($net_price, 2);
+        return round($net_price,2);
     }
 
     private function getDiscountAmount($discount)
     {
         return (isset($discount) && isset($discount['amount'])) ? $discount['amount'] : 0;
+    }
+
+    /**
+     * @param PosOrder $order
+     * @throws AccountingEntryServerError
+     */
+    private function storeJournal(PosOrder $order)
+    {
+        $this->additionalAccountingData($order);
+        /** @var AccountingRepository $accounting_repo */
+        $accounting_repo = app()->make(AccountingRepository::class);
+        $this->request->merge([
+            "inventory_products" => $accounting_repo->getInventoryProducts($order->items, $this->data['services'], $this->allServicesStockDecreasingArray),
+        ]);
+        if (isset($this->customer->id)) {
+            $this->request["customer_id"] = $this->customer->id;
+        }
+        $accounting_repo->storeEntry($this->request, EntryTypes::POS);
+    }
+
+    private function additionalAccountingData(PosOrder $order)
+    {
+        $order_discount = $order->discounts->count() > 0 ? $order->discounts()->sum('amount') : 0;
+        $this->request->merge([
+            "from_account_key"   => $order->sales_channel == SalesChannels::WEBSTORE ? (new Accounts())->income->sales::SALES_FROM_ECOM : (new Accounts())->income->sales::SALES_FROM_POS,
+            "to_account_key"     => $order->sales_channel == SalesChannels::WEBSTORE ? (new Accounts())->asset->sheba::SHEBA_ACCOUNT : (new Accounts())->asset->cash::CASH,
+            "amount"             => (double)$order->getNetBill(),
+            "amount_cleared"     => $order->getPaid(),
+            "total_discount"     => $order_discount,
+            "note"               => $order->sales_channel == SalesChannels::WEBSTORE ? SalesChannels::WEBSTORE : SalesChannels::POS,
+            "source_id"          => $order->id,
+            "total_vat"          => $order->getTotalVat(),
+            "delivery_charge"    => $order->delivery_charge ?? 0
+        ]);
+    }
+
+
+    private function isEmiApplicable(PartnerPosService $service): bool
+    {
+       if($this->data['payment_method'] == 'emi' ) {
+           if(is_null($service->id) && $service->price >= config('emi.minimum_emi_amount')) return true;
+           elseif ($service->id && $service->price >= config('emi.minimum_emi_amount') && $service->is_emi_available) return true;
+       }
+       return false;
     }
 }

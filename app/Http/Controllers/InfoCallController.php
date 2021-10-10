@@ -61,18 +61,18 @@ class InfoCallController extends Controller
         $customer = $request->customer;
         $profile = $customer->profile;
 
-        $data = [
-            'service_name' => $request->service_name,
-            'estimated_budget' => $request->estimated_budget,
-            'customer_name' => $profile->name,
-            'location_id' => $request->location_id,
-            'customer_mobile' => $profile->mobile,
-            'customer_email' => !empty($profile->email) ? $profile->email : null,
-            'customer_address' => !empty($profile->address) ? $profile->address : '',
-            'status'=> Statuses::OPEN,
-            'follow_up_date' => Carbon::now()->addMinutes(30),
-            'intended_closing_date' => Carbon::now()->addMinutes(30)
-        ];
+            $data = [
+                'service_name' => $request->service_name,
+                'estimated_budget' => $request->estimated_budget,
+                'customer_name' => $profile->name,
+                'location_id' => $request->location_id,
+                'customer_mobile' => $profile->mobile,
+                'customer_email' => !empty($profile->email) ? $profile->email : null,
+                'customer_address' => !empty($profile->address) ? $profile->address : '',
+                'status'=> Statuses::OPEN,
+                'follow_up_date' => Carbon::now()->addMinutes(30),
+                'intended_closing_date' => Carbon::now()->addMinutes(30)
+            ];
 
         $info_call = $customer->infoCalls()->create($this->withCreateModificationField($data));
         try {

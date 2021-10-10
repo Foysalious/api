@@ -1,6 +1,6 @@
 <?php namespace Sheba\TopUp;
 
-use App\Exceptions\DoNotReportException;
+use App\Exceptions\DoNotThrowException;
 use App\Models\Affiliate;
 use App\Models\Partner;
 use App\Models\TopUpOrder;
@@ -9,8 +9,10 @@ use Carbon\Carbon;
 use Exception;
 use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\ModificationFields;
+use Sheba\Reward\Rewardable;
 use Sheba\TopUp\Gateway\GatewayFactory;
 use Sheba\TopUp\Vendor\Vendor;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class Creator
 {
@@ -39,6 +41,10 @@ class Creator
         $top_up_order = new TopUpOrder();
         $agent = $this->topUpRequest->getAgent();
         if ($this->checkIfAgentDidTopup($agent)) throw new Exception("You' are not authorized to do topup", 403);
+        //freeze money amount check
+        if ($agent instanceof Partner) {
+            WalletTransactionHandler::isDebitTransactionAllowed($agent, $this->topUpRequest->getAmount(), 'টপ আপ করার');
+        }
         /** @var Vendor $vendor */
         $vendor = $this->topUpRequest->getVendor();
         /** @var TopUpVendor $model */

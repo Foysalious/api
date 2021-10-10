@@ -237,6 +237,7 @@ class MovieTicket
 
             $vendor->refill($movie_ticket_order->amount);
         });
+
     }
 
     /**

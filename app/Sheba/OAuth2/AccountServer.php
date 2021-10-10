@@ -2,7 +2,6 @@
 
 use GuzzleHttp\Client;
 use Psr\Http\Message\ResponseInterface;
-use Sheba\Dal\AuthenticationRequest\Purpose;
 
 class AccountServer
 {
@@ -152,10 +151,10 @@ class AccountServer
     public function createAvatarAndGetTokenByIdentityAndPassword($avatar_type, $identity, $password)
     {
         $data = $this->client->post("api/v3/login", [
-            'identity' => $identity,
-            'password' => $password,
+            'identity'      => $identity,
+            'password'      => $password,
             'create_avatar' => true,
-            'avatar_type' => $avatar_type
+            'avatar_type'   => $avatar_type
         ]);
         return $data['token'];
     }
@@ -188,11 +187,11 @@ class AccountServer
     public function createProfileAndAvatarAndGetTokenByIdentityAndPassword($avatar_type, $name, $identity, $password)
     {
         $data = $this->client->post("api/v3/register", [
-            'name' => $name,
-            'email' => $identity,
-            'password' => $password,
+            'name'          => $name,
+            'email'         => $identity,
+            'password'      => $password,
             'create_avatar' => true,
-            'avatar_type' => $avatar_type
+            'avatar_type'   => $avatar_type
         ]);
         return $data['token'];
     }
@@ -225,6 +224,19 @@ class AccountServer
     }
 
     /**
+     * @param $token
+     * @param $reason
+     * @return array
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     * @throws WrongPinError
+     */
+    public function logoutFromAll($token, $reason)
+    {
+        return $this->client->setToken($token)->post("/api/v1/logout-from-all", ['reason' => $reason]);
+    }
+
+    /**
      * @param $mobile
      * @param $email
      * @param $password
@@ -238,7 +250,7 @@ class AccountServer
     {
         $data = [
             'password' => $password,
-            'purpose' => $purpose
+            'purpose'  => $purpose
         ];
         if (!empty($email)) $data['email'] = $email;
         if (!empty($mobile)) $data['mobile'] = $mobile;
@@ -260,6 +272,19 @@ class AccountServer
     }
 
     /**
+     * @param $code
+     * @return string
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     * @throws WrongPinError
+     */
+    public function getTokenByShebaAccountKit($code)
+    {
+        $data = $this->client->post("api/v3/profile/authenticate/sheba-accountkit", ['code' => $code]);
+        return $data['token'];
+    }
+
+    /**
      * @param $partner_id
      * @param $customer_id
      * @param $data
@@ -273,4 +298,5 @@ class AccountServer
     {
         return $this->client->setToken($token)->put("/api/v1/partners/$partner_id/pos-customers/$customer_id", $data);
     }
+
 }

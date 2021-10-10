@@ -24,4 +24,6 @@ abstract class Vendor
     abstract function bookTicket(TransportTicketRequest $ticket_request);
 
     abstract function confirmTicket($ticket_id);
+
+    abstract function balance();
 }

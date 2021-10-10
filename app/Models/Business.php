@@ -143,6 +143,25 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
         ]);
     }
 
+    public function getAccessibleInactiveBusinessMember()
+    {
+        return BusinessMember::where('business_id', $this->id)->where('status', Statuses::INACTIVE)->with([
+            'member' => function ($q) {
+                $q->select('members.id', 'profile_id')->with([
+                    'profile' => function ($q) {
+                        $q->select('profiles.id', 'name', 'mobile', 'email', 'pro_pic');
+                    }
+                ]);
+            }, 'role' => function ($q) {
+                $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                    'businessDepartment' => function ($q) {
+                        $q->select('business_departments.id', 'business_id', 'name');
+                    }
+                ]);
+            }
+        ]);
+    }
+
     /**
      * @return mixed
      */

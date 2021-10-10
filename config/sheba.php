@@ -31,16 +31,19 @@ return [
         'manager' => env('MANAGER_TOPIC_NAME', 'manager_'),
         'manager_new' => env('MANAGER_TOPIC_NAME_NEW', 'manager_new_'),
         'employee' => env('EMPLOYEE_TOPIC_NAME', 'employee_'),
+        'affiliate' => env('AFFILIATE_TOPIC_NAME', 'affiliate_')
     ],
     'push_notification_channel_name' => [
         'customer' => 'customer_channel',
         'manager' => 'manager_channel',
         'resource' => 'resource_channel',
-        'employee' => 'employee_channel'
+        'employee' => 'employee_channel',
+        'affiliate' => 'affiliate_channel'
     ],
     'push_notification_sound' => [
         'customer' => 'default',
         'manager' => 'notification_sound',
+        'affiliate' => 'default',
         'employee'  => 'notification_sound.aiff'
     ],
     'partner_packages' => [
@@ -164,6 +167,8 @@ return [
     'mission_save_bangladesh_partner_id' => env('MISSION_SAVE_BANGLADESH_PARTNER_ID'),
     'topup_special_amount_get_url_by_ssl' => env('TOPUP_SPECIAL_AMOUNT_GET_URL_BY_SSL', 'http://vrapi.sslwireless.com/rest/specialAmount/v2/'),
     'webstore_url' => env('SHEBA_WEBSTORE_URL'),
+    'new_webstore_url' => env('SHEBA_NEW_WEBSTORE_URL'),
     'last_job_before_commission' => env('LAST_JOB_BEFORE_PARTNER_COMMISSION_DEPLOY'),
+    'category_vat_in_percentage' => 5,
     'whitelisted_ip_redis_key_name' => env('WHITELISTED_IP_REDIS_KEY_NAME','')
 ];

@@ -8,6 +8,7 @@ use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Authentication\AuthUser;
+use Sheba\Dal\JobService\JobService;
 use Sheba\ModificationFields;
 use Sheba\Resource\Jobs\BillInfo;
 use Sheba\Resource\Jobs\BillUpdate;
@@ -145,6 +146,19 @@ class ResourceJobController extends Controller
         return api_response($request, $response, $response->getCode(), ['message' => $response->getMessage()]);
     }
 
+    public function partialPay(Job $job, Request $request, CollectMoney $collect_money, UserAgentInformation $user_agent_information)
+    {
+        $this->validate($request, ['amount' => 'required|numeric']);
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+        if ($resource->id !== $job->resource_id) return api_response($request, $job, 403, ["message" => "You're not authorized to access this job's bill."]);
+        $user_agent_information->setRequest($request);
+        $collect_money->setResource($resource)->setPartnerOrder($job->partnerOrder)->setUserAgentInformation($user_agent_information)->setCollectionAmount($request->amount);
+        $response = $collect_money->collectPartial();
+        return api_response($request, $response, $response->getCode(), ['message' => $response->getMessage()]);
+    }
+
     public function extendTime(Job $job, Request $request, ExtendTime $extend_time)
     {
         $this->validate($request, ['time_in_minutes' => 'required|numeric']);
@@ -158,7 +172,8 @@ class ResourceJobController extends Controller
 
     public function getServices(Job $job, Request $request, ServiceList $serviceList)
     {
-        $services = $serviceList->setJob($job)->setRequest($request)->getServicesList();
+        $job_service = JobService::where('job_id',$job->id)->pluck('service_id')->toArray();
+        $services = $serviceList->setJob($job)->setRequest($request)->setServiceIds($job_service)->getServicesList();
         return api_response($request, null, 200, ['services' => $services]);
 
     }

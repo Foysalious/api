@@ -2,10 +2,13 @@
 
 use App\Helper\BangladeshiMobileValidator;
 use App\Http\Requests\TimeFrameReportRequest;
+use App\Jobs\Business\SendMailVerificationCodeEmail;
+use App\Jobs\Business\SendRFQCreateNotificationToPartners;
 use App\Models\BusinessJoinRequest;
 use App\Models\Member;
 use App\Models\Notification;
 use App\Models\Partner;
+use App\Models\Procurement;
 use App\Models\Profile;
 use App\Models\Resource;
 use App\Sheba\BankingInfo\GeneralBanking;
@@ -30,6 +33,7 @@ use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use App\Models\Business;
 use DB;
+use Sheba\Notification\Partner\PartnerNotificationHandler;
 use Sheba\OAuth2\AccountServer;
 use Sheba\OAuth2\AccountServerAuthenticationError;
 use Sheba\OAuth2\AccountServerNotWorking;
@@ -183,6 +187,12 @@ class BusinessesController extends Controller
         return api_response($request, $vendor, 200, ['vendor' => $vendor]);
     }
 
+    /**
+     * @param $business
+     * @param $vendor
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getVendorAdminInfo($business, $vendor, Request $request)
     {
         $partner = Partner::find((int)$vendor);
@@ -312,7 +322,7 @@ class BusinessesController extends Controller
         foreach (array_values(GeneralBanking::getWithKeys()) as $key => $bank) {
             array_push($banks, [
                 'key' => $bank,
-                'value' => ucwords(str_replace('_', ' ', $bank)),
+                'value' => ucwords(str_replace('_',' ',$bank)),
             ]);
         }
         return api_response($request, null, 200, ['banks' => $banks]);
@@ -348,10 +358,10 @@ class BusinessesController extends Controller
             ->get()
             ->each(function ($partner) use ($vendors) {
                 $vendor = [
-                    "id" => $partner->id,
-                    "name" => $partner->name,
-                    "logo" => $partner->logo,
-                    "mobile" => $partner->getContactNumber()
+                    "id"    => $partner->id,
+                    "name"  => $partner->name,
+                    "logo"  => $partner->logo,
+                    "mobile"=> $partner->getContactNumber()
                 ];
 
                 $vendors->push($vendor);

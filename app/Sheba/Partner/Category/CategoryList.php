@@ -40,9 +40,10 @@ class CategoryList
             });
         })->whereHas('locations', function ($q) {
             $q->published()->where('category_location.location_id', $this->locationId);
-        })->select('id', 'name', 'bn_name')->get();
+        })->select('id', 'name', 'bn_name', 'is_vat_applicable')->get();
         foreach ($categories as $category) {
             $category['is_car_rental'] = in_array($category->id, config('sheba.car_rental.secondary_category_ids')) ? 1 : 0;
+            $category['vat_percentage'] = config('sheba.category_vat_in_percentage');
         }
         return $categories;
     }

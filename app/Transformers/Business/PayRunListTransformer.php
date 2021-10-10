@@ -23,8 +23,8 @@ class PayRunListTransformer extends TransformerAbstract
         $department = $business_member->department();
         $salary_breakdown = $payslip->salaryBreakdown();
         $payroll_components = $business_member->business->payrollSetting->components->whereIn('type', [Type::ADDITION, Type::DEDUCTION])->sortBy('name');
-        if ($this->isProratedFilterApplicable === 0 && $payslip->joining_log) $this->isProratedFilterApplicable = 1;
         $gross_salary_breakdown = $this->getGrossBreakdown($salary_breakdown);
+        if ($this->isProratedFilterApplicable === 0 && $payslip->joining_log) $this->isProratedFilterApplicable = 1;
         return [
             'id' => $payslip->id,
             'business_member_id' => $payslip->business_member_id,

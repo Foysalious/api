@@ -1,6 +1,5 @@
 <?php namespace Sheba\OAuth2;
 
-
 use App\Models\Affiliate;
 use App\Models\Business;
 use App\Models\Partner;
@@ -9,8 +8,6 @@ use App\Models\Resource;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Namshi\JOSE\JWS;
-use Sheba\AccessToken\Exception\AccessTokenDoesNotExist;
-use Sheba\Portals\Portals;
 use Sheba\Profile\Avatars;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Facades\JWTAuth;
@@ -27,7 +24,6 @@ class AuthUser
     private $user;
     /** @var Model|null */
     private $avatar;
-
 
     public function __construct($attributes = [])
     {
@@ -108,6 +104,17 @@ class AuthUser
         return array_key_exists('logistic_user', $this->attributes);
     }
 
+    public function isCustomer()
+    {
+        return !is_null($this->attributes['customer']);
+    }
+
+    public function getCustomerId()
+    {
+        if (!$this->isCustomer()) return null;
+        return $this->attributes['customer']['id'];
+    }
+
     public function isMember()
     {
         return !is_null($this->attributes['member']);
@@ -116,7 +123,6 @@ class AuthUser
     public function doesMemberHasBusiness()
     {
         if (!$this->isMember()) return false;
-
         return !is_null($this->attributes['business_member']['business_id']);
     }
 
@@ -199,7 +205,6 @@ class AuthUser
     public function resolveAvatar()
     {
         if (!$this->attributes['avatar']) return;
-
         $avatar = Avatars::getModelName($this->attributes['avatar']['type']);
         $avatar = $avatar::find($this->attributes['avatar']['type_id']);
         if ($avatar) $this->setAvatar($avatar);
@@ -271,5 +276,4 @@ class AuthUser
         if (!$business_member) return null;
         return $business_member->business;
     }
-
 }

@@ -5,6 +5,8 @@ namespace App\Sheba\InventoryService\Services;
 
 
 use App\Sheba\InventoryService\InventoryServerClient;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Input;
 
 class CollectionService
 {
@@ -149,7 +151,7 @@ class CollectionService
 
     public function getAllCollection()
     {
-        return $this->client->get('api/v1/partners/' . $this->partner_id . '/collections?'. 'offset='. $this->offset . '&limit='. $this->limit);
+        return $this->client->get('api/v1/partners/' . $this->partner_id . '/collections?'. 'offset='. $this->offset . '&limit='. $this->limit  );
     }
 
     public function store()

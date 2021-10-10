@@ -33,6 +33,7 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
     public $totalMaterialPrice;
     public $totalMaterialCost;
     public $totalPrice;
+    public $grandTotal;
     public $gmv;
     public $serviceCharge;
     public $totalCommission;
@@ -78,6 +79,7 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
     public $totalDeliveryDiscount = 0.00;
     public $totalDeliveryDiscountShebaContribution = 0.00;
     public $totalDeliveryDiscountPartnerContribution = 0.00;
+    public $vat;
 
     /** @var CodeBuilder */
     private $codeBuilder;
@@ -140,7 +142,7 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
         $this->jobPricesWithLogistic = $this->jobPrices + $this->totalLogisticCharge;
         $this->grossAmountWithLogistic = $this->grossAmount + $this->grossLogisticCharge;
         $this->paid = $this->sheba_collection + $this->partner_collection;
-        $this->due = floatValFormat($this->grossAmount - $this->paid);
+        $this->due = floatValFormat($this->grossAmount - $this->paid + $this->vat);
         $this->paidWithLogistic = floatValFormat($this->paid + $this->totalLogisticPaid);
         $this->dueWithLogistic = floatValFormat($this->due + $this->totalLogisticDue);
         $this->overPaid = $this->isOverPaid() ? floatValFormat($this->paid - $this->grossAmount) : 0;
@@ -230,8 +232,10 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
         $this->totalServiceCost += $job->serviceCost;
         $this->totalMaterialPrice += $job->materialPrice;
         $this->totalMaterialCost += $job->materialCost;
-        $this->jobPrices += $job->totalPrice;
+        $this->jobPrices += $job->totalPrice - $job->vat;
         $this->totalPrice += $job->grossPrice;
+        $this->grandTotal += $job->totalPrice;
+        $this->vat += ceil($job->vat);
         $this->totalCostWithoutDiscount += $job->totalCostWithoutDiscount;
         $this->totalCost += $job->totalCost;
         $this->totalCommission += $job->commission;
@@ -316,6 +320,7 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
         $this->totalLogisticPaid = 0;
         $this->totalLogisticDue = 0;
         $this->totalLogisticDueWithoutDiscount = 0;
+        $this->vat = 0;
     }
 
     public function calculateStatus()
@@ -481,6 +486,9 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
         return $this->jobs()->where('status', '<>', constants('JOB_STATUSES')['Cancelled'])->first();
     }
 
+    /**
+     * @return Job
+     */
     public function lastJob()
     {
         if ($this->isCancelled()) return $this->jobs->last();

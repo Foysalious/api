@@ -37,10 +37,13 @@ class HolidayList
                 'name' => $holiday->title
             ]);
         }
+
         $business_holidays = collect($holiday_list);
+
         if($request->has('sort_on_date')) $business_holidays = $this->holidaySortOnDate($business_holidays,$request->sort_on_date)->values();
         if($request->has('sort_on_days')) $business_holidays = $this->holidaySortOnDays($business_holidays,$request->sort_on_days)->values();
         if($request->has('sort_on_name')) $business_holidays = $this->holidaySortOnName($business_holidays,$request->sort_on_name)->values();
+
         return $business_holidays;
     }
 

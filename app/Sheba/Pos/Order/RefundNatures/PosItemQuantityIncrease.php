@@ -1,6 +1,8 @@
 <?php namespace Sheba\Pos\Order\RefundNatures;
 
 use App\Models\PosOrder;
+use Exception;
+use Illuminate\Support\Facades\Log;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
@@ -8,37 +10,45 @@ use Sheba\Pos\Log\Supported\Types;
 
 class PosItemQuantityIncrease extends ReturnPosItem
 {
+    protected $refundAmount = 0;
+
     public function update()
     {
-        $this->old_services = $this->new ? $this->order->items->pluckMultiple([
-            'quantity',
-            'unit_price'
-        ], 'id', true)->toArray() : $this->old_services = $this->order->items->pluckMultiple([
-            'quantity',
-            'unit_price'
-        ], 'service_id')->toArray();
-        $this->updater->setOrder($this->order)->setData($this->data)->setNew($this->new)->update();
-        $this->refundPayment();
-        $this->generateDetails($this->order);
-        $this->saveLog();
         try {
-            $this->updateIncome($this->order);
+            $this->old_services = $this->new ? $this->order->items->pluckMultiple([
+                'quantity',
+                'unit_price'
+            ], 'id', true)->toArray() : $this->old_services = $this->order->items->pluckMultiple([
+                'quantity',
+                'unit_price'
+            ], 'service_id')->toArray();
+            Log::info(['checking update data', $this->data['services'], $this->request->paid_amount, $this->request->payment_method, $this->request->refund_nature, $this->request->return_nature]);
+            $this->makeInventoryProduct($this->order->items, $this->data['services']);
+            $this->updater->setOrder($this->order)->setData($this->data)->setNew($this->new)->update();
+            $this->refundPayment();
+            $this->generateDetails($this->order);
+            $this->saveLog();
+            if ($this->order) {
+                Log::info("checking refund 3");
+                $this->updateEntry($this->order, 'quantity_increase');
+                $this->updateIncome($this->order);
+            }
         } catch (ExpenseTrackingServerError $e) {
             app('sentry')->captureException($e);
         }
     }
-
     private function refundPayment()
     {
         $payment_data['pos_order_id'] = $this->order->id;
         $payment_data['amount']       = $this->data['paid_amount'];
-        $payment_data['method']       = $this->data['payment_method'];
+        $payment_data['method']       = $this->data['payment_method'] ?? 'cod';
         if ($this->data['paid_amount'] > 0) {
             $this->paymentCreator->credit($payment_data);
         } else {
             $payment_data['amount'] = abs($payment_data['amount']);
             $this->paymentCreator->debit($payment_data);
         }
+        $this->refundAmount = $payment_data['amount'];
     }
 
     protected function saveLog()

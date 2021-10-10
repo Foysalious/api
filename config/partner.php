@@ -9,7 +9,7 @@ return [
     'referral_steps'                   => [
         [
             'step'             => '১ম ধাপ',
-            'amount'           => 0,
+            'amount'           => 10,
             'duration'         => 6,
             'nid_verification' => false,
             'details'          => 'আপনার রেফার করা বন্ধুকে sManager অ্যাপ ৬ দিন ব্যবহার করতে হবে।',
@@ -17,7 +17,7 @@ return [
         ],
         [
             'step'             => '২য় ধাপ',
-            'amount'           => 0,
+            'amount'           => 20,
             'duration'         => 12,
             'nid_verification' => true,
             'details'          => 'আপনার রেফার করা বন্ধুকে sManager অ্যাপ ১২ দিন ব্যবহার করতে হবে এবং আপনার ব্যবসায়ী বন্ধুর sManager অ্যাকাউন্টটি অবশ্যই NID ভেরিফাইড হতে হবে।',
@@ -25,7 +25,7 @@ return [
         ],
         [
             'step'             => '৩য় ধাপ',
-            'amount'           => 0,
+            'amount'           => 30,
             'duration'         => 25,
             'nid_verification' => true,
             'details'          => 'আপনার রেফার করা বন্ধুকে sManager অ্যাপ ২৫ দিন ব্যবহার করতে হবে এবং আপনার ব্যবসায়ী বন্ধুর sManager অ্যাকাউন্টটি অবশ্যই NID ভেরিফাইড হতে হবে।',
@@ -58,10 +58,11 @@ return [
         ]
     ],
     'order'                                  => [
-        'request_accept_time_limit_in_seconds' => 90,
+        'request_accept_time_limit_in_seconds' => 300,
         'show_resource_list'                   => 0
     ],
     'lowest_version_for_emi_in_home_setting' => 3,
     'procurement_banner'                     => env('DEFAULT_PROCUREMENT_BANNER', 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/b2b/image/notification/notification-banner.jpg'),
     'webstore_default_banner_id'             => env('WEBSTORE_DEFAULT_BANNER_ID', 8)
 ];
+

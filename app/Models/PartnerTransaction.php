@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Transactions\Types;
 
 class PartnerTransaction extends Model
 {
@@ -26,5 +27,10 @@ class PartnerTransaction extends Model
     public function scopeHasTransactionID($query, $transactionId)
     {
         $query->where('transaction_details', 'LIKE', '%"id":"' . $transactionId . '"%')->orWhere('transaction_details','LIKE','%"trxID":"' . $transactionId . '"%');
+    }
+
+    public function scopePaymentLinkCredit($query, $partner_id)
+    {
+        $query->where('log', 'LIKE', '%has been collected from%')->where('partner_id', $partner_id)->where('type', Types::CREDIT);
     }
 }

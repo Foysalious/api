@@ -3,6 +3,13 @@
 use App\Http\Presenters\PresentableDTOPresenter;
 use App\Http\Requests\AppVersionRequest;
 use App\Jobs\SendFaqEmail;
+use App\Models\PotentialCustomer;
+use App\Repositories\CustomerRepository;
+use App\Models\Customer;
+use App\Sheba\BankingInfo\EmiBanking;
+use Sheba\AppVersion\AppVersionManager;
+use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
+use Sheba\Dal\Category\Category;
 use App\Models\HyperLocal;
 use App\Models\Job;
 use App\Models\OfferShowcase;
@@ -15,7 +22,6 @@ use Sheba\Dal\PaymentGateway\Contract as PaymentGatewayRepository;
 use Sheba\Dal\Service\Service;
 use App\Models\Slider;
 use App\Models\SliderPortal;
-use App\Repositories\CustomerRepository;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
 use Cache;
@@ -25,9 +31,6 @@ use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Sheba\AppVersion\AppVersionManager;
-use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
-use Sheba\Dal\Category\Category;
 use Sheba\Dal\MetaTag\MetaTagRepositoryInterface;
 use Sheba\Dal\RedirectUrl\RedirectUrl;
 use Sheba\Dal\UniversalSlug\Model as SluggableType;
@@ -39,9 +42,12 @@ use Sheba\Payment\AvailableMethods;
 use Sheba\Payment\Presenter\PaymentMethodDetails;
 use Sheba\Payment\Statuses;
 use Sheba\Repositories\PaymentLinkRepository;
+use Sheba\RequestIdentification;
+use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Throwable;
 use Validator;
+use GuzzleHttp\Client;
 
 class ShebaController extends Controller
 {
@@ -248,6 +254,7 @@ class ShebaController extends Controller
             'external_payment_redirection_url' => $external_payment ? $external_payment->success_url : null,
             'store'                            => $payment->gateway_account_name
         ];
+
         if ($payable->isPaymentLink()) $this->mergePaymentLinkInfo($info, $payable);
 
         return $info;
@@ -272,9 +279,11 @@ class ShebaController extends Controller
                 'address'  => $receiver->address
             ],
             'payer'            => [
-                'id'     => $payer->id,
-                'name'   => $payer->name,
-                'mobile' => $payer->mobile
+                'id'        => $payer->id,
+                'name'      => $payer->name,
+                'mobile'    => $payer->mobile,
+                'address'   => $payer->address,
+                'email'     => $payer->email
             ]
         ];
     }
@@ -492,7 +501,7 @@ class ShebaController extends Controller
         if (!isset($info['payer'])) {
             /** @var Payable $payer */
             $payer = $payment->payable;
-            $info  = array_merge($info, ['payer' => ['name' => $payer->getName(), 'id' => $payer->user->id, 'mobile' => $payer->getMobile()]]);
+            $info  = array_merge($info, ['payer' => ['name' => $payer->getName(), 'id' => $payer->user->id, 'mobile' => $payer->getMobile(), 'address' => $payer->getAddress(), 'email' => $payer->getEmail()]]);
         }
         return api_response($request, $info, 200, ['data' => $info]);
     }

@@ -63,14 +63,14 @@ class OrderController extends Controller
             Log::info("FRAUD_ORDER_PLACE: " . json_encode($request->all()) . " REQUEST_HEADER: " . json_encode($request->header()));
             return api_response($request, null, 500);
         }
-        
+
         $request->merge(['mobile' => formatMobile(preg_replace('/\b \b|-/', '', $request->mobile))]);
 
         $this->validate($request, [
             'name' => 'required|string',
             'services' => 'required|string',
             'sales_channel' => 'required|string',
-            'remember_token' => 'required|string',
+//            'remember_token' => 'required|string',
             'mobile' => 'required|string|mobile:bd',
             'email' => 'sometimes|email',
             'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
@@ -178,8 +178,8 @@ class OrderController extends Controller
                     ->setBusinessType(BusinessType::SMANAGER)
                     ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
                     ->send($partner->getContactNumber(), [
-                    'order_code' => $order->code(), 'partner_name' => $partner->name
-                ]);
+                        'order_code' => $order->code(), 'partner_name' => $partner->name
+                    ]);
             }
         } catch (Throwable $e) {
             logError($e);

@@ -1,8 +1,5 @@
 <?php namespace Sheba\TopUp\Vendor;
 
-use Sheba\TopUp\Vendor\Internal\RobiAxiata;
-use Sheba\TopUp\Vendor\Internal\Ssl;
-
 class Robi extends Vendor
 {
     private function getMid()

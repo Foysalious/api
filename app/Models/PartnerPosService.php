@@ -1,6 +1,5 @@
 <?php namespace App\Models;
 
-use Sheba\Dal\PartnerPosServiceBatch\Model as PartnerPosServiceBatch;
 use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceCreated;
 use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceSaved;
 use Carbon\Carbon;
@@ -8,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceUpdated;
+use Sheba\Dal\PartnerPosServiceBatch\Model as PartnerPosServiceBatch;
 use Sheba\Dal\PartnerPosServiceImageGallery\Model as PartnerPosServiceImageGallery;
 use Sheba\Elasticsearch\ElasticsearchTrait;
 
@@ -21,8 +21,6 @@ class PartnerPosService extends BaseModel
     protected $dates = ['deleted_at'];
 
     public static $savedEventClass = PartnerPosServiceSaved::class;
-    public static $updatedEventClass = PartnerPosServiceUpdated::class;
-    public static $createdEventClass = PartnerPosServiceCreated::class;
 
     public static $autoIndex = false;
     protected $indexSettings = [
@@ -56,7 +54,7 @@ class PartnerPosService extends BaseModel
             'pos_category_id' => $this->pos_category_id,
             'name' => $this->name,
             'description' => $this->description,
-            'stock' => (double)$this->stock,
+            'stock' => (double)$this->getStock(),
             'is_published_for_shop' => +$this->is_published_for_shop,
             'created_at' => $this->created_at->toDateTimeString(),
             'updated_at' => $this->updated_at->toDateTimeString(),
@@ -202,7 +200,7 @@ class PartnerPosService extends BaseModel
             'category_id' => (int)$this->pos_category_id,
             'category_name' => $this->category->name,
             'name' => $this->name,
-            'stock' => (double)$this->stock,
+            'stock' => (double)$this->getStock(),
             'description' => $this->description,
             'publication_status' => (int)$this->publication_status,
             'is_published_for_shop' => (int)$this->is_published_for_shop,
@@ -212,7 +210,7 @@ class PartnerPosService extends BaseModel
 
     public function scopeWebstorePublishedServiceByPartner($query, $partner_id)
     {
-        return $query->where('partner_id', $partner_id)->where('publication_status', 1)->where('is_published_for_shop', 1);
+        return $query->where([['partner_id', $partner_id], ['is_published_for_shop', 1]]);
     }
 
     /**
@@ -223,8 +221,24 @@ class PartnerPosService extends BaseModel
         return $this->is_published_for_shop == 1;
     }
 
-    public function stock()
+    public function batches()
     {
         return $this->hasMany(PartnerPosServiceBatch::class);
+    }
+
+    public function getLastStock()
+    {
+        return $this->batches()->latest()->first()->stock ? $this->batches()->latest()->first()->stock : null;
+    }
+
+    public function getStock()
+    {
+        if($this->partner->isMigratedToAccounting()) return $this->batches()->get()->sum('stock');
+        return $this->stock;
+    }
+
+    public function getLastCost()
+    {
+        return $this->batches()->latest()->first()->cost ? $this->batches()->latest()->first()->cost : 0.0;
     }
 }

@@ -134,7 +134,8 @@ class OrderController extends Controller
                     $services = json_decode($request->services);
                     if (isset($services[0]->id)){
                         $getServiceInfo = Service::where('id', $services[0]->id)->first();
-                        if( $getServiceInfo->is_published_for_ddn == 1 &&  $services[0]->id != 676){
+                        $cod_service_array = [676];
+                        if( $getServiceInfo->is_published_for_ddn == 1 && !in_array($services[0]->id, $cod_service_array)){
                             $request->payment_method = 'bondhu_balance';
                         } else {
                             $request->payment_method = 'cod';
@@ -170,7 +171,6 @@ class OrderController extends Controller
             DB::rollback();
             logError($e);
             return api_response($request, null, 500);
-
         } catch (Throwable $e) {
             DB::rollback();
             logError($e);

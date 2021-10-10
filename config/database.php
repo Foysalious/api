@@ -30,8 +30,13 @@ return [
         ],
         'mysql2' => [
             'driver' => 'mysql',
-            'host' => env('DB_HOST_SECOND', 'localhost'),
-            'port' => env('DB_PORT_SECOND', '3306'),
+            'read' => [
+                'host' => env('DB_READ_HOST_SECOND', 'localhost'),
+                'port' => env('DB_READ_PORT_SECOND', 3306),
+            ], 'write' => [
+                'host' => env('DB_WRITE_HOST_SECOND', 'localhost'),
+                'port' => env('DB_WRITE_PORT_SECOND', 3306)
+            ],
             'database' => env('DB_DATABASE_SECOND', 'forge'),
             'username' => env('DB_USERNAME_SECOND', 'forge'),
             'password' => env('DB_PASSWORD_SECOND', ''),
@@ -40,6 +45,7 @@ return [
             'prefix' => '',
             'strict' => false,
             'engine' => null,
+            'sticky' => true
         ],
         'pgsql' => [
             'driver' => 'pgsql',
@@ -56,7 +62,12 @@ return [
             'driver' => 'mongodb',
             'database' => env('MONGO_DB_DATABASE', 'sheba'),
             'dsn' => env('MONGO_DB_DSN')
-        ]
+        ],
+        'sqlite_testing' => [
+            'driver'   => 'sqlite',
+            'database' => ':memory:',
+            'prefix'   => '',
+        ],
     ],
     'migrations' => 'migrations',
     'redis' => [

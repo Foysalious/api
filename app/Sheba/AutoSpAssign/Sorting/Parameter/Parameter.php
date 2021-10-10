@@ -9,6 +9,7 @@ abstract class Parameter
     protected $partner;
     protected $maxValue;
     protected $minValue;
+    protected $categoryId;
 
     public function setMaxValue($maxValue)
     {
@@ -25,6 +26,16 @@ abstract class Parameter
     public function setPartner(EligiblePartner $partner)
     {
         $this->partner = $partner;
+        return $this;
+    }
+
+    /**
+     * @param $category_id
+     * @return Parameter
+     */
+    public function setCategoryId($category_id)
+    {
+        $this->categoryId = $category_id;
         return $this;
     }
 

@@ -3,10 +3,10 @@
 use App\Models\Customer;
 use App\Models\CustomerFavorite;
 use App\Models\Job;
-use Sheba\Authentication\AuthUser;
-use Sheba\Customer\Jobs\Reschedule\Reschedule;
 use App\Models\PartnerOrder;
 use Illuminate\Support\Facades\App;
+use Sheba\Authentication\AuthUser;
+use Sheba\Customer\Jobs\Reschedule\Reschedule;
 use Sheba\Dal\JobCancelReason\JobCancelReason;
 use Sheba\Dal\LocationService\LocationService;
 use App\Models\Payable;
@@ -136,6 +136,8 @@ class JobController extends Controller
         $job_collection->put('category_id', $job->category ? $job->category->id : null);
         $job_collection->put('category_name', $job->category ? $job->category->name : null);
         $job_collection->put('category_image', $job->category ? $job->category->thumb : null);
+        $job_collection->put('master_category_id', $job->category && $job->category->parent? $job->category->parent->id : null);
+        $job_collection->put('master_category_name', $job->category && $job->category->parent? $job->category->parent->name : null);
         $job_collection->put('min_order_amount', $job->category ? $job->category->min_order_amount : null);
         $job_collection->put('partner_id', $job->partnerOrder->partner ? $job->partnerOrder->partner->id : null);
         $job_collection->put('partner_name', $job->partnerOrder->partner ? $job->partnerOrder->partner->name : null);
@@ -358,6 +360,9 @@ class JobController extends Controller
         $bill['original_price'] = (double)$partnerOrder->jobPrices;
         $bill['paid'] = (double)$partnerOrder->paidWithLogistic;
         $bill['due'] = (double)$partnerOrder->dueWithLogistic;
+        $bill['grand_total'] = (double)$partnerOrder->grandTotal;
+        $bill['vat'] = $job->vat;
+        $bill['vat_percentage'] = config('sheba.category_vat_in_percentage');
         $bill['material_price'] = (double)$job->materialPrice;
         $bill['total_service_price'] = (double)$job->servicePrice;
         $bill['discount'] = (double)$job->discountWithoutDeliveryDiscount;
@@ -365,6 +370,7 @@ class JobController extends Controller
         $bill['services'] = $services;
         $bill['service_list'] = $service_list;
         $bill['category_name'] = $job->category->name;
+        $bill['category_disclaimer'] = $job->category->disclaimer;
         $bill['delivered_date'] = $job->delivered_date != null ? $job->delivered_date->format('Y-m-d') : null;
         $bill['delivered_date_timestamp'] = $job->delivered_date != null ? $job->delivered_date->timestamp : null;
         $bill['closed_and_paid_at'] = $partnerOrder->closed_and_paid_at ? $partnerOrder->closed_and_paid_at->format('Y-m-d') : null;
@@ -566,37 +572,27 @@ class JobController extends Controller
 
     public function cancel($customer, $job, Request $request)
     {
-        try {
-            $this->validate($request, [
-                'remember_token' => 'required',
-                'cancel_reason' => 'required|exists:job_cancel_reasons,key,is_published_for_customer,1',
-                'cancel_reason_details' => 'sometimes|string'
-            ]);
+        $this->validate($request, [
+            'cancel_reason' => 'required|exists:job_cancel_reasons,key,is_published_for_customer,1',
+            'cancel_reason_details' => 'sometimes|string'
+        ]);
 
-            $client = new Client();
-            $res = $client->request('POST', config('sheba.admin_url') . '/api/job/' . $job . '/change-status',
-                [
-                    'form_params' => array_merge((new UserRequestInformation($request))->getInformationArray(), [
-                        'customer_id' => $customer,
-                        'remember_token' => $request->remember_token,
-                        'status' => constants('JOB_STATUSES')['Cancelled'],
-                        'cancel_reason' => $request->cancel_reason,
-                        'cancel_reason_details' => $request->cancel_reason_details,
-                        'created_by_type' => get_class($request->customer)
-                    ])
-                ]);
-            if ($response = json_decode($res->getBody())) {
-                return api_response($request, $response, $response->code);
-            }
-            return api_response($request, null, 500);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            logError($e, $request, $message);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (RequestException $e) {
-            logError($e);
-            return api_response($request, null, 500);
-        }
+        $customer = $request->customer;
+        $client = new Client();
+        $res = $client->request('POST', config('sheba.admin_url') . '/api/job/' . $job . '/change-status',
+            [
+                'form_params' => array_merge((new UserRequestInformation($request))->getInformationArray(), [
+                    'customer_id' => $customer->id,
+                    'remember_token' => $customer->remember_token,
+                    'status' => constants('JOB_STATUSES')['Cancelled'],
+                    'cancel_reason' => $request->cancel_reason,
+                    'cancel_reason_details' => $request->cancel_reason_details,
+                    'created_by_type' => get_class($customer)
+                ])
+            ]);
+        if ($response = json_decode($res->getBody())) return api_response($request, $response, $response->code);
+
+        return api_response($request, null, 500);
     }
 
     public function saveFavorites($customer, $job, Request $request)

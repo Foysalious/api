@@ -6,8 +6,9 @@
          convertErrorsToExceptions="true"
          convertNoticesToExceptions="true"
          convertWarningsToExceptions="true"
-         processIsolation="false"
-         stopOnFailure="false">
+         processIsolation="true"
+         stopOnFailure="false"
+         stopOnError="false">
     <testsuites>
         <testsuite name="Application Test Suite">
             <directory suffix="Test.php">./tests</directory>
@@ -22,9 +23,28 @@
         </whitelist>
     </filter>
     <php>
+        <env name="DB_DATABASE" value="sheba_testing"/>
         <env name="APP_ENV" value="testing"/>
-        <env name="CACHE_DRIVER" value="array"/>
-        <env name="SESSION_DRIVER" value="array"/>
-        <env name="QUEUE_DRIVER" value="sync"/>
+        <ini name="memory_limit" value="4G"/>
     </php>
+    <logging>
+        <log type="junit" target="results/phpunit/api-test-result.xml" logIncompleteSkipped="true"/>
+    </logging>
+    <listeners>
+        <listener class="JohnKary\PHPUnit\Listener\SpeedTrapListener">
+            <arguments>
+                <array>
+                    <element key="slowThreshold">
+                        <integer>500</integer>
+                    </element>
+                    <element key="reportLength">
+                        <integer>500</integer>
+                    </element>
+                    <element key="stopOnSlow">
+                        <boolean>false</boolean>
+                    </element>
+                </array>
+            </arguments>
+        </listener>
+    </listeners>
 </phpunit>

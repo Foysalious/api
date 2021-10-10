@@ -22,5 +22,9 @@ if [ "$branch_name" = master ]; then
 fi
 
 sudo composer install --ignore-platform-reqs --no-interaction
+
+# sudo php artisan l5-swagger:generate
+# sudo php artisan swagger-upload-json
+
 sudo php artisan config:clear
 php artisan queue:restart

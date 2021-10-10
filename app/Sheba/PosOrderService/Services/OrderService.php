@@ -19,6 +19,10 @@ class OrderService
     private $token;
     private $skus, $discount, $paymentMethod, $paymentLinkAmount, $paidAmount;
     protected $emi_month, $interest, $bank_transaction_charge, $delivery_name, $delivery_mobile, $note, $voucher_id;
+    /**
+     * @var mixed
+     */
+    private $isDiscountPercentage;
     protected $userId;
     protected $filter_params;
 
@@ -207,6 +211,16 @@ class OrderService
     }
 
     /**
+     * @param mixed $isDiscountPercentage
+     * @return OrderService
+     */
+    public function setIsDiscountPercentage($isDiscountPercentage)
+    {
+        $this->isDiscountPercentage = $isDiscountPercentage;
+        return $this;
+    }
+
+    /**
      * @param mixed $voucher_id
      * @return OrderService
      */
@@ -255,6 +269,11 @@ class OrderService
         return $this->client->put('api/v1/partners/' . $this->partnerId. '/orders/' . $this->orderId, $deliveryData);
     }
 
+    public function updateCustomer()
+    {
+        return $this->client->put('api/v1/partners/' . $this->partnerId. '/orders/' . $this->orderId . '/update-customer', $this->makeCustomerUpdateData(), false);
+    }
+
     public function update()
     {
         return $this->client->setToken($this->token)->put('api/v1/partners/' . $this->partnerId. '/orders/' . $this->orderId, $this->makeUpdateData());
@@ -265,7 +284,14 @@ class OrderService
         return $this->client->delete('api/v1/partners/' . $this->partnerId . '/orders/' . $this->orderId);
     }
 
-    private function makeUpdateData()
+    private function makeCustomerUpdateData() : array
+    {
+        return [
+            'customer_id' => $this->customerId
+        ];
+    }
+
+    private function makeUpdateData() : array
     {
         $data = [];
         if (isset($this->partnerId)) $data['partner_id']                                = $this->partnerId;
@@ -286,7 +312,7 @@ class OrderService
         return $data;
     }
 
-    private function makeCreateData()
+    private function makeCreateData() : array
     {
         $data = [];
         if ($this->partnerId) array_push($data, ['name' => 'partner_id', 'contents' => $this->partnerId]);
@@ -298,10 +324,12 @@ class OrderService
         if ($this->salesChannelId) array_push($data, ['name' => 'sales_channel_id','contents' => $this->salesChannelId ?: 0]);
         if ($this->skus) array_push($data, ['name' => 'skus','contents' => $this->skus]);
         if ($this->discount) array_push($data, ['name' => 'discount','contents' => $this->discount]);
+        if ($this->isDiscountPercentage) array_push($data, ['name' => 'is_discount_percentage','contents' => $this->isDiscountPercentage]);
         if ($this->paymentMethod) array_push($data, ['name' => 'payment_method','contents' => $this->paymentMethod]);
         if ($this->paymentLinkAmount) array_push($data, ['name' => 'payment_link_amount','contents' => $this->paymentLinkAmount]);
         if ($this->paidAmount) array_push($data, ['name' => 'paid_amount','contents' => $this->paidAmount]);
         if($this->voucher_id) array_push($data, ['name' => 'voucher_id', 'contents' => $this->voucher_id]);
+        if($this->emi_month) array_push($data, ['name' => 'emi_month', 'contents' => $this->emi_month]);
         return $data;
     }
 

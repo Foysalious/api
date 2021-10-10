@@ -1156,6 +1156,10 @@ return [
         'carton' => [
             'bn' => 'কার্টন',
             'en' => 'carton'
+        ],
+        'gauze' => [
+            'bn' => 'গজ',
+            'en' => 'gauze'
         ]
     ],
     'TICKET_LOG' => [
@@ -1460,5 +1464,8 @@ return [
         ]
     ],
     "PARTNER_ORDER_TARGET_TYPE" => 'PARTNER_ORDER_DETAILS',
-    'PARTNER_SUBSCRIPTION_SMS' => env('PARTNER_SUBSCRIPTION_SMS')
+    'PARTNER_SUBSCRIPTION_SMS' => env('PARTNER_SUBSCRIPTION_SMS'),
+    'MAX_CONCURRENT_TIME' => 900,
+
+    'MAX_CONCURRENT_MIDDLEWARE_TIME' => 180,
 ];

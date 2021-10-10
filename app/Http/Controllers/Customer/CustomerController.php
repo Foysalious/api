@@ -141,7 +141,8 @@ class CustomerController extends Controller
                 if (empty($all_services)) continue;
                 $data['category']['is_inspection_service'] = $all_services[0]->is_inspection_service;
                 $data['category']['services'] = $all_services;
-                $data['category']['max_order_amount'] = $data['category']['max_order_amount'] ? (double)$data['category']['max_order_amount'] : null;
+                $data['category']['vat_percentage'] = config('sheba.category_vat_in_percentage');
+                $data['category']['max_order_amount'] = $data['category']['max_order_amount'] ? (double) $data['category']['max_order_amount'] : null;
                 $data['category']['app_thumb_sizes'] = getResizedUrls($data['category']['app_thumb'], 100, 100);
                 $data['rating'] = $review->rating;
                 $data['partner'] = $review->job->partnerOrder->partner;

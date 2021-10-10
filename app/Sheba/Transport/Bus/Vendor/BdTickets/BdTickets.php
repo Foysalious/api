@@ -148,11 +148,20 @@ class BdTickets extends Vendor
         return false;
     }
 
+    public function getTicketCancellableData($transportTicketOrder){
+        $transactionId = json_decode($transportTicketOrder->reservation_details)->id;
+        return $this->bdTicketClient->get('tickets/'.$transactionId.'/cancelcheck');
+    }
+
     public function cancelTicket($transport_ticket_order)
     {
         $transaction_id = json_decode($transport_ticket_order->reservation_details)->id;
-        $transport_ticket_order->status = 'cancelled';
-        $transport_ticket_order->save();
         return $this->bdTicketClient->post('tickets/cancel',["ticketId" => $transaction_id, "applicationChannel" => "REMOTE"]);
+    }
+
+    public function balance()
+    {
+        $response =  $this->bdTicketClient->setBookingPort(config('bus_transport.bdticket.balance_check_port'))->post('accounts/checkBalance', ['accountType' => 'AGENT']);
+        return $response['data']['balance'];
     }
 }

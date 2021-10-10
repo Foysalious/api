@@ -94,9 +94,6 @@ class Updater
         return true;
     }
 
-    /**
-     * @return bool
-     */
     public function disburse()
     {
         DB::transaction(function () {

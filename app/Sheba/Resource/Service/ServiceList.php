@@ -1,9 +1,11 @@
 <?php namespace Sheba\Resource\Service;
 
 
+use App\Models\CrosssaleService;
 use App\Models\HyperLocal;
 use App\Models\Job;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ServiceList
 {
@@ -14,6 +16,8 @@ class ServiceList
     private $resource;
     private $geo;
     private $categoryId;
+    /** @var array */
+    private $serviceIds = [];
 
     public function setJob(Job $job)
     {
@@ -37,6 +41,12 @@ class ServiceList
         return $this;
     }
 
+    public function setServiceIds(array $ids)
+    {
+        $this->serviceIds = $ids;
+        return $this;
+    }
+
     public function getServicesList()
     {
         $is_published_for_backend = $this->request->is_published_for_backend;
@@ -47,6 +57,12 @@ class ServiceList
             if (!$is_published_for_backend) $q->where('publication_status', 1);
             $q->orWhere('is_published_for_backend', 1);
         })->get();
+        $cs_add_on_service_ids = CrosssaleService::whereIn('service_id', $this->serviceIds)->pluck('add_on_service_id')->toArray();
+        if ($cs_add_on_service_ids) {
+            $services = $services->filter(function ($service) use ($cs_add_on_service_ids){
+                return $service->is_add_on == 0 || in_array($service->id, $cs_add_on_service_ids);
+            });
+        }
         if (count($services) > 0) {
             $services->each(function (&$service) {
                 $variables = json_decode($service->variables);
@@ -77,7 +93,7 @@ class ServiceList
             'services.unit',
             'services.variables',
             'app_thumb',
-            'category_id'
+            'category_id',
         ];
     }
 
@@ -147,7 +163,7 @@ class ServiceList
         $location = $hyperLocation->location->id;
 
         $services = $this->resource->firstPartner()->services()->select($this->getSelectColumnsOfService())->where(function ($q) {
-            $q->where('publication_status', 1);
+            $q->where('publication_status', 1)->where('is_add_on', 0);
         })->whereHas('locations', function ($q) use ($location) {
             $q->where('locations.id', $location);
         });

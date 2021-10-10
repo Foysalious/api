@@ -44,4 +44,30 @@ class ServiceController extends Controller
 
         return count($categories) > 0 ? api_response($request, $categories, 200, ['service' => $categories]) : api_response($request, null, 404);
     }
+
+    public function instructions(Request $request, $serviceId)
+    {
+        $service = Service::select('id', 'name', 'description_bn')->find($serviceId);
+        if (!$service) return api_response($request, '', 404, ['message' => 'Service not found']);
+        $instructions = $this->getServiceInstructions($service);
+
+        $data = [
+            'instructions' => $instructions
+        ];
+        return api_response($request, $data, 200, ['data' => $data]);
+    }
+
+    private function getServiceInstructions(Service $service) : array
+    {
+        $instructions[] = config('spro.instructions.work_start');
+
+        $serviceDescriptionBn = json_decode($service->description_bn);
+        if (count($serviceDescriptionBn) > 0) {
+            config()->set('spro.instructions.service_details.list', $serviceDescriptionBn);
+            $instructions[] = config('spro.instructions.service_details');
+        }
+
+        $instructions[] = config('spro.instructions.work_end');
+        return $instructions;
+    }
 }

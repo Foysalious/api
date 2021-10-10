@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Inventory;
 
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Inventory\CollectionRequest;
 use App\Sheba\InventoryService\Repository\CollectionRepository;
 use App\Sheba\InventoryService\Services\CollectionService;
 use Illuminate\Http\Request;
@@ -36,20 +37,21 @@ class CollectionController extends Controller
      * @throws Exception
      */
 
-    public function store(Request $request)
+    public function store(CollectionRequest $request)
     {
         $partner = $request->auth_user->getPartner();
         $response = $this->collectionService
             ->setPartnerId($partner->id)
             ->setName($request->name)
             ->setDescription($request->description)
-            ->setThumb($request->thumb)
-            ->setBanner($request->banner)
-            ->setAppThumb($request->app_thumb)
-            ->setAppBanner($request->app_banner)
+            ->setThumb($request->file('thumb'))
+            ->setBanner($request->file('banner'))
+            ->setAppThumb($request->file('app_thumb'))
+            ->setAppBanner($request->file('app_banner'))
             ->setIsPublished($request->is_published)
             ->setProducts($request->products)
             ->store();
+
         return http_response($request, null, 201, $response);
     }
 
@@ -80,6 +82,7 @@ class CollectionController extends Controller
             ->setCollectionId($collection_id)
             ->setProducts($request->products)
             ->update();
+
         return http_response($request, null, 200, $response);
     }
 

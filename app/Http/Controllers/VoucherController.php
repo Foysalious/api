@@ -62,15 +62,15 @@ class VoucherController extends Controller
             $cloned_partner_voucher_query = clone $partner_voucher_query;
 
             $data = [
-                'total_voucher' => $cloned_partner_voucher_query->count(),
-                'active_voucher' => $cloned_partner_voucher_query->valid()->count(),
+                'total_voucher'     => $cloned_partner_voucher_query->count(),
+                'active_voucher'    => $cloned_partner_voucher_query->valid()->count(),
                 'total_sale_with_voucher' => $total_sale_with_voucher
             ];
 
             $partner_voucher_query->orderBy('created_at', 'desc')->take(3)->each(function ($voucher) use (&$latest_vouchers, $manager) {
                 $resource = new Item($voucher, new VoucherTransformer());
                 $voucher = $manager->createData($resource)->toArray();
-                array_push($latest_vouchers, $voucher['data']);
+                array_push($latest_vouchers, $voucher['data']) ;
             });
 
             return api_response($request, null, 200, ['data' => $data, 'latest_vouchers' => $latest_vouchers]);
@@ -120,7 +120,7 @@ class VoucherController extends Controller
 
                 $resource = new Item($voucher, new VoucherTransformer());
                 $voucher = $manager->createData($resource)->toArray();
-                array_push($vouchers, $voucher['data']);
+                array_push($vouchers, $voucher['data']) ;
             });
             return api_response($request, null, 200, ['vouchers' => $vouchers]);
         } catch (ValidationException $e) {
@@ -320,7 +320,7 @@ class VoucherController extends Controller
     public function getVoucherDetails(Request $request)
     {
         $voucher_id = $request->voucher_id;
-        $voucher = Voucher::findOrFail($voucher_id);
+        $voucher =  Voucher::findOrFail($voucher_id);
 //        dd($voucher);
 //        app(VoucherDiscount::class)->setVoucher($voucher)->
 //        $voucher_id = $request->voucher_id;

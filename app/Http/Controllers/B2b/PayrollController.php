@@ -46,10 +46,6 @@ class PayrollController extends Controller
     private $payrollComponentRequester;
     /*** @var PayrollComponentRepository */
     private $payrollComponentRepository;
-    /*** @var BusinessWeekendRepo */
-    private $businessWeekRepo;
-    /** * @var BusinessHolidayRepo */
-    private $businessHolidayRepo;
 
     /**
      * PayrollController constructor.

@@ -31,7 +31,12 @@ class NeoBankingGigatechController extends Controller
             $neoBanking = app(NeoBanking::class);
             $info             = (array)$neoBanking->setBank($bank)->getNidInfo($data);
             $neoBanking->storeThirdPartyLogs($request, ThirdPartyLog::GIGA_TECH,"ocr images", $info["data"]);
+            if(!$info["data"]) {
+                throw new NeoBankingException('Nid ocr failed');
+            }
             return api_response($request, $info, 200, ['data' => $info["data"]]);
+        }catch (NeoBankingException $e) {
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
@@ -72,7 +77,7 @@ class NeoBankingGigatechController extends Controller
             $neoBanking = app(NeoBanking::class);
             $result         = (array)$neoBanking->setBank($bank)->getGigatechKycStatus($data);
 
-            $thirdPartyLog = neoBankingThirdPartyLog::where([['partner_id',$request->partner->id],['from', 'giga_tech_status']])->orderBy('id', 'DESC')->first();
+            $thirdPartyLog = neoBankingThirdPartyLog::where([['partner_id',$request->partner->id],['from', ThirdPartyLog::GIGA_TECH_STATUS]])->orderBy('id', 'DESC')->first();
             if($thirdPartyLog->response !== json_encode($result['data'])){
                 $neoBanking->storeThirdPartyLogs($request, ThirdPartyLog::GIGA_TECH_STATUS,$request->mobile, $result['data']);
             }

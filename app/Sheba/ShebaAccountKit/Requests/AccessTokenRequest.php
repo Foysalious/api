@@ -21,5 +21,4 @@ class AccessTokenRequest
         $this->authorizationCode = $authorizationCode;
         return $this;
     }
-
 }

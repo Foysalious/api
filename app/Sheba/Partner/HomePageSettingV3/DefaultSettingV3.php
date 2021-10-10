@@ -36,6 +36,13 @@ class DefaultSettingV3
             "is_on_homepage" => 0
         ];
 
+//        $loan = [
+//            "key" => "loan",
+//            "name_en" => "Loan",
+//            "name_bn" => "ডিজিটাল লোন",
+//            "is_on_homepage" => 1
+//        ];
+
         $earnings = [
             "key" => "earnings",
             "name_en" => "Earnings",
@@ -116,6 +123,6 @@ class DefaultSettingV3
     }
     public static function getLastUpdatedAt()
     {
-        return '2021-06-24';
+        return '2021-06-16';
     }
 }

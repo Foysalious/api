@@ -11,6 +11,7 @@ use App\Sheba\Partner\Delivery\Statuses;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\ModificationFields;
 use Throwable;
 
@@ -39,6 +40,7 @@ class DeliveryController extends Controller
      */
     public function register(Request $request, DeliveryService $delivery_service)
     {
+        //dd(123);
         $this->validate($request, [
             'name' => 'required',
             'address' => 'required',
@@ -124,7 +126,6 @@ class DeliveryController extends Controller
             ->setPickupDistrict($request->pickup_district)
             ->setPickupThana($request->pickup_thana)
             ->orderPlace();
-
         $orderPlace->setPartner($partner)->setPosOrder($request->pos_order_id)->storeDeliveryInformation($orderPlaceInfo['data']);
         return api_response($request, null, 200, ['messages' => 'ডেলিভারি রিকোয়েস্ট সম্পন্ন', 'data' => $orderPlaceInfo['data']]);
     }
@@ -276,7 +277,7 @@ class DeliveryController extends Controller
             'status' => "required|string" ,
             'merchant_code' => "required|string"
         ]);
-
+        
         $delivery_service->setToken($this->bearerToken($request))->updateDeliveryStatus($request->merchant_code, $request->order_ref_no);
         return api_response($request, null, 200);
     }

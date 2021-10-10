@@ -23,6 +23,9 @@ abstract class PaymentMethod
     /** @var StatusChanger */
     protected $statusChanger;
 
+    /**
+     * PaymentMethod constructor.
+     */
     public function __construct()
     {
         $this->paymentLogRepo = new PaymentStatusChangeLogRepository();
@@ -57,6 +60,9 @@ abstract class PaymentMethod
         return self::VALIDITY_IN_MINUTES;
     }
 
+    /**
+     * @return mixed
+     */
     abstract public function getMethodName();
 
     /**
@@ -92,5 +98,24 @@ abstract class PaymentMethod
         });
 
         return $payment;
+    }
+
+    /**
+     * @param Payable $payable
+     * @return string
+     * @throws \Exception
+     */
+    protected function getUniquePaymentInvoiceId(Payable $payable)
+    {
+        return $this->getPayableInvoiceId($payable) . '_' . randomString(10, 1, 1);
+    }
+
+    /**
+     * @param Payable $payable
+     * @return string
+     */
+    protected function getPayableInvoiceId(Payable $payable)
+    {
+        return "SHEBA_" . strtoupper($this->getMethodName()) . "_" . strtoupper($payable->readable_type) . '_' . $payable->type_id;
     }
 }

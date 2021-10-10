@@ -4,6 +4,7 @@ class CustomerRoute
 {
     public function set($api)
     {
+        $api->post('continue-with-kit', 'Customer\LoginController@continueWithKit');
         $api->group(['prefix' => 'customers'], function ($api) {
             $api->group(['prefix' => '{customer}', 'middleware' => ['customer.auth']], function ($api) {
                 $api->get('partners-nearby', 'PartnerLocationController@getNearbyPartners');
@@ -87,12 +88,12 @@ class CustomerRoute
                         $api->get('/', 'JobController@show');
                         $api->get('bills', 'JobController@getBills');
                         $api->get('invoice', 'JobController@getInvoice');
-                        $api->get('bills/clear', 'JobController@clearBills');
+                        $api->get('bills/clear', 'JobController@clearBills')->middleware('concurrent_request:customer,pay');
                         $api->post('reschedule', 'JobController@rescheduleJob');
                         $api->get('logs', 'JobController@getLogs');
                         $api->get('logs/order', 'JobController@getOrderLogs');
                         $api->post('reviews', 'ReviewController@store');
-                        $api->post('promotions', 'Customer\CustomerJobController@addPromotion');
+                        $api->post('promotions', 'Customer\CustomerJobController@addPromotion')->middleware('concurrent_request:customer,update');
                         $api->group(['prefix' => 'complains'], function ($api) {
                             $api->get('/', 'ComplainController@index');
                             $api->post('/', 'ComplainController@storeForCustomer');

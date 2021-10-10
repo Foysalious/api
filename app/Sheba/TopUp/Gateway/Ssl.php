@@ -1,8 +1,8 @@
 <?php namespace Sheba\TopUp\Gateway;
 
 use App\Models\TopUpOrder;
-use Exception;
 use Sheba\Dal\TopupOrder\Statuses;
+use Exception;
 use Sheba\TopUp\Exception\GatewayTimeout;
 use Sheba\TopUp\Vendor\Internal\SslVrClient;
 use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;

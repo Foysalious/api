@@ -85,7 +85,7 @@ class ResourceScheduleSlot
 
     private function getLeavesBetween($start, $end)
     {
-        $leaves = $this->partner->leaves()->select('id', 'partner_id', 'start', 'end')->where(function ($q) use ($start, $end) {
+        $leaves = $this->partner->leaves()->select('id', 'artisan_id', 'start', 'end')->where(function ($q) use ($start, $end) {
             $q->where(function ($q) use ($start, $end) {
                 $q->whereBetween('start', [$start, $end]);
             })->orWhere(function ($q) use ($start, $end) {
@@ -139,18 +139,16 @@ class ResourceScheduleSlot
 
     private function isBetweenAnyLeave(Carbon $time)
     {
-        if (!$this->runningLeaves) return false; else {
-            foreach ($this->runningLeaves as $runningLeave) {
-                $start = $runningLeave->start;
-                $end = $runningLeave->end;
-                if ($end) {
-                    if ($time->between($start, $end)) return true;
-                } else {
-                    if ($time->gte($start) && $end == null) return true;
-                }
-            }
-            return false;
+        if (!$this->runningLeaves) return false;
+
+        foreach ($this->runningLeaves as $running_leave) {
+            $start = $running_leave->start;
+            $end = $running_leave->end;
+            if ($end && $time->between($start, $end)) return true;
+            if ($end == null && $time->gte($start)) return true;
         }
+
+        return false;
     }
 
     private function addAvailabilityByResource(Carbon $day)

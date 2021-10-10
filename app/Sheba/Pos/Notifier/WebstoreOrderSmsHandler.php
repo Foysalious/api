@@ -7,6 +7,10 @@ use App\Sheba\Pos\Order\Invoice\InvoiceService;
 use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Sms\BusinessType;
 use Sheba\Sms\FeatureType;
+use Sheba\AccountingEntry\Accounts\Accounts;
+use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Expense\SmsPurchase;
+use Sheba\AccountingEntry\Accounts\RootAccounts;
+use Sheba\AccountingEntry\Repository\JournalCreateRepository;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Transactions\Types;
@@ -41,13 +45,22 @@ class WebstoreOrderSmsHandler
 
         $sms_handler->shoot();
 
-        (new WalletTransactionHandler())
+        $transaction = (new WalletTransactionHandler())
             ->setModel($partner)
             ->setAmount($sms_cost)
             ->setType(Types::debit())
             ->setLog($sms_cost . " BDT has been deducted for sending pos order update sms to customer(order id: {$this->order->id})")
             ->setTransactionDetails([])
             ->setSource(TransactionSources::SMS)
+            ->store();
+
+        (new JournalCreateRepository())->setTypeId($partner->id)
+            ->setSource($transaction)
+            ->setAmount($sms_cost)
+            ->setDebitAccountKey(SmsPurchase::SMS_PURCHASE_FROM_SHEBA)
+            ->setCreditAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
+            ->setDetails("Webstore sms cost")
+            ->setReference($this->order->id)
             ->store();
     }
 
@@ -79,6 +92,7 @@ class WebstoreOrderSmsHandler
                 'invoice_link' => $invoice_link
             ];
         }
+
         return $sms_handler
             ->setMobile($this->order->customer->profile->mobile)
             ->setFeatureType(FeatureType::WEB_STORE)

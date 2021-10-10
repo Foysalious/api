@@ -55,6 +55,7 @@ class OrderController extends Controller
             ->setPaymentLinkAmount($request->payment_link_amount)
             ->setPaidAmount($request->paid_amount)
             ->setVoucherId($request->voucher_id)
+            ->setEmiMonth($request->emi_month)
             ->store();
         return http_response($request, null, 200, $response);
 
@@ -93,6 +94,17 @@ class OrderController extends Controller
             ->setPaidAmount($request->paid_amount)
             ->setToken($request->header('Authorization'))
             ->update();
+        return http_response($request, null, 200, $response);
+    }
+
+    public function updateCustomer(Request $request, $order_id)
+    {
+        $partner = $request->auth_user->getPartner();
+        $response = $this->orderService
+            ->setPartnerId($partner->id)
+            ->setOrderId($order_id)
+            ->setCustomerId($request->customer_id)
+            ->updateCustomer();
         return http_response($request, null, 200, $response);
     }
 
