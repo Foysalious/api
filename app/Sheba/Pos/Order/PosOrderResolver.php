@@ -12,7 +12,7 @@ class PosOrderResolver
     /**  @var PosOrderServerClient */
     private $client;
     /** @var PosOrderObject $order */
-    private $order;
+    protected $order;
     /** @var PosOrderObject */
     private $posOrderObject;
     /**
@@ -36,31 +36,22 @@ class PosOrderResolver
         $this->orderId = $orderId;
         $oldPosOrder = PosOrder::where('id', $orderId)->select('id', 'sales_channel', 'customer_id')->first();
         if ($oldPosOrder && !$oldPosOrder->is_migrated) {
+            $oldPosOrder->calculate();
             $customer = $oldPosOrder->customer->profile;
-            $customerObject = $this->customerObject->setId($customer->id)->setName($customer->name)->setMobile($customer->mobile)->get();
-            $this->order = $this->posOrderObject->setId($oldPosOrder->id)->setSalesChannel($oldPosOrder->sales_channel)->setCustomer($customerObject)->setType(PosOrderTypes::OLD_SYSTEM)->get();
+            $customerObject = $this->customerObject->setId($customer->id)->setName($customer->name)->setMobile($customer->mobile);
+            $this->order = $this->posOrderObject->setId($oldPosOrder->id)->setDue($oldPosOrder->getDue())->setSalesChannel($oldPosOrder->sales_channel)->setCustomer($customerObject)->setType(PosOrderTypes::OLD_SYSTEM);
         } else {
-            $response = $this->client->get('api/v1/order-channel/' . $this->orderId);
+            $response = $this->client->get('api/v1/orders/' . $this->orderId);
             $newPosOrder = json_decode(json_encode($response['order']), FALSE);
             $customer = $newPosOrder->customer;
-            $customerObject = $this->customerObject->setId(null)->setName($customer->name)->setMobile($customer->mobile)->get();
-            $this->order = $this->posOrderObject->setId($newPosOrder->id)->setSalesChannel($newPosOrder->sales_channel)->setCustomer($customerObject)->setType(PosOrderTypes::NEW_SYSTEM)->get();
+            $customerObject = $this->customerObject->setId(null)->setName($customer->name)->setMobile($customer->mobile);
+            $this->order = $this->posOrderObject->setId($newPosOrder->id)->setDue($newPosOrder->due)->setSalesChannel($newPosOrder->sales_channel)->setCustomer($customerObject)->setType(PosOrderTypes::NEW_SYSTEM);
         }
         return $this;
     }
 
-    /**
-     * @return PosOrderObject
-     */
-    public function get()
+    public function __get($value)
     {
-        return $this->order;
-    }
-
-    private function setCustomer()
-    {
-        /** @var CustomerObject $customerObject */
-        $customerObject = app(CustomerObject::class);
-        return $customerObject->setId()->setName()->setMobile()->get();
+        return $this->{$value};
     }
 }

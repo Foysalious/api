@@ -181,7 +181,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $this->target = $this->paymentLink->getTarget();
         if ($this->target instanceof PosOrderObject) {
             $payment_data    = [
-                'pos_order_id' => $this->target->getId(),
+                'pos_order_id' => $this->target->id,
                 'amount'       => $this->transaction->getEntryAmount(),
                 'method'       => $this->payment->payable->type,
                 'emi_month'    => $this->transaction->getEmiMonth(),
@@ -189,7 +189,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             ];
             /** @var PaymentCreator $payment_creator */
             $payment_creator = app(PaymentCreator::class);
-            $payment_creator->credit($payment_data, $this->target->getType());
+            $payment_creator->credit($payment_data, $this->target->type);
             if ($this->transaction->isPaidByCustomer()) {
                 $this->target->update(['interest' => 0, 'bank_transaction_charge' => 0]);
             }
@@ -236,7 +236,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             "title"      => 'Order Successful',
             "message"    => "$formatted_amount Tk has been collected from {$payable->getName() } by order link- {$payment_link->getLinkID()}",
             "event_type" => $event_type,
-            "event_id"   => $this->target->getId(),
+            "event_id"   => $this->target->id,
             "sound"      => "notification_sound",
             "channel_id" => $channel
         ], $topic, $channel, $sound);
