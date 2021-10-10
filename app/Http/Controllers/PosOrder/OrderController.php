@@ -145,7 +145,7 @@ class OrderController extends Controller
             'interest' => 'required|numeric',
             'is_paid_by_customer' => 'required|boolean',
         ]);
-        if($request->header('api-key') != config('expense_tracker.api_key'))
+        if ($request->header('api-key') != config('expense_tracker.api_key'))
             throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
         $posOrder = PosOrder::find($order);
         $pos_order_type = $posOrder && !$posOrder->is_migrated ? PosOrderTypes::OLD_SYSTEM : PosOrderTypes::NEW_SYSTEM;
@@ -158,20 +158,26 @@ class OrderController extends Controller
     public function paymentLinkCreated($partner, $order, Request $request)
     {
         $this->validate($request, [
-            'link_id'                 => 'required|string',
-            'reason'                  => 'required|string',
-            'status'                  => 'required|string',
-            'link'                    => 'required|string',
-            'emi_month'               => 'sometimes|integer|in:' . implode(',', config('emi.valid_months')),
-            'interest'                => 'sometimes|numeric',
+            'link_id' => 'required|string',
+            'reason' => 'required|string',
+            'status' => 'required|string',
+            'link' => 'required|string',
+            'emi_month' => 'sometimes|integer|in:' . implode(',', config('emi.valid_months')),
+            'interest' => 'sometimes|numeric',
             'bank_transaction_charge' => 'sometimes|numeric',
-            'paid_by'                 => 'sometimes|in:' . implode(',', PaymentLinkStatics::paidByTypes()),
-            'partner_profit'          => 'sometimes'
+            'paid_by' => 'sometimes|in:' . implode(',', PaymentLinkStatics::paidByTypes()),
+            'partner_profit' => 'sometimes'
         ]);
-        if($request->header('api-key') != config('expense_tracker.api_key'))
+        if ($request->header('api-key') != config('expense_tracker.api_key'))
             throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
         //TODO: Order Payment Link Created Event
         return http_response($request, null, 200);
+    }
+
+    public function orderInvoiceDownload($order_id, Request $request)
+    {
+        $partner = $request->auth_user->getPartner();
+        return $this->orderService->orderInvoiceDownload($partner->id, $order_id);
     }
 
 }

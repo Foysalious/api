@@ -49,6 +49,7 @@ class Route
              * jwtAccessToken Middleware
              */
             $api->group(['middleware' => ['jwtAccessToken']], function ($api) {
+                $api->get('/orders/{order_id}/generate-invoice', 'PosOrder\OrderController@orderInvoiceDownload');
                 $api->group(['prefix' => 'webstore-theme-settings', 'middleware' => ['jwtAccessToken']], function ($api) {
                     $api->get('/partner-settings', 'WebstoreSettingController@index');
                     $api->get('/theme-details', 'WebstoreSettingController@getThemeDetails');
