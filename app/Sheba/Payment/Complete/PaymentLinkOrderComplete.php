@@ -7,6 +7,7 @@ use App\Models\Payment;
 use App\Models\PosOrder;
 use App\Models\Profile;
 use App\Sheba\Pos\Order\PosOrderObject;
+use App\Sheba\Pos\Repositories\PosClientRepository;
 use DB;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
@@ -180,33 +181,19 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $this->target = $this->paymentLink->getTarget();
         if ($this->target instanceof PosOrderObject) {
             $paymentMethodDetail = new PaymentMethodDetails($this->payment->paymentDetails->last()->method);
-            //amount:100
-            //payment_method_en:cod
-            //payment_method_bn:ক্যাশ
-            //payment_method_icon:https://cdn-shebadev.s3.ap-south-1.amazonaws.com/pos/payment/cash_v2.png
-            //emi_month:0
-            //interest:0
-            //is_paid_by_customer:1
+            $partner = $this->paymentLink->getPaymentReceiver();
             $payment_data    = [
                 'amount' => $this->transaction->getEntryAmount(),
-                'payment_method_en' => $paymentMethodDetail,
-//                'payment_method_bn' => ,
-//                'payment_method_icon' => ,
-//                'emi_month' => ,
-//                'interest' => ,
-//                'is_paid_by_customer' => ,
-                'pos_order_id' => $this->target->id,
-                'amount'       => $this->transaction->getEntryAmount(),
-                'method'       => $this->payment->payable->type,
-                'emi_month'    => $this->transaction->getEmiMonth(),
-                'interest'     => $this->transaction->isPaidByPartner() ? $this->transaction->getInterest() : 0
+                'payment_method_en' => $paymentMethodDetail['name'],
+                'payment_method_bn' => $paymentMethodDetail['nameBn'],
+                'payment_method_icon' => $paymentMethodDetail['icon'],
+                'emi_month' => $this->transaction->getEmiMonth(),
+                'interest' => $this->transaction->isPaidByPartner() ? $this->transaction->getInterest() : 0,
+                'is_paid_by_customer' => (bool)$this->transaction->isPaidByCustomer(),
             ];
-            /** @var PaymentCreator $payment_creator */
-            $payment_creator = app(PaymentCreator::class);
-            $payment_creator->credit($payment_data, $this->target->type);
-            if ($this->transaction->isPaidByCustomer()) {
-                $this->target->update(['interest' => 0, 'bank_transaction_charge' => 0]);
-            }
+            /** @var PosClientRepository $posOrderRepo */
+            $posOrderRepo = app(PosClientRepository::class);
+            $posOrderRepo->setPartnerId($partner->id)->setOrderId($this->target->id)->addOnlinePayment($payment_data);
         }
         if ($this->target instanceof ExternalPayment) {
             $this->target->payment_id = $this->payment->id;
