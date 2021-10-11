@@ -40,6 +40,7 @@ class AppreciationEmployeeTransformer extends TransformerAbstract
                 'name' => $profile->name,
                 'pro_pic' => $profile->pro_pic,
                 'mobile' => $business_member->mobile,
+                'is_employee_new_joiner' => $business_member->isNewJoiner(),
                 'department_id' => $department_id,
                 'designation' => $is_member_role_present ? $business_member->role->name : 'N/S',
                 'stickers' => (new EmployeeAppreciations())->getEmployeeStickers($business_member)
