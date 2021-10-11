@@ -11,6 +11,7 @@ use League\Fractal\Resource\Collection;
 use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Dal\PayrollComponent\Components;
 use Sheba\Dal\PayrollComponent\Type;
+use Sheba\Dal\Payslip\PayslipRepoImplementation;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Dal\Payslip\PayslipRepository;
 use Sheba\Dal\Salary\SalaryRepository;
@@ -35,6 +36,9 @@ class PayrunList
     private $monthYear;
     private $departmentID;
     private $payslip;
+    private $isProratedFilterApplicable;
+    private $grossSalaryProrated;
+    private $paysliprepo;
 
     /**
      * PayrunList constructor.
@@ -47,6 +51,7 @@ class PayrunList
         $this->businessMemberRepository = $business_member_repository;
         $this->payslipRepositoryInterface = $payslip_repository_interface;
         $this->salaryRepository = $salary_repository;
+        $this->paysliprepo = app(PayslipRepoImplementation::class);//Test
     }
 
     /**
@@ -110,6 +115,12 @@ class PayrunList
         return $this;
     }
 
+    public function setGrossSalaryProrated($gross_salary_prorated)
+    {
+        $this->grossSalaryProrated = $gross_salary_prorated;
+        return $this;
+    }
+
     public function get()
     {
         $this->runPayslipQuery();
@@ -119,9 +130,11 @@ class PayrunList
 
     private function runPayslipQuery()
     {
-        $payslips = $this->payslipRepositoryInterface->getPaySlipByStatus($this->businessMemberIds, Status::PENDING)->orderBy('id', 'DESC');
+        //$payslips = $this->payslipRepositoryInterface->getPaySlipByStatus($this->businessMemberIds, Status::PENDING)->orderBy('id', 'DESC');
+        $payslips = $this->getPaySlipByStatus($this->businessMemberIds, Status::PENDING)->orderBy('id', 'DESC');
         if ($this->monthYear) $payslips = $this->filterByMonthYear($payslips);
         if ($this->departmentID) $payslips = $this->filterByDepartment($payslips);
+        if($this->grossSalaryProrated) $this->filterByGrossSalaryProrated($payslips);
         $this->payslipList = $payslips->get();
     }
 
@@ -132,11 +145,13 @@ class PayrunList
     {
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
-        $payslip_list = new Collection($this->payslipList, new PayRunListTransformer());
+        $payrun_list_transformer = new PayRunListTransformer();
+        $payslip_list = new Collection($this->payslipList, $payrun_list_transformer);
         $payslip_list = collect($manager->createData($payslip_list)->toArray()['data']);
 
         if ($this->search) $payslip_list = collect($this->searchWithEmployeeName($payslip_list))->values();
         if ($this->sort && $this->sortColumn) $payslip_list = $this->sortByColumn($payslip_list, $this->sortColumn, $this->sort)->values();
+        $this->isProratedFilterApplicable = $payrun_list_transformer->getIsProratedFilterApplicable();
 
         return $payslip_list;
     }
@@ -152,6 +167,11 @@ class PayrunList
             'deduction' => $this->payslip->sum('deduction'),
             'net_payable' => $this->payslip->sum('net_payable'),
         ];
+    }
+
+    public function getIsProratedFilterApplicable()
+    {
+        return $this->isProratedFilterApplicable;
     }
 
     /**
@@ -212,5 +232,31 @@ class PayrunList
                 });
             });
         });
+    }
+
+    private function filterByGrossSalaryProrated($payslips)
+    {
+        if ($this->grossSalaryProrated === 'yes') $payslips->where('joining_log', '<>', null);
+        if ($this->grossSalaryProrated === 'no') $payslips->where('joining_log', null);
+    }
+
+    public function getPaySlipByStatus($business_member_ids, $status)
+    {
+        return $this->paysliprepo->where('status', $status)
+            ->whereIn('business_member_id', $business_member_ids)->with(['businessMember' => function ($q){
+                $q->with(['member' => function ($q) {
+                    $q->select('id', 'profile_id')
+                        ->with([
+                            'profile' => function ($q) {
+                                $q->select('id', 'name');
+                            }]);
+                },'role' => function ($q) {
+                    $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                        'businessDepartment' => function ($q) {
+                            $q->select('business_departments.id', 'business_id', 'name');
+                        }
+                    ]);
+                }]);
+            }]);
     }
 }
