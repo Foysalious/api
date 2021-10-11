@@ -346,7 +346,7 @@ class DashboardController extends Controller
             }
             $updated_setting=$home_page_setting->filter(function($item){
                 return in_array($item->key, ['payment_link','emi']);
-            });
+            })->values();
             return api_response($request, null, 200, ['data' => $updated_setting]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
