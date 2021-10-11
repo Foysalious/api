@@ -207,7 +207,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $payment_data    = [
                 'amount' => $this->transaction->getEntryAmount(),
                 'payment_method_en' => $paymentMethodDetail['name'],
-                'payment_method_bn' => $paymentMethodDetail['nameBn'],
+                'payment_method_bn' => $paymentMethodDetail['name_bn'],
                 'payment_method_icon' => $paymentMethodDetail['icon'],
                 'emi_month' => $this->transaction->getEmiMonth(),
                 'interest' => $this->transaction->isPaidByPartner() ? $this->transaction->getInterest() : 0,
