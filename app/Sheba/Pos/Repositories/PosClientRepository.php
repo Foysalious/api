@@ -2,6 +2,7 @@
 
 namespace App\Sheba\Pos\Repositories;
 
+use App\Sheba\Pos\Exceptions\PosClientException;
 use App\Sheba\Pos\PosClient;
 
 class PosClientRepository extends PosClient
@@ -9,9 +10,15 @@ class PosClientRepository extends PosClient
     private $partnerId;
     private $orderId;
 
+    /**
+     * @param array $data
+     * @return array|mixed|object|string|null
+     * @throws PosClientException
+     */
     public function addOnlinePayment(array $data)
     {
-
+        $url = "pos/v1/partners/" . $this->partnerId . "/orders/" . $this->orderId . "/online-payment";
+        return $this->post($url, $data);
     }
 
     /**
