@@ -96,7 +96,6 @@ class PaymentLinkOrderComplete extends PaymentComplete
 
     private function storeEntry()
     {
-
         $payable = $this->payment->payable;
         /** @var AutomaticEntryRepository $entry_repo */
         $entry_repo = app(AutomaticEntryRepository::class)
@@ -174,7 +173,6 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $this->transaction = (new PaymentLinkTransaction($this->payment, $this->paymentLink))->setReceiver($payment_receiver)->create();
 
     }
-
 
     private function clearTarget()
     {
