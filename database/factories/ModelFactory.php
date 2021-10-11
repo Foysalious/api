@@ -46,19 +46,7 @@ use Factory\InfoCallRejectReasonFactory;
 use Factory\InfoCallStatusLogFactory;
 use Factory\ResourceTransactionFactory;
 use \Factory\SubscriptionWisePaymentGatewaysFactory;
-use Factory\AttendanceFactory;
-use Factory\BusinessOfficeHoursFactory;
-use Factory\BusinessWeekend;
-use Factory\PayrollSettingFactory;
-use Factory\PayrollComponentFactory;
-use Factory\ComponentPackageTargetFactory;
-use Factory\AttendanceActionLogFactory;
-use Factory\PayrollComponentPackageFactory;
-use Factory\LeaveFactory;
-use Factory\LeaveTypeFactory;
-use Factory\BusinessMemberLeaveTypeFactory;
-use Factory\OfficePolicyRuleFactory;
-use Factory\ServiceDiscountFactory;
+use \Factory\LocationServiceFactory;
 
 $factory_classes = [
     CategoryFactory::class,
@@ -108,19 +96,7 @@ $factory_classes = [
     InfoCallStatusLogFactory::class,
     ResourceTransactionFactory::class,
     SubscriptionWisePaymentGatewaysFactory::class,
-    AttendanceFactory::class,
-    BusinessOfficeHoursFactory::class,
-    BusinessWeekend::class,
-    PayrollSettingFactory::class,
-    PayrollComponentFactory::class,
-    ComponentPackageTargetFactory::class,
-    AttendanceActionLogFactory::class,
-    PayrollComponentPackageFactory::class,
-    LeaveFactory::class,
-    LeaveTypeFactory::class,
-    BusinessMemberLeaveTypeFactory::class,
-    OfficePolicyRuleFactory::class,
-    ServiceDiscountFactory::class
+    LocationServiceFactory::class
 ];
 
 foreach ($factory_classes as $factory_class) {

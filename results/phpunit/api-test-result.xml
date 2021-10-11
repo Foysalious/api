@@ -2,10 +2,11 @@
 <testsuites>
   <testsuite name="Application Test Suite" tests="1" assertions="0" failures="0" errors="1" time="0.000000">
     <testsuite name="Tests\Feature\sProOrderCreate\sProOrderCreatePlaceOrderTest" file="/var/www/tests/Feature/sProOrderCreate/sProOrderCreatePlaceOrderTest.php" tests="1" assertions="0" failures="0" errors="1" time="0.000000">
-      <testcase name="testSProPlaceOrderAPIWithValidBody" class="Tests\Feature\sProOrderCreate\sProOrderCreatePlaceOrderTest" file="/var/www/tests/Feature/sProOrderCreate/sProOrderCreatePlaceOrderTest.php" line="86" assertions="0" time="0.000000">
+      <testcase name="testSProPlaceOrderAPIWithValidBody" class="Tests\Feature\sProOrderCreate\sProOrderCreatePlaceOrderTest" file="/var/www/tests/Feature/sProOrderCreate/sProOrderCreatePlaceOrderTest.php" line="113" assertions="0" time="0.000000">
         <error type="PHPUnit_Framework_Exception">Tests\Feature\sProOrderCreate\sProOrderCreatePlaceOrderTest::testSProPlaceOrderAPIWithValidBody
-PHPUnit_Framework_Exception: array:1 [
-  0 =&gt; "1"
+PHPUnit_Framework_Exception: array:2 [
+  "code" =&gt; 500
+  "message" =&gt; "Something Went Wrong"
 ]
 
 </error>
