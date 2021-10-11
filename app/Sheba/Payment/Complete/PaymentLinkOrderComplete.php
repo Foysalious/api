@@ -201,22 +201,23 @@ class PaymentLinkOrderComplete extends PaymentComplete
     {
         $this->target = $this->paymentLink->getTarget();
 //        TODO: Need to fix error: Call to undefined method App\\Sheba\\Pos\\Order\\PosOrderObject::update()
-//        if ($this->target instanceof PosOrderObject) {
-//            $payment_data    = [
-//                'pos_order_id' => $this->target->id,
-//                'amount'       => $this->transaction->getEntryAmount(),
-//                'method'       => $this->payment->payable->type,
-//                'emi_month'    => $this->transaction->getEmiMonth(),
-//                'interest'     => $this->transaction->isPaidByPartner() ? $this->transaction->getInterest() : 0
-//            ];
+        if ($this->target instanceof PosOrderObject) {
+            $payment_data    = [
+                'pos_order_id' => $this->target->id,
+                'amount'       => $this->transaction->getEntryAmount(),
+                'method'       => $this->payment->payable->type,
+                'emi_month'    => $this->transaction->getEmiMonth(),
+                'interest'     => $this->transaction->isPaidByPartner() ? $this->transaction->getInterest() : 0
+            ];
+            Log::info(['payment data', $payment_data]);
 //            /** @var PaymentCreator $payment_creator */
 //            $payment_creator = app(PaymentCreator::class);
 //            $payment_creator->credit($payment_data, $this->target->type);
 //            if ($this->transaction->isPaidByCustomer()) {
 //                $this->target->update(['interest' => 0, 'bank_transaction_charge' => 0]);
 //            }
-////            $this->storeAccountingJournal($payment_data);
-//        }
+//            $this->storeAccountingJournal($payment_data);
+        }
         if ($this->target instanceof ExternalPayment) {
             $this->target->payment_id = $this->payment->id;
             $this->target->update();
