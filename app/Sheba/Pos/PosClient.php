@@ -1,14 +1,14 @@
 <?php
 
 
-namespace App\Sheba;
+namespace App\Sheba\Pos;
 
 
+use App\Sheba\Pos\Exceptions\PosClientException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
-use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 
-abstract class APIClient
+class PosClient
 {
     protected $client;
     protected $baseUrl;
@@ -17,26 +17,14 @@ abstract class APIClient
     public function __construct(Client $client)
     {
         $this->client = $client;
-        $this->baseUrl = rtrim(config('expense_tracker.api_url'), '/');
-        $this->apiKey = config('expense_tracker.api_key');
-    }
-
-    public function setBaseUrl($url): APIClient
-    {
-        $this->baseUrl = $url;
-        return $this;
-    }
-
-    public function setApiKey($apiKey): APIClient
-    {
-        $this->apiKey = $apiKey;
-        return $this;
+        $this->baseUrl = '/';
+        $this->apiKey = 'sheba.xyz';
     }
 
     /**
      * @param $uri
      * @return mixed
-     * @throws ExpenseTrackingServerError
+     * @throws PosClientException
      */
     public function get($uri)
     {
@@ -48,21 +36,21 @@ abstract class APIClient
      * @param $uri
      * @param null $data
      * @return mixed
-     * @throws ExpenseTrackingServerError
+     * @throws PosClientException
      */
     private function call($method, $uri, $data = null)
     {
         try {
             $res = decodeGuzzleResponse($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data)));
             if ($res['code'] != 200)
-                throw new ExpenseTrackingServerError($res['message']);
+                throw new PosClientException($res['message']);
             unset($res['code'], $res['message']);
             return $res;
         } catch (GuzzleException $e) {
             $res = decodeGuzzleResponse($e->getResponse());
             if ($res['code'] == 400)
-                throw new ExpenseTrackingServerError($res['message']);
-            throw new ExpenseTrackingServerError($e->getMessage());
+                throw new PosClientException($res['message']);
+            throw new PosClientException($e->getMessage());
         }
     }
 
@@ -93,7 +81,7 @@ abstract class APIClient
      * @param $uri
      * @param $data
      * @return mixed
-     * @throws ExpenseTrackingServerError
+     * @throws PosClientException
      */
     public function post($uri, $data)
     {
@@ -104,7 +92,7 @@ abstract class APIClient
      * @param $uri
      * @param $data
      * @return mixed
-     * @throws ExpenseTrackingServerError
+     * @throws PosClientException
      */
     public function put($uri, $data)
     {
@@ -114,7 +102,7 @@ abstract class APIClient
     /**
      * @param $uri
      * @return mixed
-     * @throws ExpenseTrackingServerError
+     * @throws PosClientException
      */
     public function delete($uri)
     {
