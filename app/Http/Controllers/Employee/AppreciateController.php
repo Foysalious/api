@@ -61,7 +61,7 @@ class AppreciateController extends Controller
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($business_members->get(), new AppreciationEmployeeTransformer());
+        $resource = new Item($business_members->get(), new AppreciationEmployeeTransformer($business_member));
         $employees_with_dept_data = $manager->createData($resource)->toArray()['data'];
 
         return api_response($request, null, 200, [
