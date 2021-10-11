@@ -180,12 +180,12 @@ class PaymentLinkOrderComplete extends PaymentComplete
     {
         $this->target = $this->paymentLink->getTarget();
         if ($this->target instanceof PosOrderObject) {
-            $paymentMethodDetail = new PaymentMethodDetails($this->payment->paymentDetails->last()->method);
+            $paymentMethodDetail = (new PaymentMethodDetails($this->payment->paymentDetails->last()->method))->toArray();
             $partner = $this->paymentLink->getPaymentReceiver();
             $payment_data    = [
                 'amount' => $this->transaction->getEntryAmount(),
                 'payment_method_en' => $paymentMethodDetail['name'],
-                'payment_method_bn' => $paymentMethodDetail['nameBn'],
+                'payment_method_bn' => $paymentMethodDetail['name_bn'],
                 'payment_method_icon' => $paymentMethodDetail['icon'],
                 'emi_month' => $this->transaction->getEmiMonth(),
                 'interest' => $this->transaction->isPaidByPartner() ? $this->transaction->getInterest() : 0,
