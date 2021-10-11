@@ -115,7 +115,8 @@ class PaymentLinkController extends Controller
             $link = $paymentLinkRepository->findByIdentifier($identifier);
             if ($link) {
                 $receiver = $link->getPaymentReceiver();
-                if ($receiver instanceof Partner && $receiver->status == PartnerStatuses::BLACKLISTED) {
+                //&& $receiver->status == PartnerStatuses::BLACKLISTED
+                if ($receiver instanceof Partner ) {
                     return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
                 }
             }

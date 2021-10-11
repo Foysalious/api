@@ -132,6 +132,7 @@ class Creator
         $approval_setting = $this->findApprovalSetting->getApprovalSetting($this->businessMember, Modules::LEAVE);
 
         $this->approvers = $this->findApprovers->calculateApprovers($approval_setting, $this->businessMember);
+
         if (count($this->approvers) == 0) $this->setError(422, 'No approval flow is defined for you due to wrong approval flow setup.');
         return $this;
     }
@@ -226,18 +227,14 @@ class Creator
             'left_days' => $this->getLeftDays()
         ];
 
-        /** $first_approver */
-        $first_approver = reset($this->approvers);
-
         $leave = null;
-        DB::transaction(function () use ($data, &$leave, $first_approver) {
+        DB::transaction(function () use ($data, &$leave) {
             $this->setModifier($this->businessMember->member);
             $leave = $this->leaveRepository->create($this->withCreateModificationField($data));
             $this->approval_request_creator->setBusinessMember($this->businessMember)
-                ->setApprover($first_approver)
+                ->setApproverId($this->approvers)
                 ->setRequestable($leave)
                 ->setIsLeaveAdjustment($this->isLeaveAdjustment)
-                ->setCreatedBy($this->createdBy)
                 ->create();
             $this->createAttachments($leave);
         });
