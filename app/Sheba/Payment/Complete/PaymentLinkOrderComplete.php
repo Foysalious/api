@@ -23,6 +23,7 @@ use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\ModificationFields;
+use Sheba\Payment\Presenter\PaymentMethodDetails;
 use Sheba\PaymentLink\InvoiceCreator;
 use Sheba\PaymentLink\PaymentLinkStatics;
 use Sheba\PaymentLink\PaymentLinkTransaction;
@@ -200,7 +201,8 @@ class PaymentLinkOrderComplete extends PaymentComplete
     private function clearTarget()
     {
         $this->target = $this->paymentLink->getTarget();
-        Log::info(["which instance", $this->target instanceof PosOrderObject, $this->target instanceof PosOrder]);
+        $detail = new PaymentMethodDetails($this->payment->payable->type);
+        Log::info(["which instance", $detail);
 //        TODO: Need to fix error: Call to undefined method App\\Sheba\\Pos\\Order\\PosOrderObject::update()
         if ($this->target instanceof PosOrderObject) {
             $payment_data    = [
