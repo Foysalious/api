@@ -5,6 +5,7 @@ use App\Models\Partner;
 use App\Models\Payable;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
+use App\Sheba\Pos\Repositories\PosClientRepository;
 use App\Transformers\PaymentDetailTransformer;
 use App\Transformers\PaymentLinkArrayTransform;
 use Carbon\Carbon;
@@ -21,6 +22,10 @@ use Sheba\PaymentLink\Creator;
 use Sheba\PaymentLink\PaymentLink;
 use Sheba\PaymentLink\PaymentLinkClient;
 use Sheba\PaymentLink\PaymentLinkStatics;
+use Sheba\PaymentLink\Target;
+use Sheba\PaymentLink\TargetType;
+use Sheba\Pos\Customer\PosCustomerResolver;
+use Sheba\Pos\Order\PosOrderResolver;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
 use Throwable;
@@ -187,17 +192,21 @@ class PaymentLinkController extends Controller
             $interest = 0;
             $bank_transaction_charge = 0;
             if ($request->has('pos_order_id')) {
-                $pos_order = PosOrder::find($request->pos_order_id);
-                $this->deActivatePreviousLink($pos_order);
-                $customer = PosCustomer::find($pos_order->customer_id);
-                if (!empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
+                /** @var PosOrderResolver $posOrderResolver */
+                $posOrderResolver = (app(PosOrderResolver::class));
+                $pos_order = $posOrderResolver->setOrderId($request->pos_order_id)->get();
+                $target = new Target(TargetType::POS_ORDER, $request->pos_order_id);
+                $this->deActivatePreviousLink($target);
+                if (!empty($pos_order)) $this->creator->setPayerId($pos_order->customer_id)->setPayerType('pos_customer');
                 if ($this->creator->getPaidBy() == PaymentLinkStatics::paidByTypes()[1]) {
                     $interest = $this->creator->getInterest();
                     $bank_transaction_charge = $this->creator->getBankTransactionCharge();
                 }
             }
             if ($request->has('customer_id')) {
-                $customer = PosCustomer::find($request->customer_id);
+                /** @var PosCustomerResolver $posCustomerResolver */
+                $posCustomerResolver = app(PosCustomerResolver::class);
+                $customer = $posCustomerResolver->setCustomerId($request->customer_id)->setPartner($request->partner)->get();
                 if (!empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
                 $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
             }
@@ -210,6 +219,14 @@ class PaymentLinkController extends Controller
                 }
                 $payment_link['interest'] = $interest;
                 $payment_link['bank_transaction_charge'] = $bank_transaction_charge;
+                if (isset($request->partner) && isset($pos_order)) {
+                    /** @var PosClientRepository $posClientRepository */
+                    $posClientRepository = app(PosClientRepository::class);
+                    $data = $posClientRepository->paymentLinkCreateData($payment_link);
+                    $url = $posClientRepository->makePaymentLinkCreateApi($request->partner->id, $pos_order->id);
+                    $posClientRepository->post($url, $data);
+                }
+
                 return api_response($request, $payment_link, 200, array_merge(['payment_link' => $payment_link], $this->creator->getSuccessMessage()));
             } else {
                 return api_response($request, null, 500, $this->creator->getErrorMessage());
@@ -223,11 +240,10 @@ class PaymentLinkController extends Controller
         }
     }
 
-    private function deActivatePreviousLink(PosOrder $order)
+    private function deActivatePreviousLink(Target $target)
     {
-        $payment_link_target = $order->getPaymentLinkTarget();
-        $payment_link = app(PaymentLinkRepositoryInterface::class)->getPaymentLinksByPosOrder($payment_link_target);
-        $key = $payment_link_target->toString();
+        $payment_link = app(PaymentLinkRepositoryInterface::class)->getPaymentLinksByPosOrder($target);
+        $key = $target->toString();
         $links = null;
         if (array_key_exists($key, $payment_link))
             $links = $payment_link[$key];

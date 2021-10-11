@@ -12,6 +12,7 @@ use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\PaymentLinkAccountingRepository;
 use App\Repositories\PartnerGeneralSettingRepository;
 use Carbon\Carbon;
+use App\Sheba\Pos\Repositories\PosClientRepository;
 use DB;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
@@ -114,7 +115,6 @@ class PaymentLinkOrderComplete extends PaymentComplete
 
     private function storeEntry()
     {
-
         $payable = $this->payment->payable;
         /** @var AutomaticEntryRepository $entry_repo */
         $entry_repo = app(AutomaticEntryRepository::class)
@@ -201,25 +201,24 @@ class PaymentLinkOrderComplete extends PaymentComplete
     private function clearTarget()
     {
         $this->target = $this->paymentLink->getTarget();
-        $paymentMethodDetail = new PaymentMethodDetails($this->payment->paymentDetails->last()->method);
-        Log::info(["payment data", $paymentMethodDetail]);
-//        TODO: Need to fix error: Call to undefined method App\\Sheba\\Pos\\Order\\PosOrderObject::update()
-//        if ($this->target instanceof PosOrderObject) {
-//            $payment_data    = [
-//                'pos_order_id' => $this->target->id,
-//                'amount'       => $this->transaction->getEntryAmount(),
-//                'method'       => $this->payment->payable->type,
-//                'emi_month'    => $this->transaction->getEmiMonth(),
-//                'interest'     => $this->transaction->isPaidByPartner() ? $this->transaction->getInterest() : 0
-//            ];
-//            /** @var PaymentCreator $payment_creator */
-//            $payment_creator = app(PaymentCreator::class);
-//            $payment_creator->credit($payment_data, $this->target->type);
-//            if ($this->transaction->isPaidByCustomer()) {
-//                $this->target->update(['interest' => 0, 'bank_transaction_charge' => 0]);
-//            }
-////            $this->storeAccountingJournal($payment_data);
-//        }
+        if ($this->target instanceof PosOrderObject) {
+            $paymentMethodDetail = new PaymentMethodDetails($this->payment->paymentDetails->last()->method);
+            $partner = $this->paymentLink->getPaymentReceiver();
+            $payment_data    = [
+                'amount' => $this->transaction->getEntryAmount(),
+                'payment_method_en' => $paymentMethodDetail['name'],
+                'payment_method_bn' => $paymentMethodDetail['nameBn'],
+                'payment_method_icon' => $paymentMethodDetail['icon'],
+                'emi_month' => $this->transaction->getEmiMonth(),
+                'interest' => $this->transaction->isPaidByPartner() ? $this->transaction->getInterest() : 0,
+                'is_paid_by_customer' => (bool)$this->transaction->isPaidByCustomer(),
+            ];
+            Log::info(['payment data', $payment_data]);
+            /** @var PosClientRepository $posOrderRepo */
+            $posOrderRepo = app(PosClientRepository::class);
+            $res = $posOrderRepo->setPartnerId($partner->id)->setOrderId($this->target->id)->addOnlinePayment($payment_data);
+            Log::info(['After insertion complete', $res]);
+        }
         if ($this->target instanceof ExternalPayment) {
             $this->target->payment_id = $this->payment->id;
             $this->target->update();
