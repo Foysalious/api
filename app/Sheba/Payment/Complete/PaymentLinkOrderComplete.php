@@ -202,7 +202,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
     {
         $this->target = $this->paymentLink->getTarget();
 //        $detail = new PaymentMethodDetails($this->payment->payable->type);
-        Log::info($this->payment);
+        Log::info($this->payment->paymentDetails->last());
         Log::info($this->payment->payable);
         Log::info($this->transaction);
 //        TODO: Need to fix error: Call to undefined method App\\Sheba\\Pos\\Order\\PosOrderObject::update()
