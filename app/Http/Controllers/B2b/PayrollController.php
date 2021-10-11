@@ -277,79 +277,47 @@ class PayrollController extends Controller
         $business = $request->business;
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
         /** @var PayrollSetting $payroll_setting */
         $payroll_setting = $business->payrollSetting;
         $last_pay_day = $payroll_setting->last_pay_day;
         $next_pay_day = $payroll_setting->next_pay_day;
-        $start_date_for_next_pay_day = $next_pay_day ? Carbon::parse($next_pay_day)->subMonth() : null;
         $pay_day_type = $request->pay_day_type;
         $pay_day = $request->pay_day;
-
-
         $previous_pay_day_start = $last_pay_day ? Carbon::parse($last_pay_day)->subMonth() : null;
         $previous_pay_day_end = $last_pay_day ? Carbon::parse($last_pay_day)->subDay() : null;
-
-
-
-
-
-
-
-        $start_date_for_new_pay_day = null;
-        $end_date_for_new_pay_day = null;
-        $new_pay_day = null;
-        $type = '';
-
-
-
-
-
-
-
-
-
-
-
-
         $current_pay_day_start = $current_pay_day_end = $new_pay_day_start = $new_pay_day_end = null;
-
         if ($pay_day_type == PayDayType::FIXED_DATE) {
-            $new_pay_day = $next_pay_day ? Carbon::now()->month(Carbon::parse($next_pay_day)->month)->day($request->pay_day) : null;
             $current_pay_day_start = ($next_pay_day && $last_pay_day) ? Carbon::parse($last_pay_day) : (Carbon::now()->toDateString() >= Carbon::now()->day($pay_day)->toDateString() ? Carbon::now()->day($pay_day) : Carbon::now()->subMonth()->day($pay_day));
             $current_pay_day_end = $next_pay_day ? Carbon::parse($next_pay_day)->subDay() : (Carbon::now()->toDateString() >= Carbon::now()->day($pay_day)->toDateString() ? Carbon::now()->addMonth()->day($pay_day)->subDay() : Carbon::now()->day($pay_day)->subDay());
-            $new_pay_day_start = $next_pay_day ? Carbon::parse($next_pay_day)->day($request->pay_day) : (Carbon::now()->toDateString() >= Carbon::now()->day($pay_day)->toDateString() ? Carbon::now()->addMonth()->day($pay_day) : Carbon::now()->day($pay_day));
-            $new_pay_day_end = $next_pay_day ? Carbon::parse($next_pay_day)->addMonth()->day($request->pay_day)->subDay() : (Carbon::now()->toDateString() >= Carbon::now()->day($pay_day)->toDateString() ? Carbon::now()->addMonths(2)->day($pay_day)->subDay() : Carbon::now()->addMonth()->day($pay_day)->subDay());
+            $new_pay_day_start = $next_pay_day ? Carbon::parse($next_pay_day)->day($pay_day) : (Carbon::now()->toDateString() >= Carbon::now()->day($pay_day)->toDateString() ? Carbon::now()->addMonth()->day($pay_day) : Carbon::now()->day($pay_day));
+            $new_pay_day_end = $next_pay_day ? Carbon::parse($next_pay_day)->addMonth()->day($pay_day)->subDay() : (Carbon::now()->toDateString() >= Carbon::now()->day($pay_day)->toDateString() ? Carbon::now()->addMonths(2)->day($pay_day)->subDay() : Carbon::now()->addMonth()->day($pay_day)->subDay());
         } else if ($pay_day_type == PayDayType::LAST_WORKING_DAY) {
             $current_pay_day_start = ($next_pay_day && $last_pay_day) ? Carbon::parse($last_pay_day) : $this->lastWorkingDayOfMonth($business, Carbon::now()->subMonth()->lastOfMonth());
-            $current_pay_day_end =  $next_pay_day ? Carbon::parse($next_pay_day)->subDay() : $this->lastWorkingDayOfMonth($business, Carbon::now()->lastOfMonth()->subDay());
+            $current_pay_day_end =  $next_pay_day ? Carbon::parse($next_pay_day)->subDay() : $this->lastWorkingDayOfMonth($business, Carbon::now()->lastOfMonth()->subDay())->subDay();
             $next_pay_month = Carbon::parse($next_pay_day)->month + 1;
-            $new_pay_day_start = $next_pay_day ? $this->lastWorkingDayOfMonth($business, Carbon::parse($next_pay_day)->month($next_pay_month)->lastOfMonth())->subMonth() : $this->lastWorkingDayOfMonth($business, Carbon::now()->addMonth()->lastOfMonth());
-            $new_pay_day_end = $next_pay_day ? $this->lastWorkingDayOfMonth($business, Carbon::parse($next_pay_day)->month($next_pay_month)->lastOfMonth())->subDay() :$this->lastWorkingDayOfMonth($business, Carbon::now()->addMonths(1)->lastOfMonth())->subDay();
+            $new_pay_day_start = $next_pay_day ? $this->lastWorkingDayOfMonth($business, Carbon::parse($next_pay_day)->month($next_pay_month)->lastOfMonth())->subMonth() : $this->lastWorkingDayOfMonth($business, Carbon::now()->lastOfMonth()->subDay());
+            $new_pay_day_end = $next_pay_day ? $this->lastWorkingDayOfMonth($business, Carbon::parse($next_pay_day)->month($next_pay_month)->lastOfMonth())->subDay() : $this->lastWorkingDayOfMonth($business, Carbon::now()->addMonth()->next()->lastOfMonth())->subDay();
         }
-
-        $type = $start_date_for_next_pay_day < $start_date_for_new_pay_day ? 'GAP' : 'OVERLAPPING';
-        $day_difference = $start_date_for_new_pay_day->diffInDays($start_date_for_next_pay_day);
+        $day_difference = ($current_pay_day_end->diffInDays($new_pay_day_start));
+        $type = $current_pay_day_end < $new_pay_day_start && $day_difference > 1 ? 'GAP' : ($current_pay_day_end >= $new_pay_day_start ? 'OVERLAPPING' : null);
         $pay_day_cycle = [
             'monthly_cycle' => [
                 [
-                    'month' => $prev_pay_day_end->format('F'),
-                    'cycle' => $prev_pay_day_start->format('M d') . ' - ' . $prev_pay_day_end->format('M d'),
+                    'month' => $previous_pay_day_end ? $previous_pay_day_end->format('F') : null,
+                    'cycle' => $previous_pay_day_start && $previous_pay_day_end ? $previous_pay_day_start->format('M d') . ' - ' . $previous_pay_day_end->format('M d') : null,
                 ],
                 [
                     'month' => $current_pay_day_end->format('F'),
                     'cycle' => $current_pay_day_start->format('M d') . ' - ' . $current_pay_day_end->format('M d'),
                 ],
                 [
-                    'month' => $next_pay_day_end->format('F'),
-                    'cycle' => $next_pay_day_start->format('M d') . ' - ' . $next_pay_day_end->format('M d'),
-                ],
-                [
-                    'month' => $after_next_pay_day_end->format('F'),
-                    'cycle' => $after_next_pay_day_start->format('M d') . ' - ' . $after_next_pay_day_end->format('M d'),
-                ],
+                    'month' => $new_pay_day_end->format('F'),
+                    'cycle' => $new_pay_day_start->format('M d') . ' - ' . $new_pay_day_end->format('M d'),
+                ]
             ],
-            'conflict_type' => $day_difference > 0 && $last_pay_day && $next_pay_day ? $type : null,
-            'conflict_day' => $day_difference > 0 && $last_pay_day && $next_pay_day ? $day_difference : null
+            'conflict_type' => $last_pay_day && $next_pay_day ? $type : null,
+            'conflict_day' => $type && $last_pay_day && $next_pay_day ? ($type == 'GAP' ? $day_difference : $day_difference + 1) : null
         ];
         return api_response($request, null, 200, ['pay_day_cycle' => $pay_day_cycle]);
     }
