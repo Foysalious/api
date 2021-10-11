@@ -199,6 +199,7 @@ class AppreciateController extends Controller
             /** @var Profile $profile */
             $profile = $member->profile;
             array_push($new_employers, [
+                'id' => $profile->id,
                 'name' => $profile->name,
                 'pro_pic' => $profile->pro_pic
             ]);
