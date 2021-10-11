@@ -178,6 +178,13 @@ class PaymentLinkOrderComplete extends PaymentComplete
     {
         $this->target = $this->paymentLink->getTarget();
         if ($this->target instanceof PosOrderObject) {
+            //amount:100
+            //payment_method_en:cod
+            //payment_method_bn:ক্যাশ
+            //payment_method_icon:https://cdn-shebadev.s3.ap-south-1.amazonaws.com/pos/payment/cash_v2.png
+            //emi_month:0
+            //interest:0
+            //is_paid_by_customer:1
             $payment_data    = [
                 'pos_order_id' => $this->target->id,
                 'amount'       => $this->transaction->getEntryAmount(),
