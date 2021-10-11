@@ -201,7 +201,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
     private function clearTarget()
     {
         $this->target = $this->paymentLink->getTarget();
-//        $detail = new PaymentMethodDetails($this->payment->payable->type);
+        $detail = new PaymentMethodDetails($this->payment->paymentDetails->last()->method);
         Log::info($this->payment->paymentDetails->last());
         Log::info($this->payment->payable);
         Log::info($this->transaction);
