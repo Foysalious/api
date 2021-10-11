@@ -21,6 +21,7 @@ class Route
             $api->post('/check-access', 'PosRebuild\AccessManagerController@checkAccess');
             $api->get('voucher-details/{voucher_id}', 'VoucherController@getVoucherDetails');
             $api->post('test-migrate', 'Partner\DataMigrationController@testMigration');
+            $api->get('emi-calculate', 'PosOrder\OrderController@calculateEmiCharges');
             $api->group(['prefix' => 'partners'], function ($api) {
                 $api->group(['prefix' => '{partner}'], function ($api) {
                     $api->group(['prefix' => 'orders'], function ($api) {
