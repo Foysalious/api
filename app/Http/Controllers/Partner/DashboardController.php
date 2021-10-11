@@ -344,9 +344,15 @@ class DashboardController extends Controller
                     in_array($setting['key'], NewFeatures::get()) ? $setting['is_new'] = 1 : $setting['is_new'] = 0;
                 }
             }
-            $updated_setting=$home_page_setting->filter(function($item){
-                return in_array($item->key, ['payment_link','emi']);
-            })->values();
+           if (is_array($home_page_setting)){
+               $updated_setting=array_filter($home_page_setting,function($item){
+                   return in_array($item->key, ['payment_link','emi']);
+               });
+           }elseif (
+               $updated_setting=$home_page_setting->filter(function($item){
+                   return in_array($item->key, ['payment_link','emi']);
+               })
+           )
             return api_response($request, null, 200, ['data' => $updated_setting]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
