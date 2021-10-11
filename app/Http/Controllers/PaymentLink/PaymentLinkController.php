@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\PaymentLink;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\Partner\Pos\PosApiAfterPaymentLinkCreated;
 use App\Models\Partner;
 use App\Models\Payable;
 use App\Models\PosCustomer;
@@ -200,11 +201,8 @@ class PaymentLinkController extends Controller
                 $payment_link['interest'] = $interest;
                 $payment_link['bank_transaction_charge'] = $bank_transaction_charge;
                 if (isset($request->partner) && isset($pos_order)) {
-                    /** @var PosClientRepository $posClientRepository */
-                    $posClientRepository = app(PosClientRepository::class);
-                    $data = $posClientRepository->paymentLinkCreateData($payment_link);
-                    $url = $posClientRepository->makePaymentLinkCreateApi($request->partner->id, $pos_order->id);
-                    $posClientRepository->post($url, $data);
+                    $this->dispatch(app(PosApiAfterPaymentLinkCreated::class)->setPartnerId($request->partner->id)
+                        ->setPosOrderId($pos_order->id)->setPaymentLink($payment_link));
                 }
 
                 return api_response($request, $payment_link, 200, array_merge(['payment_link' => $payment_link], $this->creator->getSuccessMessage()));
