@@ -202,22 +202,20 @@ class PaymentLinkOrderComplete extends PaymentComplete
     {
         $this->target = $this->paymentLink->getTarget();
         if ($this->target instanceof PosOrderObject) {
-            $paymentMethodDetail = (new PaymentMethodDetails($this->payment->paymentDetails->last()->method))->toArray();
+            $paymentMethodDetail = new PaymentMethodDetails($this->payment->paymentDetails->last()->method);
             $partner = $this->paymentLink->getPaymentReceiver();
             $payment_data    = [
                 'amount' => $this->transaction->getEntryAmount(),
                 'payment_method_en' => $paymentMethodDetail['name'],
-                'payment_method_bn' => $paymentMethodDetail['name_bn'],
+                'payment_method_bn' => $paymentMethodDetail['nameBn'],
                 'payment_method_icon' => $paymentMethodDetail['icon'],
                 'emi_month' => $this->transaction->getEmiMonth(),
                 'interest' => $this->transaction->isPaidByPartner() ? $this->transaction->getInterest() : 0,
                 'is_paid_by_customer' => (bool)$this->transaction->isPaidByCustomer(),
             ];
-            Log::info(['payment data', $payment_data]);
             /** @var PosClientRepository $posOrderRepo */
             $posOrderRepo = app(PosClientRepository::class);
-            $res = $posOrderRepo->setPartnerId($partner->id)->setOrderId($this->target->id)->addOnlinePayment($payment_data);
-            Log::info(['After insertion complete', $res]);
+            $posOrderRepo->setPartnerId($partner->id)->setOrderId($this->target->id)->addOnlinePayment($payment_data);
         }
         if ($this->target instanceof ExternalPayment) {
             $this->target->payment_id = $this->payment->id;
