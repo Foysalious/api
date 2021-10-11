@@ -31,6 +31,8 @@ class TopUpRequest
     private $isFromRobiTopUpWallet;
     private $walletType;
     private $topUpBlockNumberRepository;
+    /** @var TopUpBlockedAgentRepositoryInterface */
+    private $topUpBlockedAgentsRepo;
     protected $userAgent;
     private $lat;
     private $long;
@@ -38,10 +40,11 @@ class TopUpRequest
     private $otfAmountCheck;
     private $isOtfAllow;
 
-    public function __construct(VendorFactory $vendor_factory, Contract $top_up_block_number_repository)
+    public function __construct(VendorFactory $vendor_factory, Contract $top_up_block_number_repository, TopUpBlockedAgentRepositoryInterface $topUpBlockedAgentsRepo)
     {
         $this->vendorFactory = $vendor_factory;
         $this->topUpBlockNumberRepository = $top_up_block_number_repository;
+        $this->topUpBlockedAgentsRepo = $topUpBlockedAgentsRepo;
     }
 
     /**
@@ -188,6 +191,11 @@ class TopUpRequest
             return 1;
         }
 
+        if ($this->isAgentBlocked()) {
+            $this->errorMessage = "You have been blocked to do top up. Please contact customer care.";
+            return 1;
+        }
+
         if ($this->agent instanceof Business && $this->isOtfAllow && $this->otfAmountCheck->isAmountInOtf()) {
             $this->errorMessage = "The recharge amount is blocked due to OTF activation issue.";
             return 1;
@@ -222,6 +230,11 @@ class TopUpRequest
     private function isCanTopUpNo()
     {
         return ($this->agent instanceof Partner && (!$this->agent->canTopUp()));
+    }
+
+    private function isAgentBlocked()
+    {
+        return $this->topUpBlockedAgentsRepo->isBlocked($this->agent);
     }
 
     /**

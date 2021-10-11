@@ -5,21 +5,18 @@ use App\Models\Affiliate;
 use App\Models\Business;
 use App\Models\Customer;
 use App\Models\Partner;
-use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
-use App\Models\TopUpVendorCommission;
 use App\Sheba\TopUp\TopUpBulkRequest\Formatter as TopUpBulkRequestFormatter;
 use Carbon\Carbon;
-use Elasticsearch\Common\Exceptions\Missing404Exception;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Sheba\Dal\AuthenticationRequest\Purpose;
-use Sheba\Dal\SubscriptionWisePaymentGateway\Model as SubscriptionWisePaymentGateway;
-use Sheba\Dal\TopUpBulkRequest\Statuses;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
 
 use Sheba\Dal\TopupOrder\TopUpOrderRepository;
+use Sheba\Dal\TopUpBlockedAgent\TopUpBlockedAgentRepositoryInterface;
+use Sheba\Dal\TopUpBlockedAgent\Reason;
 use Sheba\ModificationFields;
 use Sheba\TopUp\Bulk\RequestStatus;
 use Sheba\TopUp\Bulk\Validator\DataFormatValidator;
@@ -28,7 +25,6 @@ use Sheba\TopUp\Bulk\Validator\SheetNameValidator;
 
 use Sheba\TopUp\ConnectionType;
 use Sheba\OAuth2\AuthUser;
-use Sheba\TopUp\Exception\InvalidSubscriptionWiseCommission;
 use Sheba\TopUp\History\RequestBuilder;
 use Sheba\TopUp\OTF\OtfAmount;
 use Sheba\TopUp\TopUpAgent;
@@ -56,7 +52,6 @@ use Sheba\ShebaAccountKit\Requests\AccessTokenRequest;
 use Sheba\ShebaAccountKit\ShebaAccountKit;
 use Firebase\JWT\ExpiredException;
 use Firebase\JWT\JWT;
-use Elasticsearch;
 
 class TopUpController extends Controller
 {
@@ -97,13 +92,12 @@ class TopUpController extends Controller
      * @param $user
      * @param TopUpRequest $top_up_request
      * @param Creator $creator
-     * @param TopUpSpecialAmount $special_amount
      * @param UserAgentInformation $userAgentInformation
      * @param VerifyPin $verifyPin
      * @return JsonResponse
      * @throws Exception
      */
-    public function topUp(Request $request, $user, TopUpRequest $top_up_request, Creator $creator, TopUpSpecialAmount $special_amount, UserAgentInformation $userAgentInformation, VerifyPin $verifyPin)
+    public function topUp(Request $request, $user, TopUpRequest $top_up_request, Creator $creator, UserAgentInformation $userAgentInformation, VerifyPin $verifyPin, TopUpOrderRepository $top_up_order_repo, TopUpBlockedAgentRepositoryInterface $top_up_blocked_agent_repo)
     {
         $agent = $request->user;
         $validation_data = [
@@ -166,6 +160,15 @@ class TopUpController extends Controller
         }
         
         $topup_order = $creator->setTopUpRequest($top_up_request)->create();
+
+        if ($top_up_order_repo->getCountByAgentSince($agent, Carbon::now()->subMinute()) > 3) {
+            $top_up_blocked_agent_repo->create([
+                'agent_type' => get_class($agent),
+                'agent_id' => $agent->id,
+                'reason' => Reason::RECURRING_TOP_UP,
+            ]);
+        }
+
         if ($topup_order) {
             dispatch((new TopUpJob($topup_order)));
 
