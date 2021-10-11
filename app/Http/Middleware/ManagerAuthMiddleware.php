@@ -4,6 +4,7 @@ use App\Models\Partner;
 use App\Models\Resource;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redis;
 
 class ManagerAuthMiddleware
 {
@@ -21,6 +22,10 @@ class ManagerAuthMiddleware
             $manager_resource = Resource::where('remember_token', $request->input('remember_token'))->first();
             $partner = Partner::find($request->partner);
             if ($manager_resource && $partner) {
+                $isMigrationRunning = Redis::get("user-migration:".$request->partner->id);
+                if ($isMigrationRunning) {
+                    return api_response($request, null, 403, ["message" => "Sorry! Your migration is running for $isMigrationRunning. Please be patient."]);
+                }
                 if ($manager_resource->isManager($partner)) {
                     $request->merge(['manager_resource' => $manager_resource, 'partner' => $partner]);
                     return $next($request);
