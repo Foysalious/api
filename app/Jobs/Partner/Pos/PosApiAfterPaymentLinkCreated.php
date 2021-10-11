@@ -1,23 +1,20 @@
-<?php namespace App\Jobs\Partner\Pos;
+<?php
 
+namespace App\Jobs\Partner\Pos;
+
+use App\Jobs\Job;
 use App\Sheba\Pos\Order\Invoice\InvoiceService;
-use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Sheba\QueueMonitor\MonitoredJob;
 
-class GenerateOrderInvoice extends MonitoredJob implements ShouldQueue
+class PosApiAfterPaymentLinkCreated extends Job implements ShouldQueue
 {
-    protected $model;
     use InteractsWithQueue, SerializesModels;
 
-    public function __construct($model)
+    public function __construct()
     {
-        parent::__construct();
-        $this->model = $model;
-        $this->connection = 'invoice_generation';
-        $this->queue = 'invoice_generation';
+
     }
 
     public function handle()
@@ -29,13 +26,9 @@ class GenerateOrderInvoice extends MonitoredJob implements ShouldQueue
                 $invoiceService  =  $invoiceService->setPosOrder($this->model);
                 $invoiceService->generateInvoice()->saveInvoiceLink();
             }
-        } catch (Exception $e) {
-            logError($e->getMessage());
+        } catch (\Throwable $e) {
+            logError($e);
         }
     }
 
-    protected function getTitle()
-    {
-        return "Invoice Generation Job";
-    }
 }
