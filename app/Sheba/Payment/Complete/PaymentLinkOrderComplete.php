@@ -105,7 +105,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $this->notify();
 
         } catch (Throwable $e) {
-            Log::debug(["error while storing payment link entry", $e->getMessage(), $e->getCode()]);
+            Log::debug($e);
             logError($e);
         }
         $this->payment->reload();
