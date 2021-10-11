@@ -6,6 +6,7 @@ use App\Repositories\ResourceRepository;
 use Carbon\Carbon;
 use Intervention\Image\Facades\Image;
 use Sheba\Dal\ProfileNIDSubmissionLog\Model as ProfileNIDSubmissionLog;
+use Sheba\ModificationFields;
 use Sheba\Repositories\AffiliateRepository;
 use App\Repositories\FileRepository;
 use App\Sheba\DigitalKYC\Partner\ProfileUpdateRepository;
@@ -13,6 +14,8 @@ use Sheba\Repositories\ProfileRepository;
 
 class NidFaceVerification
 {
+    use ModificationFields;
+
     private $profileRepo;
     private $fileRepo;
 
@@ -28,11 +31,11 @@ class NidFaceVerification
         $this->profileRepo->updateRaw($profile, $data);
         if(isset($profile->resource)) {
             $resourceRepo = (new ResourceRepository($profile->resource));
-            $resourceRepo->update([
+            $resourceRepo->update($this->withUpdateModificationField([
                 "status" => 'verified',
                 "is_verified" => 1,
                 "verified_at" => Carbon::now()->toDateTimeString(),
-            ]);
+            ]));
 
             $resourceRepo->storeStatusUpdateLog('verified', 'ekyc_verified', "status changed to verified through ekyc");
         }
@@ -59,7 +62,7 @@ class NidFaceVerification
     {
         $this->profileRepo->increase_verification_request_count($profile);
         if(isset($profile->resource)) (new ResourceRepository($profile->resource))->setToPendingStatus();
-        elseif(isset($profile->affiliate)) (new AffiliateRepository())->updateVerificationStatus($profile->affiliate);
+        elseif(isset($profile->affiliate)) (new AffiliateRepository())->updateVerificationStatusToPending($profile->affiliate);
     }
 
     /**
