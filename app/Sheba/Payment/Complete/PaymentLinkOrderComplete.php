@@ -279,7 +279,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $fee              = number_format($this->transaction->getFee(), 2);
         $payment_completion_date = Carbon::parse($this->payment->updated_at)->format('d/m/Y');
 
-        $event_type       = $this->target && $this->target instanceof PosOrder && $this->target->sales_channel == SalesChannels::WEBSTORE ? 'WebstoreOrder' : class_basename($this->target);
+        $event_type       = $this->target && $this->target instanceof PosOrderObject && $this->target->sales_channel == SalesChannels::WEBSTORE ? 'WebstoreOrder' : class_basename($this->target);
         /** @var Payable $payable */
         $payable = Payable::find($this->payment->payable_id);
         $mobile = $payable->getMobile();
@@ -288,7 +288,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             "title"      => 'Order Successful',
             "message"    => $message,
             "event_type" => $event_type,
-            "event_id"   => $this->target->id,
+            "event_id"   => $this->target ? $this->target->id : $transaction_id,
             "sound"      => "notification_sound",
             "channel_id" => $channel
         ], $topic, $channel, $sound);

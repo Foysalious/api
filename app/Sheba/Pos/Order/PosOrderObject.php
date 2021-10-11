@@ -6,6 +6,8 @@ use Sheba\Pos\Order\PosOrderTypes;
 class PosOrderObject
 {
     private $id;
+    private $customer_id;
+    private $partner_id;
     private $sales_channel;
     private $customer;
     private $partner;
@@ -20,7 +22,27 @@ class PosOrderObject
      */
     public function setId($id): PosOrderObject
     {
-        $this->id = $id;
+        $this->id = (int)$id;
+        return $this;
+    }
+
+    /**
+     * @param mixed $customer_id
+     * @return PosOrderObject
+     */
+    public function setCustomerId($customer_id)
+    {
+        $this->customer_id = $customer_id;
+        return $this;
+    }
+
+    /**
+     * @param mixed $partner_id
+     * @return PosOrderObject
+     */
+    public function setPartnerId($partner_id)
+    {
+        $this->partner_id = $partner_id;
         return $this;
     }
 
@@ -40,7 +62,7 @@ class PosOrderObject
      */
     public function setDue($due)
     {
-        $this->due = $due;
+        $this->due = (float)$due;
         return $this;
     }
 
