@@ -9,6 +9,7 @@ use App\Http\Middleware\B2B\OrderMiddleware;
 use App\Http\Middleware\B2B\TerminatingMiddleware;
 use App\Http\Middleware\BusinessManagerAuthMiddleware;
 use App\Http\Middleware\ConcurrentRequestMiddleware;
+use App\Http\Middleware\CheckUserMigrationRunningMiddleware;
 use App\Http\Middleware\Cors2MiddleWare;
 use App\Http\Middleware\CriticalAppVersionMiddleware;
 use App\Http\Middleware\CustomerAuthMiddleware;
@@ -130,5 +131,6 @@ class Kernel extends HttpKernel
         'concurrent_request' => ConcurrentRequestMiddleware::class,
         'userMigration.auth' => UserMigrationMiddleware::class,
         'ip.whitelist' => IpWhitelistMiddleware::class,
+        'userMigration.check_status' => CheckUserMigrationRunningMiddleware::class
     ];
 }

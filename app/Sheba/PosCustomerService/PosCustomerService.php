@@ -3,6 +3,7 @@
 use App\Models\Partner;
 use App\Sheba\PosOrderService\PosOrderServerClient;
 use Carbon\Carbon;
+use phpDocumentor\Reflection\Types\Null_;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
 use Sheba\Pos\Repositories\PosCustomerRepository;
@@ -132,6 +133,7 @@ class PosCustomerService
         $customer_info = $this->getCustomerInfoFromSmanagerUserService();
         list($total_purchase_amount,$total_used_promo) = $this->getPurchaseAmountAndTotalUsedPromo();
         list($total_due_amount,$total_payable_amount) = $this->getDueAndPayableAmount();
+        $created_at=isset($customer_info['created_at']) ?Carbon::parse($customer_info['created_at']):null;
         $customer_details = [];
         $customer_details['id'] = $customer_info['_id'] ?? null;
         $customer_details['name'] = $customer_info['name'] ?? null;
@@ -140,7 +142,7 @@ class PosCustomerService
         $customer_details['address'] = $customer_info['address'] ?? null;
         $customer_details['image'] = $customer_info['pro_pic'] ?? null;
         $customer_details['customer_since'] = $customer_info['created_at'] ?? null;
-        $customer_details['customer_since_formatted'] = isset($customer_info['created_at']) ? convertTimezone($customer_info['created_at'])->format('Y-m-d H:i:s'): null;
+        $customer_details['customer_since_formatted'] = isset($customer_info['created_at']) ? convertTimezone($created_at)->format('Y-m-d H:i:s'): null;
         $customer_details['total_purchase_amount'] = $total_purchase_amount;
         $customer_details['total_used_promo'] = $total_used_promo;
         $customer_details['total_due_amount'] = $total_due_amount;

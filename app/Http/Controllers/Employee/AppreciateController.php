@@ -189,16 +189,26 @@ class AppreciateController extends Controller
         if (!$business_member) return api_response($request, null, 404);
         /** @var Business $business */
         $business = $this->getBusiness($request);
-        $business_members = $business->getActiveBusinessMember()->get();
+        $business_members = $business->getActiveBusinessMember();
+        $business_member_department = $business_member->department();
 
+        if ($business_member_department) {
+            $business_members = $business_members->whereHas('role', function ($q) use ($business_member_department) {
+                $q->whereHas('businessDepartment', function ($q) use ($business_member_department) {
+                    $q->where('business_departments.id', $business_member_department->id);
+                });
+            });
+        }
+        
         $new_employers = [];
-        foreach ($business_members as $business_member) {
+        foreach ($business_members->get() as $business_member) {
             if (!$business_member->isNewJoiner()) continue;
             /** @var Member $member */
             $member = $business_member->member;
             /** @var Profile $profile */
             $profile = $member->profile;
             array_push($new_employers, [
+                'business_member_id' => $business_member->id,
                 'name' => $profile->name,
                 'pro_pic' => $profile->pro_pic
             ]);

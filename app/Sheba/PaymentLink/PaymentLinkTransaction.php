@@ -137,7 +137,6 @@ class PaymentLinkTransaction
 
     public function getFee()
     {
-        Log::info(["gateway charge", $this->paymentLinkCharge->getGatewayChargePercentage()]);
         return $this->fee;
     }
 
