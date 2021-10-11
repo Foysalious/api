@@ -2,8 +2,13 @@
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\VoucherController;
+use App\Models\PosOrder;
 use App\Sheba\PosOrderService\Services\OrderService;
 use Illuminate\Http\Request;
+use Sheba\DueTracker\Exceptions\UnauthorizedRequestFromExpenseTrackerException;
+use Sheba\PaymentLink\PaymentLinkStatics;
+use Sheba\Pos\Order\PosOrderTypes;
+use Sheba\PosOrderService\Services\PaymentService;
 
 class OrderController extends Controller
 {
@@ -11,20 +16,25 @@ class OrderController extends Controller
      * @var OrderService
      */
     private $orderService;
+    /**
+     * @var PaymentService
+     */
+    private $paymentService;
 
 
-    public function __construct(OrderService $orderService)
+    public function __construct(OrderService $orderService, PaymentService $paymentService)
     {
         $this->orderService = $orderService;
+        $this->paymentService = $paymentService;
     }
 
     public function index(Request $request)
     {
         $partner = $request->auth_user->getPartner();
         $hasQueryStr = strpos($request->getRequestUri(), '?');
-        $queryStr = $hasQueryStr ? '?'.substr($request->getRequestUri(), strpos($request->getRequestUri(), "?") + 1) : '';
+        $queryStr = $hasQueryStr ? '?' . substr($request->getRequestUri(), strpos($request->getRequestUri(), "?") + 1) : '';
         $order = $this->orderService->setPartnerId($partner->id)->setFilterParams($queryStr)->getOrderList();
-        if(!$order) return http_response($request, "অর্ডারটি পাওয়া যায় নি", 404, $order);
+        if (!$order) return http_response($request, "অর্ডারটি পাওয়া যায় নি", 404, $order);
         else return http_response($request, null, 200, $order);
     }
 
@@ -32,7 +42,7 @@ class OrderController extends Controller
     {
         $partner = $request->auth_user->getPartner();
         $orderDetails = $this->orderService->setPartnerId($partner->id)->setOrderId($order_id)->getDetails();
-        if(!$orderDetails) return http_response($request, "অর্ডারটি পাওয়া যায় নি", 404, $orderDetails);
+        if (!$orderDetails) return http_response($request, "অর্ডারটি পাওয়া যায় নি", 404, $orderDetails);
         else return http_response($request, null, 200, $orderDetails);
     }
 
@@ -118,8 +128,57 @@ class OrderController extends Controller
     {
         $partner = $request->auth_user->getPartner();
         $orderLogs = $this->orderService->setPartnerId($partner->id)->setOrderId($order_id)->getLogs();
-        if(!$orderLogs) return http_response($request, "অর্ডারটি পাওয়া যায় নি", 404, $orderLogs);
+        if (!$orderLogs) return http_response($request, "অর্ডারটি পাওয়া যায় নি", 404, $orderLogs);
         else return http_response($request, null, 200, $orderLogs);
+    }
+
+    /**
+     * @throws UnauthorizedRequestFromExpenseTrackerException
+     */
+    public function onlinePayment($partner, $order, Request $request)
+    {
+        $this->validate($request, [
+            'amount' => 'required|numeric',
+            'payment_method_en' => 'required|string',
+            'payment_method_bn' => 'required|string',
+            'payment_method_icon' => 'required|string',
+            'emi_month' => 'required|int',
+            'interest' => 'required|numeric',
+            'is_paid_by_customer' => 'required|boolean',
+        ]);
+        if ($request->header('api-key') != config('expense_tracker.api_key'))
+            throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
+        $posOrder = PosOrder::find($order);
+        $pos_order_type = $posOrder && !$posOrder->is_migrated ? PosOrderTypes::OLD_SYSTEM : PosOrderTypes::NEW_SYSTEM;
+        $this->paymentService->setPosOrderId($order)->setPosOrderType($pos_order_type)->setPartnerId($partner)->setAmount($request->amount)
+            ->setMethod($request->payment_method_en)->setEmiMonth($request->emi_month)->setInterest($request->interest)
+            ->onlinePayment();
+        return http_response($request, null, 200);
+    }
+
+    public function paymentLinkCreated($partner, $order, Request $request)
+    {
+        $this->validate($request, [
+            'link_id' => 'required|string',
+            'reason' => 'required|string',
+            'status' => 'required|string',
+            'link' => 'required|string',
+            'emi_month' => 'sometimes|integer|in:' . implode(',', config('emi.valid_months')),
+            'interest' => 'sometimes|numeric',
+            'bank_transaction_charge' => 'sometimes|numeric',
+            'paid_by' => 'sometimes|in:' . implode(',', PaymentLinkStatics::paidByTypes()),
+            'partner_profit' => 'sometimes'
+        ]);
+        if ($request->header('api-key') != config('expense_tracker.api_key'))
+            throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
+        //TODO: Order Payment Link Created Event
+        return http_response($request, null, 200);
+    }
+
+    public function orderInvoiceDownload($order_id, Request $request)
+    {
+        $partner = $request->auth_user->getPartner();
+        return $this->orderService->orderInvoiceDownload($partner->id, $order_id);
     }
 
 }

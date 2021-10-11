@@ -15,13 +15,22 @@ class Route
             $api->get('/weight-units', "Inventory\UnitController@weightUnits");
             $api->group(['prefix' => 'partners/{partner_id}'], function ($api) {
                 $api->post('vouchers/validity-check', 'VoucherController@validateVoucher');
-                $api->post('/orders/{order}/payment/create', "Pos\OrderController@createPayment");
             });
             $api->post('/reward/action', 'PosRebuild\RewardController@actionReward');
             $api->post('/usages', 'PosRebuild\UsageController@store');
             $api->post('/check-access', 'PosRebuild\AccessManagerController@checkAccess');
             $api->get('voucher-details/{voucher_id}', 'VoucherController@getVoucherDetails');
             $api->post('test-migrate', 'Partner\DataMigrationController@testMigration');
+            $api->group(['prefix' => 'partners'], function ($api) {
+                $api->group(['prefix' => '{partner}'], function ($api) {
+                    $api->group(['prefix' => 'orders'], function ($api) {
+                        $api->group(['prefix' => '{order}'], function ($api) {
+                            $api->post('online-payment', 'PosOrder\OrderController@onlinePayment');
+                            $api->post('payment-link-created', 'PosOrder\OrderController@paymentLinkCreated');
+                        });
+                    });
+                });
+            });
             /**
              * End of No Middleware
              */
@@ -40,6 +49,7 @@ class Route
              * jwtAccessToken Middleware
              */
             $api->group(['middleware' => ['jwtAccessToken']], function ($api) {
+                $api->get('/orders/{order_id}/generate-invoice', 'PosOrder\OrderController@orderInvoiceDownload');
                 $api->group(['prefix' => 'webstore-theme-settings', 'middleware' => ['jwtAccessToken']], function ($api) {
                     $api->get('/partner-settings', 'WebstoreSettingController@index');
                     $api->get('/theme-details', 'WebstoreSettingController@getThemeDetails');
@@ -109,12 +119,13 @@ class Route
                 $api->post('migrate', 'Partner\DataMigrationController@migrate');
                 $api->group(['prefix' => 'orders'], function ($api) {
                     $api->get('/', 'PosOrder\OrderController@index');
-                    $api->get('/{order}', 'PosOrder\OrderController@show');
                     $api->post('/', 'PosOrder\OrderController@store');
                     $api->group(['prefix' => '{order}'], function ($api) {
+                        $api->get('/', 'PosOrder\OrderController@show');
                         $api->post('/update-status', 'PosOrder\OrderController@updateStatus');
                         $api->post('/validate-promo', 'PosOrder\OrderController@validatePromo');
                         $api->get('/logs', 'PosOrder\OrderController@logs');
+                        $api->post('payment/create', "Pos\OrderController@createPayment");
                     });
                     $api->put('/{order}/update-customer', 'PosOrder\OrderController@updateCustomer');
                     $api->put('/{order}', 'PosOrder\OrderController@update');

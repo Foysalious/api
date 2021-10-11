@@ -265,6 +265,11 @@ class OrderService
         return $this->client->delete('api/v1/partners/' . $this->partnerId . '/orders/' . $this->orderId);
     }
 
+    public function orderInvoiceDownload($partner,$order_id)
+    {
+        return $this->client->get('api/v1/partners/' . $partner . '/orders/' . $order_id.'/generate-invoice');
+    }
+
     private function makeUpdateData()
     {
         $data = [];
