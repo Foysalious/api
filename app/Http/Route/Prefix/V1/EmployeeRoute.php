@@ -29,6 +29,7 @@ class EmployeeRoute
             });
             //$api->post('password', 'Employee\EmployeeController@updateMyPassword');
             $api->get('dashboard', 'Employee\EmployeeController@getDashboard');
+            $api->get('dashboard-menu', 'Employee\DashboardController@index');
             $api->get('notifications', 'Employee\NotificationController@index');
             $api->get('last-notifications', 'Employee\NotificationController@lastNotificationCount');
             $api->get('test-notification', 'Employee\NotificationController@test');
