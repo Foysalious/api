@@ -60,9 +60,9 @@ class FaceVerificationController extends Controller
             $msg = getValidationErrorMessage($exception->validator->errors()->all());
             return api_response($request, null, 400, ['message' => $msg]);
         } catch (EKycException $e) {
-            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
+            return api_response($request, null, $e->getCode() >= 400 ? $e->getCode() : 400, ['message' => $e->getMessage()]);
         } catch (\Throwable $e) {
-            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
+            return api_response($request, null, $e->getCode() >= 400 ? $e->getCode() : 400, ['message' => $e->getMessage()]);
         }
     }
 
