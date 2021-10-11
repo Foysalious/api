@@ -60,8 +60,8 @@ class PosClientRepository extends PosClient
         ];
     }
 
-    public function makePaymentLinkCreateApi($partner_id, $pos_order_id): string
+    public function makePaymentLinkCreateApi(): string
     {
-        return "pos/v1/partners/" . $partner_id . "/orders/" . $pos_order_id . "/payment-link-created";
+        return "pos/v1/partners/" . $this->partnerId . "/orders/" . $this->orderId . "/payment-link-created";
     }
 }

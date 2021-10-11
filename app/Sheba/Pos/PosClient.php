@@ -80,7 +80,6 @@ class PosClient
      * @param $uri
      * @param $data
      * @return mixed
-     * @throws PosClientException
      */
     public function post($uri, $data)
     {
@@ -91,7 +90,6 @@ class PosClient
      * @param $uri
      * @param $data
      * @return mixed
-     * @throws PosClientException
      */
     public function put($uri, $data)
     {
@@ -101,7 +99,6 @@ class PosClient
     /**
      * @param $uri
      * @return mixed
-     * @throws PosClientException
      */
     public function delete($uri)
     {
