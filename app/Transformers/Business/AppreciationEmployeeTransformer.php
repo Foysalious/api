@@ -8,6 +8,13 @@ class AppreciationEmployeeTransformer extends TransformerAbstract
 {
     const NO_DEPARTMENT_VALUE = 'OTHER';
 
+    private $businessMember;
+
+    public function __construct(BusinessMember $business_member)
+    {
+        $this->businessMember = $business_member;
+    }
+
     /**
      * @param $business_members
      * @return array
@@ -16,7 +23,10 @@ class AppreciationEmployeeTransformer extends TransformerAbstract
     {
         $employee_based_on_departments = [];
         $departments_name = [];
-        $business_members->each(function ($business_member) use (&$employee_based_on_departments, &$departments_name) {
+        foreach ($business_members as $business_member) {
+
+            if ($this->businessMember->id == $business_member->id) continue;
+
             $member = $business_member->member;
             $profile = $member->profile;
             $is_member_role_present = $this->isMemberRolePresent($business_member);
@@ -34,7 +44,7 @@ class AppreciationEmployeeTransformer extends TransformerAbstract
                 'designation' => $is_member_role_present ? $business_member->role->name : 'N/S',
                 'stickers' => (new EmployeeAppreciations())->getEmployeeStickers($business_member)
             ];
-        });
+        }
 
         $departments = array_values(array_unique($departments_name));
 
