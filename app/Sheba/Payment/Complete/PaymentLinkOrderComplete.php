@@ -16,6 +16,7 @@ use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\ModificationFields;
+use Sheba\Payment\Presenter\PaymentMethodDetails;
 use Sheba\PaymentLink\InvoiceCreator;
 use Sheba\PaymentLink\PaymentLinkStatics;
 use Sheba\PaymentLink\PaymentLinkTransaction;
@@ -178,6 +179,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
     {
         $this->target = $this->paymentLink->getTarget();
         if ($this->target instanceof PosOrderObject) {
+            $paymentMethodDetail = new PaymentMethodDetails($this->payment->paymentDetails->last()->method);
             //amount:100
             //payment_method_en:cod
             //payment_method_bn:ক্যাশ
@@ -186,6 +188,13 @@ class PaymentLinkOrderComplete extends PaymentComplete
             //interest:0
             //is_paid_by_customer:1
             $payment_data    = [
+                'amount' => $this->transaction->getEntryAmount(),
+                'payment_method_en' => $paymentMethodDetail,
+//                'payment_method_bn' => ,
+//                'payment_method_icon' => ,
+//                'emi_month' => ,
+//                'interest' => ,
+//                'is_paid_by_customer' => ,
                 'pos_order_id' => $this->target->id,
                 'amount'       => $this->transaction->getEntryAmount(),
                 'method'       => $this->payment->payable->type,
