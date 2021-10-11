@@ -17,14 +17,13 @@ class PosClient
     public function __construct(Client $client)
     {
         $this->client = $client;
-        $this->baseUrl = '/';
+        $this->baseUrl = config('sheba.api_url');
         $this->apiKey = 'sheba.xyz';
     }
 
     /**
      * @param $uri
-     * @return mixed
-     * @throws PosClientException
+     * @return array|object|string|void|null
      */
     public function get($uri)
     {
@@ -35,22 +34,22 @@ class PosClient
      * @param $method
      * @param $uri
      * @param null $data
-     * @return mixed
-     * @throws PosClientException
+     * @return array|object|string|void|null
      */
     private function call($method, $uri, $data = null)
     {
         try {
             $res = decodeGuzzleResponse($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data)));
-            if ($res['code'] != 200)
-                throw new PosClientException($res['message']);
+//            if ($res['code'] != 200)
+//                throw new PosClientException($res['message']);
             unset($res['code'], $res['message']);
             return $res;
         } catch (GuzzleException $e) {
-            $res = decodeGuzzleResponse($e->getResponse());
-            if ($res['code'] == 400)
-                throw new PosClientException($res['message']);
-            throw new PosClientException($e->getMessage());
+            logError($e);
+//            $res = decodeGuzzleResponse($e->getResponse());
+//            if ($res['code'] == 400)
+//                throw new PosClientException($res['message']);
+//            throw new PosClientException($e->getMessage());
         }
     }
 
@@ -67,7 +66,7 @@ class PosClient
     {
         $options['headers'] = [
             'Content-Type' => 'application/json',
-            'x-api-key'    => $this->apiKey,
+            'api-key'    => $this->apiKey,
             'Accept'       => 'application/json'
         ];
         if ($data) {
