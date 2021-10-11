@@ -129,7 +129,9 @@ class PaymentLinkController extends Controller
                     if ($status === Statics::REJECTED)
                         return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
                 }
-                if ($receiver instanceof Partner && in_array($receiver->status, [PartnerStatuses::BLACKLISTED, PartnerStatuses::PAUSED])) {
+//                if ($receiver instanceof Partner && in_array($receiver->status, [PartnerStatuses::BLACKLISTED, PartnerStatuses::PAUSED])) {
+                //&& $receiver->status == PartnerStatuses::BLACKLISTED
+                if ($receiver instanceof Partner ) {
                     return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
                 }
             }
