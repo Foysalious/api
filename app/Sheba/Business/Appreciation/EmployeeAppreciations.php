@@ -38,15 +38,15 @@ class EmployeeAppreciations
         $group_stickers = collect($all_stickers)->groupBy('id');
         $grouped_stickers = [];
         foreach ($group_stickers as $stickers) {
-           /* $giver = [];
+            $giver = [];
             foreach ($stickers as $sticker) {
                 $giver[] = $this->getEmployeeInfo($sticker['giver_id'])['name'];
-            }*/
+            }
             $sticker = $stickers->first();
             array_push($grouped_stickers, [
                 'id' => $sticker['id'],
                 'image' => $sticker['image'],
-                #'appreciation_givers' => $giver,
+                'appreciation_givers' => $giver,
                 'number_of_stickers' => $stickers->count(),
             ]);
         }
