@@ -201,8 +201,10 @@ class PaymentLinkOrderComplete extends PaymentComplete
     private function clearTarget()
     {
         $this->target = $this->paymentLink->getTarget();
-        $detail = new PaymentMethodDetails($this->payment->payable->type);
-        Log::info(["which instance", $detail]);
+        $detail = new PaymentMethodDetails($this->payment->paymentDetails->last()->method);
+        Log::info($this->payment->paymentDetails->last());
+        Log::info($this->payment->payable);
+        Log::info($this->transaction);
 //        TODO: Need to fix error: Call to undefined method App\\Sheba\\Pos\\Order\\PosOrderObject::update()
         if ($this->target instanceof PosOrderObject) {
             $payment_data    = [
