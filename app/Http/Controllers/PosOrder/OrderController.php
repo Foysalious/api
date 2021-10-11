@@ -6,6 +6,7 @@ use App\Models\PosOrder;
 use App\Sheba\PosOrderService\Services\OrderService;
 use Illuminate\Http\Request;
 use Sheba\DueTracker\Exceptions\UnauthorizedRequestFromExpenseTrackerException;
+use Sheba\EMI\Calculations;
 use Sheba\PaymentLink\PaymentLinkStatics;
 use Sheba\Pos\Order\PosOrderTypes;
 use Sheba\PosOrderService\Services\PaymentService;
@@ -190,6 +191,15 @@ class OrderController extends Controller
     {
         $partner = $request->auth_user->getPartner();
         return $this->orderService->orderInvoiceDownload($partner->id, $order_id);
+    }
+
+    public function calculateEmiCharges(Request $request)
+    {
+        $this->validate($request,[
+            'amount' => 'required',
+            'emi_month' => 'required',
+            ]);
+        return Calculations::getMonthData($request->amount, $request->emi_month, false);
     }
 
 }
