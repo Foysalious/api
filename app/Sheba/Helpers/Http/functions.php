@@ -210,3 +210,12 @@ if (!function_exists('http_response')) {
         }
     }
 }
+
+if (!function_exists('isRequestForPosRebuild')) {
+
+    function isRequestForPosRebuild()
+    {
+        return substr( \request()->getRequestUri(), 0, 5 ) === '/pos/';
+    }
+}
+

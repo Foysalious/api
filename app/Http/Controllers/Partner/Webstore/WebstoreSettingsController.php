@@ -27,7 +27,10 @@ class WebstoreSettingsController extends Controller
         $fractal->setSerializer(new CustomSerializer());
         $resource = new Item($partner, new WebstoreSettingsTransformer());
         $settings = $fractal->createData($resource)->toArray()['data'];
-        return api_response($request, $settings, 200, ['webstore_settings' => $settings]);
+        if(isRequestForPosRebuild())
+            return http_response($request, $settings, 200, ['webstore_settings' => $settings]);
+        else
+            return api_response($request, $settings, 200, ['webstore_settings' => $settings]);
     }
 
     /**
@@ -74,7 +77,10 @@ class WebstoreSettingsController extends Controller
                 ]));
             }
         }
-        return api_response($request, null, 200, ['message' => 'Successful']);
+        if(isRequestForPosRebuild())
+            return http_response($request, null, 200, ['message' => 'Successful']);
+        else
+            return api_response($request, null, 200, ['message' => 'Successful']);
     }
 
 
