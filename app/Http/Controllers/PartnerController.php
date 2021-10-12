@@ -1199,11 +1199,15 @@ class PartnerController extends Controller
         return api_response($request, null, 200, ['message' => 'Address Updated Successfully']);
     }
 
-    public function toggleSmsActivation(Request $request, $partner, Updater $updater)
+    public function toggleSmsActivation(Request $request, Updater $updater)
     {
         $partner = resolvePartnerFromAuthMiddleware($request);
+        $this->setModifier($request->manager_resource);
         $isWebstoreSmsActive = !(int)$partner->is_webstore_sms_active;
         $updater->setPartner($partner)->setIsWebstoreSmsActive($isWebstoreSmsActive)->update();
-        return api_response($request, null, 200, ['message' => 'SMS Settings Updated Successfully']);
+        if(isRequestForPosRebuild())
+            return http_response($request, null, 200, ['message' => 'Successful']);
+        else
+            return api_response($request, null, 200, ['message' => 'SMS Settings Updated Successfully']);
     }
 }
