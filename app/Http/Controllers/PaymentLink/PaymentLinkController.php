@@ -136,17 +136,14 @@ class PaymentLinkController extends Controller
                     if ($status === Statics::REJECTED)
                         return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
                 }
-//                if ($receiver instanceof Partner && in_array($receiver->status, [PartnerStatuses::BLACKLISTED, PartnerStatuses::PAUSED])) {
-                //&& $receiver->status == PartnerStatuses::BLACKLISTED
-                if ($receiver instanceof Partner && !AccessManager::canAccess(AccessManager::Rules()->DIGITAL_COLLECTION, $receiver->subscription->getAccessRules())) {
-                    return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
+                if ($receiver instanceof Partner) {
+                    if (!AccessManager::canAccess(AccessManager::Rules()->DIGITAL_COLLECTION, $receiver->subscription->getAccessRules()) || in_array($receiver->status, [PartnerStatuses::BLACKLISTED, PartnerStatuses::PAUSED]) || !(int)$link->getIsActive())
+                        return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
+
                 }
-            }
-            if ($link && !(int)$link->getIsActive()) {
-                return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
-            }
-            if ($link && (int)$link->getIsActive()) {
-                return api_response($request, $link, 200, ['link' => $link->toArray()]);
+                if ((int)$link->getIsActive()) {
+                    return api_response($request, $link, 200, ['link' => $link->toArray()]);
+                }
             }
             return api_response($request, null, 404);
         } catch (ValidationException $e) {
