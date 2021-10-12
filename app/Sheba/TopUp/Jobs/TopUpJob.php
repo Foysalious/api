@@ -31,7 +31,7 @@ class TopUpJob extends MonitoredJob implements ShouldQueue
     {
         $this->topUpOrder = $top_up_order;
         $this->agent = $this->topUpOrder->agent;
-//        $this->connection = $this->getConnectionName();
+        $this->connection = $this->getConnectionName();
         $this->queue = $this->connection;
     }
 

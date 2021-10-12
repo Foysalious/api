@@ -141,7 +141,7 @@ class TopUpController extends Controller
             }
         }
 
-//        $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setPurpose(Purpose::TOPUP)->setRequest($request)->verify();
+        $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setPurpose(Purpose::TOPUP)->setRequest($request)->verify();
 
         $userAgentInformation->setRequest($request);
         $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id)->setLat($request->lat ? $request->lat : null)->setLong($request->long ? $request->long : null)->setUserAgent($userAgentInformation->getUserAgent());
