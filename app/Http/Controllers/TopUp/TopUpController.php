@@ -150,7 +150,7 @@ class TopUpController extends Controller
         }
 
         if ($top_up_request->hasError()) {
-            return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
+            return api_response($request, null, $top_up_request->getErrorCode(), ['message' => $top_up_request->getErrorMessage()]);
         }
         
         $topup_order = $creator->setTopUpRequest($top_up_request)->create();
