@@ -138,7 +138,7 @@ class PaymentLinkController extends Controller
                 }
 //                if ($receiver instanceof Partner && in_array($receiver->status, [PartnerStatuses::BLACKLISTED, PartnerStatuses::PAUSED])) {
                 //&& $receiver->status == PartnerStatuses::BLACKLISTED
-                if ($receiver instanceof Partner && AccessManager::canAccess(AccessManager::Rules()->DIGITAL_COLLECTION, $receiver->subscription->getAccessRules())) {
+                if ($receiver instanceof Partner && !AccessManager::canAccess(AccessManager::Rules()->DIGITAL_COLLECTION, $receiver->subscription->getAccessRules())) {
                     return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
                 }
             }
