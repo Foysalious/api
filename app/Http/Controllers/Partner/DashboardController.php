@@ -361,6 +361,8 @@ class DashboardController extends Controller
                         return !in_array($key, ['payment_link', 'emi']);
                     })->values();
                 }
+            } else {
+                $updated_setting = $home_page_setting;
             }
             return api_response($request, null, 200, ['data' => $updated_setting]);
         } catch (Throwable $e) {
