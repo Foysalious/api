@@ -40,6 +40,7 @@ use Sheba\Pos\Order\OrderPaymentStatuses;
 use Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
 use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Reward\PartnerReward;
+use Sheba\Subscription\Partner\Access\AccessManager;
 use Throwable;
 
 class DashboardController extends Controller
@@ -348,14 +349,20 @@ class DashboardController extends Controller
                 }
             }
             $updated_setting = [];
-            if (is_array($home_page_setting)) {
-                $updated_setting = array_values(array_filter($home_page_setting, function ($item) {
-                    return !in_array($item->key, ['payment_link', 'emi']);
-                }, ARRAY_FILTER_USE_BOTH));
-            } elseif ($home_page_setting instanceof Collection) {
-                $updated_setting = $home_page_setting->filter(function ($item) {
-                    return !in_array($item->key, ['payment_link', 'emi']);
-                })->values();
+            if (!AccessManager::canAccess(AccessManager::Rules()->DIGITAL_COLLECTION, $request->partner->subscription->getAccessRules())) {
+                if (is_array($home_page_setting)) {
+                    $updated_setting = array_values(array_filter($home_page_setting, function ($item) {
+                        $key = is_object($item) ? $item->key : $item['key'];
+                        return !in_array($key, ['payment_link', 'emi']);
+                    }, ARRAY_FILTER_USE_BOTH));
+                } elseif ($home_page_setting instanceof Collection) {
+                    $updated_setting = $home_page_setting->filter(function ($item) {
+                        $key = is_object($item) ? $item->key : $item['key'];
+                        return !in_array($key, ['payment_link', 'emi']);
+                    })->values();
+                }
+            } else {
+                $updated_setting = $home_page_setting;
             }
             return api_response($request, null, 200, ['data' => $updated_setting]);
         } catch (Throwable $e) {
