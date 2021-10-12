@@ -117,8 +117,7 @@ class PaymentLinkController extends Controller
             if ($link) {
                 $receiver = $link->getPaymentReceiver();
                 if ($receiver instanceof Partner) {
-                    $status = (new ComplianceInfo())->setPartner($receiver)->getComplianceStatus();
-                    if ($status === Statics::REJECTED || !AccessManager::canAccess(AccessManager::Rules()->DIGITAL_COLLECTION, $receiver->subscription->getAccessRules()) || in_array($receiver->status, [PartnerStatuses::BLACKLISTED, PartnerStatuses::PAUSED]) || !(int)$link->getIsActive())
+                    if (!AccessManager::canAccess(AccessManager::Rules()->DIGITAL_COLLECTION, $receiver->subscription->getAccessRules()) || in_array($receiver->status, [PartnerStatuses::BLACKLISTED, PartnerStatuses::PAUSED]) || !(int)$link->getIsActive())
                         return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
 
                 }
