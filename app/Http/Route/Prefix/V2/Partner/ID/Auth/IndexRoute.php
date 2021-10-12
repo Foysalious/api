@@ -289,6 +289,8 @@ class IndexRoute
                 $api->put('{withdrawals}', 'Partner\\PartnerWithdrawalRequestV2Controller@update');
                 $api->get('{withdrawals}/cancel', 'Partner\\PartnerWithdrawalRequestV2Controller@cancel');
                 $api->post('bank-info', 'Partner\\PartnerWithdrawalRequestV2Controller@storeBankInfo');
+                $api->get('get-bank-info', 'Partner\\PartnerWithdrawalRequestV2Controller@getBankInfo');
+                $api->post('update-bank-info', 'Partner\\PartnerWithdrawalRequestV2Controller@updateBankInfo');
                 $api->get('/check-pending-status', 'Partner\\PartnerWithdrawalRequestV2Controller@checkWithdrawRequestPendingStatus');
             });
             (new LoanRoute())->indexed($api);
