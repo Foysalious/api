@@ -137,7 +137,7 @@ class PaymentLinkController extends Controller
                 }
 //                if ($receiver instanceof Partner && in_array($receiver->status, [PartnerStatuses::BLACKLISTED, PartnerStatuses::PAUSED])) {
                 //&& $receiver->status == PartnerStatuses::BLACKLISTED
-                if ($receiver instanceof Partner ) {
+                if ($receiver instanceof Partner && $receiver->package_id != 19) {
                     return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
                 }
             }

@@ -348,16 +348,18 @@ class DashboardController extends Controller
                 }
             }
             $updated_setting = [];
-            if (is_array($home_page_setting)) {
-                $updated_setting = array_values(array_filter($home_page_setting, function ($item) {
-                    $key = is_object($item) ? $item->key : $item['key'];
-                    return !in_array($key, ['payment_link', 'emi']);
-                }, ARRAY_FILTER_USE_BOTH));
-            } elseif ($home_page_setting instanceof Collection) {
-                $updated_setting = $home_page_setting->filter(function ($item) {
-                    $key = is_object($item) ? $item->key : $item['key'];
-                    return !in_array($key, ['payment_link', 'emi']);
-                })->values();
+            if ($request->partner->package_id !== 19) {
+                if (is_array($home_page_setting)) {
+                    $updated_setting = array_values(array_filter($home_page_setting, function ($item) {
+                        $key = is_object($item) ? $item->key : $item['key'];
+                        return !in_array($key, ['payment_link', 'emi']);
+                    }, ARRAY_FILTER_USE_BOTH));
+                } elseif ($home_page_setting instanceof Collection) {
+                    $updated_setting = $home_page_setting->filter(function ($item) {
+                        $key = is_object($item) ? $item->key : $item['key'];
+                        return !in_array($key, ['payment_link', 'emi']);
+                    })->values();
+                }
             }
             return api_response($request, null, 200, ['data' => $updated_setting]);
         } catch (Throwable $e) {
