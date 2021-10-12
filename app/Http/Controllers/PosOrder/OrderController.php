@@ -151,12 +151,12 @@ class OrderController extends Controller
     {
         $this->validate($request, [
             'amount' => 'required|numeric',
-            'payment_method_en' => 'required|string',
-            'payment_method_bn' => 'required|string',
-            'payment_method_icon' => 'required|string',
-            'emi_month' => 'required|int',
-            'interest' => 'required|numeric',
-            'is_paid_by_customer' => 'required|boolean',
+            'payment_method_en' => 'required|string|nullable',
+            'payment_method_bn' => 'required|string|nullable',
+            'payment_method_icon' => 'required|string|nullable',
+            'emi_month' => 'required|int|nullable',
+            'interest' => 'required|numeric|nullable',
+            'is_paid_by_customer' => 'required|boolean|nullable',
         ]);
         if ($request->header('api-key') != config('expense_tracker.api_key'))
             throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
