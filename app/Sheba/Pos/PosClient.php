@@ -44,10 +44,9 @@ class PosClient
 //            if ($res['code'] != 200)
 //                throw new PosClientException($res['message']);
             unset($res['code'], $res['message']);
-            Log::info('online payment', $res);
             return $res;
         } catch (GuzzleException $e) {
-            Log::error('online payment', $e);
+            logError($e);
 //            $res = decodeGuzzleResponse($e->getResponse());
 //            if ($res['code'] == 400)
 //                throw new PosClientException($res['message']);
