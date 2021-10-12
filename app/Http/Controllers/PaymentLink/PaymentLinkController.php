@@ -21,6 +21,7 @@ use Sheba\PaymentLink\PaymentLinkClient;
 use Sheba\PaymentLink\PaymentLinkStatics;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
+use Sheba\Subscription\Partner\Access\AccessManager;
 
 class PaymentLinkController extends Controller
 {
@@ -116,7 +117,7 @@ class PaymentLinkController extends Controller
             if ($link) {
                 $receiver = $link->getPaymentReceiver();
                 //&& $receiver->status == PartnerStatuses::BLACKLISTED
-                if ($receiver instanceof Partner && $receiver->package_id != 19) {
+                if ($receiver instanceof Partner && AccessManager::canAccess(AccessManager::Rules()->DIGITAL_COLLECTION, $receiver->subscription->getAccessRules())) {
                     return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
                 }
             }
