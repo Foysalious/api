@@ -1,21 +1,27 @@
 <?php namespace Tests\Feature\sProOrderCreate;
 
+use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
+use App\Models\Job;
 use App\Models\Location;
+use App\Models\Order;
 use App\Models\Partner;
+use App\Models\PartnerOrder;
 use App\Models\PartnerResource;
 use App\Models\PartnerWalletSetting;
 use App\Models\PartnerWorkingHour;
 use App\Models\Profile;
+use App\Models\Promotion;
 use App\Models\ResourceSchedule;
+use App\Models\Voucher;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\Category\Category;
 use Sheba\Dal\CategoryLocation\CategoryLocation;
 use Sheba\Dal\CategoryPartner\CategoryPartner;
+use Sheba\Dal\JobService\JobService;
 use Sheba\Dal\LocationService\LocationService;
 use Sheba\Dal\PartnerService\PartnerService;
 use Sheba\Dal\Service\Service;
-use Sheba\Services\Type as ServiceType;
 use Tests\Feature\FeatureTestCase;
 
 class sProOrderCreatePlaceOrderTest extends FeatureTestCase
@@ -34,44 +40,49 @@ class sProOrderCreatePlaceOrderTest extends FeatureTestCase
 
         DB::table('salesman')->truncate();
 
+        DB::table('location_partner_service')->truncate();
+
         $this->truncateTables([
-            Category::class, Service::class, CategoryPartner::class, PartnerResource::class, ResourceSchedule::class,
-            LocationService::class, PartnerService::class, CustomerDeliveryAddress::class, CategoryLocation::class, PartnerWorkingHour::class, PartnerWalletSetting::class
+            Category::class, CategoryLocation::class, Service::class, LocationService::class,
+            CustomerDeliveryAddress::class, Customer::class, Profile::class,
+            PartnerOrder::class, JobService::class, Voucher::class, Promotion::class, Partner::class,
+            CategoryPartner::class, PartnerResource::class, ResourceSchedule::class,
+            PartnerService::class,  PartnerWorkingHour::class, PartnerWalletSetting::class, Job::class, Order::class
         ]);
 
         $this->logIn();
 
-        $this->location = Location:: find(4);
+        $this->location = Location::find(4);
 
-        $this->deliveryAddress = factory(CustomerDeliveryAddress::class)->create([
-            'customer_id' => $this->customer->id,
-            'location_id' => $this->location->id
-        ]);
+//        $this->deliveryAddress = factory(CustomerDeliveryAddress::class)->create([
+//            'geo_informations' => '{"lat":23.788099544655,"lng":90.412001016086}',
+//            'mobile' => '+8801835559988',
+//            'customer_id' => $this->customer->id
+//        ]);
 
-        $this->partner -> update([
-            'geo_informations' => '{"lat":"23.788099544655","lng":"90.412001016086","radius":"500"}'
+        $this->profile -> update([
+            'mobile' => '+8801835559988',
+            'name' => 'Kazi Fahd Zakwan'
         ]);
 
         $this->master_category = factory(Category::class)->create();
 
-        $this->secondaryCategory = factory(Category::class)->create([
-            'name' => 'Car Wash',
-            'bn_name' => 'গাড়ী ধোয়া',
-            'parent_id' => $this->master_category->id,
-            'publication_status' => 1
+        $this->master_category_location_id = factory(CategoryLocation::class)->create([
+            'category_id' => $this->master_category->id,
+            'location_id' => $this->location->id
         ]);
 
-        $this->secondary_category_location_id= factory(CategoryLocation::class)->create([
+        $this->secondaryCategory = factory(Category::class)->create([
+            'parent_id' => $this->master_category->id
+        ]);
+
+        $this->secondary_category_location_id = factory(CategoryLocation::class)->create([
             'category_id' => $this->secondaryCategory->id,
             'location_id' => $this->location->id
         ]);
 
         $this->service = factory(Service::class)->create([
-            'category_id' => $this->secondaryCategory->id,
-            'variable_type' => ServiceType::FIXED,
-            'variables' => '{"price":"1700","min_price":"1000","max_price":"2500","description":""}',
-            'publication_status' => 1,
-            'stock_left' => 100
+            'category_id' => $this->secondaryCategory->id
         ]);
 
         $this->categoryPartner = factory(CategoryPartner::class)->create([
@@ -85,19 +96,18 @@ class sProOrderCreatePlaceOrderTest extends FeatureTestCase
             'preparation_time_minutes' => 0
         ]);
 
-        $this->master_category = factory(ResourceSchedule::class)->create([
-            'resource_id' => $this->resource->id,
-        ]);
-
         $this->partner_resource ->update([
             'resource_type' => 'Handyman'
         ]);
 
-        $this->location_service= factory(LocationService::class)->create(
-            [
-                'service_id' => $this->service->id,
-                'location_id' => $this->location->id
-            ]);
+        $this->location_service = factory(LocationService::class)->create([
+            'service_id' => $this->service->id,
+            'location_id' => $this->location->id
+        ]);
+
+        $this->partner -> update([
+            'geo_informations' => '{"lat":23.788099544655,"lng":90.412001016086,"radius":"200"}'
+        ]);
 
         DB::insert('insert into salesman(partner_id) values (?)', [$this->partner->id]);
 
@@ -107,6 +117,7 @@ class sProOrderCreatePlaceOrderTest extends FeatureTestCase
 
         DB::insert('insert into partner_working_hours(partner_id, day, start_time, end_time) values (?, ?, ?, ?)', [$this->partner->id, 'Friday', '09:00:00', '18:00:00']);
 
+        DB::insert('insert into location_partner_service(partner_service_id , location_id) values (?, ?)', [1, 4]);
 
     }
 
@@ -114,19 +125,19 @@ class sProOrderCreatePlaceOrderTest extends FeatureTestCase
     {
         //arrange
         $services = json_encode([
-            ['id' => 1, 'option' => [], 'quantity' => 1]
+            ['id' => $this -> service -> id, 'option' => [0,0], 'quantity' => 1]
         ]);
 
         //act
         $response = $this->post('/v2/resources/orders', [
-            'services' => $services,
-            'name' => "Kazi Fahd Zakwan",
-            'mobile' => "01835559988",
-            'sales_channel' => "Web",
+            "services" => $services,
+            'name' => $this->profile->name,
+            'mobile' => $this->profile->mobile,
+            'sales_channel' => "App",
             'payment_method' => "cod",
             'date' => '2021-10-22',
             'time' => '15:00:00-16:00:00',
-            'location_id' => 4,
+            'location_id' => $this->location->id,
             'address' => 'Michael road',
             'partner' => $this->partner->id
         ], [
