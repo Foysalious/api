@@ -22,6 +22,7 @@ class TopUpRequest
     /** @var Vendor */
     private $vendor;
     private $vendorFactory;
+    private $errorCode = 403;
     private $errorMessage;
     private $name;
     private $bulk_id;
@@ -189,6 +190,7 @@ class TopUpRequest
         }
 
         if ($this->agentBlocker->isBlocked()) {
+            $this->errorCode = 429;
             $this->errorMessage = "You have been blocked to do top up. Please contact customer care.";
             return 1;
         }
@@ -242,6 +244,11 @@ class TopUpRequest
     public function getErrorMessage()
     {
         return $this->errorMessage;
+    }
+
+    public function getErrorCode()
+    {
+        return $this->errorCode;
     }
 
     /**
