@@ -100,12 +100,11 @@ class PersonalInfoUpdater
             $passport_image_name = $passport_image->getClientOriginalName();
             $passport_image = $this->getPicture($profile, $passport_image, 'passport');
         }
-
-        return [
-          'nid_image_front' => $nid_image_front,
-          'nid_image_back' => $nid_image_back,
-          'passport_image' => $passport_image,
-        ];
+        $data = [];
+        if($nid_image_front) $data['nid_image_front'] = $nid_image_front;
+        if($nid_image_back) $data['nid_image_back'] = $nid_image_back;
+        if($passport_image) $data['passport_image'] = $passport_image;
+        return $data;
     }
 
     private function getPicture($profile, $photo, $image_for = 'pro_pic')
