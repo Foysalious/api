@@ -11,6 +11,7 @@ use Sheba\QueueMonitor\MonitoredJob;
 use Sheba\TopUp\TopUpRechargeManager;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpCompletedEvent;
+use Sheba\Usage\Usage;
 
 class TopUpJob extends MonitoredJob implements ShouldQueue
 {
@@ -30,7 +31,7 @@ class TopUpJob extends MonitoredJob implements ShouldQueue
     {
         $this->topUpOrder = $top_up_order;
         $this->agent = $this->topUpOrder->agent;
-        $this->connection = $this->getConnectionName();
+//        $this->connection = $this->getConnectionName();
         $this->queue = $this->connection;
     }
 
@@ -96,6 +97,7 @@ class TopUpJob extends MonitoredJob implements ShouldQueue
         if ($this->topUp->isNotSuccessful()) {
             $this->takeUnsuccessfulAction();
         } else {
+            (new Usage())->setUser($this->agent)->setType(Usage::Partner()::TOPUP_COMPLETE)->create();
             $this->takeSuccessfulAction();
         }
     }
