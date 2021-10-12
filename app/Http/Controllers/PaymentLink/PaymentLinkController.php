@@ -42,7 +42,7 @@ class PaymentLinkController extends Controller
     }
 
     /**
-     * @param Request     $request
+     * @param Request $request
      * @param PaymentLink $link
      * @return JsonResponse
      */
@@ -116,7 +116,7 @@ class PaymentLinkController extends Controller
             if ($link) {
                 $receiver = $link->getPaymentReceiver();
                 //&& $receiver->status == PartnerStatuses::BLACKLISTED
-                if ($receiver instanceof Partner ) {
+                if ($receiver instanceof Partner && $receiver->package_id != 19) {
                     return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
                 }
             }
@@ -231,13 +231,13 @@ class PaymentLinkController extends Controller
             if ($request->has('customer_id')) $customer = PosCustomer::find($request->customer_id);
 
             $this->creator->setAmount($request->amount)
-                          ->setReason($purpose)
-                          ->setUserName($request->user->name)
-                          ->setUserId($request->user->id)
-                          ->setUserType($request->type)
-                          ->setEmiMonth($request->emi_month ?: 0)
-                          ->setPaidBy($request->interest_paid_by ?: PaymentLinkStatics::paidByTypes()[($request->has("emi_month") ? 1 : 0)])
-                          ->setTransactionFeePercentage($request->transaction_charge);
+                ->setReason($purpose)
+                ->setUserName($request->user->name)
+                ->setUserId($request->user->id)
+                ->setUserType($request->type)
+                ->setEmiMonth($request->emi_month ?: 0)
+                ->setPaidBy($request->interest_paid_by ?: PaymentLinkStatics::paidByTypes()[($request->has("emi_month") ? 1 : 0)])
+                ->setTransactionFeePercentage($request->transaction_charge);
             if (isset($customer) && !empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
             $this->creator->setTargetType('due_tracker')->setTargetId(1)->calculate();
             $payment_link_store = $this->creator->save();
