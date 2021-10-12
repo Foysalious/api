@@ -44,7 +44,7 @@ class PosClient
 //            if ($res['code'] != 200)
 //                throw new PosClientException($res['message']);
             unset($res['code'], $res['message']);
-            Log::info('online payment', [$this->makeUrl($uri), $this->getOptions($data), $res]);
+            Log::info('online payment', $res);
             return $res;
         } catch (GuzzleException $e) {
             Log::error('online payment', $e);
