@@ -3,7 +3,6 @@
 use App\Models\Affiliate;
 use App\Models\Business;
 use App\Models\Partner;
-use Carbon\Carbon;
 use Exception;
 use Sheba\Dal\TopUpBlacklistNumber\Contract;
 use Sheba\TopUp\Events\TopUpRequestOfBlockedNumber;
@@ -14,8 +13,6 @@ use Event;
 
 class TopUpRequest
 {
-    const MINIMUM_INTERVAL_BETWEEN_TWO_TOPUP_IN_SECOND = 10;
-
     private $mobile;
     private $amount;
     private $type;
@@ -29,10 +26,9 @@ class TopUpRequest
     private $name;
     private $bulk_id;
     private $isFromRobiTopUpWallet;
-    private $walletType;
     private $topUpBlockNumberRepository;
-    /** @var TopUpBlockedAgentRepositoryInterface */
-    private $topUpBlockedAgentsRepo;
+    /** @var TopUpAgentBlocker */
+    private $agentBlocker;
     protected $userAgent;
     private $lat;
     private $long;
@@ -40,11 +36,11 @@ class TopUpRequest
     private $otfAmountCheck;
     private $isOtfAllow;
 
-    public function __construct(VendorFactory $vendor_factory, Contract $top_up_block_number_repository, TopUpBlockedAgentRepositoryInterface $topUpBlockedAgentsRepo)
+    public function __construct(VendorFactory $vendor_factory, Contract $top_up_block_number_repository, TopUpAgentBlocker $agent_blocker)
     {
         $this->vendorFactory = $vendor_factory;
         $this->topUpBlockNumberRepository = $top_up_block_number_repository;
-        $this->topUpBlockedAgentsRepo = $topUpBlockedAgentsRepo;
+        $this->agentBlocker = $agent_blocker;
     }
 
     /**
@@ -73,6 +69,7 @@ class TopUpRequest
     public function setAgent(TopUpAgent $agent)
     {
         $this->agent = $agent;
+        $this->agentBlocker->setAgent($agent);
         return $this;
     }
 
@@ -191,7 +188,7 @@ class TopUpRequest
             return 1;
         }
 
-        if ($this->isAgentBlocked()) {
+        if ($this->agentBlocker->isBlocked()) {
             $this->errorMessage = "You have been blocked to do top up. Please contact customer care.";
             return 1;
         }
@@ -230,11 +227,6 @@ class TopUpRequest
     private function isCanTopUpNo()
     {
         return ($this->agent instanceof Partner && (!$this->agent->canTopUp()));
-    }
-
-    private function isAgentBlocked()
-    {
-        return $this->topUpBlockedAgentsRepo->isBlocked($this->agent);
     }
 
     /**
