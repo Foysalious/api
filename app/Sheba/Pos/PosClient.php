@@ -7,6 +7,7 @@ namespace App\Sheba\Pos;
 use App\Sheba\Pos\Exceptions\PosClientException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use Log;
 
 class PosClient
 {
@@ -45,7 +46,7 @@ class PosClient
             unset($res['code'], $res['message']);
             return $res;
         } catch (GuzzleException $e) {
-            logError($e);
+            Log::error($e);
 //            $res = decodeGuzzleResponse($e->getResponse());
 //            if ($res['code'] == 400)
 //                throw new PosClientException($res['message']);
