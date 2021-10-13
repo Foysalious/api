@@ -29,6 +29,7 @@ class PosOrderPaymentRepository extends BaseRepository
             'method_details' => $data['method_details'] ?? null,
             'emi_month' => $data['emi_month'] ?? null,
             'interest' => $data['interest'] ?? null,
+            'transaction_type' => $data['transaction_type'] ?? null,
         ];
         $client = app(PosOrderServerClient::class);
         return $client->post('api/v1/payments', $payment_data);
