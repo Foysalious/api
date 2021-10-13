@@ -204,19 +204,6 @@ class PaymentLinkController extends Controller
                     $bank_transaction_charge = $this->creator->getBankTransactionCharge();
                 }
             }
-
-            if ($request->has('pos_order_id')) {
-                $pos_order = PosOrder::find($request->pos_order_id);
-                $this->deActivatePreviousLink($pos_order);
-                $customer = PosCustomer::find($pos_order->customer_id);
-                if (!empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
-                if ($this->creator->getPaidBy() == PaymentLinkStatics::paidByTypes()[1]) {
-                    $pos_order->update(['interest' => $this->creator->getInterest(), 'bank_transaction_charge' => $this->creator->getBankTransactionCharge()]);
-                } else {
-                    $pos_order->update(['interest' => 0, 'bank_transaction_charge' => 0]);
-                }
-            }
-
             if ($request->has('customer_id')) {
                 /** @var PosCustomerResolver $posCustomerResolver */
                 $posCustomerResolver = app(PosCustomerResolver::class);
