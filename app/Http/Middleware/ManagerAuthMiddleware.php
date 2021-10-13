@@ -23,7 +23,7 @@ class ManagerAuthMiddleware
             $partner = Partner::find($request->partner);
             if ($manager_resource && $partner) {
                 //checking migration is running or not
-                $isMigrationRunning = Redis::get("user-migration:".$request->partner->id);
+                $isMigrationRunning = Redis::get("user-migration:".$partner->id);
                 if ($isMigrationRunning) {
                     return api_response($request, null, 403, ["message" => "Sorry! Your migration is running for $isMigrationRunning. Please be patient."]);
                 }
