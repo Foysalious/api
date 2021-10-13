@@ -22,6 +22,7 @@ class ManagerAuthMiddleware
             $manager_resource = Resource::where('remember_token', $request->input('remember_token'))->first();
             $partner = Partner::find($request->partner);
             if ($manager_resource && $partner) {
+                //checking migration is running or not
                 $isMigrationRunning = Redis::get("user-migration:".$request->partner->id);
                 if ($isMigrationRunning) {
                     return api_response($request, null, 403, ["message" => "Sorry! Your migration is running for $isMigrationRunning. Please be patient."]);
