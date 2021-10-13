@@ -42,10 +42,12 @@ class SettingController extends Controller
             $settings->vat_reg_number = $partner->basicInformations->is_show_vat_reg_number;
             $settings['has_qr_code'] = ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0;
             removeRelationsAndFields($settings);
-            return api_response($request, $settings, 200, ['settings' => $settings]);
+            if(isRequestForPosRebuild()) return http_response($request, null, 200, ['settings' => $settings]);
+            else return api_response($request, $settings, 200, ['settings' => $settings]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+            if(isRequestForPosRebuild()) return http_response($request, null, 500);
+            else return api_response($request, null, 500);
         }
     }
 
@@ -61,10 +63,12 @@ class SettingController extends Controller
             }
             removeRelationsAndFields($settings);
             $repository->getTrainingVideoData($settings);
-            return api_response($request, $settings, 200, ['data' => $settings]);
+            if(isRequestForPosRebuild()) return http_response($request, null, 200, ['data' => $settings]);
+            else return api_response($request, $settings, 200, ['data' => $settings]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+            if(isRequestForPosRebuild()) return http_response($request, null, 500);
+            else return api_response($request, null, 500);
         }
     }
 
@@ -84,10 +88,12 @@ class SettingController extends Controller
             if ($request->has('printer_model')) $data["printer_model"] = $request->printer_model;
 
             $partnerPosSetting->update($this->withUpdateModificationField($data));
-            return api_response($request, null, 200);
+            if(isRequestForPosRebuild()) return http_response($request, null, 200, ['message' => 'Successful']);
+            else return api_response($request, null, 200);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+            if(isRequestForPosRebuild()) return http_response($request, null, 500);
+            else return api_response($request, null, 500);
         }
     }
 

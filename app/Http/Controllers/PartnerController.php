@@ -1065,7 +1065,8 @@ class PartnerController extends Controller
                 'is_show_vat_reg_number' => $request->is_show_vat_reg_number ?: 0
             ]
         ));
-        return api_response($request, null, 200, ['msg' => 'Vat Registration Number Update Successfully']);
+        if(isRequestForPosRebuild()) return http_response($request, null, 200, ['message' => 'Successful']);
+        else return api_response($request, null, 200, ['msg' => 'Vat Registration Number Update Successfully']);
     }
 
     public function changeLogo(Request $request)
@@ -1144,7 +1145,8 @@ class PartnerController extends Controller
             'qr_code_account_type' => $request->account_type,
             'qr_code_image'        => $image_link,
         ]));
-        return api_response($request, null, 200, ['message' => 'QR code set successfully']);
+        if(isRequestForPosRebuild()) return http_response($request, null, 200, ['message' => 'successful']);
+        else return api_response($request, null, 200, ['message' => 'QR code set successfully']);
     }
 
     public function getQRCode(Request $request)
@@ -1154,7 +1156,8 @@ class PartnerController extends Controller
             'account_type' => $partner->qr_code_account_type ? config('partner.qr_code.account_types')[$partner->qr_code_account_type] : null,
             'image'        => $partner->qr_code_image ?: null
         ];
-        return api_response($request, null, 200, ['data' => $data]);
+        if(isRequestForPosRebuild()) return http_response($request, null, 200, ['data' => $data]);
+        else return api_response($request, null, 200, ['data' => $data]);
     }
 
     public function getSliderDetailsAndAccountTypes(Request $request)
@@ -1169,7 +1172,8 @@ class PartnerController extends Controller
             'slider_image'  => config('partner.qr_code.slider_image'),
             'account_types' => $account_types
         ];
-        return api_response($request, null, 200, ['data' => $data]);
+        if(isRequestForPosRebuild()) return http_response($request, null, 200, ['data' => $data]);
+        else return api_response($request, null, 200, ['data' => $data]);
     }
 
     public function dashboardByToken(Request $request)

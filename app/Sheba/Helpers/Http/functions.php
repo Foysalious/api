@@ -219,3 +219,15 @@ if (!function_exists('isRequestForPosRebuild')) {
     }
 }
 
+if (!function_exists('make_response')) {
+
+    function make_response($request, $internal_response, $response_code, $external_response)
+    {
+        $is_rebuild_response = substr( \request()->getRequestUri(), 0, 5 ) === '/pos/';
+        if($is_rebuild_response)
+            return http_response($request, $internal_response, $response_code, $external_response);
+        else
+            return api_response($request, $internal_response, $response_code, $external_response);
+    }
+}
+
