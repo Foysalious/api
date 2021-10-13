@@ -1068,14 +1068,17 @@ class PartnerController extends Controller
         return api_response($request, null, 200, ['msg' => 'Vat Registration Number Update Successfully']);
     }
 
-    public function changeLogo($partner, Request $request)
+    public function changeLogo(Request $request)
     {
-
+        $partner = resolvePartnerFromAuthMiddleware($request);
+        $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
         $this->validate($request, ['logo' => 'required|file|image']);
-        $partner = Partner::find($partner);
         $repo = new PartnerRepository($partner);
         $logo = $repo->updateLogo($request);
-        return api_response($request, $logo, 200, ['logo' => $logo]);
+        if(isRequestForPosRebuild())
+            return http_response($request, null, 200, ['message' => 'Successful']);
+        else
+            return api_response($request, $logo, 200, ['logo' => $logo]);
     }
 
     /**
@@ -1202,7 +1205,7 @@ class PartnerController extends Controller
     public function toggleSmsActivation(Request $request, Updater $updater)
     {
         $partner = resolvePartnerFromAuthMiddleware($request);
-        $this->setModifier($request->manager_resource);
+        $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
         $isWebstoreSmsActive = !(int)$partner->is_webstore_sms_active;
         $updater->setPartner($partner)->setIsWebstoreSmsActive($isWebstoreSmsActive)->update();
         if(isRequestForPosRebuild())
