@@ -17,15 +17,15 @@ class WebstoreSettingController extends Controller
     public function index(Request $request)
     {
         $partner = $request->auth_user->getPartner();
-        $units = $this->webstoreSettingService->getallSettings($partner->id);
-        return api_response($request, null, 200, $units);
+        $settings = $this->webstoreSettingService->getallSettings($partner->id);
+        return api_response($request, null, 200, $settings);
     }
 
     public function getThemeDetails(Request $request)
     {
         $partner = $request->auth_user->getPartner();
-        $units = $this->webstoreSettingService->getThemeDetails($partner->id);
-        return api_response($request, null, 200, $units);
+        $settings = $this->webstoreSettingService->getThemeDetails($partner->id);
+        return api_response($request, null, 200, $settings);
     }
 
     public function store(Request $request)
@@ -48,6 +48,41 @@ class WebstoreSettingController extends Controller
             ->setSettings($request->settings)
             ->update();
         return $response;
+    }
+
+    public function storeSocialSetting(Request $request)
+    {
+        $partner = $request->auth_user->getPartner();
+        $response = $this->webstoreSettingService
+            ->setPartner($partner->id)
+            ->setFacebook($request->facebook)
+            ->setInstagram($request->instagram)
+            ->setWhatsapp($request->whatsapp)
+            ->setYoutube($request->youtube)
+            ->setEmail($request->email)
+            ->storeSocialSetting();
+        return $response;
+    }
+
+    public function updateSocialSetting(Request $request)
+    {
+        $partner = $request->auth_user->getPartner();
+        $response = $this->webstoreSettingService
+            ->setPartner($partner->id)
+            ->setFacebook($request->facebook)
+            ->setInstagram($request->instagram)
+            ->setWhatsapp($request->whatsapp)
+            ->setYoutube($request->youtube)
+            ->setEmail($request->email)
+            ->updateSocialSetting();
+        return $response;
+    }
+
+    public function getSocialSetting(Request $request)
+    {
+        $partner = $request->auth_user->getPartner();
+        $socialSettings = $this->webstoreSettingService->getPartnerSocialSettings($partner->id);
+        return api_response($request, null, 200, $socialSettings);
     }
 
 }
