@@ -141,11 +141,13 @@ class Route
                 $api->get('webstore-dashboard', 'Partner\Webstore\WebstoreDashboardController@getDashboard');
                 $api->post('toggle-webstore-sms-activation', 'PartnerController@toggleSmsActivation');
                 $api->get('webstore/banner-list', 'Partner\Webstore\WebstoreSettingsController@bannerList');
+                $api->post('webstore/store-banner', 'Partner\Webstore\WebstoreSettingsController@storeBanner');
                 $api->post('webstore/update-banner', 'Partner\Webstore\WebstoreSettingsController@updateBanner');
                 $api->get('/settings', 'Pos\SettingController@getSettings');
                 $api->post('/settings', 'Pos\SettingController@storePosSetting');
                 $api->get('settings/printer', 'Pos\SettingController@getPrinterSettings');
                 $api->post('vat-registration-number', 'PartnerController@addVatRegistrationNumber');
+                $api->post('change-logo', 'PartnerController@changeLogo');
                 $api->get('slider-details-and-account-types', 'PartnerController@getSliderDetailsAndAccountTypes');
                 $api->get('qr-code', 'PartnerController@getQRCode');
                 $api->post('qr-code', 'PartnerController@setQRCode');

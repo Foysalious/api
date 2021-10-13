@@ -1068,14 +1068,17 @@ class PartnerController extends Controller
         return api_response($request, null, 200, ['msg' => 'Vat Registration Number Update Successfully']);
     }
 
-    public function changeLogo($partner, Request $request)
+    public function changeLogo(Request $request)
     {
-
+        $partner = resolvePartnerFromAuthMiddleware($request);
+        $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
         $this->validate($request, ['logo' => 'required|file|image']);
-        $partner = Partner::find($partner);
         $repo = new PartnerRepository($partner);
         $logo = $repo->updateLogo($request);
-        return api_response($request, $logo, 200, ['logo' => $logo]);
+        if(isRequestForPosRebuild())
+            return http_response($request, null, 200, ['message' => 'Successful']);
+        else
+            return api_response($request, $logo, 200, ['logo' => $logo]);
     }
 
     /**
@@ -1199,11 +1202,15 @@ class PartnerController extends Controller
         return api_response($request, null, 200, ['message' => 'Address Updated Successfully']);
     }
 
-    public function toggleSmsActivation(Request $request, $partner, Updater $updater)
+    public function toggleSmsActivation(Request $request, Updater $updater)
     {
         $partner = resolvePartnerFromAuthMiddleware($request);
+        $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
         $isWebstoreSmsActive = !(int)$partner->is_webstore_sms_active;
         $updater->setPartner($partner)->setIsWebstoreSmsActive($isWebstoreSmsActive)->update();
-        return api_response($request, null, 200, ['message' => 'SMS Settings Updated Successfully']);
+        if(isRequestForPosRebuild())
+            return http_response($request, null, 200, ['message' => 'Successful']);
+        else
+            return api_response($request, null, 200, ['message' => 'SMS Settings Updated Successfully']);
     }
 }
