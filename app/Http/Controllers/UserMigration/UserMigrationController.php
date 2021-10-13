@@ -89,4 +89,30 @@ class UserMigrationController extends Controller
             return api_response($request, null, 404, ['message' => $e->getMessage(), 'code' => 404]);
         }
     }
+
+    public function canAccessModule(Request $request, $moduleKey)
+    {
+        try {
+            if(!$request->hasHeader('version-code')) {
+                throw new Exception('Invalid Request!', 400);
+            }
+            /** @var UserMigrationRepository $class */
+            $class = $this->modules[$moduleKey];
+            if ($class['app_version'] < $request->header('version-code')) {
+                $res = [
+                    'code' => 403,
+                    'message' => 'Your application is outdated! Please update.'
+                ];
+            } else {
+                $res = [
+                    'code' => 200,
+                    'message' => 'You are allowed to use.'
+                ];
+            }
+
+            return api_response($request, $res, 200, ['data' => $res]);
+        } catch (Exception $e) {
+            return api_response($request, null, 404, ['message' => $e->getMessage(), 'code' => 404]);
+        }
+    }
 }
