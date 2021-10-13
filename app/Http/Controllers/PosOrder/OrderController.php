@@ -138,23 +138,24 @@ class OrderController extends Controller
     /**
      * @throws UnauthorizedRequestFromExpenseTrackerException
      */
-    public function onlinePayment($partner, $order, Request $request)
+    public function onlinePayment($partner, $order, Request $request): JsonResponse
     {
         $this->validate($request, [
             'amount' => 'required|numeric',
-//            'payment_method_en' => 'required|string',
-//            'payment_method_bn' => 'required|string',
-//            'payment_method_icon' => 'required|string',
-//            'emi_month' => 'required|int',
-//            'interest' => 'required|numeric',
-//            'is_paid_by_customer' => 'required|boolean',
+            'payment_method_en' => 'sometimes',
+            'payment_method_bn' => 'sometimes',
+            'payment_method_icon' => 'sometimes',
+            'emi_month' => 'sometimes',
+            'interest' => 'sometimes',
+            'is_paid_by_customer' => 'sometimes',
         ]);
         if ($request->header('api-key') != config('expense_tracker.api_key'))
             throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
         $posOrder = PosOrder::find($order);
+        $method_details = ['payment_method_bn' => $request->payment_method_bn, 'payment_method_icon' => $request->payment_method_icon];
         $pos_order_type = $posOrder && !$posOrder->is_migrated ? PosOrderTypes::OLD_SYSTEM : PosOrderTypes::NEW_SYSTEM;
         $this->paymentService->setPosOrderId($order)->setPosOrderType($pos_order_type)->setPartnerId($partner)->setAmount($request->amount)
-            ->setMethod($request->payment_method_en)->setEmiMonth($request->emi_month)->setInterest($request->interest)
+            ->setMethod($request->payment_method_en)->setMethodDetails($method_details)->setEmiMonth($request->emi_month)->setInterest($request->interest)
             ->onlinePayment();
         return http_response($request, null, 200);
     }
