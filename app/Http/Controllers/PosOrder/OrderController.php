@@ -2,8 +2,10 @@
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\VoucherController;
+use App\Models\Partner;
 use App\Models\PosOrder;
 use App\Sheba\PosOrderService\Services\OrderService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\DueTracker\Exceptions\UnauthorizedRequestFromExpenseTrackerException;
 use Sheba\EMI\Calculations;
@@ -157,7 +159,10 @@ class OrderController extends Controller
         return http_response($request, null, 200);
     }
 
-    public function paymentLinkCreated($partner, $order, Request $request)
+    /**
+     * @throws UnauthorizedRequestFromExpenseTrackerException
+     */
+    public function paymentLinkCreated($partner, $order, Request $request): JsonResponse
     {
         $this->validate($request, [
             'link_id' => 'required|string',
@@ -172,7 +177,20 @@ class OrderController extends Controller
         ]);
         if ($request->header('api-key') != config('expense_tracker.api_key'))
             throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
-        //TODO: Order Payment Link Created Event
+        $partner = Partner::find($partner);
+        $interest = 0;
+        $bank_transaction_charge = 0;
+        if($request->paid_by == PaymentLinkStatics::paidByTypes()[1]) {
+            $interest = $request->interest;
+            $bank_transaction_charge = $request->bank_transaction_charge;
+        }
+        if($partner->isMigrationCompleted()) {
+            $this->orderService->setPartnerId($partner->id)->setOrderId($request->order)->setInterest($interest)
+                ->setBankTransactionCharge($bank_transaction_charge)->update();
+        } else {
+            $pos_order = PosOrder::find($order);
+            $pos_order->update(['interest' => $interest, 'bank_transaction_charge' => $bank_transaction_charge]);
+        }
         return http_response($request, null, 200);
     }
 
