@@ -96,21 +96,23 @@ class UserMigrationController extends Controller
             if(!$request->hasHeader('version-code')) {
                 throw new Exception('Invalid Request!', 400);
             }
-            /** @var UserMigrationRepository $class */
-            $class = $this->modules[$moduleKey];
-            if ($class['app_version'] < $request->header('version-code')) {
-                $res = [
-                    'code' => 403,
-                    'message' => 'Your application is outdated! Please update.'
-                ];
-            } else {
-                $res = [
-                    'code' => 200,
-                    'message' => 'You are allowed to use.'
-                ];
-            }
+            foreach ($this->modules as $key => $value) {
+                if ($value['key'] == $moduleKey) {
+                    if ((int) $request->header('version-code') >= $value['app_version']) {
+                        return [
+                            'code' => 200,
+                            'message' => 'You are allowed to use.'
+                        ];
 
-            return api_response($request, $res, 200, ['data' => $res]);
+                    } else {
+                        return [
+                            'code' => 403,
+                            'message' => 'Your application is outdated! Please update.'
+                        ];
+                    }
+                }
+            }
+            throw new Exception('Module Not Found!', 400);
         } catch (Exception $e) {
             return api_response($request, null, 404, ['message' => $e->getMessage(), 'code' => 404]);
         }
