@@ -10,6 +10,7 @@ class UserMigrationRoute
             $api->post('/','UserMigration\UserMigrationController@updateStatusWebHook');
         });
         $api->group(['prefix' => 'user-migration', 'middleware' => ['userMigration.auth']], function ($api) {
+            $api->get('/can-access/{moduleName}','UserMigration\UserMigrationController@canAccessModule');
             $api->get('/','UserMigration\UserMigrationController@getMigrationList');
             $api->get('/{moduleName}','UserMigration\UserMigrationController@migrationStatusByModuleName');
             $api->post('/{moduleName}','UserMigration\UserMigrationController@updateMigrationStatus');

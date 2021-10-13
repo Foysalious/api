@@ -84,7 +84,7 @@ class InvoiceService
                 'items'       => $pos_order->items,
                 'discount'    => $pos_order->getTotalDiscount(),
                 'total'       => $pos_order->getTotalPrice(),
-                'grand_total' => $pos_order->getTotalBill(),
+                'grand_total' => $pos_order->getNetBill(),
                 'paid'        => $pos_order->getPaid(),
                 'due'         => $pos_order->getDue(),
                 'status'      => $pos_order->getPaymentStatus(),

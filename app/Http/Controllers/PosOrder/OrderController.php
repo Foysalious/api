@@ -2,8 +2,10 @@
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\VoucherController;
+use App\Models\Partner;
 use App\Models\PosOrder;
 use App\Sheba\PosOrderService\Services\OrderService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\DueTracker\Exceptions\UnauthorizedRequestFromExpenseTrackerException;
 use Sheba\EMI\Calculations;
@@ -147,43 +149,60 @@ class OrderController extends Controller
     /**
      * @throws UnauthorizedRequestFromExpenseTrackerException
      */
-    public function onlinePayment($partner, $order, Request $request)
+    public function onlinePayment($partner, $order, Request $request): JsonResponse
     {
         $this->validate($request, [
             'amount' => 'required|numeric',
-//            'payment_method_en' => 'required|string',
-//            'payment_method_bn' => 'required|string',
-//            'payment_method_icon' => 'required|string',
-//            'emi_month' => 'required|int',
-//            'interest' => 'required|numeric',
-//            'is_paid_by_customer' => 'required|boolean',
+            'payment_method_en' => 'sometimes',
+            'payment_method_bn' => 'sometimes',
+            'payment_method_icon' => 'sometimes',
+            'emi_month' => 'sometimes',
+            'interest' => 'sometimes',
+            'is_paid_by_customer' => 'sometimes',
         ]);
         if ($request->header('api-key') != config('expense_tracker.api_key'))
             throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
         $posOrder = PosOrder::find($order);
+        $method_details = ['payment_method_bn' => $request->payment_method_bn, 'payment_method_icon' => $request->payment_method_icon];
         $pos_order_type = $posOrder && !$posOrder->is_migrated ? PosOrderTypes::OLD_SYSTEM : PosOrderTypes::NEW_SYSTEM;
         $this->paymentService->setPosOrderId($order)->setPosOrderType($pos_order_type)->setPartnerId($partner)->setAmount($request->amount)
-            ->setMethod($request->payment_method_en)->setEmiMonth($request->emi_month)->setInterest($request->interest)
+            ->setMethod($request->payment_method_en)->setMethodDetails($method_details)->setEmiMonth($request->emi_month)->setInterest($request->interest)
             ->onlinePayment();
         return http_response($request, null, 200);
     }
 
-    public function paymentLinkCreated($partner, $order, Request $request)
+    /**
+     * @throws UnauthorizedRequestFromExpenseTrackerException
+     */
+    public function paymentLinkCreated($partner, $order, Request $request): JsonResponse
     {
         $this->validate($request, [
-            'link_id' => 'required|string',
-            'reason' => 'required|string',
-            'status' => 'required|string',
-            'link' => 'required|string',
-            'emi_month' => 'sometimes|integer|in:' . implode(',', config('emi.valid_months')),
-            'interest' => 'sometimes|numeric',
-            'bank_transaction_charge' => 'sometimes|numeric',
+            'link_id' => 'sometimes',
+            'reason' => 'sometimes',
+            'status' => 'sometimes',
+            'link' => 'sometimes',
+            'emi_month' => 'sometimes',
+            'interest' => 'sometimes',
+            'bank_transaction_charge' => 'sometimes',
             'paid_by' => 'sometimes|in:' . implode(',', PaymentLinkStatics::paidByTypes()),
             'partner_profit' => 'sometimes'
         ]);
         if ($request->header('api-key') != config('expense_tracker.api_key'))
             throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
-        //TODO: Order Payment Link Created Event
+        $partner = Partner::find($partner);
+        $interest = 0;
+        $bank_transaction_charge = 0;
+        if($request->paid_by == PaymentLinkStatics::paidByTypes()[1]) {
+            $interest = $request->interest;
+            $bank_transaction_charge = $request->bank_transaction_charge;
+        }
+        if($partner->isMigrationCompleted()) {
+            $this->orderService->setPartnerId($partner->id)->setOrderId($request->order)->setInterest($interest)
+                ->setBankTransactionCharge($bank_transaction_charge)->update();
+        } else {
+            $pos_order = PosOrder::find($order);
+            $pos_order->update(['interest' => $interest, 'bank_transaction_charge' => $bank_transaction_charge]);
+        }
         return http_response($request, null, 200);
     }
 

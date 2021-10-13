@@ -22,8 +22,17 @@ class PosOrderPaymentRepository extends BaseRepository
 
     public function saveToNewPosOrderSystem($data)
     {
+        $payment_data = [
+            'pos_order_id' => $data['pos_order_id'] ?? null,
+            'amount' => $data['amount'] ?? null,
+            'payment_method' => $data['method'] ?? null,
+            'method_details' => $data['method_details'] ?? null,
+            'emi_month' => $data['emi_month'] ?? null,
+            'interest' => $data['interest'] ?? null,
+            'transaction_type' => $data['transaction_type'] ?? null,
+        ];
         $client = app(PosOrderServerClient::class);
-        return $client->post('api/v1/payments', $data);
+        return $client->post('api/v1/payments', $payment_data);
     }
 
     public function deleteFromNewPosOrderSystem($pos_order_id,$amount)

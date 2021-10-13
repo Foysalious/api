@@ -573,6 +573,7 @@ class OrderController extends Controller
         $order = $posOrderResolver->setOrderId($order)->get();
         /** @var PaymentLinkController $payment_link */
         $payment_link = app(PaymentLinkController::class);
+        $auth_user = $request->auth_user->getAvatar();
         $request->merge(array(
             'amount' => $order->due,
             'purpose' => $request->purpose,
@@ -582,7 +583,8 @@ class OrderController extends Controller
             'transaction_charge' => $request->transaction_charge,
             'pos_order_id' => $order->id,
             "type" => 'partner',
-            'user' => $request->auth_user
+            'user' => $auth_user,
+            'partner' => $auth_user
         ));
         $data = $payment_link->store($request)->getData(true);
         return http_response($request, null, $data['code'], $data);

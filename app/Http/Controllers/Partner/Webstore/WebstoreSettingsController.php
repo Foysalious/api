@@ -25,14 +25,17 @@ class WebstoreSettingsController extends Controller
 {
     use ModificationFields;
 
-    public function index($partner, Request $request)
+    public function index(Request $request)
     {
-        $partner = $request->partner;
+        $partner = resolvePartnerFromAuthMiddleware($request);
         $fractal = new Manager();
         $fractal->setSerializer(new CustomSerializer());
         $resource = new Item($partner, new WebstoreSettingsTransformer());
         $settings = $fractal->createData($resource)->toArray()['data'];
-        return api_response($request, $settings, 200, ['webstore_settings' => $settings]);
+        if(isRequestForPosRebuild())
+            return http_response($request, $settings, 200, ['webstore_settings' => $settings]);
+        else
+            return api_response($request, $settings, 200, ['webstore_settings' => $settings]);
     }
 
     /**
@@ -42,7 +45,7 @@ class WebstoreSettingsController extends Controller
      * @return JsonResponse
      * @throws AccessRestrictedExceptionForPackage|DoNotReportException
      */
-    public function update($partner, Request $request, WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest)
+    public function update(Request $request, WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest)
     {
         $partner = resolvePartnerFromAuthMiddleware($request);
         $this->validate($request, [
@@ -80,38 +83,43 @@ class WebstoreSettingsController extends Controller
                 ]));
             }
         }
-        return api_response($request, null, 200, ['message' => 'Successful']);
+        if(isRequestForPosRebuild()) return http_response($request, null, 200, ['message' => 'Successful']);
+        else return api_response($request, null, 200, ['message' => 'Successful']);
     }
 
 
     /**
      * @param Request $request
-     * @param $partner
      * @param WebstoreBannerSettings $webstoreBannerSettings
      * @return JsonResponse
      */
-    public function bannerList(Request $request, $partner, WebstoreBannerSettings $webstoreBannerSettings)
+    public function bannerList(Request $request, WebstoreBannerSettings $webstoreBannerSettings)
     {
         $list = $webstoreBannerSettings->getBannerList();
-        return api_response($request, null, 200, ['data' => $list]);
+        if(isRequestForPosRebuild()) return http_response($request, null, 200, ['data' => $list]);
+        else return api_response($request, null, 200, ['data' => $list]);
     }
 
     /**
      * @param Request $request
-     * @param $partner
      * @param WebstoreBannerSettings $webstoreBannerSettings
      * @return JsonResponse
      */
-    public function updateBanner(Request $request, $partner, WebstoreBannerSettings $webstoreBannerSettings)
+    public function updateBanner(Request $request, WebstoreBannerSettings $webstoreBannerSettings)
     {
         $partner = resolvePartnerFromAuthMiddleware($request);
         $partner_id = $partner->id;
         $manager_resource = resolveManagerResourceFromAuthMiddleware($request);
         $this->setModifier($manager_resource);
         $banner_settings = PartnerWebstoreBanner::where('partner_id', $partner_id)->first();
-        if (!$banner_settings)
-            return api_response($request, null, 400, ['message' => 'Banner Settings not found']);
+        if (!$banner_settings) {
+            $return_data = ['message' => 'Banner Settings not found'];
+            if(isRequestForPosRebuild()) return http_response($request, null, 400, $return_data );
+            else return api_response($request, null, 400, $return_data );
+        }
         $webstoreBannerSettings->setBannerSettings($banner_settings)->setData($request->all())->update();
-        return api_response($request, null, 200, ['message' => 'Banner Settings Updated Successfully']);
+        $return_data = ['message' => 'Banner Settings Updated Successfully'];
+        if(isRequestForPosRebuild()) return http_response($request, null, 200, $return_data);
+        else return api_response($request, null, 200, $return_data);
     }
 }
