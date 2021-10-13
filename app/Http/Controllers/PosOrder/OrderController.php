@@ -166,13 +166,13 @@ class OrderController extends Controller
     public function paymentLinkCreated($partner, $order, Request $request): JsonResponse
     {
         $this->validate($request, [
-            'link_id' => 'required|string',
-            'reason' => 'required|string',
-            'status' => 'required|string',
-            'link' => 'required|string',
-            'emi_month' => 'sometimes|integer|in:' . implode(',', config('emi.valid_months')),
-            'interest' => 'sometimes|numeric',
-            'bank_transaction_charge' => 'sometimes|numeric',
+            'link_id' => 'sometimes',
+            'reason' => 'sometimes',
+            'status' => 'sometimes',
+            'link' => 'sometimes',
+            'emi_month' => 'sometimes',
+            'interest' => 'sometimes',
+            'bank_transaction_charge' => 'sometimes',
             'paid_by' => 'sometimes|in:' . implode(',', PaymentLinkStatics::paidByTypes()),
             'partner_profit' => 'sometimes'
         ]);
