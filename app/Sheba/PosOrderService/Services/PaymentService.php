@@ -14,6 +14,7 @@ class PaymentService
     private $pos_order_type;
     private $amount;
     private $method;
+    private $method_details;
     private $emi_month;
     private $interest;
     private $is_paid_by_customer;
@@ -70,6 +71,16 @@ class PaymentService
     }
 
     /**
+     * @param mixed $method_details
+     * @return PaymentService
+     */
+    public function setMethodDetails($method_details)
+    {
+        $this->method_details = json_encode($method_details);
+        return $this;
+    }
+
+    /**
      * @param mixed $emi_month
      * @return PaymentService
      */
@@ -106,6 +117,7 @@ class PaymentService
             'pos_order_id' => $this->pos_order_id,
             'amount' => $this->amount,
             'method' => $this->method,
+            'method_details' => $this->method_details,
             'emi_month' => $this->emi_month,
             'interest' => $this->interest,
         ];
