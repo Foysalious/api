@@ -9,6 +9,7 @@ use DB;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Sheba\AccountingEntry\Repository\UserMigrationRepository;
 use Sheba\Business\Bid\Bidder;
 use Sheba\Checkout\CommissionCalculator;
 use Sheba\Dal\ArtisanLeave\ArtisanLeave;
@@ -20,6 +21,7 @@ use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInformation;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
+use Sheba\Dal\UserMigration\UserStatus;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Payment\PayableUser;
 use Sheba\Transactions\Types;
@@ -52,9 +54,11 @@ use Sheba\Dal\Category\Category;
 use Sheba\Dal\Service\Service;
 use Sheba\Dal\PartnerNeoBankingInfo\Model as PartnerNeoBankingInfo;
 use Sheba\Dal\PartnerNeoBankingAccount\Model as PartnerNeoBankingAccount;
+use Sheba\Dal\PartnerGeneralSetting\Model as PartnerGeneralSetting;
 
 class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent, Rechargable, Bidder, HasWalletTransaction, HasReferrals, PayableUser
 {
+    CONST NOT_ELIGIBLE = 'not_eligible';
     use Wallet, TopUpTrait, MovieTicketTrait;
 
     public $totalCreditForSubscription;
@@ -931,15 +935,17 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
      */
     public function getCreditBreakdown()
     {
-        $remaining = (double)0;
-        $wallet = (double)$this->wallet;
-        $bonus_wallet = (double)$this->bonusWallet();
-        $threshold = $this->walletSetting ? (double)$this->walletSetting->min_wallet_threshold : 0;
+        $remaining             = (double)0;
+        $wallet                = (double)$this->wallet;
+        $bonus_wallet          = (double)$this->bonusWallet();
+        $threshold             = $this->walletSetting ? (double)$this->walletSetting->min_wallet_threshold : 0;
+        $freeze_money          = $this->walletSetting ? (double) $this->walletSetting->pending_withdrawal_amount : 0;
         $this->creditBreakdown = [
             'remaining_subscription_charge' => $remaining,
             'wallet' => $wallet,
             'threshold' => $threshold,
-            'bonus_wallet' => $bonus_wallet
+            'bonus_wallet' => $bonus_wallet,
+            'freeze_money' => $freeze_money
         ];
         return [
             $remaining,
@@ -1074,8 +1080,23 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->hasOne(PartnerDeliveryInformation::class);
     }
 
+    public function partnerGeneralSetting()
+    {
+        return $this->hasOne(PartnerGeneralSetting::class);
+    }
+
     public function getGatewayChargesId()
     {
         return $this->subscription_rules->payment_gateway_configuration_id;
+    }
+
+    public function isMigratedToAccounting(): bool
+    {
+        $arr = [self::NOT_ELIGIBLE, UserStatus::PENDING, UserStatus::UPGRADING, UserStatus::FAILED];
+        /** @var UserMigrationRepository $userMigrationRepo */
+        $userMigrationRepo = app(UserMigrationRepository::class);
+        $userStatus = $userMigrationRepo->userStatus($this->id);
+        if (in_array($userStatus, $arr)) return false;
+        return true;
     }
 }

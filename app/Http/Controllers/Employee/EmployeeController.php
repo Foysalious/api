@@ -36,6 +36,7 @@ use Sheba\Business\CoWorker\UpdaterV2 as Updater;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
+use Sheba\Dal\BusinessMemberBadge\BusinessMemberBadgeRepository;
 use Sheba\Dal\Visit\Status;
 use Sheba\Dal\Visit\VisitRepository;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
@@ -66,6 +67,8 @@ class EmployeeController extends Controller
     private $businessMember;
     /*** @var ProfileRequester $profileRequester */
     private $profileRequester;
+    /** @var BusinessMemberBadgeRepository $badgeRepo */
+    private $badgeRepo;
 
     /**
      * EmployeeController constructor.
@@ -82,6 +85,7 @@ class EmployeeController extends Controller
         $this->accounts = $accounts;
         $this->businessMember = app(BusinessMember::class);
         $this->profileRequester = app(ProfileRequester::class);
+        $this->badgeRepo = app(BusinessMemberBadgeRepository::class);
     }
 
     public function me(Request $request)
@@ -167,6 +171,8 @@ class EmployeeController extends Controller
         $business_member = BusinessMember::find($business_member['id']);
         if (!$business_member) return api_response($request, null, 404);
 
+        $department = $business_member->department();
+
         /** @var Attendance $attendance */
         $attendance = $business_member->attendanceOfToday();
         /** @var Attendance $last_attendance */
@@ -190,10 +196,18 @@ class EmployeeController extends Controller
         $today_visit_count = $today_visit->count();
         $current_visit = $visit_repository->where('assignee_id', $business_member->id)->where('status', Status::STARTED)->whereBetween('start_date_time', [$today.' 00:00:00', $today.' 23:59:59'])->count();
 
+        /** Check Employee Already Get a Badge or Not */
+        $start_date = Carbon::now()->startOfMonth();
+        $end_date = Carbon::now()->endOfMonth();
+        $business_member_badge = $this->badgeRepo->where('business_member_id', $business_member->id)
+            ->whereBetween('end_date', [$start_date, $end_date])->first();
+        $is_badge_seen = $business_member_badge ? $business_member_badge->is_seen : 0;
+
         $data = [
             'id' => $member->id,
             'business_id' => $business->id,
             'business_member_id' => $business_member->id,
+            'department_id' => $department ? $department->id : null,
             'notification_count' => $member->notifications()->unSeen()->count(),
             'attendance' => [
                 'can_checkin' => !$attendance ? 1 : ($attendance->canTakeThisAction(Actions::CHECKIN) ? 1 : 0),
@@ -218,7 +232,8 @@ class EmployeeController extends Controller
             'pending_visit_count' => $all_pending_visit_count,
             'today_visit_count' => $today_visit_count,
             'single_visit_title' => $today_visit_count === 1 ? $today_visit->first()->title : null,
-            'currently_on_visit' => $current_visit ? true : false
+            'currently_on_visit' => $current_visit ? true : false,
+            'is_badge_seen' => $is_badge_seen,
         ];
 
         return api_response($request, $business_member, 200, ['info' => $data]);

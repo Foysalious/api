@@ -9,6 +9,8 @@ class Statics
     CONST UNVERIFIED       = "unverified";
     CONST PENDING          = "pending";
     CONST REJECTED         = "rejected";
+    CONST SUCCESS_MESSAGE  = "আপনার NID-এর তথ্য এবং ছবি সফলভাবে বাংলাদেশ সরকার কর্তিক ভেরিফাইড হয়েছে।";
+    CONST FAIL_MESSAGE     = "দুঃখিত! আপনার আবেদনটি সফল হয়নি। যেকোনো তথ্যের জন্য কল করুন ১৬৫১৬ নাম্বারে।";
 
     public static function faceVerificationValidate(): array
     {
@@ -27,14 +29,18 @@ class Statics
         ];
     }
 
-    public static function faceVerificationResponse($status, $message)
+    /**
+     * @param $status
+     * @param $message
+     * @return array
+     */
+    public static function faceVerificationResponse($status, $message): array
     {
         if($status === self::UNVERIFIED) $status = self::REJECTED;
         return [
             'status'  => $status,
             'title'   => $status === self::VERIFIED ? "আবেদন সফল হয়েছে !" : "আবেদন সফল হয়নি !",
-            'message' => $status === self::VERIFIED ? "আপনার NID-এর তথ্য সফলভাবে sManager কর্তৃপক্ষের নিকট পাঠানো হয়েছে। আপনাকে ৭২ ঘণ্টার মধ্যে জানানো হবে। যেকোনো তথ্যের জন্য কল করুন ১৬৫১৬ নাম্বারে।"
-                : "দুঃখিত! আপনার আবেদনটি সফল হয়নি। যেকোনো তথ্যের জন্য কল করুন ১৬৫১৬ নাম্বারে।"
+            'message' => $status === self::VERIFIED ? self::SUCCESS_MESSAGE : self::FAIL_MESSAGE
         ];
     }
 

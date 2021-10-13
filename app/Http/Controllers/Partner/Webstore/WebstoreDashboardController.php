@@ -8,7 +8,7 @@ use Sheba\Partner\Webstore\WebstoreDashboard;
 
 class WebstoreDashboardController extends Controller
 {
-    public function getDashboard($partner, Request $request, WebstoreDashboard $webstoreDashboard, TimeFrame $time_frame)
+    public function getDashboard(Request $request, WebstoreDashboard $webstoreDashboard, TimeFrame $time_frame)
     {
         $this->validate($request, [
             'frequency' => 'required|string|in:day,week,month,quarter,year',
@@ -17,7 +17,8 @@ class WebstoreDashboardController extends Controller
             'month'     => 'required_if:frequency,month|numeric',
             'year'      => 'required_if:frequency,month,year|numeric',
         ]);
-        $partner = Partner::find((int)$partner);
+        $partner = resolvePartnerFromAuthMiddleware($request);
+        $partner = Partner::find((int)$partner->id);
         $dashboard = $webstoreDashboard->setPartner($partner)
             ->setFrequency($request->frequency)
             ->setYear($request->year)

@@ -140,9 +140,15 @@ class CoWorkerDetailTransformer extends TransformerAbstract
     {
         $profile_bank_info = $this->profile->banks->last();
 
-        $bank_name = $profile_bank_info ? ucwords(str_replace('_', ' ', $profile_bank_info->bank_name)) : null;
-        $account_no = $profile_bank_info ? $profile_bank_info->account_no : null;
+        $bank_name = $profile_bank_info && !$this->isNull($profile_bank_info->bank_name) ?
+            ucwords(str_replace('_', ' ', $profile_bank_info->bank_name)) :
+            null;
+        $bank = $bank_name ? [
+            'key' => snake_case($bank_name),
+            'name' => $bank_name,
+        ] : null;
 
+        $account_no = $profile_bank_info ? $profile_bank_info->account_no : null;
         $count = 0;
         if ($this->profile->tin_no ||
             $this->profile->tin_certificate ||
@@ -155,7 +161,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
             'tin_no' => $this->profile->tin_no,
             'tin_certificate_name' => $this->profile->tin_certificate ? array_last(explode('/', $this->profile->tin_certificate)) : null,
             'tin_certificate' => $this->profile->tin_certificate,
-            'bank_name' => $bank_name,
+            'bank' => $bank,
             'account_no' => $account_no,
             'financial_info_completion' => $financial_info_completion
         ];
@@ -254,10 +260,10 @@ class CoWorkerDetailTransformer extends TransformerAbstract
 
     private function getGlobalGrossSalaryComponent($payroll_setting)
     {
-        $global_gross_components = $payroll_setting->components()->where('type', Type::GROSS)->where(function($query) {
+        $global_gross_components = $payroll_setting->components()->where('type', Type::GROSS)->where(function ($query) {
             return $query->where('target_type', null)->orWhere('target_type', TargetType::GENERAL);
-        })->where(function($query) {
-            return $query->where('is_default', 1)->orWhere('is_active',1);
+        })->where(function ($query) {
+            return $query->where('is_default', 1)->orWhere('is_active', 1);
         })->orderBy('type')->get();
         $global_gross_component_data = [];
         foreach ($global_gross_components as $component) {
@@ -307,6 +313,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
     private function isNull($data)
     {
         if ($data == " ") return true;
+        if ($data == "") return true;
         return false;
     }
 }

@@ -3,6 +3,7 @@
 use App\Models\Partner;
 use App\Models\Resource;
 use App\Models\WithdrawalRequest;
+use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
@@ -250,15 +251,23 @@ class WalletTransactionHandler extends WalletTransaction
         return strtolower($this->type) == 'credit' ? $last_inserted_balance + $this->amount : $last_inserted_balance - $this->amount;
     }
 
-    public static function isDebitTransactionAllowed(Partner $partner, $amount)
+    /**
+     * @param Partner $partner
+     * @param $amount
+     * @param null $reason
+     * @throws WalletDebitForbiddenException|InsufficientBalance
+     */
+    public static function isDebitTransactionAllowed(Partner $partner, $amount, $reason = null)
     {
-        $withdrawalRequests = WithdrawalRequest::where('requester_id', $partner->id)
-            ->whereIn('status', ['pending', 'approval_pending'])
-            ->sum('amount');
-        $remainingAmount = $partner->wallet - (int) $withdrawalRequests;
-        if ($amount > $remainingAmount) {
-            $message = sprintf("আপনি %s টাকা উত্তোলনের জন্য আবেদন করেছেন, একারনে আপনার একাউন্টে পর্যাপ্ত ব্যালেন্স নেই। অনুগ্রহ করে সেবা ক্রেডিট রিচার্জ করে পুনরায় চেষ্টা করুন।", $withdrawalRequests);
-            throw new WalletDebitForbiddenException($message, 403);
+        if ((double)$partner->wallet < $amount) {
+            throw new InsufficientBalance();
+        }
+        $withdrawalRequests = $partner->walletSetting->pending_withdrawal_amount;
+        $remainingAmount = $partner->wallet - (float) $withdrawalRequests;
+        $withdrawalRequestsBn = convertNumbersToBangla($withdrawalRequests, true, 0);
+        if ($withdrawalRequests > 0 && $amount > $remainingAmount) {
+            $message = sprintf("<center>আপনি <b> %s </b> টাকা উত্তোলনের জন্য আবেদন করেছেন, একারনে %s জন্য পর্যাপ্ত ব্যালেন্স নেই। অনুগ্রহ করে সেবা ক্রেডিট রিচার্জ করে পুনরায় চেষ্টা করুন।</center>", $withdrawalRequestsBn, $reason);
+            throw new WalletDebitForbiddenException($message, 406);
         }
     }
 }

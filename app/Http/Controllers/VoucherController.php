@@ -305,7 +305,6 @@ class VoucherController extends Controller
         return $rule;
     }
 
-
     /**
      * @throws Exception
      */
@@ -327,8 +326,6 @@ class VoucherController extends Controller
 //        $voucher_id = $request->voucher_id;
         return $voucher;
     }
-
-
 
     /**
      * @param Request $request

@@ -65,32 +65,22 @@ class TaxCalculator
         $this->yearlyTaxAmount = $this->taxDeduction->setBusinessMember($this->businessMember)->setTaxableIncome($this->taxableIncome)->calculate();
         $this->businessMemberTaxHistoryData = [];
         if ($this->yearlyTaxAmount > 0)
-        $this->businessMemberTaxHistoryData = [
-            'business_member_id' => $this->businessMember->id,
-            'generated_at' => Carbon::now(),
-            'gross_components' => json_encode($this->grossTaxableComponents),
-            'addition_components' => json_encode($this->payrollTaxableComponents),
-            'exemption_amount' => $this->taxDeduction->getGenderExemption(),
-            'remaining_taxable_income' => $this->taxDeduction->getNetTaxableIncomeAmount(),
-            'slabs_amount' => json_encode($this->taxDeduction->getSlabAmount()),
-            'yearly_amount' => $this->yearlyTaxAmount,
-            'monthly_amount' => $this->getMonthlyTaxAmount()
-        ];
-    }
-
-    public function getMonthlyTaxAmount()
-    {
-        return floatValFormat($this->yearlyTaxAmount / 12);
-    }
-
-    public function getBusinessMemberTaxHistoryData()
-    {
-        return $this->businessMemberTaxHistoryData;
+            $this->businessMemberTaxHistoryData = [
+                'business_member_id' => $this->businessMember->id,
+                'generated_at' => Carbon::now(),
+                'gross_components' => json_encode($this->grossTaxableComponents),
+                'addition_components' => json_encode($this->payrollTaxableComponents),
+                'exemption_amount' => $this->taxDeduction->getGenderExemption(),
+                'remaining_taxable_income' => $this->taxDeduction->getNetTaxableIncomeAmount(),
+                'slabs_amount' => json_encode($this->taxDeduction->getSlabAmount()),
+                'yearly_amount' => $this->yearlyTaxAmount,
+                'monthly_amount' => $this->getMonthlyTaxAmount()
+            ];
     }
 
     private function calculateTaxForGrossComponents()
     {
-        foreach ($this->grossSalaryBreakdown as $gross_breakdown){
+        foreach ($this->grossSalaryBreakdown as $gross_breakdown) {
             if ($gross_breakdown['name'] == PayrollConstGetter::BASIC_SALARY) {
                 $yearly_basic_salary = $this->yearlyTotalGrossAmount($gross_breakdown['percentage']);
                 $this->yearlyAmount[] = $yearly_basic_salary;
@@ -103,7 +93,7 @@ class TaxCalculator
             if ($gross_breakdown['name'] == PayrollConstGetter::HOUSE_RENT) {
                 $yearly_house_rent = $this->yearlyTotalGrossAmount($gross_breakdown['percentage']);
                 $this->yearlyAmount[] = $yearly_house_rent;
-                $yearly_house_rent_tax =  ($yearly_house_rent - min(PayrollConstGetter::HOUSE_RENT_EXEMPTION, $this->houseRentTaxExemptionAmount)) <= 0 ? 0 : ($yearly_house_rent - min(PayrollConstGetter::HOUSE_RENT_EXEMPTION, $this->houseRentTaxExemptionAmount));
+                $yearly_house_rent_tax = ($yearly_house_rent - min(PayrollConstGetter::HOUSE_RENT_EXEMPTION, $this->houseRentTaxExemptionAmount)) <= 0 ? 0 : ($yearly_house_rent - min(PayrollConstGetter::HOUSE_RENT_EXEMPTION, $this->houseRentTaxExemptionAmount));
                 $this->taxableIncome += $yearly_house_rent_tax;
                 $this->grossTaxableComponents[PayrollConstGetter::HOUSE_RENT] = $yearly_house_rent_tax;
                 continue;
@@ -111,7 +101,7 @@ class TaxCalculator
             if ($gross_breakdown['name'] == PayrollConstGetter::CONVEYANCE) {
                 $yearly_conveyance = $this->yearlyTotalGrossAmount($gross_breakdown['percentage']);
                 $this->yearlyAmount[] = $yearly_conveyance;
-                $yearly_conveyance_tax = ($yearly_conveyance > PayrollConstGetter::CONVEYANCE_EXEMPTION ) ? ($yearly_conveyance - PayrollConstGetter::CONVEYANCE_EXEMPTION) : 0;
+                $yearly_conveyance_tax = ($yearly_conveyance > PayrollConstGetter::CONVEYANCE_EXEMPTION) ? ($yearly_conveyance - PayrollConstGetter::CONVEYANCE_EXEMPTION) : 0;
                 $this->taxableIncome += $yearly_conveyance_tax;
                 $this->grossTaxableComponents[PayrollConstGetter::CONVEYANCE] = $yearly_conveyance_tax;
                 continue;
@@ -124,7 +114,7 @@ class TaxCalculator
                 $this->grossTaxableComponents[PayrollConstGetter::MEDICAL_ALLOWANCE] = $yearly_medical_allowance_tax;
                 continue;
             }
-            if($gross_breakdown['is_taxable']) {
+            if ($gross_breakdown['is_taxable']) {
                 $custom_gross_component = $this->yearlyTotalGrossAmount($gross_breakdown['percentage']);
                 $this->yearlyAmount[] = $custom_gross_component;
                 $this->taxableIncome += $custom_gross_component;
@@ -135,10 +125,10 @@ class TaxCalculator
 
     private function calculateTaxForPayrollComponents()
     {
-        foreach ($this->taxableComponent as $component_packages){
+        foreach ($this->taxableComponent as $component_packages) {
             $final_amount = 0;
             $component_name = null;
-            foreach ($component_packages as $package){
+            foreach ($component_packages as $package) {
                 $component_name = $component_name ? $component_name : $package->payrollComponent->name;
                 $calculation_type = $package->calculation_type;
                 $on_what = $package->on_what;
@@ -155,6 +145,16 @@ class TaxCalculator
             $this->taxableIncome += $final_amount;
             $this->payrollTaxableComponents[$component_name] = $final_amount;
         }
+    }
+
+    public function getMonthlyTaxAmount()
+    {
+        return floatValFormat($this->yearlyTaxAmount / 12);
+    }
+
+    public function getBusinessMemberTaxHistoryData()
+    {
+        return $this->businessMemberTaxHistoryData;
     }
 
 }

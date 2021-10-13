@@ -11,6 +11,7 @@ use Sheba\QueueMonitor\MonitoredJob;
 use Sheba\TopUp\TopUpRechargeManager;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpCompletedEvent;
+use Sheba\Usage\Usage;
 
 class TopUpJob extends MonitoredJob implements ShouldQueue
 {
@@ -96,6 +97,7 @@ class TopUpJob extends MonitoredJob implements ShouldQueue
         if ($this->topUp->isNotSuccessful()) {
             $this->takeUnsuccessfulAction();
         } else {
+            (new Usage())->setUser($this->agent)->setType(Usage::Partner()::TOPUP_COMPLETE)->create();
             $this->takeSuccessfulAction();
         }
     }
@@ -146,7 +148,6 @@ class TopUpJob extends MonitoredJob implements ShouldQueue
 
     private function handleException(Exception $e)
     {
-        dde($e);
         $payload = $this->job->getRawBody();
         $id = $this->failedJobLogger->log($this->connection, $this->queue, $payload);
         logErrorWithExtra($e, [

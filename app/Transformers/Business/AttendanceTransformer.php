@@ -3,6 +3,7 @@
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use League\Fractal\TransformerAbstract;
+use Sheba\Business\Attendance\CheckWeekend;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\Attendance\Statuses;
 use Sheba\Helpers\TimeFrame;
@@ -12,21 +13,20 @@ class AttendanceTransformer extends TransformerAbstract
     /** @var TimeFrame $timeFrame */
     private $timeFrame;
     private $businessHoliday;
-    private $businessWeekend;
+    private $businessWeekendSettings;
     private $businessMemberLeave;
 
     /**
-     * AttendanceTransformer constructor.
      * @param TimeFrame $time_frame
      * @param $business_holiday
-     * @param $business_weekend
+     * @param $weekend_settings
      * @param $business_member_leave
      */
-    public function __construct(TimeFrame $time_frame, $business_holiday, $business_weekend, $business_member_leave)
+    public function __construct(TimeFrame $time_frame, $business_holiday, $weekend_settings, $business_member_leave)
     {
         $this->timeFrame = $time_frame;
         $this->businessHoliday = $business_holiday;
-        $this->businessWeekend = $business_weekend;
+        $this->businessWeekendSettings = $weekend_settings;
         $this->businessMemberLeave = $business_member_leave;
     }
 
@@ -37,7 +37,7 @@ class AttendanceTransformer extends TransformerAbstract
     public function transform($attendances)
     {
         $data = [];
-        $weekend_day = $this->businessWeekend->pluck('weekday_name')->toArray();
+        $check_weekend = new CheckWeekend();
         list($leaves, $leaves_date_with_half_and_full_day) = $this->formatLeaveAsDateArray();
 
         foreach ($this->businessHoliday as $holiday) {
@@ -65,6 +65,7 @@ class AttendanceTransformer extends TransformerAbstract
         $daily_breakdown = [];
         foreach ($period as $date) {
             $breakdown_data = [];
+            $weekend_day = $check_weekend->getWeekendDays($date, $this->businessWeekendSettings);
             $is_weekend_or_holiday = $this->isWeekendHoliday($date, $weekend_day, $dates_of_holidays_formatted);
             $is_on_leave = $this->isLeave($date, $leaves);
 
@@ -133,6 +134,7 @@ class AttendanceTransformer extends TransformerAbstract
 
         $remain_days = CarbonPeriod::create($this->timeFrame->end->addDay(), $this->timeFrame->start->endOfMonth());
         foreach ($remain_days as $date) {
+            $weekend_day = $check_weekend->getWeekendDays($date, $this->businessWeekendSettings);
             $is_weekend_or_holiday = $this->isWeekendHoliday($date, $weekend_day, $dates_of_holidays_formatted);
             $is_on_leave = $this->isLeave($date, $leaves);
             if ($is_weekend_or_holiday || $is_on_leave) {

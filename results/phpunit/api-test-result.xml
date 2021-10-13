@@ -1,16 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="Application Test Suite" tests="1" assertions="0" failures="0" errors="1" time="0.000000">
-    <testsuite name="Tests\Feature\sProOrderCreate\sProOrderCreatePlaceOrderTest" file="/var/www/tests/Feature/sProOrderCreate/sProOrderCreatePlaceOrderTest.php" tests="1" assertions="0" failures="0" errors="1" time="0.000000">
-      <testcase name="testSProPlaceOrderAPIWithValidBody" class="Tests\Feature\sProOrderCreate\sProOrderCreatePlaceOrderTest" file="/var/www/tests/Feature/sProOrderCreate/sProOrderCreatePlaceOrderTest.php" line="124" assertions="0" time="0.000000">
-        <error type="PHPUnit_Framework_Exception">Tests\Feature\sProOrderCreate\sProOrderCreatePlaceOrderTest::testSProPlaceOrderAPIWithValidBody
-PHPUnit_Framework_Exception: array:2 [
-  "code" =&gt; 200
-  "message" =&gt; "Successful"
-]
-
-</error>
-      </testcase>
+  <testsuite name="Application Test Suite" tests="1" assertions="0" failures="0" errors="0" time="0.405365">
+    <testsuite name="Feature\sBusinessPayroll\businessCreatingTest" file="/var/www/tests/Feature/sBusinessPayroll/businessCreatingTest.php" tests="1" assertions="0" failures="0" errors="0" time="0.405365">
+      <testcase name="testCreatingBusiness" class="Feature\sBusinessPayroll\businessCreatingTest" file="/var/www/tests/Feature/sBusinessPayroll/businessCreatingTest.php" line="17" assertions="0" time="0.405365"/>
     </testsuite>
   </testsuite>
 </testsuites>

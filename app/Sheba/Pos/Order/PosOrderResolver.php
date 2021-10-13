@@ -13,7 +13,7 @@ class PosOrderResolver
     /**  @var PosOrderServerClient */
     private $client;
     /** @var PosOrderObject $order */
-    private $order;
+    protected $order;
     /** @var PosOrderObject */
     private $posOrderObject;
     /**
@@ -42,27 +42,39 @@ class PosOrderResolver
         $this->orderId = $orderId;
         $oldPosOrder = PosOrder::where('id', $orderId)->select('id', 'sales_channel', 'customer_id', 'partner_id', 'is_migrated', 'created_at')->first();
         if ($oldPosOrder && !$oldPosOrder->is_migrated) {
-            $customer = $oldPosOrder->customer->profile;
+            $oldPosOrder->calculate();
+            $customer = $oldPosOrder->customer;
             $partner = $oldPosOrder->partner;
-            $partnerObject = $this->partnerObject->setId($partner->id)->setSubDomain($partner->sub_domain)->get();
-            $customerObject = $this->customerObject->setId($customer->id)->setName($customer->name)->setMobile($customer->mobile)->get();
-            $this->order = $this->posOrderObject->setId($oldPosOrder->id)->setSalesChannel($oldPosOrder->sales_channel)->setIsMigrated(0)
-                ->setCustomer($customerObject)->setPartner($partnerObject)->setType(PosOrderTypes::OLD_SYSTEM)->setCreatedAt($oldPosOrder->created_at)->get();
+            $partnerObject = $this->partnerObject->setId($partner->id)->setSubDomain($partner->sub_domain);
+            if ($oldPosOrder->customer_id) {
+                $customerObject = $this->customerObject->setId($customer->id)->setName($customer->nicak_name ?: $customer->profile->name)->setMobile($customer->profile->mobile);
+            } else {
+                $customerObject = null;
+            }
+            $this->order = $this->posOrderObject->setId($oldPosOrder->id)->setCustomerId($oldPosOrder->customer_id)->setPartnerId($oldPosOrder->partner_id)
+                ->setDue($oldPosOrder->getDue())->setSalesChannel($oldPosOrder->sales_channel)->setIsMigrated(0)
+                ->setCustomer($customerObject)->setPartner($partnerObject)->setType(PosOrderTypes::OLD_SYSTEM)
+                ->setCreatedAt($oldPosOrder->created_at);
         } else {
-            $response = $this->client->get('api/v1/order-info-for-payment-link/' . $this->orderId);
+            $response = $this->client->get('api/v1/orders/' . $this->orderId);
             $newPosOrder = json_decode(json_encode($response['order']), FALSE);
             $customer = $newPosOrder->customer;
             $partner = $newPosOrder->partner;
-            $partnerObject = $this->partnerObject->setId($partner->id)->setSubDomain($partner->sub_domain)->get();
-            $customerObject = $this->customerObject->setId(null)->setName($customer->name)->setMobile($customer->mobile)->get();
-            $this->order = $this->posOrderObject->setId($newPosOrder->id)->setSalesChannel($newPosOrder->sales_channel)
-                ->setIsMigrated(1)->setCustomer($customerObject)->setPartner($partnerObject)->setType(PosOrderTypes::NEW_SYSTEM)
-                ->setCreatedAt($newPosOrder->created_at)->get();
+            $partnerObject = $this->partnerObject->setId($partner->id)->setSubDomain($partner->sub_domain);
+            if ($newPosOrder->customer_id) {
+                $customerObject = $this->customerObject->setId($customer->id)->setName($customer->name)->setMobile($customer->mobile);
+            } else {
+                $customerObject = null;
+            }
+            $this->order = $this->posOrderObject->setId($newPosOrder->id)->setCustomerId($newPosOrder->customer_id)->setPartnerId($newPosOrder->partner_id)
+                ->setDue($newPosOrder->due)->setSalesChannel($newPosOrder->sales_channel)->setIsMigrated(1)
+                ->setCustomer($customerObject)->setPartner($partnerObject)->setType(PosOrderTypes::NEW_SYSTEM)
+                ->setCreatedAt($newPosOrder->created_at);
         }
         return $this;
     }
 
-    public function get()
+    public function get(): PosOrderObject
     {
         return $this->order;
     }

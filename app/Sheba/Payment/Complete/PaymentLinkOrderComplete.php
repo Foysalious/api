@@ -1,5 +1,6 @@
 <?php namespace Sheba\Payment\Complete;
 
+use App\Jobs\Partner\PaymentLink\SendPaymentCompleteSms;
 use App\Jobs\Partner\PaymentLink\SendPaymentLinkSms;
 use App\Models\PartnerPosCustomer;
 use App\Models\Payable;
@@ -9,6 +10,9 @@ use App\Models\Profile;
 use App\Sheba\Pos\Order\PosOrderObject;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\PaymentLinkAccountingRepository;
+use App\Repositories\PartnerGeneralSettingRepository;
+use Carbon\Carbon;
+use App\Sheba\Pos\Repositories\PosClientRepository;
 use DB;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
@@ -20,6 +24,7 @@ use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\ModificationFields;
+use Sheba\Payment\Presenter\PaymentMethodDetails;
 use Sheba\PaymentLink\InvoiceCreator;
 use Sheba\PaymentLink\PaymentLinkStatics;
 use Sheba\PaymentLink\PaymentLinkTransaction;
@@ -29,6 +34,9 @@ use Sheba\PushNotificationHandler;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
 use Sheba\Reward\ActionRewardDispatcher;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
+use Sheba\Sms\Sms;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Usage\Usage;
 use Throwable;
@@ -107,7 +115,6 @@ class PaymentLinkOrderComplete extends PaymentComplete
 
     private function storeEntry()
     {
-
         $payable = $this->payment->payable;
         /** @var AutomaticEntryRepository $entry_repo */
         $entry_repo = app(AutomaticEntryRepository::class)
@@ -155,8 +162,8 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $payment      = $this->payment;
             $payment_link = $this->paymentLink;
             dispatch(new SendPaymentLinkSms($payment, $payment_link));
-            $this->notifyManager($this->payment, $this->paymentLink);
         }
+        $this->notifyManager($this->payment, $this->paymentLink);
     }
 
     private function dispatchReward()
@@ -195,20 +202,20 @@ class PaymentLinkOrderComplete extends PaymentComplete
     {
         $this->target = $this->paymentLink->getTarget();
         if ($this->target instanceof PosOrderObject) {
+            $paymentMethodDetail = (new PaymentMethodDetails($this->payment->paymentDetails->last()->method))->toArray();
+            $partner = $this->paymentLink->getPaymentReceiver();
             $payment_data    = [
-                'pos_order_id' => $this->target->getId(),
-                'amount'       => $this->transaction->getEntryAmount(),
-                'method'       => $this->payment->payable->type,
-                'emi_month'    => $this->transaction->getEmiMonth(),
-                'interest'     => $this->transaction->isPaidByPartner() ? $this->transaction->getInterest() : 0
+                'amount' => $this->transaction->getEntryAmount(),
+                'payment_method_en' => $paymentMethodDetail['name'],
+                'payment_method_bn' => $paymentMethodDetail['name_bn'],
+                'payment_method_icon' => $paymentMethodDetail['icon'],
+                'emi_month' => $this->transaction->getEmiMonth(),
+                'interest' => $this->transaction->isPaidByPartner() ? $this->transaction->getInterest() : 0,
+                'is_paid_by_customer' => (bool)$this->transaction->isPaidByCustomer(),
             ];
-            /** @var PaymentCreator $payment_creator */
-            $payment_creator = app(PaymentCreator::class);
-            $payment_creator->credit($payment_data, $this->target->getType());
-            if ($this->transaction->isPaidByCustomer()) {
-                $this->target->update(['interest' => 0, 'bank_transaction_charge' => 0]);
-            }
-//            $this->storeAccountingJournal($payment_data);
+            /** @var PosClientRepository $posOrderRepo */
+            $posOrderRepo = app(PosClientRepository::class);
+            $posOrderRepo->setPartnerId($partner->id)->setOrderId($this->target->id)->addOnlinePayment($payment_data);
         }
         if ($this->target instanceof ExternalPayment) {
             $this->target->payment_id = $this->payment->id;
@@ -262,21 +269,47 @@ class PaymentLinkOrderComplete extends PaymentComplete
      */
     private function notifyManager(Payment $payment, PaymentLinkTransformer $payment_link)
     {
+        $transaction_id   = $this->transaction->getRechargeTransaction()->id;
         $partner          = $payment_link->getPaymentReceiver();
         $topic            = config('sheba.push_notification_topic_name.manager') . $partner->id;
         $channel          = config('sheba.push_notification_channel_name.manager');
         $sound            = config('sheba.push_notification_sound.manager');
-        $formatted_amount = number_format($this->transaction->getAmount(), 2);
-        $event_type       = $this->target && $this->target instanceof PosOrderObject && $this->target->getSalesChannel() == SalesChannels::WEBSTORE ? 'WebstoreOrder' : (class_basename($this->target) instanceof PosOrderObject ? 'PosOrder' : class_basename($this->target));
+        $formatted_amount = number_format($this->payment->payable->amount, 2);
+        $real_amount      = number_format(($this->payment->payable->amount - $this->transaction->getFee()), 2);
+        $fee              = number_format($this->transaction->getFee(), 2);
+        $payment_completion_date = Carbon::parse($this->payment->updated_at)->format('d/m/Y');
+
+        $event_type       = $this->target && $this->target instanceof PosOrderObject && $this->target->sales_channel == SalesChannels::WEBSTORE ? 'WebstoreOrder' : class_basename($this->target);
         /** @var Payable $payable */
         $payable = Payable::find($this->payment->payable_id);
+        $mobile = $payable->getMobile();
+        $message = "{$payable->getName()} $mobile থেকে $formatted_amount টাকা পেমেন্ট হয়েছে; ফি $fee টাকা; আপনি পাবেন $real_amount টাকা। TrxID:{$transaction_id}  at $payment_completion_date. sManager (SPL Ltd.)";
         (new PushNotificationHandler())->send([
             "title"      => 'Order Successful',
-            "message"    => "$formatted_amount Tk has been collected from {$payable->getName() } by order link- {$payment_link->getLinkID()}",
+            "message"    => $message,
             "event_type" => $event_type,
-            "event_id"   => $this->target->getId(),
+            "event_id"   => $this->target ? $this->target->id : $transaction_id,
             "sound"      => "notification_sound",
             "channel_id" => $channel
         ], $topic, $channel, $sound);
+
+        notify()->partner($partner)->send([
+            "title"       => "পেমেন্ট ৳".en2bnNumber($formatted_amount),
+            "description" => $message,
+            "type" => "Info",
+            "event_type" => "payment_link"
+        ]);
+
+        /** @var PartnerGeneralSettingRepository $partnerGeneralSetting */
+        $partnerGeneralSetting = app(PartnerGeneralSettingRepository::class);
+        if ($partnerGeneralSetting->getSMSNotificationStatus($partner->id)) {
+            $data = [
+                'formatted_amount' => $formatted_amount,
+                'real_amount' => $real_amount,
+                'fee' => $fee,
+                'payment_completion_date' => $payment_completion_date,
+            ];
+            dispatch(new SendPaymentCompleteSms($payment, $payment_link, $data));
+        }
     }
 }

@@ -10,6 +10,7 @@ use Sheba\Dal\PayrollComponent\Type;
 class GrossSalaryBreakdownCalculate
 {
     use PayrollCommonCalculation, AttendanceBasicInfo;
+
     private $componentPercentage;
     private $totalAmountPerComponent;
     private $grossSalaryBreakdownWithTotalAmount;
@@ -86,6 +87,38 @@ class GrossSalaryBreakdownCalculate
         return $final_data;
     }
 
+    private function getBusinessMemberGrossComponent($payroll_setting, $business_member)
+    {
+        $payroll_components = $payroll_setting->components()->where('type', Type::GROSS)->where(function ($query) {
+            return $query->where('target_type', null)->orWhere('target_type', TargetType::GENERAL);
+        })->where(function ($query) {
+            return $query->where('is_default', 1)->orWhere('is_active', 1);
+        })->orderBy('type')->get();
+        $gross_components = $payroll_components;
+        $payroll_component_by_target = $payroll_setting->components()->where('type', Type::GROSS)->where('target_id', $business_member->id)->where(function ($query) {
+            return $query->where('is_default', 1)->orWhere('is_active', 1);
+        })->orderBy('name')->get();
+        if ($payroll_component_by_target) $gross_components = $this->filterGrossComponentForSpecificBusinessMember($payroll_components, $payroll_component_by_target);
+
+        return $gross_components;
+    }
+
+    public function filterGrossComponentForSpecificBusinessMember($payroll_components, $payroll_component_by_target)
+    {
+        foreach ($payroll_component_by_target as $target) {
+            $payroll_components->search(function ($payroll_components_value, $payroll_components_value_index) use ($target, $payroll_components) {
+                if ($payroll_components_value->name == $target->name) return $payroll_components->forget($payroll_components_value_index);
+            });
+        } // It will filter employee target wise components with global components and remove from global if specific business member wise target exists
+
+        return $payroll_components->merge($payroll_component_by_target); // Merging both collection will make a collection which is only for specific business member
+    }
+
+    private function percentageToAmountCalculation($gross_salary, $percentage)
+    {
+        return floatValFormat(($gross_salary * $percentage) / 100);
+    }
+
     /**
      * @param BusinessMember $business_member
      * @return array
@@ -116,11 +149,10 @@ class GrossSalaryBreakdownCalculate
         return $this->breakdownData;
     }
 
-
     public function totalAmountPerComponent($gross_salary, $gross_salary_breakdown_percentage)
     {
         $total_prorated_gross_salary = $gross_salary;
-        if($this->joiningDate){
+        if ($this->joiningDate) {
             $period = $this->createPeriodByTime($this->businessPayCycleStart, $this->businessPayCycleEnd);
             $total_working_days = $this->getTotalBusinessWorkingDays($period, $this->business->officeHour);
             $total_days_after_joining = $this->getTotalBusinessWorkingDays($this->createPeriodByTime($this->joiningDate, $this->businessPayCycleEnd), $this->business->officeHour);
@@ -132,37 +164,5 @@ class GrossSalaryBreakdownCalculate
             $data[$breakdown_name] = floatValFormat(($gross_salary * $breakdown_value) / 100);
         }
         return $data;
-    }
-
-    public function filterGrossComponentForSpecificBusinessMember($payroll_components, $payroll_component_by_target)
-    {
-        foreach ($payroll_component_by_target as $target){
-            $payroll_components->search(function($payroll_components_value, $payroll_components_value_index) use($target, $payroll_components){
-                if($payroll_components_value->name == $target->name) return $payroll_components->forget($payroll_components_value_index);
-            });
-        } // It will filter employee target wise components with global components and remove from global if specific business member wise target exists
-
-        return $payroll_components->merge($payroll_component_by_target); // Merging both collection will make a collection which is only for specific business member
-    }
-
-    private function percentageToAmountCalculation($gross_salary, $percentage)
-    {
-        return floatValFormat(($gross_salary * $percentage) / 100);
-    }
-
-    private function getBusinessMemberGrossComponent($payroll_setting, $business_member)
-    {
-        $payroll_components = $payroll_setting->components()->where('type', Type::GROSS)->where(function($query) {
-            return $query->where('target_type', null)->orWhere('target_type', TargetType::GENERAL);
-        })->where(function($query) {
-            return $query->where('is_default', 1)->orWhere('is_active',1);
-        })->orderBy('type')->get();
-        $gross_components = $payroll_components;
-        $payroll_component_by_target = $payroll_setting->components()->where('type', Type::GROSS)->where('target_id', $business_member->id)->where(function($query) {
-            return $query->where('is_default', 1)->orWhere('is_active',1);
-        })->orderBy('name')->get();
-        if ($payroll_component_by_target) $gross_components = $this->filterGrossComponentForSpecificBusinessMember($payroll_components, $payroll_component_by_target);
-
-        return $gross_components;
     }
 }

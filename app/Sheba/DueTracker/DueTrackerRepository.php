@@ -9,6 +9,7 @@ use App\Models\Profile;
 use App\Repositories\FileRepository;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
 use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
+use Illuminate\Support\Facades\Log;
 use Sheba\Sms\BusinessType;
 use Sheba\Sms\FeatureType;
 use Carbon\Carbon;
@@ -265,6 +266,7 @@ class DueTrackerRepository extends BaseRepository
         $this->setModifier($partner);
         $data     = $this->createStoreData($request);
         $response = $this->client->post("accounts/$this->accountId/entries/due-store/$customer->profile_id", $data);
+        Log::info(['response from expense server', $response]);
         return $response['data'];
     }
 
@@ -500,6 +502,7 @@ class DueTrackerRepository extends BaseRepository
      * @param Request $request
      * @return mixed
      * @throws InvalidPartnerPosCustomer|InsufficientBalance
+     * @throws \Sheba\Transactions\Wallet\WalletDebitForbiddenException
      */
     public function sendSMS(Request $request)
     {
@@ -525,7 +528,8 @@ class DueTrackerRepository extends BaseRepository
         list($sms, $log) = $this->getSms($data);
         $sms_cost = $sms->estimateCharge();
         if ((double)$request->partner->wallet < $sms_cost) throw new InsufficientBalance();
-
+        //freeze money amount check
+        WalletTransactionHandler::isDebitTransactionAllowed($request->partner, $sms_cost, 'এস-এম-এস পাঠানোর');
         $sms->setBusinessType(BusinessType::SMANAGER)->setFeatureType(FeatureType::DUE_TRACKER);
         if(config('sms.is_on')) $sms->shoot();
         $transaction = (new WalletTransactionHandler())

@@ -37,7 +37,7 @@ class AffiliateRepository extends BaseRepository
         $affiliate->statusChangeLogs()->save(new AffiliateStatusChangeLog($this->withCreateModificationField($data)));
     }
 
-    public function updateVerificationStatus(Affiliate $affiliate)
+    public function updateVerificationStatusToPending(Affiliate $affiliate)
     {
         $previous_status = $affiliate->verification_status;
         $pending_status = VerificationStatus::PENDING;

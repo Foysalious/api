@@ -169,5 +169,6 @@ return [
     'webstore_url' => env('SHEBA_WEBSTORE_URL'),
     'new_webstore_url' => env('SHEBA_NEW_WEBSTORE_URL'),
     'last_job_before_commission' => env('LAST_JOB_BEFORE_PARTNER_COMMISSION_DEPLOY'),
-    'category_vat_in_percentage' => 5
+    'category_vat_in_percentage' => 5,
+    'whitelisted_ip_redis_key_name' => env('WHITELISTED_IP_REDIS_KEY_NAME','')
 ];

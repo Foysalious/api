@@ -6,6 +6,7 @@ use App\Repositories\ResourceRepository;
 use Carbon\Carbon;
 use Intervention\Image\Facades\Image;
 use Sheba\Dal\ProfileNIDSubmissionLog\Model as ProfileNIDSubmissionLog;
+use Sheba\ModificationFields;
 use Sheba\Repositories\AffiliateRepository;
 use App\Repositories\FileRepository;
 use App\Sheba\DigitalKYC\Partner\ProfileUpdateRepository;
@@ -13,13 +14,13 @@ use Sheba\Repositories\ProfileRepository;
 
 class NidFaceVerification
 {
-    private $profileUpdate;
+    use ModificationFields;
+
     private $profileRepo;
     private $fileRepo;
 
     public function __construct(ProfileUpdateRepository $profileUpdate, ProfileRepository $profileRepo, FileRepository $file_repository)
     {
-        $this->profileUpdate = $profileUpdate;
         $this->profileRepo = $profileRepo;
         $this->fileRepo = $file_repository;
     }
@@ -28,11 +29,20 @@ class NidFaceVerification
     {
         $data = $this->makeData($data);
         $this->profileRepo->updateRaw($profile, $data);
-        if(isset($profile->resource)) (new ResourceRepository($profile->resource))->update([
-            "status" => 'verified',
-            "is_verified" => 1,
-            "verified_at" => Carbon::now()->toDateTimeString(),
-        ]);
+        if(isset($profile->resource)) {
+            $resourceRepo = (new ResourceRepository($profile->resource));
+            $resourceRepo->update($this->withUpdateModificationField([
+                'father_name' => $data['father_name'] ? $data['father_name'] : 'N/A',
+                'mother_name' => $data['mother_name'],
+                'spouse_name' => $data['spouse_name'] ? $data['spouse_name'] : 'N/A',
+                'nid_no' => $data['nid_no'],
+                "status" => 'verified',
+                "is_verified" => 1,
+                "verified_at" => Carbon::now()->toDateTimeString(),
+            ]));
+
+            $resourceRepo->storeStatusUpdateLog('verified', 'ekyc_verified', "status changed to verified through ekyc");
+        }
     }
 
     public function unverifiedChanges($profile) {
@@ -40,18 +50,23 @@ class NidFaceVerification
             'nid_verified' => 0,
             'nid_verification_date' => null
         ]);
-        if(isset($profile->resource)) (new ResourceRepository($profile->resource))->update([
-            "status" => 'rejected',
-            "is_verified" => 0,
-            "verified_at" => null
-        ]);
+        if(isset($profile->resource)) {
+            $resourceRepo = (new ResourceRepository($profile->resource));
+            $resourceRepo->update([
+                "status" => 'rejected',
+                "is_verified" => 0,
+                "verified_at" => null
+            ]);
+
+            $resourceRepo->storeStatusUpdateLog('rejected', 'ekyc_rejected', "status changed to rejected through ekyc");
+        }
     }
 
     public function beforePorichoyCallChanges($profile)
     {
         $this->profileRepo->increase_verification_request_count($profile);
         if(isset($profile->resource)) (new ResourceRepository($profile->resource))->setToPendingStatus();
-        elseif(isset($profile->affiliate)) (new AffiliateRepository())->updateVerificationStatus($profile->affiliate);
+        elseif(isset($profile->affiliate)) (new AffiliateRepository())->updateVerificationStatusToPending($profile->affiliate);
     }
 
     /**
@@ -141,14 +156,15 @@ class NidFaceVerification
             ->where('nid_no', $request->nid)
             ->orderBy('id', 'desc')->first();
 
-        $porichoyNIDSubmission->update([
-            'porichoy_request'    => $requestedData,
-            'porichy_data'        => $faceVerify,
-            "verification_status" => ($faceVerificationData['data']['status'] === "verified" || $faceVerificationData['data']['status'] === "already_verified") ? "approved" : "rejected",
-            "rejection_reasons"   => $faceVerificationData['data']['reject_reason'] ? json_encode($faceVerificationData['data']['reject_reason']) : null,
-            'created_at'          => Carbon::now()->toDateTimeString()
-        ]);
-
+        if ($porichoyNIDSubmission) {
+            $porichoyNIDSubmission->update([
+                'porichoy_request'    => $requestedData,
+                'porichy_data'        => $faceVerify,
+                "verification_status" => ($faceVerificationData['data']['status'] === "verified" || $faceVerificationData['data']['status'] === "already_verified") ? "approved" : "rejected",
+                "rejection_reasons"   => $faceVerificationData['data']['reject_reason'] ? json_encode($faceVerificationData['data']['reject_reason']) : null,
+                'created_at'          => Carbon::now()->toDateTimeString()
+            ]);
+        }
     }
 
     private function makeData($data): array
@@ -158,9 +174,11 @@ class NidFaceVerification
         $new_data['bn_name'] = $porichoy_data['name_bn'];
         $new_data['father_name'] = $porichoy_data['father_name'];
         $new_data['mother_name'] = $porichoy_data['mother_name'];
+        $new_data['spouse_name'] = $porichoy_data['spouse_name'];
         $new_data['address'] = $porichoy_data['present_address'];
         $new_data['permanent_address'] = $porichoy_data['permanent_address'];
         $new_data['nid_address'] = $porichoy_data['permanent_address'];
+        $new_data['nid_no'] = $porichoy_data['nid_no'];
         $new_data['nid_verified'] = 1;
         $new_data['nid_verification_date'] = Carbon::now()->toDateTimeString();
         $new_data['dob'] = Carbon::parse($porichoy_data['dob'])->format("Y-m-d");

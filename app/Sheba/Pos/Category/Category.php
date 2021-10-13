@@ -3,6 +3,7 @@
 use App\Models\PosCategory;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\ModificationFields;
+use Sheba\Pos\Category\Constants\CategoryConstants;
 
 class Category
 {
@@ -27,7 +28,7 @@ class Category
 
         $sub_category_data = [
             'parent_id' => $master_category_id,
-            'name' => 'Sub None Category',
+            'name' => CategoryConstants::DEFAULT_SUB_CATEGORY_NAME,
             'publication_status' => 1,
             'is_published_for_sheba' => 0,
         ];

@@ -12,6 +12,8 @@ use App\Sheba\UserRequestInformation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\ComplianceInfo\ComplianceInfo;
+use Sheba\ComplianceInfo\Statics;
 use Sheba\Dal\PartnerBankInformation\Purposes;
 use Sheba\Dal\WithdrawalRequest\RequesterTypes;
 use Sheba\FileManagers\CdnFileManager;
@@ -97,6 +99,10 @@ class PartnerWithdrawalRequestV2Controller extends Controller
 
         /** @var Partner $partner */
         $partner = $request->partner;
+        $status = (new ComplianceInfo())->setPartner($partner)->getComplianceStatus();
+        if ($status === Statics::REJECTED)
+            return api_response($request, null, 412, ["message" => "Precondition Failed", "error_message" => Statics::complianceRejectedMessage()]);
+
         if($partner->status === PartnerStatuses::BLACKLISTED || $partner->status === PartnerStatuses::PAUSED) {
             return api_response($request, null, 402, ['message' => 'ব্ল্যাক লিস্ট হওয়ার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে পারবেন না।']);
         }
@@ -180,6 +186,9 @@ class PartnerWithdrawalRequestV2Controller extends Controller
                                                                        'updated_by'      => $request->manager_resource->id,
                                                                        'updated_by_name' => 'Resource - ' . $request->manager_resource->profile->name,
                                                                    ]);
+            if ($request->status == 'cancelled') {
+                $partner->walletSetting->update(['pending_withdrawal_amount' => $partner->walletSetting->pending_withdrawal_amount - $partnerWithdrawalRequest->amount]);
+            }
             return api_response($request, $withdrawal_update, 200);
         } else {
             return api_response($request, '', 403, ['result' => 'You can not update this withdraw request']);
@@ -197,6 +206,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
                                                                        'updated_by'      => $request->manager_resource->id,
                                                                        'updated_by_name' => 'Resource - ' . $request->manager_resource->profile->name,
                                                                    ]);
+            $partner->walletSetting->update(['pending_withdrawal_amount' => $partner->walletSetting->pending_withdrawal_amount - $partnerWithdrawalRequest->amount]);
             return api_response($request, $withdrawal_update, 200);
         } else {
             return api_response($request, '', 403, ['result' => 'You can not update this withdraw request']);

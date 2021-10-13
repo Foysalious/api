@@ -9,6 +9,7 @@ use App\Http\Middleware\B2B\OrderMiddleware;
 use App\Http\Middleware\B2B\TerminatingMiddleware;
 use App\Http\Middleware\BusinessManagerAuthMiddleware;
 use App\Http\Middleware\ConcurrentRequestMiddleware;
+use App\Http\Middleware\CheckUserMigrationRunningMiddleware;
 use App\Http\Middleware\Cors2MiddleWare;
 use App\Http\Middleware\CriticalAppVersionMiddleware;
 use App\Http\Middleware\CustomerAuthMiddleware;
@@ -17,6 +18,7 @@ use App\Http\Middleware\DLSApiVersioning;
 use App\Http\Middleware\EncryptCookies;
 use App\Http\Middleware\ExternalPaymentLinkAuthMiddleware;
 use App\Http\Middleware\GeoAuthMiddleware;
+use App\Http\Middleware\IpWhitelistMiddleware;
 use App\Http\Middleware\JWT\ResourceAuthMiddleware;
 use App\Http\Middleware\JwtAccessTokenMiddleware;
 use App\Http\Middleware\JWTAuthentication;
@@ -35,6 +37,7 @@ use App\Http\Middleware\SetRequestToJwtWhileTesting;
 use App\Http\Middleware\Sheba\ShebaNetworkMiddleware;
 use App\Http\Middleware\ThrottleRequests;
 use App\Http\Middleware\TopUpAuthMiddleware;
+use App\Http\Middleware\UserMigrationMiddleware;
 use App\Http\Middleware\VendorMiddleware;
 use App\Http\Middleware\VerifyCsrfToken;
 use App\Http\Middleware\XSS;
@@ -126,5 +129,8 @@ class Kernel extends HttpKernel
         'jwtAccessToken' => JwtAccessTokenMiddleware::class,
         'partner.status'=>PartnerStatusAuthMiddleware::class,
         'concurrent_request' => ConcurrentRequestMiddleware::class,
+        'userMigration.auth' => UserMigrationMiddleware::class,
+        'ip.whitelist' => IpWhitelistMiddleware::class,
+        'userMigration.check_status' => CheckUserMigrationRunningMiddleware::class
     ];
 }

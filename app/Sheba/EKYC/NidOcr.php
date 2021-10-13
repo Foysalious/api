@@ -13,8 +13,7 @@ class NidOcr
     private $profileRepo;
     private $profileNIDSubmissionRepo;
 
-    public function __construct(ProfileUpdateRepository $profileUpdate, ShebaProfileRepository $profileRepo,
-                                ProfileNIDSubmissionRepo $profileNIDSubmissionRepo)
+    public function __construct(ProfileUpdateRepository $profileUpdate, ShebaProfileRepository $profileRepo, ProfileNIDSubmissionRepo $profileNIDSubmissionRepo)
     {
         $this->profileUpdate = $profileUpdate;
         $this->profileRepo = $profileRepo;

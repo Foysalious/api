@@ -6,6 +6,7 @@ namespace Sheba\PaymentLink;
 use App\Models\Payment;
 use App\Models\PosCustomer;
 use App\Sheba\AccountingEntry\Repository\PaymentLinkAccountingRepository;
+use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Transactions\Types;
@@ -70,6 +71,11 @@ class PaymentLinkTransaction
     public function isOld()
     {
         return $this->paymentLink->isOld();
+    }
+
+    public function getRechargeTransaction()
+    {
+        return $this->rechargeTransaction;
     }
 
     /**

@@ -3,7 +3,6 @@
 use App\Models\Affiliate;
 use App\Models\Business;
 use App\Models\Partner;
-use Carbon\Carbon;
 use Exception;
 use Sheba\Dal\TopUpBlacklistNumber\Contract;
 use Sheba\TopUp\Events\TopUpRequestOfBlockedNumber;
@@ -14,8 +13,6 @@ use Event;
 
 class TopUpRequest
 {
-    const MINIMUM_INTERVAL_BETWEEN_TWO_TOPUP_IN_SECOND = 10;
-
     private $mobile;
     private $amount;
     private $type;
@@ -25,12 +22,14 @@ class TopUpRequest
     /** @var Vendor */
     private $vendor;
     private $vendorFactory;
+    private $errorCode = 403;
     private $errorMessage;
     private $name;
     private $bulk_id;
     private $isFromRobiTopUpWallet;
-    private $walletType;
     private $topUpBlockNumberRepository;
+    /** @var TopUpAgentBlocker */
+    private $agentBlocker;
     protected $userAgent;
     private $lat;
     private $long;
@@ -38,11 +37,11 @@ class TopUpRequest
     private $otfAmountCheck;
     private $isOtfAllow;
 
-
-    public function __construct(VendorFactory $vendor_factory, Contract $top_up_block_number_repository)
+    public function __construct(VendorFactory $vendor_factory, Contract $top_up_block_number_repository, TopUpAgentBlocker $agent_blocker)
     {
         $this->vendorFactory = $vendor_factory;
         $this->topUpBlockNumberRepository = $top_up_block_number_repository;
+        $this->agentBlocker = $agent_blocker;
     }
 
     /**
@@ -71,6 +70,7 @@ class TopUpRequest
     public function setAgent(TopUpAgent $agent)
     {
         $this->agent = $agent;
+        $this->agentBlocker->setAgent($agent);
         return $this;
     }
 
@@ -189,6 +189,12 @@ class TopUpRequest
             return 1;
         }
 
+        if ($this->agentBlocker->isBlocked()) {
+            $this->errorCode = 429;
+            $this->errorMessage = "You have been blocked to do top up. Please contact customer care.";
+            return 1;
+        }
+
         if ($this->agent instanceof Business && $this->isOtfAllow && $this->otfAmountCheck->isAmountInOtf()) {
             $this->errorMessage = "The recharge amount is blocked due to OTF activation issue.";
             return 1;
@@ -224,7 +230,7 @@ class TopUpRequest
     {
         return ($this->agent instanceof Partner && (!$this->agent->canTopUp()));
     }
-    
+
     /**
      * @param Business $business
      * @return bool
@@ -238,6 +244,11 @@ class TopUpRequest
     public function getErrorMessage()
     {
         return $this->errorMessage;
+    }
+
+    public function getErrorCode()
+    {
+        return $this->errorCode;
     }
 
     /**

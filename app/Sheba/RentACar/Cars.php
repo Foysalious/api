@@ -1,8 +1,4 @@
-<?php
-
-
-namespace Sheba\RentACar;
-
+<?php namespace Sheba\RentACar;
 
 use Sheba\Dal\Category\Category;
 use Sheba\Dal\LocationService\LocationService;
@@ -32,39 +28,18 @@ class Cars
         $price_calculation = $this->resolvePriceCalculation($service_model->category);
 
 
-
         foreach ($car_types as $key => $car) {
             $option = [$key];
             $price_calculation->setService($service_model)->setOption($option)->setQuantity($this->service->getQuantity());
             $service_model->category->isRentACarOutsideCity() ? $price_calculation->setPickupThanaId($this->service->getPickupThana()->id)->setDestinationThanaId($this->service->getDestinationThana()->id) : $price_calculation->setLocationService($this->location_service);
             $original_price = $price_calculation->getTotalOriginalPrice(false);
             $this->discount_calculation->setService($service_model)->setLocationService($this->location_service)->setOriginalPrice($original_price)->calculate();
-            $discounted_price =  $this->discount_calculation->getDiscountedPrice();
+            $discounted_price = $this->discount_calculation->getDiscountedPrice();
             $unit_price = $price_calculation->getUnitPrice();
             $surcharge = $price_calculation->getSurcharge();
-            $surcharge_amount =  $surcharge
-                ? $surcharge->is_amount_percentage
-                    ? ($unit_price / 100) * $surcharge->amount
-                    : $surcharge->amount
-                : null;
+            $surcharge_amount = $surcharge ? $surcharge->is_amount_percentage ? ($unit_price / 100) * $surcharge->amount : $surcharge->amount : null;
             $answer = [
-                'name' => $car,
-                'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/png/'.$variables['helpers']['assets'][$key].'.png',
-                'number_of_seats' => $variables['helpers']['capacity'][$key],
-                'info' => $variables['helpers']['descriptions'][$key],
-                'discounted_price' => $discounted_price,
-                'original_price' => $original_price,
-                'discount' => $this->discount_calculation->getDiscount(),
-                'quantity' => $this->service->getQuantity(),
-                'is_surcharge_applied' => !!($surcharge) ? 1 : 0,
-                'is_vat_applicable' => $service_model->category->is_vat_applicable ? 1 : 0,
-                'vat_percentage' => $service_model->category->is_vat_applicable ? config('sheba.category_vat_in_percentage') : 0,
-                'surcharge_percentage' => $surcharge ? $surcharge->amount : null,
-                'surcharge_amount' => $surcharge_amount,
-                'unit_price' => $unit_price,
-                'sheba_contribution' => $this->discount_calculation->getShebaContribution(),
-                'partner_contribution' => $this->discount_calculation->getPartnerContribution(),
-                'is_discount_percentage' => $this->discount_calculation->getIsDiscountPercentage() ? 1 : 0
+                'name' => $car, 'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/png/' . $variables['helpers']['assets'][$key] . '.png', 'number_of_seats' => $variables['helpers']['capacity'][$key], 'info' => $variables['helpers']['descriptions'][$key], 'discounted_price' => $discounted_price, 'original_price' => $original_price, 'discount' => $this->discount_calculation->getDiscount(), 'calculated_discount_amount' => $this->discount_calculation->getCalculatedDiscount(), 'quantity' => $this->service->getQuantity(), 'is_surcharge_applied' => !!($surcharge) ? 1 : 0, 'is_vat_applicable' => $service_model->category->is_vat_applicable ? 1 : 0, 'vat_percentage' => $service_model->category->is_vat_applicable ? config('sheba.category_vat_in_percentage') : 0, 'surcharge_percentage' => $surcharge ? $surcharge->amount : null, 'surcharge_amount' => $surcharge_amount, 'unit_price' => $unit_price, 'sheba_contribution' => $this->discount_calculation->getShebaContribution(), 'partner_contribution' => $this->discount_calculation->getPartnerContribution(), 'is_discount_percentage' => $this->discount_calculation->getIsDiscountPercentage() ? 1 : 0
             ];
             $cars[] = $answer;
         }
