@@ -118,11 +118,11 @@ class WebstoreSettingService
     public function makeUpdateDataForSocialSettings()
     {
         $data = [];
-        $data['facebook'] = $this->facebook;
-        $data['instagram'] = $this->instagram;
-        $data['whatsapp'] = $this->whatsapp;
-        $data['youtube'] = $this->youtube;
-        $data['email'] = $this->email;
+        if (isset($this->facebook)) array_push($data, ['name' => 'facebook', 'contents' => $this->facebook]);
+        if (isset($this->instagram)) array_push($data, ['name' => 'instagram', 'contents' => $this->instagram]);
+        if (isset($this->whatsapp)) array_push($data, ['name' => 'whatsapp', 'contents' => $this->whatsapp]);
+        if (isset($this->youtube)) array_push($data, ['name' => 'youtube', 'contents' => $this->youtube]);
+        if (isset($this->email)) array_push($data, ['name' => 'email', 'contents' => $this->email]);
         return $data;
     }
 
