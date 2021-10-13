@@ -42,7 +42,7 @@ class SettingController extends Controller
             $settings->vat_reg_number = $partner->basicInformations->is_show_vat_reg_number;
             $settings['has_qr_code'] = ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0;
             removeRelationsAndFields($settings);
-            return api_response($request, $settings, 200, ['settings' => $settings]);
+            return http_response($request, $settings, 200, ['settings' => $settings]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
