@@ -196,7 +196,7 @@ class sProOrderCreateServiceTest extends FeatureTestCase
 
         //assert
         $this->assertEquals(400, $data["code"]);
-        $this->assertEquals('The lat must be a number.The lng must be a number.', $data["message"]);
+        $this->assertEquals('The lat must be a number.The lng field is required.', $data["message"]);
 
     }
 

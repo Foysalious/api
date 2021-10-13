@@ -31,7 +31,6 @@ class sProOrderCreatePlaceOrderTest extends FeatureTestCase
     private $master_category;
     private $secondaryCategory;
     private $service;
-    private $deliveryAddress;
 
     public function setUp()
     {
@@ -53,12 +52,6 @@ class sProOrderCreatePlaceOrderTest extends FeatureTestCase
         $this->logIn();
 
         $this->location = Location::find(4);
-
-//        $this->deliveryAddress = factory(CustomerDeliveryAddress::class)->create([
-//            'geo_informations' => '{"lat":23.788099544655,"lng":90.412001016086}',
-//            'mobile' => '+8801835559988',
-//            'customer_id' => $this->customer->id
-//        ]);
 
         $this->profile -> update([
             'mobile' => '+8801835559988',
@@ -145,13 +138,15 @@ class sProOrderCreatePlaceOrderTest extends FeatureTestCase
         ]);
 
         $data = $response->decodeResponseJson();
-        dd($data);
+
+        $this->job = Job::latest('id')->first()->toArray();
+        $this->order = Order::latest('id')->first();
+        $code = $this->order->code();
+        $this->order->toArray();
 
         //assert
         $this->assertEquals(200, $data["code"]);
         $this->assertEquals('Successful', $data["message"]);
-        $this->assertEquals($this->today, $data["schedule"]["date"]);
-        $this->assertEquals(16, $data["schedule"]["slot"]["id"]);
     }
 
 }

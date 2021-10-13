@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-  <testsuite name="Application Test Suite" tests="1" assertions="0" failures="0" errors="0" time="0.405365">
-    <testsuite name="Feature\sBusinessPayroll\businessCreatingTest" file="/var/www/tests/Feature/sBusinessPayroll/businessCreatingTest.php" tests="1" assertions="0" failures="0" errors="0" time="0.405365">
-      <testcase name="testCreatingBusiness" class="Feature\sBusinessPayroll\businessCreatingTest" file="/var/www/tests/Feature/sBusinessPayroll/businessCreatingTest.php" line="17" assertions="0" time="0.405365"/>
+  <testsuite name="Application Test Suite" tests="7" assertions="31" failures="0" errors="0" time="1.271997">
+    <testsuite name="Tests\Feature\Payment\EMIDetailsInfo\EMIDetailsInfoTest" file="/var/www/tests/Feature/Payment/EMIDetailsInfo/EMIDetailsInfoTest.php" tests="7" assertions="31" failures="0" errors="0" time="1.271997">
+      <testcase name="testEMIInfoByGivingNoParameterAmount" class="Tests\Feature\Payment\EMIDetailsInfo\EMIDetailsInfoTest" file="/var/www/tests/Feature/Payment/EMIDetailsInfo/EMIDetailsInfoTest.php" line="48" assertions="8" time="0.179280"/>
+      <testcase name="testEMIInfoByGivingParameterOfEqualToMinimumAmount" class="Tests\Feature\Payment\EMIDetailsInfo\EMIDetailsInfoTest" file="/var/www/tests/Feature/Payment/EMIDetailsInfo/EMIDetailsInfoTest.php" line="73" assertions="5" time="0.177608"/>
+      <testcase name="testEMIInfoByGivingParameterOfLessThanMinimumAmount" class="Tests\Feature\Payment\EMIDetailsInfo\EMIDetailsInfoTest" file="/var/www/tests/Feature/Payment/EMIDetailsInfo/EMIDetailsInfoTest.php" line="95" assertions="2" time="0.191337"/>
+      <testcase name="testEMIInfoByGivingParameterOfMoreThanMinimumAmount" class="Tests\Feature\Payment\EMIDetailsInfo\EMIDetailsInfoTest" file="/var/www/tests/Feature/Payment/EMIDetailsInfo/EMIDetailsInfoTest.php" line="111" assertions="5" time="0.174013"/>
+      <testcase name="testEMIInfoByGivingParameterOfFractionalValue" class="Tests\Feature\Payment\EMIDetailsInfo\EMIDetailsInfoTest" file="/var/www/tests/Feature/Payment/EMIDetailsInfo/EMIDetailsInfoTest.php" line="133" assertions="5" time="0.172710"/>
+      <testcase name="testEMIInfoByGivingParameterOfZeroAmount" class="Tests\Feature\Payment\EMIDetailsInfo\EMIDetailsInfoTest" file="/var/www/tests/Feature/Payment/EMIDetailsInfo/EMIDetailsInfoTest.php" line="156" assertions="5" time="0.173242"/>
+      <testcase name="testEMIInfoByGivingWrongURL" class="Tests\Feature\Payment\EMIDetailsInfo\EMIDetailsInfoTest" file="/var/www/tests/Feature/Payment/EMIDetailsInfo/EMIDetailsInfoTest.php" line="184" assertions="1" time="0.203807"/>
     </testsuite>
   </testsuite>
 </testsuites>

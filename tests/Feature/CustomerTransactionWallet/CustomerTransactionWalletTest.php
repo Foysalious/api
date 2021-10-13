@@ -118,6 +118,7 @@ class CustomerTransactionWalletTest extends FeatureTestCase
         $this->assertEquals('Hi Pay with your nagad app Get upto 30% cashback!', $data_main["payments"][2]["discount_message"]);
     }
 
+    //Failed
     public function testCustomerTransactionWalletAPIToCheckDiscountMessageForCityBank()
     {
         //arrange
