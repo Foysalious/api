@@ -58,10 +58,10 @@ class AccessTokenMiddleware
             }
             $this->setAuthorizationToken($access_token);
             $request->merge(['access_token' => $access_token, 'auth_user' => AuthUser::create()]);
-            $partner = $request->auth_user->getPartner();
-            if ($this->isRouteAccessAllowed($partner)) {
-                return api_response($request, null, 403, ["message" => "Sorry! Your migration is running. Please be patient."]);
-            }
+//            $partner = $request->auth_user->getPartner();
+//            if ($this->isRouteAccessAllowed($partner)) {
+//                return api_response($request, null, 403, ["message" => "Sorry! Your migration is running. Please be patient."]);
+//            }
         } catch (JWTException $e) {
             if ($is_digigo) Redis::set($key_name, "4 (" . $e->getMessage() . "): $now : " . (isset($token) ? $token : "null"));
             return $this->formApiResponse($request, null, 401, ['message' => "Your session has expired. Try Login"]);
