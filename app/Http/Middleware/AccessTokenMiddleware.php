@@ -56,7 +56,7 @@ class AccessTokenMiddleware
             $this->setAuthorizationToken($access_token);
             $request->merge(['access_token' => $access_token, 'auth_user' => AuthUser::create()]);
             $partner = $request->auth_user->getPartner();
-            if ($this->isRouteAccessAllowed($partner)) {
+            if (!$this->isRouteAccessAllowed($partner)) {
                 return api_response($request, null, 403, ["message" => "Sorry! Your migration is running. Please be patient."]);
             }
         } catch (JWTException $e) {
