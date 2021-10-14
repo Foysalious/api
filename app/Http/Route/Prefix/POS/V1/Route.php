@@ -96,6 +96,9 @@ class Route
                         $api->post('/add-stock', 'Inventory\ProductController@addStock');
                     });
                 });
+                $api->group(['prefix' => 'skus'], function ($api) {
+                    $api->get('/', 'Inventory\SkuController@index');
+                });
                 $api->group(['prefix' => 'categories'], function ($api) {
                     $api->get('/', 'Inventory\CategoryController@index');
                     $api->get('/allCategory', 'Inventory\CategoryController@allCategory');
