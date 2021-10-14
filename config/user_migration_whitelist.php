@@ -10,5 +10,8 @@ return [
         'partner.check-verification',
         'blogs.get',
         'training-videos.get',
+        'migration.get.module',
+        'migration.can-access',
+        'migration.list'
     ]
 ];
