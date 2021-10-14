@@ -274,11 +274,6 @@ class OrderService
         return $this->client->put('api/v1/partners/' . $this->partnerId. '/orders/' . $this->orderId, $deliveryData);
     }
 
-    public function updateCustomer()
-    {
-        return $this->client->put('api/v1/partners/' . $this->partnerId. '/orders/' . $this->orderId . '/update-customer', $this->makeCustomerUpdateData(), false);
-    }
-
     public function update()
     {
         return $this->client->setToken($this->token)->put('api/v1/partners/' . $this->partnerId. '/orders/' . $this->orderId, $this->makeUpdateData());
