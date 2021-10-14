@@ -13,7 +13,7 @@ class UserProfileCreateTest extends FeatureTestCase
     {
         parent::setUp();
 
-        $this->truncateTable(Profile::class,Customer::class);
+        $this->truncateTables([Profile::class,Customer::class]);
 
         $this->logIn();
 

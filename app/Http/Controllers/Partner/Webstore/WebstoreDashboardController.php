@@ -26,9 +26,6 @@ class WebstoreDashboardController extends Controller
             ->setWeek($request->week)
             ->setDate($request->date)
             ->get();
-        if(isRequestForPosRebuild())
-            return http_response($request, null, 200, ['webstore_dashboard' => $dashboard]);
-        else
-            return api_response($request, null, 200, ['webstore_dashboard' => $dashboard]);
+        return make_response($request,null, 200, ['webstore_dashboard' => $dashboard]);
     }
 }

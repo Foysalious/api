@@ -1126,7 +1126,7 @@ class PartnerController extends Controller
                 'is_show_vat_reg_number' => $request->is_show_vat_reg_number ?: 0
             ]
         ));
-        return api_response($request, null, 200, ['msg' => 'Vat Registration Number Update Successfully']);
+        return make_response($request, null, 200, ['msg' => 'Vat Registration Number Update Successfully']);
     }
 
     public function changeLogo(Request $request)
@@ -1136,10 +1136,7 @@ class PartnerController extends Controller
         $this->validate($request, ['logo' => 'required|file|image']);
         $repo = new PartnerRepository($partner);
         $logo = $repo->updateLogo($request);
-        if(isRequestForPosRebuild())
-            return http_response($request, null, 200, ['message' => 'Successful']);
-        else
-            return api_response($request, $logo, 200, ['logo' => $logo]);
+        return make_response($request, $logo, 200, ['logo' => $logo]);
     }
 
     /**
@@ -1241,7 +1238,7 @@ class PartnerController extends Controller
             'qr_code_account_type' => $request->account_type,
             'qr_code_image'        => $image_link,
         ]));
-        return api_response($request, null, 200, ['message' => 'QR code set successfully']);
+        return make_response($request, null, 200, ['message' => 'QR code set successfully']);
     }
 
     public function getQRCode(Request $request)
@@ -1251,7 +1248,7 @@ class PartnerController extends Controller
             'account_type' => $partner->qr_code_account_type ? config('partner.qr_code.account_types')[$partner->qr_code_account_type] : null,
             'image'        => $partner->qr_code_image ?: null
         ];
-        return api_response($request, null, 200, ['data' => $data]);
+        return make_response($request, null, 200, ['data' => $data]);
     }
 
     public function getSliderDetailsAndAccountTypes(Request $request)
@@ -1266,7 +1263,7 @@ class PartnerController extends Controller
             'slider_image'  => config('partner.qr_code.slider_image'),
             'account_types' => $account_types
         ];
-        return api_response($request, null, 200, ['data' => $data]);
+        return make_response($request, null, 200, ['data' => $data]);
     }
 
     public function dashboardByToken(Request $request)
@@ -1305,9 +1302,6 @@ class PartnerController extends Controller
         $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
         $isWebstoreSmsActive = !(int)$partner->is_webstore_sms_active;
         $updater->setPartner($partner)->setIsWebstoreSmsActive($isWebstoreSmsActive)->update();
-        if(isRequestForPosRebuild())
-            return http_response($request, null, 200, ['message' => 'Successful']);
-        else
-            return api_response($request, null, 200, ['message' => 'SMS Settings Updated Successfully']);
+        return make_response($request, null, 200, ['message' => 'SMS Settings Updated Successfully']);
     }
 }

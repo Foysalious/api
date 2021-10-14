@@ -398,10 +398,10 @@ class OrderController extends Controller
         $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
         /** @var PosOrder $order */
         $order = PosOrder::with('items')->find($request->order);
-        if (empty($order)) return api_response($request, null, 404, ['msg' => 'Order not found']);
+        if (empty($order)) return make_response($request, null, 404, ['msg' => 'Order not found']);
         $order=$order->calculate();
         $this->dispatch(new OrderBillSms($order));
-        return api_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
+        return make_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
     }
 
     /**
@@ -421,13 +421,14 @@ class OrderController extends Controller
             $order = $updater->setOrder($order)->setData(['customer_id' => $requested_customer->id])->update();
         }
         if (!$order)
-            return api_response($request, null, 404, ['msg' => 'Order not found']);
+            return make_response($request,null,404, ['msg' => 'Order not found']);
         if (!$order->customer)
-            return api_response($request, null, 404, ['msg' => 'Customer not found']);
+            return make_response($request, null, 404, ['msg' => 'Customer not found']);
         if (!$order->customer->profile->email)
-            return api_response($request, null, 404, ['msg' => 'Customer email not found']);
+            return make_response($request, null, 404, ['msg' => 'Customer email not found']);
         dispatch(new OrderBillEmail($order));
-        return api_response($request, null, 200, ['msg' => 'Email Send Successfully']);
+        return make_response($request,null,200, ['msg' => 'Email Send Successfully']);
+
     }
 
     public function collectPayment(Request $request, PaymentCreator $payment_creator)
@@ -573,6 +574,7 @@ class OrderController extends Controller
         $order = $posOrderResolver->setOrderId($order)->get();
         /** @var PaymentLinkController $payment_link */
         $payment_link = app(PaymentLinkController::class);
+        $auth_user = $request->auth_user->getAvatar();
         $request->merge(array(
             'amount' => $order->due,
             'purpose' => $request->purpose,
@@ -582,7 +584,8 @@ class OrderController extends Controller
             'transaction_charge' => $request->transaction_charge,
             'pos_order_id' => $order->id,
             "type" => 'partner',
-            'user' => $request->auth_user
+            'user' => $auth_user,
+            'partner' => $auth_user
         ));
         $data = $payment_link->store($request)->getData(true);
         return http_response($request, null, $data['code'], $data);

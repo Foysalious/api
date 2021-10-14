@@ -46,6 +46,7 @@ use Factory\InfoCallRejectReasonFactory;
 use Factory\InfoCallStatusLogFactory;
 use Factory\ResourceTransactionFactory;
 use \Factory\SubscriptionWisePaymentGatewaysFactory;
+use \Factory\LocationServiceFactory;
 use Factory\AttendanceFactory;
 use Factory\BusinessOfficeHoursFactory;
 use Factory\BusinessWeekend;
@@ -58,6 +59,10 @@ use Factory\LeaveFactory;
 use Factory\LeaveTypeFactory;
 use Factory\BusinessMemberLeaveTypeFactory;
 use Factory\OfficePolicyRuleFactory;
+use Factory\DivisionFactory;
+use Factory\DistrictFactory;
+use Factory\ThanaFactory;
+use Factory\PaymentGatewayFactory;
 
 $factory_classes = [
     CategoryFactory::class,
@@ -107,6 +112,7 @@ $factory_classes = [
     InfoCallStatusLogFactory::class,
     ResourceTransactionFactory::class,
     SubscriptionWisePaymentGatewaysFactory::class,
+    LocationServiceFactory::class,
     AttendanceFactory::class,
     BusinessOfficeHoursFactory::class,
     BusinessWeekend::class,
@@ -118,7 +124,12 @@ $factory_classes = [
     LeaveFactory::class,
     LeaveTypeFactory::class,
     BusinessMemberLeaveTypeFactory::class,
-    OfficePolicyRuleFactory::class
+    OfficePolicyRuleFactory::class,
+    DivisionFactory::class,
+    DistrictFactory::class,
+    ThanaFactory::class,
+    PaymentGatewayFactory::class
+
 ];
 
 foreach ($factory_classes as $factory_class) {
