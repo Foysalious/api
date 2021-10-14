@@ -31,11 +31,11 @@ class WebstoreSettingsController extends Controller
     }
 
     /**
-     * @param $partner
      * @param Request $request
      * @param WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest
      * @return JsonResponse
-     * @throws AccessRestrictedExceptionForPackage|DoNotReportException
+     * @throws AccessRestrictedExceptionForPackage
+     * @throws DoNotReportException
      */
     public function update(Request $request, WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest)
     {

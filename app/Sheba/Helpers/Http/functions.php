@@ -211,15 +211,15 @@ if (!function_exists('http_response')) {
     }
 }
 
-if (!function_exists('isRequestForPosRebuild')) {
-
-    function isRequestForPosRebuild()
-    {
-        return substr( \request()->getRequestUri(), 0, 5 ) === '/pos/';
-    }
-}
-
 if (!function_exists('make_response')) {
+
+    /**
+     * @param $request
+     * @param $internal_response
+     * @param $response_code
+     * @param $external_response
+     * @return JsonResponse
+     */
 
     function make_response($request, $internal_response, $response_code, $external_response)
     {

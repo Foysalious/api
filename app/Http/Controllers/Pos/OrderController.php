@@ -365,8 +365,7 @@ class OrderController extends Controller
         $partner = resolvePartnerFromAuthMiddleware($request);
         $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
         $this->dispatch(new OrderBillSms($partner, $request->order));
-        if(isRequestForPosRebuild()) return http_response($request, null, 200, ['message' => 'successful']);
-        else return api_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
+        return make_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
     }
 
     /**
