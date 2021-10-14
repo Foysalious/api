@@ -54,6 +54,7 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Exception $e)
     {
+
         $handler = HandlerFactory::get($request, $e);
 
         if ($this->shouldReport($e)) $handler ? $handler->report() : logError($e);

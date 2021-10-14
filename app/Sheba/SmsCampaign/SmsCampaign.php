@@ -112,6 +112,8 @@ class SmsCampaign
     public function partnerHasEnoughBalance()
     {
         $charge = $this->smsHandler->getBulkCharge($this->mobileNumbers, $this->message);
+        //freeze money amount check
+        WalletTransactionHandler::isDebitTransactionAllowed($this->partner, $charge, 'এস-এম-এস পাঠানোর');
         return $this->partner->wallet >= $charge;
     }
 
