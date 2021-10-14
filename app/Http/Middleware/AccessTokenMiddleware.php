@@ -86,4 +86,17 @@ class AccessTokenMiddleware
     {
         return $this->authorizationToken;
     }
+    private function whiteListedApiForUserMigration()
+    {
+        return [
+            '/v3/partners/2240/home-setting',
+            '/v2/partners/2240/pos/settings',
+            '/v2/partners/2240/new-homepage',
+            '/v2/partners/2240/current-subscription-package',
+            '/v2/partners/2240/wallet-balance',
+            '/v2/partners/2240/kyc/check-verification',
+            '/v1/blogs',
+            '/v3/training-videos'
+        ];
+    }
 }

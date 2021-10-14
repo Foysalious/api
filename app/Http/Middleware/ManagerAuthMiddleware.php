@@ -22,6 +22,7 @@ class ManagerAuthMiddleware
             $manager_resource = Resource::where('remember_token', $request->input('remember_token'))->first();
             $partner = Partner::find($request->partner);
             if ($manager_resource && $partner) {
+//                dd(request()->url(), config('sheba.api_url') ."/v2/partners/2240/pos/settings", request()->is(\request()->url(), config('sheba.api_url') ."/v2/partners/2240/pos/settings"));
                 //checking migration is running or not
                 $isMigrationRunning = Redis::get("user-migration:".$partner->id);
                 if ($isMigrationRunning) {
