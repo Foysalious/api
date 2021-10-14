@@ -22,10 +22,9 @@ class ManagerAuthMiddleware
             $manager_resource = Resource::where('remember_token', $request->input('remember_token'))->first();
             $partner = Partner::find($request->partner);
             if ($manager_resource && $partner) {
-//                dd(request()->url(), config('sheba.api_url') ."/v2/partners/2240/pos/settings", request()->is(\request()->url(), config('sheba.api_url') ."/v2/partners/2240/pos/settings"));
                 //checking migration is running or not
                 $isMigrationRunning = Redis::get("user-migration:".$partner->id);
-                if ($isMigrationRunning) {
+                if ($isMigrationRunning && !$this->isRouteAccessAllowed()) {
                     return api_response($request, null, 403, ["message" => "Sorry! Your migration is running for $isMigrationRunning. Please be patient."]);
                 }
                 if ($manager_resource->isManager($partner)) {
@@ -40,5 +39,14 @@ class ManagerAuthMiddleware
         } else {
             return api_response($request, null, 400, ["message" => "Authentication token is missing from the request."]);
         }
+    }
+
+    /**
+     * @return bool
+     */
+    private function isRouteAccessAllowed()
+    {
+        $routes = config('user_migration_whitelist.routes');
+        return in_array(request()->route()->getName(), $routes);
     }
 }
