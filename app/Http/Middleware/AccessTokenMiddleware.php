@@ -57,11 +57,11 @@ class AccessTokenMiddleware
             $this->setAuthorizationToken($access_token);
             $request->merge(['access_token' => $access_token, 'auth_user' => AuthUser::create()]);
             //checking migration is running or not
-            $partner = $request->auth_user->getPartner();
+            /*$partner = $request->auth_user->getPartner();
             $isMigrationRunning = Redis::get("user-migration:".$partner->id);
             if ($isMigrationRunning && !$this->isRouteAccessAllowed()) {
                 return api_response($request, null, 403, ["message" => "Sorry! Your migration is running for $isMigrationRunning. Please be patient."]);
-            }
+            }*/
 
         } catch (JWTException $e) {
             if ($is_digigo) Redis::set($key_name, "4 (" . $e->getMessage() . "): $now : " . (isset($token) ? $token : "null"));

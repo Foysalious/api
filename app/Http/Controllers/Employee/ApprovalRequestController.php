@@ -90,6 +90,7 @@ class ApprovalRequestController extends Controller
             if (!$approval_request->requestable) continue;
             /** @var Leave $requestable */
             $requestable = $approval_request->requestable;
+            if (!$requestable->businessMember) continue;
             /** @var Member $member */
             $member = $requestable->businessMember->member;
             /** @var Profile $profile */
