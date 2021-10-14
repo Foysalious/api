@@ -7,6 +7,7 @@ use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\B2B\OrderMiddleware;
 use App\Http\Middleware\B2B\TerminatingMiddleware;
 use App\Http\Middleware\BusinessManagerAuthMiddleware;
+use App\Http\Middleware\CheckUserMigrationRunningMiddleware;
 use App\Http\Middleware\Cors2MiddleWare;
 use App\Http\Middleware\CriticalAppVersionMiddleware;
 use App\Http\Middleware\CustomerAuthMiddleware;
@@ -33,6 +34,7 @@ use App\Http\Middleware\SetRequestToJwtWhileTesting;
 use App\Http\Middleware\Sheba\ShebaNetworkMiddleware;
 use App\Http\Middleware\ThrottleRequests;
 use App\Http\Middleware\TopUpAuthMiddleware;
+use App\Http\Middleware\UserMigrationMiddleware;
 use App\Http\Middleware\VendorMiddleware;
 use App\Http\Middleware\VerifyCsrfToken;
 use App\Http\Middleware\XSS;
@@ -123,5 +125,7 @@ class Kernel extends HttpKernel
         'terminate' => TerminatingMiddleware::class,
         'jwtAccessToken' => JwtAccessTokenMiddleware::class,
         'ip.whitelist' => IpWhitelistMiddleware::class,
+        'userMigration.auth' => UserMigrationMiddleware::class,
+        'userMigration.check_status' => CheckUserMigrationRunningMiddleware::class
     ];
 }
