@@ -42,13 +42,11 @@ class SettingController extends Controller
             $settings->vat_reg_number = $partner->basicInformations->is_show_vat_reg_number;
             $settings['has_qr_code'] = ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0;
             removeRelationsAndFields($settings);
-            if(isRequestForPosRebuild()) return http_response($request, null, 200, ['settings' => $settings]);
-            else return api_response($request, null, 200, ['settings' => $settings]);
-
-
+            return make_response($request, $settings, 200, ['settings' => $settings]);
         } catch (Throwable $e) {
             logError($e);
-            return api_response($request, null, 500);
+            app('sentry')->captureException($e);
+            return make_response($request, null, 500,null);
         }
     }
 
@@ -64,10 +62,10 @@ class SettingController extends Controller
             }
             removeRelationsAndFields($settings);
             $repository->getTrainingVideoData($settings);
-            return api_response($request, $settings, 200, ['data' => $settings]);
+            return make_response($request, $settings, 200, ['data' => $settings]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+            return make_response($request, null, 500,null);
         }
     }
 
@@ -87,10 +85,11 @@ class SettingController extends Controller
             if ($request->has('printer_model')) $data["printer_model"] = $request->printer_model;
 
             $partnerPosSetting->update($this->withUpdateModificationField($data));
-            return api_response($request, null, 200);
+            return make_response($request, null, 200,['message' => 'Successful']);
         } catch (Throwable $e) {
             logError($e);
-            return api_response($request, null, 500);
+            app('sentry')->captureException($e);
+            return make_response($request, null, 500,null);
         }
     }
 
