@@ -66,7 +66,7 @@ class Route
             $api->group(['prefix' => 'service-requests'], function ($api) {
                 $api->post('/', 'ServiceRequest\ServiceRequestController@store');
             });
-            $api->get('training-videos', 'TrainingVideoController@index');
+            $api->get('training-videos', 'TrainingVideoController@index')->name('training-videos.get');
             $api->get('sitemap', 'SitemapController@index');
             $api->get('settings/car', 'HomePageSettingController@getCarV3');
             $api->group(['prefix' => 'subscriptions'], function ($api) {
