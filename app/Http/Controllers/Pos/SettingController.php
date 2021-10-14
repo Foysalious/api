@@ -113,6 +113,8 @@ class SettingController extends Controller
             ])
             ->setMobile($customer->profile->mobile);
         $sms_cost = $sms->estimateCharge();
+        //freeze money amount check
+        WalletTransactionHandler::isDebitTransactionAllowed($request->partner, $sms_cost, 'এস-এম-এস পাঠানোর');
         if ((double)$partner->wallet < $sms_cost) throw new InsufficientBalanceException();
         $sms->send($customer->profile->mobile, [
             'partner_name' => $partner->name,
