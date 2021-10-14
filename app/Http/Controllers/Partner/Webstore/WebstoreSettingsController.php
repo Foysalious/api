@@ -27,18 +27,15 @@ class WebstoreSettingsController extends Controller
         $fractal->setSerializer(new CustomSerializer());
         $resource = new Item($partner, new WebstoreSettingsTransformer());
         $settings = $fractal->createData($resource)->toArray()['data'];
-        if(isRequestForPosRebuild())
-            return http_response($request, $settings, 200, ['webstore_settings' => $settings]);
-        else
-            return api_response($request, $settings, 200, ['webstore_settings' => $settings]);
+        return make_response($request, $settings, 200, ['webstore_settings' => $settings]);
     }
 
     /**
-     * @param $partner
      * @param Request $request
      * @param WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest
      * @return JsonResponse
-     * @throws AccessRestrictedExceptionForPackage|DoNotReportException
+     * @throws AccessRestrictedExceptionForPackage
+     * @throws DoNotReportException
      */
     public function update(Request $request, WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest)
     {
@@ -77,10 +74,7 @@ class WebstoreSettingsController extends Controller
                 ]));
             }
         }
-        if(isRequestForPosRebuild())
-            return http_response($request, null, 200, ['message' => 'Successful']);
-        else
-            return api_response($request, null, 200, ['message' => 'Successful']);
+        return make_response($request, null, 200, ['message' => 'Successful']);
     }
 
 
@@ -92,8 +86,7 @@ class WebstoreSettingsController extends Controller
     public function bannerList(Request $request, WebstoreBannerSettings $webstoreBannerSettings)
     {
         $list = $webstoreBannerSettings->getBannerList();
-        if(isRequestForPosRebuild()) return http_response($request, null, 200, ['data' => $list]);
-        else return api_response($request, null, 200, ['data' => $list]);
+        return make_response($request, null, 200, ['data' => $list]);
     }
 
 
@@ -110,13 +103,9 @@ class WebstoreSettingsController extends Controller
         $this->setModifier($manager_resource);
         $banner_settings = PartnerWebstoreBanner::where('partner_id', $partner_id)->first();
         if (!$banner_settings) {
-            $return_data = ['message' => 'Banner Settings not found'];
-            if(isRequestForPosRebuild()) return http_response($request, null, 400, $return_data );
-            else return api_response($request, null, 400, $return_data );
+            return make_response($request, null, 400, ['message' => 'Banner Settings not found'] );
         }
         $webstoreBannerSettings->setBannerSettings($banner_settings)->setData($request->all())->update();
-        $return_data = ['message' => 'Banner Settings Updated Successfully'];
-        if(isRequestForPosRebuild()) return http_response($request, null, 200, $return_data);
-        else return api_response($request, null, 200, $return_data);
+        return make_response($request, null, 200, ['message' => 'Banner Settings Updated Successfully']);
     }
 }
