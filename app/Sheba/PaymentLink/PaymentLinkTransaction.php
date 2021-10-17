@@ -9,6 +9,7 @@ use App\Sheba\AccountingEntry\Repository\PaymentLinkAccountingRepository;
 use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\FraudDetection\TransactionSources;
+use Sheba\Pos\Customer\PosCustomerResolver;
 use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
@@ -246,11 +247,18 @@ class PaymentLinkTransaction
      * @param $feeTransaction
      * @param $interest
      */
-    private function storePaymentLinkEntry($amount, $feeTransaction, $interest) {
+    private function storePaymentLinkEntry($amount, $feeTransaction, $interest)
+    {
         $customer = null;
-        if (isset($this->customer)) {
-            $customer = PosCustomer::where('profile_id', $this->customer->profile->id)->first();
-        }
+        //TODO: Need to update this module after releasing customer rebuild module
+        Log::info(['pos customer object', $this->customer]);
+//        if ($this->customer) {
+//            /** @var PosCustomerResolver $posCustomerResolver */
+//            $posCustomerResolver = app(PosCustomerResolver::class);
+//            $customer = $posCustomerResolver->setCustomerId($this->customer->id)->setPartner($request->partner)->get();
+//            if (!empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
+//            $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
+//        }
         /** @var PaymentLinkAccountingRepository $paymentLinkRepo */
         $paymentLinkRepo =  app(PaymentLinkAccountingRepository::class);
         $transaction = $paymentLinkRepo->setAmount($amount)
@@ -258,8 +266,11 @@ class PaymentLinkTransaction
             ->setInterest($interest)
             ->setAmountCleared($amount);
         if ($customer) {
-            $transaction = $transaction->setCustomerId(isset($customer) ? $customer->id: null)
-                    ->setCustomerName(isset($this->customer) ? $this->customer->profile->name: null);
+            $transaction = $transaction->setCustomerId($customer->id)
+                    ->setCustomerName(isset($this->customer) ? $this->customer->profile->name: null)
+                    ->setCustomerMobile(isset($this->customer) ? $this->customer->profile->name: null)
+                    ->setCustomerProPic(isset($this->customer) ? $this->customer->profile->name: null)
+                    ->setCustomerIsSupplier(isset($this->customer) ? $this->customer->profile->name: null);
         }
         $transaction->store($this->receiver->id);
     }
