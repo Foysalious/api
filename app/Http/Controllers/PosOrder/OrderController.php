@@ -110,6 +110,17 @@ class OrderController extends Controller
         return http_response($request, null, 200, $response);
     }
 
+    public function updateCustomer(Request $request, $order_id)
+    {
+        $partner = $request->auth_user->getPartner();
+        $response = $this->orderService
+            ->setPartnerId($partner->id)
+            ->setOrderId($order_id)
+            ->setCustomerId($request->customer_id)
+            ->updateCustomer();
+        return http_response($request, null, 200, $response);
+    }
+
     public function destroy(Request $request, $order_id)
     {
         $partner = $request->auth_user->getPartner();

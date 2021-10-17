@@ -250,6 +250,11 @@ class OrderService
         return $this->client->post('api/v1/partners/'.$this->partnerId.'/orders/'.$this->orderId.'/update-status', $data, true);
     }
 
+    public function updateCustomer()
+    {
+        return $this->client->put('api/v1/partners/' . $this->partnerId. '/orders/' . $this->orderId . '/update-customer', $this->makeCustomerUpdateData(), false);
+    }
+
     public function storeDeliveryInformation($deliveryData)
     {
         return $this->client->put('api/v1/partners/' . $this->partnerId. '/orders/' . $this->orderId, $deliveryData);
@@ -263,6 +268,13 @@ class OrderService
     public function delete()
     {
         return $this->client->delete('api/v1/partners/' . $this->partnerId . '/orders/' . $this->orderId);
+    }
+
+    private function makeCustomerUpdateData() : array
+    {
+        return [
+            'customer_id' => $this->customerId
+        ];
     }
 
     public function orderInvoiceDownload($partner,$order_id)
