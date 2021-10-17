@@ -3,6 +3,7 @@
 
 namespace Sheba\PaymentLink;
 
+use App\Models\Partner;
 use App\Models\Payment;
 use App\Models\PosCustomer;
 use App\Sheba\AccountingEntry\Repository\PaymentLinkAccountingRepository;
@@ -249,6 +250,7 @@ class PaymentLinkTransaction
      */
     private function storePaymentLinkEntry($amount, $feeTransaction, $interest)
     {
+        Log::info(['partner check', $this->receiver instanceof Partner]);
         /** @var PosCustomerResolver $posCustomerResolver */
         $posCustomerResolver = app(PosCustomerResolver::class);
         $customer = $posCustomerResolver->setCustomerId($this->customer->id)->setPartner($this->receiver)->get();
@@ -266,12 +268,12 @@ class PaymentLinkTransaction
             ->setBankTransactionCharge($feeTransaction)
             ->setInterest($interest)
             ->setAmountCleared($amount);
-        if ($this->customer) {
-            $transaction = $transaction->setCustomerId($this->customer->id)
-                    ->setCustomerName($this->customer->name)
-                    ->setCustomerMobile($this->customer->mobile)
-                    ->setCustomerProPic($this->customer->pro_pic)
-                    ->setCustomerIsSupplier($this->customer->is_supplier);
+        if ($customer) {
+            $transaction = $transaction->setCustomerId($customer->id)
+                    ->setCustomerName($customer->name)
+                    ->setCustomerMobile($customer->mobile)
+                    ->setCustomerProPic($customer->pro_pic)
+                    ->setCustomerIsSupplier($customer->is_supplier);
         }
         $transaction->store($this->receiver->id);
     }
