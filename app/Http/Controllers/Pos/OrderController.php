@@ -53,6 +53,7 @@ use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Subscription\Partner\Access\AccessManager;
 use Sheba\Subscription\Partner\Access\Exceptions\AccessRestrictedExceptionForPackage;
 use Sheba\Transactions\Types;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Sheba\Usage\Usage;
 use Throwable;
 
@@ -353,6 +354,7 @@ class OrderController extends Controller
      * @param Request $request
      * @param Updater $updater
      * @return JsonResponse
+     * @throws \Sheba\Transactions\Wallet\WalletDebitForbiddenException
      */
     public function sendSms(Request $request, Updater $updater)
     {
@@ -370,6 +372,7 @@ class OrderController extends Controller
             return api_response($request, null, 404, ['msg' => 'Customer not found']);
         if (!$order->customer->profile->mobile)
             return api_response($request, null, 404, ['msg' => 'Customer mobile not found']);
+        // checking at least 1 tk is available.
         if ($partner->wallet >= 1) {
             dispatch(new OrderBillSms($order));
             return api_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
