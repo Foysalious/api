@@ -62,15 +62,15 @@ class VoucherController extends Controller
             $cloned_partner_voucher_query = clone $partner_voucher_query;
 
             $data = [
-                'total_voucher'     => $cloned_partner_voucher_query->count(),
-                'active_voucher'    => $cloned_partner_voucher_query->valid()->count(),
+                'total_voucher' => $cloned_partner_voucher_query->count(),
+                'active_voucher' => $cloned_partner_voucher_query->valid()->count(),
                 'total_sale_with_voucher' => $total_sale_with_voucher
             ];
 
             $partner_voucher_query->orderBy('created_at', 'desc')->take(3)->each(function ($voucher) use (&$latest_vouchers, $manager) {
                 $resource = new Item($voucher, new VoucherTransformer());
                 $voucher = $manager->createData($resource)->toArray();
-                array_push($latest_vouchers, $voucher['data']) ;
+                array_push($latest_vouchers, $voucher['data']);
             });
 
             return api_response($request, null, 200, ['data' => $data, 'latest_vouchers' => $latest_vouchers]);
@@ -120,7 +120,7 @@ class VoucherController extends Controller
 
                 $resource = new Item($voucher, new VoucherTransformer());
                 $voucher = $manager->createData($resource)->toArray();
-                array_push($vouchers, $voucher['data']) ;
+                array_push($vouchers, $voucher['data']);
             });
             return api_response($request, null, 200, ['vouchers' => $vouchers]);
         } catch (ValidationException $e) {
@@ -304,19 +304,22 @@ class VoucherController extends Controller
 
         return $rule;
     }
+
     /**
      * @param Request $request
      * @return JsonResponse
      * @throws Exception
      */
-    public function validateVoucher($partner,Request $request)
+    public function validateVoucher($partner, Request $request)
     {
         try {
             $pos_customer = $request->pos_customer ? PosCustomer::find($request->pos_customer) : new PosCustomer();
             $pos_order_params = (new CheckParamsForPosOrder());
             $pos_order_params->setOrderAmount($request->amount)->setApplicant($pos_customer)->setPartnerPosService($request->pos_services);
             $result = voucher($request->code)->checkForPosOrder($pos_order_params)->reveal();
-            if ($result['voucher']['created_by']!=$partner)
+            if (!$result['is_valid'])
+                return api_response($request, null, 403, ['message' => 'এই অর্ডার এমাউন্টের জন্য প্রোমোটি প্রযোজ্য নয়!']);
+            if ($result['voucher']['created_by'] != $partner)
                 return api_response($request, null, 403, ['message' => 'প্রোমো কোডটি সঠিক নয়!']);
             if ($result['is_valid']) {
                 $voucher = $result['voucher'];
@@ -336,6 +339,7 @@ class VoucherController extends Controller
             return api_response($request, null, 500);
         }
     }
+
     /**
      * @throws Exception
      */
@@ -351,7 +355,7 @@ class VoucherController extends Controller
     public function getVoucherDetails(Request $request)
     {
         $voucher_id = $request->voucher_id;
-        $voucher =  Voucher::findOrFail($voucher_id);
+        $voucher = Voucher::findOrFail($voucher_id);
 //        dd($voucher);
 //        app(VoucherDiscount::class)->setVoucher($voucher)->
 //        $voucher_id = $request->voucher_id;
@@ -425,8 +429,8 @@ class VoucherController extends Controller
     public function voucherAgainstVendor(Request $request, VoucherRepository $voucherRepository, VendorVoucherDataGenerator $voucher_generator)
     {
         // need to handle this in a Request Class
-        if(!isset($request['start_date'])) return api_response($request, null, 403, ['message' => 'Start Date field is required']);
-        if(!isset($request['channel']) || !in_array($request->channel, ['xtra'])  ) return api_response($request, null, 403, ['message' => 'invalid channel']);
+        if (!isset($request['start_date'])) return api_response($request, null, 403, ['message' => 'Start Date field is required']);
+        if (!isset($request['channel']) || !in_array($request->channel, ['xtra'])) return api_response($request, null, 403, ['message' => 'invalid channel']);
         $this->validate($request, [
             'mobile' => 'mobile:bd',
             'amount' => 'required|numeric',
