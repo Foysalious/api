@@ -4,6 +4,7 @@
 use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
 use App\Sheba\PosOrderService\SmanagerUserServerClient;
+use Illuminate\Support\Facades\Log;
 
 class PosCustomerResolver
 {
@@ -55,10 +56,16 @@ class PosCustomerResolver
             ->with(['customer' => function($q) {
                 $q->with('profile');
             }])->first();
-        return $this->posCustomerObject->setId($partner_pos_customer->customer_id)->setPartnerId($partner_pos_customer->partner_id)
-            ->setName($partner_pos_customer->nick_name ?: $partner_pos_customer->customer->profile->name)->setIsSupplier($partner_pos_customer->is_supplier)
-            ->setMobile($partner_pos_customer->customer->profile->name)->setEmail($partner_pos_customer->customer->profile->email)
-            ->setGender($partner_pos_customer->customer->profile->gender)->setDob($partner_pos_customer->customer->profile->dob)
+        Log::info(['pos customer', $partner_pos_customer]);
+        return $this->posCustomerObject
+            ->setId($partner_pos_customer->customer_id)
+            ->setPartnerId($partner_pos_customer->partner_id)
+            ->setName($partner_pos_customer->nick_name ?: $partner_pos_customer->customer->profile->name)
+            ->setIsSupplier($partner_pos_customer->is_supplier)
+            ->setMobile($partner_pos_customer->customer->profile->name)
+            ->setEmail($partner_pos_customer->customer->profile->email)
+            ->setGender($partner_pos_customer->customer->profile->gender)
+            ->setDob($partner_pos_customer->customer->profile->dob)
             ->setProPic($partner_pos_customer->customer->profile->pro_pic);
 
     }

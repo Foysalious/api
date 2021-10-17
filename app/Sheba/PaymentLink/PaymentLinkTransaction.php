@@ -3,6 +3,7 @@
 
 namespace Sheba\PaymentLink;
 
+use App\Models\Partner;
 use App\Models\Payment;
 use App\Models\PosCustomer;
 use App\Sheba\AccountingEntry\Repository\PaymentLinkAccountingRepository;
@@ -249,9 +250,11 @@ class PaymentLinkTransaction
      */
     private function storePaymentLinkEntry($amount, $feeTransaction, $interest)
     {
-        $customer = null;
-        //TODO: Need to update this module after releasing customer rebuild module
-        Log::info(['pos customer object', $this->customer]);
+        Log::info(['partner check', $this->receiver instanceof Partner, $this->customer]);
+        /** @var PosCustomerResolver $posCustomerResolver */
+        $posCustomerResolver = app(PosCustomerResolver::class);
+        $customer = $posCustomerResolver->setCustomerId($this->customer->id)->setPartner($this->receiver)->get();
+
 //        if ($this->customer) {
 //            /** @var PosCustomerResolver $posCustomerResolver */
 //            $posCustomerResolver = app(PosCustomerResolver::class);
@@ -267,10 +270,10 @@ class PaymentLinkTransaction
             ->setAmountCleared($amount);
         if ($customer) {
             $transaction = $transaction->setCustomerId($customer->id)
-                    ->setCustomerName(isset($this->customer) ? $this->customer->profile->name: null)
-                    ->setCustomerMobile(isset($this->customer) ? $this->customer->profile->name: null)
-                    ->setCustomerProPic(isset($this->customer) ? $this->customer->profile->name: null)
-                    ->setCustomerIsSupplier(isset($this->customer) ? $this->customer->profile->name: null);
+                    ->setCustomerName($customer->name)
+                    ->setCustomerMobile($customer->mobile)
+                    ->setCustomerProPic($customer->pro_pic)
+                    ->setCustomerIsSupplier($customer->is_supplier);
         }
         $transaction->store($this->receiver->id);
     }
