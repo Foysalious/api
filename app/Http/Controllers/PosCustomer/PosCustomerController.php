@@ -55,7 +55,7 @@ class PosCustomerController extends Controller
             $image = base64_encode(file_get_contents($request->file('pro_pic')->path()));
         }
         $customer = $this->posCustomerService->setPartner($partner)->setNote($request->note)->setName($request->name)->setBnName($request->bnName)->setMobile($request->mobile)
-            ->setEmail($request->email)->setAddress($request->address)->$this->supplier($request->is_supplier)->setGender($request->gender)->setBloodGroup($request->blood_group)->setDob($request->dob)->setproPic($image)
+            ->setEmail($request->email)->setAddress($request->address)->setSupplier($request->is_supplier)->setGender($request->gender)->setBloodGroup($request->blood_group)->setDob($request->dob)->setproPic($image)
             ->storePosCustomer();
         return http_response($request, null, 200, ['message' => 'Successful', 'data' => $customer]);
 
