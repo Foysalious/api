@@ -34,6 +34,7 @@ class PosCustomerService
      */
     private $posCustomerRepository;
     private $partner;
+    private $supplier;
 
     public function __construct(SmanagerUserServerClient $smanagerUserServerClient, PosOrderServerClient $posOrderServerClient, PosCustomerRepository $posCustomerRepository)
     {
@@ -85,6 +86,12 @@ class PosCustomerService
     public function setAddress($address)
     {
         $this->address = $address;
+        return $this;
+    }
+
+    public function setSupplier($supplier)
+    {
+        $this->supplier = $supplier;
         return $this;
     }
 
@@ -207,6 +214,7 @@ class PosCustomerService
             'blood_group' => $this->bloodGroup,
             'dob' => $this->dob,
             'pro_pic' => $this->pic,
+            'is_supplier'=>$this->supplier
         ];
     }
 
@@ -232,6 +240,7 @@ class PosCustomerService
         if (isset($this->name)) $data['name'] = $this->name;
         if (isset($this->note)) $data['note'] = $this->note;
         if (isset($this->email)) $data['email'] = $this->email;
+        if (isset($this->supplier)) $data['is_supplier'] = $this->supplier;
 
 
         return $data;
