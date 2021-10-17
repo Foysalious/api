@@ -26,6 +26,7 @@ class PaymentLinkAccountingRepository extends AccountingRepository
     private $note;
     private $details;
 
+
     public function __construct(AccountingEntryClient $client)
     {
         parent::__construct($client);
@@ -100,7 +101,6 @@ class PaymentLinkAccountingRepository extends AccountingRepository
         $this->customer_is_supplier = $customer_is_supplier;
         return $this;
     }
-
 
     /**
      * @param mixed $note
@@ -256,7 +256,6 @@ class PaymentLinkAccountingRepository extends AccountingRepository
         $data['note'] = $this->note;
         $data['details'] = $this->details;
         $data['partner'] = $userId;
-
         return $data;
     }
 
