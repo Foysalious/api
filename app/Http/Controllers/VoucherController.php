@@ -308,7 +308,7 @@ class VoucherController extends Controller
     /**
      * @throws Exception
      */
-    public function validateVoucher(Request $request, $partner)
+    public function validateVoucherForRebuild(Request $request, $partner)
     {
         $response = $this->voucherService->validateVoucher($partner, $request);
         if (empty($response))
