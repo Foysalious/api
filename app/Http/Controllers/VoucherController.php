@@ -296,14 +296,17 @@ class VoucherController extends Controller
      * @return JsonResponse
      * @throws Exception
      */
-    public function validateVoucher(Request $request)
+    public function validateVoucher($partner,Request $request)
     {
         try {
             $pos_customer = $request->pos_customer ? PosCustomer::find($request->pos_customer) : new PosCustomer();
             $pos_order_params = (new CheckParamsForPosOrder());
             $pos_order_params->setOrderAmount($request->amount)->setApplicant($pos_customer)->setPartnerPosService($request->pos_services);
             $result = voucher($request->code)->checkForPosOrder($pos_order_params)->reveal();
-
+            if (!$result['is_valid'])
+                return api_response($request, null, 403, ['message' => 'এই অর্ডার এমাউন্টের জন্য প্রোমোটি প্রযোজ্য নয়!']);
+            if ($result['voucher']['created_by'] != $partner)
+                return api_response($request, null, 403, ['message' => 'প্রোমো কোডটি সঠিক নয়!']);
             if ($result['is_valid']) {
                 $voucher = $result['voucher'];
                 $voucher = [
