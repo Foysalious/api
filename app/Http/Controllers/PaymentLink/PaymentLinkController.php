@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\PaymentLink;
 
 use App\Http\Controllers\Controller;
+use App\Models\Partner;
 use App\Models\Payable;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
@@ -13,12 +14,14 @@ use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use Sheba\ModificationFields;
+use Sheba\Partner\PartnerStatuses;
 use Sheba\PaymentLink\Creator;
 use Sheba\PaymentLink\PaymentLink;
 use Sheba\PaymentLink\PaymentLinkClient;
 use Sheba\PaymentLink\PaymentLinkStatics;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
+use Sheba\Subscription\Partner\Access\AccessManager;
 
 class PaymentLinkController extends Controller
 {
@@ -40,13 +43,14 @@ class PaymentLinkController extends Controller
     }
 
     /**
-     * @param Request     $request
+     * @param Request $request
      * @param PaymentLink $link
      * @return JsonResponse
      */
     public function getDashboard(Request $request, PaymentLink $link)
     {
         try {
+            if (!$request->user) return api_response($request, null, 404, ['message' => 'User not found']);
             $default_payment_link = $this->paymentLinkClient->defaultPaymentLink($request);
             if ($default_payment_link) {
                 $link->defaultPaymentLinkData($default_payment_link);
@@ -58,21 +62,6 @@ class PaymentLinkController extends Controller
             }
             $dashboard = $link->dashboard();
             return api_response($request, $dashboard, 200, ["data" => $dashboard]);
-        } catch (\Throwable $e) {
-            logError($e);
-            return api_response($request, null, 500);
-        }
-    }
-
-    /**
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function customLinkCreateData(Request $request)
-    {
-        try {
-            $data = PaymentLinkStatics::customPaymentLinkData();
-            return api_response($request, $data, 200, ["data" => $data]);
         } catch (\Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
@@ -125,11 +114,16 @@ class PaymentLinkController extends Controller
     {
         try {
             $link = $paymentLinkRepository->findByIdentifier($identifier);
-            if ($link && !(int)$link->getIsActive()) {
-                return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
-            }
-            if ($link && (int)$link->getIsActive()) {
-                return api_response($request, $link, 200, ['link' => $link->toArray()]);
+            if ($link) {
+                $receiver = $link->getPaymentReceiver();
+                if ($receiver instanceof Partner) {
+                    if (!AccessManager::canAccess(AccessManager::Rules()->DIGITAL_COLLECTION, $receiver->subscription->getAccessRules()) || in_array($receiver->status, [PartnerStatuses::BLACKLISTED, PartnerStatuses::PAUSED]) || !(int)$link->getIsActive())
+                        return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
+
+                }
+                if ((int)$link->getIsActive()) {
+                    return api_response($request, $link, 200, ['link' => $link->toArray()]);
+                }
             }
             return api_response($request, null, 404);
         } catch (ValidationException $e) {
@@ -146,7 +140,8 @@ class PaymentLinkController extends Controller
         try {
             $this->validate($request, [
                 'amount'             => 'required',
-                'purpose'            => 'required', 'customer_id' => 'sometimes|integer|exists:pos_customers,id',
+                'purpose'            => 'required',
+                'customer_id'        => 'sometimes|integer|exists:pos_customers,id',
                 'emi_month'          => 'sometimes|integer|in:' . implode(',', config('emi.valid_months')),
                 'interest_paid_by'   => 'sometimes|in:' . implode(',', PaymentLinkStatics::paidByTypes()),
                 'transaction_charge' => 'sometimes|numeric|min:' . PaymentLinkStatics::get_payment_link_commission()
@@ -235,13 +230,13 @@ class PaymentLinkController extends Controller
             if ($request->has('customer_id')) $customer = PosCustomer::find($request->customer_id);
 
             $this->creator->setAmount($request->amount)
-                          ->setReason($purpose)
-                          ->setUserName($request->user->name)
-                          ->setUserId($request->user->id)
-                          ->setUserType($request->type)
-                          ->setEmiMonth($request->emi_month ?: 0)
-                          ->setPaidBy($request->interest_paid_by ?: PaymentLinkStatics::paidByTypes()[($request->has("emi_month") ? 1 : 0)])
-                          ->setTransactionFeePercentage($request->transaction_charge);
+                ->setReason($purpose)
+                ->setUserName($request->user->name)
+                ->setUserId($request->user->id)
+                ->setUserType($request->type)
+                ->setEmiMonth($request->emi_month ?: 0)
+                ->setPaidBy($request->interest_paid_by ?: PaymentLinkStatics::paidByTypes()[($request->has("emi_month") ? 1 : 0)])
+                ->setTransactionFeePercentage($request->transaction_charge);
             if (isset($customer) && !empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
             $this->creator->setTargetType('due_tracker')->setTargetId(1)->calculate();
             $payment_link_store = $this->creator->save();

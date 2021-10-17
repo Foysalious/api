@@ -38,6 +38,12 @@ class AttendanceCommonInfo
         return in_array($this->getIp(), $business->offices->pluck('ip')->toArray());
     }
 
+    public function whichOffice(Business $business)
+    {
+        $office = $business->offices->where('ip', $this->getIp())->first();
+        return $office->name;
+    }
+
     private function getGeo()
     {
         if (!$this->lat || !$this->lng) return null;

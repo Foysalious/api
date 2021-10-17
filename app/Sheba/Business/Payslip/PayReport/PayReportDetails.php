@@ -31,7 +31,7 @@ class PayReportDetails
 
     public function setPayslip($payslip)
     {
-        $this->payslip = $this->payslipRepository->find($payslip);
+        $this->payslip = $payslip;
         $this->businessMember = $this->payslip->businessMember;
         $this->business = $this->businessMember->business;
         return $this;

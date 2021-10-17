@@ -11,8 +11,25 @@ class EmployeeRoute
                 $api->post('/', 'Employee\EmployeeController@updateMe');
                 $api->post('basic', 'Employee\EmployeeController@updateBasicInformation');
             });
+            $api->group(['prefix' => 'payroll'], function ($api) {
+                $api->get('payslip', 'Employee\PayrollController@downloadPayslip');
+                $api->get('disbursed-month', 'Employee\PayrollController@disbursedMonth');
+            });
+            $api->group(['prefix' => 'profile'], function ($api) {
+                $api->group(['prefix' => '{business_member}'], function ($api) {
+                    $api->get('financial', 'Employee\EmployeeController@getFinancialInfo');
+                    $api->get('official', 'Employee\EmployeeController@getOfficialInfo');
+                    $api->post('official', 'Employee\EmployeeController@updateOfficialInfo');
+                    $api->post('update', 'Employee\EmployeeController@updateEmployee');
+                    $api->post('emergency', 'Employee\EmployeeController@updateEmergencyInfo');
+                    $api->get('emergency', 'Employee\EmployeeController@getEmergencyContactInfo');
+                    $api->get('personal', 'Employee\EmployeeController@getPersonalInfo');
+                    $api->post('personal', 'Employee\EmployeeController@updatePersonalInfo');
+                });
+            });
             //$api->post('password', 'Employee\EmployeeController@updateMyPassword');
             $api->get('dashboard', 'Employee\EmployeeController@getDashboard');
+            $api->get('dashboard-menu', 'Employee\DashboardController@index');
             $api->get('notifications', 'Employee\NotificationController@index');
             $api->get('last-notifications', 'Employee\NotificationController@lastNotificationCount');
             $api->get('test-notification', 'Employee\NotificationController@test');
@@ -47,6 +64,7 @@ class EmployeeRoute
                 $api->get('/info', 'Employee\AttendanceController@attendanceInfo');
                 $api->post('action', 'Employee\AttendanceController@takeAction');
                 $api->get('today', 'Employee\AttendanceController@getTodaysInfo');
+                $api->post('note', 'Employee\AttendanceController@storeNote');
             });
             $api->group(['prefix' => 'leaves'], function ($api) {
                 $api->get('/', 'Employee\LeaveController@index');
@@ -80,6 +98,18 @@ class EmployeeRoute
             $api->get('managers', 'Employee\EmployeeController@getManagersList');
             $api->get('/', 'Employee\EmployeeController@index');
             $api->get('/{employee}', 'Employee\EmployeeController@show');
+
+            $api->group(['prefix' => 'appreciate'], function ($api) {
+                $api->get('/new-joiner', 'Employee\AppreciateController@getNewJoiner');
+                $api->get('/coworker', 'Employee\AppreciateController@index');
+                $api->post('/', 'Employee\AppreciateController@store');
+                $api->post('/{id}', 'Employee\AppreciateController@update');
+                $api->get('/stickers', 'Employee\AppreciateController@categoryWiseStickers');
+                $api->get('/my-stickers', 'Employee\AppreciateController@myStickers');
+                $api->get('/{id}/coworker-stickers', 'Employee\AppreciateController@coworkerStickers');
+                $api->get('/badge-counter', 'Employee\AppreciateController@badgeCounter');
+                $api->get('/badge-seen', 'Employee\AppreciateController@badgeSeen');
+            });
         });
     }
 }

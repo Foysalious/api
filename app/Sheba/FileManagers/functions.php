@@ -1197,6 +1197,24 @@ if (!function_exists('getCoWorkerInviteErrorFolder')) {
 
 }
 
+if (!function_exists('getCoWorkerStatusChangeErrorFolder')) {
+
+    /**
+     * Get Profile's Avatar Folder.
+     *
+     * @param bool $with_base_url
+     * @return string
+     */
+    function getCoWorkerStatusChangeErrorFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url) $url = env('S3_URL');
+
+        return $url . 'co_worker_status_change_error/';
+    }
+
+}
+
 if (!function_exists('getPartnerProofOfBusinessFolder')) {
     /**
      * @param false $with_base_url
@@ -1507,5 +1525,20 @@ if (!function_exists('getStorageExportFolder')) {
     function getStorageExportFolder(): string
     {
         return storage_path('exports') . "/";
+    }
+}
+
+if (!function_exists('getAppVersionImageLinkFolder')) {
+
+    /**
+     * @param bool $with_base_url
+     * @return string
+     */
+    function getAppVersionImageLinkFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url) $url = config('s3.url');
+
+        return $url . 'images/app_version_images/';
     }
 }

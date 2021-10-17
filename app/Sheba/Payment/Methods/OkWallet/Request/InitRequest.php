@@ -1,14 +1,11 @@
-<?php
-
-
-namespace App\Sheba\Payment\Methods\OkWallet\Request;
-
+<?php namespace App\Sheba\Payment\Methods\OkWallet\Request;
 
 use Illuminate\Contracts\Support\Arrayable;
 
 class InitRequest implements Arrayable
 {
-    const SUCCESS_CODE = 2000;
+    const SUCCESS_CODE = 200;
+
     private $request;
     private $ok_trx_id;
     private $amount;
@@ -22,7 +19,7 @@ class InitRequest implements Arrayable
         $this->request = $request;
         $this->map      = [
             'ok_trx_id'  => 'OKTRXID',
-            'amount'     =>   'AMOUNT',
+            'amount'     => 'AMOUNT',
             'rescode'    => 'RESCODE',
             'message'    => 'MESSAGE',
             'sessionKey' => 'SESSIONKEY'
@@ -100,7 +97,7 @@ class InitRequest implements Arrayable
     /**
      * @return array
      */
-    public function toArray()
+    public function toArray(): array
     {
         return [
             'ok_trx_id' => $this->ok_trx_id,
@@ -108,11 +105,6 @@ class InitRequest implements Arrayable
             'response_code' => $this->res_code,
             'message' => $this->message,
             'session_key' => $this->sessionKey,
-
         ];
     }
-
-
-
-
 }

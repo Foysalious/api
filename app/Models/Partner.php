@@ -12,6 +12,7 @@ use Sheba\Checkout\CommissionCalculator;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\Complain\Model as Complain;
 use Sheba\Dal\PartnerBankInformation\Purposes;
+use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInformation;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
@@ -919,11 +920,13 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         $wallet                = (double)$this->wallet;
         $bonus_wallet          = (double)$this->bonusWallet();
         $threshold             = $this->walletSetting ? (double)$this->walletSetting->min_wallet_threshold : 0;
+        $freeze_money          = $this->walletSetting ? (double) $this->walletSetting->pending_withdrawal_amount : 0;
         $this->creditBreakdown = [
             'remaining_subscription_charge' => $remaining,
             'wallet' => $wallet,
             'threshold' => $threshold,
-            'bonus_wallet' => $bonus_wallet
+            'bonus_wallet' => $bonus_wallet,
+            'freeze_money' => $freeze_money
         ];
         return [
             $remaining,
@@ -1028,6 +1031,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     }
 
+
     public function webstoreBanner()
     {
         return $this->hasOne(PartnerWebstoreBanner::class);
@@ -1036,5 +1040,15 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function topupChangeLogs()
     {
         return $this->hasMany(CanTopUpUpdateLog::class);
+    }
+
+    public function deliveryInformation()
+    {
+        return $this->hasOne(PartnerDeliveryInformation::class);
+    }
+
+    public function getGatewayChargesId()
+    {
+        return $this->subscription_rules->payment_gateway_configuration_id;
     }
 }

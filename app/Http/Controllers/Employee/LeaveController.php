@@ -57,9 +57,11 @@ class LeaveController extends Controller
         $resource = new Collection($leaves, new LeaveListTransformer());
         $leaves = $fractal->createData($resource)->toArray()['data'];
         $pending_approval_requests = $approval_request_repository->getPendingApprovalRequestByBusinessMember($business_member);
+        $pending_approval_requests_count = $approval_request_repository->countPendingLeaveApprovalRequests($business_member);
         return api_response($request, null, 200, [
             'leaves' => $leaves,
-            'pending_approval_request' => $pending_approval_requests
+            'pending_approval_request' => $pending_approval_requests,
+            'approval_requests' => ['pending_request' => $pending_approval_requests_count]
         ]);
     }
 
@@ -73,6 +75,7 @@ class LeaveController extends Controller
     public function show($leave, Request $request, LeaveRepoInterface $leave_repo, LogFormatter $log_formatter)
     {
         $leave = $leave_repo->find($leave);
+        if (!$leave) return api_response($request, null, 404);
         /** @var Business $business */
         $business = $this->getBusiness($request);
         /** @var BusinessMember $business_member */

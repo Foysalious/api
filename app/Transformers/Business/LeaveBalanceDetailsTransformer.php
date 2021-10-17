@@ -5,6 +5,7 @@ use App\Models\BusinessMember;
 use App\Models\BusinessRole;
 use App\Models\Member;
 use App\Models\Profile;
+use App\Sheba\Business\BusinessBasicInformation;
 use League\Fractal\TransformerAbstract;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
 use Sheba\Dal\Leave\LeaveStatusPresenter as LeaveStatusPresenter;
@@ -15,6 +16,8 @@ use Sheba\Helpers\TimeFrame;
 
 class LeaveBalanceDetailsTransformer extends TransformerAbstract
 {
+    use BusinessBasicInformation;
+
     private $leave_types;
     /** @var TimeFrame $timeFrame */
     private $timeFrame;
@@ -67,7 +70,7 @@ class LeaveBalanceDetailsTransformer extends TransformerAbstract
             'designation' => $role ? $role->name : null,
             'department' => $role ? $role->businessDepartment->name : null,
             'company' => $business->name,
-            'logo' => $business->logo,
+            'logo' => $this->isDefaultImageByUrl($business->logo) ? null : $business->logo,
             'approved_count' => $leaves_approved_count,
             'rejected_count' => $leaves_rejected_count,
             'leave_balance' => $this->calculate(),
@@ -108,11 +111,10 @@ class LeaveBalanceDetailsTransformer extends TransformerAbstract
         $all_leave_logs = [];
         foreach ($leaves as $leave) {
             $get_current_login_user_leave_request = $leave->requests->where('approver_id', $requested_business_member_id)->first();
-
             array_push($all_leaves, [
                 'id' => $leave->id,
-                'date' => $leave->created_at->format('d/m/Y'),
-                'leave_type' => $leave->leaveType->title,
+                'date' => ($leave->start_date->format('M d, Y') == $leave->end_date->format('M d, Y')) ? $leave->start_date->format('M d') : $leave->start_date->format('M d') . ' - ' . $leave->end_date->format('M d'),
+                'leave_type' => $leave->title,
                 'leave_days' => (double)$leave->total_days,
                 'status' => LeaveStatusPresenter::statuses()[$leave->status],
                 'approval_request_status' => $get_current_login_user_leave_request ?

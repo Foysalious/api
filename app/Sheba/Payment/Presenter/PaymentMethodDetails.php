@@ -10,6 +10,8 @@ class PaymentMethodDetails extends PresentableDTO
     private $asset;
     private $methodName;
     private $nameBn;
+    private $icon;
+    private $cashInCharge;
 
     public function __construct($method_name)
     {
@@ -18,6 +20,8 @@ class PaymentMethodDetails extends PresentableDTO
         $this->asset = $details['asset'];
         $this->methodName = $details['method_name'];
         $this->nameBn = $details['name_bn'];
+        $this->icon = $details['icon'];
+        $this->cashInCharge = $details['cash_in_charge'];
     }
 
     /**
@@ -38,7 +42,9 @@ class PaymentMethodDetails extends PresentableDTO
             'is_published' => (int)$this->isPublished,
             'description' => $this->description,
             'asset' => $this->asset,
-            'method_name' => $this->methodName
+            'method_name' => $this->methodName,
+            'icon' => $this->icon,
+            'cash_in_charge' => $this->cashInCharge,
         ];
     }
 }

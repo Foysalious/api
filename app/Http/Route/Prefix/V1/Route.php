@@ -9,7 +9,9 @@ class Route
     {
         $api->group(['prefix' => 'v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
             $api->get('hour-logs', 'ShebaController@getHourLogs');
-            (new EmployeeRoute())->set($api);
+            $api->group(['middleware' => 'terminate'], function ($api) {
+                (new EmployeeRoute())->set($api);
+            });
             (new PartnerRoute())->set($api);
             $api->post('login/apple', 'Auth\AppleController@login');
             $api->post('register/apple', 'Auth\AppleController@register');
@@ -236,8 +238,8 @@ class Route
 
                         $api->group(['prefix' => 'materials'], function ($api) {
                             $api->get('/', 'PartnerJobController@getMaterials');
-                            $api->post('/', 'PartnerJobController@addMaterial');
-                            $api->put('/', 'PartnerJobController@updateMaterial');
+                            $api->post('/', 'PartnerJobController@addMaterial')->middleware('concurrent_request:partner,update');
+                            $api->put('/', 'PartnerJobController@updateMaterial')->middleware('concurrent_request:partner,update');
                         });
                     });
                 });
@@ -311,7 +313,13 @@ class Route
             $api->group(['prefix' => 'nagad'], function ($api) {
                 $api->get('validate', 'NagadController@validatePayment');
             });
+            $api->group(['prefix' => 'ebl'], function ($api) {
+                $api->post('validate', 'EblController@validatePayment');
+                $api->post('cancel', 'EblController@cancelPayment');
+            });
             $api->get('profiles', 'Profile\ProfileController@getDetail')->middleware('jwtGlobalAuth');
+
+            $api->post('register-mobile', 'ShebaController@registerCustomer');
         });
         return $api;
     }

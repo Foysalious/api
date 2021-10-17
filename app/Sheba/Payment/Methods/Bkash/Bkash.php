@@ -33,7 +33,6 @@ class Bkash extends PaymentMethod
     private $password;
     private $url;
     private $merchantNumber;
-
     /** @var Registrar $registrar */
     private $registrar;
 
@@ -51,6 +50,7 @@ class Bkash extends PaymentMethod
     public function init(Payable $payable): Payment
     {
         $this->setCredentials($payable->user,$payable->type);
+
         $invoice = "SHEBA_BKASH_" . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . randomString(10, 1, 1);
         $payment = new Payment();
         DB::transaction(function () use ($payment, $payable, $invoice) {
@@ -108,11 +108,11 @@ class Bkash extends PaymentMethod
         $token = $token ? $token : $this->grantToken();
         $intent = 'sale';
         $create_pay_body = json_encode(array(
-            'amount' => $payment->payable->amount,
-            'currency' => 'BDT',
-            'intent' => $intent,
-            'merchantInvoiceNumber' => $payment->gateway_transaction_id
-        ));
+               'amount' => $payment->payable->amount,
+               'currency' => 'BDT',
+               'intent' => $intent,
+               'merchantInvoiceNumber' => $payment->gateway_transaction_id
+           ));
         $url = curl_init($this->url . '/checkout/payment/create');
         $header = array(
             'Content-Type:application/json',

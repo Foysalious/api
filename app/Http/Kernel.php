@@ -7,6 +7,7 @@ use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\B2B\OrderMiddleware;
 use App\Http\Middleware\B2B\TerminatingMiddleware;
 use App\Http\Middleware\BusinessManagerAuthMiddleware;
+use App\Http\Middleware\ConcurrentRequestMiddleware;
 use App\Http\Middleware\Cors2MiddleWare;
 use App\Http\Middleware\CriticalAppVersionMiddleware;
 use App\Http\Middleware\CustomerAuthMiddleware;
@@ -42,6 +43,7 @@ use Illuminate\Foundation\Http\Kernel as HttpKernel;
 use Illuminate\Foundation\Http\Middleware\Authorize;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Fideloper\Proxy\TrustProxies;
 
 class Kernel extends HttpKernel
 {
@@ -56,6 +58,7 @@ class Kernel extends HttpKernel
         CheckForMaintenanceMode::class,
         CriticalAppVersionMiddleware::class,
         XSS::class,
+        TrustProxies::class,
         SetRequestToJwtWhileTesting::class
     ];
 
@@ -72,10 +75,9 @@ class Kernel extends HttpKernel
             ShareErrorsFromSession::class,
             VerifyCsrfToken::class,
         ],
-
         'api' => [
             'throttle:60,1',
-        ],
+        ]
     ];
 
     /**
@@ -118,6 +120,6 @@ class Kernel extends HttpKernel
         'apiRequestLog' => ApiRequestMiddleware::class,
         'shebaServer' => ShebaNetworkMiddleware::class,
         'terminate' => TerminatingMiddleware::class,
-
+        'concurrent_request' => ConcurrentRequestMiddleware::class,
     ];
 }

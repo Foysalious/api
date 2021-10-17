@@ -8,6 +8,10 @@ class IndexRoute
     {
         $api->group(['prefix' => '{partner}', 'middleware' => ['manager.auth']], function ($api) {
             $api->get('dashboard', 'Partner\DashboardController@get');
+            $api->get('new-homepage', 'Partner\DashboardController@getNewHomePage');
+            $api->get('bkash', 'Partner\DashboardController@getBkashNo');
+            $api->get('geo-information', 'Partner\DashboardController@getGeoInformation');
+            $api->get('current-subscription-package', 'Partner\DashboardController@getCurrentPackage');
             $api->get('webstore-dashboard', 'Partner\Webstore\WebstoreDashboardController@getDashboard');
             $api->get('home-setting', 'Partner\DashboardController@getHomeSetting');
             $api->post('home-setting', 'Partner\DashboardController@updateHomeSetting');
@@ -162,6 +166,7 @@ class IndexRoute
                 $api->post('/upgrade', 'Partner\PartnerSubscriptionController@update');
                 $api->post('/purchase', 'Partner\PartnerSubscriptionController@purchase');
                 $api->post('/auto-billing-toggle', 'Partner\PartnerSubscriptionController@toggleAutoBillingActivation');
+                $api->put('/subscription-renewal', 'Partner\PartnerSubscriptionController@updateSubscriptionRenewalInfo');
             });
             $api->group(['prefix' => 'customer-subscriptions'], function ($api) {
                 $api->get('order-lists', 'Partner\CustomerSubscriptionController@index');
@@ -188,8 +193,8 @@ class IndexRoute
                 $api->group(['prefix' => '{order}', 'middleware' => ['partner_order.auth']], function ($api) {
                     $api->get('/', 'PartnerOrderController@showV2');
                     $api->get('bills', 'PartnerOrderController@getBillsV2');
-                    $api->post('services', 'PartnerOrderController@addService');
-                    $api->post('collect', 'PartnerOrderController@collectMoney');
+                    $api->post('services', 'PartnerOrderController@addService')->middleware('concurrent_request:partner,update,order');
+                    $api->post('collect', 'PartnerOrderController@collectMoney')->middleware('concurrent_request:partner,collect,order');
                     $api->get('retry-rider-search/{logistic_order_id}', 'PartnerOrderController@retryRiderSearch');
                 });
             });
@@ -207,8 +212,8 @@ class IndexRoute
                 $api->get('/cancel-request', 'PartnerJobController@cancelRequests');
             });
             $api->group(['prefix' => 'job_service/{job_service}'], function ($api) {
-                $api->post('/update', 'JobServiceController@update');
-                $api->delete('/', 'JobServiceController@destroy');
+                $api->post('/update', 'JobServiceController@update')->middleware('concurrent_request:partner,update,job_service');
+                $api->delete('/', 'JobServiceController@destroy')->middleware('concurrent_request:partner,update,job_service');
             });
             $api->group(['prefix' => 'complains'], function ($api) {
                 $api->get('/', 'ComplainController@index');
@@ -284,6 +289,9 @@ class IndexRoute
                 $api->put('{withdrawals}', 'Partner\\PartnerWithdrawalRequestV2Controller@update');
                 $api->get('{withdrawals}/cancel', 'Partner\\PartnerWithdrawalRequestV2Controller@cancel');
                 $api->post('bank-info', 'Partner\\PartnerWithdrawalRequestV2Controller@storeBankInfo');
+                $api->get('get-bank-info', 'Partner\\PartnerWithdrawalRequestV2Controller@getBankInfo');
+                $api->post('update-bank-info', 'Partner\\PartnerWithdrawalRequestV2Controller@updateBankInfo');
+                $api->get('/check-pending-status', 'Partner\\PartnerWithdrawalRequestV2Controller@checkWithdrawRequestPendingStatus');
             });
             (new LoanRoute())->indexed($api);
             (new IncomeExpenseRoute())->set($api);

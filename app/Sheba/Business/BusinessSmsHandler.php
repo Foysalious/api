@@ -1,6 +1,7 @@
 <?php namespace Sheba\Business;
 
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\FeatureType;
+use Exception;
 use Sheba\Sms\Sms;
 use App\Models\BusinessSmsTemplate;
 
@@ -8,20 +9,16 @@ class BusinessSmsHandler
 {
     /** @var BusinessSmsTemplate $template */
     private $template;
-    /** @var Sms $sms */
-    private $sms;
 
     public function __construct($event_name)
     {
         $this->template = BusinessSmsTemplate::where('event_name', $event_name)->first();
-        $this->sms = app(Sms::class);
     }
 
     /**
      * @param $mobile
      * @param $variables
-     * @return Sms
-     * @throws \Exception
+     * @throws Exception
      */
     public function send($mobile, $variables)
     {
@@ -33,24 +30,23 @@ class BusinessSmsHandler
         foreach ($variables as $variable => $value) {
             $message = str_replace("{{" . $variable . "}}", $value, $message);
         }
-        $sms = $this->sms
+
+        (new Sms())
             ->setFeatureType(FeatureType::BUSINESS)
             ->setBusinessType(FeatureType::BUSINESS)
             ->to($mobile)
-            ->msg($message);
-        $sms->shoot();
-
-        return $sms;
+            ->msg($message)
+            ->shoot();
     }
 
     /**
      * @param $variables
-     * @throws \Exception
+     * @throws Exception
      */
     private function checkVariables($variables)
     {
         if (count(array_diff(explode(';', $this->template->variables), array_keys($variables)))) {
-            throw new \Exception("Variable doesn't match");
+            throw new Exception("Variable doesn't match");
         }
     }
 }

@@ -8,6 +8,7 @@ abstract class StatusCalculator
     /** @var Attendance $attendance */
     protected $attendance;
     protected $action;
+    /** @var Business $business */
     protected $business;
     protected $whichHalfDay;
 

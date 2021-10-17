@@ -28,7 +28,7 @@ class PartnerRewardController extends Controller
                 elseif ($reward->isAction() && $reward->type == 'Point') array_push($point_actions, removeSelectedFieldsFromModel($reward, ['detail_type']));
                 else array_push($credit_actions, removeSelectedFieldsFromModel($reward, ['detail_type']));
             }
-            return api_response($request, $rewards, 200, ['campaigns' => $campaigns, 'actions' => array('point' => $point_actions, 'credit' => $credit_actions)]);
+            return api_response($request, $rewards, 200, ['campaigns' => $campaigns,'reward_point' => $request->partner->reward_point, 'actions' => array('point' => $point_actions, 'credit' => $credit_actions)]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

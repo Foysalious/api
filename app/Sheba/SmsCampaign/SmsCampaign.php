@@ -18,8 +18,6 @@ class SmsCampaign
 {
     use ModificationFields;
 
-    const SMS_MAX_LENGTH = 160;
-
     /** @var SmsHandler */
     private $smsHandler;
     /** @var SmsHandler */
@@ -33,8 +31,6 @@ class SmsCampaign
     private $title;
     private $mobile;
     private $message;
-    private $smsCount;
-    private $ratePerSms;
     /** @var Partner $partner */
     private $partner;
 
@@ -45,7 +41,6 @@ class SmsCampaign
         $this->smsStatusChanger = $sms_status_changer;
         $this->orderRepo = $order_repo;
         $this->receiverRepo = $receiver_repo;
-        $this->ratePerSms = constants('SMS_CAMPAIGN.rate_per_sms');
     }
 
     public function setMobile($mobile)
@@ -71,8 +66,9 @@ class SmsCampaign
         $this->title = $request['title'];
         $this->message = $request['message'];
         $this->partner = $request['partner'];
-        $length = mb_strlen($request['message'], 'utf8');
-        $this->smsCount = $length > self::SMS_MAX_LENGTH ? ceil($length / self::SMS_MAX_LENGTH) : 1;
+        // TODO
+        // $length = mb_strlen($request['message'], 'utf8');
+        // $this->smsCount = $length > self::SMS_MAX_LENGTH ? ceil($length / self::SMS_MAX_LENGTH) : 1;
         return $this;
     }
 
@@ -80,48 +76,45 @@ class SmsCampaign
     {
         if (!$this->partnerHasEnoughBalance()) return false;
 
-        $response = (object)$this->smsHandler->sendBulkMessages($this->mobileNumbers, $this->message);
+        $response = $this->smsHandler->sendBulkMessages($this->mobileNumbers, $this->message);
         $campaign_order = $this->orderRepo->create([
             'title' => $this->title,
             'message' => $this->message,
             'partner_id' => $this->partner->id,
-            'rate_per_sms' => $this->ratePerSms,
-            'bulk_id' => isset($response->bulkId) ? $response->bulkId : null
+            'rate_per_sms' => $response->getChargePerSms(),
+            'bulk_id' => $response->getSmsId() ?: null
         ]);
-        $amount_to_be_deducted = 0.0;
 
-        foreach ($response->messages as $index => $message) {
-            $message = (object)$message;
-            $amount_to_be_deducted += $this->getSingleSmsCost();
+        foreach ($response->getSinglesResponse() as $index => $single) {
             $this->receiverRepo->create([
                 'sms_campaign_order_id' => $campaign_order->id,
-                'receiver_number' => $message->to,
-                'receiver_name' => $this->customers && $this->customers[$index] && $this->customers[$index]['name'] ? $this->customers[$index]['name'] : null,
-                'message_id' => $message->messageId,
+                'receiver_number' => $single->getMobile(),
+                'receiver_name' => $this->getNthCustomerName($index),
+                'message_id' => $single->getSmsId(),
                 'status' => Status::PENDING,
-                'sms_count' => $this->smsCount
+                'sms_count' => $single->getSmsCount()
             ]);
         }
 
-        $this->createTransactions($campaign_order, $amount_to_be_deducted);
+        $this->createTransactions($campaign_order, $response->getTotalCharge());
         $this->smsStatusChanger->processPendingSms();
 
         return true;
     }
 
+    private function getNthCustomerName($n)
+    {
+        return $this->customers && $this->customers[$n] && $this->customers[$n]['name'] ?
+            $this->customers[$n]['name'] :
+            null;
+    }
+
     public function partnerHasEnoughBalance()
     {
-        return $this->partner->wallet >= $this->getOrderCost();
-    }
-
-    private function getOrderCost()
-    {
-        return count($this->mobileNumbers) * $this->getSingleSmsCost();
-    }
-
-    private function getSingleSmsCost()
-    {
-        return $this->smsCount * $this->ratePerSms;
+        $charge = $this->smsHandler->getBulkCharge($this->mobileNumbers, $this->message);
+        //freeze money amount check
+        WalletTransactionHandler::isDebitTransactionAllowed($this->partner, $charge, 'এস-এম-এস পাঠানোর');
+        return $this->partner->wallet >= $charge;
     }
 
     private function createTransactions(SmsCampaignOrder $campaign_order, $cost)

@@ -1,8 +1,9 @@
 <?php namespace App\Models;
 
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Sheba\Dal\BaseModel;
+use Sheba\Dal\POSOrder\Events\PosOrderSaved as PosOrderSavedEvent;
 use Sheba\Dal\POSOrder\OrderStatuses as POSOrderStatuses;
 use Sheba\Dal\POSOrder\SalesChannels as POSOrderSalesChannel;
 use Sheba\EMI\Calculations;
@@ -17,7 +18,7 @@ use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\Dal\POSOrder\OrderStatuses;
 
 
-class PosOrder extends Model
+class PosOrder extends BaseModel
 {
     use SoftDeletes;
 
@@ -47,6 +48,8 @@ class PosOrder extends Model
     private $netBill;
     private $originalTotal;
 
+    public static $createdEventClass = PosOrderSavedEvent::class;
+
     public function calculate()
     {
         $this->_calculateThisItems();
@@ -60,7 +63,7 @@ class PosOrder extends Model
             $this->update(['interest' => $this->interest, 'bank_transaction_charge' => $this->bank_transaction_charge]);
         }
         $this->netBill = $this->originalTotal + round((double)$this->interest, 2) + (double)round($this->bank_transaction_charge, 2);
-        if ($this->sales_channel == POSOrderSalesChannel::WEBSTORE && $this->delivery_charge && !in_array($this->status, [POSOrderStatuses::CANCELLED, POSOrderStatuses::DECLINED])) $this->netBill += (double)round($this->delivery_charge, 2);
+        if ($this->delivery_charge && !in_array($this->status, [POSOrderStatuses::CANCELLED, POSOrderStatuses::DECLINED])) $this->netBill += (double)round($this->delivery_charge, 2);
         $this->_calculatePaidAmount();
         $this->paid = round($this->paid ?: 0, 2);
 
@@ -69,6 +72,11 @@ class PosOrder extends Model
         $this->isCalculated = true;
         $this->_formatAllToTaka();
         return $this;
+    }
+
+    public function netBill()
+    {
+        return $this->netBill;
     }
 
     private function _calculateThisItems()

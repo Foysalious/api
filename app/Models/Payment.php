@@ -1,16 +1,15 @@
 <?php namespace App\Models;
 
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\BaseModel;
 use Sheba\Payment\Statuses;
 use Sheba\Transactions\DTO\ShebaTransaction;
 
-class Payment extends Model
+class Payment extends BaseModel
 {
     protected $guarded = ['id'];
 
     /**
-     *
      * Relationships
      */
     public function payable()
@@ -29,7 +28,6 @@ class Payment extends Model
     }
 
     /**
-     *
      * Scope functions
      */
     public function scopeNotCompleted($query)
@@ -63,6 +61,7 @@ class Payment extends Model
      */
     public function isComplete()
     {
+        $this->reload();
         return $this->status == Statuses::COMPLETED;
     }
 
@@ -93,15 +92,16 @@ class Payment extends Model
 
     public function canComplete()
     {
+        $this->reload();
         return $this->status == Statuses::VALIDATED || $this->status == Statuses::FAILED;
     }
 
-    public function isReturnedFrom()
+    public function isReturnedFrom(): bool
     {
         return true;
     }
 
-    public function getFormattedPayment()
+    public function getFormattedPayment(): array
     {
         return [
             'transaction_id' => $this->transaction_id,
@@ -121,8 +121,8 @@ class Payment extends Model
         $detail      = $this->paymentDetails->first();
         $transaction = new ShebaTransaction();
         $transaction->setTransactionId($this->transaction_id)
-            ->setGateway($detail ? $detail->method : null)
-            ->setDetails(json_decode($this->transaction_details));
+                    ->setGateway($detail ? $detail->method : null)
+                    ->setDetails(json_decode($this->transaction_details));
 
         return $transaction;
     }

@@ -69,7 +69,9 @@ class NotificationController extends Controller
             'Sheba\Dal\Announcement\Announcement',
             'Sheba\Dal\ApprovalRequest\Model',
             'Sheba\Dal\Leave\Model',
-            'Sheba\Dal\Support\Model'
+            'Sheba\Dal\Support\Model',
+            'Sheba\Dal\Payslip\Payslip',
+            'Sheba\Dal\Appreciation\Appreciation'
         ])->where('created_at', '>=', $request->time)->where('is_seen', 0)->count();
 
         return api_response($request, null, 200, ['notifications' => $notifications_count]);
@@ -100,7 +102,10 @@ class NotificationController extends Controller
             'leave_request_id' => 'sometimes|required|numeric',
             'leave_id' => 'sometimes|required|numeric',
             'cancel_leave_id' => 'sometimes|required|numeric',
-
+            'homepage' => 'sometimes|required',
+            'payslip_id' => 'sometimes|required|numeric',
+            'schedule_date' => 'sometimes|required',
+            'appreciation' => 'sometimes|required',
         ]);
 
         $auth_info = $request->auth_info;
@@ -111,6 +116,18 @@ class NotificationController extends Controller
         $channel = config('sheba.push_notification_channel_name.employee');
         $sound  = config('sheba.push_notification_sound.employee');
 
+        if ($request->has('homepage')) {
+            $pushNotificationHandler->send([
+                "title" => 'Refer digiGO & Earn up to 10000 TK',
+                "message" => "Refer digiGO & win attractive referral fee. Just provide lead information & we do the rest. Visit digiGO Now!",
+                "event_type" => 'referral',
+                "event_id" => '',
+                "time" => Carbon::now(),
+                "sound" => "notification_sound",
+                "channel_id" => $channel,
+                "click_action" => "FLUTTER_NOTIFICATION_CLICK"
+            ], $topic, $channel, $sound);
+        }
         if ($request->has('support_id')) {
             $pushNotificationHandler->send([
                 "title" => 'New support created',
@@ -165,13 +182,34 @@ class NotificationController extends Controller
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel, $sound);
         }
-
         if ($request->has('cancel_leave_id')) {
             $pushNotificationHandler->send([
                 "title" => "leave cancel",
                 "message" => "Test canceled his leave",
                 "event_type" => 'leave',
                 "event_id" => $request->leave_id,
+                "sound" => "notification_sound",
+                "channel_id" => $channel,
+                "click_action" => "FLUTTER_NOTIFICATION_CLICK"
+            ], $topic, $channel, $sound);
+        }
+        if ($request->has('payslip')) {
+            $pushNotificationHandler->send([
+                "title" => "Payslip Disbursed",
+                "message" => "Payslip Disbursed of month ".Carbon::parse($request->schedule_date)->format('M Y'),
+                "event_type" => 'payslip',
+                "event_id" => $request->payslip_id,
+                "sound" => "notification_sound",
+                "channel_id" => $channel,
+                "click_action" => "FLUTTER_NOTIFICATION_CLICK"
+            ], $topic, $channel, $sound);
+        }
+        if ($request->has('appreciation')) {
+            $pushNotificationHandler->send([
+                "title" => 'Appreciation',
+                "message" => "Test appreciated you",
+                "event_type" => 'appreciation',
+                "event_id" => $request->appreciation_id,
                 "sound" => "notification_sound",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"

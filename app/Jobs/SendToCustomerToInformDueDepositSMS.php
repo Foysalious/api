@@ -2,12 +2,13 @@
 
 namespace App\Jobs;
 use App\Repositories\SmsHandler;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Sheba\PartnerWallet\PartnerTransactionHandler;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 
 class SendToCustomerToInformDueDepositSMS extends Job implements ShouldQueue
@@ -37,29 +38,31 @@ class SendToCustomerToInformDueDepositSMS extends Job implements ShouldQueue
     public function handle()
     {
         try {
+            $message_data = [
+                'customer_name' => $this->data['customer_name'],
+                'partner_name' => $this->data['partner_name'],
+                'amount' => $this->data['amount'],
+            ];
+
             if ($this->data['type'] == 'due') {
-                $sms = (new SmsHandler('inform-due'))->setVendor('infobip')
-                    ->setBusinessType(BusinessType::SMANAGER)
-                    ->setFeatureType(FeatureType::DUE_TRACKER)
-                    ->send($this->data['mobile'], [
-                    'customer_name' => $this->data['customer_name'],
-                    'partner_name' => $this->data['partner_name'],
-                    'amount' => $this->data['amount'],
-                    'payment_link' => $this->data['payment_link']
-                ]);
+                $sms_handler = (new SmsHandler('inform-due'));
+                $message_data['payment_link'] = $this->data['payment_link'];
                 $log = " BDT has been deducted for sending due details";
             } else {
-                $sms = (new SmsHandler('inform-deposit'))->setVendor('infobip')
-                    ->setBusinessType(BusinessType::SMANAGER)
-                    ->setFeatureType(FeatureType::DUE_TRACKER)
-                    ->send($this->data['mobile'], [
-                    'customer_name' => $this->data['customer_name'],
-                    'partner_name' => $this->data['partner_name'],
-                    'amount' => $this->data['amount'],
-                ]);
+                $sms_handler = (new SmsHandler('inform-deposit'));
                 $log = " BDT has been deducted for sending deposit details";
             }
-            $sms_cost = $sms->getCost();
+
+            $sms = $sms_handler
+                ->setBusinessType(BusinessType::SMANAGER)
+                ->setFeatureType(FeatureType::DUE_TRACKER);
+            $sms_cost = $sms_handler->estimateCharge();
+            //wallet amount check
+            WalletTransactionHandler::isDebitTransactionAllowed($this->partner, $sms_cost, 'এস-এম-এস পাঠানোর');
+            $sms->send($this->data['mobile'], $message_data);
+
+            // TODO
+//            $sms_cost = $sms->getCost();
             $partner_transaction_handler = new PartnerTransactionHandler($this->partner);
             $partner_transaction_handler->debit($sms_cost, $sms_cost . $log, null, null);
 
