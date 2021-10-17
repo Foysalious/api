@@ -7,6 +7,7 @@ use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\PaymentLinkAccountingRepository;
+use App\Sheba\Pos\Order\PosOrderObject;
 use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\FraudDetection\TransactionSources;
@@ -275,7 +276,7 @@ class PaymentLinkTransaction
                     ->setCustomerMobile(isset($this->customer) ? $this->customer->profile->mobile: null)
                     ->setCustomerProPic(isset($this->customer) ? $this->customer->profile->pro_pic: null);
         }
-        if ($this->target instanceof PosOrder) {
+        if ($this->target instanceof PosOrderObject) {
             $transaction = $transaction->setSourceId($this->target->id)->setSourceType(EntryTypes::POS);
         }
         $transaction->store($this->receiver->id);
