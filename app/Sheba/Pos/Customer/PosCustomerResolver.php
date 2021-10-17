@@ -4,6 +4,7 @@
 use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
 use App\Sheba\PosOrderService\SmanagerUserServerClient;
+use Illuminate\Support\Facades\Log;
 
 class PosCustomerResolver
 {
@@ -55,6 +56,7 @@ class PosCustomerResolver
             ->with(['customer' => function($q) {
                 $q->with('profile');
             }])->first();
+        Log::info(['pos customer', $partner_pos_customer]);
         return $this->posCustomerObject
             ->setId($partner_pos_customer->customer_id)
             ->setPartnerId($partner_pos_customer->partner_id)
