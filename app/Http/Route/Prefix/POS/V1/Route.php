@@ -24,7 +24,7 @@ class Route
             $api->get('emi-calculate', 'PosOrder\OrderController@calculateEmiCharges');
             $api->group(['prefix' => 'partners'], function ($api) {
                 $api->group(['prefix' => '{partner}'], function ($api) {
-                    $api->get('/', 'PartnerController@findById')->middleware('ip.whitelist');
+                    $api->get('/', 'Pos\PartnerController@findById')->middleware('ip.whitelist');
                     $api->group(['prefix' => 'orders'], function ($api) {
                         $api->group(['prefix' => '{order}'], function ($api) {
                             $api->post('online-payment', 'PosOrder\OrderController@onlinePayment');
