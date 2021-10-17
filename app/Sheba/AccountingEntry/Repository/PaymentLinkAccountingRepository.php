@@ -10,7 +10,6 @@ use Sheba\AccountingEntry\Repository\AccountingEntryClient;
 
 class PaymentLinkAccountingRepository extends AccountingRepository
 {
-    private $api;
     private $amount;
     private $bank_transaction_charge;
     private $interest;
@@ -21,6 +20,9 @@ class PaymentLinkAccountingRepository extends AccountingRepository
     private $source_id;
     private $customer_id;
     private $customer_name;
+    private $customer_mobile;
+    private $customer_pro_pic;
+    private $customer_is_supplier;
     private $note;
     private $details;
 
@@ -28,7 +30,6 @@ class PaymentLinkAccountingRepository extends AccountingRepository
     public function __construct(AccountingEntryClient $client)
     {
         parent::__construct($client);
-        $this->api = 'api/entries/';
     }
 
     /**
@@ -68,6 +69,36 @@ class PaymentLinkAccountingRepository extends AccountingRepository
     public function setCustomerName($customer_name)
     {
         $this->customer_name = $customer_name;
+        return $this;
+    }
+
+    /**
+     * @param mixed $customer_mobile
+     * @return PaymentLinkAccountingRepository
+     */
+    public function setCustomerMobile($customer_mobile)
+    {
+        $this->customer_mobile = $customer_mobile;
+        return $this;
+    }
+
+    /**
+     * @param mixed $customer_pro_pic
+     * @return PaymentLinkAccountingRepository
+     */
+    public function setCustomerProPic($customer_pro_pic)
+    {
+        $this->customer_pro_pic = $customer_pro_pic;
+        return $this;
+    }
+
+    /**
+     * @param mixed $customer_is_supplier
+     * @return PaymentLinkAccountingRepository
+     */
+    public function setCustomerIsSupplier($customer_is_supplier)
+    {
+        $this->customer_is_supplier = $customer_is_supplier;
         return $this;
     }
 
@@ -209,6 +240,9 @@ class PaymentLinkAccountingRepository extends AccountingRepository
 
         $data['customer_id'] = $this->customer_id;
         $data['customer_name'] = $this->customer_name;
+        $data['customer_mobile'] = $this->customer_mobile;
+        $data['customer_pro_pic'] = $this->customer_pro_pic;
+        $data['customer_is_supplier'] = $this->customer_is_supplier;
         $data['amount'] = $this->amount;
         $data['amount_cleared'] = $this->amount_cleared;
         $data['entry_at'] = Carbon::now()->format('Y-m-d H:i:s');

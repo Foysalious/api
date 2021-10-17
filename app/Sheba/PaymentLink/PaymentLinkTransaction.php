@@ -5,6 +5,8 @@ namespace Sheba\PaymentLink;
 
 use App\Models\Payment;
 use App\Models\PosCustomer;
+use App\Models\PosOrder;
+use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\PaymentLinkAccountingRepository;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\FraudDetection\TransactionSources;
@@ -25,6 +27,7 @@ class PaymentLinkTransaction
     private $receiver;
     private $customer;
     private $tax;
+    private $target;
     private $walletTransactionHandler;
     /**
      * @var PaymentLinkTransformer
@@ -112,6 +115,15 @@ class PaymentLinkTransaction
         return $this->paymentLink->getAmount();
     }
 
+    /**
+     * @param $target
+     * @return $this
+     */
+    public function setTarget($target)
+    {
+        $this->target = $target;
+        return $this;
+    }
 
     /**
      * @param mixed $receiver
@@ -251,8 +263,13 @@ class PaymentLinkTransaction
             ->setInterest($interest)
             ->setAmountCleared($amount);
         if ($customer) {
-            $transaction = $transaction->setCustomerId(isset($customer) ? $customer->id: null)
-                    ->setCustomerName(isset($this->customer) ? $this->customer->profile->name: null);
+            $transaction = $transaction->setCustomerId($customer->id)
+                    ->setCustomerName(isset($this->customer) ? $this->customer->profile->name: null)
+                    ->setCustomerMobile(isset($this->customer) ? $this->customer->profile->mobile: null)
+                    ->setCustomerProPic(isset($this->customer) ? $this->customer->profile->pro_pic: null);
+        }
+        if ($this->target instanceof PosOrder) {
+            $transaction = $transaction->setSourceId($this->target->id)->setSourceType(EntryTypes::POS);
         }
         $transaction->store($this->receiver->id);
     }
