@@ -250,7 +250,7 @@ class PaymentLinkTransaction
      */
     private function storePaymentLinkEntry($amount, $feeTransaction, $interest)
     {
-        Log::info(['partner check', $this->receiver instanceof Partner, $this->customer->id]);
+        Log::info(['partner check', $this->receiver instanceof Partner, $this->customer]);
         /** @var PosCustomerResolver $posCustomerResolver */
         $posCustomerResolver = app(PosCustomerResolver::class);
         $customer = $posCustomerResolver->setCustomerId($this->customer->id)->setPartner($this->receiver)->get();
