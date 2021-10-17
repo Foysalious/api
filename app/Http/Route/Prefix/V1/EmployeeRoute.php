@@ -43,6 +43,7 @@ class EmployeeRoute
             });
             //$api->post('password', 'Employee\EmployeeController@updateMyPassword');
             $api->get('dashboard', 'Employee\EmployeeController@getDashboard');
+            $api->get('dashboard-menu', 'Employee\DashboardController@index');
             $api->get('notifications', 'Employee\NotificationController@index');
             $api->get('last-notifications', 'Employee\NotificationController@lastNotificationCount');
             $api->get('test-notification', 'Employee\NotificationController@test');
@@ -111,6 +112,18 @@ class EmployeeRoute
             $api->get('managers', 'Employee\EmployeeController@getManagersList');
             $api->get('/', 'Employee\EmployeeController@index');
             $api->get('/{employee}', 'Employee\EmployeeController@show');
+
+            $api->group(['prefix' => 'appreciate'], function ($api) {
+                $api->get('/new-joiner', 'Employee\AppreciateController@getNewJoiner');
+                $api->get('/coworker', 'Employee\AppreciateController@index');
+                $api->post('/', 'Employee\AppreciateController@store');
+                $api->post('/{id}', 'Employee\AppreciateController@update');
+                $api->get('/stickers', 'Employee\AppreciateController@categoryWiseStickers');
+                $api->get('/my-stickers', 'Employee\AppreciateController@myStickers');
+                $api->get('/{id}/coworker-stickers', 'Employee\AppreciateController@coworkerStickers');
+                $api->get('/badge-counter', 'Employee\AppreciateController@badgeCounter');
+                $api->get('/badge-seen', 'Employee\AppreciateController@badgeSeen');
+            });
         });
     }
 }
