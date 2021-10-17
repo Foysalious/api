@@ -252,6 +252,7 @@ class PaymentLinkTransaction
         $customer = null;
         //TODO: Need to update this module after releasing customer rebuild module
         Log::info(['pos customer object', $this->customer->id, $this->customer->name]);
+
 //        if ($this->customer) {
 //            /** @var PosCustomerResolver $posCustomerResolver */
 //            $posCustomerResolver = app(PosCustomerResolver::class);
