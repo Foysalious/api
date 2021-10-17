@@ -81,6 +81,10 @@ class PaymentLinkOrderComplete extends PaymentComplete
                 $payable = $this->payment->payable;
                 $payableUser = $payable->user;
                 $this->target = $this->paymentLink->getTarget();
+                //TODO: Need to update this module after releasing customer rebuild module
+                if ($this->target instanceof PosOrderObject) {
+                    $payableUser = null;
+                }
                 $this->setModifier($customer = $payable->user);
                 $this->completePayment();
                 $this->processTransactions($this->payment_receiver, $payableUser);
