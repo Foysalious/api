@@ -249,9 +249,9 @@ class PaymentLinkTransaction
      */
     private function storePaymentLinkEntry($amount, $feeTransaction, $interest)
     {
-        $customer = null;
-        //TODO: Need to update this module after releasing customer rebuild module
-        Log::info(['pos customer object', $this->customer->id, $this->customer->name]);
+        /** @var PosCustomerResolver $posCustomerResolver */
+        $posCustomerResolver = app(PosCustomerResolver::class);
+        $customer = $posCustomerResolver->setCustomerId($this->customer->id)->setPartner($this->receiver)->get();
 
 //        if ($this->customer) {
 //            /** @var PosCustomerResolver $posCustomerResolver */
@@ -266,12 +266,12 @@ class PaymentLinkTransaction
             ->setBankTransactionCharge($feeTransaction)
             ->setInterest($interest)
             ->setAmountCleared($amount);
-        if ($customer) {
-            $transaction = $transaction->setCustomerId($customer->id)
-                    ->setCustomerName(isset($this->customer) ? $this->customer->profile->name: null)
-                    ->setCustomerMobile(isset($this->customer) ? $this->customer->profile->name: null)
-                    ->setCustomerProPic(isset($this->customer) ? $this->customer->profile->name: null)
-                    ->setCustomerIsSupplier(isset($this->customer) ? $this->customer->profile->name: null);
+        if ($this->customer) {
+            $transaction = $transaction->setCustomerId($this->customer->id)
+                    ->setCustomerName($this->customer->name)
+                    ->setCustomerMobile($this->customer->mobile)
+                    ->setCustomerProPic($this->customer->pro_pic)
+                    ->setCustomerIsSupplier($this->customer->is_supplier);
         }
         $transaction->store($this->receiver->id);
     }
