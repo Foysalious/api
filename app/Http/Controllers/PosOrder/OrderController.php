@@ -148,6 +148,14 @@ class OrderController extends Controller
         else return http_response($request, null, 200, $orderLogs);
     }
 
+    public function generateLogInvoice(Request $request, $order_id, $log)
+    {
+        $partner = $request->auth_user->getPartner();
+        $orderLogs = $this->orderService->setPartnerId($partner->id)->setOrderId($order_id)->setLogId($request->log)->generateLogInvoice();
+        if (!$orderLogs) return http_response($request, "অর্ডারটি পাওয়া যায় নি", 404, $orderLogs);
+        else return http_response($request, null, 200, $orderLogs);
+    }
+
     /**
      * @throws UnauthorizedRequestFromExpenseTrackerException
      */

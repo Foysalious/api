@@ -25,6 +25,7 @@ class OrderService
     private $isDiscountPercentage;
     protected $userId;
     protected $filter_params;
+    private $logId;
 
     public function __construct(PosOrderServerClient $client, SmanagerUserServerClient $smanagerUserClient)
     {
@@ -230,6 +231,16 @@ class OrderService
         return $this;
     }
 
+    /**
+     * @param mixed $logId
+     * @return OrderService
+     */
+    public function setLogId($logId)
+    {
+        $this->logId = $logId;
+        return $this;
+    }
+
     public function getOrderList()
     {
         return $this->client->get('api/v1/partners/' . $this->partnerId . '/orders' . $this->filter_params);
@@ -243,6 +254,11 @@ class OrderService
     public function getLogs()
     {
         return $this->client->get('api/v1/partners/' . $this->partnerId . '/orders/' . $this->orderId . '/logs');
+    }
+
+    public function generateLogInvoice()
+    {
+        return $this->client->get('api/v1/partners/' . $this->partnerId . '/orders/' . $this->orderId . '/logs/' . $this->logId . '/invoice');
     }
 
     public function getUser()

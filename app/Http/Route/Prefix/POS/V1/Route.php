@@ -130,6 +130,7 @@ class Route
                         $api->post('/update-status', 'PosOrder\OrderController@updateStatus');
                         $api->post('/validate-promo', 'PosOrder\OrderController@validatePromo');
                         $api->get('/logs', 'PosOrder\OrderController@logs');
+                        $api->get('/logs/{log}/invoice', 'PosOrder\OrderController@generateLogInvoice');
                         $api->post('payment/create', "PosOrder\OrderController@createPayment");
                     });
                     $api->put('/{order}/update-customer', 'PosOrder\OrderController@updateCustomer');
