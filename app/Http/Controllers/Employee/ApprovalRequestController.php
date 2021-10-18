@@ -68,15 +68,25 @@ class ApprovalRequestController extends Controller
         list($offset, $limit) = calculatePagination($request);
 
         if ($request->has('type'))
-            $approval_requests = $approval_request_repo->getApprovalRequestByBusinessMemberFilterBy($requester_business_member, $request->type);
+            $leave_approval_requests = $approval_request_repo->getApprovalRequestByBusinessMemberFilterBy($requester_business_member, $request->type);
         else
-            $approval_requests = $approval_request_repo->getApprovalRequestByBusinessMember($requester_business_member);
+            $leave_approval_requests = $approval_request_repo->getApprovalRequestByBusinessMember($requester_business_member);
+
+
+        $approval_requests = collect();
+        foreach ($leave_approval_requests as $leave_approval_request) {
+            /** @var Leave $requestable */
+            $requestable = $leave_approval_request->requestable;
+            /** @var BusinessMember $business_member */
+            $business_member = $requestable->businessMember;
+            if (!$business_member || $business_member->status != 'active') continue;
+            $approval_requests->push($leave_approval_request);
+        }
 
         // Differ new & old approval request
         $approval_requests_without_order = $approval_requests->where('order', null);
         $approval_requests_with_order = $approval_requests->where('is_notified', 1);
         $merged_approval_requests = $approval_requests_with_order->merge($approval_requests_without_order);
-
 
         if ($request->has('limit')) $merged_approval_requests = $merged_approval_requests->splice($offset, $limit);
 
