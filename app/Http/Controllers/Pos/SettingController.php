@@ -101,6 +101,7 @@ class SettingController extends Controller
     public function duePaymentRequestSms(Request $request)
     {
         $this->validate($request, ['customer_id' => 'required|numeric', 'due_amount' => 'required']);
+        /** @var Partner $partner */
         $partner = $request->partner;
         $this->setModifier($request->manager_resource);
         $customer = PosCustomer::find($request->customer_id);
@@ -109,7 +110,8 @@ class SettingController extends Controller
             ->setFeatureType(FeatureType::POS)
             ->setMessage([
                 'partner_name' => $partner->name,
-                'due_amount' => $request->due_amount
+                'due_amount' => $request->due_amount,
+                'company_number'=>$partner->getContactNumber()
             ])
             ->setMobile($customer->profile->mobile);
         $sms_cost = $sms->estimateCharge();
