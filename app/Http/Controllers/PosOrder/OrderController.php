@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\PosOrder;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\PaymentLink\PaymentLinkController;
 use App\Http\Controllers\VoucherController;
 use App\Models\Partner;
 use App\Models\PosOrder;
@@ -10,6 +11,7 @@ use Illuminate\Http\Request;
 use Sheba\DueTracker\Exceptions\UnauthorizedRequestFromExpenseTrackerException;
 use Sheba\EMI\Calculations;
 use Sheba\PaymentLink\PaymentLinkStatics;
+use Sheba\Pos\Order\PosOrderResolver;
 use Sheba\Pos\Order\PosOrderTypes;
 use Sheba\PosOrderService\Services\PaymentService;
 
@@ -162,8 +164,9 @@ class OrderController extends Controller
         ]);
         if ($request->header('api-key') != config('expense_tracker.api_key'))
             throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
-        $posOrder = PosOrder::find($order);
+
         $method_details = ['payment_method_bn' => $request->payment_method_bn, 'payment_method_icon' => $request->payment_method_icon];
+        $posOrder = PosOrder::find($order);
         $pos_order_type = $posOrder && !$posOrder->is_migrated ? PosOrderTypes::OLD_SYSTEM : PosOrderTypes::NEW_SYSTEM;
         $this->paymentService->setPosOrderId($order)->setPosOrderType($pos_order_type)->setPartnerId($partner)->setAmount($request->amount)
             ->setMethod($request->payment_method_en)->setMethodDetails($method_details)->setEmiMonth($request->emi_month)->setInterest($request->interest)
@@ -192,11 +195,11 @@ class OrderController extends Controller
         $partner = Partner::find($partner);
         $interest = 0;
         $bank_transaction_charge = 0;
-        if($request->paid_by == PaymentLinkStatics::paidByTypes()[1]) {
+        if ($request->paid_by == PaymentLinkStatics::paidByTypes()[1]) {
             $interest = $request->interest;
             $bank_transaction_charge = $request->bank_transaction_charge;
         }
-        if($partner->isMigrationCompleted()) {
+        if ($partner->isMigrationCompleted()) {
             $this->orderService->setPartnerId($partner->id)->setOrderId($request->order)->setInterest($interest)
                 ->setBankTransactionCharge($bank_transaction_charge)->update();
         } else {
@@ -214,11 +217,33 @@ class OrderController extends Controller
 
     public function calculateEmiCharges(Request $request)
     {
-        $this->validate($request,[
+        $this->validate($request, [
             'amount' => 'required',
             'emi_month' => 'required',
-            ]);
+        ]);
         return Calculations::getMonthData($request->amount, $request->emi_month, false);
+    }
+
+    public function createPayment($order, Request $request, PosOrderResolver $posOrderResolver)
+    {
+        $order = $posOrderResolver->setOrderId($order)->get();
+        /** @var PaymentLinkController $payment_link */
+        $payment_link = app(PaymentLinkController::class);
+        $auth_user = $request->auth_user->getAvatar();
+        $request->merge(array(
+            'amount' => $order->due,
+            'purpose' => $request->purpose,
+            'customer_id' => $order->customer_id,
+            'emi_month' => $request->emi_month,
+            'interest_paid_by' => $request->interest_paid_by,
+            'transaction_charge' => $request->transaction_charge,
+            'pos_order_id' => $order->id,
+            "type" => 'partner',
+            'user' => $auth_user,
+            'partner' => $auth_user
+        ));
+        $data = $payment_link->store($request)->getData(true);
+        return http_response($request, null, $data['code'], $data);
     }
 
 }
