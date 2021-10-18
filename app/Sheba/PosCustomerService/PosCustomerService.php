@@ -47,7 +47,7 @@ class PosCustomerService
      * @param Partner $partner
      * @return PosCustomerService
      */
-    public function setPartner( Partner $partner)
+    public function setPartner(Partner $partner)
     {
         $this->partner = $partner;
         return $this;
@@ -138,9 +138,9 @@ class PosCustomerService
     public function getDetails(): array
     {
         $customer_info = $this->getCustomerInfoFromSmanagerUserService();
-        list($total_purchase_amount,$total_used_promo) = $this->getPurchaseAmountAndTotalUsedPromo();
-        list($total_due_amount,$total_payable_amount) = $this->getDueAndPayableAmount();
-        $created_at=isset($customer_info['created_at']) ?Carbon::parse($customer_info['created_at']):null;
+        list($total_purchase_amount, $total_used_promo) = $this->getPurchaseAmountAndTotalUsedPromo();
+        list($total_due_amount, $total_payable_amount) = $this->getDueAndPayableAmount();
+        $created_at = isset($customer_info['created_at']) ? Carbon::parse($customer_info['created_at']) : null;
         $customer_details = [];
         $customer_details['id'] = $customer_info['_id'] ?? null;
         $customer_details['name'] = $customer_info['name'] ?? null;
@@ -149,7 +149,7 @@ class PosCustomerService
         $customer_details['address'] = $customer_info['address'] ?? null;
         $customer_details['image'] = $customer_info['pro_pic'] ?? null;
         $customer_details['customer_since'] = $customer_info['created_at'] ?? null;
-        $customer_details['customer_since_formatted'] = isset($customer_info['created_at']) ? convertTimezone($created_at)->format('Y-m-d H:i:s'): null;
+        $customer_details['customer_since_formatted'] = isset($customer_info['created_at']) ? convertTimezone($created_at)->format('Y-m-d H:i:s') : null;
         $customer_details['total_purchase_amount'] = $total_purchase_amount;
         $customer_details['total_used_promo'] = $total_used_promo;
         $customer_details['total_due_amount'] = $total_due_amount;
@@ -163,7 +163,7 @@ class PosCustomerService
 
     public function getOrders()
     {
-        return $this->posOrderServerClient->get('api/v1/partners/'.$this->partner->id.'/customers/'.$this->customerId.'/orders');
+        return $this->posOrderServerClient->get('api/v1/partners/' . $this->partner->id . '/customers/' . $this->customerId . '/orders');
     }
 
     /**
@@ -183,17 +183,17 @@ class PosCustomerService
      */
     private function deleteCustomerFromSmanagerUserService()
     {
-         $this->smanagerUserServerClient->delete('api/v1/partners/'.$this->partner->id.'/pos-users/'.$this->customerId);
+        $this->smanagerUserServerClient->delete('api/v1/partners/' . $this->partner->id . '/pos-users/' . $this->customerId);
     }
 
     private function deleteCustomerFromPosOrderService()
     {
-         $this->posOrderServerClient->delete('api/v1/partners/'.$this->partner->id.'/customers/'.$this->customerId);
+        $this->posOrderServerClient->delete('api/v1/partners/' . $this->partner->id . '/customers/' . $this->customerId);
     }
 
     private function deleteUserFromAccountingService()
     {
-         $this->posCustomerRepository->deleteCustomerFromDueTracker($this->partner, $this->customerId);
+        $this->posCustomerRepository->deleteCustomerFromDueTracker($this->partner, $this->customerId);
     }
 
     public function showCustomerListByPartnerId()
@@ -214,14 +214,14 @@ class PosCustomerService
             'blood_group' => $this->bloodGroup,
             'dob' => $this->dob,
             'pro_pic' => $this->pic,
-            'is_supplier'=>$this->supplier
+            'is_supplier' => $this->supplier
         ];
     }
 
     public function storePosCustomer()
     {
         $data = $this->makeCreateData();
-        return $this->smanagerUserServerClient->post('api/v1/partners/' . $this->partner->id.'/pos-users', $data);
+        return $this->smanagerUserServerClient->post('api/v1/partners/' . $this->partner->id . '/pos-users', $data);
     }
 
     public function makeUpdateData()
@@ -249,7 +249,7 @@ class PosCustomerService
     public function updatePosCustomer()
     {
         $data = $this->makeUpdateData();
-        return $this->smanagerUserServerClient->put('api/v1/partners/' . $this->partner->id.'/pos-users/'.$this->customerId, $data);
+        return $this->smanagerUserServerClient->put('api/v1/partners/' . $this->partner->id . '/pos-users/' . $this->customerId, $data);
     }
 
     /**
@@ -257,7 +257,7 @@ class PosCustomerService
      */
     public function getCustomerInfoFromSmanagerUserService()
     {
-        return $this->smanagerUserServerClient->get('api/v1/partners/'.$this->partner->id.'/pos-users/'.$this->customerId);
+        return $this->smanagerUserServerClient->get('api/v1/partners/' . $this->partner->id . '/pos-users/' . $this->customerId);
     }
 
     /**
@@ -265,8 +265,14 @@ class PosCustomerService
      */
     private function getPurchaseAmountAndTotalUsedPromo(): array
     {
-        $response = $this->posOrderServerClient->get('api/v1/partners/'.$this->partner->id.'/customers/'.$this->customerId.'/purchase-amount-promo-usage');
-        return [$response['data']['total_purchase_amount'],$response['data']['total_used_promo']];
+
+        try {
+            $response = $this->posOrderServerClient->get('api/v1/partners/' . $this->partner->id . '/customers/' . $this->customerId . '/purchase-amount-promo-usage');
+            return [$response['data']['total_purchase_amount'], $response['data']['total_used_promo']];
+        } catch (\Exception $exception) {
+            return [null,null];
+        }
+
     }
 
     /**
@@ -275,12 +281,12 @@ class PosCustomerService
      */
     private function getDueAndPayableAmount(): array
     {
-       // $customer_amount =  $this->posCustomerRepository->getDueAmountFromDueTracker($this->partner, $this->customerId);
-        return [100,0];
+        // $customer_amount =  $this->posCustomerRepository->getDueAmountFromDueTracker($this->partner, $this->customerId);
+        return [100, 0];
     }
 
     private function getCustomerListByPartnerId()
     {
-        return $this->smanagerUserServerClient->get('api/v1/partners/'.$this->partner->id.'/pos-users');
+        return $this->smanagerUserServerClient->get('api/v1/partners/' . $this->partner->id . '/pos-users');
     }
 }
