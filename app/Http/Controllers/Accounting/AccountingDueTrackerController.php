@@ -36,7 +36,8 @@ class AccountingDueTrackerController extends Controller
                 'entry_type' => 'required|in:due,deposit',
                 'account_key' => 'required',
                 'customer_id' => 'required|integer',
-                'date' => 'required|date_format:Y-m-d H:i:s'
+                'date' => 'required|date_format:Y-m-d H:i:s',
+                'partner_wise_order_id' =>  'sometimes|numeric'
             ]);
             $request->merge(['customer_id' => $request->customer_id]);
             $response = $this->dueTrackerRepo->setPartner($request->partner)->storeEntry($request, $request->entry_type);
