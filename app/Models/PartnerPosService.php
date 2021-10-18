@@ -233,9 +233,8 @@ class PartnerPosService extends BaseModel
 
     public function getStock()
     {
-//        if($this->partner->isMigratedToAccounting()) return $this->batches()->get()->sum('stock');
-//        return $this->stock;
-        return $this->batches()->get()->sum('stock');
+        if($this->partner->isMigratedToAccounting()) return $this->batches()->get()->sum('stock');
+        return $this->stock;
     }
 
     public function getLastCost()
