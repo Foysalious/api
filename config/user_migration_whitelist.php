@@ -12,6 +12,8 @@ return [
         'training-videos.get',
         'migration.get.module',
         'migration.can-access',
-        'migration.list'
+        'migration.list',
+        'migration.update-status',
+        'migration.update-status-webhook'
     ]
 ];
