@@ -67,7 +67,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
             }
 
             if($request->partner->status === PartnerStatuses::BLACKLISTED || $request->partner->status === PartnerStatuses::PAUSED) {
-                $error_message = 'ব্ল্যাক লিস্ট হওয়ার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে পারবেন না।';
+                $error_message = 'ব্ল্যাক লিস্ট/সাময়িক বরখাস্ত হওয়ার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে পারবেন না।';
                 $is_partner_blacklisted = true;
             }
             return api_response($request, $withdrawalRequests, 200,
@@ -97,7 +97,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
         /** @var Partner $partner */
         $partner = $request->partner;
         if($partner->status === PartnerStatuses::BLACKLISTED || $partner->status === PartnerStatuses::PAUSED) {
-            return api_response($request, null, 402, ['message' => 'ব্ল্যাক লিস্ট হওয়ার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে পারবেন না।']);
+            return api_response($request, null, 402, ['message' => 'ব্ল্যাক লিস্ট/সাময়িক বরখাস্ত হওয়ার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে পারবেন না।']);
         }
 
         if ($request->payment_method == 'bkash')
