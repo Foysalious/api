@@ -39,6 +39,9 @@ class PartnerStatusAuthMiddleware
         if (!isset($request->partner) && $request->partner instanceof Partner) {
             throw new DoNotReportException("Not a Partner");
         }
+
+        (new PartnerStatusAuthentication())->logoutForBlacklisted($request->partner);
+
         PartnerStatusAuthentication::generateException($request->partner->status);
 
         return $next($request);
