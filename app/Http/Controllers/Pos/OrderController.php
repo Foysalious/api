@@ -569,25 +569,4 @@ class OrderController extends Controller
         return api_response($request, null, 200, ['msg' => 'Customer tagged Successfully']);
     }
 
-    public function createPayment($order, Request $request, PosOrderResolver $posOrderResolver)
-    {
-        $order = $posOrderResolver->setOrderId($order)->get();
-        /** @var PaymentLinkController $payment_link */
-        $payment_link = app(PaymentLinkController::class);
-        $auth_user = $request->auth_user->getAvatar();
-        $request->merge(array(
-            'amount' => $order->due,
-            'purpose' => $request->purpose,
-            'customer_id' => $order->customer_id,
-            'emi_month' => $request->emi_month,
-            'interest_paid_by' => $request->interest_paid_by,
-            'transaction_charge' => $request->transaction_charge,
-            'pos_order_id' => $order->id,
-            "type" => 'partner',
-            'user' => $auth_user,
-            'partner' => $auth_user
-        ));
-        $data = $payment_link->store($request)->getData(true);
-        return http_response($request, null, $data['code'], $data);
-    }
 }
