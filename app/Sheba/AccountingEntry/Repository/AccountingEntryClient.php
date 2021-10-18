@@ -86,7 +86,7 @@ class AccountingEntryClient
             if ($res['code'] != 200) {
                 throw new AccountingEntryServerError($res['message']);
             }
-            return isset($res['data']) ? $res['data'] : $res['message'];
+            return $res['data'] ?? $res['message'];
 
         } catch (GuzzleException $e) {
             $response = $e->getResponse() ? json_decode($e->getResponse()->getBody()->getContents(), true): null;

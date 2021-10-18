@@ -50,7 +50,7 @@ class AccountingDueTrackerRepository extends BaseRepository
      * @return bool
      * @throws AccountingEntryServerError
      */
-    public function storeEntry(Request $request, $type, $with_update = false)
+    public function storeEntry(Request $request, $type, bool $with_update = false)
     {
         if (!$this->isMigratedToAccounting($this->partner->id)) {
             return true;
