@@ -514,12 +514,15 @@ class DueTrackerRepository extends BaseRepository
         $customer = $partner_pos_customer->customer;
         $type = $request->type == 'receivable' ? 'due' : 'deposit';
 //        $data = $this->setSmsData($request, $customer);
+        /** @var Partner $partner */
+        $partner=$request->partner;
         $data     = [
             'type'          => $type,
-            'partner_name'  => $request->partner->name,
+            'partner_name'  => $partner->name,
             'customer_name' => $customer->profile->name,
             'mobile'        => $customer->profile->mobile,
             'amount'        => $request->amount,
+            'company_number'=> $partner->getContactNumber()
         ];
         if ($request->has('payment_link')) {
             $data['payment_link'] = $request->payment_link;
@@ -561,7 +564,8 @@ class DueTrackerRepository extends BaseRepository
         $message_data = [
             'customer_name' => $data['customer_name'],
             'partner_name'  => $data['partner_name'],
-            'amount'        => $data['amount']
+            'amount'        => $data['amount'],
+            'company_number'=> $data['company_number']
         ];
 
         if ($data['type'] == 'due') {
@@ -624,7 +628,7 @@ class DueTrackerRepository extends BaseRepository
             'payment_link'  => $request->type == 'due' ? $request->payment_link : null
         ];
     }
-    
+
     /**
      * @param Request $request
      * @param PaymentLinkCreator $paymentLinkCreator
