@@ -45,16 +45,13 @@ class PartnerStatusAuthentication
      */
     public function logoutForBlacklisted(Partner $partner)
     {
-        try {
-            /** @var PartnerStatusAuthentication $partnerStatus */
-            $partnerStatus = app()->make(PartnerStatusAuthentication::class);
-            if ($partner->status === PartnerStatuses::BLACKLISTED) {
-                $partner->resources->each(function ($resource) use ($partnerStatus) {
-                    $partnerStatus->logoutFromAllDevices($resource);
-                });
-            }
-        } catch (\Exception $e) {
-            dd($e);
+        /** @var PartnerStatusAuthentication $partnerStatus */
+        $partnerStatus = app()->make(PartnerStatusAuthentication::class);
+        if ($partner->status === PartnerStatuses::BLACKLISTED) {
+            $partner->resources->each(function ($resource) use ($partnerStatus) {
+                $partnerStatus->logoutFromAllDevices($resource);
+            });
         }
+
     }
 }
