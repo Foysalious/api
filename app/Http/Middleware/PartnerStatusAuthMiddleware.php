@@ -9,6 +9,7 @@ use App\Models\Partner;
 use Closure;
 use Sheba\Authentication\Exceptions\AuthenticationFailedException;
 use Sheba\Partner\PartnerStatuses;
+use Sheba\PartnerStatusAuthentication;
 
 class PartnerStatusAuthMiddleware
 {
@@ -38,21 +39,8 @@ class PartnerStatusAuthMiddleware
         if (!isset($request->partner) && $request->partner instanceof Partner) {
             throw new DoNotReportException("Not a Partner");
         }
-        $this->generateException($request->partner->status);
+        PartnerStatusAuthentication::generateException($request->partner->status);
 
         return $next($request);
-    }
-
-    /**
-     * @throws AuthenticationFailedException
-     */
-    protected function generateException($status)
-    {
-        if($status === $this->access['blacklisted'][0])
-            throw new AuthenticationFailedException("আপনাকে sManager থেকে স্থায়ী ভাবে বরখাস্ত করা হয়েছে। আরও জানতে কল করুন ১৬৫১৬।");
-
-        elseif ($status === $this->access['paused'][0])
-            throw new AuthenticationFailedException("আপনাকে sManager থেকে সাময়িক ভাবে বরখাস্ত করা হয়েছে। আরও জানতে কল করুন ১৬৫১৬।", 403);
-
     }
 }
