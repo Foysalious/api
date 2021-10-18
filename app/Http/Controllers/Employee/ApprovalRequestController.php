@@ -126,7 +126,7 @@ class ApprovalRequestController extends Controller
         $requestable = $approval_request->requestable;
         /** @var BusinessMember $leave_requester_business_member */
         $leave_requester_business_member = $requestable->businessMember;
-        if (!$leave_requester_business_member)
+        if (!$leave_requester_business_member || $leave_requester_business_member->status != 'active')
             return api_response($request, null, 403, ['message' => 'This Employee is not anymore in the company']);
         /** @var Business $business */
         $business = $this->getBusiness($request);
