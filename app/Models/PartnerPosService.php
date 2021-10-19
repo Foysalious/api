@@ -228,6 +228,7 @@ class PartnerPosService extends BaseModel
 
     public function getLastStock()
     {
+        if(!$this->partner->isMigratedToAccounting()) return $this->stock;
         return $this->batches()->latest()->first()->stock ? $this->batches()->latest()->first()->stock : null;
     }
 
@@ -239,6 +240,7 @@ class PartnerPosService extends BaseModel
 
     public function getLastCost()
     {
+        if(!$this->partner->isMigratedToAccounting()) return $this->cost;
         return $this->batches()->latest()->first()->cost ? $this->batches()->latest()->first()->cost : 0.0;
     }
 }
