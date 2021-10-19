@@ -254,4 +254,10 @@ class OrderController extends Controller
         return http_response($request, null, $data['code'], $data);
     }
 
+    public function getFilteringOptions(Request $request)
+    {
+        $data = $this->orderService->getFilteringOptions();
+        return http_response($request, null, 200, $data);
+    }
+
 }

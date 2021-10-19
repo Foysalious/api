@@ -156,8 +156,9 @@ class Route
                 $api->get('slider-details-and-account-types', 'PartnerController@getSliderDetailsAndAccountTypes');
                 $api->get('qr-code', 'PartnerController@getQRCode');
                 $api->post('qr-code', 'PartnerController@setQRCode');
-                $api->get('orders/{order}/send-sms', 'Pos\OrderController@sendSms');
-                $api->get('orders/{order}/send-email', 'Pos\OrderController@sendEmail');
+                $api->post('orders/{order}/send-sms', 'Pos\OrderController@sendSms');
+                $api->post('orders/{order}/send-email', 'Pos\OrderController@sendEmail');
+                $api->get('filtering-options', 'PosOrder\OrderController@getFilteringOptions' );
                 /**
                  * End Old APIs with jwtAccessToken Middleware
                  */
