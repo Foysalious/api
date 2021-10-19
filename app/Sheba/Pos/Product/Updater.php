@@ -1,8 +1,10 @@
 <?php namespace Sheba\Pos\Product;
 
+use App\Models\Partner;
 use App\Models\PartnerPosService;
 use App\Repositories\FileRepository;
 use App\Sheba\Pos\Product\Accounting\ExpenseEntry;
+use App\Sheba\UserMigration\Modules;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
 use Sheba\Dal\PartnerPosServiceBatch\Model as PartnerPosServiceBatch;
@@ -287,7 +289,9 @@ class Updater
 
     private function formatBatchData()
     {
-        if(!$this->service->partner->isMigratedToAccounting()) return;
+        /** @var Partner $partner */
+        $partner = $this->service->partner;
+        if(!$partner->isMigrated(Modules::EXPENSE)) return;
         if ((isset($this->data['is_stock_off']) && ($this->data['is_stock_off'] == 'true' && $this->service->getStock() != null))) {
             $this->deleteBatchesFifo();
             return;

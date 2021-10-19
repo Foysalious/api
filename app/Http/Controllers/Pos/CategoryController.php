@@ -3,6 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Models\PosCategory;
+use App\Sheba\UserMigration\Modules;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
@@ -271,7 +272,7 @@ class CategoryController extends Controller
     {
         /** @var Partner $partner */
         $partner = $service->partner;
-        if($partner->isMigratedToAccounting()) {
+        if($partner->isMigrated(Modules::EXPENSE)) {
             $batches = $this->getBatches($service->id);
             $total_buying_price = 0.0;
             foreach ($batches as $batch) {

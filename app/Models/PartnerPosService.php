@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use App\Sheba\UserMigration\Modules;
 use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceCreated;
 use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceSaved;
 use Carbon\Carbon;
@@ -228,19 +229,25 @@ class PartnerPosService extends BaseModel
 
     public function getLastStock()
     {
-        if(!$this->partner->isMigratedToAccounting()) return $this->stock;
+        /** @var Partner $partner */
+        $partner = $this->partner;
+        if(!$partner->isMigrated(Modules::EXPENSE)) return $this->stock;
         return $this->batches()->latest()->first()->stock ? $this->batches()->latest()->first()->stock : null;
     }
 
     public function getStock()
     {
-        if($this->partner->isMigratedToAccounting()) return $this->batches()->get()->sum('stock');
+        /** @var Partner $partner */
+        $partner = $this->partner;
+        if($partner->isMigrated(Modules::EXPENSE)) return $this->batches()->get()->sum('stock');
         return $this->stock;
     }
 
     public function getLastCost()
     {
-        if(!$this->partner->isMigratedToAccounting()) return $this->cost;
+        /** @var Partner $partner */
+        $partner = $this->partner;
+        if(!$partner->isMigrated(Modules::EXPENSE)) return $this->cost;
         return $this->batches()->latest()->first()->cost ? $this->batches()->latest()->first()->cost : 0.0;
     }
 }

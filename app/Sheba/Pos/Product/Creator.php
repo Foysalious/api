@@ -3,6 +3,7 @@
 use App\Models\Partner;
 use App\Models\PartnerPosService;
 use App\Sheba\Pos\Product\Accounting\ExpenseEntry;
+use App\Sheba\UserMigration\Modules;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
@@ -187,7 +188,7 @@ class Creator
     {
         /** @var Partner $partner */
         $partner = $service->partner;
-        if(!$partner->isMigratedToAccounting()) return true;
+        if(!$partner->isMigrated(Modules::EXPENSE)) return true;
         $batchData = [];
         $accounting_data = [];
         $batchData['partner_pos_service_id'] = $service->id;

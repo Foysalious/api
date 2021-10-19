@@ -2,6 +2,7 @@
 
 use App\Models\Transport\TransportTicketOrder;
 use App\Sheba\Payment\Rechargable;
+use App\Sheba\UserMigration\AccountingUserMigration;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -1053,12 +1054,12 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->subscription_rules->payment_gateway_configuration_id;
     }
 
-    public function isMigratedToAccounting(): bool
+    public function isMigrated($module_name): bool
     {
         $arr = [self::NOT_ELIGIBLE, UserStatus::PENDING, UserStatus::UPGRADING, UserStatus::FAILED];
-        /** @var UserMigrationRepository $userMigrationRepo */
-        $userMigrationRepo = app(UserMigrationRepository::class);
-        $userStatus = $userMigrationRepo->userStatus($this->id);
+        /** @var AccountingUserMigration $repo */
+        $repo = app(AccountingUserMigration::class);
+        $userStatus = $repo->setUserId($this->id)->setModuleName($module_name)->getStatus();
         if (in_array($userStatus, $arr)) return false;
         return true;
     }
