@@ -181,21 +181,26 @@ class MemberController extends Controller
         if (!$business_member) return api_response($request, null, 420, ['message' => 'You account is not active yet. Please contract with your company.']);
         $profile = $member->profile;
         $access_control->setBusinessMember($business_member);
+
         $info = [
             'profile_id' => $profile->id,
-            'name' => $profile->name,
+            'business_member_id' => $business_member->id,
+            'name' => !$this->isNull($profile->name) ? $profile->name : 'n/s',
             'mobile' => $business_member->mobile,
             'email' => $profile->email,
             'pro_pic' => $profile->pro_pic,
-            'designation' => ($business_member && $business_member->role) ? $business_member->role->name : null,
             'gender' => $profile->gender,
             'date_of_birth' => $profile->dob ? Carbon::parse($profile->dob)->format('M-j, Y') : null,
+            'join_date' => $business_member->join_date ? Carbon::parse($business_member->join_date)->toDateString() : null,
             'nid_no' => $profile->nid_no,
             'address' => $profile->address,
             'business_id' => $business ? $business->id : null,
-            'remember_token' => $member->remember_token,
+            'department' => ($business_member && $business_member->department()) ? $business_member->department()->name : null,
+            'designation' => ($business_member && $business_member->role) ? $business_member->role->name : null,
             'is_super' => $business_member ? $business_member->is_super : null,
+            'is_essential_info_available_for_activate' => $this->isEssentialInfoAvailableForActivate($business_member, $profile),
             'is_payroll_enable' => $business_member ? $business_member->is_payroll_enable : null,
+            'remember_token' => $member->remember_token,
             'access' => [
                 'support' => $business ? (in_array($business->id, config('business.WHITELISTED_BUSINESS_IDS')) && $access_control->hasAccess('support.rw') ? 1 : 0) : 0,
                 'expense' => $business ? (in_array($business->id, config('business.WHITELISTED_BUSINESS_IDS')) && $access_control->hasAccess('expense.rw') ? 1 : 0) : 0,
@@ -204,6 +209,20 @@ class MemberController extends Controller
         ];
 
         return api_response($request, $info, 200, ['info' => $info]);
+    }
+
+    private function isEssentialInfoAvailableForActivate($business_member, $profile)
+    {
+        if ($this->isNull($profile->name) || !$profile->gender || !$business_member->business_role_id || !$business_member->join_date)
+            return 0;
+        return 1;
+    }
+
+    private function isNull($data)
+    {
+        if ($data == " ") return true;
+        if ($data == null) return true;
+        return false;
     }
 
     /**
