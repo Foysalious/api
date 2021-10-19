@@ -489,4 +489,21 @@ class DashboardController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function settingLastUpdatedDetails(Request $request)
+    {
+        $partner = $request->partner;
+        $modules = config('partner_setting_modules');
+
+        foreach ($modules as $key => $module) {
+            if ($modules[$key]['function']) {
+                $modules[$key]['updated_at'] = Carbon::parse(call_user_func_array([$partner, $module['function']], []))->toDateTimeString();
+            } else {
+                $modules[$key]['updated_at'] = Carbon::now()->toDateString() . ' 00:01:01';
+            }
+
+            unset($modules[$key]['function']);
+        }
+        return api_response($request, $modules, 200, ['data' => $modules]);
+    }
 }
