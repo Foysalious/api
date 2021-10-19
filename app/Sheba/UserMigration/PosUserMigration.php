@@ -24,9 +24,10 @@ class PosUserMigration extends UserMigrationRepository
      */
     public function updateStatus($status)
     {
-        $accounting_status = $this->setModuleName(Modules::EXPENSE)->getStatus();
-        if ($accounting_status != UserStatus::UPGRADED) throw new Exception('Please Complete Accounting Migration First!');
+
         if ($status == UserStatus::UPGRADING) {
+            $accounting_status = $this->setModuleName(Modules::EXPENSE)->getStatus();
+            if ($accounting_status != UserStatus::UPGRADED) throw new Exception('Please Complete Accounting Migration First!');
             $current_status = $this->setModuleName(Modules::POS)->getStatus();
             if ($current_status == self::NOT_ELIGIBLE) throw new Exception('Sorry! Not Found');
             if ($current_status == UserStatus::UPGRADED) throw new Exception('Sorry! Already Migrated.');
