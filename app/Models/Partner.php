@@ -1071,4 +1071,9 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     {
         return $this->posSetting->updated_at;
     }
+
+    public function lastBilledDate()
+    {
+        return $this->last_billed_date;
+    }
 }
