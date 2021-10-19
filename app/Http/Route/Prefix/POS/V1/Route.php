@@ -24,6 +24,7 @@ class Route
             $api->get('emi-calculate', 'PosOrder\OrderController@calculateEmiCharges');
             $api->group(['prefix' => 'partners'], function ($api) {
                 $api->group(['prefix' => '{partner}'], function ($api) {
+                    $api->get('/', 'Pos\PartnerController@findById')->middleware('ip.whitelist');
                     $api->group(['prefix' => 'orders'], function ($api) {
                         $api->group(['prefix' => '{order}'], function ($api) {
                             $api->post('online-payment', 'PosOrder\OrderController@onlinePayment');
@@ -129,7 +130,8 @@ class Route
                         $api->post('/update-status', 'PosOrder\OrderController@updateStatus');
                         $api->post('/validate-promo', 'PosOrder\OrderController@validatePromo');
                         $api->get('/logs', 'PosOrder\OrderController@logs');
-                        $api->post('payment/create', "Pos\OrderController@createPayment");
+                        $api->get('/logs/{log}/invoice', 'PosOrder\OrderController@generateLogInvoice');
+                        $api->post('payment/create', "PosOrder\OrderController@createPayment");
                     });
                     $api->put('/{order}/update-customer', 'PosOrder\OrderController@updateCustomer');
                     $api->put('/{order}', 'PosOrder\OrderController@update');

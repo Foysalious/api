@@ -38,7 +38,7 @@ class SkuService
 
     public function getSkus($partnerId)
     {
-        $url = 'api/v1/partners/' . $partnerId . '/skus?';
+        $url = 'api/v1/partners/' . $partnerId . '/skus-details?';
         if (isset($this->skuIds)) $url .= 'skus='.$this->skuIds.'&';
         if (isset($this->channelId)) $url .= 'channel_id='.$this->channelId.'&';
         return $this->client->get($url);

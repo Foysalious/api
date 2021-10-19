@@ -109,7 +109,7 @@ class PartnerController extends Controller
 
         return api_response($request, $details, 200, ['info' => $details]);
     }
-    
+
     public function getServices($partner, $category, Request $request)
     {
         $partner = Partner::find((int)$partner);
@@ -1055,14 +1055,14 @@ class PartnerController extends Controller
     {
         $this->validate($request, [
             'vat_registration_number' => 'required',
-            'is_show_vat_reg_number' => 'sometimes|required|in:1,0'
+            'show_vat_registration_number' => 'sometimes|required|in:1,0'
         ]);
         $partner = resolvePartnerFromAuthMiddleware($request);
         $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
         $partner->basicInformations()->update($this->withUpdateModificationField(
             [
                 'vat_registration_number' => $request->vat_registration_number,
-                'is_show_vat_reg_number' => $request->is_show_vat_reg_number ?: 0
+                'show_vat_registration_number' => $request->show_vat_registration_number ?: 0
             ]
         ));
         return make_response($request, null, 200, ['msg' => 'Vat Registration Number Update Successfully']);
