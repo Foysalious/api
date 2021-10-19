@@ -33,11 +33,11 @@ class AccountingUserMigration extends UserMigrationRepository
     public function updateStatus($status)
     {
 //        TODO: Razoan
-//        if ($status == UserStatus::UPGRADING) {
-//            /** @var \Sheba\AccountingEntry\Repository\UserMigrationRepository $accUpgradeRepo */
-//            $accUpgradeRepo = app(\Sheba\AccountingEntry\Repository\UserMigrationRepository::class);
-//            $accUpgradeRepo->migrateInAccounting($this->userId, $status);
-//        }
+        if ($status == UserStatus::UPGRADING) {
+            /** @var \Sheba\AccountingEntry\Repository\UserMigrationRepository $accUpgradeRepo */
+            $accUpgradeRepo = app(\Sheba\AccountingEntry\Repository\UserMigrationRepository::class);
+            $accUpgradeRepo->migrateInAccounting($this->userId, $status);
+        }
         return $this->updateMigrationStatus($status);
     }
 
