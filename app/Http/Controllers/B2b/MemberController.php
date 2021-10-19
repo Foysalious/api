@@ -199,7 +199,7 @@ class MemberController extends Controller
             'nid_no' => $profile->nid_no,
             'address' => $profile->address,
             'business_id' => $business ? $business->id : null,
-            'department' => ($business_member && $business_member->department()) ? $business_member->department()->name : null,
+            'department' => ($business_member && $business_member->department()) ? $business_member->department()->id : null,
             'designation' => ($business_member && $business_member->role) ? $business_member->role->name : null,
             'is_super' => $business_member ? $business_member->is_super : null,
             'is_essential_info_available_for_activate' => $this->isEssentialInfoAvailableForActivate($business_member, $profile),
