@@ -6,6 +6,7 @@ use App\Models\Partner;
 use App\Models\PartnerPosSetting;
 use App\Models\PosCustomer;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
+use Exception;
 use Sheba\Sms\BusinessType;
 use Sheba\Sms\FeatureType;
 use Illuminate\Http\JsonResponse;
@@ -97,6 +98,7 @@ class SettingController extends Controller
      * @param Request $request
      * @return JsonResponse
      * @throws InsufficientBalanceException
+     * @throws Exception
      */
     public function duePaymentRequestSms(Request $request)
     {
@@ -105,23 +107,21 @@ class SettingController extends Controller
         $partner = $request->partner;
         $this->setModifier($request->manager_resource);
         $customer = PosCustomer::find($request->customer_id);
+        $variables=[
+            'partner_name' => $partner->name,
+            'due_amount' => $request->due_amount,
+            'company_number'=>$partner->getContactNumber()
+        ];
         $sms = (new SmsHandlerRepo('due-payment-collect-request'))
             ->setBusinessType(BusinessType::SMANAGER)
             ->setFeatureType(FeatureType::POS)
-            ->setMessage([
-                'partner_name' => $partner->name,
-                'due_amount' => $request->due_amount,
-                'company_number'=>$partner->getContactNumber()
-            ])
+            ->setMessage($variables)
             ->setMobile($customer->profile->mobile);
         $sms_cost = $sms->estimateCharge();
         //freeze money amount check
-        WalletTransactionHandler::isDebitTransactionAllowed($request->partner, $sms_cost, 'এস-এম-এস পাঠানোর');
+        WalletTransactionHandler::isDebitTransactionAllowed($partner, $sms_cost, 'এস-এম-এস পাঠানোর');
         if ((double)$partner->wallet < $sms_cost) throw new InsufficientBalanceException();
-        $sms->send($customer->profile->mobile, [
-            'partner_name' => $partner->name,
-            'due_amount' => $request->due_amount
-        ]);
+        $sms->send($customer->profile->mobile,$variables);
         $log = $sms_cost. " BDT has been deducted for sending due payment request sms";
         (new WalletTransactionHandler())->setModel($request->partner)->setAmount($sms_cost)->setType(Types::debit())->setLog($log)->setTransactionDetails([])->setSource(TransactionSources::SMS)->store();
 
