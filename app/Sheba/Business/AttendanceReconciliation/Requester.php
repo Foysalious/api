@@ -11,6 +11,7 @@ class Requester
     private $error;
     private $checkinTime;
     private $checkoutTime;
+    private $date;
 
     public function __construct()
     {
@@ -43,6 +44,12 @@ class Requester
         return $this;
     }
 
+    public function setDate($date)
+    {
+        $this->date = $date;
+        return $this;
+    }
+
     public function getError()
     {
         return $this->error;
@@ -61,5 +68,10 @@ class Requester
     public function getCheckoutTime()
     {
         return $this->checkoutTime;
+    }
+
+    public function getDate()
+    {
+        return $this->date;
     }
 }
