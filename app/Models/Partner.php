@@ -58,9 +58,9 @@ use Sheba\Dal\UserMigration\Model as UserMigration;
 
 class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent, Rechargable, Bidder, HasWalletTransaction, HasReferrals, PayableUser
 {
+    CONST NOT_ELIGIBLE = 'not_eligible';
     use Wallet, TopUpTrait, MovieTicketTrait;
 
-    CONST NOT_ELIGIBLE = 'not_eligible';
     public $totalCreditForSubscription;
     public $totalPriceRequiredForSubscription;
     public $creditBreakdown;
@@ -1049,16 +1049,6 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function dataMigration()
     {
         return $this->hasOne(PartnerDataMigration::class);
-    }
-
-    public function isMigrationCompleted()
-    {
-        return $this->is_migration_completed == 1;
-    }
-
-    public function isMigrationRunningOrCompleted()
-    {
-        return $this->dataMigration && $this->dataMigration->isRunningOrCompleted();
     }
 
     public function topupChangeLogs()

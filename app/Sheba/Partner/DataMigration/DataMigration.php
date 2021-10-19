@@ -3,6 +3,7 @@
 use App\Exceptions\Pos\DataMigrationException;
 use App\Models\Partner;
 use App\Sheba\Partner\DataMigration\PosOrderDataMigration;
+use App\Sheba\UserMigration\Modules;
 use Sheba\ModificationFields;
 use Sheba\Partner\DataMigration\Jobs\PartnerMigrationCompleteJob;
 use Sheba\Partner\DataMigration\Jobs\PartnerMigrationStartJob;
@@ -42,8 +43,6 @@ class DataMigration
      */
     public function migrate()
     {
-        if ($this->partner->isMigrationRunningOrCompleted()) throw new DataMigrationException();
-        dispatch(new PartnerMigrationStartJob($this->partner));
         $this->inventoryDataMigration->setPartner($this->partner)->migrate();
         $this->posOrderDataMigration->setPartner($this->partner)->migrate();
         $this->smanagerUserDataMigration->setPartner($this->partner)->migrate();

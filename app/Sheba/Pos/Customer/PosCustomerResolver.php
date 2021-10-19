@@ -4,6 +4,7 @@
 use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
 use App\Sheba\PosOrderService\SmanagerUserServerClient;
+use App\Sheba\UserMigration\Modules;
 
 class PosCustomerResolver
 {
@@ -44,7 +45,7 @@ class PosCustomerResolver
 
     public function get(): PosCustomerObject
     {
-        if ($this->partner->isMigrationCompleted()) {
+        if ($this->partner->isMigrated(Modules::POS)) {
             $customer = $this->smanagerUserServerClient->get('api/v1/partners/' . $this->partner->id . '/users/' . $this->customerId);
             return $this->posCustomerObject->setId($customer['_id'])->setPartnerId($customer['partner_id'])->setName($customer['name'])
                 ->setIsSupplier($customer['is_supplier'])->setMobile($customer['mobile'])->setEmail($customer['email'])

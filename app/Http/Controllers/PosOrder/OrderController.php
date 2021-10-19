@@ -6,6 +6,7 @@ use App\Http\Controllers\VoucherController;
 use App\Models\Partner;
 use App\Models\PosOrder;
 use App\Sheba\PosOrderService\Services\OrderService;
+use App\Sheba\UserMigration\Modules;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\DueTracker\Exceptions\UnauthorizedRequestFromExpenseTrackerException;
@@ -200,6 +201,7 @@ class OrderController extends Controller
         ]);
         if ($request->header('api-key') != config('expense_tracker.api_key'))
             throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
+        /** @var Partner $partner */
         $partner = Partner::find($partner);
         $interest = 0;
         $bank_transaction_charge = 0;
@@ -207,7 +209,7 @@ class OrderController extends Controller
             $interest = $request->interest;
             $bank_transaction_charge = $request->bank_transaction_charge;
         }
-        if ($partner->isMigrationCompleted()) {
+        if ($partner->isMigrated(Modules::POS)) {
             $this->orderService->setPartnerId($partner->id)->setOrderId($request->order)->setInterest($interest)
                 ->setBankTransactionCharge($bank_transaction_charge)->update();
         } else {

@@ -3,6 +3,7 @@
 use App\Models\Partner;
 use App\Models\PosCustomer as PosCustomerModel;
 use App\Sheba\PosCustomerService\PosCustomerService;
+use App\Sheba\UserMigration\Modules;
 use Exception;
 use Sheba\Voucher\DTO\Params\CheckParamsForPosOrder;
 
@@ -102,7 +103,7 @@ class VoucherValidate
 
     private function resolvePosCustomer()
     {
-        if (!$this->partner->isMigrationCompleted()) {
+        if (!$this->partner->isMigrated(Modules::POS)) {
             if (!$this->posCustomerId) $customer = (new PosCustomerModel());
             else $customer = PosCustomerModel::find($this->posCustomerId);
             $this->posCustomer
@@ -132,7 +133,7 @@ class VoucherValidate
     {
         $result = voucher($this->code)->checkForPosOrder($pos_order_params);
         $customer_mobile = $this->posCustomer->mobile;
-        return $customer_mobile && $this->partner->isMigrationCompleted() ? $result->checkMobile($customer_mobile)->reveal() : $result->reveal();
+        return $customer_mobile && $this->partner->isMigrated(Modules::POS) ? $result->checkMobile($customer_mobile)->reveal() : $result->reveal();
     }
 
     private function getPosCustomer()
