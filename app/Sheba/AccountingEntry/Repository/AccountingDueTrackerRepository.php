@@ -361,7 +361,12 @@ class AccountingDueTrackerRepository extends BaseRepository
         return $url;
     }
 
-    private function createEntryData(Request $request, $type)
+    /**
+     * @param Request $request
+     * @param $type
+     * @return array
+     */
+    private function createEntryData(Request $request, $type): array
     {
         $data['created_from'] = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
         $data['amount'] = (double)$request->amount;
