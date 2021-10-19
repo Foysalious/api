@@ -34,7 +34,7 @@ class TopUpAgentBlocker
 
     public function checkAndBlock()
     {
-        if ($this->orderRepo->getCountByAgentSince($this->agent, Carbon::now()->subMinute()) < 3) return;
+        if ($this->orderRepo->getCountByAgentSince($this->agent, Carbon::now()->subMinute()) < 5) return;
 
         $this->blockedAgentRepo->create([
             'agent_type' => get_class($this->agent),
