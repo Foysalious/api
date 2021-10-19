@@ -359,6 +359,11 @@ class OrderService
         return $this->client->setToken($this->token)->put('api/v1/partners/' . $this->partnerId. '/delivery_req_id/' . $delivery_req_id .'/update-status', $data);
     }
 
+    public function getFilteringOptions()
+    {
+        return $this->client->get('api/v1/filtering-options');
+    }
+
     private function makeDeliveryData()
     {
         $data = [];

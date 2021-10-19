@@ -158,6 +158,7 @@ class Route
                 $api->post('qr-code', 'PartnerController@setQRCode');
                 $api->post('orders/{order}/send-sms', 'Pos\OrderController@sendSms');
                 $api->post('orders/{order}/send-email', 'Pos\OrderController@sendEmail');
+                $api->get('filtering-options', 'PosOrder\OrderController@getFilteringOptions' );
                 /**
                  * End Old APIs with jwtAccessToken Middleware
                  */
