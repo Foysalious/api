@@ -2,6 +2,7 @@
 
 use App\Models\Transport\TransportTicketOrder;
 use App\Sheba\Payment\Rechargable;
+use App\Sheba\UserMigration\AccountingUserMigration;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,6 +17,7 @@ use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInformation;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
+use Sheba\Dal\UserMigration\UserStatus;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Payment\PayableUser;
 use Sheba\Transactions\Types;
@@ -53,6 +55,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 {
     use Wallet, TopUpTrait, MovieTicketTrait;
 
+    CONST NOT_ELIGIBLE = 'not_eligible';
     public $totalCreditForSubscription;
     public $totalPriceRequiredForSubscription;
     public $creditBreakdown;
@@ -1048,5 +1051,15 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function getGatewayChargesId()
     {
         return $this->subscription_rules->payment_gateway_configuration_id;
+    }
+
+    public function isMigrated($module_name): bool
+    {
+        $arr = [self::NOT_ELIGIBLE, UserStatus::PENDING, UserStatus::UPGRADING, UserStatus::FAILED];
+        /** @var AccountingUserMigration $repo */
+        $repo = app(AccountingUserMigration::class);
+        $userStatus = $repo->setUserId($this->id)->setModuleName($module_name)->getStatus();
+        if (in_array($userStatus, $arr)) return false;
+        return true;
     }
 }
