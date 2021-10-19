@@ -4,6 +4,7 @@ use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
 use App\Models\PosOrder;
 use App\Sheba\PosOrderService\PosOrderServerClient;
+use App\Sheba\UserMigration\Modules;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Validator;
@@ -42,7 +43,7 @@ class CustomerWise extends PosReport
     {
 
         $customer_sales = [];
-        if($this->partner->isMigrationCompleted()){
+        if($this->partner->isMigrated(Modules::POS)){
             $customer_sales =  $this->getReportDataFromPosServer(self::class);
         } else {
             $this->query->get()->each(function (PosOrder $pos_order) use (&$customer_sales) {
