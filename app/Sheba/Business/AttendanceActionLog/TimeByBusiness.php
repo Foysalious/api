@@ -10,15 +10,15 @@ use Sheba\Dal\Leave\Model as Leave;
 
 class TimeByBusiness
 {
-    public function getOfficeStartTimeByBusiness()
+    public function getOfficeStartTimeByBusiness($time = null, $business = null, $business_member = null)
     {
-        $now = Carbon::now();
+        $now = $time ? $time : Carbon::now();
         /** @var Business $business */
-        $business = $this->getBusiness();
+        $business = $business ? $business : $this->getBusiness();
         /** @var BusinessOfficeHour $office_hour */
         $office_hour = $business->officeHour;
         /** @var BusinessMember $business_member */
-        $business_member = $this->getBusinessMember();
+        $business_member = $business_member ? $business_member : $this->getBusinessMember();
 
         $business_member_is_on_leaves = $business_member->isOnLeaves($now);
         if ($business_member_is_on_leaves) {
@@ -40,7 +40,6 @@ class TimeByBusiness
                 }
             }
         }
-
         return $this->officeStartTime($office_hour);
     }
 
@@ -60,15 +59,15 @@ class TimeByBusiness
         return Carbon::parse($business_hour->start_time)->addMinutes($business_hour->start_grace_time)->format('H:i:s');
     }
 
-    public function getOfficeEndTimeByBusiness()
+    public function getOfficeEndTimeByBusiness($time = null, $business = null, $business_member = null)
     {
-        $now = Carbon::now();
+        $now = $time ? $time : Carbon::now();
         /** @var Business $business */
-        $business = $this->getBusiness();
+        $business = $business ? $business : $this->getBusiness();
         /** @var BusinessOfficeHour $office_hour */
         $office_hour = $business->officeHour;
         /** @var BusinessMember $business_member */
-        $business_member = $this->getBusinessMember();
+        $business_member = $business_member ? $business_member : $this->getBusinessMember();
 
         $business_member_is_on_leaves = $business_member->isOnLeaves($now);
         if ($business_member_is_on_leaves) {
