@@ -55,6 +55,8 @@ use Sheba\Dal\Service\Service;
 use Sheba\Dal\PartnerNeoBankingInfo\Model as PartnerNeoBankingInfo;
 use Sheba\Dal\PartnerNeoBankingAccount\Model as PartnerNeoBankingAccount;
 use Sheba\Dal\PartnerGeneralSetting\Model as PartnerGeneralSetting;
+use Sheba\Dal\UserMigration\Model as UserMigration;
+
 
 class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent, Rechargable, Bidder, HasWalletTransaction, HasReferrals, PayableUser
 {
@@ -1098,5 +1100,25 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         $userStatus = $userMigrationRepo->userStatus($this->id);
         if (in_array($userStatus, $arr)) return false;
         return true;
+    }
+
+    public function userMigration()
+    {
+        return $this->hasMany(UserMigration::class, 'user_id');
+    }
+
+    public function lastUpdatedUserMigration()
+    {
+        return $this->userMigration->max('updated_at');
+    }
+
+    public function lastUpdatedSubscription()
+    {
+        return $this->subscription->updated_at;
+    }
+
+    public function lastUpdatedPosSetting()
+    {
+        return $this->posSetting->updated_at;
     }
 }

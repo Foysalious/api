@@ -14,6 +14,7 @@ return [
         'migration.can-access',
         'migration.list',
         'migration.update-status',
-        'migration.update-status-webhook'
+        'migration.update-status-webhook',
+        'partner.setting-updated-at'
     ]
 ];

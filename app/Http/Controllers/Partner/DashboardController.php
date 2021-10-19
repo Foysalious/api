@@ -512,4 +512,23 @@ class DashboardController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function settingUpdatedDetails(Request $request)
+    {
+        $partner = $request->partner;
+        $modules = config('partner_setting_modules');
+        foreach ($modules as $key => $module) {
+            if ($module['key'] == 'home_settings') {
+                $modules[$key]['updated_at'] = Carbon::parse(call_user_func_array([$partner, $module['function']], []))->toDateTimeString();
+            }
+            if ($module['key'] == 'user_migration') {
+                $modules[$key]['updated_at'] = Carbon::parse(call_user_func_array([$partner, $module['function']], []))->toDateTimeString();
+            }
+            if ($module['key'] == 'pos_settings') {
+                $modules[$key]['updated_at'] = Carbon::parse(call_user_func_array([$partner, $module['function']], []))->toDateTimeString();
+            }
+            unset($modules[$key]['function']);
+        }
+        return api_response($request, $modules, 200, ['data' => $modules]);
+    }
 }
