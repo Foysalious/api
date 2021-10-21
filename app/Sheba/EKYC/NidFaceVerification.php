@@ -2,10 +2,13 @@
 
 namespace Sheba\EKYC;
 
+use App\Models\Resource;
 use App\Repositories\ResourceRepository;
 use Carbon\Carbon;
+use Exception;
 use Intervention\Image\Facades\Image;
 use Sheba\Dal\ProfileNIDSubmissionLog\Model as ProfileNIDSubmissionLog;
+use Sheba\EKYC\Exceptions\EKycException;
 use Sheba\ModificationFields;
 use Sheba\Repositories\AffiliateRepository;
 use App\Repositories\FileRepository;
@@ -25,12 +28,19 @@ class NidFaceVerification
         $this->fileRepo = $file_repository;
     }
 
+    /**
+     * @param $data
+     * @param $profile
+     * @throws Exception
+     */
     public function verifiedChanges($data, $profile)
     {
         $data = $this->makeData($data);
         $this->profileRepo->updateRaw($profile, $data);
         if(isset($profile->resource)) {
             $resourceRepo = (new ResourceRepository($profile->resource));
+            $count = $resourceRepo->checkDuplicateNIDInResource($data['nid_no']);
+            if($count > 0) throw new EKycException("NID already exist in another resource");
             $resourceRepo->update($this->withUpdateModificationField([
                 'father_name' => $data['father_name'] ? $data['father_name'] : 'N/A',
                 'mother_name' => $data['mother_name'],
@@ -119,17 +129,12 @@ class NidFaceVerification
         return $data;
     }
 
-    public function storeResubmitData($profile, $nid, $faceVerificationData, $profileNIDSubmissionRepo)
+    public function storeResubmitData($faceVerificationData, $profileNIDSubmissionRepo)
     {
-        $profile_id = $profile->id;
         $faceVerify = array_except($faceVerificationData['data'], ['message', 'verification_percentage', 'reject_reason']);
         $faceVerify = json_encode($faceVerify);
 
-        $porichoyNIDSubmission = $profileNIDSubmissionRepo->where('profile_id', $profile_id)
-            ->where('nid_no', $nid)
-            ->orderBy('id', 'desc')->first();
-
-        $porichoyNIDSubmission->update([
+        $profileNIDSubmissionRepo->update([
             'porichy_data' => $faceVerify,
             "verification_status" => ($faceVerificationData['data']['status'] === "verified" || $faceVerificationData['data']['status'] === "already_verified") ? "approved" : "rejected",
             "rejection_reasons" => $faceVerificationData['data']['reject_reason'] ? json_encode($faceVerificationData['data']['reject_reason']) : null,
@@ -184,5 +189,4 @@ class NidFaceVerification
         $new_data['dob'] = Carbon::parse($porichoy_data['dob'])->format("Y-m-d");
         return $new_data;
     }
-
 }

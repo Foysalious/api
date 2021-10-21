@@ -72,4 +72,9 @@ class ResourceRepository
     {
         $this->resource->update($this->withUpdateModificationField($data));
     }
+
+    public function checkDuplicateNIDInResource($nid)
+    {
+        return Resource::where('nid_no', '=', $nid)->where('id', '!=', $this->resource->id)->count();
+    }
 }
