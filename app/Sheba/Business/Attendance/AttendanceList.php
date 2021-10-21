@@ -513,7 +513,6 @@ class AttendanceList
                         'is_holiday' => $is_weekend_or_holiday ? 1 : 0,
                         'weekend_or_holiday' => $is_weekend_or_holiday ? $this->isWeekendOrHoliday() : null,
                         'is_half_day_leave' => $is_on_half_day_leave,
-                        ],
                         'which_half_day_leave' => $which_half_day,
                         'leave_type' => $is_on_leave ? $leave_type : null,
                         'holiday_name' => $is_weekend_or_holiday ? $this->getHolidayName() : null,
