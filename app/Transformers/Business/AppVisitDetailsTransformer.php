@@ -141,7 +141,7 @@ class AppVisitDetailsTransformer extends TransformerAbstract
     private function getCancelNote(Visit $visit)
     {
         if ($visit->status === Status::CANCELLED) {
-            return $visit->visitNotes()->where('status', Status::CANCELLED)->select('note')->orderBy('id', 'DESC')->first();
+            return $visit->visitNotes()->where('status', Status::CANCELLED)->select('note')->orderBy('id', 'DESC')->first()->note;
         } else {
             return null;
         }
