@@ -17,6 +17,7 @@ use App\Repositories\ResourceJobRepository;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
 use App\Sheba\Partner\KYC\Statuses;
+use App\Sheba\Repositories\PartnerSubscriptionPackageRepository;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -419,20 +420,20 @@ class DashboardController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function isUpdatedHomeSetting(Request $request)
+    public function isUpdatedHomeSetting(Request $request): JsonResponse
     {
         try {
             $this->validate($request, [
                 'last_updated' => 'sometimes|date|date_format:Y-m-d',
             ]);
-
             $is_updated   = 1;
-            $last_updated = DefaultSettingV3::getLastUpdatedAt();
+            $last_updated = (new PartnerSubscriptionPackageRepository($request->partner->package_id))->getHomepageSettingsUpdatedDate();
+
             if ($request->has('last_updated'))
-                $is_updated = Carbon::parse($last_updated) > Carbon::parse($request->last_updated) ? 1 : 0;
+                $is_updated = Carbon::parse($last_updated)->toDateString() > Carbon::parse($request->last_updated)->toDateString() ? 1 : 0;
             $data = [
                 'is_updated'   => $is_updated,
-                'last_updated' => $last_updated
+                'last_updated' => Carbon::parse($last_updated)->toDateString()
             ];
 
             return api_response($request, null, 200, ['data' => $data]);
