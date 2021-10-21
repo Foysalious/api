@@ -2,6 +2,7 @@
 
 namespace App\Sheba\UserMigration;
 
+use Illuminate\Support\Facades\Redis;
 use Sheba\Dal\UserMigration\Contract;
 use Exception;
 use Sheba\Dal\UserMigration\UserStatus;
@@ -64,6 +65,12 @@ abstract class UserMigrationRepository
         }
         if ($info->status == UserStatus::UPGRADING && ($status == UserStatus::UPGRADING || $status == UserStatus::PENDING)) {
             throw new Exception('Sorry! Already Migrating.');
+        }
+        if ($status == UserStatus::UPGRADING) {
+            Redis::set("user-migration:$this->userId", "$this->moduleName");
+        }
+        if ($status == UserStatus::UPGRADED) {
+            Redis::del("user-migration:$this->userId");
         }
         $info->status = $status;
         return $info->save();

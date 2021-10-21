@@ -88,7 +88,7 @@ class Route
                 $api->get('{offer}', 'OfferController@show');
             });
             $api->group(['prefix' => 'blogs'], function ($api) {
-                $api->get('/', 'BlogController@index');
+                $api->get('/', 'BlogController@index')->name('blogs.get');
             });
             $api->group(['prefix' => 'feedback', 'middleware' => ['manager.auth']], function ($api) {
                 $api->post('/', 'FeedbackController@create');
