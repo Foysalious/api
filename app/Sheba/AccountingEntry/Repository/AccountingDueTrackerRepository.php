@@ -87,11 +87,11 @@ class AccountingDueTrackerRepository extends BaseRepository
                 return true;
             }
             $url = "api/due-list/" . $customerId;
-            $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->delete($url);
+            return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->delete($url);
         } catch (AccountingEntryServerError $e) {
             logError($e);
+            return null;
         }
-
     }
 
     /**
