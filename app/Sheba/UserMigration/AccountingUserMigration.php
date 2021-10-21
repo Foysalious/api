@@ -3,6 +3,7 @@
 namespace App\Sheba\UserMigration;
 
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Exception;
 use Sheba\Dal\UserMigration\UserStatus;
 
 class AccountingUserMigration extends UserMigrationRepository
@@ -32,10 +33,8 @@ class AccountingUserMigration extends UserMigrationRepository
     }
 
     /**
-     * @param $status
-     * @return mixed
      * @throws AccountingEntryServerError
-     * @throws \Exception
+     * @throws Exception
      */
     public function updateStatus($status)
     {
