@@ -21,7 +21,9 @@ abstract class PosReport
      * @var $partner Partner
      *
      */
-    protected $request, $orderBy, $range, $to, $from, $query, $order, $page, $limit, $data, $partner;
+    protected $request, $orderBy, $range, $to, $from, $query, $order, $page, $limit, $data;
+    /** @var Partner */
+    protected $partner;
     /** @var ExcelHandler $excelHandler */
     private $excelHandler;
     /** @var PdfHandler $pdfHandler */

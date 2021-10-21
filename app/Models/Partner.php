@@ -4,6 +4,7 @@ use App\Models\Transport\TransportTicketOrder;
 use App\Sheba\InventoryService\Partner\Events\Created;
 use App\Sheba\InventoryService\Partner\Events\Updated;
 use App\Sheba\Payment\Rechargable;
+use App\Sheba\UserMigration\AccountingUserMigration;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -1062,16 +1063,6 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->hasOne(PartnerDataMigration::class);
     }
 
-    public function isMigrationCompleted()
-    {
-        return $this->is_migration_completed == 1;
-    }
-
-    public function isMigrationRunningOrCompleted()
-    {
-        return $this->dataMigration && $this->dataMigration->isRunningOrCompleted();
-    }
-
     public function topupChangeLogs()
     {
         return $this->hasMany(CanTopUpUpdateLog::class);
@@ -1125,5 +1116,15 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function lastBilledDate()
     {
         return $this->last_billed_date;
+    }
+
+    public function isMigrated($module_name): bool
+    {
+        $arr = [self::NOT_ELIGIBLE, UserStatus::PENDING, UserStatus::UPGRADING, UserStatus::FAILED];
+        /** @var AccountingUserMigration $repo */
+        $repo = app(AccountingUserMigration::class);
+        $userStatus = $repo->setUserId($this->id)->setModuleName($module_name)->getStatus();
+        if (in_array($userStatus, $arr)) return false;
+        return true;
     }
 }

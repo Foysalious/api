@@ -1,6 +1,7 @@
 <?php namespace Sheba\Reports\Pos\Sales;
 
 use App\Models\Partner;
+use App\Sheba\UserMigration\Modules;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Pos\Repositories\PosOrderItemRepository;
@@ -33,7 +34,7 @@ class ProductWise extends PosReport
      */
     public function prepareData($paginate = true)
     {
-        if($this->partner->isMigrationCompleted()){
+        if($this->partner->isMigrated(Modules::POS)){
             $full =  collect($this->getReportDataFromPosServer(self::class));
         } else {
             $full = $this->query->get();
