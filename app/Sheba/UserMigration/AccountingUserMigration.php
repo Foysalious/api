@@ -2,11 +2,13 @@
 
 namespace App\Sheba\UserMigration;
 
+use Exception;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\UserMigration\UserStatus;
 
 class AccountingUserMigration extends UserMigrationRepository
 {
-    public function getBanner()
+    public function getBanner(): string
     {
         return 'accounting-banner';
     }
@@ -28,6 +30,10 @@ class AccountingUserMigration extends UserMigrationRepository
         ];
     }
 
+    /**
+     * @throws AccountingEntryServerError
+     * @throws Exception
+     */
     public function updateStatus($status)
     {
         if ($status == UserStatus::UPGRADING) {
@@ -38,7 +44,7 @@ class AccountingUserMigration extends UserMigrationRepository
         return $this->updateMigrationStatus($status);
     }
 
-    private function getPendingResponse()
+    private function getPendingResponse(): array
     {
         return [
             "icon" => "image.png",
@@ -50,7 +56,7 @@ class AccountingUserMigration extends UserMigrationRepository
         ];
     }
 
-    private function getUpgradingResponse()
+    private function getUpgradingResponse(): array
     {
         return [
             "icon" => "image.png",
@@ -59,7 +65,7 @@ class AccountingUserMigration extends UserMigrationRepository
         ];
     }
 
-    private function getUpgradedResponse()
+    private function getUpgradedResponse(): array
     {
         return [
             "icon" => "image.png",
@@ -70,7 +76,8 @@ class AccountingUserMigration extends UserMigrationRepository
         ];
     }
 
-    private function getFailedResponse() {
+    private function getFailedResponse(): array
+    {
         return [
         ];
     }

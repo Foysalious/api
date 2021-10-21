@@ -26,13 +26,13 @@ abstract class UserMigrationRepository
 
     abstract public function getBanner();
 
-    public function setUserId($userId)
+    public function setUserId($userId): UserMigrationRepository
     {
         $this->userId = $userId;
         return $this;
     }
 
-    public function setModuleName($moduleName)
+    public function setModuleName($moduleName): UserMigrationRepository
     {
         $this->moduleName = $moduleName;
         return $this;
@@ -41,7 +41,7 @@ abstract class UserMigrationRepository
     /**
      * @return string
      */
-    public function getStatus()
+    public function getStatus(): string
     {
         $info = $this->repo->builder()->where('user_id', $this->userId)->where('module_name', $this->moduleName)->first();
         if ($info) {
@@ -50,6 +50,9 @@ abstract class UserMigrationRepository
         return self::NOT_ELIGIBLE;
     }
 
+    /**
+     * @throws Exception
+     */
     protected function updateMigrationStatus($status)
     {
         $info = $this->repo->builder()->where('user_id', $this->userId)->where('module_name', $this->moduleName)->first();
