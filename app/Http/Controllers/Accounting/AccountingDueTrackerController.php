@@ -39,7 +39,6 @@ class AccountingDueTrackerController extends Controller
                 'date' => 'required|date_format:Y-m-d H:i:s',
                 'partner_wise_order_id' =>  'sometimes|numeric'
             ]);
-            $request->merge(['customer_id' => $request->customer_id]);
             $response = $this->dueTrackerRepo->setPartner($request->partner)->storeEntry($request, $request->entry_type);
             (new Usage())->setUser($request->partner)->setType(Usage::Partner()::DUE_TRACKER_TRANSACTION)->create($request->auth_user);
             return api_response($request, $response, 200, ['data' => $response]);
@@ -129,6 +128,7 @@ class AccountingDueTrackerController extends Controller
      * @param Request $request
      * @param $customerId
      * @return JsonResponse
+     * @throws \Throwable
      */
     public function dueListByCustomerId(Request $request, $customerId): JsonResponse
     {
