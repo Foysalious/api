@@ -189,12 +189,12 @@ class EmployeeController extends Controller
         $approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMember($business_member);
         $pending_approval_requests_count = $this->approvalRequestRepo->countPendingLeaveApprovalRequests($business_member);
         $profile_completion_score = $completion_calculator->setBusinessMember($business_member)->getDigiGoScore();
-        $pending_visit = $visit_repository->where('visitor_id', $business_member->id)->whereIn('status', [Status::CREATED, Status::STARTED]);
+        $pending_visit = $visit_repository->where('visitor_id', $business_member->id)->whereIn('status', [Status::CREATED, Status::STARTED, Status::RESCHEDULED]);
         $all_pending_visit_count = $pending_visit->count();
         $today = Carbon::now()->format('Y-m-d');
         $today_visit = $pending_visit->whereBetween('schedule_date', [$today.' 00:00:00', $today.' 23:59:59']);
         $today_visit_count = $today_visit->count();
-        $current_visit = $visit_repository->where('assignee_id', $business_member->id)->where('status', Status::STARTED)->whereBetween('start_date_time', [$today.' 00:00:00', $today.' 23:59:59'])->count();
+        $current_visit = $visit_repository->where('visitor_id', $business_member->id)->where('status', Status::STARTED)->whereBetween('start_date_time', [$today.' 00:00:00', $today.' 23:59:59'])->first();
 
         /** Check Employee Already Get a Badge or Not */
         $start_date = Carbon::now()->startOfMonth();
@@ -229,8 +229,11 @@ class EmployeeController extends Controller
             'is_enable_employee_visit' => $business->is_enable_employee_visit,
             'pending_visit_count' => $all_pending_visit_count,
             'today_visit_count' => $today_visit_count,
-            'single_visit_title' => $today_visit_count === 1 ? $today_visit->first()->title : null,
-            'currently_on_visit' => $current_visit ? true : false,
+            'single_visit' => $today_visit_count === 1 ? [
+                    'id' =>     $today_visit->first()->id,
+                    'title' =>  $today_visit->first()->title
+            ] : null,
+            'currently_on_visit' => $current_visit ? $current_visit->id : null,
             'is_badge_seen' => $is_badge_seen,
         ];
 
