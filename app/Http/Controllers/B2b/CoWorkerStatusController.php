@@ -183,7 +183,7 @@ class CoWorkerStatusController extends Controller
             'status' => 'required|string|in:' . implode(',', Statuses::get())
         ]);
         $requester_business_member = $request->business_member;
-        if ($requester_business_member->id == $business_member_id && $request->status == Statuses::INACTIVE) return api_response($request, null, 404, ['message' => 'Sorry, You cannot deactivated yourself as super admin.']);
+        if ($requester_business_member->id == $business_member_id && $request->status != Statuses::ACTIVE) return api_response($request, null, 404, ['message' => 'Sorry, You cannot deactivated yourself as super admin.']);
 
         $business = $request->business;
         $manager_member = $request->manager_member;
