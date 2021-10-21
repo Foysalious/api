@@ -1055,7 +1055,7 @@ class PartnerController extends Controller
     {
         $this->validate($request, [
             'vat_registration_number' => 'required',
-            'show_vat_registration_number' => 'sometimes|required|in:1,0'
+            'show_vat_registration_number' => 'sometimes|required|max:1|numeric'
         ]);
         $partner = resolvePartnerFromAuthMiddleware($request);
         $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
