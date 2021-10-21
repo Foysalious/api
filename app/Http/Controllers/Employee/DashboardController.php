@@ -57,6 +57,11 @@ class DashboardController extends Controller
 
             ],
             [
+                'title' => 'Visit',
+                'target_type' => 'visit',
+
+            ],
+            [
                 'title' => 'Feedback',
                 'target_type' => 'feedback',
                 'link' => "https://sheba.freshdesk.com/support/tickets/new"
@@ -90,6 +95,11 @@ class DashboardController extends Controller
             [
                 'title' => 'Phonebook',
                 'target_type' => 'phonebook',
+            ],
+            [
+                'title' => 'Visit',
+                'target_type' => 'visit',
+
             ],
             [
                 'title' => 'Feedback',
