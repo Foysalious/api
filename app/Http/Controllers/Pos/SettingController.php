@@ -43,7 +43,7 @@ class SettingController extends Controller
             $settings->show_vat_registration_number = $partner->basicInformations->show_vat_registration_number;
             $settings['has_qr_code'] = ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0;
             removeRelationsAndFields($settings);
-            return http_response($request, $settings, 200, ['settings' => $settings]);
+            return make_response($request, $settings, 200, ['settings' => $settings]);
         } catch (Throwable $e) {
             logError($e);
             app('sentry')->captureException($e);
