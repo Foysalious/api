@@ -2,11 +2,12 @@
 
 namespace App\Sheba\UserMigration;
 
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\UserMigration\UserStatus;
 
 class AccountingUserMigration extends UserMigrationRepository
 {
-    public function getBanner()
+    public function getBanner(): string
     {
         return 'accounting-banner';
     }
@@ -30,18 +31,23 @@ class AccountingUserMigration extends UserMigrationRepository
         ];
     }
 
+    /**
+     * @param $status
+     * @return mixed
+     * @throws AccountingEntryServerError
+     * @throws \Exception
+     */
     public function updateStatus($status)
     {
-//        TODO: Razoan
-//        if ($status == UserStatus::UPGRADING) {
-//            /** @var \Sheba\AccountingEntry\Repository\UserMigrationRepository $accUpgradeRepo */
-//            $accUpgradeRepo = app(\Sheba\AccountingEntry\Repository\UserMigrationRepository::class);
-//            $accUpgradeRepo->migrateInAccounting($this->userId, $status);
-//        }
+        if ($status == UserStatus::UPGRADING) {
+            /** @var \Sheba\AccountingEntry\Repository\UserMigrationRepository $accUpgradeRepo */
+            $accUpgradeRepo = app(\Sheba\AccountingEntry\Repository\UserMigrationRepository::class);
+            $accUpgradeRepo->migrateInAccounting($this->userId, $status);
+        }
         return $this->updateMigrationStatus($status);
     }
 
-    private function getPendingResponse()
+    private function getPendingResponse(): array
     {
         return [
             "icon" => Constants::$accounting_migration_url . '/accounting_pending.png',
@@ -55,7 +61,7 @@ class AccountingUserMigration extends UserMigrationRepository
         ];
     }
 
-    private function getUpgradingResponse()
+    private function getUpgradingResponse(): array
     {
         return [
             "migrating_icon" => Constants::$accounting_migration_url . "/accounting_upgrading.png",
@@ -64,7 +70,7 @@ class AccountingUserMigration extends UserMigrationRepository
         ];
     }
 
-    private function getUpgradedResponse()
+    private function getUpgradedResponse(): array
     {
         return [
             "icon" => Constants::$accounting_migration_url . "/accounting_upgraded.png",
@@ -75,7 +81,8 @@ class AccountingUserMigration extends UserMigrationRepository
         ];
     }
 
-    private function getFailedResponse() {
+    private function getFailedResponse(): array
+    {
         return [
             "icon" => Constants::$accounting_migration_url . "/accounting_failed.png",
             "header" => "দুঃখিত",

@@ -25,7 +25,7 @@ class UserMigrationRepository extends BaseRepository
      * @return mixed
      * @throws AccountingEntryServerError
      */
-    public function migrateInAccounting($userId, $status, $userType = UserType::PARTNER)
+    public function migrateInAccounting($userId, $status, string $userType = UserType::PARTNER)
     {
         try {
             /** @var StockToBatchMigration $inventoryMigration */
@@ -44,7 +44,7 @@ class UserMigrationRepository extends BaseRepository
      * @param string $userType
      * @return null
      */
-    public function userStatus($userId, $userType = UserType::PARTNER)
+    public function userStatus($userId, string $userType = UserType::PARTNER)
     {
         /** @var AccountingUserMigration $repo */
         $repo = app(AccountingUserMigration::class);
