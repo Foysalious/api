@@ -86,7 +86,7 @@ class AccountingUserMigration extends UserMigrationRepository
         return [
             "icon" => Constants::$accounting_migration_url . "/accounting_failed.png",
             "header" => "দুঃখিত",
-            "dialog_text" => "হহিসাবখাতা আপগ্রেড হয়নি।",
+            "dialog_text" => "হিসাবখাতা আপগ্রেড হয়নি।",
             "button_text" => "আবার চেষ্টা করুন",
             "dialog_cancelable" => false,
             "migrating_icon" => Constants::$accounting_migration_url . "/accounting_upgrading.png",
