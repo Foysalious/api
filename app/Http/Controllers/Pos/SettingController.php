@@ -40,7 +40,7 @@ class SettingController extends Controller
                 $settings = PartnerPosSetting::byPartner($partner->id)->select('id', 'partner_id', 'vat_percentage', 'auto_printing', 'sms_invoice')->first();
             }
             $settings->vat_registration_number = $partner->basicInformations->vat_registration_number;
-            $settings->vat_reg_number = $partner->basicInformations->is_show_vat_reg_number;
+            $settings->show_vat_registration_number = $partner->basicInformations->show_vat_registration_number;
             $settings['has_qr_code'] = ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0;
             removeRelationsAndFields($settings);
             return make_response($request, $settings, 200, ['settings' => $settings]);

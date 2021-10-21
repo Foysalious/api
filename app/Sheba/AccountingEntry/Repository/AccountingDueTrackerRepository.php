@@ -12,7 +12,6 @@ use App\Sheba\AccountingEntry\Constants\UserType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
@@ -47,10 +46,10 @@ class AccountingDueTrackerRepository extends BaseRepository
      * @param Request $request
      * @param $type
      * @param bool $with_update
-     * @return bool
+     * @return mixed
      * @throws AccountingEntryServerError
      */
-    public function storeEntry(Request $request, $type, bool $with_update = false): bool
+    public function storeEntry(Request $request, $type, bool $with_update = false)
     {
         //todo: Should use AccountingRepository@storeEntry method for storing entry
         if (!$this->isMigratedToAccounting($this->partner->id)) {
@@ -88,11 +87,11 @@ class AccountingDueTrackerRepository extends BaseRepository
                 return true;
             }
             $url = "api/due-list/" . $customerId;
-            $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->delete($url);
+            return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->delete($url);
         } catch (AccountingEntryServerError $e) {
             logError($e);
+            return null;
         }
-
     }
 
     /**
@@ -201,7 +200,7 @@ class AccountingDueTrackerRepository extends BaseRepository
                     $item['created_at'] = Carbon::parse($item['created_at'])->format('Y-m-d h:i A');
                     $item['entry_at'] = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
                     $pos_order = PosOrder::withTrashed()->find($item['source_id']);
-                    $item['partner_wise_order_id'] = isset($pos_order) ? $pos_order->partner_wise_order_id: null;
+                    $item['partner_wise_order_id'] = isset($pos_order) ? $pos_order->partner_wise_order_id : null;
                     if ($pos_order) {
                         $item['source_type'] = 'PosOrder';
                         if ($pos_order->sales_channel == SalesChannels::WEBSTORE) {
@@ -313,9 +312,9 @@ class AccountingDueTrackerRepository extends BaseRepository
         return $list->map(function ($item) use ($customerProfile) {
             $profile = $customerProfile->where('customer_id', (int)$item['party_id']);
             $cus = $profile->map(
-                function($items) use ($item) {
+                function ($items) use ($item) {
                     $item['customer_name'] = $items->nick_name ?? $items->customer->profile->name;
-                    $item['customer_mobile'] =  $items->customer->profile->mobile;
+                    $item['customer_mobile'] = $items->customer->profile->mobile;
                     $item['avatar'] = $items->customer->profile->pro_pic;
                     $item['customer_id'] = $items->customer_id;
                     $item['is_supplier'] = $items->is_supplier;
@@ -405,11 +404,15 @@ class AccountingDueTrackerRepository extends BaseRepository
     /**
      * @param $partner
      * @param $partnerWiseOrderId
-     * @return int
+     * @return int|null
      */
-    private function posOrderId($partner, $partnerWiseOrderId): int
+    private function posOrderId($partner, $partnerWiseOrderId)
     {
-        $posOrder = PosOrder::where('partner_id', $partner->id)->where('partner_wise_order_id', $partnerWiseOrderId)->first();
-        return $posOrder->id;
+        try{
+            $posOrder = PosOrder::where('partner_id', $partner->id)->where('partner_wise_order_id', $partnerWiseOrderId)->first();
+            return $posOrder->id;
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 }
