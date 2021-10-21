@@ -12,7 +12,6 @@ use App\Sheba\AccountingEntry\Constants\UserType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
@@ -201,7 +200,7 @@ class AccountingDueTrackerRepository extends BaseRepository
                     $item['created_at'] = Carbon::parse($item['created_at'])->format('Y-m-d h:i A');
                     $item['entry_at'] = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
                     $pos_order = PosOrder::withTrashed()->find($item['source_id']);
-                    $item['partner_wise_order_id'] = isset($pos_order) ? $pos_order->partner_wise_order_id: null;
+                    $item['partner_wise_order_id'] = isset($pos_order) ? $pos_order->partner_wise_order_id : null;
                     if ($pos_order) {
                         $item['source_type'] = 'PosOrder';
                         if ($pos_order->sales_channel == SalesChannels::WEBSTORE) {
@@ -313,9 +312,9 @@ class AccountingDueTrackerRepository extends BaseRepository
         return $list->map(function ($item) use ($customerProfile) {
             $profile = $customerProfile->where('customer_id', (int)$item['party_id']);
             $cus = $profile->map(
-                function($items) use ($item) {
+                function ($items) use ($item) {
                     $item['customer_name'] = $items->nick_name ?? $items->customer->profile->name;
-                    $item['customer_mobile'] =  $items->customer->profile->mobile;
+                    $item['customer_mobile'] = $items->customer->profile->mobile;
                     $item['avatar'] = $items->customer->profile->pro_pic;
                     $item['customer_id'] = $items->customer_id;
                     $item['is_supplier'] = $items->is_supplier;
