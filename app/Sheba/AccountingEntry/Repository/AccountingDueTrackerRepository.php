@@ -50,13 +50,15 @@ class AccountingDueTrackerRepository extends BaseRepository
      * @return bool
      * @throws AccountingEntryServerError
      */
-    public function storeEntry(Request $request, $type, bool $with_update = false)
+    public function storeEntry(Request $request, $type, bool $with_update = false): bool
     {
+        //todo: Should use AccountingRepository@storeEntry method for storing entry
         if (!$this->isMigratedToAccounting($this->partner->id)) {
             return true;
         }
         $this->getCustomer($request);
         $this->setModifier($request->partner);
+        $request->merge(['source_id' => $this->posOrderId($request->partner, $request->partner_wise_order_id) ?? null]);
         $data = $this->createEntryData($request, $type);
         $url = $with_update ? "api/entries/" . $request->entry_id : $type == "deposit" ? "api/entries/deposit" : "api/entries/";
         try {
@@ -99,7 +101,7 @@ class AccountingDueTrackerRepository extends BaseRepository
      * @return array
      * @throws AccountingEntryServerError
      */
-    public function getDueList($request, $paginate = false): array
+    public function getDueList($request, bool $paginate = false): array
     {
         try {
             $url = "api/due-list?";
@@ -146,7 +148,7 @@ class AccountingDueTrackerRepository extends BaseRepository
 //            $list = $list->reject(function ($value) {
 //                return $value == null;
 //            });
-
+//
 //            if ($request->has('filter_by_supplier') && $request->filter_by_supplier == 1) {
 //                $list = $list->where('is_supplier', 1)->values();
 //            }
@@ -161,7 +163,7 @@ class AccountingDueTrackerRepository extends BaseRepository
      * @return array
      * @throws AccountingEntryServerError
      */
-    public function getDuelistBalance($request)
+    public function getDuelistBalance($request): array
     {
         try {
             $url = "api/due-list/balance";
@@ -225,7 +227,7 @@ class AccountingDueTrackerRepository extends BaseRepository
      * @throws AccountingEntryServerError
      * @throws InvalidPartnerPosCustomer
      */
-    public function dueListBalanceByCustomer($customerId)
+    public function dueListBalanceByCustomer($customerId): array
     {
         try {
             $partner_pos_customer = PartnerPosCustomer::byPartner($this->partner->id)->where(
@@ -269,7 +271,7 @@ class AccountingDueTrackerRepository extends BaseRepository
      */
     private function attachProfile(Collection $list): Collection
     {
-        $list = $list->map(
+        return $list->map(
             function ($item) {
                 $customerId = $item['party_id'];
                 /** @var PosCustomer $posCustomer */
@@ -299,7 +301,6 @@ class AccountingDueTrackerRepository extends BaseRepository
                 return false;
             }
         );
-        return $list;
     }
 
     /**
@@ -307,13 +308,13 @@ class AccountingDueTrackerRepository extends BaseRepository
      * @param $customerProfile
      * @return Collection
      */
-    private function attachCustomerProfile(Collection $list, $customerProfile)
+    private function attachCustomerProfile(Collection $list, $customerProfile): Collection
     {
-        $list = $list->map(function ($item) use ($customerProfile) {
+        return $list->map(function ($item) use ($customerProfile) {
             $profile = $customerProfile->where('customer_id', (int)$item['party_id']);
             $cus = $profile->map(
                 function($items) use ($item) {
-                    $item['customer_name'] = isset($items->nick_name) ? $items->nick_name : $items->customer->profile->name ;
+                    $item['customer_name'] = $items->nick_name ?? $items->customer->profile->name;
                     $item['customer_mobile'] =  $items->customer->profile->mobile;
                     $item['avatar'] = $items->customer->profile->pro_pic;
                     $item['customer_id'] = $items->customer_id;
@@ -323,7 +324,6 @@ class AccountingDueTrackerRepository extends BaseRepository
             );
             return $cus->count() > 0 ? call_user_func_array('array_merge', $cus->toArray()) : [];
         });
-        return $list;
     }
 
     /**
@@ -366,7 +366,12 @@ class AccountingDueTrackerRepository extends BaseRepository
         return $url;
     }
 
-    private function createEntryData(Request $request, $type)
+    /**
+     * @param Request $request
+     * @param $type
+     * @return array
+     */
+    private function createEntryData(Request $request, $type): array
     {
         $data['created_from'] = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
         $data['amount'] = (double)$request->amount;
@@ -376,6 +381,9 @@ class AccountingDueTrackerRepository extends BaseRepository
         $data['credit_account_key'] = $type === EntryTypes::DUE ? $request->account_key : $request->customer_id;
         $data['customer_id'] = $request->customer_id;
         $data['customer_name'] = $request->customer_name;
+        $data['customer_mobile'] = $request->customer_mobile;
+        $data['customer_pro_pic'] = $request->pro_pic;
+        $data['source_id'] = $request->source_id;
         $data['entry_at'] = $request->date ?: Carbon::now()->format('Y-m-d H:i:s');
         $data['attachments'] = $this->uploadAttachments($request);
         return $data;
@@ -392,5 +400,16 @@ class AccountingDueTrackerRepository extends BaseRepository
             'avatar' => $partner->logo,
             'mobile' => $partner->mobile,
         ];
+    }
+
+    /**
+     * @param $partner
+     * @param $partnerWiseOrderId
+     * @return int
+     */
+    private function posOrderId($partner, $partnerWiseOrderId): int
+    {
+        $posOrder = PosOrder::where('partner_id', $partner->id)->where('partner_wise_order_id', $partnerWiseOrderId)->first();
+        return $posOrder->id;
     }
 }
