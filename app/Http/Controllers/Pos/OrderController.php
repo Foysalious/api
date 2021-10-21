@@ -21,6 +21,7 @@ use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
+use Sheba\PartnerStatusAuthentication;
 use Sheba\PaymentLink\Creator as PaymentLinkCreator;
 use Sheba\PaymentLink\PaymentLinkTransformer;
 use Sheba\Pos\Customer\Creator as PosCustomerCreator;
@@ -120,10 +121,10 @@ class OrderController extends Controller
      * @param PartnerRepository $partnerRepository
      * @param PaymentLinkCreator $paymentLinkCreator
      * @return array|JsonResponse
+     * @throws \Sheba\Authentication\Exceptions\AuthenticationFailedException
      */
     public function store($partner, Request $request, Creator $creator, ProfileCreator $profileCreator, PosCustomerCreator $posCustomerCreator, PartnerRepository $partnerRepository, PaymentLinkCreator $paymentLinkCreator)
     {
-
         $this->validate($request, [
             'services' => 'required|string',
             'paid_amount' => 'sometimes|required|numeric',
@@ -192,6 +193,7 @@ class OrderController extends Controller
         $order->net_bill = $order->getNetBill();
         $payment_link_amount = $request->has('payment_link_amount') ? $request->payment_link_amount : $order->net_bill;
         if ($request->payment_method == 'payment_link' || $request->payment_method == 'emi') {
+            (new PartnerStatusAuthentication())->handleInside($partner);
             $paymentLink = $paymentLinkCreator->setAmount($payment_link_amount)->setReason("PosOrder ID: $order->id Due payment")
                 ->setUserName($partner->name)->setUserId($partner->id)
                 ->setUserType('partner')

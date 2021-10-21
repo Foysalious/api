@@ -59,11 +59,14 @@ class SmsHandler
     private function getSms()
     {
         $invoice_link =   $this->order->invoice ? : $this->resolveInvoiceLink() ;
+        /** @var Partner $partner */
+        $partner=$this->order->partner;
         $message_data = [
             'order_id'           => $this->order->partner_wise_order_id,
             'total_amount'       => $this->order->getNetBill(),
             'partner_name'       => $this->order->partner->name,
-            'invoice_link'       => $invoice_link
+            'invoice_link'       => $invoice_link,
+            'company_number'     => $partner->getContactNumber()
         ];
 
         if ($this->order->getDue() > 0) {
