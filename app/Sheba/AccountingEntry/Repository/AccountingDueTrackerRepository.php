@@ -47,10 +47,10 @@ class AccountingDueTrackerRepository extends BaseRepository
      * @param Request $request
      * @param $type
      * @param bool $with_update
-     * @return bool
+     * @return mixed
      * @throws AccountingEntryServerError
      */
-    public function storeEntry(Request $request, $type, bool $with_update = false): bool
+    public function storeEntry(Request $request, $type, bool $with_update = false)
     {
         //todo: Should use AccountingRepository@storeEntry method for storing entry
         if (!$this->isMigratedToAccounting($this->partner->id)) {
@@ -405,11 +405,15 @@ class AccountingDueTrackerRepository extends BaseRepository
     /**
      * @param $partner
      * @param $partnerWiseOrderId
-     * @return int
+     * @return int|null
      */
-    private function posOrderId($partner, $partnerWiseOrderId): int
+    private function posOrderId($partner, $partnerWiseOrderId)
     {
-        $posOrder = PosOrder::where('partner_id', $partner->id)->where('partner_wise_order_id', $partnerWiseOrderId)->first();
-        return $posOrder->id;
+        try{
+            $posOrder = PosOrder::where('partner_id', $partner->id)->where('partner_wise_order_id', $partnerWiseOrderId)->first();
+            return $posOrder->id;
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 }
