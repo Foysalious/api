@@ -337,11 +337,13 @@ class DashboardController extends Controller
      * @param SettingV3 $setting
      * @return JsonResponse
      */
-    public function getHomeSettingV3(Request $request, SettingV3 $setting)
+    public function getHomeSettingV3(Request $request, SettingV3 $setting): JsonResponse
     {
         try {
             $this->setModifier($request->partner);
-            $home_page_setting = $setting->setPartner($request->partner)->get();
+            $home_page_setting = (new PartnerSubscriptionPackageRepository($request->partner->package_id))->getHomepageSettings();
+            $home_page_setting = json_decode($home_page_setting);
+
             foreach ($home_page_setting as &$setting) {
                 if (is_object($setting)) {
                     in_array($setting->key, NewFeatures::get()) ? $setting->is_new = 1 : $setting->is_new = 0;
@@ -349,23 +351,7 @@ class DashboardController extends Controller
                     in_array($setting['key'], NewFeatures::get()) ? $setting['is_new'] = 1 : $setting['is_new'] = 0;
                 }
             }
-            $updated_setting = [];
-            if (!AccessManager::canAccess(AccessManager::Rules()->DIGITAL_COLLECTION, $request->partner->subscription->getAccessRules())) {
-                if (is_array($home_page_setting)) {
-                    $updated_setting = array_values(array_filter($home_page_setting, function ($item) {
-                        $key = is_object($item) ? $item->key : $item['key'];
-                        return !in_array($key, ['payment_link', 'emi']);
-                    }, ARRAY_FILTER_USE_BOTH));
-                } elseif ($home_page_setting instanceof Collection) {
-                    $updated_setting = $home_page_setting->filter(function ($item) {
-                        $key = is_object($item) ? $item->key : $item['key'];
-                        return !in_array($key, ['payment_link', 'emi']);
-                    })->values();
-                }
-            } else {
-                $updated_setting = $home_page_setting;
-            }
-            return api_response($request, null, 200, ['data' => $updated_setting]);
+            return api_response($request, null, 200, ['data' => $home_page_setting]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -426,8 +412,10 @@ class DashboardController extends Controller
             $this->validate($request, [
                 'last_updated' => 'sometimes|date|date_format:Y-m-d',
             ]);
+            /** @var Partner $partner */
+            $partner = $request->partner;
             $is_updated   = 1;
-            $last_updated = (new PartnerSubscriptionPackageRepository($request->partner->package_id))->getHomepageSettingsUpdatedDate();
+            $last_updated = (new PartnerSubscriptionPackageRepository($partner->package_id))->getHomepageSettingsUpdatedDate($partner->billing_start_date);
 
             if ($request->has('last_updated'))
                 $is_updated = Carbon::parse($last_updated)->toDateString() > Carbon::parse($request->last_updated)->toDateString() ? 1 : 0;
