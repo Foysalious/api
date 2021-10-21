@@ -21,6 +21,7 @@ use Sheba\PaymentLink\PaymentLinkClient;
 use Sheba\PaymentLink\PaymentLinkStatics;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
+use Sheba\Subscription\Partner\Access\AccessManager;
 
 class PaymentLinkController extends Controller
 {
@@ -42,7 +43,7 @@ class PaymentLinkController extends Controller
     }
 
     /**
-     * @param Request     $request
+     * @param Request $request
      * @param PaymentLink $link
      * @return JsonResponse
      */
@@ -115,15 +116,14 @@ class PaymentLinkController extends Controller
             $link = $paymentLinkRepository->findByIdentifier($identifier);
             if ($link) {
                 $receiver = $link->getPaymentReceiver();
-                if ($receiver instanceof Partner && $receiver->status == PartnerStatuses::BLACKLISTED) {
-                    return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
+                if ($receiver instanceof Partner) {
+                    if (!AccessManager::canAccess(AccessManager::Rules()->DIGITAL_COLLECTION, $receiver->subscription->getAccessRules()) || in_array($receiver->status, [PartnerStatuses::BLACKLISTED, PartnerStatuses::PAUSED]) || !(int)$link->getIsActive())
+                        return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
+
                 }
-            }
-            if ($link && !(int)$link->getIsActive()) {
-                return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
-            }
-            if ($link && (int)$link->getIsActive()) {
-                return api_response($request, $link, 200, ['link' => $link->toArray()]);
+                if ((int)$link->getIsActive()) {
+                    return api_response($request, $link, 200, ['link' => $link->toArray()]);
+                }
             }
             return api_response($request, null, 404);
         } catch (ValidationException $e) {
@@ -230,13 +230,13 @@ class PaymentLinkController extends Controller
             if ($request->has('customer_id')) $customer = PosCustomer::find($request->customer_id);
 
             $this->creator->setAmount($request->amount)
-                          ->setReason($purpose)
-                          ->setUserName($request->user->name)
-                          ->setUserId($request->user->id)
-                          ->setUserType($request->type)
-                          ->setEmiMonth($request->emi_month ?: 0)
-                          ->setPaidBy($request->interest_paid_by ?: PaymentLinkStatics::paidByTypes()[($request->has("emi_month") ? 1 : 0)])
-                          ->setTransactionFeePercentage($request->transaction_charge);
+                ->setReason($purpose)
+                ->setUserName($request->user->name)
+                ->setUserId($request->user->id)
+                ->setUserType($request->type)
+                ->setEmiMonth($request->emi_month ?: 0)
+                ->setPaidBy($request->interest_paid_by ?: PaymentLinkStatics::paidByTypes()[($request->has("emi_month") ? 1 : 0)])
+                ->setTransactionFeePercentage($request->transaction_charge);
             if (isset($customer) && !empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
             $this->creator->setTargetType('due_tracker')->setTargetId(1)->calculate();
             $payment_link_store = $this->creator->save();

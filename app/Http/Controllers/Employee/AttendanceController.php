@@ -3,6 +3,7 @@
 use App\Sheba\Business\BusinessBasicInformation;
 use Illuminate\Support\Facades\Log;
 use Sheba\Business\Attendance\AttendanceCommonInfo;
+use Sheba\Business\AttendanceActionLog\ActionChecker\ActionResultCodes;
 use Sheba\Dal\AttendanceActionLog\RemoteMode;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
@@ -35,6 +36,8 @@ class AttendanceController extends Controller
 {
     use ModificationFields, BusinessBasicInformation;
 
+    const FIRST_DAY_OF_MONTH = 1;
+
     /**
      * @param Request $request
      * @param AttendanceRepoInterface $attendance_repo
@@ -51,8 +54,15 @@ class AttendanceController extends Controller
         $month = $request->month;
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
-
         $time_frame = $time_frame->forAMonth($month, $year);
+        $business_member_joining_date = $business_member->join_date;
+        $joining_date = null;
+        if ($this->checkJoiningDate($business_member_joining_date, $month, $year)){
+            $joining_date = $business_member_joining_date->format('d F');
+            $start_date = $business_member_joining_date;
+            $end_date = Carbon::now()->month($month)->year($year)->lastOfMonth();
+            $time_frame = $time_frame->forDateRange($start_date, $end_date);
+        }
         $business_member_leave = $business_member->leaves()->accepted()->between($time_frame)->get();
         $time_frame->end = $this->isShowRunningMonthsAttendance($year, $month) ? Carbon::now() : $time_frame->end;
         $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
@@ -65,22 +75,28 @@ class AttendanceController extends Controller
         $resource = new Item($attendances, new AttendanceTransformer($time_frame, $business_holiday, $weekend_settings, $business_member_leave));
         $attendances_data = $manager->createData($resource)->toArray()['data'];
 
-        return api_response($request, null, 200, ['attendance' => $attendances_data]);
+        return api_response($request, null, 200, ['attendance' => $attendances_data, 'joining_date' => $joining_date]);
+    }
+
+    private function checkJoiningDate($business_member_joining_date, $month, $year)
+    {
+        if (!$business_member_joining_date) return false;
+        if ($business_member_joining_date->format('d') == self::FIRST_DAY_OF_MONTH) return false;
+        return $business_member_joining_date->format('m-Y') === Carbon::now()->month($month)->year($year)->format('m-Y');
     }
 
     /**
      * @param Request $request
      * @param AttendanceAction $attendance_action
-     * @param ActionProcessor $action_processor
      * @return JsonResponse
      */
-    public function takeAction(Request $request, AttendanceAction $attendance_action, ActionProcessor $action_processor)
+    public function takeAction(Request $request, AttendanceAction $attendance_action)
     {
         $validation_data = [
             'action' => 'required|string|in:' . implode(',', Actions::get()),
             'device_id' => 'string',
             'user_agent' => 'string',
-            #'is_in_wifi_area' => 'required|numeric'
+            'is_in_wifi_area' => 'required|numeric|in:0,1'
         ];
 
         $business_member = $this->getBusinessMember($request);
@@ -91,18 +107,11 @@ class AttendanceController extends Controller
         Log::info("Attendance for Employee#$business_member->id, Request#" . json_encode($request->except(['profile', 'auth_info', 'auth_user', 'access_token'])));
 
         if ($business->isRemoteAttendanceEnable($business_member->id) && !$request->is_in_wifi_area) {
-            $validation_data += ['lat' => 'required|numeric', 'lng' => 'required|numeric'];
+            #$validation_data += ['lat' => 'required|numeric', 'lng' => 'required|numeric'];
             $validation_data += ['remote_mode' => 'required|string|in:' . implode(',', RemoteMode::get())];
         }
         #$this->validate($request, $validation_data);
         $this->setModifier($business_member->member);
-
-        $checkin = $action_processor->setActionName(Actions::CHECKIN)->getAction();
-        $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
-
-        $is_note_required = 0;
-        if ($request->action == Actions::CHECKIN && $checkin->isLateNoteRequired()) $is_note_required = 1;
-        if ($request->action == Actions::CHECKOUT && $checkout->isLeftEarlyNoteRequired()) $is_note_required = 1;
 
         $attendance_action->setBusinessMember($business_member)
             ->setAction($request->action)
@@ -112,6 +121,8 @@ class AttendanceController extends Controller
             ->setLat($request->lat)
             ->setLng($request->lng);
         $action = $attendance_action->doAction();
+
+        $is_note_required = in_array($action->getResultCode(), [ActionResultCodes::LATE_TODAY, ActionResultCodes::LEFT_EARLY_TODAY]) ? 1 : 0;
 
         return response()->json(['code' => $action->getResultCode(),
             'is_note_required' => $is_note_required,
@@ -155,7 +166,8 @@ class AttendanceController extends Controller
         /** @var Business $business */
         $business = $this->getBusiness($request);
         $attendance_common_info->setLat($request->lat)->setLng($request->lng);
-        $is_in_wifi_area = $attendance_common_info->isInWifiArea($business) ? 1 : 0;
+        $is_ip_attendance_enable = $business->isIpBasedAttendanceEnable();
+        $is_in_wifi_area = $is_ip_attendance_enable ? $attendance_common_info->isInWifiArea($business) ? 1 : 0 : 0;
         $data = [
             'is_in_wifi_area' => $is_in_wifi_area,
             'which_office' => $is_in_wifi_area ? $attendance_common_info->whichOffice($business) : null,
