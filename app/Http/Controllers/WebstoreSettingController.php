@@ -23,7 +23,7 @@ class WebstoreSettingController extends Controller
     {
         $partner = $request->auth_user->getPartner();
         $units = $this->webstoreSettingService->getallSettings($partner->id);
-        return api_response($request, null, 200, $units);
+        return api_response($request, null, 200, ['message' => 'Successful', 'data' => $units]);
     }
 
     public function getThemeDetails(Request $request)
