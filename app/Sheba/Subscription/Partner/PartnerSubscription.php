@@ -101,7 +101,7 @@ class PartnerSubscription
         if (!$single) $package['usps'] = $package->usps ? json_decode($package->usps) : ['usp' => [], 'usp_bn' => []];
         $package['features']    = $package->features ? json_decode($package->features) : [];
         $package['features']    = array_values(array_filter($package['features'], function ($item) {
-            return !in_array($item['en'], ['Payment Link', 'Loan']);
+            return !in_array($item->en, ['Payment Link', 'Loan']);
         }));
         $package['is_featured'] = in_array($package->id, $featured_package_id);
         $package['web_view']    = config('sheba.partners_url') . "/api/packages/" . $package->id;
