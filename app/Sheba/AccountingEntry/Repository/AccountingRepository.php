@@ -6,6 +6,7 @@ use App\Models\Partner;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Constants\UserType;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Statics\IncomeExpenseStatics;
 use Sheba\RequestIdentification;
@@ -30,6 +31,7 @@ class AccountingRepository extends BaseRepository
         $url = "api/entries/";
         try {
             $datum = $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->post($url, $data);
+            Log::debug(['data from accounting', $datum]);
             // May need pos order reconcile while storing entry
             if ($type != EntryTypes::POS && $datum['source_type'] == 'pos' && $datum['amount_cleared'] > 0) {
                 $this->createPosOrderPayment($datum['amount_cleared'], $datum['source_id'], 'cod');
