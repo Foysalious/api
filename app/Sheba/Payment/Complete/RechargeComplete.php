@@ -31,6 +31,10 @@ class RechargeComplete extends PaymentComplete
     private $paymentGateway;
 
     /**
+     * @return Payment
+     * @throws AccountingEntryServerError
+     * @throws InvalidSourceException
+     * @throws KeyNotFoundException
      * @throws WalletDebitForbiddenException
      */
     public function complete()
@@ -72,12 +76,13 @@ class RechargeComplete extends PaymentComplete
     {
         /** @var HasWalletTransaction $user */
         $user = $this->payment->payable->user;
-        return (new WalletTransactionHandler())->setModel($user)->setAmount((double)$this->payment->payable->amount)
+        $this->transaction= (new WalletTransactionHandler())->setModel($user)->setAmount((double)$this->payment->payable->amount)
             ->setType(Types::credit())
             ->setLog('Credit Purchase')
             ->setTransactionDetails($this->payment->getShebaTransaction()->toArray())
             ->setSource($this->payment->paymentDetails
             ->last()->method)->store();
+        return $this->transaction;
     }
 
     protected function saveInvoice()
@@ -132,7 +137,6 @@ class RechargeComplete extends PaymentComplete
     }
 
     /**
-     * @throws ReflectionException
      * @throws AccountingEntryServerError
      * @throws InvalidSourceException|KeyNotFoundException
      */
