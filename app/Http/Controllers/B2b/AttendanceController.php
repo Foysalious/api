@@ -47,6 +47,7 @@ use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 class AttendanceController extends Controller
 {
     use ModificationFields, BusinessBasicInformation;
+    const FIRST_DAY_OF_MONTH = 1;
 
     /** @var BusinessHolidayRepoInterface $holidayRepository */
     private $holidayRepository;
@@ -870,6 +871,7 @@ class AttendanceController extends Controller
     private function checkJoiningDate($business_member_joining_date, $start_date, $end_date)
     {
         if (!$business_member_joining_date) return false;
+        if ($business_member_joining_date->format('d') == self::FIRST_DAY_OF_MONTH) return false;
         return $business_member_joining_date->format('Y-m-d') >= $start_date && $business_member_joining_date->format('Y-m-d') <= $end_date;
     }
     /**
