@@ -32,7 +32,7 @@ class PackageWiseHomepageSettings
      */
     public function get(): array
     {
-        foreach ($this->package_settings as $key => &$setting) {
+        foreach ($this->package_settings as &$setting) {
             if($setting->is_published === 1)
                 foreach ($this->partner_settings as $partner_setting)
                     if ($setting->key === $partner_setting->key)

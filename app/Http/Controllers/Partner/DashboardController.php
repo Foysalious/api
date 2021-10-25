@@ -22,6 +22,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 use Sheba\Analysis\PartnerPerformance\PartnerPerformance;
@@ -377,18 +378,17 @@ class DashboardController extends Controller
      * @param PartnerRepositoryInterface $partner_repo
      * @return JsonResponse
      */
-    public function updateHomeSettingV3(Request $request, PartnerRepositoryInterface $partner_repo)
+    public function updateHomeSettingV3(Request $request, PartnerRepositoryInterface $partner_repo): JsonResponse
     {
         try {
             $home_page_setting             = $request->home_page_setting;
-            $data['home_page_setting_new'] = $home_page_setting;
-            $partner_repo->update($request->partner, $data);
+            $home_page_setting = (new HomepageSettingsV3($request->partner))->update($home_page_setting, $partner_repo);
             return api_response($request, null, 200, [
                 'message' => 'Dashboard Setting updated successfully',
                 'data'    => json_decode($home_page_setting)
             ]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
