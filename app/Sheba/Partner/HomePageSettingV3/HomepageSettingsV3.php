@@ -25,10 +25,8 @@ class HomepageSettingsV3
             $this->storeHomepageSettings($home_page_setting);
             return json_decode($home_page_setting);
         }
-
         $home_page_setting = $this->packageWiseSettings->setPackageSettings($home_page_setting)->setPartnerSettings($partner_homepage_settings)->get();
         $this->addIsNewTag($home_page_setting);
-
         return $home_page_setting;
     }
 
@@ -45,10 +43,9 @@ class HomepageSettingsV3
     public function filterIsPublished($home_page_setting)
     {
         if(is_string($home_page_setting)) $home_page_setting = json_decode($home_page_setting);
-
         $filtered_settings = array();
         foreach ($home_page_setting as $setting) {
-            if($setting->is_on_homepage === 1)
+            if($setting->is_published === 1)
                 $filtered_settings[] = $setting;
         }
 
