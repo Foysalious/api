@@ -29,6 +29,7 @@ class Route
                 $api->get('/setting-details', 'WebstoreSettingController@getThemeDetails');
                 $api->post('/', 'WebstoreSettingController@store');
                 $api->put('/', 'WebstoreSettingController@update');
+                $api->get('/system-defined', 'WebstoreSettingController@getSystemDefinedSettings');
             });
             $api->group(['prefix' => 'collections'], function ($api) {
                 $api->get('/', 'Inventory\CollectionController@index');

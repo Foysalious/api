@@ -18,7 +18,7 @@ class WebstoreSettingController extends Controller
     {
         $partner = $request->auth_user->getPartner();
         $settings = $this->webstoreSettingService->getallSettings($partner->id);
-        return api_response($request, null, 200, $settings);
+        return api_response($request, null, 200, ['message' => 'Successful', 'data' => $settings]);
     }
 
     public function getThemeDetails(Request $request)
@@ -31,23 +31,23 @@ class WebstoreSettingController extends Controller
     public function store(Request $request)
     {
         $partner = $request->auth_user->getPartner();
-        $response = $this->webstoreSettingService
+        $this->webstoreSettingService
             ->setPartner($partner->id)
             ->setTheme($request->theme_id)
             ->setSettings($request->settings)
             ->store();
-        return $response;
+        return api_response($request, null, 200);
     }
 
     public function update(Request $request)
     {
         $partner = $request->auth_user->getPartner();
-        $response = $this->webstoreSettingService
+        $this->webstoreSettingService
             ->setPartner($partner->id)
             ->setTheme($request->theme_id)
             ->setSettings($request->settings)
             ->update();
-        return $response;
+        return api_response($request, null, 200);
     }
 
     public function storeSocialSetting(Request $request)
@@ -82,7 +82,14 @@ class WebstoreSettingController extends Controller
     {
         $partner = $request->auth_user->getPartner();
         $socialSettings = $this->webstoreSettingService->getPartnerSocialSettings($partner->id);
-        return api_response($request, null, 200, $socialSettings);
+        return api_response($request, null, 200, ['message' => 'Successful', 'data' => $socialSettings]);
+    }
+
+    public function getSystemDefinedSettings(Request $request)
+    {
+        $partner = $request->auth_user->getPartner();
+        $systemDefinedSettings = $this->webstoreSettingService->getSystemDefinedSettings($partner->id);
+        return api_response($request, null, 200, ['message' => 'Successful', 'data' => $systemDefinedSettings]);
     }
 
 }

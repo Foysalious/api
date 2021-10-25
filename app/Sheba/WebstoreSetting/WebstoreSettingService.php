@@ -79,7 +79,13 @@ class WebstoreSettingService
 
     public function getPartnerSocialSettings($partner)
     {
-        $url = 'api/v1/partners/' . $partner . '/setting-details';
+        $url = 'api/v1/partners/' . $partner . '/social-settings';
+        return $this->client->get($url);
+    }
+
+    public function getSystemDefinedSettings($partner)
+    {
+        $url = 'api/v1/theme-settings/system-defined';
         return $this->client->get($url);
     }
 
@@ -101,7 +107,7 @@ class WebstoreSettingService
     public function store()
     {
         $data = $this->makeStoreData();
-        return $this->client->post('api/v1/partners/' . $this->partner . '/settings', $data);
+        return $this->client->post('api/v1/partners/' . $this->partner . '/theme-settings', $data);
     }
 
     public function makeStoreDataForSocialSettings()
@@ -118,11 +124,11 @@ class WebstoreSettingService
     public function makeUpdateDataForSocialSettings()
     {
         $data = [];
-        if (isset($this->facebook)) array_push($data, ['name' => 'facebook', 'contents' => $this->facebook]);
-        if (isset($this->instagram)) array_push($data, ['name' => 'instagram', 'contents' => $this->instagram]);
-        if (isset($this->whatsapp)) array_push($data, ['name' => 'whatsapp', 'contents' => $this->whatsapp]);
-        if (isset($this->youtube)) array_push($data, ['name' => 'youtube', 'contents' => $this->youtube]);
-        if (isset($this->email)) array_push($data, ['name' => 'email', 'contents' => $this->email]);
+        if (isset($this->facebook)) $data['facebook'] = $this->facebook;
+        if (isset($this->instagram)) $data['instagram'] = $this->instagram;
+        if (isset($this->whatsapp)) $data['whatsapp'] = $this->whatsapp;
+        if (isset($this->youtube)) $data['youtube'] = $this->youtube;
+        if (isset($this->email)) $data['email'] = $this->email;
         return $data;
     }
 
@@ -134,14 +140,14 @@ class WebstoreSettingService
 
     public function updateSocialSetting()
     {
-        $data = $this->makeStoreDataForSocialSettings();
-        return $this->client->post('api/v1/partners/' . $this->partner . '/social-settings', $data);
+        $data = $this->makeUpdateDataForSocialSettings();
+        return $this->client->put('api/v1/partners/' . $this->partner . '/social-settings', $data);
     }
 
 
     public function update()
     {
         $data = $this->makeStoreData();
-        return $this->client->put('api/v1/partners/' . $this->partner . '/settings', $data);
+        return $this->client->put('api/v1/partners/' . $this->partner . '/theme-settings', $data);
     }
 }
