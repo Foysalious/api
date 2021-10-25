@@ -5,7 +5,7 @@ use Illuminate\Foundation\Support\Providers\EventServiceProvider;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceSaved as PartnerPosServiceSaved;
-use App\Sheba\Algolia\Listeners\PosServiceSavedListener;
+use Sheba\Algolia\Listeners\PosServiceSavedListener;
 
 class EventsListenerProvider extends ServiceProvider
 {
