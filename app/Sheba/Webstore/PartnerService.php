@@ -30,8 +30,6 @@ class PartnerService
             'is_webstore_published'
         ]);
         $data->put('mobile', $partner->getContactNumber());
-        $show_old_website = !$partner->is_migration_completed ? 1 : 0;
-        $data->put('show_old_website', $show_old_website);
         return $data->toArray();
     }
 
