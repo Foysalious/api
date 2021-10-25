@@ -94,7 +94,10 @@ class CoWorkerDetailTransformer extends TransformerAbstract
             'employee_id' => $business_member->employee_id,
             'join_date' => $business_member->join_date,
             'grade' => $business_member->grade,
-            'employee_type' => $business_member->employee_type,
+            'employee_type' => $business_member->employee_type ? [
+                'key' => $business_member->employee_type,
+                'title' => ucwords(str_replace('_', ' ', $business_member->employee_type))
+            ] : null,
             'previous_institution' => $business_member->previous_institution,
             'official_info_completion' => $official_info_completion
         ];
