@@ -34,6 +34,7 @@ use Sheba\ModificationFields;
 use Sheba\Partner\HomePageSetting\CacheManager;
 use Sheba\Partner\HomePageSetting\Setting;
 use Sheba\Partner\HomePageSettingV3\DefaultSettingV3;
+use Sheba\Partner\HomePageSettingV3\HomepageSettingsV3;
 use Sheba\Partner\HomePageSettingV3\NewFeatures;
 use Sheba\Partner\HomePageSettingV3\SettingV3;
 use Sheba\Partner\LeaveStatus;
@@ -301,23 +302,18 @@ class DashboardController extends Controller
 
     /**
      * @param Request $request
-     * @param SettingV3 $setting
      * @return JsonResponse
      */
-    public function getHomeSettingV3(Request $request, SettingV3 $setting): JsonResponse
+    public function getHomeSettingV3(Request $request): JsonResponse
     {
-        $this->setModifier($request->partner);
-        $home_page_setting = (new PartnerSubscriptionPackageRepository($request->partner->package_id))->getHomepageSettings();
-        $home_page_setting = json_decode($home_page_setting);
-
-        foreach ($home_page_setting as &$setting) {
-            if (is_object($setting)) {
-                in_array($setting->key, NewFeatures::get()) ? $setting->is_new = 1 : $setting->is_new = 0;
-            } else {
-                in_array($setting['key'], NewFeatures::get()) ? $setting['is_new'] = 1 : $setting['is_new'] = 0;
-            }
+        try {
+            $this->setModifier($request->partner);
+            $home_page_setting = (new HomepageSettingsV3($request->partner))->get();
+            return api_response($request, null, 200, ['data' => $home_page_setting]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
         }
-        return api_response($request, null, 200, ['data' => $home_page_setting]);
     }
 
     /**
