@@ -2,7 +2,6 @@
 
 use App\Exceptions\DoNotReportException;
 use App\Exceptions\WalletTransaction\WalletDebitTransactionForbiddenHandler;
-use Exception as BaseException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Exceptions\Exceptions\ExceptionForClient;
@@ -26,6 +25,7 @@ use Sheba\Transactions\Wallet\WalletDebitForbiddenException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
+use Throwable;
 
 class HandlerFactory
 {
