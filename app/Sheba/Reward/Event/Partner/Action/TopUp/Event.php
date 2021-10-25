@@ -13,9 +13,8 @@ class Event extends Action implements AmountCalculator
 {
     /** @var Partner $partner */
     private $partner;
-    /**
-     * @var TopUpOrder $topup_order
-     */
+
+    /** @var TopUpOrder $topup_order */
     private $topup_order;
 
     /**
@@ -52,6 +51,7 @@ class Event extends Action implements AmountCalculator
                     $this->partner = Partner::find($this->topup_order->agent_id);
                     return in_array($this->partner->package_id, $ids);
                 }
+                return in_array($this->partner->package_id, $ids);
             }
         }
 
