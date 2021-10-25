@@ -6,6 +6,7 @@ use App\Models\PartnerResource;
 use App\Models\ReviewQuestionAnswer;
 use App\Repositories\ReviewRepository;
 use App\Sheba\Partner\Delivery\Methods;
+use App\Sheba\UserMigration\Modules;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -96,7 +97,7 @@ class PartnerDetails
         $info->put('mobile', $partner->getContactNumber());
         $info->put('banner', $this->getWebStoreBanner());
         $info->put('delivery_method', $this->getDeliveryMethod());
-        $show_old_website = !$partner->is_migration_completed ? 1 : 0;
+        $show_old_website = !$partner->isMigrated(Modules::POS) ? 1 : 0;
         $info->put('show_old_website', $show_old_website);
         // $this->calculateWorkingDaysInfo();
         // $info->put('working_days', $this->workingInfo);
