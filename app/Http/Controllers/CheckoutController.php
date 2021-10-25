@@ -1,28 +1,19 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Jobs\CalculatePapAffiliateId;
 use App\Models\Customer;
-use App\Models\PartnerTransaction;
 use App\Repositories\CartRepository;
 use App\Repositories\CheckoutRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\DiscountRepository;
 use App\Repositories\NotificationRepository;
 use App\Repositories\VoucherRepository;
-use Carbon\Carbon;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
-use Session;
 use Cache;
 use DB;
 use Mail;
 use Illuminate\Support\Facades\Redis;
-use Sheba\Voucher\Creator\GiftedReferral;
-use Sheba\Voucher\PromotionList;
-#use Sheba\Voucher\ReferralCreator;
-use Sheba\Voucher\Creator\Referral;
 
 class CheckoutController extends Controller
 {
@@ -127,17 +118,9 @@ class CheckoutController extends Controller
 
     private function updateVouchers($order, $customer)
     {
-        if ($order->voucher_id != null) {
-            $voucher = $order->voucher;
-            $this->updateVoucherInPromoList($customer, $voucher, $order);
-//            if ($this->isOriginalReferral($order, $voucher)) {
-//                if ($voucher->owner_type == 'App\Models\Customer') {
-//                    $this->createVoucherNPromotionForReferrer($customer, $order);
-//                } elseif ($voucher->owner_type == 'App\Models\Partner') {
-//                    $this->addAmountToPartnerWallet($voucher, $customer);
-//                }
-//            }
-        }
+        if ($order->voucher_id == null) return;
+        $voucher = $order->voucher;
+        $this->updateVoucherInPromoList($customer, $voucher, $order);
     }
 
     public function spPayment(Request $request, $customer)
@@ -176,87 +159,37 @@ class CheckoutController extends Controller
 
     public function validateVoucher(Request $request)
     {
-        try {
-            $data = json_decode($request->data);
-            $sales_channel = property_exists($data, 'sales_channel') ? $data->sales_channel : "Web";
-            $cart = $data->cart;
-            if ($this->cartRepository->hasDiscount($cart->items)) {
-                return api_response($request, null, 404, ['result' => 'Discount available for service!']);
-            }
-            $amount = [];
-            $applied = false;
-            foreach ($cart->items as $item) {
-                $result = $this->voucherRepository
-                    ->isValid($data->voucher_code, $item->service->id, $item->partner->id, $data->location, $data->customer, $cart->price, $sales_channel);
-                if ($result['is_valid']) {
-                    if ($this->voucherRepository->isOwnVoucher($data->customer, $result['voucher'])) {
-                        $result = "Can't add your own voucher";
-                        return api_response($request, $result, 403, ['result' => $result]);
-                    }
-                    $applied = true;
-                    $item->partner = $this->cartRepository->getPartnerPrice($item);
-                    if ($result['is_percentage']) {
-                        $result['amount'] = ((float)$item->partner->prices * $item->quantity * $result['amount']) / 100;
-                        if ($result['voucher']->cap != 0 && $result['amount'] > $result['voucher']->cap) {
-                            $result['amount'] = $result['voucher']->cap;
-                        }
-                    }
-                    $amount[] = (new DiscountRepository())->validateDiscountValue($item->partner->prices * $item->quantity, $result['amount']);
-                }
-            }
-            if ($applied) {
-                return api_response($request, max($amount), 200, ['amount' => max($amount)]);
-            }
-            return api_response($request, $result, 404, ['result' => max($result)]);
-        } catch (\Exception $e) {
-            return api_response($request, null, 500);
+        $data = json_decode($request->data);
+        $sales_channel = property_exists($data, 'sales_channel') ? $data->sales_channel : "Web";
+        $cart = $data->cart;
+        if ($this->cartRepository->hasDiscount($cart->items)) {
+            return api_response($request, null, 404, ['result' => 'Discount available for service!']);
         }
-    }
-
-    /**
-     * @param $order
-     * @param $voucher
-     * @return bool
-     */
-    private function isOriginalReferral($order, $voucher)
-    {
-        return $order->voucher_id != null && $voucher->is_referral == 1 && $voucher->referred_from == null;
-    }
-
-    /**
-     * @param $customer
-     * @param $order
-     */
-    private function createVoucherNPromotionForReferrer($customer, $order)
-    {
-        $order_voucher = $order->voucher;
-        $customer->referrer_id = $order_voucher->owner_id;
-        $customer->update();
-        #$referral_creator = new ReferralCreator($customer);
-        #$voucher = $referral_creator->create($order->voucher_id);
-        $voucher = new GiftedReferral($customer, $order->voucher);
-
-        $promo_list = new PromotionList($order_voucher->owner_id);
-        $promo_list->create($voucher->id);
-    }
-
-    private function addAmountToPartnerWallet($voucher, $customer)
-    {
-        $partner = $voucher->owner;
-        $partner->wallet += constants('REFERRAL_GIFT_AMOUNT');
-        $partner->update();
-        $this->addPartnerTransactionLog($partner, $customer);
-    }
-
-    private function addPartnerTransactionLog($partner, $customer)
-    {
-        $transaction = new PartnerTransaction();
-        $transaction->partner_id = $partner->id;
-        $transaction->type = 'Debit';
-        $transaction->amount = constants('REFERRAL_GIFT_AMOUNT');
-        $transaction->log = $customer->name . " has gifted you " . constants('REFERRAL_GIFT_AMOUNT') . "tk &#128526;";
-        $transaction->created_at = Carbon::now();
-        $transaction->save();
+        $amount = [];
+        $applied = false;
+        foreach ($cart->items as $item) {
+            $result = $this->voucherRepository
+                ->isValid($data->voucher_code, $item->service->id, $item->partner->id, $data->location, $data->customer, $cart->price, $sales_channel);
+            if ($result['is_valid']) {
+                if ($this->voucherRepository->isOwnVoucher($data->customer, $result['voucher'])) {
+                    $result = "Can't add your own voucher";
+                    return api_response($request, $result, 403, ['result' => $result]);
+                }
+                $applied = true;
+                $item->partner = $this->cartRepository->getPartnerPrice($item);
+                if ($result['is_percentage']) {
+                    $result['amount'] = ((float)$item->partner->prices * $item->quantity * $result['amount']) / 100;
+                    if ($result['voucher']->cap != 0 && $result['amount'] > $result['voucher']->cap) {
+                        $result['amount'] = $result['voucher']->cap;
+                    }
+                }
+                $amount[] = (new DiscountRepository())->validateDiscountValue($item->partner->prices * $item->quantity, $result['amount']);
+            }
+        }
+        if ($applied) {
+            return api_response($request, max($amount), 200, ['amount' => max($amount)]);
+        }
+        return api_response($request, $result, 404, ['result' => max($result)]);
     }
 
     private function updateVoucherInPromoList(Customer $customer, $voucher, $order)

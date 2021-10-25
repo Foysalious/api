@@ -1,12 +1,13 @@
 <?php namespace Sheba\Logs;
 
 use App\Sheba\Release\Release;
-use Exception;
 use Illuminate\Http\Request;
 use InvalidArgumentException;
+use Throwable;
 
 class ErrorLog
 {
+    /** @var Throwable */
     private $exception;
     /** @var Request */
     private $request;
@@ -20,7 +21,7 @@ class ErrorLog
         $this->context = [];
     }
 
-    public function setException($exception)
+    public function setException(Throwable $exception)
     {
         $this->exception = $exception;
         return $this;

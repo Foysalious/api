@@ -106,7 +106,7 @@ class IncomeController extends Controller
                 'created_at' => 'required',
                 'head_id' => 'required'
             ]);
-            $input = $request->only(['amount', 'created_at', 'head_id', 'note']);
+            $input = $request->all(['amount', 'created_at', 'head_id', 'note']);
             $input['amount_cleared'] = $request->input('amount');
             $income = $this->entryRepo->setPartner($request->partner)->storeEntry(EntryType::getRoutable(EntryType::INCOME), $input);
             $manager = new Manager();
@@ -166,7 +166,7 @@ class IncomeController extends Controller
     public function update(Request $request,$partner, $income_id)
     {
         try {
-            $input = $request->only(['amount', 'created_at', 'head_id', 'note']);
+            $input = $request->all(['amount', 'created_at', 'head_id', 'note']);
             $input['amount_cleared'] = $request->input('amount');
             $income = $this->entryRepo->setPartner($request->partner)->updateEntry(EntryType::getRoutable(EntryType::INCOME), $input, $income_id);
             $manager = new Manager();

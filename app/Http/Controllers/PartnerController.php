@@ -446,10 +446,8 @@ class PartnerController extends Controller
 
     public function getEarnings($partner, Request $request)
     {
-        Carbon::setWeekStartsAt(Carbon::SUNDAY);
-        Carbon::setWeekEndsAt(Carbon::SATURDAY);
-        $start_time     = Carbon::now()->startOfWeek();
-        $end_time       = Carbon::now()->endOfWeek();
+        $start_time     = Carbon::now()->startOfWeek(Carbon::SUNDAY);
+        $end_time       = Carbon::now()->endOfWeek(Carbon::SATURDAY);
         $partner        = $request->partner;
         $sales_stats    = (new PartnerSalesStatistics($partner))->calculate();
         $partner_orders = $this->partnerOrderRepository->getOrdersByClosedAt($partner, $start_time, $end_time);

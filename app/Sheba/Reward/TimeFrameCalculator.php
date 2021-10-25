@@ -8,13 +8,6 @@ class TimeFrameCalculator
 {
     private $reward;
 
-    public function __construct()
-    {
-        Carbon::setWeekStartsAt(Carbon::SUNDAY);
-        Carbon::setWeekEndsAt(Carbon::SATURDAY);
-    }
-
-
     public function setReward(Reward $reward)
     {
         $this->reward = $reward;

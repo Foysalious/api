@@ -5,12 +5,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Models\Member;
-use App\Sheba\Business\Payslip\Excel as PaySlipExcel;
+use App\Sheba\Business\Payslip\PayslipExcel;
 use App\Sheba\Business\Payslip\PayRun\PayRunBulkExcel;
 use App\Sheba\Business\Payslip\PayrunList;
 use App\Sheba\Business\Payslip\PendingMonths;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel as MaatwebsiteExcel;
 use Sheba\Business\Payslip\PayRun\Updater as PayRunUpdater;
 use Sheba\Dal\AuthenticationRequest\Purpose;
 use Sheba\Dal\PayrollComponent\Type;
@@ -22,6 +23,7 @@ use Sheba\OAuth2\VerifyPin;
 use Sheba\OAuth2\WrongPinError;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\TopUp\Exception\PinMismatchException;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class PayRunController extends Controller
 {
@@ -47,11 +49,10 @@ class PayRunController extends Controller
     /**
      * @param Request $request
      * @param PayrunList $payrun_list
-     * @param PaySlipExcel $pay_slip_excel
      * @param PayRunBulkExcel $pay_run_bulk_excel
-     * @return JsonResponse
+     * @return JsonResponse|BinaryFileResponse
      */
-    public function index(Request $request, PayrunList $payrun_list, PaySlipExcel $pay_slip_excel, PayRunBulkExcel $pay_run_bulk_excel)
+    public function index(Request $request, PayrunList $payrun_list, PayRunBulkExcel $pay_run_bulk_excel)
     {
         /** @var Business $business */
         $business = $request->business;
@@ -69,7 +70,10 @@ class PayRunController extends Controller
             ->get();
 
         $count = count($payslip);
-        if ($request->file == 'excel') return $pay_slip_excel->setPayslipData($payslip->toArray())->setPayslipName('Pay_run')->get();
+        if ($request->file == 'excel') {
+            $excel = new PayslipExcel($payslip->toArray());
+            return MaatwebsiteExcel::download($excel, 'Pay_run.xlsx');
+        }
         if ($request->limit == 'all') $limit = $count;
 
         $addition_payroll_components = $business->payrollSetting->components->where('type', Type::ADDITION)->sortBy('name');

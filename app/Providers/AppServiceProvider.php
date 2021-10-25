@@ -1,11 +1,13 @@
 <?php namespace App\Providers;
 
 use App\Http\Middleware\B2B\TerminatingMiddleware;
+use Illuminate\Support\Carbon;
+use Sheba\Algolia\Provider\EventsListenerProvider as AlgoliaProvider;
 use App\Sheba\Algolia\Provider\EventsListenerProvider;
 use App\Sheba\Pos\Order\Providers\EventsListenerProvider as PosOrderInvoiceGenerationEventsListenerProvider;
-use Exception;
 use Illuminate\Support\ServiceProvider;
 use Sheba\Dal\Providers\CustomMigrationServiceProvider;
+use Sheba\Dal\Providers\SearchServiceProvider;
 use Sheba\Partner\HomePageSetting\Providers\ServiceProvider as PartnerHomeSettingServiceProvider;
 use Sheba\Partner\HomePageSettingV3\Providers\ServiceProvider as PartnerHomeSettingServiceProviderV3;
 use Sheba\PartnerOrder\ConcurrentUpdateRestriction\CURServiceProvider;
@@ -19,6 +21,17 @@ use Sheba\AppSettings\HomePageSetting\Getters\Provider as HomePageSettingGetters
 
 class AppServiceProvider extends ServiceProvider
 {
+    public function boot()
+    {
+        Carbon::serializeUsing(function ($date) {
+            return [
+                'date' => $date->toDateTimeString(),
+                "timezone_type" => ((array) $date->tz)['timezone_type'],
+                'timezone' => $date->tzName,
+            ];
+        });
+    }
+
     /**
      * Register any application services.
      *
@@ -37,8 +50,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->register(PartnerHomeSettingServiceProviderV3::class);
         $this->app->register(HighlyDemandsCategoriesServiceProvider::class);
         $this->app->register(CURServiceProvider::class);
-        $this->app->register(EventsListenerProvider::class);
+        $this->app->register(AlgoliaProvider::class);
         $this->app->singleton(TerminatingMiddleware::class);
         $this->app->register(PosOrderInvoiceGenerationEventsListenerProvider::class);
+        $this->app->register(SearchServiceProvider::class);
     }
 }

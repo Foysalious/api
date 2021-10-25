@@ -1,10 +1,9 @@
 <?php namespace App\Exceptions;
 
 use Dingo\Api\Http\Request;
-use Exception;
+use Throwable;
 use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Auth\AuthenticationException;
 use Sheba\Exceptions\HandlerFactory;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -27,10 +26,10 @@ class CustomHandler extends DingoHandler
      *
      * This is a great spot to send exceptions to Sentry, Bugsnag, etc.
      *
-     * @param Exception $e
+     * @param Throwable $e
      * @return void
      */
-    public function report(Exception $e)
+    public function report(Throwable $e)
     {
         /**
          * Done in the render section.
@@ -42,16 +41,28 @@ class CustomHandler extends DingoHandler
      * Render an exception into an HTTP response.
      *
      * @param Request $request
-     * @param Exception $e
+     * @param Throwable $e
      * @return \Illuminate\Http\Response|Response
-     * @throws Exception
+     * @throws Throwable
      */
-    public function render($request, Exception $e)
+    public function render($request, Throwable $e)
     {
         $handler = HandlerFactory::get($request, $e);
 
         if ($this->parentHandler->shouldReport($e)) $handler ? $handler->report() : logError($e);
 
         return $handler ? $handler->render() : parent::render($request, $e);
+    }
+
+    /**
+     * Convert an authentication exception into an unauthenticated response.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param AuthenticationException $exception
+     * @return \Illuminate\Http\Response|Response
+     */
+    protected function unauthenticated($request, AuthenticationException $exception)
+    {
+        return response()->json(['error' => 'Unauthenticated.'], 401);
     }
 }

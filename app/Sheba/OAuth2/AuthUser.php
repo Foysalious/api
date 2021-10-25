@@ -61,7 +61,7 @@ class AuthUser
 
     public static function authenticate()
     {
-        JWTAuth::getPayload(JWTAuth::getToken());
+        JWTAuth::setToken(JWTAuth::getToken())->getPayload();
     }
 
     /**
@@ -76,11 +76,11 @@ class AuthUser
                 $jws = JWS::load($token);
                 $payload = $jws->getPayload();
             } else {
-                $payload = JWTAuth::getPayload($token)->toArray();
+                $payload = JWTAuth::setToken($token)->getPayload()->toArray();
             }
             return new static($payload);
         } catch (JWTException $e) {
-            throw new SomethingWrongWithToken($e->getMessage(), $e->getStatusCode());
+            throw new SomethingWrongWithToken($e->getMessage(), $e->getCode());
         }
     }
 

@@ -45,7 +45,7 @@ foreach ($connection_names as $connection_name => $agent_ids) {
         'driver' => $queue_driver,
         'connection' => 'default',
         'queue' => $connection_name,  // otherwise, it'll go to 'queues:default' along with many other jobs.
-        'expire' => 60
+        'retry_after' => 60
     ];
 
     if (ends_with($connection_name, "_default")) continue;

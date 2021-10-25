@@ -1,50 +1,31 @@
 <?php namespace Sheba\Business\Expense;
 
 use Carbon\Carbon;
-use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Collection;
+use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class ExpenseExcel
+class ExpenseExcel implements FromCollection, WithHeadings, ShouldAutoSize, WithStyles
 {
-    private $data = [];
     private $expenseData;
-    private $name;
 
-    public function setData(array $expense_data)
+    public function __construct(array $expense_data)
     {
         $this->expenseData = $expense_data;
-        return $this;
     }
 
-    public function setName($name)
+    /**
+     * @return Collection
+     */
+    public function collection(): Collection
     {
-        $this->name = $name;
-        return $this;
-    }
-
-    public function get()
-    {
-        $this->makeData();
-        $file_name = $this->name;
-        Excel::create($file_name, function ($excel) {
-            $excel->sheet('data', function ($sheet) {
-                $sheet->fromArray($this->data, null, 'A1', true, false);
-                $sheet->prependRow($this->getHeaders());
-                $sheet->freezeFirstRow();
-                $sheet->cell('A1:H1', function ($cells) {
-                    $cells->setFontWeight('bold');
-                });
-                $sheet->getDefaultStyle()->getAlignment()->applyFromArray(
-                    array('horizontal' => 'left')
-                );
-                $sheet->setAutoSize(true);
-            });
-        })->export('xlsx');
-    }
-
-    private function makeData()
-    {
+        $data = collect([]);
         foreach ($this->expenseData as $expense) {
-            array_push($this->data, [
+            $data->push([
                 'month' => Carbon::now()->month(($expense['month']))->format('F'),
                 'employee_id' => $expense['employee_id'] ?: 'N/A',
                 'employee_name' => $expense['employee_name'],
@@ -55,10 +36,21 @@ class ExpenseExcel
                 'amount' => (double)$expense['amount']
             ]);
         }
+        return $data;
     }
 
-    private function getHeaders()
+    public function headings(): array
     {
         return ['Month', 'Employee ID', 'Employee Name', 'Department', 'Transport', 'Food', 'Other', 'Amount'];
+    }
+
+    /**
+     * @throws \PhpOffice\PhpSpreadsheet\Exception
+     */
+    public function styles(Worksheet $sheet)
+    {
+        $sheet->freezePane('A1');
+        $sheet->getStyle('A1:H1')->getFont()->setBold(true);
+        $sheet->getParent()->getDefaultStyle()->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
     }
 }

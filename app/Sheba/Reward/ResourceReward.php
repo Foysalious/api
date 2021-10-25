@@ -77,7 +77,7 @@ class ResourceReward extends ShebaReward
         $partner_resources = PartnerResource::with('categories')->handyman()->select('id')->where('resource_id', $this->resource->id)->get();
         if ($partner_resources->count() == 0) return false;
         $category_partner_resources = DB::table('category_partner_resource')->where('partner_resource_id', $partner_resources->pluck('id')->toArray())
-            ->select('category_id')->get();
+            ->select('category_id')->get()->all();
         foreach ($category_partner_resources as $category_partner_resource) {
             if (in_array($category_partner_resource->category_id, $reward_categories)) return true;
         }
@@ -93,7 +93,6 @@ class ResourceReward extends ShebaReward
     {
         // TODO: Implement running() method.
     }
-
 
     public function upcoming()
     {

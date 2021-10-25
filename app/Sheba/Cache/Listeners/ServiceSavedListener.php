@@ -1,6 +1,5 @@
 <?php namespace Sheba\Cache\Listeners;
 
-
 use Sheba\Dal\Service\Service;
 use Sheba\Cache\CacheAside;
 use Sheba\Cache\Category\Children\CategoryChildrenCacheRequest;
@@ -9,9 +8,8 @@ use Sheba\Cache\Category\Info\CategoryCacheRequest;
 use Sheba\Cache\Category\Tree\CategoryTreeCacheRequest;
 use Sheba\Cache\Sitemap\SitemapCacheRequest;
 use Sheba\Dal\Service\Events\ServiceSaved as ServiceSavedEvent;
-use Sheba\Report\Listeners\BaseSavedListener;
 
-class ServiceSavedListener extends BaseSavedListener
+class ServiceSavedListener
 {
     public function handle(ServiceSavedEvent $event)
     {

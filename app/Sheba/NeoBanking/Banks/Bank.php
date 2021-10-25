@@ -1,7 +1,4 @@
-<?php
-
-
-namespace Sheba\NeoBanking\Banks;
+<?php namespace Sheba\NeoBanking\Banks;
 
 
 use App\Models\Partner;

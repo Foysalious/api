@@ -212,21 +212,11 @@ class PosOrderList
                 $query->where('partner_pos_customers.nick_name', 'LIKE', '%' . $search_query . '%');
             });
         });
-        $orders_query = $orders_query->orWhere([
-            [
-                'pos_orders.partner_wise_order_id',
-                'LIKE',
-                '%' . $search_query . '%'
-            ],
-            [
-                'pos_orders.partner_id',
-                $this->partner->id
-            ],
-            [
-                'pos_orders.sales_channel',
-                $this->sales_channel
-            ]
-        ]);
+        $orders_query = $orders_query->orWhere(function ($q) use ($search_query) {
+            $q->where('pos_orders.partner_wise_order_id', 'LIKE', '%' . $search_query . '%')
+                ->where('pos_orders.partner_id', $this->partner->id)
+                ->where('pos_orders.sales_channel', $this->sales_channel);
+        });
         return $orders_query;
     }
 

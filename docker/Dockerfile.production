@@ -1,4 +1,4 @@
-FROM php:7.0-fpm
+FROM php:7.3-fpm
 
 ARG APP_ENV
 
@@ -12,31 +12,24 @@ ENV PHP_CPPFLAGS="$PHP_CPPFLAGS -std=c++11"
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
-    nginx \
-    libpng-dev \
-    zlib1g-dev \
-    libsasl2-dev \
-    libssl-dev \
-    libjpeg62-turbo-dev \
-    libfreetype6-dev \
-    libpng-dev \
-    libxpm-dev \
-    libvpx-dev \
-    libxml2-dev \
-    libicu-dev \
-    git
+    nginx git \
+    libsasl2-dev  libssl-dev \
+    libjpeg62-turbo-dev libfreetype6-dev libpng-dev libxpm-dev libvpx-dev \
+    libxml2-dev libicu-dev zlib1g-dev
+    libgmp-dev libmhash-dev
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install extensions
+RUN docker-php-ext-configure gmp --with-gmp=/usr/include/
+RUN docker-php-ext-install gmp
 RUN docker-php-ext-configure gd --with-gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ --with-png-dir=/usr/include/
 RUN docker-php-ext-configure intl
-RUN docker-php-ext-install -j$(nproc) pdo_mysql mbstring zip calendar soap gd intl opcache
+RUN docker-php-ext-install -j$(nproc) pdo_mysql mbstring zip calendar soap gd intl opcache bcmath
 
 # Install mongodb extension
-RUN pecl install mongodb-1.4.4 \
-    && echo "extension=mongodb.so" > /usr/local/etc/php/conf.d/mongo.ini
+RUN pecl install mongodb-1.8.1  && echo "extension=mongodb.so" > /usr/local/etc/php/conf.d/mongo.ini
 
 # Install php-ext-apfd
 RUN pecl install apfd && docker-php-ext-enable apfd
@@ -45,8 +38,7 @@ RUN pecl install apfd && docker-php-ext-enable apfd
 RUN curl -sL https://sentry.io/get-cli/ | bash
 
 # Install composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer --version=1.8.6
-RUN composer global require hirak/prestissimo
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 # Copy existing application directory permissions
 COPY --chown=www-data:www-data . /var/www
@@ -86,7 +78,7 @@ WORKDIR /var/www
 # Make sentry cli script executable
 RUN chmod +x ./bin/sentry_release.sh
 
-RUN composer install --ignore-platform-reqs && rm -rf /home/www-data/.composer/cache
+RUN composer install && rm -rf /home/www-data/.composer/cache
 
 # RUN chmod -R g+w /var/www/vendor
 

@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
 use Sheba\Dal\PaymentGateway\Contract as PaymentGatewayRepository;
 
 class PaymentGatewayController extends Controller
@@ -16,10 +17,11 @@ class PaymentGatewayController extends Controller
     }
 
     /**
+     * @param Request $request
      * @param $service_type
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getPaymentGateways($service_type)
+    public function getPaymentGateways(Request $request, $service_type)
     {
         if ($service_type == "affiliate") {
             $service = "App\\Models\\Affiliate";
@@ -36,6 +38,6 @@ class PaymentGatewayController extends Controller
             ->orderBy('order', 'asc')
             ->get();
 
-        return api_response($service_type, $payment_gateways, 200, ['payment_gateways' => $payment_gateways]);
+        return api_response($request, null, 200, ['payment_gateways' => $payment_gateways]);
     }
 }

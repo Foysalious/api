@@ -85,15 +85,9 @@ class ExpenseController extends Controller
                 ],
                 'expenses' => $expenses_formatted
             ]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
         } catch (ExpenseTrackingServerError $e) {
             $message = $e->getMessage();
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
         }
     }
 
@@ -103,39 +97,31 @@ class ExpenseController extends Controller
      */
     public function store(Request $request)
     {
-        try {
-            $this->validate($request, [
-                'amount' => 'required|numeric',
-                'created_at' => 'required',
-                'head_id' => 'required',
-                'amount_cleared' => 'sometimes|required|numeric',
-                'customer_id' => 'required_with:amount_cleared'
-            ]);
+        $this->validate($request, [
+            'amount' => 'required|numeric',
+            'created_at' => 'required',
+            'head_id' => 'required',
+            'amount_cleared' => 'sometimes|required|numeric',
+            'customer_id' => 'required_with:amount_cleared'
+        ]);
 
-            $input = $request->only(['amount', 'created_at', 'head_id', 'note']);
-            $input['amount_cleared'] = $request->has('amount_cleared') ? $request->input('amount_cleared') : $request->input('amount');
+        $input = $request->all(['amount', 'created_at', 'head_id', 'note']);
+        $input['amount_cleared'] = $request->has('amount_cleared') ? $request->input('amount_cleared') : $request->input('amount');
 
-            $customer_id = $request->input('customer_id');
-            if ($customer_id) $input['profile_id'] = PosCustomer::find($customer_id)->profile_id;
+        $customer_id = $request->input('customer_id');
+        if ($customer_id) $input['profile_id'] = PosCustomer::find($customer_id)->profile_id;
 
-            $expense = $this->entryRepo->setPartner($request->partner)->storeEntry(EntryType::getRoutable(EntryType::EXPENSE), $input);
-            $manager = new Manager();
-            $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($expense, new ExpenseTransformer());
-            $expense_formatted = $manager->createData($resource)->toArray()['data'];
+        $expense = $this->entryRepo->setPartner($request->partner)->storeEntry(EntryType::getRoutable(EntryType::EXPENSE), $input);
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Item($expense, new ExpenseTransformer());
+        $expense_formatted = $manager->createData($resource)->toArray()['data'];
 
-            /**
-             * USAGE LOG
-             */
-            (new Usage())->setUser($request->partner)->setType(Usage::Partner()::EXPENSE_TRACKER_TRANSACTION)->create($request->manager_resource);
-            return api_response($request, null, 200, ['expense' => $expense_formatted]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        /**
+         * USAGE LOG
+         */
+        (new Usage())->setUser($request->partner)->setType(Usage::Partner()::EXPENSE_TRACKER_TRANSACTION)->create($request->manager_resource);
+        return api_response($request, null, 200, ['expense' => $expense_formatted]);
     }
 
     /**
@@ -164,9 +150,6 @@ class ExpenseController extends Controller
         } catch (ExpenseTrackingServerError $e) {
             $message = $e->getMessage();
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
         }
     }
 
@@ -178,29 +161,21 @@ class ExpenseController extends Controller
      */
     public function update(Request $request, $partner, $expense_id)
     {
-        try {
-            $this->validate($request, ['amount_cleared' => 'sometimes|required|numeric', 'customer_id' => 'required_with:amount_cleared']);
-            $input = $request->only(['amount', 'created_at', 'head_id', 'note']);
+        $this->validate($request, ['amount_cleared' => 'sometimes|required|numeric', 'customer_id' => 'required_with:amount_cleared']);
+        $input = $request->all(['amount', 'created_at', 'head_id', 'note']);
 
-            if ($request->input('amount_cleared'))
-                $input['amount_cleared'] = $request->input('amount_cleared');
+        if ($request->input('amount_cleared'))
+            $input['amount_cleared'] = $request->input('amount_cleared');
 
-            $customer_id = $request->input('customer_id');
-            if ($customer_id) $input['profile_id'] = PosCustomer::find($customer_id)->profile_id;
+        $customer_id = $request->input('customer_id');
+        if ($customer_id) $input['profile_id'] = PosCustomer::find($customer_id)->profile_id;
 
-            $expense = $this->entryRepo->setPartner($request->partner)->updateEntry(EntryType::getRoutable(EntryType::EXPENSE), $input, $expense_id);
-            $manager = new Manager();
-            $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($expense, new ExpenseTransformer());
-            $expense_formatted = $manager->createData($resource)->toArray()['data'];
+        $expense = $this->entryRepo->setPartner($request->partner)->updateEntry(EntryType::getRoutable(EntryType::EXPENSE), $input, $expense_id);
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Item($expense, new ExpenseTransformer());
+        $expense_formatted = $manager->createData($resource)->toArray()['data'];
 
-            return api_response($request, null, 200, ['expense' => $expense_formatted]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        return api_response($request, null, 200, ['expense' => $expense_formatted]);
     }
 }

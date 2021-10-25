@@ -58,7 +58,7 @@ class ExternalPayments
      */
     public function setData(Request $request)
     {
-        $this->data = $request->only(ExternalPaymentStatics::dataFields());
+        $this->data = $request->all(ExternalPaymentStatics::dataFields());
         $this->setAgent();
         $this->data['emi_month'] = (int)$request->get('emi_month');
         if (!isset($this->data['transaction_id'])) throw new InvalidTransactionIDException();

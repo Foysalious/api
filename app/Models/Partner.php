@@ -24,6 +24,7 @@ use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
 use Sheba\Dal\UserMigration\UserStatus;
 use Sheba\FraudDetection\TransactionSources;
+use Sheba\Jobs\JobStatuses;
 use Sheba\Payment\PayableUser;
 use Sheba\Transactions\Types;
 use Sheba\Wallet\HasWallet;
@@ -181,12 +182,12 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function getLocationsList()
     {
-        return $this->locations->lists('id')->toArray();
+        return $this->locations->pluck('id')->toArray();
     }
 
     public function getLocationsNames()
     {
-        return $this->locations->lists('name')->toArray();
+        return $this->locations->pluck('name')->toArray();
     }
 
     public function reviews()
@@ -416,7 +417,6 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->belongsToMany(Resource::class)->where('resource_type', constants('RESOURCE_TYPES')['Admin'])->withPivot($this->resourcePivotColumns);
     }
 
-
     public function updatedAt()
     {
         if ($operation_resource = $this->operationResources()->first())
@@ -467,7 +467,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function withdrawalRequests()
     {
-        Relation::morphMap(['partner' => 'App\Models\Partner']);
+        Relation::morphMap(['partner' => Partner::class]);
         return $this->morphMany(WithdrawalRequest::class, 'requester');
     }
 
@@ -483,11 +483,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function onGoingJobs()
     {
-        return $this->jobs()->whereIn('status', [
-            constants('JOB_STATUSES')['Accepted'],
-            constants('JOB_STATUSES')['Process'],
-            constants('JOB_STATUSES')['Schedule_Due']
-        ])->count();
+        return $this->jobs()->whereIn('status', JobStatuses::getOngoingWithoutServedAndServeDue())->count();
     }
 
     public function resourcesInCategory($category)
@@ -498,9 +494,12 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
             $partner_resource_ids[$resource->pivot->id] = $resource;
         });
         $result = [];
-        collect(DB::table('category_partner_resource')->select('partner_resource_id')->whereIn('partner_resource_id', array_keys($partner_resource_ids))->where('category_id', $category)->get())->pluck('partner_resource_id')->each(function ($partner_resource_id) use ($partner_resource_ids, &$result) {
-            $result[] = $partner_resource_ids[$partner_resource_id];
-        });
+        DB::table('category_partner_resource')->select('partner_resource_id')
+            ->whereIn('partner_resource_id', array_keys($partner_resource_ids))->where('category_id', $category)
+            ->get()->pluck('partner_resource_id')
+            ->each(function ($partner_resource_id) use ($partner_resource_ids, &$result) {
+                $result[] = $partner_resource_ids[$partner_resource_id];
+            });
         return collect($result);
     }
 
@@ -629,7 +628,6 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     {
         $this->subscriber()->getBilling()->runSubscriptionBilling();
     }
-
 
     public function retailers()
     {

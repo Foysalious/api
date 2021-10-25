@@ -1,9 +1,6 @@
 <?php namespace Sheba;
 
 use App\Models\ServiceGroupService;
-use Auth;
-use Session;
-use Carbon\Carbon;
 
 trait CategoryServiceGroup
 {
@@ -13,5 +10,4 @@ trait CategoryServiceGroup
         $service_group_service_id = ServiceGroupService::whereIn('service_group_id', $service_group_id)->pluck('service_id')->toArray();
         return $service_group_service_id;
     }
-
 }

@@ -9,10 +9,12 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\App;
 use Intervention\Image\Image;
 use League\Fractal\Resource\ResourceAbstract;
+use Maatwebsite\Excel\Facades\Excel as MaatwebsiteExcel;
+use Sheba\Business\Attendance\Daily\DailyExcel;
 use Sheba\Business\CoWorker\Designations;
 use Sheba\Business\CoWorker\Filter\CoWorkerInfoFilter;
 use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
-use Sheba\Business\CoWorker\Excel as EmployeeExcel;
+use Sheba\Business\CoWorker\CoworkerExcel;
 use App\Transformers\Business\CoWorkerDetailTransformer;
 use Sheba\Business\CoWorker\Creator as CoWorkerCreator;
 use Sheba\Business\CoWorker\Sorting\CoWorkerInfoSort;
@@ -285,7 +287,10 @@ class CoWorkerController extends Controller
 
         $this->coWorkerExistenceCheck->setBusiness($business)->setEmail($email)->checkEmailUsability();
         if ($this->coWorkerExistenceCheck->hasError()) {
-            return api_response($request, null, $this->coWorkerExistenceCheck->getErrorCode(), ['message' => $this->coWorkerExistenceCheck->getErrorMessage(), 'business_member_id' => $this->coWorkerExistenceCheck->getBusinessMemberId()]);
+            return api_response($request, null, $this->coWorkerExistenceCheck->getErrorCode(), [
+                'message' => $this->coWorkerExistenceCheck->getErrorMessage(),
+                'business_member_id' => $this->coWorkerExistenceCheck->getBusinessMemberId()
+            ]);
         }
 
         $basic_request = $this->basicRequest->setProPic($request->pro_pic)
@@ -302,10 +307,12 @@ class CoWorkerController extends Controller
         $this->coWorkerUpdater->setBasicRequest($basic_request)->setBusiness($business)->setBusinessMember($business_member);
         list($business_member, $profile_pic_name, $profile_pic) = $this->coWorkerUpdater->basicInfoUpdate();
 
-        if ($business_member)
-            return api_response($request, null, 200, ['profile_pic_name' => $profile_pic_name, 'profile_pic' => $profile_pic]);
+        if (!$business_member) return api_response($request, null, 404);
 
-        return api_response($request, null, 404);
+        return api_response($request, null, 200, [
+            'profile_pic_name' => $profile_pic_name,
+            'profile_pic' => $profile_pic
+        ]);
     }
 
     /**
@@ -635,9 +642,8 @@ class CoWorkerController extends Controller
     /**
      * @param $business
      * @param Request $request
-     * @param EmployeeExcel $employee_report
      */
-    public function downloadEmployeesReport($business, Request $request, EmployeeExcel $employee_report)
+    public function downloadEmployeesReport($business, Request $request)
     {
         /** @var Business $business */
         $business = $request->business;
@@ -656,7 +662,8 @@ class CoWorkerController extends Controller
 
         $employees = collect($employees);
 
-        return $employee_report->setEmployee($employees->toArray())->get();
+        $excel = new CoworkerExcel($employees->toArray());
+        return MaatwebsiteExcel::download($excel, 'Coworker_Report.xlsx');
     }
 
     /**

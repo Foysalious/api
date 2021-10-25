@@ -19,7 +19,6 @@ class CategoryTreeCache implements CacheObject
         return 'category_tree';
     }
 
-
     public function getExpirationTimeInSeconds(): int
     {
         return 1 * 60 * 60;
@@ -29,7 +28,6 @@ class CategoryTreeCache implements CacheObject
     {
         $this->categoryTreeCacheRequest = $cache_request;
     }
-
 
     public function getAllKeysRegularExpression(): string
     {

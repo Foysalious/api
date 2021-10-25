@@ -108,7 +108,7 @@ class BusinessCreatorRequest
     {
         $blacklist = ["google", "facebook", "microsoft", "sheba", "sheba.xyz"];
         $base_name = $name = preg_replace('/-$/', '', substr(strtolower(clean($this->getName())), 0, 15));
-        $already_used = Business::select('sub_domain')->lists('sub_domain')->toArray();
+        $already_used = Business::select('sub_domain')->pluck('sub_domain')->toArray();
         $counter = 0;
         while (in_array($name, array_merge($blacklist, $already_used))) {
             $name = $base_name . $counter;

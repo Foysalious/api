@@ -324,20 +324,18 @@ class ProfileController extends Controller
         $previous_status = $affiliate->verification_status;
         $pending_status = VerificationStatus::PENDING;
 
-        if ($previous_status != $pending_status) {
-            $affiliate->update($this->withUpdateModificationField(['verification_status' => $pending_status]));
+        if ($previous_status == $pending_status) return true;
 
-            $log_data = [
-                'from' => $previous_status,
-                'to' => $pending_status,
-                'log' => null,
-                'reason' => 're-submitted NID',
-            ];
+        $affiliate->update($this->withUpdateModificationField(['verification_status' => $pending_status]));
 
-            return (new AffiliateRepository())->saveStatusChangeLog($affiliate, $log_data);
-        }
+        $log_data = [
+            'from' => $previous_status,
+            'to' => $pending_status,
+            'log' => null,
+            'reason' => 're-submitted NID',
+        ];
 
-        return true;
+        (new AffiliateRepository())->saveStatusChangeLog($affiliate, $log_data);
     }
 
     private function setToPendingStatus($resource)
@@ -360,10 +358,5 @@ class ProfileController extends Controller
             'log' => 'status changed to pending as resource submit profile info for verification'
         ];
         ResourceStatusChangeLogModel::create($this->withCreateModificationField($data));
-    }
-
-    public function KycNidCheckAndUpdateInfo(Request $request, ProfileRepositoryInterface $profile_repo)
-    {
-
     }
 }

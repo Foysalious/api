@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\App;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use League\Fractal\Resource\Collection;
+use Maatwebsite\Excel\Facades\Excel as MaatwebsiteExcel;
 use Sheba\Business\ApprovalRequest\Leave\SuperAdmin\StatusUpdater as StatusUpdater;
 use Sheba\Business\ApprovalRequest\UpdaterV2;
 use Sheba\Business\ApprovalSetting\FindApprovalSettings;
@@ -46,9 +47,10 @@ use Sheba\Dal\Leave\Contract as LeaveRepository;
 use Sheba\Business\Leave\SuperAdmin\Updater as LeaveUpdater;
 use Sheba\Business\Leave\SuperAdmin\LeaveEditType as EditType;
 use Sheba\Business\Leave\Adjustment\Approvers as AdjustmentApprovers;
-use Sheba\Business\Leave\Request\Excel as LeaveRequestExcel;
+use Sheba\Business\Leave\Request\LeaveRequestExcel;
 use Sheba\Dal\LeaveStatusChangeLog\Contract as LeaveStatusChangeLogRepo;
 use App\Transformers\Business\LeaveApprovalRequestListTransformer;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class LeaveController extends Controller
 {
@@ -77,10 +79,9 @@ class LeaveController extends Controller
 
     /**
      * @param Request $request
-     * @param LeaveRequestExcel $leave_request_report
-     * @return JsonResponse
+     * @return JsonResponse|BinaryFileResponse
      */
-    public function index(Request $request, LeaveRequestExcel $leave_request_report)
+    public function index(Request $request)
     {
         $this->validate($request, ['list_type' => 'required|string|in:own,all', 'sort' => 'sometimes|required|string|in:asc,desc']);
 
@@ -138,7 +139,8 @@ class LeaveController extends Controller
         }
 
         if ($request->file == 'excel') {
-            return $leave_request_report->setLeave($leaves)->get();
+            $excel = new LeaveRequestExcel($leaves);
+            return MaatwebsiteExcel::download($excel, 'Leave_request_report.xlsx');
         }
 
         return api_response($request, $leaves, 200, [

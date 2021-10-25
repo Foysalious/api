@@ -87,6 +87,7 @@ if (!function_exists('showLongAnswer')) {
         return showLines($title, 'Long Answer', 2);
     }
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -429,7 +430,7 @@ if (!function_exists('showLongAnswer')) {
     </tr>
 </table>
 
-@if(count($procurement_details['price_quotation']))
+@if(is_array($procurement_details['price_quotation']) && count($procurement_details['price_quotation']))
     <table class="" style="width: 100%; table-spacing: 0px; margin-bottom: 20px;">
         <tr>
             <th class="tableHeadRegular" colspan="5">Price Quotation</th>
@@ -463,7 +464,7 @@ if (!function_exists('showLongAnswer')) {
     </table>
 @endif
 
-@if(count($procurement_details['technical_evaluation']))
+@if(is_array($procurement_details['technical_evaluation']) && count($procurement_details['technical_evaluation']))
     <table class="outerTable">
         <tbody>
         <tr>
@@ -498,7 +499,7 @@ if (!function_exists('showLongAnswer')) {
     </table>
 @endif
 
-@if(count($procurement_details['company_evaluation']))
+@if(is_array($procurement_details['company_evaluation']) && count($procurement_details['company_evaluation']))
     <table class="outerTable">
         <tr>
             <th class="tableHeadRegular">

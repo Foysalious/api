@@ -11,7 +11,6 @@ use Sheba\Dal\PartnerPosServiceBatch\Model as PartnerPosServiceBatch;
 use Sheba\Dal\PartnerPosServiceImageGallery\Model as PartnerPosServiceImageGallery;
 use Sheba\Elasticsearch\ElasticsearchTrait;
 
-
 class PartnerPosService extends BaseModel
 {
     use SoftDeletes, ElasticsearchTrait;
@@ -192,7 +191,7 @@ class PartnerPosService extends BaseModel
         return $this->hasMany(PartnerPosServiceLog::class);
     }
 
-    public function getAlgoliaRecord()
+    public function toSearchableArray()
     {
         return [
             'id' => (int)$this->id,

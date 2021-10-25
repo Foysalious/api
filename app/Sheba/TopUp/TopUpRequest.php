@@ -4,12 +4,12 @@ use App\Models\Affiliate;
 use App\Models\Business;
 use App\Models\Partner;
 use Exception;
+use Illuminate\Support\Facades\Event;
 use Sheba\Dal\TopUpBlacklistNumber\Contract;
 use Sheba\TopUp\Events\TopUpRequestOfBlockedNumber;
 use Sheba\TopUp\OTF\OtfAmountCheck;
 use Sheba\TopUp\Vendor\Vendor;
 use Sheba\TopUp\Vendor\VendorFactory;
-use Event;
 
 class TopUpRequest
 {
@@ -206,7 +206,7 @@ class TopUpRequest
         }
 
         if ($this->topUpBlockNumberRepository->findByMobile($this->mobile)) {
-            Event::fire(new TopUpRequestOfBlockedNumber($this));
+            Event::dispatch(new TopUpRequestOfBlockedNumber($this));
             $this->errorMessage = "You can't recharge to a blocked number.";
             return 1;
         }

@@ -1,13 +1,14 @@
 <?php namespace Sheba\Cache\Listeners;
 
 
+use Sheba\Dal\CrosssaleService\Events\CrosssaleServiceSaved as CrosssaleServiceSavedEvent;
 use Sheba\Dal\Service\Service;
 use Sheba\Cache\CacheAside;
 use Sheba\Cache\Category\Children\Services\ServicesCacheRequest;
 
 class CrosssaleServiceSaved
 {
-    public function handle(\Sheba\Dal\CrosssaleService\Events\CrosssaleServiceSaved $event)
+    public function handle(CrosssaleServiceSavedEvent $event)
     {
         /** @var Service $service */
         $service = Service::find($event->model->service_id);

@@ -389,8 +389,8 @@ class TripRequestController extends Controller
 
                 $vehicles = $vehicleScheduler->getFreeVehicles();
                 $drivers = $vehicleScheduler->getFreeDrivers();
-                if ($vehicles->count() > 0) $vehicle = $vehicles->random(1);
-                if ($drivers->count() > 0) $driver = $drivers->random(1);
+                if ($vehicles->count() > 0) $vehicle = $vehicles->random();
+                if ($drivers->count() > 0) $driver = $drivers->random();
                 if (!(isset($vehicle) && isset($driver))) {
                     return api_response($request, null, 500, ["message" => "There is no free vehicle or driver"]);
                 }

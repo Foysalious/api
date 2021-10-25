@@ -44,9 +44,10 @@ use App\Http\Middleware\XSS;
 use App\Http\Middleware\CheckForMaintenanceMode;
 
 use Illuminate\Auth\Middleware\AuthenticateWithBasicAuth;
+use Illuminate\Auth\Middleware\Authorize;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
-use Illuminate\Foundation\Http\Middleware\Authorize;
+use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Fideloper\Proxy\TrustProxies;
@@ -64,6 +65,7 @@ class Kernel extends HttpKernel
         CheckForMaintenanceMode::class,
         CriticalAppVersionMiddleware::class,
         XSS::class,
+        // \Fruitcake\Cors\HandleCors::class
         TrustProxies::class,
         SetRequestToJwtWhileTesting::class
     ];
@@ -80,10 +82,12 @@ class Kernel extends HttpKernel
             StartSession::class,
             ShareErrorsFromSession::class,
             VerifyCsrfToken::class,
+            SubstituteBindings::class,
         ],
         'api' => [
             'throttle:60,1',
-        ]
+            'bindings'
+        ],
     ];
 
     /**
@@ -97,6 +101,7 @@ class Kernel extends HttpKernel
         'auth' => Authenticate::class,
         'auth.basic' => AuthenticateWithBasicAuth::class,
         'can' => Authorize::class,
+        'bindings' => SubstituteBindings::class,
         'guest' => RedirectIfAuthenticated::class,
         'throttle' => ThrottleRequests::class,
         'cors2' => Cors2MiddleWare::class,

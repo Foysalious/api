@@ -17,7 +17,6 @@ use Sheba\Pos\Repositories\PosSettingRepository;
 use Sheba\Pos\Setting\Creator;
 use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
-use Throwable;
 
 class SettingController extends Controller
 {
@@ -49,6 +48,10 @@ class SettingController extends Controller
             app('sentry')->captureException($e);
             return make_response($request, null, 500,null);
         }
+        $settings->vat_registration_number = $partner->basicInformations->vat_registration_number;
+        $settings['has_qr_code'] = ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0;
+        removeRelationsAndFields($settings);
+        return api_response($request, $settings,200, ['settings' => $settings]);
     }
 
     public function getPrinterSettings(Request $request, Creator $creator, PosSettingRepository $repository)
@@ -68,6 +71,9 @@ class SettingController extends Controller
             app('sentry')->captureException($e);
             return make_response($request, null, 500,null);
         }
+        removeRelationsAndFields($settings);
+        $repository->getTrainingVideoData($settings);
+        return api_response($request, $settings,200, ['data' => $settings]);
     }
 
     public function storePosSetting(Request $request, Creator $creator)

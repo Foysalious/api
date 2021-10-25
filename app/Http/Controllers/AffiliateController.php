@@ -11,7 +11,6 @@ use App\Models\Profile;
 use App\Models\ProfileBankInformation;
 use App\Models\ProfileMobileBankInformation;
 use App\Models\Resource;
-use App\Models\TopUpOrder;
 use Sheba\Dal\Service\Service;
 use App\Repositories\AffiliateRepository;
 use App\Repositories\FileRepository;
@@ -34,7 +33,6 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Bondhu\Statuses;
 use Sheba\Dal\TopupOrder\TopUpOrderRepository;
-use Sheba\FraudDetection\TransactionSources;
 use Sheba\Logs\Customer\JobLogs;
 use Sheba\ModificationFields;
 use Sheba\Reports\ExcelHandler;
@@ -43,8 +41,6 @@ use Sheba\Repositories\Interfaces\ProfileMobileBankingRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Sheba\TopUp\History\RequestBuilder;
 use Sheba\Transactions\InvalidTransaction;
-use Sheba\Transactions\Types;
-use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Throwable;
 use Validator;
 use Sheba\Dal\TopUpVendorOTF\Contract as TopUpVendorOTFRepo;
@@ -53,8 +49,11 @@ class AffiliateController extends Controller
 {
     use ModificationFields;
 
+    /** @var FileRepository  */
     private $fileRepository;
+    /** @var LocationRepository  */
     private $locationRepository;
+    /** @var AffiliateRepository  */
     private $affiliateRepository;
     private $nidOcrRepo;
 
@@ -201,11 +200,9 @@ class AffiliateController extends Controller
             ['ambassador_code', strtoupper(trim($request->code))],
             ['is_ambassador', 1]
         ])->first();
-        if ($ambassador) {
-            return api_response($request, $ambassador->profile, 200, ['info' => $ambassador->profile]);
-        } else {
-            return api_response($request, null, 404);
-        }
+        if ($ambassador)  return api_response($request, $ambassador->profile, 200, ['info' => $ambassador->profile]);
+
+        return api_response($request, null, 404);
     }
 
     /**
@@ -240,9 +237,8 @@ class AffiliateController extends Controller
     public function getAgents($affiliate, Request $request)
     {
         $affiliate = $request->affiliate;
-        if ($affiliate->is_ambassador == 0) {
-            return api_response($request, null, 403);
-        }
+        if ($affiliate->is_ambassador == 0) return api_response($request, null, 403);
+
         $q = $request->get('query');
         $range = $request->get('range');
         $sort_order = $request->get('sort_order');
@@ -285,46 +281,40 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id]));
         $agents = $this->sortAgents($sort_order, $agents);
 
         $agents = $agents->splice($offset, $limit)->toArray();
-        if (count($agents) > 0) {
-            $response = ['agents' => $agents];
-            if ($range) {
-                $r_d = getRangeFormat($request);
-                $response['range'] = ['to' => $r_d[0], 'from' => $r_d[1]];
-            }
-            return api_response($request, $agents, 200, $response);
+        if (count($agents) == 0) return api_response($request, null, 404);
+
+        $response = ['agents' => $agents];
+        if ($range) {
+            $r_d = getRangeFormat($request);
+            $response['range'] = ['to' => $r_d[0], 'from' => $r_d[1]];
         }
-        return api_response($request, null, 404);
+        return api_response($request, $agents, 200, $response);
     }
 
     private function filterAgents($q, $agents)
     {
-        if (isset($q) & !empty($q)) {
-            return $agents->filter(function ($data) use ($q) {
-                return str_contains($data['name'], $q);
-            });
-        }
-        return $agents;
+        if (!isset($q) && empty($q)) return $agents;
+        return $agents->filter(function ($data) use ($q) {
+            return str_contains($data['name'], $q);
+        });
     }
 
     private function sortAgents($sort_order, $agents)
     {
-        if (isset($sort_order)) {
-            return ($sort_order == 'asc') ? $agents->sortBy('total_gifted_amount') : $agents->sortByDesc('total_gifted_amount');
-        }
-        return $agents;
+        if (!isset($sort_order)) return $agents;
+
+        return ($sort_order == 'asc') ? $agents->sortBy('total_gifted_amount') : $agents->sortByDesc('total_gifted_amount');
     }
 
     public function getGodFather($affiliate, Request $request)
     {
         $affiliate = $request->affiliate;
-        if ($affiliate->ambassador_id == null) {
-            return api_response($request, null, 404);
-        } else {
-            $profile = collect($affiliate->ambassador->profile)->only(['name', 'pro_pic', 'mobile'])->all();
-            $profile['picture'] = $profile['pro_pic'];
-            array_forget($profile, 'pro_pic');
-            return api_response($request, $profile, 200, ['info' => $profile]);
-        }
+        if ($affiliate->ambassador_id == null)  return api_response($request, null, 404);
+
+        $profile = collect($affiliate->ambassador->profile)->only(['name', 'pro_pic', 'mobile'])->all();
+        $profile['picture'] = $profile['pro_pic'];
+        array_forget($profile, 'pro_pic');
+        return api_response($request, $profile, 200, ['info' => $profile]);
     }
 
     public function getLeaderboard($affiliate, Request $request)
@@ -500,6 +490,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
     {
         $notifications = $request->affiliate->notifications()->select('id', 'title', 'description', 'event_type', 'event_id', 'type', 'is_seen', 'created_at')->where('id', $notification)->get();
         if (count($notifications) == 0) return api_response($request, null, 404);
+
         $notifications = $notifications->map(function ($notification) {
             $notification->event_type = str_replace('App\Models\\', "", $notification->event_type);
             if (json_decode($notification->title) != null) $notification->title = json_decode($notification->title);
@@ -533,14 +524,8 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             return api_response($request, null, 200, ['message' => "Moneybag refilled."]);*/
         } catch (InvalidTransaction $e) {
             logError($e);
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
         }
-    }
-
-    private function recharge(Affiliate $affiliate, $transaction)
-    {
-        $data = $this->makeRechargeData($transaction);
-        $amount = $transaction['amount'];
-        (new WalletTransactionHandler())->setModel($affiliate)->setSource(TransactionSources::BKASH)->setTransactionDetails($data['transaction_details'])->setType(Types::credit())->setAmount($amount)->setLog($data['log'])->dispatch();
     }
 
     private function makeRechargeData($transaction)
@@ -664,18 +649,18 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         $topup_otfs = $topup_vendor_otf->builder()->get()->pluckMultiple(['name_en', 'name_bn'], 'id')->toArray();
         $topup_data = [];
         foreach ($topups as $topup) {
-            /** @var TopUpOrder $topup */
-            array_push($topup_data, [
+            $topup = [
                 'payee_mobile' => $topup->payee_mobile,
                 'payee_name' => $topup->payee_name ?: 'N/A',
                 'amount' => $topup->amount,
                 'operator' => $topup->vendor->name,
-                'status' => $topup->getStatusForAgent(),
+                'status' => $topup->status,
                 'otf_name_en' => isset($topup_otfs[$topup->otf_id]) ? $topup_otfs[$topup->otf_id]['name_en'] : "",
                 'otf_name_bn' => isset($topup_otfs[$topup->otf_id]) ? $topup_otfs[$topup->otf_id]['name_bn'] : "",
                 'created_at' => $topup->created_at->format('jS M, Y h:i A'),
-                'created_at_raw' => $topup->created_at->format('Y-m-d H:i:s')
-            ]);
+                'created_at_raw' => $topup->created_at->format('Y-m-d h:i:s')
+            ];
+            array_push($topup_data, $topup);
         }
 
         if ($is_excel_report) {
@@ -695,12 +680,10 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             'mobile' => 'required|mobile:bd'
         ]);
         $profile = Profile::where('mobile', '+88' . $request->mobile)->first();
-        if (!is_null($profile)) {
-            $customer_name = $profile->name;
+        if (is_null($profile)) return api_response($request, [], 404, ['message' => 'Customer not found.']);
 
-            return api_response($request, $customer_name, 200, ['name' => $customer_name]);
-        }
-        return api_response($request, [], 404, ['message' => 'Customer not found.']);
+        $customer_name = $profile->name;
+        return api_response($request, $customer_name, 200, ['name' => $customer_name]);
     }
 
     public function getPartnerInfo(Request $request)
@@ -709,12 +692,10 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             'partner_id' => 'required|numeric'
         ]);
         $partner = Partner::find($request->partner_id);
-        if (!is_null($partner)) {
-            $customer_name = $partner->name;
+        if (is_null($partner)) return api_response($request, [], 404, ['message' => 'Customer not found.']);
 
-            return api_response($request, $customer_name, 200, ['name' => $customer_name]);
-        }
-        return api_response($request, [], 404, ['message' => 'Customer not found.']);
+        $customer_name = $partner->name;
+        return api_response($request, $customer_name, 200, ['name' => $customer_name]);
     }
 
     /**
@@ -899,38 +880,36 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         ]);
         $profile = Profile::where('mobile', '+88' . $request->mobile)->first();
         if (is_null($profile)) return api_response($request, [], 404, null);
-
         $customer_name = $profile->name;
         $resource = Resource::where('profile_id', $profile->id)->first();
-        if ($resource) {
-            $token = $resource->remember_token;
-            $resource_informations = [
-                'name' => $profile->name,
-                'image' => $profile->pro_pic,
-                'resource' => [
-                    'id' => $resource->id,
-                    'token' => $token
-                ]
-            ];
-            if (count($resource->partners) > 0) {
-                $resource_informations['partner'] = [
-                    'id' => $resource->partners[0]->id,
-                    'name' => $resource->partners[0]->name,
-                ];
-                if ($resource->partners[0]->geo_informations) {
-                    $resource_informations['partner']['lat'] = json_decode($resource->partners[0]->geo_informations)->lat;
-                    $resource_informations['partner']['lng'] = json_decode($resource->partners[0]->geo_informations)->lng;
-                    $resource_informations['partner']['radius'] = json_decode($resource->partners[0]->geo_informations)->radius;
-                }
-            }
-            return api_response($request, $customer_name, 200, ['data' => $resource_informations]);
-        } else {
+        if (!$resource) {
             $resource_informations = [
                 'name' => $profile->name,
                 'image' => $profile->pro_pic,
             ];
             return api_response($request, $customer_name, 200, ['data' => $resource_informations]);
         }
+        $token = $resource->remember_token;
+        $resource_informations = [
+            'name' => $profile->name,
+            'image' => $profile->pro_pic,
+            'resource' => [
+                'id' => $resource->id,
+                'token' => $token
+            ]
+        ];
+        if (count($resource->partners) > 0) {
+            $resource_informations['partner'] = [
+                'id' => $resource->partners[0]->id,
+                'name' => $resource->partners[0]->name,
+            ];
+            if ($resource->partners[0]->geo_informations) {
+                $resource_informations['partner']['lat'] = json_decode($resource->partners[0]->geo_informations)->lat;
+                $resource_informations['partner']['lng'] = json_decode($resource->partners[0]->geo_informations)->lng;
+                $resource_informations['partner']['radius'] = json_decode($resource->partners[0]->geo_informations)->radius;
+            }
+        }
+        return api_response($request, $customer_name, 200, ['data' => $resource_informations]);
     }
 
     public function bankList(Request $request)
@@ -943,41 +922,6 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
     {
         $bank_list = MobileBanking::getPublishedBank();
         return api_response($request, null, 200, ['data' => $bank_list]);
-    }
-
-    private function mapAgents($query)
-    {
-        return collect(array_merge(...$query))->groupBy('id')
-            ->map(function ($data) {
-                $dataSet = $data[0];
-                if (isset($data[1])) {
-                    $dataSet['total_gifted_amount'] += $data[1]['total_gifted_amount'];
-                    $dataSet['total_gifted_number'] += $data[1]['total_gifted_number'];
-                }
-                if (isset($data[2])) {
-                    $dataSet['total_gifted_amount'] += $data[2]['total_gifted_amount'];
-                    $dataSet['total_gifted_number'] += $data[2]['total_gifted_number'];
-                }
-                return $dataSet;
-            })->values();
-    }
-
-    private function allAgents($affiliate)
-    {
-        return $affiliate->agents->map(function ($agent) {
-            return [
-                'id' => $agent->id,
-                'profile_id' => $agent->profile_id,
-                'name' => $agent->profile->name,
-                'ambassador_id' => $agent->ambassador_id,
-                'picture' => $agent->profile->pro_pic,
-                'mobile' => $agent->profile->mobile,
-                'created_at' => $agent->created_at->toDateTimeString(),
-                'joined' => $agent->joined,
-                'total_gifted_amount' => 0,
-                'total_gifted_number' => 0
-            ];
-        })->toArray();
     }
 
     public function getOrderList($affiliate, Request $request)
@@ -1083,7 +1027,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         $service = $job->jobServices[0]->service;
         $show_expert = $job->canCallExpert();
         $process_log = $job->statusChangeLogs->where('to_status', constants('JOB_STATUSES')['Process'])->first();
-        return collect([
+        return collect(array(
             'id' => $partnerOrder->id,
             'job_id' => $job->id,
             'subscription_order_id' => $partnerOrder->order->subscription_order_id,
@@ -1123,7 +1067,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             'discounted_price' => (double)$partnerOrder->totalPrice + $job->logistic_charge,
             'complain_count' => $job->customerComplains->count(),
             'message' => (new JobLogs($job))->getOrderMessage(),
-        ]);
+        ));
     }
 
     protected function canPay($job)

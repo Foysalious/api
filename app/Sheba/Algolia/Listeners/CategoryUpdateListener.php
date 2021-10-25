@@ -2,19 +2,20 @@
 
 
 use Sheba\Dal\Category\Category;
+use Sheba\Dal\Extras\Events\BaseSavedEvent;
+use Sheba\Dal\Service\Service;
 use Sheba\Report\Listeners\BaseSavedListener;
-use Sheba\Dal\Category\Events\CategorySaved as CategorySavedEvent;
 
 class CategoryUpdateListener extends BaseSavedListener
 {
-
-    public function handle(CategorySavedEvent $event)
+    public function handle(BaseSavedEvent $event)
     {
         /** @var Category $category */
         $category = $event->model;
-        $category->pushToIndex();
+        $category->searchable();
         foreach ($category->services as $service) {
-            $service->pushToIndex();
+            /** @var $service Service */
+            $service->searchable();
         }
     }
 }

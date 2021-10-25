@@ -4,13 +4,13 @@ use Sheba\Logs\ErrorLog;
 
 if (!function_exists('logError')) {
     /**
-     * @param $exception
+     * @param Throwable$exception
      * @param null $request
      * @param null $message
      * @param array $extra
      * @return void
      */
-    function logError($exception, $request = null, $message = null, $extra = [])
+    function logError(Throwable $exception, $request = null, $message = null, $extra = [])
     {
         $log = (new ErrorLog())->setException($exception);
         if ($request) $log->setRequest($request);
@@ -23,11 +23,11 @@ if (!function_exists('logError')) {
 
 if (!function_exists('logErrorWithExtra')) {
     /**
-     * @param $exception
+     * @param Throwable $exception
      * @param array $extra
      * @return void
      */
-    function logErrorWithExtra($exception, array $extra)
+    function logErrorWithExtra(Throwable $exception, array $extra)
     {
         logError($exception, null, null, $extra);
     }

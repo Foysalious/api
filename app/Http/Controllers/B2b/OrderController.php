@@ -221,46 +221,37 @@ class OrderController extends Controller
      */
     public function show($order, Request $request)
     {
-        try {
-            $customer = $request->manager_member->profile->customer;
-            $partner_order = $request->partner_order;
-            if ($customer) {
-                $url = config('sheba.api_url') . "/v2/customers/$customer->id/orders/$partner_order->id?remember_token=$customer->remember_token";
+        $customer = $request->manager_member->profile->customer;
+        $partner_order = $request->partner_order;
+        if (!$customer) return api_response($request, null, 404);
 
-                $client = new Client();
-                $res = $client->request('GET', $url);
-                $response = json_decode($res->getBody());
-                if ($response->code == 200) {
-                    $order = $response->orders;
-                    $job = Job::find($order->jobs[0]->job_id);
-                    $question = null;
-                    $answer = null;
-                    $answer_text = null;
-                    $review_question_answer = null;
-                    if ($job->review && !$job->review->rates->isEmpty()) {
-                        $job->review->rates->each(function ($rate) use (&$question, &$answer, &$answer_text) {
-                            if (!is_null($rate->rate_answer_id)) $question = $rate->rate_question_id;
-                            if (!is_null($rate->rate_answer_id)) $answer[] = $rate->rate_answer_id;
-                            if ($rate->rate_answer_text) $answer_text = $rate->rate_answer_text;
-                        });
-                        $review_question_answer = ['question' => $question, 'answer' => $answer];
-                    }
-                    return api_response($request, $response, 200, [
-                        'order' => $order,
-                        'review_question_answer' => $review_question_answer,
-                        'answer_text' => $answer_text,
-                        'can_give_review' => $this->canGiveReview($job)
-                    ]);
-                } else {
-                    api_response($request, $response, $response->code);
-                }
-            } else {
-                return api_response($request, null, 404);
-            }
-        } catch (Throwable $e) {
-            logError($e);
-            return api_response($request, null, 500);
+        $url = config('sheba.api_url') . "/v2/customers/$customer->id/orders/$partner_order->id?remember_token=$customer->remember_token";
+
+        $client = new Client();
+        $res = $client->request('GET', $url);
+        $response = json_decode($res->getBody());
+        if ($response->code != 200) api_response($request, $response, $response->code);
+
+        $order = $response->orders;
+        $job = Job::find($order->jobs[0]->job_id);
+        $question = null;
+        $answer = [];
+        $answer_text = null;
+        $review_question_answer = null;
+        if ($job->review && !$job->review->rates->isEmpty()) {
+            $job->review->rates->each(function ($rate) use (&$question, &$answer, &$answer_text) {
+                if (!is_null($rate->rate_answer_id)) $question = $rate->rate_question_id;
+                if (!is_null($rate->rate_answer_id)) $answer[] = $rate->rate_answer_id;
+                if ($rate->rate_answer_text) $answer_text = $rate->rate_answer_text;
+            });
+            $review_question_answer = ['question' => $question, 'answer' => $answer];
         }
+        return api_response($request, $response, 200, [
+            'order' => $order,
+            'review_question_answer' => $review_question_answer,
+            'answer_text' => $answer_text,
+            'can_give_review' => $this->canGiveReview($job)
+        ]);
     }
 
     /**
@@ -271,27 +262,17 @@ class OrderController extends Controller
      */
     public function getBills($order, Request $request)
     {
-        try {
-            $customer = $request->manager_member->profile->customer;
-            $job = $request->job;
-            if ($customer) {
-                $url = config('sheba.api_url') . "/v2/customers/$customer->id/jobs/$job->id/bills?remember_token=$customer->remember_token";
-                $client = new Client();
-                $res = $client->request('GET', $url);
-                if ($response = json_decode($res->getBody())) {
-                    return ($response->code == 200) ? api_response($request, $response, 200, ['order' => $response->bill]) : api_response($request, $response, $response->code);
-                }
-            } else {
-                return api_response($request, null, 404);
-            }
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            logError($e, $request, $message);
-            return response()->json(['data' => null, 'message' => $message]);
-        } catch (Throwable $e) {
-            logError($e);
-            return api_response($request, null, 500);
-        }
+        $customer = $request->manager_member->profile->customer;
+        $job = $request->job;
+        if (!$customer) return api_response($request, null, 404);
+
+        $url = config('sheba.api_url') . "/v2/customers/$customer->id/jobs/$job->id/bills?remember_token=$customer->remember_token";
+        $client = new Client();
+        $res = $client->request('GET', $url);
+        $response = json_decode($res->getBody());
+        if ($response->code != 200) return api_response($request, $response, $response->code);
+
+        return api_response($request, $response, 200, ['order' => $response->bill]);
     }
 
     /**
@@ -364,13 +345,11 @@ class OrderController extends Controller
             ->check($partnerListRequest->selectedCategory->id, $request->partner, $location, $customer, $order_amount, constants('SALES_CHANNELS')['B2B']['name'])
             ->reveal();
 
-        if ($result['is_valid']) {
-            $voucher = $result['voucher'];
-            $promo = array('amount' => (double)$result['amount'], 'code' => $voucher->code, 'id' => $voucher->id, 'title' => $voucher->title);
-            return api_response($request, 1, 200, ['promotion' => $promo]);
-        } else {
-            return api_response($request, null, 403, ['message' => 'Invalid Promo']);
-        }
+        if (!$result['is_valid']) return api_response($request, null, 403, ['message' => 'Invalid Promo']);
+
+        $voucher = $result['voucher'];
+        $promo = array('amount' => (double)$result['amount'], 'code' => $voucher->code, 'id' => $voucher->id, 'title' => $voucher->title);
+        return api_response($request, 1, 200, ['promotion' => $promo]);
     }
 
     /**
@@ -382,73 +361,60 @@ class OrderController extends Controller
      */
     public function placeOrder(Request $request, GeoCode $geo_code, Address $address)
     {
-        try {
-            $request->merge(['mobile' => trim(formatMobile($request->mobile))]);
-            $this->validate($request, [
-                'services' => 'required|string',
-                'partner' => 'required',
-                'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
-                'time' => 'required|string',
-                'delivery_address' => 'required|string',
-                'issue_id' => 'sometimes|required|integer',
-            ], ['mobile' => 'Invalid mobile number!']);
+        $request->merge(['mobile' => trim(formatMobile($request->mobile))]);
+        $this->validate($request, [
+            'services' => 'required|string',
+            'partner' => 'required',
+            'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
+            'time' => 'required|string',
+            'delivery_address' => 'required|string',
+            'issue_id' => 'sometimes|required|integer',
+        ], ['mobile' => 'Invalid mobile number!']);
 
-            $business = $request->business;
-            $member = $request->manager_member;
-            $customer = $member->profile->customer;
-            $this->setModifier($customer);
+        $business = $request->business;
+        $member = $request->manager_member;
+        $customer = $member->profile->customer;
+        $this->setModifier($customer);
 
-            $address->setAddress($request->delivery_address);
-            $geo = $geo_code->setAddress($address)->getGeo();
+        $address->setAddress($request->delivery_address);
+        $geo = $geo_code->setAddress($address)->getGeo();
 
-            if (!$customer) {
-                $customer = $this->memberManager->createCustomerFromMember($member);
-                $member = Member::find($member->id);
-                $address = $this->memberManager->createAddress($member, $business, $request->delivery_address, $geo);
-            } else {
-                $coords = new Coords($geo->getLat(), $geo->getLng());
-                $address = (new AddressValidator())->isAddressLocationExists($customer->delivery_addresses, $coords);
-                if (!$address) $address = $this->memberManager->createAddress($member, $business, $request->delivery_address, $geo);
-            }
-            $order = new Checkout($customer);
-            $request->merge([
-                'customer' => $customer,
-                'address_id' => $address->id,
-                'name' => $request->has('delivery_name') ? $request->delivery_name : $business->name,
-                'payment_method' => 'cod',
-                'mobile' => $request->has('mobile') ? $request->mobile : $member->profile->mobile,
-                'business_id' => $business->id,
-                'sales_channel' => $request->sales_channel ?: constants('SALES_CHANNELS')['B2B']['name'],
-                'voucher' => $request->voucher
-            ]);
-
-            $order = $order->placeOrder($request);
-
-            if (!$order) return api_response($request, null, 422, ['message' => "You have selected a partner who doesn't provide service at you area. Please change your delivery address."]);
-
-            if ($request->has('issue_id')) {
-                $issue = InspectionItemIssue::find((int)$request->issue_id);
-                $issue->update($this->withBothModificationFields(['order_id' => $order->id, 'status' => 'closed']));
-            }
-            $this->sendNotifications($order);
-
-            return api_response($request, $order, 200, [
-                'job_id' => $order->jobs->first()->id,
-                'order_id' => $order->jobs->first()->partnerOrder->id,
-                'order_code' => $order->code()
-            ]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            logError($e, $request, $message);
-            return response()->json(['data' => null, 'message' => $message]);
-        } catch (MapClientNoResultException $e) {
-            $message = $e->getMessage();
-            logError($e, $request, $message);
-            return response()->json(['data' => null, 'message' => 'Invalid delivery address! Please check.']);
-        } catch (Throwable $e) {
-            logError($e);
-            return api_response($request, null, 500);
+        if (!$customer) {
+            $customer = $this->memberManager->createCustomerFromMember($member);
+            $member = Member::find($member->id);
+            $address = $this->memberManager->createAddress($member, $business, $request->delivery_address, $geo);
+        } else {
+            $coords = new Coords($geo->getLat(), $geo->getLng());
+            $address = (new AddressValidator())->isAddressLocationExists($customer->delivery_addresses, $coords);
+            if (!$address) $address = $this->memberManager->createAddress($member, $business, $request->delivery_address, $geo);
         }
+        $order = new Checkout($customer);
+        $request->merge([
+            'customer' => $customer,
+            'address_id' => $address->id,
+            'name' => $request->has('delivery_name') ? $request->delivery_name : $business->name,
+            'payment_method' => 'cod',
+            'mobile' => $request->has('mobile') ? $request->mobile : $member->profile->mobile,
+            'business_id' => $business->id,
+            'sales_channel' => $request->sales_channel ?: constants('SALES_CHANNELS')['B2B']['name'],
+            'voucher' => $request->voucher
+        ]);
+
+        $order = $order->placeOrder($request);
+
+        if (!$order) return api_response($request, null, 422, ['message' => "You have selected a partner who doesn't provide service at you area. Please change your delivery address."]);
+
+        if ($request->has('issue_id')) {
+            $issue = InspectionItemIssue::find((int)$request->issue_id);
+            $issue->update($this->withBothModificationFields(['order_id' => $order->id, 'status' => 'closed']));
+        }
+        $this->sendNotifications($order);
+
+        return api_response($request, $order, 200, [
+            'job_id' => $order->jobs->first()->id,
+            'order_id' => $order->jobs->first()->partnerOrder->id,
+            'order_code' => $order->code()
+        ]);
     }
 
     /**
@@ -458,26 +424,18 @@ class OrderController extends Controller
      */
     public function placeSubscriptionOrder(Request $request, B2bSubscriptionOrderPlaceFactory $factory)
     {
-        try {
-            $this->validate($request, [
-                'date' => 'required|string',
-                'time' => 'sometimes|required|string',
-                'services' => 'required|string',
-                'partner' => 'required|numeric',
-                'subscription_type' => 'required|string',
-                'additional_info' => 'string'
-            ]);
-            $this->setModifier($request->manager_member->profile->customer);
-            $subscription_order = $factory->get($request)->place();
-            $order = (new SubscriptionOrderAdapter($subscription_order))->convertToOrder();
-            return api_response($request, $order, 200, ['order' => ['id' => $order->id]]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            logError($e);
-            return api_response($request, null, 500);
-        }
+        $this->validate($request, [
+            'date' => 'required|string',
+            'time' => 'sometimes|required|string',
+            'services' => 'required|string',
+            'partner' => 'required|numeric',
+            'subscription_type' => 'required|string',
+            'additional_info' => 'string'
+        ]);
+        $this->setModifier($request->manager_member->profile->customer);
+        $subscription_order = $factory->get($request)->place();
+        $order = (new SubscriptionOrderAdapter($subscription_order))->convertToOrder();
+        return api_response($request, $order, 200, ['order' => ['id' => $order->id]]);
     }
 
     /**

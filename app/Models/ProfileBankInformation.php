@@ -8,6 +8,7 @@ class ProfileBankInformation extends Model
     use SoftDeletes;
 
     protected $guarded = ['id'];
+    protected $table = 'profile_bank_informations';
 
     public function profile()
     {

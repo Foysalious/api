@@ -32,7 +32,7 @@ class PrimeBank extends Bank
 
     public function categories(): BankFormCategoryList
     {
-        // TODO: Implement categories() method.
+        return new BankFormCategoryList();
     }
 
     /**

@@ -148,56 +148,52 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
     {
         $filter             = $search_value = $request->transaction_search;
         $payment_links_list = $this->getPartnerPaymentLinkList($request);
-        if (is_array($payment_links_list) && count($payment_links_list) > 0) {
-            $transactionList = [];
-            $linkIds         = array_column($payment_links_list, 'linkId');
-            $links           = [];
-            array_walk($payment_links_list, function ($val, $key) use (&$links) {
-                $links[$val['linkId']] = $val;
-            });
-            $transactionQuery = DB::table('payments as pa')
-                                  ->select('pa.id as payment_id', 'pb.id as payable_id', 'customerProfile.name', 'pb.type_id')
-                                  ->join('payables as pb', 'pa.payable_id', '=', 'pb.id')
-                                  ->leftJoin('customers as cus', function ($join) {
-                                      $join->on('pb.user_id', '=', 'cus.id')
-                                           ->on('pb.user_type', '=', DB::raw('"App\\\Models\\\Customer"'));
-                                  })
-                                  ->leftJoin('profiles as customerProfile', function ($join) {
-                                      $join->on('cus.profile_id', '=', 'customerProfile.id')
-                                           ->on('pb.user_type', '=', DB::raw('"App\\\Models\\\Customer"'));
-                                  })
-                                  ->whereIn('type_id', $linkIds)
-                                  ->where('status', Statuses::COMPLETED)
-                                  ->where('type', 'payment_link');
+        if (!is_array($payment_links_list) || count($payment_links_list) == 0) return null;
 
-            $transactions = $transactionQuery->get();
+        $transactionList = [];
+        $linkIds         = array_column($payment_links_list, 'linkId');
+        $links           = [];
+        array_walk($payment_links_list, function ($val, $key) use (&$links) {
+            $links[$val['linkId']] = $val;
+        });
+        $transactionQuery = DB::table('payments as pa')
+              ->select('pa.id as payment_id', 'pb.id as payable_id', 'customerProfile.name', 'pb.type_id')
+              ->join('payables as pb', 'pa.payable_id', '=', 'pb.id')
+              ->leftJoin('customers as cus', function ($join) {
+                  $join->on('pb.user_id', '=', 'cus.id')
+                       ->on('pb.user_type', '=', DB::raw('"App\\\Models\\\Customer"'));
+              })
+              ->leftJoin('profiles as customerProfile', function ($join) {
+                  $join->on('cus.profile_id', '=', 'customerProfile.id')
+                       ->on('pb.user_type', '=', DB::raw('"App\\\Models\\\Customer"'));
+              })
+              ->whereIn('type_id', $linkIds)
+              ->where('status', Statuses::COMPLETED)
+              ->where('type', 'payment_link');
 
-            foreach ($transactions as $transaction) {
-                $payment              = $this->payment($transaction->payment_id);
-                $transactionFormatted = $this->paymentLinkTransactionDetailTransformer->transform($payment, $links[$transaction->type_id]);
-                array_push($transactionList, $transactionFormatted);
-            }
+        $transactions = $transactionQuery->get()->all();
 
-
-            if ($filter) {
-                $transactionList = array_filter($transactionList, function ($item) use ($filter) {
-                    return strpos((string)$item['payment_id'], $filter) !== false || strpos($item['customer_name'], $filter) !== false;
-                });
-            }
-
-            usort($transactionList, function ($a, $b) {
-                return $b['payment_id'] - $a['payment_id'];
-            });
-
-            $limit  = $request->transaction_limit;
-            $offset = $request->transaction_offset;
-            $links  = collect($transactionList)->slice($offset)->take($limit);
-            return array_values($links->toArray());
-
+        foreach ($transactions as $transaction) {
+            $payment              = $this->payment($transaction->payment_id);
+            $transactionFormatted = $this->paymentLinkTransactionDetailTransformer->transform($payment, $links[$transaction->type_id]);
+            array_push($transactionList, $transactionFormatted);
         }
-        return null;
-    }
 
+        if ($filter) {
+            $transactionList = array_filter($transactionList, function ($item) use ($filter) {
+                return strpos((string)$item['payment_id'], $filter) !== false || strpos($item['customer_name'], $filter) !== false;
+            });
+        }
+
+        usort($transactionList, function ($a, $b) {
+            return $b['payment_id'] - $a['payment_id'];
+        });
+
+        $limit  = $request->transaction_limit;
+        $offset = $request->transaction_offset;
+        $links  = collect($transactionList)->slice($offset)->take($limit);
+        return array_values($links->toArray());
+    }
 
     /**
      * @param $targets Target[]

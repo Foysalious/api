@@ -94,7 +94,8 @@ class ExpenseRepo
         try {
             $expense = Expense::where('id', $expense)
                 ->orderBy('created_at', 'DESC')
-                ->select('id', 'member_id', 'business_member_id', 'amount', 'status', 'remarks', 'type', 'created_at')->first();
+                ->select('id', 'member_id', 'business_member_id', 'amount', 'status', 'remarks', 'type', 'created_at')
+                ->first();
 
             if (!$expense) return false;
 

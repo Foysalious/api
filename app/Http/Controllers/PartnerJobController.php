@@ -3,7 +3,6 @@
 use App\Models\Job;
 use Exception;
 use Illuminate\Support\Collection;
-use Sheba\Dal\JobMaterial\JobMaterial;
 use Sheba\Dal\JobUpdateLog\JobUpdateLog;
 use App\Models\Resource;
 use App\Repositories\PartnerOrderRepository;
@@ -12,15 +11,12 @@ use Sheba\Jobs\JobTime;
 use App\Sheba\UserRequestInformation;
 use Carbon\Carbon;
 use DB;
-use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 use Sheba\Jobs\StatusChanger;
 use Sheba\Logistics\DTO\Order;
 use Sheba\Logistics\OrderManager;
 use Sheba\ModificationFields;
 use Sheba\PushNotificationHandler;
-use Sheba\Resource\Jobs\Material\Creator as MaterialCreator;
 use Sheba\Resource\Jobs\Service\ServiceUpdateRequest;
 use Sheba\UserAgentInformation;
 use Throwable;
@@ -45,7 +41,6 @@ class PartnerJobController extends Controller
 
     public function index($partner, Request $request)
     {
-
         ini_set('memory_limit', '4096M');
         ini_set('max_execution_time', 660);
 
@@ -121,87 +116,67 @@ class PartnerJobController extends Controller
         $logistic_ids = array_filter($jobs->pluck('logistic_id')->toArray());
         if (!empty($logistic_ids)) $this->attachLogisticOrder($logistic_ids, $jobs);
 
-        if (count($jobs) > 0 || count($jobs_with_resource) > 0) {
-            if ($filter == 'ongoing') {
-                $group_by_jobs = $jobs->groupBy('schedule_date')->sortBy(function ($item, $key) {
-                    return $key;
-                });
-                $final = collect();
-                foreach ($group_by_jobs as $key => $jobs) {
-                    $jobs = $jobs->sortBy('schedule_timestamp');
-                    foreach ($jobs as $job) {
-                        $final->push($job);
-                    }
-                }
-                $jobs = $jobs_with_resource->merge($final);
-            } else {
-                $jobs = $jobs_with_resource->merge($jobs);
-                $jobs = $jobs->sortByDesc('id');
-            }
-            list($offset, $limit) = calculatePagination($request);
-            $jobs = $jobs->splice($offset, $limit);
-            $resources = collect();
-            foreach ($jobs->groupBy('resource_id') as $key => $resource) {
-                if (!empty($key)) {
-                    $resources->push(array(
-                        'id' => (int)$key,
-                        'name' => $resource->first()->resource_name
-                    ));
-                }
-            }
-            $subscription_orders = $partner->subscriptionOrders->where('status', 'accepted')->count();
+        if (count($jobs) == 0 && count($jobs_with_resource) == 0) return api_response($request, null, 404);
 
-            return api_response($request, $jobs, 200, ['jobs' => $jobs, 'resources' => $resources, 'subscription_orders' => $subscription_orders]);
+        if ($filter == 'ongoing') {
+            $group_by_jobs = $jobs->groupBy('schedule_date')->sortBy(function ($item, $key) {
+                return $key;
+            });
+            $final = collect();
+            foreach ($group_by_jobs as $key => $jobs) {
+                $jobs = $jobs->sortBy('schedule_timestamp');
+                foreach ($jobs as $job) {
+                    $final->push($job);
+                }
+            }
+            $jobs = $jobs_with_resource->merge($final);
         } else {
-            return api_response($request, null, 404);
+            $jobs = $jobs_with_resource->merge($jobs);
+            $jobs = $jobs->sortByDesc('id');
         }
+        list($offset, $limit) = calculatePagination($request);
+        $jobs = $jobs->splice($offset, $limit);
+        $resources = collect();
+        foreach ($jobs->groupBy('resource_id') as $key => $resource) {
+            if (!empty($key)) {
+                $resources->push(array(
+                    'id' => (int)$key,
+                    'name' => $resource->first()->resource_name
+                ));
+            }
+        }
+        $subscription_orders = $partner->subscriptionOrders->where('status', 'accepted')->count();
 
+        return api_response($request, $jobs, 200, ['jobs' => $jobs, 'resources' => $resources, 'subscription_orders' => $subscription_orders]);
     }
 
     public function acceptJobAndAssignResource($partner, $job, Request $request)
     {
-        try {
-            ini_set('memory_limit', '4096M');
-            ini_set('max_execution_time', 660);
-            $this->validate($request, [
-                'resource_id' => 'int'
+        ini_set('memory_limit', '4096M');
+        ini_set('max_execution_time', 660);
+        $this->validate($request, [
+            'resource_id' => 'int'
+        ]);
+
+        $this->jobStatusChanger->acceptJobAndAssignResource($request);
+        if ($this->jobStatusChanger->hasError()) {
+            return api_response($request, null, $this->jobStatusChanger->getErrorCode(), [
+                'message' => $this->jobStatusChanger->getErrorMessage()
             ]);
-
-            $this->jobStatusChanger->acceptJobAndAssignResource($request);
-            if ($this->jobStatusChanger->hasError()) {
-                return api_response($request, null, $this->jobStatusChanger->getErrorCode(), [
-                    'message' => $this->jobStatusChanger->getErrorMessage()
-                ]);
-            }
-
-            return api_response($request, $this->jobStatusChanger->getChangedJob(), 200);
-
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
         }
+
+        return api_response($request, $this->jobStatusChanger->getChangedJob(), 200);
     }
 
     public function declineJob($partner, $job, Request $request)
     {
-        try {
-            $this->jobStatusChanger->decline($request);
-            if ($this->jobStatusChanger->hasError()) {
-                return api_response($request, null, $this->jobStatusChanger->getErrorCode(), [
-                    'message' => $this->jobStatusChanger->getErrorMessage()
-                ]);
-            }
-            return api_response($request, null, 200);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        $this->jobStatusChanger->decline($request);
+        if ($this->jobStatusChanger->hasError()) {
+            return api_response($request, null, $this->jobStatusChanger->getErrorCode(), [
+                'message' => $this->jobStatusChanger->getErrorMessage()
+            ]);
         }
+        return api_response($request, null, 200);
     }
 
     public function update($partner, $job, Request $request)
@@ -255,21 +230,16 @@ class PartnerJobController extends Controller
 
     public function getMaterials($partner, $job, Request $request)
     {
-        try {
-            $materials = $request->job->usedMaterials;
-            if (count($materials) > 0) {
-                $materials->each(function ($item, $key) {
-                    $item['material_price'] = (double)$item->material_price;
-                    $item['added_by'] = $item->created_by_name;
-                    removeSelectedFieldsFromModel($item);
-                });
-                return api_response($request, $materials, 200, ['materials' => $materials, 'total_material_price' => $materials->sum('material_price')]);
-            }
-            return api_response($request, $job, 404);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $materials = $request->job->usedMaterials;
+        if (count($materials) == 0) return api_response($request, $job, 404);
+
+        $materials->each(function ($item, $key) {
+            $item['material_price'] = (double)$item->material_price;
+            $item['added_by'] = $item->created_by_name;
+            removeSelectedFieldsFromModel($item);
+        });
+        return api_response($request, $materials, 200, ['materials' => $materials, 'total_material_price' => $materials->sum('material_price')]);
+
     }
 
     public function addMaterial($partner, $job, Request $request, UserAgentInformation $user_agent_information, ServiceUpdateRequest $update_request)
@@ -329,75 +299,71 @@ class PartnerJobController extends Controller
         }
         $this->jobUpdateLog($job->id, json_encode($updatedData), $manager_resource);
 
-        $this->sendAssignResourcePushNotifications($job);
+        try {
+            $this->sendAssignResourcePushNotifications($job);
+        } catch (Throwable $e) {
+            logError($e);
+        }
+
         return $job;
     }
 
     private function sendAssignResourcePushNotifications(Job $job)
     {
-        try {
-            $topic = config('sheba.push_notification_topic_name.customer') . $job->partner_order->order->customer->id;
-            $channel = config('sheba.push_notification_channel_name.customer');
-            (new PushNotificationHandler())->send([
-                "title" => 'Resource has been assigned',
-                "message" => $job->resource->profile->name . " has been added as a resource for your job.",
-                "event_type" => 'Job',
-                "event_id" => $job->id,
-                "sound" => "notification_sound",
-                "channel_id" => $channel
-            ], $topic, $channel);
+        $topic = config('sheba.push_notification_topic_name.customer') . $job->partner_order->order->customer->id;
+        $channel = config('sheba.push_notification_channel_name.customer');
+        (new PushNotificationHandler())->send([
+            "title" => 'Resource has been assigned',
+            "message" => $job->resource->profile->name . " has been added as a resource for your job.",
+            "event_type" => 'Job',
+            "event_id" => $job->id,
+            "sound" => "notification_sound",
+            "channel_id" => $channel
+        ], $topic, $channel);
 
-            $topic = config('sheba.push_notification_topic_name.resource') . $job->resource_id;
-            $channel = config('sheba.push_notification_channel_name.resource');
-            (new PushNotificationHandler())->send([
-                "title" => 'Assigned to a new job',
-                "message" => 'You have been assigned to a new job. Job ID: ' . $job->partnerOrder->order->code(),
-                "event_type" => 'PartnerOrder',
-                "event_id" => $job->partnerOrder->id,
-                "sound" => "notification_sound",
-                "channel_id" => $channel
-            ], $topic, $channel);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-        }
+        $topic = config('sheba.push_notification_topic_name.resource') . $job->resource_id;
+        $channel = config('sheba.push_notification_channel_name.resource');
+        (new PushNotificationHandler())->send([
+            "title" => 'Assigned to a new job',
+            "message" => 'You have been assigned to a new job. Job ID: ' . $job->partnerOrder->order->code(),
+            "event_type" => 'PartnerOrder',
+            "event_id" => $job->partnerOrder->id,
+            "sound" => "notification_sound",
+            "channel_id" => $channel
+        ], $topic, $channel);
     }
 
     public function cancelRequests($partner, Request $request)
     {
-        try {
-            $jobs = Job::whereHas('cancelRequests', function ($query) {
-                $query->where('status', 'Pending');
-            })->whereHas('partnerOrder', function ($q) use ($partner) {
-                $q->ongoing()->where('partner_id', $partner);
-            })->with(['category' => function ($q) {
-                $q->select('id', 'name');
-            }, 'partnerOrder' => function ($q) {
-                $q->with(['order' => function ($q) {
-                    $q->select('id', 'customer_id', 'location_id', 'sales_channel')->with(['location' => function ($q) {
+        $jobs = Job::whereHas('cancelRequests', function ($query) {
+            $query->where('status', 'Pending');
+        })->whereHas('partnerOrder', function ($q) use ($partner) {
+            $q->ongoing()->where('partner_id', $partner);
+        })->with(['category' => function ($q) {
+            $q->select('id', 'name');
+        }, 'partnerOrder' => function ($q) {
+            $q->with(['order' => function ($q) {
+                $q->select('id', 'customer_id', 'location_id', 'sales_channel')->with(['location' => function ($q) {
+                    $q->select('id', 'name');
+                }, 'customer' => function ($q) {
+                    $q->select('id', 'profile_id')->with(['profile' => function ($q) {
                         $q->select('id', 'name');
-                    }, 'customer' => function ($q) {
-                        $q->select('id', 'profile_id')->with(['profile' => function ($q) {
-                            $q->select('id', 'name');
-                        }]);
                     }]);
                 }]);
-            }])->info()->orderBy('jobs.id', 'desc')->get();
-            foreach ($jobs as $job) {
-                $job['is_on_premise'] = (int)$job->isOnPremise();
-                $job['location'] = $job->partnerOrder->order->location->name;
-                $job['code'] = $job->partnerOrder->order->code();
-                $job['category_name'] = $job->category ? $job->category->name : null;
-                $job['customer_name'] = $job->partnerOrder->order->customer ? $job->partnerOrder->order->customer->profile->name : null;
-                $job['schedule_timestamp'] = $job->partnerOrder->getVersion() == 'v2' ? Carbon::parse($job->schedule_date . ' ' . explode('-', $job->preferred_time)[0])->timestamp : Carbon::parse($job->schedule_date)->timestamp;
-                $job['preferred_time'] = humanReadableShebaTime($job->preferred_time);
-                $job['version'] = $job->partnerOrder->order->getVersion();
-                removeRelationsFromModel($job);
-            }
-            return count($jobs) == 0 ? api_response($request, null, 404) : api_response($request, $jobs, 200, ['jobs' => $jobs]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+            }]);
+        }])->info()->orderBy('jobs.id', 'desc')->get();
+        foreach ($jobs as $job) {
+            $job['is_on_premise'] = (int)$job->isOnPremise();
+            $job['location'] = $job->partnerOrder->order->location->name;
+            $job['code'] = $job->partnerOrder->order->code();
+            $job['category_name'] = $job->category ? $job->category->name : null;
+            $job['customer_name'] = $job->partnerOrder->order->customer ? $job->partnerOrder->order->customer->profile->name : null;
+            $job['schedule_timestamp'] = $job->partnerOrder->getVersion() == 'v2' ? Carbon::parse($job->schedule_date . ' ' . explode('-', $job->preferred_time)[0])->timestamp : Carbon::parse($job->schedule_date)->timestamp;
+            $job['preferred_time'] = humanReadableShebaTime($job->preferred_time);
+            $job['version'] = $job->partnerOrder->order->getVersion();
+            removeRelationsFromModel($job);
         }
+        return count($jobs) == 0 ? api_response($request, null, 404) : api_response($request, $jobs, 200, ['jobs' => $jobs]);
     }
 
     /**

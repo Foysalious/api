@@ -18,11 +18,12 @@ use Sheba\Resource\Jobs\Material\Updater as MaterialUpdater;
 class ServiceUpdateRequest
 {
     /** @var array */
-    private $newServices;
+    private $newServices = [];
     /** @var array */
-    private $quantity;
+    private $quantity = [];
     /** @var array */
-    private $materials;
+    private $materials = [];
+
     /** @var Job */
     private $job;
     private $serviceRequest;
@@ -77,7 +78,6 @@ class ServiceUpdateRequest
         return $this;
     }
 
-
     /**
      * @param $quantity
      * @return $this
@@ -93,6 +93,7 @@ class ServiceUpdateRequest
         $this->materials = $materials;
         return $this;
     }
+
     /**
      * @return Response
      */
@@ -103,9 +104,13 @@ class ServiceUpdateRequest
             return $this->response;
         }
         DB::transaction(function () {
-            if (count($this->newServices) > 0) $this->createNewJobService->setJob($this->job)->setServices($this->newServices)->create();
-            if (count($this->materials) > 0) $this->materialCreator->setJob($this->job)->setUserAgentInformation($this->userAgentInformation)
-                ->setMaterials($this->materials)->create();
+            if (count($this->newServices) > 0) {
+                $this->createNewJobService->setJob($this->job)->setServices($this->newServices)->create();
+            }
+            if (count($this->materials) > 0) {
+                $this->materialCreator->setJob($this->job)->setUserAgentInformation($this->userAgentInformation)
+                    ->setMaterials($this->materials)->create();
+            }
             if (count($this->quantity) > 0) {
                 foreach ($this->quantity as $quantity) {
                     $job_service = JobService::find($quantity['job_service_id']);
@@ -136,5 +141,4 @@ class ServiceUpdateRequest
     {
         return $this->policy->setJob($this->job)->setPartner($this->job->partnerOrder->partner)->canUpdate();
     }
-
 }

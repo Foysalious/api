@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Providers;
+<?php namespace App\Providers;
 
 use App\Sheba\InventoryService\Partner\Events\Created as PartnerCreatedEvent;
 use App\Sheba\InventoryService\Partner\Listeners\Created as PartnerCreatedListener ;
@@ -63,17 +61,4 @@ class EventServiceProvider extends ServiceProvider
             PosSettingUpdatedListener::class
         ]
     ];
-
-    /**
-     * Register any other events for your application.
-     *
-     * @param DispatcherContract $events
-     * @return void
-     */
-    public function boot(DispatcherContract $events)
-    {
-        parent::boot($events);
-
-        //
-    }
 }

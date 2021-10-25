@@ -54,7 +54,7 @@ class Updater
     public function update(array $data)
     {
         #$this->formatData($data);
-        return $this->businessMemberRepository->update($this->businessMember, $this->withUpdateModificationField($data));
+        return $this->businessMemberRepository->update($this->businessMember, $data);
     }
 
     public function delete()

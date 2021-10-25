@@ -21,11 +21,12 @@ class CompletionCalculation
      */
     public function get($allData)
     {
-        foreach ($allData as $data)
-        {
-            if ($data['field_type'] == 'multipleView')
-                foreach ($data["views"] as $multiView)
+        foreach ($allData as $data) {
+            if ($data['field_type'] == 'multipleView') {
+                foreach ($data["views"] as $multiView) {
                     $this->calculate($multiView);
+                }
+            }
 
             elseif ($data['field_type'] == 'radioGroup' || $data['field_type'] == 'conditionalSelect') $this->calculateGroupedViews($data);
             else $this->calculate($data);
@@ -38,11 +39,9 @@ class CompletionCalculation
      */
     private function calculate($data)
     {
-        if ($data['field_type'] !== 'header' && $data['field_type'] !== 'multipleView' && $data['field_type'] !== 'textView' && $data['mandatory'] !== false)
-        {
-            if (!in_array($data['id'], $this->skipFields))
-            {
-                if($data['value'] !== ''){
+        if ($data['field_type'] !== 'header' && $data['field_type'] !== 'multipleView' && $data['field_type'] !== 'textView' && $data['mandatory'] !== false) {
+            if (!in_array($data['id'], $this->skipFields)) {
+                if($data['value'] !== '') {
                     $this->filled++;
                     $this->filled_id[] = $data['id'];
                 }

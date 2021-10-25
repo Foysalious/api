@@ -49,8 +49,9 @@ use Sheba\Business\Holiday\Creator as HolidayCreator;
 use Sheba\Business\Holiday\Updater as HolidayUpdater;
 use Sheba\Business\Holiday\CreateRequest as HolidayCreatorRequest;
 use Sheba\Business\Attendance\HalfDaySetting\Updater as HalfDaySettingUpdater;
-use Sheba\Business\Attendance\Detail\DetailsExcel as DetailsExcel;
-use Throwable;
+use Sheba\Business\Attendance\Detail\DetailsExcel;
+use Maatwebsite\Excel\Facades\Excel as MaatwebsiteExcel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class AttendanceController extends Controller
 {
@@ -90,7 +91,7 @@ class AttendanceController extends Controller
      * @param AttendanceList $stat
      * @param TimeFrame $time_frame
      * @param BusinessOfficeRepoInterface $business_office_repo
-     * @return JsonResponse
+     * @return JsonResponse|BinaryFileResponse
      */
     public function getDailyStats($business, Request $request, AttendanceList $stat, TimeFrame $time_frame,
                                   BusinessOfficeRepoInterface $business_office_repo)
@@ -134,7 +135,12 @@ class AttendanceController extends Controller
         }
 
         $count = count($attendances);
-        if ($request->file == 'excel') return (new DailyExcel())->setDate($date->format('Y-m-d'))->setData($attendances)->download();
+
+        if ($request->file == 'excel') {
+            $excel = new DailyExcel($attendances, $date->format('Y-m-d'));
+            return MaatwebsiteExcel::download($excel, 'Daily_attendance_report.xlsx');
+        }
+
         return api_response($request, null, 200, ['attendances' => $attendances, 'total' => $count]);
     }
 
@@ -366,13 +372,12 @@ class AttendanceController extends Controller
      * @param BusinessMemberRepositoryInterface $business_member_repository
      * @param TimeFrame $time_frame
      * @param AttendanceList $list
-     * @param DetailsExcel $details_excel
-     * @return JsonResponse|void
+     * @return JsonResponse|BinaryFileResponse
      */
     public function showStat($business, $member, Request $request, BusinessHolidayRepoInterface $business_holiday_repo,
                              BusinessWeekendSettingsRepo $business_weekend_settings_repo, AttendanceRepoInterface $attendance_repo,
                              BusinessMemberRepositoryInterface $business_member_repository,
-                             TimeFrame $time_frame, AttendanceList $list, DetailsExcel $details_excel)
+                             TimeFrame $time_frame, AttendanceList $list)
     {
         $this->validate($request, ['month' => 'numeric|min:1|max:12']);
         $business = $request->business;
@@ -407,12 +412,11 @@ class AttendanceController extends Controller
         if ($request->has('sort_on_checkin')) $daily_breakdowns = $this->attendanceSortOnCheckin($daily_breakdowns, $request->sort_on_checkin)->values();
         if ($request->has('sort_on_checkout')) $daily_breakdowns = $this->attendanceSortOnCheckout($daily_breakdowns, $request->sort_on_checkout)->values();
         if ($request->has('sort_on_overtime')) $daily_breakdowns = $this->attendanceCustomSortOnOvertime($daily_breakdowns, $request->sort_on_overtime)->values();
+
         if ($request->file == 'excel') {
-            return $details_excel->setBreakDownData($daily_breakdowns->toArray())
-                ->setBusinessMember($business_member)
-                ->setStartDate($request->start_date)
-                ->setEndDate($request->end_date)
-                ->download();
+            $time_frame = $time_frame->forDateRange($request->start_date, $request->end_date);
+            $excel = new DetailsExcel($business_member, $daily_breakdowns->toArray(), $time_frame);
+            return MaatwebsiteExcel::download($excel, $excel->getFilename());
         }
 
         return api_response($request, $list, 200, [

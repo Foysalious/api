@@ -1,8 +1,8 @@
 <?php namespace App\Models;
 
-use AlgoliaSearch\Laravel\AlgoliaEloquentTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
+use Laravel\Scout\Searchable;
 use Sheba\Business\Procurement\Statuses;
 use Sheba\Business\Procurement\Type;
 use Sheba\Dal\Procurement\PublicationStatuses;
@@ -15,7 +15,7 @@ use Sheba\Dal\Category\Category;
 
 class Procurement extends Model implements PayableType
 {
-    use AlgoliaEloquentTrait;
+    use Searchable;
 
     protected $guarded = ['id'];
     protected $dates = ['closed_and_paid_at', 'procurement_start_date', 'procurement_end_date', 'last_date_of_submission', 'published_at'];
@@ -24,7 +24,6 @@ class Procurement extends Model implements PayableType
     public $totalPrice;
     /** @var CodeBuilder $codeBuilder */
     private $codeBuilder;
-    public $algoliaSettings = ['searchableAttributes' => ['title', 'name', '_tags', 'short_description', 'long_description']];
 
     public function __construct(array $attributes = [])
     {
@@ -153,7 +152,7 @@ class Procurement extends Model implements PayableType
         return $this->last_date_of_submission->diffInDays($today) + 1;
     }
 
-    public function getAlgoliaRecord()
+    public function toSearchableArray()
     {
         return [
             'id' => $this->id,

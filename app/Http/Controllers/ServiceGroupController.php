@@ -46,7 +46,7 @@ class ServiceGroupController extends Controller
             })->get();
         } else {
             $service_groups = ServiceGroup::select('id', 'name', 'thumb', 'app_thumb', 'short_description')->publishedFor($request->for)->with([
-                'services' => function ($query){
+                'services' => function ($query) {
                     $query->select('id', 'category_id', 'name', 'thumb', 'app_thumb')->published();
                 }
             ])->get();
@@ -54,9 +54,9 @@ class ServiceGroupController extends Controller
 
         if (count($service_groups) === 0)
             return api_response($request, 1, 404);
-        $service_groups->each(function ($service_group) use (&$service_group_list,$location) {
+        $service_groups->each(function ($service_group) use (&$service_group_list, $location) {
             $services = $service_group->services;
-            $services_without_pivot_data = $services->each(function ($service) use($location) {
+            $services_without_pivot_data = $services->each(function ($service) use ($location) {
                 if ($location) {
                     $location_service = LocationService::where('location_id', $location)->where('service_id', $service->id)->first();
                     $service_discount = $location_service->discounts()->running()->first();
@@ -65,8 +65,7 @@ class ServiceGroupController extends Controller
                     $service['universal_slug'] = $service->getSlug();
                     $service['has_discount'] = $service_discount ? 1 : 0;
                     $service['discount_amount'] = $service_discount ? $service_discount['amount'] : 0;
-                }
-                else {
+                } else {
                     removeRelationsFromModel($service);
                     $service['slug'] = $service->getSlug();
                     $service['universal_slug'] = $service->getSlug();
@@ -101,11 +100,11 @@ class ServiceGroupController extends Controller
             if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
         }
 
-        if(is_null($single_service_group->locations()->where('location_id',$location)->first())) return api_response($request, 1, 404);
+        if (is_null($single_service_group->locations()->where('location_id', $location)->first())) return api_response($request, 1, 404);
 
         if ($location) {
             $loc_is_published = Location::find($location)->publication_status;
-            if ($loc_is_published==1 && $single_service_group->is_published_for_app==1 && $single_service_group->is_published_for_web==1) {
+            if ($loc_is_published == 1 && $single_service_group->is_published_for_app == 1 && $single_service_group->is_published_for_web == 1) {
                 $service_group = ServiceGroup::with(['services' => function ($q) use ($location) {
                     return $q->published()
                         ->whereHas('locations', function ($q) use ($location) {
@@ -116,7 +115,7 @@ class ServiceGroupController extends Controller
                 return api_response($request, 1, 404);
             }
         } else {
-            if ($single_service_group->is_published_for_app==1 && $single_service_group->is_published_for_web==1) {
+            if ($single_service_group->is_published_for_app == 1 && $single_service_group->is_published_for_web == 1) {
                 $service_group = ServiceGroup::with(['services' => function ($q) {
                     $q->published()/*->orderBy('service_group_service.order')*/ ->orderBy('stock_left');
                 }])->where('id', $service_group)->select('id', 'name', 'app_thumb')->first();
@@ -182,5 +181,4 @@ class ServiceGroupController extends Controller
             'slug' => $service->getSlug()
         ];
     }
-
 }

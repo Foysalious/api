@@ -2,7 +2,6 @@
 
 use Sheba\Cache\CacheObject;
 use Sheba\Cache\CacheRequest;
-use Sheba\Cache\DataStoreObject;
 
 class SchemaCache implements CacheObject
 {
@@ -23,7 +22,6 @@ class SchemaCache implements CacheObject
     {
         return 24 * 60 * 60;
     }
-
 
     public function setCacheRequest(CacheRequest $cache_request)
     {

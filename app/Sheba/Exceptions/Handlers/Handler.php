@@ -1,11 +1,11 @@
 <?php namespace Sheba\Exceptions\Handlers;
 
-use Exception;
+use Throwable;
 use Illuminate\Http\Request;
 
 abstract class Handler
 {
-    /** @var Exception */
+    /** @var Throwable */
     protected $exception;
     /** @var Request */
     protected $request;
@@ -14,7 +14,7 @@ abstract class Handler
      * @param mixed $exception
      * @return Handler
      */
-    public function setException(Exception $exception)
+    public function setException(Throwable $exception)
     {
         $this->exception = $exception;
         return $this;

@@ -10,15 +10,6 @@ class TimeFrameCalculator
     private $reward;
 
     /**
-     * TimeFrameCalculator constructor.
-     */
-    public function __construct()
-    {
-        Carbon::setWeekStartsAt(Carbon::SUNDAY);
-        Carbon::setWeekEndsAt(Carbon::SATURDAY);
-    }
-
-    /**
      * @param Reward $reward
      * @return $this
      */

@@ -319,6 +319,7 @@ class BidController extends Controller
             },
             'procurement'
         ]);
+        /** @var Procurement $procurement */
         $procurement = $bid->procurement;
         $price_quotation = $bid->items->where('type', 'price_quotation')->first();
         $technical_evaluation = $bid->items->where('type', 'technical_evaluation')->first();

@@ -1,6 +1,6 @@
 version: '3.5'
 services:
-  api-service:
+  upgraded-api-service:
     environment:
       SERVICE_NAME: app
       VIRTUAL_HOST: ${API_DOMAIN}
@@ -28,6 +28,6 @@ services:
       - "${VIRTUAL_HOST_EXPENSE}:${DOCKER_HOST_ADDR}"
 
 networks:
-  api-service-network:
+  upgraded-api-service-network:
     external:
       name: ${EXTERNAL_NETWORK}

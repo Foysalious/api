@@ -177,7 +177,7 @@ class PayableController extends Controller {
         try {
             $this->validate($request, ['amount' => 'required|numeric', 'customer_id' => 'required|numeric']);
 
-            $input               = $request->only(['amount']);
+            $input               = $request->all(['amount']);
             $input['profile_id'] = PosCustomer::find($request->customer_id)->profile_id;
             $updater_information = [
                 'updated_by'      => $request->manager_resource->id,

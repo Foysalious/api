@@ -130,7 +130,6 @@ class ResourceJobController extends Controller
         } catch (Throwable $e) {
             throw new Exception('আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন', 500);
         }
-
     }
 
     public function collectMoney(Job $job, Request $request, CollectMoney $collect_money, UserAgentInformation $user_agent_information)
@@ -175,7 +174,6 @@ class ResourceJobController extends Controller
         $job_service = JobService::where('job_id',$job->id)->pluck('service_id')->toArray();
         $services = $serviceList->setJob($job)->setRequest($request)->setServiceIds($job_service)->getServicesList();
         return api_response($request, null, 200, ['services' => $services]);
-
     }
 
     public function getUpdatedBill(Job $job, BillUpdate $billUpdate, Request $request)
@@ -214,19 +212,21 @@ class ResourceJobController extends Controller
             /** @var AuthUser $auth_user */
             $auth_user = $request->auth_user;
             $resource = $auth_user->getResource();
+            if ($resource->id !== $job->resource_id) return api_response($request, $job, 403, ["message" => "You're not authorized to access this job."]);
+
             $this->setModifier($resource);
             $user_agent_information->setRequest($request);
-            $services = json_decode($request->services, 1);
-            $quantity = json_decode($request->quantity, 1);
-            $materials = json_decode($request->materials, 1);
-            if ($resource->id !== $job->resource_id) return api_response($request, $job, 403, ["message" => "You're not authorized to access this job."]);
+
+            $services = json_decode($request->services, 1) ?: [];
+            $quantity = json_decode($request->quantity, 1) ?: [];
+            $materials = json_decode($request->materials, 1) ?: [];
             if (count($services) > 0) $updateRequest->setServices($services);
             if (count($materials) > 0) $updateRequest->setMaterials($materials);
             if (count($quantity) > 0) $updateRequest->setQuantity($quantity);
             $response = $updateRequest->setJob($job)->setUserAgentInformation($user_agent_information)->update();
             return api_response($request, null, $response->getCode(), ['message' => $response->getMessage()]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500, ['message' => 'আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন']);
         }
     }

@@ -12,7 +12,6 @@ class TimeFrame
 
     public function __construct($start = null, $end = null)
     {
-        Carbon::useMicrosecondsFallback(false);
         $this->set($start, $end);
     }
 
@@ -101,11 +100,8 @@ class TimeFrame
 
     public function forCurrentWeek($week_start = null)
     {
-        Carbon::setWeekStartsAt($week_start ?: Carbon::SUNDAY);
-        Carbon::setWeekEndsAt(Carbon::SATURDAY);
-
-        $this->start = Carbon::now()->startOfWeek();
-        $this->end = Carbon::now()->endOfWeek();
+        $this->start = Carbon::now()->startOfWeek($week_start ?: Carbon::SUNDAY);
+        $this->end = Carbon::now()->endOfWeek(Carbon::SATURDAY);
         return $this;
     }
 
@@ -118,11 +114,8 @@ class TimeFrame
 
     public function forAWeek(Carbon $date, $week_start = null, $week_end = null)
     {
-        Carbon::setWeekStartsAt($week_start ?: Carbon::SUNDAY);
-        Carbon::setWeekEndsAt($week_end ?: Carbon::SATURDAY);
-
-        $this->start = $date->copy()->startOfWeek();
-        $this->end = $date->endOfWeek();
+        $this->start = $date->copy()->startOfWeek($week_start ?: Carbon::SUNDAY);
+        $this->end = $date->endOfWeek($week_end ?: Carbon::SATURDAY);
         return $this;
     }
 
@@ -219,5 +212,10 @@ class TimeFrame
         }
 
         return $this;
+    }
+
+    public function toDateString($separator = " - "): string
+    {
+        return $this->start->toDateString() . $separator . $this->end->toDateString();
     }
 }

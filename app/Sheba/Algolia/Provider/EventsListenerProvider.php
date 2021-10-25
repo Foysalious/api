@@ -1,30 +1,16 @@
-<?php namespace App\Sheba\Algolia\Provider;
+<?php namespace Sheba\Algolia\Provider;
 
 use Illuminate\Contracts\Events\Dispatcher;
+use Illuminate\Foundation\Support\Providers\EventServiceProvider;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceSaved as PartnerPosServiceSaved;
 use App\Sheba\Algolia\Listeners\PartnerPosServiceSaved as PartnerPosServiceSavedListener;
 
-class EventsListenerProvider extends ServiceProvider
+class EventsListenerProvider extends EventServiceProvider
 {
-    /**
-     * Register the service provider.
-     *
-     * @return void
-     */
-    public function register()
+    public function boot()
     {
-        // TODO: Implement register() method.DalEventsListenerProvider
+        Event::listen(PartnerPosServiceSaved::class, PartnerPosServiceSavedListener::class);
     }
-
-    /**
-     * @param Dispatcher $events
-     */
-    public function boot(Dispatcher $events)
-    {
-        parent::boot($events);
-        $events->listen(PartnerPosServiceSaved::class, PartnerPosServiceSavedListener::class);
-    }
-
-
 }

@@ -102,14 +102,14 @@ class CustomerController extends Controller
             'name' => 'string',
             'gender'=>'string|in:Male,Female,Other',
             'address'=>'string',
-            'dob' => 'date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
+            'dob' => 'date|before:today',
             'email' => 'email|unique:profiles,email,' . $profile->id,
             'is_old_user' => 'required'
         ]);
         if ($request->has('name')) $profile->name = ucwords($request->name);
         if ($request->has('gender')) $profile->gender = $request->gender;
         if ($request->has('address')) $profile->address = $request->address;
-        if ($request->has('dob')) $profile->dob = $request->dob;
+        if ($request->has('dob')) $profile->dob = Carbon::parse($request->dob)->toDateString();
         if ($request->has('email')) $profile->email = $request->email;
         $profile->update();
         $customer->reload();
@@ -117,8 +117,7 @@ class CustomerController extends Controller
             app()->make(ActionRewardDispatcher::class)->run('profile_complete', $customer);
             $customer->is_completed = 1;
             $customer->update();
-        }
-        elseif ($customer->isCompleted() && !$customer->is_completed) {
+        } elseif ($customer->isCompleted() && !$customer->is_completed) {
             $customer->is_completed = 1;
             $customer->update();
         }
@@ -455,7 +454,7 @@ class CustomerController extends Controller
             'name'  => 'required|string',
             'email' => 'required|email|unique:profiles,email,' . $profile->id,
             'gender'=> 'sometimes|required|in:Male,Female,Other',
-            'dob'   => 'sometimes|required|date|date_format:Y-m-d|before:' . date('Y-m-d')
+            'dob'   => 'sometimes|required|date|before:today'
         ]);
         return $validator->fails() ? $validator->errors()->all()[0] : false;
     }

@@ -1,21 +1,16 @@
-<?php
-
-
-namespace Sheba\NeoBanking\Banks;
+<?php namespace Sheba\NeoBanking\Banks;
 
 
 use App\Sheba\NeoBanking\Banks\BankAccountInfoWithTransaction;
 use App\Sheba\NeoBanking\Banks\NidInformation;
-use ReflectionClass;
-use ReflectionException;
 use Sheba\NeoBanking\DTO\BankFormCategory;
 use Sheba\NeoBanking\DTO\BankFormCategoryList;
 
 class BracBank  extends Bank
 {
-    protected $id      = 2;
-    protected $name    = "Brac Bank";
-    protected $name_bn = "ব্র্যাক ব্যাংক";
+    public $id      = 2;
+    public $name    = "Brac Bank";
+    public $name_bn = "ব্র্যাক ব্যাংক";
 
     public function categories():BankFormCategoryList
     {
@@ -55,5 +50,30 @@ class BracBank  extends Bank
     public function getSDKLivelinessToken()
     {
         return null;
+    }
+
+    public function accountCreate()
+    {
+        // TODO: Implement accountCreate() method.
+    }
+
+    public function storeAccountNumber($account_no)
+    {
+        // TODO: Implement storeAccountNumber() method.
+    }
+
+    public function transactionList()
+    {
+        // TODO: Implement transactionList() method.
+    }
+
+    public function getGigatechKycStatus($data)
+    {
+        // TODO: Implement getGigatechKycStatus() method.
+    }
+
+    public function storeGigatechKyc($data)
+    {
+        // TODO: Implement storeGigatechKyc() method.
     }
 }

@@ -122,9 +122,9 @@ class OfferShowcase extends Model
     {
         return $this->belongsToMany(OfferGroup::class, 'offer_group_offer');
     }
+
     public function scopeGetPartnerOffers($query)
     {
         return $query->where('target_type', "App\\Models\\PartnerOffer");
     }
-
 }
