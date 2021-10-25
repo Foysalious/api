@@ -75,7 +75,6 @@ class BusinessMemberPolicyRulesCalculator
         $is_for_late_checkin = $business_office->is_for_late_checkin;
         $is_for_early_checkout = $business_office->is_for_early_checkout;
         $is_unpaid_leave_policy_enable = $business_office->is_unpaid_leave_policy_enable;
-        if (!$is_grace_period_policy_enable && !$is_late_checkin_early_checkout_policy_enable && !$is_unpaid_leave_policy_enable) return ['attendance_adjustment' => 0, 'leave_adjustment' => 0, 'tax' => 0];
         $time_frame = $this->proratedTimeFrame ? $this->proratedTimeFrame : $this->timeFrame;
         $attendances = $this->attendanceRepositoryInterface->getAllAttendanceByBusinessMemberFilteredWithYearMonth($this->businessMember, $time_frame);
         $business_member_leave = $this->businessMember->leaves()->accepted()->between($time_frame)->get();
