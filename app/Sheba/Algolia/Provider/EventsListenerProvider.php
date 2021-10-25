@@ -1,4 +1,4 @@
-<?php namespace App\Sheba\Algolia\Provider;
+<?php namespace Sheba\Algolia\Provider;
 
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Support\ServiceProvider;
