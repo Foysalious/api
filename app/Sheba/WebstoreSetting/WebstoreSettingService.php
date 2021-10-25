@@ -73,7 +73,7 @@ class WebstoreSettingService
 
     public function getallSettings($partner)
     {
-        $url = 'api/v1/partners/' . $partner . '/settings';
+        $url = 'api/v1/partners/' . $partner . '/theme-settings';
         return $this->client->get($url);
     }
 
