@@ -1,4 +1,4 @@
-<?php namespace App\Sheba\Algolia\Listeners;
+<?php namespace Sheba\Algolia\Listeners;
 
 use App\Models\Partner;
 use Sheba\Dal\Partner\Events\PartnerSaved as PartnerSavedEvent;

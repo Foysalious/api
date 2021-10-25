@@ -3,7 +3,7 @@
 use App\Http\Middleware\B2B\TerminatingMiddleware;
 use Illuminate\Support\Carbon;
 use Sheba\Algolia\Provider\EventsListenerProvider as AlgoliaProvider;
-use App\Sheba\Algolia\Provider\EventsListenerProvider;
+use Sheba\Algolia\Provider\EventsListenerProvider;
 use App\Sheba\Pos\Order\Providers\EventsListenerProvider as PosOrderInvoiceGenerationEventsListenerProvider;
 use Illuminate\Support\ServiceProvider;
 use Sheba\Dal\Providers\CustomMigrationServiceProvider;
