@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use Sheba\Dal\Appreciation\Appreciation;
 use Sheba\Dal\BusinessMemberStatusChangeLog\Model as BusinessMemberStatusChangeLog;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
@@ -33,6 +34,18 @@ class BusinessMember extends Model
         'updated' => BusinessMemberUpdated::class,
         'deleted' => BusinessMemberDeleted::class,
     ];
+
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $table = config('database.connections.mysql.database') . '.business_member';
+        $this->setTable($table);
+    }
+
+    public function setTable($table)
+    {
+        $this->table = $table;
+    }
 
     public function member()
     {
@@ -97,6 +110,11 @@ class BusinessMember extends Model
     public function statusChangeLogs()
     {
         return $this->hasMany(BusinessMemberStatusChangeLog::class);
+    }
+
+    public function appreciations()
+    {
+        return $this->hasMany(Appreciation::class, 'receiver_id');
     }
 
     public function scopeActive($query)
@@ -255,5 +273,15 @@ class BusinessMember extends Model
             ->join('profiles', 'profiles.id', '=', 'members.profile_id')
             ->where('business_member.id', '=', $this->id)
             ->first();
+    }
+
+    public function isNewJoiner()
+    {
+        $start_date = $this->join_date;
+        if (!$start_date) return false;
+        $end_date = $this->join_date->addDays(30);
+        $time_frame = new TimeFrame();
+        $time_frame->forDateRange($start_date, $end_date);
+        return $time_frame->hasDateBetween(Carbon::now());
     }
 }

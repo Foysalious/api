@@ -21,6 +21,7 @@ use Sheba\PaymentLink\PaymentLinkClient;
 use Sheba\PaymentLink\PaymentLinkStatics;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
+use Sheba\Subscription\Partner\Access\AccessManager;
 
 class PaymentLinkController extends Controller
 {
@@ -42,7 +43,7 @@ class PaymentLinkController extends Controller
     }
 
     /**
-     * @param Request     $request
+     * @param Request $request
      * @param PaymentLink $link
      * @return JsonResponse
      */

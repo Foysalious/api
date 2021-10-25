@@ -32,6 +32,10 @@ class LeaveApprovalRequestListTransformer extends TransformerAbstract
         $this->approvalRequestRepository = app(ApprovalRequestRepository::class);
     }
 
+    /**
+     * @param $approval_request
+     * @return array
+     */
     public function transform($approval_request)
     {
         /** @var Leave $requestable */
@@ -42,7 +46,7 @@ class LeaveApprovalRequestListTransformer extends TransformerAbstract
         /** @var Profile $profile */
         $profile = $member->profile;
         $leave_type = $requestable->leaveType()->withTrashed()->first();
-        $approvers = $this->getApprover($requestable, $business_member);
+        $approvers = $this->getApprover($requestable);
         return [
             'id' => $approval_request->id,
             'type' => Type::LEAVE,
@@ -91,15 +95,9 @@ class LeaveApprovalRequestListTransformer extends TransformerAbstract
         return ApprovalRequestPresenter::statuses()[$approval_request->status];
     }
 
-    private function getApprover($requestable, $requestable_business_member)
+    private function getApprover($requestable)
     {
         $approvers = [];
-        $this->requestableType = ApprovalRequestType::getByModel($requestable);
-        $approval_setting = (new FindApprovalSettings())->getApprovalSetting($requestable_business_member, $this->requestableType);
-        $find_approvers = (new FindApprovers())->calculateApprovers($approval_setting, $requestable_business_member);
-        $requestable_approval_request_ids = $requestable->requests()->pluck('approver_id', 'id')->toArray();
-        $remainingApprovers = array_diff($find_approvers, $requestable_approval_request_ids);
-        $default_approvers = (new FindApprovers())->getApproversInfo($remainingApprovers);
         foreach ($requestable->requests as $approval_request) {
             $profile = DB::table('approval_requests')
                 ->join('business_member', 'business_member.id', '=', 'approval_requests.approver_id')
@@ -107,13 +105,13 @@ class LeaveApprovalRequestListTransformer extends TransformerAbstract
                 ->join('profiles', 'profiles.id', '=', 'members.profile_id')
                 ->where('approval_requests.id', '=', $approval_request->id)
                 ->first();
+
             array_push($approvers, [
                 'name' => $profile->name ? $profile->name : 'n/s',
                 'status' => ApprovalRequestPresenter::statuses()[$approval_request->status]
             ]);
         }
-        $all_approvers = array_merge($approvers, $default_approvers);
 
-        return $all_approvers;
+        return $approvers;
     }
 }

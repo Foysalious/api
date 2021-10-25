@@ -14,6 +14,8 @@ use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
 use Sheba\Partner\PartnerStatuses;
+use Sheba\PartnerWithdrawal\PartnerWithdrawalService;
+use Sheba\Repositories\Interfaces\ProfileBankingRepositoryInterface;
 use Sheba\ShebaAccountKit\Requests\AccessTokenRequest;
 use Sheba\ShebaAccountKit\ShebaAccountKit;
 
@@ -91,7 +93,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
         /** @var Partner $partner */
         $partner = $request->partner;
         if($partner->status === PartnerStatuses::BLACKLISTED || $partner->status === PartnerStatuses::PAUSED) {
-            return api_response($request, null, 402, ['message' => 'ব্ল্যাক লিস্ট হওয়ার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে পারবেন না।']);
+            return api_response($request, null, 402, ['message' => 'ব্ল্যাক লিস্ট/সাময়িকভাবে বরখাস্ত হওয়ার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে পারবেন না।আরও জানতে কল করুন ১৬৫১৬।']);
         }
 
         if ($request->payment_method == 'bkash')
@@ -142,7 +144,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
             $message = 'পর্যাপ্ত ব্যালান্স না থাকার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে  পারবেন না।আপনার সিকিউরিটি মানি ৳'. convertNumbersToBangla($security_money, true, 0). '।';
             return api_response($request, null, 403, ['message' => $message]);
         }
-        $new_withdrawal = WithdrawalRequest::create(array_merge((new UserRequestInformation($request))->getInformationArray(), [
+        $data = array_merge((new UserRequestInformation($request))->getInformationArray(), [
             'requester_id'    => $partner->id,
             'requester_type'  => RequesterTypes::PARTNER,
             'amount'          => $request->amount,
@@ -153,7 +155,10 @@ class PartnerWithdrawalRequestV2Controller extends Controller
             'created_by_name' => 'Resource - ' . $request->manager_resource->profile->name,
             'api_request_id' => $request->api_request ? $request->api_request->id : null,
             'wallet_balance' => $partner->wallet
-        ]));
+        ]);
+        /** @var PartnerWithdrawalService $partnerWithdrawalSvc */
+        $partnerWithdrawalSvc = app(PartnerWithdrawalService::class);
+        $new_withdrawal = $partnerWithdrawalSvc->store($partner, $data);
 
         return api_response($request, $new_withdrawal, 200);
     }

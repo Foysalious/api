@@ -27,7 +27,8 @@ class BusinessEmployeesTransformer extends TransformerAbstract
                 'name' => $profile->name,
                 'pro_pic' => $profile->pro_pic,
                 'mobile' => $business_member->mobile,
-                'designation' => $is_member_role_present ? $business_member->role->name : 'N/S'
+                'designation' => $is_member_role_present ? $business_member->role->name : 'N/S',
+                'is_employee_new_joiner' => $business_member->isNewJoiner()
             ];
         });
 

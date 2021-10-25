@@ -22,7 +22,7 @@ class WalletTransaction
      */
     public static function throwException($e)
     {
-        app('sentry')->captureException($e);
+        logError($e);
     }
 
     /**
