@@ -5,6 +5,7 @@ use App\Models\Partner;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Models\Profile;
+use App\Sheba\Pos\Order\Invoice\InvoiceService;
 use App\Transformers\CustomSerializer;
 use App\Transformers\PosOrderTransformer;
 use Carbon\Carbon;
@@ -20,6 +21,7 @@ use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
+use Sheba\PartnerStatusAuthentication;
 use Sheba\PaymentLink\Creator as PaymentLinkCreator;
 use Sheba\PaymentLink\PaymentLinkTransformer;
 use Sheba\Pos\Customer\Creator as PosCustomerCreator;
@@ -43,6 +45,7 @@ use Sheba\Pos\Order\Updater;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Profile\Creator as ProfileCreator;
+use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Reports\PdfHandler;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PartnerRepository;
@@ -51,6 +54,7 @@ use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Subscription\Partner\Access\AccessManager;
 use Sheba\Subscription\Partner\Access\Exceptions\AccessRestrictedExceptionForPackage;
 use Sheba\Transactions\Types;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Sheba\Usage\Usage;
 use Throwable;
 
@@ -117,10 +121,10 @@ class OrderController extends Controller
      * @param PartnerRepository $partnerRepository
      * @param PaymentLinkCreator $paymentLinkCreator
      * @return array|JsonResponse
+     * @throws \Sheba\Authentication\Exceptions\AuthenticationFailedException
      */
     public function store($partner, Request $request, Creator $creator, ProfileCreator $profileCreator, PosCustomerCreator $posCustomerCreator, PartnerRepository $partnerRepository, PaymentLinkCreator $paymentLinkCreator)
     {
-
         $this->validate($request, [
             'services' => 'required|string',
             'paid_amount' => 'sometimes|required|numeric',
@@ -189,6 +193,7 @@ class OrderController extends Controller
         $order->net_bill = $order->getNetBill();
         $payment_link_amount = $request->has('payment_link_amount') ? $request->payment_link_amount : $order->net_bill;
         if ($request->payment_method == 'payment_link' || $request->payment_method == 'emi') {
+            (new PartnerStatusAuthentication())->handleInside($partner);
             $paymentLink = $paymentLinkCreator->setAmount($payment_link_amount)->setReason("PosOrder ID: $order->id Due payment")
                 ->setUserName($partner->name)->setUserId($partner->id)
                 ->setUserType('partner')
@@ -351,6 +356,7 @@ class OrderController extends Controller
      * @param Request $request
      * @param Updater $updater
      * @return JsonResponse
+     * @throws \Sheba\Transactions\Wallet\WalletDebitForbiddenException
      */
     public function sendSms(Request $request, Updater $updater)
     {
@@ -368,6 +374,7 @@ class OrderController extends Controller
             return api_response($request, null, 404, ['msg' => 'Customer not found']);
         if (!$order->customer->profile->mobile)
             return api_response($request, null, 404, ['msg' => 'Customer mobile not found']);
+        // checking at least 1 tk is available.
         if ($partner->wallet >= 1) {
             dispatch(new OrderBillSms($order));
             return api_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
@@ -452,101 +459,38 @@ class OrderController extends Controller
      * @param Request $request
      * @param $partner
      * @param PosOrder $order
-     * @return JsonResponse|string
+     * @param InvoiceService $invoiceService
+     * @return JsonResponse
+     * @throws AccessRestrictedExceptionForPackage
+     * @throws NotAssociativeArray
      */
-    public function downloadInvoice(Request $request, $partner, PosOrder $order)
+    public function downloadInvoice(Request $request, $partner, PosOrder $order, InvoiceService $invoiceService)
     {
-        try {
-            AccessManager::checkAccess(AccessManager::Rules()->POS->INVOICE->DOWNLOAD, $request->partner->subscription->getAccessRules());
-            $pdf_handler = new PdfHandler();
-            $pos_order   = $order->calculate();
-            $partner     = $pos_order->partner;
-            $info        = [
-                'amount'           => $pos_order->getNetBill(),
-                'created_at'       => $pos_order->created_at->format('jS M, Y, h:i A'),
-                'payment_receiver' => [
-                    'name'                    => $partner->name,
-                    'image'                   => $partner->logo,
-                    'mobile'                  => $partner->getContactNumber(),
-                    'address'                 => $partner->address,
-                    'vat_registration_number' => $partner->vat_registration_number
-                ],
-                'pos_order'        => $pos_order ? [
-                    'items'       => $pos_order->items,
-                    'discount'    => $pos_order->getTotalDiscount(),
-                    'total'       => $pos_order->getTotalPrice(),
-                    'grand_total' => $pos_order->getTotalBill(),
-                    'paid'        => $pos_order->getPaid(),
-                    'due'         => $pos_order->getDue(),
-                    'status'      => $pos_order->getPaymentStatus(),
-                    'vat'         => $pos_order->getTotalVat(),
-                    'delivery_charge' => $pos_order->delivery_charge
-                ] : null
-            ];
-            if ($pos_order->customer) {
-                $customer     = $pos_order->customer->profile;
-                $info['user'] = [
-                    'name'   => $customer->name,
-                    'mobile' => $customer->mobile,
-                    'address' => !$pos_order->address?$customer->address:$pos_order->address
-                ];
-            }
-            $invoice_name = 'pos_order_invoice_' . $pos_order->id;
-            $link         = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('order_invoice')->save(true);
-            return api_response($request, null, 200, [
-                'message' => 'Successfully Download receipt',
-                'link'    => $link
-            ]);
-        } catch (AccessRestrictedExceptionForPackage $exception) {
-            return api_response($request, $exception, 403, ['message' => $exception->getMessage()]);
-        }
+        AccessManager::checkAccess(AccessManager::Rules()->POS->INVOICE->DOWNLOAD, $request->partner->subscription->getAccessRules());
+        $invoiceService = $invoiceService->setPosOrder($order);
+        $invoiceLink = $invoiceService->isAlreadyGenerated()->getInvoiceLink();
+        if (!$invoiceLink)
+            $invoiceLink = $invoiceService->generateInvoice()->saveInvoiceLink()->getInvoiceLink();
+        return api_response($request, null, 200, [
+            'message' => 'Successfully Download receipt',
+            'link' => $invoiceLink
+        ]);
     }
 
-    public function downloadInvoiceFromWebStore(Request $request, $partner, PosOrder $order)
+
+    /**
+     * @throws NotAssociativeArray
+     */
+    public function downloadInvoiceFromWebStore(Request $request, $partner, PosOrder $order, InvoiceService $invoiceService)
     {
-        try {
-            $pdf_handler = new PdfHandler();
-            $pos_order   = $order->calculate();
-            $partner     = $pos_order->partner;
-            $info        = [
-                'amount'           => $pos_order->getNetBill(),
-                'created_at'       => $pos_order->created_at->format('jS M, Y, h:i A'),
-                'payment_receiver' => [
-                    'name'                    => $partner->name,
-                    'image'                   => $partner->logo,
-                    'mobile'                  => $partner->getContactNumber(),
-                    'address'                 => $partner->address,
-                    'vat_registration_number' => $partner->vat_registration_number
-                ],
-                'pos_order'        => $pos_order ? [
-                    'items'       => $pos_order->items,
-                    'discount'    => $pos_order->getTotalDiscount(),
-                    'total'       => $pos_order->getTotalPrice(),
-                    'grand_total' => $pos_order->getTotalBill(),
-                    'paid'        => $pos_order->getPaid(),
-                    'due'         => $pos_order->getDue(),
-                    'status'      => $pos_order->getPaymentStatus(),
-                    'vat'         => $pos_order->getTotalVat(),
-                    'delivery_charge' => $pos_order->delivery_charge
-                ] : null
-            ];
-            if ($pos_order->customer) {
-                $customer     = $pos_order->customer->profile;
-                $info['user'] = [
-                    'name'   => $customer->name,
-                    'mobile' => $customer->mobile,
-                    'address' => !$pos_order->address?$customer->address:$pos_order->address
-                ];
-            }
-            $invoice_name = 'pos_order_invoice_' . $pos_order->id;
-            $link         = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('order_invoice')->save(true);
-            return api_response($request, null, 200, [
-                'message' => 'Successfully Download receipt',
-                'link'    => $link
-            ]);
-        } catch (AccessRestrictedExceptionForPackage $exception) {
-            return api_response($request, $exception, 403, ['message' => $exception->getMessage()]);
-        }
+        $invoiceService = $invoiceService->setPosOrder($order);
+        $invoiceLink = $invoiceService->isAlreadyGenerated()->getInvoiceLink();
+        if (!$invoiceLink)
+            $invoiceLink = $invoiceService->generateInvoice()->saveInvoiceLink()->getInvoiceLink();
+        return api_response($request, null, 200, [
+            'message' => 'Successfully Download receipt',
+            'link' => $invoiceLink
+        ]);
     }
 
     /**
