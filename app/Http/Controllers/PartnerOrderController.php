@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequest;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Jobs\Discount;
+use Sheba\Jobs\JobStatuses;
 use Sheba\Logistics\Exceptions\LogisticServerError;
 use Sheba\Logistics\Repository\OrderRepository;
 use Sheba\Logs\OrderLogs;
@@ -88,7 +89,7 @@ class PartnerOrderController extends Controller
             ]);
             if ($request->has('getCount')) {
                 $partner = $request->partner->load(['jobs' => function ($q) {
-                    $q->status(array(constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']))->select('jobs.id', 'jobs.partner_order_id')
+                    $q->status([JobStatuses::PENDING, JobStatuses::NOT_RESPONDED])->select('jobs.id', 'jobs.partner_order_id')
                         ->whereDoesntHave('cancelRequests', function ($q) {
                             $q->select('id', 'job_id', 'status')->where('status', 'Pending');
                         })->with(['partnerOrder' => function ($q) {
