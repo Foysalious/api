@@ -381,7 +381,7 @@ class DashboardController extends Controller
     public function updateHomeSettingV3(Request $request, PartnerRepositoryInterface $partner_repo): JsonResponse
     {
         try {
-            $home_page_setting             = $request->home_page_setting;
+            $home_page_setting = $request->home_page_setting;
             $home_page_setting = (new HomepageSettingsV3($request->partner))->update($home_page_setting, $partner_repo);
             return api_response($request, null, 200, [
                 'message' => 'Dashboard Setting updated successfully',
