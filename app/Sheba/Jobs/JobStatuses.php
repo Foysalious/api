@@ -37,6 +37,26 @@ class JobStatuses
         return [self::ACCEPTED, self::SCHEDULE_DUE, self::PROCESS, self::SERVE_DUE, self::SERVED];
     }
 
+    public static function getNotOpenForTodayForPartner()
+    {
+        return [self::SERVED, self::CANCELLED, self::DECLINED, self::NOT_RESPONDED];
+    }
+
+    public static function isOpenForTodayForPartner($status)
+    {
+        return !is_array($status, self::getNotOpenForTodayForPartner());
+    }
+
+    public static function getNotOpenForTomorrowForPartner()
+    {
+        return [self::SERVED, self::CANCELLED, self::DECLINED];
+    }
+
+    public static function isOpenForTomorrowForPartner($status)
+    {
+        return !is_array($status, self::getNotOpenForTomorrowForPartner());
+    }
+
     public static function getOngoingWithoutServed()
     {
         return [self::ACCEPTED, self::SCHEDULE_DUE, self::PROCESS, self::SERVE_DUE];

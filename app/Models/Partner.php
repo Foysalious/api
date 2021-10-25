@@ -668,21 +668,11 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     {
         if (is_null($jobs)) {
             return $this->notCancelledJobs()->filter(function ($job, $key) {
-                return $job->schedule_date == Carbon::now()->toDateString() && !in_array($job->status, [
-                        'Served',
-                        'Cancelled',
-                        'Declined',
-                        'Not Responded'
-                    ]);
+                return $job->schedule_date == Carbon::now()->toDateString() && JobStatuses::isOpenForTodayForPartner($job->status);
             });
         }
         return $jobs->filter(function ($job, $key) {
-            return $job->schedule_date == Carbon::now()->toDateString() && !in_array($job->status, [
-                    'Served',
-                    'Cancelled',
-                    'Declined',
-                    'Not Responded'
-                ]);
+            return $job->schedule_date == Carbon::now()->toDateString() && JobStatuses::isOpenForTodayForPartner($job->status);
         });
     }
 
@@ -698,41 +688,33 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     {
         if (is_null($jobs)) {
             return $this->notCancelledJobs()->filter(function ($job, $key) {
-                return $job->schedule_date == Carbon::tomorrow()->toDateString() && !in_array($job->status, [
-                        'Served',
-                        'Cancelled',
-                        'Declined'
-                    ]);
+                return $job->schedule_date == Carbon::tomorrow()->toDateString() && JobStatuses::isOpenForTomorrowForPartner($job->status);
             });
         }
         return $jobs->filter(function ($job, $key) {
-            return $job->schedule_date == Carbon::tomorrow()->toDateString() && !in_array($job->status, [
-                    'Served',
-                    'Cancelled',
-                    'Declined'
-                ]);
+            return $job->schedule_date == Carbon::tomorrow()->toDateString() && JobStatuses::isOpenForTomorrowForPartner($job->status);
         });
     }
 
     public function notRespondedJobs($jobs = null)
     {
         if (is_null($jobs))
-            return $this->notCancelledJobs()->where('status', constants('JOB_STATUSES')['Not_Responded']);
-        return $jobs->where('status', constants('JOB_STATUSES')['Not_Responded']);
+            return $this->notCancelledJobs()->where('status', JobStatuses::NOT_RESPONDED);
+        return $jobs->where('status', JobStatuses::NOT_RESPONDED);
     }
 
     public function scheduleDueJobs($jobs = null)
     {
         if (is_null($jobs))
-            return $this->notCancelledJobs()->where('status', constants('JOB_STATUSES')['Schedule_Due']);
-        return $jobs->where('status', constants('JOB_STATUSES')['Schedule_Due']);
+            return $this->notCancelledJobs()->where('status', JobStatuses::SCHEDULE_DUE);
+        return $jobs->where('status', JobStatuses::SCHEDULE_DUE);
     }
 
     public function serveDueJobs($jobs = null)
     {
         if (is_null($jobs))
-            return $this->notCancelledJobs()->where('status', constants('JOB_STATUSES')['Serve_Due']);
-        return $jobs->where('status', constants('JOB_STATUSES')['Serve_Due']);
+            return $this->notCancelledJobs()->where('status', JobStatuses::SERVE_DUE);
+        return $jobs->where('status', JobStatuses::SERVE_DUE);
     }
 
     public function getCommission()

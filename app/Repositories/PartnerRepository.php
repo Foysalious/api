@@ -23,6 +23,7 @@ use Sheba\ModificationFields;
 use Sheba\Partner\LeaveStatus;
 use Sheba\ResourceScheduler\ResourceHandler;
 use Sheba\Location\LocationSetter;
+use Throwable;
 
 class PartnerRepository
 {
@@ -305,7 +306,9 @@ class PartnerRepository
             ]
         ];
     }
-    public function getDashboard(Resource $manager_resource){
+
+    public function getDashboard(Resource $manager_resource)
+    {
         $partner=$this->partner;
         $profile        = $manager_resource->profile;
         $rating = (new ReviewRepository)->getAvgRating($partner->reviews);
@@ -341,7 +344,9 @@ class PartnerRepository
             'has_qr_code' => ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0
         ];
     }
-    public function getNewDashboard($request, $performance) {
+
+    public function getNewDashboard($request, $performance)
+    {
         $performance->setPartner($this->partner)->setTimeFrame((new TimeFrame())->forCurrentWeek())->calculate();
         $performanceStats = $performance->getData();
         $rating             = (new ReviewRepository)->getAvgRating($this->partner->reviews);
@@ -373,7 +378,7 @@ class PartnerRepository
             'is_on_leave'                  => $this->partner->runningLeave() ? 1 : 0,
             'bonus_credit'                 => $this->partner->bonusWallet(),
             'current_stats'                => [
-                'total_new_order'     => count($new_order) > 0 ? $new_order->total_new_orders : 0,
+                'total_new_order'     => count($new_order) > 0 ? $new_order['total_new_orders'] : 0,
                 'total_order'         => $this->partner->orders()->count(),
                 'total_ongoing_order' => (new JobList($this->partner))->ongoing()->count(),
                 'today_order'         => $this->partner->todayJobs($successful_jobs)->count(),
@@ -447,9 +452,9 @@ class PartnerRepository
             $request->merge(['getCount' => 1]);
             $partner_order = new PartnerOrderController();
             $new_order     = $partner_order->newOrders($partner, $request)->getData();
-            return $new_order;
+            return (array)$new_order;
         } catch (Throwable $e) {
-            return array();
+            return [];
         }
     }
 
