@@ -3,7 +3,7 @@
 use Sheba\Dal\Extras\Events\BaseEvent;
 use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceSaved as PartnerPosServiceSavedEvent;
 
-class PartnerPosServiceSavedListener
+class PosServiceSavedListener
 {
     /**
      * @param PartnerPosServiceSavedEvent $event
