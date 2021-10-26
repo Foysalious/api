@@ -50,7 +50,6 @@ class Route
             /**
              * jwtAccessToken Middleware
              */
-            $api->get('webstore-theme-settings/partners/{partner}/setting-details', 'WebstoreSettingController@getThemeDetails');
             $api->group(['middleware' => ['jwtAccessToken']], function ($api) {
                 $api->get('/orders/{order_id}/generate-invoice', 'PosOrder\OrderController@orderInvoiceDownload');
                 $api->group(['prefix' => 'webstore-theme-settings', 'middleware' => ['jwtAccessToken']], function ($api) {
@@ -163,7 +162,7 @@ class Route
                 $api->post('qr-code', 'PartnerController@setQRCode');
                 $api->post('orders/{order}/send-sms', 'Pos\OrderController@sendSms');
                 $api->post('orders/{order}/send-email', 'Pos\OrderController@sendEmail');
-                $api->get('filters', 'PosOrder\OrderController@getFilteringOptions');
+                $api->get('filters', 'PosOrder\OrderController@getFilteringOptions' );
                 /**
                  * End Old APIs with jwtAccessToken Middleware
                  */
