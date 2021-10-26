@@ -30,6 +30,8 @@ class PartnerUsageUpgradeJob extends Job implements ShouldQueue
         $data = ['type' => $this->type];
         if (!empty($modifier))
             $this->setModifier($modifier);
+        else
+            $this->setModifier($this->user);
         $data['partner_id'] = $this->user->id;
         PartnerUsageHistory::create($this->withCreateModificationField($data));
         if (!empty($this->user->referredBy))
