@@ -91,7 +91,7 @@ class Payslip extends Command
                 $last_pay_day = $payroll_setting->last_pay_day;
                 foreach ($business_members as $business_member) {
                     $joining_date = $business_member->join_date;
-                    if ($joining_date <= Carbon::parse($last_pay_day)) $joining_date = null;
+                    if ($last_pay_day && $joining_date <= Carbon::parse($last_pay_day) || $joining_date <= Carbon::now()->subMonth()) $joining_date = null;
                     $prorated_time_frame = null;
                     $start_date = $last_pay_day ? Carbon::parse($last_pay_day)->format('Y-m-d') : Carbon::now()->subMonth()->format('Y-m-d');
                     $end_date = Carbon::now()->subDay()->format('Y-m-d');

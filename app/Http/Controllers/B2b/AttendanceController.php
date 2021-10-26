@@ -8,6 +8,9 @@ use App\Sheba\Business\BusinessBasicInformation;
 use App\Sheba\Business\OfficeSetting\PolicyRuleRequester;
 use App\Sheba\Business\OfficeSetting\PolicyRuleUpdater;
 use App\Sheba\Business\OfficeSetting\PolicyTransformer;
+use App\Sheba\Business\OfficeSettingChangesLogs\ChangesLogsTransformer;
+use App\Sheba\Business\OfficeSettingChangesLogs\Creator;
+use App\Sheba\Business\OfficeSettingChangesLogs\Requester;
 use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -40,6 +43,7 @@ use Sheba\Dal\BusinessOffice\Contract as BusinessOfficeRepoInterface;
 use Sheba\Dal\BusinessOfficeHours\Contract as BusinessOfficeHoursRepoInterface;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\OfficePolicy\Type;
+use Sheba\Dal\OfficeSettingChangesLogs\OfficeSettingChangesLogsRepository;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
@@ -51,14 +55,29 @@ class AttendanceController extends Controller
 
     /** @var BusinessHolidayRepoInterface $holidayRepository */
     private $holidayRepository;
+    /*** @var OfficeSettingChangesLogsRepository $officeSettingChangesLogsRepo*/
+    private $officeSettingChangesLogsRepo;
+    /*** @var Requester */
+    private $officeSettingChangesLogsRequester;
+    /*** @var Creator */
+    private $officeSettingChangesLogsCreator;
+    private $businessWeekendRepo;
+    /*** @var BusinessOfficeRepoInterface $businessOfficeRepo*/
+    private $businessOfficeRepo;
 
     /**
      * AttendanceController constructor.
      * @param BusinessHolidayRepoInterface $business_holidays_repo
      */
-    public function __construct(BusinessHolidayRepoInterface $business_holidays_repo)
+    public function __construct(BusinessHolidayRepoInterface $business_holidays_repo, BusinessWeekendRepoInterface $business_weekend_repo, BusinessOfficeRepositoryInterface $business_office_repo)
     {
         $this->holidayRepository = $business_holidays_repo;
+        $this->officeSettingChangesLogsRepo = app(OfficeSettingChangesLogsRepository::class);
+        $this->officeSettingChangesLogsRequester = new Requester();
+        $this->officeSettingChangesLogsCreator = new Creator();
+        $this->businessWeekendRepo =  $business_weekend_repo;
+        $this->businessOfficeRepo = $business_office_repo;
+
         return $this;
     }
 
@@ -473,7 +492,10 @@ class AttendanceController extends Controller
             ->setHolidayRepo($this->holidayRepository)
             ->setStartDate($request->start_date)
             ->setEndDate($request->end_date)
-            ->setHolidayName($request->title)->create();
+            ->setHolidayName($request->title)
+            ->create();
+        $this->officeSettingChangesLogsRequester->setBusiness($request->business)->setHolidayStartDate($request->start_date)->setHolidayEndDate($request->end_date)->setHolidayName($request->title);
+        $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createHolidayStoreLogs();
         return api_response($request, null, 200, ['holiday' => $holiday]);
     }
 
@@ -494,12 +516,23 @@ class AttendanceController extends Controller
         ]);
         $manager_member = $request->manager_member;
         $holiday = $this->holidayRepository->find((int)$holiday);
+
+        $this->officeSettingChangesLogsRequester->setBusiness($request->business)
+                                                ->setExistingHolidayStart($holiday->start_date)
+                                                ->setExistingHolidayEnd($holiday->end_date)
+                                                ->setExistingHolidayName($holiday->title)
+                                                ->setHolidayStartDate($request->start_date)
+                                                ->setHolidayEndDate($request->end_date)
+                                                ->setHolidayName($request->title);
+        
         $updater_request = $creator_request->setBusiness($request->business)
             ->setMember($manager_member)
             ->setStartDate($request->start_date)
             ->setEndDate($request->end_date)
             ->setHolidayName($request->title);
+
         $updater->setHoliday($holiday)->setBusinessHolidayCreatorRequest($updater_request)->update();
+        $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createHolidayUpdateLogs();
         return api_response($request, null, 200);
     }
 
@@ -511,9 +544,13 @@ class AttendanceController extends Controller
      */
     public function destroy($business, $holiday, Request $request)
     {
+        $manager_member = $request->manager_member;
         $holiday = $this->holidayRepository->find((int)$holiday);
         if (!$holiday) return api_response($request, null, 404);
+        $this->officeSettingChangesLogsRequester->setBusiness($request->business)->setExistingHoliday($holiday);
         $this->holidayRepository->delete($holiday);
+        $this->setModifier($manager_member);
+        $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createHolidayDeleteLogs();
         return api_response($request, null, 200);
     }
 
@@ -589,8 +626,10 @@ class AttendanceController extends Controller
         $business = $request->business;
         $this->setModifier($business_member->member);
         $errors = [];
-
+        $previous_attendance_type = $business->attendanceTypes->pluck('attendance_type')->toArray();
         $attendance_types = json_decode($request->attendance_types);
+        $new_attendance_type = [];
+        $this->officeSettingChangesLogsRequester->setBusiness($business);
         if (!is_null($attendance_types)) {
             foreach ($attendance_types as $attendance_type) {
                 $attendance_type_id = isset($attendance_type->id) ? $attendance_type->id : null;
@@ -600,7 +639,10 @@ class AttendanceController extends Controller
                     ->setType($attendance_type->type)
                     ->setAction($attendance_type->action)
                     ->update();
+                if($attendance_type->action == 'checked') $new_attendance_type[] = $attendance_type->type;
             }
+            $this->officeSettingChangesLogsRequester->setPreviousAttendanceType($previous_attendance_type)->setNewAttendanceType($new_attendance_type);
+            $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createAttendanceTypeLogs();
         }
 
         $business_offices = json_decode($request->business_offices);
@@ -609,12 +651,15 @@ class AttendanceController extends Controller
             $offices = collect($business_offices);
             $deleted_offices = $offices->where('action', ActionType::DELETE);
             $deleted_offices->each(function ($deleted_office) use ($setting_deleter) {
+                $this->officeSettingChangesLogsRequester->setOfficeName($deleted_office->office_name)->setOfficeIp($deleted_office->ip);
                 $setting_deleter->setBusinessOfficeId($deleted_office->id);
                 $setting_deleter->delete();
+                $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createDeleteOfficeIpLogs();
             });
 
             $added_offices = $offices->where('action', ActionType::ADD);
             $added_offices->each(function ($added_office) use ($setting_creator, $business, &$errors) {
+                $this->officeSettingChangesLogsRequester->setOfficeName($added_office->office_name)->setOfficeIp($added_office->ip);
                 $setting_creator->setBusiness($business)->setName($added_office->office_name)->setIp($added_office->ip);
                 if ($setting_creator->hasError()) {
                     array_push($errors, $setting_creator->getErrorMessage());
@@ -622,10 +667,14 @@ class AttendanceController extends Controller
                     return;
                 }
                 $setting_creator->create();
+                $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createCreatedOfficeIpLogs();
             });
 
             $edited_offices = $offices->where('action', ActionType::EDIT);
             $edited_offices->each(function ($edited_office) use ($setting_updater, $business, &$errors) {
+
+                $previous_office_ip = $this->businessOfficeRepo->builder()->withTrashed()->find($edited_office->id);
+                $this->officeSettingChangesLogsRequester->setPreviousOfficeIp($previous_office_ip)->setOfficeName($edited_office->office_name)->setOfficeIp($edited_office->ip);
                 $setting_updater->setBusinessOfficeId($edited_office->id)->setName($edited_office->office_name)->setIp($edited_office->ip);
                 if ($setting_updater->hasError()) {
                     array_push($errors, $setting_updater->getErrorMessage());
@@ -633,6 +682,7 @@ class AttendanceController extends Controller
                     return;
                 }
                 $setting_updater->update();
+                $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createEditedOfficeIpLogs();
             });
         }
 
@@ -640,7 +690,11 @@ class AttendanceController extends Controller
             if ($this->isFailedToUpdateAllSettings($errors, $business_offices)) return api_response($request, null, 422, ['message' => implode(', ', $errors)]);
             return api_response($request, null, 303, ['message' => implode(', ', $errors)]);
         }
-
+        $business_weekend = $this->businessWeekendRepo->getAllByBusiness($business)->pluck('weekday_name')->toArray();
+        $business_office = $business->officeHour;
+        $previous_working_days_type = $business_office->type;
+        $previous_number_of_days = $business_office->number_of_days;
+        $previous_is_weekend_included = $business_office->is_weekend_included;
         $office_timing = $operational_setting_updater->setBusiness($request->business)
             ->setMember($business_member->member)
             ->setWeekends($request->weekends)
@@ -648,6 +702,9 @@ class AttendanceController extends Controller
             ->setNumberOfDays($request->days)
             ->setIsWeekendIncluded($request->is_weekend_included)
             ->update();
+        $this->officeSettingChangesLogsRequester->setPreviousWeekends($business_weekend)->setPreviousTotalWorkingDaysType($previous_working_days_type)->setPreviousNumberOfDays($previous_number_of_days)->setPreviousIsWeekendIncluded($previous_is_weekend_included)->setRequest($request);
+        if ($request->weekends) $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createWeekendLogs();
+        $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createWorkingDaysTypeLogs();
 
         if ($office_timing) return api_response($request, null, 200, ['msg' => "Update Successful"]);
     }
@@ -698,8 +755,19 @@ class AttendanceController extends Controller
 
         $start_time = Carbon::parse($request->start_time)->format('H:i') . ':59';
         $end_time = Carbon::parse($request->end_time)->format('H:i') . ':00';
-
+        $business = $request->business;
+        $business_office_hour = $business->officeHour;
         $business_member = $request->business_member;
+        $this->officeSettingChangesLogsRequester
+            ->setBusiness($business)
+            ->setPreviousOfficeStartTime($business_office_hour->start_time)
+            ->setPreviousOfficeEndTime($business_office_hour->end_time)
+            ->setPreviousIsStartGracePeriodEnable($business_office_hour->is_start_grace_time_enable)
+            ->setPreviousIsEndGracePeriodEnable($business_office_hour->is_end_grace_time_enable)
+            ->setPreviousStartGracePeriodTime($business_office_hour->start_grace_time)
+            ->setPreviousEndGracePeriodTime($business_office_hour->end_grace_time)
+            ->setRequest($request);
+
         $office_timing = $updater->setBusiness($request->business)
             ->setMember($business_member->member)
             ->setOfficeHourType($request->office_hour_type)
@@ -712,6 +780,11 @@ class AttendanceController extends Controller
             ->setHalfDayTimings($request)
             ->update();
 
+        $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester);
+        $this->officeSettingChangesLogsCreator->createAttendanceOfficeStartTimingLogs();
+        $this->officeSettingChangesLogsCreator->createAttendanceOfficeEndTimingLogs();
+        $this->officeSettingChangesLogsCreator->createAttendanceStartGraceTimingLogs();
+        $this->officeSettingChangesLogsCreator->createAttendanceEndGraceTimingLogs();
         if ($office_timing) {
              $requester->setBusiness($request->business)
                             ->setIsEnable($request->is_grace_policy_enable)
@@ -796,6 +869,21 @@ class AttendanceController extends Controller
         $checkin_checkout_policy_rules = $manager->createData($resource)->toArray()['data'];
 
         return api_response($request, $checkin_checkout_policy_rules, 200, ['checkin_checkout_policy_rules' => $checkin_checkout_policy_rules]);
+    }
+
+    public function getOfficeSettingChangesLogs(Request $request, OfficeSettingChangesLogsRepository $office_setting_changes_logs)
+    {
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
+        $business = $request->business;
+        if (!$business) return api_response($request, null, 401);
+        $operational_changes_logs = $office_setting_changes_logs->where('business_id', $business->id)->orderBy('created_at', 'DESC')->get();
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Collection($operational_changes_logs, new ChangesLogsTransformer());
+        $operational_changes_logs = $manager->createData($resource)->toArray()['data'];
+        return api_response($request, $operational_changes_logs, 200, ['office_setting_changes_logs' => $operational_changes_logs]);
     }
 
     private function attendanceSortOnDate($attendances, $sort = 'asc')
