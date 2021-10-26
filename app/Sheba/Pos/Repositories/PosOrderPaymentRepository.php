@@ -51,6 +51,7 @@ class PosOrderPaymentRepository extends BaseRepository
         $payment_data['amount']       = $amount_cleared;
         $payment_data['method']       = $payment_method;
         $payment_data['transaction_type'] = 'Credit';
+        Log::info(['checking partner migration', $this->partner->is_migration_completed]);
         if($this->partner->is_migration_completed) {
             return $this->saveToNewPosOrderSystem($payment_data);
         }
