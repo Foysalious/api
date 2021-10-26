@@ -9,7 +9,7 @@ return [
     'wallet_url' => env('SHEBA_WALLET_URL', 'https://wallet.sheba.xyz'),
     'payment_link_url' => env('SHEBA_PAYMENT_LINK_URL'),
     'payment_link_web_url' => env('SHEBA_PAYMENT_LINK_WEB_URL', 'https://payments.sheba.xyz'),
-    'services_api_url' => env('SHEBA_SERVICES_URL'),
+    'services_api_url' => env('SHEBA_SERVICES_URL','http://services.dev-sheba.xyz'),
     's3_url' => env('S3_URL'),
     'socket_url' => env('SHEBA_SOCKET_URL'),
     'ebl_url'=>env('EBL_URL'),

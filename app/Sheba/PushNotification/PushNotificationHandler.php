@@ -3,13 +3,8 @@
 
 class PushNotificationHandler
 {
-    /**
-     * @param $notification_data
-     * @param $topic
-     * @return mixed|null
-     * @throws Exceptions\PushNotificationServerError
-     */
-    public function send($notification_data, $topic)
+
+    public function send($topic, $notification = null, $data = null, $priority = null)
     {
         $topicResponse = null;
         if (config('sheba.send_push_notifications')) {
@@ -17,11 +12,12 @@ class PushNotificationHandler
             $client = app(PushNotificationClient::class);
             $data = [
                 "topic" => $topic,
-                "title" => $notification_data["title"],
-                "body" => $notification_data["message"],
-                "data" => $notification_data,
-                "account_id" => config('sheba.sheba_push_notifications_account_id')
+                "data" => json_encode($data),
+                'channel' => 'firebase'
             ];
+            if ($notification && $notification['title']) $data['title'] = $notification['title'];
+            if ($notification && $notification['body']) $data['body'] = $notification['body'];
+            if ($priority) $data['priority'] = $priority;
             $url = 'api/vendors/' . config('sheba.sheba_services_vendor_id') . '/notification/send';
             $topicResponse = $client->post($url, $data);
         }
