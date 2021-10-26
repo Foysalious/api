@@ -91,7 +91,8 @@ class BaseRepository
         $paymentCreator->credit($payment_data);
     }
 
-    public function removePosOrderPayment($pos_order_id, $amount){
+    public function removePosOrderPayment($pos_order_id, $amount)
+    {
         $payment = PosOrderPayment::where('pos_order_id', $pos_order_id)
             ->where('amount', $amount)
             ->where('transaction_type', 'Credit')
