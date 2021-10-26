@@ -42,7 +42,7 @@ class WebstoreOrderSms extends Job implements ShouldQueue
      */
     public function handle(SmsHandler $handler)
     {
-        if ($this->attempts() > 2) return;
+        if ($this->attempts() > $this->tries) return;
         $this->resolvePosOrder();
         $this->generateCommonData();
         if (!$this->partner->isMigrated(Modules::POS))

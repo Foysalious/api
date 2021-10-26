@@ -931,11 +931,13 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         $wallet                = (double)$this->wallet;
         $bonus_wallet          = (double)$this->bonusWallet();
         $threshold             = $this->walletSetting ? (double)$this->walletSetting->min_wallet_threshold : 0;
+        $freeze_money          = $this->walletSetting ? (double) $this->walletSetting->pending_withdrawal_amount : 0;
         $this->creditBreakdown = [
             'remaining_subscription_charge' => $remaining,
             'wallet' => $wallet,
             'threshold' => $threshold,
-            'bonus_wallet' => $bonus_wallet
+            'bonus_wallet' => $bonus_wallet,
+            'freeze_money' => $freeze_money
         ];
         return [
             $remaining,

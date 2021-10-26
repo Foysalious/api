@@ -27,6 +27,7 @@ use Sheba\Pos\Customer\PosCustomerResolver;
 use Sheba\Pos\Order\PosOrderResolver;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
+use Sheba\Subscription\Partner\Access\AccessManager;
 use Throwable;
 
 class PaymentLinkController extends Controller
@@ -122,15 +123,14 @@ class PaymentLinkController extends Controller
             $link = $paymentLinkRepository->findByIdentifier($identifier);
             if ($link) {
                 $receiver = $link->getPaymentReceiver();
-                if ($receiver instanceof Partner && $receiver->status == PartnerStatuses::BLACKLISTED) {
-                    return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
+                if ($receiver instanceof Partner) {
+                    if (!AccessManager::canAccess(AccessManager::Rules()->DIGITAL_COLLECTION, $receiver->subscription->getAccessRules()) || in_array($receiver->status, [PartnerStatuses::BLACKLISTED, PartnerStatuses::PAUSED]) || !(int)$link->getIsActive())
+                        return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
+
                 }
-            }
-            if ($link && !(int)$link->getIsActive()) {
-                return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
-            }
-            if ($link && (int)$link->getIsActive()) {
-                return api_response($request, $link, 200, ['link' => $link->toArray()]);
+                if ((int)$link->getIsActive()) {
+                    return api_response($request, $link, 200, ['link' => $link->toArray()]);
+                }
             }
             return api_response($request, null, 404);
         } catch (ValidationException $e) {
