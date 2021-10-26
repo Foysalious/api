@@ -38,7 +38,6 @@ use Sheba\Business\OfficeTiming\Updater as OfficeTimingUpdater;
 use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
 use Sheba\Dal\Attendance\Statuses;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
-use Sheba\Dal\BusinessOffice\Contract as BusinessOfficeRepositoryInterface;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\BusinessOfficeHours\Contract as BusinessOfficeHoursRepoInterface;
 use Sheba\Dal\BusinessAttendanceTypes\Contract as BusinessAttendanceTypesRepoInterface;
@@ -72,8 +71,10 @@ class AttendanceController extends Controller
     /**
      * AttendanceController constructor.
      * @param BusinessHolidayRepoInterface $business_holidays_repo
+     * @param BusinessWeekendRepoInterface $business_weekend_repo
+     * @param BusinessOfficeRepoInterface $business_office_repo
      */
-    public function __construct(BusinessHolidayRepoInterface $business_holidays_repo, BusinessWeekendRepoInterface $business_weekend_repo, BusinessOfficeRepositoryInterface $business_office_repo)
+    public function __construct(BusinessHolidayRepoInterface $business_holidays_repo, BusinessWeekendRepoInterface $business_weekend_repo, BusinessOfficeRepoInterface $business_office_repo)
     {
         $this->holidayRepository = $business_holidays_repo;
         $this->officeSettingChangesLogsRepo = app(OfficeSettingChangesLogsRepository::class);
@@ -81,8 +82,6 @@ class AttendanceController extends Controller
         $this->officeSettingChangesLogsCreator = new Creator();
         $this->businessWeekendRepo =  $business_weekend_repo;
         $this->businessOfficeRepo = $business_office_repo;
-
-        return $this;
     }
 
     /**
