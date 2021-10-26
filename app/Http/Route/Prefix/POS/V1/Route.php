@@ -50,7 +50,6 @@ class Route
             /**
              * jwtAccessToken Middleware
              */
-            $api->get('/webstore-theme-settings/partners/{partner}/setting-details', 'WebstoreSettingController@getThemeDetails');
             $api->group(['middleware' => ['jwtAccessToken']], function ($api) {
                 $api->get('/orders/{order_id}/generate-invoice', 'PosOrder\OrderController@orderInvoiceDownload');
                 $api->group(['prefix' => 'webstore-theme-settings', 'middleware' => ['jwtAccessToken']], function ($api) {
@@ -58,6 +57,7 @@ class Route
                     $api->get('/social-settings', 'WebstoreSettingController@getSocialSetting');
                     $api->post('/social-settings', 'WebstoreSettingController@storeSocialSetting');
                     $api->put('/social-settings', 'WebstoreSettingController@updateSocialSetting');
+                    $api->get('/setting-details', 'WebstoreSettingController@getThemeDetails');
                     $api->post('/', 'WebstoreSettingController@store');
                     $api->put('/', 'WebstoreSettingController@update');
                     $api->get('/system-defined', 'WebstoreSettingController@getSystemDefinedSettings');
