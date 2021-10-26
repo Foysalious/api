@@ -50,9 +50,9 @@ class Route
             /**
              * jwtAccessToken Middleware
              */
+            $api->get('/webstore-theme-settings/partners/{partner}/setting-details', 'WebstoreSettingController@getThemeDetails');
             $api->group(['middleware' => ['jwtAccessToken']], function ($api) {
                 $api->get('/orders/{order_id}/generate-invoice', 'PosOrder\OrderController@orderInvoiceDownload');
-                $api->get('/webstore-theme-settings/partners/{partner}/setting-details', 'WebstoreSettingController@getThemeDetails');
                 $api->group(['prefix' => 'webstore-theme-settings', 'middleware' => ['jwtAccessToken']], function ($api) {
                     $api->get('/settings', 'WebstoreSettingController@index');
                     $api->get('/social-settings', 'WebstoreSettingController@getSocialSetting');
