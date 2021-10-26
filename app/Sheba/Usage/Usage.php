@@ -2,7 +2,9 @@
 
 namespace Sheba\Usage;
 
+use App\Models\PartnerUsageHistory;
 use App\Sheba\Usage\PartnerUsageUpgradeJob;
+use Illuminate\Database\Query\Builder;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
 use Sheba\Transactions\Types;
@@ -38,7 +40,7 @@ class Usage
 
     public function setUser($user)
     {
-        $this->user = $user;
+        $this->user = $user instanceof Builder? $user->first():$user;
         return $this;
     }
 
@@ -49,7 +51,7 @@ class Usage
 
     public function updateUserLevel()
     {
-        $usage = $this->user->usage()->selectRaw('COUNT(DISTINCT(DATE(`partner_usages_history`.`created_at`))) as usages')->first();
+        $usage = PartnerUsageHistory::query()->where('partner_id',$this->user_id)->selectRaw('COUNT(DISTINCT(DATE(`partner_usages_history`.`created_at`))) as usages')->first();
         $usage = $usage ? $usage->usages : 0;
         $this->findAndUpgradeLevel($usage);
 
