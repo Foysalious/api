@@ -24,21 +24,21 @@ class OfficialInfoUpdater
 
     public function update()
     {
-        DB::transaction(function () {
-            $this->makeData();
+        $business_member_data = $this->makeData();
+        $business_member = $this->profileRequester->getBusinessMember();
+        DB::transaction(function () use ($business_member, $business_member_data) {
+            $this->businessMemberRepository->update($business_member, $business_member_data);
         });
     }
 
     private function makeData()
     {
-        $business_member = $this->profileRequester->getBusinessMember();
-        $business_member_data = [
-          'manager_id' =>  $this->profileRequester->getManager(),
-          'employee_id' => $this->profileRequester->getEmployeeId(),
-          'employee_type' => $this->profileRequester->getEmployeeType(),
-          'grade' => $this->profileRequester->getGrade()
+        return [
+            'manager_id' =>  $this->profileRequester->getManager(),
+            'employee_id' => $this->profileRequester->getEmployeeId(),
+            'employee_type' => $this->profileRequester->getEmployeeType(),
+            'grade' => $this->profileRequester->getGrade()
         ];
-        $this->businessMemberRepository->update($business_member, $business_member_data);
     }
 
 }
