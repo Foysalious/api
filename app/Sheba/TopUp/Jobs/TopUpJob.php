@@ -98,7 +98,7 @@ class TopUpJob extends MonitoredJob implements ShouldQueue
         if ($this->topUp->isNotSuccessful()) {
             $this->takeUnsuccessfulAction();
         } else {
-            (new Usage())->setUser($this->agent)->setType(Usage::Partner()::TOPUP_COMPLETE)->create();
+//            (new Usage())->setUser($this->agent)->setType(Usage::Partner()::TOPUP_COMPLETE)->create();
             $this->takeSuccessfulAction();
         }
     }
