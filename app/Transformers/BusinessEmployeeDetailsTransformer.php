@@ -18,15 +18,15 @@ class BusinessEmployeeDetailsTransformer extends TransformerAbstract
         $role = $business_member->role;
 
         return [
-            'name'          => $profile->name ? : null,
-            'mobile'        => $business_member->mobile,
-            'email'         => $profile->email,
-            'image'         => $profile->pro_pic,
-            'designation'   => $role ? $role->name : null,
-            'department'    => $role ? $role->businessDepartment->name : null,
-            'blood_group'   => $profile->blood_group,
-            'dob'           => Carbon::parse($profile->dob)->format('jS F'),
-            'social_link'   => (new SocialLink($member))->get()
+            'name' => $profile->name ?: null,
+            'mobile' => $business_member->mobile,
+            'email' => $profile->email,
+            'image' => $profile->pro_pic,
+            'designation' => $role ? $role->name : null,
+            'department' => $role ? $role->businessDepartment->name : null,
+            'blood_group' => $profile->blood_group,
+            'dob' => $profile->dob ? Carbon::parse($profile->dob)->format('jS F') : null,
+            'social_link' => (new SocialLink($member))->get()
         ];
     }
 }
