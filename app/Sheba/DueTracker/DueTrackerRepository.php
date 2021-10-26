@@ -9,6 +9,7 @@ use App\Models\Profile;
 use App\Repositories\FileRepository;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
 use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
+use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Illuminate\Support\Facades\Log;
 use Sheba\Sms\BusinessType;
 use Sheba\Sms\FeatureType;
@@ -301,11 +302,9 @@ class DueTrackerRepository extends BaseRepository
 
         $response = $this->client->post("accounts/$this->accountId/entries/update/$request->entry_id", $data);
 
-        if ($data['amount_cleared'] > 1 && $response['data']['source_type'] == 'PosOrder' && !empty($response['data']['source_id'])) {
-            /* @var $posOrderPaymentRepo PosOrderPaymentRepository */
-            $posOrderPaymentRepo = app(PosOrderPaymentRepository::class);
-            $posOrderPaymentRepo->createPosOrderPayment($data['amount_cleared'], $response['data']['source_id'], 'cod');
-        }
+        if ($data['amount_cleared'] > 1 && $response['data']['source_type'] == 'PosOrder' && !empty($response['data']['source_id']))
+            $this->createPosOrderPayment($data['amount_cleared'], $response['data']['source_id'], 'cod');
+
         return $response['data'];
     }
 
@@ -322,7 +321,9 @@ class DueTrackerRepository extends BaseRepository
                 $payment_data['pos_order_id'] = $pos_order_id;
                 $payment_data['amount']       = $amount_cleared;
                 $payment_data['method']       = $payment_method;
-                $this->paymentCreator->credit($payment_data);
+                /** @var PaymentCreator $paymentCreator */
+                $paymentCreator = app(PaymentCreator::class);
+                $paymentCreator->credit($payment_data);
             }
         }
     }

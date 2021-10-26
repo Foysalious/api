@@ -21,10 +21,10 @@ class BaseRepository
 {
     use ModificationFields, CdnFileManager, FileManager;
 
-    CONST NOT_ELIGIBLE = 'not_eligible';
-
     /** @var AccountingEntryClient $client */
     protected $client;
+
+    CONST NOT_ELIGIBLE = 'not_eligible';
 
     /**
      * BaseRepository constructor.
@@ -105,10 +105,12 @@ class BaseRepository
 
     public function createPosOrderPayment($amount_cleared, $pos_order_id, $payment_method)
     {
-        /* @var $posOrderPaymentRepo PosOrderPaymentRepository */
-        $posOrderPaymentRepo = app(PosOrderPaymentRepository::class);
-        Log::info("reconciling pos order");
-        $posOrderPaymentRepo->createPosOrderPayment($amount_cleared, $pos_order_id, $payment_method);
+        $payment_data['pos_order_id'] = $pos_order_id;
+        $payment_data['amount']       = $amount_cleared;
+        $payment_data['method']       = $payment_method;
+        /** @var PaymentCreator $paymentCreator */
+        $paymentCreator = app(PaymentCreator::class);
+        $paymentCreator->credit($payment_data);
     }
 
     public function removePosOrderPayment($pos_order_id, $amount): bool
