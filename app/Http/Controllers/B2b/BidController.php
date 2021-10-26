@@ -346,9 +346,9 @@ class BidController extends Controller
             'end_date' => $procurement->procurement_end_date->format('d/m/y'),
 
             'created_at' => $bid->created_at->format('d M, Y'),
-            'price_quotation' => $price_quotation ? $price_quotation->fields ? $price_quotation->fields->toArray() : null : null,
-            'technical_evaluation' => $technical_evaluation ? $technical_evaluation->fields ? $technical_evaluation->fields->toArray() : null : null,
-            'company_evaluation' => $company_evaluation ? $company_evaluation->fields ? $company_evaluation->fields->toArray() : null : null,
+            'price_quotation' => $price_quotation && $price_quotation->fields ? $price_quotation->fields->toArray() : [],
+            'technical_evaluation' => $technical_evaluation && $technical_evaluation->fields ? $technical_evaluation->fields->toArray() : [],
+            'company_evaluation' => $company_evaluation && $company_evaluation->fields ? $company_evaluation->fields->toArray() : [],
         ];
         
         #return view('pdfs.quotation_details', compact('bid_details'));
