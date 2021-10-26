@@ -7,6 +7,7 @@ use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\B2B\OrderMiddleware;
 use App\Http\Middleware\B2B\TerminatingMiddleware;
 use App\Http\Middleware\BusinessManagerAuthMiddleware;
+use App\Http\Middleware\ConcurrentRequestMiddleware;
 use App\Http\Middleware\Cors2MiddleWare;
 use App\Http\Middleware\CriticalAppVersionMiddleware;
 use App\Http\Middleware\CustomerAuthMiddleware;
@@ -23,6 +24,7 @@ use App\Http\Middleware\MemberAuthMiddleware;
 use App\Http\Middleware\PartnerJobAuthMiddleware;
 use App\Http\Middleware\PartnerOrderAuthMiddleware;
 use App\Http\Middleware\PartnerResourceAuthMiddleware;
+use App\Http\Middleware\PartnerStatusAuthMiddleware;
 use App\Http\Middleware\PaymentLinkAuthMiddleware;
 use App\Http\Middleware\ProfileAuthMiddleware;
 use App\Http\Middleware\RedirectIfAuthenticated;
@@ -119,6 +121,7 @@ class Kernel extends HttpKernel
         'apiRequestLog' => ApiRequestMiddleware::class,
         'shebaServer' => ShebaNetworkMiddleware::class,
         'terminate' => TerminatingMiddleware::class,
-
+        'partner.status'=> PartnerStatusAuthMiddleware::class,
+        'concurrent_request' => ConcurrentRequestMiddleware::class,
     ];
 }

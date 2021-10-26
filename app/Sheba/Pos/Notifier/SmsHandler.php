@@ -3,6 +3,8 @@
 use App\Models\Partner;
 use App\Models\PosOrder;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
+use App\Sheba\Pos\Order\Invoice\InvoiceService;
+use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Sms\BusinessType;
 use Sheba\Sms\FeatureType;
 use Exception;
@@ -30,23 +32,15 @@ class SmsHandler
         $partner = $this->order->partner;
         $partner->reload();
         if (empty($this->order->customer)) return;
-
-        $service_break_down = [];
-        $this->order->items->each(function ($item) use (&$service_break_down) {
-            $service_break_down[$item->id] = $item->service_name . ': ' . $item->getTotal();
-        });
-
-        $service_break_down = implode(',', $service_break_down);
-        $sms                = $this->getSms($service_break_down);
+        $sms                = $this->getSms();
         $sms_cost           = $sms->estimateCharge();
         if ((double)$partner->wallet < $sms_cost) return;
+        //freeze money amount check
+        WalletTransactionHandler::isDebitTransactionAllowed($partner, $sms_cost, 'এস-এম-এস পাঠানোর');
 
-        try {
-            $sms->setBusinessType(BusinessType::SMANAGER)
-                ->setFeatureType(FeatureType::POS)
-                ->shoot();
-        } catch(\Throwable $e) {
-        }
+        $sms->setBusinessType(BusinessType::SMANAGER)
+            ->setFeatureType(FeatureType::POS)
+            ->shoot();
 
         (new WalletTransactionHandler())
             ->setModel($partner)
@@ -59,17 +53,20 @@ class SmsHandler
     }
 
     /**
-     * @param $service_break_down
      * @return SmsHandlerRepo
      * @throws Exception
      */
-    private function getSms($service_break_down)
+    private function getSms()
     {
+        $invoice_link =   $this->order->invoice ? : $this->resolveInvoiceLink() ;
+        /** @var Partner $partner */
+        $partner=$this->order->partner;
         $message_data = [
             'order_id'           => $this->order->partner_wise_order_id,
-            'service_break_down' => $service_break_down,
             'total_amount'       => $this->order->getNetBill(),
-            'partner_name'       => $this->order->partner->name
+            'partner_name'       => $this->order->partner->name,
+            'invoice_link'       => $invoice_link,
+            'company_number'     => $partner->getContactNumber()
         ];
 
         if ($this->order->getDue() > 0) {
@@ -84,5 +81,15 @@ class SmsHandler
             ->setFeatureType(FeatureType::POS)
             ->setBusinessType(BusinessType::SMANAGER)
             ->setMessage($message_data);
+    }
+
+    /**
+     * @throws NotAssociativeArray
+     */
+    private function resolveInvoiceLink()
+    {
+        /** @var InvoiceService $invoiceService */
+        $invoiceService = app(InvoiceService::class)->setPosOrder($this->order);
+        return $invoiceService->generateInvoice()->saveInvoiceLink()->getInvoiceLink();
     }
 }
