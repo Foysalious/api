@@ -30,7 +30,8 @@ class AccountingRepository extends BaseRepository
         Log::info(['entry data', $data]);
         try {
             $datum = $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->post($url, $data);
-            // May need pos order reconcile while storing entry
+            Log::info(['checking data', $type != EntryTypes::POS && $datum['source_type'] == 'pos' && $datum['amount_cleared'] > 0, $type, $datum]);
+            //pos order reconcile while storing entry
             if ($type != EntryTypes::POS && $datum['source_type'] == 'pos' && $datum['amount_cleared'] > 0) {
                 Log::info(['data after entry', $datum]);
                 $this->createPosOrderPayment($datum['amount_cleared'], $datum['source_id'], 'cod');
