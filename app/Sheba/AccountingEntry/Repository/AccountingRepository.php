@@ -134,7 +134,7 @@ class AccountingRepository extends BaseRepository
         $requested_service = json_decode($requestedService, true);
         $inventory_products = [];
         foreach ($services as $key => $service) {
-            $original_service = isset($service->service) ? $service->service : null;
+            $original_service = $service->service ?? null;
             if ($original_service) {
                 $sellingPrice = isset($requested_service[$key]['updated_price']) && $requested_service[$key]['updated_price'] ? $requested_service[$key]['updated_price'] : $original_service->price;
                 $unitPrice = $original_service->cost ?: $sellingPrice;
@@ -143,16 +143,16 @@ class AccountingRepository extends BaseRepository
                     "name" => $original_service->name ?? $requested_service[$key]['name'],
                     "unit_price" => (double)$unitPrice,
                     "selling_price" => (double)$sellingPrice,
-                    "quantity" => isset($requested_service[$key]['quantity']) ? $requested_service[$key]['quantity'] : 1
+                    "quantity" => $requested_service[$key]['quantity'] ?? 1
                 ];
             } else {
-                $sellingPrice = isset($requested_service[$key]['updated_price']) ? $requested_service[$key]['updated_price'] : $original_service->price;
+                $sellingPrice = $requested_service[$key]['updated_price'] ?? $original_service->price;
                 $inventory_products[] = [
                     "id" => 0,
                     "name" => 'Custom Amount',
                     "unit_price" => $sellingPrice,
-                    "selling_price" => isset($original_service->cost) ? $original_service->cost : $sellingPrice,
-                    "quantity" => isset($requested_service[$key]['quantity']) ? $requested_service[$key]['quantity'] : 1
+                    "selling_price" => $original_service->cost ?? $sellingPrice,
+                    "quantity" => $requested_service[$key]['quantity'] ?? 1
                 ];
             }
         }
@@ -177,24 +177,24 @@ class AccountingRepository extends BaseRepository
         $data['source_id'] = $type_id;
         $data['debit_account_key'] = $request->to_account_key; // to = debit = je account e jabe
         $data['credit_account_key'] = $request->from_account_key; // from = credit = je account theke jabe
-        $data['note'] = isset($request->note) ? $request->note : null;
-        $data['amount_cleared'] = isset($request->amount_cleared) ? $request->amount_cleared : 0;
-        $data['reconcile_amount'] = isset($request->reconcile_amount) ? $request->reconcile_amount : 0;
-        $data['customer_id'] = isset($request->customer_id) ? $request->customer_id : null;
-        $data['customer_name'] = isset($request->customer_id) ? $request->customer_name : null;
-        $data['customer_mobile'] = isset($request->customer_mobile) ? $request->customer_mobile : null;
-        $data['customer_pro_pic'] = isset($request->customer_pro_pic) ? $request->customer_pro_pic : null;
-        $data['customer_is_supplier'] = isset($request->customer_is_supplier) ? $request->customer_is_supplier : null;
-        $data['inventory_products'] = isset($request->inventory_products) ? $request->inventory_products : null;
-        $data['entry_at'] = isset($request->date) ? $request->date : Carbon::now()->format('Y-m-d H:i:s');
+        $data['note'] = $request->note ?? null;
+        $data['amount_cleared'] = $request->amount_cleared ?? 0;
+        $data['reconcile_amount'] = $request->reconcile_amount ?? 0;
+        $data['customer_id'] = $request->customer_id ?? null;
+        $data['customer_name'] = $request->customer_name ?? null;
+        $data['customer_mobile'] = $request->customer_mobile ?? null;
+        $data['customer_pro_pic'] = $request->customer_pro_pic ?? null;
+        $data['customer_is_supplier'] = $request->customer_is_supplier ?? null;
+        $data['inventory_products'] = $request->inventory_products ?? null;
+        $data['entry_at'] = $request->date ?? Carbon::now()->format('Y-m-d H:i:s');
         $data['attachments'] = $this->uploadAttachments($request);
         $data['total_discount'] = isset($request->total_discount) ? (double)$request->total_discount : 0;
         $data['total_vat'] = isset($request->total_vat) ? (double)$request->total_vat : 0;
         $data['delivery_charge'] = isset($request->delivery_charge) ? (double)$request->delivery_charge : 0;
-        $data['bank_transaction_charge'] = isset($request->bank_transaction_charge) ? $request->bank_transaction_charge : 0;
-        $data['interest'] = isset($request->interest) ? $request->interest : 0;
-        $data['details'] = isset($request->details) ? $request->details : null;
-        $data['reference'] = isset($request->reference) ? $request->reference : null;
+        $data['bank_transaction_charge'] = $request->bank_transaction_charge ?? 0;
+        $data['interest'] = $request->interest ?? 0;
+        $data['details'] = $request->details ?? null;
+        $data['reference'] = $request->reference ?? null;
         return $data;
     }
 }
