@@ -68,8 +68,10 @@ class AttendanceController extends Controller
     /**
      * AttendanceController constructor.
      * @param BusinessHolidayRepoInterface $business_holidays_repo
+     * @param BusinessWeekendRepoInterface $business_weekend_repo
+     * @param BusinessOfficeRepoInterface $business_office_repo
      */
-    public function __construct(BusinessHolidayRepoInterface $business_holidays_repo, BusinessWeekendRepoInterface $business_weekend_repo, BusinessOfficeRepositoryInterface $business_office_repo)
+    public function __construct(BusinessHolidayRepoInterface $business_holidays_repo, BusinessWeekendRepoInterface $business_weekend_repo, BusinessOfficeRepoInterface $business_office_repo)
     {
         $this->holidayRepository = $business_holidays_repo;
         $this->officeSettingChangesLogsRepo = app(OfficeSettingChangesLogsRepository::class);
@@ -77,8 +79,6 @@ class AttendanceController extends Controller
         $this->officeSettingChangesLogsCreator = new Creator();
         $this->businessWeekendRepo =  $business_weekend_repo;
         $this->businessOfficeRepo = $business_office_repo;
-
-        return $this;
     }
 
     /**
