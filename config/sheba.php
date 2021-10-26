@@ -9,6 +9,7 @@ return [
     'wallet_url' => env('SHEBA_WALLET_URL', 'https://wallet.sheba.xyz'),
     'payment_link_url' => env('SHEBA_PAYMENT_LINK_URL'),
     'payment_link_web_url' => env('SHEBA_PAYMENT_LINK_WEB_URL', 'https://payments.sheba.xyz'),
+    'services_api_url' => env('SHEBA_SERVICES_URL','http://services.dev-sheba.xyz'),
     's3_url' => env('S3_URL'),
     'socket_url' => env('SHEBA_SOCKET_URL'),
     'ebl_url'=>env('EBL_URL'),
@@ -165,5 +166,9 @@ return [
     'topup_special_amount_get_url_by_ssl' => env('TOPUP_SPECIAL_AMOUNT_GET_URL_BY_SSL', 'http://vrapi.sslwireless.com/rest/specialAmount/v2/'),
     'webstore_url' => env('SHEBA_WEBSTORE_URL'),
     'last_job_before_commission' => env('LAST_JOB_BEFORE_PARTNER_COMMISSION_DEPLOY'),
+    'sheba_services_vendor_id' => env('SHEBA_SERVICES_VENDOR_ID', '60cb5b0f6fe71675a8564683'),
+    'sheba_push_notifications_account_id' => env('SHEBA_PUSH_NOTIFICATIONS_ACCOUNT_ID', '60cb5b37deda99001d7b7fd4'),
+    'notification_services_app_key' => env('SHEBA_NOTIFICATION_SERVICES_APP_KEY', 'sheba1234'),
+    'notification_services_app_secret' => env('SHEBA_NOTIFICATION_SERVICES_APP_SECRET', 'sheba1234'),
     'whitelisted_ip_redis_key_name' => env('WHITELISTED_IP_REDIS_KEY_NAME','')
 ];

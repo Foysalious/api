@@ -65,9 +65,11 @@ class PosOrderServerClient
     private function getOptions($data = null, $multipart = false)
     {
         $options['headers'] = [
-            'Accept' => 'application/json'
+            'Accept' => 'application/json',
+            'portal-name' => getShebaRequestHeader()->toArray()['portal-name'],
+            'Version-Code' => getShebaRequestHeader()->toArray()['Version-Code']
         ];
-        if ($this->token)  $options['headers'] += ['Authorization' => 'Bearer ' . $this->token];
+        if ($this->token) $options['headers'] += ['Authorization' => 'Bearer ' . $this->token];
         if (!$data) return $options;
         if ($multipart) {
             $options['multipart'] = $data;
