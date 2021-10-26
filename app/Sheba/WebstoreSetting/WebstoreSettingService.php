@@ -91,7 +91,7 @@ class WebstoreSettingService
 
     public function getThemeDetails($partner)
     {
-        $url = 'api/v1/partners/' . $partner . '/setting-details';
+        $url = 'api/v1/partners/' . $partner . '/theme-settings/details';
         return $this->client->get($url);
     }
 
