@@ -91,16 +91,6 @@ class RechargeComplete extends PaymentComplete
         }
     }
 
-    private function setPaymentGateWay()
-    {
-        $payment_gateways = app(PaymentGatewayRepo::class);
-        $this->paymentGateway = $payment_gateways->builder()
-            ->where('service_type', $this->payment->created_by_type)
-            ->where('method_name', $this->payment->paymentDetails->last()->method)
-            ->where('status', 'Published')
-            ->first();
-    }
-
     /**
      * @throws AccountingEntryServerError
      * @throws InvalidSourceException|KeyNotFoundException
