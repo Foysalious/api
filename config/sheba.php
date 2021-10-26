@@ -9,10 +9,10 @@ return [
     'wallet_url' => env('SHEBA_WALLET_URL', 'https://wallet.sheba.xyz'),
     'payment_link_url' => env('SHEBA_PAYMENT_LINK_URL'),
     'payment_link_web_url' => env('SHEBA_PAYMENT_LINK_WEB_URL', 'https://payments.sheba.xyz'),
-    'services_api_url' => env('SHEBA_SERVICES_URL','http://services.dev-sheba.xyz'),
+    'services_api_url' => env('SHEBA_SERVICES_URL', 'http://services.dev-sheba.xyz'),
     's3_url' => env('S3_URL'),
     'socket_url' => env('SHEBA_SOCKET_URL'),
-    'ebl_url'=>env('EBL_URL'),
+    'ebl_url' => env('EBL_URL'),
     'socket_on' => env('SHEBA_SOCKET_ON', true),
     'send_push_notifications' => env('SHEBA_SEND_PUSH_NOTIFICATIONS', true),
     'partners_url' => env('SHEBA_PARTNER_END_URL') . '/' . env('SHEBA_PARTNERS_URL_PREFIX'),
@@ -42,7 +42,7 @@ return [
     'push_notification_sound' => [
         'customer' => 'default',
         'manager' => 'notification_sound',
-        'employee'  => 'notification_sound.aiff'
+        'employee' => 'notification_sound.aiff'
     ],
     'partner_packages' => [
         'ESP' => 4,
@@ -102,12 +102,12 @@ return [
         ['#00B8BA', '#00FFED']
     ],
     'screen' => ['home', 'eshop', 'payment_link', 'pos', 'inventory', 'referral', 'due'],
-    'partner_lite_packages_id'  => env('LITE_PACKAGE_ID', 1),
+    'partner_lite_packages_id' => env('LITE_PACKAGE_ID', 1),
     'partner_basic_packages_id' => env('BASIC_PACKAGE_ID', 2),
-    'partner_registration_package_id' => env('PARTNER_REGISTRATION_PACKAGE_ID',18),
-    'lite_package_message'      => 'প্রিমিয়াম প্যাকেজ গুলোর দুর্দান্ত সব ফিচার ব্যাবহার করে ২ গুন ব্যবসা বৃদ্ধি করুন কোন বাড়তি ঝামেলা ছাড়াই!',
-    'partner_subscription_vat'  => 5.00,
-    'welcome_message_image' => env('WELCOME_MSG_IMAGE','images/manager_app/welcome.jpg'),
+    'partner_registration_package_id' => env('PARTNER_REGISTRATION_PACKAGE_ID', 18),
+    'lite_package_message' => 'প্রিমিয়াম প্যাকেজ গুলোর দুর্দান্ত সব ফিচার ব্যাবহার করে ২ গুন ব্যবসা বৃদ্ধি করুন কোন বাড়তি ঝামেলা ছাড়াই!',
+    'partner_subscription_vat' => 5.00,
+    'welcome_message_image' => env('WELCOME_MSG_IMAGE', 'images/manager_app/welcome.jpg'),
     'rent_a_car' => [
         'inside_city' => [
             'category' => [222]
@@ -167,7 +167,6 @@ return [
     'webstore_url' => env('SHEBA_WEBSTORE_URL'),
     'last_job_before_commission' => env('LAST_JOB_BEFORE_PARTNER_COMMISSION_DEPLOY'),
     'sheba_services_vendor_id' => env('SHEBA_SERVICES_VENDOR_ID', '60cb5b0f6fe71675a8564683'),
-    'sheba_push_notifications_account_id' => env('SHEBA_PUSH_NOTIFICATIONS_ACCOUNT_ID', '60cb5b37deda99001d7b7fd4'),
     'notification_services_app_key' => env('SHEBA_NOTIFICATION_SERVICES_APP_KEY', 'sheba1234'),
     'notification_services_app_secret' => env('SHEBA_NOTIFICATION_SERVICES_APP_SECRET', 'sheba1234'),
 ];
