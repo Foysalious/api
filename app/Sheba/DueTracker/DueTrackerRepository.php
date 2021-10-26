@@ -31,6 +31,7 @@ use Sheba\PaymentLink\Creator as PaymentLinkCreator;
 use Sheba\RequestIdentification;
 use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
+use Sheba\Pos\Repositories\PosOrderPaymentRepository;
 
 class DueTrackerRepository extends BaseRepository
 {
@@ -300,9 +301,11 @@ class DueTrackerRepository extends BaseRepository
 
         $response = $this->client->post("accounts/$this->accountId/entries/update/$request->entry_id", $data);
 
-        if ($data['amount_cleared'] > 1 && $response['data']['source_type'] == 'PosOrder' && !empty($response['data']['source_id']))
-            $this->$this->posOrderPaymentRepository->createPosOrderPayment($data['amount_cleared'], $response['data']['source_id'], 'cod');
-
+        if ($data['amount_cleared'] > 1 && $response['data']['source_type'] == 'PosOrder' && !empty($response['data']['source_id'])) {
+            /* @var $posOrderPaymentRepo PosOrderPaymentRepository */
+            $posOrderPaymentRepo = app(PosOrderPaymentRepository::class);
+            $posOrderPaymentRepo->createPosOrderPayment($data['amount_cleared'], $response['data']['source_id'], 'cod');
+        }
         return $response['data'];
     }
 

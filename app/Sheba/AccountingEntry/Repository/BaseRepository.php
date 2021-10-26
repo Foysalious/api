@@ -14,6 +14,7 @@ use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
+use Sheba\Pos\Repositories\PosOrderPaymentRepository;
 
 class BaseRepository
 {
@@ -103,15 +104,13 @@ class BaseRepository
 
     public function createPosOrderPayment($amount_cleared, $pos_order_id, $payment_method)
     {
-        $payment_data['pos_order_id'] = $pos_order_id;
-        $payment_data['amount']       = $amount_cleared;
-        $payment_data['method']       = $payment_method;
-        /** @var PaymentCreator $paymentCreator */
-        $paymentCreator = app(PaymentCreator::class);
-        $paymentCreator->credit($payment_data);
+        /* @var $posOrderPaymentRepo PosOrderPaymentRepository */
+        $posOrderPaymentRepo = app(PosOrderPaymentRepository::class);
+        $posOrderPaymentRepo->createPosOrderPayment($amount_cleared, $pos_order_id, $payment_method);
     }
 
-    public function removePosOrderPayment($pos_order_id, $amount){
+    public function removePosOrderPayment($pos_order_id, $amount): bool
+    {
         $payment = PosOrderPayment::where('pos_order_id', $pos_order_id)
             ->where('amount', $amount)
             ->where('transaction_type', 'Credit')
@@ -124,7 +123,7 @@ class BaseRepository
      * @param $userId
      * @return bool
      */
-    public function isMigratedToAccounting($userId)
+    public function isMigratedToAccounting($userId): bool
     {
         $arr = [self::NOT_ELIGIBLE, UserStatus::PENDING, UserStatus::UPGRADING, UserStatus::FAILED];
         /** @var UserMigrationRepository $userMigrationRepo */
