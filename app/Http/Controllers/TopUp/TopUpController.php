@@ -133,6 +133,7 @@ class TopUpController extends Controller
             }
 
         } else return api_response($request, null, 400);
+
         $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setPurpose(Purpose::TOPUP)->setRequest($request)->verify();
 
         $userAgentInformation->setRequest($request);
