@@ -6,6 +6,7 @@ use App\Models\PosCustomer;
 use App\Repositories\FileRepository;
 use App\Models\PosOrder;
 use App\Models\PosOrderPayment;
+use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
 use Sheba\AccountingEntry\Repository\UserMigrationRepository;
@@ -106,6 +107,7 @@ class BaseRepository
     {
         /* @var $posOrderPaymentRepo PosOrderPaymentRepository */
         $posOrderPaymentRepo = app(PosOrderPaymentRepository::class);
+        Log::info("reconciling pos order");
         $posOrderPaymentRepo->createPosOrderPayment($amount_cleared, $pos_order_id, $payment_method);
     }
 
