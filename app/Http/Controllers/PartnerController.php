@@ -1124,7 +1124,7 @@ class PartnerController extends Controller
                 'show_vat_registration_number' => (int)$request->show_vat_registration_number ?: 0
             ]
         ));
-        return api_response($request, null, 200, ['msg' => 'Vat Registration Number Update Successfully']);
+        return make_response($request, null, 200, ['msg' => 'Vat Registration Number Update Successfully']);
     }
 
     public function changeLogo(Request $request)
