@@ -41,9 +41,10 @@ class CheckIn extends ActionChecker
         if (!$this->isSuccess()) return;
 
         $today_checkin_time_without_second = Carbon::parse($date->format('Y-m-d H:i'));
+        $is_full_day_leave = (new HalfDayLeaveCheck())->setBusinessMember($this->businessMember)->checkFullDayLeave();
 
         if ($today_checkin_time_without_second->greaterThan($today_last_checkin_time)) {
-            if ($weekendHoliday->isWeekendByBusiness($date) || $weekendHoliday->isHolidayByBusiness($date)) {
+            if ($weekendHoliday->isWeekendByBusiness($date) || $weekendHoliday->isHolidayByBusiness($date) || $is_full_day_leave) {
                 $this->setResult(ActionResultCodes::SUCCESSFUL, ActionResultCodeMessages::SUCCESSFUL_CHECKIN);
             } else {
                 $this->setResult(ActionResultCodes::LATE_TODAY, ActionResultCodeMessages::LATE_TODAY);

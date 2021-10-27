@@ -2,6 +2,9 @@
 
 namespace Sheba\Usage;
 
+use App\Models\PartnerUsageHistory;
+use App\Sheba\Usage\PartnerUsageUpgradeJob;
+use Illuminate\Database\Query\Builder;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
 use Sheba\Transactions\Types;
@@ -37,26 +40,18 @@ class Usage
 
     public function setUser($user)
     {
-        $this->user = $user;
+        $this->user = $user instanceof Builder? $user->first():$user;
         return $this;
     }
 
     public function create($modifier = null)
     {
-        if (empty($this->type))
-            return 0;
-        $data = ['type' => $this->type];
-        if (!empty($modifier))
-            $this->setModifier($modifier);
-        $history = $this->user->usage()->create($this->withCreateModificationField($data));
-        if (!empty($this->user->referredBy))
-            $this->updateUserLevel();
-        return $history;
+        dispatch((new PartnerUsageUpgradeJob( $this->user, $modifier, $this->type)));
     }
 
-    private function updateUserLevel()
+    public function updateUserLevel()
     {
-        $usage = $this->user->usage()->selectRaw('COUNT(DISTINCT(DATE(`partner_usages_history`.`created_at`))) as usages')->first();
+        $usage = PartnerUsageHistory::query()->where('partner_id',$this->user_id)->selectRaw('COUNT(DISTINCT(DATE(`partner_usages_history`.`created_at`))) as usages')->first();
         $usage = $usage ? $usage->usages : 0;
         $this->findAndUpgradeLevel($usage);
 
@@ -68,7 +63,7 @@ class Usage
         foreach ($this->config as $index => $level) {
             $duration      += $level['duration'];
             $duration_pass = $usage >= $duration;
-            $nid_pass=$level['nid_verification']?$this->user->isNIDVerified():true;
+            $nid_pass= !$level['nid_verification'] || $this->user->isNIDVerified();
             if ($nid_pass&&$duration_pass) $this->upgradeLevel($index+1,true);
         }
         return -1;
