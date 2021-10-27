@@ -10,6 +10,7 @@ class InventoryServerClient
 {
     protected $client;
     protected $baseUrl;
+    private $token;
 
     public function __construct(Client $client)
     {
@@ -52,7 +53,9 @@ class InventoryServerClient
     private function getOptions($data = null, $multipart = false)
     {
         $options['headers'] = [
-            'Accept' => 'application/json'
+            'Accept' => 'application/json',
+            'portal-name' => getShebaRequestHeader()->toArray()['portal-name'],
+            'Version-Code' => getShebaRequestHeader()->toArray()['Version-Code']
         ];
         if (!$data) return $options;
         if ($multipart) {
@@ -91,5 +94,21 @@ class InventoryServerClient
         return $this->call('DELETE', $uri);
     }
 
+    private function addHeadersToOption($options, $headers)
+    {
+        $options['headers'] = $this->getHeaders($headers);
+        if (empty($options['headers'])) unset($options['headers']);
+        return $options;
+    }
+
+    private function getHeaders($extra_headers = null)
+    {
+        $sheba_headers = getShebaRequestHeader();
+        $headers = [];
+        if ($this->token) $headers += ['Authorization' => 'Bearer ' . $this->token];
+        if ($extra_headers) $headers += $extra_headers;
+        if (!$sheba_headers->isEmpty()) $headers += $sheba_headers->toArray();
+        return $headers;
+    }
 
 }

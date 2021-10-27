@@ -17,6 +17,7 @@ use Sheba\Pos\Repositories\PosSettingRepository;
 use Sheba\Pos\Setting\Creator;
 use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
+use Throwable;
 
 class SettingController extends Controller
 {

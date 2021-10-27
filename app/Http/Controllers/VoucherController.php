@@ -306,42 +306,9 @@ class VoucherController extends Controller
     }
 
     /**
-     * @param Request $request
-     * @return JsonResponse
      * @throws Exception
      */
-    public function validateVoucher($partner, Request $request)
-    {
-        try {
-            $pos_customer = $request->pos_customer ? PosCustomer::find($request->pos_customer) : new PosCustomer();
-            $pos_order_params = (new CheckParamsForPosOrder());
-            $pos_order_params->setOrderAmount($request->amount)->setApplicant($pos_customer)->setPartnerPosService($request->pos_services);
-            $result = voucher($request->code)->checkForPosOrder($pos_order_params)->reveal();
-            if (!$result['is_valid'] || $result['voucher']['created_by'] != $partner)
-                return api_response($request, null, 403, ['message' => 'প্রোমো কোডটি সঠিক নয়!']);
-            if ($result['is_valid']) {
-                $voucher = $result['voucher'];
-                $voucher = [
-                    'amount' => (double)$result['amount'],
-                    'code' => $voucher->code,
-                    'id' => $voucher->id,
-                    'title' => $voucher->title
-                ];
-
-                return api_response($request, null, 200, ['voucher' => $voucher]);
-            } else {
-                return api_response($request, null, 403, ['message' => 'Invalid Promo']);
-            }
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
-    /**
-     * @throws Exception
-     */
-    public function validateVoucherForRebuild(Request $request, $partner)
+    public function validateVoucher(Request $request, $partner)
     {
         $response = $this->voucherService->validateVoucher($partner, $request);
         if (empty($response))
@@ -427,8 +394,8 @@ class VoucherController extends Controller
     public function voucherAgainstVendor(Request $request, VoucherRepository $voucherRepository, VendorVoucherDataGenerator $voucher_generator)
     {
         // need to handle this in a Request Class
-        if (!isset($request['start_date'])) return api_response($request, null, 403, ['message' => 'Start Date field is required']);
-        if (!isset($request['channel']) || !in_array($request->channel, ['xtra'])) return api_response($request, null, 403, ['message' => 'invalid channel']);
+        if(!isset($request['start_date'])) return api_response($request, null, 403, ['message' => 'Start Date field is required']);
+        if(!isset($request['channel']) || !in_array($request->channel, ['xtra'])  ) return api_response($request, null, 403, ['message' => 'invalid channel']);
         $this->validate($request, [
             'mobile' => 'mobile:bd',
             'amount' => 'required|numeric',
