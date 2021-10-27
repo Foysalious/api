@@ -155,6 +155,7 @@ class PosOrder  extends BaseModel
 
     private function _setPaymentStatus() {
         $this->paymentStatus = ($this->due) ? OrderPaymentStatuses::DUE : OrderPaymentStatuses::PAID;
+        if($this->payment_status != $this->paymentStatus)
         $this->storePaymentStatus();
         return $this;
     }
