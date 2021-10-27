@@ -7,6 +7,7 @@ use App\Sheba\Repositories\PartnerSubscriptionPackageRepository;
 
 class HomepageSettingsV3
 {
+    const SHOW_ON_HOME = 7;
     private $partner;
     private $packageWiseSettings;
 
@@ -19,6 +20,9 @@ class HomepageSettingsV3
         $this->packageWiseSettings = new PackageWiseHomepageSettings();
     }
 
+    /**
+     * @return array
+     */
     public function get() : array
     {
         $partner_homepage_settings = $this->partner->home_page_setting_new;
@@ -28,8 +32,30 @@ class HomepageSettingsV3
             return json_decode($home_page_setting);
         }
         $home_page_setting = $this->packageWiseSettings->setPackageSettings($home_page_setting)->setPartnerSettings($partner_homepage_settings)->get();
+        $this->resolveMinimumOnHomepage($home_page_setting);
         $this->addIsNewTag($home_page_setting);
         return $home_page_setting;
+    }
+
+    /**
+     * @param $home_page_setting
+     */
+    private function resolveMinimumOnHomepage(&$home_page_setting)
+    {
+        $count = 0;
+        foreach ($home_page_setting as $setting)
+            if($setting->is_on_homepage === 1) $count++;
+
+        if($count < self::SHOW_ON_HOME) {
+            $diff = self::SHOW_ON_HOME - $count;
+            foreach ($home_page_setting as $setting) {
+                if ($diff === 0) break;
+                if($setting->is_on_homepage === 0) {
+                    $setting->is_on_homepage = 1;
+                    $diff--;
+                }
+            }
+        }
     }
 
     private function getFilteredPackageSettings()
