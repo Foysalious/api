@@ -36,8 +36,8 @@ class WebstorePushNotificationHandler
             "event_type" => 'WebstoreOrder',
             "event_id" => (string)$order_id
         ];
-        (new PushNotificationHandler())->send($data, $topic, $channel, $sound);
-//        (new PusNotificationService())->send($topic, null, $data);
+//        (new PushNotificationHandler())->send($data, $topic, $channel, $sound);
+        (new PusNotificationService())->send($topic, null, $data);
     }
 
 }
