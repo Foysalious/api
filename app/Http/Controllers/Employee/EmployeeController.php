@@ -372,6 +372,7 @@ class EmployeeController extends Controller
 
         /** @var Member $member */
         $member = $profile->member;
+        if (!$member) return api_response($request, null, 420, ['message' => 'You are not eligible employee']);
         /** @var BusinessMember $business_member */
         $business_member = $member->businessMember;
         if (!$business_member) return api_response($request, null, 420, ['message' => 'You are not eligible employee']);

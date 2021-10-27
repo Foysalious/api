@@ -44,6 +44,7 @@ use Sheba\Pos\Jobs\OrderBillEmail;
 use Sheba\Pos\Jobs\OrderBillSms;
 use Sheba\Pos\Jobs\WebstoreOrderPushNotification;
 use Sheba\Pos\Jobs\WebstoreOrderSms;
+use Sheba\Pos\Notifier\WebstorePushNotificationHandler;
 use Sheba\Pos\Order\Creator;
 use Sheba\Pos\Order\Deleter as PosOrderDeleter;
 use Sheba\Pos\Order\PosOrderList;
@@ -68,6 +69,7 @@ use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Subscription\Partner\Access\AccessManager;
 use Sheba\Subscription\Partner\Access\Exceptions\AccessRestrictedExceptionForPackage;
 use Sheba\Transactions\Types;
+use Sheba\Transactions\Wallet\WalletDebitForbiddenException;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Sheba\Usage\Usage;
 use Throwable;
@@ -539,7 +541,11 @@ class OrderController extends Controller
      */
     private function sendOrderPlacePushNotificationToPartner(PosOrder $order)
     {
-        dispatch(new WebstoreOrderPushNotification($order));
+        try {
+            (new WebstorePushNotificationHandler())->setOrder($order)->handle();
+        } catch (Throwable $e) {
+            logError($e);
+        }
     }
 
     /**
