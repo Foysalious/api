@@ -27,6 +27,17 @@ class WalletTransactionHandler extends WalletTransaction
     /** @var TransactionDetails $transaction_details */
     protected $transaction_details;
     private   $source;
+    private $isNegativeDebitAllowed = false;
+
+    /**
+     * @param bool $isNegativeDebitAllowed
+     * @return WalletTransactionHandler
+     */
+    public function setIsNegativeDebitAllowed(bool $isNegativeDebitAllowed): WalletTransactionHandler
+    {
+        $this->isNegativeDebitAllowed = $isNegativeDebitAllowed;
+        return $this;
+    }
 
     /**
      * @param array $extras
@@ -43,7 +54,7 @@ class WalletTransactionHandler extends WalletTransaction
             if (!$isJob) {
                 $extras = $this->withCreateModificationField((new RequestIdentification())->set($extras));
             }
-            if ($this->type == Types::debit() && $this->model instanceof Partner) {
+            if ($this->type == Types::debit() && !$this->isNegativeDebitAllowed && $this->model instanceof Partner) {
                 self::isDebitTransactionAllowed($this->model, $this->amount);
             }
             return $this->storeTransaction($extras);
