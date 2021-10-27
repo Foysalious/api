@@ -26,6 +26,8 @@ class PaymentService
     public function setPosOrderId($pos_order_id)
     {
         $this->pos_order_id = $pos_order_id;
+        $posOrder = PosOrder::find($pos_order_id);
+        $this->pos_order_type = $posOrder && !$posOrder->is_migrated ? PosOrderTypes::OLD_SYSTEM : PosOrderTypes::NEW_SYSTEM;
         return $this;
     }
 
@@ -38,17 +40,6 @@ class PaymentService
         $this->partner_id = $partner_id;
         return $this;
     }
-
-    /**
-     * @param mixed $pos_order_type
-     * @return PaymentService
-     */
-    public function setPosOrderType($pos_order_type)
-    {
-        $this->pos_order_type = $pos_order_type;
-        return $this;
-    }
-
 
     /**
      * @param mixed $amount
