@@ -7,29 +7,66 @@ use App\Sheba\Repositories\PartnerSubscriptionPackageRepository;
 
 class HomepageSettingsV3
 {
+    const SHOW_ON_HOME = 7;
     private $partner;
     private $packageWiseSettings;
 
+    /**
+     * @param Partner $partner
+     */
     public function __construct(Partner $partner)
     {
         $this->partner = $partner;
         $this->packageWiseSettings = new PackageWiseHomepageSettings();
     }
 
+    /**
+     * @return array
+     */
     public function get() : array
     {
         $partner_homepage_settings = $this->partner->home_page_setting_new;
-        $home_page_setting = (new PartnerSubscriptionPackageRepository($this->partner->package_id))->getHomepageSettings();
-        $home_page_setting = $this->filterIsPublished($home_page_setting);
+        $home_page_setting = $this->getFilteredPackageSettings();
         if(is_null($partner_homepage_settings)) {
             $this->storeHomepageSettings($home_page_setting);
             return json_decode($home_page_setting);
         }
         $home_page_setting = $this->packageWiseSettings->setPackageSettings($home_page_setting)->setPartnerSettings($partner_homepage_settings)->get();
+        $this->resolveMinimumOnHomepage($home_page_setting);
         $this->addIsNewTag($home_page_setting);
         return $home_page_setting;
     }
 
+    /**
+     * @param $home_page_setting
+     */
+    private function resolveMinimumOnHomepage(&$home_page_setting)
+    {
+        $count = 0;
+        foreach ($home_page_setting as $setting)
+            if($setting->is_on_homepage === 1) $count++;
+
+        if($count < self::SHOW_ON_HOME) {
+            $diff = self::SHOW_ON_HOME - $count;
+            foreach ($home_page_setting as $setting) {
+                if ($diff === 0) break;
+                if($setting->is_on_homepage === 0) {
+                    $setting->is_on_homepage = 1;
+                    $diff--;
+                }
+            }
+        }
+    }
+
+    private function getFilteredPackageSettings()
+    {
+        $home_page_setting = (new PartnerSubscriptionPackageRepository($this->partner->package_id))->getHomepageSettings();
+        return $this->filterIsPublished($home_page_setting);
+    }
+
+    /**
+     * @param $home_page_setting
+     */
     private function storeHomepageSettings($home_page_setting)
     {
         $this->partner->home_page_setting_new = $home_page_setting;
@@ -52,6 +89,9 @@ class HomepageSettingsV3
         return json_encode($filtered_settings);
     }
 
+    /**
+     * @param $home_page_setting
+     */
     private function addIsNewTag(&$home_page_setting)
     {
         foreach ($home_page_setting as &$setting) {
@@ -61,5 +101,23 @@ class HomepageSettingsV3
                 in_array($setting['key'], NewFeatures::get()) ? $setting['is_new'] = 1 : $setting['is_new'] = 0;
             }
         }
+    }
+
+    /**
+     * @param $request_settings
+     * @param $partner_repo
+     * @return mixed|void
+     */
+    public function update($request_settings, $partner_repo)
+    {
+        $package_settings = $this->getFilteredPackageSettings();
+        if(empty($this->partner->home_page_setting_new)) {
+            $this->storeHomepageSettings($request_settings);
+            return $request_settings;
+        }
+        $home_page_setting = $this->packageWiseSettings->setPackageSettings($package_settings)->setPartnerSettings($request_settings)->get();
+        $data['home_page_setting_new'] = json_encode($home_page_setting);
+        $partner_repo->update($this->partner, $data);
+        return json_encode($home_page_setting);
     }
 }
