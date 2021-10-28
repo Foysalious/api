@@ -79,6 +79,12 @@ class PosOrderList
         return $this;
     }
 
+    public function setPaymentStatus($payment_status)
+    {
+        $this->payment_status = $payment_status;
+        return $this;
+    }
+
     /**
      * @param $type
      * @return PosOrderList
@@ -147,9 +153,9 @@ class PosOrderList
         }
 
         if (!empty($payment_link_targets)) $this->mapPaymentLinkData($final_orders, $payment_link_targets);
-
         if (!empty($this->status))
             $final_orders = $final_orders->where('status', $this->status)->slice($this->offset)->take($this->limit);
+
         $final_orders = $final_orders->groupBy('date')->toArray();
 
         $orders_formatted = [];
@@ -255,4 +261,11 @@ class PosOrderList
         $orders_query = $orders_query->where('status', $orderStatus);
         return $orders_query;
     }
+
+    private function filteredByStatus($orders_query, $status)
+    {
+        return $orders_query->where('payment_status', $status);
+    }
+
+
 }
