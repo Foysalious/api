@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\UserMigration;
 
 use App\Http\Controllers\Controller;
+use App\Sheba\UserMigration\Modules;
 use Illuminate\Http\Request;
 use App\Sheba\UserMigration\UserMigrationService;
 use App\Sheba\UserMigration\UserMigrationRepository;
@@ -62,9 +63,8 @@ class UserMigrationController extends Controller
         try {
             $this->validate($request, ['status' => 'required|string']);
             $userId = $request->partner->id;
-            if (!in_array($request->status, UserStatus::get())) {
-                throw new Exception('Invalid Status');
-            }
+            if (!in_array($request->status, UserStatus::get())) throw new Exception('Invalid Status');
+            if (!in_array($moduleName, Modules::get())) throw new Exception('Invalid Module');
             /** @var UserMigrationRepository $class */
             $class = $this->userMigrationSvc->resolveClass($moduleName);
             $res = $class->setUserId($userId)->setModuleName($moduleName)->updateStatus($request->status);

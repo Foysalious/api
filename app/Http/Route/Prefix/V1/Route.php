@@ -77,7 +77,7 @@ class Route
                 $api->get('{offer}', 'OfferController@show');
             });
             $api->group(['prefix' => 'blogs'], function ($api) {
-                $api->get('/', 'BlogController@index');
+                $api->get('/', 'BlogController@index')->name('blogs.get');
             });
             $api->group(['prefix' => 'feedback', 'middleware' => ['manager.auth']], function ($api) {
                 $api->post('/', 'FeedbackController@create');
@@ -238,8 +238,8 @@ class Route
 
                         $api->group(['prefix' => 'materials'], function ($api) {
                             $api->get('/', 'PartnerJobController@getMaterials');
-                            $api->post('/', 'PartnerJobController@addMaterial');
-                            $api->put('/', 'PartnerJobController@updateMaterial');
+                            $api->post('/', 'PartnerJobController@addMaterial')->middleware('concurrent_request:partner,update');
+                            $api->put('/', 'PartnerJobController@updateMaterial')->middleware('concurrent_request:partner,update');
                         });
                     });
                 });

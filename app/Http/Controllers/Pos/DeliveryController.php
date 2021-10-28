@@ -11,6 +11,7 @@ use App\Sheba\Partner\Delivery\Statuses;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\ModificationFields;
 use Throwable;
 
@@ -271,13 +272,17 @@ class DeliveryController extends Controller
 
     public function deliveryStatusUpdate(Request $request, DeliveryService $delivery_service)
     {
+        if(config('app.env') == 'production') {
+            if($request->ip() != config('pos_delivery.server_ip')) {
+                return api_response($request, null, 400);
+            }
+        }
         $this->validate($request, [
             'order_ref_no' => 'required',
             'status' => "required|string" ,
             'merchant_code' => "required|string"
         ]);
-
-        $delivery_service->setToken($this->bearerToken($request))->updateDeliveryStatus($request->merchant_code, $request->order_ref_no);
+        $delivery_service->setDeliveryReqId($request->order_ref_no)->setDeliveryStatus($request->status)->updateDeliveryStatus();
         return api_response($request, null, 200);
     }
 

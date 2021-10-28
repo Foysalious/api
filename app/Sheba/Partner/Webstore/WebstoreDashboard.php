@@ -5,6 +5,7 @@ use App\Models\Partner;
 use App\Models\PosOrder;
 use App\Sheba\InventoryService\InventoryServerClient;
 use App\Sheba\PosOrderService\PosOrderServerClient;
+use App\Sheba\UserMigration\Modules;
 use Carbon\Carbon;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Helpers\TimeFrame;
@@ -176,7 +177,7 @@ class WebstoreDashboard
 
     private function resolveProductStats(): array
     {
-        if ($this->partner->isMigrationCompleted()) {
+        if ($this->partner->isMigrated(Modules::POS)) {
             $stats = $this->inventoryServerClient->get('api/v1/partners/'.$this->partner->id.'/statistics');
             return $this->getProductStatsFromInventoryService($stats['statistics']);
         }
@@ -185,7 +186,7 @@ class WebstoreDashboard
 
     private function resolveOrderAndSalesStats(): array
     {
-        if ($this->partner->isMigrationCompleted()) {
+        if ($this->partner->isMigrated(Modules::POS)) {
             $stats = $this->posOrderServerClient->get('api/v1/partners/'.$this->partner->id.'/statistics?frequency='.$this->frequency. $this->makeParams());
             return [$this->getOrderStatsFromPosOrderService($stats['statistics']['status_count']), $this->getSalesStatsFromPosOrderService($stats['statistics'])];
         }

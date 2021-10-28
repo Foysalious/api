@@ -73,6 +73,11 @@ class PosOrder extends BaseModel
         return $this;
     }
 
+    public function netBill()
+    {
+        return $this->netBill;
+    }
+
     private function _calculateThisItems()
     {
         $this->_initializeTotalsToZero();

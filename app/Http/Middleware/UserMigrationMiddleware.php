@@ -6,7 +6,7 @@ use Sheba\OAuth2\AuthUser;
 
 class UserMigrationMiddleware extends AccessTokenMiddleware
 {
-    public function setExtraDataToRequest($request)
+    protected function setExtraDataToRequest($request)
     {
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;

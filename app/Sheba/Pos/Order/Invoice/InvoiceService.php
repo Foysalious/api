@@ -47,6 +47,7 @@ class InvoiceService
     {
         return $this->invoiceLink;
     }
+
     /**
      * @throws NotAssociativeArray
      */
@@ -54,13 +55,13 @@ class InvoiceService
     {
         $data = $this->generateData();
         $invoice_name = 'pos_order_invoice_' . $this->posOrder->id;
-        $this->invoiceLink         =  (new PdfHandler())->setData($data)->setName($invoice_name)->setViewFile('order_invoice')->save(true);
+        $this->invoiceLink = (new PdfHandler())->setData($data)->setName($invoice_name)->setViewFile('order_invoice')->save(true);
         return $this;
     }
 
     public function saveInvoiceLink()
     {
-        $this->posOrderRepository->update($this->posOrder,['invoice' => $this->invoiceLink]);
+        $this->posOrderRepository->update($this->posOrder, ['invoice' => $this->invoiceLink]);
         return $this;
     }
 
@@ -69,32 +70,32 @@ class InvoiceService
      */
     private function generateData()
     {
-        $pos_order   = $this->posOrder->calculate();
-        $partner     = $pos_order->partner;
-        $info        = [
-            'amount'           => $pos_order->getNetBill(),
-            'created_at'       => $pos_order->created_at->format('jS M, Y, h:i A'),
+        $pos_order = $this->posOrder->calculate();
+        $partner = $pos_order->partner;
+        $info = [
+            'amount' => $pos_order->getNetBill(),
+            'created_at' => $pos_order->created_at->format('jS M, Y, h:i A'),
             'payment_receiver' => [
-                'name'                    => $partner->name,
-                'image'                   => $partner->logo,
-                'mobile'                  => $partner->getContactNumber(),
-                'address'                 => $partner->address,
+                'name' => $partner->name,
+                'image' => $partner->logo,
+                'mobile' => $partner->getContactNumber(),
+                'address' => $partner->address,
                 'vat_registration_number' => $partner->vat_registration_number
             ],
-            'pos_order'        => $pos_order ? [
-                'items'       => $pos_order->items,
-                'discount'    => $pos_order->getTotalDiscount(),
-                'total'       => $pos_order->getTotalPrice(),
-                'grand_total' => $pos_order->getTotalBill(),
-                'paid'        => $pos_order->getPaid(),
-                'due'         => $pos_order->getDue(),
-                'status'      => $pos_order->getPaymentStatus(),
-                'vat'         => $pos_order->getTotalVat(),
+            'pos_order' => $pos_order ? [
+                'items' => $pos_order->items,
+                'discount' => $pos_order->getTotalDiscount(),
+                'total' => $pos_order->getTotalPrice(),
+                'grand_total' => $pos_order->netBill(),
+                'paid' => $pos_order->getPaid(),
+                'due' => $pos_order->getDue(),
+                'status' => $pos_order->getPaymentStatus(),
+                'vat' => $pos_order->getTotalVat(),
                 'delivery_charge' => $pos_order->delivery_charge
             ] : null
         ];
         if ($pos_order->customer) {
-            $customer     = $pos_order->customer->profile;
+            $customer = $pos_order->customer->profile;
             $info['user'] = [
                 'name'   => $customer->name,
                 'mobile' => $customer->mobile,
@@ -103,9 +104,6 @@ class InvoiceService
         }
         return $info;
     }
-
-
-
 
 
 }

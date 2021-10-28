@@ -415,6 +415,7 @@ class DueTrackerRepository extends BaseRepository
      * @param Request $request
      * @return mixed
      * @throws InvalidPartnerPosCustomer|InsufficientBalance
+     * @throws \Sheba\Transactions\Wallet\WalletDebitForbiddenException
      */
     public function sendSMS(Request $request)
     {
@@ -422,12 +423,15 @@ class DueTrackerRepository extends BaseRepository
         if (empty($partner_pos_customer)) throw new InvalidPartnerPosCustomer();
         /** @var PosCustomer $customer */
         $customer = $partner_pos_customer->customer;
+        /** @var Partner $partner */
+        $partner=$request->partner;
         $data     = [
             'type'          => $request->type,
-            'partner_name'  => $request->partner->name,
+            'partner_name'  => $partner->name,
             'customer_name' => $customer->profile->name,
             'mobile'        => $customer->profile->mobile,
             'amount'        => $request->amount,
+            'company_number'=> $partner->getContactNumber()
         ];
 
         if ($request->has('payment_link')) {
@@ -437,7 +441,8 @@ class DueTrackerRepository extends BaseRepository
         list($sms, $log) = $this->getSms($data);
         $sms_cost = $sms->estimateCharge();
         if ((double)$request->partner->wallet < $sms_cost) throw new InsufficientBalance();
-
+        //freeze money amount check
+        WalletTransactionHandler::isDebitTransactionAllowed($request->partner, $sms_cost, 'এস-এম-এস পাঠানোর');
         $sms->setBusinessType(BusinessType::SMANAGER)->setFeatureType(FeatureType::DUE_TRACKER);
         $sms->shoot();
 
@@ -458,7 +463,8 @@ class DueTrackerRepository extends BaseRepository
         $message_data = [
             'customer_name' => $data['customer_name'],
             'partner_name'  => $data['partner_name'],
-            'amount'        => $data['amount']
+            'amount'        => $data['amount'],
+            'company_number'=> $data['company_number']
         ];
 
         if ($data['type'] == 'due') {

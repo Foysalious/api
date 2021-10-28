@@ -1,10 +1,12 @@
 <?php namespace Sheba\Pos\Jobs;
 
 use App\Jobs\Job;
+use App\Models\Partner;
 use App\Models\PosOrder;
 use App\Sheba\PosOrderService\Services\OrderService;
 use App\Sheba\Sms\BusinessType;
 use App\Sheba\Sms\FeatureType;
+use App\Sheba\UserMigration\Modules;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
@@ -19,6 +21,7 @@ class OrderBillSms extends Job implements ShouldQueue
     private $order;
     protected $tries = 1;
     private $data = [];
+    /** @var Partner */
     private $partner;
     private $serviceBreakDown = [];
     private $due_amount;
@@ -36,17 +39,17 @@ class OrderBillSms extends Job implements ShouldQueue
      */
     public function handle(SmsHandler $handler)
     {
-        if ($this->attempts() > 2) return;
+        if ($this->attempts() > $this->tries) return;
         $this->resolvePosOrder();
         $this->generateCommonData();
-        if (!$this->partner->isMigrationCompleted()) $this->generateDataForOldSystem();
+        if (!$this->partner->isMigrated(Modules::POS)) $this->generateDataForOldSystem();
         else $this->generateDataForNewSystem();
         $handler->setData($this->data)->handle();
     }
 
     private function resolvePosOrder()
     {
-        if (!$this->partner->isMigrationCompleted())
+        if (!$this->partner->isMigrated(Modules::POS))
             $this->order = PosOrder::find($this->orderId);
         else
             $this->order = $this->getOrderDetailsFromPosOrderService();

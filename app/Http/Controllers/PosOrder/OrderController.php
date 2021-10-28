@@ -6,6 +6,7 @@ use App\Http\Controllers\VoucherController;
 use App\Models\Partner;
 use App\Models\PosOrder;
 use App\Sheba\PosOrderService\Services\OrderService;
+use App\Sheba\UserMigration\Modules;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\DueTracker\Exceptions\UnauthorizedRequestFromExpenseTrackerException;
@@ -174,9 +175,7 @@ class OrderController extends Controller
             throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
 
         $method_details = ['payment_method_bn' => $request->payment_method_bn, 'payment_method_icon' => $request->payment_method_icon];
-        $posOrder = PosOrder::find($order);
-        $pos_order_type = $posOrder && !$posOrder->is_migrated ? PosOrderTypes::OLD_SYSTEM : PosOrderTypes::NEW_SYSTEM;
-        $this->paymentService->setPosOrderId($order)->setPosOrderType($pos_order_type)->setPartnerId($partner)->setAmount($request->amount)
+        $this->paymentService->setPosOrderId($order)->setPartnerId($partner)->setAmount($request->amount)
             ->setMethod($request->payment_method_en)->setMethodDetails($method_details)->setEmiMonth($request->emi_month)->setInterest($request->interest)
             ->onlinePayment();
         return http_response($request, null, 200);
@@ -200,6 +199,7 @@ class OrderController extends Controller
         ]);
         if ($request->header('api-key') != config('expense_tracker.api_key'))
             throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
+        /** @var Partner $partner */
         $partner = Partner::find($partner);
         $interest = 0;
         $bank_transaction_charge = 0;
@@ -207,7 +207,7 @@ class OrderController extends Controller
             $interest = $request->interest;
             $bank_transaction_charge = $request->bank_transaction_charge;
         }
-        if ($partner->isMigrationCompleted()) {
+        if ($partner->isMigrated(Modules::POS)) {
             $this->orderService->setPartnerId($partner->id)->setOrderId($request->order)->setInterest($interest)
                 ->setBankTransactionCharge($bank_transaction_charge)->update();
         } else {

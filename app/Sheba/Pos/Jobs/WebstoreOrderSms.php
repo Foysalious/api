@@ -6,6 +6,7 @@ use App\Models\PosOrder;
 use App\Sheba\PosOrderService\Services\OrderService;
 use App\Sheba\Sms\BusinessType;
 use App\Sheba\Sms\FeatureType;
+use App\Sheba\UserMigration\Modules;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
@@ -41,10 +42,10 @@ class WebstoreOrderSms extends Job implements ShouldQueue
      */
     public function handle(SmsHandler $handler)
     {
-        if ($this->attempts() > 2) return;
+        if ($this->attempts() > $this->tries) return;
         $this->resolvePosOrder();
         $this->generateCommonData();
-        if (!$this->partner->isMigrationCompleted())
+        if (!$this->partner->isMigrated(Modules::POS))
             $this->generateDataForOldWebstoreSms();
         else
             $this->generateDataForNewWebstoreSms();
@@ -53,7 +54,7 @@ class WebstoreOrderSms extends Job implements ShouldQueue
 
     private function resolvePosOrder()
     {
-        if (!$this->partner->isMigrationCompleted())
+        if (!$this->partner->isMigrated(Modules::POS))
             $this->order = PosOrder::find($this->orderId);
         else
             $this->order = $this->getOrderDetailsFromPosOrderService();

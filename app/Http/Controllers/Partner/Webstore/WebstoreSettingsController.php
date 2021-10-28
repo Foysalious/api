@@ -42,7 +42,7 @@ class WebstoreSettingsController extends Controller
         $partner = resolvePartnerFromAuthMiddleware($request);
         $this->validate($request, [
             'is_webstore_published' => 'sometimes|numeric|between:0,1', 'name' => 'sometimes|string',
-            'sub_domain' => 'sometimes|string', 'delivery_charge' => 'sometimes|numeric|digits_between:1,5'
+            'sub_domain' => 'sometimes|string', 'delivery_charge' => 'sometimes|integer|digits_between:1,5'
         ],
             [
                 'delivery_charge.digits_between' => 'ডেলিভারি চার্জ ৫ সংখ্যার মধ্যে হওয়া আবশ্যক।'

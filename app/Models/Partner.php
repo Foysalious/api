@@ -4,6 +4,7 @@ use App\Models\Transport\TransportTicketOrder;
 use App\Sheba\InventoryService\Partner\Events\Created;
 use App\Sheba\InventoryService\Partner\Events\Updated;
 use App\Sheba\Payment\Rechargable;
+use App\Sheba\UserMigration\AccountingUserMigration;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -19,6 +20,7 @@ use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInformation;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
+use Sheba\Dal\UserMigration\UserStatus;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Payment\PayableUser;
 use Sheba\Transactions\Types;
@@ -51,9 +53,12 @@ use Sheba\Dal\Category\Category;
 use Sheba\Dal\Service\Service;
 use Sheba\Dal\PartnerNeoBankingInfo\Model as PartnerNeoBankingInfo;
 use Sheba\Dal\PartnerNeoBankingAccount\Model as PartnerNeoBankingAccount;
+use Sheba\Dal\UserMigration\Model as UserMigration;
+
 
 class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent, Rechargable, Bidder, HasWalletTransaction, HasReferrals, PayableUser
 {
+    CONST NOT_ELIGIBLE = 'not_eligible';
     use Wallet, TopUpTrait, MovieTicketTrait;
 
     public $totalCreditForSubscription;
@@ -926,11 +931,13 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         $wallet                = (double)$this->wallet;
         $bonus_wallet          = (double)$this->bonusWallet();
         $threshold             = $this->walletSetting ? (double)$this->walletSetting->min_wallet_threshold : 0;
+        $freeze_money          = $this->walletSetting ? (double) $this->walletSetting->pending_withdrawal_amount : 0;
         $this->creditBreakdown = [
             'remaining_subscription_charge' => $remaining,
             'wallet' => $wallet,
             'threshold' => $threshold,
-            'bonus_wallet' => $bonus_wallet
+            'bonus_wallet' => $bonus_wallet,
+            'freeze_money' => $freeze_money
         ];
         return [
             $remaining,
@@ -1046,16 +1053,6 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->hasOne(PartnerDataMigration::class);
     }
 
-    public function isMigrationCompleted()
-    {
-        return $this->is_migration_completed == 1;
-    }
-
-    public function isMigrationRunningOrCompleted()
-    {
-        return $this->dataMigration && $this->dataMigration->isRunningOrCompleted();
-    }
-
     public function topupChangeLogs()
     {
         return $this->hasMany(CanTopUpUpdateLog::class);
@@ -1069,5 +1066,40 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function getGatewayChargesId()
     {
         return $this->subscription_rules->payment_gateway_configuration_id;
+    }
+
+    public function userMigration()
+    {
+        return $this->hasMany(UserMigration::class, 'user_id');
+    }
+
+    public function lastUpdatedUserMigration()
+    {
+        return $this->userMigration->max('updated_at');
+    }
+
+    public function lastUpdatedSubscription()
+    {
+        return $this->subscription->updated_at;
+    }
+
+    public function lastUpdatedPosSetting()
+    {
+        return $this->posSetting->updated_at;
+    }
+
+    public function lastBilledDate()
+    {
+        return $this->last_billed_date;
+    }
+
+    public function isMigrated($module_name): bool
+    {
+        $arr = [self::NOT_ELIGIBLE, UserStatus::PENDING, UserStatus::UPGRADING, UserStatus::FAILED];
+        /** @var AccountingUserMigration $repo */
+        $repo = app(AccountingUserMigration::class);
+        $userStatus = $repo->setUserId($this->id)->setModuleName($module_name)->getStatus();
+        if (in_array($userStatus, $arr)) return false;
+        return true;
     }
 }
