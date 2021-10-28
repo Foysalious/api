@@ -70,7 +70,7 @@ class Updater
                 $this->salaryRepository->update($this->salary, $this->salaryData);
                 $this->salaryLogCreate();
             }
-            $this->createComponentPercentage();
+            if (!$this->salaryRequest->getIsForBulkGrossSalary()) $this->createComponentPercentage();
         });
         return true;
     }
