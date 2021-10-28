@@ -27,11 +27,23 @@ class WalletTransactionHandler extends WalletTransaction
     /** @var TransactionDetails $transaction_details */
     protected $transaction_details;
     private   $source;
+    private $isNegativeDebitAllowed = false;
+
+    /**
+     * @param bool $isNegativeDebitAllowed
+     * @return WalletTransactionHandler
+     */
+    public function setIsNegativeDebitAllowed(bool $isNegativeDebitAllowed): WalletTransactionHandler
+    {
+        $this->isNegativeDebitAllowed = $isNegativeDebitAllowed;
+        return $this;
+    }
 
     /**
      * @param array $extras
      * @param bool $isJob
      * @return Model
+     * @throws WalletDebitForbiddenException
      */
     public function store($extras = [], $isJob = false)
     {
@@ -42,16 +54,11 @@ class WalletTransactionHandler extends WalletTransaction
             if (!$isJob) {
                 $extras = $this->withCreateModificationField((new RequestIdentification())->set($extras));
             }
-            if ($this->type == Types::debit() && $this->model instanceof Partner) {
+            if ($this->type == Types::debit() && !$this->isNegativeDebitAllowed && $this->model instanceof Partner) {
                 self::isDebitTransactionAllowed($this->model, $this->amount);
             }
-            $transaction = $this->storeTransaction($extras);
-            try {
-                $this->storeFraudDetectionTransaction(!$isJob);
-            } catch (\Throwable $e) {
-                WalletTransaction::throwException($e);
-            }
-            return $transaction;
+            return $this->storeTransaction($extras);
+
         }
         catch (WalletDebitForbiddenException $e) {
             throw new WalletDebitForbiddenException($e->getMessage(), $e->getCode());
@@ -86,12 +93,12 @@ class WalletTransactionHandler extends WalletTransaction
             $transaction_data = $this->getTransactionClass()->fill($data);
             $transaction      = $this->model->transactions()->save($transaction_data);
 
-            event(new WalletUpdateEvent([
-                'amount'    => $this->model->fresh()->wallet,
-                'user_type' => strtolower(class_basename($this->model)),
-                'user_id'   => $this->model->id
-            ]));
         });
+        event(new WalletUpdateEvent([
+            'amount'    => $this->model->fresh()->wallet,
+            'user_type' => strtolower(class_basename($this->model)),
+            'user_id'   => $this->model->id
+        ]));
 
         return $transaction;
     }
