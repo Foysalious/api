@@ -27,7 +27,7 @@ class PersonalInfoTransformer extends TransformerAbstract
             'nid_back_image' => $profile->nid_image_back,
             'passport_no' => $profile->passport_no,
             'passport_image' => $profile->passport_image,
-            'blood_group' => $profile->blood_group,
+            'blood_group' => !empty($profile->blood_group) ? $profile->blood_group : null,
             'social_links' => (new SocialLink($member))->get()
         ];
     }
