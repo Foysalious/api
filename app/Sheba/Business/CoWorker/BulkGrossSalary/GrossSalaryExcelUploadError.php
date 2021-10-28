@@ -1,24 +1,23 @@
-<?php namespace Sheba\Business\LeaveAdjustment;
+<?php namespace App\Sheba\Business\CoWorker\BulkGrossSalary;
 
 use Maatwebsite\Excel\Readers\LaravelExcelReader;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Excel;
 
-class LeaveAdjustmentExcelUploadError
+class GrossSalaryExcelUploadError
 {
     use FileManager, CdnFileManager;
 
-    private $agent;
     private $file;
     private $row;
     private $totalRow;
     /** @var LaravelExcelReader */
     private $excel = null;
 
-    public function setAgent($agent)
+    public function setBusiness($business)
     {
-        $this->agent = $agent;
+        $this->business = $business;
         return $this;
     }
 
@@ -40,16 +39,10 @@ class LeaveAdjustmentExcelUploadError
         return $this;
     }
 
-    private function getExcel()
-    {
-        if (!$this->excel) $this->excel = Excel::selectSheets(AdjustmentExcel::SHEET)->load($this->file);
-        return $this->excel;
-    }
-
     public function updateExcel($message = null)
     {
         if ($message) {
-            $this->getExcel()->getActiveSheet()->setCellValue(AdjustmentExcel::MESSAGE_COLUMN . $this->row, $message);
+            $this->getExcel()->getActiveSheet()->setCellValue(GrossSalaryExcel::MESSAGE_COLUMN . $this->row, $message);
             $this->excel->save();
         }
     }
@@ -57,11 +50,17 @@ class LeaveAdjustmentExcelUploadError
     public function takeCompletedAction()
     {
         if ($this->row == $this->totalRow + 1) {
-            $name = strtolower(class_basename($this->agent)) . '_' . dechex($this->agent->id);
+            $name = strtolower(class_basename($this->business)) . '_' . dechex($this->business->id);
             $file_name = $this->uniqueFileName($this->file, $name, $this->getExcel()->ext);
-            $file_path = $this->saveFileToCDN($this->file, getBulkLeaveAdjustmentFolder(), $file_name);
+            $file_path = $this->saveFileToCDN($this->file, getBulkGrossSalaryFolder(), $file_name);
             unlink($this->file);
             return $file_path;
         }
+    }
+
+    private function getExcel()
+    {
+        if (!$this->excel) $this->excel = Excel::selectSheets(GrossSalaryExcel::SHEET)->load($this->file);
+        return $this->excel;
     }
 }
