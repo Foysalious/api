@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Sheba\Business\CoWorker\BulkGrossSalary\BulkGrossSalaryExcel;
 use App\Sheba\Business\Salary\Requester as CoWorkerSalaryRequester;
 use App\Transformers\Business\CoWorkerGrossSalaryReportTransformer;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
@@ -20,6 +21,7 @@ use Excel;
 class CoWorkerGrossSalaryController extends Controller
 {
     use ModificationFields;
+
     /** @var ProfileRepositoryInterface $profileRepo */
     private $profileRepo;
     /** @var CoWorkerSalaryRequester $coWorkerSalaryRequester */
@@ -76,6 +78,10 @@ class CoWorkerGrossSalaryController extends Controller
 
     }
 
+    /**
+     * @param $business
+     * @param Request $request
+     */
     public function grossSalaryReport($business, Request $request)
     {
         /** @var Business $business */
@@ -87,6 +93,6 @@ class CoWorkerGrossSalaryController extends Controller
         $employees = new Collection($business_members->get(), new CoWorkerGrossSalaryReportTransformer());
         $employees = collect($manager->createData($employees)->toArray()['data']);
 
-        if (count($employees) > 0) return api_response($request, $employees, 200, ['employee' => $employees]);
+        return (new BulkGrossSalaryExcel)->setEmployeeData($employees->toArray())->download();
     }
 }
