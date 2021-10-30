@@ -31,6 +31,20 @@ class SettingController extends Controller
      */
     public function getSettings(Request $request, Creator $creator, PosSettingRepository $repository)
     {
+        $settings = $this->getSettingsData($request,$creator,$repository);
+        if(!$settings) return api_response($request, null, 500,null);
+        else return api_response($request, $settings,200, ['settings' => $settings]);
+    }
+
+    public function getSettingsV2(Request $request, Creator $creator, PosSettingRepository $repository)
+    {
+        $settings = $this->getSettingsData($request,$creator,$repository);
+        if(!$settings) return http_response($request, null, 500,null);
+        else return http_response($request, $settings,200, ['settings' => $settings]);
+    }
+
+    private function getSettingsData(Request $request, Creator $creator, PosSettingRepository $repository)
+    {
         try {
             $partner = resolvePartnerFromAuthMiddleware($request);
             $settings = PartnerPosSetting::byPartner($partner->id)->select('id', 'partner_id', 'vat_percentage', 'auto_printing', 'sms_invoice')->first();
@@ -43,10 +57,10 @@ class SettingController extends Controller
             $settings->show_vat_registration_number = $partner->basicInformations->show_vat_registration_number;
             $settings['has_qr_code'] = ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0;
             removeRelationsAndFields($settings);
-            return api_response($request, $settings,200, ['settings' => $settings]);
+            return $settings;
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
-            return make_response($request, null, 500,null);
+            return false;
         }
     }
 

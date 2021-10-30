@@ -141,14 +141,14 @@ class Route
                 /**
                  * Old APIs with jwtAccessToken Middleware
                  */
-                $api->get('webstore-settings', 'Partner\Webstore\WebstoreSettingsController@index');
-                $api->post('webstore-settings', 'Partner\Webstore\WebstoreSettingsController@update');
-                $api->get('webstore-dashboard', 'Partner\Webstore\WebstoreDashboardController@getDashboard');
-                $api->post('toggle-webstore-sms-activation', 'PartnerController@toggleSmsActivation');
-                $api->get('webstore/banner-list', 'Partner\Webstore\WebstoreSettingsController@bannerList');
+                $api->get('webstore-settings', 'Partner\Webstore\WebstoreSettingsController@indexV2');
+                $api->post('webstore-settings', 'Partner\Webstore\WebstoreSettingsController@updateV2');
+                $api->get('webstore-dashboard', 'Partner\Webstore\WebstoreDashboardController@getDashboardV2');
+                $api->post('toggle-webstore-sms-activation', 'PartnerController@toggleSmsActivationV2');
+                $api->get('webstore/banner-list', 'Partner\Webstore\WebstoreSettingsController@bannerListV2');
                 $api->post('webstore/store-banner', 'Partner\Webstore\WebstoreSettingsController@storeBanner');
-                $api->post('webstore/update-banner', 'Partner\Webstore\WebstoreSettingsController@updateBanner');
-                $api->get('/settings', 'Pos\SettingController@getSettings');
+                $api->post('webstore/update-banner', 'Partner\Webstore\WebstoreSettingsController@updateBannerV2');
+                $api->get('/settings', 'Pos\SettingController@getSettingsV2');
                 $api->post('/settings', 'Pos\SettingController@storePosSetting');
                 $api->get('settings/printer', 'Pos\SettingController@getPrinterSettings');
                 $api->post('vat-registration-number', 'PartnerController@addVatRegistrationNumber');
