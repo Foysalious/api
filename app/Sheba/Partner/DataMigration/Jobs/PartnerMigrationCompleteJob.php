@@ -31,9 +31,9 @@ class PartnerMigrationCompleteJob extends Job implements ShouldQueue
 
     private function isQueuesProcessed(): bool
     {
-        return empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::Inventory::Queue::*')) &&
-            empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::PosOrder::Queue::*')) &&
-            empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::SmanagerUser::Queue::*'));
+        return empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::Inventory::Queue::*')); //&&
+//            empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::PosOrder::Queue::*')) &&
+//            empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::SmanagerUser::Queue::*'));
     }
 
     /**
@@ -47,6 +47,7 @@ class PartnerMigrationCompleteJob extends Job implements ShouldQueue
         $userMigrationSvc = app(UserMigrationService::class);
         /** @var UserMigrationRepository $class */
         $class = $userMigrationSvc->resolveClass(Modules::POS);
-        $class->setUserId($this->partner->id)->setModuleName(Modules::POS)->updateStatus(UserStatus::UPGRADED);
+        $current_status = $class->setUserId($this->partner->id)->setModuleName(Modules::POS)->getStatus();
+        if ($current_status == UserStatus::UPGRADING) $class->updateStatus(UserStatus::UPGRADED);
     }
 }

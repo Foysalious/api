@@ -55,7 +55,7 @@ class SmanagerUserDataMigration
 
     private function migratePosCustomers($data)
     {
-        $chunks = array_chunk($data, self::CHUNK_SIZE);
+        $chunks = array_chunk($data->toArray(), self::CHUNK_SIZE);
         foreach ($chunks as $chunk) {
             $this->setRedisKey();
             dispatch(new PartnerDataMigrationToSmanagerUserJob($this->partner, ['pos_customers' => $chunk], $this->currentQueue));
