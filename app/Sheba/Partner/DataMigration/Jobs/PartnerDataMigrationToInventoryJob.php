@@ -5,14 +5,15 @@ use App\Jobs\Job;
 use App\Models\PartnerPosService;
 use App\Models\PosCategory;
 use App\Sheba\InventoryService\InventoryServerClient;
-use GuzzleHttp\Exception\GuzzleException;
+use App\Sheba\UserMigration\Modules;
+use App\Sheba\UserMigration\UserMigrationRepository;
+use App\Sheba\UserMigration\UserMigrationService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Redis;
-use Sheba\Dal\PartnerDataMigration\PartnerDataMigration;
-use Sheba\Dal\PartnerDataMigration\Statuses;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
+use Sheba\Dal\UserMigration\UserStatus;
 
 class PartnerDataMigrationToInventoryJob extends Job implements ShouldQueue
 {
@@ -37,16 +38,9 @@ class PartnerDataMigrationToInventoryJob extends Job implements ShouldQueue
     public function handle()
     {
         try {
-            $this->migrate();
-        } catch (GuzzleException $e) {
-            if ($this->attempts < 2) {
-                $this->migrate();
-            } else {
-                $data_type = isset($this->data['partner_info']) ? 'partner_info' : key($this->data);
-                $ids = array_column($this->data[key($this->data)], 'id');
-//                $this->storeFailedLogs($data_type, $ids);
-            }
-
+            $this->attempts < 2 ? $this->migrate() : $this->storeLogs(0);;
+        } catch (\Exception $e) {
+            $this->storeLogs(0);
         }
     }
 
@@ -60,6 +54,7 @@ class PartnerDataMigrationToInventoryJob extends Job implements ShouldQueue
             $client->post('api/v1/partners/'.$this->partner->id.'/migrate', $this->data);
             $current_key = $redis_inventory_namespace . $this->queueNo;
             $this->deleteRedisKey($current_key);
+            $this->storeLogs(1);
         } else {
             $this->release(10);
         }
@@ -81,19 +76,27 @@ class PartnerDataMigrationToInventoryJob extends Job implements ShouldQueue
         $this->attempts += 1;
     }
 
-    private function storeFailedLogs($data_type, $ids)
+    private function storeLogs($isMigrated = 1)
     {
-        $partnerDataMigration = PartnerDataMigration::where('partner_id', $this->partner->id)->first();
-        $partnerDataMigration->update(['status' => Statuses::FAILED]);
+        if ($isMigrated == 0) {
+            /** @var UserMigrationService $userMigrationSvc */
+            $userMigrationSvc = app(UserMigrationService::class);
+            /** @var UserMigrationRepository $class */
+            $class = $userMigrationSvc->resolveClass(Modules::POS);
+            $class->setUserId($this->partner->id)->setModuleName(Modules::POS)->updateStatus(UserStatus::FAILED);
+        }
+
+        $data_type = isset($this->data['partner_info']) ? 'partner_info' : key($this->data);
+        $ids = array_column($this->data[key($this->data)], 'id');
         switch ($data_type) {
             case 'pos_categories':
-                PosCategory::whereIn('id', $ids)->update(['is_migrated' => 0]);
+                PosCategory::whereIn('id', $ids)->update(['is_migrated' => $isMigrated]);
                 break;
             case 'partner_pos_categories':
-                PartnerPosCategory::whereIn('id', $ids)->update(['is_migrated' => 0]);
+                PartnerPosCategory::whereIn('id', $ids)->update(['is_migrated' => $isMigrated]);
                 break;
             case 'products':
-                PartnerPosService::whereIn('id', $ids)->update(['is_migrated' => 0]);
+                PartnerPosService::whereIn('id', $ids)->update(['is_migrated' => $isMigrated]);
                 break;
         }
     }
