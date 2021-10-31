@@ -87,6 +87,6 @@ class PartnerDataMigrationToPosOrderJob extends Job implements ShouldQueue
         }
         $data_type = isset($this->data['partner_info']) ? 'partner_info' : key($this->data);
         $ids = array_column($this->data[key($this->data)], 'id');
-        if ($data_type == 'pos_orders') PosOrder::whereIn('id', $ids)->update(['is_migrated' => $isMigrated]);
+        if ($data_type == 'pos_orders') PosOrder::whereIn('id', $ids)->withTrashed()->update(['is_migrated' => $isMigrated]);
     }
 }
