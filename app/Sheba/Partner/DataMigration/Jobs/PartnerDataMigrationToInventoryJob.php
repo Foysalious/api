@@ -90,13 +90,13 @@ class PartnerDataMigrationToInventoryJob extends Job implements ShouldQueue
         $ids = array_column($this->data[key($this->data)], 'id');
         switch ($data_type) {
             case 'pos_categories':
-                PosCategory::whereIn('id', $ids)->update(['is_migrated' => $isMigrated]);
+                PosCategory::whereIn('id', $ids)->withTrashed()->update(['is_migrated' => $isMigrated]);
                 break;
             case 'partner_pos_categories':
-                PartnerPosCategory::whereIn('id', $ids)->update(['is_migrated' => $isMigrated]);
+                PartnerPosCategory::whereIn('id', $ids)->withTrashed()->update(['is_migrated' => $isMigrated]);
                 break;
             case 'products':
-                PartnerPosService::whereIn('id', $ids)->update(['is_migrated' => $isMigrated]);
+                PartnerPosService::whereIn('id', $ids)->withTrashed()->update(['is_migrated' => $isMigrated]);
                 break;
         }
     }

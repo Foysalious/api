@@ -31,9 +31,9 @@ class PartnerMigrationCompleteJob extends Job implements ShouldQueue
 
     private function isQueuesProcessed(): bool
     {
-        return empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::Inventory::Queue::*')); //&&
-//            empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::PosOrder::Queue::*')) &&
-//            empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::SmanagerUser::Queue::*'));
+        return empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::Inventory::Queue::*')) &&
+            empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::PosOrder::Queue::*')) &&
+            empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::SmanagerUser::Queue::*'));
     }
 
     /**
@@ -41,8 +41,6 @@ class PartnerMigrationCompleteJob extends Job implements ShouldQueue
      */
     private function storeSuccessLog()
     {
-//        $partnerDataMigration = PartnerDataMigration::where('partner_id', $this->partner->id)->first();
-//        $partnerDataMigration->update(['status' => Statuses::SUCCESSFUL]);
         /** @var UserMigrationService $userMigrationSvc */
         $userMigrationSvc = app(UserMigrationService::class);
         /** @var UserMigrationRepository $class */
