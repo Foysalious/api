@@ -94,6 +94,7 @@ class PosOrderDataMigration
         $pos_setting = $this->partner->posSetting;
         return [
             'id' => $this->partner->id,
+            'name' => $this->partner->name,
             'sub_domain' => $this->partner->sub_domain,
             'sms_invoice' => $pos_setting ? $this->partner->posSetting->sms_invoice : 0,
             'auto_printing' => $pos_setting ? $this->partner->posSetting->auto_pronting : 0,
