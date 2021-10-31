@@ -44,7 +44,7 @@ class JobStatuses
 
     public static function isOpenForTodayForPartner($status)
     {
-        return !is_array($status, self::getNotOpenForTodayForPartner());
+        return !in_array($status, self::getNotOpenForTodayForPartner());
     }
 
     public static function getNotOpenForTomorrowForPartner()
@@ -54,7 +54,7 @@ class JobStatuses
 
     public static function isOpenForTomorrowForPartner($status)
     {
-        return !is_array($status, self::getNotOpenForTomorrowForPartner());
+        return !in_array($status, self::getNotOpenForTomorrowForPartner());
     }
 
     public static function getOngoingWithoutServed()
