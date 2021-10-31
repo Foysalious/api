@@ -111,7 +111,7 @@ class PosOrderDataMigration
                         ELSE "2" 
                         END) AS sales_channel_id'), 'emi_month',
                 'bank_transaction_charge', 'interest', 'delivery_charge', 'address AS delivery_address', 'note',
-                'voucher_id')->get()->toArray();
+                'voucher_id', 'created_at', 'created_by_name', 'updated_at', 'updated_by_name', 'deleted_at')->get()->toArray();
         $this->partnerPosOrderIds = array_column($pos_orders, 'id');
 
         return $pos_orders;
