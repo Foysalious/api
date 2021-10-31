@@ -70,7 +70,7 @@ class PosCustomerController extends Controller
             $image = base64_encode(file_get_contents($request->file('pro_pic')->path()));
         }
         $this->posCustomerService->setPartner($partner)->setNote($request->note)->setName($request->name)->setBnName($request->bnName)->setMobile($request->mobile)
-            ->setEmail($request->email)->setAddress($request->address)->setGender($request->gender)->setBloodGroup($request->blood_group)->setDob($request->dob)->setproPic($image)->setCustomerId($customer_id)
+            ->setEmail($request->email)->setAddress($request->address)->setGender($request->gender)->setSupplier($request->is_supplier)->setBloodGroup($request->blood_group)->setDob($request->dob)->setproPic($image)->setCustomerId($customer_id)
             ->updatePosCustomer();
     }
 
