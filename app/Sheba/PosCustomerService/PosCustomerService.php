@@ -241,7 +241,7 @@ class PosCustomerService
         if (isset($this->note)) $data['note'] = $this->note;
         if (isset($this->email)) $data['email'] = $this->email;
         if (isset($this->supplier)) $data['is_supplier'] = $this->supplier;
-
+dd($data);
 
         return $data;
     }
