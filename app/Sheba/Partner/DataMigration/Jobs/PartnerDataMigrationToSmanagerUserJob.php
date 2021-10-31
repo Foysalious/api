@@ -95,7 +95,7 @@ class PartnerDataMigrationToSmanagerUserJob extends Job implements ShouldQueue
         $ids = array_column($this->data[key($this->data)], 'id');
         switch ($data_type) {
             case 'pos_customers':
-                PartnerPosCustomer::whereIn('id', $ids)->update(['is_migrated' => 0]);
+                PartnerPosCustomer::whereIn('id', $ids)->update(['is_migrated' => $isMigrated]);
                 break;
         }
     }

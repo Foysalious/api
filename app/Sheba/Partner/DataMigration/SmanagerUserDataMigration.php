@@ -68,6 +68,9 @@ class SmanagerUserDataMigration
         $query = DB::raw("(CASE WHEN partner_pos_customers.nick_name IS NOT NULL  THEN partner_pos_customers.nick_name  ELSE profiles.name END) as name");
         return DB::table('partner_pos_customers')
             ->where('partner_id', $this->partner->id)
+            ->where(function ($q) {
+                $q->where('is_migrated', null)->orWhere('is_migrated', 0);
+            })
             ->join('pos_customers', 'partner_pos_customers.customer_id', '=', 'pos_customers.id')
             ->join('profiles', 'pos_customers.profile_id', '=', 'profiles.id')
             ->select('partner_pos_customers.customer_id as previous_id', 'partner_pos_customers.partner_id', $query,
