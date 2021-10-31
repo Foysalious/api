@@ -149,15 +149,15 @@ class Route
                 $api->post('webstore/store-banner', 'Partner\Webstore\WebstoreSettingsController@storeBanner');
                 $api->post('webstore/update-banner', 'Partner\Webstore\WebstoreSettingsController@updateBannerV2');
                 $api->get('/settings', 'Pos\SettingController@getSettingsV2');
-                $api->post('/settings', 'Pos\SettingController@storePosSetting');
-                $api->get('settings/printer', 'Pos\SettingController@getPrinterSettings');
-                $api->post('vat-registration-number', 'PartnerController@addVatRegistrationNumber');
-                $api->post('change-logo', 'PartnerController@changeLogo');
-                $api->get('slider-details-and-account-types', 'PartnerController@getSliderDetailsAndAccountTypes');
-                $api->get('qr-code', 'PartnerController@getQRCode');
-                $api->post('qr-code', 'PartnerController@setQRCode');
-                $api->post('orders/{order}/send-sms', 'Pos\OrderController@sendSms');
-                $api->post('orders/{order}/send-email', 'Pos\OrderController@sendEmail');
+                $api->post('/settings', 'Pos\SettingController@storePosSettingV2');
+                $api->get('settings/printer', 'Pos\SettingController@getPrinterSettingsV2');
+                $api->post('vat-registration-number', 'PartnerController@addVatRegistrationNumberV2');
+                $api->post('change-logo', 'PartnerController@changeLogoV2');
+                $api->get('slider-details-and-account-types', 'PartnerController@getSliderDetailsAndAccountTypesV2');
+                $api->get('qr-code', 'PartnerController@getQRCodeV2');
+                $api->post('qr-code', 'PartnerController@setQRCodeV2');
+                $api->post('orders/{order}/send-sms', 'Pos\OrderController@sendSmsV2');
+                $api->post('orders/{order}/send-email', 'Pos\OrderController@sendEmailV2');
                 $api->get('filters', 'PosOrder\OrderController@getFilteringOptions' );
                 /**
                  * End Old APIs with jwtAccessToken Middleware

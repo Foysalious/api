@@ -66,24 +66,39 @@ class SettingController extends Controller
 
     public function getPrinterSettings(Request $request, Creator $creator, PosSettingRepository $repository)
     {
-        try {
-            $partner = resolvePartnerFromAuthMiddleware($request);
-            $settings = PartnerPosSetting::byPartner($partner->id)->select('partner_id', 'printer_model', 'printer_name', 'auto_printing')->first();
-            if (!$settings) {
-                $data = ['partner_id' => $partner->id,];
-                $creator->setData($data)->create();
-                $settings = PartnerPosSetting::byPartner($partner->id)->select('partner_id', 'printer_model', 'printer_name', 'auto_printing')->first();
-            }
-            removeRelationsAndFields($settings);
-            $repository->getTrainingVideoData($settings);
-            return make_response($request, $settings, 200, ['data' => $settings]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return make_response($request, null, 500,null);
-        }
+        $printer_settings_data = $this->getPrinterSettingsData($request,$creator,$repository);
+        if($printer_settings_data)
+            return api_response($request, $printer_settings_data, 200, ['data' => $printer_settings_data]);
+        else
+            return api_response($request, null, 500);
+
+    }
+
+    public function getPrinterSettingsV2(Request $request, Creator $creator, PosSettingRepository $repository)
+    {
+        $printer_settings_data = $this->getPrinterSettingsData($request,$creator,$repository);
+        if($printer_settings_data)
+            return http_response($request, $printer_settings_data, 200, ['data' => $printer_settings_data]);
+        else
+            return http_response($request, null, 500);
+
     }
 
     public function storePosSetting(Request $request, Creator $creator)
+    {
+        $settings_saved = $this->savePosSettings($request,$creator);
+        if(!$settings_saved) return api_response($request, null, 500);
+        else return api_response($request, null,200, ['message' => 'Successful']);
+    }
+
+    public function storePosSettingV2(Request $request, Creator $creator)
+    {
+        $settings_saved = $this->savePosSettings($request,$creator);
+        if(!$settings_saved) return http_response($request, null, 500);
+        else return http_response($request, null,200);
+    }
+
+    private function savePosSettings(Request $request, Creator $creator)
     {
         try {
             $partner = resolvePartnerFromAuthMiddleware($request);
@@ -99,10 +114,10 @@ class SettingController extends Controller
             if ($request->has('printer_model')) $data["printer_model"] = $request->printer_model;
 
             $partnerPosSetting->update($this->withUpdateModificationField($data));
-            return make_response($request, null, 200,['message' => 'Successful']);
+            return true;
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
-            return make_response($request, null, 500,null);
+            return false;
         }
     }
 
@@ -139,5 +154,24 @@ class SettingController extends Controller
         (new WalletTransactionHandler())->setModel($request->partner)->setAmount($sms_cost)->setType(Types::debit())->setLog($log)->setTransactionDetails([])->setSource(TransactionSources::SMS)->store();
 
         return api_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
+    }
+
+    private function getPrinterSettingsData(Request $request, Creator $creator, PosSettingRepository $repository)
+    {
+        try {
+            $partner = resolvePartnerFromAuthMiddleware($request);
+            $settings = PartnerPosSetting::byPartner($partner->id)->select('partner_id', 'printer_model', 'printer_name', 'auto_printing')->first();
+            if (!$settings) {
+                $data = ['partner_id' => $partner->id,];
+                $creator->setData($data)->create();
+                $settings = PartnerPosSetting::byPartner($partner->id)->select('partner_id', 'printer_model', 'printer_name', 'auto_printing')->first();
+            }
+            removeRelationsAndFields($settings);
+            $repository->getTrainingVideoData($settings);
+            return $settings;
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return false;
+        }
     }
 }
