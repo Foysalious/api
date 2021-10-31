@@ -14,7 +14,7 @@ use Sheba\Usage\Usage;
 
 class PartnerUsageUpgradeJob extends Job implements ShouldQueue
 {
-    use ModificationFields; 
+    use ModificationFields;
     use InteractsWithQueue, SerializesModels;
 
     private $modifier;
@@ -30,7 +30,7 @@ class PartnerUsageUpgradeJob extends Job implements ShouldQueue
 
     public function handle()
     {
-        if ($this->attempts() <= 1){
+        if ($this->attempts() <= 1) {
             try {
                 $data = ['type' => $this->type];
                 if (!empty($modifier))
@@ -39,10 +39,10 @@ class PartnerUsageUpgradeJob extends Job implements ShouldQueue
                     $this->setModifier($this->user);
                 $data['partner_id'] = $this->user->id;
                 PartnerUsageHistory::create($this->withCreateModificationField($data));
-                if (!empty($this->user->referredBy))
+                if (Usage::isRefEnabled() && !empty($this->user->referredBy))
                     (new Usage())->setType($this->type)->setUser($this->user)->updateUserLevel();
-            }catch (\Throwable $e){
-                Log::error($e->getFile().'||'.$e->getLine().'||'.$e->getMessage());
+            } catch (\Throwable $e) {
+                Log::error($e->getFile() . '||' . $e->getLine() . '||' . $e->getMessage());
             }
         }
     }
