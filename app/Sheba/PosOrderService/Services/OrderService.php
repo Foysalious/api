@@ -346,7 +346,7 @@ class OrderService
 
     public function getFilteringOptions()
     {
-        return $this->client->get('api/v1/filtering-options');
+        return $this->client->get('api/v1/filters');
     }
 
     private function makeDeliveryData()

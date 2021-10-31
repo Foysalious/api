@@ -1053,29 +1053,26 @@ class PartnerController extends Controller
      */
     public function addVatRegistrationNumber(Request $request)
     {
-        $this->validate($request, [
-            'vat_registration_number' => 'required',
-            'show_vat_registration_number' => 'sometimes|required|max:1|numeric'
-        ]);
-        $partner = resolvePartnerFromAuthMiddleware($request);
-        $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
-        $partner->basicInformations()->update($this->withUpdateModificationField(
-            [
-                'vat_registration_number' => $request->vat_registration_number,
-                'show_vat_registration_number' => (int)$request->show_vat_registration_number ?: 0
-            ]
-        ));
-        return make_response($request, null, 200, ['msg' => 'Vat Registration Number Update Successfully']);
+        $this->saveVatRegistrationNumber($request);
+        return api_response($request, null, 200, ['msg' => 'Vat Registration Number Update Successfully']);
+    }
+
+    public function addVatRegistrationNumberV2(Request $request)
+    {
+        $this->saveVatRegistrationNumber($request);
+        return http_response($request, null, 200, ['msg' => 'Vat Registration Number Update Successfully']);
     }
 
     public function changeLogo(Request $request)
     {
-        $partner = resolvePartnerFromAuthMiddleware($request);
-        $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
-        $this->validate($request, ['logo' => 'required|file|image']);
-        $repo = new PartnerRepository($partner);
-        $logo = $repo->updateLogo($request);
-        return make_response($request, $logo, 200, ['logo' => $logo]);
+        $logo = $this->updateLogo($request);
+        return api_response($request, $logo, 200, ['logo' => $logo]);
+    }
+
+    public function changeLogoV2(Request $request)
+    {
+        $logo = $this->updateLogo($request);
+        return http_response($request, $logo, 200, ['logo' => $logo]);
     }
 
     /**
@@ -1122,51 +1119,38 @@ class PartnerController extends Controller
 
     public function setQRCode(Request $request)
     {
-        $account_type = array_keys(config('partner.qr_code.account_types'));
-        $account_type = implode(',', $account_type);
-        $this->validate($request, [
-            'account_type' => "required|in:$account_type",
-            'image'        => "required|mimes:jpeg,png,jpg",
-        ]);
-        $image   = $request->file('image');
-        $partner = resolvePartnerFromAuthMiddleware($request);
-        if ($partner->qr_code_image) {
-            $file_name = substr($partner->qr_code_image, strlen(env('S3_URL')));
-            $this->fileRepository->deleteFileFromCDN($file_name);
-        }
-        $file_name  = $partner->id . '_QR_code' . '.' . $image->extension();
-        $image_link = $this->fileRepository->uploadToCDN($file_name, $request->file('image'), 'partner/qr-code/');
-        $this->setModifier($partner);
-        $partner->update($this->withUpdateModificationField([
-            'qr_code_account_type' => $request->account_type,
-            'qr_code_image'        => $image_link,
-        ]));
-        return make_response($request, null, 200, ['message' => 'QR code set successfully']);
+        $this->saveQRCodeData($request);
+        return api_response($request, null, 200, ['message' => 'QR code set successfully']);
+    }
+
+    public function setQRCodeV2(Request $request)
+    {
+        $this->saveQRCodeData($request);
+        return http_response($request, null, 200);
     }
 
     public function getQRCode(Request $request)
     {
-        $partner = resolvePartnerFromAuthMiddleware($request);
-        $data    = [
-            'account_type' => $partner->qr_code_account_type ? config('partner.qr_code.account_types')[$partner->qr_code_account_type] : null,
-            'image'        => $partner->qr_code_image ?: null
-        ];
-        return make_response($request, null, 200, ['data' => $data]);
+        $data = $this->getQRCodeData($request);
+        return api_response($request, null, 200, ['data' => $data]);
+    }
+
+    public function getQRCodeV2(Request $request)
+    {
+        $data = $this->getQRCodeData($request);
+        return http_response($request, null, 200, ['data' => $data]);
     }
 
     public function getSliderDetailsAndAccountTypes(Request $request)
     {
-        $account_types     = [];
-        $all_account_types = config('partner.qr_code.account_types');
-        foreach ($all_account_types as $key => $type) {
-            array_push($account_types, $type);
-        }
-        $data = [
-            'description'   => config('partner.qr_code.description'),
-            'slider_image'  => config('partner.qr_code.slider_image'),
-            'account_types' => $account_types
-        ];
-        return make_response($request, null, 200, ['data' => $data]);
+        $data = $this->getSliderDetailsAndAccountTypesData();
+        return api_response($request, null, 200, ['data' => $data]);
+    }
+
+    public function getSliderDetailsAndAccountTypesV2(Request $request)
+    {
+        $data = $this->getSliderDetailsAndAccountTypesData();
+        return http_response($request, null, 200, ['data' => $data]);
     }
 
     public function dashboardByToken(Request $request)
@@ -1201,10 +1185,92 @@ class PartnerController extends Controller
 
     public function toggleSmsActivation(Request $request, Updater $updater)
     {
+        $this->updateToggleSmsActivation($request,$updater);
+        return api_response($request, null, 200, ['message' => 'SMS Settings Updated Successfully']);
+    }
+
+    public function toggleSmsActivationV2(Request $request, Updater $updater)
+    {
+        $this->updateToggleSmsActivation($request,$updater);
+        return http_response($request, null, 200, ['message' => 'SMS Settings Updated Successfully']);
+    }
+
+    private function updateToggleSmsActivation(Request $request, Updater $updater)
+    {
         $partner = resolvePartnerFromAuthMiddleware($request);
         $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
         $isWebstoreSmsActive = !(int)$partner->is_webstore_sms_active;
         $updater->setPartner($partner)->setIsWebstoreSmsActive($isWebstoreSmsActive)->update();
-        return make_response($request, null, 200, ['message' => 'SMS Settings Updated Successfully']);
+    }
+
+    private function saveVatRegistrationNumber(Request $request)
+    {
+        $this->validate($request, [
+            'vat_registration_number' => 'required',
+            'show_vat_registration_number' => 'sometimes|required|max:1|numeric'
+        ]);
+        $partner = resolvePartnerFromAuthMiddleware($request);
+        $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
+        $partner->basicInformations()->update($this->withUpdateModificationField(
+            [
+                'vat_registration_number' => $request->vat_registration_number,
+                'show_vat_registration_number' => (int)$request->show_vat_registration_number ?: 0
+            ]
+        ));
+    }
+
+    private function getQRCodeData(Request $request)
+    {
+        $partner = resolvePartnerFromAuthMiddleware($request);
+        return [
+            'account_type' => $partner->qr_code_account_type ? config('partner.qr_code.account_types')[$partner->qr_code_account_type] : null,
+            'image'        => $partner->qr_code_image ?: null
+        ];
+    }
+
+    private function getSliderDetailsAndAccountTypesData()
+    {
+        $account_types     = [];
+        $all_account_types = config('partner.qr_code.account_types');
+        foreach ($all_account_types as $key => $type) {
+            array_push($account_types, $type);
+        }
+        return [
+            'description'   => config('partner.qr_code.description'),
+            'slider_image'  => config('partner.qr_code.slider_image'),
+            'account_types' => $account_types
+        ];
+    }
+
+    private function saveQRCodeData(Request $request)
+    {
+        $account_type = array_keys(config('partner.qr_code.account_types'));
+        $account_type = implode(',', $account_type);
+        $this->validate($request, [
+            'account_type' => "required|in:$account_type",
+            'image'        => "required|mimes:jpeg,png,jpg",
+        ]);
+        $image   = $request->file('image');
+        $partner = resolvePartnerFromAuthMiddleware($request);
+        if ($partner->qr_code_image) {
+            $file_name = substr($partner->qr_code_image, strlen(env('S3_URL')));
+            $this->fileRepository->deleteFileFromCDN($file_name);
+        }
+        $file_name  = $partner->id . '_QR_code' . '.' . $image->extension();
+        $image_link = $this->fileRepository->uploadToCDN($file_name, $request->file('image'), 'partner/qr-code/');
+        $this->setModifier($partner);
+        $partner->update($this->withUpdateModificationField([
+            'qr_code_account_type' => $request->account_type,
+            'qr_code_image'        => $image_link,
+        ]));
+    }
+
+    private function updateLogo(Request $request)
+    {
+        $partner = resolvePartnerFromAuthMiddleware($request);
+        $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
+        $this->validate($request, ['logo' => 'required|file|image']);
+        $repo = new PartnerRepository($partner);
+        return $repo->updateLogo($request);
     }
 }
