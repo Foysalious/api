@@ -211,24 +211,3 @@ if (!function_exists('getLocationFromRequest')) {
     }
 }
 
-
-if (!function_exists('make_response')) {
-
-    /**
-     * @param $request
-     * @param $internal_response
-     * @param $response_code
-     * @param $external_response
-     * @return JsonResponse
-     */
-
-    function make_response($request, $internal_response, $response_code, $external_response)
-    {
-        $is_rebuild_response = substr( \request()->getRequestUri(), 0, 5 ) === '/pos/';
-        if($is_rebuild_response)
-            return http_response($request, $internal_response, $response_code, $external_response);
-        else
-            return api_response($request, $internal_response, $response_code, $external_response);
-    }
-}
-

@@ -396,14 +396,19 @@ class OrderController extends Controller
      */
     public function sendSms(Request $request, Updater $updater)
     {
-        $partner = resolvePartnerFromAuthMiddleware($request);
-        $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
-        /** @var PosOrder $order */
-        $order = PosOrder::with('items')->find($request->order);
-        if (empty($order)) return make_response($request, null, 404, ['msg' => 'Order not found']);
-        $order=$order->calculate();
-        $this->dispatch(new OrderBillSms($order));
-        return make_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
+        $this->sendSmsCore($request,$updater);
+        return api_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
+    }
+
+    /**
+     * @param Request $request
+     * @param Updater $updater
+     * @return JsonResponse
+     */
+    public function sendSmsV2(Request $request, Updater $updater)
+    {
+        $this->sendSmsCore($request,$updater);
+        return http_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
     }
 
     /**
@@ -415,22 +420,19 @@ class OrderController extends Controller
      */
     public function sendEmail(Request $request, Updater $updater)
     {
-        $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
-        /** @var PosOrder $order */
-        $order = PosOrder::with('items')->find($request->order)->calculate();
-        if ($request->has('customer_id') && is_null($order->customer_id)) {
-            $requested_customer = PosCustomer::find($request->customer_id);
-            $order = $updater->setOrder($order)->setData(['customer_id' => $requested_customer->id])->update();
-        }
-        if (!$order)
-            return make_response($request,null,404, ['msg' => 'Order not found']);
-        if (!$order->customer)
-            return make_response($request, null, 404, ['msg' => 'Customer not found']);
-        if (!$order->customer->profile->email)
-            return make_response($request, null, 404, ['msg' => 'Customer email not found']);
-        dispatch(new OrderBillEmail($order));
-        return make_response($request,null,200, ['msg' => 'Email Send Successfully']);
+        $response = $this->sendEmailCore($request, $updater);
+        return api_response($request,null,$response['code'], ['msg' => $response['msg'] ]);
+    }
 
+    /**
+     * @param Request $request
+     * @param Updater $updater
+     * @return JsonResponse
+     */
+    public function sendEmailV2(Request $request, Updater $updater)
+    {
+        $response = $this->sendEmailCore($request, $updater);
+        return http_response($request,null,$response['code'], ['msg' => $response['msg'] ]);
     }
 
     public function collectPayment(Request $request, PaymentCreator $payment_creator)
@@ -573,6 +575,32 @@ class OrderController extends Controller
         $entry  = app(AutomaticEntryRepository::class);
         $entry->setPartner($order->partner)->setFor(EntryType::INCOME)->setSourceType(class_basename($order))->setSourceId($order->id)->setParty($requested_customer->profile)->updatePartyFromSource();
         return api_response($request, null, 200, ['msg' => 'Customer tagged Successfully']);
+    }
+
+    private function sendSmsCore(Request $request, Updater $updater)
+    {
+        $partner = resolvePartnerFromAuthMiddleware($request);
+        $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
+        $this->dispatch(new OrderBillSms($partner, $request->order));
+    }
+
+    private function sendEmailCore(Request $request, Updater $updater)
+    {
+        $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
+        /** @var PosOrder $order */
+        $order = PosOrder::with('items')->find($request->order)->calculate();
+        if ($request->has('customer_id') && is_null($order->customer_id)) {
+            $requested_customer = PosCustomer::find($request->customer_id);
+            $order = $updater->setOrder($order)->setData(['customer_id' => $requested_customer->id])->update();
+        }
+        if (!$order)
+            return (['code' =>404, 'msg' => 'Order not found']);
+        if (!$order->customer)
+          return (['code' =>404, 'msg' => 'Customer not found']);
+        if (!$order->customer->profile->email)
+            return (['code' =>404, 'msg' => 'Customer email not found']);
+        dispatch(new OrderBillEmail($order));
+        return (['code' =>200, 'msg' => 'Email Send Successfully']);
     }
 
 }
