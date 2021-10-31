@@ -62,7 +62,7 @@ class PosCustomerController extends Controller
     }
 
     public function updatePosCustomer(Request $request)
-    {
+    {dd(1);
         $partner = $request->auth_user->getPartner();
         $customer_id = $request->customer_id;
         $image = null;
