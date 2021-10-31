@@ -27,12 +27,14 @@ class WebstoreSettingsController extends Controller
 
     public function index(Request $request)
     {
-        $partner = resolvePartnerFromAuthMiddleware($request);
-        $fractal = new Manager();
-        $fractal->setSerializer(new CustomSerializer());
-        $resource = new Item($partner, new WebstoreSettingsTransformer());
-        $settings = $fractal->createData($resource)->toArray()['data'];
-        return make_response($request, $settings, 200, ['webstore_settings' => $settings]);
+        $settings = $this->getWebstoreSettingsData($request);
+        return api_response($request, $settings, 200, ['webstore_settings' => $settings]);
+    }
+
+    public function indexV2(Request $request)
+    {
+        $settings = $this->getWebstoreSettingsData($request);
+        return http_response($request, $settings, 200, ['webstore_settings' => $settings]);
     }
 
     /**
@@ -43,6 +45,76 @@ class WebstoreSettingsController extends Controller
      * @throws DoNotReportException
      */
     public function update(Request $request, WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest)
+    {
+        $this->updateWebstoreSettings($request,$webstoreSettingsUpdateRequest);
+        return api_response($request, null, 200, ['message' => 'Successful']);
+    }
+
+    public function updateV2(Request $request, WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest)
+    {
+        $this->updateWebstoreSettings($request,$webstoreSettingsUpdateRequest);
+        return http_response($request, null, 200, ['message' => 'Successful']);
+    }
+
+
+    /**
+     * @param Request $request
+     * @param WebstoreBannerSettings $webstoreBannerSettings
+     * @return JsonResponse
+     */
+    public function bannerList(Request $request, WebstoreBannerSettings $webstoreBannerSettings)
+    {
+        $list = $this->getBannerList($request,$webstoreBannerSettings);
+        return api_response($request, null, 200, ['data' => $list]);
+    }
+
+    public function bannerListV2(Request $request, WebstoreBannerSettings $webstoreBannerSettings)
+    {
+        $list = $this->getBannerList($request,$webstoreBannerSettings);
+        return http_response($request, null, 200, ['data' => $list]);
+    }
+
+    /**
+     * @param Request $request
+     * @param WebstoreBannerSettings $webstoreBannerSettings
+     * @return JsonResponse
+     */
+    public function updateBanner(Request $request, WebstoreBannerSettings $webstoreBannerSettings)
+    {
+        $banner_settings_updated = $this->updateBannerSettings($request,$webstoreBannerSettings);
+        if (!$banner_settings_updated) {
+            return api_response($request, null, 400, ['message' => 'Banner Settings not found'] );
+        } else{
+           return api_response($request, null, 200, ['message' => 'Banner Settings Updated Successfully']);
+        }
+    }
+
+    public function updateBannerV2(Request $request, WebstoreBannerSettings $webstoreBannerSettings)
+    {
+        $banner_settings_updated = $this->updateBannerSettings($request,$webstoreBannerSettings);
+        if (!$banner_settings_updated) {
+            return http_response($request, null, 400, ['message' => 'Banner Settings not found'] );
+        } else{
+            return http_response($request, null, 200, ['message' => 'Banner Settings Updated Successfully']);
+        }
+    }
+
+    private function getWebstoreSettingsData(Request $request)
+    {
+        $partner = resolvePartnerFromAuthMiddleware($request);
+        $fractal = new Manager();
+        $fractal->setSerializer(new CustomSerializer());
+        $resource = new Item($partner, new WebstoreSettingsTransformer());
+        return $fractal->createData($resource)->toArray()['data'];
+    }
+
+    /**
+     * @param Request $request
+     * @param WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest
+     * @throws AccessRestrictedExceptionForPackage
+     * @throws DoNotReportException
+     */
+    private function updateWebstoreSettings(Request $request, WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest)
     {
         $partner = resolvePartnerFromAuthMiddleware($request);
         $this->validate($request, [
@@ -80,37 +152,26 @@ class WebstoreSettingsController extends Controller
                 ]));
             }
         }
-        return make_response($request, null, 200, ['message' => 'Successful']);
     }
 
 
-    /**
-     * @param Request $request
-     * @param WebstoreBannerSettings $webstoreBannerSettings
-     * @return JsonResponse
-     */
-    public function bannerList(Request $request, WebstoreBannerSettings $webstoreBannerSettings)
+    private function getBannerList(Request $request, WebstoreBannerSettings $webstoreBannerSettings)
     {
-        $list = $webstoreBannerSettings->getBannerList();
-        return make_response($request, null, 200, ['data' => $list]);
+        return $webstoreBannerSettings->getBannerList();
     }
 
-    /**
-     * @param Request $request
-     * @param WebstoreBannerSettings $webstoreBannerSettings
-     * @return JsonResponse
-     */
-    public function updateBanner(Request $request, WebstoreBannerSettings $webstoreBannerSettings)
+    private function updateBannerSettings(Request $request, WebstoreBannerSettings $webstoreBannerSettings)
     {
         $partner = resolvePartnerFromAuthMiddleware($request);
         $partner_id = $partner->id;
         $manager_resource = resolveManagerResourceFromAuthMiddleware($request);
         $this->setModifier($manager_resource);
         $banner_settings = PartnerWebstoreBanner::where('partner_id', $partner_id)->first();
-        if (!$banner_settings) {
-            return make_response($request, null, 400, ['message' => 'Banner Settings not found'] );
+        if(!$banner_settings)
+            return false;
+        else {
+            $webstoreBannerSettings->setBannerSettings($banner_settings)->setData($request->all())->update();
+            return true;
         }
-        $webstoreBannerSettings->setBannerSettings($banner_settings)->setData($request->all())->update();
-        return make_response($request, null, 200, ['message' => 'Banner Settings Updated Successfully']);
     }
 }

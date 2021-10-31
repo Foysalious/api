@@ -1,6 +1,7 @@
 <?php namespace Sheba\Business\Attendance\Detail;
 
 use App\Models\BusinessMember;
+use App\Sheba\Business\Attendance\AttendanceConstGetter;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;

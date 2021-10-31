@@ -66,8 +66,8 @@ class PosOrderServerClient
     {
         $options['headers'] = [
             'Accept' => 'application/json',
-            'portal-name' => getShebaRequestHeader()->toArray()['portal-name'],
-            'Version-Code' => getShebaRequestHeader()->toArray()['Version-Code']
+           // 'portal-name' => getShebaRequestHeader()->toArray()['portal-name'],
+            //'Version-Code' => getShebaRequestHeader()->toArray()['Version-Code']
         ];
         if ($this->token) $options['headers'] += ['Authorization' => 'Bearer ' . $this->token];
         if (!$data) return $options;

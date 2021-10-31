@@ -4,8 +4,7 @@ use App\Jobs\Job;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Sheba\Dal\PartnerDataMigration\PartnerDataMigration;
-use Sheba\Dal\PartnerDataMigration\Statuses;
+use Illuminate\Support\Facades\Redis;
 
 class PartnerMigrationStartJob extends Job implements ShouldQueue
 {
@@ -22,8 +21,7 @@ class PartnerMigrationStartJob extends Job implements ShouldQueue
 
     public function handle()
     {
-        $partnerDataMigration = PartnerDataMigration::where('partner_id', $this->partner->id)->first();
-        $partnerDataMigration ? $partnerDataMigration->update(['status' => Statuses::INITIATED]) :
-            PartnerDataMigration::create(['partner_id' => $this->partner->id, 'status' => Statuses::INITIATED]);
+        $key = 'DataMigration::Partner::'.$this->partner->id;
+        Redis::get($key);
     }
 }

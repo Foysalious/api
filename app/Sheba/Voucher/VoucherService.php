@@ -25,6 +25,6 @@ class VoucherService
             ->setAmount($request->amount)
             ->setCode($request->code)
             ->setPosServices($request->posServices)
-            ->validate();
+            ->validate($partnerId);
     }
 }

@@ -145,7 +145,11 @@ class InventoryDataMigration
         return [
             'id' => $this->partner->id,
             'sub_domain' => $this->partner->sub_domain,
-            'vat_percentage' => $this->partner->posSetting ? $this->partner->posSetting->vat_percentage : 0.0
+            'vat_percentage' => $this->partner->posSetting ? $this->partner->posSetting->vat_percentage : 0.0,
+            'created_at' => $this->partner->created_at->format('Y-m-d H:i:s'),
+            'created_by_name' => $this->partner->created_by_name,
+            'updated_at' => $this->partner->updated_at->format('Y-m-d H:i:s'),
+            'updated_by_name' => $this->partner->updated_by_name,
         ];
     }
 

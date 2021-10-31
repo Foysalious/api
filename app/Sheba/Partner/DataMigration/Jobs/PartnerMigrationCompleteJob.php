@@ -41,12 +41,11 @@ class PartnerMigrationCompleteJob extends Job implements ShouldQueue
      */
     private function storeSuccessLog()
     {
-//        $partnerDataMigration = PartnerDataMigration::where('partner_id', $this->partner->id)->first();
-//        $partnerDataMigration->update(['status' => Statuses::SUCCESSFUL]);
         /** @var UserMigrationService $userMigrationSvc */
         $userMigrationSvc = app(UserMigrationService::class);
         /** @var UserMigrationRepository $class */
         $class = $userMigrationSvc->resolveClass(Modules::POS);
-        $class->setUserId($this->partner->id)->setModuleName(Modules::POS)->updateStatus(UserStatus::UPGRADED);
+        $current_status = $class->setUserId($this->partner->id)->setModuleName(Modules::POS)->getStatus();
+        if ($current_status == UserStatus::UPGRADING) $class->updateStatus(UserStatus::UPGRADED);
     }
 }

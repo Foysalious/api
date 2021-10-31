@@ -14,6 +14,7 @@ use Sheba\ModificationFields;
 
 class Creator
 {
+    const ATTENDANCE_RECONCILED = 1;
     use ModificationFields;
 
     /*** @var Requester $reconciliation_requester */
@@ -90,7 +91,8 @@ class Creator
         return $this->attendanceRepo->create($this->withCreateModificationField([
             'business_member_id' => $this->businessMember->id,
             'date' => $this->date,
-            'checkin_time' => $this->checkin
+            'checkin_time' => $this->checkin,
+            'is_attendance_reconciled' => self::ATTENDANCE_RECONCILED
         ]));
     }
 
@@ -128,7 +130,8 @@ class Creator
         $this->attendanceRepo->update($this->attendance, [
             'checkout_time' => $this->checkout,
             'staying_time_in_minutes' => $staying_time_in_minutes,
-            'overtime_in_minutes' => $this->calculateOvertime($staying_time_in_minutes)
+            'overtime_in_minutes' => $this->calculateOvertime($staying_time_in_minutes),
+            'is_attendance_reconciled' => self::ATTENDANCE_RECONCILED
         ]);
     }
 

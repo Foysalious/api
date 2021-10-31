@@ -51,7 +51,9 @@ class SmanagerUserServerClient
     private function getOptions($data = null, $multipart = false)
     {
         $options['headers'] = [
-            'Accept' => 'application/x-www-form-urlencoded'
+            'Accept' => 'application/x-www-form-urlencoded',
+//            'portal-name' => getShebaRequestHeader()->toArray()['portal-name'],
+//            'Version-Code' => getShebaRequestHeader()->toArray()['Version-Code']
         ];
         if (!$data) return $options;
         if ($multipart) {

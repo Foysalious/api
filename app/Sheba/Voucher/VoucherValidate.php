@@ -83,12 +83,14 @@ class VoucherValidate
     /**
      * @throws Exception
      */
-    public function validate()
+    public function validate($partnerId)
     {
         $this->resolvePosCustomer();
         $pos_order_params = $this->setPosOrderParams();
         $result = $this->reveal($pos_order_params);
         $response = [];
+        if (!$result['is_valid'] || $result['voucher']['created_by'] != $partnerId)
+            return $response;
         if ($result['is_valid']) {
             $voucher = $result['voucher'];
             $response = [

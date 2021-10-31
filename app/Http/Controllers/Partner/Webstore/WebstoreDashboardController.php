@@ -10,6 +10,18 @@ class WebstoreDashboardController extends Controller
 {
     public function getDashboard(Request $request, WebstoreDashboard $webstoreDashboard, TimeFrame $time_frame)
     {
+        $dashboard = $this->getDashboardData($request,$webstoreDashboard,$time_frame);
+        return api_response($request, null, 200, ['webstore_dashboard' => $dashboard]);
+    }
+
+    public function getDashboardV2(Request $request, WebstoreDashboard $webstoreDashboard, TimeFrame $time_frame)
+    {
+        $dashboard = $this->getDashboardData($request,$webstoreDashboard,$time_frame);
+        return http_response($request, null, 200, ['webstore_dashboard' => $dashboard]);
+    }
+
+    private function getDashboardData(Request $request, WebstoreDashboard $webstoreDashboard,TimeFrame $time_frame)
+    {
         $this->validate($request, [
             'frequency' => 'required|string|in:day,week,month,quarter,year',
             'date'      => 'required_if:frequency,day,quarter|date',
@@ -26,6 +38,7 @@ class WebstoreDashboardController extends Controller
             ->setWeek($request->week)
             ->setDate($request->date)
             ->get();
-        return make_response($request,null, 200, ['webstore_dashboard' => $dashboard]);
+
+        return $dashboard;
     }
 }

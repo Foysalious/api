@@ -106,7 +106,7 @@ class PosOrderDataMigration
     {
         $pos_orders = PosOrder::where('partner_id', $this->partner->id)->where(function ($q) {
             $q->where('is_migrated', null)->orWhere('is_migrated', 0);
-        })->select('id', 'partner_wise_order_id', 'partner_id', 'customer_id', DB::raw('(CASE 
+        })->withTrashed()->select('id', 'partner_wise_order_id', 'partner_id', 'customer_id', DB::raw('(CASE 
                         WHEN pos_orders.sales_channel = "pos" THEN "1" 
                         ELSE "2" 
                         END) AS sales_channel_id'), 'emi_month',
@@ -123,7 +123,7 @@ class PosOrderDataMigration
             ->select('pos_order_id AS order_id', 'service_id AS sku_id', 'service_name AS name', 'quantity',
                 'unit_price', 'vat_percentage', 'warranty', 'warranty_unit', 'note', 'created_by_name',
                 'updated_by_name', 'created_at', 'updated_at')->get();
-        $service_ids = array_column($pos_order_items, 'sku_id');
+        $service_ids = array_column($pos_order_items->toArray(), 'sku_id');
         $sku_ids = $this->getSkuIdsForProducts($service_ids);
         $skus = $sku_ids['skus'];
         $pos_order_items = collect($pos_order_items);

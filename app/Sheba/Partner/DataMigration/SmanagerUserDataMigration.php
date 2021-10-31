@@ -55,7 +55,7 @@ class SmanagerUserDataMigration
 
     private function migratePosCustomers($data)
     {
-        $chunks = array_chunk($data, self::CHUNK_SIZE);
+        $chunks = array_chunk($data->toArray(), self::CHUNK_SIZE);
         foreach ($chunks as $chunk) {
             $this->setRedisKey();
             dispatch(new PartnerDataMigrationToSmanagerUserJob($this->partner, ['pos_customers' => $chunk], $this->currentQueue));
@@ -65,12 +65,16 @@ class SmanagerUserDataMigration
 
     private function generatePosCustomersMigrationData()
     {
+        $query = DB::raw("(CASE WHEN partner_pos_customers.nick_name IS NOT NULL  THEN partner_pos_customers.nick_name  ELSE profiles.name END) as name");
         return DB::table('partner_pos_customers')
             ->where('partner_id', $this->partner->id)
+            ->where(function ($q) {
+                $q->where('is_migrated', null)->orWhere('is_migrated', 0);
+            })
             ->join('pos_customers', 'partner_pos_customers.customer_id', '=', 'pos_customers.id')
             ->join('profiles', 'pos_customers.profile_id', '=', 'profiles.id')
-            ->select('partner_pos_customers.customer_id as previous_id', 'partner_pos_customers.partner_id', 'partner_pos_customers.nick_name',
-                'partner_pos_customers.is_supplier', 'partner_pos_customers.note', 'profiles.name', 'profiles.bn_name', 'profiles.mobile', 'profiles.email',
+            ->select('partner_pos_customers.customer_id as previous_id', 'partner_pos_customers.partner_id', $query,
+                'partner_pos_customers.is_supplier', 'partner_pos_customers.note', 'profiles.bn_name', 'profiles.mobile', 'profiles.email',
                 'profiles.password', 'profiles.is_blacklisted', 'profiles.login_blocked_until', 'profiles.fb_id', 'profiles.google_id',
                 'profiles.mobile_verified', 'profiles.email_verified', 'profiles.email_verified_at', 'profiles.address', 'profiles.gender',
                 'profiles.dob', 'profiles.pro_pic', 'profiles.created_by_name', 'profiles.updated_by_name', 'profiles.created_at',
