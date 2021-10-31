@@ -14,8 +14,17 @@ class PresentableDTOPresenter extends Presenter
         $this->dbGateways = $dbGateways;
     }
 
-    public function mergeWithDbGateways($userType){
+    public function mergeWithDbGateways($userType, $payableType){
         $dto = $this->dto->toArray();
+
+        if ($userType === 'customer') {
+            if ($payableType === 'order') {
+                if ($gateway = $this->dbGateways->where('method_name', $dto['method_name'])->first()) $dto['discount_message'] = $gateway->discount_message;
+                else $dto['discount_message'] = '';
+            }
+            return $dto;
+        }
+
         if ($gateway = $this->dbGateways->where('method_name', $dto['method_name'])->first()){
             $dto['name'] = $gateway->name_en;
             $dto['name_bn'] = $gateway->name_bn;
@@ -30,11 +39,11 @@ class PresentableDTOPresenter extends Presenter
             $dto['cash_in_charge'] = $maxCashInCharge;
             $dto['asset'] = $method->asset_name;
             $dto['order'] = $method['order'];
-            $dto['name_bn'] = 'ভিসা/মাস্টার ও অন্যান্য';
+            $dto['name_bn'] =$dto['name'] =='City Bank (American Express)'?'City Bank ': 'ভিসা/মাস্টার ও অন্যান্য';
             return $dto;
         }
 
-        if ($userType == 'partner') {
+        if ($userType == 'partner' && $payableType == 'wallet_recharge') {
             return null;
         }
 

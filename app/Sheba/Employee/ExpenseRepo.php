@@ -18,7 +18,8 @@ class ExpenseRepo
     public function index(Request $request, $member)
     {
         try {
-            $expenses = Expense::where('member_id', $member->id)
+            $business_member = $member->activeBusinessMember->first();
+            $expenses = Expense::where('business_member_id', $business_member->id)
                 ->select('id', 'member_id', 'amount', 'status', 'remarks', 'type', 'created_at')
                 ->orderBy('id', 'desc');
 
@@ -38,21 +39,23 @@ class ExpenseRepo
         }
     }
 
-    public function filterMonth($month,$request)
+    public function filterMonth($month, $request)
     {
         try {
             $date = Carbon::createFromFormat('m', $month);
             $start_date= $date->startOfMonth()->toDateTimeString();
             $end_date=$date->endOfMonth()->toDateTimeString();
-            $expenses= Expense::where('member_id',$request->member_id)
+            $expenses= Expense::where('business_member_id', $request->business_member_id)
                 ->whereBetween('created_at', [$start_date, $end_date])
-                ->select('id', 'member_id', 'amount', 'status', 'remarks', 'type', 'created_at')
+                ->select('id', 'member_id', 'business_member_id', 'amount', 'status', 'remarks', 'type', 'created_at')
                 ->orderBy('id', 'desc')
                 ->get();
             foreach ($expenses as $expense) {
                 $expense['employee_name'] = $expense->member->profile->name;
                 $expense['employee_department'] = $expense->member->businessMember->department() ? $expense->member->businessMember->department()->name : null;
+                $expense['employee_designation'] = $expense->member->businessMember->role ? $expense->member->businessMember->role->name : null;
                 $expense['attachment'] = $this->getAttachments($expense, $request) ? $this->getAttachments($expense, $request) : null;
+                unset($expense->businessMember);
                 unset($expense->member);
             }
             return $expenses;
@@ -64,12 +67,16 @@ class ExpenseRepo
 
     public function store(Request $request, $member)
     {
+
         try {
+            $business_member = $member->activeBusinessMember->first();
             $expense = new Expense();
             $expense->amount = $request->amount;
             $expense->member_id = $member->id;
+            $expense->business_member_id = $business_member->id;
             $expense->remarks = $request->remarks;
             $expense->type = $request->type;
+
             $expense->save();
 
             if ($request['file']) {
@@ -87,7 +94,7 @@ class ExpenseRepo
         try {
             $expense = Expense::where('id', $expense)
                 ->orderBy('created_at', 'DESC')
-                ->select('id', 'member_id', 'amount', 'status', 'remarks', 'type', 'created_at')->first();
+                ->select('id', 'member_id', 'business_member_id', 'amount', 'status', 'remarks', 'type', 'created_at')->first();
 
             if (!$expense) return false;
 
@@ -199,7 +206,7 @@ class ExpenseRepo
                         }
                     ]);
                 }
-            ])->select('id', 'member_id', 'amount', 'type', 'created_at', DB::raw('YEAR(created_at) year, MONTH(created_at) month'), DB::raw('SUM(amount) amount'))
+            ])->select('id', 'member_id', 'business_member_id', 'amount', 'type', 'created_at', DB::raw('YEAR(created_at) year, MONTH(created_at) month'), DB::raw('SUM(amount) amount'))
             ->groupby('year', 'month', 'member_id', 'type')
             ->orderBy('created_at', 'desc');
     }

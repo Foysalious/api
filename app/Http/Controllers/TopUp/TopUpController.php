@@ -5,17 +5,12 @@ use App\Models\Affiliate;
 use App\Models\Business;
 use App\Models\Customer;
 use App\Models\Partner;
-use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
-use App\Models\TopUpVendorCommission;
 use App\Sheba\TopUp\TopUpBulkRequest\Formatter as TopUpBulkRequestFormatter;
 use Carbon\Carbon;
-use Elasticsearch\Common\Exceptions\Missing404Exception;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Sheba\Dal\AuthenticationRequest\Purpose;
-use Sheba\Dal\SubscriptionWisePaymentGateway\Model as SubscriptionWisePaymentGateway;
-use Sheba\Dal\TopUpBulkRequest\Statuses;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
 
@@ -28,10 +23,10 @@ use Sheba\TopUp\Bulk\Validator\SheetNameValidator;
 
 use Sheba\TopUp\ConnectionType;
 use Sheba\OAuth2\AuthUser;
-use Sheba\TopUp\Exception\InvalidSubscriptionWiseCommission;
 use Sheba\TopUp\History\RequestBuilder;
 use Sheba\TopUp\OTF\OtfAmount;
 use Sheba\TopUp\TopUpAgent;
+use Sheba\TopUp\TopUpAgentBlocker;
 use Sheba\TopUp\TopUpChargesSubscriptionWise;
 use Sheba\TopUp\TopUpDataFormat;
 use Sheba\TopUp\TopUpHistoryExcel;
@@ -56,7 +51,6 @@ use Sheba\ShebaAccountKit\Requests\AccessTokenRequest;
 use Sheba\ShebaAccountKit\ShebaAccountKit;
 use Firebase\JWT\ExpiredException;
 use Firebase\JWT\JWT;
-use Elasticsearch;
 
 class TopUpController extends Controller
 {
@@ -70,26 +64,21 @@ class TopUpController extends Controller
      */
     public function getVendor(Request $request, TopUpDataFormat $formatter, string $user = ''): JsonResponse
     {
-        try {
-            $topup_charges = [];
-            /** @var TopUpAgent $agent */
-            $agent = $this->getAgent($request, $user);
-            $agent_class = get_class($agent);
+        $topup_charges = [];
+        /** @var TopUpAgent $agent */
+        $agent = $this->getAgent($request, $user);
+        $agent_class = get_class($agent);
 
-            if ($agent_class === "App\Models\Partner")
-                $topup_charges = (new TopUpChargesSubscriptionWise())->getCharges($agent);
+        if ($agent_class === "App\Models\Partner")
+            $topup_charges = (new TopUpChargesSubscriptionWise())->getCharges($agent);
 
-            $vendors = TopUpVendor::select('id', 'name', 'is_published')->published()->get();
+        $vendors = TopUpVendor::select('id', 'name', 'is_published')->published()->get();
 
-            foreach ($vendors as $vendor)
-                $formatter->makeVendorWiseCommissionData($vendor, $agent_class, $topup_charges);
+        foreach ($vendors as $vendor)
+            $formatter->makeVendorWiseCommissionData($vendor, $agent_class, $topup_charges);
 
-            $regular_expression = $formatter->getAdditionalData();
-            return api_response($request, $vendors, 200, ['vendors' => $vendors, 'regex' => $regular_expression]);
-        } catch (Throwable $e) {
-            logError($e);
-            return api_response($request, null, 500);
-        }
+        $regular_expression = $formatter->getAdditionalData();
+        return api_response($request, $vendors, 200, ['vendors' => $vendors, 'regex' => $regular_expression]);
     }
 
     /**
@@ -97,13 +86,12 @@ class TopUpController extends Controller
      * @param $user
      * @param TopUpRequest $top_up_request
      * @param Creator $creator
-     * @param TopUpSpecialAmount $special_amount
      * @param UserAgentInformation $userAgentInformation
      * @param VerifyPin $verifyPin
      * @return JsonResponse
      * @throws Exception
      */
-    public function topUp(Request $request, $user, TopUpRequest $top_up_request, Creator $creator, TopUpSpecialAmount $special_amount, UserAgentInformation $userAgentInformation, VerifyPin $verifyPin)
+    public function topUp(Request $request, $user, TopUpRequest $top_up_request, Creator $creator, UserAgentInformation $userAgentInformation, VerifyPin $verifyPin, TopUpAgentBlocker $agent_blocker)
     {
         $agent = $request->user;
         $validation_data = [
@@ -145,6 +133,7 @@ class TopUpController extends Controller
             }
 
         } else return api_response($request, null, 400);
+
         $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setPurpose(Purpose::TOPUP)->setRequest($request)->verify();
 
         $userAgentInformation->setRequest($request);
@@ -162,10 +151,13 @@ class TopUpController extends Controller
         }
 
         if ($top_up_request->hasError()) {
-            return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
+            return api_response($request, null, $top_up_request->getErrorCode(), ['message' => $top_up_request->getErrorMessage()]);
         }
         
         $topup_order = $creator->setTopUpRequest($top_up_request)->create();
+
+        $agent_blocker->setAgent($agent)->checkAndBlock();
+
         if ($topup_order) {
             dispatch((new TopUpJob($topup_order)));
 

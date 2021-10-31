@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\B2B\TerminatingMiddleware;
 use App\Sheba\Algolia\Provider\EventsListenerProvider;
+use App\Sheba\Pos\Order\Providers\EventsListenerProvider as PosOrderInvoiceGenerationEventsListenerProvider;
 use Exception;
 use Illuminate\Support\ServiceProvider;
 
@@ -20,19 +21,6 @@ use Sheba\AppSettings\HomePageSetting\Getters\Provider as HomePageSettingGetters
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Bootstrap any application services.
-     *
-     * @return void
-     * @throws Exception
-     */
-    public function boot()
-    {
-        if (!in_array($this->app->environment(), ["production", "development"])) {
-            $this->app->make(DevelopmentEnvironmentChecker::class)->check();
-        }
-    }
-
     /**
      * Register any application services.
      *
@@ -53,5 +41,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->register(CURServiceProvider::class);
         $this->app->register(EventsListenerProvider::class);
         $this->app->singleton(TerminatingMiddleware::class);
+        $this->app->register(PosOrderInvoiceGenerationEventsListenerProvider::class);
     }
 }

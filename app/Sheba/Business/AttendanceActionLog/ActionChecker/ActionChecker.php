@@ -206,7 +206,7 @@ abstract class ActionChecker
 
     public function isSuccess()
     {
-        return $this->resultCode ? in_array($this->resultCode, [ActionResultCodes::SUCCESSFUL, ActionResultCodes::LATE_TODAY]) : true;
+        return $this->resultCode ? in_array($this->resultCode, [ActionResultCodes::SUCCESSFUL, ActionResultCodes::LATE_TODAY, ActionResultCodes::LEFT_EARLY_TODAY]) : true;
     }
 
     public function isLateNoteRequired()
@@ -233,6 +233,36 @@ abstract class ActionChecker
         if (is_null($checkout_time)) return 0;
         if (!$weekendHoliday->isWeekendByBusiness($date) && !$weekendHoliday->isHolidayByBusiness($date)) {
             return Carbon::now()->lt(Carbon::parse($checkout_time)) ? 1 : 0;
+        }
+        return 0;
+    }
+
+    public function isLateNoteRequiredForSpecificDate($date, $time)
+    {
+        $date_time = $date.' '.$time;
+        $date_time = Carbon::parse($date_time);
+        $business_time = new TimeByBusiness();
+        $weekendHoliday = new WeekendHolidayByBusiness();
+        $checkin_time = $date.' '.$business_time->getOfficeStartTimeByBusiness();
+
+        if (is_null($checkin_time)) return 0;
+        if (!$weekendHoliday->isWeekendByBusiness($date_time) && !$weekendHoliday->isHolidayByBusiness($date_time)) {
+            return $date_time->gt(Carbon::parse($checkin_time)) ? 1 : 0;
+        }
+        return 0;
+    }
+
+    public function isLeftEarlyNoteRequiredForSpecificDate($date, $time)
+    {
+        $date_time = $date.' '.$time;
+        $date_time = Carbon::parse($date_time);
+        $business_time = new TimeByBusiness();
+        $weekendHoliday = new WeekendHolidayByBusiness();
+        $checkout_time = $date.' '.$business_time->getOfficeEndTimeByBusiness();
+
+        if (is_null($checkout_time)) return 0;
+        if (!$weekendHoliday->isWeekendByBusiness($date_time) && !$weekendHoliday->isHolidayByBusiness($date_time)) {
+            return $date_time->lt(Carbon::parse($checkout_time)) ? 1 : 0;
         }
         return 0;
     }

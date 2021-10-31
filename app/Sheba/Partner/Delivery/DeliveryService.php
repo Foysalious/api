@@ -7,6 +7,7 @@ use App\Models\Partner;
 use App\Models\PartnerPosService;
 use App\Models\PosOrder;
 use App\Models\PosOrderPayment;
+use App\Sheba\Notification\Customer\Order;
 use App\Sheba\Partner\Delivery\Exceptions\DeliveryCancelRequestError;
 use Illuminate\Support\Str;
 use Sheba\Dal\PartnerDeliveryInformation\Contract as PartnerDeliveryInformationRepositoryInterface;
@@ -60,6 +61,8 @@ class DeliveryService
      */
     private $posOrderRepository;
     private $serviceRepositoryInterface;
+    protected $deliveryStatus;
+    protected $deliveryReqId;
 
 
     public function __construct(DeliveryServerClient $client, PartnerDeliveryInformationRepositoryInterface $partnerDeliveryInfoRepositoryInterface,
@@ -122,6 +125,24 @@ class DeliveryService
     public function setToken($token)
     {
         $this->token = $token;
+        return $this;
+    }
+
+    /**
+     * @param mixed $deliveryReqId
+     */
+    public function setDeliveryReqId($deliveryReqId)
+    {
+        $this->deliveryReqId = $deliveryReqId;
+        return $this;
+    }
+
+    /**
+     * @param mixed $deliveryStatus
+     */
+    public function setDeliveryStatus($deliveryStatus)
+    {
+        $this->deliveryStatus = $deliveryStatus;
         return $this;
     }
 
@@ -427,6 +448,7 @@ class DeliveryService
         $data = [
             'name' => $info['contact_info']['name'],
             'partner_id' => $this->partner->id,
+            'merchant_id' =>  $info['uid'],
             'mobile' => $info['phone'],
             'email' => $info['contact_info']['email'],
             'business_type' => $info['product_nature'],
@@ -485,21 +507,27 @@ class DeliveryService
 
     /**
      * @return mixed
+     * @throws DoNotReportException
      */
     public function getDeliveryStatus()
     {
         $delivery_order_id = $this->posOrder->delivery_request_id;
-        if(!$delivery_order_id)
-            throw new DoNotReportException('Delivery tracking id not found',404);
+        if (!$delivery_order_id)
+            throw new DoNotReportException('Delivery tracking id not found', 404);
         $data = [
             'uid' => $delivery_order_id
         ];
-        return $this->client->setToken($this->token)->post('orders/track', $data);
+        $response = $this->client->setToken($this->token)->post('orders/track', $data);
+        return [
+            'status' => $response['data']['status'],
+            'delivery_order_id' => $delivery_order_id,
+            'merchant_id' => $this->partner->deliveryInformation ? $this->partner->deliveryInformation->merchant_id : null
+        ];
     }
 
     public function cancelOrder()
     {
-        $status = $this->getDeliveryStatus()['data']['status'];
+        $status = $this->getDeliveryStatus()['status'];
         $data = [
             'uid' => $this->posOrder->delivery_request_id
         ];
@@ -521,6 +549,16 @@ class DeliveryService
     public function getPaperflyDeliveryCharge()
     {
         return config('pos_delivery.paperfly_charge');
+    }
+
+    public function updateDeliveryStatus()
+    {
+        $pos_order  = PosOrder::where('delivery_request_id', $this->deliveryReqId)->first();
+        if($pos_order) {
+            $pos_order->delivery_status = $this->deliveryStatus;
+            if($this->deliveryStatus == Statuses::DELIVERED) $pos_order->status = OrderStatuses::COMPLETED;
+            $pos_order->save();
+        }
     }
 
 

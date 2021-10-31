@@ -3,9 +3,7 @@
 namespace Sheba\Reward\Event\Partner\Action\TopUp;
 
 use App\Models\Partner;
-use App\Models\PartnerPosService;
-
-use App\Models\Payable;
+use App\Models\TopUpOrder;
 use Sheba\Reward\AmountCalculator;
 use Sheba\Reward\Event\Action;
 use Sheba\Reward\Event\Rule as BaseRule;
@@ -15,6 +13,9 @@ class Event extends Action implements AmountCalculator
 {
     /** @var Partner $partner */
     private $partner;
+
+    /** @var TopUpOrder $topup_order */
+    private $topup_order;
 
     /**
      * @param BaseRule $rule
@@ -32,12 +33,29 @@ class Event extends Action implements AmountCalculator
     public function setParams(array $params)
     {
         parent::setParams($params);
-        $this->partner = $this->params[0];
+        $this->topup_order = $this->params[0];
     }
 
     public function isEligible()
     {
-        return $this->rule->check($this->params);
+        return $this->rule->check($this->params) && $this->filterConstraints();
+    }
+
+    private function filterConstraints()
+    {
+        foreach ($this->reward->constraints->groupBy('constraint_type') as $key => $type) {
+            $ids = $type->pluck('constraint_id')->toArray();
+
+            if ($key == 'App\Models\PartnerSubscriptionPackage') {
+                if($this->topup_order->isAgentPartner()) {
+                    $this->partner = Partner::find($this->topup_order->agent_id);
+                    return in_array($this->partner->package_id, $ids);
+                }
+                return in_array($this->partner->package_id, $ids);
+            }
+        }
+
+        return true;
     }
 
     /**
