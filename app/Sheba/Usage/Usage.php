@@ -51,6 +51,9 @@ class Usage
         dispatch((new PartnerUsageUpgradeJob( $this->user, $modifier, $this->type)));
     }
 
+    public static function isRefEnabled(){
+        return !!config('partner.referral_enabled');
+    }
     public function updateUserLevel()
     {
         $usage = PartnerUsageHistory::query()->where('partner_id',$this->user_id)->selectRaw('COUNT(DISTINCT(DATE(`partner_usages_history`.`created_at`))) as usages')->first();

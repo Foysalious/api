@@ -120,20 +120,19 @@ class ExpenseEntry
             $this->accountingRepo->storeEntry($negativeEntryData, EntryTypes::INVENTORY);
         }
         $data = $this->makeData();
-        $this->accountingRepo->storeEntry($data, EntryTypes::INVENTORY);
+        $this->accountingRepo->storeEntry((object)$data, EntryTypes::INVENTORY);
     }
 
     private function makeData()
     {
-        $data = collect();
-        $data->partner              = $this->partner;
-        $data->amount               = $this->stock * $this->costPerUnit;
-        $data->from_account_key     = $this->accountingInfo['from_account'];
-        $data->to_account_key       = $this->id;
-        $data->customer_id          = $this->accountingInfo['supplier_id'] ?? null;
-        $data->inventory_products   = json_encode([['id' => $this->id, 'unit_price' => $this->costPerUnit, 'name' => $this->name, 'quantity' => $this->stock]]);
-        $data->amount_cleared       = $this->accountingInfo['transaction_type'] == 'due' ?  $this->accountingInfo['amount_cleared'] : $this->stock * $this->costPerUnit;
-        $data->source_id            = null;
+        $data['partner']              = $this->partner;
+        $data['amount']               = $this->stock * $this->costPerUnit;
+        $data['from_account_key']     = $this->accountingInfo['from_account'];
+        $data['to_account_key']       = $this->id;
+        $data['customer_id']          = $this->accountingInfo['supplier_id'] ?? null;
+        $data['inventory_products']   = json_encode([['id' => $this->id, 'unit_price' => $this->costPerUnit, 'name' => $this->name, 'quantity' => $this->stock]]);
+        $data['amount_cleared']       = $this->accountingInfo['transaction_type'] == 'due' ?  $this->accountingInfo['amount_cleared'] : $this->stock * $this->costPerUnit;
+        $data['source_id']            = null;
         return $data;
     }
 
