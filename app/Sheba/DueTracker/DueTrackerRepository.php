@@ -266,6 +266,7 @@ class DueTrackerRepository extends BaseRepository
                 $payment_data['amount']       = $amount_cleared;
                 $payment_data['method']       = $payment_method;
                 $this->paymentCreator->credit($payment_data);
+                $order->calculate();
             }
         }
     }
@@ -276,7 +277,15 @@ class DueTrackerRepository extends BaseRepository
             ->where('transaction_type', 'Credit')
             ->first();
 
-        return $payment ? $payment->delete() : false;
+       if($payment)
+       {
+           $payment->delete();
+           /** @var PosOrder $order */
+           $order = PosOrder::find($pos_order_id);
+           $order->calculate();
+           return true;
+       }
+       return false;
     }
 
     private function createStoreData(Request $request)
