@@ -184,7 +184,7 @@ class AccountingRepository extends BaseRepository
         $data['amount_cleared'] = $request->amount_cleared ?? 0;
         $data['reconcile_amount'] = $request->reconcile_amount ?? 0;
         $data['customer_id'] = $request->customer_id ?? null;
-        $data['customer_name'] = isset($request->customer_id) ? $request->customer_name : null;
+        $data['customer_name'] = $request->customer_name ?? null;
         $data['customer_mobile'] = $request->customer_mobile ?? null;
         $data['customer_pro_pic'] = $request->customer_pro_pic ?? null;
         $data['customer_is_supplier'] = $request->customer_is_supplier ?? null;
