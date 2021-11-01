@@ -49,13 +49,12 @@ class GrossSalaryExcelUploadError
 
     public function takeCompletedAction()
     {
-        if ($this->row == $this->totalRow + 1) {
-            $name = strtolower(class_basename($this->business)) . '_' . dechex($this->business->id);
-            $file_name = $this->uniqueFileName($this->file, $name, $this->getExcel()->ext);
-            $file_path = $this->saveFileToCDN($this->file, getBulkGrossSalaryFolder(), $file_name);
-            unlink($this->file);
-            return $file_path;
-        }
+        $name = strtolower(class_basename($this->business)) . '_' . dechex($this->business->id);
+        $file_name = $this->uniqueFileName($this->file, $name, $this->getExcel()->ext);
+        $file_path = $this->saveFileToCDN($this->file, getBulkGrossSalaryFolder(), $file_name);
+        unlink($this->file);
+
+        return $file_path;
     }
 
     private function getExcel()
