@@ -174,10 +174,10 @@ class InventoryDataMigration
         $products = $this->partnerPosServiceRepository->where('partner_id', $this->partner->id)
             ->where(function ($q) {
                 $q->where('is_migrated', null)->orWhere('is_migrated', 0);
-            })->withTrashed()->select('id', 'partner_id', 'pos_category_id AS category_id',
-            'name', 'app_thumb', 'description', 'price', 'unit', 'wholesale_price', 'warranty', 'warranty_unit',
-            'vat_percentage', 'publication_status', 'is_published_for_shop', 'created_by_name', 'updated_by_name',
-            'created_at', 'updated_at', 'deleted_at')->get()->toArray();
+            })->withTrashed()->select('id', 'partner_id', 'pos_category_id AS category_id', 'name', 'app_thumb',
+                'description', 'price', 'unit', 'wholesale_price', 'warranty', 'warranty_unit', 'weight', 'weight_unit',
+                'vat_percentage', 'publication_status', 'is_published_for_shop', 'created_by_name', 'updated_by_name',
+                'created_at', 'updated_at', 'deleted_at')->get()->toArray();
         $this->partnerPosServiceIds = array_column($products, 'id');
         return $products;
     }
@@ -210,7 +210,7 @@ class InventoryDataMigration
     {
         return DB::table('partner_pos_service_discounts')
             ->whereIn('partner_pos_service_id', $this->partnerPosServiceIds)
-            ->select('partner_pos_service_id AS type_id', DB::raw("'product' AS type"), 'amount',
+            ->select('partner_pos_service_id AS type_id', DB::raw("'sku_channel' AS type"), 'amount',
                 'is_amount_percentage', 'cap', 'start_date', 'end_date', 'created_by_name', 'updated_by_name',
                 'created_at', 'updated_at')->get();
     }

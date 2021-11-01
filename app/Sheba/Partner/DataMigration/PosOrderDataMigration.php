@@ -99,7 +99,11 @@ class PosOrderDataMigration
             'sms_invoice' => $pos_setting ? $this->partner->posSetting->sms_invoice : 0,
             'auto_printing' => $pos_setting ? $this->partner->posSetting->auto_pronting : 0,
             'printer_name' => $pos_setting ? $this->partner->posSetting->printer_name : null,
-            'printer_model' => $pos_setting ? $this->partner->posSetting->printer_model : null
+            'printer_model' => $pos_setting ? $this->partner->posSetting->printer_model : null,
+            'created_at' => $this->partner->created_at->format('Y-m-d H:i:s'),
+            'created_by_name' => $this->partner->created_by_name,
+            'updated_at' => $this->partner->updated_at->format('Y-m-d H:i:s'),
+            'updated_by_name' => $this->partner->updated_by_name,
         ];
     }
 
@@ -108,6 +112,9 @@ class PosOrderDataMigration
         $pos_orders = PosOrder::where('partner_id', $this->partner->id)->where(function ($q) {
             $q->where('is_migrated', null)->orWhere('is_migrated', 0);
         })->withTrashed()->select('id', 'partner_wise_order_id', 'partner_id', 'customer_id', DB::raw('(CASE 
+                        WHEN pos_orders.payment_status = "Paid" THEN pos_orders.updated_at 
+                        ELSE NULL 
+                        END) AS paid_at'), DB::raw('(CASE 
                         WHEN pos_orders.sales_channel = "pos" THEN "1" 
                         ELSE "2" 
                         END) AS sales_channel_id'), 'emi_month',
