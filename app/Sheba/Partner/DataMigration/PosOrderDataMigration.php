@@ -152,7 +152,7 @@ class PosOrderDataMigration
     {
         return DB::table('pos_order_discounts')->whereIn('pos_order_id', $this->partnerPosOrderIds)
             ->select('pos_order_id AS order_id', 'type', 'amount', 'original_amount',
-                'is_percentage', 'cap', 'discount_id', 'item_id', 'created_by_name', 'updated_by_name',
+                'is_percentage', 'cap', 'discount_id', 'item_id AS type_id', 'created_by_name', 'updated_by_name',
                 'created_at', 'updated_at')->get();
     }
 
