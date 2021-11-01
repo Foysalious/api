@@ -4,6 +4,7 @@ use App\Exceptions\HyperLocationNotFoundException;
 use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
 use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
+use App\Sheba\PartnerGeneralSettings;
 use Sheba\Dal\Category\Category;
 use Sheba\Dal\CategoryPartner\CategoryPartner;
 use Sheba\Dal\DeliveryChargeUpdateRequest\DeliveryChargeUpdateRequest;
@@ -1273,4 +1274,13 @@ class PartnerController extends Controller
         $repo = new PartnerRepository($partner);
         return $repo->updateLogo($request);
     }
+
+    public function generalSettings(Request $request, PartnerGeneralSettings $generalSettings)
+    {
+        $partner = $request->auth_user->getPartner();
+        $generalSettings = $generalSettings->setPartner($partner)->getGeneralSettings();
+        return http_response($request, $generalSettings,200, ['generalSettings' => $generalSettings]);
+    }
+
+
 }
