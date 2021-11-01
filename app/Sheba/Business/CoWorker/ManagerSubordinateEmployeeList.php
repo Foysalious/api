@@ -42,7 +42,7 @@ class ManagerSubordinateEmployeeList
                         $managers_data[] = $manager->createData($resource)->toArray()['data'];
                     }
             }
-        if ($department) return $this->filterEmployeeByDepartment($managers_data, $department);
+        if ($department) return $this->filterEmployeeByDepartment($managers_data);
         return $managers_data;
     }
 
@@ -55,7 +55,7 @@ class ManagerSubordinateEmployeeList
         return $this->businessMemberRepository->where('manager_id', $business_member_id)->get();
     }
 
-    private function filterEmployeeByDepartment($managers_data, $department)
+    private function filterEmployeeByDepartment($managers_data)
     {
         $data = [];
         foreach($managers_data as $manager)
