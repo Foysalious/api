@@ -14,5 +14,5 @@ results/phpunit/
 .env.testing
 .DS_Store
 resources/assets/ebl/*
-resources/assets/ebl/*
 .composer/
+storage/exports/*
