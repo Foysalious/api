@@ -89,9 +89,9 @@ class VoucherValidate
         $pos_order_params = $this->setPosOrderParams();
         $result = $this->reveal($pos_order_params);
         $response = [];
-        if (!$result['is_valid'] || $result['voucher']['created_by'] != $partnerId)
+        if (!$result['is_valid'])
             return $response;
-        if ($result['is_valid']) {
+        if ($result['is_valid'] && $result['voucher']['owner_type'] != "App\Models\Partner") {
             $voucher = $result['voucher'];
             $response = [
                 'amount' => (double)$result['amount'],
@@ -99,8 +99,20 @@ class VoucherValidate
                 'id' => $voucher->id,
                 'title' => $voucher->title
             ];
+            return $response;
         }
-        return $response;
+        if ($result['voucher']['owner_type'] == "App\Models\Partner" && $result['voucher']['owner_id'] = $partnerId) {
+            $voucher = $result['voucher'];
+            $response = [
+                'amount' => (double)$result['amount'],
+                'code' => $voucher->code,
+                'id' => $voucher->id,
+                'title' => $voucher->title
+            ];
+            return $response;
+        } else {
+            return $response;
+        }
     }
 
     private function resolvePosCustomer()
