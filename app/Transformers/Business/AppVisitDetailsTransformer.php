@@ -76,7 +76,7 @@ class AppVisitDetailsTransformer extends TransformerAbstract
     private function getNotes(Visit $visit)
     {
         $notes = [];
-        $visit_notes = $visit->visitNotes()->select('id', 'visit_id', 'note', 'date')->orderBy('id', 'DESC')->get();
+        $visit_notes = $visit->visitNotes()->where('status','<>', Status::CANCELLED)->select('id', 'visit_id', 'note', 'date')->orderBy('id', 'DESC')->get();
 
         foreach ($visit_notes as $visit_note) {
             array_push($notes, [
