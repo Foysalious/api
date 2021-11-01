@@ -328,16 +328,6 @@ class VoucherController extends Controller
             $result = voucher($request->code)->checkForPosOrder($pos_order_params)->reveal();
             if (!$result['is_valid'])
                 return api_response($request, null, 403, ['message' => 'প্রোমো কোডটি সঠিক নয়!']);
-            if ($result['voucher']['owner_type'] != "App\Models\Partner") {
-                $voucher = $result['voucher'];
-                $voucher = [
-                    'amount' => (double)$result['amount'],
-                    'code' => $voucher->code,
-                    'id' => $voucher->id,
-                    'title' => $voucher->title
-                ];
-                return api_response($request, null, 200, ['voucher' => $voucher]);
-            }
             if ($result['voucher']['owner_type'] == "App\Models\Partner" && $result['voucher']['owner_id'] = $partner) {
                 $voucher = $result['voucher'];
                 $voucher = [
