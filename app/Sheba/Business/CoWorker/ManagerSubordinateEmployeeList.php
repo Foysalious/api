@@ -21,7 +21,7 @@ class ManagerSubordinateEmployeeList
      * @param $business_member
      * @return array
      */
-    public function get($business_member)
+    public function get($business_member, $department = null)
     {
         $managers_data = [];
         $manager = new Manager();
@@ -40,16 +40,9 @@ class ManagerSubordinateEmployeeList
                     foreach ($second_level_managers as $second_level_manager) {
                         $resource = new Item($second_level_manager, new CoWorkerManagerListTransformer());
                         $managers_data[] = $manager->createData($resource)->toArray()['data'];
-
-                        /** @var  $third_level_managers */
-                        $third_level_managers = $this->getCoWorkersUnderSpecificManager($second_level_manager->id);
-                        if ($third_level_managers->count() > 0)
-                            foreach ($third_level_managers as $third_level_manager) {
-                                $resource = new Item($third_level_manager, new CoWorkerManagerListTransformer());
-                                $managers_data[] = $manager->createData($resource)->toArray()['data'];
-                            }
                     }
             }
+        if ($department) $managers_data = $this->filterEmployeeByDepartment($managers_data, $department);
         return $managers_data;
     }
 
@@ -60,5 +53,15 @@ class ManagerSubordinateEmployeeList
     private function getCoWorkersUnderSpecificManager($business_member_id)
     {
         return $this->businessMemberRepository->where('manager_id', $business_member_id)->get();
+    }
+
+    private function filterEmployeeByDepartment($managers_data, $department)
+    {
+        $data = [];
+        foreach($managers_data as $manager)
+        {
+            if ($manager['department_id'] == $department) array_push($data, $manager);
+        }
+        return $data;
     }
 }
