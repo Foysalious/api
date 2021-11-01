@@ -12,6 +12,7 @@ use App\Models\PartnerOrder;
 use App\Models\PartnerPosCustomer;
 use App\Models\PartnerServicePricesUpdate;
 use App\Models\Resource;
+use App\Sheba\PartnerGeneralSettings;
 use Sheba\Dal\Service\Service;
 use App\Models\SubscriptionOrder;
 use App\Repositories\DiscountRepository;
