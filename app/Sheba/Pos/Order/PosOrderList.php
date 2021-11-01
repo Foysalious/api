@@ -127,6 +127,7 @@ class PosOrderList
 
     public function get()
     {
+        $this->updateNonCalculatedOrders();
         /** @var PosOrder $orders */
         $orders = $this->getFilteredOrders();
 
@@ -142,9 +143,9 @@ class PosOrderList
         foreach ($orders as $index => $order) {
             $order->isRefundable();
             $order_data = $order->calculate();
-            $manager    = new Manager();
+            $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
-            $resource        = new Item($order_data, new PosOrderTransformer());
+            $resource = new Item($order_data, new PosOrderTransformer());
             $order_formatted = $manager->createData($resource)->toArray()['data'];
             if (array_key_exists('payment_link_target', $order_formatted)) {
                 $payment_link_targets[] = $order_formatted['payment_link_target'];
@@ -153,38 +154,39 @@ class PosOrderList
         }
 
         if (!empty($payment_link_targets)) $this->mapPaymentLinkData($final_orders, $payment_link_targets);
-        if (!empty($this->status))
-            $final_orders = $final_orders->where('status', $this->status)->slice($this->offset)->take($this->limit);
 
         $final_orders = $final_orders->groupBy('date')->toArray();
 
         $orders_formatted = [];
-        $pos_orders_repo  = new PosOrderRepository();
-        $pos_sales        = [];
+        $pos_sales = [];
         foreach (array_keys($final_orders) as $date) {
             $timeFrame = new TimeFrame();
             $timeFrame->forADay(Carbon::parse($date))->getArray();
-            $pos_orders = $pos_orders_repo->getCreatedOrdersBetween($timeFrame, $this->partner);
+            $pos_orders = PosOrder::with(['discounts', 'payments', 'items' => function ($q) {
+                $q->with('discount');
+            }])->byPartner($this->partner->id)->where('created_at', '>=', $timeFrame->start)
+                ->where('created_at', '<=', $timeFrame->end)->get();
             $pos_orders->map(function ($pos_order) {
+                $pos_order->calculate();
                 /** @var PosOrder $pos_order */
                 $pos_order->sale = $pos_order->getNetBill();
                 $pos_order->paid = $pos_order->getPaid();
-                $pos_order->due  = $pos_order->getDue();
+                $pos_order->due = $pos_order->getDue();
             });
             $pos_sales[$date] = [
                 'total_sale' => $pos_orders->sum('sale'),
                 'total_paid' => $pos_orders->sum('paid'),
-                'total_due'  => $pos_orders->sum('due'),
+                'total_due' => $pos_orders->sum('due'),
             ];
         }
         foreach ($final_orders as $key => $value) {
             if (count($value) > 0) {
                 $order_list = [
-                    'date'       => $key,
+                    'date' => $key,
                     'total_sale' => $pos_sales[$key]['total_sale'],
                     'total_paid' => $pos_sales[$key]['total_paid'],
-                    'total_due'  => $pos_sales[$key]['total_due'],
-                    'orders'     => $value
+                    'total_due' => $pos_sales[$key]['total_due'],
+                    'orders' => $value
                 ];
                 array_push($orders_formatted, $order_list);
             }
@@ -192,24 +194,38 @@ class PosOrderList
         return $orders_formatted;
     }
 
+    public function updateNonCalculatedOrders()
+    {
+        $orders = PosOrder::where('payment_status', null)->with(['discounts', 'payments', 'items' => function ($q) {
+            $q->with('discount');
+        }])->byPartner($this->partner->id)->get();
+        /** @var PosOrder $order */
+        foreach ($orders as $order) {
+            $order->calculate();
+        }
+    }
+
     private function getFilteredOrders()
     {
-        $orders_query = PosOrder::salesChannel($this->sales_channel)->with('items.service.discounts', 'customer.profile', 'payments', 'logs', 'partner')->byPartner($this->partner->id);
+        $orders_query = PosOrder::salesChannel($this->sales_channel)->with(['items' => function ($q) {
+            $q->with('service', 'discount');
+        }, 'customer.profile', 'payments', 'logs', 'partner.deliveryInformation', 'discounts'])->byPartner($this->partner->id);
         if ($this->type) $orders_query = $this->filteredByType($orders_query, $this->type);
         if ($this->orderStatus) $orders_query = $this->filteredByOrderStatus($orders_query, $this->orderStatus);
         if ($this->q) $orders_query = $this->filteredBySearchQuery($orders_query, $this->q);
-        return empty($this->status) ? $orders_query->orderBy('created_at', 'desc')->skip($this->offset)->take($this->limit)->get() : $orders_query->orderBy('created_at', 'desc')->get();
+        if ($this->status) $orders_query = $orders_query->where('payment_status', $this->status);
+        return $orders_query->orderBy('created_at', 'desc')->skip($this->offset)->take($this->limit)->get();
     }
 
     private function filteredBySearchQuery($orders_query, $search_query)
     {
         $partner_id = $this->partner->id;
-        $orders_query = $orders_query->where(function ($query) use($search_query, $partner_id){
+        $orders_query = $orders_query->where(function ($query) use ($search_query, $partner_id) {
             $query->whereHas('customer.profile', function ($query) use ($search_query) {
                 $query->orWhere('profiles.name', 'LIKE', '%' . $search_query . '%');
                 $query->orWhere('profiles.email', 'LIKE', '%' . $search_query . '%');
                 $query->orWhere('profiles.mobile', 'LIKE', '%' . $search_query . '%');
-            })->orWhereHas('customer.partnerPosCustomer', function($query) use ($search_query, $partner_id) {
+            })->orWhereHas('customer.partnerPosCustomer', function ($query) use ($search_query, $partner_id) {
                 $query->where('partner_id', $partner_id);
                 $query->where('partner_pos_customers.nick_name', 'LIKE', '%' . $search_query . '%');
             });
