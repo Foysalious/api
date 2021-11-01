@@ -94,7 +94,12 @@ class AppVisitDetailsTransformer extends TransformerAbstract
      */
     private function getPhotos(Visit $visit)
     {
-        $photos = $visit->visitPhotos()->orderBy('id', 'DESC')->pluck('photo')->toArray();
+        $photos = $visit->visitPhotos()->orderBy('id', 'DESC')->get()->map(function ($photo) {
+            return [
+                'id' => $photo->id,
+                'photo' => $photo->photo
+            ];
+        })->toArray();
         if ($photos) return $photos;
         return null;
     }
