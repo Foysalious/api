@@ -17,6 +17,7 @@ use League\Fractal\Resource\Item;
 use Sheba\Dal\Visit\Status;
 use Sheba\Dal\Visit\VisitRepository;
 use Sheba\Dal\VisitPhoto\VisitPhoto;
+use Sheba\Dal\VisitPhoto\VisitPhotoRepository;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 use Sheba\Business\EmployeeTracking\Visit\VisitList;
@@ -290,9 +291,9 @@ class VisitController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function deletePhoto($visit, $visit_photo, Request $request)
+    public function deletePhoto($visit, $visit_photo, Request $request, VisitPhotoRepository $visit_photo_repository)
     {
-        $visit_photo = VisitPhoto::find($visit_photo);
+        $visit_photo = $visit_photo_repository->find($visit_photo);
         $visit_photo->delete();
         return api_response($request, null, 200);
     }
