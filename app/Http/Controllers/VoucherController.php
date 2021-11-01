@@ -328,7 +328,7 @@ class VoucherController extends Controller
             $result = voucher($request->code)->checkForPosOrder($pos_order_params)->reveal();
             if (!$result['is_valid'])
                 return api_response($request, null, 403, ['message' => 'প্রোমো কোডটি সঠিক নয়!']);
-            if ($result['is_valid'] && $result['voucher']['owner_type'] != "App\Models\Partner") {
+            if ($result['voucher']['owner_type'] != "App\Models\Partner") {
                 $voucher = $result['voucher'];
                 $voucher = [
                     'amount' => (double)$result['amount'],
@@ -435,8 +435,8 @@ class VoucherController extends Controller
     public function voucherAgainstVendor(Request $request, VoucherRepository $voucherRepository, VendorVoucherDataGenerator $voucher_generator)
     {
         // need to handle this in a Request Class
-        if(!isset($request['start_date'])) return api_response($request, null, 403, ['message' => 'Start Date field is required']);
-        if(!isset($request['channel']) || !in_array($request->channel, ['xtra'])  ) return api_response($request, null, 403, ['message' => 'invalid channel']);
+        if (!isset($request['start_date'])) return api_response($request, null, 403, ['message' => 'Start Date field is required']);
+        if (!isset($request['channel']) || !in_array($request->channel, ['xtra'])) return api_response($request, null, 403, ['message' => 'invalid channel']);
         $this->validate($request, [
             'mobile' => 'mobile:bd',
             'amount' => 'required|numeric',
