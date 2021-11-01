@@ -67,11 +67,10 @@ class ApprovalRequestController extends Controller
 
         list($offset, $limit) = calculatePagination($request);
 
-        if ($request->has('type'))
+        if ($request->has('type') && !empty($request->type))
             $leave_approval_requests = $approval_request_repo->getApprovalRequestByBusinessMemberFilterBy($requester_business_member, $request->type);
         else
             $leave_approval_requests = $approval_request_repo->getApprovalRequestByBusinessMember($requester_business_member);
-
 
         $approval_requests = collect();
         foreach ($leave_approval_requests as $leave_approval_request) {
