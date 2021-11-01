@@ -22,6 +22,7 @@ class AppVisitDetailsTransformer extends TransformerAbstract
             'general_info' => $this->getGeneralInfo($visit),
             'notes' => $this->getNotes($visit),
             'photos' => $this->getPhotos($visit),
+            'current_status_info' => $this->getCurrentStatusInfo($visit),
             'status_change_logs' => $this->getStatusChangesLogs($visit),
             'cancel_note' => $this->getCancelNote($visit)
         ];
@@ -120,6 +121,7 @@ class AppVisitDetailsTransformer extends TransformerAbstract
                 'date' => $visit_status_change_log->created_at->format('d M, Y'),
                 'time' => $visit_status_change_log->created_at->format('h:i A'),
                 'status' => $this->statusFormat($visit_status_change_log->new_status),
+                'color_code' => $this->getColorCode($visit_status_change_log->new_status),
                 'location' => json_decode($visit_status_change_log->new_location)
             ];
         }
@@ -137,6 +139,40 @@ class AppVisitDetailsTransformer extends TransformerAbstract
         if ($status === Status::RESCHEDULED) return "Visit Rescheduled";
         if ($status === Status::CANCELLED) return "Cancelled Visit";
         if ($status === Status::COMPLETED) return "Completed Visit";
+    }
+
+    /**
+     * @param $status
+     * @return string|void
+     */
+    private function getColorCode($status)
+    {
+        if ($status === Status::STARTED) return "#60A917";
+        if ($status === Status::REACHED) return "#60A917";
+        if ($status === Status::RESCHEDULED) return "#EEB728";
+        if ($status === Status::CANCELLED) return "#D85839";
+        if ($status === Status::COMPLETED) return "#60A917";
+    }
+
+    /**
+     * @param Visit $visit
+     * @return string[]|null
+     */
+    private function getCurrentStatusInfo(Visit $visit)
+    {
+        if ($visit->status === Status::STARTED) {
+            return [
+                'color_code' => '#D8D8D8',
+                'text' => 'Enroute to location'
+            ];
+        } else if ($visit->status === Status::REACHED) {
+            return [
+                'color_code' => '#D8D8D8',
+                'text' => 'Currently in the destination'
+            ];
+        } else {
+            return null;
+        }
     }
 
     /**
