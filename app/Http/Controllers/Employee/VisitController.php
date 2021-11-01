@@ -16,6 +16,7 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Dal\Visit\Status;
 use Sheba\Dal\Visit\VisitRepository;
+use Sheba\Dal\VisitPhoto\VisitPhoto;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 use Sheba\Business\EmployeeTracking\Visit\VisitList;
@@ -280,6 +281,19 @@ class VisitController extends Controller
         if (!$visit) return api_response($request, null, 404);
         $status_updater->setVisit($visit)->setStatus($request->status)->setLat($request->lat)->setLng($request->lng)
                        ->setNote($request->note)->setDate($request->date)->update();
+        return api_response($request, null, 200);
+    }
+
+    /**
+     * @param $visit
+     * @param $visit_photo
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function deletePhoto($visit, $visit_photo, Request $request)
+    {
+        $visit_photo = VisitPhoto::find($visit_photo);
+        $visit_photo->delete();
         return api_response($request, null, 200);
     }
 
