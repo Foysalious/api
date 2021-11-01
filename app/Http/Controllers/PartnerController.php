@@ -1368,4 +1368,13 @@ class PartnerController extends Controller
         $repo = new PartnerRepository($partner);
         return $repo->updateLogo($request);
     }
+
+    public function generalSettings(Request $request, PartnerGeneralSettings $generalSettings)
+    {
+        $partner = $request->auth_user->getPartner();
+        $generalSettings = $generalSettings->setPartner($partner)->getGeneralSettings();
+        return http_response($request, $generalSettings,200, ['generalSettings' => $generalSettings]);
+    }
+
+
 }

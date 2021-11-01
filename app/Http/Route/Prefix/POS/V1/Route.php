@@ -141,6 +141,7 @@ class Route
                     $api->put('/{order}', 'PosOrder\OrderController@update');
                     $api->delete('/{order}', 'PosOrder\OrderController@destroy');
                 });
+                $api->get('general-settings', 'PartnerController@generalSettings' );
 
                 /**
                  * Old APIs with jwtAccessToken Middleware
@@ -163,6 +164,7 @@ class Route
                 $api->post('orders/{order}/send-sms', 'Pos\OrderController@sendSmsV2');
                 $api->post('orders/{order}/send-email', 'Pos\OrderController@sendEmailV2');
                 $api->get('filters', 'PosOrder\OrderController@getFilteringOptions' );
+
                 /**
                  * End Old APIs with jwtAccessToken Middleware
                  */
