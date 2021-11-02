@@ -260,7 +260,7 @@ class VisitController extends Controller
     public function updateStatus(Request $request, $visit, StatusUpdater $status_updater)
     {
         $validation_data = [
-            'status' => 'required|string',
+            'status' => 'required|string|in:' . implode(',', Status::get()),
             'lat' => 'required|numeric',
             'lng' => 'required|numeric'
         ];
