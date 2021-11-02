@@ -69,7 +69,7 @@ abstract class UserMigrationRepository
 //        if ($status == UserStatus::UPGRADING) {
 //            Redis::set("user-migration:$this->userId", "$this->moduleName");
 //        }
-//        if ($status == UserStatus::UPGRADED) {
+//        if (in_array($status, [UserStatus::FAILED, UserStatus::UPGRADED])) {
 //            Redis::del("user-migration:$this->userId");
 //        }
         $info->status = $status;
