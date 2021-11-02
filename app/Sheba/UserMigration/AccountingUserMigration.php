@@ -10,7 +10,7 @@ class AccountingUserMigration extends UserMigrationRepository
 {
     public function getBanner(): string
     {
-        return 'accounting-banner';
+        return Constants::$accounting_migration_url . "/accounting_migration_banner.png";
     }
 
     public function getStatusWiseResponse(): array
@@ -38,12 +38,12 @@ class AccountingUserMigration extends UserMigrationRepository
      */
     public function updateStatus($status)
     {
-        if ($status == UserStatus::UPGRADING) {
-            $currentStatus = $this->getStatus();
-            /** @var \Sheba\AccountingEntry\Repository\UserMigrationRepository $accUpgradeRepo */
-            $accUpgradeRepo = app(\Sheba\AccountingEntry\Repository\UserMigrationRepository::class);
-            $accUpgradeRepo->migrateInAccounting($this->userId, $currentStatus);
-        }
+//        if ($status == UserStatus::UPGRADING) {
+//            $currentStatus = $this->getStatus();
+//            /** @var \Sheba\AccountingEntry\Repository\UserMigrationRepository $accUpgradeRepo */
+//            $accUpgradeRepo = app(\Sheba\AccountingEntry\Repository\UserMigrationRepository::class);
+//            $accUpgradeRepo->migrateInAccounting($this->userId, $currentStatus);
+//        }
         return $this->updateMigrationStatus($status);
     }
 

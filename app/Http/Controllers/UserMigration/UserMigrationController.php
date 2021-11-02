@@ -4,6 +4,7 @@ namespace App\Http\Controllers\UserMigration;
 
 use App\Http\Controllers\Controller;
 use App\Sheba\UserMigration\Modules;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Sheba\UserMigration\UserMigrationService;
 use App\Sheba\UserMigration\UserMigrationRepository;
@@ -23,7 +24,7 @@ class UserMigrationController extends Controller
         $this->userMigrationSvc = $migrationService;
     }
 
-    public function getMigrationList(Request $request)
+    public function getMigrationList(Request $request): JsonResponse
     {
         try {
             $banner = null;
@@ -45,7 +46,7 @@ class UserMigrationController extends Controller
         }
     }
 
-    public function migrationStatusByModuleName(Request $request, $moduleName)
+    public function migrationStatusByModuleName(Request $request, $moduleName): JsonResponse
     {
         try {
             $userId = $request->partner->id;
@@ -58,7 +59,7 @@ class UserMigrationController extends Controller
         }
     }
 
-    public function updateMigrationStatus(Request $request, $moduleName)
+    public function updateMigrationStatus(Request $request, $moduleName): JsonResponse
     {
         try {
             $this->validate($request, ['status' => 'required|string']);
@@ -74,7 +75,7 @@ class UserMigrationController extends Controller
         }
     }
 
-    public function updateStatusWebHook(Request $request)
+    public function updateStatusWebHook(Request $request): JsonResponse
     {
         try {
             if(!$request->hasHeader('X-API-KEY') || $request->header('X-API-KEY') != self::X_API_KEY) {
