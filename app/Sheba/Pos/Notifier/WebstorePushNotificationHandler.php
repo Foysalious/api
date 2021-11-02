@@ -21,6 +21,7 @@ class WebstorePushNotificationHandler
     public function handle()
     {
         $topic = config('sheba.push_notification_topic_name.manager_new') . $this->order->partner_id;
+        $channel = config('sheba.push_notification_channel_name.manager');
         $sound = config('sheba.push_notification_sound.manager');
         $this->order->calculate();
         $net_bill = $this->order->getNetBill();
@@ -35,6 +36,7 @@ class WebstorePushNotificationHandler
             "event_type" => 'WebstoreOrder',
             "event_id" => (string)$order_id
         ];
+//        (new PushNotificationHandler())->send($data, $topic, $channel, $sound);
         (new PusNotificationService())->send($topic, null, $data);
     }
 
