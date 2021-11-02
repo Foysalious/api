@@ -74,11 +74,12 @@ class Requester
 
     public function createOrUpdate()
     {
-        $bkash_account = $this->businessMember->bkashInfos->last();
-        if (!$bkash_account) {
+        $bkash_info = $this->businessMember->bkashInfos->last();
+
+        if (!$bkash_info) {
             $this->creator->setBkashAccRequester($this)->create();
         } else {
-            $this->updater->setSalary($bkash_account)->setBkashAccRequester($this)->update();
+            $this->updater->setBkashInfo($bkash_info)->setBkashAccRequester($this)->update();
         }
     }
 }

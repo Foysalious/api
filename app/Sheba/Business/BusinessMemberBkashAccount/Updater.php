@@ -7,7 +7,10 @@ class Updater
 {
     private $bkashAccData = [];
     private $bkashAccRequest;
-    private $bkashNumber;
+    /** @var BusinessMemberBkashInfoRepository $bkashAccRepository */
+    private $bkashAccRepository;
+    private $bkashInfo;
+    private $oldBkashAcc;
 
     public function __construct()
     {
@@ -24,16 +27,10 @@ class Updater
         return $this;
     }
 
-    public function setBkashNumber($bkash_number)
-    {
-        $this->bkashNumber = $bkash_number;
-        return $this;
-    }
-
-    public function setSalary($bkash_info)
+    public function setBkashInfo($bkash_info)
     {
         $this->bkashInfo = $bkash_info;
-        $this->oldBkashInfo = $this->bkashInfo->account_no;
+        $this->oldBkashAcc = $this->bkashInfo->account_no;
         return $this;
     }
 
@@ -41,7 +38,7 @@ class Updater
     {
         $this->makeData();
         DB::transaction(function () {
-            if ($this->oldBkashAcc != $this->bkashAccRequest->getGrossSalary()) {
+            if ($this->oldBkashAcc != $this->bkashAccRequest->getBkashNumber()) {
                 $this->bkashAccRepository->update($this->bkashInfo, $this->bkashAccData);
             }
         });

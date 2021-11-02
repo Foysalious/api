@@ -375,7 +375,8 @@ class CoWorkerController extends Controller
      */
     public function financialInfoEdit($business, $business_member_id, Request $request)
     {
-        $validation_data = ['tin_number ' => 'sometimes|required', 'bank_name ' => 'sometimes|required', 'bank_account_number ' => 'sometimes|required'];
+        $validation_data = [
+            'tin_number ' => 'sometimes|required', 'bank_name ' => 'sometimes|required', 'bank_account_number ' => 'sometimes|required', 'bkash_number'=> 'sometimes|required'];
         $validation_data ['tin_certificate '] = $this->isFile($request->tin_certificate) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
         $this->validate($request, $validation_data);
 
@@ -387,7 +388,8 @@ class CoWorkerController extends Controller
         $financial_request = $this->financialRequest->setTinNumber($request->tin_number)
             ->setTinCertificate($request->tin_certificate)
             ->setBankName($request->bank_name)
-            ->setBankAccNumber($request->bank_account_number);
+            ->setBankAccNumber($request->bank_account_number)
+            ->setBkashNumber($request->bkash_number);
 
         list($profile, $image_name, $image_link) = $this->coWorkerUpdater
             ->setFinancialRequest($financial_request)
