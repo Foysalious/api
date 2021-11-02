@@ -99,6 +99,8 @@ class BusinessRoute
                     $api->get('/report', 'B2b\CoWorkerController@downloadEmployeesReport');
                     $api->get('/gross-salary-report', 'B2b\CoWorkerGrossSalaryController@grossSalaryReport');
                     $api->post('/gross-salary-upload', 'B2b\CoWorkerGrossSalaryController@bulkGrossSalaryUpload');
+                    $api->get('/bkash-number-report', 'B2b\CoWorkerBkashController@bulkBakshInfoReport');
+                    $api->post('/bkash-number-upload', 'B2b\CoWorkerBkashController@bulkBakshInfoUpload');
                     $api->group(['prefix' => '{employee}'], function ($api) {
                         $api->post('/basic-info', 'B2b\CoWorkerController@basicInfoEdit');
                         $api->post('/official-info', 'B2b\CoWorkerController@officialInfoEdit');

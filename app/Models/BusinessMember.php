@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use Sheba\Dal\Appreciation\Appreciation;
+use Sheba\Dal\BusinessMemberBkashInfo\BusinessMemberBkashInfo;
 use Sheba\Dal\BusinessMemberStatusChangeLog\Model as BusinessMemberStatusChangeLog;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
@@ -68,6 +69,11 @@ class BusinessMember extends Model
     public function salary()
     {
         return $this->hasOne(Salary::class);
+    }
+
+    public function bkashInfos()
+    {
+        return $this->hasMany(BusinessMemberBkashInfo::class);
     }
 
     public function department()
