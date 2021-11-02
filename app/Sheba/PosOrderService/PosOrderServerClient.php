@@ -5,9 +5,11 @@ use App\Sheba\InventoryService\Exceptions\InventoryServiceServerError;
 use App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use Sheba\ModificationFields;
 
 class PosOrderServerClient
 {
+    use ModificationFields;
     protected $client;
     public $baseUrl;
     public $token;
@@ -68,6 +70,7 @@ class PosOrderServerClient
             'Accept' => 'application/json',
            // 'portal-name' => getShebaRequestHeader()->toArray()['portal-name'],
             //'Version-Code' => getShebaRequestHeader()->toArray()['Version-Code']
+            'Modifier-Name' => $this->getModifierNameForHeader()
         ];
         if ($this->token) $options['headers'] += ['Authorization' => 'Bearer ' . $this->token];
         if (!$data) return $options;
@@ -91,6 +94,7 @@ class PosOrderServerClient
      * @param bool $multipart
      * @return array|object|string|null
      * @throws InventoryServiceServerError
+     * @throws PosOrderServiceServerError
      */
     public function put($uri, $data, $multipart = false)
     {
@@ -101,10 +105,18 @@ class PosOrderServerClient
      * @param $uri
      * @return array|object|string|null
      * @throws InventoryServiceServerError
+     * @throws PosOrderServiceServerError
      */
     public function delete($uri)
     {
         return $this->call('DELETE', $uri);
+    }
+
+    private function getModifierNameForHeader()
+    {
+        $partner = request()->auth_user->getPartner();
+        $this->setModifier($partner);
+        return $this->getModifierName();
     }
 
 
