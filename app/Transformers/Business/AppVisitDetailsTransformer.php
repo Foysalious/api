@@ -196,7 +196,10 @@ class AppVisitDetailsTransformer extends TransformerAbstract
      */
     private function getRescheduleNote(Visit $visit)
     {
-       $reschedule_note = $visit->visitNotes()->where('status', Status::RESCHEDULED)->select('note')->orderBy('id', 'DESC')->first();
-       return $reschedule_note ? $reschedule_note->note : null;
+       $reschedule_note = $visit->visitNotes()->where('status', Status::RESCHEDULED)->select('note', 'date')->orderBy('id', 'DESC')->first();
+       return $reschedule_note ? [
+         'note' => $reschedule_note->note,
+         'date' => Carbon::parse($reschedule_note->date)->format('F d,Y')
+       ] : null;
     }
 }
