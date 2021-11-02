@@ -12,6 +12,7 @@ use Sheba\Dal\ProfileNIDSubmissionLog\Contact as ProfileNIDSubmissionRepo;
 use Sheba\Dal\ProfileNIDSubmissionLog\Model as ProfileNIDSubmissionLog;
 use Sheba\EKYC\EkycClient;
 use Sheba\EKYC\Exceptions\EKycException;
+use Sheba\EKYC\LivelinessService;
 use Sheba\EKYC\NidFaceVerification;
 use Sheba\EKYC\Statics;
 use Sheba\Repositories\ProfileRepository;
@@ -73,7 +74,7 @@ class FaceVerificationController extends Controller
     public function getLivelinessCredentials(Request $request): JsonResponse
     {
         try {
-            $data = Statics::getLivelinessConfigurations();
+            $data = (new LivelinessService($this->client))->getLivelinessConfigurations();
             return api_response($request, null, 200, ['data' => $data]);
         } catch (\Throwable $e) {
             logError($e);
