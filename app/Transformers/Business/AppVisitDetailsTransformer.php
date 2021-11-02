@@ -24,7 +24,8 @@ class AppVisitDetailsTransformer extends TransformerAbstract
             'photos' => $this->getPhotos($visit),
             'current_status_info' => $this->getCurrentStatusInfo($visit),
             'status_change_logs' => $this->getStatusChangesLogs($visit),
-            'cancel_note' => $this->getCancelNote($visit)
+            'cancel_note' => $this->getCancelNote($visit),
+            'reschedule_note' => $this->getRescheduleNote($visit)
         ];
     }
 
@@ -186,5 +187,16 @@ class AppVisitDetailsTransformer extends TransformerAbstract
         } else {
             return null;
         }
+    }
+
+
+    /**
+     * @param Visit $visit
+     * @return null
+     */
+    private function getRescheduleNote(Visit $visit)
+    {
+       $reschedule_note = $visit->visitNotes()->where('status', Status::RESCHEDULED)->select('note')->orderBy('id', 'DESC')->first();
+       return $reschedule_note ? $reschedule_note->note : null;
     }
 }
