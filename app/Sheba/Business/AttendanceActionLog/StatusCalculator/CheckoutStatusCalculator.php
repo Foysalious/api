@@ -9,7 +9,7 @@ class CheckoutStatusCalculator extends StatusCalculator
     {
         $checkout_time = $this->checkoutTime ?: $this->business->calculationTodayLastCheckOutTime($this->whichHalfDay);
         if (is_null($checkout_time)) return Statuses::LEFT_TIMELY;
-        $today_checkout_date = $this->checkoutTime ? Carbon::parse($this->attendance->date . ' ' . $this->attendance->checkout_time): Carbon::now();
+        $today_checkout_date = $this->newCheckoutTime ? Carbon::parse($this->attendance->date . ' ' . $this->newCheckoutTime): Carbon::now();
         $last_checkout_time = $this->checkoutTime ?: Carbon::parse($today_checkout_date->toDateString() . ' ' . $checkout_time);
 
         $today_checkout_date_without_second = Carbon::parse($today_checkout_date->format('Y-m-d H:i'));
