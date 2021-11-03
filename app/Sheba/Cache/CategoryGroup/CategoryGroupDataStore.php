@@ -23,7 +23,7 @@ class CategoryGroupDataStore implements DataStoreObject
         $category_group = CategoryGroup::whereHas('categories', function ($q) {
             $q->publishedWithServiceOnLocation($this->categoryGroupCacheRequest->getLocationId());
         })->where('id', $this->categoryGroupCacheRequest->getCategoryGroupId())->with(['categories' => function ($q) {
-            $q->select('id', 'name', 'thumb', 'app_thumb', 'banner', 'app_banner', 'icon', 'icon_png', 'parent_id')->where('publication_status', 1);
+            $q->published()->hasLocation($this->categoryGroupCacheRequest->getCategoryGroupId())->select('id', 'name', 'thumb', 'app_thumb', 'banner', 'app_banner', 'icon', 'icon_png', 'parent_id');
         }])->select('id', 'name')->first();
 
         if (!$category_group) return null;
