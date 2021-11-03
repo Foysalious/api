@@ -145,4 +145,10 @@ trait ModificationFields
     {
         if (!empty(class_basename(Session::get('modifier')))) return "App\\Models\\" . class_basename(Session::get('modifier'));
     }
+
+    public function getModifierName()
+    {
+        list($id, $name, $time) = $this->getData();
+        return $name;
+    }
 }

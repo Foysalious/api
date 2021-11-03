@@ -5,9 +5,11 @@ namespace App\Sheba\InventoryService;
 use App\Sheba\InventoryService\Exceptions\InventoryServiceServerError;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use Sheba\ModificationFields;
 
 class InventoryServerClient
 {
+    use ModificationFields;
     protected $client;
     protected $baseUrl;
     private $token;
@@ -56,6 +58,7 @@ class InventoryServerClient
             'Accept' => 'application/json',
 //            'portal-name' => getShebaRequestHeader()->toArray()['portal-name'],
 //            'Version-Code' => getShebaRequestHeader()->toArray()['Version-Code']
+            'Modifier-Name' => $this->getModifierNameForHeader()
         ];
         if (!$data) return $options;
         if ($multipart) {
@@ -109,6 +112,13 @@ class InventoryServerClient
         if ($extra_headers) $headers += $extra_headers;
         if (!$sheba_headers->isEmpty()) $headers += $sheba_headers->toArray();
         return $headers;
+    }
+
+    private function getModifierNameForHeader()
+    {
+        $partner = request()->auth_user->getPartner();
+        $this->setModifier($partner);
+        return $this->getModifierName();
     }
 
 }
