@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Sheba\Business\Payslip\Excel as PaySlipExcel;
+use App\Sheba\Business\Payslip\PayReport\BkashSalaryReportExcel;
 use App\Sheba\Business\Payslip\PayReportList;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -74,11 +75,11 @@ class PayReportController extends Controller
      */
     public function show($business, $payslip, Request $request, PayReportDetails $pay_report_details)
     {
-        $pay_slip =  $this->payslipRepo->find($payslip);
+        $pay_slip = $this->payslipRepo->find($payslip);
         if (!$pay_slip) return api_response($request, null, 404);
         $pay_report_detail = $pay_report_details->setPayslip($pay_slip)->setMonthYear($request->month_year)->get();
 
-        if($request->file=='pdf') return App::make('dompdf.wrapper')->loadView('pdfs.payslip.payroll_details', compact('pay_report_detail'))->download("payroll_details.pdf");
+        if ($request->file == 'pdf') return App::make('dompdf.wrapper')->loadView('pdfs.payslip.payroll_details', compact('pay_report_detail'))->download("payroll_details.pdf");
 
         return api_response($request, null, 200, ['pay_report_detail' => $pay_report_detail]);
     }
@@ -93,5 +94,23 @@ class PayReportController extends Controller
         $last_disbursed_month = $pay_report_list->setBusiness($business)->getDisbursedMonth();
 
         return api_response($request, null, 200, ['last_disbursed_month' => $last_disbursed_month]);
+    }
+
+    /**
+     * @param Request $request
+     * @param PayReportList $pay_report_list
+     * @return JsonResponse
+     */
+    public function bkashSalaryReport(Request $request, PayReportList $pay_report_list)
+    {
+
+        /** @var Business $business */
+        $business = $request->business;
+
+        $payslip = $pay_report_list->setBusiness($business)
+            ->setMonthYear('2021-09')
+            ->getBkashSalaryData();
+
+        return (new BkashSalaryReportExcel)->setEmployeeData($payslip->toArray())->download();
     }
 }
