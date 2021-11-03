@@ -9,6 +9,7 @@ class FinancialRequest
     private $tinCertificate;
     private $bankName;
     private $bankAccountNumber;
+    private $bkashNumber;
 
     /**
      * @param $business_member
@@ -98,6 +99,24 @@ class FinancialRequest
     public function getBankAccNumber()
     {
         return $this->bankAccountNumber;
+    }
+
+    /**
+     * @param $bkash_number
+     * @return $this
+     */
+    public function setBkashNumber($bkash_number)
+    {
+        $this->bkashNumber = $bkash_number;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getBkashNumber()
+    {
+        return $this->bkashNumber;
     }
 
     /**

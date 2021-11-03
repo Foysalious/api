@@ -25,6 +25,7 @@ use Sheba\ComplianceInfo\ComplianceInfo;
 use Sheba\ComplianceInfo\Statics;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\Discount\InvalidDiscountType;
+use Sheba\Authentication\Exceptions\AuthenticationFailedException;
 use League\Fractal\Resource\ResourceAbstract;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Dal\POSOrder\SalesChannels;
@@ -333,12 +334,12 @@ class OrderController extends Controller
             $request->merge(['refund_nature' => $refund_nature]);
 
             $refund->setNew($new)->update();
-            $invoiceService->setPosOrder($order)->generateInvoice()->saveInvoiceLink();
+        $invoiceService->setPosOrder($order)->generateInvoice()->saveInvoiceLink();
             $order->payment_status = $order->calculate()->getPaymentStatus();
-            return api_response($request, null, 200, [
-                'msg'   => 'Order Updated Successfully',
-                'order' => $order
-            ]);
+        return api_response($request, null, 200, [
+            'msg' => 'Order Updated Successfully',
+            'order' => $order
+        ]);
     }
 
     /**
@@ -572,7 +573,7 @@ class OrderController extends Controller
             return api_response($request, null, 401, ['msg' => 'Customer not found']);
         $updater->setOrder($order)->setData(['customer_id' => $requested_customer->id])->update();
         /** @var AutomaticEntryRepository $entry */
-        $entry  = app(AutomaticEntryRepository::class);
+        $entry = app(AutomaticEntryRepository::class);
         $entry->setPartner($order->partner)->setFor(EntryType::INCOME)->setSourceType(class_basename($order))->setSourceId($order->id)->setParty($requested_customer->profile)->updatePartyFromSource();
         return api_response($request, null, 200, ['msg' => 'Customer tagged Successfully']);
     }

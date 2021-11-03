@@ -24,7 +24,8 @@ class AppVisitDetailsTransformer extends TransformerAbstract
             'photos' => $this->getPhotos($visit),
             'current_status_info' => $this->getCurrentStatusInfo($visit),
             'status_change_logs' => $this->getStatusChangesLogs($visit),
-            'cancel_note' => $this->getCancelNote($visit)
+            'cancel_note' => $this->getCancelNote($visit),
+            'reschedule_note' => $this->getRescheduleNote($visit)
         ];
     }
 
@@ -182,9 +183,24 @@ class AppVisitDetailsTransformer extends TransformerAbstract
     private function getCancelNote(Visit $visit)
     {
         if ($visit->status === Status::CANCELLED) {
-            return $visit->visitNotes()->where('status', Status::CANCELLED)->select('note')->orderBy('id', 'DESC')->first()->note;
+            $visit_note = $visit->visitNotes()->where('status', Status::CANCELLED)->select('note')->orderBy('id', 'DESC')->first();
+            return $visit_note ? $visit_note->note : null;
         } else {
             return null;
         }
+    }
+
+
+    /**
+     * @param Visit $visit
+     * @return null
+     */
+    private function getRescheduleNote(Visit $visit)
+    {
+       $reschedule_note = $visit->visitNotes()->where('status', Status::RESCHEDULED)->select('note', 'date')->orderBy('id', 'DESC')->first();
+       return $reschedule_note ? [
+         'note' => $reschedule_note->note,
+         'date' => Carbon::parse($reschedule_note->date)->format('F d,Y')
+       ] : null;
     }
 }

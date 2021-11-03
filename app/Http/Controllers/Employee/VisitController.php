@@ -246,6 +246,10 @@ class VisitController extends Controller
 
         $visit = $this->visitRepository->find($visit);
         if (!$visit) return api_response($request, null, 404);
+        $existing_photos_count = $visit->visitPhotos()->get()->count();
+        if ($existing_photos_count > 5) {
+            return api_response($request, null, 420);
+        }
         $photo_creator->setVisit($visit)->setPhoto($request->image)->store();
         return api_response($request, null, 200);
     }
@@ -260,7 +264,7 @@ class VisitController extends Controller
     public function updateStatus(Request $request, $visit, StatusUpdater $status_updater)
     {
         $validation_data = [
-            'status' => 'required|string',
+            'status' => 'required|string|in:' . implode(',', Status::get()),
             'lat' => 'required|numeric',
             'lng' => 'required|numeric'
         ];

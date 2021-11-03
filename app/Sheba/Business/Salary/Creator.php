@@ -14,7 +14,7 @@ class Creator
     private $businessMember;
     /** @var SalaryRepository */
     private $salaryRepository;
-    /*** @var PayrollComponentRepository*/
+    /*** @var PayrollComponentRepository */
     private $payrollComponentRepository;
     private $salary;
 
@@ -46,7 +46,7 @@ class Creator
         $this->makeData();
         DB::transaction(function () {
             $this->salary = $this->salaryRepository->create($this->salaryData);
-            $this->createComponentPercentage();
+            if (!$this->salaryRequest->getIsForBulkGrossSalary()) $this->createComponentPercentage();
         });
 
         return true;
@@ -63,7 +63,7 @@ class Creator
         $business_member = $this->salaryRequest->getBusinessMember();
         $breakdown_percentage = $this->salaryRequest->getBreakdownPercentage();
         if (empty($breakdown_percentage)) return true;
-        foreach ( $breakdown_percentage as $component) {
+        foreach ($breakdown_percentage as $component) {
             $gross_salary_breakdown_maker = new Maker($component, $business_member, $this->salary, null);
             $gross_salary_breakdown_maker->setManager($this->salaryRequest->getManagerMember());
             $gross_salary_breakdown_maker->runComponent();

@@ -1,5 +1,6 @@
 <?php namespace Sheba\Business\CoWorker;
 
+use App\Sheba\Business\BusinessMemberBkashAccount\Requester as CoWorkerBkashAccountRequester;
 use Exception;
 use App\Helper\BangladeshiMobileValidator;
 use Sheba\Business\BusinessMemberStatusChangeLog\Creator as BusinessMemberStatusChangeLogCreator;
@@ -96,6 +97,8 @@ class Updater
     private $businessMemberData = [];
     /**  @var BusinessMemberStatusChangeLogCreator $businessMemberStatusChangeLogCreator */
     private $businessMemberStatusChangeLogCreator;
+    /** @var CoWorkerBkashAccountRequester $coWorkerBkashAccRequester */
+    private $coWorkerBkashAccRequester;
 
     /**
      * Updater constructor.
@@ -112,6 +115,7 @@ class Updater
      * @param MemberRepositoryInterface $member_repository
      * @param BusinessRoleRepositoryInterface $business_role_repository
      * @param BusinessMemberStatusChangeLogCreator $business_member_status_change_log_creator
+     * @param CoWorkerBkashAccountRequester $co_worker_bkash_acc_requester
      */
     public function __construct(FileRepository                       $file_repository, ProfileRepository $profile_repository,
                                 BusinessMemberRepositoryInterface    $business_member_repository,
@@ -119,7 +123,7 @@ class Updater
                                 BusinessMemberRequester              $business_member_requester, BusinessMemberCreator $business_member_creator,
                                 BusinessMemberUpdater                $business_member_updater, ProfileBankInfoInterface $profile_bank_information,
                                 MemberRepositoryInterface            $member_repository, BusinessRoleRepositoryInterface $business_role_repository,
-                                BusinessMemberStatusChangeLogCreator $business_member_status_change_log_creator)
+                                BusinessMemberStatusChangeLogCreator $business_member_status_change_log_creator, CoWorkerBkashAccountRequester $co_worker_bkash_acc_requester)
     {
         $this->fileRepository = $file_repository;
         $this->profileRepository = $profile_repository;
@@ -134,6 +138,7 @@ class Updater
         $this->memberRepository = $member_repository;
         $this->businessRoleRepository = $business_role_repository;
         $this->businessMemberStatusChangeLogCreator = $business_member_status_change_log_creator;
+        $this->coWorkerBkashAccRequester = $co_worker_bkash_acc_requester;
     }
 
     /**
@@ -433,9 +438,14 @@ class Updater
 
             if ($this->financialRequest->getBankAccNumber() != 'null') $this->profileBankInfoRepository->create($profile_bank_data);
 
+            $this->coWorkerBkashAccRequester->setBusinessMember($this->businessMember)
+                ->setBkashNumber($this->financialRequest->getBkashNumber())
+                ->createOrUpdate();
+
             DB::commit();
             return [$this->profile, $tin_certificate_name, $tin_certificate_link];
         } catch (Throwable $e) {
+
             DB::rollback();
             app('sentry')->captureException($e);
             return null;
@@ -542,7 +552,7 @@ class Updater
     {
         DB::beginTransaction();
         try {
-            $this->businessMemberUpdater->setBusinessMember($this->businessMember)->update(['status'=>'inactive']);
+            $this->businessMemberUpdater->setBusinessMember($this->businessMember)->update(['status' => 'inactive']);
             $this->businessMember->delete();
             (new InvalidToken())->invalidTheTokens($this->profile->email);
             DB::commit();

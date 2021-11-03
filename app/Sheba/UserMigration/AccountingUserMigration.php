@@ -10,7 +10,7 @@ class AccountingUserMigration extends UserMigrationRepository
 {
     public function getBanner(): string
     {
-        return 'accounting-banner';
+        return Constants::$accounting_migration_url . "/accounting_migration_banner.png";
     }
 
     public function getStatusWiseResponse(): array

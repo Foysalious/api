@@ -203,6 +203,9 @@ class EmployeeController extends Controller
             ->whereBetween('end_date', [$start_date, $end_date])->first();
         $is_badge_seen = $business_member_badge ? $business_member_badge->is_seen : 0;
 
+        $manager = $business ? $business->getActiveBusinessMember()->where('manager_id', $business_member->id)->count() : null;
+        $is_manager = $manager ? 1 : 0;
+
         $data = [
             'id' => $member->id,
             'business_id' => $business->id,
@@ -237,6 +240,7 @@ class EmployeeController extends Controller
             ] : null,
             'currently_on_visit' => $current_visit ? $current_visit->id : null,
             'is_badge_seen' => $is_badge_seen,
+            'is_manager' => $is_manager
         ];
 
         return api_response($request, $business_member, 200, ['info' => $data]);
