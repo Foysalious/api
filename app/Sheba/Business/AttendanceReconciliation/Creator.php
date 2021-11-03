@@ -65,7 +65,6 @@ class Creator
     {
         $this->businessCheckinTime = Carbon::parse($this->date . '' . (new TimeByBusiness())->getOfficeStartTimeByBusiness(Carbon::parse($this->date . ' ' . $this->checkin), $this->businessMember->business, $this->businessMember));
         $new_attendance = false;
-
         if (!$this->attendance) {
             $this->attendance = $this->createAttendance();
             $new_attendance = true;
@@ -74,20 +73,38 @@ class Creator
             ->setAction(Actions::CHECKIN)
             ->setAttendance($this->attendance)
             ->setCheckinTime($this->businessCheckinTime)
+            ->setNewCheckInTime($this->checkin)
             ->setWhichHalfDay($this->whichHalf)
             ->calculate();
         if ($new_attendance) {
             $this->createAttendanceActionLogs(Actions::CHECKIN, $status);
+            $this->attendanceOverrideLogsRepo->create([
+                'attendance_id' => $this->attendance->id,
+                'action' => Actions::CHECKIN,
+                'new_time' => $this->checkin,
+                'new_status' => $status,
+                'log' => 'Checkin has been reconciled'
+            ]);
         } else {
+            $prev_time = $this->attendance->checkin_time;
+            $prev_status = $this->attendanceActionLogsRepo->where('attendance_id', $this->attendance->id)->where('action',Actions::CHECKIN)->first()->status;
             $this->updateCheckinAttendance();
             $attendance_action_log = $this->getAttendanceActionLogs(Actions::CHECKIN);
             $this->updateAttendanceActionLogs($attendance_action_log, $status);
+            $this->attendanceOverrideLogsRepo->create([
+                'attendance_id' => $this->attendance->id,
+                'action' => Actions::CHECKIN,
+                'previous_time' => $prev_time,
+                'previous_status' => $prev_status,
+                'new_time' => $this->checkin,
+                'new_status' => $status,
+                'log' => 'Checkin has been reconciled'
+            ]);
         }
     }
 
     private function createAttendance()
     {
-
         return $this->attendanceRepo->create($this->withCreateModificationField([
             'business_member_id' => $this->businessMember->id,
             'date' => $this->date,
@@ -98,7 +115,7 @@ class Creator
 
     private function updateCheckinAttendance()
     {
-        $this->attendanceActionLogsRepo->update($this->attendance, ['checkin_time' => $this->checkin]);
+        $this->attendanceRepo->update($this->attendance, ['checkin_time' => $this->checkin]);
     }
 
     private function updateAttendanceActionLogs($attendance_action_log, $status)
@@ -109,19 +126,34 @@ class Creator
     private function createOrUpdateCheckout()
     {
         $this->businessCheckoutTime = Carbon::parse($this->date . '' . (new TimeByBusiness())->getOfficeEndTimeByBusiness(Carbon::parse($this->date . ' ' . $this->checkout), $this->businessMember->business, $this->businessMember));
+        if (!$this->businessCheckinTime) $this->businessCheckinTime = Carbon::parse($this->date . ' ' .$this->attendance->checkin_time);
+        
         $status = (new CheckoutStatusCalculator)->setBusiness($this->business)
             ->setAction(Actions::CHECKOUT)
             ->setAttendance($this->attendance)
             ->setCheckoutTime($this->businessCheckoutTime)
+            ->setNewCheckOutTime($this->checkout)
             ->setWhichHalfDay($this->whichHalf)
             ->calculate();
+        $prev_time = $this->attendance->checkout_time;
         $this->updateCheckoutAttendance();
         $attendance_action_log = $this->getAttendanceActionLogs(Actions::CHECKOUT);
+        $prev_status = null;
         if (!$attendance_action_log) {
             $this->createAttendanceActionLogs(Actions::CHECKOUT, $status);
         } else {
+            $prev_status = $attendance_action_log->status;
             $this->updateAttendanceActionLogs($attendance_action_log, $status);
         }
+        $this->attendanceOverrideLogsRepo->create([
+            'attendance_id' => $this->attendance->id,
+            'action' => Actions::CHECKOUT,
+            'previous_time' => $prev_status ? $prev_time : null,
+            'previous_status' => $prev_status,
+            'new_time' => $this->checkout,
+            'new_status' => $status,
+            'log' => 'Checkout has been reconciled'
+        ]);
     }
 
     private function updateCheckoutAttendance()

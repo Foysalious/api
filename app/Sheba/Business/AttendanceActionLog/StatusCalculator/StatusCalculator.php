@@ -13,6 +13,8 @@ abstract class StatusCalculator
     protected $whichHalfDay;
     protected $checkinTime;
     protected $checkoutTime;
+    protected $newCheckinTime;
+    protected $newCheckoutTime;
 
 
     public function setBusiness(Business $business)
@@ -44,6 +46,19 @@ abstract class StatusCalculator
     public function setCheckinTime($checkin_time)
     {
         $this->checkinTime = $checkin_time;
+        return $this;
+    }
+
+
+    public function setNewCheckInTime($new_checkin_time)
+    {
+        $this->newCheckinTime = $new_checkin_time;
+        return $this;
+    }
+
+    public function setNewCheckOutTime($new_checkout_time)
+    {
+        $this->newCheckoutTime = $new_checkout_time;
         return $this;
     }
 
