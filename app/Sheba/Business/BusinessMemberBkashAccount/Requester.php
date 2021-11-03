@@ -61,17 +61,6 @@ class Requester
         return $this->bkashNumber;
     }
 
-    public function setManagerMember($manager_member)
-    {
-        $this->managerMember = $manager_member;
-        return $this;
-    }
-
-    public function getManagerMember()
-    {
-        return $this->managerMember;
-    }
-
     public function createOrUpdate()
     {
         $bkash_info = $this->businessMember->bkashInfos->last();
