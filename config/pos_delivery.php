@@ -7,6 +7,7 @@ return [
         'own_delivery' => ['bn' => 'নিজস্ব ডেলিভারি ', 'en' => 'Own Delivery'], 'paperfly' => ['bn' => 'পেপারফ্লাই', 'en' => 'Paperfly']
     ],
     'api_url' => env('S_DELIVERY_API_URL'),
+    'server_ip' => env('S_DELIVERY_SERVER_IP'),
 
     'payment_method' => ['beftn','bkash','rocket','nagad'],
     'account_type'  => ['bank','mobile'],
