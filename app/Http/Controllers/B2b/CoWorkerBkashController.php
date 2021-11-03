@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use App\Models\Business;
 use App\Models\Member;
+use Excel;
 
 class CoWorkerBkashController extends Controller
 {
@@ -31,7 +32,7 @@ class CoWorkerBkashController extends Controller
         $this->coWorkerBkashAccRequester = $co_worker_bkash_acc_requester;
     }
 
-    public function bulkGrossSalaryUpload($business, Request $request, BulkBkashNumberExcelUploadError $bulk_bkash_excel_upload_error)
+    public function bulkBakshInfoUpload($business, Request $request, BulkBkashNumberExcelUploadError $bulk_bkash_excel_upload_error)
     {
         $this->validate($request, ['file' => 'required|file']);
         $valid_extensions = ["xls", "xlsx", "xlm", "xla", "xlc", "xlt", "xlw"];
@@ -92,7 +93,6 @@ class CoWorkerBkashController extends Controller
 
             $this->coWorkerBkashAccRequester->setBusinessMember($business_member)
                 ->setBkashNumber($value->$bkash_number)
-                ->setManagerMember($manager_member)
                 ->createOrUpdate();
         });
 

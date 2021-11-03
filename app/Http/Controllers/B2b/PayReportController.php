@@ -112,7 +112,7 @@ class PayReportController extends Controller
         $business = $request->business;
 
         $payslip = $pay_report_list->setBusiness($business)
-            ->setMonthYear('2021-09')
+            ->setMonthYear($request->month_year)
             ->getBkashSalaryData();
 
         return (new BkashSalaryReportExcel)->setEmployeeData($payslip->toArray())->download();
