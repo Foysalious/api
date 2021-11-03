@@ -1,10 +1,7 @@
-<?php
-
-
-namespace App\Sheba\InventoryService\Services;
-
+<?php namespace App\Sheba\InventoryService\Services;
 
 use App\Sheba\InventoryService\InventoryServerClient;
+use Illuminate\Support\Facades\File;
 
 class CollectionService
 {
@@ -154,13 +151,13 @@ class CollectionService
 
     public function store()
     {
-        $data = $this->makeCreateData();
+        $data = $this->makeData();
         return $this->client->post('api/v1/partners/' . $this->partner_id . '/collections', $data, true);
     }
 
     public function update()
     {
-        $data = $this->makeCreateData();
+        $data = $this->makeData();
         return $this->client->put('api/v1/partners/' . $this->partner_id . '/collections/' . $this->collection_id, $data, true);
     }
 
@@ -169,7 +166,7 @@ class CollectionService
         return $this->client->get('api/v1/partners/' . $this->partner_id . '/collections/'. $this->collection_id);
     }
 
-    private function makeCreateData()
+    private function makeData()
     {
         return [
             ['name' => 'name', 'contents' => $this->name],
