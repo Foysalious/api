@@ -38,12 +38,16 @@ class AccountingUserMigration extends UserMigrationRepository
      */
     public function updateStatus($status)
     {
-        if ($status == UserStatus::UPGRADING) {
-            $currentStatus = $this->getStatus();
-            /** @var \Sheba\AccountingEntry\Repository\UserMigrationRepository $accUpgradeRepo */
-            $accUpgradeRepo = app(\Sheba\AccountingEntry\Repository\UserMigrationRepository::class);
-            $accUpgradeRepo->migrateInAccounting($this->userId, $currentStatus);
+        //TODO: Need to remove 216657
+        if ($this->userId != 216657) {
+            if ($status == UserStatus::UPGRADING) {
+                $currentStatus = $this->getStatus();
+                /** @var \Sheba\AccountingEntry\Repository\UserMigrationRepository $accUpgradeRepo */
+                $accUpgradeRepo = app(\Sheba\AccountingEntry\Repository\UserMigrationRepository::class);
+                $accUpgradeRepo->migrateInAccounting($this->userId, $currentStatus);
+            }
         }
+
         return $this->updateMigrationStatus($status);
     }
 
