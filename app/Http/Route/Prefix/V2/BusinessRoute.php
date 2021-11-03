@@ -376,6 +376,7 @@ class BusinessRoute
                     $api->get('/pending-months','B2b\PayRunController@pendingMonths');
                 });
                 $api->group(['prefix' => 'pay-report'], function ($api) {
+                    $api->get('/bkash-salary-report','B2b\PayReportController@bkashSalaryReport');
                     $api->get('/', 'B2b\PayReportController@index');
                     $api->get('/last-disbursed-month', 'B2b\PayReportController@lastDisbursedMonth');
                     $api->get('/{id}', 'B2b\PayReportController@show');

@@ -1,6 +1,7 @@
 <?php namespace App\Sheba\Business\Payslip;
 
 use App\Models\Business;
+use App\Transformers\Business\BkashSalaryReportTransformer;
 use App\Transformers\Business\PayReportListTransformer;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
@@ -46,7 +47,7 @@ class PayReportList
     public function setBusiness(Business $business)
     {
         $this->business = $business;
-        $this->businessMemberIds = $this->business->getAccessibleBusinessMember()->pluck('id')->toArray();
+        $this->businessMemberIds = $this->business->getActiveBusinessMember()->pluck('id')->toArray();
         return $this;
     }
 
@@ -128,7 +129,7 @@ class PayReportList
         $payslips = $this->getPaySlipByStatus($this->businessMemberIds, Status::DISBURSED)->orderBy('id', 'DESC');
         if ($this->monthYear) $payslips = $this->filterByMonthYear($payslips);
         if ($this->departmentID) $payslips = $this->filterByDepartment($payslips);
-        if($this->grossSalaryProrated) $this->filterByGrossSalaryProrated($payslips);
+        if ($this->grossSalaryProrated) $this->filterByGrossSalaryProrated($payslips);
         $this->payslipList = $payslips->get();
     }
 
@@ -147,6 +148,19 @@ class PayReportList
         if ($this->sort && $this->sortColumn) $payslip_list = $this->sortByColumn($payslip_list, $this->sortColumn, $this->sort)->values();
         $this->isProratedFilterApplicable = $payreport_list_transformer->getIsProratedFilterApplicable();
         return $payslip_list;
+    }
+
+    /**
+     * @return \Illuminate\Support\Collection
+     */
+    public function getBkashSalaryData()
+    {
+        $this->runPayslipQuery();
+
+        $manager = new Manager();
+        $manager->setSerializer(new ArraySerializer());
+        $payslip_list = new Collection($this->payslipList, new BkashSalaryReportTransformer());
+        return collect($manager->createData($payslip_list)->toArray()['data']);
     }
 
     /**
@@ -222,23 +236,23 @@ class PayReportList
         if ($this->grossSalaryProrated === 'no') $payslips->where('joining_log', null);
     }
 
-        public function getPaySlipByStatus($business_member_ids, $status)
+    public function getPaySlipByStatus($business_member_ids, $status)
     {
-            return $this->paysliprepo->where('status', $status)
-                ->whereIn('business_member_id', $business_member_ids)->with(['businessMember' => function ($q){
-                    $q->with(['member' => function ($q) {
-                        $q->select('id', 'profile_id')
-                            ->with([
-                                'profile' => function ($q) {
-                                    $q->select('id', 'name');
-                                }]);
-                    },'role' => function ($q) {
-                        $q->select('business_roles.id', 'business_department_id', 'name')->with([
-                            'businessDepartment' => function ($q) {
-                                $q->select('business_departments.id', 'business_id', 'name');
-                            }
-                        ]);
-                    }]);
+        return $this->paysliprepo->where('status', $status)
+            ->whereIn('business_member_id', $business_member_ids)->with(['businessMember' => function ($q) {
+                $q->with(['member' => function ($q) {
+                    $q->select('id', 'profile_id')
+                        ->with([
+                            'profile' => function ($q) {
+                                $q->select('id', 'name');
+                            }]);
+                }, 'role' => function ($q) {
+                    $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                        'businessDepartment' => function ($q) {
+                            $q->select('business_departments.id', 'business_id', 'name');
+                        }
+                    ]);
                 }]);
-        }
+            }]);
+    }
 }
