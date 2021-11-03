@@ -4013,7 +4013,7 @@
             "source": {
                 "type": "git",
                 "url": "https://bitbucket.org/startern/sheba_dal.git",
-                "reference": "459371ae7ca4411122a318097ebbe5be26fe9ee3"
+                "reference": "3e566949b583840cbbecf072f2fd784524f31c76"
             },
             "require": {
                 "php": ">=5.4"
