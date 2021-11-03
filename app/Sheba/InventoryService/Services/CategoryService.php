@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\File;
 class CategoryService
 {
     public $partnerId;
-    public $modifier;
     public $categoryName;
     public $categoryId;
     public $parentId;
@@ -19,12 +18,6 @@ class CategoryService
     public function __construct(InventoryServerClient $client)
     {
         $this->client = $client;
-    }
-
-    public function setModifier($modifier)
-    {
-        $this->modifier = $modifier;
-        return $this;
     }
 
     public function setPartner($partner_id)
@@ -93,7 +86,6 @@ class CategoryService
     {
         $data =  [
             ['name' => 'name', 'contents' => $this->categoryName],
-            ['name' => 'modifier', 'contents' => $this->modifier],
             ['name' => 'thumb', 'contents' => $this->thumb ? File::get($this->thumb->getRealPath()) : null, 'filename' => $this->thumb ? $this->thumb->getClientOriginalName() : '']
         ];
         if ($this->parentId != null) {
@@ -111,7 +103,6 @@ class CategoryService
     {
         return [
             ['name' => 'name', 'contents' => $this->categoryName],
-            ['name' => 'modifier', 'contents' => $this->modifier],
             ['name' => 'thumb', 'contents' => $this->thumb ? File::get($this->thumb->getRealPath()) : null, 'filename' => $this->thumb ? $this->thumb->getClientOriginalName() : '']
         ];
     }
@@ -136,7 +127,6 @@ class CategoryService
 
     public function delete()
     {
-        $data = $this->makeUpdateData();
         return $this->client->delete('api/v1/partners/'.$this->partnerId.'/categories/'.$this->categoryId);
     }
 
@@ -148,11 +138,10 @@ class CategoryService
         return $this->client->get($url);
     }
 
-    public function makeStoreDataForCategoryWithSubCategory()
+    public function makeStoreDataForCategoryWithSubCategory(): array
     {
         $data =  [
             ['name' => 'category_name', 'contents' => $this->categoryName],
-            ['name' => 'modifier', 'contents' => $this->modifier],
             [
                 'name' => 'category_thumb',
                 'contents' => $this->thumb ? File::get($this->thumb->getRealPath()) : null,
