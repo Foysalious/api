@@ -5,6 +5,7 @@ use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
 use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
 use App\Sheba\PartnerGeneralSettings;
+use Illuminate\Support\Str;
 use Sheba\Dal\Category\Category;
 use Sheba\Dal\CategoryPartner\CategoryPartner;
 use Sheba\Dal\DeliveryChargeUpdateRequest\DeliveryChargeUpdateRequest;
@@ -1278,9 +1279,18 @@ class PartnerController extends Controller
     public function generalSettings(Request $request, PartnerGeneralSettings $generalSettings)
     {
         $partner = $request->auth_user->getPartner();
-        $generalSettings = $generalSettings->setPartner($partner)->getGeneralSettings();
+        $generalSettings = $generalSettings->setToken($this->bearerToken($request))->setPartner($partner)->getGeneralSettings();
         return http_response($request, $generalSettings,200, ['generalSettings' => $generalSettings]);
     }
+    private function bearerToken($request)
+    {
+        $header = $request->header('Authorization', '');
+        if (Str::startsWith($header, 'Bearer ')) {
+            return Str::substr($header, 7);
+        }
+        return false;
+    }
+
 
 
 }
