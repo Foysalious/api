@@ -160,6 +160,7 @@ class PayReportList
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
         $payslip_list = new Collection($this->payslipList, new BkashSalaryReportTransformer());
+
         return collect($manager->createData($payslip_list)->toArray()['data']);
     }
 
