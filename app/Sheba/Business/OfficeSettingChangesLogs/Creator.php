@@ -99,6 +99,8 @@ class Creator
     {
         $previous_type = $this->officeSettingChangesLogsRequester->getPreviousAttendanceType();
         $new_type = $this->officeSettingChangesLogsRequester->getNewAttendanceType();
+        sort($previous_type);
+        sort($new_type);
         if ($previous_type == $new_type) return;
         $previous_type_string = implode(", ", $previous_type);
         $new_type_string = implode(", ", $new_type);
@@ -156,6 +158,153 @@ class Creator
             'from' => $from,
             'to' => $to,
             'logs' => 'Office IP has been updated from '.$from.' to '.$to
+        ];
+        $this->officeSettingChangesLogsRepo->create($log_data);
+    }
+
+    public function createHolidayStoreLogs()
+    {
+        $holiday_start = $this->officeSettingChangesLogsRequester->getHolidayStartDate();
+        $holiday_end = $this->officeSettingChangesLogsRequester->getHolidayEndDate();
+        $holiday_name = $this->officeSettingChangesLogsRequester->getHolidayName();
+        $logs = $holiday_start != $holiday_end ? "New holiday ".$holiday_name." from ".$holiday_start." to ".$holiday_end." has been added" : "New holiday ".$holiday_name." on ".$holiday_start." has been added";
+        $log_data = [
+            'business_id' => $this->officeSettingChangesLogsRequester->getBusiness()->id,
+            'type' => 'holiday',
+            'logs' => $logs
+        ];
+        $this->officeSettingChangesLogsRepo->create($log_data);
+    }
+
+    public function createHolidayDeleteLogs()
+    {
+        $existing_holiday = $this->officeSettingChangesLogsRequester->getExistingHoliday();
+        $holiday_start = $existing_holiday->start_date->format('Y-m-d');
+        $holiday_end = $existing_holiday->end_date->format('Y-m-d');
+        $holiday_name = $existing_holiday->title;
+        $logs = $holiday_start != $holiday_end ? "Holiday ".$holiday_name." from ".$holiday_start." to ".$holiday_end." has been removed" : "Holiday ".$holiday_name." on ".$holiday_start." has been removed";
+        $log_data = [
+            'business_id' => $this->officeSettingChangesLogsRequester->getBusiness()->id,
+            'type' => 'holiday',
+            'logs' => $logs
+        ];
+        $this->officeSettingChangesLogsRepo->create($log_data);
+    }
+
+    public function createHolidayUpdateLogs()
+    {
+        $prev_holiday_start  = $this->officeSettingChangesLogsRequester->getExistingHolidayStart()->format('Y-m-d');
+        $prev_holiday_end  = $this->officeSettingChangesLogsRequester->getExistingHolidayEnd()->format('Y-m-d');
+        $prev_holiday_name = $this->officeSettingChangesLogsRequester->getExistingHolidayName();
+        $new_start_date = $this->officeSettingChangesLogsRequester->getHolidayStartDate();
+        $new_end_date = $this->officeSettingChangesLogsRequester->getHolidayEndDate();
+        $new_holiday_name = $this->officeSettingChangesLogsRequester->getHolidayName();
+        if ($prev_holiday_start == $new_start_date && $prev_holiday_end == $new_end_date && $prev_holiday_name == $new_holiday_name) return;
+        $logs = "Holiday updated from ".$prev_holiday_name." on (".$prev_holiday_start." - ".$prev_holiday_end.") to ".$new_holiday_name." on (".$new_start_date." - ".$new_end_date.")";
+        $log_data = [
+            'business_id' => $this->officeSettingChangesLogsRequester->getBusiness()->id,
+            'from' => $prev_holiday_name.", (".$prev_holiday_start." - ".$prev_holiday_end.")",
+            'to' => $new_holiday_name.", (".$new_start_date." - ".$new_end_date.")",
+            'type' => 'holiday',
+            'logs' => $logs
+        ];
+        $this->officeSettingChangesLogsRepo->create($log_data);
+    }
+
+    public function createAttendanceOfficeStartTimingLogs()
+    {
+        $previous_start_time = $this->officeSettingChangesLogsRequester->getPreviousOfficeStartTime();
+        $new_office_start_time = $this->officeSettingChangesLogsRequester->getOfficeStartTime();
+
+        if ($previous_start_time == $new_office_start_time) return;
+        $log_data = [
+            'business_id' => $this->officeSettingChangesLogsRequester->getBusiness()->id,
+            'from' => $previous_start_time,
+            'to' => $new_office_start_time,
+            'type' => 'attendance',
+            'logs' => 'Office hour start time updated from '.$previous_start_time.' to '.$new_office_start_time
+        ];
+        $this->officeSettingChangesLogsRepo->create($log_data);
+    }
+
+    public function createAttendanceOfficeEndTimingLogs()
+    {
+        $previous_end_time = $this->officeSettingChangesLogsRequester->getPreviousOfficeEndTime();
+        $new_office_end_time = $this->officeSettingChangesLogsRequester->getOfficeEndTime();
+
+        if ($previous_end_time == $new_office_end_time) return;
+        $log_data = [
+            'business_id' => $this->officeSettingChangesLogsRequester->getBusiness()->id,
+            'from' => $previous_end_time,
+            'to' => $new_office_end_time,
+            'type' => 'attendance',
+            'logs' => 'Office hour start time updated from '.$previous_end_time.' to '.$new_office_end_time
+        ];
+        $this->officeSettingChangesLogsRepo->create($log_data);
+    }
+
+    public function createAttendanceStartGraceTimingLogs()
+    {
+        $previous_start_grace_enable = $this->officeSettingChangesLogsRequester->getPreviousIsStartGracePeriodEnable();
+        $previous_start_grace_time = $this->officeSettingChangesLogsRequester->getPreviousStartGracePeriodTime();
+        $new_start_grace_enable = $this->officeSettingChangesLogsRequester->getIsStartGracePeriodEnable();
+        $new_start_grace_time = $this->officeSettingChangesLogsRequester->getStartGraceTime();
+        if ($previous_start_grace_enable == $new_start_grace_enable && $previous_start_grace_time == $new_start_grace_time) return;
+        $from = $to = $logs = "";
+        if ($previous_start_grace_enable != $new_start_grace_enable && $new_start_grace_enable == 1){
+            $from = $previous_start_grace_enable.', '.$previous_start_grace_time;
+            $to = $new_start_grace_enable.', '.$new_start_grace_time;
+            $logs = "Start Time Grace is Enabled for ".$new_start_grace_time.' mins';
+        }
+        if ($previous_start_grace_enable != $new_start_grace_enable && $new_start_grace_enable == 0){
+            $from = $previous_start_grace_enable.', '.$previous_start_grace_time;
+            $to = $new_start_grace_time;
+            $logs = "Start Time Grace is Disabled";
+        }
+        if ($previous_start_grace_enable == $new_start_grace_enable && $previous_start_grace_time != $new_start_grace_time){
+            $from = $previous_start_grace_time;
+            $to = $new_start_grace_time;
+            $logs = "Start Time Grace is updated from ".$previous_start_grace_time." mins to ".$new_start_grace_time." mins";
+        }
+        $log_data = [
+            'business_id' => $this->officeSettingChangesLogsRequester->getBusiness()->id,
+            'from' => $from,
+            'to' => $to,
+            'type' => 'attendance',
+            'logs' => $logs
+        ];
+        $this->officeSettingChangesLogsRepo->create($log_data);
+    }
+
+    public function createAttendanceEndGraceTimingLogs()
+    {
+        $previous_end_grace_enable = $this->officeSettingChangesLogsRequester->getPreviousIsEndGracePeriodEnable();
+        $previous_end_grace_time = $this->officeSettingChangesLogsRequester->getPreviousEndGracePeriodTime();
+        $new_end_grace_enable = $this->officeSettingChangesLogsRequester->getIsEndGracePeriodEnable();
+        $new_end_grace_time = $this->officeSettingChangesLogsRequester->getEndGraceTime();
+        if ($previous_end_grace_enable == $new_end_grace_enable && $previous_end_grace_time == $new_end_grace_time) return;
+        $from = $to = $logs = "";
+        if ($previous_end_grace_enable != $new_end_grace_enable && $new_end_grace_enable == 1){
+            $from = $previous_end_grace_enable.', '.$previous_end_grace_time;
+            $to = $new_end_grace_enable.', '.$new_end_grace_time;
+            $logs = "End Time Grace is Enabled for ".$new_end_grace_time.' mins';
+        }
+        if ($previous_end_grace_enable != $new_end_grace_enable && $new_end_grace_enable == 0){
+            $from = $previous_end_grace_enable.', '.$previous_end_grace_time;
+            $to = $new_end_grace_time;
+            $logs = "End Time Grace is Disabled";
+        }
+        if ($previous_end_grace_enable == $new_end_grace_enable && $previous_end_grace_time != $new_end_grace_time){
+            $from = $previous_end_grace_time;
+            $to = $new_end_grace_time;
+            $logs = "End Time Grace is updated from ".$previous_end_grace_time." mins to ".$new_end_grace_time." mins";
+        }
+        $log_data = [
+            'business_id' => $this->officeSettingChangesLogsRequester->getBusiness()->id,
+            'from' => $from,
+            'to' => $to,
+            'type' => 'attendance',
+            'logs' => $logs
         ];
         $this->officeSettingChangesLogsRepo->create($log_data);
     }
