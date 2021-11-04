@@ -3,7 +3,7 @@
 
 use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
-use App\Sheba\PosOrderService\SmanagerUserServerClient;
+use App\Sheba\PosCustomerService\SmanagerUserServerClient;
 use App\Sheba\UserMigration\Modules;
 
 class PosCustomerResolver
