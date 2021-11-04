@@ -107,7 +107,6 @@ class PayReportController extends Controller
      */
     public function bkashSalaryReport(Request $request, PayReportList $pay_report_list)
     {
-
         /** @var Business $business */
         $business = $request->business;
 
@@ -115,6 +114,8 @@ class PayReportController extends Controller
             ->setMonthYear($request->month_year)
             ->getBkashSalaryData();
 
-        return (new BkashSalaryReportExcel)->setEmployeeData($payslip->toArray())->download();
+        $bkash_salary_report =  (new BkashSalaryReportExcel)->setEmployeeData($payslip->toArray())->download();
+
+        return api_response($request, null, 200, ['bkash_salary_report' => $bkash_salary_report]);
     }
 }
