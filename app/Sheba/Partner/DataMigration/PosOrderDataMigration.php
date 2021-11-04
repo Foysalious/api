@@ -109,7 +109,7 @@ class PosOrderDataMigration
 
     private function generatePosOrdersMigrationData()
     {
-        $pos_orders = DB::table('pos_orders')->where('partner_id', $this->partner->id)->where(function ($q) {
+        $pos_orders = PosOrder::table('pos_orders')->where('partner_id', $this->partner->id)->where(function ($q) {
             $q->where('is_migrated', null)->orWhere('is_migrated', 0);
         })->withTrashed()->select('id', 'partner_wise_order_id', 'partner_id', 'customer_id', DB::raw('(CASE 
                         WHEN pos_orders.payment_status = "Paid" THEN pos_orders.updated_at 
@@ -120,7 +120,7 @@ class PosOrderDataMigration
                         END) AS sales_channel_id'), 'emi_month',
                 'bank_transaction_charge', 'interest', 'delivery_charge', 'address AS delivery_address', 'delivery_vendor_name',
             'delivery_request_id', 'delivery_thana', 'delivery_district', 'note', 'status', 'voucher_id', 'created_at',
-            'created_by_name', 'updated_at', 'updated_by_name', 'deleted_at')->get();
+            'created_by_name', 'updated_at', 'updated_by_name', 'deleted_at')->get()->toArray();
         $this->partnerPosOrderIds = array_column($pos_orders, 'id');
 
         return $pos_orders;
