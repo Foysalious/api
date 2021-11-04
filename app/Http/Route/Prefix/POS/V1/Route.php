@@ -22,6 +22,7 @@ class Route
             $api->get('voucher-details/{voucher_id}', 'VoucherController@getVoucherDetails');
             $api->post('test-migrate', 'Partner\DataMigrationController@testMigration');
             $api->get('emi-calculate', 'PosOrder\OrderController@calculateEmiCharges');
+            $api->post('orders/{order}/payment-link/create', "PosOrder\OrderController@createPaymentLinkFromWebstore");
             $api->group(['prefix' => 'partners'], function ($api) {
                 $api->group(['prefix' => '{partner}'], function ($api) {
                     $api->get('/', 'Pos\PartnerController@findById')->middleware('ip.whitelist');
@@ -29,7 +30,6 @@ class Route
                         $api->group(['prefix' => '{order}'], function ($api) {
                             $api->post('online-payment', 'PosOrder\OrderController@onlinePayment');
                             $api->post('payment-link-created', 'PosOrder\OrderController@paymentLinkCreated');
-                            $api->post('payment-link/create', "PosOrder\OrderController@createPaymentLinkFromWebstore");
                         });
                     });
                 });
