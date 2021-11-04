@@ -36,6 +36,7 @@ class PartnerDataMigrationToPosOrderJob extends Job implements ShouldQueue
             $this->attempts < 2 ? $this->migrate() : $this->storeLogs(0);;
         } catch (\Exception $e) {
             $this->storeLogs(0);
+            app('sentry')->captureException($e);
         }
     }
 
