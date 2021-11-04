@@ -14,6 +14,7 @@ class PosOrderObject
     private $is_migrated;
     private $created_at;
     private $due;
+    private $emi_month;
     protected $type = PosOrderTypes::OLD_SYSTEM;
 
     /**
@@ -114,6 +115,16 @@ class PosOrderObject
     public function setCreatedAt($created_at): PosOrderObject
     {
         $this->created_at = $created_at;
+        return $this;
+    }
+
+    /**
+     * @param mixed $emi_month
+     * @return PosOrderObject
+     */
+    public function setEmiMonth($emi_month)
+    {
+        $this->emi_month = $emi_month;
         return $this;
     }
 

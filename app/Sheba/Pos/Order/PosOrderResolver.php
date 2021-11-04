@@ -40,7 +40,7 @@ class PosOrderResolver
     public function setOrderId($orderId)
     {
         $this->orderId = $orderId;
-        $oldPosOrder = PosOrder::where('id', $orderId)->select('id', 'sales_channel', 'customer_id', 'partner_id', 'is_migrated', 'created_at')->first();
+        $oldPosOrder = PosOrder::where('id', $orderId)->select('id', 'sales_channel', 'customer_id', 'partner_id', 'is_migrated', 'created_at', 'emi_month')->first();
         if ($oldPosOrder && !$oldPosOrder->is_migrated) {
             $oldPosOrder->calculate();
             $customer = $oldPosOrder->customer;
@@ -54,7 +54,7 @@ class PosOrderResolver
             $this->order = $this->posOrderObject->setId($oldPosOrder->id)->setCustomerId($oldPosOrder->customer_id)->setPartnerId($oldPosOrder->partner_id)
                 ->setDue($oldPosOrder->getDue())->setSalesChannel($oldPosOrder->sales_channel)->setIsMigrated(0)
                 ->setCustomer($customerObject)->setPartner($partnerObject)->setType(PosOrderTypes::OLD_SYSTEM)
-                ->setCreatedAt($oldPosOrder->created_at);
+                ->setCreatedAt($oldPosOrder->created_at)->setEmiMonth($oldPosOrder->emi_month);
         } else {
             $response = $this->client->get('api/v1/orders/' . $this->orderId);
             $newPosOrder = json_decode(json_encode($response['order']), FALSE);
@@ -69,7 +69,7 @@ class PosOrderResolver
             $this->order = $this->posOrderObject->setId($newPosOrder->id)->setCustomerId($newPosOrder->customer_id)->setPartnerId($newPosOrder->partner_id)
                 ->setDue($newPosOrder->due)->setSalesChannel($newPosOrder->sales_channel)->setIsMigrated(1)
                 ->setCustomer($customerObject)->setPartner($partnerObject)->setType(PosOrderTypes::NEW_SYSTEM)
-                ->setCreatedAt($newPosOrder->created_at);
+                ->setCreatedAt($newPosOrder->created_at)->setEmiMonth($newPosOrder->emi_month);
         }
         return $this;
     }
