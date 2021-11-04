@@ -72,6 +72,7 @@ class DeliveryService
     protected $deliveryReqId;
 
 
+
     public function __construct(DeliveryServerClient $client, PartnerDeliveryInformationRepositoryInterface $partnerDeliveryInfoRepositoryInterface,
                                 PosOrderRepository $posOrderRepository,PosServiceRepositoryInterface $serviceRepositoryInterface, PosOrderServerClient $posOrderClient,
                                 OrderService $orderService)

@@ -114,9 +114,13 @@ class PosOrderServerClient
 
     private function getModifierNameForHeader()
     {
-        $partner = request()->auth_user->getPartner();
-        $this->setModifier($partner);
-        return $this->getModifierName();
+        $partner = !is_null(request()->auth_user) ? request()->auth_user->getPartner() : '' ;
+        if($partner) {
+            $this->setModifier($partner);
+            return $this->getModifierName();
+        } else {
+            return '';
+        }
     }
 
 

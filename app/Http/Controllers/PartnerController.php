@@ -4,6 +4,10 @@ use App\Exceptions\HyperLocationNotFoundException;
 use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
 use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
+use App\Sheba\PartnerGeneralSettings;
+use Sheba\Dal\Category\Category;
+use Sheba\Dal\CategoryPartner\CategoryPartner;
+use Sheba\Dal\DeliveryChargeUpdateRequest\DeliveryChargeUpdateRequest;
 use App\Models\HyperLocal;
 use App\Models\Job;
 use App\Models\Location;
@@ -12,7 +16,6 @@ use App\Models\PartnerOrder;
 use App\Models\PartnerPosCustomer;
 use App\Models\PartnerServicePricesUpdate;
 use App\Models\Resource;
-use App\Sheba\PartnerGeneralSettings;
 use Sheba\Dal\Service\Service;
 use App\Models\SubscriptionOrder;
 use App\Repositories\DiscountRepository;
@@ -34,10 +37,6 @@ use Illuminate\Support\Facades\Redis;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
 use Sheba\Checkout\Partners\LitePartnerList;
 use Sheba\Checkout\Requests\PartnerListRequest;
-use Sheba\Dal\Category\Category;
-use Sheba\Dal\CategoryPartner\CategoryPartner;
-use Sheba\Dal\DeliveryChargeUpdateRequest\DeliveryChargeUpdateRequest;
-use Sheba\Dal\PartnerService\PartnerService;
 use Sheba\Logistics\Repository\ParcelRepository;
 use Sheba\Manager\JobList;
 use Sheba\ModificationFields;
@@ -47,10 +46,8 @@ use Sheba\Partner\PartnerDetails;
 use Sheba\Partner\QRCode\AccountType;
 use Sheba\Partner\Updater;
 use Sheba\Reward\PartnerReward;
-use Sheba\UserAgentInformation;
 use Throwable;
 use Validator;
-use Sheba\OAuth2\AuthUser;
 
 class PartnerController extends Controller
 {
@@ -70,16 +67,16 @@ class PartnerController extends Controller
 
     public function __construct()
     {
-        $this->serviceRepository = new ServiceRepository();
-        $this->reviewRepository = new ReviewRepository();
-        $this->resourceJobRepository = new ResourceJobRepository();
-        $this->partnerOrderRepository = new PartnerOrderRepository();
+        $this->serviceRepository        = new ServiceRepository();
+        $this->reviewRepository         = new ReviewRepository();
+        $this->resourceJobRepository    = new ResourceJobRepository();
+        $this->partnerOrderRepository   = new PartnerOrderRepository();
         $this->partnerServiceRepository = new PartnerServiceRepository();
-        $this->discountRepository = new DiscountRepository();
-        $this->fileRepository = new FileRepository();
-        $this->rentCarCategoryIds = array_map('intval', explode(',', env('RENT_CAR_IDS')));
-        $this->days = constants('WEEK_DAYS');
-        $this->profileRepo = new ProfileRepository();
+        $this->discountRepository       = new DiscountRepository();
+        $this->fileRepository           = new FileRepository();
+        $this->rentCarCategoryIds       = array_map('intval', explode(',', env('RENT_CAR_IDS')));
+        $this->days                     = constants('WEEK_DAYS');
+        $this->profileRepo              = new ProfileRepository();
     }
 
     public function index()
@@ -89,8 +86,8 @@ class PartnerController extends Controller
         })->has('resources', '>', 0)->where('status', 'Verified')->orderBy('name')->get();
         return response()->json([
             'partners' => $partners,
-            'code' => 200,
-            'msg' => 'successful'
+            'code'     => 200,
+            'msg'      => 'successful'
         ]);
     }
 
@@ -112,53 +109,6 @@ class PartnerController extends Controller
 
         return api_response($request, $details, 200, ['info' => $details]);
     }
-
-    public function showByDomain(Request $request, PartnerDetails $details)
-    {
-        $this->validate($request, ['domain_name' => 'required|string']);
-        ini_set('memory_limit', '6096M');
-        ini_set('max_execution_time', 660);
-        try {
-            $details->setPartnerFromDomain($request->domain_name);
-        } catch (\Exception $e) {
-            return api_response($request, null, 404);
-        }
-        $loc = getLocationFromRequest($request);
-        if ($loc) $details->setLocationId($loc->id);
-        $info = $details->get();
-        return api_response($request, $info, 200, ['info' => $info]);
-    }
-
-
-    /**
-     * @SWG\Get(
-     *     path="/v2/partners/{partner}/categories/{category}/services",
-     *     tags={"Partner"},
-     *     description="Return partner's info",
-     *     @SWG\Parameter(
-     *         name="partner",
-     *         in="path",
-     *         type="string",
-     *         description="partner_id",
-     *         required=true,
-     *     ),
-     *     @SWG\Parameter(
-     *         name="category",
-     *         in="path",
-     *         type="string",
-     *         description="category_id",
-     *         required=true,
-     *     ),
-     *     @SWG\Response(
-     *         response=200,
-     *         description="OK",
-     *     ),
-     *     @SWG\Response(
-     *         response=500,
-     *         description="Internel Server Error"
-     *     )
-     * )
-     */
 
     public function getServices($partner, $category, Request $request)
     {
@@ -208,7 +158,7 @@ class PartnerController extends Controller
         foreach ($options as $option) {
             $questions->push(array(
                 'question' => $option->question,
-                'answers' => explode(',', $option->answers)
+                'answers'  => explode(',', $option->answers)
             ));
         }
         return $questions;
@@ -222,7 +172,7 @@ class PartnerController extends Controller
                 'option' => collect(explode(',', $key))->map(function ($key) {
                     return (int)$key;
                 }),
-                'price' => (double)$price
+                'price'  => (double)$price
             ));
         }
         return $options;
@@ -447,8 +397,10 @@ class PartnerController extends Controller
 
     public function getEarnings($partner, Request $request)
     {
-        $start_time     = Carbon::now()->startOfWeek(Carbon::SUNDAY);
-        $end_time       = Carbon::now()->endOfWeek(Carbon::SATURDAY);
+        Carbon::setWeekStartsAt(Carbon::SUNDAY);
+        Carbon::setWeekEndsAt(Carbon::SATURDAY);
+        $start_time     = Carbon::now()->startOfWeek();
+        $end_time       = Carbon::now()->endOfWeek();
         $partner        = $request->partner;
         $sales_stats    = (new PartnerSalesStatistics($partner))->calculate();
         $partner_orders = $this->partnerOrderRepository->getOrdersByClosedAt($partner, $start_time, $end_time);
@@ -503,7 +455,7 @@ class PartnerController extends Controller
         $info->put('total_services', $partner->services->count());
         $info->put('total_resources', $partner->resources->count());
         $info->put('wallet', $partner->wallet);
-        $info->put('leave_status', (new LeaveStatus())->setArtisan($partner)->getCurrentStatus());
+        $info->put('leave_status', (new LeaveStatus($partner))->getCurrentStatus());
         return api_response($request, $info, 200, ['info' => $info]);
     }
 
@@ -539,14 +491,14 @@ class PartnerController extends Controller
     {
         try {
             $this->validate($request, [
-                'date' => 'sometimes|required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
-                'time' => 'sometimes|required|string',
-                'services' => 'required|string',
-                'isAvailable' => 'sometimes|required',
+                'date'              => 'sometimes|required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
+                'time'              => 'sometimes|required|string',
+                'services'          => 'required|string',
+                'isAvailable'       => 'sometimes|required',
                 'skip_availability' => 'sometimes|required|numeric|in:0,1',
-                'partner' => 'sometimes|required',
-                'filter' => 'sometimes|required|in:sheba',
-                'has_premise' => 'sometimes|required',
+                'partner'           => 'sometimes|required',
+                'filter'            => 'sometimes|required|in:sheba',
+                'has_premise'       => 'sometimes|required',
                 'has_home_delivery' => 'sometimes|required'
             ]);
             $validation = new Validation($request);
@@ -558,13 +510,13 @@ class PartnerController extends Controller
             $partner_list = new PartnerList();
             $partner_list->setPartnerListRequest($partnerListRequest)->find($partner);
             if ($request->has('isAvailable')) {
-                $partners = $partner_list->partners;
+                $partners           = $partner_list->partners;
                 $available_partners = $partners->filter(function ($partner) {
                     return $partner->is_available == 1;
                 });
-                $is_available = count($available_partners) != 0 ? 1 : 0;
+                $is_available       = count($available_partners) != 0 ? 1 : 0;
                 return api_response($request, $is_available, 200, [
-                    'is_available' => $is_available,
+                    'is_available'       => $is_available,
                     'available_partners' => count($available_partners)
                 ]);
             }
@@ -586,7 +538,7 @@ class PartnerController extends Controller
                     $lite_partners = [];
                 }
                 return api_response($request, $partners, 200, [
-                    'partners' => $partners,
+                    'partners'      => $partners,
                     'lite_partners' => $lite_partners
                 ]);
             }
@@ -596,17 +548,17 @@ class PartnerController extends Controller
         } catch (InsideCityPickUpAddressNotFoundException $e) {
             return api_response($request, null, 400, [
                 'message' => 'Please try with outside city for this location.',
-                'code' => 700
+                'code'    => 700
             ]);
         } catch (OutsideCityPickUpAddressNotFoundException $e) {
             return api_response($request, null, 400, [
                 'message' => 'This service isn\'t available at this location.',
-                'code' => 701
+                'code'    => 701
             ]);
         } catch (DestinationCitySameAsPickupException $e) {
             return api_response($request, null, 400, [
                 'message' => 'Please try with inside city for this location.',
-                'code' => 702
+                'code'    => 702
             ]);
         }
     }
@@ -833,10 +785,10 @@ class PartnerController extends Controller
         $options = collect();
         foreach ($prices as $key => $price) {
             $options->push(array(
-                'option' => collect(explode(',', $key))->map(function ($key) {
+                'option'    => collect(explode(',', $key))->map(function ($key) {
                     return (int)$key;
                 }),
-                'price' => (double)$price,
+                'price'     => (double)$price,
                 'old_price' => is_null($old_prices) ? null : (isset($old_prices[$key]) ? (double)$old_prices[$key] : null)
             ));
         }
@@ -1012,7 +964,7 @@ class PartnerController extends Controller
     {
         list($old_category_partner_info, $new_category_partner_info) = $this->formatData($category_partner, $request);
         DeliveryChargeUpdateRequest::create($this->withCreateModificationField([
-            'category_partner_id' => $category_partner->id,
+            'category_partner_id'       => $category_partner->id,
             'old_category_partner_info' => json_encode($old_category_partner_info),
             'new_category_partner_info' => json_encode($new_category_partner_info)
         ]));
@@ -1021,19 +973,19 @@ class PartnerController extends Controller
     private function formatData($category_partner, Request $request)
     {
         $category = Category::find($category_partner->category_id);
-        $old = [
-            'is_home_delivery_applied' => $category_partner->is_home_delivery_applied,
+        $old      = [
+            'is_home_delivery_applied'   => $category_partner->is_home_delivery_applied,
             'is_partner_premise_applied' => $category_partner->is_partner_premise_applied,
-            'delivery_charge' => $category_partner->delivery_charge,
-            'uses_sheba_logistic' => $category_partner->uses_sheba_logistic
+            'delivery_charge'            => $category_partner->delivery_charge,
+            'uses_sheba_logistic'        => $category_partner->uses_sheba_logistic
         ];
-        $new = [
-            'is_home_delivery_applied' => $request->has('is_home_delivery_applied') ? 1 : 0,
+        $new      = [
+            'is_home_delivery_applied'   => $request->has('is_home_delivery_applied') ? 1 : 0,
             'is_partner_premise_applied' => $request->has('on_premise') ? 1 : 0,
-            'delivery_charge' => $request->has('is_home_delivery_applied') ? $request->delivery_charge : 0,
-            'uses_sheba_logistic' => $this->doesUseShebaLogistic($category, $request),
+            'delivery_charge'            => $request->has('is_home_delivery_applied') ? $request->delivery_charge : 0,
+            'uses_sheba_logistic'        => $this->doesUseShebaLogistic($category, $request),
         ];
-        return [$old, $new];
+        return [ $old, $new ];
     }
 
     private function doesUseShebaLogistic(Category $category, Request $request)
@@ -1087,21 +1039,9 @@ class PartnerController extends Controller
         return api_response($request, $served_customers, 200, ['customers' => $served_customers]);
     }
 
-    public function changeLeaveStatus($partner, Request $request, LeaveStatus $leaveStatus, UserAgentInformation $userAgentInformation)
+    public function changeLeaveStatus($partner, Request $request)
     {
         $status = (new LeaveStatus(Partner::find($partner)))->changeStatus()->getCurrentStatus();
-        return api_response($request, $status, 200, ['status' => $status]);
-    }
-
-    public function changeLeaveStatusOfResource($resource, Request $request, LeaveStatus $leaveStatus, UserAgentInformation $userAgentInformation)
-    {
-        $userAgentInformation->setRequest($request);
-        /** @var AuthUser $auth_user */
-        $auth_user = $request->auth_user;
-        $this->setModifier($auth_user->getResource());
-        $partner_resource = $auth_user->getPartner()->resources()->where('partner_resource.resource_id', $resource)->first();
-        if (!$partner_resource) return api_response($request, null, 403);
-        $status = $leaveStatus->setArtisan($partner_resource)->setUserAgentInformation($userAgentInformation)->changeStatus()->getCurrentStatus();
         return api_response($request, $status, 200, ['status' => $status]);
     }
 
@@ -1149,7 +1089,6 @@ class PartnerController extends Controller
         return api_response($request, null, 200, ['resource_types' => $resource_types]);
     }
 
-
     /**
      * @param Request $request
      * @return JsonResponse
@@ -1167,41 +1106,6 @@ class PartnerController extends Controller
             return api_response($request, null, 500);
         }
     }
-
-    /**
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function getBusinessTypesForTradeFair(Request $request)
-    {
-        try {
-            $business_types = constants('PARTNER_BUSINESS_TYPE');
-            $converted_business_types = [];
-            foreach($business_types as $business_type)
-            {
-                $converted_business_types[$business_type['bn']] = $business_type['en'];
-            }
-            $business_type_with_count = Partner::where(function($q){
-                $q->whereHas('tradeFair',function($q){
-                    $q->where('is_published',1);
-                });
-            })->where('is_webstore_published',1)->whereNotNull('business_type')->groupBy('business_type')->select('business_type', DB::raw('count(*) as total'))->get()->toArray();
-            $business_types_with_count = collect($business_type_with_count)->map(function($type) use($converted_business_types){
-                return [
-                    'business_type' => $converted_business_types[$type['business_type']],
-                    'count' => $type['total']
-                ];
-            });
-            return api_response($request, null, 200, ['partner_business_types' => $business_types_with_count]);
-        } catch (ModelNotFoundException $e) {
-            app('sentry')->captureException($e);
-            return response()->json(['code' => 404, 'message' => $e->getMessage()], 404);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return response()->json(['code' => 500, 'message' => $e->getMessage()], 500);
-        }
-    }
-
 
     /**
      * @param Request $request
