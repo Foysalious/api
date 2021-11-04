@@ -7,7 +7,7 @@ use DB;
 
 class SmanagerUserDataMigration
 {
-    const CHUNK_SIZE = 10;
+    const CHUNK_SIZE = 50;
     private $currentQueue = 1;
     /** @var Partner */
     private $partner;
@@ -47,7 +47,7 @@ class SmanagerUserDataMigration
     private function generatePartnerMigrationData()
     {
         return [
-            'previous_id' => $this->partner->id,
+            'originalId' => $this->partner->id,
             'name' => $this->partner->name,
             'sub_domain' => $this->partner->sub_domain,
         ];
@@ -74,8 +74,7 @@ class SmanagerUserDataMigration
             ->join('pos_customers', 'partner_pos_customers.customer_id', '=', 'pos_customers.id')
             ->join('profiles', 'pos_customers.profile_id', '=', 'profiles.id')
             ->select('partner_pos_customers.id','partner_pos_customers.customer_id as previous_id', 'partner_pos_customers.partner_id', $query,
-                'partner_pos_customers.is_supplier', 'partner_pos_customers.note', 'profiles.bn_name', 'profiles.mobile', 'profiles.email',
-                'profiles.password', 'profiles.is_blacklisted', 'profiles.login_blocked_until', 'profiles.fb_id', 'profiles.google_id',
+                'partner_pos_customers.is_supplier', 'partner_pos_customers.note', 'profiles.mobile', 'profiles.email', 'profiles.fb_id', 'profiles.google_id',
                 'profiles.mobile_verified', 'profiles.email_verified', 'profiles.email_verified_at', 'profiles.address', 'profiles.gender',
                 'profiles.dob', 'profiles.pro_pic', 'profiles.created_by_name', 'profiles.updated_by_name', 'profiles.created_at',
                 'profiles.updated_at')
