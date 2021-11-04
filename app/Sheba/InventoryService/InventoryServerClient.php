@@ -5,6 +5,7 @@ namespace App\Sheba\InventoryService;
 use App\Sheba\InventoryService\Exceptions\InventoryServiceServerError;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use Illuminate\Http\Request;
 use Sheba\ModificationFields;
 
 class InventoryServerClient
@@ -116,9 +117,13 @@ class InventoryServerClient
 
     private function getModifierNameForHeader()
     {
-        $partner = request()->auth_user->getPartner();
-        $this->setModifier($partner);
-        return $this->getModifierName();
+        $partner = !is_null(request()->auth_user) ? request()->auth_user->getPartner() : '' ;
+        if($partner) {
+            $this->setModifier($partner);
+            return $this->getModifierName();
+        } else {
+            return '';
+        }
     }
 
 }
