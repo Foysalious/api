@@ -1,5 +1,7 @@
 <?php namespace App\Http\Controllers\PosOrder;
 
+use App\Exceptions\DoNotReportException;
+use App\Exceptions\NotFoundException;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\PaymentLink\PaymentLinkController;
 use App\Http\Controllers\VoucherController;
@@ -249,6 +251,32 @@ class OrderController extends Controller
             "type" => 'partner',
             'user' => $auth_user,
             'partner' => $auth_user
+        ));
+        $data = $payment_link->store($request)->getData(true);
+        return http_response($request, null, $data['code'], $data);
+    }
+
+    /**
+     * @throws NotFoundException
+     */
+    public function createPaymentLinkFromWebstore($order, Request $request, PosOrderResolver $posOrderResolver): JsonResponse
+    {
+        $order = $posOrderResolver->setOrderId($order)->get();
+        /** @var PaymentLinkController $payment_link */
+        $payment_link = app(PaymentLinkController::class);
+        $partner = Partner::find($order->partner_id);
+        if ($partner) throw new NotFoundException('Partner Not Found', 404);
+        $request->merge(array(
+            'amount' => $order->due,
+            'purpose' => $request->purpose,
+            'customer_id' => $order->customer_id,
+            'emi_month' => $request->emi_month,
+            'interest_paid_by' => $request->interest_paid_by,
+            'transaction_charge' => $request->transaction_charge,
+            'pos_order_id' => $order->id,
+            "type" => 'partner',
+            'user' => $partner,
+            'partner' => $partner
         ));
         $data = $payment_link->store($request)->getData(true);
         return http_response($request, null, $data['code'], $data);
