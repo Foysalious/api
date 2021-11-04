@@ -270,12 +270,12 @@ class OrderController extends Controller
             'amount' => $order->due,
             'purpose' => "PosOrder ID: " . $order->id . " Due payment",
             'customer_id' => $order->customer_id,
-            'emi_month' => $order->emi_month,
             'pos_order_id' => $order->id,
             "type" => 'partner',
             'user' => $partner,
             'partner' => $partner
         ));
+        if ($order->emi_month) $request->merge(array('emi_month' => $order->emi_month));
         $data = $payment_link->store($request)->getData(true);
         return http_response($request, null, $data['code'], $data);
     }
