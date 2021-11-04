@@ -97,7 +97,7 @@ class PosOrderDataMigration
             'name' => $this->partner->name,
             'sub_domain' => $this->partner->sub_domain,
             'sms_invoice' => $pos_setting ? $this->partner->posSetting->sms_invoice : 0,
-            'auto_printing' => $pos_setting ? $this->partner->posSetting->auto_pronting : 0,
+            'auto_printing' => $pos_setting ? $this->partner->posSetting->auto_printing : 0,
             'printer_name' => $pos_setting ? $this->partner->posSetting->printer_name : null,
             'printer_model' => $pos_setting ? $this->partner->posSetting->printer_model : null,
             'created_at' => $this->partner->created_at->format('Y-m-d H:i:s'),
