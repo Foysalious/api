@@ -301,6 +301,7 @@ class AttendanceController extends Controller
             'attendances' => $daily_breakdowns,
             'employee' => [
                 'id' => $business_member->member->id,
+                'business_member_id' => $business_member->id,
                 'name' => $business_member->member->profile->name,
                 'image' => $business_member->member->profile->pro_pic,
                 'mobile' => $business_member->member->profile->mobile ?: 'N/S',
