@@ -34,9 +34,7 @@ class CategoryController extends Controller
     public function store(Request $request)
     {
         $partner = $request->auth_user->getPartner();
-        $modifier = $request->auth_user->getResource()->profile->name;
         $response = $this->categoryService
-            ->setModifier($modifier)
             ->setPartner($partner->id)
             ->setCategoryName($request->name)
             ->setThumb($request->thumb)
@@ -48,8 +46,7 @@ class CategoryController extends Controller
     public function update(Request $request,$category_id)
     {
         $partner = $request->auth_user->getPartner();
-        $modifier = $request->auth_user->getResource()->profile->name;
-        $response =  $this->categoryService->setModifier($modifier)->setPartner($partner->id)
+        $response =  $this->categoryService->setPartner($partner->id)
             ->setCategoryId($category_id)
             ->setCategoryName($request->name)
             ->setThumb($request->thumb)
@@ -60,8 +57,7 @@ class CategoryController extends Controller
     public function delete(Request $request,$category_id)
     {
         $partner = $request->auth_user->getPartner();
-        $modifier = $request->auth_user->getResource()->profile->name;
-        $response =  $this->categoryService->setModifier($modifier)->setPartner($partner->id)->setCategoryId($category_id)->setCategoryName($request->name)->delete();
+        $response =  $this->categoryService->setPartner($partner->id)->setCategoryId($category_id)->setCategoryName($request->name)->delete();
         return http_response($request, null, 200, $response);
     }
 
@@ -75,9 +71,7 @@ class CategoryController extends Controller
     public function createCategoryWithSubCategory(Request $request)
     {
         $partner = $request->auth_user->getPartner();
-        $modifier = $request->auth_user->getResource()->profile->name;
         $response = $this->categoryService
-            ->setModifier($modifier)
             ->setPartner($partner->id)
             ->setCategoryName($request->category_name)
             ->setThumb($request->category_thumb)
