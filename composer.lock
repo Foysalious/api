@@ -6993,8 +6993,7 @@
             "source": {
                 "type": "git",
                 "url": "https://bitbucket.org/startern/sheba_dal.git",
-                "reference": "da7520ec52c24cffbed987cb4ea296524130a1b3"
-                "reference": "3e566949b583840cbbecf072f2fd784524f31c76"
+                "reference": "ec6ae5717410ad65cf1ef61fd6e3a858b6ef248c"
             },
             "require": {
                 "php": ">=5.4"
@@ -7021,8 +7020,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2021-11-02T10:23:15+00:00"
-            "time": "2021-10-27T06:58:36+00:00"
+            "time": "2021-10-31T13:08:06+00:00"
         },
         {
             "name": "sheba/elasticsearch",
@@ -11172,56 +11170,6 @@
             "time": "2021-04-27T22:00:25+00:00"
         },
         {
-            "name": "johnkary/phpunit-speedtrap",
-            "version": "v1.0.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/johnkary/phpunit-speedtrap.git",
-                "reference": "ad70c60c6d77ddd51e6aca9fdf165538e43b0193"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/johnkary/phpunit-speedtrap/zipball/ad70c60c6d77ddd51e6aca9fdf165538e43b0193",
-                "reference": "ad70c60c6d77ddd51e6aca9fdf165538e43b0193",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=5.3.0"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "3.7.*|~4.0"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "1.0-dev"
-                }
-            },
-            "autoload": {
-                "psr-0": {
-                    "JohnKary": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "John Kary",
-                    "email": "john@johnkary.net"
-                }
-            ],
-            "description": "Find slow tests in your PHPUnit test suite",
-            "homepage": "https://github.com/johnkary/phpunit-speedtrap",
-            "keywords": [
-                "phpunit",
-                "profile",
-                "slow"
-            ],
-            "time": "2015-03-21T19:00:39+00:00"
-        },
-        {
             "name": "mockery/mockery",
             "version": "1.4.3",
             "source": {
@@ -13019,5 +12967,5 @@
         "ext-intl": "*"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.0.0"
+    "plugin-api-version": "2.1.0"
 }

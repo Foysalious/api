@@ -17,6 +17,8 @@ pull_from_docker_registry() {
 run_on_local() {
   . ./bin/parse_env.sh
   ./bin/dcup.sh local -d --build
+  ./bin/composer.sh install --no-interaction --ignore-platform-reqs
+  ./bin/config_clear.sh
 }
 
 # USE ON DEVELOPMENT
