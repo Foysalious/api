@@ -268,11 +268,9 @@ class OrderController extends Controller
         if ($partner) throw new NotFoundException('Partner Not Found', 404);
         $request->merge(array(
             'amount' => $order->due,
-            'purpose' => $request->purpose,
+            'purpose' => "PosOrder ID: " . $order->id . " Due payment",
             'customer_id' => $order->customer_id,
-            'emi_month' => $request->emi_month,
-            'interest_paid_by' => $request->interest_paid_by,
-            'transaction_charge' => $request->transaction_charge,
+            'emi_month' => $order->emi_month,
             'pos_order_id' => $order->id,
             "type" => 'partner',
             'user' => $partner,
