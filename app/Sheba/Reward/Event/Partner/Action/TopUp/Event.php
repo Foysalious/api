@@ -64,6 +64,7 @@ class Event extends Action implements AmountCalculator
      */
     private function filterTargets(): bool
     {
+        if(count($this->reward->rewardTargets) === 0) return true;
         $reward_target = $this->reward->rewardTargets()->where('target_id', $this->partner->id)->first();
         return (isset($reward_target));
     }
