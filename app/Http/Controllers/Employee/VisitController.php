@@ -251,7 +251,13 @@ class VisitController extends Controller
             return api_response($request, null, 420);
         }
         $photo_creator->setVisit($visit)->setPhoto($request->image)->store();
-        return api_response($request, null, 200);
+        $photos = $visit->visitPhotos()->orderBy('id', 'DESC')->get()->map(function ($photo) {
+            return [
+                'id' => $photo->id,
+                'photo' => $photo->photo
+            ];
+        })->toArray();
+        return api_response($request, null, 200, ['photos' => $photos]);
     }
 
 
