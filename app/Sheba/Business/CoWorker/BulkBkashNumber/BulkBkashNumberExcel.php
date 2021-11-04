@@ -48,6 +48,6 @@ class BulkBkashNumberExcel
 
     private function getHeaders()
     {
-        return ['Employee Name', 'Employee Email', 'Bkash Number'];
+        return ['Employee Name', 'Employee Email', 'bKash Number'];
     }
 }
