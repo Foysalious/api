@@ -265,7 +265,7 @@ class OrderController extends Controller
         /** @var PaymentLinkController $payment_link */
         $payment_link = app(PaymentLinkController::class);
         $partner = Partner::find($order->partner_id);
-        if ($partner) throw new NotFoundException('Partner Not Found', 404);
+        if (!$partner) throw new NotFoundException('Partner Not Found', 404);
         $request->merge(array(
             'amount' => $order->due,
             'purpose' => "PosOrder ID: " . $order->id . " Due payment",
