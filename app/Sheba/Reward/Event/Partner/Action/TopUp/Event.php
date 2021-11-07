@@ -77,8 +77,9 @@ class Event extends Action implements AmountCalculator
     {
         $topUpAmount = $this->params[0];
         if ($this->reward->is_amount_percentage) {
-            $cap = $this->reward->cap ?? 0;
-            return max($cap, (($this->reward->amount * $topUpAmount->amount) / 100));
+            $cap = $this->reward->cap ? : 0;
+            $amount = ($this->reward->amount * $topUpAmount->amount);
+            return  $amount > $cap ? $cap : $amount;
         }
         return $this->reward->amount;
     }
