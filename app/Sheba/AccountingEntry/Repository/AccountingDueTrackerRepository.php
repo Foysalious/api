@@ -375,7 +375,7 @@ class AccountingDueTrackerRepository extends BaseRepository
         $data['created_from'] = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
         $data['amount'] = (double)$request->amount;
         $data['source_type'] = $type;
-        $data['note'] = $request->note;
+        $data['note'] = $request->note ?? null;
         $data['debit_account_key'] = $type === EntryTypes::DUE ? $request->customer_id : $request->account_key;
         $data['credit_account_key'] = $type === EntryTypes::DUE ? $request->account_key : $request->customer_id;
         $data['customer_id'] = $request->customer_id;
