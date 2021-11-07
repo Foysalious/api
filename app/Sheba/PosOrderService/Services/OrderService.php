@@ -16,8 +16,7 @@ class OrderService
     private $deliveryCharge;
     private $status;
     private $orderId;
-    private $token;
-    private $skus, $discount, $paymentMethod, $paymentLinkAmount, $paidAmount;
+    private $skus, $discount, $paymentMethod, $paidAmount;
     protected $emi_month, $interest, $bank_transaction_charge, $delivery_name, $delivery_mobile, $note, $voucher_id;
     protected $userId;
     protected $filter_params;
@@ -36,16 +35,6 @@ class OrderService
     public function setUserId($user_id)
     {
         $this->userId = $user_id;
-        return $this;
-    }
-
-    /**
-     * @param mixed $token
-     * @return OrderService
-     */
-    public function setToken($token)
-    {
-        $this->token = $token;
         return $this;
     }
 
@@ -255,7 +244,7 @@ class OrderService
     public function store()
     {
         $data = $this->makeCreateData();
-        return $this->client->setToken($this->token)->post('api/v1/partners/'.$this->partnerId.'/orders', $data, true);
+        return $this->client->post('api/v1/partners/'.$this->partnerId.'/orders', $data, true);
     }
 
     public function updateStatus()
@@ -278,7 +267,7 @@ class OrderService
 
     public function update()
     {
-        return $this->client->setToken($this->token)->put('api/v1/partners/' . $this->partnerId. '/orders/' . $this->orderId, $this->makeUpdateData());
+        return $this->client->put('api/v1/partners/' . $this->partnerId. '/orders/' . $this->orderId, $this->makeUpdateData());
     }
 
     public function delete()
@@ -332,7 +321,6 @@ class OrderService
         if ($this->skus) array_push($data, ['name' => 'skus','contents' => $this->skus]);
         if ($this->discount) array_push($data, ['name' => 'discount','contents' => $this->discount]);
         if ($this->paymentMethod) array_push($data, ['name' => 'payment_method','contents' => $this->paymentMethod]);
-        if ($this->paymentLinkAmount) array_push($data, ['name' => 'payment_link_amount','contents' => $this->paymentLinkAmount]);
         if ($this->paidAmount) array_push($data, ['name' => 'paid_amount','contents' => $this->paidAmount]);
         if($this->voucher_id) array_push($data, ['name' => 'voucher_id', 'contents' => $this->voucher_id]);
         if($this->emi_month) array_push($data, ['name' => 'emi_month', 'contents' => $this->emi_month]);
@@ -341,7 +329,7 @@ class OrderService
 
     public function updateStatusByDeliveryReqId($delivery_req_id, $data)
     {
-        return $this->client->setToken($this->token)->put('api/v1/partners/' . $this->partnerId. '/delivery_req_id/' . $delivery_req_id .'/update-status', $data);
+        return $this->client->put('api/v1/partners/' . $this->partnerId. '/delivery_req_id/' . $delivery_req_id .'/update-status', $data);
     }
 
     public function getFilteringOptions()
