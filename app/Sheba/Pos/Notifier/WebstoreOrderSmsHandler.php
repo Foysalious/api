@@ -42,6 +42,8 @@ class WebstoreOrderSmsHandler
         $sms_handler = $this->buildSmsHandler();
         $sms_cost = $sms_handler->estimateCharge();
         if ((double)$partner->wallet < $sms_cost) return;
+        //freeze money amount check
+        WalletTransactionHandler::isDebitTransactionAllowed($partner, $sms_cost, 'এস-এম-এস পাঠানোর');
 
         $sms_handler->shoot();
 

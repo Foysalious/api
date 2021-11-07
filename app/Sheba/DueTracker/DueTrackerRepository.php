@@ -319,6 +319,7 @@ class DueTrackerRepository extends BaseRepository
                 $payment_data['amount']       = $amount_cleared;
                 $payment_data['method']       = $payment_method;
                 $this->paymentCreator->credit($payment_data);
+                $order->calculate();
             }
         }
     }
@@ -332,7 +333,15 @@ class DueTrackerRepository extends BaseRepository
             ->where('transaction_type', 'Credit')
             ->first();
 
-        return $payment ? $payment->delete() : false;
+       if($payment)
+       {
+           $payment->delete();
+           /** @var PosOrder $order */
+           $order = PosOrder::find($pos_order_id);
+           $order->calculate();
+           return true;
+       }
+       return false;
     }
 
     private function createStoreData(Request $request)
@@ -499,6 +508,7 @@ class DueTrackerRepository extends BaseRepository
      * @param Request $request
      * @return mixed
      * @throws InvalidPartnerPosCustomer|InsufficientBalance
+     * @throws \Sheba\Transactions\Wallet\WalletDebitForbiddenException
      */
     public function sendSMS(Request $request)
     {
@@ -507,12 +517,15 @@ class DueTrackerRepository extends BaseRepository
         /** @var PosCustomer $customer */
         $customer = $partner_pos_customer->customer;
         $type = $request->type == 'receivable' ? 'due' : 'deposit';
+        /** @var Partner $partner */
+        $partner=$request->partner;
         $data     = [
             'type'          => $type,
-            'partner_name'  => $request->partner->name,
+            'partner_name'  => $partner->name,
             'customer_name' => $customer->profile->name,
             'mobile'        => $customer->profile->mobile,
             'amount'        => $request->amount,
+            'company_number'=> $partner->getContactNumber()
         ];
 
         if ($request->has('payment_link')) {
@@ -522,7 +535,8 @@ class DueTrackerRepository extends BaseRepository
         list($sms, $log) = $this->getSms($data);
         $sms_cost = $sms->estimateCharge();
         if ((double)$request->partner->wallet < $sms_cost) throw new InsufficientBalance();
-
+        //freeze money amount check
+        WalletTransactionHandler::isDebitTransactionAllowed($request->partner, $sms_cost, 'এস-এম-এস পাঠানোর');
         $sms->setBusinessType(BusinessType::SMANAGER)->setFeatureType(FeatureType::DUE_TRACKER);
         if(config('sms.is_on')) $sms->shoot();
         $transaction = (new WalletTransactionHandler())
@@ -554,7 +568,8 @@ class DueTrackerRepository extends BaseRepository
         $message_data = [
             'customer_name' => $data['customer_name'],
             'partner_name'  => $data['partner_name'],
-            'amount'        => $data['amount']
+            'amount'        => $data['amount'],
+            'company_number'=> $data['company_number']
         ];
 
         if ($data['type'] == 'due') {

@@ -48,7 +48,7 @@ class PosOrder extends BaseModel
     private $netBill;
     private $originalTotal;
 
-    public static $createdEventClass = PosOrderSavedEvent::class;
+    // public static $createdEventClass = PosOrderSavedEvent::class;
 
     public function calculate()
     {
@@ -72,6 +72,11 @@ class PosOrder extends BaseModel
         $this->isCalculated = true;
         $this->_formatAllToTaka();
         return $this;
+    }
+
+    public function netBill()
+    {
+        return $this->netBill;
     }
 
     private function _calculateThisItems()
@@ -103,7 +108,9 @@ class PosOrder extends BaseModel
 
     public function discountsAmountWithoutService()
     {
-        return $this->discountsWithoutService()->sum('amount');
+        return $this->discounts->filter(function ($discount) {
+            return $discount->item_id == null;
+        })->sum('amount');
     }
 
     public function discountsWithoutService()
@@ -147,8 +154,16 @@ class PosOrder extends BaseModel
     private function _setPaymentStatus()
     {
         $this->paymentStatus = ($this->due) ? OrderPaymentStatuses::DUE : OrderPaymentStatuses::PAID;
+        if ($this->payment_status != $this->paymentStatus) $this->storePaymentStatus();
         return $this;
     }
+
+
+    private function storePaymentStatus()
+    {
+        $this->update(['payment_status' => $this->paymentStatus]);
+    }
+
 
     private function _formatAllToTaka()
     {
