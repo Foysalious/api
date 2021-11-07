@@ -42,6 +42,7 @@ use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Dal\BusinessOffice\Contract as BusinessOfficeRepoInterface;
 use Sheba\Dal\BusinessOfficeHours\Contract as BusinessOfficeHoursRepoInterface;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
+use Sheba\Dal\BusinessWeekendSettings\BusinessWeekendSettingsRepo;
 use Sheba\Dal\OfficePolicy\Type;
 use Sheba\Dal\OfficeSettingChangesLogs\OfficeSettingChangesLogsRepository;
 use Sheba\Helpers\TimeFrame;
