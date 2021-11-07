@@ -8,6 +8,7 @@ use App\Sheba\InventoryService\InventoryServerClient;
 use App\Sheba\Partner\DataMigration\Jobs\PartnerDataMigrationToPosOrderJob;
 use Illuminate\Support\Facades\Redis;
 use DB;
+use Sheba\Pos\Repositories\PosOrderPaymentRepository;
 use stdClass;
 
 class PosOrderDataMigration
@@ -29,9 +30,10 @@ class PosOrderDataMigration
     private $posCustomers;
 
 
-    public function __construct(InventoryServerClient $inventoryServerClient)
+    public function __construct(InventoryServerClient $inventoryServerClient, PosOrderPaymentRepository $orderPaymentRepository)
     {
         $this->inventoryServerClient = $inventoryServerClient;
+        $this->orderPaymentRepository = $orderPaymentRepository;
     }
 
     /**
@@ -113,6 +115,8 @@ class PosOrderDataMigration
             $q->where('is_migrated', null)->orWhere('is_migrated', 0);
         })->withTrashed()
             ->join('pos_order_payments', 'pos_orders.id', '=', 'pos_order_payments.pos_order_id')
+            ->join('pos_customers', 'pos_orders.customer_id', '=', 'pos_customers.id')
+            ->join('profiles', 'profiles.id', '=', 'pos_customers.profile_id')
             ->select('pos_orders.id', 'pos_orders.partner_wise_order_id', 'pos_orders.partner_id', 'pos_orders.customer_id', DB::raw('(CASE 
                         WHEN pos_orders.payment_status = "Paid" THEN pos_order_payments.created_at
                         ELSE NULL 
@@ -124,7 +128,7 @@ class PosOrderDataMigration
                 'pos_orders.address AS delivery_address', 'pos_orders.delivery_vendor_name', 'pos_orders.delivery_request_id',
                 'pos_orders.delivery_thana', 'pos_orders.delivery_district', 'pos_orders.note', 'pos_orders.status',
                 'pos_orders.voucher_id', 'pos_orders.created_at', 'pos_orders.created_by_name', 'pos_orders.updated_at',
-                'pos_orders.updated_by_name', 'pos_orders.deleted_at')->get()->toArray();
+                'pos_orders.updated_by_name', 'pos_orders.deleted_at', 'profiles.name AS delivery_name', 'profiles.mobile AS delivery_mobile')->groupBy('id')->get()->toArray();
         $this->partnerPosOrderIds = array_column($pos_orders, 'id');
 
         return $pos_orders;
@@ -136,7 +140,7 @@ class PosOrderDataMigration
             ->select('pos_order_id AS order_id', 'service_id AS sku_id', 'service_name AS name', 'quantity',
                 'unit_price', 'vat_percentage', 'warranty', 'warranty_unit', 'note', 'created_by_name',
                 'updated_by_name', 'created_at', 'updated_at')->get();
-        $service_ids = array_column($pos_order_items->toArray(), 'sku_id');
+        $service_ids = array_column($pos_order_items, 'sku_id');
         $sku_ids = $this->getSkuIdsForProducts($service_ids);
         $skus = $sku_ids['skus'];
         $pos_order_items = collect($pos_order_items);
@@ -148,9 +152,55 @@ class PosOrderDataMigration
 
     private function generatePosOrderPaymentsData()
     {
-        return DB::table('pos_order_payments')->whereIn('pos_order_id', $this->partnerPosOrderIds)
-            ->select('pos_order_id AS order_id', 'amount', 'transaction_type', 'method', 'emi_month', 'interest', 
+        $pos_order_payments = DB::table('pos_order_payments')->whereIn('pos_order_id', $this->partnerPosOrderIds)
+            ->select('pos_order_id AS order_id', 'amount', 'transaction_type', 'method', 'method_details', 'emi_month', 'interest',
                 'created_by_name', 'updated_by_name', 'created_at', 'updated_at')->get();
+        $collection = collect($pos_order_payments);
+        $cash_details = json_encode(['payment_method_en' => 'Cash', 'payment_method_bn' => ' নগদ গ্রহন', 'payment_method_icon' => config('s3.url') . 'pos/payment/cash_v2.png']);
+        $digital_payment_details = json_encode(['payment_method_en' => 'Digital Payment', 'payment_method_bn' => 'ডিজিটাল পেমেন্ট', 'payment_method_icon' => config('s3.url') . 'pos/payment/digital_collection_v2.png']);
+        $other_details = json_encode(['payment_method_en' => 'Others', 'payment_method_bn' => 'অন্যান্য', 'payment_method_icon' => config('s3.url') . 'pos/payment/others_v2.png']);
+        $payments = $collection->map(function($payment) use ($cash_details, $digital_payment_details, $other_details) {
+            if ($payment->method == 'advance_balance' || $payment->method == 'cod') return [
+                "order_id" => $payment->order_id,
+                "amount" => $payment->amount,
+                "transaction_type" => $payment->transaction_type,
+                "method" => $payment->method,
+                "method_details" => $cash_details,
+                "emi_month" => $payment->emi_month,
+                "interest" => $payment->interest,
+                "created_by_name" => $payment->created_by_name,
+                "updated_by_name" => $payment->updated_by_name,
+                "created_at" => $payment->created_at,
+                "updated_at" => $payment->updated_at,
+            ];
+            if ($payment->method == 'later' || $payment->method == 'transfer' || $payment->method == 'others') return [
+                "order_id" => $payment->order_id,
+                "amount" => $payment->amount,
+                "transaction_type" => $payment->transaction_type,
+                "method" => $payment->method,
+                "method_details" => $other_details,
+                "emi_month" => $payment->emi_month,
+                "interest" => $payment->interest,
+                "created_by_name" => $payment->created_by_name,
+                "updated_by_name" => $payment->updated_by_name,
+                "created_at" => $payment->created_at,
+                "updated_at" => $payment->updated_at,
+            ];
+            return [
+                "order_id" => $payment->order_id,
+                "amount" => $payment->amount,
+                "transaction_type" => $payment->transaction_type,
+                "method" => $payment->method,
+                "method_details" => $digital_payment_details,
+                "emi_month" => $payment->emi_month,
+                "interest" => $payment->interest,
+                "created_by_name" => $payment->created_by_name,
+                "updated_by_name" => $payment->updated_by_name,
+                "created_at" => $payment->created_at,
+                "updated_at" => $payment->updated_at,
+            ];
+        });
+        return $payments->toArray();
     }
 
     private function generatePartnerPosOrderDiscountsMigrationData()
