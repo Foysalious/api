@@ -1,16 +1,20 @@
 <?php namespace Sheba\Payment\Complete;
 
 use App\Models\Partner;
-use DB;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Database\QueryException;
 use Sheba\Dal\PaymentGateway\Contract as PaymentGatewayRepo;
 use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
+use Sheba\Transactions\Wallet\WalletDebitForbiddenException;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class RechargeComplete extends PaymentComplete
 {
+    /**
+     * @throws WalletDebitForbiddenException
+     */
     public function complete()
     {
         try {
@@ -18,27 +22,35 @@ class RechargeComplete extends PaymentComplete
             if ($this->payment->isComplete()) return $this->payment;
             $this->paymentRepository->setPayment($this->payment);
             DB::transaction(function () {
-                $this->storeTransaction();
-                $this->completePayment();
-                $payable      = $this->payment->payable;
-                $payable_user = $payable->user;
-                if ($payable_user instanceof Partner) {
-                    app(ActionRewardDispatcher::class)->run('partner_wallet_recharge', $payable_user, $payable_user, $payable);
+                $transaction=$this->storeTransaction();
+                if ($transaction){
+                    $this->completePayment();
+                    $this->storeCommissionTransaction();
                 }
-                $this->storeCommissionTransaction();
             });
         } catch (QueryException $e) {
             $this->failPayment();
             throw $e;
+        } catch (WalletDebitForbiddenException $e) {
+            $this->failPayment();
+            throw $e;
+        }
+        $payable      = $this->payment->payable;
+        $payable_user = $payable->user;
+        if ($payable_user instanceof Partner) {
+            app(ActionRewardDispatcher::class)->run('partner_wallet_recharge', $payable_user, $payable_user, $payable);
         }
         return $this->payment;
     }
 
+    /**
+     * @throws WalletDebitForbiddenException
+     */
     private function storeTransaction()
     {
         /** @var HasWalletTransaction $user */
         $user = $this->payment->payable->user;
-        (new WalletTransactionHandler())->setModel($user)->setAmount((double)$this->payment->payable->amount)->setType(Types::credit())->setLog('Credit Purchase')->setTransactionDetails($this->payment->getShebaTransaction()->toArray())->setSource($this->payment->paymentDetails->last()->method)->store();
+        return (new WalletTransactionHandler())->setModel($user)->setAmount((double)$this->payment->payable->amount)->setType(Types::credit())->setLog('Credit Purchase')->setTransactionDetails($this->payment->getShebaTransaction()->toArray())->setSource($this->payment->paymentDetails->last()->method)->store();
     }
 
     protected function saveInvoice()

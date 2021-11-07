@@ -18,6 +18,7 @@ class EmployeeAppreciations
             $sticker = $appreciation->sticker;
             array_push($all_stickers, [
                 'id' => $sticker->id,
+                'giver_id' => $appreciation->giver_id,
                 'image' => $sticker->image,
             ]);
             if ($appreciation->note) {
@@ -37,10 +38,15 @@ class EmployeeAppreciations
         $group_stickers = collect($all_stickers)->groupBy('id');
         $grouped_stickers = [];
         foreach ($group_stickers as $stickers) {
+            $giver = [];
+            foreach ($stickers as $sticker) {
+                $giver[] = $this->getEmployeeInfo($sticker['giver_id'])['name'];
+            }
             $sticker = $stickers->first();
             array_push($grouped_stickers, [
                 'id' => $sticker['id'],
                 'image' => $sticker['image'],
+                'appreciation_givers' => $giver,
                 'number_of_stickers' => $stickers->count(),
             ]);
         }
@@ -79,7 +85,7 @@ class EmployeeAppreciations
         $member = $business_member->member;
         $profile = $member->profile;
         return [
-            'name' => $profile->name
+            'name' => $profile->name ?: 'n/s'
         ];
     }
 }
