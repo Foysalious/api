@@ -129,7 +129,7 @@ class OperationalSetting
         $new_setting_data = [
             'business_id' => $business_id,
             'start_date' => Carbon::now()->format('Y-m-d'),
-            'weekday_name' => json_encode($this->weekends)
+            'weekday_name' => json_encode(array_map('strtolower', $this->weekends))
         ];
         $this->businessWeekendSettingsRepo->create($new_setting_data);
     }
