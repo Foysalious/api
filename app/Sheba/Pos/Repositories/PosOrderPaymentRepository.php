@@ -5,11 +5,13 @@ use App\Models\PosOrder;
 use App\Models\PosOrderPayment;
 use App\Sheba\PosOrderService\PosOrderServerClient;
 use Illuminate\Support\Facades\Log;
+use Sheba\PosOrderService\Services\PaymentService;
 use Sheba\Repositories\BaseRepository;
 
 class PosOrderPaymentRepository extends BaseRepository
 {
     private $partner;
+    private $method_details;
 
     /**
      * @param array $data
@@ -51,10 +53,11 @@ class PosOrderPaymentRepository extends BaseRepository
         $payment_data['amount']       = $amount_cleared;
         $payment_data['method']       = $payment_method;
         $payment_data['transaction_type'] = 'Credit';
+        $payment_data['method_details'] = $this->method_details;
         Log::info(['checking partner migration', $this->partner->is_migration_completed]);
-        if($this->partner->is_migration_completed) {
-            return $this->saveToNewPosOrderSystem($payment_data);
-        }
+        if($this->partner->is_migration_completed)
+           return $this->saveToNewPosOrderSystem($payment_data);
+
         /** @var PosOrder $order */
         $order = PosOrder::find($pos_order_id);
         if(isset($order)) {
@@ -76,6 +79,14 @@ class PosOrderPaymentRepository extends BaseRepository
             $this->resolvePartner($expenseAccountId);
         return $this;
     }
+
+
+    public function setMethodDetails($method_details)
+    {
+        $this->method_details = json_encode($method_details);
+        return $this;
+    }
+
 
     public function resolvePartner($expenseAccountId)
     {

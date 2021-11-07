@@ -303,14 +303,16 @@ class DueTrackerController extends Controller
         $this->validate($request, [
             'amount' => 'required',
             'pos_order_id' => 'required',
-            'payment_method'    => 'required|string|in:' . implode(',', config('pos.payment_method')),
+            'payment_method_en' => 'sometimes|string|in:' . implode(',', config('pos.payment_method')),
+            'payment_method_bn' => 'sometimes',
+            'payment_method_icon' => 'sometimes',
             'api_key' => 'required',
             'expense_account_id' => 'sometimes'
         ]);
         if($request->api_key != config('expense_tracker.api_key'))
             throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
-        Log::info(['Pos Order payment', $request->amount, $request->pos_order_id, $request->api_key]);
-        $posOrderPaymentRepository->setExpenseAccountId($request->expense_account_id)->createPosOrderPayment($request->amount, $request->pos_order_id,$request->payment_method);
+        $method_details = ['payment_method_bn' => $request->payment_method_bn, 'payment_method_icon' => $request->payment_method_icon];
+        $posOrderPaymentRepository->setExpenseAccountId($request->expense_account_id)->setMethodDetails($method_details)->createPosOrderPayment($request->amount, $request->pos_order_id,$request->payment_method);
         return api_response($request, true, 200, ['message' => 'Pos Order Payment created successfully']);
     }
 
