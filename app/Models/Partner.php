@@ -1062,22 +1062,22 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function lastUpdatedUserMigration()
     {
-        return $this->userMigration->max('updated_at');
+        return $this->userMigration->max('updated_at') ?? null;
     }
 
     public function lastUpdatedSubscription()
     {
-        return $this->subscription->updated_at;
+        return $this->subscription->updated_at ?? null;
     }
 
     public function lastUpdatedPosSetting()
     {
-        return $this->posSetting->updated_at;
+        return $this->posSetting->updated_at ?? null;
     }
 
     public function lastBilledDate()
     {
-        return $this->last_billed_date;
+        return $this->last_billed_date ?? null;
     }
 
     public function isMigrated($module_name): bool
