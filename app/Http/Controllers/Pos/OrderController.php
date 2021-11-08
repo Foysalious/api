@@ -18,6 +18,7 @@ use League\Fractal\Resource\Item;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Dal\POSOrder\SalesChannels;
+use Sheba\DueTracker\Exceptions\UnauthorizedRequestFromExpenseTrackerException;
 use Sheba\ExpenseTracker\EntryType;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
@@ -45,6 +46,7 @@ use Sheba\Pos\Order\RefundNatures\ReturnNatures;
 use Sheba\Pos\Order\StatusChanger;
 use Sheba\Pos\Order\Updater;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
+use Sheba\Pos\Repositories\PosOrderPaymentRepository;
 use Sheba\Profile\Creator as ProfileCreator;
 use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
@@ -567,6 +569,45 @@ class OrderController extends Controller
             return (['code' =>404, 'msg' => 'Customer email not found']);
         dispatch(new OrderBillEmail($order));
         return (['code' =>200, 'msg' => 'Email Send Successfully']);
+    }
+
+    /**
+     * @throws UnauthorizedRequestFromExpenseTrackerException
+     */
+    public function createPayment(Request $request, PosOrderPaymentRepository $posOrderPaymentRepository)
+    {
+        $this->validate($request, [
+            'amount' => 'required',
+            'pos_order_id' => 'required',
+            'payment_method_en' => 'sometimes|string|in:' . implode(',', config('pos.payment_method')),
+            'payment_method_bn' => 'sometimes',
+            'payment_method_icon' => 'sometimes',
+            'api_key' => 'required',
+            'expense_account_id' => 'sometimes'
+        ]);
+        if($request->api_key != config('expense_tracker.api_key'))
+            throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
+        $method_details = ['payment_method_bn' => $request->payment_method_bn, 'payment_method_icon' => $request->payment_method_icon];
+        $posOrderPaymentRepository->setExpenseAccountId($request->expense_account_id)->setMethodDetails($method_details)->createPosOrderPayment($request->amount, $request->pos_order_id,$request->payment_method);
+        return api_response($request, true, 200, ['message' => 'Pos Order Payment created successfully']);
+    }
+
+    /**
+     * @throws UnauthorizedRequestFromExpenseTrackerException
+     */
+    public function removePayment(Request $request, $pos_order_id, PosOrderPaymentRepository $posOrderPaymentRepository)
+    {
+        $this->validate($request, [
+            'api_key' => 'required',
+            'expense_account_id' => 'sometimes'
+        ]);
+        if($request->api_key != config('expense_tracker.api_key'))
+            throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
+        $result = $posOrderPaymentRepository->setExpenseAccountId($request->expense_account_id)->removePosOrderPayment($pos_order_id, $request->amount);
+        $message = null;
+        if($result) $message = 'Pos Order Payment remove successfully';
+        else $message = 'There is no Pos Order Payment';
+        return api_response($request, true, 200, ['message' => $message]);
     }
 
 }
