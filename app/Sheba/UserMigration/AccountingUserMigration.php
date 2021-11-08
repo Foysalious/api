@@ -56,7 +56,7 @@ class AccountingUserMigration extends UserMigrationRepository
         return [
             "icon" => Constants::$accounting_migration_url . '/accounting_pending.png',
             "header" => "হিসাব খাতা আপগ্রেড করুন।",
-            "body" => '<center> হিসাবখাতা ব্যাবহার করতে নতুন সিস্টেম এ আপগ্রেড করা জরুরী। <br />  নতুন হিসাবখাতায় যা যা থাকছে <br /> <b>- লাভ ক্ষতির হিসাব</b><br /><b>- ক্যাশ হিসাব</b><br /><b>- আর অনেক</b></center>',
+            "body" => '<center> নতুন হিসাব খাতা ব্যবহার করতে নতুন সিস্টেমে আপগ্রেড করা আবশ্যক। <br />  নতুন হিসাব খাতায় থাকছে: <br /> <b>• লাভ ক্ষতির হিসাব</b><br /><b>• ক্যাশ লেনদেনের বিস্তারিত হিসাব</b><br /><b>• আরও অনেক কিছু</b></center>',
             "confirm_text" => "আপগ্রেড করুন",
             "cancel_text" => "পুরাতন হিসাব খাতায় থাকতে চাই",
             "dialog_cancelable" => false,
