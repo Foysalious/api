@@ -7,7 +7,10 @@ use App\Models\Partner;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Models\Profile;
+use App\Sheba\InventoryService\InventoryServerClient;
 use App\Sheba\Pos\Order\Invoice\InvoiceService;
+use App\Sheba\PosOrderService\PosOrderServerClient;
+use App\Sheba\UserMigration\Modules;
 use App\Transformers\CustomSerializer;
 use App\Transformers\PosOrderTransformer;
 use Dingo\Api\Routing\Helpers;
@@ -46,7 +49,7 @@ use Sheba\Pos\Order\RefundNatures\ReturnNatures;
 use Sheba\Pos\Order\StatusChanger;
 use Sheba\Pos\Order\Updater;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
-use Sheba\Pos\Repositories\PosOrderPaymentRepository;
+use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Profile\Creator as ProfileCreator;
 use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
@@ -63,6 +66,16 @@ use Throwable;
 class OrderController extends Controller
 {
     use ModificationFields, Helpers;
+
+    /**
+     * @var PosOrderServerClient
+     */
+    private $posOrderServerClient;
+
+    public function __construct(PosOrderServerClient $posOrderServerClient)
+    {
+        $this->posOrderServerClient = $posOrderServerClient;
+    }
 
     public function index(Request $request, PosOrderList $posOrderList)
     {
@@ -122,11 +135,11 @@ class OrderController extends Controller
      * @param PartnerRepository $partnerRepository
      * @param PaymentLinkCreator $paymentLinkCreator
      * @return array|false|JsonResponse
+     * @return array|JsonResponse
      * @throws ExpenseTrackingServerError
      * @throws NotAssociativeArray
      * @throws DoNotReportException
      * @throws InvalidDiscountType
-     * @return array|JsonResponse
      * @throws \Sheba\Authentication\Exceptions\AuthenticationFailedException
      */
     public function store($partner, Request $request, Creator $creator, ProfileCreator $profileCreator, PosCustomerCreator $posCustomerCreator, PartnerRepository $partnerRepository, PaymentLinkCreator $paymentLinkCreator)
@@ -369,7 +382,7 @@ class OrderController extends Controller
      */
     public function sendSms(Request $request, Updater $updater)
     {
-        $this->sendSmsCore($request,$updater);
+        $this->sendSmsCore($request, $updater);
         return api_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
     }
 
@@ -380,7 +393,7 @@ class OrderController extends Controller
      */
     public function sendSmsV2(Request $request, Updater $updater)
     {
-        $this->sendSmsCore($request,$updater);
+        $this->sendSmsCore($request, $updater);
         return http_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
     }
 
@@ -394,7 +407,7 @@ class OrderController extends Controller
     public function sendEmail(Request $request, Updater $updater)
     {
         $response = $this->sendEmailCore($request, $updater);
-        return api_response($request,null,$response['code'], ['msg' => $response['msg'] ]);
+        return api_response($request, null, $response['code'], ['msg' => $response['msg']]);
     }
 
     /**
@@ -402,10 +415,15 @@ class OrderController extends Controller
      * @param Updater $updater
      * @return JsonResponse
      */
-    public function sendEmailV2(Request $request, Updater $updater)
+    public function sendEmailV2($order, Request $request)
     {
-        $response = $this->sendEmailCore($request, $updater);
-        return http_response($request,null,$response['code'], ['msg' => $response['msg'] ]);
+        $partner = $request->auth_user->getPartner();
+        $partner = Partner::find($partner->id);
+        if ($partner->isMigrated(Modules::POS)) {
+            return $this->posOrderServerClient->post('api/v1/partners/' . $partner->id . '/orders/' . $order . '/send-email', null);
+        }
+        $response = $this->sendEmailCore($request);
+        return http_response($request, null, $response['code'], ['msg' => $response['msg']]);
     }
 
     public function collectPayment(Request $request, PaymentCreator $payment_creator)
@@ -552,23 +570,20 @@ class OrderController extends Controller
         $this->dispatch(new OrderBillSms($partner, $request->order));
     }
 
-    private function sendEmailCore(Request $request, Updater $updater)
+    private function sendEmailCore(Request $request)
     {
         $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
         /** @var PosOrder $order */
         $order = PosOrder::with('items')->find($request->order)->calculate();
-        if ($request->has('customer_id') && is_null($order->customer_id)) {
-            $requested_customer = PosCustomer::find($request->customer_id);
-            $order = $updater->setOrder($order)->setData(['customer_id' => $requested_customer->id])->update();
-        }
+
         if (!$order)
-            return (['code' =>404, 'msg' => 'Order not found']);
+            return (['code' => 404, 'msg' => 'Order not found']);
         if (!$order->customer)
-          return (['code' =>404, 'msg' => 'Customer not found']);
+            return (['code' => 404, 'msg' => 'Customer not found']);
         if (!$order->customer->profile->email)
-            return (['code' =>404, 'msg' => 'Customer email not found']);
+            return (['code' => 404, 'msg' => 'Customer email not found']);
         dispatch(new OrderBillEmail($order));
-        return (['code' =>200, 'msg' => 'Email Send Successfully']);
+        return (['code' => 200, 'msg' => 'Email Send Successfully']);
     }
 
     /**

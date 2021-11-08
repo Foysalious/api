@@ -58,7 +58,6 @@ class OrderController extends Controller
     {
         $partner = $request->auth_user->getPartner();
         $response = $this->orderService
-            ->setToken(bearerToken($request))
             ->setPartnerId($partner->id)
             ->setCustomerId($request->customer_id)
             ->setDeliveryAddress($request->delivery_address)
@@ -70,7 +69,6 @@ class OrderController extends Controller
             ->setSkus($request->skus)
             ->setDiscount($request->discount)
             ->setPaymentMethod($request->payment_method)
-            ->setPaymentLinkAmount($request->payment_link_amount)
             ->setPaidAmount($request->paid_amount)
             ->setVoucherId($request->voucher_id)
             ->setEmiMonth($request->emi_month)
@@ -110,7 +108,6 @@ class OrderController extends Controller
             ->setDiscount($request->discount)
             ->setPaymentMethod($request->payment_method)
             ->setPaidAmount($request->paid_amount)
-            ->setToken($request->header('Authorization'))
             ->update();
         return http_response($request, null, 200, $response);
     }
@@ -166,6 +163,7 @@ class OrderController extends Controller
     {
         $this->validate($request, [
             'amount' => 'required|numeric',
+            'payment_method' => 'sometimes|numeric',
             'payment_method_en' => 'sometimes',
             'payment_method_bn' => 'sometimes',
             'payment_method_icon' => 'sometimes',
@@ -176,9 +174,9 @@ class OrderController extends Controller
         if ($request->header('api-key') != config('expense_tracker.api_key'))
             throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
 
-        $method_details = ['payment_method_bn' => $request->payment_method_bn, 'payment_method_icon' => $request->payment_method_icon];
+        $method_details = ['payment_method_en' => $request->payment_method_en, 'payment_method_bn' => $request->payment_method_bn, 'payment_method_icon' => $request->payment_method_icon];
         $this->paymentService->setPosOrderId($order)->setPartnerId($partner)->setAmount($request->amount)
-            ->setMethod($request->payment_method_en)->setMethodDetails($method_details)->setEmiMonth($request->emi_month)->setInterest($request->interest)
+            ->setMethod($request->payment_method)->setMethodDetails($method_details)->setEmiMonth($request->emi_month)->setInterest($request->interest)
             ->onlinePayment();
         return http_response($request, null, 200);
     }
