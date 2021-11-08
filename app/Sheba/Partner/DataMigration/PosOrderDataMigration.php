@@ -118,7 +118,7 @@ class PosOrderDataMigration
             ->leftJoin('pos_customers', 'pos_orders.customer_id', '=', 'pos_customers.id')
             ->leftJoin('profiles', 'profiles.id', '=', 'pos_customers.profile_id')
             ->select('pos_orders.id', 'pos_orders.partner_wise_order_id', 'pos_orders.partner_id', 'pos_orders.customer_id', DB::raw('(CASE 
-                        WHEN pos_orders.payment_status = "Paid" THEN pos_orders.created_at
+                        WHEN pos_orders.payment_status = "Paid" THEN pos_order_payments.created_at
                         ELSE NULL 
                         END) AS paid_at'), DB::raw('(CASE 
                         WHEN pos_orders.sales_channel = "pos" THEN "1" 
