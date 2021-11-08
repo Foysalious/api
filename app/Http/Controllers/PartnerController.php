@@ -1029,7 +1029,7 @@ class PartnerController extends Controller
         PartnerPosCustomer::with('customer.profile')->byPartner($partner)->get()->each(function ($pos_customer) use ($served_customers) {
             $customer = $pos_customer->customer->profile;
             $served_customers->push([
-                'name'     => $customer->name,
+                'name'     => $pos_customer->nick_name ? : $customer->name,
                 'mobile'   => $customer->mobile,
                 'image'    => $customer->pro_pic,
                 'category' => 'Pos Category'
