@@ -32,6 +32,7 @@ use Sheba\Authentication\Exceptions\AuthenticationFailedException;
 use League\Fractal\Resource\ResourceAbstract;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Dal\POSOrder\SalesChannels;
+use Sheba\DueTracker\Exceptions\UnauthorizedRequestFromExpenseTrackerException;
 use Sheba\ExpenseTracker\EntryType;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
@@ -445,14 +446,14 @@ class OrderController extends Controller
      * @param Updater $updater
      * @return JsonResponse
      */
-    public function sendEmailV2(Request $request, Updater $updater)
+    public function sendEmailV2($order, Request $request)
     {
-        $partner = Partner::find($request->partner);
-        $order = $request->order;
+        $partner = $request->auth_user->getPartner();
+        $partner = Partner::find($partner->id);
         if ($partner->isMigrated(Modules::POS)) {
-            $this->posOrderServerClient->get('/api/v1/orders/' . $order . '/send-email');
+            return $this->posOrderServerClient->post('api/v1/partners/' . $partner->id . '/orders/' . $order . '/send-email', null);
         }
-        $response = $this->sendEmailCore($request, $updater);
+        $response = $this->sendEmailCore($request);
         return http_response($request, null, $response['code'], ['msg' => $response['msg']]);
     }
 
@@ -605,15 +606,12 @@ class OrderController extends Controller
         $this->dispatch(new OrderBillSms($partner, $request->order));
     }
 
-    private function sendEmailCore(Request $request, Updater $updater)
+    private function sendEmailCore(Request $request)
     {
         $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
         /** @var PosOrder $order */
         $order = PosOrder::with('items')->find($request->order)->calculate();
-        if ($request->has('customer_id') && is_null($order->customer_id)) {
-            $requested_customer = PosCustomer::find($request->customer_id);
-            $order = $updater->setOrder($order)->setData(['customer_id' => $requested_customer->id])->update();
-        }
+
         if (!$order)
             return (['code' => 404, 'msg' => 'Order not found']);
         if (!$order->customer)
@@ -622,6 +620,45 @@ class OrderController extends Controller
             return (['code' => 404, 'msg' => 'Customer email not found']);
         dispatch(new OrderBillEmail($order));
         return (['code' => 200, 'msg' => 'Email Send Successfully']);
+    }
+
+    /**
+     * @throws UnauthorizedRequestFromExpenseTrackerException
+     */
+    public function createPayment(Request $request, PosOrderPaymentRepository $posOrderPaymentRepository)
+    {
+        $this->validate($request, [
+            'amount' => 'required',
+            'pos_order_id' => 'required',
+            'payment_method_en' => 'sometimes|string|in:' . implode(',', config('pos.payment_method')),
+            'payment_method_bn' => 'sometimes',
+            'payment_method_icon' => 'sometimes',
+            'api_key' => 'required',
+            'expense_account_id' => 'sometimes'
+        ]);
+        if($request->api_key != config('expense_tracker.api_key'))
+            throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
+        $method_details = ['payment_method_bn' => $request->payment_method_bn, 'payment_method_icon' => $request->payment_method_icon];
+        $posOrderPaymentRepository->setExpenseAccountId($request->expense_account_id)->setMethodDetails($method_details)->createPosOrderPayment($request->amount, $request->pos_order_id,$request->payment_method);
+        return api_response($request, true, 200, ['message' => 'Pos Order Payment created successfully']);
+    }
+
+    /**
+     * @throws UnauthorizedRequestFromExpenseTrackerException
+     */
+    public function removePayment(Request $request, $pos_order_id, PosOrderPaymentRepository $posOrderPaymentRepository)
+    {
+        $this->validate($request, [
+            'api_key' => 'required',
+            'expense_account_id' => 'sometimes'
+        ]);
+        if($request->api_key != config('expense_tracker.api_key'))
+            throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
+        $result = $posOrderPaymentRepository->setExpenseAccountId($request->expense_account_id)->removePosOrderPayment($pos_order_id, $request->amount);
+        $message = null;
+        if($result) $message = 'Pos Order Payment remove successfully';
+        else $message = 'There is no Pos Order Payment';
+        return api_response($request, true, 200, ['message' => $message]);
     }
 
 }

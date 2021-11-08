@@ -292,45 +292,4 @@ class DueTrackerController extends Controller
         $faqs = $dueTrackerRepository->getFaqs();
         return api_response($request, $faqs, 200, ['faqs' => $faqs]);
     }
-
-    /**
-     * @param Request $request
-     * @param PosOrderPaymentRepository $posOrderPaymentRepository
-     * @return JsonResponse
-     */
-    public function createPosOrderPayment(Request $request, PosOrderPaymentRepository $posOrderPaymentRepository): JsonResponse
-    {
-        $this->validate($request, [
-            'amount' => 'required',
-            'pos_order_id' => 'required',
-            'payment_method_en' => 'sometimes|string|in:' . implode(',', config('pos.payment_method')),
-            'payment_method_bn' => 'sometimes',
-            'payment_method_icon' => 'sometimes',
-            'api_key' => 'required',
-            'expense_account_id' => 'sometimes'
-        ]);
-        if($request->api_key != config('expense_tracker.api_key'))
-            throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
-        $method_details = ['payment_method_bn' => $request->payment_method_bn, 'payment_method_icon' => $request->payment_method_icon];
-        $posOrderPaymentRepository->setExpenseAccountId($request->expense_account_id)->setMethodDetails($method_details)->createPosOrderPayment($request->amount, $request->pos_order_id,$request->payment_method);
-        return api_response($request, true, 200, ['message' => 'Pos Order Payment created successfully']);
-    }
-
-    /**
-     * @throws UnauthorizedRequestFromExpenseTrackerException
-     */
-    public function removePosOrderPayment(Request $request, $pos_order_id, PosOrderPaymentRepository $posOrderPaymentRepository)
-    {
-        $this->validate($request, [
-            'api_key' => 'required',
-            'expense_account_id' => 'sometimes'
-        ]);
-        if($request->api_key != config('expense_tracker.api_key'))
-            throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
-        $result = $posOrderPaymentRepository->setExpenseAccountId($request->expense_account_id)->removePosOrderPayment($pos_order_id, $request->amount);
-        $message = null;
-        if($result) $message = 'Pos Order Payment remove successfully';
-        else $message = 'There is no Pos Order Payment';
-        return api_response($request, true, 200, ['message' => $message]);
-    }
 }

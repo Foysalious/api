@@ -121,8 +121,8 @@ class PartnerDetails
 
     private function getDeliveryMethod()
     {
-        $partnerDeliveryInformation = PartnerDeliveryInformation::where('partner_id', $this->partner->id)->first();
-        return !empty($partnerDeliveryInformation) ? $partnerDeliveryInformation->delivery_vendor : Methods::OWN_DELIVERY;
+        $partnerDeliveryInformation =  PartnerDeliveryInformation::where('partner_id', $this->partner->id)->first();
+        return !empty($partnerDeliveryInformation) && $partnerDeliveryInformation->delivery_vendor == Methods::OWN_DELIVERY ? Methods::OWN_DELIVERY : Methods::SDELIVERY;
     }
 
     private function loadPartnerRelations()

@@ -34,6 +34,7 @@ class WebstoreSettingsController extends Controller
     public function indexV2(Request $request)
     {
         $settings = $this->getWebstoreSettingsData($request);
+        $settings['published_products'] = 0;
         return http_response($request, $settings, 200, ['webstore_settings' => $settings]);
     }
 

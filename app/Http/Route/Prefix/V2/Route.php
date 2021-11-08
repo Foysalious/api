@@ -210,8 +210,8 @@ class Route
             });
             // $api->get('refresh-token', 'ProfileController@refresh');
             $api->get('service-price-calculate', 'Service\ServicePricingController@getCalculatedPrice');
-            $api->post('due-tracker/create-pos-order-payment', 'Pos\DueTrackerController@createPosOrderPayment');
-            $api->delete('due-tracker/remove-pos-order-payment/{pos_order_id}', 'Pos\DueTrackerController@removePosOrderPayment');
+            $api->post('due-tracker/create-pos-order-payment', 'Pos\OrderController@createPayment');
+            $api->delete('due-tracker/remove-pos-order-payment/{pos_order_id}', 'Pos\OrderController@removePayment');
             $api->group(['prefix' => 'voucher'], function ($api) {
                 $api->post('/vendor', 'VoucherController@voucherAgainstVendor');
             });
