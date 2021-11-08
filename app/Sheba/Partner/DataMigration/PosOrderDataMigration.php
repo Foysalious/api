@@ -114,11 +114,11 @@ class PosOrderDataMigration
         $pos_orders = PosOrder::where('partner_id', $this->partner->id)->where(function ($q) {
             $q->where('is_migrated', null)->orWhere('is_migrated', 0);
         })->withTrashed()
-            ->join('pos_order_payments', 'pos_orders.id', '=', 'pos_order_payments.pos_order_id')
-            ->join('pos_customers', 'pos_orders.customer_id', '=', 'pos_customers.id')
-            ->join('profiles', 'profiles.id', '=', 'pos_customers.profile_id')
+            ->leftJoin('pos_order_payments', 'pos_orders.id', '=', 'pos_order_payments.pos_order_id')
+            ->leftJoin('pos_customers', 'pos_orders.customer_id', '=', 'pos_customers.id')
+            ->leftJoin('profiles', 'profiles.id', '=', 'pos_customers.profile_id')
             ->select('pos_orders.id', 'pos_orders.partner_wise_order_id', 'pos_orders.partner_id', 'pos_orders.customer_id', DB::raw('(CASE 
-                        WHEN pos_orders.payment_status = "Paid" THEN pos_order_payments.created_at
+                        WHEN pos_orders.payment_status = "Paid" THEN pos_orders.created_at
                         ELSE NULL 
                         END) AS paid_at'), DB::raw('(CASE 
                         WHEN pos_orders.sales_channel = "pos" THEN "1" 
@@ -218,25 +218,25 @@ class PosOrderDataMigration
         }])->whereIn('pos_order_id', $this->partnerPosOrderIds)->select('id','type', 'pos_order_id', 'log', 'details')->get();
 
         $data = collect();
-         collect($logs)->each(function ($pos_order_logs) use(&$data) {
-             $temp = new stdClass();
-             $temp->order_id = $pos_order_logs->pos_order_id;
-             $temp->old_value = json_encode([
+        collect($logs)->each(function ($pos_order_logs) use(&$data) {
+            $temp = new stdClass();
+            $temp->order_id = $pos_order_logs->pos_order_id;
+            $temp->old_value = json_encode([
                 "log" => $pos_order_logs->log,
                 "previous_order_id" => $pos_order_logs->order->previous_order_id ?: null
             ],true);
             $temp->new_value = json_encode($pos_order_logs->details,true);
             $data->push($temp);
         });
-         return $data;
+        return $data;
     }
 
     public function generatePosCustomersData()
     {
         return DB::table('partner_pos_customers')
             ->where('partner_id', $this->partner->id)
-            ->join('pos_customers', 'partner_pos_customers.customer_id', '=', 'pos_customers.id')
-            ->join('profiles', 'pos_customers.profile_id', '=', 'profiles.id')
+            ->leftJoin('pos_customers', 'partner_pos_customers.customer_id', '=', 'pos_customers.id')
+            ->leftJoin('profiles', 'pos_customers.profile_id', '=', 'profiles.id')
             ->select('partner_pos_customers.customer_id as id', 'partner_pos_customers.partner_id', 'profiles.name',
                 'profiles.mobile', 'profiles.email', 'profiles.pro_pic', 'profiles.created_at', 'profiles.updated_at')->get();
     }
