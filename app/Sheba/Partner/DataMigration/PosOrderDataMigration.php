@@ -140,7 +140,7 @@ class PosOrderDataMigration
             ->select('pos_order_id AS order_id', 'service_id AS sku_id', 'service_name AS name', 'quantity',
                 'unit_price', 'vat_percentage', 'warranty', 'warranty_unit', 'note', 'created_by_name',
                 'updated_by_name', 'created_at', 'updated_at')->get();
-        $service_ids = array_column($pos_order_items, 'sku_id');
+        $service_ids = array_column($pos_order_items->toArray(), 'sku_id');
         $sku_ids = $this->getSkuIdsForProducts($service_ids);
         $skus = $sku_ids['skus'];
         $pos_order_items = collect($pos_order_items);
