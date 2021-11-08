@@ -414,14 +414,14 @@ class OrderController extends Controller
      * @param Updater $updater
      * @return JsonResponse
      */
-    public function sendEmailV2(Request $request, Updater $updater)
+    public function sendEmailV2($order, Request $request)
     {
-        $partner = Partner::find($request->partner);
-        $order = $request->order;
+        $partner = $request->auth_user->getPartner();
+        $partner = Partner::find($partner->id);
         if ($partner->isMigrated(Modules::POS)) {
-            $this->posOrderServerClient->get('/api/v1/orders/' . $order . '/send-email');
+            return $this->posOrderServerClient->post('api/v1/partners/' . $partner->id . '/orders/' . $order . '/send-email', null);
         }
-        $response = $this->sendEmailCore($request, $updater);
+        $response = $this->sendEmailCore($request);
         return http_response($request, null, $response['code'], ['msg' => $response['msg']]);
     }
 
@@ -569,15 +569,12 @@ class OrderController extends Controller
         $this->dispatch(new OrderBillSms($partner, $request->order));
     }
 
-    private function sendEmailCore(Request $request, Updater $updater)
+    private function sendEmailCore(Request $request)
     {
         $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
         /** @var PosOrder $order */
         $order = PosOrder::with('items')->find($request->order)->calculate();
-        if ($request->has('customer_id') && is_null($order->customer_id)) {
-            $requested_customer = PosCustomer::find($request->customer_id);
-            $order = $updater->setOrder($order)->setData(['customer_id' => $requested_customer->id])->update();
-        }
+
         if (!$order)
             return (['code' => 404, 'msg' => 'Order not found']);
         if (!$order->customer)
