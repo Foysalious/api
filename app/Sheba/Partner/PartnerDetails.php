@@ -5,7 +5,6 @@ use App\Models\Partner;
 use App\Models\PartnerResource;
 use App\Models\ReviewQuestionAnswer;
 use App\Repositories\ReviewRepository;
-use App\Sheba\Partner\Delivery\DeliveryServerClient;
 use App\Sheba\Partner\Delivery\Methods;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -26,13 +25,11 @@ class PartnerDetails
     private $reviewRepository;
 
     private $workingInfo = [];
-    private $client;
 
-    public function __construct(ReviewRepository $review_repo, DeliveryServerClient $client)
+    public function __construct(ReviewRepository $review_repo)
     {
         $this->reviewRepository = $review_repo;
         $this->days = constants('WEEK_DAYS');
-        $this->client = $client;
     }
 
     /**
@@ -99,12 +96,8 @@ class PartnerDetails
 
     private function getDeliveryMethod()
     {
-        $partnerDeliveryInformation = PartnerDeliveryInformation::where('partner_id', $this->partner->id)->first();
-        return !empty($partnerDeliveryInformation) && ($partnerDeliveryInformation->delivery_vendor != Methods::OWN_DELIVERY) ?  $this->getPreferredDeliveryMethod() : Methods::OWN_DELIVERY;     return !empty($partnerDeliveryInformation) ? $partnerDeliveryInformation->delivery_vendor : Methods::OWN_DELIVERY;
-    }
-    private function getPreferredDeliveryMethod()
-    {
-        return $this->client->setToken($this->token)->get('merchants/info')['preferred_logistic_partner_name'];
+        $partnerDeliveryInformation =  PartnerDeliveryInformation::where('partner_id', $this->partner->id)->first();
+        return !empty($partnerDeliveryInformation) && $partnerDeliveryInformation->delivery_vendor == Methods::OWN_DELIVERY ? Methods::OWN_DELIVERY : Methods::SDELIVERY;
     }
 
     private function loadPartnerRelations()
