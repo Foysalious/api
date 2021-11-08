@@ -214,7 +214,7 @@ class PosOrderDataMigration
     private function generatePosOrderLogsMigrationData()
     {
         $logs =  PosOrderLog::with(['order' => function ($pos_order) {
-            $pos_order->select('id');
+            $pos_order->withTrashed()->select('id');
         }])->whereIn('pos_order_id', $this->partnerPosOrderIds)->select('id','type', 'pos_order_id', 'log', 'details')->get();
 
         $data = collect();
