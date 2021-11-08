@@ -18,7 +18,7 @@ class EkycClient
     public function __construct()
     {
         $this->client = (new Client());
-        $this->baseUrl = rtrim(config('ekyc.url', 'http://ekyc.sheba.test:8181') . '/api/v1');
+        $this->baseUrl = rtrim(config('ekyc.url') . '/api/v1');
         $this->clientId = config('ekyc.client_id');
         $this->clientSecret = config('ekyc.client_secret');
     }
