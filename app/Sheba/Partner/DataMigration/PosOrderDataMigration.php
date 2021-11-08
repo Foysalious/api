@@ -8,6 +8,7 @@ use App\Sheba\InventoryService\InventoryServerClient;
 use App\Sheba\Partner\DataMigration\Jobs\PartnerDataMigrationToPosOrderJob;
 use Illuminate\Support\Facades\Redis;
 use DB;
+use Sheba\Pos\Repositories\PosOrderPaymentRepository;
 use stdClass;
 
 class PosOrderDataMigration
@@ -29,9 +30,10 @@ class PosOrderDataMigration
     private $posCustomers;
 
 
-    public function __construct(InventoryServerClient $inventoryServerClient)
+    public function __construct(InventoryServerClient $inventoryServerClient, PosOrderPaymentRepository $orderPaymentRepository)
     {
         $this->inventoryServerClient = $inventoryServerClient;
+        $this->orderPaymentRepository = $orderPaymentRepository;
     }
 
     /**
@@ -109,18 +111,24 @@ class PosOrderDataMigration
 
     private function generatePosOrdersMigrationData()
     {
-        $pos_orders = PosOrder::table('pos_orders')->where('partner_id', $this->partner->id)->where(function ($q) {
+        $pos_orders = PosOrder::where('partner_id', $this->partner->id)->where(function ($q) {
             $q->where('is_migrated', null)->orWhere('is_migrated', 0);
-        })->withTrashed()->select('id', 'partner_wise_order_id', 'partner_id', 'customer_id', DB::raw('(CASE 
-                        WHEN pos_orders.payment_status = "Paid" THEN pos_orders.updated_at 
+        })->withTrashed()
+            ->leftJoin('pos_order_payments', 'pos_orders.id', '=', 'pos_order_payments.pos_order_id')
+            ->leftJoin('pos_customers', 'pos_orders.customer_id', '=', 'pos_customers.id')
+            ->leftJoin('profiles', 'profiles.id', '=', 'pos_customers.profile_id')
+            ->select('pos_orders.id', 'pos_orders.partner_wise_order_id', 'pos_orders.partner_id', 'pos_orders.customer_id', DB::raw('(CASE 
+                        WHEN pos_orders.payment_status = "Paid" THEN pos_order_payments.created_at
                         ELSE NULL 
                         END) AS paid_at'), DB::raw('(CASE 
                         WHEN pos_orders.sales_channel = "pos" THEN "1" 
                         ELSE "2" 
-                        END) AS sales_channel_id'), 'emi_month',
-                'bank_transaction_charge', 'interest', 'delivery_charge', 'address AS delivery_address', 'delivery_vendor_name',
-            'delivery_request_id', 'delivery_thana', 'delivery_district', 'note', 'status', 'voucher_id', 'created_at',
-            'created_by_name', 'updated_at', 'updated_by_name', 'deleted_at')->get()->toArray();
+                        END) AS sales_channel_id'), 'pos_orders.emi_month',
+                'pos_orders.bank_transaction_charge', 'pos_orders.interest', 'pos_orders.delivery_charge',
+                'pos_orders.address AS delivery_address', 'pos_orders.delivery_vendor_name', 'pos_orders.delivery_request_id',
+                'pos_orders.delivery_thana', 'pos_orders.delivery_district', 'pos_orders.note', 'pos_orders.status',
+                'pos_orders.voucher_id', 'pos_orders.created_at', 'pos_orders.created_by_name', 'pos_orders.updated_at',
+                'pos_orders.updated_by_name', 'pos_orders.deleted_at', 'profiles.name AS delivery_name', 'profiles.mobile AS delivery_mobile')->groupBy('id')->get()->toArray();
         $this->partnerPosOrderIds = array_column($pos_orders, 'id');
 
         return $pos_orders;
@@ -144,9 +152,55 @@ class PosOrderDataMigration
 
     private function generatePosOrderPaymentsData()
     {
-        return DB::table('pos_order_payments')->whereIn('pos_order_id', $this->partnerPosOrderIds)
-            ->select('pos_order_id AS order_id', 'amount', 'transaction_type', 'method', 'emi_month', 'interest', 
+        $pos_order_payments = DB::table('pos_order_payments')->whereIn('pos_order_id', $this->partnerPosOrderIds)
+            ->select('pos_order_id AS order_id', 'amount', 'transaction_type', 'method', 'method_details', 'emi_month', 'interest',
                 'created_by_name', 'updated_by_name', 'created_at', 'updated_at')->get();
+        $collection = collect($pos_order_payments);
+        $cash_details = json_encode(['payment_method_en' => 'Cash', 'payment_method_bn' => ' নগদ গ্রহন', 'payment_method_icon' => config('s3.url') . 'pos/payment/cash_v2.png']);
+        $digital_payment_details = json_encode(['payment_method_en' => 'Digital Payment', 'payment_method_bn' => 'ডিজিটাল পেমেন্ট', 'payment_method_icon' => config('s3.url') . 'pos/payment/digital_collection_v2.png']);
+        $other_details = json_encode(['payment_method_en' => 'Others', 'payment_method_bn' => 'অন্যান্য', 'payment_method_icon' => config('s3.url') . 'pos/payment/others_v2.png']);
+        $payments = $collection->map(function($payment) use ($cash_details, $digital_payment_details, $other_details) {
+            if ($payment->method == 'advance_balance' || $payment->method == 'cod') return [
+                "order_id" => $payment->order_id,
+                "amount" => $payment->amount,
+                "transaction_type" => $payment->transaction_type,
+                "method" => $payment->method,
+                "method_details" => $cash_details,
+                "emi_month" => $payment->emi_month,
+                "interest" => $payment->interest,
+                "created_by_name" => $payment->created_by_name,
+                "updated_by_name" => $payment->updated_by_name,
+                "created_at" => $payment->created_at,
+                "updated_at" => $payment->updated_at,
+            ];
+            if ($payment->method == 'later' || $payment->method == 'transfer' || $payment->method == 'others') return [
+                "order_id" => $payment->order_id,
+                "amount" => $payment->amount,
+                "transaction_type" => $payment->transaction_type,
+                "method" => $payment->method,
+                "method_details" => $other_details,
+                "emi_month" => $payment->emi_month,
+                "interest" => $payment->interest,
+                "created_by_name" => $payment->created_by_name,
+                "updated_by_name" => $payment->updated_by_name,
+                "created_at" => $payment->created_at,
+                "updated_at" => $payment->updated_at,
+            ];
+            return [
+                "order_id" => $payment->order_id,
+                "amount" => $payment->amount,
+                "transaction_type" => $payment->transaction_type,
+                "method" => $payment->method,
+                "method_details" => $digital_payment_details,
+                "emi_month" => $payment->emi_month,
+                "interest" => $payment->interest,
+                "created_by_name" => $payment->created_by_name,
+                "updated_by_name" => $payment->updated_by_name,
+                "created_at" => $payment->created_at,
+                "updated_at" => $payment->updated_at,
+            ];
+        });
+        return $payments->toArray();
     }
 
     private function generatePartnerPosOrderDiscountsMigrationData()
@@ -164,25 +218,25 @@ class PosOrderDataMigration
         }])->whereIn('pos_order_id', $this->partnerPosOrderIds)->select('id','type', 'pos_order_id', 'log', 'details')->get();
 
         $data = collect();
-         collect($logs)->each(function ($pos_order_logs) use(&$data) {
-             $temp = new stdClass();
-             $temp->order_id = $pos_order_logs->pos_order_id;
-             $temp->old_value = json_encode([
+        collect($logs)->each(function ($pos_order_logs) use(&$data) {
+            $temp = new stdClass();
+            $temp->order_id = $pos_order_logs->pos_order_id;
+            $temp->old_value = json_encode([
                 "log" => $pos_order_logs->log,
                 "previous_order_id" => $pos_order_logs->order->previous_order_id ?: null
             ],true);
             $temp->new_value = json_encode($pos_order_logs->details,true);
             $data->push($temp);
         });
-         return $data;
+        return $data;
     }
 
     public function generatePosCustomersData()
     {
         return DB::table('partner_pos_customers')
             ->where('partner_id', $this->partner->id)
-            ->join('pos_customers', 'partner_pos_customers.customer_id', '=', 'pos_customers.id')
-            ->join('profiles', 'pos_customers.profile_id', '=', 'profiles.id')
+            ->leftJoin('pos_customers', 'partner_pos_customers.customer_id', '=', 'pos_customers.id')
+            ->leftJoin('profiles', 'pos_customers.profile_id', '=', 'profiles.id')
             ->select('partner_pos_customers.customer_id as id', 'partner_pos_customers.partner_id', 'profiles.name',
                 'profiles.mobile', 'profiles.email', 'profiles.pro_pic', 'profiles.created_at', 'profiles.updated_at')->get();
     }

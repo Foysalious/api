@@ -12,7 +12,6 @@ class PosOrderServerClient
     use ModificationFields;
     protected $client;
     public $baseUrl;
-    public $token;
 
     public function __construct(Client $client)
     {
@@ -21,16 +20,10 @@ class PosOrderServerClient
     }
 
     /**
-     * @param mixed $token
-     * @return PosOrderServerClient
+     * @param $uri
+     * @return mixed
+     * @throws PosOrderServiceServerError
      */
-    public function setToken($token)
-    {
-        $this->token = $token;
-        return $this;
-    }
-
-
     public function get($uri)
     {
         return $this->call('get', $uri);
@@ -43,7 +36,6 @@ class PosOrderServerClient
      * @param null $data
      * @param bool $multipart
      * @return mixed
-     * @throws InventoryServiceServerError
      * @throws PosOrderServiceServerError
      */
     private function call($method, $uri, $data = null, $multipart = false)
@@ -72,7 +64,6 @@ class PosOrderServerClient
             //'Version-Code' => getShebaRequestHeader()->toArray()['Version-Code']
             'Modifier-Name' => $this->getModifierNameForHeader()
         ];
-        if ($this->token) $options['headers'] += ['Authorization' => 'Bearer ' . $this->token];
         if (!$data) return $options;
         if ($multipart) {
             $options['multipart'] = $data;
@@ -93,7 +84,6 @@ class PosOrderServerClient
      * @param $data
      * @param bool $multipart
      * @return array|object|string|null
-     * @throws InventoryServiceServerError
      * @throws PosOrderServiceServerError
      */
     public function put($uri, $data, $multipart = false)
@@ -104,7 +94,6 @@ class PosOrderServerClient
     /**
      * @param $uri
      * @return array|object|string|null
-     * @throws InventoryServiceServerError
      * @throws PosOrderServiceServerError
      */
     public function delete($uri)
