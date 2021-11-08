@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\Partner\Webstore;
 
 use App\Exceptions\DoNotReportException;
+use App\Jobs\WebstoreSettingsSyncJob;
 use App\Sheba\Partner\Webstore\WebstoreBannerSettings;
 use App\Transformers\CustomSerializer;
 use App\Transformers\Partner\WebstoreSettingsTransformer;
@@ -165,6 +166,7 @@ class WebstoreSettingsController extends Controller
             return false;
         else {
             $webstoreBannerSettings->setBannerSettings($banner_settings)->setData($request->all())->update();
+            dispatch(new WebStoreSettingsSyncJob( $partner_id));
             return true;
         }
     }
