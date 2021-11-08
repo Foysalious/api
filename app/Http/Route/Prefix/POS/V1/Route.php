@@ -107,6 +107,7 @@ class Route
                 });
                 $api->group(['prefix' => 'categories'], function ($api) {
                     $api->get('/', 'Inventory\CategoryController@index');
+                    $api->get('/{category_id}', 'Inventory\CategoryController@show');
                     $api->get('/allCategory', 'Inventory\CategoryController@allCategory');
                     $api->post('/', 'Inventory\CategoryController@store');
                     $api->post('/category-with-sub-category', 'Inventory\CategoryController@createCategoryWithSubCategory');

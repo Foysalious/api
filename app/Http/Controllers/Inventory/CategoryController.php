@@ -80,4 +80,11 @@ class CategoryController extends Controller
         return http_response($request, null, 201, $response);
     }
 
+    public function show(Request $request, int $category_id)
+    {
+        $partner = $request->auth_user->getPartner();
+        $details = $this->categoryService->setCategoryId($category_id)->setPartner($partner->id)->getCategoryDetail();
+        return http_response($request, null, 201, $details);
+    }
+
 }
