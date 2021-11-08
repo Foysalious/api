@@ -32,11 +32,19 @@ class PackageWiseHomepageSettings
      */
     public function get(): array
     {
-        foreach ($this->package_settings as &$setting) {
-            if($setting->is_published === 1)
-                foreach ($this->partner_settings as $partner_setting)
-                    if ($setting->key === $partner_setting->key)
+        foreach ($this->package_settings as $setting) {
+            if($setting->is_published === 1) {
+                $found = 0;
+                foreach ($this->partner_settings as $partner_setting) {
+                    if ($setting->key === $partner_setting->key) {
+                        $found = 1;
                         $setting->is_on_homepage = $partner_setting->is_on_homepage;
+                    }
+                }
+                if($found === 0)
+                    $setting->is_on_homepage = 0;
+
+            }
         }
 
         return $this->package_settings;
