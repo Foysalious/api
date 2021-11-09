@@ -246,10 +246,10 @@ class VisitController extends Controller
 
         $visit = $this->visitRepository->find($visit);
         if (!$visit) return api_response($request, null, 404);
+
         $existing_photos_count = $visit->visitPhotos()->get()->count();
-        if ($existing_photos_count > 5) {
-            return api_response($request, null, 420);
-        }
+        if ($existing_photos_count > 5) return api_response($request, null, 420);
+
         $photo_creator->setVisit($visit)->setPhoto($request->image)->store();
         $photos = $visit->visitPhotos()->orderBy('id', 'DESC')->get()->map(function ($photo) {
             return [
@@ -297,7 +297,7 @@ class VisitController extends Controller
         $visit = $this->visitRepository->find($visit);
         if (!$visit) return api_response($request, null, 404);
         $status_updater->setVisit($visit)->setStatus($request->status)->setLat($request->lat)->setLng($request->lng)
-                       ->setNote($request->note)->setDate($request->date)->update();
+            ->setNote($request->note)->setDate($request->date)->update();
         return api_response($request, null, 200);
     }
 
