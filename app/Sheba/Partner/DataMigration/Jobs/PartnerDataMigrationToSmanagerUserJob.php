@@ -64,6 +64,7 @@ class PartnerDataMigrationToSmanagerUserJob extends Job implements ShouldQueue
     private function isInventoryAndPosOrderQueuesProcessed(): bool
     {
         return empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::Inventory::Queue::*')) &&
+            empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::PosOrderChunk::Queue::*')) &&
             empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::PosOrder::Queue::*'));
     }
 
