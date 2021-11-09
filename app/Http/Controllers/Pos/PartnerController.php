@@ -9,7 +9,7 @@ class PartnerController extends Controller
 {
     public function findById($partner, Request $request)
     {
-        $partner = Partner::where('id', $partner)->select('id', 'name', 'logo', 'sub_domain')->first();
+        $partner = Partner::where('id', $partner)->select('id', 'name', 'logo', 'sub_domain','delivery_charge')->first();
         $partner->banner=$this->getWebStoreBanner($partner);
         removeRelationsAndFields($partner,['webstore_banner']);
         if (!$partner) return http_response($request, null, 404);
