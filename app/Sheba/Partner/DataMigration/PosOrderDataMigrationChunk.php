@@ -27,7 +27,7 @@ class PosOrderDataMigrationChunk
         $size =  $posOrderCount < self::CHUNK_SIZE ? 1 : ceil($posOrderCount/self::CHUNK_SIZE);
         for($i=0; $i < $size; $i++) {
             $this->setRedisKey();
-            dispatch(new PartnerDataMigrationToPosOrderChunk($i, $size, $this->partner, $this->currentQueue));
+            dispatch(new PartnerDataMigrationToPosOrderChunk($i, self::CHUNK_SIZE, $this->partner, $this->currentQueue));
             $this->increaseCurrentQueueValue();
         }
     }
