@@ -8,6 +8,8 @@ use Sheba\Partner\DataMigration\Jobs\PartnerMigrationStartJob;
 
 class DataMigration
 {
+    const START = 1;
+    const END = 5;
     use ModificationFields;
     /** @var Partner */
     private $partner;
@@ -43,10 +45,12 @@ class DataMigration
 
     public function migrate()
     {
-        dispatch(new PartnerMigrationStartJob($this->partner));
-        $this->inventoryDataMigration->setPartner($this->partner)->migrate();
-        $this->posOrderDataMigrationChunk->setPartner($this->partner)->generate();
-        $this->smanagerUserDataMigration->setPartner($this->partner)->migrate();
-        dispatch(new PartnerMigrationCompleteJob($this->partner));
+        $rand = rand(self::START, self::END);
+        $queue_and_connection_name = 'pos_rebuild_data_migration_' . $rand;
+        dispatch(new PartnerMigrationStartJob($this->partner, $queue_and_connection_name));
+        $this->inventoryDataMigration->setPartner($this->partner)->setQueueAndConnectionName($queue_and_connection_name)->migrate();
+        $this->posOrderDataMigrationChunk->setPartner($this->partner)->setQueueAndConnectionName($queue_and_connection_name)->generate();
+        $this->smanagerUserDataMigration->setPartner($this->partner)->setQueueAndConnectionName($queue_and_connection_name)->migrate();
+        dispatch(new PartnerMigrationCompleteJob($this->partner, $queue_and_connection_name));
     }
 }

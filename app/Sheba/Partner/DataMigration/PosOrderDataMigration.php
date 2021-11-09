@@ -29,6 +29,7 @@ class PosOrderDataMigration
     private $posCustomers;
     private $skip;
     private $take;
+    private $queue_and_connection_name;
 
 
     public function __construct(InventoryServerClient $inventoryServerClient)
@@ -43,6 +44,16 @@ class PosOrderDataMigration
     public function setPartner(Partner $partner)
     {
         $this->partner = $partner;
+        return $this;
+    }
+
+    /**
+     * @param mixed $queue_and_connection_name
+     * @return PosOrderDataMigration
+     */
+    public function setQueueAndConnectionName($queue_and_connection_name)
+    {
+        $this->queue_and_connection_name = $queue_and_connection_name;
         return $this;
     }
 
@@ -87,7 +98,7 @@ class PosOrderDataMigration
     private function migratePartner($data)
     {
         $this->setRedisKey();
-        dispatch(new PartnerDataMigrationToPosOrderJob($this->partner, ['partner_info' => $data], $this->currentQueue));
+        dispatch(new PartnerDataMigrationToPosOrderJob($this->partner, ['partner_info' => $data], $this->currentQueue, $this->queue_and_connection_name));
         $this->increaseCurrentQueueValue();
     }
 
@@ -106,7 +117,7 @@ class PosOrderDataMigration
                 'pos_order_discounts' => $pos_order_discounts,
                 'pos_order_logs' => $pos_order_logs,
                 'pos_customers' => $pos_customers
-            ], $this->currentQueue));
+            ], $this->currentQueue, $this->queue_and_connection_name));
             $this->increaseCurrentQueueValue();
         }
     }
