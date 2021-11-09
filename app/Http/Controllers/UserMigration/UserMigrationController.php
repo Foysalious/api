@@ -71,7 +71,7 @@ class UserMigrationController extends Controller
             $res = $class->setUserId($userId)->setModuleName($moduleName)->updateStatus($request->status);
             return api_response($request, $res, 200, ['data' => $res]);
         } catch (Exception $e) {
-            dd($e);
+            app('sentry')->captureException($e);
             return api_response($request, null, 400, ['message' => $e->getMessage(), 'code' => 400]);
         }
     }
