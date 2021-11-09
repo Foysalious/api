@@ -1,7 +1,12 @@
 <?php namespace Sheba\Partner\DataMigration;
 
 use App\Models\Partner;
+use App\Models\PartnerPosCustomer;
+use App\Models\PartnerPosService;
+use App\Models\PosOrder;
 use App\Sheba\Partner\DataMigration\PosOrderDataMigration;
+use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
+use Sheba\Dal\PartnerPosService\PartnerPosServiceRepository;
 use Sheba\ModificationFields;
 use Sheba\Partner\DataMigration\Jobs\PartnerMigrationCompleteJob;
 use Sheba\Partner\DataMigration\Jobs\PartnerMigrationStartJob;
@@ -48,9 +53,41 @@ class DataMigration
         $rand = rand(self::START, self::END);
         $queue_and_connection_name = 'pos_rebuild_data_migration_' . $rand;
         dispatch(new PartnerMigrationStartJob($this->partner, $queue_and_connection_name));
-        $this->inventoryDataMigration->setPartner($this->partner)->setQueueAndConnectionName($queue_and_connection_name)->migrate();
-        $this->posOrderDataMigrationChunk->setPartner($this->partner)->setQueueAndConnectionName($queue_and_connection_name)->generate();
-        $this->smanagerUserDataMigration->setPartner($this->partner)->setQueueAndConnectionName($queue_and_connection_name)->migrate();
+        if(!$this->isInventoryMigrated()) $this->inventoryDataMigration->setPartner($this->partner)->setQueueAndConnectionName($queue_and_connection_name)->migrate();
+        if(!$this->isPosOrderMigrated()) $this->posOrderDataMigrationChunk->setPartner($this->partner)->setQueueAndConnectionName($queue_and_connection_name)->generate();
+        if(!$this->isPosCustomerMigrated()) $this->smanagerUserDataMigration->setPartner($this->partner)->setQueueAndConnectionName($queue_and_connection_name)->migrate();
         dispatch(new PartnerMigrationCompleteJob($this->partner, $queue_and_connection_name));
+    }
+
+    private function isInventoryMigrated(): bool
+    {
+        $partner_pos_service_count = PartnerPosService::where('partner_id', $this->partner->id)
+            ->where(function ($q) {
+                $q->where('is_migrated', null)->orWhere('is_migrated', 0);
+            })->withTrashed()->count();
+        $partner_pos_category = PartnerPosCategory::where('partner_id', $this->partner->id)
+            ->where(function ($q) {
+                $q->where('is_migrated', null)->orWhere('is_migrated', 0);
+            })->withTrashed()->count();
+        if($partner_pos_service_count == 0 && $partner_pos_category == 0) return true;
+        return false;
+    }
+
+    private function isPosOrderMigrated(): bool
+    {
+        $pos_order_count = PosOrder::withTrashed()->where('partner_id', $this->partner->id)->where(function ($q) {
+            $q->where('is_migrated', null)->orWhere('is_migrated', 0);
+        })->count();
+        if($pos_order_count == 0) return true;
+        return false;
+    }
+
+    private function isPosCustomerMigrated(): bool
+    {
+        $pos_customer_count = PartnerPosCustomer::where('partner_id', $this->partner->id)->where(function ($q) {
+            $q->where('is_migrated', null)->orWhere('is_migrated', 0);
+        })->count();
+        if($pos_customer_count == 0) return true;
+        return false;
     }
 }

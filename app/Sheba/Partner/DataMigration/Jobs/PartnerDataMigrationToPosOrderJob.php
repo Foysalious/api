@@ -33,7 +33,7 @@ class PartnerDataMigrationToPosOrderJob extends Job implements ShouldQueue
     public function handle()
     {
         try {
-            $this->attempts < 10 ? $this->migrate() : $this->storeLogs(0);;
+            $this->attempts < 2 ? $this->migrate() : $this->storeLogs(0);;
         } catch (\Exception $e) {
             $this->storeLogs(0);
             app('sentry')->captureException($e);
@@ -46,12 +46,12 @@ class PartnerDataMigrationToPosOrderJob extends Job implements ShouldQueue
         $redis_pos_order_namespace = 'DataMigration::Partner::'.$this->partner->id.'::PosOrder::Queue::';
         $previous_key = $redis_pos_order_namespace . ($this->queueNo - 1);
         if ($this->isInventoryQueuesProcessed() && !$this->isRedisKeyExists($previous_key)) {
-            $this->increaseAttempts();
             $client->post('api/v1/partners/'.$this->partner->id.'/migrate', $this->data);
             $current_key = $redis_pos_order_namespace . $this->queueNo;
             $this->deleteRedisKey($current_key);
             $this->storeLogs(1);
         } else {
+            $this->increaseAttempts();
             $this->release(10);
         }
    }
