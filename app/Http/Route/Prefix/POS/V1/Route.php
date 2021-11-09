@@ -26,6 +26,7 @@ class Route
             $api->group(['prefix' => 'partners'], function ($api) {
                 $api->group(['prefix' => '{partner}'], function ($api) {
                     $api->get('/', 'Pos\PartnerController@findById')->middleware('ip.whitelist');
+                    $api->get('/banner', 'Pos\PartnerController@getWebStoreBanner');
                     $api->group(['prefix' => 'orders'], function ($api) {
                         $api->group(['prefix' => '{order}'], function ($api) {
                             $api->post('online-payment', 'PosOrder\OrderController@onlinePayment');
