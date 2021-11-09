@@ -22,6 +22,6 @@ class PartnerMigrationStartJob extends Job implements ShouldQueue
     public function handle()
     {
         $key = 'DataMigration::Partner::'.$this->partner->id;
-        Redis::get($key);
+        Redis::delete($key);
     }
 }
