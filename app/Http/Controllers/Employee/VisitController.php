@@ -278,6 +278,12 @@ class VisitController extends Controller
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
 
+        $current_visits = $this->visitRepository->where('visitor_id', $business_member->id)
+            ->whereIn('status', [Status::STARTED, Status::REACHED])->get()->count();
+        if ($current_visits > 0) {
+            return api_response($request, null, 420);
+        }
+
         if ($request->status === Status::RESCHEDULED) {
             $validation_data += ['note' => 'string', 'date' => 'required|date_format:Y-m-d'];
         }
