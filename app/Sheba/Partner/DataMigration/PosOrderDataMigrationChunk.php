@@ -34,7 +34,9 @@ class PosOrderDataMigrationChunk
 
     public function generate()
     {
-        $posOrderCount = PosOrder::withTrashed()->where('partner_id', $this->partner->id)->count();
+        $posOrderCount = PosOrder::withTrashed()->where('partner_id', $this->partner->id)->where(function ($q) {
+            $q->where('is_migrated', null)->orWhere('is_migrated', 0);
+        })->count();
         for($i=1 ; $i<=$posOrderCount/self::CHUNK_SIZE; $i++) {
             $this->setRedisKey();
             dispatch(new PartnerDataMigrationToPosOrderChunk($i*self::CHUNK_SIZE, self::CHUNK_SIZE, $this->partner, $this->currentQueue));
