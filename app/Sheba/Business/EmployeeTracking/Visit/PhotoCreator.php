@@ -2,6 +2,7 @@
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Intervention\Image\Image;
 use Sheba\Dal\Visit\Visit;
 use Sheba\Dal\VisitPhoto\VisitPhotoRepository;
 use Sheba\FileManagers\CdnFileManager;
@@ -21,7 +22,7 @@ class PhotoCreator
      */
     public function __construct(VisitPhotoRepository $visit_photo_repository)
     {
-       $this->visitPhotoRepository = $visit_photo_repository;
+        $this->visitPhotoRepository = $visit_photo_repository;
     }
 
     /**
@@ -46,8 +47,8 @@ class PhotoCreator
 
     public function store()
     {
-        if ($this->photo instanceof UploadedFile) {
-            $name = 'visit_photo'.' '.rand(100,100000);
+        if ($this->isFile($this->photo)) {
+            $name = $this->getClientOriginalNameWithoutExtension();
             $photo = $this->saveVisitPhoto($this->photo, $name);
 
             $this->makeData($photo);
@@ -58,6 +59,24 @@ class PhotoCreator
     }
 
     /**
+     * @return array|string|string[]
+     */
+    private function getClientOriginalNameWithoutExtension()
+    {
+        return pathinfo($this->photo->getClientOriginalName(), PATHINFO_FILENAME);
+    }
+
+    /**
+     * @param $image
+     * @return bool
+     */
+    private function isFile($image)
+    {
+        if ($image instanceof Image || $image instanceof UploadedFile) return true;
+        return false;
+    }
+
+    /**
      * @param $photo
      * @param $name
      * @return string
@@ -65,7 +84,7 @@ class PhotoCreator
     private function saveVisitPhoto($photo, $name)
     {
         list($photo, $visit_filename) = $this->makeAttachment($photo, $name);
-        return $this->saveImageToCDN($photo, getEmployeeVisitFolder(), $visit_filename);
+        return $this->saveFileToCDN($photo, getEmployeeVisitFolder(), $visit_filename);
     }
 
     private function makeData($photo)
