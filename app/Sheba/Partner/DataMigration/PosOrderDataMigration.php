@@ -8,7 +8,6 @@ use App\Sheba\InventoryService\InventoryServerClient;
 use App\Sheba\Partner\DataMigration\Jobs\PartnerDataMigrationToPosOrderJob;
 use Illuminate\Support\Facades\Redis;
 use DB;
-use Sheba\Pos\Repositories\PosOrderPaymentRepository;
 use stdClass;
 
 class PosOrderDataMigration
@@ -28,12 +27,13 @@ class PosOrderDataMigration
     private $posOrderDiscounts;
     private $posOrderLogs;
     private $posCustomers;
+    private $skip;
+    private $take;
 
 
-    public function __construct(InventoryServerClient $inventoryServerClient, PosOrderPaymentRepository $orderPaymentRepository)
+    public function __construct(InventoryServerClient $inventoryServerClient)
     {
         $this->inventoryServerClient = $inventoryServerClient;
-        $this->orderPaymentRepository = $orderPaymentRepository;
     }
 
     /**
@@ -43,6 +43,26 @@ class PosOrderDataMigration
     public function setPartner(Partner $partner)
     {
         $this->partner = $partner;
+        return $this;
+    }
+
+    /**
+     * @param mixed $skip
+     * @return PosOrderDataMigration
+     */
+    public function setSkip($skip)
+    {
+        $this->skip = $skip;
+        return $this;
+    }
+
+    /**
+     * @param mixed $take
+     * @return PosOrderDataMigration
+     */
+    public function setTake($take)
+    {
+        $this->take = $take;
         return $this;
     }
 
@@ -128,7 +148,7 @@ class PosOrderDataMigration
                 'pos_orders.address AS delivery_address', 'pos_orders.delivery_vendor_name', 'pos_orders.delivery_request_id',
                 'pos_orders.delivery_thana', 'pos_orders.delivery_district', 'pos_orders.note', 'pos_orders.status',
                 'pos_orders.voucher_id', 'pos_orders.created_at', 'pos_orders.created_by_name', 'pos_orders.updated_at',
-                'pos_orders.updated_by_name', 'pos_orders.deleted_at', 'profiles.name AS delivery_name', 'profiles.mobile AS delivery_mobile')->groupBy('id')->get()->toArray();
+                'pos_orders.updated_by_name', 'pos_orders.deleted_at', 'profiles.name AS delivery_name', 'profiles.mobile AS delivery_mobile')->skip($this->skip)->take($this->take)->groupBy('id')->get()->toArray();
         $this->partnerPosOrderIds = array_column($pos_orders, 'id');
 
         return $pos_orders;

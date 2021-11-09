@@ -33,7 +33,7 @@ class PartnerDataMigrationToPosOrderJob extends Job implements ShouldQueue
     public function handle()
     {
         try {
-            $this->attempts < 2 ? $this->migrate() : $this->storeLogs(0);;
+            $this->attempts < 10 ? $this->migrate() : $this->storeLogs(0);;
         } catch (\Exception $e) {
             $this->storeLogs(0);
             app('sentry')->captureException($e);
@@ -58,7 +58,8 @@ class PartnerDataMigrationToPosOrderJob extends Job implements ShouldQueue
 
    private function isInventoryQueuesProcessed(): bool
    {
-       return empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::Inventory::Queue::*'));
+       return empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::Inventory::Queue::*')) &&
+           empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::PosOrderChunk::Queue::*'));
    }
 
     private function isRedisKeyExists($key): bool
