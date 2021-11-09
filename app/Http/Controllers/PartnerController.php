@@ -1177,11 +1177,16 @@ class PartnerController extends Controller
 
     public function updateAddress(Request $request, $partner, Updater $updater)
     {
-        $this->validate($request, ['address' => 'required'], ['required' => 'ঠিকানা আবশ্যক']);
-        $partner = $request->partner;
-        $updater->setPartner($partner)->setAddress($request->address)->update();
+        $this->updateAddressCore($request,$updater);
         return api_response($request, null, 200, ['message' => 'Address Updated Successfully']);
     }
+
+    public function updateAddressV2(Request $request, Updater $updater)
+    {
+        $this->updateAddressCore($request,$updater);
+        return http_response($request, null, 200);
+    }
+
 
     public function toggleSmsActivation(Request $request, Updater $updater)
     {
@@ -1279,6 +1284,21 @@ class PartnerController extends Controller
         $partner = $request->auth_user->getPartner();
         $generalSettings = $generalSettings->setPartner($partner)->getGeneralSettings();
         return http_response($request, $generalSettings,200, ['generalSettings' => $generalSettings]);
+    }
+    private function bearerToken($request)
+    {
+        $header = $request->header('Authorization', '');
+        if (Str::startsWith($header, 'Bearer ')) {
+            return Str::substr($header, 7);
+        }
+        return false;
+    }
+
+    private function updateAddressCore(Request $request, Updater $updater)
+    {
+        $this->validate($request, ['address' => 'required'], ['required' => 'ঠিকানা আবশ্যক']);
+        $partner = resolvePartnerFromAuthMiddleware($request);
+        $updater->setPartner($partner)->setAddress($request->address)->update();
     }
 
 
