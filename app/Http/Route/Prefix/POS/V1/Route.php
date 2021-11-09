@@ -162,6 +162,7 @@ class Route
                 $api->post('orders/{order}/send-sms', 'Pos\OrderController@sendSmsV2');
                 $api->post('orders/{order}/send-email', 'Pos\OrderController@sendEmailV2');
                 $api->get('filters', 'PosOrder\OrderController@getFilteringOptions' );
+                $api->post('address', 'PartnerController@updateAddressV2');
 
                 /**
                  * End Old APIs with jwtAccessToken Middleware
