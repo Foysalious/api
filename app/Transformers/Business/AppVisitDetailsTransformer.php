@@ -63,7 +63,8 @@ class AppVisitDetailsTransformer extends TransformerAbstract
         $department = $role ? $role->businessDepartment : null;
 
         return [
-            'id' => $profile->id,
+            'profile_id' => $profile->id,
+            'business_member_id' => $business_member->id,
             'name' => $profile->name ?: null,
             'pro_pic' => $profile->pro_pic ?: null,
             'designation' => $role ? $role->name : null,
