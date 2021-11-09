@@ -127,6 +127,7 @@ class ExpenseRepo
             $expense->amount = $request->amount;
             if ($request->remarks) $expense->remarks = $request->remarks;
             if ($request->type) $expense->type = $request->type;
+            $expense->is_updated_by_super_admin = 1;
             $expense->save();
 
             if ($request['file']) $this->storeAttachment($expense, $request, $member);
