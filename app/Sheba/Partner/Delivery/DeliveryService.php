@@ -556,7 +556,10 @@ class DeliveryService
         $pos_order  = PosOrder::where('delivery_request_id', $this->deliveryReqId)->first();
         if($pos_order) {
             $pos_order->delivery_status = $this->deliveryStatus;
-            if($this->deliveryStatus == Statuses::DELIVERED) $pos_order->status = OrderStatuses::COMPLETED;
+            if($this->deliveryStatus == Statuses::DELIVERED)
+                $pos_order->status = OrderStatuses::COMPLETED;
+            elseif ($this->deliveryStatus == Statuses::PICKED_UP)
+                $pos_order->status = OrderStatuses::SHIPPED;
             $pos_order->save();
         }
     }
