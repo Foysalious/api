@@ -43,11 +43,10 @@ class DataMigration
 
     public function migrate()
     {
-//        dispatch(new PartnerMigrationStartJob($this->partner));
-//        $this->inventoryDataMigration->setPartner($this->partner)->migrate();
+        dispatch(new PartnerMigrationStartJob($this->partner));
+        $this->inventoryDataMigration->setPartner($this->partner)->migrate();
         $this->posOrderDataMigrationChunk->setPartner($this->partner)->generate();
-//        $this->posOrderDataMigration->setPartner($this->partner)->migrate();
-//        $this->smanagerUserDataMigration->setPartner($this->partner)->migrate();
-//        dispatch(new PartnerMigrationCompleteJob($this->partner));
+        $this->smanagerUserDataMigration->setPartner($this->partner)->migrate();
+        dispatch(new PartnerMigrationCompleteJob($this->partner));
     }
 }

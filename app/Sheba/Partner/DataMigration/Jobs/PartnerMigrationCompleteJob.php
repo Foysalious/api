@@ -32,6 +32,7 @@ class PartnerMigrationCompleteJob extends Job implements ShouldQueue
     private function isQueuesProcessed(): bool
     {
         return empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::Inventory::Queue::*')) &&
+            empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::PosOrderChunk::Queue::*')) &&
             empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::PosOrder::Queue::*')) &&
             empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::SmanagerUser::Queue::*'));
     }
