@@ -18,12 +18,17 @@ class DataMigration
      */
     private $posOrderDataMigration;
     private $smanagerUserDataMigration;
+    /**
+     * @var PosOrderDataMigrationChunk
+     */
+    private $posOrderDataMigrationChunk;
 
-    public function __construct(InventoryDataMigration $inventoryDataMigration, PosOrderDataMigration $posOrderDataMigration, SmanagerUserDataMigration $smanagerUserDataMigration)
+    public function __construct(InventoryDataMigration $inventoryDataMigration, PosOrderDataMigration $posOrderDataMigration, SmanagerUserDataMigration $smanagerUserDataMigration, PosOrderDataMigrationChunk $posOrderDataMigrationChunk)
     {
         $this->inventoryDataMigration = $inventoryDataMigration;
         $this->posOrderDataMigration = $posOrderDataMigration;
         $this->smanagerUserDataMigration = $smanagerUserDataMigration;
+        $this->posOrderDataMigrationChunk = $posOrderDataMigrationChunk;
     }
 
     /**
@@ -40,7 +45,7 @@ class DataMigration
     {
         dispatch(new PartnerMigrationStartJob($this->partner));
         $this->inventoryDataMigration->setPartner($this->partner)->migrate();
-        $this->posOrderDataMigration->setPartner($this->partner)->migrate();
+        $this->posOrderDataMigrationChunk->setPartner($this->partner)->generate();
         $this->smanagerUserDataMigration->setPartner($this->partner)->migrate();
         dispatch(new PartnerMigrationCompleteJob($this->partner));
     }
