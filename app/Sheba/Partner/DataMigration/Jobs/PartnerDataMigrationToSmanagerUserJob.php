@@ -25,10 +25,10 @@ class PartnerDataMigrationToSmanagerUserJob extends Job implements ShouldQueue
     private $queueNo;
     private $attempts = 0;
 
-    public function __construct($partner, $data, $queueNo)
+    public function __construct($partner, $data, $queueNo, $queue_and_connection_name)
     {
-        $this->connection = 'pos_rebuild_data_migration';
-        $this->queue = 'pos_rebuild_data_migration';
+        $this->connection = $queue_and_connection_name;
+        $this->queue = $queue_and_connection_name;
         $this->partner = $partner;
         $this->data = $data;
         $this->queueNo = $queueNo;

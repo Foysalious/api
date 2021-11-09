@@ -40,6 +40,7 @@ class InventoryDataMigration
      * @var PartnerPosServiceBatchRepositoryInterface
      */
     private $partnerPosServiceBatchRepository;
+    private $queue_and_connection_name;
 
 
     public function __construct(
@@ -64,6 +65,17 @@ class InventoryDataMigration
         $this->partner = $partner;
         return $this;
     }
+
+    /**
+     * @param $queue_and_connection_name
+     * @return InventoryDataMigration
+     */
+    public function setQueueAndConnectionName($queue_and_connection_name)
+    {
+        $this->queue_and_connection_name = $queue_and_connection_name;
+        return $this;
+    }
+
 
     private function generatePosCategoriesData($pos_category)
     {
@@ -98,7 +110,7 @@ class InventoryDataMigration
     private function migratePartner($data)
     {
         $this->setRedisKey();
-        dispatch(new PartnerDataMigrationToInventoryJob($this->partner, ['partner_info' => $data], $this->currentQueue));
+        dispatch(new PartnerDataMigrationToInventoryJob($this->partner, ['partner_info' => $data], $this->currentQueue, $this->queue_and_connection_name));
         $this->increaseCurrentQueueValue();
     }
 
@@ -107,7 +119,7 @@ class InventoryDataMigration
         $chunks = array_chunk($data, self::CHUNK_SIZE);
         foreach ($chunks as $chunk) {
             $this->setRedisKey();
-            dispatch(new PartnerDataMigrationToInventoryJob($this->partner, ['pos_categories' => $chunk], $this->currentQueue));
+            dispatch(new PartnerDataMigrationToInventoryJob($this->partner, ['pos_categories' => $chunk], $this->currentQueue, $this->queue_and_connection_name));
             $this->increaseCurrentQueueValue();
         }
     }
@@ -117,7 +129,7 @@ class InventoryDataMigration
         $chunks = array_chunk($data, self::CHUNK_SIZE);
         foreach ($chunks as $chunk) {
             $this->setRedisKey();
-            dispatch(new PartnerDataMigrationToInventoryJob($this->partner, ['partner_pos_categories' => $chunk], $this->currentQueue));
+            dispatch(new PartnerDataMigrationToInventoryJob($this->partner, ['partner_pos_categories' => $chunk], $this->currentQueue, $this->queue_and_connection_name));
             $this->increaseCurrentQueueValue();
         }
     }
@@ -135,7 +147,7 @@ class InventoryDataMigration
                 'partner_pos_service_image_gallery' => $images,
                 'partner_pos_services_logs' => $logs,
                 'partner_pos_service_discounts' => $discounts,
-            ], $this->currentQueue));
+            ], $this->currentQueue, $this->queue_and_connection_name));
             $this->increaseCurrentQueueValue();
         }
     }
