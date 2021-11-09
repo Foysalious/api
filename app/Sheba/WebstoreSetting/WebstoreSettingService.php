@@ -60,12 +60,18 @@ class WebstoreSettingService
     public function store()
     {
         $data = $this->makeStoreData();
-        return $this->client->post('api/v1/partners/' . $this->partner.'/theme-settings', $data);
+        return $this->client->post('api/v1/partners/' . $this->partner . '/theme-settings', $data);
     }
 
     public function update()
     {
         $data = $this->makeStoreData();
-        return $this->client->put('api/v1/partners/' . $this->partner.'/theme-settings', $data);
+        return $this->client->put('api/v1/partners/' . $this->partner . '/theme-settings', $data);
+    }
+
+    public function sync()
+    {
+        $data = $this->makeStoreData();
+        return $this->client->post('api/v1/partners/' . $this->partner . '/theme-settings/sync', $data);
     }
 }
