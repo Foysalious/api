@@ -130,9 +130,9 @@ class DataMigration
 
     private function shouldQueue($count)
     {
-        if ($count['partner_pos_categories_count'] > self::MAX_PARTNER_POS_CATEGORIES &&
-            $count['partner_pos_services_count'] > self::MAX_PARTNER_POS_SERVICES &&
-            $count['pos_orders_count'] > self::MAX_POS_ORDERS &&
+        if ($count['partner_pos_categories_count'] > self::MAX_PARTNER_POS_CATEGORIES ||
+            $count['partner_pos_services_count'] > self::MAX_PARTNER_POS_SERVICES ||
+            $count['pos_orders_count'] > self::MAX_POS_ORDERS ||
             $count['partner_pos_customers_count'] > self::MAX_PARTNER_POS_CUSTOMERS) {
             return true;
         }
