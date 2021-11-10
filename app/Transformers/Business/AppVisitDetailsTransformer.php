@@ -185,7 +185,10 @@ class AppVisitDetailsTransformer extends TransformerAbstract
     {
         if ($visit->status === Status::CANCELLED) {
             $visit_note = $visit->visitNotes()->where('status', Status::CANCELLED)->select('note')->orderBy('id', 'DESC')->first();
-            return $visit_note ? $visit_note->note : null;
+            return $visit_note ? [
+                'note' => $visit_note->note,
+                'date' => Carbon::parse($visit_note->date)->format('F d,Y')
+            ] : null;
         } else {
             return null;
         }
