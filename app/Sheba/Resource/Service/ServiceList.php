@@ -59,8 +59,12 @@ class ServiceList
         })->get();
         $cs_add_on_service_ids = CrosssaleService::whereIn('service_id', $this->serviceIds)->pluck('add_on_service_id')->toArray();
         if ($cs_add_on_service_ids) {
-            $services = $services->filter(function ($service) use ($cs_add_on_service_ids){
+            $services = $services->filter(function ($service) use ($cs_add_on_service_ids) {
                 return $service->is_add_on == 0 || in_array($service->id, $cs_add_on_service_ids);
+            });
+        } else {
+            $services = $services->filter(function ($service) {
+                return $service->is_add_on == 0;
             });
         }
         if (count($services) > 0) {
@@ -94,6 +98,7 @@ class ServiceList
             'services.variables',
             'app_thumb',
             'category_id',
+            'is_add_on'
         ];
     }
 
