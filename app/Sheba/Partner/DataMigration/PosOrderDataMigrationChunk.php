@@ -77,7 +77,7 @@ class PosOrderDataMigrationChunk
         $count = (int)Redis::get('PosOrderDataMigrationCount::' . $this->queue_and_connection_name);
         $count ? $count++ : $count = 1;
         Redis::set('PosOrderDataMigrationCount::' . $this->queue_and_connection_name, $count);
-        //Redis::set('DataMigration::Partner::' . $this->partner->id . '::PosOrderChunk::Queue::' . $this->currentQueue, 'initiated');
+        Redis::set('DataMigration::Partner::' . $this->partner->id . '::PosOrderChunk::Queue::' . $this->currentQueue, 'initiated');
     }
 
     private function increaseCurrentQueueValue()
