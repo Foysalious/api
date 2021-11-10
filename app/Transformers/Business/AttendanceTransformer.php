@@ -51,7 +51,7 @@ class AttendanceTransformer extends TransformerAbstract
         $period = CarbonPeriod::create($this->timeFrame->start, $this->timeFrame->end);
         $remaining_days = (($this->timeFrame->start)->diffInDays($this->timeFrame->end)) + 1;
         $statistics = [
-            'working_days' => $remaining_days,
+            'working_days' => $this->timeFrame->start->format('Y-m') === Carbon::now()->format('Y-m') ? $this->timeFrame->start->daysInMonth : $remaining_days,
             'present' => 0,
             Statuses::ON_TIME => 0,
             Statuses::LATE => 0,
@@ -70,10 +70,11 @@ class AttendanceTransformer extends TransformerAbstract
             $is_on_leave = $this->isLeave($date, $leaves);
 
             $breakdown_data['weekend_or_holiday_tag'] = null;
-            if ($is_weekend_or_holiday || $is_on_leave) {
+            if ($is_weekend_or_holiday) {
                 $breakdown_data['weekend_or_holiday_tag'] = $this->isWeekendHolidayLeaveTag($date, $leaves_date_with_half_and_full_day, $dates_of_holidays_formatted);
-
                 if (!$this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['working_days']--;
+            }
+            if ($is_on_leave) {
                 if ($this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['full_day_leave']++;
                 if ($this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['half_day_leave'] += 0.5;
             }
