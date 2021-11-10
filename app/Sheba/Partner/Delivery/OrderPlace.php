@@ -34,6 +34,7 @@ class OrderPlace
      * @var OrderService
      */
     private $orderService;
+    private $posOrderId;
 
     public function __construct(DeliveryServerClient $client, PosOrderRepository $posOrderRepository, OrderService $orderService)
     {
@@ -128,6 +129,7 @@ class OrderPlace
 
     public function setPosOrder($posOrderId)
     {
+        $this->posOrderId = $posOrderId;
         $this->posOrder  = PosOrder::find($posOrderId);
         return $this;
     }
@@ -158,7 +160,7 @@ class OrderPlace
             'status' => OrderStatuses::SHIPPED
         ];
         if ($this->posOrder && !$this->posOrder->is_migrated) return $this->posOrderRepository->update($this->posOrder, $data);
-        return $this->orderService->storeDeliveryInformation($data);
+        return $this->orderService->setPartnerId($this->partner->id)->setOrderId($this->posOrderId)->storeDeliveryInformation($data);
     }
 
 

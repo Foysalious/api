@@ -14,6 +14,7 @@ class SmanagerUserDataMigration
     private $partnerInfo;
     private $posCustomers;
     private $queue_and_connection_name;
+    private $shouldQueue;
 
     /**
      * @param Partner $partner
@@ -35,6 +36,16 @@ class SmanagerUserDataMigration
         return $this;
     }
 
+    /**
+     * @param mixed $shouldQueue
+     * @return SmanagerUserDataMigration
+     */
+    public function setShouldQueue($shouldQueue)
+    {
+        $this->shouldQueue = $shouldQueue;
+        return $this;
+    }
+
     public function migrate()
     {
         $this->generateMigrationData();
@@ -51,7 +62,8 @@ class SmanagerUserDataMigration
     private function migratePartner($data)
     {
         $this->setRedisKey();
-        dispatch(new PartnerDataMigrationToSmanagerUserJob($this->partner, ['partner_info' => $data], $this->currentQueue, $this->queue_and_connection_name));
+        $this->shouldQueue ? dispatch(new PartnerDataMigrationToSmanagerUserJob($this->partner, ['partner_info' => $data], $this->currentQueue, $this->queue_and_connection_name)) :
+            dispatchJobNow(new PartnerDataMigrationToSmanagerUserJob($this->partner, ['partner_info' => $data], $this->currentQueue, $this->queue_and_connection_name));
         $this->increaseCurrentQueueValue();
     }
 
@@ -69,7 +81,8 @@ class SmanagerUserDataMigration
         $chunks = array_chunk($data->toArray(), self::CHUNK_SIZE);
         foreach ($chunks as $chunk) {
             $this->setRedisKey();
-            dispatch(new PartnerDataMigrationToSmanagerUserJob($this->partner, ['pos_customers' => $chunk], $this->currentQueue, $this->queue_and_connection_name));
+            $this->shouldQueue ? dispatch(new PartnerDataMigrationToSmanagerUserJob($this->partner, ['pos_customers' => $chunk], $this->currentQueue, $this->queue_and_connection_name)) :
+                dispatchJobNow(new PartnerDataMigrationToSmanagerUserJob($this->partner, ['pos_customers' => $chunk], $this->currentQueue, $this->queue_and_connection_name));
             $this->increaseCurrentQueueValue();
         }
     }
@@ -84,7 +97,7 @@ class SmanagerUserDataMigration
             })
             ->join('pos_customers', 'partner_pos_customers.customer_id', '=', 'pos_customers.id')
             ->join('profiles', 'pos_customers.profile_id', '=', 'profiles.id')
-            ->select('partner_pos_customers.id','partner_pos_customers.customer_id as previous_id', 'partner_pos_customers.partner_id', $query,
+            ->select('partner_pos_customers.id', 'partner_pos_customers.customer_id as previous_id', 'partner_pos_customers.partner_id', $query,
                 'partner_pos_customers.is_supplier', 'partner_pos_customers.note', 'profiles.mobile', 'profiles.email', 'profiles.fb_id', 'profiles.google_id',
                 'profiles.mobile_verified', 'profiles.email_verified', 'profiles.email_verified_at', 'profiles.address', 'profiles.gender',
                 'profiles.dob', 'profiles.pro_pic', 'profiles.created_by_name', 'profiles.updated_by_name', 'profiles.created_at',
@@ -94,6 +107,9 @@ class SmanagerUserDataMigration
 
     private function setRedisKey()
     {
+        $count = (int)Redis::get('PosOrderDataMigrationCount::' . $this->queue_and_connection_name);
+        $count ? $count++ : $count = 1;
+        Redis::set('PosOrderDataMigrationCount::' . $this->queue_and_connection_name, $count);
         Redis::set('DataMigration::Partner::' . $this->partner->id . '::SmanagerUser::Queue::' . $this->currentQueue, 'initiated');
     }
 

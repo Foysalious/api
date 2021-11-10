@@ -26,7 +26,7 @@ class Route
             $api->group(['prefix' => 'partners'], function ($api) {
                 $api->group(['prefix' => '{partner}'], function ($api) {
                     $api->get('/', 'Pos\PartnerController@findById')->middleware('ip.whitelist');
-                    $api->get('/banner', 'Pos\PartnerController@getWebStoreBanner');
+                    $api->get('/webstore-banner', 'Pos\PartnerController@getWebStoreBanner');
                     $api->group(['prefix' => 'orders'], function ($api) {
                         $api->group(['prefix' => '{order}'], function ($api) {
                             $api->post('online-payment', 'PosOrder\OrderController@onlinePayment');
@@ -54,6 +54,7 @@ class Route
              */
             $api->group(['middleware' => ['jwtAccessToken']], function ($api) {
                 $api->get('/orders/{order_id}/generate-invoice', 'PosOrder\OrderController@orderInvoiceDownload');
+                $api->get('/banner-list', 'Pos\PartnerController@getBanner');
                 $api->group(['prefix' => 'webstore-theme-settings', 'middleware' => ['jwtAccessToken']], function ($api) {
                     $api->get('/settings', 'WebstoreSettingController@index');
                     $api->get('/social-settings', 'WebstoreSettingController@getSocialSetting');

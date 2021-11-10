@@ -1,6 +1,7 @@
 <?php
 
 use Carbon\Carbon;
+use Illuminate\Bus\Dispatcher;
 use Sheba\Reward\ActionRewardDispatcher;
 
 if (!function_exists('constants')) {
@@ -293,6 +294,20 @@ if (!function_exists('array_push_on_array')) {
         function convertTimezone(Carbon $datetime,  $timezone = 'Asia/Dhaka')
         {
             return $datetime->timezone($timezone);
+
+        }
+    }
+
+    if (!function_exists('dispatchJobNow')) {
+
+        /**
+         * Dispatch a command to its appropriate handler in the current process.
+         * @param $job
+         * @return mixed
+         */
+        function dispatchJobNow($job)
+        {
+            return app(Dispatcher::class)->dispatchNow($job);
 
         }
     }
