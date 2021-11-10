@@ -80,9 +80,7 @@ class AccountingEntryClient
             if (!$this->userType || !$this->userId ) {
                 throw new AccountingEntryServerError('Set user type and user id', 400);
             }
-            $res = decodeGuzzleResponse(
-                $this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data))
-            );
+            $res = json_decode($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data))->getBody()->getContents(), true);
             if ($res['code'] != 200) {
                 throw new AccountingEntryServerError($res['message']);
             }
@@ -91,7 +89,10 @@ class AccountingEntryClient
         } catch (GuzzleException $e) {
             $response = $e->getResponse() ? json_decode($e->getResponse()->getBody()->getContents(), true): null;
             $message = null;
-            if (isset($response['message']) ) {
+            if ($e->getMessage()) {
+                $message = $e->getMessage();
+            }
+            else if (isset($response['message']) ) {
                 $message = $response['message'];
             } else if (isset($response['detail'])) {
                 $message = json_encode($response['detail']);
