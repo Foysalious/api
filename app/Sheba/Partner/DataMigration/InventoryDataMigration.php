@@ -40,12 +40,14 @@ class InventoryDataMigration
      * @var PartnerPosServiceBatchRepositoryInterface
      */
     private $partnerPosServiceBatchRepository;
+    private $queue_and_connection_name;
+    private $shouldQueue;
 
 
     public function __construct(
-        PosCategoryRepository $posCategoryRepository,
-        PartnerPosCategoryRepository $partnerPosCategoryRepository,
-        PartnerPosServiceRepository $partnerPosServiceRepository,
+        PosCategoryRepository                     $posCategoryRepository,
+        PartnerPosCategoryRepository              $partnerPosCategoryRepository,
+        PartnerPosServiceRepository               $partnerPosServiceRepository,
         PartnerPosServiceBatchRepositoryInterface $partnerPosServiceBatchRepository)
     {
         $this->posCategoryRepository = $posCategoryRepository;
@@ -64,6 +66,27 @@ class InventoryDataMigration
         $this->partner = $partner;
         return $this;
     }
+
+    /**
+     * @param $queue_and_connection_name
+     * @return InventoryDataMigration
+     */
+    public function setQueueAndConnectionName($queue_and_connection_name)
+    {
+        $this->queue_and_connection_name = $queue_and_connection_name;
+        return $this;
+    }
+
+    /**
+     * @param mixed $shouldQueue
+     * @return InventoryDataMigration
+     */
+    public function setShouldQueue($shouldQueue)
+    {
+        $this->shouldQueue = $shouldQueue;
+        return $this;
+    }
+
 
     private function generatePosCategoriesData($pos_category)
     {
@@ -86,7 +109,7 @@ class InventoryDataMigration
     private function generateMigrationData()
     {
         $this->partnerInfo = $this->generatePartnerMigrationData();
-        $this->posCategories  = $this->generatePosCategoriesMigrationData();
+        $this->posCategories = $this->generatePosCategoriesMigrationData();
         $this->partnerPosCategories = $this->generatePartnerPosCategoriesMigrationData();
         $this->partnerPosServices = $this->generatePartnerPosServicesMigrationData();
         $this->partnerPosServiceBatches = collect($this->generatePartnerPosServiceBatchesData());
@@ -98,7 +121,8 @@ class InventoryDataMigration
     private function migratePartner($data)
     {
         $this->setRedisKey();
-        dispatch(new PartnerDataMigrationToInventoryJob($this->partner, ['partner_info' => $data], $this->currentQueue));
+        $this->shouldQueue ? dispatch(new PartnerDataMigrationToInventoryJob($this->partner, ['partner_info' => $data], $this->currentQueue, $this->queue_and_connection_name)) :
+            dispatchJobNow(new PartnerDataMigrationToInventoryJob($this->partner, ['partner_info' => $data], $this->currentQueue, $this->queue_and_connection_name));
         $this->increaseCurrentQueueValue();
     }
 
@@ -107,7 +131,8 @@ class InventoryDataMigration
         $chunks = array_chunk($data, self::CHUNK_SIZE);
         foreach ($chunks as $chunk) {
             $this->setRedisKey();
-            dispatch(new PartnerDataMigrationToInventoryJob($this->partner, ['pos_categories' => $chunk], $this->currentQueue));
+            $this->shouldQueue ? dispatch(new PartnerDataMigrationToInventoryJob($this->partner, ['pos_categories' => $chunk], $this->currentQueue, $this->queue_and_connection_name)) :
+                dispatchJobNow(new PartnerDataMigrationToInventoryJob($this->partner, ['pos_categories' => $chunk], $this->currentQueue, $this->queue_and_connection_name));
             $this->increaseCurrentQueueValue();
         }
     }
@@ -117,7 +142,8 @@ class InventoryDataMigration
         $chunks = array_chunk($data, self::CHUNK_SIZE);
         foreach ($chunks as $chunk) {
             $this->setRedisKey();
-            dispatch(new PartnerDataMigrationToInventoryJob($this->partner, ['partner_pos_categories' => $chunk], $this->currentQueue));
+            $this->shouldQueue ? dispatch(new PartnerDataMigrationToInventoryJob($this->partner, ['partner_pos_categories' => $chunk], $this->currentQueue, $this->queue_and_connection_name)) :
+                dispatchJobNow(new PartnerDataMigrationToInventoryJob($this->partner, ['partner_pos_categories' => $chunk], $this->currentQueue, $this->queue_and_connection_name));
             $this->increaseCurrentQueueValue();
         }
     }
@@ -129,13 +155,20 @@ class InventoryDataMigration
             $productIds = array_column($chunk, 'id');
             list($images, $logs, $discounts, $batches) = $this->getProductsRelatedData($productIds);
             $this->setRedisKey();
-            dispatch(new PartnerDataMigrationToInventoryJob($this->partner, [
+            $this->shouldQueue ? dispatch(new PartnerDataMigrationToInventoryJob($this->partner, [
                 'products' => $chunk,
                 'partner_pos_service_batches' => $batches,
                 'partner_pos_service_image_gallery' => $images,
                 'partner_pos_services_logs' => $logs,
                 'partner_pos_service_discounts' => $discounts,
-            ], $this->currentQueue));
+            ], $this->currentQueue, $this->queue_and_connection_name)) :
+                dispatchJobNow(new PartnerDataMigrationToInventoryJob($this->partner, [
+                    'products' => $chunk,
+                    'partner_pos_service_batches' => $batches,
+                    'partner_pos_service_image_gallery' => $images,
+                    'partner_pos_services_logs' => $logs,
+                    'partner_pos_service_discounts' => $discounts,
+                ], $this->currentQueue, $this->queue_and_connection_name));
             $this->increaseCurrentQueueValue();
         }
     }
@@ -226,6 +259,10 @@ class InventoryDataMigration
 
     private function setRedisKey()
     {
+        $count = (int)Redis::get('PosOrderDataMigrationCount::' . $this->queue_and_connection_name);
+        if ($count) $count++;
+        else $count = 1;
+        Redis::set('PosOrderDataMigrationCount::' . $this->queue_and_connection_name, $count);
         Redis::set('DataMigration::Partner::' . $this->partner->id . '::Inventory::Queue::' . $this->currentQueue, 'initiated');
     }
 

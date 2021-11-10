@@ -26,6 +26,7 @@ class Route
             $api->group(['prefix' => 'partners'], function ($api) {
                 $api->group(['prefix' => '{partner}'], function ($api) {
                     $api->get('/', 'Pos\PartnerController@findById')->middleware('ip.whitelist');
+                    $api->get('/webstore-banner', 'Pos\PartnerController@getWebStoreBanner');
                     $api->group(['prefix' => 'orders'], function ($api) {
                         $api->group(['prefix' => '{order}'], function ($api) {
                             $api->post('online-payment', 'PosOrder\OrderController@onlinePayment');
@@ -53,6 +54,7 @@ class Route
              */
             $api->group(['middleware' => ['jwtAccessToken']], function ($api) {
                 $api->get('/orders/{order_id}/generate-invoice', 'PosOrder\OrderController@orderInvoiceDownload');
+                $api->get('/banner-list', 'Pos\PartnerController@getBanner');
                 $api->group(['prefix' => 'webstore-theme-settings', 'middleware' => ['jwtAccessToken']], function ($api) {
                     $api->get('/partner-settings', 'WebstoreSettingController@index');
                     $api->get('/theme-details', 'WebstoreSettingController@getThemeDetails');
@@ -162,6 +164,7 @@ class Route
                 $api->post('orders/{order}/send-sms', 'Pos\OrderController@sendSmsV2');
                 $api->post('orders/{order}/send-email', 'Pos\OrderController@sendEmailV2');
                 $api->get('filters', 'PosOrder\OrderController@getFilteringOptions' );
+                $api->post('address', 'PartnerController@updateAddressV2');
 
                 /**
                  * End Old APIs with jwtAccessToken Middleware

@@ -1,6 +1,8 @@
 <?php namespace App\Http\Controllers\Partner\Webstore;
 
 use App\Exceptions\DoNotReportException;
+use App\Jobs\WebstoreSettingsSyncJob;
+use App\Sheba\InventoryService\Services\ProductService;
 use App\Sheba\Partner\Webstore\WebstoreBannerSettings;
 use App\Transformers\CustomSerializer;
 use App\Transformers\Partner\WebstoreSettingsTransformer;
@@ -26,10 +28,11 @@ class WebstoreSettingsController extends Controller
         return api_response($request, $settings, 200, ['webstore_settings' => $settings]);
     }
 
-    public function indexV2(Request $request)
+    public function indexV2(Request $request, ProductService $productService)
     {
         $settings = $this->getWebstoreSettingsData($request);
-        $settings['published_products'] = 0;
+        $partner = resolvePartnerFromAuthMiddleware($request);
+        $settings['published_products'] = $productService->setPartnerId($partner->id)->getWebstorePublishedProductCount();
         return http_response($request, $settings, 200, ['webstore_settings' => $settings]);
     }
 
@@ -166,6 +169,7 @@ class WebstoreSettingsController extends Controller
             return false;
         else {
             $webstoreBannerSettings->setBannerSettings($banner_settings)->setData($request->all())->update();
+            dispatch(new WebStoreSettingsSyncJob( $partner_id));
             return true;
         }
     }

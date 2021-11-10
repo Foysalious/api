@@ -87,10 +87,34 @@ return [
                 'queue' => 'invoice_generation',
                 'expire' => 60
             ],
-            'pos_rebuild_data_migration' => [
+            'pos_rebuild_data_migration_1' => [
                 'driver' => 'redis',
                 'connection' => 'default',
-                'queue' => 'pos_rebuild_data_migration',
+                'queue' => 'pos_rebuild_data_migration_1',
+                'expire' => 60
+            ],
+            'pos_rebuild_data_migration_2' => [
+                'driver' => 'redis',
+                'connection' => 'default',
+                'queue' => 'pos_rebuild_data_migration_2',
+                'expire' => 60
+            ],
+            'pos_rebuild_data_migration_3' => [
+                'driver' => 'redis',
+                'connection' => 'default',
+                'queue' => 'pos_rebuild_data_migration_3',
+                'expire' => 60
+            ],
+            'pos_rebuild_data_migration_4' => [
+                'driver' => 'redis',
+                'connection' => 'default',
+                'queue' => 'pos_rebuild_data_migration_4',
+                'expire' => 60
+            ],
+            'pos_rebuild_data_migration_5' => [
+                'driver' => 'redis',
+                'connection' => 'default',
+                'queue' => 'pos_rebuild_data_migration_5',
                 'expire' => 60
             ],
 

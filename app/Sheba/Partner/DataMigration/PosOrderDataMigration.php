@@ -29,6 +29,8 @@ class PosOrderDataMigration
     private $posCustomers;
     private $skip;
     private $take;
+    private $queue_and_connection_name;
+    private $shouldQueue;
 
 
     public function __construct(InventoryServerClient $inventoryServerClient)
@@ -43,6 +45,16 @@ class PosOrderDataMigration
     public function setPartner(Partner $partner)
     {
         $this->partner = $partner;
+        return $this;
+    }
+
+    /**
+     * @param mixed $queue_and_connection_name
+     * @return PosOrderDataMigration
+     */
+    public function setQueueAndConnectionName($queue_and_connection_name)
+    {
+        $this->queue_and_connection_name = $queue_and_connection_name;
         return $this;
     }
 
@@ -63,6 +75,16 @@ class PosOrderDataMigration
     public function setTake($take)
     {
         $this->take = $take;
+        return $this;
+    }
+
+    /**
+     * @param mixed $shouldQueue
+     * @return PosOrderDataMigration
+     */
+    public function setShouldQueue($shouldQueue)
+    {
+        $this->shouldQueue = $shouldQueue;
         return $this;
     }
 
@@ -87,7 +109,8 @@ class PosOrderDataMigration
     private function migratePartner($data)
     {
         $this->setRedisKey();
-        dispatch(new PartnerDataMigrationToPosOrderJob($this->partner, ['partner_info' => $data], $this->currentQueue));
+        $this->shouldQueue ? dispatch(new PartnerDataMigrationToPosOrderJob($this->partner, ['partner_info' => $data], $this->currentQueue, $this->queue_and_connection_name)) :
+            dispatchJobNow(new PartnerDataMigrationToPosOrderJob($this->partner, ['partner_info' => $data], $this->currentQueue, $this->queue_and_connection_name));
         $this->increaseCurrentQueueValue();
     }
 
@@ -99,14 +122,21 @@ class PosOrderDataMigration
             $posCustomerIds = array_column($chunk, 'customer_id');
             list($pos_order_items, $pos_order_payments, $pos_order_discounts, $pos_order_logs, $pos_customers) = $this->getPosOrderRelatedData($posOrderIds, $posCustomerIds);
             $this->setRedisKey();
-            dispatch(new PartnerDataMigrationToPosOrderJob($this->partner, [
+            $this->shouldQueue ? dispatch(new PartnerDataMigrationToPosOrderJob($this->partner, [
                 'pos_orders' => $chunk,
                 'pos_order_items' => $pos_order_items,
                 'pos_order_payments' => $pos_order_payments,
                 'pos_order_discounts' => $pos_order_discounts,
                 'pos_order_logs' => $pos_order_logs,
                 'pos_customers' => $pos_customers
-            ], $this->currentQueue));
+            ], $this->currentQueue, $this->queue_and_connection_name)) : dispatchJobNow(new PartnerDataMigrationToPosOrderJob($this->partner, [
+                'pos_orders' => $chunk,
+                'pos_order_items' => $pos_order_items,
+                'pos_order_payments' => $pos_order_payments,
+                'pos_order_discounts' => $pos_order_discounts,
+                'pos_order_logs' => $pos_order_logs,
+                'pos_customers' => $pos_customers
+            ], $this->currentQueue, $this->queue_and_connection_name));
             $this->increaseCurrentQueueValue();
         }
     }
@@ -280,6 +310,9 @@ class PosOrderDataMigration
 
     private function setRedisKey()
     {
+        $count = (int)Redis::get('PosOrderDataMigrationCount::' . $this->queue_and_connection_name);
+        $count ? $count++ : $count = 1;
+        Redis::set('PosOrderDataMigrationCount::' . $this->queue_and_connection_name, $count);
         Redis::set('DataMigration::Partner::' . $this->partner->id . '::PosOrder::Queue::' . $this->currentQueue, 'initiated');
     }
 

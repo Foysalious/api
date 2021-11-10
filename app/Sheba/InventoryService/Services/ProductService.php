@@ -349,4 +349,10 @@ class ProductService
 
     }
 
+    public function getWebstorePublishedProductCount()
+    {
+        $data =  $this->client->get('api/v1/partners/' . $this->partnerId . '/statistics');
+        return $data['statistics']['total_published_products'];
+    }
+
 }
