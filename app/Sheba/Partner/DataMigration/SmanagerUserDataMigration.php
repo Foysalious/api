@@ -14,6 +14,7 @@ class SmanagerUserDataMigration
     private $partnerInfo;
     private $posCustomers;
     private $queue_and_connection_name;
+    private $shouldQueue;
 
     /**
      * @param Partner $partner
@@ -35,6 +36,16 @@ class SmanagerUserDataMigration
         return $this;
     }
 
+    /**
+     * @param mixed $shouldQueue
+     * @return SmanagerUserDataMigration
+     */
+    public function setShouldQueue($shouldQueue)
+    {
+        $this->shouldQueue = $shouldQueue;
+        return $this;
+    }
+
     public function migrate()
     {
         $this->generateMigrationData();
@@ -51,7 +62,8 @@ class SmanagerUserDataMigration
     private function migratePartner($data)
     {
         $this->setRedisKey();
-        dispatch(new PartnerDataMigrationToSmanagerUserJob($this->partner, ['partner_info' => $data], $this->currentQueue, $this->queue_and_connection_name));
+        $this->shouldQueue ? dispatch(new PartnerDataMigrationToSmanagerUserJob($this->partner, ['partner_info' => $data], $this->currentQueue, $this->queue_and_connection_name)) :
+            dispatchJobNow(new PartnerDataMigrationToSmanagerUserJob($this->partner, ['partner_info' => $data], $this->currentQueue, $this->queue_and_connection_name));
         $this->increaseCurrentQueueValue();
     }
 
@@ -69,7 +81,8 @@ class SmanagerUserDataMigration
         $chunks = array_chunk($data->toArray(), self::CHUNK_SIZE);
         foreach ($chunks as $chunk) {
             $this->setRedisKey();
-            dispatch(new PartnerDataMigrationToSmanagerUserJob($this->partner, ['pos_customers' => $chunk], $this->currentQueue, $this->queue_and_connection_name));
+            $this->shouldQueue ? dispatch(new PartnerDataMigrationToSmanagerUserJob($this->partner, ['pos_customers' => $chunk], $this->currentQueue, $this->queue_and_connection_name)) :
+                dispatchJobNow(new PartnerDataMigrationToSmanagerUserJob($this->partner, ['pos_customers' => $chunk], $this->currentQueue, $this->queue_and_connection_name));
             $this->increaseCurrentQueueValue();
         }
     }

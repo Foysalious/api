@@ -11,12 +11,9 @@ class PosOrderDataMigrationChunk
 {
     private $partner;
     const CHUNK_SIZE = 5000;
-    /**
-     * @var PosOrderRepository
-     */
-    private $posOrderRepository;
     private $currentQueue = 1;
     private $queue_and_connection_name;
+    private $shouldQueue;
 
     public function __construct(PosOrderRepository $posOrderRepository)
     {
@@ -43,6 +40,16 @@ class PosOrderDataMigrationChunk
         return $this;
     }
 
+    /**
+     * @param mixed $shouldQueue
+     * @return PosOrderDataMigrationChunk
+     */
+    public function setShouldQueue($shouldQueue)
+    {
+        $this->shouldQueue = $shouldQueue;
+        return $this;
+    }
+
     public function generate()
     {
         $posOrderCount = PosOrder::withTrashed()->where('partner_id', $this->partner->id)->where(function ($q) {
@@ -51,7 +58,8 @@ class PosOrderDataMigrationChunk
         $size = $posOrderCount < self::CHUNK_SIZE ? 1 : ceil($posOrderCount / self::CHUNK_SIZE);
         for ($i = 0; $i < $size; $i++) {
             $this->setRedisKey();
-            dispatch(new PartnerDataMigrationToPosOrderChunkJob($i * self::CHUNK_SIZE, self::CHUNK_SIZE, $this->partner, $this->currentQueue, $this->queue_and_connection_name));
+            $this->shouldQueue ? dispatch(new PartnerDataMigrationToPosOrderChunkJob($i * self::CHUNK_SIZE, self::CHUNK_SIZE, $this->partner, $this->currentQueue, $this->queue_and_connection_name, $this->shouldQueue)) :
+                dispatchJobNow(new PartnerDataMigrationToPosOrderChunkJob($i * self::CHUNK_SIZE, self::CHUNK_SIZE, $this->partner, $this->currentQueue, $this->queue_and_connection_name, $this->shouldQueue));
             $this->increaseCurrentQueueValue();
         }
     }
