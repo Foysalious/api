@@ -3,7 +3,7 @@
 
 use App\Models\PosOrder;
 use Illuminate\Support\Facades\Redis;
-use Sheba\Partner\DataMigration\Jobs\PartnerDataMigrationToPosOrderChunk;
+use Sheba\Partner\DataMigration\Jobs\PartnerDataMigrationToPosOrderChunkJob;
 use Sheba\Partner\DataMigration\Jobs\PartnerMigrationCompleteJob;
 use Sheba\Pos\Repositories\PosOrderRepository;
 
@@ -51,7 +51,7 @@ class PosOrderDataMigrationChunk
         $size = $posOrderCount < self::CHUNK_SIZE ? 1 : ceil($posOrderCount / self::CHUNK_SIZE);
         for ($i = 0; $i < $size; $i++) {
             $this->setRedisKey();
-            dispatch(new PartnerDataMigrationToPosOrderChunk($i * self::CHUNK_SIZE, self::CHUNK_SIZE, $this->partner, $this->currentQueue, $this->queue_and_connection_name));
+            dispatch(new PartnerDataMigrationToPosOrderChunkJob($i * self::CHUNK_SIZE, self::CHUNK_SIZE, $this->partner, $this->currentQueue, $this->queue_and_connection_name));
             $this->increaseCurrentQueueValue();
         }
     }
