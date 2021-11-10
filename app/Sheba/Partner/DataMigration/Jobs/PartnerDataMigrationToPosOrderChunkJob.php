@@ -17,8 +17,9 @@ class PartnerDataMigrationToPosOrderChunkJob extends Job implements ShouldQueue
     private $partner;
     private $queueNo;
     private $queue_and_connection_name;
+    private $shouldQueue;
 
-    public function __construct($skip, $take, $partner, $queueNo, $queue_and_connection_name)
+    public function __construct($skip, $take, $partner, $queueNo, $queue_and_connection_name, $shouldQueue)
     {
         $this->skip = $skip;
         $this->take = $take;
@@ -27,6 +28,7 @@ class PartnerDataMigrationToPosOrderChunkJob extends Job implements ShouldQueue
         $this->connection = $queue_and_connection_name;
         $this->queue = $queue_and_connection_name;
         $this->queue_and_connection_name = $queue_and_connection_name;
+        $this->shouldQueue = $shouldQueue;
     }
 
 
@@ -38,7 +40,7 @@ class PartnerDataMigrationToPosOrderChunkJob extends Job implements ShouldQueue
             /** @var PosOrderDataMigration $posOrderDataMigration */
             $posOrderDataMigration = app(PosOrderDataMigration::class);
             $posOrderDataMigration->setPartner($this->partner)->setSkip($this->skip)->setTake($this->take)
-                ->setQueueAndConnectionName($this->queue_and_connection_name)->migrate();
+                ->setQueueAndConnectionName($this->queue_and_connection_name)->setShouldQueue($this->shouldQueue)->migrate();
             $current_key = $redis_pos_order_chunk_namespace . $this->queueNo;
             $this->deleteRedisKey($current_key);
         } else {

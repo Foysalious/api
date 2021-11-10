@@ -30,6 +30,7 @@ class PosOrderDataMigration
     private $skip;
     private $take;
     private $queue_and_connection_name;
+    private $shouldQueue;
 
 
     public function __construct(InventoryServerClient $inventoryServerClient)
@@ -77,6 +78,16 @@ class PosOrderDataMigration
         return $this;
     }
 
+    /**
+     * @param mixed $shouldQueue
+     * @return PosOrderDataMigration
+     */
+    public function setShouldQueue($shouldQueue)
+    {
+        $this->shouldQueue = $shouldQueue;
+        return $this;
+    }
+
     public function migrate()
     {
         $this->generateMigrationData();
@@ -98,7 +109,8 @@ class PosOrderDataMigration
     private function migratePartner($data)
     {
         $this->setRedisKey();
-        dispatch(new PartnerDataMigrationToPosOrderJob($this->partner, ['partner_info' => $data], $this->currentQueue, $this->queue_and_connection_name));
+        $this->shouldQueue ? dispatch(new PartnerDataMigrationToPosOrderJob($this->partner, ['partner_info' => $data], $this->currentQueue, $this->queue_and_connection_name)) :
+            dispatchJobNow(new PartnerDataMigrationToPosOrderJob($this->partner, ['partner_info' => $data], $this->currentQueue, $this->queue_and_connection_name));
         $this->increaseCurrentQueueValue();
     }
 
@@ -110,7 +122,14 @@ class PosOrderDataMigration
             $posCustomerIds = array_column($chunk, 'customer_id');
             list($pos_order_items, $pos_order_payments, $pos_order_discounts, $pos_order_logs, $pos_customers) = $this->getPosOrderRelatedData($posOrderIds, $posCustomerIds);
             $this->setRedisKey();
-            dispatch(new PartnerDataMigrationToPosOrderJob($this->partner, [
+            $this->shouldQueue ? dispatch(new PartnerDataMigrationToPosOrderJob($this->partner, [
+                'pos_orders' => $chunk,
+                'pos_order_items' => $pos_order_items,
+                'pos_order_payments' => $pos_order_payments,
+                'pos_order_discounts' => $pos_order_discounts,
+                'pos_order_logs' => $pos_order_logs,
+                'pos_customers' => $pos_customers
+            ], $this->currentQueue, $this->queue_and_connection_name)) : dispatchJobNow(new PartnerDataMigrationToPosOrderJob($this->partner, [
                 'pos_orders' => $chunk,
                 'pos_order_items' => $pos_order_items,
                 'pos_order_payments' => $pos_order_payments,
