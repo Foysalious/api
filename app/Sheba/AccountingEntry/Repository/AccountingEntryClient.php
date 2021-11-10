@@ -79,9 +79,7 @@ class AccountingEntryClient
             if (!$this->userType || !$this->userId ) {
                 throw new AccountingEntryServerError('Set user type and user id', 400);
             }
-            $res = decodeGuzzleResponse(
-                $this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data))
-            );
+            $res = json_decode($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data))->getBody()->getContents(), true);
             if ($res['code'] != 200) {
                 throw new AccountingEntryServerError($res['message']);
             }
