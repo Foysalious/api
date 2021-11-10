@@ -42,12 +42,12 @@ class PartnerDataMigrationToPosOrderJob extends Job implements ShouldQueue
         }
     }
 
-   private function migrate()
-   {
+    private function migrate()
+    {
         $client = app(PosOrderServerClient::class);
         $chunkNo = $this->chunkNo != 1 && $this->queueNo == 1 ? $this->chunkNo - 1 : $this->chunkNo;
         $redis_pos_order_namespace = 'DataMigration::Partner::'.$this->partner->id.'::Chunk::Queue::';
-        $previous_key = $redis_pos_order_namespace . $chunkNo .'::PosOrder::Queue::'  ($this->queueNo - 1);
+        $previous_key = 'DataMigration::Partner::'.$this->partner->id.'::Chunk::Queue::'.$chunkNo .'::PosOrder::Queue::' .($this->queueNo - 1);
         if ($this->isInventoryQueuesProcessed() && !$this->isRedisKeyExists($previous_key)) {
             $client->post('api/v1/partners/'.$this->partner->id.'/migrate', $this->data);
             $current_key = $redis_pos_order_namespace . $this->chunkNo .'::PosOrder::Queue::' . $this->queueNo;
@@ -57,12 +57,12 @@ class PartnerDataMigrationToPosOrderJob extends Job implements ShouldQueue
             $this->increaseAttempts();
             $this->release(10);
         }
-   }
+    }
 
-   private function isInventoryQueuesProcessed(): bool
-   {
-       return empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::Inventory::Queue::*'));
-   }
+    private function isInventoryQueuesProcessed(): bool
+    {
+        return empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::Inventory::Queue::*'));
+    }
 
     private function isRedisKeyExists($key): bool
     {

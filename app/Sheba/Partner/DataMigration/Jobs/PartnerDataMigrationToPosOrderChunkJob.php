@@ -34,15 +34,14 @@ class PartnerDataMigrationToPosOrderChunkJob extends Job implements ShouldQueue
 
     public function handle()
     {
-//        $redis_pos_order_chunk_namespace = 'DataMigration::Partner::'.$this->partner->id.'::PosOrderChunk::Queue::';
-//        $previous_key = $redis_pos_order_chunk_namespace . ($this->queueNo - 1);
+        $redis_pos_order_chunk_namespace = 'DataMigration::Partner::'.$this->partner->id.'::PosOrderChunk::Queue::';
         if ($this->isInventoryQueuesProcessed()) {
             /** @var PosOrderDataMigration $posOrderDataMigration */
             $posOrderDataMigration = app(PosOrderDataMigration::class);
             $posOrderDataMigration->setPartner($this->partner)->setSkip($this->skip)->setTake($this->take)
                 ->setQueueAndConnectionName($this->queue_and_connection_name)->setShouldQueue($this->shouldQueue)->setCurrentChunk($this->queueNo)->migrate();
-//            $current_key = $redis_pos_order_chunk_namespace . $this->queueNo;
-//            $this->deleteRedisKey($current_key);
+            $current_key = $redis_pos_order_chunk_namespace . $this->queueNo;
+            $this->deleteRedisKey($current_key);
         } else {
             $this->release(10);
         }
