@@ -13,10 +13,10 @@ use Sheba\Partner\DataMigration\Jobs\PartnerMigrationStartJob;
 
 class DataMigration
 {
-    const MAX_PARTNER_POS_CATEGORIES = 20;
-    const MAX_PARTNER_POS_SERVICES = 10;
-    const MAX_POS_ORDERS = 20;
-    const MAX_PARTNER_POS_CUSTOMERS = 20;
+    const MAX_PARTNER_POS_CATEGORIES = 50;
+    const MAX_PARTNER_POS_SERVICES = 20;
+    const MAX_POS_ORDERS = 50;
+    const MAX_PARTNER_POS_CUSTOMERS = 50;
     use ModificationFields;
 
     /** @var Partner */
