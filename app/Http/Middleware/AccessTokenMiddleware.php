@@ -62,6 +62,10 @@ class AccessTokenMiddleware
         } catch (JWTException $e) {
             if ($is_digigo) Redis::set($key_name, "4 (" . $e->getMessage() . "): $now : " . (isset($token) ? $token : "null"));
             return $this->formApiResponse($request, null, 401, ['message' => "Your session has expired. Try Login"]);
+        } catch (AccessTokenDoesNotExist $e) {
+            return $this->formApiResponse($request, null, 401, ['message' => "Your session has expired. Try Login"]);
+        } catch (AccessTokenNotValidException $e) {
+            return $this->formApiResponse($request, null, 401, ['message' => "Your session has expired. Try Login"]);
         }
 
         $this->setExtraDataToRequest($request);
