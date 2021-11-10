@@ -8,7 +8,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Redis;
 
-class PartnerDataMigrationToPosOrderChunk extends Job implements ShouldQueue
+class PartnerDataMigrationToPosOrderChunkJob extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
 

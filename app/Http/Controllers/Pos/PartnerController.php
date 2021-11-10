@@ -17,7 +17,7 @@ class PartnerController extends Controller
 
     public function getWebStoreBanner($partner, Request $request)
     {
-        $partner = Partner::where('id', $partner)->select('id', 'name', 'logo', 'sub_domain', 'delivery_charge')->first();
+        $partner = Partner::where('id', $partner)->first();
         $web_store_banner = $partner->webstoreBanner;
         if (!$web_store_banner) return null;
         $banner = [
@@ -29,5 +29,11 @@ class PartnerController extends Controller
         ];
         return http_response($request, $partner, 200, ['data' => [$banner]]);
 
+    }
+
+    public function getBanner(Request $request)
+    {
+        $partner = $request->auth_user->getPartner()->id;
+        return $this->getWebStoreBanner($partner, $request);
     }
 }
