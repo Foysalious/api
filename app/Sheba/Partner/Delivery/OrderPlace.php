@@ -158,7 +158,7 @@ class OrderPlace
             'status' => OrderStatuses::SHIPPED
         ];
         if ($this->posOrder && !$this->posOrder->is_migrated) return $this->posOrderRepository->update($this->posOrder, $data);
-        return $this->orderService->storeDeliveryInformation($data);
+        return $this->orderService->setPartnerId($this->partner->id)->storeDeliveryInformation($data);
     }
 
 
