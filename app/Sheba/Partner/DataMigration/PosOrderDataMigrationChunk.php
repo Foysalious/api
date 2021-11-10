@@ -14,6 +14,7 @@ class PosOrderDataMigrationChunk
     private $currentQueue = 1;
     private $queue_and_connection_name;
     private $shouldQueue;
+    private $orderCount;
 
     public function __construct(PosOrderRepository $posOrderRepository)
     {
@@ -50,12 +51,19 @@ class PosOrderDataMigrationChunk
         return $this;
     }
 
+    /**
+     * @param mixed $orderCount
+     * @return PosOrderDataMigrationChunk
+     */
+    public function setOrderCount($orderCount)
+    {
+        $this->orderCount = $orderCount;
+        return $this;
+    }
+
     public function generate()
     {
-        $posOrderCount = PosOrder::withTrashed()->where('partner_id', $this->partner->id)->where(function ($q) {
-            $q->where('is_migrated', null)->orWhere('is_migrated', 0);
-        })->count();
-        $size = $posOrderCount < self::CHUNK_SIZE ? 1 : ceil($posOrderCount / self::CHUNK_SIZE);
+        $size = $this->orderCount < self::CHUNK_SIZE ? 1 : ceil($this->orderCount / self::CHUNK_SIZE);
         for ($i = 0; $i < $size; $i++) {
             $this->setRedisKey();
             $this->shouldQueue ? dispatch(new PartnerDataMigrationToPosOrderChunkJob($i * self::CHUNK_SIZE, self::CHUNK_SIZE, $this->partner, $this->currentQueue, $this->queue_and_connection_name, $this->shouldQueue)) :
@@ -69,7 +77,7 @@ class PosOrderDataMigrationChunk
         $count = (int)Redis::get('PosOrderDataMigrationCount::' . $this->queue_and_connection_name);
         $count ? $count++ : $count = 1;
         Redis::set('PosOrderDataMigrationCount::' . $this->queue_and_connection_name, $count);
-        Redis::set('DataMigration::Partner::' . $this->partner->id . '::PosOrderChunk::Queue::' . $this->currentQueue, 'initiated');
+        //Redis::set('DataMigration::Partner::' . $this->partner->id . '::PosOrderChunk::Queue::' . $this->currentQueue, 'initiated');
     }
 
     private function increaseCurrentQueueValue()

@@ -20,14 +20,16 @@ class PartnerDataMigrationToPosOrderJob extends Job implements ShouldQueue
     private $partner;
     private $attempts = 0;
     private $queueNo;
+    private $chunkNo;
 
-    public function __construct($partner, $data, $queueNo, $queue_and_connection_name)
+    public function __construct($partner, $data, $chunkNo, $queueNo, $queue_and_connection_name)
     {
         $this->connection = $queue_and_connection_name;
         $this->queue = $queue_and_connection_name;
         $this->partner = $partner;
         $this->data = $data;
         $this->queueNo = $queueNo;
+        $this->chunkNo = $chunkNo;
     }
 
     public function handle()
@@ -43,11 +45,12 @@ class PartnerDataMigrationToPosOrderJob extends Job implements ShouldQueue
    private function migrate()
    {
         $client = app(PosOrderServerClient::class);
-        $redis_pos_order_namespace = 'DataMigration::Partner::'.$this->partner->id.'::PosOrder::Queue::';
-        $previous_key = $redis_pos_order_namespace . ($this->queueNo - 1);
+        $chunkNo = $this->chunkNo != 1 && $this->queueNo == 1 ? $this->chunkNo - 1 : $this->chunkNo;
+        $redis_pos_order_namespace = 'DataMigration::Partner::'.$this->partner->id.'::Chunk::Queue::';
+        $previous_key = $redis_pos_order_namespace . $chunkNo .'::PosOrder::Queue::'  ($this->queueNo - 1);
         if ($this->isInventoryQueuesProcessed() && !$this->isRedisKeyExists($previous_key)) {
             $client->post('api/v1/partners/'.$this->partner->id.'/migrate', $this->data);
-            $current_key = $redis_pos_order_namespace . $this->queueNo;
+            $current_key = $redis_pos_order_namespace . $this->chunkNo .'::PosOrder::Queue::' . $this->queueNo;
             $this->deleteRedisKey($current_key);
             $this->storeLogs(1);
         } else {
@@ -58,8 +61,7 @@ class PartnerDataMigrationToPosOrderJob extends Job implements ShouldQueue
 
    private function isInventoryQueuesProcessed(): bool
    {
-       return empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::Inventory::Queue::*')) &&
-           empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::PosOrderChunk::Queue::*'));
+       return empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::Inventory::Queue::*'));
    }
 
     private function isRedisKeyExists($key): bool
