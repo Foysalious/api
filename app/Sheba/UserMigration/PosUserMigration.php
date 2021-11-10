@@ -32,11 +32,14 @@ class PosUserMigration extends UserMigrationRepository
             if ($current_status == self::NOT_ELIGIBLE) throw new Exception('Sorry! Not Found');
             if ($current_status == UserStatus::UPGRADED) throw new Exception('Sorry! Already Migrated.');
             if ($current_status == UserStatus::UPGRADING ) throw new Exception('Sorry! Already Migrating.');
+            $response = $this->updateMigrationStatus($status);
             /** @var DataMigration $dataMigration */
             $dataMigration = app(DataMigration::class);
             $partner = Partner::find($this->userId);
             $dataMigration->setPartner($partner)->migrate();
+            return $response;
+        } else {
+            return $this->updateMigrationStatus($status);
         }
-        return $this->updateMigrationStatus($status);
     }
 }

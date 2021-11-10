@@ -155,11 +155,13 @@ class VisitController extends Controller
     public function teamVisitsList(Request $request, VisitList $visit_list, TimeFrame $time_frame)
     {
         $business_member = $this->getBusinessMember($request);
+
         if (!$business_member) return api_response($request, null, 404);
         $managers_data = (new ManagerSubordinateEmployeeList())->get($business_member);
+
         $business_member_ids = array_column($managers_data, 'id');
         $business_member_key = array_search($business_member->id, $business_member_ids);
-        unset($business_member_ids[$business_member_key]);
+        if ($business_member_key) unset($business_member_ids[$business_member_key]);
 
         $team_visits = $visit_list->getTeamVisits($this->visitRepository, $business_member_ids);
 
@@ -177,6 +179,7 @@ class VisitController extends Controller
         }
 
         $team_visits = $team_visits->get();
+
         if (count($team_visits) == 0) return api_response($request, null, 404);
         $team_visits = $team_visits->groupBy('date');
         $team_visit_list = $visit_list->getTeamVisitList($team_visits);

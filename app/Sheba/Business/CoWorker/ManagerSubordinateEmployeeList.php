@@ -19,6 +19,7 @@ class ManagerSubordinateEmployeeList
 
     /**
      * @param $business_member
+     * @param null $department
      * @return array
      */
     public function get($business_member, $department = null)

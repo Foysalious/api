@@ -22,7 +22,10 @@ class DashboardController extends Controller
         /** @var PayrollSetting $payroll_setting */
         $payroll_setting = $business->payrollSetting;
 
-        $dashboard_one = [
+        $is_enable_employee_visit = $business->is_enable_employee_visit;
+
+
+        $dashboard = collect([
             [
                 'title' => 'Support',
                 'target_type' => 'support',
@@ -66,48 +69,11 @@ class DashboardController extends Controller
                 'target_type' => 'feedback',
                 'link' => "https://sheba.freshdesk.com/support/tickets/new"
             ],
-        ];
-        $dashboard_two = [
-            [
-                'title' => 'Support',
-                'target_type' => 'support',
-            ],
-            [
-                'title' => 'Attendance',
-                'target_type' => 'attendance',
-            ],
-            [
-                'title' => 'Notice',
-                'target_type' => 'notice',
-            ],
-            [
-                'title' => 'Expense',
-                'target_type' => 'expense',
-            ],
-            [
-                'title' => 'Leave',
-                'target_type' => 'leave',
-            ],
-            [
-                'title' => 'Approval',
-                'target_type' => 'approval',
-            ],
-            [
-                'title' => 'Phonebook',
-                'target_type' => 'phonebook',
-            ],
-            [
-                'title' => 'Visit',
-                'target_type' => 'visit',
+        ]);
 
-            ],
-            [
-                'title' => 'Feedback',
-                'target_type' => 'feedback',
-                'link' => "https://sheba.freshdesk.com/support/tickets/new"
-            ],
-        ];
-        $dashboard = $payroll_setting->is_enable ? $dashboard_one : $dashboard_two;
-        return api_response($request, $dashboard, 200, ['dashboard' => $dashboard]);
+        if (!$payroll_setting->is_enable) $dashboard->forget(7);
+        if (!$is_enable_employee_visit) $dashboard->forget(8);
+
+        return api_response($request, $dashboard, 200, ['dashboard' => $dashboard->values()]);
     }
 }
