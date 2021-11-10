@@ -62,7 +62,7 @@ class DataMigration
             ->setQueueAndConnectionName($queue_and_connection_name)->setShouldQueue($shouldQueue)->migrate();
 
         if (!$this->isPosOrderMigrated($count)) $this->posOrderDataMigrationChunk->setPartner($this->partner)
-            ->setQueueAndConnectionName($queue_and_connection_name)->setShouldQueue($shouldQueue)->generate();
+            ->setQueueAndConnectionName($queue_and_connection_name)->setShouldQueue($shouldQueue)->setOrderCount($count['pos_orders_count'])->generate();
 
         if (!$this->isPosCustomerMigrated($count)) $this->smanagerUserDataMigration->setPartner($this->partner)
             ->setQueueAndConnectionName($queue_and_connection_name)->setShouldQueue($shouldQueue)->migrate();
