@@ -1282,7 +1282,7 @@ class PartnerController extends Controller
     public function generalSettings(Request $request, PartnerGeneralSettings $generalSettings)
     {
         $partner = $request->auth_user->getPartner();
-        $generalSettings = $generalSettings->setPartner($partner)->getGeneralSettings();
+        $generalSettings = $generalSettings->setToken($this->bearerToken($request))->setPartner($partner)->getGeneralSettings();
         return http_response($request, $generalSettings,200, ['generalSettings' => $generalSettings]);
     }
     private function bearerToken($request)

@@ -55,6 +55,7 @@ class PartnerGeneralSettings
 
     private function getPreferredDeliveryMethod()
     {
+        dd($this->token);
         return $this->client->setToken($this->token)->get('merchants/info')['preferred_logistic_partner_name'];
     }
 
