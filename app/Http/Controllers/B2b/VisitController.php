@@ -51,8 +51,7 @@ class VisitController extends Controller
         $business_member = $request->business_member;
 
         list($offset, $limit) = calculatePagination($request);
-        #$visits = $this->visitRepository->getAllVisitsWithRelations()->where('visitor_id', '<>', $business_member->id)->orderBy('id', 'DESC');
-        $visits = $this->visitRepository->getAllVisitsWithRelations()->orderBy('id', 'DESC');
+        $visits = $this->visitRepository->getAllVisitsWithRelations()->where('visitor_id', '<>', $business_member->id)->orderBy('id', 'DESC');
         $visits = $visits->whereIn('visitor_id', $this->getBusinessMemberIds($business, $business_member));
 
         /** Department Filter */
