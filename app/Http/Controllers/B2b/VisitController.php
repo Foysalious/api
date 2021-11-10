@@ -90,12 +90,10 @@ class VisitController extends Controller
 
         if ($request->has('file') && $request->file == 'excel') return $employee_visit_excel->setEmployeeVisitData($visits->toArray())->get();
 
-        if (count($visits) > 0) return api_response($request, $visits, 200, [
+        return api_response($request, $visits, 200, [
             'employees' => $visits,
             'total_visits' => $total_visits
         ]);
-
-        return api_response($request, null, 404);
     }
 
     /**
@@ -138,12 +136,10 @@ class VisitController extends Controller
 
         if ($request->has('file') && $request->file == 'excel') return $my_visit_excel->setMyVisitData($visits->toArray())->get();
 
-        if (count($visits) > 0) return api_response($request, $visits, 200, [
+        return api_response($request, $visits, 200, [
             'employees' => $visits,
             'total_visits' => $total_visits
         ]);
-
-        return api_response($request, null, 404);
     }
 
     /**

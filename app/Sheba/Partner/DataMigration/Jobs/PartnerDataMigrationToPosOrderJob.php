@@ -21,10 +21,10 @@ class PartnerDataMigrationToPosOrderJob extends Job implements ShouldQueue
     private $attempts = 0;
     private $queueNo;
 
-    public function __construct($partner, $data, $queueNo)
+    public function __construct($partner, $data, $queueNo, $queue_and_connection_name)
     {
-        $this->connection = 'pos_rebuild_data_migration';
-        $this->queue = 'pos_rebuild_data_migration';
+        $this->connection = $queue_and_connection_name;
+        $this->queue = $queue_and_connection_name;
         $this->partner = $partner;
         $this->data = $data;
         $this->queueNo = $queueNo;
@@ -46,19 +46,20 @@ class PartnerDataMigrationToPosOrderJob extends Job implements ShouldQueue
         $redis_pos_order_namespace = 'DataMigration::Partner::'.$this->partner->id.'::PosOrder::Queue::';
         $previous_key = $redis_pos_order_namespace . ($this->queueNo - 1);
         if ($this->isInventoryQueuesProcessed() && !$this->isRedisKeyExists($previous_key)) {
-            $this->increaseAttempts();
             $client->post('api/v1/partners/'.$this->partner->id.'/migrate', $this->data);
             $current_key = $redis_pos_order_namespace . $this->queueNo;
             $this->deleteRedisKey($current_key);
             $this->storeLogs(1);
         } else {
+            $this->increaseAttempts();
             $this->release(10);
         }
    }
 
    private function isInventoryQueuesProcessed(): bool
    {
-       return empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::Inventory::Queue::*'));
+       return empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::Inventory::Queue::*')) &&
+           empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::PosOrderChunk::Queue::*'));
    }
 
     private function isRedisKeyExists($key): bool

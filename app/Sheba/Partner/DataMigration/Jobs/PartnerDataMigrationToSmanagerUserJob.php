@@ -25,10 +25,10 @@ class PartnerDataMigrationToSmanagerUserJob extends Job implements ShouldQueue
     private $queueNo;
     private $attempts = 0;
 
-    public function __construct($partner, $data, $queueNo)
+    public function __construct($partner, $data, $queueNo, $queue_and_connection_name)
     {
-        $this->connection = 'pos_rebuild_data_migration';
-        $this->queue = 'pos_rebuild_data_migration';
+        $this->connection = $queue_and_connection_name;
+        $this->queue = $queue_and_connection_name;
         $this->partner = $partner;
         $this->data = $data;
         $this->queueNo = $queueNo;
@@ -50,13 +50,13 @@ class PartnerDataMigrationToSmanagerUserJob extends Job implements ShouldQueue
         $client = app(SmanagerUserServerClient::class);
         $redis_smanager_user_namespace = 'DataMigration::Partner::'.$this->partner->id.'::SmanagerUser::Queue::';
         $previous_key = $redis_smanager_user_namespace . ($this->queueNo - 1);
-        if ($this->isInventoryAndPosOrderQueuesProcessed() && !$this->isRedisKeyExists($previous_key)) {
-            $this->increaseAttempts();
+        if (!$this->isRedisKeyExists($previous_key)) {
             $client->post('api/v1/partners/'.$this->partner->id.'/migrate', $this->data);
             $current_key = $redis_smanager_user_namespace . $this->queueNo;
             $this->deleteRedisKey($current_key);
             $this->storeLogs(1);
         } else {
+            $this->increaseAttempts();
             $this->release(10);
         }
     }
@@ -64,6 +64,7 @@ class PartnerDataMigrationToSmanagerUserJob extends Job implements ShouldQueue
     private function isInventoryAndPosOrderQueuesProcessed(): bool
     {
         return empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::Inventory::Queue::*')) &&
+            empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::PosOrderChunk::Queue::*')) &&
             empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::PosOrder::Queue::*'));
     }
 

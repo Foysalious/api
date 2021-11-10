@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Jobs\Business\SendBusinessWelcomeEmail;
 use App\Models\Member;
 use App\Models\Profile;
 use Carbon\Carbon;
@@ -96,6 +97,7 @@ class RegistrationController extends Controller
             $common_info_creator->setBusiness($business)->setMember($member)->create();
             $business_member = $this->createBusinessMember($business, $member);
             DB::commit();
+            dispatch(new SendBusinessWelcomeEmail($business_member));
             $info = [
                 'email_verified' => $profile->email_verified,
                 'member_id' => $member->id,

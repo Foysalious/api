@@ -17,10 +17,10 @@ class PartnerMigrationCompleteJob extends Job implements ShouldQueue
 
     private $partner;
 
-    public function __construct($partner)
+    public function __construct($partner, $queue_and_connection_name)
     {
-        $this->connection = 'pos_rebuild_data_migration';
-        $this->queue = 'pos_rebuild_data_migration';
+        $this->connection = $queue_and_connection_name;
+        $this->queue = $queue_and_connection_name;
         $this->partner = $partner;
     }
 
@@ -32,6 +32,7 @@ class PartnerMigrationCompleteJob extends Job implements ShouldQueue
     private function isQueuesProcessed(): bool
     {
         return empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::Inventory::Queue::*')) &&
+            empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::PosOrderChunk::Queue::*')) &&
             empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::PosOrder::Queue::*')) &&
             empty(Redis::keys('DataMigration::Partner::' . $this->partner->id . '::SmanagerUser::Queue::*'));
     }
@@ -48,4 +49,14 @@ class PartnerMigrationCompleteJob extends Job implements ShouldQueue
         $current_status = $class->setUserId($this->partner->id)->setModuleName(Modules::POS)->getStatus();
         if ($current_status == UserStatus::UPGRADING) $class->updateStatus(UserStatus::UPGRADED);
     }
+
+    public function failed()
+    {
+        /** @var UserMigrationService $userMigrationSvc */
+        $userMigrationSvc = app(UserMigrationService::class);
+        /** @var UserMigrationRepository $class */
+        $class = $userMigrationSvc->resolveClass(Modules::POS);
+        $class->setUserId($this->partner->id)->setModuleName(Modules::POS)->updateStatus(UserStatus::FAILED);
+    }
+
 }

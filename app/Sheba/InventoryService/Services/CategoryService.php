@@ -164,4 +164,9 @@ class CategoryService
         }
         return array_merge_recursive($data,$sub_category);
     }
+
+    public function getCategoryDetail()
+    {
+        return $this->client->get('api/v1/partners/' . $this->partnerId.'/categories/' . $this->categoryId);
+    }
 }
