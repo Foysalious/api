@@ -1,6 +1,5 @@
 <?php namespace App\Http\Controllers;
 
-use App\Jobs\CalculatePapAffiliateId;
 use App\Models\Customer;
 use App\Repositories\CartRepository;
 use App\Repositories\CheckoutRepository;
@@ -48,9 +47,6 @@ class CheckoutController extends Controller
             $customer = Customer::find($order->customer_id);
             $this->updateVouchers($order, $customer);
             $this->checkoutRepository->sendConfirmation($customer->id, $order);
-            if ($order->pap_visitor_id != null) {
-                $this->dispatch(new CalculatePapAffiliateId($order));
-            }
             $order->calculate();
             return response()->json(['code' => 200, 'pap_number' => (double)$order->profit, 'pap_code' => $order->code(), 'msg' => 'Order placed successfully!']);
         } else {
