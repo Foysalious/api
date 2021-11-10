@@ -44,9 +44,9 @@ class InventoryDataMigration
 
 
     public function __construct(
-        PosCategoryRepository $posCategoryRepository,
-        PartnerPosCategoryRepository $partnerPosCategoryRepository,
-        PartnerPosServiceRepository $partnerPosServiceRepository,
+        PosCategoryRepository                     $posCategoryRepository,
+        PartnerPosCategoryRepository              $partnerPosCategoryRepository,
+        PartnerPosServiceRepository               $partnerPosServiceRepository,
         PartnerPosServiceBatchRepositoryInterface $partnerPosServiceBatchRepository)
     {
         $this->posCategoryRepository = $posCategoryRepository;
@@ -98,7 +98,7 @@ class InventoryDataMigration
     private function generateMigrationData()
     {
         $this->partnerInfo = $this->generatePartnerMigrationData();
-        $this->posCategories  = $this->generatePosCategoriesMigrationData();
+        $this->posCategories = $this->generatePosCategoriesMigrationData();
         $this->partnerPosCategories = $this->generatePartnerPosCategoriesMigrationData();
         $this->partnerPosServices = $this->generatePartnerPosServicesMigrationData();
         $this->partnerPosServiceBatches = collect($this->generatePartnerPosServiceBatchesData());
@@ -238,6 +238,10 @@ class InventoryDataMigration
 
     private function setRedisKey()
     {
+        $count = (int)Redis::get('PosOrderDataMigrationCount::' . $this->queue_and_connection_name);
+        if ($count) $count++;
+        else $count = 1;
+        Redis::set('PosOrderDataMigrationCount::' . $this->queue_and_connection_name, $count);
         Redis::set('DataMigration::Partner::' . $this->partner->id . '::Inventory::Queue::' . $this->currentQueue, 'initiated');
     }
 

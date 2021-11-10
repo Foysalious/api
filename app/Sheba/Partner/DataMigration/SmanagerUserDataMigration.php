@@ -84,7 +84,7 @@ class SmanagerUserDataMigration
             })
             ->join('pos_customers', 'partner_pos_customers.customer_id', '=', 'pos_customers.id')
             ->join('profiles', 'pos_customers.profile_id', '=', 'profiles.id')
-            ->select('partner_pos_customers.id','partner_pos_customers.customer_id as previous_id', 'partner_pos_customers.partner_id', $query,
+            ->select('partner_pos_customers.id', 'partner_pos_customers.customer_id as previous_id', 'partner_pos_customers.partner_id', $query,
                 'partner_pos_customers.is_supplier', 'partner_pos_customers.note', 'profiles.mobile', 'profiles.email', 'profiles.fb_id', 'profiles.google_id',
                 'profiles.mobile_verified', 'profiles.email_verified', 'profiles.email_verified_at', 'profiles.address', 'profiles.gender',
                 'profiles.dob', 'profiles.pro_pic', 'profiles.created_by_name', 'profiles.updated_by_name', 'profiles.created_at',
@@ -94,6 +94,9 @@ class SmanagerUserDataMigration
 
     private function setRedisKey()
     {
+        $count = (int)Redis::get('PosOrderDataMigrationCount::' . $this->queue_and_connection_name);
+        $count ? $count++ : $count = 1;
+        Redis::set('PosOrderDataMigrationCount::' . $this->queue_and_connection_name, $count);
         Redis::set('DataMigration::Partner::' . $this->partner->id . '::SmanagerUser::Queue::' . $this->currentQueue, 'initiated');
     }
 
