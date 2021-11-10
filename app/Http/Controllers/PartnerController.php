@@ -455,7 +455,7 @@ class PartnerController extends Controller
         $info->put('total_services', $partner->services->count());
         $info->put('total_resources', $partner->resources->count());
         $info->put('wallet', $partner->wallet);
-        $info->put('leave_status', (new LeaveStatus($partner))->getCurrentStatus());
+        $info->put('leave_status', (new LeaveStatus())->setArtisan($partner)->getCurrentStatus());
         return api_response($request, $info, 200, ['info' => $info]);
     }
 
