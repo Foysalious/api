@@ -291,6 +291,9 @@ class PosOrderDataMigration
 
     private function setRedisKey()
     {
+        $count = (int)Redis::get('PosOrderDataMigrationCount::' . $this->queue_and_connection_name);
+        $count ? $count++ : $count = 1;
+        Redis::set('PosOrderDataMigrationCount::' . $this->queue_and_connection_name, $count);
         Redis::set('DataMigration::Partner::' . $this->partner->id . '::PosOrder::Queue::' . $this->currentQueue, 'initiated');
     }
 
