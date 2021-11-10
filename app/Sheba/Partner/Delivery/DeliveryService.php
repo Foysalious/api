@@ -216,7 +216,7 @@ class DeliveryService
             throw new DoNotReportException("Order does not belongs to this partner", 400);
         }
         $customer_delivery_info = $this->resolveDeliveryInfo();
-        $payment_info = $this->paymentInfo($this->posOrder->id);
+        //$payment_info = $this->paymentInfo($this->posOrder->id);
         return [
             'partner_pickup_information' => [
                 'merchant_name' => $this->partner->name,
