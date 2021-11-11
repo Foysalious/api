@@ -251,11 +251,10 @@ class DueTrackerController extends Controller
 //        TODO: new "receivable", "payable" support should be in V3 API
         try {
             $request->merge(['customer_id' => $customer_id]);
-            $this->validate($request, ['type' => 'required|in:due, deposit, receivable, payable', 'amount' => 'required']);
+            $this->validate($request, ['type' => 'required|in:due,deposit,receivable,payable', 'amount' => 'required']);
             $status = (new ComplianceInfo())->setPartner($request->partner)->getComplianceStatus();
             if ($status === Statics::REJECTED)
                 return api_response($request, null, 412, ["message" => "Precondition Failed", "error_message" => Statics::complianceRejectedMessage()]);
-
             if ($request->type == 'receivable' || $request->type == 'due') {
                 $request['payment_link'] = $dueTrackerRepository->createPaymentLink($request, $this->paymentLinkCreator);
             }
