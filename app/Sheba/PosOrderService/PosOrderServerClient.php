@@ -10,6 +10,7 @@ use Sheba\ModificationFields;
 class PosOrderServerClient
 {
     use ModificationFields;
+
     protected $client;
     public $baseUrl;
 
@@ -60,7 +61,7 @@ class PosOrderServerClient
     {
         $options['headers'] = [
             'Accept' => 'application/json',
-           // 'portal-name' => getShebaRequestHeader()->toArray()['portal-name'],
+            // 'portal-name' => getShebaRequestHeader()->toArray()['portal-name'],
             //'Version-Code' => getShebaRequestHeader()->toArray()['Version-Code']
             'Modifier-Name' => $this->getModifierNameForHeader()
         ];
@@ -103,8 +104,8 @@ class PosOrderServerClient
 
     private function getModifierNameForHeader()
     {
-        $partner = !is_null(request()->auth_user) ? request()->auth_user->getPartner() : '' ;
-        if($partner) {
+        $partner = !is_null(request()->auth_user) ? request()->auth_user->getPartner() : '';
+        if ($partner) {
             $this->setModifier($partner);
             return $this->getModifierName();
         } else {

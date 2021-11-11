@@ -1,6 +1,8 @@
 <?php namespace Sheba\Analysis\PartnerSale\Calculators;
 
 use App\Models\PosOrder;
+use App\Sheba\PosOrderService\PosOrderServerClient;
+use App\Sheba\UserMigration\Modules;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Sheba\Analysis\PartnerSale\PartnerSale;
@@ -16,15 +18,18 @@ class Basic extends PartnerSale
     private $partnerOrders;
     private $posOrders;
 
-    /**
-     * @return Collection|mixed
-     */
-    protected function calculate()
-    {
-        $this->partnerOrders = new PartnerOrderRepository();
-        $orders = $this->partnerOrders->getClosedOrdersBetween($this->timeFrame, $this->partner);
-        $accepted_orders = $this->partnerOrders->getAcceptedOrdersBetween($this->timeFrame, $this->partner);
 
+    private function getNewPosOrderInformation()
+    {
+        $client = app(PosOrderServerClient::class);
+        $test = $client->get('api/v1/partners/' . $this->partner->id . '/sales');
+        dd($test);
+    }
+
+    private function getPosOrderInformation()
+    {
+        if ($this->partner->isMigrated(Modules::POS))
+            $this->getNewPosOrderInformation();
         $this->posOrders = new PosOrderRepository();
         $pos_orders = $this->posOrders->getCreatedOrdersBetween($this->timeFrame, $this->partner);
         $pos_payment_status_wise_count = [OrderPaymentStatuses::PAID => 0, OrderPaymentStatuses::DUE => 0];
@@ -35,7 +40,19 @@ class Basic extends PartnerSale
             $pos_order->dueAmount = $pos_order->getDue();
             $pos_payment_status_wise_count[$pos_order->getPaymentStatus()]++;
         });
+        return [$pos_orders, $pos_payment_status_wise_count];
+    }
 
+    /**
+     * @return Collection|mixed
+     */
+    protected function calculate()
+    {
+        $this->partnerOrders = new PartnerOrderRepository();
+        $orders = $this->partnerOrders->getClosedOrdersBetween($this->timeFrame, $this->partner);
+        $accepted_orders = $this->partnerOrders->getAcceptedOrdersBetween($this->timeFrame, $this->partner);
+
+        list($pos_orders, $pos_payment_status_wise_count) = $this->getPosOrderInformation();
         $pos_sales_count = $pos_orders->count();
         $pos_sales = $pos_orders->sum('sale');
         $pos_paid = $pos_orders->sum('paidAmount');
@@ -50,8 +67,8 @@ class Basic extends PartnerSale
         $data['pos_order_created'] = $pos_orders->count();
         $data['pos'] = [
             'sales' => ['count' => $pos_sales_count, 'amount' => $pos_sales],
-            'paid'  => ['count' => $pos_payment_status_wise_count[OrderPaymentStatuses::PAID], 'amount' => $pos_paid],
-            'due'   => ['count' => $pos_payment_status_wise_count[OrderPaymentStatuses::DUE], 'amount' => $pos_due]
+            'paid' => ['count' => $pos_payment_status_wise_count[OrderPaymentStatuses::PAID], 'amount' => $pos_paid],
+            'due' => ['count' => $pos_payment_status_wise_count[OrderPaymentStatuses::DUE], 'amount' => $pos_due]
         ];
 
         $this->formatTimeline($data);
