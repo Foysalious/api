@@ -78,7 +78,7 @@ class UpayApiResponse
 
     public function hasError()
     {
-        return in_array($this->code,$this->success_codes);
+        return !in_array($this->code,$this->success_codes);
     }
 
     /**
