@@ -16,7 +16,8 @@ class PartnerMigrationCompleteJob extends Job implements ShouldQueue
     use InteractsWithQueue, SerializesModels;
 
     const SINGLE_QUEUE_PROCESS_TIME = 1;
-
+    const DELAY = 5;
+    public $tries = 10;
     private $partner;
 
     public function __construct($partner, $queue_and_connection_name)
@@ -67,7 +68,7 @@ class PartnerMigrationCompleteJob extends Job implements ShouldQueue
     {
         $keys = Redis::keys('DataMigration::Partner::' . $this->partner->id. '::*');
         $count = count($keys);
-        return $count * self::SINGLE_QUEUE_PROCESS_TIME;
+        return ($count * self::SINGLE_QUEUE_PROCESS_TIME) + self::DELAY;
     }
 
 }
