@@ -49,6 +49,7 @@ class DeliveryService
     private $deliveryDistrict;
     private $posOrder;
     private $token;
+    private $merchantCode;
     /**
      * @var PartnerDeliveryInformationRepositoryInterface
      */
@@ -387,6 +388,15 @@ class DeliveryService
         return $this;
     }
 
+    /**
+     * @param mixed $merchantCode
+     */
+    public function setMerchantCode($merchantCode)
+    {
+        $this->merchantCode = $merchantCode;
+        return $this;
+    }
+
     public function makeData()
     {
         return [
@@ -595,16 +605,6 @@ class DeliveryService
             'cod_amount' => $deliveryDetails['order']['due'],
         ];
     }
-    public function updateDeliveryStatus()
-    {
-        $pos_order  = PosOrder::where('delivery_request_id', $this->deliveryReqId)->first();
-        if($pos_order) {
-            $pos_order->delivery_status = $this->deliveryStatus;
-            if($this->deliveryStatus == Statuses::DELIVERED) $pos_order->status = OrderStatuses::COMPLETED;
-            $pos_order->save();
-        }
-    }
-
 
     private function isOrderMigrated()
     {
@@ -612,27 +612,24 @@ class DeliveryService
         return true;
     }
 
-//    TODO: Will Be Fixed by Al Amin
-//    public function updateDeliveryStatus($merchant_id, $delivery_req_id)
-//    {
-//        $status = $this->getDeliveryStatusByReqId($delivery_req_id);
-//        if($status == Statuses::DELIVERED) {
-//            $pos_order = PosOrder::where('delivery_request_id', $delivery_req_id)->first();
-//            $this->posOrder = $pos_order;
-//            if($this->isOrderMigrated() || is_null($pos_order)) {
-//                $partner_delivery_info = $this->partnerDeliveryInfoRepositoryInterface->where('merchant_id',$merchant_id)->first();
-//                $this->orderService->setPartnerId($partner_delivery_info->partner->id)->setStatus(OrderStatuses::COMPLETED)->updateStatusByDeliveryReqId($delivery_req_id, ['status' => 'Completed']);
-//            } else {
-//                $pos_order->delivery_status = Statuses::DELIVERED;
-//                $pos_order->status = OrderStatuses::COMPLETED;
-//                $pos_order->save();
-//            }
-//        }
-//    }
 
-    private function getDeliveryStatusByReqId($delivery_req_id)
+    public function updateDeliveryStatus()
     {
-        $res = $this->client->setToken($this->token)->post('orders/track', ['uid' => $delivery_req_id]);
-        return $res['data']['status'];
+        $pos_order = PosOrder::where('delivery_request_id', $this->deliveryReqId)->first();
+        $this->posOrder = $pos_order;
+        if($this->isOrderMigrated()) {
+            $partner_delivery_info = $this->partnerDeliveryInfoRepositoryInterface->where('merchant_id',$this->merchantCode)->first();
+            $this->orderService->setPartnerId($partner_delivery_info->partner->id)
+                ->setDeliveryStatus($this->deliveryStatus)
+                ->setDeliveryRequestId($this->deliveryReqId)
+                ->updateStatusByDeliveryReqId();
+        } else {
+            $pos_order->delivery_status = $this->deliveryStatus;
+            if($this->deliveryStatus == Statuses::DELIVERED)
+                $pos_order->status = OrderStatuses::COMPLETED;
+            elseif ($this->deliveryStatus == Statuses::PICKED_UP)
+                $pos_order->status = OrderStatuses::SHIPPED;
+            $pos_order->save();
+        }
     }
 }
