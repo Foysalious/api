@@ -282,7 +282,10 @@ class DeliveryController extends Controller
             'status' => "required|string" ,
             'merchant_code' => "required|string"
         ]);
-        $delivery_service->setDeliveryReqId($request->order_ref_no)->setDeliveryStatus($request->status)->updateDeliveryStatus();
+        $delivery_service->setDeliveryReqId($request->order_ref_no)
+            ->setDeliveryStatus($request->status)
+            ->setMerchantCode($request->merchant_code)
+            ->updateDeliveryStatus();
         return api_response($request, null, 200);
     }
 

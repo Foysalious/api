@@ -49,6 +49,7 @@ class DeliveryService
     private $deliveryDistrict;
     private $posOrder;
     private $token;
+    private $merchantCode;
     /**
      * @var PartnerDeliveryInformationRepositoryInterface
      */
@@ -387,6 +388,15 @@ class DeliveryService
         return $this;
     }
 
+    /**
+     * @param mixed $merchantCode
+     */
+    public function setMerchantCode($merchantCode)
+    {
+        $this->merchantCode = $merchantCode;
+        return $this;
+    }
+
     public function makeData()
     {
         return [
@@ -602,10 +612,18 @@ class DeliveryService
         return true;
     }
 
+
     public function updateDeliveryStatus()
     {
-        $pos_order  = PosOrder::where('delivery_request_id', $this->deliveryReqId)->first();
-        if($pos_order) {
+        $pos_order = PosOrder::where('delivery_request_id', $this->deliveryReqId)->first();
+        $this->posOrder = $pos_order;
+        if($this->isOrderMigrated()) {
+            $partner_delivery_info = $this->partnerDeliveryInfoRepositoryInterface->where('merchant_id',$this->merchantCode)->first();
+            $this->orderService->setPartnerId($partner_delivery_info->partner->id)
+                ->setDeliveryStatus($this->deliveryStatus)
+                ->setDeliveryRequestId($this->deliveryReqId)
+                ->updateStatusByDeliveryReqId();
+        } else {
             $pos_order->delivery_status = $this->deliveryStatus;
             if($this->deliveryStatus == Statuses::DELIVERED)
                 $pos_order->status = OrderStatuses::COMPLETED;
@@ -614,5 +632,5 @@ class DeliveryService
             $pos_order->save();
         }
     }
-    
+
 }
