@@ -98,6 +98,6 @@ return [
                 'redirect_url'             => env('SHEBA_API_URL') . '/v2/payments/upay'
             ]
         ],
-        'base_url'     => env('UPAY_BASE_URL', 'https://uat-pg.upay.systems/')
+        'base_url'     => env('UPAY_BASE_URL', 'https://uat-pg.upay.systems')
     ]
 ];
