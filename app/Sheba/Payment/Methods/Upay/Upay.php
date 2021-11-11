@@ -84,7 +84,12 @@ class Upay extends PaymentMethod
         return $payment;
     }
 
-    private function onInitFailed(Payment $payment, UpayApiResponse $res)
+    /**
+     * @param Payment $payment
+     * @param UpayApiResponse $res
+     * @return Payment
+     */
+    private function onInitFailed(Payment $payment, UpayApiResponse $res): Payment
     {
         $this->paymentLogRepo->setPayment($payment);
         $str_resp = $res->toString();
@@ -115,7 +120,7 @@ class Upay extends PaymentMethod
         // TODO: Implement validate() method.
     }
 
-    public function getMethodName()
+    public function getMethodName(): string
     {
         return self::NAME;
     }

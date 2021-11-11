@@ -15,14 +15,14 @@ class UpayApiResponse
      */
     private $success_codes;
 
+
+    public function __construct() {
+        $this->success_codes=['MAS2001','MPIS2002','PS2005'];
+    }
     /**
      * @param mixed $server_response
      * @return UpayApiResponse
      */
-    public function __construct() {
-        $this->success_codes=['MAS2001','MPIS2002','PS2005'];
-    }
-
     public function setServerResponse($server_response)
     {
         $this->server_response = json_decode($server_response, 0);
