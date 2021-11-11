@@ -8,12 +8,14 @@ use App\Sheba\InventoryService\InventoryServerClient;
 use App\Sheba\UserMigration\Modules;
 use App\Sheba\UserMigration\UserMigrationRepository;
 use App\Sheba\UserMigration\UserMigrationService;
+use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Redis;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\Dal\UserMigration\UserStatus;
+use Sheba\Partner\DataMigration\PartnerDataMigrationComplete;
 
 class PartnerDataMigrationToInventoryJob extends Job implements ShouldQueue
 {
@@ -39,12 +41,15 @@ class PartnerDataMigrationToInventoryJob extends Job implements ShouldQueue
     {
         try {
             $this->attempts < 2 ? $this->migrate() : $this->storeLogs(0);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->storeLogs(0);
             app('sentry')->captureException($e);
         }
     }
 
+    /**
+     * @throws Exception
+     */
     private function migrate()
     {
         $client = app(InventoryServerClient::class);
@@ -55,6 +60,9 @@ class PartnerDataMigrationToInventoryJob extends Job implements ShouldQueue
             $current_key = $redis_inventory_namespace . $this->queueNo;
             $this->deleteRedisKey($current_key);
             $this->storeLogs(1);
+            /** @var PartnerDataMigrationComplete $migrationComplete */
+            $migrationComplete = app(PartnerDataMigrationComplete::class);
+            $migrationComplete->setPartnerId($this->partner->id)->checkAndUpgrade();
         } else {
             $this->increaseAttempts();
             $this->release(10);

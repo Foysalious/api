@@ -65,8 +65,6 @@ class DataMigration
 
         if (!$this->isPosCustomerMigrated($count)) $this->smanagerUserDataMigration->setPartner($this->partner)
             ->setQueueAndConnectionName($queue_and_connection_name)->setShouldQueue($shouldQueue)->migrate();
-        $shouldQueue ? dispatch(new PartnerMigrationCompleteJob($this->partner, $queue_and_connection_name)) :
-            dispatchJobNow(new PartnerMigrationCompleteJob($this->partner, $queue_and_connection_name));
     }
 
     public function getMinQueue()
