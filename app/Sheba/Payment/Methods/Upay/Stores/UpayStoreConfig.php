@@ -17,7 +17,7 @@ class UpayStoreConfig implements Arrayable
     public $redirect_url;
     public function build(array $data){
         foreach ($data as $key=>$value){
-            if(isset($this->$key)){
+            if(property_exists($this,$key)){
                 $this->$key=$value;
             }
         }
