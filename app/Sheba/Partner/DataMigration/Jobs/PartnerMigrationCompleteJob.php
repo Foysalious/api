@@ -15,6 +15,8 @@ class PartnerMigrationCompleteJob extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
 
+    const SINGLE_QUEUE_PROCESS_TIME = 1;
+
     private $partner;
 
     public function __construct($partner, $queue_and_connection_name)
@@ -24,9 +26,12 @@ class PartnerMigrationCompleteJob extends Job implements ShouldQueue
         $this->partner = $partner;
     }
 
+    /**
+     * @throws Exception
+     */
     public function handle()
     {
-        $this->isQueuesProcessed() ? $this->storeSuccessLog() : $this->release(10);
+        $this->isQueuesProcessed() ? $this->storeSuccessLog() : $this->release($this->calculateNextAttemptTime());
     }
 
     private function isQueuesProcessed(): bool
@@ -56,6 +61,13 @@ class PartnerMigrationCompleteJob extends Job implements ShouldQueue
         /** @var UserMigrationRepository $class */
         $class = $userMigrationSvc->resolveClass(Modules::POS);
         $class->setUserId($this->partner->id)->setModuleName(Modules::POS)->updateStatus(UserStatus::FAILED);
+    }
+
+    private function calculateNextAttemptTime()
+    {
+        $keys = Redis::keys('DataMigration::Partner::' . $this->partner->id. '::*');
+        $count = count($keys);
+        return $count * self::SINGLE_QUEUE_PROCESS_TIME;
     }
 
 }
