@@ -56,8 +56,7 @@ class DataMigration
         $queue_and_connection_name = $this->getMinQueue();
         $count = $this->partnerDataCount();
         $shouldQueue = $this->shouldQueue($count);
-        $shouldQueue ? dispatch(new PartnerMigrationStartJob($this->partner, $queue_and_connection_name)) :
-            dispatchJobNow(new PartnerMigrationStartJob($this->partner, $queue_and_connection_name));
+        $this->deletePreviousRedisKeys();
         if (!$this->isInventoryMigrated($count)) $this->inventoryDataMigration->setPartner($this->partner)
             ->setQueueAndConnectionName($queue_and_connection_name)->setShouldQueue($shouldQueue)->migrate();
 
@@ -137,5 +136,11 @@ class DataMigration
             return true;
         }
         return false;
+    }
+
+    private function deletePreviousRedisKeys()
+    {
+        $key = 'DataMigration::Partner::'.$this->partner->id;
+        Redis::del($key);
     }
 }
