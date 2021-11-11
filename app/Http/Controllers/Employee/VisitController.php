@@ -156,15 +156,9 @@ class VisitController extends Controller
     public function teamVisitsList(Request $request, VisitList $visit_list, TimeFrame $time_frame)
     {
         $business_member = $this->getBusinessMember($request);
-
         if (!$business_member) return api_response($request, null, 404);
-        $managers_data = (new ManagerSubordinateEmployeeList())->get($business_member);
 
-        $business_member_ids = array_column($managers_data, 'id');
-        $business_member_key = array_search($business_member->id, $business_member_ids);
-        if ($business_member_key) unset($business_member_ids[$business_member_key]);
-
-        $team_visits = $visit_list->getTeamVisits($this->visitRepository, $business_member_ids);
+        $team_visits = $visit_list->getTeamVisits($this->visitRepository, $business_member);
 
         if ($request->has('start_date') && $request->has('end_date')) {
             $time_frame = $time_frame->forDateRange($request->start_date, $request->end_date);
@@ -313,6 +307,7 @@ class VisitController extends Controller
      * @param $visit
      * @param $visit_photo
      * @param Request $request
+     * @param VisitPhotoRepository $visit_photo_repository
      * @return JsonResponse
      */
     public function deletePhoto($visit, $visit_photo, Request $request, VisitPhotoRepository $visit_photo_repository)
