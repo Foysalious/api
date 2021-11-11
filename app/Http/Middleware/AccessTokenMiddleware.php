@@ -90,6 +90,7 @@ class AccessTokenMiddleware
 
     protected function setExtraDataToRequest($request)
     {
+
     }
 
     protected function formApiResponse($request, $internal, $code, array $data)
