@@ -32,7 +32,7 @@ class PartnerMigrationCompleteJob extends Job implements ShouldQueue
      */
     public function handle()
     {
-        $this->isQueuesProcessed() ? $this->storeSuccessLog() : $this->release($this->calculateNextAttemptTime());
+        $this->isQueuesProcessed() ? $this->storeSuccessLog() : $this->tryNextAttempt();
     }
 
     private function isQueuesProcessed(): bool
@@ -62,6 +62,16 @@ class PartnerMigrationCompleteJob extends Job implements ShouldQueue
         /** @var UserMigrationRepository $class */
         $class = $userMigrationSvc->resolveClass(Modules::POS);
         $class->setUserId($this->partner->id)->setModuleName(Modules::POS)->updateStatus(UserStatus::FAILED);
+    }
+
+    private function tryNextAttempt()
+    {
+        /** @var UserMigrationService $userMigrationSvc */
+        $userMigrationSvc = app(UserMigrationService::class);
+        /** @var UserMigrationRepository $class */
+        $class = $userMigrationSvc->resolveClass(Modules::POS);
+        $current_status = $class->setUserId($this->partner->id)->setModuleName(Modules::POS)->getStatus();
+        if($current_status == UserStatus::UPGRADING) $this->release($this->calculateNextAttemptTime());
     }
 
     private function calculateNextAttemptTime()
