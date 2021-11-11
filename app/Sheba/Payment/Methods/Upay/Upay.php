@@ -31,7 +31,7 @@ class Upay extends PaymentMethod
 
 
 
-    public function setStore(UpayStore $store)
+    public function setStore(UpayStore $store): Upay
     {
         $this->store  = $store;
         $this->config = $store->getConfig();

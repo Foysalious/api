@@ -95,7 +95,7 @@ return [
                 'merchant_category_code'    => env('UPAY_DEFAULT_MERCHANT_CATEGORY_CODE', 'TEST4'),
                 'merchant_mobile'           => env('UPAY_DEFAULT_MERCHANT_MOBILE', '01196385274'),
                 'transaction_currency_code' => 'BDT',
-                'redirect _url'             => env('SHEBA_API_URL') . '/v2/payments/upay'
+                'redirect_url'             => env('SHEBA_API_URL') . '/v2/payments/upay'
             ]
         ],
         'base_url'     => env('UPAY_BASE_URL', 'https://uat-pg.upay.systems/')
