@@ -43,7 +43,7 @@ class ManagerSubordinateEmployeeList
                         $managers_data[] = $manager->createData($resource)->toArray()['data'];
                     }
             }
-        if ($department) return $this->filterEmployeeByDepartment($managers_data);
+        if ($department) return $this->filterEmployeeByDepartment($business_member, $managers_data);
         return $managers_data;
     }
 
@@ -56,13 +56,45 @@ class ManagerSubordinateEmployeeList
         return $this->businessMemberRepository->where('manager_id', $business_member_id)->get();
     }
 
-    private function filterEmployeeByDepartment($managers_data)
+    /**
+     * @param $business_member
+     * @param $managers_data
+     * @return array
+     */
+    private function filterEmployeeByDepartment($business_member, $managers_data)
     {
+        $unique_managers_data = $this->uniqueManagerData($managers_data);
+        $filtered_unique_managers_data = $this->removeSpecificBusinessMemberIdFormUniqueManagersData($business_member, $unique_managers_data);
+
         $data = [];
-        foreach($managers_data as $manager)
-        {
+        foreach ($filtered_unique_managers_data as $manager) {
             $data[$manager['department']][] = $manager;
         }
         return $data;
+    }
+
+    /**
+     * @param $managers_data
+     * @return array
+     */
+    private function uniqueManagerData($managers_data)
+    {
+        $out = [];
+        foreach ($managers_data as $row) {
+            $out[$row['id']] = $row;
+        }
+        return array_values($out);
+    }
+
+    /**
+     * @param $business_member
+     * @param $unique_managers_data
+     * @return array
+     */
+    private function removeSpecificBusinessMemberIdFormUniqueManagersData($business_member, $unique_managers_data)
+    {
+        return array_filter($unique_managers_data, function ($manager_data) use ($business_member) {
+            return ($manager_data['id'] != $business_member->id);
+        });
     }
 }

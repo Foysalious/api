@@ -49,6 +49,7 @@ class VisitController extends Controller
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
         $managers_data = (new ManagerSubordinateEmployeeList())->get($business_member, true);
+
         $departments = array_keys($managers_data);
         return api_response($request, null, 200, ['employee_list' => $managers_data, 'departments' => $departments]);
     }
