@@ -92,7 +92,8 @@ return [
                 'merchant_name'             => env('UPAY_DEFAULT_MERCHANT_NAME', 'Imtiaz shop'),
                 'merchant_country_code'     => 'BD',
                 'merchant_city'             => 'Dhaka',
-                'merchant_category_code'    => env('UPAY_DEFAULT_MERCHANT_CATEGORY_CODE', '9702'),
+                'merchant_category_code'    => env('UPAY_DEFAULT_MERCHANT_CATEGORY_CODE', 'Merchant'),
+                'merchant_code'    => env('UPAY_DEFAULT_MERCHANT_CODE', '9702'),
                 'merchant_mobile'           => env('UPAY_DEFAULT_MERCHANT_MOBILE', '01199878787'),
                 'transaction_currency_code' => 'BDT',
                 'redirect_url'             => env('SHEBA_API_URL') . '/v2/payments/upay'
