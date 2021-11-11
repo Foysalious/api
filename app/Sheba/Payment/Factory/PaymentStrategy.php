@@ -17,6 +17,7 @@ use Sheba\Payment\Methods\PaymentMethod;
 use Sheba\Payment\Methods\PortWallet\PortWallet;
 use Sheba\Payment\Methods\Ssl\Ssl;
 use Sheba\Payment\Methods\Ssl\SslBuilder;
+use Sheba\Payment\Methods\Upay\UpayBuilder;
 use Sheba\Payment\Methods\Wallet;
 use Sheba\Payment\PayableUser;
 
@@ -36,6 +37,7 @@ class PaymentStrategy
     const PORT_WALLET    = "port_wallet";
     const NAGAD          = 'nagad';
     const EBL            = 'ebl';
+    const UPAY           = 'upay';
 
     public static function getDefaultOnlineMethod()
     {
@@ -77,6 +79,8 @@ class PaymentStrategy
                 return NagadBuilder::get($payable);
             case self::EBL:
                 return EblBuilder::get($payable);
+            case self::UPAY:
+                return UpayBuilder::get($payable);
         }
     }
 

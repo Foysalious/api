@@ -50,13 +50,13 @@ return [
         ]
     ],
     'ok_wallet'   => [
-        'base_url'      => env('OK_WALLET_BASE_URL'),
-        'api_user'      => env('OK_WALLET_API_USER'),
-        'api_password'  => env('OK_WALLET_API_PASSWORD'),
-        'merchant_id'   => env('OK_WALLET_MERCHANT_ID'),
-        'access_key'    => env('OK_WALLET_ACCESS_KEY'),
+        'base_url'            => env('OK_WALLET_BASE_URL'),
+        'api_user'            => env('OK_WALLET_API_USER'),
+        'api_password'        => env('OK_WALLET_API_PASSWORD'),
+        'merchant_id'         => env('OK_WALLET_MERCHANT_ID'),
+        'access_key'          => env('OK_WALLET_ACCESS_KEY'),
         'web_client_base_url' => env('OK_WALLET_WEB_CLIENT_BASE_URL'),
-        'urls'          => [
+        'urls'                => [
             'approve' => env('SHEBA_API_URL') . '/v2/payments/ok-wallet/success',
             'decline' => env('SHEBA_API_URL') . '/v2/payments/ok-wallet/fail',
             'cancel'  => env('SHEBA_API_URL') . '/v2/payments/ok-wallet/cancel',
@@ -65,23 +65,39 @@ return [
     'nagad'       => [
         'stores' => [
             'default'     => [
-                'base_url'         => env('NAGAD_BASE_URL', 'http://sandbox.mynagad.com:10080/remote-payment-gateway-1.0'),
-                'merchant_id'      => env('NAGAD_MERCHANT_ID', '683002007104225'),
-                'context_path'     => 'remote-payment-gateway-1.0'
+                'base_url'     => env('NAGAD_BASE_URL', 'http://sandbox.mynagad.com:10080/remote-payment-gateway-1.0'),
+                'merchant_id'  => env('NAGAD_MERCHANT_ID', '683002007104225'),
+                'context_path' => 'remote-payment-gateway-1.0'
             ],
             'affiliate'   => [
-                'base_url'         => env('NAGAD_BASE_URL', 'http://sandbox.mynagad.com:10080/remote-payment-gateway-1.0'),
-                'merchant_id'      => env('NAGAD_AFFILIATE_MERCHANT_ID', '683002007104225'),
-                'context_path'     => 'remote-payment-gateway-1.0'
+                'base_url'     => env('NAGAD_BASE_URL', 'http://sandbox.mynagad.com:10080/remote-payment-gateway-1.0'),
+                'merchant_id'  => env('NAGAD_AFFILIATE_MERCHANT_ID', '683002007104225'),
+                'context_path' => 'remote-payment-gateway-1.0'
             ],
             'marketplace' => [
-                'base_url'         => env('NAGAD_BASE_URL', 'http://sandbox.mynagad.com:10080/remote-payment-gateway-1.0'),
-                'merchant_id'      => env('NAGAD_MARKETPLACE_MERCHANT_ID', '686200110675045'),
-                'context_path'     => 'remote-payment-gateway-1.0'
+                'base_url'     => env('NAGAD_BASE_URL', 'http://sandbox.mynagad.com:10080/remote-payment-gateway-1.0'),
+                'merchant_id'  => env('NAGAD_MARKETPLACE_MERCHANT_ID', '686200110675045'),
+                'context_path' => 'remote-payment-gateway-1.0'
             ],
         ]
     ],
     'ebl'         => [
         'auth_token' => env('EBL_APP_AUTH_TOKEN')
+    ],
+    'upay'        => [
+        'stores'       => [
+            'default' => [
+                'merchant_id'               => env('UPAY_DEFAULT_MERCHANT_ID', '1110101010000007'),
+                'merchant_key'              => env('UPAY_DEFAULT_MERCHANT_KEY', 'sdf7jk23489889234'),
+                'merchant_name'             => env('UPAY_DEFAULT_MERCHANT_NAME', 'TEST4'),
+                'merchant_country_code'     => 'BD',
+                'merchant_city'             => 'Dhaka',
+                'merchant_category_code'    => env('UPAY_DEFAULT_MERCHANT_CATEGORY_CODE', 'TEST4'),
+                'merchant_mobile'           => env('UPAY_DEFAULT_MERCHANT_MOBILE', '01196385274'),
+                'transaction_currency_code' => 'BDT',
+                'redirect _url'             => env('SHEBA_API_URL') . '/v2/payments/upay'
+            ]
+        ],
+        'base_url'     => env('UPAY_BASE_URL', 'https://uat-pg.upay.systems/')
     ]
 ];
