@@ -306,14 +306,17 @@ class PayrollController extends Controller
                 [
                     'month' => $previous_pay_day_end ? $previous_pay_day_end->format('F') : null,
                     'cycle' => $previous_pay_day_start && $previous_pay_day_end ? $previous_pay_day_start->format('M d') . ' - ' . $previous_pay_day_end->format('M d') : null,
+                    'schedule' => 'previous'
                 ],
                 [
                     'month' => $current_pay_day_end->format('F'),
                     'cycle' => $current_pay_day_start->format('M d') . ' - ' . $current_pay_day_end->format('M d'),
+                    'schedule' => 'current'
                 ],
                 [
                     'month' => $new_pay_day_end->format('F'),
                     'cycle' => $new_pay_day_start->format('M d') . ' - ' . $new_pay_day_end->format('M d'),
+                    'schedule' => 'next'
                 ]
             ],
             'conflict_type' => $last_pay_day && $next_pay_day ? $type : null,
