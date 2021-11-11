@@ -21,6 +21,8 @@ class OrderService
     protected $userId;
     protected $filter_params;
     private $logId;
+    protected $deliveryRequestId;
+    protected $deliveryStatus;
 
     public function __construct(PosOrderServerClient $client, SmanagerUserServerClient $smanagerUserClient)
     {
@@ -216,6 +218,24 @@ class OrderService
         return $this;
     }
 
+    /**
+     * @param mixed $deliveryRequestId
+     */
+    public function setDeliveryRequestId($deliveryRequestId)
+    {
+        $this->deliveryRequestId = $deliveryRequestId;
+        return $this;
+    }
+
+    /**
+     * @param mixed $deliveryStatus
+     */
+    public function setDeliveryStatus($deliveryStatus)
+    {
+        $this->deliveryStatus = $deliveryStatus;
+        return $this;
+    }
+
     public function getOrderList()
     {
         return $this->client->get('api/v1/partners/' . $this->partnerId . '/orders' . $this->filter_params);
@@ -327,9 +347,13 @@ class OrderService
         return $data;
     }
 
-    public function updateStatusByDeliveryReqId($delivery_req_id, $data)
+    public function updateStatusByDeliveryReqId()
     {
-        return $this->client->put('api/v1/partners/' . $this->partnerId. '/delivery_req_id/' . $delivery_req_id .'/update-status', $data);
+        $data = [
+            'delivery_status' => $this->deliveryStatus,
+            'delivery_req_id' => $this->deliveryRequestId,
+        ];
+        return $this->client->put('api/v1/partners/' . $this->partnerId .'/update-status-for-ipn', $data);
     }
 
     public function getFilteringOptions()
