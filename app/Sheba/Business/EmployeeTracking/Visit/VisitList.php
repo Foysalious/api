@@ -3,7 +3,9 @@
 use App\Models\BusinessMember;
 use App\Models\Member;
 use App\Models\Profile;
+use App\Sheba\Business\CoWorker\ManagerSubordinateEmployeeList;
 use Carbon\Carbon;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\Visit\VisitRepository;
 
@@ -11,12 +13,14 @@ class VisitList
 {
     /**
      * @param VisitRepository $visit_repository
-     * @param $business_member_ids
+     * @param $business_member
      * @return mixed
      */
-    public function getTeamVisits(VisitRepository $visit_repository, $business_member_ids)
+    public function getTeamVisits(VisitRepository $visit_repository, $business_member)
     {
-        return $visit_repository->getAllVisitsWithRelations()->whereIn('visitor_id', $business_member_ids)
+        $visits = $visit_repository->getAllVisitsWithRelations()->where('visitor_id', '<>', $business_member->id)->orderBy('id', 'DESC');
+
+        return $visits->whereIn('visitor_id', $this->getBusinessMemberIds($business_member))
             ->select('id', 'visitor_id', 'title', 'status', 'start_date_time', 'end_date_time', 'total_time_in_minutes', 'schedule_date', DB::raw('DATE_FORMAT(schedule_date, "%Y-%m-%d") as date'))
             ->orderBy('id', 'desc');
     }
@@ -134,5 +138,15 @@ class VisitList
         }
 
         return $visit_list;
+    }
+
+    /**
+     * @param BusinessMember $business_member
+     * @return array
+     */
+    private function getBusinessMemberIds(BusinessMember $business_member)
+    {
+        $manager_subordinates = (new ManagerSubordinateEmployeeList())->get($business_member);
+        return Arr::pluck($manager_subordinates, 'id');
     }
 }
