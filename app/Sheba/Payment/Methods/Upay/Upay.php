@@ -110,7 +110,7 @@ class Upay extends PaymentMethod
         return array_merge($this->config->toArray(),
             [
                 'date'       => Carbon::today()->format('Y-m-d'),
-                'txn_id'     => $payment->geteway_transaction_id,
+                'txn_id'     => $payment->gateway_transaction_id,
                 'invoice_id' => $payment->gateway_transaction_id,
                 'amount'     => (double)$payment->payable->amount
             ]);
