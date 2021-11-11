@@ -15,6 +15,9 @@ class PartnerMigrationCompleteJob extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
 
+    const SINGLE_QUEUE_PROCESS_TIME = 1;
+    const DELAY = 5;
+    public $tries = 10;
     private $partner;
 
     public function __construct($partner, $queue_and_connection_name)
@@ -24,9 +27,12 @@ class PartnerMigrationCompleteJob extends Job implements ShouldQueue
         $this->partner = $partner;
     }
 
+    /**
+     * @throws Exception
+     */
     public function handle()
     {
-        $this->isQueuesProcessed() ? $this->storeSuccessLog() : $this->release(10);
+        $this->isQueuesProcessed() ? $this->storeSuccessLog() : $this->tryNextAttempt();
     }
 
     private function isQueuesProcessed(): bool
@@ -56,6 +62,23 @@ class PartnerMigrationCompleteJob extends Job implements ShouldQueue
         /** @var UserMigrationRepository $class */
         $class = $userMigrationSvc->resolveClass(Modules::POS);
         $class->setUserId($this->partner->id)->setModuleName(Modules::POS)->updateStatus(UserStatus::FAILED);
+    }
+
+    private function tryNextAttempt()
+    {
+        /** @var UserMigrationService $userMigrationSvc */
+        $userMigrationSvc = app(UserMigrationService::class);
+        /** @var UserMigrationRepository $class */
+        $class = $userMigrationSvc->resolveClass(Modules::POS);
+        $current_status = $class->setUserId($this->partner->id)->setModuleName(Modules::POS)->getStatus();
+        if($current_status == UserStatus::UPGRADING) $this->release($this->calculateNextAttemptTime());
+    }
+
+    private function calculateNextAttemptTime()
+    {
+        $keys = Redis::keys('DataMigration::Partner::' . $this->partner->id. '::*');
+        $count = count($keys);
+        return ($count * self::SINGLE_QUEUE_PROCESS_TIME) + self::DELAY;
     }
 
 }
