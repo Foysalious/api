@@ -130,7 +130,7 @@ class Cors2MiddleWare
         if (!in_array($request->server('HTTP_ORIGIN'), $domains)) {
             $ids = app(PartnerWebstoreDomainInfo::class)->pluck('domain_name')->all();
             if (!in_array($request->getHttpHost(), $ids)) {
-                return response()->json(['message' => 'Unauthorized domain :' . $request->server('HTTP_ORIGIN'), 'code' => 401])->withHeaders($headers);
+                return response()->json(['message' => 'Unauthorized domain :' . $request->getHttpHost().'allowed hosts:'.implode(',',$ids), 'code' => 401])->withHeaders($headers);
             }
         }
 
