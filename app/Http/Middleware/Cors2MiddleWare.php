@@ -3,6 +3,7 @@
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Sheba\Dal\PartnerWebstoreDomainInfo\PartnerWebstoreDomainInfo;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class Cors2MiddleWare
@@ -128,17 +129,20 @@ class Cors2MiddleWare
         ];
         // ALLOW OPTIONS METHOD
         $headers['Access-Control-Allow-Credentials'] = 'true';
-        $headers['Access-Control-Allow-Methods'] = 'POST, GET, PUT, DELETE';
-        $headers['Access-Control-Allow-Headers'] = 'Content-Type, X-Auth-Token, Origin, Authorization, X-Requested-With, Portal-Name, User-Id';
-        $headers['Access-Control-Allow-Origin'] = '*';
+        $headers['Access-Control-Allow-Methods']     = 'POST, GET, PUT, DELETE';
+        $headers['Access-Control-Allow-Headers']     = 'Content-Type, X-Auth-Token, Origin, Authorization, X-Requested-With, Portal-Name, User-Id';
+        $headers['Access-Control-Allow-Origin']      = '*';
         if (!in_array($request->server('HTTP_ORIGIN'), $domains)) {
-            return response()->json(['message' => 'Unauthorized domain :' . $request->server('HTTP_ORIGIN'), 'code' => 401])->withHeaders($headers);
+            $ids = app(PartnerWebstoreDomainInfo::class)->pluck('domain_name')->all();
+            if (!in_array($request->server('HTTP_ORIGIN'), $domains)) {
+                return response()->json(['message' => 'Unauthorized domain :' . $request->server('HTTP_ORIGIN'), 'code' => 401])->withHeaders($headers);
+            }
         }
 
         // ALLOW OPTIONS METHOD
         $headers['Access-Control-Allow-Methods'] = 'POST, GET, PUT, DELETE';
         $headers['Access-Control-Allow-Headers'] = 'Content-Type, X-Auth-Token, Origin, Authorization, X-Requested-With, Portal-Name, User-Id';
-        $response = $next($request);
+        $response                                = $next($request);
         foreach ($headers as $key => $value) {
             if ($response instanceof BinaryFileResponse) {
             } else $response->header($key, $value);
