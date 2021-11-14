@@ -12,6 +12,7 @@ use Sheba\Payment\Methods\Upay\Response\UpayApiResponse;
 use Sheba\Payment\Methods\Upay\Response\UpayInitiatePaymentResponse;
 use Sheba\Payment\Methods\Upay\Response\UpayLoginResponse;
 use Sheba\Payment\Methods\Upay\Stores\UpayStore;
+use Sheba\Payment\Statuses;
 
 class Upay extends PaymentMethod
 {
@@ -84,7 +85,12 @@ class Upay extends PaymentMethod
         return $payment;
     }
 
-    private function onInitFailed(Payment $payment, UpayApiResponse $res)
+    /**
+     * @param Payment $payment
+     * @param UpayApiResponse $res
+     * @return Payment
+     */
+    private function onInitFailed(Payment $payment, UpayApiResponse $res): Payment
     {
         $this->paymentLogRepo->setPayment($payment);
         $str_resp = $res->toString();
@@ -104,9 +110,9 @@ class Upay extends PaymentMethod
         return array_merge($this->config->toArray(),
             [
                 'date'       => Carbon::today()->format('Y-m-d'),
-                'trx_id'     => $payment->geteway_transaction_id,
+                'txn_id'     => $payment->gateway_transaction_id,
                 'invoice_id' => $payment->gateway_transaction_id,
-                'amount'     => $payment->payable->amount
+                'amount'     => (double)$payment->payable->amount
             ]);
     }
 
@@ -115,7 +121,7 @@ class Upay extends PaymentMethod
         // TODO: Implement validate() method.
     }
 
-    public function getMethodName()
+    public function getMethodName(): string
     {
         return self::NAME;
     }

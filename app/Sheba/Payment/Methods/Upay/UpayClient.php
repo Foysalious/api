@@ -38,11 +38,13 @@ class UpayClient
                 'form_params'     => $this->payload,
                 'timeout'         => self::TIMEOUT,
                 'read_timeout'    => self::TIMEOUT,
-                'connect_timeout' => self::TIMEOUT
+                'connect_timeout' => self::TIMEOUT,
+                'http_errors'     => false
             ])->getBody();
             return (new UpayApiResponse())->setServerResponse($res);
         } catch (GuzzleException $e) {
-            return (new UpayApiResponse())->setCode($e->getCode())->setMessage($e->getMessage());
+            $server_response = json_encode(['code' => $e->getCode(), 'message' => $e->getMessage()]);
+            return (new UpayApiResponse())->setServerResponse($server_response);
         }
     }
 

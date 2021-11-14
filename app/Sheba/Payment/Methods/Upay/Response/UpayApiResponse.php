@@ -7,10 +7,18 @@ class UpayApiResponse
     private $server_response;
     private $code;
     private $message;
-    const SUCCESS_CODE = 'MS2001';
     private $data;
     private $language;
     private $lang;
+    /**
+     * @var string[]
+     */
+    private $success_codes;
+
+
+    public function __construct() {
+        $this->success_codes=['MAS2001','MPIS2002','PS2005'];
+    }
     /**
      * @param mixed $server_response
      * @return UpayApiResponse
@@ -70,7 +78,7 @@ class UpayApiResponse
 
     public function hasError()
     {
-        return $this->code !== self::SUCCESS_CODE;
+        return !in_array($this->code,$this->success_codes);
     }
 
     /**

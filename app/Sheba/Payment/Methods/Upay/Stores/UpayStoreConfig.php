@@ -15,6 +15,7 @@ class UpayStoreConfig implements Arrayable
     public $merchant_category_code;
     public $transaction_currency_code;
     public $redirect_url;
+    public $merchant_code;
     public function build(array $data){
         foreach ($data as $key=>$value){
             if(property_exists($this,$key)){
