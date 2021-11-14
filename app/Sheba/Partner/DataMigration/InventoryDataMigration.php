@@ -121,8 +121,8 @@ class InventoryDataMigration
     private function migratePartner($data)
     {
         $this->setRedisKey();
-        $this->shouldQueue ? dispatch(new PartnerDataMigrationToInventoryJob($this->partner, ['partner_info' => $data], $this->currentQueue, $this->queue_and_connection_name)) :
-            dispatchJobNow(new PartnerDataMigrationToInventoryJob($this->partner, ['partner_info' => $data], $this->currentQueue, $this->queue_and_connection_name));
+        $this->shouldQueue ? dispatch(new PartnerDataMigrationToInventoryJob($this->partner, ['partner_info' => $data], $this->currentQueue, $this->queue_and_connection_name, $this->shouldQueue)) :
+            dispatchJobNow(new PartnerDataMigrationToInventoryJob($this->partner, ['partner_info' => $data], $this->currentQueue, $this->queue_and_connection_name, $this->shouldQueue));
         $this->increaseCurrentQueueValue();
     }
 
@@ -131,8 +131,8 @@ class InventoryDataMigration
         $chunks = array_chunk($data, self::CHUNK_SIZE);
         foreach ($chunks as $chunk) {
             $this->setRedisKey();
-            $this->shouldQueue ? dispatch(new PartnerDataMigrationToInventoryJob($this->partner, ['pos_categories' => $chunk], $this->currentQueue, $this->queue_and_connection_name)) :
-                dispatchJobNow(new PartnerDataMigrationToInventoryJob($this->partner, ['pos_categories' => $chunk], $this->currentQueue, $this->queue_and_connection_name));
+            $this->shouldQueue ? dispatch(new PartnerDataMigrationToInventoryJob($this->partner, ['pos_categories' => $chunk], $this->currentQueue, $this->queue_and_connection_name, $this->shouldQueue)) :
+                dispatchJobNow(new PartnerDataMigrationToInventoryJob($this->partner, ['pos_categories' => $chunk], $this->currentQueue, $this->queue_and_connection_name, $this->shouldQueue));
             $this->increaseCurrentQueueValue();
         }
     }
@@ -142,8 +142,8 @@ class InventoryDataMigration
         $chunks = array_chunk($data, self::CHUNK_SIZE);
         foreach ($chunks as $chunk) {
             $this->setRedisKey();
-            $this->shouldQueue ? dispatch(new PartnerDataMigrationToInventoryJob($this->partner, ['partner_pos_categories' => $chunk], $this->currentQueue, $this->queue_and_connection_name)) :
-                dispatchJobNow(new PartnerDataMigrationToInventoryJob($this->partner, ['partner_pos_categories' => $chunk], $this->currentQueue, $this->queue_and_connection_name));
+            $this->shouldQueue ? dispatch(new PartnerDataMigrationToInventoryJob($this->partner, ['partner_pos_categories' => $chunk], $this->currentQueue, $this->queue_and_connection_name, $this->shouldQueue)) :
+                dispatchJobNow(new PartnerDataMigrationToInventoryJob($this->partner, ['partner_pos_categories' => $chunk], $this->currentQueue, $this->queue_and_connection_name, $this->shouldQueue));
             $this->increaseCurrentQueueValue();
         }
     }
@@ -161,14 +161,14 @@ class InventoryDataMigration
                 'partner_pos_service_image_gallery' => $images,
                 'partner_pos_services_logs' => $logs,
                 'partner_pos_service_discounts' => $discounts,
-            ], $this->currentQueue, $this->queue_and_connection_name)) :
+            ], $this->currentQueue, $this->queue_and_connection_name, $this->shouldQueue)) :
                 dispatchJobNow(new PartnerDataMigrationToInventoryJob($this->partner, [
                     'products' => $chunk,
                     'partner_pos_service_batches' => $batches,
                     'partner_pos_service_image_gallery' => $images,
                     'partner_pos_services_logs' => $logs,
                     'partner_pos_service_discounts' => $discounts,
-                ], $this->currentQueue, $this->queue_and_connection_name));
+                ], $this->currentQueue, $this->queue_and_connection_name, $this->shouldQueue));
             $this->increaseCurrentQueueValue();
         }
     }

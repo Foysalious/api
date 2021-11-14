@@ -23,8 +23,9 @@ class PartnerDataMigrationToPosOrderJob extends Job implements ShouldQueue
     private $attempts = 0;
     private $queueNo;
     private $chunkNo;
+    private $shouldQueue;
 
-    public function __construct($partner, $data, $chunkNo, $queueNo, $queue_and_connection_name)
+    public function __construct($partner, $data, $chunkNo, $queueNo, $queue_and_connection_name, $shouldQueue)
     {
         $this->connection = $queue_and_connection_name;
         $this->queue = $queue_and_connection_name;
@@ -32,6 +33,7 @@ class PartnerDataMigrationToPosOrderJob extends Job implements ShouldQueue
         $this->data = $data;
         $this->queueNo = $queueNo;
         $this->chunkNo = $chunkNo;
+        $this->shouldQueue = $shouldQueue;
     }
 
     public function handle()
@@ -58,9 +60,11 @@ class PartnerDataMigrationToPosOrderJob extends Job implements ShouldQueue
             $current_key = $redis_pos_order_namespace . $this->chunkNo .'::PosOrder::Queue::' . $this->queueNo;
             $this->deleteRedisKey($current_key);
             $this->storeLogs(1);
-            /** @var PartnerDataMigrationComplete $migrationComplete */
-            $migrationComplete = app(PartnerDataMigrationComplete::class);
-            $migrationComplete->setPartnerId($this->partner->id)->checkAndUpgrade();
+            if ($this->shouldQueue) {
+                /** @var PartnerDataMigrationComplete $migrationComplete */
+                $migrationComplete = app(PartnerDataMigrationComplete::class);
+                $migrationComplete->setPartnerId($this->partner->id)->checkAndUpgrade();
+            }
         } else {
             $this->increaseAttempts();
             $this->release(10);

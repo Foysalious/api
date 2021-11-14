@@ -5,6 +5,7 @@ use App\Models\PartnerPosCustomer;
 use App\Models\PartnerPosService;
 use App\Models\PosOrder;
 use App\Sheba\Partner\DataMigration\PosOrderDataMigration;
+use Exception;
 use Illuminate\Support\Facades\Redis;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\ModificationFields;
@@ -51,6 +52,9 @@ class DataMigration
         return $this;
     }
 
+    /**
+     * @throws Exception
+     */
     public function migrate()
     {
         $queue_and_connection_name = $this->getMinQueue();
@@ -65,6 +69,12 @@ class DataMigration
 
         if (!$this->isPosCustomerMigrated($count)) $this->smanagerUserDataMigration->setPartner($this->partner)
             ->setQueueAndConnectionName($queue_and_connection_name)->setShouldQueue($shouldQueue)->migrate();
+
+        if(!$shouldQueue) {
+            /** @var PartnerDataMigrationComplete $migrationComplete */
+            $migrationComplete = app(PartnerDataMigrationComplete::class);
+            $migrationComplete->setPartnerId($this->partner->id)->checkAndUpgrade();
+        }
     }
 
     public function getMinQueue()

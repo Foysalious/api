@@ -62,8 +62,8 @@ class SmanagerUserDataMigration
     private function migratePartner($data)
     {
         $this->setRedisKey();
-        $this->shouldQueue ? dispatch(new PartnerDataMigrationToSmanagerUserJob($this->partner, ['partner_info' => $data], $this->currentQueue, $this->queue_and_connection_name)) :
-            dispatchJobNow(new PartnerDataMigrationToSmanagerUserJob($this->partner, ['partner_info' => $data], $this->currentQueue, $this->queue_and_connection_name));
+        $this->shouldQueue ? dispatch(new PartnerDataMigrationToSmanagerUserJob($this->partner, ['partner_info' => $data], $this->currentQueue, $this->queue_and_connection_name, $this->shouldQueue)) :
+            dispatchJobNow(new PartnerDataMigrationToSmanagerUserJob($this->partner, ['partner_info' => $data], $this->currentQueue, $this->queue_and_connection_name, $this->shouldQueue));
         $this->increaseCurrentQueueValue();
     }
 
@@ -81,8 +81,8 @@ class SmanagerUserDataMigration
         $chunks = array_chunk($data->toArray(), self::CHUNK_SIZE);
         foreach ($chunks as $chunk) {
             $this->setRedisKey();
-            $this->shouldQueue ? dispatch(new PartnerDataMigrationToSmanagerUserJob($this->partner, ['pos_customers' => $chunk], $this->currentQueue, $this->queue_and_connection_name)) :
-                dispatchJobNow(new PartnerDataMigrationToSmanagerUserJob($this->partner, ['pos_customers' => $chunk], $this->currentQueue, $this->queue_and_connection_name));
+            $this->shouldQueue ? dispatch(new PartnerDataMigrationToSmanagerUserJob($this->partner, ['pos_customers' => $chunk], $this->currentQueue, $this->queue_and_connection_name, $this->shouldQueue)) :
+                dispatchJobNow(new PartnerDataMigrationToSmanagerUserJob($this->partner, ['pos_customers' => $chunk], $this->currentQueue, $this->queue_and_connection_name, $this->shouldQueue));
             $this->increaseCurrentQueueValue();
         }
     }
