@@ -227,6 +227,7 @@ class InventoryDataMigration
     {
         return DB::table('partner_pos_service_image_gallery')
             ->whereIn('partner_pos_service_id', $this->partnerPosServiceIds)
+            ->whereNotNull('image_link')
             ->select('partner_pos_service_id AS product_id', 'image_link', 'created_by_name', 'created_at',
                 'updated_by_name', 'updated_at')->get();
     }
