@@ -199,7 +199,11 @@ class PosOrderDataMigration
     private function generatePosOrderItemsData()
     {
         $pos_order_items = DB::table('pos_order_items')->whereIn('pos_order_id', $this->partnerPosOrderIds)
-            ->select('pos_order_id AS order_id', 'service_id AS sku_id', 'service_name AS name', 'quantity',
+            ->select('pos_order_id AS order_id', 'service_id AS sku_id', DB::raw('(CASE 
+                        WHEN service_name = "" THEN "Custom Item"
+                        WHEN service_name IS NULL THEN "Custom Item"
+                        ELSE service_name 
+                        END) AS name'), 'quantity',
                 'unit_price', 'vat_percentage', 'warranty', 'warranty_unit', 'note', 'created_by_name',
                 'updated_by_name', 'created_at', 'updated_at')->get();
         $service_ids = array_column($pos_order_items->toArray(), 'sku_id');
