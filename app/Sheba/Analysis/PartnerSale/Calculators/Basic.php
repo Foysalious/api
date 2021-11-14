@@ -135,7 +135,6 @@ class Basic extends PartnerSale
         $this->initData(self::WEEK_BASE);
         $this->getOrdersBreakdownData($orders, $for, self::WEEK_BASE);
         if ($pos_orders) $this->getPosOrdersBreakdownData($for, $pos_orders, self::WEEK_BASE);
-
         return collect($this->data)->values()->all();
     }
 
@@ -179,6 +178,7 @@ class Basic extends PartnerSale
         $pos_orders->each(function ($pos_order) use ($for, $is_calculating_for_month) {
             $pos_order_created_at_formatter = $is_calculating_for_month ? intval($pos_order->created_at->format('d')) : $pos_order->created_at->format('D');
             $this->data[$pos_order_created_at_formatter]['amount'] += ($for == 'sales') ? $pos_order->getNetBill() : 1;
+            dd($this->data);
         });
     }
 
