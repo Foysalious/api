@@ -100,7 +100,7 @@ class VisitController extends Controller
         $member = $this->getMember($request);
         $this->setModifier($member);
         $requester->setBusinessMember($business_member)->setEmployeeVisit($employee_visit)
-            ->setDate($request->date)->setEmployee($request->employee)->setTitle($request->title)->setDescription($request->description);
+            ->setEmployee($request->employee)->setTitle($request->title)->setDescription($request->description);
         $updater->setRequester($requester)->update();
         return api_response($request, null, 200);
     }
