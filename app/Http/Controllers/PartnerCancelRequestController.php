@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use Sheba\Dal\JobCancelReason\JobCancelReason;
 
 use Illuminate\Foundation\Bus\DispatchesJobs;
@@ -24,6 +25,14 @@ class PartnerCancelRequestController extends Controller
         $partner_requestor->setJob($job);
         $error = $partner_requestor->hasError();
         if ($error) return api_response($request, $error['msg'], $error['code'], ['message' => $error['msg']]);
+        if ($job->category->preparation_time_minutes != 0) {
+            $preferred_time_start = $job->preferred_time_start;
+            $preparation_time_start = $preferred_time_start ? Carbon::parse($preferred_time_start)->subMinutes($job->category->preparation_time_minutes) : null;
+            $now = Carbon::now();
+            if ($preparation_time_start && ($now->between($preparation_time_start, $preferred_time_start) || $job->status == "Schedule Due")) {
+                return api_response($request, null, 400, ['message' => "You cannot request for cancel right before the schedule date and time"]);
+            }
+        }
         $userAgentInformation->setRequest($request);
         $send_cancel_request
             ->setJobId($job->id)
