@@ -26,14 +26,16 @@ class PartnerDataMigrationToSmanagerUserJob extends Job implements ShouldQueue
     private $partner;
     private $queueNo;
     private $attempts = 0;
+    private $shouldQueue;
 
-    public function __construct($partner, $data, $queueNo, $queue_and_connection_name)
+    public function __construct($partner, $data, $queueNo, $queue_and_connection_name, $shouldQueue)
     {
         $this->connection = $queue_and_connection_name;
         $this->queue = $queue_and_connection_name;
         $this->partner = $partner;
         $this->data = $data;
         $this->queueNo = $queueNo;
+        $this->shouldQueue = $shouldQueue;
     }
 
     public function handle()
@@ -60,9 +62,11 @@ class PartnerDataMigrationToSmanagerUserJob extends Job implements ShouldQueue
             $current_key = $redis_smanager_user_namespace . $this->queueNo;
             $this->deleteRedisKey($current_key);
             $this->storeLogs(1);
-            /** @var PartnerDataMigrationComplete $migrationComplete */
-            $migrationComplete = app(PartnerDataMigrationComplete::class);
-            $migrationComplete->setPartnerId($this->partner->id)->checkAndUpgrade();
+            if($this->shouldQueue) {
+                /** @var PartnerDataMigrationComplete $migrationComplete */
+                $migrationComplete = app(PartnerDataMigrationComplete::class);
+                $migrationComplete->setPartnerId($this->partner->id)->checkAndUpgrade();
+            }
         } else {
             $this->increaseAttempts();
             $this->release(10);

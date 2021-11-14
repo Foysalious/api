@@ -121,8 +121,8 @@ class PosOrderDataMigration
     private function migratePartner($data)
     {
         $this->setRedisKey();
-        $this->shouldQueue ? dispatch(new PartnerDataMigrationToPosOrderJob($this->partner, ['partner_info' => $data], $this->currentChunk, $this->currentQueue, $this->queue_and_connection_name)) :
-            dispatchJobNow(new PartnerDataMigrationToPosOrderJob($this->partner, ['partner_info' => $data], $this->currentChunk, $this->currentQueue, $this->queue_and_connection_name));
+        $this->shouldQueue ? dispatch(new PartnerDataMigrationToPosOrderJob($this->partner, ['partner_info' => $data], $this->currentChunk, $this->currentQueue, $this->queue_and_connection_name, $this->shouldQueue)) :
+            dispatchJobNow(new PartnerDataMigrationToPosOrderJob($this->partner, ['partner_info' => $data], $this->currentChunk, $this->currentQueue, $this->queue_and_connection_name, $this->shouldQueue));
         $this->increaseCurrentQueueValue();
     }
 
@@ -141,14 +141,14 @@ class PosOrderDataMigration
                 'pos_order_discounts' => $pos_order_discounts,
                 'pos_order_logs' => $pos_order_logs,
                 'pos_customers' => $pos_customers
-            ], $this->currentChunk, $this->currentQueue, $this->queue_and_connection_name)) : dispatchJobNow(new PartnerDataMigrationToPosOrderJob($this->partner, [
+            ], $this->currentChunk, $this->currentQueue, $this->queue_and_connection_name, $this->shouldQueue)) : dispatchJobNow(new PartnerDataMigrationToPosOrderJob($this->partner, [
                 'pos_orders' => $chunk,
                 'pos_order_items' => $pos_order_items,
                 'pos_order_payments' => $pos_order_payments,
                 'pos_order_discounts' => $pos_order_discounts,
                 'pos_order_logs' => $pos_order_logs,
                 'pos_customers' => $pos_customers
-            ], $this->currentChunk, $this->currentQueue, $this->queue_and_connection_name));
+            ], $this->currentChunk, $this->currentQueue, $this->queue_and_connection_name, $this->shouldQueue));
             $this->increaseCurrentQueueValue();
         }
     }
