@@ -87,11 +87,11 @@ class Updater
     {
         $this->saveImages();
         $this->format();
-        $this->formatBatchData();
-        $image_gallery = [];
-        if (isset($this->updatedData['image_gallery'])) $image_gallery = json_decode($this->updatedData['image_gallery'], true);
-        $cloned_data = $this->data;
-        $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'is_vat_percentage_off', 'is_stock_off', 'image_gallery','accounting_info']);
+        if (isset($this->updatedData['image_gallery'])) {
+            $image_gallery = json_decode($this->updatedData['image_gallery'], true);
+            $this->storeImageGallery($image_gallery);
+        }
+        $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'is_vat_percentage_off', 'is_stock_off', 'image_gallery']);
         if (!empty($this->updatedData)) $this->updatedData = array_except($this->updatedData, 'image_gallery');
 
         $lastBatchData = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->latest()->first();
@@ -344,20 +344,20 @@ class Updater
     public function storeLogs(PartnerPosService $service, $updated_data)
     {
         $field_names = [];
-        $old_value = [];
-        $new_value = [];
-        $service = $service->toArray();
+        $old_value   = [];
+        $new_value   = [];
+        $service     = $service->toArray();
         foreach ($updated_data as $field_name => $value) {
-            $field_names[] = $field_name;
+            $field_names[]          = $field_name;
             $old_value[$field_name] = $service[$field_name];
             $new_value[$field_name] = $value;
         }
 
         $data = [
             'partner_pos_service_id' => $service['id'],
-            'field_names' => json_encode($field_names),
-            'old_value' => json_encode($old_value),
-            'new_value' => json_encode($new_value)
+            'field_names'            => json_encode($field_names),
+            'old_value'              => json_encode($old_value),
+            'new_value'              => json_encode($new_value)
         ];
         $this->posServiceLogRepo->create($data);
     }

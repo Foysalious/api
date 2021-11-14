@@ -5,14 +5,15 @@ use Sheba\Dal\Visit\VisitRepository;
 
 class Updater
 {
-    /** @var VisitRepository $visitRepository*/
+    /** @var VisitRepository $visitRepository */
     private $visitRepository;
 
     public function __construct()
     {
         $this->visitRepository = app(VisitRepository::class);
     }
-    /** @var Requester  $requester **/
+
+    /** @var Requester $requester * */
     private $requester;
     private $visitData = [];
 
@@ -32,15 +33,10 @@ class Updater
 
     private function makeData()
     {
-        $business_member_id = $this->requester->getBusinessMember()->id;
-        $employee_id = $this->requester->getEmployee();
-        $visitor = $employee_id ? $employee_id : $business_member_id;
         $this->visitData = [
-            'visitor_id' => $visitor,
             'title' => $this->requester->getTitle(),
             'description' => $this->requester->getDescription(),
         ];
-        if ($employee_id) $this->visitData['assignee_id'] = $business_member_id;
     }
 
 }
