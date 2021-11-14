@@ -88,7 +88,6 @@ class VisitController extends Controller
     public function update($visit_id, Request $request, Requester $requester, Updater $updater)
     {
         $this->validate($request, [
-            'date' => 'required|date_format:Y-m-d',
             'employee' => 'numeric',
             'title' => 'required|string',
             'description' => 'sometimes|required|string',
