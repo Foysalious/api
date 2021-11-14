@@ -111,6 +111,22 @@ class PartnerController extends Controller
         return api_response($request, $details, 200, ['info' => $details]);
     }
 
+    public function showByDomain(Request $request, PartnerDetails $details)
+    {
+        $this->validate($request, ['domain_name' => 'required|string']);
+        ini_set('memory_limit', '6096M');
+        ini_set('max_execution_time', 660);
+        try {
+            $details->setPartnerFromDomain($request->domain_name);
+        } catch (\Exception $e) {
+            return api_response($request, null, 404);
+        }
+        $loc = getLocationFromRequest($request);
+        if ($loc) $details->setLocationId($loc->id);
+        $info = $details->get();
+        return api_response($request, $info, 200, ['info' => $info]);
+    }
+
     public function getServices($partner, $category, Request $request)
     {
         $partner = Partner::find((int)$partner);
