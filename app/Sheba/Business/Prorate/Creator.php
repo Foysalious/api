@@ -11,7 +11,7 @@ class Creator
     private $businessMemberLeaveTypeRepo;
     /** @var Requester $requester */
     private $requester;
-    private $data;
+    private $data = [];
     private $oldBusinessMemberLeaveTypes;
 
     /**
@@ -42,11 +42,12 @@ class Creator
 
     public function create()
     {
+        $this->data = [];
         $this->getOldBusinessMemberLeaveType();
         foreach ($this->requester->getBusinessMemberIds() as $business_member_id) {
-                        if ($old_business_member_type = $this->oldBusinessMemberLeaveTypes->filter(function($item) use  ($business_member_id) {
-                            return $item->business_member_id == $business_member_id;
-                        })->first()){
+            if ($old_business_member_type = $this->oldBusinessMemberLeaveTypes->filter(function ($item) use ($business_member_id) {
+                return $item->business_member_id == $business_member_id;
+            })->first()) {
                 $this->businessMemberLeaveTypeRepo->delete($old_business_member_type);
             }
             $this->data[] = [

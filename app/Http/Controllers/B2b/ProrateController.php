@@ -4,6 +4,7 @@ use App\Models\Business;
 use App\Models\BusinessDepartment;
 use App\Models\BusinessMember;
 use App\Models\Member;
+use App\Sheba\Business\Prorate\RunProrateOnActiveLeaveTypes;
 use App\Sheba\Business\Prorate\AutoProrateCalculator;
 use Illuminate\Http\JsonResponse;
 use Sheba\Business\Prorate\Updater;
@@ -219,6 +220,8 @@ class ProrateController extends Controller
         if ($request->is_prorated === 'no') return api_response($request, null, 200, ['message' => 'User does not want to prorate']);
         $business = $business_member->business;
         if (!$business->is_leave_prorate_enable) return api_response($request, null, 200, ['message' => 'Leave Prorate is deactivated for this business.']);
-        $auto_prorate_calculator->setBusiness($business)->run();
+        $run_prorate_on_active_leaves = new RunProrateOnActiveLeaveTypes();
+        $run_prorate_on_active_leaves->setBusiness($business)->run();
+        return api_response($request, null, 200);
     }
 }
