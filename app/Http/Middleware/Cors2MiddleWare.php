@@ -134,7 +134,7 @@ class Cors2MiddleWare
         $headers['Access-Control-Allow-Origin']      = '*';
         if (!in_array($request->server('HTTP_ORIGIN'), $domains)) {
             $ids = app(PartnerWebstoreDomainInfo::class)->pluck('domain_name')->all();
-            if (!in_array($request->server('HTTP_ORIGIN'), $domains)) {
+            if (!in_array($request->getHttpHost(), $ids)) {
                 return response()->json(['message' => 'Unauthorized domain :' . $request->server('HTTP_ORIGIN'), 'code' => 401])->withHeaders($headers);
             }
         }

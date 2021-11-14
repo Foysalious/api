@@ -37,7 +37,6 @@ class Updater
         $visitor = $employee_id ? $employee_id : $business_member_id;
         $this->visitData = [
             'visitor_id' => $visitor,
-            'schedule_date' => $this->requester->getDate(),
             'title' => $this->requester->getTitle(),
             'description' => $this->requester->getDescription(),
         ];
