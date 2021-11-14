@@ -26,7 +26,7 @@ class RewardController extends Controller
             'event' => 'required|in:' . implode(',', Types::get()),
             'rewardable_type' => 'required|in:' . implode(',', RewardableTypes::get()),
             'rewardable_id' => 'required|integer',
-            'event_data' => 'required'
+            'event_data' => 'required|json'
         ]);
 
         $model = "App\\Models\\" . ucfirst(camel_case($request->rewardable_type));
