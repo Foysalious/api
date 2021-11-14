@@ -92,7 +92,7 @@ class CustomerController extends Controller
         /** @var Customer $customer */
         $customer = $request->customer;
         $profile = $customer->profile;
-        $request['email'] = trim($request->email);
+        if ($request->has('email')) $request['email'] = trim($request->email);
         $this->validate($request, [
             'name' => 'string',
             'gender'=>'string|in:Male,Female,Other',
