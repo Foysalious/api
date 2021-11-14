@@ -156,6 +156,7 @@ class EmployeeController extends Controller
      * @param Request $request
      * @param ActionProcessor $action_processor
      * @param ProfileCompletionCalculator $completion_calculator
+     * @param VisitRepository $visit_repository
      * @return JsonResponse
      */
     public function getDashboard(Request $request, ActionProcessor $action_processor,
