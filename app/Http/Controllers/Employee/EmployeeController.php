@@ -191,15 +191,14 @@ class EmployeeController extends Controller
         $pending_approval_requests_count = $this->approvalRequestRepo->countPendingLeaveApprovalRequests($business_member);
         $profile_completion_score = $completion_calculator->setBusinessMember($business_member)->getDigiGoScore();
 
-        $pending_visit = $visit_repository->where('visitor_id', $business_member->id)->whereIn('status', [Status::CREATED, Status::STARTED, Status::RESCHEDULED]);
-        $all_pending_visit_count = $pending_visit->count();
+        $visits = $visit_repository->where('visitor_id', $business_member->id);
+        $pending_visit = $visits->whereIn('status', [Status::STARTED, Status::REACHED]);
+        $pending_visit_count = $pending_visit->count();
+        $current_visit = $visits->whereIn('status', [Status::STARTED, Status::REACHED])->first();
 
         $today = Carbon::now()->format('Y-m-d');
-        $today_visit = $pending_visit->whereBetween('schedule_date', [$today.' 00:00:00', $today.' 23:59:59']);
+        $today_visit = $visits->where('status', Status::CREATED)->whereBetween('schedule_date', [$today.' 00:00:00', $today.' 23:59:59']);
         $today_visit_count = $today_visit->count();
-        $current_visit = $visit_repository->where('visitor_id', $business_member->id)
-            ->where('status', Status::STARTED)
-            ->whereBetween('start_date_time', [$today.' 00:00:00', $today.' 23:59:59'])->first();
 
         /** Check Employee Already Get a Badge or Not */
         $start_date = Carbon::now()->startOfMonth();
@@ -235,7 +234,7 @@ class EmployeeController extends Controller
             'is_sheba_platform' => in_array($business->id, config('b2b.BUSINESSES_IDS_FOR_REFERRAL') ) ? 1 : 0,
             'is_payroll_enable' => $business->payrollSetting->is_enable,
             'is_enable_employee_visit' => $business->is_enable_employee_visit,
-            'pending_visit_count' => $all_pending_visit_count,
+            'pending_visit_count' => $pending_visit_count,
             'today_visit_count' => $today_visit_count,
             'single_visit' => $today_visit_count === 1 ? [
                     'id' =>     $today_visit->first()->id,
