@@ -13,6 +13,7 @@ use Sheba\Dal\BusinessMemberLeaveType\Model as BusinessMemberLeaveType;
 use App\Http\Controllers\Controller;
 use Sheba\Business\Prorate\Creator;
 use Sheba\Business\Prorate\Requester as ProrateRequester;
+use Sheba\Dal\LeaveType\Contract as LeaveTypeRepo;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 
@@ -222,6 +223,25 @@ class ProrateController extends Controller
         if (!$business->is_leave_prorate_enable) return api_response($request, null, 200, ['message' => 'Leave Prorate is deactivated for this business.']);
         $run_prorate_on_active_leaves = new RunProrateOnActiveLeaveTypes();
         $run_prorate_on_active_leaves->setBusiness($business)->run();
+        return api_response($request, null, 200);
+    }
+
+    public function leaveTypeAutoProrate(Request $request, LeaveTypeRepo $leave_type_repo)
+    {
+        $this->validate($request, [
+            'is_prorated' => 'required|string',
+            'leave_type_id' => 'required'
+        ]);
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 420);
+        if ($request->is_prorated === 'no') return api_response($request, null, 200, ['message' => 'User does not want to prorate']);
+        $business = $business_member->business;
+        if (!$business->is_leave_prorate_enable) return api_response($request, null, 200, ['message' => 'Leave Prorate is deactivated for this business.']);
+        $leave_type = $leave_type_repo->find($request->leave_type_id);
+        if (!$leave_type) return api_response($request, null, 404, ['message' => 'Sorry! Leave Type not found.']);
+        $auto_prorate_calculator = new AutoProrateCalculator();
+        $auto_prorate_calculator->setBusiness($business)->setLeaveType($leave_type)->run();
         return api_response($request, null, 200);
     }
 }
