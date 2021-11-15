@@ -1055,6 +1055,6 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function pgwStoreAccounts()
     {
-        return $this->hasMany(PgwStoreAccount::class);
+        return $this->morphMany(PgwStoreAccount::class, 'user');
     }
 }
