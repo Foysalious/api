@@ -1,4 +1,5 @@
 <?php
+
 namespace Sheba\AccountingEntry\Repository;
 
 use GuzzleHttp\Client;
@@ -76,22 +77,21 @@ class AccountingEntryClient
     public function call($method, $uri, $data = null)
     {
         try {
-            if (!$this->userType || !$this->userId ) {
+            if (!$this->userType || !$this->userId) {
                 throw new AccountingEntryServerError('Set user type and user id', 400);
             }
-            $res = json_decode($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data))->getBody()->getContents(), true);
+            $res = decodeGuzzleResponse(
+                $this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data))
+            );
             if ($res['code'] != 200) {
                 throw new AccountingEntryServerError($res['message']);
             }
             return $res['data'] ?? $res['message'];
 
         } catch (GuzzleException $e) {
-            $response = $e->getResponse() ? json_decode($e->getResponse()->getBody()->getContents(), true): null;
-            $message = null;
-            if ($e->getMessage()) {
-                $message = $e->getMessage();
-            }
-            else if (isset($response['message']) ) {
+            $response = $e->getResponse() ? json_decode($e->getResponse()->getBody()->getContents(), true) : null;
+            $message = $e->getMessage();
+            if (isset($response['message'])) {
                 $message = $response['message'];
             } else if (isset($response['detail'])) {
                 $message = json_encode($response['detail']);
