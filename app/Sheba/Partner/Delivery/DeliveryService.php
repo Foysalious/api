@@ -230,6 +230,8 @@ class DeliveryService
                     'thana' => $this->partner->deliveryInformation->thana,
                     'zilla' => $this->partner->deliveryInformation->district
                 ],
+                'weight' => $customer_delivery_info['weight'],
+                'delivery_charge' =>  $customer_delivery_info['delivery_charge'],
             ],
             'customer-delivery_information' => [
                 'name' => $customer_delivery_info['name'],
@@ -592,6 +594,8 @@ class DeliveryService
                 'delivery_zilla' => $this->posOrder->delivery_district,
                 'payment_method' => ($payment_info = $this->paymentInfo($this->posOrder->id)) ? $payment_info->method : null,
                 'cod_amount' => $this->getDueAmount(),
+                'weight' => (double) $this->posOrder->weight,
+                'delivery_charge' => (double) $this->posOrder->delivery_charge,
             ];
         }
         $deliveryDetails = $this->posOrderClient->get('api/v1/partners/' . $this->partner->id . '/orders/' . $this->posOrderId . '/delivery-info');
@@ -603,6 +607,8 @@ class DeliveryService
             'delivery_zilla' => $deliveryDetails['order']['delivery_district'],
             'payment_method' => $deliveryDetails['order']['payment_method'],
             'cod_amount' => $deliveryDetails['order']['due'],
+            'weight' => $deliveryDetails['order']['weight'],
+            'delivery_charge' => $deliveryDetails['order']['delivery_charge'],
         ];
     }
 
