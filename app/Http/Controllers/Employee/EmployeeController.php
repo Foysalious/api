@@ -159,7 +159,7 @@ class EmployeeController extends Controller
      * @param VisitRepository $visit_repository
      * @return JsonResponse
      */
-    public function getDashboard(Request $request, ActionProcessor $action_processor,
+    public function getDashboard(Request                     $request, ActionProcessor $action_processor,
                                  ProfileCompletionCalculator $completion_calculator, VisitRepository $visit_repository)
     {
         /** @var Business $business */
@@ -191,13 +191,17 @@ class EmployeeController extends Controller
         $pending_approval_requests_count = $this->approvalRequestRepo->countPendingLeaveApprovalRequests($business_member);
         $profile_completion_score = $completion_calculator->setBusinessMember($business_member)->getDigiGoScore();
 
-        $visits = $visit_repository->where('visitor_id', $business_member->id);
-        $pending_visit = $visits->whereIn('status', [Status::STARTED, Status::REACHED]);
+        $pending_visit = $visit_repository->where('visitor_id', $business_member->id)
+            ->whereIn('status', [Status::STARTED, Status::REACHED]);
         $pending_visit_count = $pending_visit->count();
-        $current_visit = $visits->whereIn('status', [Status::STARTED, Status::REACHED])->first();
+
+        $current_visit = $visit_repository->where('visitor_id', $business_member->id)
+            ->whereIn('status', [Status::STARTED, Status::REACHED])->first();
 
         $today = Carbon::now()->format('Y-m-d');
-        $today_visit = $visits->where('status', Status::CREATED)->whereBetween('schedule_date', [$today.' 00:00:00', $today.' 23:59:59']);
+        $today_visit = $visit_repository->where('visitor_id', $business_member->id)
+            ->where('status', Status::CREATED)
+            ->whereBetween('schedule_date', [$today . ' 00:00:00', $today . ' 23:59:59']);
         $today_visit_count = $today_visit->count();
 
         /** Check Employee Already Get a Badge or Not */
@@ -232,15 +236,14 @@ class EmployeeController extends Controller
             'is_eligible_for_lunch' => in_array($business->id, config('b2b.BUSINESSES_IDS_FOR_LUNCH')) ? [
                 'link' => config('b2b.BUSINESSES_LUNCH_LINK'),
             ] : null,
-            'is_sheba_platform' => in_array($business->id, config('b2b.BUSINESSES_IDS_FOR_REFERRAL') ) ? 1 : 0,
-            'location_fetch_waiting_time' => 3,
+            'is_sheba_platform' => in_array($business->id, config('b2b.BUSINESSES_IDS_FOR_REFERRAL')) ? 1 : 0,
             'is_payroll_enable' => $business->payrollSetting->is_enable,
             'is_enable_employee_visit' => $business->is_enable_employee_visit,
             'pending_visit_count' => $pending_visit_count,
             'today_visit_count' => $today_visit_count,
             'single_visit' => $today_visit_count === 1 ? [
-                    'id' =>     $today_visit->first()->id,
-                    'title' =>  $today_visit->first()->title
+                'id' => $today_visit->first()->id,
+                'title' => $today_visit->first()->title
             ] : null,
             'currently_on_visit' => $current_visit ? $current_visit->id : null,
             'is_badge_seen' => $is_badge_seen,
