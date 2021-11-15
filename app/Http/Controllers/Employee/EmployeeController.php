@@ -190,12 +190,17 @@ class EmployeeController extends Controller
         $approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMember($business_member);
         $pending_approval_requests_count = $this->approvalRequestRepo->countPendingLeaveApprovalRequests($business_member);
         $profile_completion_score = $completion_calculator->setBusinessMember($business_member)->getDigiGoScore();
-        $pending_visit = $visit_repository->where('visitor_id', $business_member->id)->whereIn('status', [Status::CREATED, Status::STARTED, Status::RESCHEDULED]);
+
+        $pending_visit = $visit_repository->where('visitor_id', $business_member->id)
+            ->whereIn('status', [Status::STARTED, Status::REACHED]);
         $all_pending_visit_count = $pending_visit->count();
+
         $today = Carbon::now()->format('Y-m-d');
         $today_visit = $pending_visit->whereBetween('schedule_date', [$today.' 00:00:00', $today.' 23:59:59']);
         $today_visit_count = $today_visit->count();
-        $current_visit = $visit_repository->where('visitor_id', $business_member->id)->where('status', Status::STARTED)->whereBetween('start_date_time', [$today.' 00:00:00', $today.' 23:59:59'])->first();
+        $current_visit = $visit_repository->where('visitor_id', $business_member->id)
+            ->where('status', Status::STARTED)
+            ->whereBetween('start_date_time', [$today.' 00:00:00', $today.' 23:59:59'])->first();
 
         /** Check Employee Already Get a Badge or Not */
         $start_date = Carbon::now()->startOfMonth();
