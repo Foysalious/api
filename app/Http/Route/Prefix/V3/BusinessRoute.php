@@ -34,6 +34,7 @@ class BusinessRoute
                     $api->get('unpaid-leave-policy', 'B2b\AttendanceController@getUnpaidLeavePolicy');
                     $api->post('unpaid-leave-policy', 'B2b\AttendanceController@createUnpaidLeavePolicy');
                     $api->get('checkin-checkout-policy', 'B2b\AttendanceController@getLateCheckinEarlyCheckoutPolicy');
+                    $api->get('changes-logs', 'B2b\AttendanceController@getOfficeSettingChangesLogs');
                 });
             });
         });

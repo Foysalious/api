@@ -19,6 +19,8 @@ class Amount extends ActionEventParameter
      */
     public function check(array $params)
     {
-        return true;
+        $topup_order = $params[0];
+        if($topup_order->amount >= $this->value) return true;
+        return false;
     }
 }
