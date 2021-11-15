@@ -4,8 +4,6 @@ use App\Models\Transport\TransportTicketOrder;
 use App\Sheba\InventoryService\Partner\Events\Created;
 use App\Sheba\InventoryService\Partner\Events\Updated;
 use App\Sheba\Payment\Rechargable;
-use App\Sheba\UserMigration\AccountingUserMigration;
-use App\Sheba\UserMigration\UserMigrationRepository;
 use App\Sheba\UserMigration\UserMigrationService;
 use Carbon\Carbon;
 use DB;
