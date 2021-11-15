@@ -2588,6 +2588,12 @@
                 "php",
                 "utf-8"
             ],
+            "funding": [
+                {
+                    "url": "https://www.paypal.me/mpdf",
+                    "type": "custom"
+                }
+            ],
             "time": "2021-05-12T14:18:06+00:00"
         },
         {
@@ -3771,6 +3777,20 @@
                 "png",
                 "png2webp"
             ],
+            "support": {
+                "issues": "https://github.com/rosell-dk/webp-convert/issues",
+                "source": "https://github.com/rosell-dk/webp-convert/tree/2.4.0"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/rosell-dk",
+                    "type": "github"
+                },
+                {
+                    "url": "https://ko-fi.com/rosell",
+                    "type": "ko_fi"
+                }
+            ],
             "time": "2020-11-10T11:24:50+00:00"
         },
         {
@@ -4004,6 +4024,12 @@
                 "fpdf",
                 "fpdi",
                 "pdf"
+            ],
+            "funding": [
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/setasign/fpdi",
+                    "type": "tidelift"
+                }
             ],
             "time": "2021-02-11T11:37:01+00:00"
         },
@@ -7052,5 +7078,6 @@
         "ext-mysql_xdevapi": "*",
         "ext-intl": "*"
     },
-    "platform-dev": []
+    "platform-dev": [],
+    "plugin-api-version": "1.1.0"
 }

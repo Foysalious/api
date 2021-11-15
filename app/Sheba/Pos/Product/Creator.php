@@ -41,12 +41,10 @@ class Creator
         $this->data['pos_category_id'] = $this->data['category_id'];
         $this->data['cost'] = (double)$this->data['cost'];
         $this->format();
-        $image_gallery = null;
-        if (isset($this->data['image_gallery']))
-            $image_gallery = $this->data['image_gallery'];
         $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'image_gallery']);
         $partner_pos_service = $this->serviceRepo->save($this->data + (new RequestIdentification())->get());
-        $this->storeImageGallery($partner_pos_service, json_decode($image_gallery,true));
+        if (isset($this->data['image_gallery']))
+            $this->storeImageGallery($partner_pos_service, json_decode($this->data['image_gallery'],true));
         return $partner_pos_service;
     }
 
