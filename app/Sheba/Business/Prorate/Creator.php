@@ -55,7 +55,7 @@ class Creator
                 'leave_type_id' => $this->requester->getLeaveTypeId(),
                 'total_days' => $this->requester->getTotalDays(),
                 'note' => $this->requester->getNote(),
-                'is_auto_prorated' => $this->requester->getIsAutoProrated()
+                'is_auto_prorated' => $this->requester->getIsAutoProrated() ?: 0
             ];
         }
         $this->businessMemberLeaveTypeRepo->insert($this->data);
