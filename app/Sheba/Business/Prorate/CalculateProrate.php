@@ -72,7 +72,8 @@ class CalculateProrate
         if ((isset($business_member_leave_type) && $business_member_leave_type->total_days == $prorated_days)) return false;
         $this->prorateRequester->setTotalDays($prorated_days)
             ->setLeaveTypeId($leave_type_id)
-            ->setNote(self::AUTO_PRORATE_NOTE);
+            ->setNote(self::AUTO_PRORATE_NOTE)
+            ->setIsAutoProrated(1);
         if (!$business_member_leave_type) {
             $this->prorateRequester->setBusinessMemberIds([$business_member_id]);
             $this->prorateCreator->setRequester($this->prorateRequester)->create();
