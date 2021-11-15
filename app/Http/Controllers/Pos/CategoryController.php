@@ -58,7 +58,7 @@ class CategoryController extends Controller
                         ->with(['services' => function ($service_query) use ($service_where_query, $updated_after_clause) {
                             $service_query->where($service_where_query);
 
-                            $service_query->with(['discounts' => function ($discounts_query) use ($updated_after_clause) {
+                            $service_query->with(['imageGallery','discounts' => function ($discounts_query) use ($updated_after_clause) {
                                 $discounts_query->runningDiscounts()
                                     ->select($this->getSelectColumnsOfServiceDiscount());
 
@@ -79,7 +79,7 @@ class CategoryController extends Controller
             $master_categories->each(function ($category) use ($request, &$all_services, &$deleted_services) {
                 $category->children->each(function ($child) use ($request, &$children, &$all_services, &$deleted_services) {
                     array_push($all_services, $child->services->all());
-                    array_push($deleted_services, $child->deletedServices->all());
+                    array_push($deleted_services,$request->has('updated_after') ?  $child->deletedServices->all() : [] );
                 });
                 removeRelationsAndFields($category);
                 if (!empty($all_services)) $all_services = array_merge(... $all_services);
