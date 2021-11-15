@@ -11,8 +11,6 @@ class DynamicSslStore extends SslStore
 {
     use DynamicStore;
 
-    const name = "dynamic";
-
     public function __construct($receiver)
     {
         $this->setPartner($receiver);
