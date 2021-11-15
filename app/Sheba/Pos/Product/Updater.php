@@ -297,6 +297,12 @@ class Updater
         }
 
         $this->batchData['cost'] = isset($this->data['cost']) ? (double)$this->data['cost'] : (double)$this->service->getLastCost();
+        $cloned_data = $this->data;
+        if(isset($cloned_data['accounting_info']) && !empty($cloned_data['accounting_info'])) {
+            $accounting_data = (array) (json_decode($cloned_data['accounting_info']));
+            $this->batchData['from_account'] = $accounting_data['from_account'];
+            $this->batchData['supplier_id'] = $accounting_data['supplier_id'] ?? null;
+        }
     }
 
     private function deleteBatchesFifo()
