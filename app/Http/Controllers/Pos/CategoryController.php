@@ -17,7 +17,9 @@ class CategoryController extends Controller
     {
         ini_set('memory_limit', '2048M');
         try {
-            $partner = $request->partner;
+            $partner = $request->partner->load(['posServices' => function($q){
+                $q->published();
+            }]);
             $total_items = 0.00;
             $total_buying_price = 0.00;
 
@@ -50,8 +52,8 @@ class CategoryController extends Controller
 
             $partner_categories = $this->getPartnerCategories($partner);
 
-            $master_categories = PosCategory::whereIn('id', $partner_categories)->select($this->getSelectColumnsOfCategory())->get()
-                ->load(['children' => function ($q) use ($request, $service_where_query, $deleted_service_where_query, $updated_after_clause, $deleted_after_clause) {
+            $master_categories = PosCategory::whereIn('id', $partner_categories)->select($this->getSelectColumnsOfCategory())
+                ->with(['children' => function ($q) use ($request, $service_where_query, $deleted_service_where_query, $updated_after_clause, $deleted_after_clause) {
                     $q->whereHas('services', $service_where_query)
                         ->with(['services' => function ($service_query) use ($service_where_query, $updated_after_clause) {
                             $service_query->where($service_where_query);
@@ -69,7 +71,7 @@ class CategoryController extends Controller
                             $deleted_service_query->where($deleted_after_clause)->where($deleted_service_where_query)->select($this->getSelectColumnsOfDeletedService());
                         }]);
                     }
-                }]);
+                }])->get();
 
             $all_services = [];
             $deleted_services = [];
@@ -134,10 +136,10 @@ class CategoryController extends Controller
     private function getPartnerCategories(Partner $partner)
     {
         $masters = [];
-        $children = array_unique($partner->posServices()->published()->pluck('pos_category_id')->toArray());
-        PosCategory::whereIn('id',$children)->get()->each(function($child) use(&$masters){
-            if($child->parent()->first())
-                array_push($masters,$child->parent()->first()->id);
+        $children = array_unique($partner->posServices->pluck('pos_category_id')->toArray());
+        PosCategory::whereIn('id',$children)->with('parent')->get()->each(function($child) use(&$masters){
+            if($child->parent)
+                array_push($masters,$child->parent->id);
         });
         return array_unique($masters);
 
