@@ -3,6 +3,7 @@
 namespace Sheba\Payment\Methods\Ssl\Stores;
 
 use Sheba\Payment\Exceptions\StoreNotFoundException;
+use Sheba\Payment\Factory\PaymentStrategy;
 use Sheba\Payment\Methods\DynamicStore;
 use Sheba\Payment\Methods\DynamicStoreConfiguration;
 
@@ -34,6 +35,7 @@ class DynamicSslStore extends SslStore
 
     public function getName()
     {
-        // TODO: Implement getName() method.
+        $storeAccount        = $this->getStoreAccount(PaymentStrategy::SSL);
+        return $storeAccount->name;
     }
 }
