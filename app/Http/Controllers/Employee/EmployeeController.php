@@ -191,8 +191,7 @@ class EmployeeController extends Controller
         $pending_approval_requests_count = $this->approvalRequestRepo->countPendingLeaveApprovalRequests($business_member);
         $profile_completion_score = $completion_calculator->setBusinessMember($business_member)->getDigiGoScore();
 
-        $pending_visit = $visit_repository->where('visitor_id', $business_member->id)
-            ->whereIn('status', [Status::STARTED, Status::REACHED]);
+        $pending_visit = $visit_repository->where('visitor_id', $business_member->id)->whereIn('status', [Status::CREATED, Status::STARTED, Status::RESCHEDULED]);
         $all_pending_visit_count = $pending_visit->count();
 
         $today = Carbon::now()->format('Y-m-d');
