@@ -392,6 +392,13 @@ class BusinessRoute
                     $api->post('show-tax-report-download-banner', 'B2b\TaxHistoryController@updateReportShowBanner');
                     $api->get('download-tax-certificate/{business_member_id}/tax-report/{id}', 'B2b\TaxHistoryController@downloadBusinessMemberTaxCertificate');
                 });
+                $api->group(['prefix' => 'employee-visit'], function ($api) {
+                    $api->post('settings', 'B2b\VisitSettingController@settings');
+                    $api->get('settings', 'B2b\VisitSettingController@getSettings');
+                    $api->get('team-visits', 'B2b\VisitController@getTeamVisits');
+                    $api->get('my-visits', 'B2b\VisitController@getMyVisits');
+                    $api->get('/{id}', 'B2b\VisitController@show');
+                });
             });
         });
         $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {
