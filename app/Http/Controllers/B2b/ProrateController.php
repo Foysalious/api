@@ -2,7 +2,10 @@
 
 use App\Models\Business;
 use App\Models\BusinessDepartment;
+use App\Models\BusinessMember;
 use App\Models\Member;
+use App\Sheba\Business\Prorate\RunProrateOnActiveLeaveTypes;
+use App\Sheba\Business\Prorate\AutoProrateCalculator;
 use Illuminate\Http\JsonResponse;
 use Sheba\Business\Prorate\Updater;
 use Sheba\Dal\BusinessMemberLeaveType\Contract as BusinessMemberLeaveTypeInterface;
@@ -204,5 +207,21 @@ class ProrateController extends Controller
         if($not_found_counter === $total_prorate) return api_response($request, null, 404, ['message' => 'No prorates found']);
         $message = $not_found_counter > 0 ? 'One or more prorates not found.' : 'Successful';
         return api_response($request, null, 200, ['message' => $message]);
+    }
+
+    public function runAutoProrate(Request $request, AutoProrateCalculator $auto_prorate_calculator)
+    {
+        $this->validate($request, [
+            'is_prorated' => 'required|string'
+        ]);
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 420);
+        if ($request->is_prorated === 'no') return api_response($request, null, 200, ['message' => 'User does not want to prorate']);
+        $business = $business_member->business;
+        if (!$business->is_leave_prorate_enable) return api_response($request, null, 200, ['message' => 'Leave Prorate is deactivated for this business.']);
+        $run_prorate_on_active_leaves = new RunProrateOnActiveLeaveTypes();
+        $run_prorate_on_active_leaves->setBusiness($business)->run();
+        return api_response($request, null, 200);
     }
 }

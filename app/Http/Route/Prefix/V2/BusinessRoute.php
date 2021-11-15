@@ -159,9 +159,11 @@ class BusinessRoute
                         $api->post('/', 'B2b\ProrateController@store');
                         $api->get('/', 'B2b\ProrateController@index');
                         $api->post('/delete', 'B2b\ProrateController@delete');
+                        $api->post('/run-prorate', 'B2b\ProrateController@runAutoProrate');
                         $api->group(['prefix' => '{prorate}'], function ($api) {
                             $api->post('/', 'B2b\ProrateController@edit');
                         });
+
                     });
                 });
                 $api->group(['prefix' => 'orders'], function ($api) {
