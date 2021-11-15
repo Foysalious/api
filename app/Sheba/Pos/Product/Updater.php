@@ -93,11 +93,11 @@ class Updater
         $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'is_vat_percentage_off', 'is_stock_off', 'image_gallery','accounting_info']);
         if (!empty($this->updatedData)) $this->updatedData = array_except($this->updatedData, 'image_gallery');
 
-        $lastBatchData = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->latest()->first();
-        $this->setOldCost($lastBatchData->cost);
-        $this->setOldStock($lastBatchData->stock);
-
-
+        if($this->service->partner->isMigratedToAccounting()) {
+            $lastBatchData = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->latest()->first();
+            $this->setOldCost($lastBatchData->cost);
+            $this->setOldStock($lastBatchData->stock);
+        }
         if (!empty($this->updatedData)) {
             $old_service = clone $this->service;
             $this->serviceRepo->update($this->service, $this->updatedData);

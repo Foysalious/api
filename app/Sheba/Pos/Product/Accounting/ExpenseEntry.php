@@ -117,38 +117,36 @@ class ExpenseEntry
     {
         if($this->isUpdate) {
             $negativeEntryData = $this->makeNegativeEntryData();
-            $this->accountingRepo->storeEntry($negativeEntryData, EntryTypes::INVENTORY);
+            $this->accountingRepo->storeEntry((object)$negativeEntryData, EntryTypes::INVENTORY);
         }
         $data = $this->makeData();
-        $this->accountingRepo->storeEntry($data, EntryTypes::INVENTORY);
+        $this->accountingRepo->storeEntry((object)$data, EntryTypes::INVENTORY);
     }
 
     private function makeData()
     {
-        $data = collect();
-        $data->partner              = $this->partner;
-        $data->amount               = $this->stock * $this->costPerUnit;
-        $data->from_account_key     = $this->accountingInfo['from_account'];
-        $data->to_account_key       = $this->id;
-        $data->customer_id          = $this->accountingInfo['supplier_id'] ?? null;
-        $data->inventory_products   = json_encode([['id' => $this->id, 'unit_price' => $this->costPerUnit, 'name' => $this->name, 'quantity' => $this->stock]]);
-        $data->amount_cleared       = $this->accountingInfo['transaction_type'] == 'due' ?  ($this->accountingInfo['amount_cleared'] ?? 0.0) : $this->stock * $this->costPerUnit;
-        $data->source_id            = null;
+        $data['partner']              = $this->partner;
+        $data['amount']               = $this->stock * $this->costPerUnit;
+        $data['from_account_key']     = $this->accountingInfo['from_account'];
+        $data['to_account_key']       = $this->id;
+        $data['customer_id']          = $this->accountingInfo['supplier_id'] ?? null;
+        $data['inventory_products']   = json_encode([['id' => $this->id, 'unit_price' => $this->costPerUnit, 'name' => $this->name, 'quantity' => $this->stock]]);
+        $data['amount_cleared']       = $this->accountingInfo['transaction_type'] == 'due' ?  $this->accountingInfo['amount_cleared'] : $this->stock * $this->costPerUnit;
+        $data['source_id']            = null;
         return $data;
     }
 
     private function makeNegativeEntryData()
     {
         $lastBatch = PartnerPosServiceBatch::where('partner_pos_service_id', $this->id)->latest()->first();
-        $data = collect();
-        $data->partner              = $this->partner;
-        $data->amount               = $this->oldStock * $this->oldCost;
-        $data->from_account_key     = $this->id;
-        $data->to_account_key       = $lastBatch->from_account;
-        $data->customer_id          = $lastBatch->supplier_id ?? null;
-        $data->inventory_products   = json_encode([['id' => $this->id, 'unit_price' => $this->oldCost, 'name' => $this->name, 'quantity' => $this->oldStock]]);
-        $data->amount_cleared       = $this->oldStock * $this->oldCost;
-        $data->source_id            = null;
+        $data['partner']              = $this->partner;
+        $data['amount']               = $this->oldStock * $this->oldCost;
+        $data['from_account_key']     = $this->id;
+        $data['to_account_key']       = $lastBatch->from_account;
+        $data['customer_id']          = $lastBatch->supplier_id ?? null;
+        $data['inventory_products']   = json_encode([['id' => $this->id, 'unit_price' => $this->oldCost, 'name' => $this->name, 'quantity' => $this->oldStock]]);
+        $data['amount_cleared']       = $this->oldStock * $this->oldCost;
+        $data['source_id']            = null;
         return $data;
     }
 
