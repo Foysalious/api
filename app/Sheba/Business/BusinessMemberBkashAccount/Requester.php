@@ -52,7 +52,7 @@ class Requester
 
     public function setBkashNumber($bkash_number)
     {
-        $this->bkashNumber = $bkash_number;
+        $this->bkashNumber = formatMobile($bkash_number);
         return $this;
     }
 

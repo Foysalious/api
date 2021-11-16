@@ -133,8 +133,9 @@ class Cors2MiddleWare
         $headers['Access-Control-Allow-Headers']     = 'Content-Type, X-Auth-Token, Origin, Authorization, X-Requested-With, Portal-Name, User-Id';
         $headers['Access-Control-Allow-Origin']      = '*';
         if (!in_array($request->server('HTTP_ORIGIN'), $domains)) {
-            $ids = app(PartnerWebstoreDomainInfo::class)->pluck('domain_name')->all();
-            if (!in_array(preg_replace('/^https:\/\/|^http:\/\//','',$request->server('HTTP_ORIGIN')), $ids)) {
+            $domain_name=preg_replace('/^https:\/\/|^http:\/\//','',$request->server('HTTP_ORIGIN'));
+            $exists = app(PartnerWebstoreDomainInfo::class)->where('domain_name',$domain_name)->first();
+            if (empty($exists)) {
                 return response()->json(['message' => 'Unauthorized domain : ' . $request->server('HTTP_ORIGIN'), 'code' => 401])->withHeaders($headers);
             }
         }
