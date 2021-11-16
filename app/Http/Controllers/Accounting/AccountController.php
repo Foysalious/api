@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers\Accounting;
 
+use App\Exceptions\DoNotReportException;
 use Exception;
 use App\Http\Controllers\Controller;
-use Sheba\AccountingEntry\Repository\UserAccountRepository;
+use App\Sheba\AccountingEntry\Repository\UserAccountRepository;
 use Illuminate\Http\Request;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use \Illuminate\Http\JsonResponse;
 
 class AccountController extends Controller
 {
@@ -16,135 +19,93 @@ class AccountController extends Controller
         $this->accountRepo = $accountRepo;
     }
 
-    public function getAccountTypeList(Request $request)
+    /**
+     * @throws AccountingEntryServerError
+     */
+    public function getAccountTypeList(Request $request): JsonResponse
     {
-        try {
-            $response = $this->accountRepo->getAccountType($request->partner->id, $request->all());
-            return api_response($request, $response, 200, ['data' => $response]);
-        } catch (Exception $e) {
-            return api_response(
-                $request,
-                null,
-                $e->getCode() == 0 ? 400 : $e->getCode(),
-                ['message' => $e->getMessage()]
-            );
-        }
+        $response = $this->accountRepo->getAccountType($request->partner->id, $request->all());
+        return api_response($request, $response, 200, ['data' => $response]);
     }
 
-    public function getAccountList(Request $request)
+    /**
+     * @throws AccountingEntryServerError
+     */
+    public function getAccountList(Request $request): JsonResponse
     {
-        try {
-            $response = $this->accountRepo->getAccounts($request->partner->id, $request->all());
-            return api_response($request, $response, 200, ['data' => $response]);
-        } catch (Exception $e) {
-            return api_response(
-                $request,
-                null,
-                $e->getCode() == 0 ? 400 : $e->getCode(),
-                ['message' => $e->getMessage()]
-            );
-        }
+        $response = $this->accountRepo->getAccounts($request->partner->id, $request->all());
+        return api_response($request, $response, 200, ['data' => $response]);
     }
 
-    public function getCashAccountList(Request $request)
+    /**
+     * @throws AccountingEntryServerError
+     */
+    public function getCashAccountList(Request $request): JsonResponse
     {
-        try {
-            $response = $this->accountRepo->getCashAccounts($request->partner->id);
-            return api_response($request, $response, 200, ['data' => $response]);
-        } catch (Exception $e) {
-            return api_response(
-                $request,
-                null,
-                $e->getCode() == 0 ? 400 : $e->getCode(),
-                ['message' => $e->getMessage()]
-            );
-        }
+        $response = $this->accountRepo->getCashAccounts($request->partner->id);
+        return api_response($request, $response, 200, ['data' => $response]);
     }
 
-    public function createAccount(Request $request)
+    /**
+     * @throws AccountingEntryServerError
+     */
+    public function createAccount(Request $request): JsonResponse
     {
-        try {
-            $this->validate(
-                $request,
-                [
-                    'name' => 'required|string',
-                    'name_bn' => 'required|string',
-                    'root_account' => 'required|string',
-                    'account_type' => 'required|string',
-                    'icon' => 'string',
-                    'opening_balance' => 'numeric',
-                    'balance_type' => 'required_with:opening_balance|in:positive,negative'
-                ]
-            );
+        $this->validate(
+            $request,
+            [
+                'name' => 'required|string',
+                'name_bn' => 'required|string',
+                'root_account' => 'required|string',
+                'account_type' => 'required|string',
+                'icon' => 'string',
+                'opening_balance' => 'numeric',
+                'balance_type' => 'required_with:opening_balance|in:positive,negative'
+            ]
+        );
 
-            $response = $this->accountRepo
-                ->setName($request->name)
-                ->setNameBn($request->name_bn)
-                ->setRootAccount($request->root_account)
-                ->setAccountType($request->account_type)
-                ->setIcon($request->icon)
-                ->setOpeningBalance($request->opening_balance)
-                ->setBalanceType($request->balance_type)
-                ->storeAccount($request->partner->id);
-            return api_response($request, $response, 200, ['data' => $response]);
-        } catch (Exception $e) {
-            return api_response(
-                $request,
-                null,
-                $e->getCode() == 0 ? 400 : $e->getCode(),
-                ['message' => $e->getMessage()]
-            );
-        }
+        $response = $this->accountRepo
+            ->setName($request->name)
+            ->setNameBn($request->name_bn)
+            ->setRootAccount($request->root_account)
+            ->setAccountType($request->account_type)
+            ->setIcon($request->icon)
+            ->setOpeningBalance($request->opening_balance)
+            ->setBalanceType($request->balance_type)
+            ->storeAccount($request->partner->id);
+        return api_response($request, $response, 200, ['data' => $response]);
     }
 
-    public function updateAccount($accountId, Request $request)
+    /**
+     * @throws AccountingEntryServerError
+     */
+    public function updateAccount($accountId, Request $request): JsonResponse
     {
-        try {
-            $this->validate(
-                $request,
-                [
-                    'name' => 'required|string',
-                    'name_bn' => 'required|string',
-                    'icon' => 'string'
-                ]
-            );
-            $response = $this->accountRepo
-                ->setName($request->name)
-                ->setNameBn($request->name_bn)
-                ->setIcon($request->icon)
-                ->updateAccount($accountId, $request->partner->id);
-            return api_response($request, $response, 200, ['data' => $response]);
-        } catch (Exception $e) {
-            return api_response(
-                $request,
-                null,
-                $e->getCode() == 0 ? 400 : $e->getCode(),
-                ['message' => $e->getMessage()]
-            );
-        }
+        $this->validate(
+            $request,
+            [
+                'name' => 'required|string',
+                'name_bn' => 'required|string',
+                'icon' => 'string'
+            ]
+        );
+        $response = $this->accountRepo
+            ->setName($request->name)
+            ->setNameBn($request->name_bn)
+            ->setIcon($request->icon)
+            ->updateAccount($accountId, $request->partner->id);
+        return api_response($request, $response, 200, ['data' => $response]);
     }
 
-    public function deleteAccount($accountId, Request $request)
+    /**
+     * @throws AccountingEntryServerError|DoNotReportException
+     */
+    public function deleteAccount($accountId, Request $request): JsonResponse
     {
-        try {
-            $response = $this->accountRepo->deleteAccount($accountId, $request->partner->id);
-            return response()->json(
-                [
-                    "code" => 200,
-                    "message" => $response
-                ]
-            );
-        } catch (Exception $e) {
-            $message = $e->getMessage();
-            if(is_numeric($e->getMessage())) {
-                $message = "উপরোক্ত অ্যাকাউন্টটি ". en2bnNumber($e->getMessage())."টি লেনদেনের সাথে জড়িত থাকায় ডিলিট করা সম্ভব নয়।";
-            }
-            return api_response(
-                $request,
-                null,
-                $e->getCode() == 0 ? 400 : $e->getCode(),
-                ['message' => $message]
-            );
+        $response = $this->accountRepo->deleteAccount($accountId, $request->partner->id);
+        if (is_numeric($response)) {
+            throw new DoNotReportException("উপরোক্ত অ্যাকাউন্টটি " . en2bnNumber($response) . "টি লেনদেনের সাথে জড়িত থাকায় ডিলিট করা সম্ভব নয়।", 401);
         }
+        return api_response($request, $response, 200, ['data' => $response]);
     }
 }

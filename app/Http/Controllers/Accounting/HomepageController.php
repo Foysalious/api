@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 
 class HomepageController extends Controller
 {
@@ -18,53 +19,34 @@ class HomepageController extends Controller
     }
 
     /**
-     * @param Request $request
-     * @return JsonResponse
+     * @throws AccountingEntryServerError
      */
     public function getAssetAccountBalance(Request $request): JsonResponse
     {
-        try {
-            $response = $this->homepageRepo->getAssetBalance($request->partner->id);
-            return api_response($request, $response, 200, ['data' => $response]);
-        } catch (Exception $e) {
-            return api_response(
-                $request,
-                null,
-                $e->getCode() == 0 ? 400 : $e->getCode(),
-                ['message' => $e->getMessage()]
-            );
-        }
+        $response = $this->homepageRepo->getAssetBalance($request->partner->id);
+        return api_response($request, $response, 200, ['data' => $response]);
+
     }
 
     /**
-     * @param Request $request
-     * @return JsonResponse
+     * @throws AccountingEntryServerError
      */
     public function getIncomeExpenseBalance(Request $request): JsonResponse
     {
         $startDate = $this->convertStartDate($request->start_date);
         $endDate = $this->convertEndDate($request->end_date);
 
-        if ($endDate < $startDate){
-            return api_response($request,null, 400, ['message' => 'End date can not smaller than start date']);
+        if ($endDate < $startDate) {
+            return api_response($request, null, 400, ['message' => 'End date can not smaller than start date']);
         }
+        $response = $this->homepageRepo->getIncomeExpenseBalance($request->partner->id, $startDate, $endDate);
+        return api_response($request, $response, 200, ['data' => $response]);
 
-        try {
-            $response = $this->homepageRepo->getIncomeExpenseBalance($request->partner->id, $startDate, $endDate);
-            return api_response($request, $response, 200, ['data' => $response]);
-        } catch (Exception $e) {
-            return api_response(
-                $request,
-                null,
-                $e->getCode() == 0 ? 400 : $e->getCode(),
-                ['message' => $e->getMessage()]
-            );
-        }
     }
 
+
     /**
-     * @param Request $request
-     * @return JsonResponse
+     * @throws AccountingEntryServerError
      */
     public function getIncomeExpenseEntries(Request $request): JsonResponse
     {
@@ -73,114 +55,72 @@ class HomepageController extends Controller
         $startDate = $request->has('start_date') ? $this->convertStartDate($request->start_date) : null;
         $endDate = $request->has('start_date') ? $this->convertEndDate($request->end_date) : null;
         $sourceType = $request->has('source_type') ? $request->source_type : null;
-
-        try {
-            $response = $this->homepageRepo->getIncomeExpenseEntries($request->partner->id, $limit, $nextCursor, $startDate, $endDate, $sourceType);
-            return api_response($request, $response, 200, ['data' => $response]);
-        } catch (Exception $e) {
-            return api_response(
-                $request,
-                null,
-                $e->getCode() == 0 ? 400 : $e->getCode(),
-                ['message' => $e->getMessage()]
-            );
-        }
+        $response = $this->homepageRepo->getIncomeExpenseEntries($request->partner->id, $limit, $nextCursor, $startDate, $endDate, $sourceType);
+        return api_response($request, $response, 200, ['data' => $response]);
     }
 
     /**
      * @param $accountKey
      * @param Request $request
      * @return JsonResponse
+     * @throws AccountingEntryServerError
      */
     public function getEntriesByAccountKey($accountKey, Request $request): JsonResponse
     {
         $limit = $request->limit ?? 15;
         $nextCursor = $request->next_cursor ?? null;
-        try {
-            $response = $this->homepageRepo->getEntriesByAccountKey($accountKey, $request->partner->id, $limit, $nextCursor);
-            return api_response($request, $response, 200, ['data' => $response]);
-        } catch (Exception $e) {
-            return api_response(
-                $request,
-                null,
-                $e->getCode() == 0 ? 400 : $e->getCode(),
-                ['message' => $e->getMessage()]
-            );
-        }
+
+        $response = $this->homepageRepo->getEntriesByAccountKey($accountKey, $request->partner->id, $limit, $nextCursor);
+        return api_response($request, $response, 200, ['data' => $response]);
     }
 
     /**
      * @param Request $request
      * @return JsonResponse
+     * @throws AccountingEntryServerError
      */
-    public function getDueCollectionBalance(Request $request):JsonResponse
+    public function getDueCollectionBalance(Request $request): JsonResponse
     {
         $startDate = $this->convertStartDate($request->start_date);
         $endDate = $this->convertEndDate($request->end_date);
-        if ($endDate < $startDate){
-            return api_response($request,null, 400, ['message' => 'End date can not smaller than start date']);
+        if ($endDate < $startDate) {
+            return api_response($request, null, 400, ['message' => 'End date can not smaller than start date']);
         }
 
-        try {
-            $response = $this->homepageRepo->getDueCollectionBalance($request->partner->id, $startDate, $endDate);
-            return api_response($request, $response, 200, ['data' => $response]);
-        } catch (Exception $e) {
-            return api_response(
-                $request,
-                null,
-                $e->getCode() == 0 ? 400 : $e->getCode(),
-                ['message' => $e->getMessage()]
-            );
-        }
+        $response = $this->homepageRepo->getDueCollectionBalance($request->partner->id, $startDate, $endDate);
+        return api_response($request, $response, 200, ['data' => $response]);
     }
 
+
     /**
-     * @param Request $request
-     * @return JsonResponse
+     * @throws AccountingEntryServerError
      */
-    public function getAccountListBalance(Request $request)
+    public function getAccountListBalance(Request $request): JsonResponse
     {
         $startDate = $request->has('start_date') ? $this->convertStartDate($request->start_date) : null;
         $endDate = $request->has('start_date') ? $this->convertEndDate($request->end_date) : null;
         $limit = $request->has('limit') ? $request->limit : null;
         $offset = $request->has('offset') ? $request->offset : null;
         $rootAccount = $request->has('root_account') ? $request->root_account : null;
-        if ($endDate < $startDate){
-            return api_response($request,null, 400, ['message' => 'End date can not smaller than start date']);
+        if ($endDate < $startDate) {
+            return api_response($request, null, 400, ['message' => 'End date can not smaller than start date']);
         }
 
-        try {
-            $response = $this->homepageRepo->getAccountListBalance($request->partner->id, $startDate, $endDate, $limit, $offset, $rootAccount);
-            return api_response($request, $response, 200, ['data' => $response]);
-        } catch (Exception $e) {
-            return api_response(
-                $request,
-                null,
-                $e->getCode() == 0 ? 400 : $e->getCode(),
-                ['message' => $e->getMessage()]
-            );
-        }
+        $response = $this->homepageRepo->getAccountListBalance($request->partner->id, $startDate, $endDate, $limit, $offset, $rootAccount);
+        return api_response($request, $response, 200, ['data' => $response]);
+
     }
 
-    public function getTrainingVideo(Request $request)
+    public function getTrainingVideo(Request $request): JsonResponse
     {
-        try {
-            $response = [
-                'video_key' => "accounting_dashboard",
-                'faq_url' => 'https://faq.sheba.xyz/dummy'
-            ];
-            return api_response($request, $response, 200, ['data' => $response]);
-        } catch (Exception $e) {
-            return api_response(
-                $request,
-                null,
-                $e->getCode() == 0 ? 400 : $e->getCode(),
-                ['message' => $e->getMessage()]
-            );
-        }
+        $response = [
+            'video_key' => "accounting_dashboard",
+            'faq_url' => 'https://faq.sheba.xyz/dummy'
+        ];
+        return api_response($request, $response, 200, ['data' => $response]);
     }
 
-    public function getHomepageReportList(Request $request)
+    public function getHomepageReportList(Request $request): JsonResponse
     {
         $data = [
             [
@@ -205,13 +145,13 @@ class HomepageController extends Controller
                 'key' => 'other_report',
                 'report_bangla_name' => 'অন্যান্য রিপোর্ট',
                 'url' => "",
-                'icon' =>  config('accounting_entry.icon_url') . '/' . 'investments.png'
+                'icon' => config('accounting_entry.icon_url') . '/' . 'investments.png'
             ],
         ];
         return api_response($request, $data, 200, ['data' => $data]);
     }
 
-    public function getTimeFilters(Request $request)
+    public function getTimeFilters(Request $request): JsonResponse
     {
         Carbon::setWeekStartsAt(Carbon::SATURDAY);
         Carbon::setWeekEndsAt(Carbon::FRIDAY);
@@ -232,8 +172,8 @@ class HomepageController extends Controller
             [
                 'title' => 'এই সপ্তাহ (' .
                     convertNumbersToBangla($startOfWeek->day, false) .
-                    ($startOfWeek->month === $endOfWeek->month ? '' : banglaMonth($startOfWeek->month)). ' - ' .
-                    convertNumbersToBangla($endOfWeek->day, false) .' '.
+                    ($startOfWeek->month === $endOfWeek->month ? '' : banglaMonth($startOfWeek->month)) . ' - ' .
+                    convertNumbersToBangla($endOfWeek->day, false) . ' ' .
                     banglaMonth($endOfWeek->month) . ')',
                 'start_date' => $startOfWeek->format('Y-m-d'),
                 'end_date' => $endOfWeek->format('Y-m-d'),
@@ -244,7 +184,7 @@ class HomepageController extends Controller
                 'end_date' => $endOfMonth->format('Y-m-d'),
             ],
             [
-                'title' => 'এই কোয়ার্টার (' . banglaMonth($startOfQuarter->month) .' - '. banglaMonth($endOfQuarter->month) .')',
+                'title' => 'এই কোয়ার্টার (' . banglaMonth($startOfQuarter->month) . ' - ' . banglaMonth($endOfQuarter->month) . ')',
                 'start_date' => $startOfQuarter->format('Y-m-d'),
                 'end_date' => $endOfQuarter->format('Y-m-d'),
             ],
@@ -257,13 +197,15 @@ class HomepageController extends Controller
         return api_response($request, null, 200, ['data' => $response]);
     }
 
-    private function convertStartDate($date) {
+    private function convertStartDate($date)
+    {
         return $date ?
             Carbon::createFromFormat('Y-m-d H:i:s', $date . ' 0:00:00')->timestamp :
             strtotime('1 January 1971');
     }
 
-    private function convertEndDate($date) {
+    private function convertEndDate($date)
+    {
         return $date ?
             Carbon::createFromFormat('Y-m-d H:i:s', $date . ' 23:59:59')->timestamp :
             strtotime('tomorrow midnight') - 1;
