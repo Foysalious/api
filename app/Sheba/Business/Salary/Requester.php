@@ -21,10 +21,11 @@ class Requester
     private $managerMember;
     private $breakdownPercentage;
     private $removeOverwritten;
+    private $isBulkGrossSalary;
 
     public function __construct(BusinessMemberRepositoryInterface $business_member_repository,
-                                CoWorkerSalaryCreator $salary_creator,
-                                CoWorkerSalaryUpdater $salary_updater)
+                                CoWorkerSalaryCreator             $salary_creator,
+                                CoWorkerSalaryUpdater             $salary_updater)
     {
         $this->businessMemberRepository = $business_member_repository;
         $this->creator = $salary_creator;
@@ -105,6 +106,17 @@ class Requester
     public function getManagerMember()
     {
         return $this->managerMember;
+    }
+
+    public function setIsForBulkGrossSalary($is_bulk_gross_salary)
+    {
+        $this->isBulkGrossSalary = $is_bulk_gross_salary;
+        return $this;
+    }
+
+    public function getIsForBulkGrossSalary()
+    {
+        return $this->isBulkGrossSalary;
     }
 
     public function createOrUpdate()

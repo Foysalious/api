@@ -97,6 +97,10 @@ class BusinessRoute
                     $api->post('/invite', 'B2b\CoWorkerInviteController@sendInvitation');
                     $api->post('/single-invite', 'B2b\CoWorkerInviteController@sendSingleInvitation');
                     $api->get('/report', 'B2b\CoWorkerController@downloadEmployeesReport');
+                    $api->get('/gross-salary-report', 'B2b\CoWorkerGrossSalaryController@grossSalaryReport');
+                    $api->post('/gross-salary-upload', 'B2b\CoWorkerGrossSalaryController@bulkGrossSalaryUpload');
+                    $api->get('/bkash-number-report', 'B2b\CoWorkerBkashController@bulkBakshInfoReport');
+                    $api->post('/bkash-number-upload', 'B2b\CoWorkerBkashController@bulkBakshInfoUpload');
                     $api->group(['prefix' => '{employee}'], function ($api) {
                         $api->post('/basic-info', 'B2b\CoWorkerController@basicInfoEdit');
                         $api->post('/official-info', 'B2b\CoWorkerController@officialInfoEdit');
@@ -369,6 +373,7 @@ class BusinessRoute
                     $api->get('/pending-months','B2b\PayRunController@pendingMonths');
                 });
                 $api->group(['prefix' => 'pay-report'], function ($api) {
+                    $api->get('/bkash-salary-report','B2b\PayReportController@bkashSalaryReport');
                     $api->get('/', 'B2b\PayReportController@index');
                     $api->get('/last-disbursed-month', 'B2b\PayReportController@lastDisbursedMonth');
                     $api->get('/{id}', 'B2b\PayReportController@show');
@@ -386,6 +391,13 @@ class BusinessRoute
                     $api->get('/tax-report', 'B2b\TaxHistoryController@index');
                     $api->post('show-tax-report-download-banner', 'B2b\TaxHistoryController@updateReportShowBanner');
                     $api->get('download-tax-certificate/{business_member_id}/tax-report/{id}', 'B2b\TaxHistoryController@downloadBusinessMemberTaxCertificate');
+                });
+                $api->group(['prefix' => 'employee-visit'], function ($api) {
+                    $api->post('settings', 'B2b\VisitSettingController@settings');
+                    $api->get('settings', 'B2b\VisitSettingController@getSettings');
+                    $api->get('team-visits', 'B2b\VisitController@getTeamVisits');
+                    $api->get('my-visits', 'B2b\VisitController@getMyVisits');
+                    $api->get('/{id}', 'B2b\VisitController@show');
                 });
             });
         });
