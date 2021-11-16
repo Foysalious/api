@@ -14,7 +14,7 @@ class DeliveryRoute
         $api->group(['prefix' => 'pos/delivery', 'middleware' => ['accessToken']], function ($api) {
             $api->get('register', 'Pos\\DeliveryController@getInfoForRegistration');
             $api->post('register', 'Pos\\DeliveryController@register');
-            $api->get('/orders/{order_id}', 'Pos\\DeliveryController@getOrderInformation');
+            $api->get('/order-information/{order_id}', 'Pos\\DeliveryController@getOrderInformation');
             $api->get('delivery-status', 'Pos\\DeliveryController@getDeliveryStatus');
             $api->post('cancel-order', 'Pos\\DeliveryController@cancelOrder');
             $api->post('orders', 'Pos\\DeliveryController@orderPlace');
