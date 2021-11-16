@@ -124,7 +124,7 @@ class Upay extends PaymentMethod
     public function validate(Payment $payment): Payment
     {
         $this->login();
-        $url=`self::VALIDATE_URL${$payment->gateway_transaction_id}`;
+        $url=self::VALIDATE_URL.`${$payment->gateway_transaction_id}`;
         $res = (new UpayClient())->setHeaders($this->headers)->setMethod('GET')->setUrl($url)->call();
         if ($res->hasError()){
             return $this->onValidateFailed($payment,$res);
