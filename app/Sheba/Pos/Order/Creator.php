@@ -177,14 +177,14 @@ class Creator
                 $payment_data['method'] = $this->data['payment_method'] ?: 'cod';
                 $this->paymentCreator->credit($payment_data);
             }
-
+            $order = $order->calculate();
             $this->discountHandler->setOrder($order)->setType(DiscountTypes::ORDER)->setData($this->data);
             if ($this->discountHandler->hasDiscount()) $this->discountHandler->create($order);
-            $order = $order->calculate();
             $this->voucherCalculation($order);
+            DB::commit();
             $this->resolvePaymentMethod();
             $this->storeIncome($order);
-            DB::commit();
+
             return $order;
 
         } catch (Throwable $e) {
