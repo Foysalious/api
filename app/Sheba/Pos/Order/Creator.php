@@ -178,10 +178,9 @@ class Creator
                 $this->paymentCreator->credit($payment_data);
             }
 
-            $order = $order->calculate();
             $this->discountHandler->setOrder($order)->setType(DiscountTypes::ORDER)->setData($this->data);
             if ($this->discountHandler->hasDiscount()) $this->discountHandler->create($order);
-
+            $order = $order->calculate();
             $this->voucherCalculation($order);
             $this->resolvePaymentMethod();
             $this->storeIncome($order);
