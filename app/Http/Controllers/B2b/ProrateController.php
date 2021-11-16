@@ -1,12 +1,15 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Models\Business;
-use App\Models\BusinessDepartment;
 use App\Models\BusinessMember;
 use App\Models\Member;
 use App\Sheba\Business\Prorate\RunProrateOnActiveLeaveTypes;
 use App\Sheba\Business\Prorate\AutoProrateCalculator;
+use App\Transformers\Business\BusinessMemberLeaveProrateTransformer;
 use Illuminate\Http\JsonResponse;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
+use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Business\Prorate\Updater;
 use Sheba\Dal\BusinessMemberLeaveType\Contract as BusinessMemberLeaveTypeInterface;
 use Sheba\Dal\BusinessMemberLeaveType\Model as BusinessMemberLeaveType;
@@ -53,81 +56,38 @@ class ProrateController extends Controller
     {
         /** @var Business $business */
         $business = $request->business;
-        $business_departments = BusinessDepartment::published()->where('business_id', $business->id)
-            ->select('id', 'business_id', 'name')->get();
-        $department_info = [];
-        foreach ($business_departments as $business_department) {
-            $prorates = $this->businessMemberLeaveTypeRepo->builder()->with([
-                'businessMember' => function ($q) {
-                    $q->select('id', 'member_id', 'employee_id', 'business_role_id')
-                        ->with([
-                            'member' => function ($q) {
-                                $q->select('id', 'profile_id')
-                                    ->with([
-                                        'profile' => function ($q) {
-                                            $q->select('id', 'name', 'pro_pic');
-                                        }]);
-                            },
-                            'role' => function ($q) {
-                                $q->select('business_roles.id', 'business_department_id', 'name')->with([
-                                    'businessDepartment' => function ($q) {
-                                        $q->select('business_departments.id', 'business_id', 'name');
-                                    }
-                                ]);
-                            }
-                        ]);
-                }, 'leaveType' => function ($query) {
-                    $query->withTrashed()->select('id', 'business_id', 'title');
-                }
-            ]);
-            $prorates = $prorates->whereHas('businessMember', function ($q) use ($business_department) {
-                $q->whereHas('role', function ($q) use ($business_department) {
-                    $q->whereHas('businessDepartment', function ($q) use ($business_department) {
-                        $q->where('business_departments.id', $business_department->id);
-                    });
+        list($offset, $limit) = calculatePagination($request);
+        $business_members = $business->getActiveBusinessMember();
+        if ($request->has('department_id')) {
+            $business_members = $business_members->whereHas('role', function ($q) use ($request) {
+                $q->whereHas('businessDepartment', function ($q) use ($request) {
+                    $q->where('business_departments.id', $request->department_id);
                 });
             });
-            $prorates = $prorates->get();
-            $employee_data = [];
-            foreach ($prorates as $prorate) {
-                $business_member = $prorate->businessMember;
-                $member = $business_member->member;
-                $profile = $member->profile;
-
-                array_push($employee_data, [
-                    'id' => $prorate->id,
-                    'employee_id' => $business_member->employee_id,
-                    'business_member_id' => $business_member->id,
-                    'profile' => [
-                        'id' => $profile->id,
-                        'name' => $profile->name,
-                        'pro_pic' => $profile->pro_pic,
-                    ],
-                    'leave_type_id' => $prorate->leaveType->id,
-                    'leave_type' => $prorate->leaveType->title,
-                    'total_days' => $prorate->total_days,
-                    'note' => $prorate->note,
-                    'department' => $business_department->name,
-                ]);
-            }
-            array_push($department_info, [
-                'department_id' => $business_department->id,
-                'department' => $business_department->name,
-                'employees' => $employee_data
-            ]);
         }
-        $department_info = collect($department_info);
-        $department_info = $department_info->filter(function ($employee) use ($request) {
-            return count($employee['employees']) > 0;
-        })->values();
-
-        if ($request->has('department')) {
-            $department_info = $department_info->filter(function ($employee) use ($request) {
-                return $employee['department_id'] == $request->department;
-            })->values();
+        if ($request->has('name')) {
+            $business_members = $business_members->whereHas('member', function ($q) use ($request) {
+                $q->whereHas('profile', function ($q) use ($request) {
+                    $q->where('profiles.name', 'LIKE','%'.$request->name.'%');
+                });
+            });
         }
-
-        return api_response($request, null, 200, ['leave_prorate' => $department_info]);
+        $business_member_ids = $business_members->pluck('id')->toArray();
+        $prorates = $this->businessMemberLeaveTypeRepo->getAllBusinessMemberProratesWithLeaveTypes($business_member_ids);
+        if ($request->has('is_auto_prorated')) {
+            $prorates = $prorates->where('is_auto_prorated', $request->is_auto_prorated);
+        }
+        if ($request->has('sort_column') && $request->sort_column == 'created_at') {
+            $prorates = $prorates->OrderBy($request->sort_column, $request->sort_order);
+        }
+        $manager = new Manager();
+        $manager->setSerializer(new ArraySerializer());
+        $prorates = new Collection($prorates->get(), new BusinessMemberLeaveProrateTransformer());
+        $prorates = collect($manager->createData($prorates)->toArray()['data']);
+        if ($request->has('sort_column') && $request->sort_column !== 'created_at') $prorates = $this->sortByColumn($prorates, $request->sort_column, $request->sort_order)->values();
+        $total_count = count($prorates);
+        $prorates = collect($prorates)->splice($offset, $limit);
+        return api_response($request, null, 200, ['total' => $total_count, 'leave_prorate' => $prorates]);
     }
 
     /**
@@ -243,5 +203,13 @@ class ProrateController extends Controller
         $auto_prorate_calculator = new AutoProrateCalculator();
         $auto_prorate_calculator->setBusiness($business)->setLeaveType($leave_type)->run();
         return api_response($request, null, 200);
+    }
+
+    private function sortByColumn($data, $column, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($data)->$sort_by(function ($value, $key) use ($column) {
+            return strtoupper($value['profile'][$column]);
+        });
     }
 }
