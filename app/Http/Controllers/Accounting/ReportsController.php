@@ -10,7 +10,6 @@ use Illuminate\Validation\ValidationException;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Reports\Accounting\AccountingReportRepository;
 use Sheba\Reports\Pos\PosReportRepository;
-use Sheba\Reports\Accounting\AccountingReportValidation;
 use Throwable;
 
 class ReportsController extends Controller
