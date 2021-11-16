@@ -32,6 +32,7 @@ class VisitDetailsTransformer extends TransformerAbstract
             'assignee_profile' => $assignee ? $this->getEmployeeProfile($assignee) : null,
             'visit_photos' => $this->getVisitPhotos($visit),
             'visit_notes' => $this->getVisitNotes($visit),
+            'current_status_info' => $this->getCurrentStatusInfo($visit),
             'visit_status_change_logs' => $this->getVisitStatusChangeLogs($visit)
         ];
     }
@@ -79,25 +80,18 @@ class VisitDetailsTransformer extends TransformerAbstract
      */
     private function getVisitNotes(Visit $visit)
     {
-        $all_notes = [];
-        $all_visit_notes = $visit->visitNotes()->select('id', 'visit_id', 'note', 'status', 'date')->orderBy('id', 'DESC')->get()->groupBy('status');
+        $notes = [];
+        $visit_notes = $visit->visitNotes()->select('id', 'visit_id', 'note', 'date', 'status')->orderBy('id', 'DESC')->get();
 
-
-        foreach ($all_visit_notes as $status => $visit_notes) {
-            $notes = [];
-            $date = null;
-            foreach ($visit_notes as $visit_note) {
-                $notes [] = $visit_note->note;
-                $date = $visit_note->date->format('h:i A') . " - " . $visit_note->date->format('j M,Y');
-            }
-            $all_notes [] = [
-                'status' => $status,
-                'date' => $date,
-                'notes' => $notes
-            ];
+        foreach ($visit_notes as $visit_note) {
+            array_push($notes, [
+                'date' => $visit_note->date->format('h:i A') . " - " . $visit_note->date->format('j M,Y'),
+                'note' => $visit_note->note,
+                'status' => $visit_note->status
+            ]);
         }
 
-        return $all_notes ?: null;
+        return $notes ?: null;
     }
 
     /**
@@ -134,5 +128,20 @@ class VisitDetailsTransformer extends TransformerAbstract
         if ($status === Status::RESCHEDULED) return 'Visit Rescheduled';
         if ($status === Status::CANCELLED) return 'Cancelled Visit';
         if ($status === Status::COMPLETED) return 'Completed Visit';
+    }
+
+    /**
+     * @param Visit $visit
+     * @return string|null
+     */
+    private function getCurrentStatusInfo(Visit $visit)
+    {
+        if ($visit->status === Status::STARTED) {
+            return 'Enroute to location';
+        } else if ($visit->status === Status::REACHED) {
+            return 'Currently in the destination';
+        } else {
+            return null;
+        }
     }
 }

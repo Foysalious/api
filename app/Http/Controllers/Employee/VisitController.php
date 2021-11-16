@@ -16,6 +16,8 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Dal\Visit\Status;
 use Sheba\Dal\Visit\VisitRepository;
+use Sheba\Dal\VisitPhoto\VisitPhoto;
+use Sheba\Dal\VisitPhoto\VisitPhotoRepository;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 use Sheba\Business\EmployeeTracking\Visit\VisitList;
@@ -46,8 +48,10 @@ class VisitController extends Controller
     {
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
-        $managers_data = (new ManagerSubordinateEmployeeList())->get($business_member);
-        return api_response($request, null, 200, ['manager_list' => $managers_data]);
+        $managers_data = (new ManagerSubordinateEmployeeList())->get($business_member, true);
+
+        $departments = array_keys($managers_data);
+        return api_response($request, null, 200, ['employee_list' => $managers_data, 'departments' => $departments]);
     }
 
     /**
@@ -84,7 +88,6 @@ class VisitController extends Controller
     public function update($visit_id, Request $request, Requester $requester, Updater $updater)
     {
         $this->validate($request, [
-            'date' => 'required|date_format:Y-m-d',
             'employee' => 'numeric',
             'title' => 'required|string',
             'description' => 'sometimes|required|string',
@@ -96,7 +99,7 @@ class VisitController extends Controller
         $member = $this->getMember($request);
         $this->setModifier($member);
         $requester->setBusinessMember($business_member)->setEmployeeVisit($employee_visit)
-            ->setDate($request->date)->setEmployee($request->employee)->setTitle($request->title)->setDescription($request->description);
+            ->setEmployee($request->employee)->setTitle($request->title)->setDescription($request->description);
         $updater->setRequester($requester)->update();
         return api_response($request, null, 200);
     }
@@ -153,10 +156,8 @@ class VisitController extends Controller
     {
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
-        $managers_data = (new ManagerSubordinateEmployeeList())->get($business_member);
-        $business_member_ids = array_column($managers_data, 'id');
 
-        $team_visits = $visit_list->getTeamVisits($this->visitRepository, $business_member_ids);
+        $team_visits = $visit_list->getTeamVisits($this->visitRepository, $business_member);
 
         if ($request->has('start_date') && $request->has('end_date')) {
             $time_frame = $time_frame->forDateRange($request->start_date, $request->end_date);
@@ -172,6 +173,7 @@ class VisitController extends Controller
         }
 
         $team_visits = $team_visits->get();
+
         if (count($team_visits) == 0) return api_response($request, null, 404);
         $team_visits = $team_visits->groupBy('date');
         $team_visit_list = $visit_list->getTeamVisitList($team_visits);
@@ -243,8 +245,18 @@ class VisitController extends Controller
 
         $visit = $this->visitRepository->find($visit);
         if (!$visit) return api_response($request, null, 404);
+
+        $existing_photos_count = $visit->visitPhotos()->get()->count();
+        if ($existing_photos_count > 5) return api_response($request, null, 420);
+
         $photo_creator->setVisit($visit)->setPhoto($request->image)->store();
-        return api_response($request, null, 200);
+        $photos = $visit->visitPhotos()->orderBy('id', 'DESC')->get()->map(function ($photo) {
+            return [
+                'id' => $photo->id,
+                'photo' => $photo->photo
+            ];
+        })->toArray();
+        return api_response($request, null, 200, ['photos' => $photos]);
     }
 
 
@@ -257,13 +269,21 @@ class VisitController extends Controller
     public function updateStatus(Request $request, $visit, StatusUpdater $status_updater)
     {
         $validation_data = [
-            'status' => 'required|string',
+            'status' => 'required|string|in:' . implode(',', Status::get()),
             'lat' => 'required|numeric',
             'lng' => 'required|numeric'
         ];
 
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
+
+        if ($request->status === Status::STARTED) {
+            $current_visits = $this->visitRepository->where('visitor_id', $business_member->id)
+                ->whereIn('status', [Status::STARTED, Status::REACHED])->get()->count();
+            if ($current_visits > 0) {
+                return api_response($request, null, 420);
+            }
+        }
 
         if ($request->status === Status::RESCHEDULED) {
             $validation_data += ['note' => 'string', 'date' => 'required|date_format:Y-m-d'];
@@ -278,7 +298,21 @@ class VisitController extends Controller
         $visit = $this->visitRepository->find($visit);
         if (!$visit) return api_response($request, null, 404);
         $status_updater->setVisit($visit)->setStatus($request->status)->setLat($request->lat)->setLng($request->lng)
-                       ->setNote($request->note)->setDate($request->date)->update();
+            ->setNote($request->note)->setDate($request->date)->update();
+        return api_response($request, null, 200);
+    }
+
+    /**
+     * @param $visit
+     * @param $visit_photo
+     * @param Request $request
+     * @param VisitPhotoRepository $visit_photo_repository
+     * @return JsonResponse
+     */
+    public function deletePhoto($visit, $visit_photo, Request $request, VisitPhotoRepository $visit_photo_repository)
+    {
+        $visit_photo = $visit_photo_repository->find($visit_photo);
+        $visit_photo->delete();
         return api_response($request, null, 200);
     }
 

@@ -22,8 +22,10 @@ class AppVisitDetailsTransformer extends TransformerAbstract
             'general_info' => $this->getGeneralInfo($visit),
             'notes' => $this->getNotes($visit),
             'photos' => $this->getPhotos($visit),
+            'current_status_info' => $this->getCurrentStatusInfo($visit),
             'status_change_logs' => $this->getStatusChangesLogs($visit),
-            'cancel_note' => $this->getCancelNote($visit)
+            'cancel_note' => $this->getCancelNote($visit),
+            'reschedule_note' => $this->getRescheduleNote($visit)
         ];
     }
 
@@ -61,7 +63,8 @@ class AppVisitDetailsTransformer extends TransformerAbstract
         $department = $role ? $role->businessDepartment : null;
 
         return [
-            'id' => $profile->id,
+            'profile_id' => $profile->id,
+            'business_member_id' => $business_member->id,
             'name' => $profile->name ?: null,
             'pro_pic' => $profile->pro_pic ?: null,
             'designation' => $role ? $role->name : null,
@@ -76,7 +79,7 @@ class AppVisitDetailsTransformer extends TransformerAbstract
     private function getNotes(Visit $visit)
     {
         $notes = [];
-        $visit_notes = $visit->visitNotes()->select('id', 'visit_id', 'note', 'date')->orderBy('id', 'DESC')->get();
+        $visit_notes = $visit->visitNotes()->whereNotIn('status', [Status::CANCELLED, Status::RESCHEDULED])->select('id', 'visit_id', 'note', 'date')->orderBy('id', 'DESC')->get();
 
         foreach ($visit_notes as $visit_note) {
             array_push($notes, [
@@ -94,7 +97,12 @@ class AppVisitDetailsTransformer extends TransformerAbstract
      */
     private function getPhotos(Visit $visit)
     {
-        $photos = $visit->visitPhotos()->orderBy('id', 'DESC')->pluck('photo')->toArray();
+        $photos = $visit->visitPhotos()->orderBy('id', 'DESC')->get()->map(function ($photo) {
+            return [
+                'id' => $photo->id,
+                'photo' => $photo->photo
+            ];
+        })->toArray();
         if ($photos) return $photos;
         return null;
     }
@@ -115,6 +123,7 @@ class AppVisitDetailsTransformer extends TransformerAbstract
                 'date' => $visit_status_change_log->created_at->format('d M, Y'),
                 'time' => $visit_status_change_log->created_at->format('h:i A'),
                 'status' => $this->statusFormat($visit_status_change_log->new_status),
+                'color_code' => $this->getColorCode($visit_status_change_log->new_status),
                 'location' => json_decode($visit_status_change_log->new_location)
             ];
         }
@@ -135,15 +144,64 @@ class AppVisitDetailsTransformer extends TransformerAbstract
     }
 
     /**
+     * @param $status
+     * @return string|void
+     */
+    private function getColorCode($status)
+    {
+        if ($status === Status::STARTED) return "#60A917";
+        if ($status === Status::REACHED) return "#60A917";
+        if ($status === Status::RESCHEDULED) return "#EEB728";
+        if ($status === Status::CANCELLED) return "#D85839";
+        if ($status === Status::COMPLETED) return "#60A917";
+    }
+
+    /**
+     * @param Visit $visit
+     * @return string[]|null
+     */
+    private function getCurrentStatusInfo(Visit $visit)
+    {
+        if ($visit->status === Status::STARTED) {
+            return [
+                'color_code' => '#D8D8D8',
+                'text' => 'Enroute to location'
+            ];
+        } else if ($visit->status === Status::REACHED) {
+            return [
+                'color_code' => '#D8D8D8',
+                'text' => 'Currently in the destination'
+            ];
+        } else {
+            return null;
+        }
+    }
+
+    /**
      * @param Visit $visit
      * @return mixed
      */
     private function getCancelNote(Visit $visit)
     {
         if ($visit->status === Status::CANCELLED) {
-            return $visit->visitNotes()->where('status', Status::CANCELLED)->select('note')->orderBy('id', 'DESC')->first();
+            $visit_note = $visit->visitNotes()->where('status', Status::CANCELLED)->select('note')->orderBy('id', 'DESC')->first();
+            return $visit_note ? $visit_note->note: null;
         } else {
             return null;
         }
+    }
+
+
+    /**
+     * @param Visit $visit
+     * @return null
+     */
+    private function getRescheduleNote(Visit $visit)
+    {
+       $reschedule_note = $visit->visitNotes()->where('status', Status::RESCHEDULED)->select('note', 'date')->orderBy('id', 'DESC')->first();
+       return $reschedule_note ? [
+         'note' => $reschedule_note->note,
+         'date' => Carbon::parse($reschedule_note->date)->format('F d,Y')
+       ] : null;
     }
 }

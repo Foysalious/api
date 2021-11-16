@@ -36,9 +36,9 @@ use Sheba\Business\CoWorker\UpdaterV2 as Updater;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
-use Sheba\Dal\BusinessMemberBadge\BusinessMemberBadgeRepository;
 use Sheba\Dal\Visit\Status;
 use Sheba\Dal\Visit\VisitRepository;
+use Sheba\Dal\BusinessMemberBadge\BusinessMemberBadgeRepository;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\ModificationFields;
 use Sheba\OAuth2\AccountServer;
@@ -156,9 +156,10 @@ class EmployeeController extends Controller
      * @param Request $request
      * @param ActionProcessor $action_processor
      * @param ProfileCompletionCalculator $completion_calculator
+     * @param VisitRepository $visit_repository
      * @return JsonResponse
      */
-    public function getDashboard(Request $request, ActionProcessor $action_processor,
+    public function getDashboard(Request                     $request, ActionProcessor $action_processor,
                                  ProfileCompletionCalculator $completion_calculator, VisitRepository $visit_repository)
     {
         /** @var Business $business */
@@ -189,12 +190,19 @@ class EmployeeController extends Controller
         $approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMember($business_member);
         $pending_approval_requests_count = $this->approvalRequestRepo->countPendingLeaveApprovalRequests($business_member);
         $profile_completion_score = $completion_calculator->setBusinessMember($business_member)->getDigiGoScore();
-        $pending_visit = $visit_repository->where('assignee_id', $business_member->id)->whereIn('status', [Status::CREATED, Status::STARTED]);
-        $all_pending_visit_count = $pending_visit->count();
+
+        $pending_visit = $visit_repository->where('visitor_id', $business_member->id)
+            ->whereIn('status', [Status::STARTED, Status::REACHED]);
+        $pending_visit_count = $pending_visit->count();
+
+        $current_visit = $visit_repository->where('visitor_id', $business_member->id)
+            ->whereIn('status', [Status::STARTED, Status::REACHED])->first();
+
         $today = Carbon::now()->format('Y-m-d');
-        $today_visit = $pending_visit->whereBetween('schedule_date', [$today.' 00:00:00', $today.' 23:59:59']);
+        $today_visit = $visit_repository->where('visitor_id', $business_member->id)
+            ->where('status', Status::CREATED)
+            ->whereBetween('schedule_date', [$today . ' 00:00:00', $today . ' 23:59:59']);
         $today_visit_count = $today_visit->count();
-        $current_visit = $visit_repository->where('assignee_id', $business_member->id)->where('status', Status::STARTED)->whereBetween('start_date_time', [$today.' 00:00:00', $today.' 23:59:59'])->count();
 
         /** Check Employee Already Get a Badge or Not */
         $start_date = Carbon::now()->startOfMonth();
@@ -202,6 +210,9 @@ class EmployeeController extends Controller
         $business_member_badge = $this->badgeRepo->where('business_member_id', $business_member->id)
             ->whereBetween('end_date', [$start_date, $end_date])->first();
         $is_badge_seen = $business_member_badge ? $business_member_badge->is_seen : 0;
+
+        $manager = $business ? $business->getActiveBusinessMember()->where('manager_id', $business_member->id)->count() : null;
+        $is_manager = $manager ? 1 : 0;
 
         $data = [
             'id' => $member->id,
@@ -224,14 +235,18 @@ class EmployeeController extends Controller
             'is_eligible_for_lunch' => in_array($business->id, config('b2b.BUSINESSES_IDS_FOR_LUNCH')) ? [
                 'link' => config('b2b.BUSINESSES_LUNCH_LINK'),
             ] : null,
-            'is_sheba_platform' => in_array($business->id, config('b2b.BUSINESSES_IDS_FOR_REFERRAL') ) ? 1 : 0,
+            'is_sheba_platform' => in_array($business->id, config('b2b.BUSINESSES_IDS_FOR_REFERRAL')) ? 1 : 0,
             'is_payroll_enable' => $business->payrollSetting->is_enable,
             'is_enable_employee_visit' => $business->is_enable_employee_visit,
-            'pending_visit_count' => $all_pending_visit_count,
+            'pending_visit_count' => $pending_visit_count,
             'today_visit_count' => $today_visit_count,
-            'single_visit_title' => $today_visit_count === 1 ? $today_visit->first()->title : null,
-            'currently_on_visit' => $current_visit ? true : false,
+            'single_visit' => $today_visit_count === 1 ? [
+                'id' => $today_visit->first()->id,
+                'title' => $today_visit->first()->title
+            ] : null,
+            'currently_on_visit' => $current_visit ? $current_visit->id : null,
             'is_badge_seen' => $is_badge_seen,
+            'is_manager' => $is_manager
         ];
 
         return api_response($request, $business_member, 200, ['info' => $data]);
@@ -367,6 +382,7 @@ class EmployeeController extends Controller
 
         /** @var Member $member */
         $member = $profile->member;
+        if (!$member) return api_response($request, null, 420, ['message' => 'You are not eligible employee']);
         /** @var BusinessMember $business_member */
         $business_member = $member->businessMember;
         if (!$business_member) return api_response($request, null, 420, ['message' => 'You are not eligible employee']);
