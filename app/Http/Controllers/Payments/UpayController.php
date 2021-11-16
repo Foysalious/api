@@ -26,7 +26,11 @@ class UpayController extends Controller
             return api_response($request, null, 402, ['message' => "Invalid or completed payment"]);
         }
         $method=PaymentStrategy::UPAY;
-        $manager->setMethodName($method)->setPayment($payment)->complete();
+        try {
+            $manager->setMethodName($method)->setPayment($payment)->complete();
+        }catch (AlreadyCompletingPayment $e){
+
+        }
         $payment->reload();
         $redirect_url = $payment->status === Statuses::COMPLETED ?
             $payment->payable->success_url . '?invoice_id=' . $payment->transaction_id :

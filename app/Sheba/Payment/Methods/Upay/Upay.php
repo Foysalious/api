@@ -28,11 +28,10 @@ class Upay extends PaymentMethod
     private $config;
     private $login_token;
     private $headers;
-    const LOGIN_URL = 'payment/merchant-auth/';
-    const INIT_URL  = 'payment/merchant-payment-init/';
-    const VALIDATE_URL='payment/single-payment-status/';
-    const NAME      = 'upay';
-
+    const LOGIN_URL    = 'payment/merchant-auth/';
+    const INIT_URL     = 'payment/merchant-payment-init/';
+    const VALIDATE_URL = 'payment/single-payment-status/';
+    const NAME         = 'upay';
 
 
     public function setStore(UpayStore $store): Upay
@@ -74,15 +73,17 @@ class Upay extends PaymentMethod
         $this->login();
         $payment = $this->createPayment($payable, $this->store->getName());
         $payload = $this->buildInitPayload($payment);
-        $res = (new UpayClient())->setHeaders($this->headers)->setPayload($payload)->setUrl(self::INIT_URL)->call();
+        $res     = (new UpayClient())->setHeaders($this->headers)->setPayload($payload)->setUrl(self::INIT_URL)->call();
         if ($res->hasError()) {
             return $this->onInitFailed($payment, $res);
         }
         return $this->onSuccess($payment, $res);
-        
+
     }
-    private function onSuccess(Payment $payment,UpayApiResponse $res){
-        $payment->redirect_url =(new UpayInitiatePaymentResponse())->setData($res->getData())->gateway_url;
+
+    private function onSuccess(Payment $payment, UpayApiResponse $res)
+    {
+        $payment->redirect_url        = (new UpayInitiatePaymentResponse())->setData($res->getData())->gateway_url;
         $payment->transaction_details = $res->toString();
         $payment->update();
         return $payment;
@@ -108,6 +109,10 @@ class Upay extends PaymentMethod
         return $payment;
     }
 
+    /**
+     * @param Payment $payment
+     * @return array
+     */
     private function buildInitPayload(Payment $payment)
     {
         return array_merge($this->config->toArray(),
@@ -118,23 +123,31 @@ class Upay extends PaymentMethod
                 'amount'     => (double)$payment->payable->amount
             ]);
     }
+
     /**
      * @throws UpayApiCallException
      */
     public function validate(Payment $payment): Payment
     {
         $this->login();
-        $url=self::VALIDATE_URL.''.$payment->gateway_transaction_id;
+        $url = self::VALIDATE_URL . '' . $payment->gateway_transaction_id;
         $this->paymentLogRepo->setPayment($payment);
         $res = (new UpayClient())->setHeaders($this->headers)->setMethod('GET')->setUrl($url)->call();
-        if ($res->hasError()){
-            return $this->onValidateFailed($payment,$res);
+        if ($res->hasError()) {
+            return $this->onValidateFailed($payment, $res);
         }
-        $response_data=(new UpayValidateApiResponse())->setData($res->getData());
+        $response_data = (new UpayValidateApiResponse())->setData($res->getData());
         if (!$response_data->isSuccess()) return $this->onValidateFailed($payment, $res);
-        return $this->onValidated($payment,$res);
+        return $this->onValidated($payment, $res);
     }
-    private function onValidateFailed(Payment $payment,UpayApiResponse $res){
+
+    /**
+     * @param Payment $payment
+     * @param UpayApiResponse $res
+     * @return Payment
+     */
+    private function onValidateFailed(Payment $payment, UpayApiResponse $res)
+    {
         $this->paymentLogRepo->create([
             'to'                  => Statuses::VALIDATION_FAILED,
             'from'                => $payment->status,
@@ -145,7 +158,14 @@ class Upay extends PaymentMethod
         $payment->update();
         return $payment;
     }
-    private function onValidated(Payment $payment,UpayApiResponse $response){
+
+    /**
+     * @param Payment $payment
+     * @param UpayApiResponse $response
+     * @return Payment
+     */
+    private function onValidated(Payment $payment, UpayApiResponse $response)
+    {
         $this->paymentLogRepo->create([
             'to'                  => Statuses::VALIDATED,
             'from'                => $payment->status,
@@ -157,6 +177,9 @@ class Upay extends PaymentMethod
         return $payment;
     }
 
+    /**
+     * @return string
+     */
     public function getMethodName(): string
     {
         return self::NAME;
