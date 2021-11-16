@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Accounting;
 
 use App\Exceptions\DoNotReportException;
-use Exception;
 use App\Http\Controllers\Controller;
 use Sheba\AccountingEntry\Repository\UserAccountRepository;
 use Illuminate\Http\Request;
@@ -98,7 +97,8 @@ class AccountController extends Controller
     }
 
     /**
-     * @throws AccountingEntryServerError|DoNotReportException
+     * @throws DoNotReportException
+     * @throws AccountingEntryServerError
      */
     public function deleteAccount($accountId, Request $request): JsonResponse
     {
