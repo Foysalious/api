@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\Employee;
 
+use App\Transformers\Business\ApprovalRequestListTransformer;
 use App\Transformers\Business\LeaveListTransformer;
 use Exception;
 use League\Fractal\Resource\Collection;
@@ -90,19 +91,14 @@ class ApprovalRequestController extends Controller
 
         if ($request->has('limit')) $merged_approval_requests = $merged_approval_requests->splice($offset, $limit);
 
-        foreach ($merged_approval_requests as $approval_request) {
+       foreach ($merged_approval_requests as $approval_request) {
             if (!$approval_request->requestable) continue;
-            /** @var Leave $requestable */
             $requestable = $approval_request->requestable;
             if (!$requestable->businessMember) continue;
-            /** @var Member $member */
-            $member = $requestable->businessMember->member;
-            /** @var Profile $profile */
-            $profile = $member->profile;
 
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($approval_request, new ApprovalRequestTransformer($profile, $business, $requester_business_member));
+            $resource = new Item($approval_request, new ApprovalRequestListTransformer($business));
             $approval_request = $manager->createData($resource)->toArray()['data'];
 
             array_push($approval_requests_list, $approval_request);
