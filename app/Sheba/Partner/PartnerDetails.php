@@ -74,6 +74,8 @@ class PartnerDetails
         $info->put('mobile', $partner->getContactNumber());
         $info->put('banner', $this->getWebStoreBanner());
         $info->put('delivery_method', $this->getDeliveryMethod());
+        $can_use_webstore = $partner->isMigrated(Modules::POS) ? 1 : 0;
+        $info->put('can_use_webstore', $can_use_webstore);
         // $this->calculateWorkingDaysInfo();
         // $info->put('working_days', $this->workingInfo);
         // $info->put('is_available', $this->isOpenToday() ? 1 : 0);
