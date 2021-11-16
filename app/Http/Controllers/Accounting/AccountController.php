@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Accounting;
 
 use App\Exceptions\DoNotReportException;
-use Exception;
 use App\Http\Controllers\Controller;
 use App\Sheba\AccountingEntry\Repository\UserAccountRepository;
 use Illuminate\Http\Request;
