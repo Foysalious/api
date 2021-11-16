@@ -20,7 +20,7 @@ class BkashSalaryReportExcel
     public function download()
     {
         $six_digit_random_number = random_int(100000, 999999);
-        $file_name = 'Pay_Report_Bkash_Report_' . $six_digit_random_number . '_' . Carbon::now()->toDateTimeString();
+        $file_name = 'Net_Payable_Bkash_Report_' . $six_digit_random_number . '_' . Carbon::now()->toDateTimeString();
         $file = Excel::create($file_name, function ($excel) {
             $excel->sheet('data', function ($sheet) {
                 $sheet->fromArray($this->makeData(), null, 'A1', false, false);

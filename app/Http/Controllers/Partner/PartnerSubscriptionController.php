@@ -400,9 +400,17 @@ class PartnerSubscriptionController extends Controller
      */
     private function generateSubscriptionData(Partner $partner = null, $package = null)
     {
+        $features = [];
         $partner_subscription_packages = PartnerSubscriptionPackage::validDiscounts()->where('id', '>', 0);
         if ($package) {
-            $partner_subscription_packages = $partner_subscription_packages ->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'badge', 'features')->where('id', $package)->first();
+            $partner_subscription_packages = $partner_subscription_packages->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'badge', 'features')->where('id', $package)->first();
+            $partner_subscription_package = json_decode($partner_subscription_packages->features, 1);
+            foreach($partner_subscription_package as $feature) {
+                if ($feature['is_showed']) {
+                    $features[] = $feature;
+                }
+            }
+            $partner_subscription_packages['features'] = json_encode($features);
             (new PartnerSubscription())->dataFormat($partner_subscription_packages, $partner, true);
         } else {
             $partner_subscription_packages = $partner_subscription_packages ->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'rules', 'usps', 'badge', 'features')->where('status', Status::PUBLISHED)->orderBy('sort_order')->get();
