@@ -36,6 +36,11 @@ class BusinessRoute
                     $api->get('checkin-checkout-policy', 'B2b\AttendanceController@getLateCheckinEarlyCheckoutPolicy');
                     $api->get('changes-logs', 'B2b\AttendanceController@getOfficeSettingChangesLogs');
                 });
+                $api->group(['prefix' => 'leaves'], function ($api) {
+                    $api->group(['prefix' => 'prorate'], function ($api) {
+                        $api->get('/', 'B2b\ProrateController@indexV2');
+                    });
+                });
             });
         });
     }
