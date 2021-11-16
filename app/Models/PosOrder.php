@@ -108,9 +108,7 @@ class PosOrder  extends BaseModel
 
     public function discountsAmountWithoutService()
     {
-        return $this->discounts->filter(function ($discount) {
-            return $discount->item_id == null;
-        })->sum('amount');
+        return $this->discounts()->whereNull('item_id')->get()->sum('amount');
     }
 
     public function discountsWithoutService()
