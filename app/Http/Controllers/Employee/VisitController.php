@@ -112,10 +112,12 @@ class VisitController extends Controller
     {
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
+        list($offset, $limit) = calculatePagination($request);
+
         $own_visits = $this->visitRepository->where('visitor_id', $business_member->id)
             ->whereNotIn('status', [Status::COMPLETED, Status::CANCELLED])
             ->select('id', 'title', 'status', 'schedule_date')
-            ->orderBy('id', 'desc')->get();
+            ->orderBy('id', 'desc')->skip($offset)->take($limit)->get();
         if (count($own_visits) == 0) return api_response($request, null, 404);
         $own_visits->map(function (&$own_visit) {
             $own_visit['date'] = Carbon::parse($own_visit->schedule_date)->format('M d, Y');
@@ -133,11 +135,14 @@ class VisitController extends Controller
     {
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
+        list($offset, $limit) = calculatePagination($request);
+
         $own_visits = $this->visitRepository->where('visitor_id', $business_member->id)
             ->whereIn('status', [Status::COMPLETED, Status::CANCELLED])
             ->select('id', 'title', 'status', 'start_date_time', 'end_date_time', 'total_time_in_minutes', 'schedule_date', DB::raw('YEAR(schedule_date) year, MONTH(schedule_date) month'))
             ->orderBy('id', 'desc')->get();
         if (count($own_visits) == 0) return api_response($request, null, 404);
+
         $own_visits = $own_visits->groupBy('year')->transform(function ($item, $k) {
             return $item->groupBy('month');
         });
@@ -156,6 +161,7 @@ class VisitController extends Controller
     {
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
+        list($offset, $limit) = calculatePagination($request);
 
         $team_visits = $visit_list->getTeamVisits($this->visitRepository, $business_member);
 
@@ -172,7 +178,7 @@ class VisitController extends Controller
             $team_visits = $team_visits->where('status', $request->status);
         }
 
-        $team_visits = $team_visits->get();
+        $team_visits = $team_visits->skip($offset)->take($limit)->get();
 
         if (count($team_visits) == 0) return api_response($request, null, 404);
         $team_visits = $team_visits->groupBy('date');
