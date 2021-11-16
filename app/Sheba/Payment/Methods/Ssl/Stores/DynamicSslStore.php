@@ -33,7 +33,7 @@ class DynamicSslStore extends SslStore
 
     public function getName()
     {
-        $storeAccount        = $this->getStoreAccount(PaymentStrategy::SSL);
-        return $storeAccount->name;
+//        $storeAccount        = $this->getStoreAccount(PaymentStrategy::SSL);
+//        return $storeAccount->name;
     }
 }
