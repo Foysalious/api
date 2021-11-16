@@ -19,7 +19,7 @@ class CategoryController extends Controller
         ini_set('memory_limit', '2048M');
         try {
             $partner = $request->partner->load(['posServices' => function($q){
-                $q->published();
+                $q->with('batches')->published();
             }]);
             $total_items = 0.00;
             $total_buying_price = 0.00;
@@ -93,14 +93,16 @@ class CategoryController extends Controller
                 $deleted_services = [];
             });
 
-            $master_categories->each(function ($category) use (&$category_id, &$total_items, &$total_buying_price, &$items_with_buying_price) {
+            $is_migrated_to_accounting = $partner->isMigratedToAccounting();
+
+            $master_categories->each(function ($category) use (&$category_id, &$total_items, &$total_buying_price, &$items_with_buying_price,$is_migrated_to_accounting) {
                 $category_id = $category->id;
                 $category->total_services = count($category->services);
-                $category->services->each(function ($service) use ($category_id, &$total_items, &$total_buying_price, &$items_with_buying_price) {
+                $category->services->each(function ($service) use ($category_id, &$total_items, &$total_buying_price, &$items_with_buying_price,$is_migrated_to_accounting) {
                     $service->pos_category_id = $category_id;
                     $service->unit = $service->unit ? constants('POS_SERVICE_UNITS')[$service->unit] : null;
                     $service->warranty_unit = $service->warranty_unit ? config('pos.warranty_unit')[$service->warranty_unit] : null;
-                    $service->stock = $service->batches->sum('stock');
+                    $service->stock = $is_migrated_to_accounting ? $service->batches->sum('stock') : $service->stock;
                     $service->image_gallery = $service->imageGallery ? $service->imageGallery->map(function($image){
                         return [
                             'id' =>   $image->id,
@@ -109,7 +111,7 @@ class CategoryController extends Controller
                     }) : [];
                     $total_items++;
                     if ($service->cost) $items_with_buying_price++;
-                    $total_buying_price += $this->getBuyingPriceOfService($service);
+                    $total_buying_price += $this->getBuyingPriceOfService($service,$is_migrated_to_accounting);
                 });
             });
 
@@ -269,12 +271,11 @@ class CategoryController extends Controller
         return api_response($request, null, 200, ['message' => 'Category Updated Successfully']);
     }
 
-    public function getBuyingPriceOfService($service)
+    public function getBuyingPriceOfService($service,$is_migrated_to_accounting)
     {
-        /** @var Partner $partner */
-        $partner = $service->partner;
-        if($partner->isMigratedToAccounting()) {
-            $batches = $this->getBatches($service->id);
+        /** @var $partner Partner */
+        if($is_migrated_to_accounting) {
+            $batches = $service->batches;
             $total_buying_price = 0.0;
             foreach ($batches as $batch) {
                 $total_buying_price += $batch->cost * $batch->stock;
@@ -285,10 +286,4 @@ class CategoryController extends Controller
 
     }
 
-    public function getBatches($service_id)
-    {
-        /** @var PartnerPosServiceBatchRepositoryInterface $partnerPosServiceBatchRepository */
-        $partnerPosServiceBatchRepository = app(PartnerPosServiceBatchRepositoryInterface::class);
-        return $partnerPosServiceBatchRepository->where('partner_pos_service_id', $service_id)->get();
-    }
 }
