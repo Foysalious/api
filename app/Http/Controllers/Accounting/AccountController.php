@@ -98,7 +98,8 @@ class AccountController extends Controller
     }
 
     /**
-     * @throws AccountingEntryServerError|DoNotReportException
+     * @throws DoNotReportException
+     * @throws AccountingEntryServerError
      */
     public function deleteAccount($accountId, Request $request): JsonResponse
     {

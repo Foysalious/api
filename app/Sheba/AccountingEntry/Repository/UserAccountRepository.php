@@ -133,7 +133,7 @@ class UserAccountRepository extends BaseRepository
      * @return mixed
      * @throws AccountingEntryServerError
      */
-    public function getAccountType($userId, array $request = [], $userType = UserType::PARTNER)
+    public function getAccountType($userId, array $request = [], string $userType = UserType::PARTNER)
     {
         $query = '';
         if (isset($request['root_account'])) {
@@ -155,7 +155,7 @@ class UserAccountRepository extends BaseRepository
      * @return mixed
      * @throws AccountingEntryServerError
      */
-    public function getAccounts($userId, array $request = [], $userTYpe = UserType::PARTNER)
+    public function getAccounts($userId, array $request = [], string $userTYpe = UserType::PARTNER)
     {
         $query = '?';
         if (isset($request['root_account'])) {
@@ -179,7 +179,7 @@ class UserAccountRepository extends BaseRepository
      * @return mixed
      * @throws AccountingEntryServerError
      */
-    public function getCashAccounts($userId, $userType = UserType::PARTNER)
+    public function getCashAccounts($userId, string $userType = UserType::PARTNER)
     {
         try {
             return $this->client->setUserType($userType)->setUserId($userId)
@@ -195,7 +195,7 @@ class UserAccountRepository extends BaseRepository
      * @return mixed
      * @throws AccountingEntryServerError
      */
-    public function storeAccount($userId, $userType = UserType::PARTNER)
+    public function storeAccount($userId, string $userType = UserType::PARTNER)
     {
         try {
             $payload = $this->makeData();
@@ -224,17 +224,16 @@ class UserAccountRepository extends BaseRepository
      * @return mixed
      * @throws AccountingEntryServerError
      */
-    public function deleteAccount($accountId, $userId, $userType = UserType::PARTNER)
+    public function deleteAccount($accountId, $userId, string $userType = UserType::PARTNER)
     {
         try {
-            return $this->client->setUserType($userType)->setUserId($userId)
-                ->delete($this->api . $accountId);
+            return $this->client->setUserType($userType)->setUserId($userId)->delete($this->api . $accountId);
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
     }
 
-    private function makeData()
+    private function makeData(): array
     {
         if ($this->balanceType == 'negative') {
             $this->openingBalance = 0 - $this->openingBalance;
