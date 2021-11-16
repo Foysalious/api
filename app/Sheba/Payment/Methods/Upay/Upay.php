@@ -2,6 +2,7 @@
 
 namespace Sheba\Payment\Methods\Upay;
 
+use App\Http\Requests\Request;
 use App\Models\Payable;
 use App\Models\Payment;
 use Carbon\Carbon;
@@ -11,6 +12,7 @@ use Sheba\Payment\Methods\Upay\Exceptions\UpayApiCallException;
 use Sheba\Payment\Methods\Upay\Response\UpayApiResponse;
 use Sheba\Payment\Methods\Upay\Response\UpayInitiatePaymentResponse;
 use Sheba\Payment\Methods\Upay\Response\UpayLoginResponse;
+use Sheba\Payment\Methods\Upay\Response\UpayValidateApiResponse;
 use Sheba\Payment\Methods\Upay\Stores\UpayStore;
 use Sheba\Payment\Statuses;
 
@@ -28,6 +30,7 @@ class Upay extends PaymentMethod
     private $headers;
     const LOGIN_URL = 'payment/merchant-auth/';
     const INIT_URL  = 'payment/merchant-payment-init/';
+    const VALIDATE_URL='payment/single-payment-status/';
     const NAME      = 'upay';
 
 
@@ -115,10 +118,42 @@ class Upay extends PaymentMethod
                 'amount'     => (double)$payment->payable->amount
             ]);
     }
-
+    /**
+     * @throws UpayApiCallException
+     */
     public function validate(Payment $payment): Payment
     {
-        // TODO: Implement validate() method.
+        $this->login();
+        $url=`self::VALIDATE_URL${$payment->gateway_transaction_id}`;
+        $res = (new UpayClient())->setHeaders($this->headers)->setMethod('GET')->setUrl($url)->call();
+        if ($res->hasError()){
+            return $this->onValidateFailed($payment,$res);
+        }
+        $response_data=(new UpayValidateApiResponse())->setData($res->getData());
+        if (!$response_data->isSuccess()) return $this->onValidateFailed($payment, $res);
+        return $this->onValidated($payment,$res);
+    }
+    private function onValidateFailed(Payment $payment,UpayApiResponse $res){
+        $this->paymentLogRepo->create([
+            'to'                  => Statuses::VALIDATION_FAILED,
+            'from'                => $payment->status,
+            'transaction_details' => $payment->transaction_details
+        ]);
+        $payment->status              = Statuses::VALIDATION_FAILED;
+        $payment->transaction_details = $res->toString();
+        $payment->update();
+        return $payment;
+    }
+    private function onValidated(Payment $payment,UpayApiResponse $response){
+        $this->paymentLogRepo->create([
+            'to'                  => Statuses::VALIDATED,
+            'from'                => $payment->status,
+            'transaction_details' => $payment->transaction_details
+        ]);
+        $payment->status              = Statuses::VALIDATED;
+        $payment->transaction_details = $response->toString();
+        $payment->update();
+        return $payment;
     }
 
     public function getMethodName(): string
