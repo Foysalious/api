@@ -23,11 +23,12 @@ class DynamicSslStore extends SslStore
      */
     public function set($payment_method): DynamicSslStore
     {
-        $storeAccount        = $this->getStoreAccount($payment_method);
+        $storeAccount             = $this->getStoreAccount($payment_method);
         if(!isset($storeAccount)) throw new StoreNotFoundException();
-        $this->storeId       = $storeAccount->store_id;
-        $this->storePassword = (new DynamicStoreConfiguration($storeAccount->configuration))->getPassword();
-        $this->sessionUrl    = config("payment.ssl.stores.default.session_url");
+        $this->storeId            = $storeAccount->store_id;
+        $this->storePassword      = (new DynamicStoreConfiguration($storeAccount->configuration))->getPassword();
+        $this->sessionUrl         = config("payment.ssl.stores.default.session_url");
+        $this->orderValidationUrl = config("payment.ssl.stores.default.order_validation_url");
         return $this;
     }
 
