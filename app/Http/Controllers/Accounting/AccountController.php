@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Accounting;
 use App\Exceptions\DoNotReportException;
 use Exception;
 use App\Http\Controllers\Controller;
-use App\Sheba\AccountingEntry\Repository\UserAccountRepository;
+use Sheba\AccountingEntry\Repository\UserAccountRepository;
 use Illuminate\Http\Request;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use \Illuminate\Http\JsonResponse;
