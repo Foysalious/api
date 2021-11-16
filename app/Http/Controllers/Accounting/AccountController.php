@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Accounting;
 
+use App\Exceptions\DoNotReportException;
 use Exception;
 use App\Http\Controllers\Controller;
 use App\Sheba\AccountingEntry\Repository\UserAccountRepository;
@@ -96,17 +97,15 @@ class AccountController extends Controller
         return api_response($request, $response, 200, ['data' => $response]);
     }
 
+    /**
+     * @throws AccountingEntryServerError|DoNotReportException
+     */
     public function deleteAccount($accountId, Request $request): JsonResponse
     {
-        try {
-            $response = $this->accountRepo->deleteAccount($accountId, $request->partner->id);
-            return api_response($request, $response, 200, ['data' => $response]);
-        } catch (Exception $e) {
-            $message = $e->getMessage();
-            if (is_numeric($e->getMessage())) {
-                $message = "উপরোক্ত অ্যাকাউন্টটি " . en2bnNumber($e->getMessage()) . "টি লেনদেনের সাথে জড়িত থাকায় ডিলিট করা সম্ভব নয়।";
-            }
-            return api_response($request, null, $e->getCode() == 0 ? 400 : $e->getCode(), ['message' => $message]);
+        $response = $this->accountRepo->deleteAccount($accountId, $request->partner->id);
+        if (is_numeric($response)) {
+            throw new DoNotReportException("উপরোক্ত অ্যাকাউন্টটি " . en2bnNumber($response) . "টি লেনদেনের সাথে জড়িত থাকায় ডিলিট করা সম্ভব নয়।", 401);
         }
+        return api_response($request, $response, 200, ['data' => $response]);
     }
 }
