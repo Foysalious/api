@@ -178,11 +178,12 @@ class Creator
                 $this->paymentCreator->credit($payment_data);
             }
             $order = $order->calculate();
-            DB::commit();
             $this->discountHandler->setOrder($order)->setType(DiscountTypes::ORDER)->setData($this->data);
             if ($this->discountHandler->hasDiscount()) $this->discountHandler->create($order);
             $this->voucherCalculation($order);
             $this->resolvePaymentMethod();
+
+            DB::commit();
             $this->storeIncome($order);
 
             return $order;
