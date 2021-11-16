@@ -23,6 +23,7 @@ use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInformation;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
+use Sheba\Dal\PgwStoreAccount\Model as PgwStoreAccount;
 use Sheba\Dal\UserMigration\UserStatus;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Jobs\JobStatuses;
@@ -1062,6 +1063,11 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function getGatewayChargesId()
     {
         return $this->subscription_rules->payment_gateway_configuration_id;
+    }
+
+    public function pgwStoreAccounts()
+    {
+        return $this->morphMany(PgwStoreAccount::class, 'user');
     }
 
     public function isMigratedToAccounting(): bool
