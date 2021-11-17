@@ -5,6 +5,9 @@ use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
 use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
 use App\Sheba\PartnerGeneralSettings;
+use App\Sheba\PosOrderService\Services\OrderService;
+use App\Sheba\UserMigration\Modules;
+use Exception;
 use Illuminate\Support\Str;
 use Sheba\Dal\Category\Category;
 use Sheba\Dal\CategoryPartner\CategoryPartner;
@@ -49,6 +52,7 @@ use Sheba\Partner\Updater;
 use Sheba\Reward\PartnerReward;
 use Throwable;
 use Validator;
+
 
 class PartnerController extends Controller
 {
@@ -99,7 +103,7 @@ class PartnerController extends Controller
 
         try {
             $details->setPartner($partner);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return api_response($request, null, 404);
         }
 
@@ -1264,7 +1268,10 @@ class PartnerController extends Controller
         ];
     }
 
-    private function saveQRCodeData(Request $request)
+    /**
+     * @throws Exception
+     */
+    private function saveQRCodeData(Request $request,OrderService $orderService)
     {
         $account_type = array_keys(config('partner.qr_code.account_types'));
         $account_type = implode(',', $account_type);
@@ -1274,17 +1281,27 @@ class PartnerController extends Controller
         ]);
         $image   = $request->file('image');
         $partner = resolvePartnerFromAuthMiddleware($request);
-        if ($partner->qr_code_image) {
-            $file_name = substr($partner->qr_code_image, strlen(env('S3_URL')));
-            $this->fileRepository->deleteFileFromCDN($file_name);
-        }
-        $file_name  = $partner->id . '_QR_code' . '.' . $image->extension();
-        $image_link = $this->fileRepository->uploadToCDN($file_name, $request->file('image'), 'partner/qr-code/');
-        $this->setModifier($partner);
-        $partner->update($this->withUpdateModificationField([
-            'qr_code_account_type' => $request->account_type,
-            'qr_code_image'        => $image_link,
-        ]));
+        $qr_code_image = $this->resolveQrCodeImage($partner);
+            if ($qr_code_image) {
+                $file_name = substr($partner->qr_code_image, strlen(env('S3_URL')));
+                $this->fileRepository->deleteFileFromCDN($file_name);
+            }
+            $file_name  = $partner->id . '_QR_code' . '.' . $image->extension();
+            $image_link = $this->fileRepository->uploadToCDN($file_name, $request->file('image'), 'partner/qr-code/');
+            $this->setModifier($partner);
+            $partner->update($this->withUpdateModificationField([
+                'qr_code_account_type' => $request->account_type,
+                'qr_code_image'        => $image_link,
+            ]));
+
+    }
+
+    private function resolveQrCodeImage($partner, OrderService $orderService)
+    {
+        if(!$partner->isMigrated(Modules::POS))
+            return $partner->qr_code_image;
+        return $orderService->setPartnerId($partner->id)->getPartnerDetails()['partner']['qr_code_image'];
+
     }
 
     private function updateLogo(Request $request)

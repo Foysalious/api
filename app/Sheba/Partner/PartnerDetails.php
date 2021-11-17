@@ -78,6 +78,9 @@ class PartnerDetails
         return $this;
     }
 
+    /**
+     * @throws Exception
+     */
     public function get()
     {
         // $this->loadPartnerRelations();

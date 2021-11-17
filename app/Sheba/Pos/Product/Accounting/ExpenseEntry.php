@@ -115,7 +115,8 @@ class ExpenseEntry
 
     public function create()
     {
-        if($this->isUpdate) {
+        $lastBatch = PartnerPosServiceBatch::where('partner_pos_service_id', $this->id)->latest()->first();
+        if($this->isUpdate && $lastBatch->from_account) {
             $negativeEntryData = $this->makeNegativeEntryData();
             $this->accountingRepo->storeEntry((object)$negativeEntryData, EntryTypes::INVENTORY);
         }
