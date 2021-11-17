@@ -1156,15 +1156,15 @@ class PartnerController extends Controller
         return http_response($request, null, 200);
     }
 
-    public function getQRCode(Request $request)
+    public function getQRCode(Request $request,OrderService $orderService)
     {
-        $data = $this->getQRCodeData($request);
+        $data = $this->getQRCodeData($request,$orderService);
         return api_response($request, null, 200, ['data' => $data]);
     }
 
-    public function getQRCodeV2(Request $request)
+    public function getQRCodeV2(Request $request,OrderService $orderService)
     {
-        $data = $this->getQRCodeData($request);
+        $data = $this->getQRCodeData($request,$orderService);
         return http_response($request, null, 200, ['data' => $data]);
     }
 
@@ -1251,13 +1251,20 @@ class PartnerController extends Controller
         ));
     }
 
-    private function getQRCodeData(Request $request)
+    private function getQRCodeData(Request $request, OrderService $orderService)
     {
         $partner = resolvePartnerFromAuthMiddleware($request);
+        if(!$partner->isMigrated(Modules::POS))
         return [
             'account_type' => $partner->qr_code_account_type ? config('partner.qr_code.account_types')[$partner->qr_code_account_type] : null,
             'image'        => $partner->qr_code_image ?: null
         ];
+        $partnerInfo = $orderService->setPartnerId($partner->id)->getPartnerDetails();
+        return [
+            'account_type' => $partnerInfo['partner']['qr_code_account_type'] ? config('partner.qr_code.account_types')[$partnerInfo['partner']['qr_code_account_type']] : null,
+            'image'        => $partnerInfo['partner']['qr_code_image'] ?: null
+        ];
+
     }
 
     private function getSliderDetailsAndAccountTypesData()
