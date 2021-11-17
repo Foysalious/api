@@ -5,6 +5,7 @@ namespace App\Sheba\AccountingEntry\Repository;
 use App\Models\Partner;
 use App\Sheba\AccountingEntry\Constants\UserType;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Statics\IncomeExpenseStatics;
 use Sheba\RequestIdentification;
@@ -26,8 +27,10 @@ class AccountingRepository extends BaseRepository
         }
         $this->setModifier($partner);
         $data = $this->createEntryData($request, $type, $request->source_id);
+        Log::debug(['data for accounting', $data]);
         $url = "api/entries/";
         $data = $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->post($url, $data);
+        Log::debug(['data from accounting', $data]);
         foreach ($data as $datum) {
             //pos order reconcile while storing entry
             if ($datum['source_type'] == 'pos' && $datum['amount_cleared'] > 0) {
