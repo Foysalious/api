@@ -68,7 +68,7 @@ $ebl            = [
 ];
 $upay           = [
     'name'           => 'Upay',
-    'name_bn'        => 'Upay',
+    'name_bn'        => 'উপায়',
     'asset'          => 'upay',
     'method_name'    => 'upay',
     'icon'           => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/payments/upay.png',
