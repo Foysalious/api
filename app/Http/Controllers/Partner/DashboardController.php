@@ -17,6 +17,8 @@ use App\Repositories\ResourceJobRepository;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
 use App\Sheba\Partner\KYC\Statuses;
+use App\Sheba\PosOrderService\Services\OrderService;
+use App\Sheba\UserMigration\Modules;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -47,7 +49,7 @@ class DashboardController extends Controller
 {
     use ModificationFields, LocationSetter;
 
-    public function get(Request $request, PartnerPerformance $performance)
+    public function get(Request $request, PartnerPerformance $performance, OrderService $orderService)
     {
         ini_set('memory_limit', '6096M');
         ini_set('max_execution_time', 660);
@@ -169,7 +171,7 @@ class DashboardController extends Controller
                 'has_pos_paid_order'           => 0,
                 'home_videos'                  => $videos ? $videos : null,
                 'feature_videos'               => $details,
-                'has_qr_code'                  => ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0,
+                'has_qr_code'                  => $this->hasQrCode($orderService,$partner),
                 'has_webstore'                 => $partner->has_webstore,
                 'is_webstore_published'        => $partner->is_webstore_published,
                 'is_registered_for_delivery'   => $partner->deliveryInformation ? 1 : 0
@@ -181,6 +183,13 @@ class DashboardController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+    private function hasQrCode(OrderService $orderService, Partner $partner)
+    {
+        if(!$partner->isMigrated(Modules::POS))
+            return ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0;
+        $partnerInfo = $orderService->setPartnerId($partner->id)->getPartnerDetails();
+        return $partnerInfo['partner']['qr_code_account_type'] && $partnerInfo['partner']['qr_code_image'] ? 1 : 0;
     }
 
     private function getSpLoanInformationCompletion($partner, $request)
@@ -280,16 +289,17 @@ class DashboardController extends Controller
         app()->make(ActionRewardDispatcher::class)->run('daily_usage', $partner, $partner, $portal_name);
     }
 
-    public function getV3(Request $request)
+    public function getV3(Request $request, OrderService $orderService)
     {
         try {
             /** @var Partner $partner */
             $partner = $request->partner;
             /** @var Resource $resource */
             $resource = $request->manager_resource;
-            $data     = (new PartnerRepository($partner))->getDashboard($resource);
+            $data     = (new PartnerRepository($partner))->getDashboard($resource,$orderService);
             return api_response($request, $data, 200, ['data' => $data]);
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
