@@ -129,6 +129,7 @@ class Route
                 $api->group(['prefix' => 'orders'], function ($api) {
                     $api->get('/', 'PosOrder\OrderController@index');
                     $api->post('/', 'PosOrder\OrderController@store');
+                    $api->get('/{order_id}/delivery-information', 'Pos\\DeliveryController@getOrderInformation');
                     $api->group(['prefix' => '{order}'], function ($api) {
                         $api->get('/', 'PosOrder\OrderController@show');
                         $api->post('/update-status', 'PosOrder\OrderController@updateStatus');
@@ -184,7 +185,6 @@ class Route
             $api->group(['prefix' => 'delivery', 'middleware' => ['jwtAccessToken']], function ($api) {
                 $api->get('register', 'Pos\\DeliveryController@getInfoForRegistration');
                 $api->post('register', 'Pos\\DeliveryController@register');
-                $api->get('/order-information/{order_id}', 'Pos\\DeliveryController@getOrderInformation');
                 $api->get('delivery-status', 'Pos\\DeliveryController@getDeliveryStatus');
                 $api->post('cancel-order', 'Pos\\DeliveryController@cancelOrder');
                 $api->post('orders', 'Pos\\DeliveryController@orderPlace');
