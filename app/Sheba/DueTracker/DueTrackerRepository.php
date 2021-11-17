@@ -502,7 +502,7 @@ class DueTrackerRepository extends BaseRepository
         if ($data['type'] == 'due') {
             $sms = (new SmsHandlerRepo('inform-due'));
             $message_data['payment_link']  = $data['payment_link'];
-            $log = "due details";
+            $log .= "due details";
         } else {
             $sms = (new SmsHandlerRepo('inform-deposit'));
             $log .= "deposit details";

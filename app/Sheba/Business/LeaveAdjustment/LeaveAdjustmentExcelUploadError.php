@@ -59,7 +59,7 @@ class LeaveAdjustmentExcelUploadError
         if ($this->row == $this->totalRow + 1) {
             $name = strtolower(class_basename($this->agent)) . '_' . dechex($this->agent->id);
             $file_name = $this->uniqueFileName($this->file, $name, $this->getExcel()->ext);
-            $file_path = $this->saveFileToCDN($this->file, getBulkVendorStoreFolder(), $file_name);
+            $file_path = $this->saveFileToCDN($this->file, getBulkLeaveAdjustmentFolder(), $file_name);
             unlink($this->file);
             return $file_path;
         }

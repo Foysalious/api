@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\Employee;
 
+use App\Transformers\Business\ApprovalRequestListTransformer;
 use App\Transformers\Business\LeaveListTransformer;
 use Exception;
 use League\Fractal\Resource\Collection;
@@ -66,11 +67,7 @@ class ApprovalRequestController extends Controller
         $approval_requests_list = [];
 
         list($offset, $limit) = calculatePagination($request);
-
-        if ($request->has('type') && !empty($request->type))
-            $leave_approval_requests = $approval_request_repo->getApprovalRequestByBusinessMemberFilterBy($requester_business_member, $request->type);
-        else
-            $leave_approval_requests = $approval_request_repo->getApprovalRequestByBusinessMember($requester_business_member);
+        $leave_approval_requests = $approval_request_repo->getApprovalRequestByBusinessMemberFilterBy($requester_business_member, 'leave');
 
         $approval_requests = collect();
         foreach ($leave_approval_requests as $leave_approval_request) {
@@ -91,17 +88,12 @@ class ApprovalRequestController extends Controller
 
         foreach ($merged_approval_requests as $approval_request) {
             if (!$approval_request->requestable) continue;
-            /** @var Leave $requestable */
             $requestable = $approval_request->requestable;
             if (!$requestable->businessMember) continue;
-            /** @var Member $member */
-            $member = $requestable->businessMember->member;
-            /** @var Profile $profile */
-            $profile = $member->profile;
 
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($approval_request, new ApprovalRequestTransformer($profile, $business, $requester_business_member));
+            $resource = new Item($approval_request, new ApprovalRequestListTransformer($business));
             $approval_request = $manager->createData($resource)->toArray()['data'];
 
             array_push($approval_requests_list, $approval_request);
