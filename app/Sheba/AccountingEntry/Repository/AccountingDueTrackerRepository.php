@@ -65,7 +65,7 @@ class AccountingDueTrackerRepository extends BaseRepository
             // if type deposit then auto reconcile happen. for that we have to reconcile pos order.
             if ($type == "deposit") {
                 foreach ($data as $datum) {
-                    if ($datum['source_type'] == 'pos') {
+                    if ($datum['source_type'] == 'pos' && $datum['amount_cleared'] > 0) {
                         $this->createPosOrderPayment($datum['amount_cleared'], $datum['source_id'], 'cod');
                     }
                 }
