@@ -108,7 +108,7 @@ class DashboardController extends Controller
             'reward_point' => $partner->reward_point,
             'bkash_no' => $partner->bkash_no,
             'current_stats' => [
-                'total_new_order' => count($new_order) > 0 ? $new_order->total_new_orders : 0,
+                'total_new_order' => $new_order && count($new_order) > 0 ? $new_order->total_new_orders : 0,
                 'total_order' => $partner->orders()->count(),
                 'total_ongoing_order' => (new JobList($partner))->ongoing()->count(),
                 'today_order' => $partner->todayJobs($successful_jobs)->count(),
