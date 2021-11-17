@@ -3,6 +3,7 @@
 namespace App\Sheba\AccountingEntry\Repository;
 
 use App\Models\Partner;
+use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Constants\UserType;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -33,7 +34,7 @@ class AccountingRepository extends BaseRepository
         Log::debug(['data from accounting', $data]);
         foreach ($data as $datum) {
             //pos order reconcile while storing entry
-            if ($datum['source_type'] == 'pos' && $datum['amount_cleared'] > 0) {
+            if ($type != EntryTypes::POS && $datum['source_type'] == 'pos' && $datum['amount_cleared'] > 0) {
                 $this->createPosOrderPayment($datum['amount_cleared'], $datum['source_id'], 'cod');
             }
         }
