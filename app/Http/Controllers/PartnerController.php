@@ -1286,7 +1286,7 @@ class PartnerController extends Controller
                 'qr_code_image' => $image_link,
             ]));
         }
-        return $orderService->setQrCodeAccountType($request->account_type)->setQrCodeImage($image_link)->updatePartnerDetails();
+        return $orderService->setPartnerId($partner->id)->setQrCodeAccountType($request->account_type)->setQrCodeImage($image_link)->updatePartnerDetails();
     }
 
     private function resolveQrCodeImage($partner, OrderService $orderService)
