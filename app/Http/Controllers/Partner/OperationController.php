@@ -63,8 +63,9 @@ class OperationController extends Controller
 
         $partner = $request->partner;
         $this->setModifier($partner);
-        $this->saveInDatabase($partner, $request);
-        return api_response($request, $partner, 200);
+//        $this->saveInDatabase($partner, $request);
+//        return api_response($request, $partner, 200);
+        return api_response($request, null, 403, ['message' => 'You do not have permission to update location.']);
     }
 
     private function saveInDatabase($partner, Request $request)
