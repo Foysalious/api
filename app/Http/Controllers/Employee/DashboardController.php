@@ -65,6 +65,11 @@ class DashboardController extends Controller
 
             ],
             [
+                'title' => 'My Team',
+                'target_type' => 'my_team',
+
+            ],
+            [
                 'title' => 'Feedback',
                 'target_type' => 'feedback',
                 'link' => "https://sheba.freshdesk.com/support/tickets/new"
