@@ -1,10 +1,10 @@
-<?php namespace App\Sheba\AccountingEntry\Repository;
+<?php
+
+namespace App\Sheba\AccountingEntry\Repository;
 
 use App\Models\Partner;
-use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Constants\UserType;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Statics\IncomeExpenseStatics;
 use Sheba\RequestIdentification;
@@ -27,16 +27,15 @@ class AccountingRepository extends BaseRepository
         $this->setModifier($partner);
         $data = $this->createEntryData($request, $type, $request->source_id);
         $url = "api/entries/";
-        try {
-            $datum = $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->post($url, $data);
+        $data = $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->post($url, $data);
+        foreach ($data as $datum) {
             //pos order reconcile while storing entry
             if ($datum['source_type'] == 'pos' && $datum['amount_cleared'] > 0) {
                 $this->createPosOrderPayment($datum['amount_cleared'], $datum['source_id'], 'cod');
             }
-            return $datum;
-        } catch (AccountingEntryServerError $e) {
-            logError($e);
         }
+
+        return $data;
     }
 
     /**
@@ -56,12 +55,7 @@ class AccountingRepository extends BaseRepository
         $this->setModifier($partner);
         $data = $this->createEntryData($request, $type, $request->source_id);
         $url = "api/entries/" . $entry_id;
-        Log::info(['update entry data', $data]);
-        try {
-            return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->post($url, $data);
-        } catch (AccountingEntryServerError $e) {
-            logError($e);
-        }
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->post($url, $data);
     }
 
     /**
@@ -81,11 +75,7 @@ class AccountingRepository extends BaseRepository
         $this->setModifier($partner);
         $data = $this->createEntryData($request, $sourceType, $sourceId);
         $url = "api/entries/source/" . $sourceType . '/' . $sourceId;
-        try {
-            return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->post($url, $data);
-        } catch (AccountingEntryServerError $e) {
-            logError($e);
-        }
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->post($url, $data);
     }
 
     /**
@@ -93,6 +83,7 @@ class AccountingRepository extends BaseRepository
      * @param $sourceType
      * @param $sourceId
      * @return mixed
+     * @throws AccountingEntryServerError
      */
     public function deleteEntryBySource(Partner $partner, $sourceType, $sourceId)
     {
@@ -100,11 +91,7 @@ class AccountingRepository extends BaseRepository
         if (!$this->isMigratedToAccounting($partner->id)) {
             return true;
         }
-        try {
-            return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->delete($url);
-        } catch (AccountingEntryServerError $e) {
-            logError($e);
-        }
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->delete($url);
     }
 
     /**
@@ -116,11 +103,7 @@ class AccountingRepository extends BaseRepository
     {
         list($start, $end) = IncomeExpenseStatics::createDataForAccountsTotal($request->start_date, $request->end_date);
         $url = "api/reports/account-list-with-sum/{$request->account_type}?start_date=$start&end_date=$end";
-        try {
-            return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->get($url);
-        } catch (AccountingEntryServerError $e) {
-            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
-        }
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->get($url);
     }
 
     /**
@@ -134,8 +117,8 @@ class AccountingRepository extends BaseRepository
         $requested_service = json_decode($requestedService, true);
         $inventory_products = [];
         foreach ($services as $key => $service) {
-            $original_service = ($service->service);
-            if($original_service) {
+            $original_service = ($service->service) ?? null;
+            if ($original_service) {
                 $serviceBatches = $servicesStockCostInfo[$original_service->id];
                 foreach ($serviceBatches as $serviceBatch) {
                     $sellingPrice = isset($requested_service[$key]['updated_price']) && $requested_service[$key]['updated_price'] ? $requested_service[$key]['updated_price'] : $original_service->price;
@@ -154,7 +137,7 @@ class AccountingRepository extends BaseRepository
                     "id" => 0,
                     "name" => 'Custom Amount',
                     "unit_price" => $sellingPrice,
-                    "selling_price" => $serviceBatch['cost']  ?? $sellingPrice,
+                    "selling_price" => $serviceBatch['cost'] ?? $sellingPrice,
                     "quantity" => $serviceBatch['stock'] ?? ($requested_service[$key]['quantity'] ?? 1)
                 ];
             }
