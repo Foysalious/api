@@ -6,7 +6,9 @@ use App\Models\PartnerResource;
 use App\Models\ReviewQuestionAnswer;
 use App\Repositories\ReviewRepository;
 use App\Sheba\Partner\Delivery\Methods;
+use App\Sheba\UserMigration\Modules;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInformation;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
@@ -35,7 +37,7 @@ class PartnerDetails
     /**
      * @param $identifier
      * @return $this
-     * @throws \Exception
+     * @throws Exception
      */
     public function setPartner($identifier)
     {
@@ -44,7 +46,7 @@ class PartnerDetails
         } else {
             $this->partner = Partner::where('sub_domain', $identifier)->first();
         }
-        if (!$this->partner) throw new \Exception("Invalid Partner");
+        if (!$this->partner) throw new Exception("Invalid Partner");
 
         return $this;
     }
@@ -55,6 +57,9 @@ class PartnerDetails
         return $this;
     }
 
+    /**
+     * @throws Exception
+     */
     public function get()
     {
         // $this->loadPartnerRelations();
