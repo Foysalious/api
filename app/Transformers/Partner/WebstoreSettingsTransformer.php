@@ -1,5 +1,8 @@
 <?php namespace App\Transformers\Partner;
 
+use App\Models\Partner;
+use App\Sheba\PosOrderService\Services\OrderService;
+use App\Sheba\UserMigration\Modules;
 use League\Fractal\TransformerAbstract;
 use Sheba\Sms\AdaReach;
 use Sheba\Sms\Infobip;
@@ -10,14 +13,14 @@ class WebstoreSettingsTransformer extends TransformerAbstract
     public function transform($partner)
     {
         $banner_settings = PartnerWebstoreBanner::where('partner_id', $partner->id)->first();
-        
+
         return [
             'name' => $partner->name,
             'sub_domain' => $partner->sub_domain,
             'has_webstore' => $partner->has_webstore,
             'is_webstore_published' => $partner->is_webstore_published,
             'logo' => $partner->logo,
-            'delivery_charge' => $partner->delivery_charge,
+            'delivery_charge' => $this->getDeliveryCharge($partner),
             'is_inventory_empty' => !$partner->posServices()->count() ? 1 : 0,
             'address' => $partner->address,
             'wallet' => $partner->wallet,
@@ -32,5 +35,14 @@ class WebstoreSettingsTransformer extends TransformerAbstract
                 'is_published' => $banner_settings->is_published
             ] : null,
         ];
+    }
+
+    public function getDeliveryCharge(Partner $partner)
+    {
+        if(!$partner->isMigrated(Modules::POS))
+            return $partner->delivery_charge;
+        /** @var OrderService $orderService */
+        $orderService = app(OrderService::class);
+        return $orderService->setPartnerId($partner->id)->getPartnerDetails()['partner']['delivery_charge'];
     }
 }
