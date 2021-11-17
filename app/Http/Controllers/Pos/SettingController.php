@@ -31,9 +31,9 @@ class SettingController extends Controller
      * @param PosSettingRepository $repository
      * @return JsonResponse
      */
-    public function getSettings(Request $request, Creator $creator, PosSettingRepository $repository)
+    public function getSettings(Request $request, Creator $creator, PosSettingRepository $repository,PartnerService $partnerService)
     {
-        $settings = $this->getSettingsData($request,$creator,$repository);
+        $settings = $this->getSettingsData($request,$creator,$repository,$partnerService);
         if(!$settings) return api_response($request, null, 500,null);
         else return api_response($request, $settings,200, ['settings' => $settings]);
     }
