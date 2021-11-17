@@ -13,7 +13,7 @@ class OptionService
 
     /**
      * OptionService constructor.
-     * @param $client
+     * @param InventoryServerClient $client
      */
     public function __construct(InventoryServerClient $client)
     {

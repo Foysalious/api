@@ -54,7 +54,7 @@ class Route
              */
             $api->group(['middleware' => ['jwtAccessToken']], function ($api) {
                 $api->get('/orders/{order_id}/generate-invoice', 'PosOrder\OrderController@orderInvoiceDownload');
-                $api->get('/banner-list', 'Pos\PartnerController@getBanner');
+                $api->get('/webstore-banner-list', 'Pos\PartnerController@getBanner');
                 $api->group(['prefix' => 'webstore-theme-settings', 'middleware' => ['jwtAccessToken']], function ($api) {
                     $api->get('/settings', 'WebstoreSettingController@index');
                     $api->get('/social-settings', 'WebstoreSettingController@getSocialSetting');

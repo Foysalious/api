@@ -6,6 +6,8 @@ use App\Models\Partner;
 use App\Models\PartnerPosSetting;
 use App\Models\PosCustomer;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
+use App\Sheba\InventoryService\Services\PartnerService;
+use App\Sheba\UserMigration\Modules;
 use Exception;
 use Sheba\Sms\BusinessType;
 use Sheba\Sms\FeatureType;
@@ -36,14 +38,14 @@ class SettingController extends Controller
         else return api_response($request, $settings,200, ['settings' => $settings]);
     }
 
-    public function getSettingsV2(Request $request, Creator $creator, PosSettingRepository $repository)
+    public function getSettingsV2(Request $request, Creator $creator, PosSettingRepository $repository, PartnerService $partnerService)
     {
-        $settings = $this->getSettingsData($request,$creator,$repository);
+        $settings = $this->getSettingsData($request,$creator,$repository,$partnerService);
         if(!$settings) return http_response($request, null, 500,null);
         else return http_response($request, $settings,200, ['settings' => $settings]);
     }
 
-    private function getSettingsData(Request $request, Creator $creator, PosSettingRepository $repository)
+    private function getSettingsData(Request $request, Creator $creator, PosSettingRepository $repository,PartnerService $partnerService)
     {
         try {
             $partner = resolvePartnerFromAuthMiddleware($request);
@@ -56,6 +58,8 @@ class SettingController extends Controller
             $settings->vat_registration_number = $partner->basicInformations->vat_registration_number;
             $settings->show_vat_registration_number = $partner->basicInformations->show_vat_registration_number;
             $settings['has_qr_code'] = ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0;
+            if($partner->isMigrated(Modules::POS))
+                $settings->vat_percentage = $partnerService->setPartner($partner)->get()['partner']['vat_percentage'];
             removeRelationsAndFields($settings);
             return $settings;
         } catch (Throwable $e) {
@@ -89,21 +93,21 @@ class SettingController extends Controller
 
     }
 
-    public function storePosSetting(Request $request, Creator $creator)
+    public function storePosSetting(Request $request, Creator $creator,PartnerService $partnerService)
     {
-        $settings_saved = $this->savePosSettings($request,$creator);
+        $settings_saved = $this->savePosSettings($request,$creator,$partnerService);
         if(!$settings_saved) return api_response($request, null, 500);
         else return api_response($request, null,200, ['message' => 'Successful']);
     }
 
-    public function storePosSettingV2(Request $request, Creator $creator)
+    public function storePosSettingV2(Request $request, Creator $creator, PartnerService $partnerService)
     {
-        $settings_saved = $this->savePosSettings($request,$creator);
+        $settings_saved = $this->savePosSettings($request,$creator,$partnerService);
         if(!$settings_saved) return http_response($request, null, 500);
         else return http_response($request, null,200);
     }
 
-    private function savePosSettings(Request $request, Creator $creator)
+    private function savePosSettings(Request $request, Creator $creator, PartnerService $partnerService)
     {
         try {
             $partner = resolvePartnerFromAuthMiddleware($request);
@@ -112,13 +116,17 @@ class SettingController extends Controller
             $data = [];
             $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
 
-            if ($request->has('vat_percentage')) $data["vat_percentage"] = $request->vat_percentage;
+            if ($request->has('vat_percentage') && !$partner->isMigrated(Modules::POS)) $data["vat_percentage"] = $request->vat_percentage;
             if ($request->has('sms_invoice')) $data["sms_invoice"] = $request->sms_invoice;
             if ($request->has('auto_printing')) $data["auto_printing"] = $request->auto_printing;
             if ($request->has('printer_name')) $data["printer_name"] = $request->printer_name;
             if ($request->has('printer_model')) $data["printer_model"] = $request->printer_model;
 
             $partnerPosSetting->update($this->withUpdateModificationField($data));
+
+            if($request->has('vat_percentage') && $partner->isMigrated(Modules::POS)){
+                $partnerService->setPartner($partner)->setVatPercentage($request->vat_percentage)->update();
+            }
             return true;
         } catch (Throwable $e) {
             logError($e);
