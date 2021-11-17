@@ -1138,15 +1138,21 @@ class PartnerController extends Controller
         return api_response($request, null, 200, ['wallet_balance' => $wallet_balance]);
     }
 
-    public function setQRCode(Request $request)
+    /**
+     * @throws Exception
+     */
+    public function setQRCode(Request $request, OrderService $orderService)
     {
-        $this->saveQRCodeData($request);
+        $this->saveQRCodeData($request, $orderService);
         return api_response($request, null, 200, ['message' => 'QR code set successfully']);
     }
 
-    public function setQRCodeV2(Request $request)
+    /**
+     * @throws Exception
+     */
+    public function setQRCodeV2(Request $request, OrderService $orderService)
     {
-        $this->saveQRCodeData($request);
+        $this->saveQRCodeData($request,$orderService);
         return http_response($request, null, 200);
     }
 
@@ -1271,29 +1277,31 @@ class PartnerController extends Controller
     /**
      * @throws Exception
      */
-    private function saveQRCodeData(Request $request,OrderService $orderService)
+    private function saveQRCodeData(Request $request, OrderService $orderService)
     {
         $account_type = array_keys(config('partner.qr_code.account_types'));
         $account_type = implode(',', $account_type);
         $this->validate($request, [
             'account_type' => "required|in:$account_type",
-            'image'        => "required|mimes:jpeg,png,jpg",
+            'image' => "required|mimes:jpeg,png,jpg",
         ]);
-        $image   = $request->file('image');
+        $image = $request->file('image');
         $partner = resolvePartnerFromAuthMiddleware($request);
-        $qr_code_image = $this->resolveQrCodeImage($partner);
-            if ($qr_code_image) {
-                $file_name = substr($partner->qr_code_image, strlen(env('S3_URL')));
-                $this->fileRepository->deleteFileFromCDN($file_name);
-            }
-            $file_name  = $partner->id . '_QR_code' . '.' . $image->extension();
-            $image_link = $this->fileRepository->uploadToCDN($file_name, $request->file('image'), 'partner/qr-code/');
-            $this->setModifier($partner);
-            $partner->update($this->withUpdateModificationField([
+        $qr_code_image = $this->resolveQrCodeImage($partner, $orderService);
+        if ($qr_code_image) {
+            $file_name = substr($partner->qr_code_image, strlen(env('S3_URL')));
+            $this->fileRepository->deleteFileFromCDN($file_name);
+        }
+        $file_name = $partner->id . '_QR_code' . '.' . $image->extension();
+        $image_link = $this->fileRepository->uploadToCDN($file_name, $request->file('image'), 'partner/qr-code/');
+        $this->setModifier($partner);
+        if (!$partner->isMigrated(Modules::POS)) {
+            return $partner->update($this->withUpdateModificationField([
                 'qr_code_account_type' => $request->account_type,
-                'qr_code_image'        => $image_link,
+                'qr_code_image' => $image_link,
             ]));
-
+        }
+        return $orderService->setQrCodeAccountType($request->account_type)->setQrCodeImage($image_link)->updatePartnerDetails();
     }
 
     private function resolveQrCodeImage($partner, OrderService $orderService)

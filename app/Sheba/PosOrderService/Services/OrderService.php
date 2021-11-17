@@ -27,6 +27,9 @@ class OrderService
     private $logId;
     protected $deliveryRequestId;
     protected $deliveryStatus;
+    private $qrCodeImage;
+    private $qrCodeAccountType;
+
 
     public function __construct(PosOrderServerClient $client, SmanagerUserServerClient $smanagerUserClient)
     {
@@ -265,6 +268,18 @@ class OrderService
         return $this->client->get('api/v1/partners/' . $this->partnerId);
     }
 
+    public function updatePartnerDetails()
+    {
+        return $this->client->put('api/v1/partners/' . $this->partnerId, $this->makePartnerUpdateData(),false);
+    }
+
+    private function makePartnerUpdateData()
+    {
+        $data = [];
+        if ($this->qrCodeAccountType) $data['qr_code_account_type'] = $this->qrCodeAccountType;
+        if ($this->qrCodeImage) $data['qr_code_image'] = $this->qrCodeImage;
+        return $data;
+    }
 
     public function getLogs()
     {
@@ -380,6 +395,26 @@ class OrderService
     public function getFilteringOptions()
     {
         return $this->client->get('api/v1/filters');
+    }
+
+    /**
+     * @param $qrCodeAccountType
+     * @return OrderService
+     */
+    public function setQrCodeAccountType($qrCodeAccountType)
+    {
+        $this->qrCodeAccountType = $qrCodeAccountType;
+        return $this;
+    }
+
+    /**
+     * @param mixed $qrCodeImage
+     * @return OrderService
+     */
+    public function setQrCodeImage($qrCodeImage)
+    {
+        $this->qrCodeImage = $qrCodeImage;
+        return $this;
     }
 
     private function makeDeliveryData()
