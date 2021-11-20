@@ -1,11 +1,13 @@
 <?php namespace App\Http\Controllers\B2b;
 
-use App\Sheba\Business\CoWorker\BulkGrossSalary\BulkGrossSalaryExcel;
+use Sheba\Business\CoWorker\BulkGrossSalary\BulkGrossSalaryExcel;
 use App\Sheba\Business\CoWorker\BulkGrossSalary\GrossSalaryExcelUploadError;
-use App\Sheba\Business\Salary\Requester as CoWorkerSalaryRequester;
+use Sheba\Business\Salary\Requester as CoWorkerSalaryRequester;
 use App\Transformers\Business\CoWorkerGrossSalaryReportTransformer;
+use Carbon\Carbon;
+use Maatwebsite\Excel\Facades\Excel as MaatwebsiteExcel;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
-use App\Sheba\Business\CoWorker\BulkGrossSalary\GrossSalaryExcel;
+use Sheba\Business\CoWorker\BulkGrossSalary\GrossSalaryExcel;
 use League\Fractal\Serializer\ArraySerializer;
 use League\Fractal\Resource\Collection;
 use App\Http\Controllers\Controller;
@@ -16,7 +18,6 @@ use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use App\Models\Business;
 use App\Models\Member;
-use Excel;
 
 class CoWorkerGrossSalaryController extends Controller
 {
@@ -127,6 +128,9 @@ class CoWorkerGrossSalaryController extends Controller
         $employees = new Collection($business_members->get(), new CoWorkerGrossSalaryReportTransformer());
         $employees = collect($manager->createData($employees)->toArray()['data']);
 
-        return (new BulkGrossSalaryExcel)->setEmployeeData($employees->toArray())->download();
+        $excel = new BulkGrossSalaryExcel($employees->toArray());
+        $time = Carbon::now()->format("Y_m_d_H_i_s");
+        $file_name = 'Coworker_Gross_Salary_Report_' . randomString(6, true) . '_' . $time . ".xlsx";
+        return MaatwebsiteExcel::download($excel, $file_name);
     }
 }

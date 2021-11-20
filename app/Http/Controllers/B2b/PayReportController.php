@@ -109,8 +109,9 @@ class PayReportController extends Controller
      * @param Request $request
      * @param PayReportList $pay_report_list
      * @return JsonResponse
+     * @throws \Exception
      */
-    public function bkashSalaryReport(Request $request, PayReportList $pay_report_list)
+    public function bkashSalaryReport(Request $request, PayReportList $pay_report_list): JsonResponse
     {
         /** @var Business $business */
         $business = $request->business;

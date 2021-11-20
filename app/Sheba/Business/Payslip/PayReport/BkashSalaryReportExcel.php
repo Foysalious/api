@@ -7,36 +7,14 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use Sheba\FileManagers\CdnFileManager;
-use Sheba\FileManagers\FileManager;
-use Carbon\Carbon;
 
 class BkashSalaryReportExcel implements FromCollection, WithHeadings, ShouldAutoSize, WithStyles
 {
-    use FileManager, CdnFileManager;
-
     private $payReportData;
 
     public function __construct(array $pay_report_data)
     {
         $this->payReportData = $pay_report_data;
-    }
-
-    public function download()
-    {
-        $six_digit_random_number = random_int(100000, 999999);
-        $file_name = 'Net_Payable_Bkash_Report_' . $six_digit_random_number . '_' . Carbon::now()->toDateTimeString();
-        $file = Excel::create($file_name, function ($excel) {
-            $excel->sheet('data', function ($sheet) {
-            });
-        })->save();
-
-        $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
-        $file_name = $this->uniqueFileName($file_path, $file_name, 'xlsx');
-        $file_link = $this->saveFileToCDN($file_path, getBulkGrossSalaryFolder(), $file_name);
-        unlink($file_path);
-
-        return $file_link;
     }
 
     /**

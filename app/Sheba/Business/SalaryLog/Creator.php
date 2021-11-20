@@ -1,4 +1,4 @@
-<?php namespace App\Sheba\Business\SalaryLog;
+<?php namespace Sheba\Business\SalaryLog;
 
 use Sheba\Dal\SalaryLog\SalaryLogRepository;
 use Sheba\ModificationFields;

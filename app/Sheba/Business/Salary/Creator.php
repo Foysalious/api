@@ -1,9 +1,7 @@
-<?php namespace App\Sheba\Business\Salary;
+<?php namespace Sheba\Business\Salary;
 
-use App\Models\BusinessMember;
 use App\Sheba\Business\Salary\Component\Maker;
 use Illuminate\Support\Facades\DB;
-use Sheba\Dal\PayrollComponent\PayrollComponentRepository;
 use Sheba\Dal\Salary\SalaryRepository;
 
 class Creator
@@ -11,11 +9,8 @@ class Creator
     /** @var Requester */
     private $salaryRequest;
     private $salaryData = [];
-    private $businessMember;
     /** @var SalaryRepository */
     private $salaryRepository;
-    /*** @var PayrollComponentRepository */
-    private $payrollComponentRepository;
     private $salary;
 
     /**
@@ -25,19 +20,15 @@ class Creator
     public function __construct(SalaryRepository $salary_repository)
     {
         $this->salaryRepository = $salary_repository;
-        $this->payrollComponentRepository = app(PayrollComponentRepository::class);
     }
 
-    /** @param $salary_request */
+    /**
+     * @param Requester $salary_request
+     * @return Creator
+     */
     public function setSalaryRequester(Requester $salary_request)
     {
         $this->salaryRequest = $salary_request;
-        return $this;
-    }
-
-    public function setBusinessMember(BusinessMember $business_member)
-    {
-        $this->businessMember = $business_member;
         return $this;
     }
 

@@ -2,12 +2,10 @@
 
 use App\Sheba\Business\Salary\Component\Maker;
 use Illuminate\Support\Facades\DB;
-use Sheba\Dal\PayrollComponent\PayrollComponentRepository;
 use Sheba\Dal\Salary\SalaryRepository;
-use Sheba\Dal\SalaryLog\SalaryLogRepository;
-use App\Sheba\Business\SalaryLog\Requester;
-use App\Sheba\Business\Salary\Requester as SalaryRequester;
-use App\Sheba\Business\SalaryLog\Creator;
+use Sheba\Business\SalaryLog\Requester;
+use Sheba\Business\Salary\Requester as SalaryRequester;
+use Sheba\Business\SalaryLog\Creator;
 
 class Updater
 {
@@ -17,32 +15,23 @@ class Updater
     private $salaryRepository;
     private $salaryData = [];
     private $salary;
-    /** @var SalaryLogRepository */
-    private $SalaryLogRepository;
-    /**
-     * @var Requester
-     */
+    /** @var Requester */
     private $salaryLogRequester;
     /** @var Creator */
     private $salaryLogCreator;
     private $oldSalary;
-    /*** @var PayrollComponentRepository */
-    private $payrollComponentRepository;
 
     /**
      * Updater constructor.
      * @param SalaryRepository $salary_repository
-     * @param SalaryLogRepository $salary_log_repository
      * @param Requester $salary_log_requester
      * @param Creator $salary_log_creator
      */
-    public function __construct(SalaryRepository $salary_repository, SalaryLogRepository $salary_log_repository, Requester $salary_log_requester, Creator $salary_log_creator)
+    public function __construct(SalaryRepository $salary_repository, Requester $salary_log_requester, Creator $salary_log_creator)
     {
         $this->salaryRepository = $salary_repository;
-        $this->SalaryLogRepository = $salary_log_repository;
         $this->salaryLogRequester = $salary_log_requester;
         $this->salaryLogCreator = $salary_log_creator;
-        $this->payrollComponentRepository = app(PayrollComponentRepository::class);
     }
 
     /**
@@ -90,6 +79,7 @@ class Updater
             ->setSalary($this->salary);
         $this->salaryLogCreator->setSalaryLogRequester($this->salaryLogRequester)->create();
     }
+
     private function createComponentPercentage()
     {
         $business_member = $this->salaryRequest->getBusinessMember();
