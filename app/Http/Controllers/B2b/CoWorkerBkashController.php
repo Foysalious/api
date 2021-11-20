@@ -1,7 +1,9 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Sheba\Business\CoWorker\BulkBkashNumber\BulkBkashNumberExcelUploadError;
-use App\Sheba\Business\CoWorker\BulkBkashNumber\BulkBkashNumberExcel;
+use Carbon\Carbon;
+use Maatwebsite\Excel\Facades\Excel as MaatwebsiteExcel;
+use Sheba\Business\CoWorker\BulkBkashNumber\BulkBkashNumberExcel;
 use App\Transformers\Business\CoWorkerBkashNumberReportTransformer;
 use App\Sheba\Business\CoWorker\BulkBkashNumber\BkashNumberExcel;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
@@ -15,7 +17,6 @@ use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use App\Models\Business;
 use App\Models\Member;
-use Excel;
 
 class CoWorkerBkashController extends Controller
 {
@@ -51,11 +52,10 @@ class CoWorkerBkashController extends Controller
         $employee_email = BkashNumberExcel::USERS_MAIL_COLUMN_TITLE;
         $bkash_number = BkashNumberExcel::USERS_BKASH_COLUMN_TITLE;
 
-        $excel_error = null;
         $halt_execution = false;
         $bulk_bkash_excel_upload_error->setBusiness($business)->setFile($file_path);
 
-        $data->each(function ($value, $key) use ($business, $file_path, $total, $employee_email, $bkash_number, $excel_error, &$halt_execution, $bulk_bkash_excel_upload_error) {
+        $data->each(function ($value, $key) use ($business, $file_path, $total, $employee_email, $bkash_number, &$halt_execution, $bulk_bkash_excel_upload_error) {
             $profile = $this->profileRepo->checkExistingEmail($value->$employee_email);
 
             if (!$value->$employee_email || !$value->$bkash_number) {
@@ -115,6 +115,9 @@ class CoWorkerBkashController extends Controller
         $employees = new Collection($business_members->get(), new CoWorkerBkashNumberReportTransformer());
         $employees = collect($manager->createData($employees)->toArray()['data']);
 
-        return (new BulkBkashNumberExcel)->setEmployeeData($employees->toArray())->download();
+        $time = Carbon::now()->format("Y_m_d_H_i_s");
+        $file_name = 'Coworker_Bkash_Number_Report_' . randomString(6, true) . '_' . $time . ".xlsx";
+        $excel = new BulkBkashNumberExcel($employees->toArray());
+        return MaatwebsiteExcel::download($excel, $file_name);
     }
 }
