@@ -96,7 +96,6 @@ class PaymentLinkBillController extends Controller
             logError($e);
             return api_response($request, null, $e->getCode(),['message'=>$e->getMessage()]);
         } catch (\Throwable $e) {
-            dd($e);
             logError($e);
             return api_response($request, null, 500);
         }
