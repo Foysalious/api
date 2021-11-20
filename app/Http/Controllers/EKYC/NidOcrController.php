@@ -60,6 +60,7 @@ class NidOcrController extends Controller
             $msg = getValidationErrorMessage($exception->validator->errors()->all());
             return api_response($request, null, 400, ['message' => $msg]);
         } catch (EKycException $e) {
+            logError($e);
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         } catch (\Throwable $e) {
             logError($e);
