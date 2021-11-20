@@ -87,12 +87,12 @@ class CustomerController extends Controller
                 $total_purchase_amount += $order->getNetBill();
                 $total_used_promo += !empty($order->voucher_id) ? $this->getVoucherAmount($order) : 0;
             });
-            $customerAmount = $posCustomerRepository->getDueAmountFromDueTracker($request->partner, $customer->id, $request);
+            $customerAmount = $posCustomerRepository->getDueAmountFromDueTracker($request->partner, $customer->id);
             $data['total_purchase_amount'] = $total_purchase_amount;
             $data['total_due_amount']      = $customerAmount['due'];
             $data['total_payable_amount']  = $customerAmount['payable'];
             $data['total_purchase_amount'] = $total_purchase_amount;
-             $data['total_used_promo']      = $total_used_promo;
+            $data['total_used_promo']      = $total_used_promo;
             $data['is_customer_editable']  = $customer->isEditable();
             $data['is_customer_editable']  = true;
             $data['note']                  = $partner_pos_customer->note;

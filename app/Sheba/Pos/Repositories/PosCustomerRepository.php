@@ -23,13 +23,12 @@ class PosCustomerRepository extends BaseRepository
     /**
      * @param Partner $partner
      * @param $customerId
-     * @param $request
      * @return int[]
      * @throws AccountingEntryServerError
-     * @throws InvalidPartnerPosCustomer
      * @throws ExpenseTrackingServerError
+     * @throws InvalidPartnerPosCustomer
      */
-    public function getDueAmountFromDueTracker(Partner $partner, $customerId)
+    public function getDueAmountFromDueTracker(Partner $partner, $customerId): array
     {
         $response = [
             'due' => 0,
@@ -58,7 +57,7 @@ class PosCustomerRepository extends BaseRepository
     {
         /** @var AccountingDueTrackerRepository $accDueTrackerRepository */
         $accDueTrackerRepository = app(AccountingDueTrackerRepository::class);
-        $accDueTrackerRepository->setPartner($partner)->deleteCustomer($customerId);
+        return $accDueTrackerRepository->setPartner($partner)->deleteCustomer($customerId);
 
     }
 }

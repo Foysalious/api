@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use phpDocumentor\Reflection\Types\Null_;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
+use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\Pos\Repositories\PosCustomerRepository;
 
 class PosCustomerService
@@ -278,11 +279,11 @@ class PosCustomerService
     /**
      * @throws InvalidPartnerPosCustomer
      * @throws AccountingEntryServerError
+     * @throws ExpenseTrackingServerError
      */
     private function getDueAndPayableAmount(): array
     {
-        // $customer_amount =  $this->posCustomerRepository->getDueAmountFromDueTracker($this->partner, $this->customerId);
-        return [100, 0];
+         return $this->posCustomerRepository->getDueAmountFromDueTracker($this->partner, $this->customerId);
     }
 
     private function getCustomerListByPartnerId()
