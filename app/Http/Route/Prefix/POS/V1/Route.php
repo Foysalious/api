@@ -176,20 +176,20 @@ class Route
              * sdelivery route
              */
             $api->group(['prefix' => 'delivery'], function ($api) {
-                $api->post('/delivery-charge', 'Pos\\DeliveryController@getDeliveryCharge');
-                $api->get('/district', 'Pos\\DeliveryController@getDistricts');
-                $api->get('/upzillas/{district_name}/district', 'Pos\\DeliveryController@getUpzillas');
-                $api->get('/paperfly-delivery-charge', 'Pos\\DeliveryController@paperflyDeliveryCharge');
-                $api->post('/delivery-status-update','Pos\\DeliveryController@deliveryStatusUpdate');
+                $api->post('/delivery-charge', 'Pos\\DeliveryController@getDeliveryChargeV2');
+                $api->get('/district', 'Pos\\DeliveryController@getDistrictsV2');
+                $api->get('/upzillas/{district_name}/district', 'Pos\\DeliveryController@getUpzillasV2');
+                $api->get('/paperfly-delivery-charge', 'Pos\\DeliveryController@paperflyDeliveryChargeV2');
+                $api->post('/delivery-status-update','Pos\\DeliveryController@deliveryStatusUpdateV2');
             });
             $api->group(['prefix' => 'delivery', 'middleware' => ['jwtAccessToken']], function ($api) {
                 $api->get('register', 'Pos\\DeliveryController@getInfoForRegistrationV2');
                 $api->post('register', 'Pos\\DeliveryController@registerV2');
-                $api->get('delivery-status', 'Pos\\DeliveryController@getDeliveryStatus');
-                $api->post('cancel-order', 'Pos\\DeliveryController@cancelOrder');
-                $api->post('orders', 'Pos\\DeliveryController@orderPlace');
-                $api->post('partner-vendor', 'Pos\\DeliveryController@vendorUpdate');
-                $api->get('vendor-list', 'Pos\DeliveryController@getVendorList');
+                $api->get('delivery-status', 'Pos\\DeliveryController@getDeliveryStatusV2');
+                $api->post('cancel-order', 'Pos\\DeliveryController@cancelOrderV2');
+                $api->post('orders', 'Pos\\DeliveryController@orderPlaceV2');
+                $api->post('partner-vendor', 'Pos\\DeliveryController@vendorUpdateV2');
+                $api->get('vendor-list', 'Pos\DeliveryController@getVendorListV2');
             });
             /**
              * End jwtAccessToken Middleware

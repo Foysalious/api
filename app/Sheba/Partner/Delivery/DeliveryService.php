@@ -2,6 +2,7 @@
 
 
 use App\Exceptions\DoNotReportException;
+use App\Exceptions\HttpException;
 use App\Http\Requests\Request;
 use App\Models\Partner;
 use App\Models\PartnerPosService;
@@ -9,6 +10,7 @@ use App\Models\PosOrder;
 use App\Models\PosOrderPayment;
 use App\Sheba\Notification\Customer\Order;
 use App\Sheba\Partner\Delivery\Exceptions\DeliveryCancelRequestError;
+use App\Sheba\Partner\Delivery\Exceptions\DeliveryCancelRequestHttpError;
 use App\Sheba\PosOrderService\PosOrderServerClient;
 use App\Sheba\PosOrderService\Services\OrderService;
 use Illuminate\Support\Str;
@@ -212,12 +214,25 @@ class DeliveryService
 
     public function getOrderInfo()
     {
-
         if ($this->posOrder && $this->partner->id != $this->posOrder->partner_id) {
             throw new DoNotReportException("Order does not belongs to this partner", 400);
         }
+        return $this->getOrderInfoCore();
+    }
+
+    /**
+     * @throws HttpException
+     */
+    public function getOrderInfoV2()
+    {
+        if ($this->posOrder && $this->partner->id != $this->posOrder->partner_id) {
+            throw new HttpException("Order does not belongs to this partner", 400);
+        }
+        return $this->getOrderInfoCore();
+    }
+    public function getOrderInfoCore()
+    {
         $customer_delivery_info = $this->resolveDeliveryInfo();
-        //$payment_info = $this->paymentInfo($this->posOrder->id);
         return [
             'partner_pickup_information' => [
                 'merchant_name' => $this->partner->name,
@@ -530,7 +545,7 @@ class DeliveryService
     }
 
     /**
-     * @return mixed
+     * @return array
      * @throws DoNotReportException
      */
     public function getDeliveryStatus()
@@ -538,6 +553,22 @@ class DeliveryService
         $delivery_order_id = $this->resolveDeliveryRequestId();
         if(!$delivery_order_id)
             throw new DoNotReportException('Delivery tracking id not found',404);
+        return $this->getDeliveryStatusCore($delivery_order_id);
+    }
+
+    /**
+     * @throws HttpException
+     */
+    public function getDeliveryStatusV2()
+    {
+        $delivery_order_id = $this->resolveDeliveryRequestId();
+        if(!$delivery_order_id)
+            throw new HttpException('Delivery tracking id not found',404);
+        return $this->getDeliveryStatusCore($delivery_order_id);
+    }
+
+    private function getDeliveryStatusCore($delivery_order_id)
+    {
         $data = [
             'uid' => $delivery_order_id
         ];
@@ -549,6 +580,10 @@ class DeliveryService
         ];
     }
 
+    /**
+     * @throws DeliveryCancelRequestError
+     * @throws DoNotReportException
+     */
     public function cancelOrder()
     {
         $status = $this->getDeliveryStatus()['status'];
@@ -561,6 +596,23 @@ class DeliveryService
         $this->updatePosOrder();
         return true;
     }
+
+    /**
+     * @throws HttpException
+     */
+    public function cancelOrderV2()
+    {
+        $status = $this->getDeliveryStatusV2()['status'];
+        $data = [
+            'uid' => $this->resolveDeliveryRequestId()
+        ];
+        if ($status == Statuses::PICKED_UP)
+            throw new DeliveryCancelRequestHttpError();
+        $this->client->setToken($this->token)->post('orders/cancel', $data);
+        $this->updatePosOrder();
+        return true;
+    }
+
 
     private function updatePosOrder()
     {
