@@ -13,6 +13,7 @@ use App\Sheba\Partner\Delivery\Exceptions\DeliveryCancelRequestError;
 use App\Sheba\Partner\Delivery\Exceptions\DeliveryCancelRequestHttpError;
 use App\Sheba\PosOrderService\PosOrderServerClient;
 use App\Sheba\PosOrderService\Services\OrderService;
+use App\Sheba\UserMigration\Modules;
 use Illuminate\Support\Str;
 use Sheba\Dal\PartnerDeliveryInformation\Contract as PartnerDeliveryInformationRepositoryInterface;
 use Sheba\Dal\POSOrder\OrderStatuses;
@@ -173,9 +174,18 @@ class DeliveryService
         $data['delivery_vendors'] = $temp;
         $data['delivery_method'] = $this->getDeliveryMethod();
         $data['is_registered_for_delivery'] = $this->partner->deliveryInformation ? 1 : 0;
-        $data['delivery_charge'] = $this->partner->delivery_charge;
+        $data['delivery_charge'] = $this->getDeliveryCharge($this->partner);
         $data['products_without_weight'] = $this->countProductWithoutWeight();
         return $data;
+    }
+
+    public function getDeliveryCharge(Partner $partner)
+    {
+        if(!$partner->isMigrated(Modules::POS))
+            return $partner->delivery_charge;
+        /** @var OrderService $orderService */
+        $orderService = app(OrderService::class);
+        return $orderService->setPartnerId($partner->id)->getPartnerDetails()['partner']['delivery_charge'];
     }
 
     /**
