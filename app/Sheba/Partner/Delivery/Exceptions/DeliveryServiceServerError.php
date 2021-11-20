@@ -2,10 +2,9 @@
 
 
 use App\Exceptions\DoNotReportException;
-use App\Exceptions\HttpException;
 use Throwable;
 
-class DeliveryServiceServerError extends HttpException
+class DeliveryServiceServerError extends DoNotReportException
 {
     public function __construct($message = "", $code = 402, Throwable $previous = null)
     {
