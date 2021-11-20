@@ -84,7 +84,7 @@ class DueTrackerController extends Controller
         ini_set('max_execution_time', 420);
 
         $request->merge(['customer_id' => $customer_id]);
-        $data = $dueTrackerRepository->setPartner($request->partner)->getDueListByProfile($request->partner, $request);
+        $data = $dueTrackerRepository->setPartner($request->partner)->getDueListByProfile($request->partner, $customer_id, $request);
         if (($request->has('download_pdf')) && ($request->download_pdf == 1)) {
             $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
             $data['end_date'] = $request->has("end_date") ? $request->end_date : null;
