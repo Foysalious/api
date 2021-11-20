@@ -1,20 +1,25 @@
-<?php namespace App\Sheba\Business\Payslip\PayReport;
+<?php namespace Sheba\Business\Payslip\PayReport;
 
+use Illuminate\Support\Collection;
+use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Carbon\Carbon;
-use Excel;
 
-class BkashSalaryReportExcel
+class BkashSalaryReportExcel implements FromCollection, WithHeadings, ShouldAutoSize, WithStyles
 {
     use FileManager, CdnFileManager;
 
     private $payReportData;
 
-    public function setEmployeeData(array $pay_report_data)
+    public function __construct(array $pay_report_data)
     {
         $this->payReportData = $pay_report_data;
-        return $this;
     }
 
     public function download()
@@ -23,16 +28,6 @@ class BkashSalaryReportExcel
         $file_name = 'Net_Payable_Bkash_Report_' . $six_digit_random_number . '_' . Carbon::now()->toDateTimeString();
         $file = Excel::create($file_name, function ($excel) {
             $excel->sheet('data', function ($sheet) {
-                $sheet->fromArray($this->makeData(), null, 'A1', false, false);
-                $sheet->prependRow($this->getHeaders());
-                $sheet->freezeFirstRow();
-                $sheet->cell('A1:D1', function ($cells) {
-                    $cells->setFontWeight('bold');
-                });
-                $sheet->getDefaultStyle()->getAlignment()->applyFromArray(
-                    array('horizontal' => 'left')
-                );
-                $sheet->setAutoSize(true);
             });
         })->save();
 
@@ -44,22 +39,35 @@ class BkashSalaryReportExcel
         return $file_link;
     }
 
-    private function makeData()
+    /**
+     * @return Collection
+     */
+    public function collection(): Collection
     {
-        $formatted_data = [];
+        $formatted_data = collect([]);
         foreach ($this->payReportData as $pay_report_data) {
-            $formatted_data [] = [
+            $formatted_data->push([
                 'employee_id' => $pay_report_data['employee_id'],
                 'employee_name' => $pay_report_data['name'],
                 'bkash_number' => $pay_report_data['account_no'],
                 'net_payable' => $pay_report_data['net_payable'],
-            ];
+            ]);
         }
         return $formatted_data;
     }
 
-    private function getHeaders()
+    public function headings(): array
     {
         return ['Employee Id', 'Employee Name', 'Bkash Number', 'Net Payable'];
+    }
+
+    /**
+     * @throws \PhpOffice\PhpSpreadsheet\Exception
+     */
+    public function styles(Worksheet $sheet)
+    {
+        $sheet->freezePane('A1');
+        $sheet->getStyle('A1:D1')->getFont()->setBold(true);
+        $sheet->getParent()->getDefaultStyle()->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
     }
 }

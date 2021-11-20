@@ -28,7 +28,7 @@ class PBLStatics
      */
     public static function uniqueTransactionId(): string
     {
-        return self::CHANNEL . "-" . time() . randomString(4, 1, 1);
+        return self::CHANNEL . "-" . time() . randomString(4, true, true);
     }
 
     /**

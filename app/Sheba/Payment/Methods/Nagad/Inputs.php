@@ -110,7 +110,7 @@ class Inputs
     public static function orderID(): string
     {
         try {
-            return 'S' . time() . randomString(4, 1, 1);
+            return 'S' . time() . randomString(4, true, true);
         } catch (\Exception $e) {
             return 'SHEBA' . time();
         }

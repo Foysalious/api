@@ -69,7 +69,7 @@ abstract class PaymentMethod
     {
         $payment = new Payment();
         $user    = $payable->user;
-        $invoice = "SHEBA_" . strtoupper($this->getMethodName()) . "_" . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . randomString(10, 1, 1);
+        $invoice = "SHEBA_" . strtoupper($this->getMethodName()) . "_" . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . randomString(10, true, true);
         
         DB::transaction(function () use (&$payment, $payable, $invoice, $user, $gateway_account_name) {
             $payment->payable_id             = $payable->id;

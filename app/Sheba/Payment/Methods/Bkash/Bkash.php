@@ -51,7 +51,7 @@ class Bkash extends PaymentMethod
     {
         $this->setCredentials($payable->user,$payable->type);
 
-        $invoice = "SHEBA_BKASH_" . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . randomString(10, 1, 1);
+        $invoice = "SHEBA_BKASH_" . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . randomString(10, true, true);
         $payment = new Payment();
         DB::transaction(function () use ($payment, $payable, $invoice) {
             $payment->payable_id = $payable->id;

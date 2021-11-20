@@ -4,7 +4,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Sheba\Business\Payslip\Excel as PaySlipExcel;
-use App\Sheba\Business\Payslip\PayReport\BkashSalaryReportExcel;
+use Carbon\Carbon;
+use Sheba\Business\Payslip\PayReport\BkashSalaryReportExcel;
 use App\Sheba\Business\Payslip\PayReportList;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -12,10 +13,14 @@ use Illuminate\Support\Facades\App;
 use Maatwebsite\Excel\Facades\Excel as MaatwebsiteExcel;
 use Sheba\Business\Payslip\PayReport\PayReportDetails;
 use Sheba\Dal\Payslip\PayslipRepository;
+use Sheba\FileManagers\CdnFileManager;
+use Sheba\FileManagers\FileManager;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class PayReportController extends Controller
 {
+    use FileManager, CdnFileManager;
+
     /** @var PayslipRepository */
     private $payslipRepo;
 
@@ -114,8 +119,17 @@ class PayReportController extends Controller
             ->setMonthYear($request->month_year)
             ->getBkashSalaryData();
 
-        $bkash_salary_report =  (new BkashSalaryReportExcel)->setEmployeeData($payslip->toArray())->download();
+        $six_digit_random_number = randomString(6, true);
+        $time = Carbon::now()->format("Y_m_d_H_i_s");
+        $file_name = 'Net_Payable_Bkash_Report_' . $six_digit_random_number . '_' . $time . ".xlsx";
+        $excel = new BkashSalaryReportExcel($payslip->toArray());
+        MaatwebsiteExcel::store($excel, $file_name);
 
-        return api_response($request, null, 200, ['bkash_salary_report' => $bkash_salary_report]);
+        $file_path = storage_path("app/" . $file_name) . DIRECTORY_SEPARATOR . $file_name;
+        $file_name = $this->uniqueFileName($file_path, $file_name, 'xlsx');
+        $file_link = $this->saveFileToCDN($file_path, getBulkGrossSalaryFolder(), $file_name);
+        unlink($file_path);
+
+        return api_response($request, null, 200, ['bkash_salary_report' => $file_link]);
     }
 }
