@@ -28,13 +28,12 @@ class PosCustomerRepository extends BaseRepository
      * @throws InvalidPartnerPosCustomer
      * @throws \Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError
      */
-    public function getDueAmountFromDueTracker(Partner $partner, $customerId, $request)
+    public function getDueAmountFromDueTracker(Partner $partner, $customerId)
     {
         $response = [
             'due' => 0,
             'payable' => 0
         ];
-        $request->merge(['customer_id' => $customerId]);
         /** @var AccountingDueTrackerRepository $accDueTrackerRepository */
         $accDueTrackerRepository = app(AccountingDueTrackerRepository::class);
         // checking the partner is migrated to accounting
