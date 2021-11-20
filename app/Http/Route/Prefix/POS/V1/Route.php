@@ -183,8 +183,8 @@ class Route
                 $api->post('/delivery-status-update','Pos\\DeliveryController@deliveryStatusUpdate');
             });
             $api->group(['prefix' => 'delivery', 'middleware' => ['jwtAccessToken']], function ($api) {
-                $api->get('register', 'Pos\\DeliveryController@getInfoForRegistration');
-                $api->post('register', 'Pos\\DeliveryController@register');
+                $api->get('register', 'Pos\\DeliveryController@getInfoForRegistrationV2');
+                $api->post('register', 'Pos\\DeliveryController@registerV2');
                 $api->get('delivery-status', 'Pos\\DeliveryController@getDeliveryStatus');
                 $api->post('cancel-order', 'Pos\\DeliveryController@cancelOrder');
                 $api->post('orders', 'Pos\\DeliveryController@orderPlace');
