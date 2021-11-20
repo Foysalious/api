@@ -5,7 +5,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Models\Member;
-use App\Sheba\Business\Payslip\PayslipExcel;
+use Sheba\Business\Payslip\PayslipExcel;
 use App\Sheba\Business\Payslip\PayRun\PayRunBulkExcel;
 use App\Sheba\Business\Payslip\PayrunList;
 use App\Sheba\Business\Payslip\PendingMonths;
@@ -31,7 +31,7 @@ class PayRunController extends Controller
 
     private $payslipRepo;
     private $businessMemberRepository;
-    private $payrunUpdater;
+    private $payRunUpdater;
 
     /**
      * PayRunController constructor.
@@ -43,7 +43,7 @@ class PayRunController extends Controller
     {
         $this->payslipRepo = $payslip_repo;
         $this->businessMemberRepository = $business_member_repository;
-        $this->payrunUpdater = $payrun_updater;
+        $this->payRunUpdater = $payrun_updater;
     }
 
     /**
@@ -71,7 +71,7 @@ class PayRunController extends Controller
 
         $count = count($payslip);
         if ($request->file == 'excel') {
-            $excel = new PayslipExcel($payslip->toArray());
+            $excel = new PayslipExcel($this->businessMemberRepository, $payslip->toArray());
             return MaatwebsiteExcel::download($excel, 'Pay_run.xlsx');
         }
         if ($request->limit == 'all') $limit = $count;
@@ -133,7 +133,7 @@ class PayRunController extends Controller
         $this->setModifier($manager_member);
 
         $verifyPin->setAgent($business)->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->setPurpose(Purpose::PAYSLIP_DISBURSE)->verify();
-        $this->payrunUpdater->setScheduleDate($request->schedule_date)->setBusiness($business)->disburse();
+        $this->payRunUpdater->setScheduleDate($request->schedule_date)->setBusiness($business)->disburse();
 
         return api_response($request, null, 200);
     }
@@ -153,7 +153,7 @@ class PayRunController extends Controller
         $manager_member = $request->manager_member;
         $this->setModifier($manager_member);
 
-        $this->payrunUpdater->setData($request->data)->setManagerMember($manager_member)->update();
+        $this->payRunUpdater->setData($request->data)->setManagerMember($manager_member)->update();
 
         return api_response($request, null, 200);
     }
