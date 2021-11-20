@@ -431,7 +431,7 @@ class BusinessesController extends Controller
     {
         /** @var Member $member */
         $member = $this->getMember($member_repository);
-        $verification_token = randomString(30, 1, 1);
+        $verification_token = randomString(30, true, true);
         $top_up_jwt_token = ['jwt_token' => $this->fetchJWTToken($member)];
         $redis_name_space = 'TopUpPortal::topup-portal_' . $verification_token;
         Redis::set($redis_name_space, json_encode($top_up_jwt_token));

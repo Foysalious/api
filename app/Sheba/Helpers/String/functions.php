@@ -5,13 +5,13 @@ use Sheba\BanglaToEnglish;
 if (!function_exists('randomString')) {
     /**
      * @param $len
-     * @param int $num
-     * @param int $alpha
-     * @param int $spec_char
+     * @param bool $num
+     * @param bool $alpha
+     * @param bool $spec_char
      * @return string
      * @throws Exception
      */
-    function randomString($len, $num = 0, $alpha = 0, $spec_char = 0)
+    function randomString($len, bool $num = false, bool $alpha = false, bool $spec_char = false): string
     {
         $alphabets = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
         $numbers = "0123456789";

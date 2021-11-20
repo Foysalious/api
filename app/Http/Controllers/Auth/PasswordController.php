@@ -50,7 +50,7 @@ class PasswordController extends Controller
      */
     private function sendResetCode(Profile $profile, $column, $email)
     {
-        $reset_token = randomString(4, 1);
+        $reset_token = randomString(4, true);
         $key_name = 'password_reset_code_' . $reset_token;
 
         Redis::set($key_name, json_encode(["profile_id" => $profile->id, 'code' => $reset_token]));

@@ -52,7 +52,7 @@ class Creator
     {
         $data = [
             'profile_id' => $this->profile->id,
-            'remember_token' => randomString(255, 0, 1, 0),
+            'remember_token' => randomString(255, false, true),
             'verification_status' => VerificationStatus::PENDING,
             'geolocation' => $this->geolocation
         ];

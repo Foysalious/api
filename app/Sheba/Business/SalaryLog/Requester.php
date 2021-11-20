@@ -1,4 +1,4 @@
-<?php namespace App\Sheba\Business\SalaryLog;
+<?php namespace Sheba\Business\SalaryLog;
 
 
 class Requester
@@ -7,7 +7,6 @@ class Requester
     private $businessMember;
     private $grossSalary;
     private $oldSalary;
-    private $profile;
     private $managerMember;
 
     public function setBusinessMember($business_member)

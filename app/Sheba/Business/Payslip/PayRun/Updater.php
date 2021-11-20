@@ -3,7 +3,7 @@
 use App\Jobs\Business\SendPayslipDisburseNotificationToEmployee;
 use App\Jobs\Business\SendPayslipDisbursePushNotificationToEmployee;
 use App\Sheba\Business\PayrollComponent\Components\GrossSalaryBreakdownCalculate;
-use App\Sheba\Business\Salary\Requester as SalaryRequester;
+use Sheba\Business\Salary\Requester as SalaryRequester;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\PayrollComponent\Components;
 use Sheba\Dal\PayrollComponent\PayrollComponentRepository;

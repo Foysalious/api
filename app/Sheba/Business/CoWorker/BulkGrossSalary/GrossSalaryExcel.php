@@ -1,4 +1,4 @@
-<?php namespace App\Sheba\Business\CoWorker\BulkGrossSalary;
+<?php namespace Sheba\Business\CoWorker\BulkGrossSalary;
 
 class GrossSalaryExcel
 {

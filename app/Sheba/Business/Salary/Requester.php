@@ -1,21 +1,15 @@
-<?php namespace App\Sheba\Business\Salary;
+<?php namespace Sheba\Business\Salary;
 
 use App\Models\BusinessMember;
-use App\Models\Member;
-use App\Sheba\Business\Salary\Creator as CoWorkerSalaryCreator;
+use Sheba\Business\Salary\Creator as CoWorkerSalaryCreator;
 use App\Sheba\Business\Salary\Updater as CoWorkerSalaryUpdater;
-use Sheba\Business\CoWorker\Statuses;
-use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 
 class Requester
 {
-
-    private $business;
     private $grossSalary;
     private $businessMember;
     private $member;
     private $profile;
-    private $businessMemberRepository;
     private $creator;
     private $updater;
     private $managerMember;
@@ -23,11 +17,8 @@ class Requester
     private $removeOverwritten;
     private $isBulkGrossSalary;
 
-    public function __construct(BusinessMemberRepositoryInterface $business_member_repository,
-                                CoWorkerSalaryCreator             $salary_creator,
-                                CoWorkerSalaryUpdater             $salary_updater)
+    public function __construct(CoWorkerSalaryCreator $salary_creator, CoWorkerSalaryUpdater $salary_updater)
     {
-        $this->businessMemberRepository = $business_member_repository;
         $this->creator = $salary_creator;
         $this->updater = $salary_updater;
     }

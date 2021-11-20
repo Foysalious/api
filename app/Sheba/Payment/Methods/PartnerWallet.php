@@ -20,7 +20,7 @@ class PartnerWallet extends PaymentMethod
      */
     public function init(Payable $payable): Payment
     {
-        $invoice = 'SHEBA_CREDIT_' . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . randomString(10, 1, 1);
+        $invoice = 'SHEBA_CREDIT_' . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . randomString(10, true, true);
         $payment = new Payment();
         DB::transaction(function () use ($payment, $payable, $invoice) {
             $payment->payable_id = $payable->id;
