@@ -69,8 +69,8 @@ class DeliveryController extends Controller
             return http_response($request, null, 200, ['messages' => 'আপনার রেজিস্ট্রেশন সফল হয়েছে', 'data' => $registration['data']]);
         } catch (GuzzleException $e) {
             list($http_code,$message) = $this->resolveError($e);
-            if ($http_code > 399 && $http_code < 500) throw new DeliveryServiceServerHttpError($message, $http_code);
-            throw new DeliveryServiceServerHttpError($e->getMessage(), $http_code);
+            if ($http_code > 399 && $http_code < 500) throw new DeliveryServiceServerError($message, $http_code);
+            throw new DeliveryServiceServerError($e->getMessage(), $http_code);
         }
     }
 
