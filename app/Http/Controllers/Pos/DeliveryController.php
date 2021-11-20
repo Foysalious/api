@@ -30,6 +30,14 @@ class DeliveryController extends Controller
         $partner = $request->auth_user->getPartner();
         $info = $delivery_service->setPartner($partner)->getRegistrationInfo();
         return api_response($request, null, 200, ['info' => $info]);
+
+    }
+
+    public function getInfoForRegistrationV2(Request $request, DeliveryService $delivery_service)
+    {
+        $partner = $request->auth_user->getPartner();
+        $info = $delivery_service->setPartner($partner)->getRegistrationInfo();
+        return http_response($request, $info, 200, ['info' => $info]);
     }
 
     /**
@@ -39,6 +47,18 @@ class DeliveryController extends Controller
      * @return JsonResponse
      */
     public function register(Request $request, DeliveryService $delivery_service)
+    {
+        $registration = $this->registerCore($request,$delivery_service);
+        return api_response($request, null, 200, ['messages' => 'আপনার রেজিস্ট্রেশন সফল হয়েছে', 'data' => $registration['data']]);
+    }
+
+    public function registerV2(Request $request, DeliveryService $delivery_service)
+    {
+        $registration = $this->registerCore($request,$delivery_service);
+        return http_response($request, null, 200, ['messages' => 'আপনার রেজিস্ট্রেশন সফল হয়েছে', 'data' => $registration['data']]);
+    }
+
+    private function registerCore(Request $request, DeliveryService $delivery_service)
     {
         $this->validate($request, [
             'name' => 'required',
@@ -80,7 +100,7 @@ class DeliveryController extends Controller
             ->setAccountType($request->account_type)
             ->register();
         $delivery_service->setPartner($partner)->setAccountType($request->account_type)->storeDeliveryInformation($registration['data']);
-        return api_response($request, null, 200, ['messages' => 'আপনার রেজিস্ট্রেশন সফল হয়েছে', 'data' => $registration['data']]);
+        return $registration;
     }
 
 
