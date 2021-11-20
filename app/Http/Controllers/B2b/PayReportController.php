@@ -3,7 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
-use App\Sheba\Business\Payslip\Excel as PaySlipExcel;
+use Sheba\Business\Payslip\PayslipExcel;
 use Carbon\Carbon;
 use Sheba\Business\Payslip\PayReport\BkashSalaryReportExcel;
 use App\Sheba\Business\Payslip\PayReportList;
@@ -15,6 +15,7 @@ use Sheba\Business\Payslip\PayReport\PayReportDetails;
 use Sheba\Dal\Payslip\PayslipRepository;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
+use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class PayReportController extends Controller
@@ -36,9 +37,10 @@ class PayReportController extends Controller
     /**
      * @param Request $request
      * @param PayReportList $pay_report_list
+     * @param BusinessMemberRepositoryInterface $business_member_repo
      * @return JsonResponse|BinaryFileResponse
      */
-    public function index(Request $request, PayReportList $pay_report_list)
+    public function index(Request $request, PayReportList $pay_report_list, BusinessMemberRepositoryInterface $business_member_repo)
     {
         /** @var Business $business */
         $business = $request->business;
@@ -60,7 +62,7 @@ class PayReportController extends Controller
 
         $count = count($payslip);
         if ($request->file == 'excel') {
-            $excel = new PayslipExcel($payslip->toArray());
+            $excel = new PayslipExcel($business_member_repo, $payslip->toArray());
             return MaatwebsiteExcel::download($excel, 'Pay_report.xlsx');
         }
         if ($request->limit == 'all') $limit = $count;
