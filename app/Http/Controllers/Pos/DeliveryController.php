@@ -55,17 +55,23 @@ class DeliveryController extends Controller
             $registration = $this->registerCore($request, $delivery_service);
             return api_response($request, null, 200, ['messages' => 'আপনার রেজিস্ট্রেশন সফল হয়েছে', 'data' => $registration['data']]);
         } catch (GuzzleException $e) {
-            $res = $e->getResponse();
-            $http_code = $res->getStatusCode();
-            $message = $res->getBody()->getContents();
-            $decoded_message = json_decode($message, true);
-            if (isset($decoded_message['errors']))
-                $message = array_values($decoded_message['errors'])[0][0];
-            else
-                $message = $decoded_message['message'];
+            list($http_code,$message) = $this->resoleError($e);
             if ($http_code > 399 && $http_code < 500) throw new DeliveryServiceServerError($message, $http_code);
             throw new DeliveryServiceServerError($e->getMessage(), $http_code);
         }
+    }
+
+    private function resoleError(GuzzleException $e)
+    {
+        $res = $e->getResponse();
+        $http_code = $res->getStatusCode();
+        $message = $res->getBody()->getContents();
+        $decoded_message = json_decode($message, true);
+        if (isset($decoded_message['errors']))
+            $message = array_values($decoded_message['errors'])[0][0];
+        else
+            $message = $decoded_message['message'];
+        return [$http_code,$message];
     }
 
     /**
@@ -77,14 +83,7 @@ class DeliveryController extends Controller
             $registration = $this->registerCore($request, $delivery_service);
             return http_response($request, null, 200, ['messages' => 'আপনার রেজিস্ট্রেশন সফল হয়েছে', 'data' => $registration['data']]);
         } catch (GuzzleException $e) {
-            $res = $e->getResponse();
-            $http_code = $res->getStatusCode();
-            $message = $res->getBody()->getContents();
-            $decoded_message = json_decode($message, true);
-            if (isset($decoded_message['errors']))
-                $message = array_values($decoded_message['errors'])[0][0];
-            else
-                $message = $decoded_message['message'];
+            list($http_code,$message) = $this->resoleError($e);
             if ($http_code > 399 && $http_code < 500) throw new DeliveryServiceServerHttpError($message, $http_code);
             throw new DeliveryServiceServerHttpError($e->getMessage(), $http_code);
         }
