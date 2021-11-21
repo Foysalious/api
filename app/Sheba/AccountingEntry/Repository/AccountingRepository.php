@@ -34,7 +34,7 @@ class AccountingRepository extends BaseRepository
         Log::debug(['data from accounting', $data]);
         foreach ($data as $datum) {
             //pos order reconcile while storing entry
-            if ($type != EntryTypes::POS && $datum['source_type'] == 'pos' && $datum['amount_cleared'] > 0) {
+            if ($datum['source_type'] == 'pos' && $datum['amount_cleared'] > 0) {
                 $this->createPosOrderPayment($datum['amount_cleared'], $datum['source_id'], 'cod');
             }
         }

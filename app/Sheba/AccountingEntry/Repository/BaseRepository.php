@@ -4,9 +4,7 @@ use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
 use App\Models\PosCustomer;
 use App\Repositories\FileRepository;
-use App\Models\PosOrder;
 use App\Models\PosOrderPayment;
-use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
 use Sheba\AccountingEntry\Repository\UserMigrationRepository;
@@ -15,7 +13,6 @@ use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
-use Sheba\Pos\Repositories\PosOrderPaymentRepository;
 
 class BaseRepository
 {
@@ -95,11 +92,8 @@ class BaseRepository
 
     protected function getPartner($request)
     {
-        if (isset($request->partner->id)) {
-            $partner_id = $request->partner->id;
-        } else {
-            $partner_id = (int)$request->partner;
-        }
+        $partner_id = $request->partner->id ?? (int)$request->partner;
+
         return Partner::find($partner_id);
     }
 
