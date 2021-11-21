@@ -250,7 +250,7 @@ class DeliveryController extends Controller
     public function getVendorListV2(Request $request, DeliveryService $delivery_service)
     {
         $partner = $request->auth_user->getPartner();
-        $data = $delivery_service->setPartner($partner)->vendorlistWithSelectedDeliveryMethod();
+        $data = $delivery_service->setPartner($partner)->vendorlistWithSelectedDeliveryMethodV2();
         return http_response($request, null, 200, ['data' => $data]);
     }
 
