@@ -146,8 +146,8 @@ class DeliveryController extends Controller
             return api_response($request, null, 200, ['messages' => 'ডেলিভারি রিকোয়েস্ট সম্পন্ন', 'data' => $orderPlaceInfo['data']]);
         } catch (GuzzleException $e) {
             list($http_code,$message) = $this->resolveError($e);
-            if ($http_code > 399 && $http_code < 500) throw new DeliveryServiceServerError($message, $http_code);
-            throw new DeliveryServiceServerError($e->getMessage(), $http_code);
+            if ($http_code > 399 && $http_code < 500) return api_response($request, null, $http_code, ['message' => $message]);
+            return api_response($request, null, $http_code, ['message' => $e->getMessage()]);
         }
     }
 
@@ -162,8 +162,8 @@ class DeliveryController extends Controller
             return http_response($request, null, 200, ['messages' => 'ডেলিভারি রিকোয়েস্ট সম্পন্ন', 'data' => $orderPlaceInfo['data']]);
         } catch (GuzzleException $e) {
             list($http_code, $message) = $this->resolveError($e);
-            if ($http_code > 399 && $http_code < 500) throw new DeliveryServiceServerHttpError($message, $http_code);
-            throw new DeliveryServiceServerHttpError($e->getMessage(), $http_code);
+            if ($http_code > 399 && $http_code < 500) return http_response($request, null, $http_code, ['message' => $message]);
+            return http_response($request, null, $http_code, ['message' => $e->getMessage()]);
         }
     }
 
@@ -293,8 +293,8 @@ class DeliveryController extends Controller
             return api_response($request, null, 200, ['delivery_charge' => $charge]);
         } catch (GuzzleException $e) {
             list($http_code, $message) = $this->resolveError($e);
-            if ($http_code > 399 && $http_code < 500) throw new DeliveryServiceServerError($message, $http_code);
-            throw new DeliveryServiceServerHttpError($e->getMessage(), $http_code);
+            if ($http_code > 399 && $http_code < 500) return api_response($request, null, $http_code, ['message' => $message]);
+            return api_response($request, null, $http_code, ['message' => $e->getMessage()]);
         }
 
     }
@@ -309,8 +309,8 @@ class DeliveryController extends Controller
             return http_response($request, null, 200, ['delivery_charge' => $charge]);
         } catch (GuzzleException $e) {
             list($http_code, $message) = $this->resolveError($e);
-            if ($http_code > 399 && $http_code < 500) throw new DeliveryServiceServerHttpError($message, $http_code);
-            throw new DeliveryServiceServerHttpError($e->getMessage(), $http_code);
+            if ($http_code > 399 && $http_code < 500) return http_response($request, null, $http_code, ['message' => $message]);
+            return http_response($request, null, $http_code, ['message' => $e->getMessage()]);
         }
     }
     public function getDeliveryChargeCore(Request $request, DeliveryService $delivery_service)
@@ -343,14 +343,13 @@ class DeliveryController extends Controller
             return api_response($request, null, 200, ['districts' => $districts]);
         }catch (GuzzleException $e) {
             list($http_code, $message) = $this->resolveError($e);
-            if ($http_code > 399 && $http_code < 500) throw new DeliveryServiceServerError($message, $http_code);
-            throw new DeliveryServiceServerHttpError($e->getMessage(), $http_code);
+            if ($http_code > 399 && $http_code < 500) return api_response($request, null, $http_code, ['message' => $message]);
+            return api_response($request, null, $http_code, ['message' => $e->getMessage()]);
         }
 
     }
 
     /**
-     * @throws DeliveryServiceServerHttpError
      */
     public function getDistrictsV2(Request $request, DeliveryService $delivery_service)
     {
@@ -359,8 +358,8 @@ class DeliveryController extends Controller
             return http_response($request, null, 200, ['districts' => $districts]);
         }catch (GuzzleException $e) {
             list($http_code, $message) = $this->resolveError($e);
-            if ($http_code > 399 && $http_code < 500) throw new DeliveryServiceServerHttpError($message, $http_code);
-            throw new DeliveryServiceServerHttpError($e->getMessage(), $http_code);
+            if ($http_code > 399 && $http_code < 500) return http_response($request, null, $http_code, ['message' => $message]);
+            return http_response($request, null, $http_code, ['message' => $e->getMessage()]);
         }
 
     }
@@ -380,8 +379,8 @@ class DeliveryController extends Controller
             return api_response($request, null, 200, ['upzillas' => $upzillas]);
         }catch (GuzzleException $e) {
             list($http_code, $message) = $this->resolveError($e);
-            if ($http_code > 399 && $http_code < 500) throw new DeliveryServiceServerHttpError($message, $http_code);
-            throw new DeliveryServiceServerHttpError($e->getMessage(), $http_code);
+            if ($http_code > 399 && $http_code < 500) return api_response($request, null, $http_code, ['message' => $message]);
+            return api_response($request, null, $http_code, ['message' => $e->getMessage()]);
         }
     }
 
@@ -395,8 +394,8 @@ class DeliveryController extends Controller
             return http_response($request, null, 200, ['upzillas' => $upzillas]);
         }catch (GuzzleException $e) {
             list($http_code, $message) = $this->resolveError($e);
-            if ($http_code > 399 && $http_code < 500) throw new DeliveryServiceServerHttpError($message, $http_code);
-            throw new DeliveryServiceServerHttpError($e->getMessage(), $http_code);
+            if ($http_code > 399 && $http_code < 500) return http_response($request, null, $http_code, ['message' => $message]);
+            return http_response($request, null, $http_code, ['message' => $e->getMessage()]);
         }
 
     }
@@ -419,8 +418,8 @@ class DeliveryController extends Controller
             return api_response($request, null, 200, $data);
         }catch (GuzzleException $e) {
             list($http_code, $message) = $this->resolveError($e);
-            if ($http_code > 399 && $http_code < 500) throw new DeliveryServiceServerError($message, $http_code);
-            throw new DeliveryServiceServerError($e->getMessage(), $http_code);
+            if ($http_code > 399 && $http_code < 500) return api_response($request, null, $http_code, ['message' => $message]);
+            return api_response($request, null, $http_code, ['message' => $e->getMessage()]);
         }
 
     }
@@ -439,8 +438,8 @@ class DeliveryController extends Controller
             return http_response($request, null, 200, $data);
         }catch (GuzzleException $e) {
             list($http_code, $message) = $this->resolveError($e);
-            if ($http_code > 399 && $http_code < 500) throw new DeliveryServiceServerHttpError($message, $http_code);
-            throw new DeliveryServiceServerHttpError($e->getMessage(), $http_code);
+            if ($http_code > 399 && $http_code < 500) return http_response($request, null, $http_code, ['message' => $message]);
+            return http_response($request, null, $http_code, ['message' => $e->getMessage()]);
         }
     }
 
