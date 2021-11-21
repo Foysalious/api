@@ -1,13 +1,12 @@
 <?php namespace App\Jobs\Business;
 
-use App\Jobs\Job;
+use App\Sheba\Business\BusinessEmailQueue;
 use Exception;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
 
-class SendTenderBillInvoiceEmailToBusiness extends Job implements ShouldQueue
+class SendTenderBillInvoiceEmailToBusiness extends BusinessEmailQueue
 {
     use InteractsWithQueue, SerializesModels;
 
@@ -26,6 +25,7 @@ class SendTenderBillInvoiceEmailToBusiness extends Job implements ShouldQueue
         $this->email = $email;
         $this->file = $file;
         $this->data = $data;
+        parent::__construct();
     }
 
     /**

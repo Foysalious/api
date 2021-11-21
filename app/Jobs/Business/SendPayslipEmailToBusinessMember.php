@@ -1,8 +1,6 @@
 <?php namespace App\Jobs\Business;
 
-use App\Jobs\Job;
 use App\Sheba\Business\BusinessEmailQueue;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
@@ -26,6 +24,7 @@ class SendPayslipEmailToBusinessMember extends BusinessEmailQueue
         $this->employeeName = $employee_name;
         $this->timePeriod = $time_period;
         $this->payslipPdfFile = $payslip_pdf_file;
+        parent::__construct();
     }
 
     public function handle()
