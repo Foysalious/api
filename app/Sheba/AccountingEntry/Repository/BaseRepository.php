@@ -3,7 +3,6 @@
 use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
 use App\Models\PosCustomer;
-use App\Models\PosOrder;
 use App\Models\PosOrderPayment;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
@@ -73,11 +72,7 @@ class BaseRepository
 
     protected function getPartner($request)
     {
-        if(isset($request->partner->id)) {
-            $partner_id = $request->partner->id;
-        } else {
-            $partner_id = (int) $request->partner;
-        }
+        $partner_id = $request->partner->id ?? (int)$request->partner;
         return Partner::find($partner_id);
     }
 
@@ -105,7 +100,7 @@ class BaseRepository
      * @param $userId
      * @return bool
      */
-    public function isMigratedToAccounting($userId)
+    public function isMigratedToAccounting($userId): bool
     {
         $arr = [self::NOT_ELIGIBLE, UserStatus::PENDING, UserStatus::UPGRADING, UserStatus::FAILED];
         /** @var UserMigrationRepository $userMigrationRepo */
