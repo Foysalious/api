@@ -179,6 +179,21 @@ class DeliveryService
         return $data;
     }
 
+    public function vendorlistWithSelectedDeliveryMethodV2()
+    {
+        $data = [];
+        $all_vendor_list = config('pos_delivery.vendor_list_v2');
+        $temp = [];
+        foreach ($all_vendor_list as $key => $vendor)
+            array_push($temp, array_merge($vendor, ['key' => $key]));
+        $data['delivery_vendors'] = $temp;
+        $data['delivery_method'] = $this->getDeliveryMethod();
+        $data['is_registered_for_delivery'] = $this->partner->deliveryInformation ? 1 : 0;
+        $data['delivery_charge'] = $this->getDeliveryCharge($this->partner);
+        $data['products_without_weight'] = $this->countProductWithoutWeight();
+        return $data;
+    }
+
     public function getDeliveryCharge(Partner $partner)
     {
         if(!$partner->isMigrated(Modules::POS))
