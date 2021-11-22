@@ -194,7 +194,7 @@ class AttendanceSummaryFilter
                     $which_half_day = $leave['leave']['which_half_day'];
                 }
 
-                if ($this->statusFilter == self::ON_LEAVE && !$is_on_half_day_leave) continue;
+//                if ($this->statusFilter == self::ON_LEAVE && !$is_on_half_day_leave) continue;
                 array_push($this->usersWhoGiveAttendance, $attendance->businessMember->id);
 
 
@@ -259,6 +259,12 @@ class AttendanceSummaryFilter
             }
         } else {
             $business_members_in_absence = [];
+        }
+
+        if ($this->statusFilter == self::ON_LEAVE) {
+            $present_and_on_leave_business_members = array_filter($present_and_on_leave_business_members, function ($item) {
+                return $item['is_on_leave'];
+            });
         }
 
         return array_merge($present_and_on_leave_business_members, $business_members_in_absence);
