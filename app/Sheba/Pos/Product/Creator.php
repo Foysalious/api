@@ -14,6 +14,7 @@ use Sheba\ModificationFields;
 use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
 use Sheba\RequestIdentification;
 use Sheba\Subscription\Partner\Access\AccessManager;
+use Sheba\Subscription\Partner\Access\Exceptions\AccessRestrictedExceptionForPackage;
 
 class Creator
 {
@@ -57,14 +58,13 @@ class Creator
         $this->data['pos_category_id'] = $this->data['category_id'];
         $this->data['cost'] = (double)$this->data['cost'];
         $this->format();
-        $image_gallery = null;
-        if (isset($this->data['image_gallery'])) $image_gallery = $this->data['image_gallery'];
-        $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'image_gallery','accounting_info']);
+        $image_gallery = isset($this->data['image_gallery']) ? $this->data['image_gallery'] : null;
+        $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'image_gallery']);
         $partner_pos_service = $this->serviceRepo->save($this->data + (new RequestIdentification())->get());
         /** @var Partner $partner */
         $partner = $partner_pos_service->partner;
         if($partner->isMigratedToAccounting()) $this->savePartnerPosServiceBatch($partner_pos_service, $this->data['stock'], $this->data['cost']);
-        $this->storeImageGallery($partner_pos_service, json_decode($image_gallery,true));
+        if ($image_gallery) $this->storeImageGallery($partner_pos_service, json_decode($image_gallery, true));
         return $partner_pos_service;
     }
 
@@ -130,7 +130,7 @@ class Creator
     }
 
     /**
-     * @throws \Sheba\Subscription\Partner\Access\Exceptions\AccessRestrictedExceptionForPackage
+     * @throws AccessRestrictedExceptionForPackage
      */
     private function format()
     {
