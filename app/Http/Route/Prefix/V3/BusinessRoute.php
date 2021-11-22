@@ -39,6 +39,9 @@ class BusinessRoute
                 $api->group(['prefix' => 'leaves'], function ($api) {
                     $api->group(['prefix' => 'prorate'], function ($api) {
                         $api->get('/', 'B2b\ProrateController@indexV2');
+                        $api->group(['prefix' => '{prorate}'], function ($api) {
+                            $api->get('/employee-info', 'B2b\ProrateController@employeeInfo');
+                        });
                     });
                 });
             });

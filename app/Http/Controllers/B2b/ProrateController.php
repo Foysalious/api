@@ -7,9 +7,13 @@ use App\Models\Member;
 use App\Sheba\Business\Prorate\RunProrateOnActiveLeaveTypes;
 use App\Sheba\Business\Prorate\AutoProrateCalculator;
 use App\Transformers\Business\BusinessMemberLeaveProrateTransformer;
+use App\Transformers\Business\LeaveProrateEmployeeInfoTransformer;
+use App\Transformers\Business\LeaveRequestDetailsTransformer;
+use App\Transformers\CustomSerializer;
 use Illuminate\Http\JsonResponse;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
+use League\Fractal\Resource\Item;
 use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Business\Prorate\Updater;
 use Sheba\Dal\BusinessMemberLeaveType\Contract as BusinessMemberLeaveTypeInterface;
@@ -291,6 +295,20 @@ class ProrateController extends Controller
         $auto_prorate_calculator = new AutoProrateCalculator();
         $auto_prorate_calculator->setBusiness($business)->setLeaveType($leave_type)->run();
         return api_response($request, null, 200);
+    }
+
+    public function employeeInfo(Request $request, $business, $prorate)
+    {
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 420);
+        $business_member_leave_prorate = $this->businessMemberLeaveTypeRepo->find($prorate);
+        if (!$business_member_leave_prorate) return api_response($request, null, 404, ['message' => 'Sorry! Leave Prorate doesn\'t exist.']);
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Item($business_member_leave_prorate, new LeaveProrateEmployeeInfoTransformer());
+        $prorated_employee_info = $manager->createData($resource)->toArray()['data'];
+        return api_response($request, null, 200, ['leave_prorate' => $prorated_employee_info]);
     }
 
     private function sortByColumn($data, $column, $sort = 'asc')
