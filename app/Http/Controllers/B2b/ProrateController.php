@@ -160,8 +160,10 @@ class ProrateController extends Controller
         }
         $business_member_ids = $business_members->pluck('id')->toArray();
         $prorates = $this->businessMemberLeaveTypeRepo->getAllBusinessMemberProratesWithLeaveTypes($business_member_ids);
-        if ($request->has('is_auto_prorated')) {
-            $prorates = $prorates->where('is_auto_prorated', $request->is_auto_prorated);
+        if ($request->has('prorate_type') && $request->prorate_type == 'auto') {
+            $prorates = $prorates->where('is_auto_prorated', 1);
+        }else{
+            $prorates = $prorates->where('is_auto_prorated', 0);
         }
         if ($request->has('sort_column') && $request->sort_column == 'created_at') {
             $prorates = $prorates->OrderBy($request->sort_column, $request->sort_order);
