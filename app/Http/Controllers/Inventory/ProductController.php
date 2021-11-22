@@ -107,4 +107,11 @@ class ProductController extends Controller
         return http_response($request, null, 200, $product);
     }
 
+    public function changePublishStatus(Request $request,$product_id,$status)
+    {
+        $partner = $request->auth_user->getPartner();
+        $this->productService->setPartnerId($partner->id)->setProductId($product_id)->setPublishStatus($status)->changePublishStatus();
+        return http_response($request, null, 200);
+    }
+
 }
