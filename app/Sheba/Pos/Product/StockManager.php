@@ -49,7 +49,7 @@ class StockManager
 
     private function updatedStock($quantity) : array
     {
-        if($this->service->partner->isMigratedToAccounting) {
+        if($this->service->partner->isMigratedToAccounting()) {
             $decreasedBatchesInfo = [];
             while ($quantity > 0) {
                 $firstBatch = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->first();
