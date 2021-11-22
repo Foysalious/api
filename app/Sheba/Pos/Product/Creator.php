@@ -41,10 +41,10 @@ class Creator
         $this->data['pos_category_id'] = $this->data['category_id'];
         $this->data['cost'] = (double)$this->data['cost'];
         $this->format();
+        $image_gallery = $this->data['image_gallery'];
         $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'image_gallery']);
         $partner_pos_service = $this->serviceRepo->save($this->data + (new RequestIdentification())->get());
-        if (isset($this->data['image_gallery']))
-            $this->storeImageGallery($partner_pos_service, json_decode($this->data['image_gallery'],true));
+        if ($image_gallery) $this->storeImageGallery($partner_pos_service, json_decode($image_gallery, true));
         return $partner_pos_service;
     }
 
@@ -56,17 +56,18 @@ class Creator
 
     }
 
-    private function storeImageGallery($partner_pos_service,$image_gallery)
+    private function storeImageGallery($partner_pos_service, $image_gallery)
     {
         $data = [];
-        collect($image_gallery)->each(function($image) use($partner_pos_service, &$data){
+        collect($image_gallery)->each(function ($image) use ($partner_pos_service, &$data) {
             array_push($data, [
-                'partner_pos_service_id' => $partner_pos_service->id,
-                'image_link' => $image
-            ] +  $this->modificationFields(true, false) );
+                    'partner_pos_service_id' => $partner_pos_service->id,
+                    'image_link' => $image
+                ] + $this->modificationFields(true, false));
         });
         return PartnerPosServiceImageGallery::insert($data);
     }
+
     /**
      * Save profile image for resource
      *
@@ -101,12 +102,12 @@ class Creator
      */
     private function format()
     {
-        $this->data['stock']            = (isset($this->data['stock']) && $this->data['stock'] > 0) ? (double)$this->data['stock'] : null;
-        $this->data['vat_percentage']   = (isset($this->data['vat_percentage']) && $this->data['vat_percentage'] > 0) ? (double)$this->data['vat_percentage'] : 0.00;
-        $this->data['warranty_unit']    = (isset($this->data['warranty_unit']) && in_array($this->data['warranty_unit'], array_keys(config('pos.warranty_unit')))) ? $this->data['warranty_unit'] : config('pos.warranty_unit.day.en');
-        $this->data['wholesale_price']  = (isset($this->data['wholesale_price']) && $this->data['wholesale_price'] > 0) ? (double)$this->data['wholesale_price'] : 0.00;
-        $this->data['price']            = (isset($this->data['price']) && $this->data['price'] > 0) ? (double)$this->data['price'] : null;
-        $this->data['publication_status']            = isset($this->data['publication_status'])  ?  $this->data['publication_status'] : 1;
+        $this->data['stock'] = (isset($this->data['stock']) && $this->data['stock'] > 0) ? (double)$this->data['stock'] : null;
+        $this->data['vat_percentage'] = (isset($this->data['vat_percentage']) && $this->data['vat_percentage'] > 0) ? (double)$this->data['vat_percentage'] : 0.00;
+        $this->data['warranty_unit'] = (isset($this->data['warranty_unit']) && in_array($this->data['warranty_unit'], array_keys(config('pos.warranty_unit')))) ? $this->data['warranty_unit'] : config('pos.warranty_unit.day.en');
+        $this->data['wholesale_price'] = (isset($this->data['wholesale_price']) && $this->data['wholesale_price'] > 0) ? (double)$this->data['wholesale_price'] : 0.00;
+        $this->data['price'] = (isset($this->data['price']) && $this->data['price'] > 0) ? (double)$this->data['price'] : null;
+        $this->data['publication_status'] = isset($this->data['publication_status']) ? $this->data['publication_status'] : 1;
         if (isset($this->data['is_published_for_shop']) && $this->data['is_published_for_shop'] == 1) {
             if (PartnerPosService::webstorePublishedServiceByPartner($this->data['partner_id'])->count() >= config('pos.maximum_publishable_product_in_webstore_for_free_packages'))
                 AccessManager::checkAccess(AccessManager::Rules()->POS->ECOM->PRODUCT_PUBLISH, $this->getPartner($this->data['partner_id'])->subscription->getAccessRules());
@@ -133,24 +134,22 @@ class Creator
         $master_cat_id = $partner_pos_service->master_category_id;
         $sub_cat_id = $partner_pos_service->sub_category_id;
 
-        $partner_categories = PartnerPosCategory::where('partner_id',$partner_id)->whereIn('category_id',[$master_cat_id,$sub_cat_id])->pluck('category_id')->toArray();
+        $partner_categories = PartnerPosCategory::where('partner_id', $partner_id)->whereIn('category_id', [$master_cat_id, $sub_cat_id])->pluck('category_id')->toArray();
 
-        if(empty($partner_categories) || !in_array($master_cat_id,$partner_categories))
-        {
-            array_push($data,$this->withCreateModificationField([
+        if (empty($partner_categories) || !in_array($master_cat_id, $partner_categories)) {
+            array_push($data, $this->withCreateModificationField([
                 'partner_id' => $partner_id,
                 'category_id' => $master_cat_id,
             ]));
         }
-        if(empty($partner_categories) || !in_array($sub_cat_id,$partner_categories))
-        {
-            array_push($data,$this->withCreateModificationField([
+        if (empty($partner_categories) || !in_array($sub_cat_id, $partner_categories)) {
+            array_push($data, $this->withCreateModificationField([
                 'partner_id' => $partner_id,
                 'category_id' => $sub_cat_id,
             ]));
         }
 
-        if(!empty($data))
+        if (!empty($data))
             PartnerPosCategory::insert($data);
     }
 }
