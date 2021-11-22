@@ -41,6 +41,7 @@ class ProductService
     protected $accountingInfo;
     protected $skuId;
     protected $appThumb;
+    protected $publishStatus;
 
 
     public function __construct(InventoryServerClient $client)
@@ -292,6 +293,16 @@ class ProductService
     }
 
     public function getProducts($partnerId)
+    /**
+     * @param mixed $publishStatus
+     */
+    public function setPublishStatus($publishStatus)
+    {
+        $this->publishStatus = $publishStatus;
+        return $this;
+    }
+
+    public function getAllProducts($partnerId)
     {
         $url = 'api/v1/partners/' . $partnerId . '/products?';
         if (isset($this->limit)) $url .= 'offset='.$this->offset.'&limit='.$this->limit.'&';
@@ -403,5 +414,11 @@ class ProductService
         $data =  $this->client->get('api/v1/partners/' . $this->partnerId . '/statistics');
         return $data['statistics']['total_published_products'];
     }
+
+    public function changePublishStatus()
+    {
+        return $this->client->put('api/v1/partners/'.$this->partnerId. '/products/' . $this->productId . '/change-publish-status/' . $this->publishStatus, []);
+    }
+
 
 }
