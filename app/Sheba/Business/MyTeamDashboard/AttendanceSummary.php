@@ -136,7 +136,10 @@ class AttendanceSummary
 
         foreach ($this->usersWhoOnLeave as $user) {
             if (in_array($user, $non_present_ids)) {
-                $counter++;
+                $is_half_day_leave = $this->checkHalfDayLeave($user);
+                if (!$is_half_day_leave) {
+                    $counter++;
+                }
             }
         }
         return $counter;
