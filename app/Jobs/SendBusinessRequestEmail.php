@@ -1,11 +1,11 @@
 <?php namespace App\Jobs;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
+use App\Sheba\Business\BusinessEmailQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
 
-class SendBusinessRequestEmail extends Job implements ShouldQueue
+class SendBusinessRequestEmail extends BusinessEmailQueue
 {
     use InteractsWithQueue, SerializesModels;
 
@@ -18,6 +18,7 @@ class SendBusinessRequestEmail extends Job implements ShouldQueue
     public function __construct($email)
     {
         $this->email = $email;
+        parent::__construct();
     }
 
     /**
