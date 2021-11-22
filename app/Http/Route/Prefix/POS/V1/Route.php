@@ -56,10 +56,14 @@ class Route
                 $api->get('/orders/{order_id}/generate-invoice', 'PosOrder\OrderController@orderInvoiceDownload');
                 $api->get('/webstore-banner-list', 'Pos\PartnerController@getBanner');
                 $api->group(['prefix' => 'webstore-theme-settings', 'middleware' => ['jwtAccessToken']], function ($api) {
-                    $api->get('/partner-settings', 'WebstoreSettingController@index');
-                    $api->get('/theme-details', 'WebstoreSettingController@getThemeDetails');
+                    $api->get('/settings', 'WebstoreSettingController@index');
+                    $api->get('/social-settings', 'WebstoreSettingController@getSocialSetting');
+                    $api->post('/social-settings', 'WebstoreSettingController@storeSocialSetting');
+                    $api->put('/social-settings', 'WebstoreSettingController@updateSocialSetting');
+                    $api->get('/setting-details', 'WebstoreSettingController@getThemeDetails');
                     $api->post('/', 'WebstoreSettingController@store');
                     $api->put('/', 'WebstoreSettingController@update');
+                    $api->get('/system-defined', 'WebstoreSettingController@getSystemDefinedSettings');
                 });
                 $api->group(['prefix' => 'collections'], function ($api) {
                     $api->get('/', 'Inventory\CollectionController@index');
