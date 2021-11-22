@@ -292,7 +292,6 @@ class ProductService
         return $this;
     }
 
-    public function getProducts($partnerId)
     /**
      * @param mixed $publishStatus
      */
@@ -302,7 +301,7 @@ class ProductService
         return $this;
     }
 
-    public function getAllProducts($partnerId)
+    public function getProducts($partnerId)
     {
         $url = 'api/v1/partners/' . $partnerId . '/products?';
         if (isset($this->limit)) $url .= 'offset='.$this->offset.'&limit='.$this->limit.'&';
