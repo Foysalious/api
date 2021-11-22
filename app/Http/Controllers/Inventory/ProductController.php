@@ -19,7 +19,21 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         $partner = $request->auth_user->getPartner();
-        $products = $this->productService->getAllProducts($partner->id);
+        $category_products = $this->productService
+            ->setCategoryIds($request->category_ids)
+            ->setSubCategoryIds($request->sub_category_ids)
+            ->setUpdatedAfter($request->updated_after)
+            ->setIsPublishedForWebstore($request->is_published_for_webstore)
+            ->setOffset($request->offset)
+            ->setLimit($request->limit)
+            ->getProducts($partner->id);
+        return http_response($request, null, 200, $category_products);
+    }
+
+    public function getWebstoreProducts(Request $request)
+    {
+        $partner = $request->auth_user->getPartner();
+        $products = $this->productService->setOffset($request->offset)->setLimit($request->limit)->setSearchKey($request->q)->getWebstoreProducts($partner->id);
         return http_response($request, null, 200, $products);
     }
 
