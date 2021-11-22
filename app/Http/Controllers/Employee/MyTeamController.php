@@ -109,6 +109,7 @@ class MyTeamController extends Controller
         $selected_date = $time_frame->forADay($date);
 
         $my_team = $this->subordinateEmployeeList->get($business_member);
+        $my_team = $this->subordinateEmployeeList->removeSpecificBusinessMemberIdFormUniqueManagersData($business_member, $my_team);
 
         $summary = $attendance_summary->setBusiness($business)
                                       ->setSelectedDate($selected_date)
@@ -142,6 +143,7 @@ class MyTeamController extends Controller
         $selected_date = $time_frame->forADay($date);
 
         $my_team = $this->subordinateEmployeeList->get($business_member);
+        $my_team = $this->subordinateEmployeeList->removeSpecificBusinessMemberIdFormUniqueManagersData($business_member, $my_team);
 
         $attendances = $attendance_summary_filter->setBusiness($business)
                                                  ->setSelectedDate($selected_date)
