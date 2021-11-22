@@ -149,7 +149,7 @@ class AttendanceSummary
             ->where('date', '<=', $this->endDate->toDateString())
             ->with([
                 'actions' => function ($q) {
-                    $q->select('id', 'status', 'created_at');
+                    $q->select('id', 'attendance_id', 'status', 'created_at');
                 },
                 'businessMember' => function ($q) {
                     $q->select('id', 'member_id', 'business_role_id', 'employee_id');
