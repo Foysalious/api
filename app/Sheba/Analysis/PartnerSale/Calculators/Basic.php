@@ -26,35 +26,23 @@ class Basic extends PartnerSale
     {
         /** @var PosOrderServerClient $client */
         $client = app(PosOrderServerClient::class);
-        $sales_details = $client->get('api/v1/partners/' . $this->partner->id . '/sales?from=2021-11-15&to=2021-11-16');
+        $sales_details = $client->get('api/v1/partners/' . $this->partner->id . '/sales?from=' . $this->timeFrame->start->toDateString() . '&to=' . $this->timeFrame->end->toDateString());
+        $a = $sales_details['data'];
         $orders = $this->partnerOrders->getClosedOrdersBetween($this->timeFrame, $this->partner);
         $accepted_orders = $this->partnerOrders->getAcceptedOrdersBetween($this->timeFrame, $this->partner);
-        $pos_orders = $this->posOrders->getCreatedOrdersBetween($this->timeFrame, $this->partner);
-        $pos_payment_status_wise_count = [OrderPaymentStatuses::PAID => 0, OrderPaymentStatuses::DUE => 0];
-        $pos_orders->map(function ($pos_order) use (&$pos_payment_status_wise_count) {
-            /** @var PosOrder $pos_order */
-            $pos_order->sale = $pos_order->getNetBill();
-            $pos_order->paidAmount = $pos_order->getPaid();
-            $pos_order->dueAmount = $pos_order->getDue();
-            $pos_payment_status_wise_count[$pos_order->getPaymentStatus()]++;
-        });
 
-        $pos_sales_count = $pos_orders->count();
-        $pos_sales = $pos_orders->sum('sale');
-        $pos_paid = $pos_orders->sum('paidAmount');
-        $pos_due = $pos_orders->sum('dueAmount');
 
         $data['sheba_sales'] = $orders->sum('gmv');
-        $data['pos_sales'] = $pos_sales;
+        $data['pos_sales'] = $a['net_bill'];
         $data['total_sales'] = $data['sheba_sales'] + $data['pos_sales'];
 
         $data['order_accepted'] = $accepted_orders ? $accepted_orders->count : 0;
         $data['order_completed'] = $orders->count();
-        $data['pos_order_created'] = $pos_orders->count();
+        $data['pos_order_created'] = $a['net_bill'];
         $data['pos'] = [
-            'sales' => ['count' => $pos_sales_count, 'amount' => $pos_sales],
-            'paid' => ['count' => $pos_payment_status_wise_count[OrderPaymentStatuses::PAID], 'amount' => $pos_paid],
-            'due' => ['count' => $pos_payment_status_wise_count[OrderPaymentStatuses::DUE], 'amount' => $pos_due]
+            'sales' => ['count' => $a['net_bill_count'], 'amount' => $a['net_bill']],
+            'paid' => ['count' => $a['paid_count'], 'amount' => $a['paid']],
+            'due' => ['count' => $a['due_count'], 'amount' => $a['due']]
         ];
 
         $this->formatTimeline($data);
@@ -66,25 +54,34 @@ class Basic extends PartnerSale
 
         if ($this->frequency == self::WEEK_BASE) {
             $data['timeline'] = $this->timeFrame->start->format('M d') . ' - ' . $this->timeFrame->end->format('M d');
+            $sale_stat = [];
+            collect($a['sales_stat_breakdown'])->each(function ($data) use (&$sale_stat) {
+                array_push($sale_stat, ["value" => $data['day'], "date" => $data["date"], "amount" => $data["amount"]]);
 
-            $data['sales_stat_breakdown'] = $this->getWeeklyStatFor($orders, 'sales', $pos_orders);
+            });
+            $data['sales_stat_breakdown'] = $sale_stat;
             $data['order_stat_breakdown'] = $this->getWeeklyStatFor($orders, 'order_count');
         }
 
         if ($this->frequency == self::MONTH_BASE) {
             $data['timeline'] = $this->timeFrame->start->format('F');
             $data['day'] = $this->timeFrame->start->format('Y-m-d');
-
-            $data['sales_stat_breakdown'] = $this->getMonthlyStatFor($orders, 'sales', $pos_orders);
+            $sale_stat = [];
+            $count = 0;
+            collect($a['sales_stat_breakdown'])->each(function ($data) use (&$sale_stat, &$count) {
+                array_push($sale_stat, ["value" => $count + 1, "amount" => $data["amount"]]);
+                $count++;
+            });
+            $data['sales_stat_breakdown'] = $sale_stat;
             $data['order_stat_breakdown'] = $this->getMonthlyStatFor($orders, 'order_count');
         }
-        if (in_array($this->frequency, [self::DAY_BASE, self::WEEK_BASE, self::MONTH_BASE])) {
-            $data['partner_collection'] = $orders->sum('partner_collection');
-
-            list($payable_to, $payable_amount) = $this->payableTo($orders->sum('shebaReceivable'), $orders->sum('spPayable'));
-            $data['payable_to'] = $payable_to;
-            $data['payable_amount'] = (double)$payable_amount;
-        }
+//        if (in_array($this->frequency, [self::DAY_BASE, self::WEEK_BASE, self::MONTH_BASE])) {
+//            $data['partner_collection'] = $orders->sum('partner_collection');
+//
+//            list($payable_to, $payable_amount) = $this->payableTo($orders->sum('shebaReceivable'), $orders->sum('spPayable'));
+//            $data['payable_to'] = $payable_to;
+//            $data['payable_amount'] = (double)$payable_amount;
+//        }
 
         return $data;
     }
@@ -98,59 +95,61 @@ class Basic extends PartnerSale
         $orders = $this->partnerOrders->getClosedOrdersBetween($this->timeFrame, $this->partner);
         $accepted_orders = $this->partnerOrders->getAcceptedOrdersBetween($this->timeFrame, $this->partner);
 
-        $this->posOrders = new PosOrderRepository();
-        if (!$this->partner->isMigrated(Modules::POS)) {
-            $this->getNewPosOrderInformation();
-        }
-        $pos_orders = $this->posOrders->getCreatedOrdersBetween($this->timeFrame, $this->partner);
-        $pos_payment_status_wise_count = [OrderPaymentStatuses::PAID => 0, OrderPaymentStatuses::DUE => 0];
-        $pos_orders->map(function ($pos_order) use (&$pos_payment_status_wise_count) {
-            /** @var PosOrder $pos_order */
-            $pos_order->sale = $pos_order->getNetBill();
-            $pos_order->paidAmount = $pos_order->getPaid();
-            $pos_order->dueAmount = $pos_order->getDue();
-            $pos_payment_status_wise_count[$pos_order->getPaymentStatus()]++;
-        });
 
-        $pos_sales_count = $pos_orders->count();
-        $pos_sales = $pos_orders->sum('sale');
-        $pos_paid = $pos_orders->sum('paidAmount');
-        $pos_due = $pos_orders->sum('dueAmount');
+        if ($this->partner->isMigrated(Modules::POS)) {
+            $data = $this->getNewPosOrderInformation();
+        } else {
+            $this->posOrders = new PosOrderRepository();
+            $pos_orders = $this->posOrders->getCreatedOrdersBetween($this->timeFrame, $this->partner);
+            $pos_payment_status_wise_count = [OrderPaymentStatuses::PAID => 0, OrderPaymentStatuses::DUE => 0];
+            $pos_orders->map(function ($pos_order) use (&$pos_payment_status_wise_count) {
+                /** @var PosOrder $pos_order */
+                $pos_order->sale = $pos_order->getNetBill();
+                $pos_order->paidAmount = $pos_order->getPaid();
+                $pos_order->dueAmount = $pos_order->getDue();
+                $pos_payment_status_wise_count[$pos_order->getPaymentStatus()]++;
+            });
 
-        $data['sheba_sales'] = $orders->sum('gmv');
-        $data['pos_sales'] = $pos_sales;
-        $data['total_sales'] = $data['sheba_sales'] + $data['pos_sales'];
+            $pos_sales_count = $pos_orders->count();
+            $pos_sales = $pos_orders->sum('sale');
+            $pos_paid = $pos_orders->sum('paidAmount');
+            $pos_due = $pos_orders->sum('dueAmount');
 
-        $data['order_accepted'] = $accepted_orders ? $accepted_orders->count : 0;
-        $data['order_completed'] = $orders->count();
-        $data['pos_order_created'] = $pos_orders->count();
-        $data['pos'] = [
-            'sales' => ['count' => $pos_sales_count, 'amount' => $pos_sales],
-            'paid' => ['count' => $pos_payment_status_wise_count[OrderPaymentStatuses::PAID], 'amount' => $pos_paid],
-            'due' => ['count' => $pos_payment_status_wise_count[OrderPaymentStatuses::DUE], 'amount' => $pos_due]
-        ];
+            $data['sheba_sales'] = $orders->sum('gmv');
+            $data['pos_sales'] = $pos_sales;
+            $data['total_sales'] = $data['sheba_sales'] + $data['pos_sales'];
 
-        $this->formatTimeline($data);
+            $data['order_accepted'] = $accepted_orders ? $accepted_orders->count : 0;
+            $data['order_completed'] = $orders->count();
+            $data['pos_order_created'] = $pos_orders->count();
+            $data['pos'] = [
+                'sales' => ['count' => $pos_sales_count, 'amount' => $pos_sales],
+                'paid' => ['count' => $pos_payment_status_wise_count[OrderPaymentStatuses::PAID], 'amount' => $pos_paid],
+                'due' => ['count' => $pos_payment_status_wise_count[OrderPaymentStatuses::DUE], 'amount' => $pos_due]
+            ];
 
-        if ($this->frequency == self::DAY_BASE) {
-            $data['day'] = $this->timeFrame->start->format('Y-m-d');
-            $data['timeline'] = $this->timeFrame->start->format('l, M d');
-        }
+            $this->formatTimeline($data);
 
-        if ($this->frequency == self::WEEK_BASE) {
-            $data['timeline'] = $this->timeFrame->start->format('M d') . ' - ' . $this->timeFrame->end->format('M d');
+            if ($this->frequency == self::DAY_BASE) {
+                $data['day'] = $this->timeFrame->start->format('Y-m-d');
+                return $data;
+                $data['timeline'] = $this->timeFrame->start->format('l, M d');
+            }
 
-            $data['sales_stat_breakdown'] = $this->getWeeklyStatFor($orders, 'sales', $pos_orders);
-            $data['order_stat_breakdown'] = $this->getWeeklyStatFor($orders, 'order_count');
-        }
+            if ($this->frequency == self::WEEK_BASE) {
+                $data['timeline'] = $this->timeFrame->start->format('M d') . ' - ' . $this->timeFrame->end->format('M d');
 
-        if ($this->frequency == self::MONTH_BASE) {
-            $data['timeline'] = $this->timeFrame->start->format('F');
-            $data['day'] = $this->timeFrame->start->format('Y-m-d');
+                $data['sales_stat_breakdown'] = $this->getWeeklyStatFor($orders, 'sales', $pos_orders);
+                $data['order_stat_breakdown'] = $this->getWeeklyStatFor($orders, 'order_count');
+            }
 
-            $data['sales_stat_breakdown'] = $this->getMonthlyStatFor($orders, 'sales', $pos_orders);
-            $data['order_stat_breakdown'] = $this->getMonthlyStatFor($orders, 'order_count');
-        }
+            if ($this->frequency == self::MONTH_BASE) {
+                $data['timeline'] = $this->timeFrame->start->format('F');
+                $data['day'] = $this->timeFrame->start->format('Y-m-d');
+
+                $data['sales_stat_breakdown'] = $this->getMonthlyStatFor($orders, 'sales', $pos_orders);
+                $data['order_stat_breakdown'] = $this->getMonthlyStatFor($orders, 'order_count');
+            }
 
 //        if ($this->frequency == self::YEAR_BASE) {
 //            $lifetime_timeFrame = (new TimeFrame())->forLifeTime();
@@ -161,15 +160,16 @@ class Basic extends PartnerSale
 //            $data['lifetime_sales'] = $lifetime_closed_orders->sum('totalPrice');
 //        }
 
-        if (in_array($this->frequency, [self::DAY_BASE, self::WEEK_BASE, self::MONTH_BASE])) {
-            $data['partner_collection'] = $orders->sum('partner_collection');
+            if (in_array($this->frequency, [self::DAY_BASE, self::WEEK_BASE, self::MONTH_BASE])) {
+                $data['partner_collection'] = $orders->sum('partner_collection');
 
-            list($payable_to, $payable_amount) = $this->payableTo($orders->sum('shebaReceivable'), $orders->sum('spPayable'));
-            $data['payable_to'] = $payable_to;
-            $data['payable_amount'] = (double)$payable_amount;
+                list($payable_to, $payable_amount) = $this->payableTo($orders->sum('shebaReceivable'), $orders->sum('spPayable'));
+                $data['payable_to'] = $payable_to;
+                $data['payable_amount'] = (double)$payable_amount;
+            }
         }
-
         return $data;
+
     }
 
     /**
