@@ -22,6 +22,7 @@ class AttendanceSummary
     private $leaveRepositoryInterface;
     private $commonFunctions;
     private $usersWhoOnLeave = [];
+    private $usersLeaveIds = [];
     private $myTeam;
     private $onTime = 0;
     private $late = 0;
@@ -87,8 +88,12 @@ class AttendanceSummary
         $present = $attendances->count();
         if (!$is_weekend_or_holiday) {
             foreach ($attendances as $attendance) {
+                $is_half_day_leave = false;
                 $is_on_leave = $this->isOnLeave($attendance->businessMember->id);
-                if (!$is_on_leave) {
+                if ($is_on_leave) {
+                    $is_half_day_leave = $this->checkHalfDayLeave($attendance->businessMember->id);
+                }
+                if (!$is_on_leave || $is_half_day_leave ) {
                     foreach ($attendance->actions as $action) {
                         $this->incrementStatus($action->status);
                     }
@@ -170,6 +175,15 @@ class AttendanceSummary
 
         foreach ($leaves as $leave) {
             array_push($this->usersWhoOnLeave, $leave->businessMember->id);
+            $this->usersLeaveIds[$leave->businessMember->id] = [
+                'member_id' => $leave->businessMember->member->id,
+                'business_member_id' => $leave->businessMember->id,
+                'leave' => [
+                    'id' => $leave->id,
+                    'is_half_day_leave' => (int)$leave->is_half_day,
+                    'which_half_day' => $leave->is_half_day ? $leave->half_day_configuration : null
+                ]
+            ];
         }
     }
 
@@ -180,6 +194,12 @@ class AttendanceSummary
     private function isOnLeave($business_member_id)
     {
         return in_array($business_member_id, $this->usersWhoOnLeave);
+    }
+
+    private function checkHalfDayLeave($business_member_id)
+    {
+        $leave = $this->usersLeaveIds[$business_member_id];
+        return $leave['leave']['is_half_day_leave'];
     }
 
 }
