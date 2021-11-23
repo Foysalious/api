@@ -20,72 +20,6 @@ class Basic extends PartnerSale
     private $posOrders;
 
     /**
-     * @throws PosOrderServiceServerError
-     */
-//    private function getNewPosOrderInformation()
-//    {
-//        /** @var PosOrderServerClient $client */
-//        $client = app(PosOrderServerClient::class);
-//        $sales_details = $client->get('api/v1/partners/' . $this->partner->id . '/sales?from=' . $this->timeFrame->start->toDateString() . '&to=' . $this->timeFrame->end->toDateString());
-//        $sales_data = $sales_details['data'];
-//        $orders = $this->partnerOrders->getClosedOrdersBetween($this->timeFrame, $this->partner);
-//        $accepted_orders = $this->partnerOrders->getAcceptedOrdersBetween($this->timeFrame, $this->partner);
-//
-//
-//        $data['sheba_sales'] = $orders->sum('gmv');
-//        $data['pos_sales'] = $sales_data['net_bill'];
-//        $data['total_sales'] = $data['sheba_sales'] + $data['pos_sales'];
-//
-//        $data['order_accepted'] = $sales_data['order_count'];
-//        $data['order_completed'] = $sales_data['order_count'];
-//        $data['pos_order_created'] = $sales_data['net_bill'];
-//        $data['pos'] = [
-//            'sales' => ['count' => $sales_data['net_bill_count'], 'amount' => $sales_data['net_bill']],
-//            'paid' => ['count' => $sales_data['paid_count'], 'amount' => $sales_data['paid']],
-//            'due' => ['count' => $sales_data['due_count'], 'amount' => $sales_data['due']]
-//        ];
-//
-//        $this->formatTimeline($data);
-//
-//        if ($this->frequency == self::DAY_BASE) {
-//            $data['day'] = $this->timeFrame->start->format('Y-m-d');
-//            $data['timeline'] = $this->timeFrame->start->format('l, M d');
-//        }
-//
-//        if ($this->frequency == self::WEEK_BASE) {
-//            $data['timeline'] = $this->timeFrame->start->format('M d') . ' - ' . $this->timeFrame->end->format('M d');
-//            $sale_stat = [];
-//            collect($sales_data['sales_stat_breakdown'])->each(function ($data) use (&$sale_stat) {
-//                array_push($sale_stat, ["value" => $data['day'], "date" => $data["date"], "amount" => $data["amount"]]);
-//            });
-//            $data['sales_stat_breakdown'] = $sale_stat;
-//            $data['order_stat_breakdown'] = $this->getWeeklyStatFor($orders, 'order_count');
-//        }
-//
-//        if ($this->frequency == self::MONTH_BASE) {
-//            $data['timeline'] = $this->timeFrame->start->format('F');
-//            $data['day'] = $this->timeFrame->start->format('Y-m-d');
-//            $sale_stat = [];
-//            $count = 0;
-//            collect($sales_data['sales_stat_breakdown'])->each(function ($data) use (&$sale_stat, &$count) {
-//                array_push($sale_stat, ["value" => $count + 1, "amount" => $data["amount"]]);
-//                $count++;
-//            });
-//            $data['sales_stat_breakdown'] = $sale_stat;
-//            $data['order_stat_breakdown'] = $this->getMonthlyStatFor($orders, 'order_count');
-//        }
-////        if (in_array($this->frequency, [self::DAY_BASE, self::WEEK_BASE, self::MONTH_BASE])) {
-////            $data['partner_collection'] = $orders->sum('partner_collection');
-////
-////            list($payable_to, $payable_amount) = $this->payableTo($orders->sum('shebaReceivable'), $orders->sum('spPayable'));
-////            $data['payable_to'] = $payable_to;
-////            $data['payable_amount'] = (double)$payable_amount;
-////        }
-//
-//        return $data;
-//    }
-
-    /**
      * @return Collection|mixed
      */
     protected function calculate()
@@ -94,16 +28,13 @@ class Basic extends PartnerSale
         $orders = $this->partnerOrders->getClosedOrdersBetween($this->timeFrame, $this->partner);
         $accepted_orders = $this->partnerOrders->getAcceptedOrdersBetween($this->timeFrame, $this->partner);
 
-
+        $data['sheba_sales'] = $orders->sum('gmv');
         if ($this->partner->isMigrated(Modules::POS)) {
             $client = app(PosOrderServerClient::class);
             $sales_details = $client->get('api/v1/partners/' . $this->partner->id . '/sales?from=' . $this->timeFrame->start->toDateString() . '&to=' . $this->timeFrame->end->toDateString());
             $sales_data = $sales_details['data'];
             $orders = $this->partnerOrders->getClosedOrdersBetween($this->timeFrame, $this->partner);
-            $accepted_orders = $this->partnerOrders->getAcceptedOrdersBetween($this->timeFrame, $this->partner);
-
-
-            $data['sheba_sales'] = $orders->sum('gmv');
+            $this->partnerOrders->getAcceptedOrdersBetween($this->timeFrame, $this->partner);
             $data['pos_sales'] = $sales_data['net_bill'];
             $data['total_sales'] = $data['sheba_sales'] + $data['pos_sales'];
 
@@ -116,42 +47,6 @@ class Basic extends PartnerSale
                 'due' => ['count' => $sales_data['due_count'], 'amount' => $sales_data['due']]
             ];
 
-            $this->formatTimeline($data);
-
-            if ($this->frequency == self::DAY_BASE) {
-                $data['day'] = $this->timeFrame->start->format('Y-m-d');
-                $data['timeline'] = $this->timeFrame->start->format('l, M d');
-            }
-
-            if ($this->frequency == self::WEEK_BASE) {
-                $data['timeline'] = $this->timeFrame->start->format('M d') . ' - ' . $this->timeFrame->end->format('M d');
-                $sale_stat = [];
-                collect($sales_data['sales_stat_breakdown'])->each(function ($data) use (&$sale_stat) {
-                    array_push($sale_stat, ["value" => $data['day'], "date" => $data["date"], "amount" => $data["amount"]]);
-                });
-                $data['sales_stat_breakdown'] = $sale_stat;
-                $data['order_stat_breakdown'] = $this->getWeeklyStatFor($orders, 'order_count');
-            }
-
-            if ($this->frequency == self::MONTH_BASE) {
-                $data['timeline'] = $this->timeFrame->start->format('F');
-                $data['day'] = $this->timeFrame->start->format('Y-m-d');
-                $sale_stat = [];
-                $count = 0;
-                collect($sales_data['sales_stat_breakdown'])->each(function ($data) use (&$sale_stat, &$count) {
-                    array_push($sale_stat, ["value" => $count + 1, "amount" => $data["amount"]]);
-                    $count++;
-                });
-                $data['sales_stat_breakdown'] = $sale_stat;
-                $data['order_stat_breakdown'] = $this->getMonthlyStatFor($orders, 'order_count');
-            }
-//        if (in_array($this->frequency, [self::DAY_BASE, self::WEEK_BASE, self::MONTH_BASE])) {
-//            $data['partner_collection'] = $orders->sum('partner_collection');
-//
-//            list($payable_to, $payable_amount) = $this->payableTo($orders->sum('shebaReceivable'), $orders->sum('spPayable'));
-//            $data['payable_to'] = $payable_to;
-//            $data['payable_amount'] = (double)$payable_amount;
-//        }
         } else {
             $this->posOrders = new PosOrderRepository();
             $pos_orders = $this->posOrders->getCreatedOrdersBetween($this->timeFrame, $this->partner);
@@ -169,7 +64,6 @@ class Basic extends PartnerSale
             $pos_paid = $pos_orders->sum('paidAmount');
             $pos_due = $pos_orders->sum('dueAmount');
 
-            $data['sheba_sales'] = $orders->sum('gmv');
             $data['pos_sales'] = $pos_sales;
             $data['total_sales'] = $data['sheba_sales'] + $data['pos_sales'];
 
@@ -181,14 +75,6 @@ class Basic extends PartnerSale
                 'paid' => ['count' => $pos_payment_status_wise_count[OrderPaymentStatuses::PAID], 'amount' => $pos_paid],
                 'due' => ['count' => $pos_payment_status_wise_count[OrderPaymentStatuses::DUE], 'amount' => $pos_due]
             ];
-
-            $this->formatTimeline($data);
-
-            if ($this->frequency == self::DAY_BASE) {
-                $data['day'] = $this->timeFrame->start->format('Y-m-d');
-                $data['timeline'] = $this->timeFrame->start->format('l, M d');
-            }
-
 
 //        if ($this->frequency == self::YEAR_BASE) {
 //            $lifetime_timeFrame = (new TimeFrame())->forLifeTime();
@@ -206,6 +92,10 @@ class Basic extends PartnerSale
                 $data['payable_to'] = $payable_to;
                 $data['payable_amount'] = (double)$payable_amount;
             }
+        }
+        if ($this->frequency == self::DAY_BASE) {
+            $data['day'] = $this->timeFrame->start->format('Y-m-d');
+            $data['timeline'] = $this->timeFrame->start->format('l, M d');
         }
         if ($this->frequency == self::WEEK_BASE) {
             $data['timeline'] = $this->timeFrame->start->format('M d') . ' - ' . $this->timeFrame->end->format('M d');
@@ -236,6 +126,7 @@ class Basic extends PartnerSale
                 $data['sales_stat_breakdown'] = $this->getMonthlyStatFor($orders, 'sales', $pos_orders);
             }
             $data['order_stat_breakdown'] = $this->getMonthlyStatFor($orders, 'order_count');
+            $this->formatTimeline($data);
         }
         return $data;
 
