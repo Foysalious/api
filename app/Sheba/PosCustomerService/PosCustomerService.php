@@ -277,12 +277,10 @@ class PosCustomerService
 
     /**
      * @throws InvalidPartnerPosCustomer
-     * @throws AccountingEntryServerError
      */
-    private function getDueAndPayableAmount(): array
+    private function getDueAndPayableAmount()
     {
-        // $customer_amount =  $this->posCustomerRepository->getDueAmountFromDueTracker($this->partner, $this->customerId);
-        return [100, 0];
+        return $this->posCustomerRepository->getDueAmountFromDueTracker($this->partner, $this->customerId);
     }
 
     private function getCustomerListByPartnerId()

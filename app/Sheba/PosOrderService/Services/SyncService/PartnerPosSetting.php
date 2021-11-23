@@ -24,6 +24,7 @@ class PartnerPosSetting extends Service
         $data = [
             'name' => $this->partner->name,
             'sub_domain' => $this->partner->sub_domain,
+            'delivery_charge' => $this->partner->delivery_charge
         ];
         $pos_settings = $this->partner->posSetting;
         if ($pos_settings) {

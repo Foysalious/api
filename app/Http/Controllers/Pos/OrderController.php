@@ -596,15 +596,13 @@ class OrderController extends Controller
             'amount' => 'required',
             'pos_order_id' => 'required',
             'payment_method' => 'sometimes|string|in:' . implode(',', config('pos.payment_method')),
-            'payment_method_en' => 'sometimes|numeric',
-            'payment_method_bn' => 'sometimes',
-            'payment_method_icon' => 'sometimes',
             'api_key' => 'required',
             'expense_account_id' => 'sometimes'
         ]);
         if($request->api_key != config('expense_tracker.api_key'))
             throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
-        $method_details = ['payment_method_en' => $request->payment_method_en, 'payment_method_bn' => $request->payment_method_bn, 'payment_method_icon' => $request->payment_method_icon];
+        //from expense server payment details always advance cash
+        $method_details = ['payment_method_en' => 'Cash', 'payment_method_bn' => ' নগদ গ্রহন', 'payment_method_icon' => config('s3.url') . 'pos/payment/cash_v2.png'];
         $posOrderPaymentRepository->setExpenseAccountId($request->expense_account_id)->setMethodDetails($method_details)->createPosOrderPayment($request->amount, $request->pos_order_id,$request->payment_method);
         return api_response($request, true, 200, ['message' => 'Pos Order Payment created successfully']);
     }

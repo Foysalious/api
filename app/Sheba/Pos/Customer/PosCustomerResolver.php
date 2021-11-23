@@ -49,7 +49,7 @@ class PosCustomerResolver
             $customer = $this->smanagerUserServerClient->get('api/v1/partners/' . $this->partner->id . '/users/' . $this->customerId);
             return $this->posCustomerObject->setId($customer['_id'])->setPartnerId($customer['partner_id'])->setName($customer['name'])
                 ->setIsSupplier($customer['is_supplier'])->setMobile($customer['mobile'])->setEmail($customer['email'])
-                ->setGender($customer['gender'])->setDob($customer['dob'])->setProPic($customer['_id']);
+                ->setGender($customer['gender'])->setDob($customer['dob'])->setProPic($customer['pro_pic']);
 
         }
         $partner_pos_customer = PartnerPosCustomer::where('customer_id', $this->customerId)->where('partner_id', $this->partner->id)
