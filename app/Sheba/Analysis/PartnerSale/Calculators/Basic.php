@@ -36,8 +36,8 @@ class Basic extends PartnerSale
         $data['pos_sales'] = $a['net_bill'];
         $data['total_sales'] = $data['sheba_sales'] + $data['pos_sales'];
 
-        $data['order_accepted'] = $accepted_orders ? $accepted_orders->count : 0;
-        $data['order_completed'] = $orders->count();
+        $data['order_accepted'] = $a['order_count'];
+        $data['order_completed'] = $a['order_count'];
         $data['pos_order_created'] = $a['net_bill'];
         $data['pos'] = [
             'sales' => ['count' => $a['net_bill_count'], 'amount' => $a['net_bill']],
