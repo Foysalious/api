@@ -18,6 +18,7 @@ class SendBusinessRequestEmail extends Job implements ShouldQueue
     public function __construct($email)
     {
         $this->email = $email;
+        $this->setBusinessMailgunDomain();
     }
 
     /**
@@ -43,7 +44,7 @@ class SendBusinessRequestEmail extends Job implements ShouldQueue
      * @param mixed $password
      * @return SendBusinessRequestEmail
      */
-    public function setPassword($password)
+    public function setPassword($password): SendBusinessRequestEmail
     {
         $this->password = $password;
         return $this;
@@ -53,7 +54,7 @@ class SendBusinessRequestEmail extends Job implements ShouldQueue
      * @param mixed $template
      * @return SendBusinessRequestEmail
      */
-    public function setTemplate($template)
+    public function setTemplate($template): SendBusinessRequestEmail
     {
         $this->template = $template;
         return $this;
@@ -63,9 +64,14 @@ class SendBusinessRequestEmail extends Job implements ShouldQueue
      * @param mixed $subject
      * @return SendBusinessRequestEmail
      */
-    public function setSubject($subject)
+    public function setSubject($subject): SendBusinessRequestEmail
     {
         $this->subject = $subject;
         return $this;
+    }
+
+    private function setBusinessMailgunDomain()
+    {
+        config()->set('services.mailgun.domain', config('services.mailgun.business_domain'));
     }
 }
