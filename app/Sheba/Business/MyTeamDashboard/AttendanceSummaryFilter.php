@@ -211,7 +211,7 @@ class AttendanceSummaryFilter
                             'address' => $action->is_remote ?
                                 $action->location ? json_decode($action->location)->address : null
                                 : null,
-                            'checkin_time' => Carbon::parse($attendance->date . ' ' . $attendance->checkin_time)->format('g:i a'),
+                            'checkin_time' => Carbon::parse($attendance->date . ' ' . $attendance->checkin_time)->format('h:i a'),
                             'note' => $action->note,
                             'remote_mode' => $action->remote_mode ?: null
                         ]);
@@ -223,7 +223,7 @@ class AttendanceSummaryFilter
                             'address' => $action->is_remote ?
                                 $action->location ? json_decode($action->location)->address : null
                                 : null,
-                            'checkout_time' => $attendance->checkout_time ? Carbon::parse($attendance->date . ' ' . $attendance->checkout_time)->format('g:i a') : null,
+                            'checkout_time' => $attendance->checkout_time ? Carbon::parse($attendance->date . ' ' . $attendance->checkout_time)->format('h:i a') : null,
                             'note' => $action->note,
                             'remote_mode' => $action->remote_mode ?: null
                         ]);
