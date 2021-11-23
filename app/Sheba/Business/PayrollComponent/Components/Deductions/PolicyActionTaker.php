@@ -142,14 +142,14 @@ class PolicyActionTaker
                 ->setLeaveTypeId($penalty_type)
                 ->setTotalDays($total_leave_type_days_after_penalty)
                 ->setNote(PayrollConstGetter::LEAVE_PRORATE_NOTE_FOR_POLICY_ACTION);
-            $this->leaveProrateLogCreator->setBusinessMember($this->businessMember)->setProratedType(self::LEAVE_PRORATE_TYPE)->setLeaveType($leave_type)->setProratedLeaveDays($total_leave_type_days_after_penalty)->setPreviousLeaveTypeTotalDays($previous_leave_type_total_days);
+            $this->leaveProrateLogCreator->setBusinessMember($this->businessMember)->setProratedType(self::LEAVE_PRORATE_TYPE)->setProratedLeaveDays($total_leave_type_days_after_penalty)->setPreviousLeaveTypeTotalDays($previous_leave_type_total_days);
             if ($existing_prorate) {
                 $this->prorateUpdater->setRequester($this->prorateRequester)->setBusinessMemberLeaveType($existing_prorate)->update();
-                $this->leaveProrateLogCreator->setLeaveTypeTarget(get_class($existing_prorate));
+                $this->leaveProrateLogCreator->setLeaveType($existing_prorate)->setLeaveTypeTarget(get_class($existing_prorate));
             }
             else {
                 $this->prorateCreator->setRequester($this->prorateRequester)->create();
-                $this->leaveProrateLogCreator->setLeaveTypeTarget(get_class($leave_type));
+                $this->leaveProrateLogCreator->setLeaveType($leave_type)->setLeaveTypeTarget(get_class($leave_type));
             }
             $this->leaveProrateLogCreator->create();
             return $policy_total;
