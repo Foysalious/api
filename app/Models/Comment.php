@@ -1,9 +1,9 @@
 <?php namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Sheba\Dal\Accessor\Model as Accessor;
+use Sheba\Dal\BaseModel;
 
-class Comment extends Model
+class Comment extends BaseModel
 {
     protected $guarded = ['id'];
 
