@@ -7,8 +7,8 @@ use App\Models\Member;
 use App\Sheba\Business\Prorate\RunProrateOnActiveLeaveTypes;
 use App\Sheba\Business\Prorate\AutoProrateCalculator;
 use App\Transformers\Business\BusinessMemberLeaveProrateTransformer;
+use App\Transformers\Business\BusinessMemberProrateLogsTransformer;
 use App\Transformers\Business\LeaveProrateEmployeeInfoTransformer;
-use App\Transformers\Business\LeaveRequestDetailsTransformer;
 use App\Transformers\CustomSerializer;
 use Illuminate\Http\JsonResponse;
 use League\Fractal\Manager;
@@ -21,6 +21,7 @@ use Sheba\Dal\BusinessMemberLeaveType\Model as BusinessMemberLeaveType;
 use App\Http\Controllers\Controller;
 use Sheba\Business\Prorate\Creator;
 use Sheba\Business\Prorate\Requester as ProrateRequester;
+use Sheba\Dal\LeaveProrateLog\Contract as LeaveProrateLogRepo;
 use Sheba\Dal\LeaveType\Contract as LeaveTypeRepo;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
@@ -166,7 +167,7 @@ class ProrateController extends Controller
         $prorates = $this->businessMemberLeaveTypeRepo->getAllBusinessMemberProratesWithLeaveTypes($business_member_ids);
         if ($request->has('prorate_type') && $request->prorate_type == 'auto') {
             $prorates = $prorates->where('is_auto_prorated', 1);
-        }else{
+        }else if($request->has('prorate_type') && $request->prorate_type == 'manual'){
             $prorates = $prorates->where('is_auto_prorated', 0);
         }
         if ($request->has('sort_column') && $request->sort_column == 'created_at') {
@@ -309,6 +310,21 @@ class ProrateController extends Controller
         $resource = new Item($business_member_leave_prorate, new LeaveProrateEmployeeInfoTransformer());
         $prorated_employee_info = $manager->createData($resource)->toArray()['data'];
         return api_response($request, null, 200, ['leave_prorate' => $prorated_employee_info]);
+    }
+
+    public function employeeLeaveProrateLog(Request $request, $business, $prorate, LeaveProrateLogRepo $leave_prorate_log_repo)
+    {
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 420);
+        $business_member_leave_prorate = $this->businessMemberLeaveTypeRepo->find($prorate);
+        if (!$business_member_leave_prorate) return api_response($request, null, 404, ['message' => 'Sorry! Leave Prorate doesn\'t exist.']);
+        $prorate_logs = $leave_prorate_log_repo->getBusinessMemberLeaveProrateLogs($business_member_leave_prorate);
+        $manager = new Manager();
+        $manager->setSerializer(new ArraySerializer());
+        $prorate_logs = new Collection($prorate_logs->get(), new BusinessMemberProrateLogsTransformer());
+        $prorate_logs = collect($manager->createData($prorate_logs)->toArray()['data']);
+        return api_response($request, null, 200, ['leave_prorate_logs' => $prorate_logs]);
     }
 
     private function sortByColumn($data, $column, $sort = 'asc')
