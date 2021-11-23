@@ -18,7 +18,6 @@ class SendBusinessRequestEmail extends Job implements ShouldQueue
     public function __construct($email)
     {
         $this->email = $email;
-        $this->setBusinessMailgunDomain();
     }
 
     /**
@@ -33,6 +32,7 @@ class SendBusinessRequestEmail extends Job implements ShouldQueue
             $subject = $this->subject ?: 'Profile Creation';
             $email = $this->email;
 
+            config()->set('services.mailgun.domain', config('services.mailgun.business_domain'));
             Mail::send($template, ['email' => $this->email, 'password' => $this->password], function ($m) use ($subject, $email) {
                 $m->from('noreply@sheba-business.com', 'Sheba Platform Limited');
                 $m->to($email)->subject($subject);
@@ -68,10 +68,5 @@ class SendBusinessRequestEmail extends Job implements ShouldQueue
     {
         $this->subject = $subject;
         return $this;
-    }
-
-    private function setBusinessMailgunDomain()
-    {
-        config()->set('services.mailgun.domain', config('services.mailgun.business_domain'));
     }
 }
