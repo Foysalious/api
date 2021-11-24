@@ -7,8 +7,8 @@ return [
         'own_delivery' => ['bn' => 'নিজস্ব ডেলিভারি ', 'en' => 'Own Delivery'], 'paperfly' => ['bn' => 'পেপারফ্লাই', 'en' => 'Paperfly']
     ],
     'vendor_list_v2' => [
-        'paperfly' => ['bn' => 'পেপারফ্লাই', 'en' => 'Paperfly' , 'icon' => config('sheba.s3_url').'pos/paperfly.png'],
-        'redex' => ['bn' => 'রেডেক্স', 'en' => 'Redex' , 'icon' => config('sheba.s3_url').'pos/paperfly.png']
+        'paperfly' => ['bn' => 'পেপারফ্লাই', 'en' => 'Paperfly' , 'icon' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/pos/paperfly.png'],
+        'redex' => ['bn' => 'রেডেক্স', 'en' => 'Redex' , 'icon' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/pos/paperfly.png']
     ],
     'api_url' => env('S_DELIVERY_API_URL'),
     'server_ip' => env('S_DELIVERY_SERVER_IP'),
