@@ -36,6 +36,7 @@ class Partner extends TopUpCommission
     {
         /** @var \App\Models\Partner $partner */
         $partner = $this->agent;
+        Log::info(["top up journal entry"]);
         (new JournalCreateRepository())
             ->setTypeId($partner->id)
             ->setSource($this->transaction)
