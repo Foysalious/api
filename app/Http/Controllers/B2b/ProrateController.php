@@ -266,7 +266,8 @@ class ProrateController extends Controller
     public function runAutoProrate(Request $request, AutoProrateCalculator $auto_prorate_calculator)
     {
         $this->validate($request, [
-            'is_prorated' => 'required|string'
+            'is_prorated' => 'required|string',
+            'prorate_type' => 'required|string'
         ]);
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
@@ -275,7 +276,7 @@ class ProrateController extends Controller
         $business = $business_member->business;
         if (!$business->is_leave_prorate_enable) return api_response($request, null, 200, ['message' => 'Leave Prorate is deactivated for this business.']);
         $run_prorate_on_active_leaves = new RunProrateOnActiveLeaveTypes();
-        $run_prorate_on_active_leaves->setBusiness($business)->run();
+        $run_prorate_on_active_leaves->setBusiness($business)->setProrateType($request->prorate_type)->run();
         return api_response($request, null, 200);
     }
 

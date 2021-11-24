@@ -2,6 +2,7 @@
 
 namespace App\Sheba\Business\Prorate;
 
+use App\Sheba\Business\LeaveProrateLogs\Creator as LeaveProrateLogCreator;
 use Carbon\Carbon;
 use Sheba\Business\Prorate\Creator as ProrateCreator;
 use Sheba\Business\Prorate\Requester as ProrateRequester;
@@ -21,6 +22,9 @@ class CalculateProrate
     private $prorateCreator;
     private $prorateupdater;
     private $businessMemberLeaveTypeRepo;
+    private $prorateType;
+    /*** @var LeaveProrateLogCreator $leaveProrateLogCreator*/
+    private $leaveProrateLogCreator;
 
     public function __construct()
     {
@@ -28,6 +32,7 @@ class CalculateProrate
         $this->prorateCreator = app(ProrateCreator::class);
         $this->prorateupdater = app(ProrateUpdater::class);
         $this->businessMemberLeaveTypeRepo = app(BusinessMemberLeaveTypeInterface::class);
+        $this->leaveProrateLogCreator = app(LeaveProrateLogCreator::class);
     }
 
     public function setBusiness($business)
@@ -45,6 +50,12 @@ class CalculateProrate
     public function setLeaveType($leave_type)
     {
         $this->leaveType = $leave_type;
+        return $this;
+    }
+
+    public function setProrateType($prorate_type)
+    {
+        $this->prorateType = $prorate_type;
         return $this;
     }
 
@@ -74,12 +85,18 @@ class CalculateProrate
             ->setLeaveTypeId($leave_type_id)
             ->setNote(self::AUTO_PRORATE_NOTE)
             ->setIsAutoProrated(1);
+        $this->leaveProrateLogCreator->setBusinessMember($this->businessMember)->setProratedType($this->prorateType)->setProratedLeaveDays($prorated_days);
         if (!$business_member_leave_type) {
             $this->prorateRequester->setBusinessMemberIds([$business_member_id]);
+            $this->leaveProrateLogCreator->setPreviousLeaveTypeTotalDays($this->leaveType->total_days);
             $this->prorateCreator->setRequester($this->prorateRequester)->create();
+            $this->leaveProrateLogCreator->setLeaveType($this->leaveType)->setLeaveTypeTarget(get_class($this->leaveType));
         } else {
+            $this->leaveProrateLogCreator->setPreviousLeaveTypeTotalDays($business_member_leave_type->total_days);
             $this->prorateupdater->setRequester($this->prorateRequester)->setBusinessMemberLeaveType($business_member_leave_type)->update();
+            $this->leaveProrateLogCreator->setLeaveType($business_member_leave_type)->setLeaveTypeTarget(get_class($business_member_leave_type));
         }
+        $this->leaveProrateLogCreator->create();
     }
 
 
