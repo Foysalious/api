@@ -284,7 +284,8 @@ class ProrateController extends Controller
     {
         $this->validate($request, [
             'is_prorated' => 'required|string',
-            'leave_type_id' => 'required'
+            'leave_type_id' => 'required',
+            'prorate_type' => 'required|string'
         ]);
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
@@ -295,7 +296,7 @@ class ProrateController extends Controller
         $leave_type = $leave_type_repo->find($request->leave_type_id);
         if (!$leave_type) return api_response($request, null, 404, ['message' => 'Sorry! Leave Type not found.']);
         $auto_prorate_calculator = new AutoProrateCalculator();
-        $auto_prorate_calculator->setBusiness($business)->setLeaveType($leave_type)->run();
+        $auto_prorate_calculator->setBusiness($business)->setProrateType($request->prorate_type)->setLeaveType($leave_type)->run();
         return api_response($request, null, 200);
     }
 
