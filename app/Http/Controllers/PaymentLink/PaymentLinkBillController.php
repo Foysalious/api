@@ -90,7 +90,10 @@ class PaymentLinkBillController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (InitiateFailedException | StoreNotFoundException $e) {
+        } catch (InitiateFailedException $e) {
+            logError($e);
+            return api_response($request, null, $e->getCode(),['message'=>$e->getMessage()]);
+        } catch (StoreNotFoundException $e) {
             logError($e);
             return api_response($request, null, $e->getCode(),['message'=>$e->getMessage()]);
         } catch (\Throwable $e) {
