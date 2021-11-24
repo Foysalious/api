@@ -235,9 +235,14 @@ class BusinessMember extends Model
      */
     public function getTotalLeaveDaysByLeaveTypes($leave_type_id)
     {
+        return $this->getBusinessMemberLeaveType($leave_type_id)->total_days;
+    }
+
+    public function getBusinessMemberLeaveType($leave_type_id)
+    {
         $business_member_leave_type = $this->leaveTypes()->where('leave_type_id', $leave_type_id)->first();
-        if ($business_member_leave_type) return $business_member_leave_type->total_days;
-        return $this->business->leaveTypes()->withTrashed()->where('id', $leave_type_id)->first()->total_days;
+        if ($business_member_leave_type) return $business_member_leave_type;
+        return $this->business->leaveTypes()->withTrashed()->where('id', $leave_type_id)->first();
     }
 
     /**

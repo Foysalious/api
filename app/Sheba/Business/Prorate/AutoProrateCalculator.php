@@ -1,16 +1,23 @@
 <?php namespace App\Sheba\Business\Prorate;
 
-use App\Models\BusinessMember;
+use App\Models\Business;
 
 class AutoProrateCalculator
 {
-    /** @var BusinessMember $business */
+    /** @var Business $business */
     private $business;
     private $leaveType;
+    private $prorateType;
 
     public function setBusiness($business)
     {
         $this->business = $business;
+        return $this;
+    }
+
+    public function setProrateType($prorate_type)
+    {
+        $this->prorateType = $prorate_type;
         return $this;
     }
 
@@ -29,6 +36,7 @@ class AutoProrateCalculator
             $calculate_prorate
                 ->setBusiness($this->business)
                 ->setLeaveType($this->leaveType)
+                ->setProrateType($this->prorateType)
                 ->setBusinessFiscalYear($fiscal_year)
                 ->setBusinessMember($business_member)
                 ->calculate();

@@ -87,13 +87,15 @@ class LeaveBalanceDetailsTransformer extends TransformerAbstract
         $single_employee_leave_balance = [];
         foreach ($this->leave_types as $leave_type) {
             if ($leave_type->trashed()) continue;
+            $prorated_leave = $this->businessMember->getBusinessMemberLeaveType($leave_type->id);
             $used_leave_days = $this->businessMember->getCountOfUsedLeaveDaysByTypeOnAFiscalYear($leave_type->id);
-            $leave_type_total_days = $this->businessMember->getTotalLeaveDaysByLeaveTypes($leave_type->id);
+            $leave_type_total_days = $prorated_leave ? $prorated_leave->total_days : $this->businessMember->getTotalLeaveDaysByLeaveTypes($leave_type->id);
             array_push($single_employee_leave_balance, [
                 'title' => $leave_type->title,
                 'allowed_leaves' => (int)$leave_type_total_days,
                 'used_leaves' => $used_leave_days,
-                'is_leave_days_exceeded' => ($used_leave_days > (int)$leave_type_total_days)
+                'is_leave_days_exceeded' => ($used_leave_days > (int)$leave_type_total_days),
+                'leave_prorate_id' => $prorated_leave ? $prorated_leave->id : null
             ]);
         }
 
