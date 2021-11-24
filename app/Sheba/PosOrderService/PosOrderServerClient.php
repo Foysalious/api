@@ -10,6 +10,7 @@ use Sheba\ModificationFields;
 class PosOrderServerClient
 {
     use ModificationFields;
+
     protected $client;
     public $baseUrl;
 
@@ -58,10 +59,20 @@ class PosOrderServerClient
 
     private function getOptions($data = null, $multipart = false)
     {
+        if (isset(getShebaRequestHeader()->toArray()['portal-name'])) {
+            $portal_name = getShebaRequestHeader()->toArray()['portal-name'];
+        } else {
+            $portal_name = null;
+        }
+        if (isset(getShebaRequestHeader()->toArray()['Version-Code'])) {
+            $version_code = getShebaRequestHeader()->toArray()['Version-Code'];
+        } else {
+            $version_code = null;
+        }
         $options['headers'] = [
             'Accept' => 'application/json',
-           // 'portal-name' => getShebaRequestHeader()->toArray()['portal-name'],
-            //'Version-Code' => getShebaRequestHeader()->toArray()['Version-Code']
+            'portal-name' => $portal_name,
+            'Version-Code' => $version_code,
             'Modifier-Name' => $this->getModifierNameForHeader()
         ];
         if (!$data) return $options;
@@ -103,7 +114,7 @@ class PosOrderServerClient
 
     private function getModifierNameForHeader()
     {
-        if($manager_resource =\request()->manager_resource) {
+        if ($manager_resource = \request()->manager_resource) {
             $this->setModifier($manager_resource);
             return $this->getModifierName();
         } else {
