@@ -53,8 +53,7 @@ class PaymentStrategy
      */
     public static function getMethod($method, Payable $payable)
     {
-        if (!self::isValid($method)) $method = "ssl";
-//        if (!self::isValid($method)) throw new InvalidPaymentMethod();
+        if (!self::isValid($method)) throw new InvalidPaymentMethod();
 
         if ($method == self::ONLINE) $method = self::getRealOnlineMethod($payable);
 
