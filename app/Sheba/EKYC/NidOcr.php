@@ -26,11 +26,13 @@ class NidOcr
         return $this->profileRepo->update($profile, $data);
     }
 
-    public function formatToData(Request $request)
+    public function formatToData(Request $request, $user_agent)
     {
         $data['id_front'] = $request->file('id_front');
         $data['id_back'] = $request->file('id_back');
-        return $data;    }
+        $data['user_agent'] = $user_agent;
+        return $data;
+    }
 
     public function storeData($request, $nidOcrData, $nid_no, $business_name = "sManager", $feature_name = "NID Verification")
     {

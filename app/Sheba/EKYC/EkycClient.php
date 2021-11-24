@@ -83,10 +83,12 @@ class EkycClient
             /** @var UploadedFile $id_back */
             $id_front               = $data['id_front'];
             $id_back                = $data['id_back'];
+            $user_agent             = $data['user_agent'];
 
             $options['multipart'] = [
                 ['name' => 'id_front', 'contents' => File::get($id_front->getRealPath()), 'filename' => $id_front->getClientOriginalName()],
-                ['name' => 'id_back', 'contents' => File::get($id_back->getRealPath()), 'filename' => $id_back->getClientOriginalName()]
+                ['name' => 'id_back', 'contents' => File::get($id_back->getRealPath()), 'filename' => $id_back->getClientOriginalName()],
+                ['name' => 'user_agent', 'contents' => $user_agent]
             ];
 
         } else {
