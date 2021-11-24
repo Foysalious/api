@@ -223,7 +223,7 @@ class AutomaticEntryRepository extends BaseRepository
     {
         try {
             if ($this->isMigratedToAccounting()) {
-                throw new MigratedToAccountingException();
+                return true;
             }
             $data = $this->getData();
             if (empty($data['head_name']))
@@ -289,7 +289,7 @@ class AutomaticEntryRepository extends BaseRepository
     {
         try {
             if ($this->isMigratedToAccounting()) {
-                throw new MigratedToAccountingException();
+                return true;
             }
             $data = $this->getData();
             if (empty($data['source_type']) || empty($data['source_id']))
@@ -309,7 +309,7 @@ class AutomaticEntryRepository extends BaseRepository
     {
         try {
             if ($this->isMigratedToAccounting()) {
-                throw new MigratedToAccountingException();
+                return true;
             }
             $data = [
                 'source_type' => $this->sourceType,
@@ -333,7 +333,7 @@ class AutomaticEntryRepository extends BaseRepository
     {
         try {
             if ($this->isMigratedToAccounting()) {
-                throw new MigratedToAccountingException();
+                return true;
             }
             $data = $this->getData();
             if (empty($data['source_type']) || empty($data['source_id']))
@@ -349,7 +349,7 @@ class AutomaticEntryRepository extends BaseRepository
     {
         try {
             if ($this->isMigratedToAccounting()) {
-                throw new MigratedToAccountingException();
+                return true;
             }
             $data = $this->getData();
             if (empty($data['source_type']) || empty($data['source_id']))
