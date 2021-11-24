@@ -30,7 +30,7 @@ class BulkBkashNumberExcel
                 );
                 $sheet->setAutoSize(true);
             });
-        })->export('xlsx');
+        })->export('xls');
     }
 
     private function makeData()
