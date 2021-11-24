@@ -4,6 +4,7 @@ use App\Models\Customer;
 use App\Models\Partner;
 use App\Models\Payable;
 use App\Sheba\Payment\Methods\Nagad\NagadBuilder;
+use Illuminate\Support\Facades\Log;
 use Sheba\Helpers\ConstGetter;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
 use Sheba\Payment\Methods\Bkash\Bkash;
@@ -50,6 +51,7 @@ class PaymentStrategy
      */
     public static function getMethod($method, Payable $payable)
     {
+        Log::info("-----------". $method. "--------");
         if (!self::isValid($method)) throw new InvalidPaymentMethod();
 
         if ($method == self::ONLINE) $method = self::getRealOnlineMethod($payable);
