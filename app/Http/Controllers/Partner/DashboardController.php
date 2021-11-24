@@ -194,12 +194,12 @@ class DashboardController extends Controller
     {
         try {
             $sp_loan_information_completion = new SpLoanInformationCompletion();
-            $sp_information_completion      = $sp_loan_information_completion->getLoanInformationCompletion($partner, $request)->getData()->completion;
-            $personal                       = $sp_information_completion->personal->completion_percentage;
-            $business                       = $sp_information_completion->business->completion_percentage;
-            $finance                        = $sp_information_completion->finance->completion_percentage;
-            $nominee                        = $sp_information_completion->nominee->completion_percentage;
-            $documents                      = $sp_information_completion->documents->completion_percentage;
+            $sp_information_completion = $sp_loan_information_completion->getLoanInformationCompletion($partner, $request)->getData()->completion;
+            $personal = $sp_information_completion->personal->completion_percentage;
+            $business = $sp_information_completion->business->completion_percentage;
+            $finance = $sp_information_completion->finance->completion_percentage;
+            $nominee = $sp_information_completion->nominee->completion_percentage;
+            $documents = $sp_information_completion->documents->completion_percentage;
             return ($personal == 100 && $business == 100 && $finance == 100 && $nominee == 100 && $documents == 100) ? 1 : 0;
         } catch (Throwable $e) {
             return 0;
@@ -213,7 +213,7 @@ class DashboardController extends Controller
 
         /** @var Partner $partner */
         $partner = $request->partner;
-        $data    = (new PartnerRepository($partner))->getNewDashboard($request, $performance);
+        $data = (new PartnerRepository($partner))->getNewDashboard($request, $performance);
         if (request()->hasHeader('Portal-Name'))
             $this->setDailyUsageRecord($partner, request()->header('Portal-Name'));
         return api_response($request, $data, 200, ['data' => $data]);
@@ -224,14 +224,14 @@ class DashboardController extends Controller
         /** @var Partner $partner */
         $partner = $request->partner;
         /** @var Resource $resource */
-        $resource        = $request->manager_resource;
+        $resource = $request->manager_resource;
         $resource_status = $resource->status;
-        $data            = [
-            'name'                   => $partner->name,
-            'logo'                   => $partner->logo,
-            'resource_kyc_status'    => $resource_status,
-            'is_nid_verified'        => (bool)((int)$request->manager_resource->profile->nid_verified),
-            'is_webstore_published'  => $partner->is_webstore_published,
+        $data = [
+            'name' => $partner->name,
+            'logo' => $partner->logo,
+            'resource_kyc_status' => $resource_status,
+            'is_nid_verified' => (bool)((int)$request->manager_resource->profile->nid_verified),
+            'is_webstore_published' => $partner->is_webstore_published,
             'new_notification_count' => $partner->notifications()->where('is_seen', '0')->count()
         ];
         if ($resource_status === Statuses::VERIFIED) {
@@ -245,7 +245,7 @@ class DashboardController extends Controller
         try {
             $request->merge(['getCount' => 1]);
             $partner_order = new PartnerOrderController();
-            $new_order     = $partner_order->newOrders($partner, $request)->getData();
+            $new_order = $partner_order->newOrders($partner, $request)->getData();
             return $new_order;
         } catch (Throwable $e) {
             return array();
@@ -268,9 +268,9 @@ class DashboardController extends Controller
     private function setDailyUsageRecord(Partner $partner, $portal_name)
     {
         $daily_usages_record_namespace = 'PartnerDailyAppUsages:partner_' . $partner->id;
-        $daily_uses_count              = Redis::get($daily_usages_record_namespace);
-        $daily_uses_count              = !is_null($daily_uses_count) ? (int)$daily_uses_count + 1 : 1;
-        $second_left                   = Carbon::now()->diffInSeconds(Carbon::today()->endOfDay(), false);
+        $daily_uses_count = Redis::get($daily_usages_record_namespace);
+        $daily_uses_count = !is_null($daily_uses_count) ? (int)$daily_uses_count + 1 : 1;
+        $second_left = Carbon::now()->diffInSeconds(Carbon::today()->endOfDay(), false);
         Redis::set($daily_usages_record_namespace, $daily_uses_count);
         if ($daily_uses_count == 1) {
             Redis::expire($daily_usages_record_namespace, $second_left);
@@ -284,7 +284,7 @@ class DashboardController extends Controller
             $partner = $request->partner;
             /** @var Resource $resource */
             $resource = $request->manager_resource;
-            $data     = (new PartnerRepository($partner))->getDashboard($resource,$orderService);
+            $data = (new PartnerRepository($partner))->getDashboard($resource,$orderService);
             return api_response($request, $data, 200, ['data' => $data]);
     }
 
@@ -295,7 +295,7 @@ class DashboardController extends Controller
                 'type' => 'sometimes|required|in:payment_link,pos,inventory,referral,due',
             ]);
             $repository = (new PartnerRepository($request->partner));
-            $videos     = $repository->featureVideos($request->type);
+            $videos = $repository->featureVideos($request->type);
             return api_response($request, $videos, 200, ['feature_videos' => $videos]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -343,13 +343,13 @@ class DashboardController extends Controller
      */
     public function updateHomeSetting(Request $request, PartnerRepositoryInterface $partner_repo, CacheManager $cache_manager)
     {
-        $home_page_setting         = $request->home_page_setting;
+        $home_page_setting = $request->home_page_setting;
         $data['home_page_setting'] = $home_page_setting;
         $partner_repo->update($request->partner, $data);
         $cache_manager->setPartner($request->partner)->store(json_decode($data['home_page_setting'], true));
         return api_response($request, null, 200, [
             'message' => 'Dashboard Setting updated successfully',
-            'data'    => json_decode($home_page_setting)
+            'data' => json_decode($home_page_setting)
         ]);
     }
 
@@ -365,7 +365,7 @@ class DashboardController extends Controller
             $home_page_setting = (new HomepageSettingsV3($request->partner))->update($home_page_setting, $partner_repo);
             return api_response($request, null, 200, [
                 'message' => 'Dashboard Setting updated successfully',
-                'data'    => json_decode($home_page_setting)
+                'data' => json_decode($home_page_setting)
             ]);
         } catch (Throwable $e) {
             logError($e);
@@ -384,13 +384,13 @@ class DashboardController extends Controller
         ]);
         /** @var Partner $partner */
         $partner = $request->partner;
-        $is_updated   = 1;
+        $is_updated = 1;
         $last_updated = (new PartnerSubscriptionPackageRepository($partner->package_id))->getHomepageSettingsUpdatedDate($partner->billing_start_date);
 
         if ($request->has('last_updated'))
             $is_updated = Carbon::parse($last_updated)->toDateString() > Carbon::parse($request->last_updated)->toDateString() ? 1 : 0;
         $data = [
-            'is_updated'   => $is_updated,
+            'is_updated' => $is_updated,
             'last_updated' => Carbon::parse($last_updated)->toDateString()
         ];
 
@@ -405,7 +405,7 @@ class DashboardController extends Controller
     {
         /** @var Partner $partner */
         $partner = $request->partner;
-        $data    = [
+        $data = [
             'bkash_no' => $partner->bkash_no,
         ];
         return api_response($request, $data, 200, ['data' => $data]);
@@ -419,7 +419,7 @@ class DashboardController extends Controller
     {
         /** @var Partner $partner */
         $partner = $request->partner;
-        $data    = [
+        $data = [
             'geo_informations' => json_decode($partner->geo_informations)
         ];
         return api_response($request, $data, 200, ['data' => $data]);
@@ -429,22 +429,22 @@ class DashboardController extends Controller
     {
         /** @var Partner $partner */
         $partner = $request->partner;
-        $data    = [
+        $data = [
             'current_subscription_package' => [
-                'id'                           => $partner->subscription->id,
-                'name'                         => $partner->subscription->name,
-                'name_bn'                      => $partner->subscription->show_name_bn,
-                'remaining_day'                => $partner->last_billed_date ? $partner->periodicBillingHandler()->remainingDay() : 0,
-                'last_billing_date'            => $partner->last_billed_date ? $partner->last_billed_date->format('Y-m-d') : null,
-                'next_billing_date'            => $partner->periodicBillingHandler()->nextBillingDate() ? $partner->periodicBillingHandler()->nextBillingDate()->format('Y-m-d') : null,
-                'billing_type'                 => $partner->billing_type,
-                'rules'                        => $partner->subscription->getAccessRules(),
-                'is_light'                     => $partner->subscription->id == (int)config('sheba.partner_lite_packages_id'),
-                'auto_billing_activated'       => (bool)($partner->auto_billing_activated),
+                'id' => $partner->subscription->id,
+                'name' => $partner->subscription->name,
+                'name_bn' => $partner->subscription->show_name_bn,
+                'remaining_day' => $partner->last_billed_date ? $partner->periodicBillingHandler()->remainingDay() : 0,
+                'last_billing_date' => $partner->last_billed_date ? $partner->last_billed_date->format('Y-m-d') : null,
+                'next_billing_date' => $partner->periodicBillingHandler()->nextBillingDate() ? $partner->periodicBillingHandler()->nextBillingDate()->format('Y-m-d') : null,
+                'billing_type' => $partner->billing_type,
+                'rules' => $partner->subscription->getAccessRules(),
+                'is_light' => $partner->subscription->id == (int)config('sheba.partner_lite_packages_id'),
+                'auto_billing_activated' => (bool)($partner->auto_billing_activated),
                 'subscription_renewal_warning' => (bool)($partner->subscription_renewal_warning),
-                'renewal_warning_days'         => $partner->renewal_warning_days,
+                'renewal_warning_days' => $partner->renewal_warning_days,
             ],
-            "status"                       => $partner->getStatusToCalculateAccess()
+            "status" => $partner->getStatusToCalculateAccess()
         ];
         return api_response($request, $data, 200, ['data' => $data]);
     }
@@ -453,6 +453,9 @@ class DashboardController extends Controller
     {
         $partner = $request->partner;
         $modules = config('partner_setting_modules');
+        if (!$partner instanceof Partner) {
+            $partner = Partner::find($partner);
+        }
 
         foreach ($modules as $key => $module) {
             if ($modules[$key]['function']) {
