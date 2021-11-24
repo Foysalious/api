@@ -19,6 +19,9 @@ class BulkBkashNumberExcel
         $file_name = 'Coworker_Bkash_Number_Report_' . $six_digit_random_number . '_' . Carbon::now()->toDateTimeString();
         Excel::create($file_name, function ($excel) {
             $excel->sheet('data', function ($sheet) {
+                $sheet->setColumnFormat(array(
+                    'C' => '#0'
+                ));
                 $sheet->fromArray($this->makeData(), null, 'A1', false, false);
                 $sheet->prependRow($this->getHeaders());
                 $sheet->freezeFirstRow();
