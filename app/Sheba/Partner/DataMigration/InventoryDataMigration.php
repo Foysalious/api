@@ -179,9 +179,9 @@ class InventoryDataMigration
             'id' => $this->partner->id,
             'sub_domain' => $this->partner->sub_domain,
             'vat_percentage' => $this->partner->posSetting ? $this->partner->posSetting->vat_percentage : 0.0,
-            'created_at' => $this->partner->created_at->format('Y-m-d H:i:s'),
+            'created_at' => $this->partner->created_at->subHour(6)->format('Y-m-d H:i:s'),
             'created_by_name' => $this->partner->created_by_name,
-            'updated_at' => $this->partner->updated_at->format('Y-m-d H:i:s'),
+            'updated_at' => $this->partner->updated_at->subHour(6)->format('Y-m-d H:i:s'),
             'updated_by_name' => $this->partner->updated_by_name,
         ];
     }
@@ -209,8 +209,9 @@ class InventoryDataMigration
                 $q->where('is_migrated', null)->orWhere('is_migrated', 0);
             })->withTrashed()->select('id', 'partner_id', 'pos_category_id AS category_id', 'name', 'app_thumb',
                 'description', 'price', 'unit', 'wholesale_price', 'warranty', 'warranty_unit', 'weight', 'weight_unit',
-                'vat_percentage', 'publication_status', 'is_published_for_shop', 'created_by_name', 'updated_by_name',
-                'created_at', 'updated_at', 'deleted_at')->get()->toArray();
+                'vat_percentage', 'publication_status', 'is_published_for_shop', 'created_by_name', 'updated_by_name')
+            ->selectRaw("SUBTIME(created_at,'6:00:00') as created_at, SUBTIME(updated_at,'6:00:00') as updated_at, SUBTIME(deleted_at,'6:00:00') as deleted_at")
+            ->get()->toArray();
         $this->partnerPosServiceIds = array_column($products, 'id');
         return $products;
     }
@@ -219,8 +220,9 @@ class InventoryDataMigration
     {
         return $this->partnerPosServiceBatchRepository->builder()
             ->whereIn('partner_pos_service_id', $this->partnerPosServiceIds)
-            ->withTrashed()->select('partner_pos_service_id AS product_id', 'supplier_id', 'from_account', 'cost', 'stock',
-                'deleted_at', 'created_by_name', 'created_at', 'updated_by_name', 'updated_at')->get();
+            ->withTrashed()->select('partner_pos_service_id AS product_id', 'supplier_id', 'from_account', 'cost', 'stock', 'created_by_name','updated_by_name')
+            ->selectRaw("SUBTIME(created_at,'6:00:00') as created_at, SUBTIME(updated_at,'6:00:00') as updated_at, SUBTIME(deleted_at,'6:00:00') as deleted_at")
+            ->get();
     }
 
     private function generatePartnerPosServiceImageGalleryData()
@@ -230,15 +232,18 @@ class InventoryDataMigration
             ->whereNotNull('image_link')
             ->where('image_link', '<>', '')
             ->select('partner_pos_service_id AS product_id', 'image_link', 'created_by_name', 'created_at',
-                'updated_by_name', 'updated_at')->get();
+                'updated_by_name', 'updated_at')
+            ->selectRaw("SUBTIME(created_at,'6:00:00') as created_at, SUBTIME(updated_at,'6:00:00') as updated_at")
+            ->get();
     }
 
     private function generatePartnerPosServiceLogsMigrationData()
     {
         return DB::table('partner_pos_service_logs')
             ->whereIn('partner_pos_service_id', $this->partnerPosServiceIds)
-            ->select('partner_pos_service_id AS product_id', 'field_names', 'old_value', 'new_value',
-                'created_by_name', 'created_at')->get();
+            ->select('partner_pos_service_id AS product_id', 'field_names', 'old_value', 'new_value','created_by_name')
+            ->selectRaw("SUBTIME(created_at,'6:00:00') as created_at")
+            ->get();
     }
 
     private function generatePartnerPosServiceDiscountsMigrationData()
@@ -246,8 +251,9 @@ class InventoryDataMigration
         return DB::table('partner_pos_service_discounts')
             ->whereIn('partner_pos_service_id', $this->partnerPosServiceIds)
             ->select('partner_pos_service_id AS type_id', DB::raw("'sku_channel' AS type"), 'amount',
-                'is_amount_percentage', 'cap', 'start_date', 'end_date', 'created_by_name', 'updated_by_name',
-                'created_at', 'updated_at')->get();
+                'is_amount_percentage', 'cap', 'start_date', 'end_date', 'created_by_name', 'updated_by_name')
+            ->selectRaw("SUBTIME(created_at,'6:00:00') as created_at, SUBTIME(updated_at,'6:00:00') as updated_at")
+            ->get();
     }
 
     private function getProductsRelatedData($productIds): array
