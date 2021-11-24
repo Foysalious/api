@@ -180,7 +180,7 @@ class PosOrderDataMigration
             ->leftJoin('pos_customers', 'pos_orders.customer_id', '=', 'pos_customers.id')
             ->leftJoin('profiles', 'profiles.id', '=', 'pos_customers.profile_id')
             ->select('pos_orders.id', 'pos_orders.partner_wise_order_id', 'pos_orders.partner_id', 'pos_orders.customer_id', DB::raw('(CASE 
-                        WHEN pos_orders.payment_status = "Paid" THEN SUBTIME(pos_order_payments.created_at,"6:00:00") as created_at
+                        WHEN pos_orders.payment_status = "Paid" THEN SUBTIME(pos_order_payments.created_at,"6:00:00") 
                         ELSE NULL 
                         END) AS paid_at'), DB::raw('(CASE 
                         WHEN pos_orders.sales_channel = "pos" THEN "1" 
@@ -189,8 +189,8 @@ class PosOrderDataMigration
                 'pos_orders.bank_transaction_charge', 'pos_orders.interest', 'pos_orders.delivery_charge',
                 'pos_orders.address AS delivery_address', 'pos_orders.delivery_vendor_name', 'pos_orders.delivery_request_id',
                 'pos_orders.delivery_thana', 'pos_orders.delivery_district', 'pos_orders.note', 'pos_orders.status','pos_orders.voucher_id',
-                DB::raw("SUBTIME(pos_orders.created_at,'6:00:00') as created_at, SUBTIME(pos_orders.updated_at,'6:00:00') as updated_at, 
-                SUBTIME(pos_orders.deleted_at,'6:00:00') as deleted_at"),
+                DB::raw('SUBTIME(pos_orders.created_at,"6:00:00") as created_at, SUBTIME(pos_orders.updated_at,"6:00:00") as updated_at, 
+                SUBTIME(pos_orders.deleted_at,"6:00:00") as deleted_at'),
                 'pos_orders.created_by_name', 'pos_orders.updated_by_name',
                 'profiles.name AS delivery_name', 'profiles.mobile AS delivery_mobile')
             ->skip($this->skip)->take($this->take)->groupBy('id')->get()->toArray();
@@ -207,11 +207,16 @@ class PosOrderDataMigration
                         WHEN service_name IS NULL THEN "Custom Item"
                         ELSE service_name 
                         END) AS name'), 'quantity',
-                'unit_price', 'vat_percentage', 'warranty', 'warranty_unit', 'note', 'created_by_name',
-                'updated_by_name')
-            ->selectRaw("SUBTIME(created_at,'6:00:0') as created_at, SUBTIME(updated_at,'6:00:0') as updated_at")
+                'unit_price', 'vat_percentage', 'warranty', 'warranty_unit', 'note', 'created_by_name','updated_by_name',
+                DB::raw('SUBTIME(created_at,"6:00:00") as created_at, SUBTIME(updated_at,"6:00:00") as updated_at'))
             ->get();
-        $service_ids = array_column($pos_order_items->toArray(), 'sku_id');
+
+        if(!is_array($pos_order_items)) {
+            $items = $pos_order_items->toArray();
+        } else {
+            $items = $pos_order_items;
+        }
+        $service_ids = array_column($items, 'sku_id');
         $sku_ids = $this->getSkuIdsForProducts($service_ids);
         $skus = $sku_ids['skus'];
         $pos_order_items = collect($pos_order_items);
@@ -225,8 +230,7 @@ class PosOrderDataMigration
     {
         $pos_order_payments = DB::table('pos_order_payments')->whereIn('pos_order_id', $this->partnerPosOrderIds)
             ->select('pos_order_id AS order_id', 'amount', 'transaction_type', 'method', 'method_details', 'emi_month', 'interest',
-                'created_by_name', 'updated_by_name')
-            ->selectRaw("SUBTIME(created_at,'6:00:0') as created_at, SUBTIME(updated_at,'6:00:0') as updated_at")
+                'created_by_name', 'updated_by_name', DB::raw('SUBTIME(created_at,"6:00:00") as created_at, SUBTIME(updated_at,"6:00:00") as updated_at'))
             ->get();
         $collection = collect($pos_order_payments);
         $cash_details = json_encode(['payment_method_en' => 'Cash', 'payment_method_bn' => ' নগদ গ্রহন', 'payment_method_icon' => config('s3.url') . 'pos/payment/cash_v2.png']);
@@ -280,8 +284,8 @@ class PosOrderDataMigration
     {
         return DB::table('pos_order_discounts')->whereIn('pos_order_id', $this->partnerPosOrderIds)
             ->select('pos_order_id AS order_id', 'type', 'amount', 'original_amount',
-                'is_percentage', 'cap', 'discount_id', 'item_id AS type_id', 'created_by_name', 'updated_by_name')
-            ->selectRaw("SUBTIME(created_at,'6:00:0') as created_at, SUBTIME(updated_at,'6:00:0') as updated_at")
+                'is_percentage', 'cap', 'discount_id', 'item_id AS type_id', 'created_by_name', 'updated_by_name',
+            DB::raw('SUBTIME(created_at,"6:00:00") as created_at, SUBTIME(updated_at,"6:00:00") as updated_at'))
             ->get();
     }
 
@@ -312,8 +316,8 @@ class PosOrderDataMigration
             ->leftJoin('pos_customers', 'partner_pos_customers.customer_id', '=', 'pos_customers.id')
             ->leftJoin('profiles', 'pos_customers.profile_id', '=', 'profiles.id')
             ->select('partner_pos_customers.customer_id as id', 'partner_pos_customers.partner_id', 'profiles.name',
-                'profiles.mobile', 'profiles.email', 'profiles.pro_pic')
-            ->selectRaw("SUBTIME(profiles.created_at,'6:00:0') as created_at, SUBTIME(profiles.updated_at,'6:00:0') as updated_at")
+                'profiles.mobile', 'profiles.email', 'profiles.pro_pic', DB::raw('SUBTIME(profiles.created_at,"6:00:0") as created_at, 
+                SUBTIME(profiles.updated_at,"6:00:0") as updated_at'))
             ->get();
     }
 
