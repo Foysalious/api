@@ -28,7 +28,7 @@ class InfoCallController extends Controller
                 'service_name' => $info_call->service_name,
                 'status' => $info_call->status,
                 'created_at' => $info_call->created_at->format('F j, Y'),
-                'formatted_date' => $info_call->created_at->format('F j, h:ia'),
+                'formatted_date' => $info_call->created_at->format('M j, h:ia'),
                 'address' => $info_call->location ? $info_call->location->name : ''
             ];
             $info_call_lists->push($info);
