@@ -46,9 +46,13 @@ class PartnerGeneralSettings
     {
         $partnerDeliveryInformation = PartnerDeliveryInformation::where('partner_id', $this->partner->id)->first();
         $delivery_method = !empty($partnerDeliveryInformation) && ($partnerDeliveryInformation->delivery_vendor != Methods::OWN_DELIVERY) ?  $this->getPreferredDeliveryMethod() : Methods::OWN_DELIVERY;
+
+        $preferred_delivery_method = config('pos_delivery.vendor_list')[$delivery_method];
+        $preferred_delivery_method['key'] = $delivery_method;
+
         return [
             'use_sdelivery' => $delivery_method != Methods::OWN_DELIVERY,
-            'preferred_delivery_method' => $delivery_method,
+            'preferred_delivery_method' => $preferred_delivery_method,
             'delivery_price' => $delivery_method == Methods::OWN_DELIVERY ? $this->partner->delivery_charge : null
         ];
     }
