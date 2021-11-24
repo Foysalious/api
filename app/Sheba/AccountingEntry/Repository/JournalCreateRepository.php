@@ -6,6 +6,7 @@ namespace Sheba\AccountingEntry\Repository;
 use App\Sheba\AccountingEntry\Constants\UserType;
 use App\Sheba\AccountingEntry\Repository\BaseRepository;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Exceptions\InvalidSourceException;
 use Sheba\AccountingEntry\Exceptions\KeyNotFoundException;
@@ -184,6 +185,7 @@ class JournalCreateRepository extends BaseRepository
             return true;
         }
         $data = $this->toData();
+        Log::info(['top up journal', $data,$this->end_point, $this->typeId,  $this->type]);
         return $this->client->setUserId($this->typeId)->setUserType($this->type)->post($this->end_point, $data);
     }
 }
