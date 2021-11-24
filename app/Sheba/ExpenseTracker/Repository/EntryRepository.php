@@ -2,6 +2,7 @@
 
 use App\Models\Partner;
 use Carbon\Carbon;
+use Sheba\AccountingEntry\Exceptions\MigratedToAccountingException;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\Helpers\TimeFrame;
 use Sheba\RequestIdentification;
@@ -61,12 +62,12 @@ class EntryRepository extends BaseRepository
      * @param $for
      * @param $data
      * @return string
-     * @throws ExpenseTrackingServerError
+     * @throws ExpenseTrackingServerError|MigratedToAccountingException
      */
     public function storeEntry($for, $data)
     {
         if ($this->isMigratedToAccounting()) {
-            return true;
+            throw new MigratedToAccountingException();
         }
         $data['created_at'] = Carbon::parse($data['created_at'])->format('Y-m-d H:i:s');
         $request_identification = $this->withBothModificationFields((new RequestIdentification())->get());
@@ -80,12 +81,12 @@ class EntryRepository extends BaseRepository
      * @param $data
      * @param $entry_id
      * @return mixed
-     * @throws ExpenseTrackingServerError
+     * @throws ExpenseTrackingServerError|MigratedToAccountingException
      */
     public function updateEntry($for, $data, $entry_id)
     {
         if ($this->isMigratedToAccounting()) {
-            return true;
+            throw new MigratedToAccountingException();
         }
         $request_identification = $this->withBothModificationFields((new RequestIdentification())->get());
         $data['created_from'] = json_encode($request_identification);

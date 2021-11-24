@@ -3,6 +3,7 @@
 use App\Models\Profile;
 use Carbon\Carbon;
 use Exception;
+use Sheba\AccountingEntry\Exceptions\MigratedToAccountingException;
 use Sheba\ExpenseTracker\AutomaticExpense;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\EntryType;
@@ -222,7 +223,7 @@ class AutomaticEntryRepository extends BaseRepository
     {
         try {
             if ($this->isMigratedToAccounting()) {
-                return true;
+                throw new MigratedToAccountingException();
             }
             $data = $this->getData();
             if (empty($data['head_name']))
@@ -289,7 +290,7 @@ class AutomaticEntryRepository extends BaseRepository
     {
         try {
             if ($this->isMigratedToAccounting()) {
-                return true;
+                throw new MigratedToAccountingException();
             }
             $data = $this->getData();
             if (empty($data['source_type']) || empty($data['source_id']))
@@ -309,7 +310,7 @@ class AutomaticEntryRepository extends BaseRepository
     {
         try {
             if ($this->isMigratedToAccounting()) {
-                return true;
+                throw new MigratedToAccountingException();
             }
             $data = [
                 'source_type' => $this->sourceType,
@@ -333,7 +334,7 @@ class AutomaticEntryRepository extends BaseRepository
     {
         try {
             if ($this->isMigratedToAccounting()) {
-                return true;
+                throw new MigratedToAccountingException();
             }
             $data = $this->getData();
             if (empty($data['source_type']) || empty($data['source_id']))
@@ -349,7 +350,7 @@ class AutomaticEntryRepository extends BaseRepository
     {
         try {
             if ($this->isMigratedToAccounting()) {
-                return true;
+                throw new MigratedToAccountingException();
             }
             $data = $this->getData();
             if (empty($data['source_type']) || empty($data['source_id']))
