@@ -51,7 +51,6 @@ class PaymentStrategy
      */
     public static function getMethod($method, Payable $payable)
     {
-        Log::info("-----------". $method. "--------");
         if (!self::isValid($method)) throw new InvalidPaymentMethod();
 
         if ($method == self::ONLINE) $method = self::getRealOnlineMethod($payable);
