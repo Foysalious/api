@@ -37,7 +37,7 @@ class BkashSalaryReportExcel
         })->save();
 
         $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
-        $file_name = $this->uniqueFileName($file_path, $file_name, 'xlsx');
+        $file_name = $this->uniqueFileName($file_path, $file_name, 'xls');
         $file_link = $this->saveFileToCDN($file_path, getBulkGrossSalaryFolder(), $file_name);
         unlink($file_path);
 
