@@ -2,6 +2,7 @@
 
 use App\Jobs\Job;
 use App\Models\Profile;
+use App\Sheba\Business\BusinessEmailQueue;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
@@ -9,7 +10,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Mail;
 
-class SendMailVerificationCodeEmail extends Job implements ShouldQueue
+class SendMailVerificationCodeEmail extends BusinessEmailQueue
 {
     use InteractsWithQueue, SerializesModels;
     private $profile;
@@ -22,6 +23,7 @@ class SendMailVerificationCodeEmail extends Job implements ShouldQueue
     public function __construct($profile)
     {
         $this->profile = $profile instanceof Profile ? $profile : Profile::find($profile);
+        parent::__construct();
     }
 
     /**
