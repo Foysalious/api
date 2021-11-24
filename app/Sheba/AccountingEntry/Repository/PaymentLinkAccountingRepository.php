@@ -197,29 +197,23 @@ class PaymentLinkAccountingRepository extends AccountingRepository
     /**
      * @param $userId
      * @return bool|mixed
+     * @throws AccountingEntryServerError
      */
     public function store($userId)
     {
-        try {
-            $payload = $this->makeData($userId);
-            return $this->storeEntry((object)$payload, EntryTypes::PAYMENT_LINK);
-        } catch (AccountingEntryServerError $e) {
-            logError($e);
-        }
+        $payload = $this->makeData($userId);
+        return $this->storeEntry((object)$payload, EntryTypes::PAYMENT_LINK);
     }
 
     /**
      * @param $userId
      * @return bool|mixed
+     * @throws AccountingEntryServerError
      */
     public function updatePaymentLinkEntry($userId)
     {
-        try {
-            $payload = $this->makeData($userId);
-            return $this->updateEntryBySource((object)$payload, $this->source_id, $this->source_type);
-        } catch (AccountingEntryServerError $e) {
-            logError($e);
-        }
+        $payload = $this->makeData($userId);
+        return $this->updateEntryBySource((object)$payload, $this->source_id, $this->source_type);
     }
 
     /**
@@ -258,6 +252,4 @@ class PaymentLinkAccountingRepository extends AccountingRepository
         $data['partner'] = $userId;
         return $data;
     }
-
-
 }
