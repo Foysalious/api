@@ -113,10 +113,11 @@ class NidFaceVerification
 
     /**
      * @param $request
+     * @param $userAgent
      * @param $photoLink
      * @return array
      */
-    public function formatToData($request, $photoLink): array
+    public function formatToData($request, $userAgent, $photoLink): array
     {
         $image = $request->person_photo;
         $image=explode(",",$image);
@@ -126,6 +127,7 @@ class NidFaceVerification
         $data['pro_pic'] = $image;
         $data['dob'] = $request->dob;
         $data['selfie_photo'] = $photoLink;
+        $data['user_agent'] = $userAgent;
         return $data;
     }
 

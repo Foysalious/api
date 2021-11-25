@@ -100,7 +100,8 @@ class EkycClient
                 'nid' => $nid,
                 'person_photo' => $person_photo,
                 'dob' => $dob,
-                'selfie_photo' => $data['selfie_photo']
+                'selfie_photo' => $data['selfie_photo'],
+                'user_agent' => $data['user_agent']
             ];
         }
 
