@@ -52,13 +52,15 @@ class ManualLeaveProrateLogRequester
         $this->getBusinessMember();
         foreach ($this->businessMemberIds as $business_member_id) {
             if ($business_member = $this->businessMembers->filter(function ($item) use ($business_member_id) {
-                return $item->business_member_id == $business_member_id;
+                return $item->id == $business_member_id;
             })->first()) {
                 $this->leaveProrateLogCreator->setBusinessMember($business_member)
                     ->setProratedType(self::MANUAL_PRORATE)
                     ->setProratedLeaveDays($this->totalDays)
-                    ->setPreviousLeaveTypeTotalDays($this->leaveType->totalDays)
-                    ->setLeaveTypeTarget(get_class($this->leaveType));
+                    ->setLeaveType($this->leaveType)
+                    ->setPreviousLeaveTypeTotalDays($this->leaveType->total_days)
+                    ->setLeaveTypeTarget(get_class($this->leaveType))
+                    ->create();
             }
         }
     }
