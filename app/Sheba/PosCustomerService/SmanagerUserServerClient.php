@@ -50,10 +50,21 @@ class SmanagerUserServerClient
 
     private function getOptions($data = null, $multipart = false)
     {
+        if (isset(getShebaRequestHeader()->toArray()['portal-name'])) {
+            $portal_name = getShebaRequestHeader()->toArray()['portal-name'];
+        } else {
+            $portal_name = null;
+        }
+        if (isset(getShebaRequestHeader()->toArray()['Version-Code'])) {
+            $version_code = getShebaRequestHeader()->toArray()['Version-Code'];
+        } else {
+            $version_code = null;
+        }
+
         $options['headers'] = [
             'Accept' => 'application/x-www-form-urlencoded',
-//            'portal-name' => getShebaRequestHeader()->toArray()['portal-name'],
-//            'Version-Code' => getShebaRequestHeader()->toArray()['Version-Code']
+            'portal-name' => $portal_name,
+            'Version-Code' => $version_code
         ];
         if (!$data) return $options;
         if ($multipart) {

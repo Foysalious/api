@@ -38,7 +38,7 @@ class WebstoreDashboardController extends Controller
             ->setWeek($request->week)
             ->setDate($request->date)
             ->get();
-
+        $dashboard['wallet'] = $partner->wallet;
         return $dashboard;
     }
 }
