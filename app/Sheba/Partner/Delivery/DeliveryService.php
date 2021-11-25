@@ -219,7 +219,8 @@ class DeliveryService
     private function getDeliveryMethod()
     {
         $partnerDeliveryInformation = $this->partnerDeliveryInfoRepositoryInterface->where('partner_id', $this->partner->id)->first();
-        return !empty($partnerDeliveryInformation) ? $partnerDeliveryInformation->delivery_vendor : NULL;
+        $deliveryMethod =  !empty($partnerDeliveryInformation) ? $partnerDeliveryInformation->delivery_vendor : Methods::OWN_DELIVERY;
+        return $deliveryMethod == Methods::SDELIVERY ? Methods::PAPERFLY : $deliveryMethod;
     }
 
     public function getRegistrationInfo()
