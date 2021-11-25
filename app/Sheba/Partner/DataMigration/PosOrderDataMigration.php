@@ -160,6 +160,8 @@ class PosOrderDataMigration
             'id' => $this->partner->id,
             'name' => $this->partner->name,
             'sub_domain' => $this->partner->sub_domain,
+            'qr_code_account_type' => $this->partner->qr_code_account_type,
+            'qr_code_image' => $this->partner->qr_code_image,
             'sms_invoice' => $pos_setting ? $this->partner->posSetting->sms_invoice : 0,
             'auto_printing' => $pos_setting ? $this->partner->posSetting->auto_printing : 0,
             'printer_name' => $pos_setting ? $this->partner->posSetting->printer_name : null,
