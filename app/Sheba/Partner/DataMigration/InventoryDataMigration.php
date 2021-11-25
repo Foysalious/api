@@ -209,8 +209,10 @@ class InventoryDataMigration
                 $q->where('is_migrated', null)->orWhere('is_migrated', 0);
             })->withTrashed()->select('id', 'partner_id', 'pos_category_id AS category_id', 'name', 'app_thumb',
                 'description', 'price', 'unit', 'wholesale_price', 'warranty', 'warranty_unit', 'weight', 'weight_unit',
-                'vat_percentage', 'publication_status', 'is_published_for_shop', 'created_by_name', 'updated_by_name')
-            ->selectRaw("SUBTIME(created_at,'6:00:00') as created_at, SUBTIME(updated_at,'6:00:00') as updated_at, SUBTIME(deleted_at,'6:00:00') as deleted_at")
+                'vat_percentage', 'publication_status', 'is_published_for_shop', 'created_by_name', 'updated_by_name',
+                DB::raw('SUBTIME(created_at,"6:00:00") as created_at, 
+                SUBTIME(updated_at,"6:00:00") as updated_at, 
+                SUBTIME(deleted_at,"6:00:00") as deleted_at'))
             ->get()->toArray();
         $this->partnerPosServiceIds = array_column($products, 'id');
         return $products;
@@ -220,8 +222,9 @@ class InventoryDataMigration
     {
         return $this->partnerPosServiceBatchRepository->builder()
             ->whereIn('partner_pos_service_id', $this->partnerPosServiceIds)
-            ->withTrashed()->select('partner_pos_service_id AS product_id', 'supplier_id', 'from_account', 'cost', 'stock', 'created_by_name','updated_by_name')
-            ->selectRaw("SUBTIME(created_at,'6:00:00') as created_at, SUBTIME(updated_at,'6:00:00') as updated_at, SUBTIME(deleted_at,'6:00:00') as deleted_at")
+            ->withTrashed()->select('partner_pos_service_id AS product_id', 'supplier_id', 'from_account', 'cost', 'stock', 'created_by_name','updated_by_name',
+                DB::raw('SUBTIME(created_at,"6:00:00") as created_at, SUBTIME(updated_at,"6:00:00") as updated_at, 
+                SUBTIME(deleted_at,"6:00:00") as deleted_at'))
             ->get();
     }
 
@@ -231,9 +234,8 @@ class InventoryDataMigration
             ->whereIn('partner_pos_service_id', $this->partnerPosServiceIds)
             ->whereNotNull('image_link')
             ->where('image_link', '<>', '')
-            ->select('partner_pos_service_id AS product_id', 'image_link', 'created_by_name', 'created_at',
-                'updated_by_name', 'updated_at')
-            ->selectRaw("SUBTIME(created_at,'6:00:00') as created_at, SUBTIME(updated_at,'6:00:00') as updated_at")
+            ->select('partner_pos_service_id AS product_id', 'image_link', 'created_by_name', 'created_at', 'updated_by_name',
+                DB::raw('SUBTIME(created_at,"6:00:00") as created_at, SUBTIME(updated_at,"6:00:00") as updated_at'))
             ->get();
     }
 
@@ -241,8 +243,8 @@ class InventoryDataMigration
     {
         return DB::table('partner_pos_service_logs')
             ->whereIn('partner_pos_service_id', $this->partnerPosServiceIds)
-            ->select('partner_pos_service_id AS product_id', 'field_names', 'old_value', 'new_value','created_by_name')
-            ->selectRaw("SUBTIME(created_at,'6:00:00') as created_at")
+            ->select('partner_pos_service_id AS product_id', 'field_names', 'old_value', 'new_value','created_by_name',
+                DB::raw('SUBTIME(created_at,"6:00:00") as created_at'))
             ->get();
     }
 
@@ -251,8 +253,8 @@ class InventoryDataMigration
         return DB::table('partner_pos_service_discounts')
             ->whereIn('partner_pos_service_id', $this->partnerPosServiceIds)
             ->select('partner_pos_service_id AS type_id', DB::raw("'sku_channel' AS type"), 'amount',
-                'is_amount_percentage', 'cap', 'start_date', 'end_date', 'created_by_name', 'updated_by_name')
-            ->selectRaw("SUBTIME(created_at,'6:00:00') as created_at, SUBTIME(updated_at,'6:00:00') as updated_at")
+                'is_amount_percentage', 'cap', 'start_date', 'end_date', 'created_by_name', 'updated_by_name',
+                DB::raw('SUBTIME(created_at,"6:00:00") as created_at, SUBTIME(updated_at,"6:00:00") as updated_at'))
             ->get();
     }
 
