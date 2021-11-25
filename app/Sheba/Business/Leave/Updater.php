@@ -2,6 +2,8 @@
 
 use App\Jobs\Business\SendCancelPushNotificationToApprovers;
 use App\Jobs\Business\SendLeaveSubstitutionPushNotificationToEmployee;
+use App\Jobs\Business\SendPushNotificationToLeaveCreator;
+use App\Jobs\Business\WebPushToLeaveCreator;
 use App\Models\BusinessMember;
 use App\Models\Member;
 use App\Models\Profile;
@@ -62,11 +64,11 @@ class Updater
      * @param LeaveLogRepo $leave_log_repo
      * @param LeaveRejectionCreator $leave_rejection_creator
      */
-    public function __construct(LeaveRepository $leave_repository,
-                                LeaveStatusChangeLogCreator $leave_status_change_log_creator,
+    public function __construct(LeaveRepository                   $leave_repository,
+                                LeaveStatusChangeLogCreator       $leave_status_change_log_creator,
                                 BusinessMemberRepositoryInterface $business_member_repo,
-                                Attachments $attachment_manager, LeaveLogRepo $leave_log_repo,
-                                LeaveRejectionCreator $leave_rejection_creator)
+                                Attachments                       $attachment_manager, LeaveLogRepo $leave_log_repo,
+                                LeaveRejectionCreator             $leave_rejection_creator)
     {
         $this->leaveRepository = $leave_repository;
         $this->leaveStatusLogCreator = $leave_status_change_log_creator;
@@ -195,43 +197,17 @@ class Updater
         });
 
         try {
-            if ($this->status != Status::CANCELED) $this->sendApprovedOrRejectNotificationToLeaveCreator($this->status);
+            if ($this->status != Status::CANCELED) $this->sendApprovedOrRejectNotificationToLeaveCreator();
             if ($this->status == Status::CANCELED) $this->sendLeaveCancelNotificationToApprovers();
         } catch (Exception $e) {
         }
     }
-
-    /**
-     * @param $status
-     * @throws Exception
-     */
-    private function sendApprovedOrRejectNotificationToLeaveCreator($status)
+    
+    private function sendApprovedOrRejectNotificationToLeaveCreator()
     {
-        $status = LeaveStatusPresenter::statuses()[$status];
-        $business_member = $this->businessMemberRepository->where('id', $this->leave->business_member_id)->first();
-        $sheba_notification_data = [
-            'title' => "Your leave request has been $status",
-            'type' => 'Info',
-            'event_type' => 'Sheba\Dal\Leave\Model',
-            'event_id' => $this->leave->id,
-            /*'link' => config('sheba.business_url') . '/dashboard/employee/leaves/'.$this->leave->id*/
-        ];
-        notify()->member($business_member->member)->send($sheba_notification_data);
-
-        $topic = config('sheba.push_notification_topic_name.employee') . $business_member->member->id;
-        $channel = config('sheba.push_notification_channel_name.employee');
-        $sound = config('sheba.push_notification_sound.employee');
-        $push_notification_data = [
-            "title" => 'Leave request update',
-            "message" => "Your leave request has been $status",
-            "event_type" => 'leave',
-            "event_id" => $this->leave->id,
-            "sound" => "notification_sound",
-            "channel_id" => $channel,
-            "click_action" => "FLUTTER_NOTIFICATION_CLICK"
-        ];
-
-        $this->pushNotification->send($push_notification_data, $topic, $channel, $sound);
+        $leave = $this->leave->fresh();
+        dispatch(new WebPushToLeaveCreator($leave));
+        dispatch(new SendPushNotificationToLeaveCreator($leave));
     }
 
     /**
