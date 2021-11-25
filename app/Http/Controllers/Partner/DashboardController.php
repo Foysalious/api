@@ -299,7 +299,6 @@ class DashboardController extends Controller
             $data     = (new PartnerRepository($partner))->getDashboard($resource,$orderService);
             return api_response($request, $data, 200, ['data' => $data]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
