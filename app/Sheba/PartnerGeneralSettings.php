@@ -56,7 +56,7 @@ class PartnerGeneralSettings
         return [
             'use_sdelivery' => $delivery_method != Methods::OWN_DELIVERY,
             'preferred_delivery_method' => $preferred_delivery_method,
-            'delivery_price' => $delivery_method == Methods::OWN_DELIVERY ? $this->getDeliveryCharge($this->partner) : null
+            'delivery_price' => $delivery_method == Methods::OWN_DELIVERY ? (double)$this->getDeliveryCharge($this->partner) : null
         ];
     }
 
