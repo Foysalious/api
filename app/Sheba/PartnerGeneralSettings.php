@@ -1,7 +1,10 @@
 <?php namespace App\Sheba;
 
+use App\Models\Partner;
 use App\Sheba\Partner\Delivery\DeliveryServerClient;
 use App\Sheba\Partner\Delivery\Methods;
+use App\Sheba\PosOrderService\Services\OrderService;
+use App\Sheba\UserMigration\Modules;
 use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInformation;
 
 class PartnerGeneralSettings
@@ -53,13 +56,22 @@ class PartnerGeneralSettings
         return [
             'use_sdelivery' => $delivery_method != Methods::OWN_DELIVERY,
             'preferred_delivery_method' => $preferred_delivery_method,
-            'delivery_price' => $delivery_method == Methods::OWN_DELIVERY ? $this->partner->delivery_charge : null
+            'delivery_price' => $delivery_method == Methods::OWN_DELIVERY ? $this->getDeliveryCharge($this->partner) : null
         ];
     }
 
     private function getPreferredDeliveryMethod()
     {
         return $this->client->setToken($this->token)->get('merchants/info')['data']['preferred_logistic_partner_name'];
+    }
+
+    public function getDeliveryCharge(Partner $partner)
+    {
+        if(!$partner->isMigrated(Modules::POS))
+            return $partner->delivery_charge;
+        /** @var OrderService $orderService */
+        $orderService = app(OrderService::class);
+        return $orderService->setPartnerId($partner->id)->getPartnerDetails()['partner']['delivery_charge'];
     }
 
 
