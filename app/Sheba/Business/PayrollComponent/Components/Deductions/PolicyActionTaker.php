@@ -37,9 +37,6 @@ class PolicyActionTaker
     private $policyType;
     private $isUnpaidLeavePolicyEnable;
     private $businessMemberSalary;
-    /**
-     * @var bool|\Carbon\Carbon|float|\Illuminate\Support\Collection|int|mixed|string|null
-     */
     private $businessOfficeHour;
     /*** @var LeaveProrateLogCreator $leaveProrateLogCreator */
     private $leaveProrateLogCreator;

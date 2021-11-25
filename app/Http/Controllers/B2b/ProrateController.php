@@ -4,6 +4,8 @@ use App\Models\Business;
 use App\Models\BusinessDepartment;
 use App\Models\BusinessMember;
 use App\Models\Member;
+use App\Sheba\Business\LeaveProrateLogs\Creator as LeaveProrateLogCreator;
+use App\Sheba\Business\LeaveProrateLogs\ManualLeaveProrateLogRequester;
 use App\Sheba\Business\Prorate\RunProrateOnActiveLeaveTypes;
 use App\Sheba\Business\Prorate\AutoProrateCalculator;
 use App\Transformers\Business\BusinessMemberLeaveProrateTransformer;
@@ -187,7 +189,7 @@ class ProrateController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function store(Request $request)
+    public function store(Request $request, ManualLeaveProrateLogRequester $manual_leave_prorate_log_requester)
     {
         $this->validate($request, [
             'business_member_ids' => 'required|array',
@@ -205,6 +207,7 @@ class ProrateController extends Controller
             ->setNote($request->note);
 
         $this->creator->setRequester($this->requester)->create();
+        $manual_leave_prorate_log_requester->setBusinessMemberIds($request->business_member_ids)->setLeaveTypeId($request->leave_type_id)->setProratedLeaveDays($request->total_days)->create();
         return api_response($request, null, 200);
     }
 
