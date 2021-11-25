@@ -65,7 +65,7 @@ class ManualLeaveProrateLogRequester
 
     private function getBusinessMember()
     {
-        $this->businessMembers = $this->businessMemberRepo->builder()->whereIn('business_member_id', $this->businessMemberIds)->get();
+        $this->businessMembers = $this->businessMemberRepo->builder()->whereIn('id', $this->businessMemberIds)->get();
     }
 
 }
