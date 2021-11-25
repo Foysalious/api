@@ -11,6 +11,7 @@ use Sheba\EKYC\EkycClient;
 use Sheba\EKYC\Exceptions\EKycException;
 use Sheba\EKYC\NidOcr;
 use Sheba\EKYC\Statics;
+use Sheba\UserAgentInformation;
 
 
 class NidOcrController extends Controller
@@ -31,17 +32,20 @@ class NidOcrController extends Controller
 
     /**
      * @param Request $request
+     * @param UserAgentInformation $userAgentInformation
      * @return JsonResponse
      * @throws GuzzleException
      */
-    public function storeNidOcrData(Request $request): JsonResponse
+    public function storeNidOcrData(Request $request, UserAgentInformation $userAgentInformation): JsonResponse
     {
         try {
             $this->validate($request, Statics::storeNidOcrDataValidation());
+            $userAgentInformation->setRequest($request);
             if ($request->hasFile('id_front') && $request->hasFile('id_front')) {
                 /** @var Profile $profile */
                 $profile = $request->auth_user->getProfile();
-                $data = $this->nidOCR->formatToData($request);
+                $user_agent = $userAgentInformation->getUserAgent();
+                $data = $this->nidOCR->formatToData($request, $user_agent);
                 $nidOcrData = $this->client->post($this->api, $data);
                 $nid_no = $nidOcrData['data']['nid_no'];
                 $profile_by_given_nid = $profile->searchOtherUsingVerifiedNid($nid_no);
@@ -60,9 +64,10 @@ class NidOcrController extends Controller
             $msg = getValidationErrorMessage($exception->validator->errors()->all());
             return api_response($request, null, 400, ['message' => $msg]);
         } catch (EKycException $e) {
+            logError($e);
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         } catch (\Throwable $e) {
-            Log::info($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }

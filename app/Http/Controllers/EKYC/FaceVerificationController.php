@@ -16,6 +16,7 @@ use Sheba\EKYC\LivelinessService;
 use Sheba\EKYC\NidFaceVerification;
 use Sheba\EKYC\Statics;
 use Sheba\Repositories\ProfileRepository;
+use Sheba\UserAgentInformation;
 
 
 class FaceVerificationController extends Controller
@@ -37,16 +38,19 @@ class FaceVerificationController extends Controller
      * @param Request $request
      * @param ProfileNIDSubmissionRepo $profileNIDSubmissionRepo
      * @param ProfileRepository $profileRepository
+     * @param UserAgentInformation $userAgentInformation
      * @return JsonResponse
      * @throws GuzzleException
      */
-    public function faceVerification(Request $request, ProfileNIDSubmissionRepo $profileNIDSubmissionRepo, ProfileRepository $profileRepository): JsonResponse
+    public function faceVerification(Request $request, ProfileNIDSubmissionRepo $profileNIDSubmissionRepo, ProfileRepository $profileRepository, UserAgentInformation $userAgentInformation): JsonResponse
     {
         try {
             $this->validate($request, Statics::faceVerificationValidate());
+            $userAgentInformation->setRequest($request);
             $profile = $request->auth_user->getProfile();
+            $userAgent = $userAgentInformation->getUserAgent();
             $photoLink = $this->nidFaceVerification->getPersonPhotoLink($request, $profile);
-            $requestedData = $this->nidFaceVerification->formatToData($request, $photoLink);
+            $requestedData = $this->nidFaceVerification->formatToData($request, $userAgent, $photoLink);
             $this->nidFaceVerification->makeProfileAdjustment($photoLink, $profile, $request->nid);
             $this->nidFaceVerification->beforePorichoyCallChanges($profile);
             $faceVerificationData = $this->client->post($this->api, $requestedData);
