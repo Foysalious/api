@@ -189,7 +189,7 @@ class DeliveryService
         $data['delivery_vendors'] = $temp;
         $data['delivery_method'] = $this->getDeliveryMethod();
         $data['is_registered_for_delivery'] = $this->partner->deliveryInformation ? 1 : 0;
-        $data['delivery_charge'] = $this->getDeliveryCharge($this->partner);
+        $data['delivery_charge'] = (double) $this->getDeliveryCharge($this->partner);
         $data['products_without_weight'] = $this->countProductWithoutWeight();
         return $data;
     }
@@ -219,7 +219,8 @@ class DeliveryService
     private function getDeliveryMethod()
     {
         $partnerDeliveryInformation = $this->partnerDeliveryInfoRepositoryInterface->where('partner_id', $this->partner->id)->first();
-        return !empty($partnerDeliveryInformation) ? $partnerDeliveryInformation->delivery_vendor : NULL;
+        $deliveryMethod =  !empty($partnerDeliveryInformation) ? $partnerDeliveryInformation->delivery_vendor : Methods::OWN_DELIVERY;
+        return $deliveryMethod == Methods::SDELIVERY ? Methods::PAPERFLY : $deliveryMethod;
     }
 
     public function getRegistrationInfo()
@@ -528,7 +529,7 @@ class DeliveryService
             'branch_name' => $info['mfs_info']['branch_name'] ?? null,
             'account_number' => $info['mfs_info']['account_number'],
             'routing_number' => $info['mfs_info']['routing_number'] ?? null,
-            'delivery_vendor' => Methods::PAPERFLY,
+            'delivery_vendor' => Methods::SDELIVERY,
             'account_type' => $this->accountType
         ];
 
@@ -538,10 +539,10 @@ class DeliveryService
     public function updateVendorInformation()
     {
         $data = [
-            'delivery_vendor' => $this->vendorName
+            'delivery_vendor' => $this->vendorName == Methods::OWN_DELIVERY ? Methods::OWN_DELIVERY : Methods::SDELIVERY
         ];
         $deliveryInfo = $this->partnerDeliveryInfoRepositoryInterface->where('partner_id', $this->partner->id)->first();
-        return $this->partnerDeliveryInfoRepositoryInterface->update($deliveryInfo, $data);
+        $this->partnerDeliveryInfoRepositoryInterface->update($deliveryInfo, $data);
     }
 
     public function deliveryCharge()

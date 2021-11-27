@@ -223,10 +223,10 @@ class WebstoreDashboard
     private function makeParams(): string
     {
         $params = '';
-        if ($this->year) $params = $params . '&year='.$this->year;
-        if ($this->month) $params = $params . '&month='.$this->month;
-        if ($this->week) $params = $params . '&week='.$this->week;
-        if ($this->date) $params = $params . '&date='.$this->date;
+        if (isset($this->year)) $params = $params . '&year='.$this->year;
+        if (isset($this->month)) $params = $params . '&month='.$this->month;
+        if (isset($this->week)) $params = $params . '&week='.$this->week;
+        if (isset($this->date)) $params = $params . '&date='.$this->date;
         return $params;
     }
 }

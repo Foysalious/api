@@ -318,7 +318,8 @@ class PosOrderDataMigration
             ->leftJoin('pos_customers', 'partner_pos_customers.customer_id', '=', 'pos_customers.id')
             ->leftJoin('profiles', 'pos_customers.profile_id', '=', 'profiles.id')
             ->select('partner_pos_customers.customer_id as id', 'partner_pos_customers.partner_id', 'profiles.name',
-                'profiles.mobile', 'profiles.email', 'profiles.pro_pic', DB::raw('SUBTIME(profiles.created_at,"6:00:0") as created_at, 
+                'profiles.mobile', 'profiles.email', 'profiles.pro_pic',
+                DB::raw('SUBTIME(profiles.created_at,"6:00:0") as created_at, 
                 SUBTIME(profiles.updated_at,"6:00:0") as updated_at'))
             ->get();
     }
