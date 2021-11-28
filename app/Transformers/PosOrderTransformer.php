@@ -53,7 +53,7 @@ class PosOrderTransformer extends TransformerAbstract
             'sales_channel' => $order->sales_channel,
             'delivery_charge' => $order->delivery_charge,
             'delivery_by_third_party' => $delivery_by_third_party,
-            'selected_delivery_method' => $this->getDeliveryMethod($order->partner),
+            'selected_delivery_method' => $delivery_by_third_party ? Methods::SDELIVERY : Methods::OWN_DELIVERY,
             'total_weight' => $order->weight
         ];
 
