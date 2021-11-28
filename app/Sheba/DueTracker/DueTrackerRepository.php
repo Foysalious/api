@@ -461,7 +461,7 @@ class DueTrackerRepository extends BaseRepository
         $data     = [
             'type'          => $request->type,
             'partner_name'  => $partner->name,
-            'customer_name' => $customer->profile->name,
+            'customer_name' => $partner_pos_customer->nick_name ? : $customer->profile->name,
             'mobile'        => $customer->profile->mobile,
             'amount'        => $request->amount,
             'company_number'=> $partner->getContactNumber()
@@ -503,7 +503,7 @@ class DueTrackerRepository extends BaseRepository
         if ($data['type'] == 'due') {
             $sms = (new SmsHandlerRepo('inform-due'));
             $message_data['payment_link']  = $data['payment_link'];
-            $log = "due details";
+            $log .= "due details";
         } else {
             $sms = (new SmsHandlerRepo('inform-deposit'));
             $log .= "deposit details";

@@ -80,6 +80,7 @@ class RechargeComplete extends PaymentComplete
             $amount = $this->calculateCommission($payment_gateway->cash_in_charge);
             (new WalletTransactionHandler())->setModel($user)
                 ->setAmount($amount)
+                ->setIsNegativeDebitAllowed(true)
                 ->setType(Types::debit())
                 ->setLog($amount . ' BDT has been deducted as a gateway charge for SHEBA credit recharge')
                 ->setTransactionDetails($this->payment->getShebaTransaction()->toArray())

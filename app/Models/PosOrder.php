@@ -54,7 +54,8 @@ class PosOrder extends BaseModel
     {
         $this->_calculateThisItems();
         $this->totalDiscount = $this->totalItemDiscount + $this->discountsAmountWithoutService();
-        $this->appliedDiscount = ($this->discountsAmountWithoutService() > $this->totalBill) ? $this->totalBill : $this->discountsAmountWithoutService();
+        $discount_amount_without_service = $this->discountsAmountWithoutService();
+        $this->appliedDiscount = ( $discount_amount_without_service> $this->totalBill) ? $this->totalBill : $discount_amount_without_service;
         $this->originalTotal = round($this->totalBill - $this->appliedDiscount, 2);
         if (isset($this->emi_month) && !$this->interest) {
             $data = Calculations::getMonthData($this->originalTotal, (int)$this->emi_month, false);
@@ -108,9 +109,7 @@ class PosOrder extends BaseModel
 
     public function discountsAmountWithoutService()
     {
-        return $this->discounts->filter(function ($discount) {
-            return $discount->item_id == null;
-        })->sum('amount');
+        return $this->discounts()->whereNull('item_id')->get()->sum('amount');
     }
 
     public function discountsWithoutService()
