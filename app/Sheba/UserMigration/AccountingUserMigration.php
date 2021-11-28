@@ -107,13 +107,7 @@ class AccountingUserMigration extends UserMigrationRepository
             "access" => false,
             "icon" => Constants::$accounting_migration_url . '/accounting_pending.png',
             "header" => "নতুন হিসাব খাতায় আপগ্রেড করেছেন।",
-            "message" => "<center>নতুন হিসাব খাতা ব্যবহার করতে নতুন সিস্টেম <br />
-                            প্লে-স্টোর থেকে আপগ্রেড করা আবশ্যক।<br />
-                            নতুন হিসাব খাতায় থাকছে: <br />                                            
-                            <b>• লাভ ক্ষতির হিসাব</b><br />
-                            <b>• ক্যাশ লেনদেনের বিস্তারিত হিসাব</b><br />
-                            <b>• আরও অনেক কিছু</b>
-                         </center>"
+            "message" => "<center>নতুন হিসাব খাতা ব্যবহার করতে নতুন সিস্টেম <br /> প্লে-স্টোর থেকে আপগ্রেড করা আবশ্যক।<br /> নতুন হিসাব খাতায় থাকছে: <br /><b>• লাভ ক্ষতির হিসাব</b><br /><b>• ক্যাশ লেনদেনের বিস্তারিত হিসাব</b><br /><b>• আরও অনেক কিছু</b></center>"
         ];
 
     }
