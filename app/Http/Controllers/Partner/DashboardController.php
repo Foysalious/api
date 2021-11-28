@@ -516,6 +516,9 @@ class DashboardController extends Controller
     public function settingLastUpdatedDetails(Request $request)
     {
         $partner = $request->partner;
+        if (!$partner instanceof Partner) {
+            $partner = Partner::find($partner);
+        }
         $modules = config('partner_setting_modules');
 
         foreach ($modules as $key => $module) {
