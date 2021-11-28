@@ -94,7 +94,7 @@ class AccountingUserMigration extends UserMigrationRepository
         ];
     }
 
-    public function canAccessModule($appVersion, $modulePayload)
+    public function versionCodeCheck($appVersion, $modulePayload)
     {
         if ((int)$appVersion >= $modulePayload['app_version']) {
             return [

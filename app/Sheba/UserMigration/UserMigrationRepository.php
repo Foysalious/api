@@ -27,7 +27,7 @@ abstract class UserMigrationRepository
 
     abstract public function getBanner();
 
-    abstract public function canAccessModule($appVersion, $modulePayload);
+    abstract public function versionCodeCheck($appVersion, $modulePayload);
 
     public function setUserId($userId): UserMigrationRepository
     {
@@ -71,7 +71,7 @@ abstract class UserMigrationRepository
         if ($status == UserStatus::UPGRADING) {
             Redis::set("user-migration:$this->userId", "$this->moduleName");
         }
-        // if failed all api will be halt
+        // Api call will be halt if migration failed.
         if ($status == UserStatus::UPGRADED) {
             Redis::del("user-migration:$this->userId");
         }
