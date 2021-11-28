@@ -4,7 +4,7 @@ return [
     'modules' => [
         [
             'key'           => 'expense', //accounting - expense given by mobile team
-            'app_version'   => 230600,
+            'app_version'   => 230700,
             'status'        => null,
             'priority'      => 1
         ],

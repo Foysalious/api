@@ -217,7 +217,7 @@ class ProrateController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function edit($business, $prorate, Request $request)
+    public function edit($business, $prorate, Request $request, ManualLeaveProrateLogRequester $manual_leave_prorate_log_requester)
     {
         /**@var BusinessMemberLeaveType $business_member_leave_type */
         $business_member_leave_type = $this->businessMemberLeaveTypeRepo->find($prorate);
@@ -237,6 +237,7 @@ class ProrateController extends Controller
             ->setNote($request->note);
 
         $this->updater->setRequester($this->requester)->setBusinessMemberLeaveType($business_member_leave_type)->update();
+        $manual_leave_prorate_log_requester->setBusinessMemberIds([$business_member_leave_type->businessMember->id])->setLeaveTypeId($request->leave_type_id)->setProratedLeaveDays($request->total_days)->create();
         return api_response($request, null, 200);
     }
 
