@@ -217,11 +217,12 @@ class AttendanceSummary
 
     /**
      * @param $count
-     * @return mixed|string
+     * @return string
      */
     private function formatCount($count)
     {
-        return $count < 10 ? '0'.$count : $count;
+        $number_of_count = $count < 10 ? '0'.$count : $count;
+        return (string) $number_of_count;
     }
 
 }
