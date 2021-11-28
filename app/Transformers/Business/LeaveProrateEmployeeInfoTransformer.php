@@ -7,6 +7,7 @@ class LeaveProrateEmployeeInfoTransformer extends TransformerAbstract
     public function transform($prorate)
     {
         $business_member = $prorate->businessMember;
+        $business_member_join_date = $business_member->join_date;
         $member = $business_member->member;
         $profile = $member->profile;
         $department = $business_member->department();
@@ -20,7 +21,7 @@ class LeaveProrateEmployeeInfoTransformer extends TransformerAbstract
             'employee_name' => $profile->name,
             'employee_pro_pic' => $profile->pro_pic,
             'employee_department_name' => $department ? $department->name : null,
-            'business_member_joined_date' => $business_member->join_date->format('F Y'),
+            'business_member_joined_date' => $business_member_join_date ? $business_member_join_date->format('F Y') : null,
             'leave_type' => $prorate->leaveType->title,
             'total_days' => $prorate->total_days,
             'updated_by' => $prorate->updated_by_name,
