@@ -6,6 +6,8 @@ use App\Sheba\EmployeeTracking\Creator;
 use App\Sheba\EmployeeTracking\Requester;
 use App\Sheba\EmployeeTracking\Updater;
 use App\Transformers\Business\AppVisitDetailsTransformer;
+use App\Transformers\Business\LeaveApprovalRequestListTransformer;
+use App\Transformers\Business\VisitHistoryTransformer;
 use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -13,6 +15,7 @@ use Illuminate\Http\Request;
 use App\Sheba\Business\BusinessBasicInformation;
 use Illuminate\Support\Facades\DB;
 use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use Sheba\Dal\Visit\Status;
 use Sheba\Dal\Visit\VisitRepository;
@@ -149,6 +152,25 @@ class VisitController extends Controller
 
         $visit_history = $visit_list->getOwnVisitHistory($own_visits);
         return api_response($request, $own_visits, 200, ['own_visit_history' => $visit_history]);
+    }
+
+    public function ownVisitHistoryV2(Request $request)
+    {
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        list($offset, $limit) = calculatePagination($request);
+        $own_visits = $this->visitRepository->where('visitor_id', $business_member->id)
+            ->whereIn('status', [Status::COMPLETED, Status::CANCELLED])
+            ->select('id', 'title', 'status', 'start_date_time', 'end_date_time', 'total_time_in_minutes', 'schedule_date')
+            ->orderBy('schedule_date', 'desc')->get();
+        if (count($own_visits) == 0) return api_response($request, null, 404);
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Collection($own_visits, new VisitHistoryTransformer());
+        $own_visits = $manager->createData($resource)->toArray()['data'];
+        $total_visit = count($own_visits);
+        $own_visits = collect($own_visits)->splice($offset, $limit);
+        return api_response($request, $own_visits, 200, ['total_visit' => $total_visit, 'own_visit_history' => $own_visits]);
     }
 
     /**
