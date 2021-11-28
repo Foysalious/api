@@ -256,7 +256,7 @@ class DueTrackerRepository extends BaseRepository
     public function store(Partner $partner, Request $request)
     {
         if ($this->isMigratedToAccounting()) {
-            throw new MigratedToAccountingException();
+            return true;
         }
         $partner_pos_customer = PartnerPosCustomer::byPartner($partner->id)->where('customer_id', $request->customer_id)->with(['customer'])->first();
         if (empty($partner_pos_customer))
@@ -280,7 +280,7 @@ class DueTrackerRepository extends BaseRepository
     public function update(Partner $partner, Request $request)
     {
         if ($this->isMigratedToAccounting()) {
-            throw new MigratedToAccountingException();
+            return true;
         }
         $partner_pos_customer = PartnerPosCustomer::byPartner($partner->id)->where('customer_id', $request->customer_id)->with(['customer'])->first();
         if (empty($partner_pos_customer))
@@ -310,7 +310,7 @@ class DueTrackerRepository extends BaseRepository
     public function createPosOrderPayment($amount_cleared, $pos_order_id, $payment_method)
     {
         if ($this->isMigratedToAccounting()) {
-            throw new MigratedToAccountingException();
+            return true;
         }
         /** @var PosOrder $order */
         $order = PosOrder::find($pos_order_id);
@@ -331,7 +331,7 @@ class DueTrackerRepository extends BaseRepository
     public function removePosOrderPayment($pos_order_id, $amount)
     {
         if ($this->isMigratedToAccounting()) {
-            throw new MigratedToAccountingException();
+            return true;
         }
         $payment = PosOrderPayment::where('pos_order_id', $pos_order_id)
             ->where('amount', $amount)

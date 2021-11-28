@@ -67,7 +67,7 @@ class EntryRepository extends BaseRepository
     public function storeEntry($for, $data)
     {
         if ($this->isMigratedToAccounting()) {
-            throw new MigratedToAccountingException();
+            return true;
         }
         $data['created_at'] = Carbon::parse($data['created_at'])->format('Y-m-d H:i:s');
         $request_identification = $this->withBothModificationFields((new RequestIdentification())->get());
@@ -86,7 +86,7 @@ class EntryRepository extends BaseRepository
     public function updateEntry($for, $data, $entry_id)
     {
         if ($this->isMigratedToAccounting()) {
-            throw new MigratedToAccountingException();
+            return true;
         }
         $request_identification = $this->withBothModificationFields((new RequestIdentification())->get());
         $data['created_from'] = json_encode($request_identification);

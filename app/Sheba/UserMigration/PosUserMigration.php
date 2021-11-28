@@ -42,4 +42,9 @@ class PosUserMigration extends UserMigrationRepository
             return $this->updateMigrationStatus($status);
         }
     }
+
+    public function canAccessModule($appVersion, $modulePayload)
+    {
+        // TODO: Implement canAccessModule() method.
+    }
 }

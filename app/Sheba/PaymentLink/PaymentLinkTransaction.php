@@ -257,6 +257,7 @@ class PaymentLinkTransaction
      * @param $amount
      * @param $feeTransaction
      * @param $interest
+     * @throws AccountingEntryServerError
      */
     private function storePaymentLinkEntry($amount, $feeTransaction, $interest)
     {

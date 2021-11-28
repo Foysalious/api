@@ -1,6 +1,5 @@
 <?php namespace Sheba\TopUp\Commission;
 
-use Illuminate\Support\Facades\Log;
 use ReflectionException;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Exceptions\InvalidSourceException;
@@ -37,7 +36,6 @@ class Partner extends TopUpCommission
     {
         /** @var \App\Models\Partner $partner */
         $partner = $this->agent;
-        Log::info(['top up journal', $partner->id]);
         (new JournalCreateRepository())
             ->setTypeId($partner->id)
             ->setSource($this->transaction)
