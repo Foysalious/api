@@ -96,6 +96,18 @@ class AccountingUserMigration extends UserMigrationRepository
 
     public function canAccessModule($appVersion)
     {
-        // TODO: Implement canAccessModule() method.
+//        $modules =  config('user_migration.modules.');
+//        if ((int) $appVersion >= $value['app_version']) {
+//            return [
+//                'code' => 200,
+//                'message' => 'You are allowed to use.'
+//            ];
+//
+//        } else {
+//            return [
+//                'code' => 403,
+//                'message' => 'Your application is outdated! Please update.'
+//            ];
+//        }
     }
 }
