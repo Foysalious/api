@@ -81,7 +81,7 @@ class StockManager
 
     private function increaseUpdatedStock($quantity)
     {
-        if($this->service->partner->isMigratedToAccounting) {
+        if($this->service->partner->isMigratedToAccounting()) {
             $lastBatch = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->latest()->first();
             $lastStock = $lastBatch ? $lastBatch->stock : 0;
             PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->where('id', $lastBatch->id)->update(['stock' => $lastStock + $quantity]);
