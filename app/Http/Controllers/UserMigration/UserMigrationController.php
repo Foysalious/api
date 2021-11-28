@@ -90,7 +90,7 @@ class UserMigrationController extends Controller
         }
     }
 
-    public function canAccessModule(Request $request, $moduleName)
+    public function checkModuleAccess(Request $request, $moduleName)
     {
         if (!$request->hasHeader('version-code')) {
             throw new Exception('Invalid Request!', 400);
@@ -99,7 +99,7 @@ class UserMigrationController extends Controller
             if ($value['key'] == $moduleName) {
                 /** @var UserMigrationRepository $class */
                 $class = $this->userMigrationSvc->resolveClass($moduleName);
-                $res = $class->setUserId($request->partner->id)->setModuleName($moduleName)->canAccessModule($request->hasHeader('version-code'), $value);
+                $res = $class->versionCodeCheck($request->hasHeader('version-code'), $value);
                 return api_response($request, $res, 200, ['data' => $res]);
             }
         }
