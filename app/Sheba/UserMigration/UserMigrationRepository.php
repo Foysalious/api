@@ -26,7 +26,7 @@ abstract class UserMigrationRepository
 
     abstract public function getBanner();
 
-    abstract public function canAccessModule($appVersion);
+    abstract public function canAccessModule($appVersion, $modulePayload);
 
     public function setUserId($userId)
     {
