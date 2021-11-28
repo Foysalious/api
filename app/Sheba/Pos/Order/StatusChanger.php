@@ -67,11 +67,13 @@ class StatusChanger
      */
     public function changeStatus()
     {
+        if ($this->order->sales_channel == SalesChannels::WEBSTORE && !in_array($this->status, [OrderStatuses::CANCELLED, OrderStatuses::DECLINED, OrderStatuses::PENDING])) return false;
         $this->orderRepo->update($this->order, ['status' => $this->status]);
         if ($this->order->sales_channel == SalesChannels::WEBSTORE) {
             if ($this->status == OrderStatuses::DECLINED || $this->status == OrderStatuses::CANCELLED) $this->refund();
             if ($this->status == OrderStatuses::COMPLETED && $this->order->getDue()) $this->collectPayment($this->order);
         }
+        return true;
     }
 
     private function getData()
@@ -108,8 +110,8 @@ class StatusChanger
     {
         $payment_data = [
             'pos_order_id' => $order->id,
-            'amount'       => $order->getDue(),
-            'method'       => 'cod'
+            'amount' => $order->getDue(),
+            'method' => 'cod'
         ];
         if ($order->emi_month) $payment_data['emi_month'] = $order->emi_month;
         $this->paymentCreator->credit($payment_data);
@@ -126,9 +128,10 @@ class StatusChanger
      * @param $emi_month
      * @throws ExpenseTrackingServerError
      */
-    private function updateIncome(PosOrder $order, $paid_amount, $emi_month) {
+    private function updateIncome(PosOrder $order, $paid_amount, $emi_month)
+    {
         /** @var AutomaticEntryRepository $entry */
-        $entry  = app(AutomaticEntryRepository::class);
+        $entry = app(AutomaticEntryRepository::class);
         $amount = (double)$order->getNetBill();
         $entry->setPartner($order->partner)->setAmount($amount)->setAmountCleared($paid_amount)->setFor(EntryType::INCOME)->setSourceType(class_basename($order))->setSourceId($order->id)->setCreatedAt($order->created_at)->setEmiMonth($emi_month)->setIsWebstoreOrder($order->sales_channel == SalesChannels::WEBSTORE ? 1 : 0)->updateFromSrc();
     }
