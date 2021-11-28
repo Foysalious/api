@@ -23,16 +23,20 @@ class PartnerController extends Controller
     public function findById($partner, Request $request)
     {
         $partner = Partner::where('id', $partner)->select('id', 'name', 'logo', 'sub_domain', 'delivery_charge')->first();
-        $partner->delivery_method = $this->getDeliveryMethod($partner->id);
+        list($is_registered_for_sdelivery,$delivery_method) = $this->getDeliveryInformation($partner->id);
+        $partner->is_registered_for_sdelivery = $is_registered_for_sdelivery;
+        $partner->delivery_method = $delivery_method;
         removeRelationsAndFields($partner, ['webstore_banner']);
         if (!$partner) return http_response($request, null, 404);
         return http_response($request, $partner, 200, ['partner' => $partner]);
     }
 
-    private function getDeliveryMethod($partnerId)
+    private function getDeliveryInformation($partnerId)
     {
         $partnerDeliveryInformation =  PartnerDeliveryInformation::where('partner_id', $partnerId)->first();
-        return (empty($partnerDeliveryInformation) || ($partnerDeliveryInformation->delivery_vendor == Methods::OWN_DELIVERY)) ? Methods::OWN_DELIVERY : Methods::SDELIVERY;
+        $is_registered_for_sdelivery = !(empty($partnerDeliveryInformation))  ? 1 : 0;
+        $delivery_method = (empty($partnerDeliveryInformation) || ($partnerDeliveryInformation->delivery_vendor == Methods::OWN_DELIVERY)) ? Methods::OWN_DELIVERY : Methods::SDELIVERY;
+        return [$is_registered_for_sdelivery,$delivery_method];
     }
 
     public function getWebStoreBanner($partner, Request $request)
