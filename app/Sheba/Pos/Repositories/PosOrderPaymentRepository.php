@@ -5,6 +5,7 @@ use App\Models\PosOrder;
 use App\Models\PosOrderPayment;
 use App\Sheba\PosOrderService\PosOrderServerClient;
 use Illuminate\Support\Facades\Log;
+use App\Sheba\UserMigration\Modules;
 use Sheba\PosOrderService\Services\PaymentService;
 use Sheba\Repositories\BaseRepository;
 
@@ -57,7 +58,7 @@ class PosOrderPaymentRepository extends BaseRepository
 
         /** @var PosOrder $order */
         $order = PosOrder::find($pos_order_id);
-        if(isset($order)) {
+        if(isset($order) && !$order->partner->isMigrated(Modules::POS)) {
             $order->calculate();
             if ($order->getDue() > 0) {
                 return $this->save($payment_data);
