@@ -54,9 +54,6 @@ class PosOrderPaymentRepository extends BaseRepository
         $payment_data['method']       = $payment_method;
         $payment_data['transaction_type'] = 'Credit';
         $payment_data['method_details'] = $this->method_details;
-        Log::info(['checking partner migration', $this->partner->is_migration_completed]);
-        if($this->partner->is_migration_completed)
-           return $this->saveToNewPosOrderSystem($payment_data);
 
         /** @var PosOrder $order */
         $order = PosOrder::find($pos_order_id);
@@ -66,20 +63,8 @@ class PosOrderPaymentRepository extends BaseRepository
                 return $this->save($payment_data);
             }
         }
-        Log::info(['payment data', $order->id, $order->getDue()]);
+        return $this->saveToNewPosOrderSystem($payment_data);
     }
-
-    /**
-     * @param mixed $expenseAccountId
-     * @return PosOrderPaymentRepository
-     */
-    public function setExpenseAccountId($expenseAccountId)
-    {
-        if($expenseAccountId)
-            $this->resolvePartner($expenseAccountId);
-        return $this;
-    }
-
 
     public function setMethodDetails($method_details)
     {
