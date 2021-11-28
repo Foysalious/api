@@ -648,11 +648,10 @@ class OrderController extends Controller
     {
         $this->validate($request, [
             'api_key' => 'required',
-            'expense_account_id' => 'sometimes'
         ]);
         if($request->api_key != config('expense_tracker.api_key'))
             throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
-        $result = $posOrderPaymentRepository->setExpenseAccountId($request->expense_account_id)->removePosOrderPayment($pos_order_id, $request->amount);
+        $result = $posOrderPaymentRepository->removePosOrderPayment($pos_order_id, $request->amount);
         $message = null;
         if($result) $message = 'Pos Order Payment remove successfully';
         else $message = 'There is no Pos Order Payment';
