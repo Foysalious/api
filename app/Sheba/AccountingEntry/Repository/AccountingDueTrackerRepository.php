@@ -90,47 +90,6 @@ class AccountingDueTrackerRepository extends BaseRepository
             $list = $list->$order('customer_name', SORT_NATURAL | SORT_FLAG_CASE)->values();
         }
         return $list;
-//            $customerProfiles = null;
-//            if($request->has('q') && !empty($request->q)) {
-//                $profiles = PartnerPosCustomer::with([
-//                 'customer' => function($q) {
-//                     $q->select('id', 'profile_id');
-//                 },
-//                 'customer.profile' => function($q) {
-//                     $q->select('name', 'mobile', 'id', 'pro_pic');
-//                 }])->where('partner_id', $this->partner->id);
-//
-//                if (is_numeric($request->q)) {
-//                    $profiles->whereHas('customer.profile', function ($query) use ($request) {
-//                        $query->where('mobile', 'like', '%'.$request->q.'%');
-//                    });
-//                }
-//                else {
-//                    $profiles->whereHas('customer.profile', function ($query) use ($request) {
-//                        $query->where('name', 'like', '%'.$request->q.'%');
-//                    });
-//                }
-//                $customerProfiles = $profiles->get();
-//                if ($customerProfiles->isEmpty()) {
-//                    return ['list' => []];
-//                }
-//                $ids = $profiles->get()->pluck('customer_id');
-//                $ids = implode(",", $ids->toArray());
-//                $url .= "&q=$ids";
-//            }
-//            if ($customerProfiles) {
-//                $list = $this->attachCustomerProfile(collect($result['list']), $customerProfiles);
-//            } else {
-//                $list = $this->attachProfile(collect($result['list']));
-//            }
-//            $list = $list->reject(function ($value) {
-//                return $value == null;
-//            });
-//
-//            if ($request->has('filter_by_supplier') && $request->filter_by_supplier == 1) {
-//                $list = $list->where('is_supplier', 1)->values();
-//            }
-
     }
 
     /**
