@@ -67,7 +67,6 @@ class StatusChanger
      */
     public function changeStatus()
     {
-        if ($this->order->sales_channel == SalesChannels::WEBSTORE && !in_array($this->status, [OrderStatuses::CANCELLED, OrderStatuses::DECLINED, OrderStatuses::PROCESSING])) return false;
         $this->orderRepo->update($this->order, ['status' => $this->status]);
         if ($this->order->sales_channel == SalesChannels::WEBSTORE) {
             if ($this->status == OrderStatuses::DECLINED || $this->status == OrderStatuses::CANCELLED) $this->refund();
