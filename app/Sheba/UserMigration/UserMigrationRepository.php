@@ -68,7 +68,7 @@ abstract class UserMigrationRepository
             Redis::set("user-migration:$this->userId", "$this->moduleName");
         }
         // Api call will be halt if migration failed.
-        if (in_array($status, [UserStatus::UPGRADED])) {
+        if ($status == UserStatus::UPGRADED) {
             Redis::del("user-migration:$this->userId");
         }
         $info->status = $status;
