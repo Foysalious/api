@@ -311,8 +311,7 @@ class OrderController extends Controller
     {
         $this->setModifier($request->manager_resource);
         $order = PosOrder::with('items')->find($request->order);
-        $result = $statusChanger->setOrder($order)->setStatus($request->status)->setModifier($request->manager_resource)->changeStatus();
-        if (!$result) return api_response($request, null, 403, ['message' => 'Order Status can not be changed.']);
+        $statusChanger->setOrder($order)->setStatus($request->status)->setModifier($request->manager_resource)->changeStatus();
         if ($order->partner->is_webstore_sms_active && $order->partner->wallet >= 1 && $order->sales_channel == SalesChannels::WEBSTORE) {
             try {
                 dispatch(new WebstoreOrderSms($order));
