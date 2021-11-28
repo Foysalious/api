@@ -28,7 +28,7 @@ class AccountingUserMigration extends UserMigrationRepository
         }
         return [
             'status' => $status,
-            'data'   => $response
+            'data' => $response
         ];
     }
 
@@ -94,20 +94,27 @@ class AccountingUserMigration extends UserMigrationRepository
         ];
     }
 
-    public function canAccessModule($appVersion)
+    public function canAccessModule($appVersion, $modulePayload)
     {
-//        $modules =  config('user_migration.modules.');
-//        if ((int) $appVersion >= $value['app_version']) {
-//            return [
-//                'code' => 200,
-//                'message' => 'You are allowed to use.'
-//            ];
-//
-//        } else {
-//            return [
-//                'code' => 403,
-//                'message' => 'Your application is outdated! Please update.'
-//            ];
-//        }
+        if ((int)$appVersion >= $modulePayload['app_version']) {
+            return [
+                'code' => 200,
+                'message' => 'You are allowed to use.'
+            ];
+
+        }
+        return [
+            "code" => 403,
+            "icon" => Constants::$accounting_migration_url . '/accounting_pending.png',
+            "header" => "নতুন হিসাব খাতায় আপগ্রেড করেছেন।",
+            "message" => "<center>নতুন হিসাব খাতা ব্যবহার করতে নতুন সিস্টেম <br />
+                            প্লে-স্টোর থেকে আপগ্রেড করা আবশ্যক।<br />
+                            নতুন হিসাব খাতায় থাকছে: <br />                                            
+                            <b>• লাভ ক্ষতির হিসাব</b><br />
+                            <b>• ক্যাশ লেনদেনের বিস্তারিত হিসাব</b><br />
+                            <b>• আরও অনেক কিছু</b>
+                         </center>"
+        ];
+
     }
 }
