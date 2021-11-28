@@ -18,4 +18,9 @@ class PosUserMigration extends UserMigrationRepository
     {
         // TODO: Implement updateStatus() method.
     }
+
+    public function canAccessModule($appVersion)
+    {
+        // TODO: Implement canAccessModule() method.
+    }
 }

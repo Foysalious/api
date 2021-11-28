@@ -94,4 +94,8 @@ class AccountingUserMigration extends UserMigrationRepository
         ];
     }
 
+    public function canAccessModule($appVersion)
+    {
+        // TODO: Implement canAccessModule() method.
+    }
 }
