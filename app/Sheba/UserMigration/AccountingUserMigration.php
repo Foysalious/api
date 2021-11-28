@@ -31,6 +31,9 @@ class AccountingUserMigration extends UserMigrationRepository
         ];
     }
 
+    /**
+     * @throws Exception
+     */
     public function updateStatus($status)
     {
         if ($status == UserStatus::UPGRADING) {
@@ -39,7 +42,7 @@ class AccountingUserMigration extends UserMigrationRepository
         return $this->updateMigrationStatus($status);
     }
 
-    private function getPendingResponse()
+    private function getPendingResponse(): array
     {
         return [
             "icon" => Constants::$accounting_migration_url . '/accounting_pending.png',
@@ -53,7 +56,7 @@ class AccountingUserMigration extends UserMigrationRepository
         ];
     }
 
-    private function getUpgradingResponse()
+    private function getUpgradingResponse(): array
     {
         return [
             "migrating_icon" => Constants::$accounting_migration_url . "/accounting_upgrading.png",
@@ -62,7 +65,7 @@ class AccountingUserMigration extends UserMigrationRepository
         ];
     }
 
-    private function getUpgradedResponse()
+    private function getUpgradedResponse(): array
     {
         return [
             "icon" => Constants::$accounting_migration_url . "/accounting_upgraded.png",
@@ -73,7 +76,8 @@ class AccountingUserMigration extends UserMigrationRepository
         ];
     }
 
-    private function getFailedResponse() {
+    private function getFailedResponse(): array
+    {
         return [
             "icon" => Constants::$accounting_migration_url . "/accounting_failed.png",
             "header" => "দুঃখিত",
@@ -85,4 +89,8 @@ class AccountingUserMigration extends UserMigrationRepository
         ];
     }
 
+    public function canAccessModule($appVersion)
+    {
+        // TODO: Implement canAccessModule() method.
+    }
 }
