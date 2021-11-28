@@ -98,13 +98,13 @@ class AccountingUserMigration extends UserMigrationRepository
     {
         if ((int)$appVersion >= $modulePayload['app_version']) {
             return [
-                'code' => 200,
+                "access" => true,
                 'message' => 'You are allowed to use.'
             ];
 
         }
         return [
-            "code" => 403,
+            "access" => false,
             "icon" => Constants::$accounting_migration_url . '/accounting_pending.png',
             "header" => "নতুন হিসাব খাতায় আপগ্রেড করেছেন।",
             "message" => "<center>নতুন হিসাব খাতা ব্যবহার করতে নতুন সিস্টেম <br />
