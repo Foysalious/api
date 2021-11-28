@@ -24,6 +24,8 @@ class DashboardController extends Controller
 
         $is_enable_employee_visit = $business->is_enable_employee_visit;
 
+        $manager = $business ? $business->getActiveBusinessMember()->where('manager_id', $business_member->id)->count() : null;
+        $is_manager = $manager ? 1 : 0;
 
         $dashboard = collect([
             [
@@ -78,6 +80,7 @@ class DashboardController extends Controller
 
         if (!$payroll_setting->is_enable) $dashboard->forget(7);
         if (!$is_enable_employee_visit) $dashboard->forget(8);
+        if (!$is_manager) $dashboard->forget(9);
 
         return api_response($request, $dashboard, 200, ['dashboard' => $dashboard->values()]);
     }

@@ -104,16 +104,19 @@ class AttendanceSummary
         $absent = sizeof($business_member_ids) - ($present + $on_leave_and_absent);
 
         return [
-            'present' => $present,
-            'on_time' => $this->onTime,
-            'late' => $this->late,
-            'left_timely' => $this->leftTimely,
-            'left_early' => $this->leftEarly,
-            'on_leave' => sizeof($this->usersWhoOnLeave),
-            'absent' => $is_weekend_or_holiday ? 0 : $absent
+            'present' => $this->formatCount($present) ,
+            'on_time' => $this->formatCount($this->onTime),
+            'late' => $this->formatCount($this->late),
+            'left_timely' => $this->formatCount($this->leftTimely),
+            'left_early' => $this->formatCount($this->leftEarly),
+            'on_leave' => $this->formatCount(sizeof($this->usersWhoOnLeave)),
+            'absent' => $this->formatCount($is_weekend_or_holiday ? 0 : $absent)
         ];
     }
 
+    /**
+     * @param $status
+     */
     private function incrementStatus($status) {
         if (Statuses::ON_TIME === $status) $this->onTime++;
         if (Statuses::LATE === $status) $this->late++;
@@ -164,6 +167,9 @@ class AttendanceSummary
                 }]);
     }
 
+    /**
+     * @param $business_member_ids
+     */
     private function getBusinessMemberWhoAreOnLeave($business_member_ids)
     {
         $leaves = $this->leaveRepositoryInterface->builder()
@@ -199,10 +205,23 @@ class AttendanceSummary
         return in_array($business_member_id, $this->usersWhoOnLeave);
     }
 
+    /**
+     * @param $business_member_id
+     * @return mixed
+     */
     private function checkHalfDayLeave($business_member_id)
     {
         $leave = $this->usersLeaveIds[$business_member_id];
         return $leave['leave']['is_half_day_leave'];
+    }
+
+    /**
+     * @param $count
+     * @return mixed|string
+     */
+    private function formatCount($count)
+    {
+        return $count < 10 ? '0'.$count : $count;
     }
 
 }
