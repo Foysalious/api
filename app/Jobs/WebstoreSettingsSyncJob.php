@@ -12,6 +12,8 @@ class WebstoreSettingsSyncJob extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
 
+    private $partnerId;
+
     /**
      * Create a new job instance.
      *
