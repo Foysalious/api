@@ -8,6 +8,7 @@ class Route
             (new CustomerRoute())->set($api);
             (new AffiliateRoute())->set($api);
             (new PartnerRoute())->set($api);
+            (new UserMigrationRoute())->set($api);
 
             $api->group(['middleware' => 'terminate'], function ($api) {
                 (new BusinessRoute())->set($api);
@@ -63,7 +64,7 @@ class Route
             $api->group(['prefix' => 'service-requests'], function ($api) {
                 $api->post('/', 'ServiceRequest\ServiceRequestController@store');
             });
-            $api->get('training-videos', 'TrainingVideoController@index');
+            $api->get('training-videos', 'TrainingVideoController@index')->name('training-videos.get');
             $api->get('sitemap', 'SitemapController@index');
             $api->get('settings/car', 'HomePageSettingController@getCarV3');
             $api->group(['prefix' => 'subscriptions'], function ($api) {
