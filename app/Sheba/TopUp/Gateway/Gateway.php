@@ -27,4 +27,9 @@ interface Gateway
      * @return IpnResponse
      */
     public function enquireIpnResponse(TopUpOrder $topup_order): IpnResponse;
+
+    /**
+     * @return FailedReason
+     */
+    public function getFailedReason(): FailedReason;
 }

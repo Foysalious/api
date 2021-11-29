@@ -1,4 +1,4 @@
-<?php namespace Sheba\TopUp\ResponseCode;
+<?php namespace Sheba\TopUp\Gateway\FailedReason;
 
 class SslRechargeResponseCodes
 {

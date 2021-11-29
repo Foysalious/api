@@ -1,4 +1,4 @@
-<?php namespace Sheba\TopUp\Vendor\Internal;
+<?php namespace Sheba\TopUp\Gateway\Clients;
 
 use Exception;
 use GuzzleHttp\Client as HttpClient;
