@@ -47,9 +47,9 @@ class WebstoreSettingsTransformer extends TransformerAbstract
     public function getWebStoreURL(Partner $partner)
     {
         if($partner->isMigrated(Modules::POS)) {
-            return config('sheba.webstore_url_new');
+            return config('sheba.new_webstore_url');
         } else {
-            return config('sheba.webstore_url');
+            return config('sheba.new_webstore_url');
         }
     }
 }
