@@ -26,7 +26,7 @@ class PartnerController extends Controller
     {
         $partner = Partner::where('id', $partner)->select('id', 'name', 'logo', 'sub_domain')->first();
         if (!$partner) return http_response($request, null, 404);
-        list($is_registered_for_sdelivery,$delivery_method,$delivery_charge) = $this->getDeliveryInformation($partner->id);
+        list($is_registered_for_sdelivery,$delivery_method,$delivery_charge) = $this->getDeliveryInformation($partner);
         $partner->is_registered_for_sdelivery = $is_registered_for_sdelivery;
         $partner->delivery_method = $delivery_method;
         $partner->delivery_charge = $delivery_charge;
@@ -34,12 +34,12 @@ class PartnerController extends Controller
         return http_response($request, $partner, 200, ['partner' => $partner]);
     }
 
-    private function getDeliveryInformation($partnerId)
+    private function getDeliveryInformation($partner)
     {
-        $partnerDeliveryInformation =  PartnerDeliveryInformation::where('partner_id', $partnerId)->first();
+        $partnerDeliveryInformation =  PartnerDeliveryInformation::where('partner_id', $partner->id)->first();
         $is_registered_for_sdelivery = !(empty($partnerDeliveryInformation))  ? 1 : 0;
         $delivery_method = (empty($partnerDeliveryInformation) || ($partnerDeliveryInformation->delivery_vendor == Methods::OWN_DELIVERY)) ? Methods::OWN_DELIVERY : Methods::SDELIVERY;
-        $delivery_charge = $delivery_method == Methods::OWN_DELIVERY ? (double)$this->getDeliveryCharge($this->partner) : null;
+        $delivery_charge = $delivery_method == Methods::OWN_DELIVERY ? (double)$this->getDeliveryCharge($partner) : null;
         return [$is_registered_for_sdelivery,$delivery_method,$delivery_charge];
     }
     public function getDeliveryCharge(Partner $partner)
