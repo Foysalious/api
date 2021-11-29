@@ -134,10 +134,8 @@ class Kernel extends HttpKernel
         'jwtAccessToken' => JwtAccessTokenMiddleware::class,
         'partner.status'=>PartnerStatusAuthMiddleware::class,
         'userMigration.auth' => UserMigrationMiddleware::class,
-        'partner.status'=> PartnerStatusAuthMiddleware::class,
         'concurrent_request' => ConcurrentRequestMiddleware::class,
         'ip.whitelist' => IpWhitelistMiddleware::class,
-        'userMigration.auth' => UserMigrationMiddleware::class,
         'userMigration.check_status' => CheckUserMigrationRunningMiddleware::class
     ];
 }

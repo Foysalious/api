@@ -122,19 +122,8 @@ class Creator
     {
         $this->data = $data;
         $this->createValidator->setServices(json_decode($this->data['services'], true));
-        if (!isset($this->data['payment_method'])) {
-            $this->data['payment_method'] = 'cod';
-        }
-        if (isset($this->data['customer_address'])) {
-            $this->setAddress($this->data['customer_address']);
-        }
-        return $this;
-    }
-
-    public function setRequest(Request $request)
-    {
-        $this->request = $request;
-        $this->setData($request->all());
+        if (!isset($this->data['payment_method'])) $this->data['payment_method'] = 'cod';
+        if (isset($this->data['customer_address'])) $this->setAddress($this->data['customer_address']);
         return $this;
     }
 
@@ -235,21 +224,18 @@ class Creator
             if ($this->discountHandler->hasDiscount()) $this->discountHandler->create($order);
             $this->voucherCalculation($order);
             $this->resolvePaymentMethod();
-
-            DB::commit();
             $this->storeIncome($order);
             $this->setAllServicesStockDecreasingArray($servicesStockDecreasingInfo);
             if (!$this->request->has('refund_nature')) {
                 $this->storeJournal($order);
             }
-
+            DB::commit();
             return $order;
         } catch (Throwable $e) {
             DB::rollback();
             app('sentry')->captureException($e);
             throw $e;
         }
-
     }
 
     /**
