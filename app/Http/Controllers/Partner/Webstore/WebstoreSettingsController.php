@@ -171,11 +171,12 @@ class WebstoreSettingsController extends Controller
         $manager_resource = resolveManagerResourceFromAuthMiddleware($request);
         $this->setModifier($manager_resource);
         $banner_settings = PartnerWebstoreBanner::where('partner_id', $partner_id)->first();
-        if(!$banner_settings)
+        if(!$banner_settings) {
             return false;
+        }
+
         else {
             $webstoreBannerSettings->setBannerSettings($banner_settings)->setData($request->all())->update();
-            dispatch(new WebStoreSettingsSyncJob( $partner_id));
             return true;
         }
     }
