@@ -165,7 +165,7 @@ class Creator
      * @throws InvalidDiscountType
      * @throws NotEnoughStockException
      * @throws PartnerPosCustomerNotFoundException
-     * @throws PosCustomerNotFoundException|ExpenseTrackingServerError
+     * @throws PosCustomerNotFoundException|ExpenseTrackingServerError|Throwable
      */
     public function create()
     {
@@ -201,7 +201,7 @@ class Creator
                 if ($original_service->is_published_for_shop && isset($service['quantity']) && !empty($service['quantity']) && $service['quantity'] > $original_service->getStock())
                     throw new NotEnoughStockException("Not enough stock", 403);
                 // $is_service_discount_applied = $original_service->discount();
-                $service_wholesale_applicable = $original_service->wholesale_price ? true : false;
+                $service_wholesale_applicable = (bool)$original_service->wholesale_price;
                 $service['service_id'] = $original_service->id;
                 $service['service_name'] = isset($service['name']) ? $service['name'] : $original_service->name;
                 $service['pos_order_id'] = $order->id;

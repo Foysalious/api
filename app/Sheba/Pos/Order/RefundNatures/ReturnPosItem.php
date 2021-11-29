@@ -36,6 +36,9 @@ abstract class ReturnPosItem extends RefundNature
         $this->request = $request;
     }
 
+    /**
+     * @throws AccountingEntryServerError
+     */
     public function update()
     {
         try {
@@ -166,7 +169,7 @@ abstract class ReturnPosItem extends RefundNature
             ]
         );
     }
-
+    //todo: need to change this block
     protected function makeInventoryProduct($services, $requestedServices)
     {
         $requested_service = json_decode($requestedServices, true);
@@ -205,8 +208,8 @@ abstract class ReturnPosItem extends RefundNature
                 } else {
                     $sellingPrice = $product->unit_price;
                     $unitPrice = $product->unit_price;
-                    $qty = isset($requested_service[$key]['quantity']) && $requested_service[$key]['quantity'] > 0 ? $requested_service[$key]['quantity'] - $product->quantity : $product->quantity;
-                    $type = ($requested_service[$key]['quantity'] > $product->quantity) ? 'quantity_increase' : 'refund';
+                    $qty = isset($value['quantity']) && $value['quantity'] > 0 ? $value['quantity'] - $product->quantity : $product->quantity;
+                    $type = ($value['quantity'] > $product->quantity) ? 'quantity_increase' : 'refund';
                     $inventory_products[] = $this->makeInventoryData($originalSvc, $unitPrice, $sellingPrice, $qty, $type);
                 }
             }
