@@ -148,14 +148,17 @@ abstract class ReturnPosItem extends RefundNature
 
     private function additionalAccountingData(PosOrder $order, $refundType)
     {
+        $netBill = (double)$this->order->calculate()->getNetBill();
+        $previouslyPaidAmount = $this->order->calculate()->getPaid();
+        $totalPaidAmount = $previouslyPaidAmount + $this->data['paid_amount'];
         $this->request->merge(
             [
                 "from_account_key" => (new Accounts())->asset->cash::CASH,
                 "to_account_key" => (new Accounts())->income->sales::SALES_FROM_POS,
-                "amount" => (double)$this->order->calculate()->getNetBill(),
-                "amount_cleared" => (double)($this->order->calculate()->getPaid() + $this->data['paid_amount']),
+                "amount" => $netBill,
+                "amount_cleared" => (double)($this->data['paid_amount'] > 0 && $totalPaidAmount > $netBill ? $netBill : $totalPaidAmount),
                 // amount in negative if refund
-                "reconcile_amount" => (double)$this->data['paid_amount'],
+                "reconcile_amount" =>(double)($this->data['paid_amount'] > 0 ? ($previouslyPaidAmount - $this->data['paid_amount']): $this->data['paid_amount']),
                 "note" => $refundType,
                 "source_id" => $order->id,
                 "customer_id" => isset($order->customer) ? $order->customer->id : null,
