@@ -1,9 +1,9 @@
 <?php namespace App\Jobs\Business;
 
-use App\Models\BusinessMember;
-use App\Sheba\Business\BusinessQueue;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
+use App\Sheba\Business\BusinessQueue;
 use Sheba\PushNotificationHandler;
+use App\Models\BusinessMember;
 
 class SendLeavePushNotificationToEmployee extends BusinessQueue
 {
