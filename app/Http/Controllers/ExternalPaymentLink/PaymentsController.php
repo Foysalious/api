@@ -58,4 +58,25 @@ class PaymentsController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    /**
+     * @param Request $request
+     * @param ExternalPayments $payments
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getStatus(Request $request, ExternalPayments $payments)
+    {
+        try {
+            /** @var PaymentClientAuthentication $client */
+            $client = $request->client;
+            $status = $payments->setClient($client)->getGatewayStatus();
+            return api_response($request, $payments, 200, ['data' => $status]);
+
+        } catch (ExternalPaymentLinkException $e) {
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
+    }
 }
