@@ -17,6 +17,7 @@ class WebstoreSettingsTransformer extends TransformerAbstract
         return [
             'name' => $partner->name,
             'sub_domain' => $partner->sub_domain,
+            'url' => $this->getWebStoreURL($partner),
             'has_webstore' => $partner->has_webstore,
             'is_webstore_published' => $partner->is_webstore_published,
             'logo' => $partner->logo,
@@ -44,5 +45,14 @@ class WebstoreSettingsTransformer extends TransformerAbstract
         /** @var OrderService $orderService */
         $orderService = app(OrderService::class);
         return $orderService->setPartnerId($partner->id)->getPartnerDetails()['partner']['delivery_charge'];
+    }
+
+    public function getWebStoreURL(Partner $partner)
+    {
+        if($partner->isMigrated(Modules::POS)) {
+            return config('sheba.new_webstore_url');
+        } else {
+            return config('sheba.new_webstore_url');
+        }
     }
 }
