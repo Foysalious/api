@@ -169,7 +169,7 @@ abstract class ReturnPosItem extends RefundNature
             ]
         );
     }
-
+    //todo: need to change this block
     protected function makeInventoryProduct($services, $requestedServices)
     {
         $requested_service = json_decode($requestedServices, true);
