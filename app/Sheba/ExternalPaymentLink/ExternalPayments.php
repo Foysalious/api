@@ -23,6 +23,7 @@ use Sheba\Pos\Repositories\PosCustomerRepository;
 use Sheba\Repositories\ProfileRepository;
 use Sheba\RequestIdentification;
 use Sheba\PaymentLink\Creator;
+use Sheba\Dal\PgwStoreAccount\Model as PgwStoreAccount;
 
 class ExternalPayments
 {
@@ -232,5 +233,14 @@ class ExternalPayments
         }
         return $this->posCustomerRepo->save(['profile_id' => $profile->id]);
 
+    }
+
+    /**
+     * @return bool
+     */
+    public function getGatewayStatus()
+    {
+        $partner = $this->client->partner;
+        return PgwStoreAccount::where('user_id', $partner->id)->where('user_type', get_class($partner))->where('status', 1)->first() ? true : false;
     }
 }

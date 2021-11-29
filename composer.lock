@@ -6993,7 +6993,7 @@
             "source": {
                 "type": "git",
                 "url": "https://bitbucket.org/startern/sheba_dal.git",
-                "reference": "d4b572ad40f7c5a6608e76d66ce93fc221c0c6b4"
+                "reference": "14df75569bc523c6045db6eea8ac011ce333f503"
             },
             "require": {
                 "php": ">=5.4"
@@ -7020,7 +7020,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2021-11-24T03:21:14+00:00"
+            "time": "2021-11-29T05:15:34+00:00"
         },
         {
             "name": "sheba/elasticsearch",
@@ -7590,7 +7590,8 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2021-03-09T12:30:35+00:00"
+            "abandoned": "symfony/mailer",
+            "time": "2017-05-01T15:54:03+00:00"
         },
         {
             "name": "symfony/console",
