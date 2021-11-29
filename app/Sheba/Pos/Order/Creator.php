@@ -93,6 +93,12 @@ class Creator
         return $this->createValidator->hasError();
     }
 
+    public function setRequest(Request $request)
+    {
+        $this->request = $request;
+        return $this;
+    }
+
     /**
      * @param mixed $allServicesStockDecreasingArray
      * @return Creator
