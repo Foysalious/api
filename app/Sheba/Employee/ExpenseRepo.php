@@ -100,7 +100,8 @@ class ExpenseRepo
 
             $expense['date'] = $expense->created_at ? $expense->created_at->format('M d') : null;
             $expense['time'] = $expense->created_at ? $expense->created_at->format('h:i A') : null;
-            $expense['can_edit'] = $this->canEdit($expense);
+            $expense['can_edit'] = $expense->is_updated_by_super_admin ? 0 : $this->canEdit($expense);
+            $expense['reason'] = $expense->is_updated_by_super_admin ? "hello" : null;
 
             if ($this->getAttachments($expense, $request)) $expense['attachment'] = $this->getAttachments($expense, $request);
 
