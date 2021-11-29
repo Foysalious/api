@@ -52,6 +52,12 @@ trait AttendanceBasicInfo
         return $data;
     }
 
+    public function getFormattedWeekendsString($weekends): string
+    {
+        sort($weekends);
+        return implode(', ', array_map('ucfirst', $weekends));
+    }
+
     public function createPeriodByTime($start_date, $end_date)
     {
         return CarbonPeriod::create($start_date, $end_date);
