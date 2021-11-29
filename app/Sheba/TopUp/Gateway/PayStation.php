@@ -1,9 +1,6 @@
 <?php namespace Sheba\TopUp\Gateway;
 
 use App\Models\TopUpOrder;
-use GuzzleHttp\Client as HttpClient;
-use GuzzleHttp\Exception\ConnectException;
-use GuzzleHttp\Exception\GuzzleException;
 use InvalidArgumentException;
 use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\TopUp\Exception\GatewayTimeout;
@@ -12,6 +9,10 @@ use Sheba\TopUp\Gateway\FailedReason\PayStationFailedReason;
 use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
 use Sheba\TopUp\Vendor\Response\PayStationResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
+use Sheba\TPProxy\TPProxyClient;
+use Sheba\TPProxy\TPProxyServerError;
+use Sheba\TPProxy\TPProxyServerTimeout;
+use Sheba\TPProxy\TPRequest;
 
 class PayStation implements Gateway
 {
@@ -19,16 +20,16 @@ class PayStation implements Gateway
     CONST SUCCESS = 1;
     CONST FAILED = 2;
 
-    /** @var HttpClient */
-    private $httpClient;
+    /** @var TPProxyClient */
+    private $tpClient;
 
     private $rechargeUrl;
     private $userName;
     private $password;
 
-    public function __construct(HttpClient $client)
+    public function __construct(TPProxyClient $client)
     {
-        $this->httpClient = $client;
+        $this->tpClient = $client;
 
         $this->rechargeUrl = config('topup.pay_station.recharge_url');
         $this->userName = config('topup.pay_station.user_name');
@@ -37,13 +38,15 @@ class PayStation implements Gateway
 
     /**
      * @throws GatewayTimeout
-     * @throws GuzzleException
      * @throws PayStationNotWorkingException
      */
     public function recharge(TopUpOrder $topup_order): TopUpResponse
     {
+        $api_response = $this->call($this->makeUrl($topup_order));
+        dump($api_response);
+
         $response = new PayStationResponse();
-        $response->setResponse($this->call($this->makeUrl($topup_order)));
+        $response->setResponse($api_response);
         return $response;
     }
 
@@ -102,7 +105,7 @@ class PayStation implements Gateway
         throw new InvalidArgumentException('Invalid operator for pay station topup.');
     }
 
-    private function getConnectionType($connection_type, $vendor_id)
+    private function getConnectionType($vendor_id, $connection_type)
     {
         if ($vendor_id == 7) return "Skitto";
         if ($connection_type == "prepaid") return "Pre-paid";
@@ -113,24 +116,23 @@ class PayStation implements Gateway
 
     /**
      * @throws GatewayTimeout
-     * @throws GuzzleException
      * @throws PayStationNotWorkingException
      */
     private function call($url)
     {
-        try {
-            $result = $this->httpClient->get($url, [
-                'timeout' => 60,
-                'read_timeout' => 60,
-                'connect_timeout' => 60
-            ]);
-        } catch (ConnectException $e) {
-            if (isTimeoutException($e)) throw new GatewayTimeout($e->getMessage());
-            throw $e;
-        }
+        $tp_request = (new TPRequest())
+            ->setMethod(TPRequest::METHOD_GET)
+            ->setUrl($url)
+            ->setTimeout(60);
 
-        $response = $result->getBody()->getContents();
-        if (!$response) throw new PayStationNotWorkingException();
-        return json_decode($response);
+        dump($tp_request);
+
+        try {
+            return $this->tpClient->call($tp_request);
+        } catch (TPProxyServerTimeout $e) {
+            throw new GatewayTimeout($e->getMessage());
+        } catch (TPProxyServerError $e) {
+            throw new PayStationNotWorkingException($e->getMessage());
+        }
     }
 }
