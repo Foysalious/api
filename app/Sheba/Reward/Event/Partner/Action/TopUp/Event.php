@@ -34,28 +34,39 @@ class Event extends Action implements AmountCalculator
     {
         parent::setParams($params);
         $this->topup_order = $this->params[0];
+        if($this->topup_order->isAgentPartner())
+            $this->partner = Partner::find($this->topup_order->agent_id);
     }
 
-    public function isEligible()
+    public function isEligible(): bool
     {
-        return $this->rule->check($this->params) && $this->filterConstraints();
+        return $this->rule->check($this->params) && $this->filterConstraints() && $this->filterTargets();
     }
 
-    private function filterConstraints()
+    /**
+     * @return bool
+     */
+    private function filterConstraints(): bool
     {
         foreach ($this->reward->constraints->groupBy('constraint_type') as $key => $type) {
             $ids = $type->pluck('constraint_id')->toArray();
 
-            if ($key == 'App\Models\PartnerSubscriptionPackage') {
-                if($this->topup_order->isAgentPartner()) {
-                    $this->partner = Partner::find($this->topup_order->agent_id);
-                    return in_array($this->partner->package_id, $ids);
-                }
+            if ($key == 'App\Models\PartnerSubscriptionPackage')
                 return in_array($this->partner->package_id, $ids);
-            }
+
         }
 
         return true;
+    }
+
+    /**
+     * @return bool
+     */
+    private function filterTargets(): bool
+    {
+        if(count($this->reward->rewardTargets) === 0) return true;
+        $reward_target = $this->reward->rewardTargets()->where('target_id', $this->partner->id)->first();
+        return (isset($reward_target));
     }
 
     /**
@@ -66,8 +77,9 @@ class Event extends Action implements AmountCalculator
     {
         $topUpAmount = $this->params[0];
         if ($this->reward->is_amount_percentage) {
-
-            return (($this->reward->amount * $topUpAmount->amount) / 100);
+            $cap = $this->reward->cap ? : 0;
+            $amount = ($this->reward->amount * $topUpAmount->amount);
+            return  $amount > $cap ? $cap : $amount;
         }
         return $this->reward->amount;
     }

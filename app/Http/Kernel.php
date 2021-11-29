@@ -8,8 +8,8 @@ use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\B2B\OrderMiddleware;
 use App\Http\Middleware\B2B\TerminatingMiddleware;
 use App\Http\Middleware\BusinessManagerAuthMiddleware;
-use App\Http\Middleware\CheckUserMigrationRunningMiddleware;
 use App\Http\Middleware\ConcurrentRequestMiddleware;
+use App\Http\Middleware\CheckUserMigrationRunningMiddleware;
 use App\Http\Middleware\Cors2MiddleWare;
 use App\Http\Middleware\CriticalAppVersionMiddleware;
 use App\Http\Middleware\CustomerAuthMiddleware;
@@ -125,9 +125,9 @@ class Kernel extends HttpKernel
         'shebaServer' => ShebaNetworkMiddleware::class,
         'terminate' => TerminatingMiddleware::class,
         'accounting.auth' => AccountingAuthMiddleware::class,
-        'userMigration.auth' => UserMigrationMiddleware::class,
-        'userMigration.check_status' => CheckUserMigrationRunningMiddleware::class,
         'partner.status'=> PartnerStatusAuthMiddleware::class,
         'concurrent_request' => ConcurrentRequestMiddleware::class,
+        'userMigration.auth' => UserMigrationMiddleware::class,
+        'userMigration.check_status' => CheckUserMigrationRunningMiddleware::class
     ];
 }

@@ -3,6 +3,7 @@
 
 use App\Models\PosOrder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Redis;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Pos\Repositories\PosOrderRepository;
 
@@ -122,7 +123,7 @@ class OrderPlace
 
     public function setPosOrder($posOrderId)
     {
-        $this->posOrder  = PosOrder::find($posOrderId);
+        $this->posOrder = PosOrder::find($posOrderId);
         return $this;
     }
 
@@ -141,6 +142,7 @@ class OrderPlace
      */
     public function storeDeliveryInformation($info)
     {
+        Redis::set("sDelivery_" . $this->posOrder->id, json_encode($info));
         $data = [
             'delivery_vendor_name' => $info['logistic_partner_id'],
             'address' => $info['delivery_address']['address'],
@@ -153,7 +155,6 @@ class OrderPlace
 
         return $this->posOrderRepository->update($this->posOrder, $data);
     }
-
 
 
     private function makeData()
