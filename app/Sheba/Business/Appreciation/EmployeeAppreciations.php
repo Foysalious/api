@@ -1,6 +1,7 @@
 <?php namespace App\Sheba\Business\Appreciation;
 
 use App\Models\BusinessMember;
+use Carbon\Carbon;
 use Sheba\Dal\BusinessMemberBadge\BusinessMemberBadgeRepository;
 
 class EmployeeAppreciations
@@ -62,40 +63,44 @@ class EmployeeAppreciations
                 'number_of_stickers' => $stickers->count(),
             ]);
         }
-        $early_bird_badge = $this->businessMemberBadgeRepo->where('business_member_id', $business_member->id)->where('badge', self::EARLY_BIRD)->count();
-        $late_lateef_badge = $this->businessMemberBadgeRepo->where('business_member_id', $business_member->id)->where('badge', self::LATE_LATEEF)->count();
-        if ($early_bird_badge) array_push($grouped_stickers, [
-            'id' => null,
+        $early_bird_badge = $this->businessMemberBadgeRepo->where('business_member_id', $business_member->id)->where('badge', self::EARLY_BIRD);
+        $late_lateef_badge = $this->businessMemberBadgeRepo->where('business_member_id', $business_member->id)->where('badge', self::LATE_LATEEF);
+        if ($early_bird_badge->count()) {
+            array_push($grouped_stickers, [
+            'id' => rand(-9999,-1),
             'image' => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/stickers/sharp_cookiee_stickers-3.png",
             'appreciation_givers' => null,
-            'number_of_stickers' => $early_bird_badge
-        ]);
-        if ($late_lateef_badge) array_push($grouped_stickers, [
-            'id' => null,
-            'image' => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/stickers/sharp_cookiee_stickers-3.png",
-            'appreciation_givers' => null,
-            'number_of_stickers' => $late_lateef_badge
+            'number_of_stickers' => $early_bird_badge->count()
         ]);
         array_push($all_complements, [
-            "id" => null,
+            "id" => rand(-9999,-1),
             "complement" => "Thanks for your extra effort! keep up the pace.",
             "sticker" => [
-              "id" => null,
-              "image" => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/stickers/thank_you_stickers.png"
-            ],
-            "given_by" => null,
-            "date" => null
-        ],
-        [
-            "id" => null,
-            "complement" => "Sometimes it’s considerable. Make sure you don’t make it a habit!",
-            "sticker" => [
-                "id" => null,
+                "id" => rand(-9999,-1),
                 "image" => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/stickers/thank_you_stickers.png"
             ],
-            "given_by" => null,
-            "date" => null
+            "given_by" => 'Admin',
+            "date" => $early_bird_badge->last()->created_at->format('dS F')
         ]);
+        }
+        if ($late_lateef_badge->count()) {
+            array_push($grouped_stickers, [
+                'id' => rand(-9999,-1),
+                'image' => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/stickers/sharp_cookiee_stickers-3.png",
+                'appreciation_givers' => null,
+                'number_of_stickers' => $late_lateef_badge->count()
+            ]);
+            array_push($all_complements, [
+                "id" => rand(-9999,-1),
+                "complement" => "Sometimes it’s considerable. Make sure you don’t make it a habit!",
+                "sticker" => [
+                    "id" => rand(-9999,-1),
+                    "image" => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/stickers/thank_you_stickers.png"
+                ],
+                "given_by" => 'Admin',
+                "date" => $late_lateef_badge->last()->created_at->format('dS F')
+            ]);
+        }
         return ['stickers' => $grouped_stickers, 'complements' => $all_complements];
     }
 
