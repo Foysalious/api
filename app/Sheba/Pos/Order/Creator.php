@@ -96,6 +96,7 @@ class Creator
     public function setRequest(Request $request)
     {
         $this->request = $request;
+        $this->setData($request->all());
         return $this;
     }
 
