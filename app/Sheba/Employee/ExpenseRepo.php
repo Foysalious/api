@@ -94,14 +94,14 @@ class ExpenseRepo
         try {
             $expense = Expense::where('id', $expense)
                 ->orderBy('created_at', 'DESC')
-                ->select('id', 'member_id', 'business_member_id', 'amount', 'status', 'is_updated_by_super_admin', 'remarks', 'type', 'created_at')->first();
+                ->select('id', 'member_id', 'business_member_id', 'amount', 'status', 'is_updated_by_super_admin', 'remarks', 'type', 'created_at', 'updated_at')->first();
 
             if (!$expense) return false;
 
             $expense['date'] = $expense->created_at ? $expense->created_at->format('M d') : null;
             $expense['time'] = $expense->created_at ? $expense->created_at->format('h:i A') : null;
             $expense['can_edit'] = $expense->is_updated_by_super_admin ? 0 : $this->canEdit($expense);
-            $expense['reason'] = $expense->is_updated_by_super_admin ? "hello" : null;
+            $expense['reason'] = $expense->is_updated_by_super_admin ? "Expense already updated by admin at " .$expense->updated_at->format('d-M-Y h:i A') : null;
 
             if ($this->getAttachments($expense, $request)) $expense['attachment'] = $this->getAttachments($expense, $request);
 
