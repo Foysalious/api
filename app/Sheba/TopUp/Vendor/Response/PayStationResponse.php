@@ -9,7 +9,7 @@ class PayStationResponse extends TopUpResponse
      */
     public function hasSuccess(): bool
     {
-        return $this->response && $this->response->status == 200;
+        return $this->response && $this->response->Status == "SUCCESS";
     }
 
     /**
@@ -17,7 +17,7 @@ class PayStationResponse extends TopUpResponse
      */
     public function getTransactionId()
     {
-        return $this->response->data->tid;
+        return $this->response->Transiction_id;
     }
 
     /**
@@ -25,7 +25,7 @@ class PayStationResponse extends TopUpResponse
      */
     public function getErrorCode()
     {
-        return $this->response->status;
+        return null;
     }
 
     /**
@@ -33,7 +33,7 @@ class PayStationResponse extends TopUpResponse
      */
     public function getErrorMessage()
     {
-        return $this->response->data->message;
+        return $this->response->Message;
     }
 
     /**

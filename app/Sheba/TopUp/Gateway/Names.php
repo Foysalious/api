@@ -12,5 +12,5 @@ class Names
     const AIRTEL = 'airtel';
     const PAYWELL = 'paywell';
     const BD_RECHARGE = 'bdrecharge';
-    const PAY_STATION = 'pay_station';
+    const PAY_STATION = 'paystation';
 }
