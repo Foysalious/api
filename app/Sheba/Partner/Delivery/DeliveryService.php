@@ -223,8 +223,7 @@ class DeliveryService
     {
         /** @var InventoryServerClient $inventoryService */
         $inventoryService = app(InventoryServerClient::class);
-        return 0;
-        return $inventoryService->get('api/v1/partners/'.$partnerId.'/products-without-weight');
+        return $inventoryService->get('api/v1/webstore/partners/'.$partnerId.'/product-without-weight-count')['count'];
     }
 
 
