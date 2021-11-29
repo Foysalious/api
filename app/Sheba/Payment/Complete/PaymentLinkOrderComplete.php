@@ -90,7 +90,6 @@ class PaymentLinkOrderComplete extends PaymentComplete
             });
         } catch (Throwable $e) {
             $this->failPayment();
-            Log::debug(["error while completing payment link", $e->getMessage(), $e->getCode()]);
             throw $e;
         }
         try {
@@ -102,7 +101,6 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $this->notify();
 
         } catch (Throwable $e) {
-            Log::debug(["error while storing payment link entry", $e->getMessage(), $e->getCode()]);
             logError($e);
         }
         $this->payment->reload();
