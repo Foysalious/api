@@ -79,8 +79,8 @@ abstract class TopUpResponse
         if ($this->hasSuccess()) throw new Exception('Response has success.');
 
         $topup_error = new TopUpErrorResponse();
-        $topup_error->errorCode = isset($this->response->recharge_status) ? $this->response->recharge_status : 400;
-        $topup_error->errorMessage = isset($this->response->Message) ? $this->response->Message : 'Vendor api call error';
+        $topup_error->errorCode = $this->getErrorCode() ?: 400;
+        $topup_error->errorMessage = $this->getErrorMessage() ?: 'Vendor api call error';
         $topup_error->errorResponse = $this->response ?: '';
         $topup_error->setFailedReason(FailedReason::GATEWAY_ERROR);
         return $topup_error;
