@@ -1,4 +1,4 @@
-<?php namespace Sheba\TopUp\Vendor\Internal;
+<?php namespace Sheba\TopUp\Gateway\Clients;
 
 use App\Models\TopUpOrder;
 use Exception;

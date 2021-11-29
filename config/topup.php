@@ -62,4 +62,9 @@ return [
             'k' => env('BD_RECHARGE_ENCRYPTION_KEY'),
         ]
     ],
+    'pay_station' => [
+        'recharge_url' => env('PAY_STATION_RECHARGE_URL'),
+        'user_name' => env('PAY_STATION_USER_NAME'),
+        'password' => env('PAY_STATION_PASSWORD'),
+    ]
 ];

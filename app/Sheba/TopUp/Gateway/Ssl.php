@@ -2,9 +2,9 @@
 
 use App\Models\TopUpOrder;
 use Exception;
-use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\TopUp\Exception\GatewayTimeout;
-use Sheba\TopUp\Vendor\Internal\SslVrClient;
+use Sheba\TopUp\Gateway\FailedReason\SslFailedReason;
+use Sheba\TopUp\Gateway\Clients\SslVrClient;
 use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\Ssl\SslFailResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\Ssl\SslSuccessResponse;
@@ -115,5 +115,10 @@ class Ssl implements Gateway
     public function getName()
     {
         return Names::SSL;
+    }
+
+    public function getFailedReason(): FailedReason
+    {
+        return new SslFailedReason();
     }
 }

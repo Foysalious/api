@@ -1,8 +1,8 @@
 <?php namespace Sheba\TopUp\Vendor\Response;
 
-use Sheba\TopUp\Gateway\BdRecharge;
+use Sheba\TopUp\Gateway\PayStation;
 
-class BdRechargeResponse extends TopUpResponse
+class PayStationResponse extends TopUpResponse
 {
     /**
      * @inheritDoc
@@ -41,7 +41,7 @@ class BdRechargeResponse extends TopUpResponse
      */
     public function resolveTopUpSuccessStatus()
     {
-        return BdRecharge::getInitialStatusStatically();
+        return PayStation::getInitialStatusStatically();
     }
 
     public function isPending()

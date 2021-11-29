@@ -1,46 +1,33 @@
 <?php namespace Sheba\TopUp\Gateway;
 
+use App\Models\TopUpOrder;
 use Sheba\TopUp\Gateway\Pretups\Operator\Airtel;
 use Sheba\TopUp\Gateway\Pretups\Operator\Robi;
 use Sheba\TopUp\Gateway\Pretups\Operator\Banglalink;
-use Sheba\TopUp\Vendor\VendorFactory;
 
 class GatewayFactory
 {
-    private $vendorId;
-    private $gatewayName;
-
-    public function setVendorId($vendor_id)
-    {
-        $this->vendorId = $vendor_id;
-        return $this;
-    }
-
-    public function setGatewayName($gatewayName)
-    {
-        $this->gatewayName = $gatewayName;
-        return $this;
-    }
-
     /**
+     * @param $name
      * @return Gateway
      */
-    public function get()
+    public static function getByName($name)
     {
-        if ($this->gatewayName == Names::BANGLALINK) return app(Banglalink::class);
-        if ($this->gatewayName == Names::ROBI) return app(Robi::class);
-        if ($this->gatewayName == Names::AIRTEL) return app(Airtel::class);
-        if ($this->gatewayName == Names::PAYWELL) return app(Paywell::class);
-        if ($this->gatewayName == Names::BD_RECHARGE) return app(BdRecharge::class);
+        if ($name == Names::BANGLALINK) return app(Banglalink::class);
+        if ($name == Names::ROBI) return app(Robi::class);
+        if ($name == Names::AIRTEL) return app(Airtel::class);
+        if ($name == Names::PAYWELL) return app(Paywell::class);
+        if ($name == Names::BD_RECHARGE) return app(BdRecharge::class);
+        if ($name == Names::PAY_STATION) return app(PayStation::class);
         else return app(Ssl::class);
     }
 
     /**
-     * @param Gateway $gateway
-     * @return string
+     * @param TopUpOrder $order
+     * @return Gateway
      */
-    public static function getNameFromGateway(Gateway $gateway)
+    public static function getByOrder(TopUpOrder $order)
     {
-        return $gateway->getName();
+        return self::getByName($order->gateway);
     }
 }

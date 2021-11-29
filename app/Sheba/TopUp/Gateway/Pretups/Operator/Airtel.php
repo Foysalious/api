@@ -1,5 +1,7 @@
 <?php namespace Sheba\TopUp\Gateway\Pretups\Operator;
 
+use Sheba\TopUp\Gateway\FailedReason;
+use Sheba\TopUp\Gateway\FailedReason\AirtelFailedReason;
 use Sheba\TopUp\Gateway\Gateway;
 use Sheba\TopUp\Gateway\Names;
 use Sheba\TopUp\Gateway\Pretups\Pretups;
@@ -7,6 +9,7 @@ use Sheba\TopUp\Gateway\Pretups\Pretups;
 class Airtel extends Pretups implements Gateway
 {
     use RobiAxiata;
+
     CONST SHEBA_COMMISSION = 3.60;
 
     protected function getMid()
@@ -27,5 +30,10 @@ class Airtel extends Pretups implements Gateway
     public function getName()
     {
         return Names::AIRTEL;
+    }
+
+    public function getFailedReason(): FailedReason
+    {
+        return new AirtelFailedReason();
     }
 }

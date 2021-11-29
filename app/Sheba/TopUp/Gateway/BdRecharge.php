@@ -1,16 +1,13 @@
-<?php
-
-
-namespace Sheba\TopUp\Gateway;
-
+<?php namespace Sheba\TopUp\Gateway;
 
 use App\Models\TopUpOrder;
 use App\Sheba\TopUp\Exception\BdRechargeTopUpStillProcessing;
-use App\Sheba\TopUp\Vendor\Internal\BdRechargeClient;
 use App\Sheba\TopUp\Vendor\Response\Ipn\BdRecharge\BdRechargeFailResponse;
 use App\Sheba\TopUp\Vendor\Response\Ipn\BdRecharge\BdRechargeSuccessResponse;
-use Exception;
 use Sheba\Dal\TopupOrder\Statuses;
+use Sheba\TopUp\Exception\GatewayTimeout;
+use Sheba\TopUp\Gateway\Clients\BdRechargeClient;
+use Sheba\TopUp\Gateway\FailedReason\BdRechargeFailedReason;
 use Sheba\TopUp\Vendor\Response\BdRechargeResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
@@ -21,6 +18,7 @@ class BdRecharge implements Gateway
     CONST SHEBA_COMMISSION = 0.0;
     CONST SUCCESS = 1;
     CONST FAILED = 2;
+
     private $client;
 
     public function __construct(BdRechargeClient $client)
@@ -61,7 +59,7 @@ class BdRecharge implements Gateway
     /**
      * @param TopUpOrder $topup_order
      * @return IpnResponse
-     * @throws TPProxyServerError | BdRechargeTopUpStillProcessing
+     * @throws TPProxyServerError | BdRechargeTopUpStillProcessing | GatewayTimeout
      */
     public function enquireIpnResponse(TopUpOrder $topup_order): IpnResponse
     {
@@ -75,9 +73,14 @@ class BdRecharge implements Gateway
         } else if ($status == 'failed' || $status == 400) {
             $ipn_response = app(BdRechargeFailResponse::class);
         } else if ($status == 'processing') {
-            Throw new BdRechargeTopUpStillProcessing($response);
+            throw new BdRechargeTopUpStillProcessing($response);
         }
         $ipn_response->setResponse($data);
         return $ipn_response;
+    }
+
+    public function getFailedReason(): FailedReason
+    {
+        return new BdRechargeFailedReason();
     }
 }

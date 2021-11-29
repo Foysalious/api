@@ -1,6 +1,6 @@
-<?php namespace Sheba\TopUp\FailedReason;
+<?php namespace Sheba\TopUp\Gateway\FailedReason;
 
-use Sheba\TopUp\ResponseCode\SslRechargeResponseCodes;
+use Sheba\TopUp\Gateway\FailedReason;
 use Throwable;
 
 class SslFailedReason extends FailedReason

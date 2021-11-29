@@ -2,10 +2,10 @@
 
 use App\Models\TopUpOrder;
 use Exception;
-use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\TopUp\Exception\GatewayTimeout;
 use Sheba\TopUp\Exception\PaywellTopUpStillNotResolved;
-use Sheba\TopUp\Vendor\Internal\PaywellClient;
+use Sheba\TopUp\Gateway\Clients\PaywellClient;
+use Sheba\TopUp\Gateway\FailedReason\PaywellFailedReason;
 use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\Paywell\PaywellFailResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\Paywell\PaywellSuccessResponse;
@@ -63,5 +63,10 @@ class Paywell implements Gateway
         }
         $ipn_response->setResponse($response);
         return $ipn_response;
+    }
+
+    public function getFailedReason(): FailedReason
+    {
+        return new PaywellFailedReason();
     }
 }
