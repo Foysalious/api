@@ -79,7 +79,7 @@ class EmployeeAppreciations
                 "id" => rand(-9999,-1),
                 "image" => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/stickers/thank_you_stickers.png"
             ],
-            "given_by" => 'Admin',
+            "given_by" => ['name' => 'Admin'],
             "date" => $early_bird_badge->last()->created_at->format('dS F')
         ]);
         }
@@ -97,7 +97,7 @@ class EmployeeAppreciations
                     "id" => rand(-9999,-1),
                     "image" => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/stickers/thank_you_stickers.png"
                 ],
-                "given_by" => 'Admin',
+                "given_by" => ['name' => 'Admin'],
                 "date" => $late_lateef_badge->last()->created_at->format('dS F')
             ]);
         }
