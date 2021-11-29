@@ -76,7 +76,7 @@ class EmployeeAppreciations
             'appreciation_givers' => null,
             'number_of_stickers' => $late_lateef_badge
         ]);
-        if ($is_self) array_push($all_complements, [
+        array_push($all_complements, [
             "id" => null,
             "complement" => "Thanks for your extra effort! keep up the pace.",
             "sticker" => [
