@@ -2,10 +2,8 @@
 
 use App\Models\TopUpOrder;
 use Exception;
-use GuzzleHttp\Exception\GuzzleException;
-use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\TopUp\Exception\GatewayTimeout;
-use Sheba\TopUp\Vendor\Internal\Pretups\Client as PretupsClient;
+use Sheba\TopUp\Gateway\Clients\PretupsClient;
 use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 

@@ -1,5 +1,7 @@
 <?php namespace Sheba\TopUp\Gateway\Pretups\Operator;
 
+use Sheba\TopUp\Gateway\FailedReason;
+use Sheba\TopUp\Gateway\FailedReason\RobiFailedReason;
 use Sheba\TopUp\Gateway\Gateway;
 use Sheba\TopUp\Gateway\Names;
 use Sheba\TopUp\Gateway\Pretups\Pretups;
@@ -7,6 +9,7 @@ use Sheba\TopUp\Gateway\Pretups\Pretups;
 class Robi extends Pretups implements Gateway
 {
     use RobiAxiata;
+
     CONST SHEBA_COMMISSION = 4.02;
 
     protected function getMid()
@@ -27,5 +30,10 @@ class Robi extends Pretups implements Gateway
     public function getName()
     {
         return Names::ROBI;
+    }
+
+    public function getFailedReason(): FailedReason
+    {
+        return new RobiFailedReason();
     }
 }

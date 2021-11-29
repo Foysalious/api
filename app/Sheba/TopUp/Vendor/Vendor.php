@@ -1,15 +1,12 @@
 <?php namespace Sheba\TopUp\Vendor;
 
 use App\Models\TopUpOrder;
-use App\Models\TopUpRechargeHistory;
 use App\Models\TopUpVendor;
-use Carbon\Carbon;
 use Exception;
 use Sheba\TopUp\Exception\GatewayTimeout;
 use Sheba\TopUp\Exception\PaywellTopUpStillNotResolved;
 use Sheba\TopUp\Gateway\Gateway;
 use Sheba\TopUp\Gateway\GatewayFactory;
-use Sheba\TopUp\Gateway\Names;
 use Sheba\TopUp\Gateway\Ssl;
 use Sheba\TopUp\GatewayTimeoutHandler;
 use Sheba\TopUp\Vendor\Response\GenericGatewayErrorResponse;
@@ -23,15 +20,11 @@ abstract class Vendor
     /** @var Gateway */
     protected $topUpGateway;
 
-    /** @var GatewayFactory */
-    private $gatewayFactory;
-
     /** @var GatewayTimeoutHandler */
     private $gatewayTimeoutHandler;
 
-    public function __construct(GatewayFactory $factory, GatewayTimeoutHandler $timeout_handler)
+    public function __construct(GatewayTimeoutHandler $timeout_handler)
     {
-        $this->gatewayFactory = $factory;
         $this->gatewayTimeoutHandler = $timeout_handler;
     }
 
@@ -92,8 +85,7 @@ abstract class Vendor
 
     protected function resolveGateway(TopUpOrder $top_up_order)
     {
-        $this->gatewayFactory->setGatewayName($top_up_order->gateway)->setVendorId($top_up_order->vendor_id);
-        $this->setTopUpGateway($this->gatewayFactory->get());
+        $this->setTopUpGateway(GatewayFactory::getByOrder($top_up_order));
         $this->gatewayTimeoutHandler->setTopUpOrder($top_up_order);
     }
 
