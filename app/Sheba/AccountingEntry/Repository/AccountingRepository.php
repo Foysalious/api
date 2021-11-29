@@ -78,6 +78,7 @@ class AccountingRepository extends BaseRepository
         }
         $this->setModifier($partner);
         $data = $this->createEntryData($request, $sourceType, $sourceId);
+        Log::debug(['data for accounting', $data]);
         $url = "api/entries/source/" . $sourceType . '/' . $sourceId;
         return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->post($url, $data);
     }
