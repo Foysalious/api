@@ -62,7 +62,7 @@ class PartnerService
     private function makeUpdateData()
     {
         $data = [];
-        if($this->vatPercentage) $data['vat_percentage'] = $this->vatPercentage;
+        if(isset($this->vatPercentage)) $data['vat_percentage'] = $this->vatPercentage;
         return $data;
     }
 
