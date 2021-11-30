@@ -11,6 +11,7 @@ use App\Sheba\AccountingEntry\Constants\UserType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
@@ -300,7 +301,7 @@ class AccountingDueTrackerRepository extends BaseRepository
         $data['source_type'] = $type;
         $data['note'] = $request->note ?? null;
         $data['debit_account_key'] = $type === EntryTypes::DUE ? $request->customer_id : $request->account_key;
-        $data['credit_account_key'] = $type === EntryTypes::DUE ? $request->account_key : $request->customer_id;
+        $data['credit_account_key'] = $type === EntryTypes::DUE ? (new Accounts())->income->sales::DUE_SALES_FROM_DT : $request->customer_id;
         $data['customer_id'] = $request->customer_id;
         $data['customer_name'] = $request->customer_name;
         $data['customer_mobile'] = $request->customer_mobile;
