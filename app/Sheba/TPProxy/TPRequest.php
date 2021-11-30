@@ -1,5 +1,7 @@
 <?php namespace Sheba\TPProxy;
 
+use InvalidArgumentException;
+
 class TPRequest
 {
     const METHOD_GET = "get";
@@ -9,8 +11,8 @@ class TPRequest
     private $method;
     private $input = [];
     private $headers = [];
-    private $read_timeout = 60;
-    private $connect_timeout = 60;
+    private $readTimeout = 60;
+    private $connectTimeout = 60;
     private $timeout = 60;
 
     /**
@@ -96,7 +98,7 @@ class TPRequest
     public function setMethod(string $method): TPRequest
     {
         if (!in_array($method, [self::METHOD_GET, self::METHOD_POST])) {
-            throw new \InvalidArgumentException("$method not supported by tp client");
+            throw new InvalidArgumentException("$method not supported by tp client");
         }
         $this->method = $method;
 
@@ -108,7 +110,7 @@ class TPRequest
      */
     public function getReadTimeout(): int
     {
-        return $this->read_timeout;
+        return $this->readTimeout;
     }
 
     /**
@@ -116,7 +118,7 @@ class TPRequest
      */
     public function getConnectTimeout(): int
     {
-        return $this->connect_timeout;
+        return $this->connectTimeout;
     }
 
     /**
@@ -134,8 +136,8 @@ class TPRequest
     public function setTimeout(int $timeout): TPRequest
     {
         $this->timeout = $timeout;
-        $this->read_timeout = $timeout;
-        $this->connect_timeout = $timeout;
+        $this->readTimeout = $timeout;
+        $this->connectTimeout = $timeout;
 
         return $this;
     }

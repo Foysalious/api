@@ -26,5 +26,10 @@ interface Gateway
      * @throws PaywellTopUpStillNotResolved
      * @return IpnResponse
      */
-    public function enquireIpnResponse(TopUpOrder $topup_order): IpnResponse;
+    public function enquire(TopUpOrder $topup_order): IpnResponse;
+
+    /**
+     * @return FailedReason
+     */
+    public function getFailedReason(): FailedReason;
 }

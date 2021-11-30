@@ -1,15 +1,15 @@
 <?php namespace Sheba\TopUp\Vendor\Response;
 
-use Sheba\TopUp\Gateway\BdRecharge;
+use Sheba\TopUp\Gateway\PayStation;
 
-class BdRechargeResponse extends TopUpResponse
+class PayStationResponse extends TopUpResponse
 {
     /**
      * @inheritDoc
      */
     public function hasSuccess(): bool
     {
-        return $this->response && $this->response->status == 200;
+        return $this->response && $this->response->Status == "SUCCESS";
     }
 
     /**
@@ -17,7 +17,7 @@ class BdRechargeResponse extends TopUpResponse
      */
     public function getTransactionId()
     {
-        return $this->response->data->tid;
+        return $this->response->Reference;
     }
 
     /**
@@ -25,7 +25,7 @@ class BdRechargeResponse extends TopUpResponse
      */
     public function getErrorCode()
     {
-        return $this->response->status;
+        return null;
     }
 
     /**
@@ -33,7 +33,7 @@ class BdRechargeResponse extends TopUpResponse
      */
     public function getErrorMessage()
     {
-        return $this->response->data->message;
+        return $this->response->Message;
     }
 
     /**
@@ -41,11 +41,11 @@ class BdRechargeResponse extends TopUpResponse
      */
     public function resolveTopUpSuccessStatus()
     {
-        return BdRecharge::getInitialStatusStatically();
+        return PayStation::getInitialStatusStatically();
     }
 
     public function isPending()
     {
-        return $this->hasSuccess();
+        return $this->response && $this->response->Status == "REQUEST ACCEPTED";
     }
 }

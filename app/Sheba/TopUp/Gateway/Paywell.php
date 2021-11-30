@@ -2,10 +2,10 @@
 
 use App\Models\TopUpOrder;
 use Exception;
-use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\TopUp\Exception\GatewayTimeout;
 use Sheba\TopUp\Exception\PaywellTopUpStillNotResolved;
-use Sheba\TopUp\Vendor\Internal\PaywellClient;
+use Sheba\TopUp\Gateway\Clients\PaywellClient;
+use Sheba\TopUp\Gateway\FailedReason\PaywellFailedReason;
 use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\Paywell\PaywellFailResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\Paywell\PaywellSuccessResponse;
@@ -48,7 +48,7 @@ class Paywell implements Gateway
      * @return IpnResponse
      * @throws TPProxyServerError | PaywellTopUpStillNotResolved
      */
-    public function enquireIpnResponse(TopUpOrder $topup_order): IpnResponse
+    public function enquire(TopUpOrder $topup_order): IpnResponse
     {
         $response = $this->paywell->enquiry($topup_order);
 
@@ -65,4 +65,8 @@ class Paywell implements Gateway
         return $ipn_response;
     }
 
+    public function getFailedReason(): FailedReason
+    {
+        return new PaywellFailedReason();
+    }
 }

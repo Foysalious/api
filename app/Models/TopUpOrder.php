@@ -248,7 +248,6 @@ class TopUpOrder extends BaseModel implements PayableType
 
     public function getGatewayRefId()
     {
-
         if ($this->isGatewayRefUniform()) return dechex($this->id);
 
         if ($this->isViaPaywell()) return $this->id;

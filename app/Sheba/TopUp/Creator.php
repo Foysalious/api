@@ -60,8 +60,7 @@ class Creator
         $top_up_order->is_robi_topup_wallet = $this->topUpRequest->isRobiTopUpWallet() == 1 ? 1 : 0;
         $top_up_order->vendor_id = $model->id;
         $top_up_order->gateway = $model->gateway;
-        $gateway_factory = new GatewayFactory();
-        $gateway = $gateway_factory->setGatewayName($top_up_order->gateway)->get();
+        $gateway = GatewayFactory::getByOrder($top_up_order);
         $top_up_order->sheba_commission = ($this->topUpRequest->getAmount() * $gateway->getShebaCommission()) / 100;
         $top_up_order->ip = getIp();
         $top_up_order->lat = $this->topUpRequest->getLat();
