@@ -5,19 +5,22 @@ use App\Exceptions\NotFoundException;
 use App\Exceptions\ServiceRequest\MultipleCategoryServiceRequestException;
 use Sheba\Dal\Category\Category;
 use App\Models\Job;
+use Sheba\Dal\JobUpdateLog\JobUpdateLog;
 use Sheba\Dal\LocationService\LocationService;
 use App\Models\Order;
 use App\Models\PartnerOrder;
 use Sheba\Dal\JobService\JobServiceRepositoryInterface;
 use Sheba\LocationService\DiscountCalculation;
-use Sheba\LocationService\PriceCalculation;
 use Sheba\LocationService\UpsellCalculation;
+use Sheba\ModificationFields;
 use Sheba\PriceCalculation\PriceCalculationFactory;
+use Sheba\RequestIdentification;
 use Sheba\ServiceRequest\ServiceRequestObject;
 use Sheba\Dal\JobService\JobService;
 
 class Creator
 {
+    use ModificationFields;
     /** @var Job */
     private $job;
     /** @var  JobService[] */
@@ -135,7 +138,8 @@ class Creator
                 $service_data['discount_percentage'] = $this->discountCalculation->getIsDiscountPercentage() ? $this->discountCalculation->getDiscount() : 0;
             }
             list($service_data['option'], $service_data['variables']) = $service->getVariableAndOption($selected_service->getOption());
-            $this->jobServiceRepository->create($service_data);
+            $job_service = $this->jobServiceRepository->create($service_data);
+            $this->jobServiceLog($job_service, "$job_service->name Added");
         }
     }
 
@@ -144,6 +148,24 @@ class Creator
         $priceCalculationFactory = new PriceCalculationFactory();
         $priceCalculationFactory->setCategory($category);
         return $priceCalculationFactory->get();
+    }
+
+    private function jobServiceLog(JobService $job_service, $msg)
+    {
+        $data = $job_service->toArray();
+        $data['msg'] = $msg;
+        unset($data['job']);
+
+        $this->jobUpdateLog($job_service->job->id, json_encode($data));
+    }
+
+    private function jobUpdateLog($job_id, $log)
+    {
+        $log_data = [
+            'job_id' => $job_id,
+            'log'    => $log
+        ];
+        JobUpdateLog::create($this->withCreateModificationField((new RequestIdentification())->set($log_data)));
     }
 
 

@@ -39,7 +39,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
             'basic_info' => $this->getBasicInfo($business_member),
             'official_info' => $this->getOfficialInfo($business_member),
             'personal_info' => $this->getPersonalInfo($business_member),
-            'financial_info' => $this->getFinancialInfo(),
+            'financial_info' => $this->getFinancialInfo($business_member),
             'emergency_info' => $this->getEmergencyInfo(),
             'salary_info' => $this->getSalaryInfo($business_member),
             'profile_completion' => $this->profileCompletion($business_member),
@@ -139,8 +139,9 @@ class CoWorkerDetailTransformer extends TransformerAbstract
         ];
     }
 
-    private function getFinancialInfo()
+    private function getFinancialInfo($business_member)
     {
+        $bkash_info = $business_member->bkashInfos->last();
         $profile_bank_info = $this->profile->banks->last();
 
         $bank_name = $profile_bank_info && !$this->isNull($profile_bank_info->bank_name) ?
@@ -166,6 +167,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
             'tin_certificate' => $this->profile->tin_certificate,
             'bank' => $bank,
             'account_no' => $account_no,
+            'bkash_no' => $bkash_info ? $bkash_info->account_no : null,
             'financial_info_completion' => $financial_info_completion
         ];
     }
@@ -213,7 +215,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
         $basic_info_completion = $this->getBasicInfo($business_member)['basic_info_completion'];
         $official_info_completion = $this->getOfficialInfo($business_member)['official_info_completion'];
         $personal_info_completion = $this->getPersonalInfo($business_member)['personal_info_completion'];
-        $financial_info_completion = $this->getFinancialInfo()['financial_info_completion'];
+        $financial_info_completion = $this->getFinancialInfo($business_member)['financial_info_completion'];
         $emergency_info_completion = $this->getEmergencyInfo()['emergency_info_completion'];
         $gross_salary_info_completion = $this->getSalaryInfo($business_member)['gross_salary_completion'];
 
