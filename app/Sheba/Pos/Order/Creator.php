@@ -10,6 +10,7 @@ use App\Models\PartnerPosService;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Models\Profile;
+use App\Sheba\Partner\Delivery\Methods;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Dal\POSOrder\SalesChannels;
@@ -141,6 +142,7 @@ class Creator
             $order_data['weight'] = isset($this->data['weight']) ? $this->data['weight'] : 0;
             $order_data['delivery_district'] = isset($this->data['sales_channel']) && $this->data['sales_channel'] == SalesChannels::WEBSTORE && isset($this->data['delivery_district']) ? $this->data['delivery_district'] : null;
             $order_data['delivery_thana'] = isset($this->data['sales_channel']) && $this->data['sales_channel'] == SalesChannels::WEBSTORE && isset($this->data['delivery_thana']) ? $this->data['delivery_thana'] : null;
+            if (isset($order_data['delivery_district'])) $order_data['delivery_vendor_name'] = $this->getDeliveryVendorName();
             $order = $this->orderRepo->save($order_data);
             $services = json_decode($this->data['services'], true);
             foreach ($services as $service) {
@@ -343,5 +345,12 @@ class Creator
     private function getDiscountAmount($discount)
     {
         return (isset($discount) && isset($discount['amount'])) ? $discount['amount'] : 0;
+    }
+
+    private function getDeliveryVendorName()
+    {
+        $partnerDeliveryInformation = $this->partner->deliveryInformation;
+        if ($partnerDeliveryInformation && $partnerDeliveryInformation->delivery_vendor != Methods::OWN_DELIVERY) return Methods::SDELIVERY;
+        return Methods::OWN_DELIVERY;
     }
 }
