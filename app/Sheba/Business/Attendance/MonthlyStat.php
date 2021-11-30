@@ -132,7 +132,14 @@ class MonthlyStat
                         'active_hours' => $attendance->staying_time_in_minutes ? $this->formatMinute($attendance->staying_time_in_minutes) : null,
                         'overtime_in_minutes' => $overtime_in_minutes ?: 0,
                         'overtime' => $overtime_in_minutes ? $this->formatMinute($overtime_in_minutes) : null,
+                        'is_attendance_reconciled' => $attendance->is_attendance_reconciled
                     ];
+                    if ($attendance->overrideLogs) {
+                        foreach ($attendance->overrideLogs as $override_log) {
+                            if ($override_log->action == Actions::CHECKIN ) $breakdown_data['check_in_overridden'] = 1;
+                            if ($override_log->action == Actions::CHECKOUT) $breakdown_data['check_out_overridden'] = 1;
+                        }
+                    }
                 }
                 if (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance_checkin_action) $statistics[$attendance_checkin_action->status]++;
                 if (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance_checkout_action) $statistics[$attendance_checkout_action->status]++;
@@ -207,6 +214,7 @@ class MonthlyStat
                 $business_member_leaves_date_with_half_and_full_day[$date->toDateString()] = [
                     'is_half_day_leave' => $leave->is_half_day,
                     'which_half_day' => $leave->half_day_configuration,
+                    'leave_type' => $leave->leaveType()->withTrashed()->first()->title
                 ];
             }
         });
@@ -308,5 +316,33 @@ class MonthlyStat
     private function hasAttendanceButNotAbsent($attendance)
     {
         return $attendance && !($attendance->status == Statuses::ABSENT);
+    }
+
+    /**
+     * @param $date
+     * @return null
+     */
+    private function getHolidayName($date)
+    {
+        $holiday_name = null;
+        foreach ($this->businessHoliday as $holiday) {
+            if (!$date->between($holiday->start_date, $holiday->end_date)) continue;
+            $holiday_name = $holiday->title;
+            break;
+        }
+        return $holiday_name;
+    }
+
+    /**
+     * @param Carbon $date
+     * @param array $leaves_date_with_half_and_full_day
+     * @return mixed|null
+     */
+    private function getLeaveType(Carbon $date, array $leaves_date_with_half_and_full_day)
+    {
+        if (array_key_exists($date->format('Y-m-d'), $leaves_date_with_half_and_full_day)) {
+            return $leaves_date_with_half_and_full_day[$date->format('Y-m-d')]['leave_type'];
+        }
+        return null;
     }
 }
