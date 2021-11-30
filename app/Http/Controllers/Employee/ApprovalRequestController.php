@@ -1,6 +1,8 @@
 <?php namespace App\Http\Controllers\Employee;
 
+use App\Transformers\Business\ApprovalRequestListTransformer;
 use App\Transformers\Business\LeaveListTransformer;
+use Exception;
 use League\Fractal\Resource\Collection;
 use Sheba\Business\LeaveRejection\Requester as LeaveRejectionRequester;
 use App\Models\Attachment;
@@ -41,7 +43,7 @@ class ApprovalRequestController extends Controller
      * @param ApprovalRequestRepositoryInterface $approval_request_repo
      * @param LeaveRejectionRequester $leave_rejection_requester
      */
-    public function __construct(ApprovalRequestRepositoryInterface $approval_request_repo,LeaveRejectionRequester $leave_rejection_requester)
+    public function __construct(ApprovalRequestRepositoryInterface $approval_request_repo, LeaveRejectionRequester $leave_rejection_requester)
     {
         $this->approvalRequestRepo = $approval_request_repo;
         $this->leaveRejectionRequester = $leave_rejection_requester;
@@ -57,31 +59,41 @@ class ApprovalRequestController extends Controller
         $this->validate($request, ['type' => 'sometimes|string|in:' . implode(',', Type::get())]);
         /** @var Business $business */
         $business = $this->getBusiness($request);
-        /** @var BusinessMember $business_member */
-        $business_member = $this->getBusinessMember($request);
+        /**
+         * @var BusinessMember $requester_business_member
+         * means who is request for the approval list
+         */
+        $requester_business_member = $this->getBusinessMember($request);
         $approval_requests_list = [];
 
         list($offset, $limit) = calculatePagination($request);
+        $leave_approval_requests = $approval_request_repo->getApprovalRequestByBusinessMemberFilterBy($requester_business_member, 'leave');
 
-        if ($request->has('type'))
-            $approval_requests = $approval_request_repo->getApprovalRequestByBusinessMemberFilterBy($business_member, $request->type);
-        else
-            $approval_requests = $approval_request_repo->getApprovalRequestByBusinessMember($business_member);
-
-        if ($request->has('limit')) $approval_requests = $approval_requests->splice($offset, $limit);
-
-        foreach ($approval_requests as $approval_request) {
-            if (!$approval_request->requestable) continue;
+        $approval_requests = collect();
+        foreach ($leave_approval_requests as $leave_approval_request) {
             /** @var Leave $requestable */
+            $requestable = $leave_approval_request->requestable;
+            /** @var BusinessMember $business_member */
+            $business_member = $requestable->businessMember;
+            if (!$business_member || $business_member->status != 'active') continue;
+            $approval_requests->push($leave_approval_request);
+        }
+
+        // Differ new & old approval request
+        $approval_requests_without_order = $approval_requests->where('order', null);
+        $approval_requests_with_order = $approval_requests->where('is_notified', 1);
+        $merged_approval_requests = $approval_requests_with_order->merge($approval_requests_without_order);
+
+        if ($request->has('limit')) $merged_approval_requests = $merged_approval_requests->splice($offset, $limit);
+
+        foreach ($merged_approval_requests as $approval_request) {
+            if (!$approval_request->requestable) continue;
             $requestable = $approval_request->requestable;
-            /** @var Member $member */
-            $member = $requestable->businessMember->member;
-            /** @var Profile $profile */
-            $profile = $member->profile;
+            if (!$requestable->businessMember) continue;
 
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($approval_request, new ApprovalRequestTransformer($profile, $business));
+            $resource = new Item($approval_request, new ApprovalRequestListTransformer($business));
             $approval_request = $manager->createData($resource)->toArray()['data'];
 
             array_push($approval_requests_list, $approval_request);
@@ -103,15 +115,20 @@ class ApprovalRequestController extends Controller
         $approval_request = $this->approvalRequestRepo->find($approval_request);
         /** @var Leave $requestable */
         $requestable = $approval_request->requestable;
-        /** @var Business $business */
-        $business = $this->getBusiness($request);
-        /** @var BusinessMember $business_member */
-        $business_member = $this->getBusinessMember($request);
-        if ($business_member->id != $approval_request->approver_id)
-            return api_response($request, null, 403, ['message' => 'You Are not authorized to show this request']);
-
         /** @var BusinessMember $leave_requester_business_member */
         $leave_requester_business_member = $requestable->businessMember;
+        if (!$leave_requester_business_member || $leave_requester_business_member->status != 'active')
+            return api_response($request, null, 200, ['message' => 'This Employee is not anymore in the company']);
+        /** @var Business $business */
+        $business = $this->getBusiness($request);
+        /**
+         * @var BusinessMember $requester_business_member
+         * means who is request for the approval list
+         */
+        $requester_business_member = $this->getBusinessMember($request);
+        if ($requester_business_member->id != $approval_request->approver_id)
+            return api_response($request, null, 403, ['message' => 'You Are not authorized to show this request']);
+
         /** @var Member $member */
         $member = $leave_requester_business_member->member;
         /** @var Profile $profile */
@@ -121,7 +138,7 @@ class ApprovalRequestController extends Controller
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($approval_request, new ApprovalRequestTransformer($profile, $business));
+        $resource = new Item($approval_request, new ApprovalRequestTransformer($profile, $business, $requester_business_member));
         $approval_request = $manager->createData($resource)->toArray()['data'];
 
         $attachments = $this->getAttachments($requestable);
@@ -152,6 +169,7 @@ class ApprovalRequestController extends Controller
      * @param Request $request
      * @param UpdaterV2 $updater
      * @return JsonResponse
+     * @throws Exception
      */
     public function updateStatus(Request $request, UpdaterV2 $updater)
     {
@@ -187,7 +205,7 @@ class ApprovalRequestController extends Controller
         return api_response($request, null, 200);
     }
 
-    public function leaveHistory($business_member,Request $request, LeaveRepoInterface $leave_repo)
+    public function leaveHistory($business_member, Request $request, LeaveRepoInterface $leave_repo)
     {
         $business_member = $this->getBusinessMemberById($business_member);
         if (!$business_member) return api_response($request, null, 404);

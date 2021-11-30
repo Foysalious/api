@@ -1,11 +1,11 @@
 <?php namespace App\Transformers;
 
+use App\Models\Partner;
 use App\Models\PosOrder;
 use App\Sheba\Partner\Delivery\Methods;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use League\Fractal\TransformerAbstract;
-use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInformation;
 use Sheba\PaymentLink\PaymentLinkTransformer;
 
 class PosOrderTransformer extends TransformerAbstract
@@ -20,13 +20,19 @@ class PosOrderTransformer extends TransformerAbstract
     {
         $refundable = $order->isRefundable();
         $refund_status = $order->getRefundStatus();
+        $delivery_by_third_party = 0;
+        if ($order->delivery_vendor_name && $order->delivery_vendor_name = Methods::SDELIVERY) {
+            $delivery_by_third_party = 1;
+        } elseif ($order->delivery_thana && $order->delivery_district) {
+            $delivery_by_third_party = 1;
+        }
         $data = [
             'id' => $order->id,
             'previous_order_id' => $order->previous_order_id,
             'note' => $order->note,
             'created_by_name' => $order->created_by_name,
             'created_at' => $order->created_at->format('Y-m-d h:i A'),
-            'date'=>$order->created_at->format('Y-m-d'),
+            'date' => $order->created_at->format('Y-m-d'),
             'partner_name' => $order->partner->name,
             'price' => (double)$order->getNetBill(),
             'original_price' => (double)$order->getTotalPrice(),
@@ -35,7 +41,7 @@ class PosOrderTransformer extends TransformerAbstract
             'vat' => (double)$order->getTotalVat(),
             'discount_amount' => (double)$order->getTotalDiscount(),
             'paid' => $order->getPaid(),
-            'status'=> $order->getPaymentStatus(),
+            'status' => $order->getPaymentStatus(),
             'due' => $order->getDue(),
             'customer' => null,
             'address' => $order->address,
@@ -46,8 +52,8 @@ class PosOrderTransformer extends TransformerAbstract
             'partner_wise_previous_order_id' => $order->previousOrder ? $order->previousOrder->partner_wise_order_id : null,
             'sales_channel' => $order->sales_channel,
             'delivery_charge' => $order->delivery_charge,
-            'delivery_by_third_party' => $order->delivery_thana && $order->delivery_district ? 1 : 0,
-            'selected_delivery_method' => $this->getDeliveryMethod($order->partner_id),
+            'delivery_by_third_party' => $delivery_by_third_party,
+            'selected_delivery_method' => $delivery_by_third_party ? Methods::SDELIVERY : Methods::OWN_DELIVERY,
             'total_weight' => $order->weight
         ];
 
@@ -56,9 +62,9 @@ class PosOrderTransformer extends TransformerAbstract
         return $data;
     }
 
-    private function getDeliveryMethod($partner_id)
+    private function getDeliveryMethod(Partner $partner)
     {
-        $partnerDeliveryInformation =  PartnerDeliveryInformation::where('partner_id', $partner_id)->first();
+        $partnerDeliveryInformation = $partner->deliveryInformation;
         return !empty($partnerDeliveryInformation) ? $partnerDeliveryInformation->delivery_vendor : Methods::OWN_DELIVERY;
     }
 

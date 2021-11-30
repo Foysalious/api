@@ -19,42 +19,40 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use Sheba\Business\Attendance\AttendanceList;
 use Sheba\Business\Attendance\Daily\DailyExcel;
+use Sheba\Business\Attendance\Detail\DetailsExcel as DetailsExcel;
+use Sheba\Business\Attendance\HalfDaySetting\Updater as HalfDaySettingUpdater;
 use Sheba\Business\Attendance\Monthly\Excel;
-use Sheba\Business\Attendance\Member\Excel as MemberMonthlyExcel;
 use Sheba\Business\Attendance\Setting\ActionType;
+use Sheba\Business\Attendance\Setting\AttendanceSettingTransformer;
+use Sheba\Business\Attendance\Setting\Creator as SettingCreator;
+use Sheba\Business\Attendance\Setting\Deleter as SettingDeleter;
+use Sheba\Business\Attendance\Setting\Updater as SettingUpdater;
+use Sheba\Business\Attendance\Type\Updater as TypeUpdater;
+use Sheba\Business\Holiday\CreateRequest as HolidayCreatorRequest;
+use Sheba\Business\Holiday\Creator as HolidayCreator;
+use Sheba\Business\Holiday\HolidayList;
+use Sheba\Business\Holiday\Updater as HolidayUpdater;
 use Sheba\Business\OfficeSetting\AttendaceSettingUpdater;
 use Sheba\Business\OfficeSetting\OperationalSetting;
+use Sheba\Business\OfficeTiming\Updater as OfficeTimingUpdater;
 use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
 use Sheba\Dal\Attendance\Statuses;
-use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
-use Sheba\Dal\BusinessOffice\Contract as BusinessOfficeRepositoryInterface;
-use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
-use Sheba\Dal\BusinessOfficeHours\Contract as BusinessOfficeHoursRepoInterface;
 use Sheba\Dal\BusinessAttendanceTypes\Contract as BusinessAttendanceTypesRepoInterface;
+use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Dal\BusinessOffice\Contract as BusinessOfficeRepoInterface;
+use Sheba\Dal\BusinessOfficeHours\Contract as BusinessOfficeHoursRepoInterface;
+use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\BusinessWeekendSettings\BusinessWeekendSettingsRepo;
 use Sheba\Dal\OfficePolicy\Type;
 use Sheba\Dal\OfficeSettingChangesLogs\OfficeSettingChangesLogsRepository;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
-use Sheba\Business\OfficeTiming\Updater as OfficeTimingUpdater;
-use Sheba\Business\Attendance\Setting\Creator as SettingCreator;
-use Sheba\Business\Attendance\Setting\Updater as SettingUpdater;
-use Sheba\Business\Attendance\Setting\Deleter as SettingDeleter;
-use Sheba\Business\Attendance\Setting\AttendanceSettingTransformer;
-use Sheba\Business\Attendance\Type\Updater as TypeUpdater;
-use Sheba\Business\Holiday\HolidayList;
-use Sheba\Business\Holiday\Creator as HolidayCreator;
-use Sheba\Business\Holiday\Updater as HolidayUpdater;
-use Sheba\Business\Holiday\CreateRequest as HolidayCreatorRequest;
-use Sheba\Business\Attendance\HalfDaySetting\Updater as HalfDaySettingUpdater;
-use Sheba\Business\Attendance\Detail\DetailsExcel as DetailsExcel;
-use Throwable;
 
 class AttendanceController extends Controller
 {
     use ModificationFields, BusinessBasicInformation;
+    const FIRST_DAY_OF_MONTH = 1;
 
     /** @var BusinessHolidayRepoInterface $holidayRepository */
     private $holidayRepository;
@@ -71,8 +69,10 @@ class AttendanceController extends Controller
     /**
      * AttendanceController constructor.
      * @param BusinessHolidayRepoInterface $business_holidays_repo
+     * @param BusinessWeekendRepoInterface $business_weekend_repo
+     * @param BusinessOfficeRepoInterface $business_office_repo
      */
-    public function __construct(BusinessHolidayRepoInterface $business_holidays_repo, BusinessWeekendRepoInterface $business_weekend_repo, BusinessOfficeRepositoryInterface $business_office_repo)
+    public function __construct(BusinessHolidayRepoInterface $business_holidays_repo, BusinessWeekendRepoInterface $business_weekend_repo, BusinessOfficeRepoInterface $business_office_repo)
     {
         $this->holidayRepository = $business_holidays_repo;
         $this->officeSettingChangesLogsRepo = app(OfficeSettingChangesLogsRepository::class);
@@ -80,8 +80,6 @@ class AttendanceController extends Controller
         $this->officeSettingChangesLogsCreator = new Creator();
         $this->businessWeekendRepo =  $business_weekend_repo;
         $this->businessOfficeRepo = $business_office_repo;
-
-        return $this;
     }
 
     /**
@@ -176,23 +174,27 @@ class AttendanceController extends Controller
         }
 
         $all_employee_attendance = [];
-        if ($request->has('start_date') && $request->has('end_date')) {
-            $start_date = $request->start_date;
-            $end_date = $request->end_date;
-        } else {
-            $start_date = Carbon::now()->startOfMonth()->toDateString();
-            $end_date = Carbon::now()->endOfMonth()->toDateString();
-        }
-
         $business_holiday = $business_holiday_repo->getAllByBusiness($business);
         $weekend_settings = $business_weekend_settings_repo->getAllByBusiness($business);
         foreach ($business_members->get() as $business_member) {
+            if ($request->has('start_date') && $request->has('end_date')) {
+                $start_date = $request->start_date;
+                $end_date = $request->end_date;
+            } else {
+                $start_date = Carbon::now()->startOfMonth()->toDateString();
+                $end_date = Carbon::now()->endOfMonth()->toDateString();
+            }
             $member_name = $business_member->member->profile->name;
             /** @var BusinessMember $business_member */
             $member_department = $business_member->role ? $business_member->role->businessDepartment : null;
             $department_name = $member_department ? $member_department->name : 'N/S';
             $department_id = $member_department ? $member_department->id : 'N/S';
-
+            $business_member_joining_date = $business_member->join_date;
+            $joining_prorated = null;
+            if ($this->checkJoiningDate($business_member_joining_date, $start_date, $end_date)) {
+                $joining_prorated = 1;
+                $start_date = $business_member_joining_date;
+            }
             $time_frame = $time_frame->forDateRange($start_date, $end_date);
             $business_member_leave = $business_member->leaves()->accepted()->startDateBetween($time_frame)->endDateBetween($time_frame)->get();
             $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
@@ -210,7 +212,8 @@ class AttendanceController extends Controller
                     'id' => $department_id,
                     'name' => $department_name,
                 ],
-                'attendance' => $employee_attendance['statistics']
+                'attendance' => $employee_attendance['statistics'],
+                'joining_prorated' => $joining_prorated ? 'Yes' : 'No'
             ]);
 
         }
@@ -232,124 +235,8 @@ class AttendanceController extends Controller
         if ($request->file == 'excel') {
             return $monthly_excel->setMonthlyData($all_employee_attendance->toArray())->setStartDate($request->start_date)->setEndDate($request->end_date)->get();
         }
-        if ($all_employee_attendance->isEmpty()) return api_response($request, null, 404);
 
         return api_response($request, $all_employee_attendance, 200, ['all_employee_attendance' => $all_employee_attendance, 'total_members' => $total_members]);
-    }
-
-    /**
-     * @param $employee_attendance
-     * @param Request $request
-     * @return mixed
-     */
-    private function searchWithEmployeeName($employee_attendance, Request $request)
-    {
-        return $employee_attendance->filter(function ($attendance) use ($request) {
-            return str_contains(strtoupper($attendance['member']['name']), strtoupper($request->search));
-        });
-    }
-
-    /**
-     * @param $employee_attendance
-     * @param string $sort
-     * @return mixed
-     */
-    private function attendanceSortOnAbsent($employee_attendance, $sort = 'asc')
-    {
-        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
-        return $employee_attendance->$sort_by(function ($attendance, $key) {
-            return strtoupper($attendance['attendance']['absent']);
-        });
-    }
-
-    /**
-     * @param $employee_attendance
-     * @param string $sort
-     * @return mixed
-     */
-    private function attendanceSortOnPresent($employee_attendance, $sort = 'asc')
-    {
-        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
-        return $employee_attendance->$sort_by(function ($attendance, $key) {
-            return strtoupper($attendance['attendance']['present']);
-        });
-    }
-
-    /**
-     * @param $employee_attendance
-     * @param string $sort
-     * @return mixed
-     */
-    private function attendanceSortOnLeave($employee_attendance, $sort = 'asc')
-    {
-        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
-        return $employee_attendance->$sort_by(function ($attendance, $key) {
-            return strtoupper($attendance['attendance']['on_leave']);
-        });
-    }
-
-    /**
-     * @param $employee_attendance
-     * @param string $sort
-     * @return mixed
-     */
-    private function attendanceSortOnLate($employee_attendance, $sort = 'asc')
-    {
-        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
-        return $employee_attendance->$sort_by(function ($attendance, $key) {
-            return strtoupper($attendance['attendance']['late']);
-        });
-    }
-
-    /**
-     * @param $attendances
-     * @param string $sort
-     * @return mixed
-     */
-    private function attendanceSortOnOvertime($attendances, $sort = 'asc')
-    {
-        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
-        return $attendances->$sort_by(function ($attendance, $key) {
-            return $attendance['overtime_in_minutes'];
-        });
-    }
-
-    /**
-     * @param $attendances
-     * @param string $sort
-     * @return mixed
-     */
-    private function attendanceCustomSortOnOvertime($attendances, $sort = 'asc')
-    {
-        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
-        return $attendances->$sort_by(function ($attendance, $key) {
-            return $attendance['attendance']['overtime_in_minutes'];
-        });
-    }
-
-    /**
-     * @param $employee_attendance
-     * @return mixed
-     */
-    private function filterInactiveCoWorkersWithData($employee_attendance)
-    {
-        return $employee_attendance->filter(function ($attendance) {
-            if ($attendance['status'] === 'inactive') {
-                return $attendance['attendance']['present'] || $attendance['attendance']['on_leave'];
-            } else {
-                return true;
-            }
-        });
-    }
-
-    /**
-     * @param $month
-     * @param $year
-     * @return bool
-     */
-    private function isShowRunningMonthsAttendance($year, $month)
-    {
-        return (Carbon::now()->month == (int)$month && Carbon::now()->year == (int)$year);
     }
 
     /**
@@ -376,6 +263,14 @@ class AttendanceController extends Controller
         $business_member = $business_member_repository->where('business_id', $business->id)->where('member_id', $member)->first();
 
         $time_frame = $time_frame->forDateRange($request->start_date, $request->end_date);
+        $business_member_joining_date = $business_member->join_date;
+        $joining_date = null;
+        if ($this->checkJoiningDate($business_member_joining_date, $request->start_date, $request->end_date)){
+            $joining_date = $business_member_joining_date->format('d F');
+            $start_date = $business_member_joining_date;
+            $end_date = $request->end_date;
+            $time_frame = $time_frame->forDateRange($start_date, $end_date);
+        }
 
         $business_member_leave = $business_member->leaves()->accepted()->between($time_frame)->get();
 
@@ -413,7 +308,8 @@ class AttendanceController extends Controller
                 'mobile' => $business_member->member->profile->mobile ?: 'N/S',
                 'designation' => $business_member->role ? $business_member->role->name : null,
                 'department' => $business_member->role && $business_member->role->businessDepartment ? $business_member->role->businessDepartment->name : null,
-            ]
+            ],
+            'joining_date' =>   $joining_date
         ]);
     }
 
@@ -598,7 +494,10 @@ class AttendanceController extends Controller
             ->setHolidayRepo($this->holidayRepository)
             ->setStartDate($request->start_date)
             ->setEndDate($request->end_date)
-            ->setHolidayName($request->title)->create();
+            ->setHolidayName($request->title)
+            ->create();
+        $this->officeSettingChangesLogsRequester->setBusiness($request->business)->setHolidayStartDate($request->start_date)->setHolidayEndDate($request->end_date)->setHolidayName($request->title);
+        $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createHolidayStoreLogs();
         return api_response($request, null, 200, ['holiday' => $holiday]);
     }
 
@@ -619,12 +518,23 @@ class AttendanceController extends Controller
         ]);
         $manager_member = $request->manager_member;
         $holiday = $this->holidayRepository->find((int)$holiday);
+
+        $this->officeSettingChangesLogsRequester->setBusiness($request->business)
+                                                ->setExistingHolidayStart($holiday->start_date)
+                                                ->setExistingHolidayEnd($holiday->end_date)
+                                                ->setExistingHolidayName($holiday->title)
+                                                ->setHolidayStartDate($request->start_date)
+                                                ->setHolidayEndDate($request->end_date)
+                                                ->setHolidayName($request->title);
+        
         $updater_request = $creator_request->setBusiness($request->business)
             ->setMember($manager_member)
             ->setStartDate($request->start_date)
             ->setEndDate($request->end_date)
             ->setHolidayName($request->title);
+
         $updater->setHoliday($holiday)->setBusinessHolidayCreatorRequest($updater_request)->update();
+        $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createHolidayUpdateLogs();
         return api_response($request, null, 200);
     }
 
@@ -636,80 +546,14 @@ class AttendanceController extends Controller
      */
     public function destroy($business, $holiday, Request $request)
     {
+        $manager_member = $request->manager_member;
         $holiday = $this->holidayRepository->find((int)$holiday);
         if (!$holiday) return api_response($request, null, 404);
+        $this->officeSettingChangesLogsRequester->setBusiness($request->business)->setExistingHoliday($holiday);
         $this->holidayRepository->delete($holiday);
+        $this->setModifier($manager_member);
+        $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createHolidayDeleteLogs();
         return api_response($request, null, 200);
-    }
-
-    private function attendanceSortOnDate($attendances, $sort = 'asc')
-    {
-        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
-        return $attendances->$sort_by(function ($attendance, $key) {
-            return strtoupper($attendance['date']);
-        });
-    }
-
-    private function attendanceSortOnHour($attendances, $sort = 'asc')
-    {
-        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
-        return $attendances->$sort_by(function ($attendance, $key) {
-            return strtoupper($attendance['attendance']['active_hours']);
-        });
-    }
-
-    private function attendanceSortOnCheckin($attendances, $sort = 'asc')
-    {
-        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
-        return $attendances->$sort_by(function ($attendance, $key) {
-            return strtoupper($attendance['attendance']['check_in']['time']);
-        });
-    }
-
-    private function attendanceSortOnCheckout($attendances, $sort = 'asc')
-    {
-        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
-        return $attendances->$sort_by(function ($attendance, $key) {
-            return strtoupper($attendance['attendance']['check_out']['time']);
-        });
-    }
-
-    /**
-     * @param array $errors
-     * @param $business_offices
-     * @return bool
-     */
-    private function isFailedToUpdateAllSettings(array $errors, $business_offices)
-    {
-        return count($errors) == count($business_offices);
-    }
-
-    private function getHalfDayTimings(Business $business)
-    {
-        if ($business->half_day_configuration) {
-            $half_day_times = json_decode($business->half_day_configuration);
-            return [
-                'first_half' => [
-                    'start_time' => Carbon::parse($half_day_times->first_half->start_time)->format('h:i a'),
-                    'end_time' => Carbon::parse($half_day_times->first_half->end_time)->format('h:i a')
-                ],
-                'second_half' => [
-                    'start_time' => Carbon::parse($half_day_times->second_half->start_time)->format('h:i a'),
-                    'end_time' => Carbon::parse($half_day_times->second_half->end_time)->format('h:i a')
-                ]
-            ];
-        } else {
-            return [
-                'first_half' => [
-                    'start_time' => '09:00 am',
-                    'end_time' => '12:59 pm'
-                ],
-                'second_half' => [
-                    'start_time' => '01:00 pm',
-                    'end_time' => '06:00 pm'
-                ]
-            ];
-        }
     }
 
     public function updateHalfDaySetting($business, Request $request, HalfDaySettingUpdater $updater)
@@ -862,7 +706,7 @@ class AttendanceController extends Controller
             ->setIsWeekendIncluded($request->is_weekend_included)
             ->update();
         $this->officeSettingChangesLogsRequester->setPreviousWeekends($business_weekend)->setPreviousTotalWorkingDaysType($previous_working_days_type)->setPreviousNumberOfDays($previous_number_of_days)->setPreviousIsWeekendIncluded($previous_is_weekend_included)->setRequest($request);
-        $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createWeekendLogs();
+        if ($request->weekends) $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createWeekendLogs();
         $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createWorkingDaysTypeLogs();
 
         if ($office_timing) return api_response($request, null, 200, ['msg' => "Update Successful"]);
@@ -914,8 +758,19 @@ class AttendanceController extends Controller
 
         $start_time = Carbon::parse($request->start_time)->format('H:i') . ':59';
         $end_time = Carbon::parse($request->end_time)->format('H:i') . ':00';
-
+        $business = $request->business;
+        $business_office_hour = $business->officeHour;
         $business_member = $request->business_member;
+        $this->officeSettingChangesLogsRequester
+            ->setBusiness($business)
+            ->setPreviousOfficeStartTime($business_office_hour->start_time)
+            ->setPreviousOfficeEndTime($business_office_hour->end_time)
+            ->setPreviousIsStartGracePeriodEnable($business_office_hour->is_start_grace_time_enable)
+            ->setPreviousIsEndGracePeriodEnable($business_office_hour->is_end_grace_time_enable)
+            ->setPreviousStartGracePeriodTime($business_office_hour->start_grace_time)
+            ->setPreviousEndGracePeriodTime($business_office_hour->end_grace_time)
+            ->setRequest($request);
+
         $office_timing = $updater->setBusiness($request->business)
             ->setMember($business_member->member)
             ->setOfficeHourType($request->office_hour_type)
@@ -928,6 +783,11 @@ class AttendanceController extends Controller
             ->setHalfDayTimings($request)
             ->update();
 
+        $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester);
+        $this->officeSettingChangesLogsCreator->createAttendanceOfficeStartTimingLogs();
+        $this->officeSettingChangesLogsCreator->createAttendanceOfficeEndTimingLogs();
+        $this->officeSettingChangesLogsCreator->createAttendanceStartGraceTimingLogs();
+        $this->officeSettingChangesLogsCreator->createAttendanceEndGraceTimingLogs();
         if ($office_timing) {
              $requester->setBusiness($request->business)
                             ->setIsEnable($request->is_grace_policy_enable)
@@ -974,6 +834,7 @@ class AttendanceController extends Controller
         $this->setModifier($request->manager_member);
         $requester->setBusiness($business)
                         ->setIsEnable($request->is_enable)
+                        ->setPenaltyComponent($request->component)
                         ->setPolicyType($request->policy_type)
                         ->setRules($request->rules);
         if ($requester->getError()) return api_response($request, null, 400, ['message' => $requester->getError()]);
@@ -992,8 +853,12 @@ class AttendanceController extends Controller
         $manager->setSerializer(new CustomSerializer());
         $resource = new Collection($unpaid_leave_policy, new PolicyTransformer());
         $unpaid_leave_policy_rules = $manager->createData($resource)->toArray()['data'];
-
-        return api_response($request, $unpaid_leave_policy_rules, 200, ['is_unpaid_leave_policy_enable' => $office_time->is_unpaid_leave_policy_enable, 'unpaid_leave_policy_rules' => $unpaid_leave_policy_rules]);
+        $unauthorised_leave_penalty_component = $office_time->unauthorised_leave_penalty_component;
+        return api_response($request, $unpaid_leave_policy_rules, 200, [
+            'is_unpaid_leave_policy_enable' => $office_time->is_unpaid_leave_policy_enable,
+            'unauthorised_leave_penalty_component' => is_numeric($unauthorised_leave_penalty_component) ? intval($unauthorised_leave_penalty_component) : $unauthorised_leave_penalty_component,
+            'unpaid_leave_policy_rules' => $unpaid_leave_policy_rules
+        ]);
     }
 
     public function getLateCheckinEarlyCheckoutPolicy(Request $request)
@@ -1022,5 +887,196 @@ class AttendanceController extends Controller
         $resource = new Collection($operational_changes_logs, new ChangesLogsTransformer());
         $operational_changes_logs = $manager->createData($resource)->toArray()['data'];
         return api_response($request, $operational_changes_logs, 200, ['office_setting_changes_logs' => $operational_changes_logs]);
+    }
+
+    private function attendanceSortOnDate($attendances, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return $attendances->$sort_by(function ($attendance, $key) {
+            return strtoupper($attendance['date']);
+        });
+    }
+
+    private function attendanceSortOnHour($attendances, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return $attendances->$sort_by(function ($attendance, $key) {
+            return strtoupper($attendance['attendance']['active_hours']);
+        });
+    }
+
+    private function attendanceSortOnCheckin($attendances, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return $attendances->$sort_by(function ($attendance, $key) {
+            return strtoupper($attendance['attendance']['check_in']['time']);
+        });
+    }
+
+    private function attendanceSortOnCheckout($attendances, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return $attendances->$sort_by(function ($attendance, $key) {
+            return strtoupper($attendance['attendance']['check_out']['time']);
+        });
+    }
+
+    /**
+     * @param array $errors
+     * @param $business_offices
+     * @return bool
+     */
+    private function isFailedToUpdateAllSettings(array $errors, $business_offices)
+    {
+        return count($errors) == count($business_offices);
+    }
+
+    private function getHalfDayTimings(Business $business)
+    {
+        if ($business->half_day_configuration) {
+            $half_day_times = json_decode($business->half_day_configuration);
+            return [
+                'first_half' => [
+                    'start_time' => Carbon::parse($half_day_times->first_half->start_time)->format('h:i a'),
+                    'end_time' => Carbon::parse($half_day_times->first_half->end_time)->format('h:i a')
+                ],
+                'second_half' => [
+                    'start_time' => Carbon::parse($half_day_times->second_half->start_time)->format('h:i a'),
+                    'end_time' => Carbon::parse($half_day_times->second_half->end_time)->format('h:i a')
+                ]
+            ];
+        } else {
+            return [
+                'first_half' => [
+                    'start_time' => '09:00 am',
+                    'end_time' => '12:59 pm'
+                ],
+                'second_half' => [
+                    'start_time' => '01:00 pm',
+                    'end_time' => '06:00 pm'
+                ]
+            ];
+        }
+    }
+
+    private function checkJoiningDate($business_member_joining_date, $start_date, $end_date)
+    {
+        if (!$business_member_joining_date) return false;
+        if ($business_member_joining_date->format('d') == self::FIRST_DAY_OF_MONTH) return false;
+        return $business_member_joining_date->format('Y-m-d') >= $start_date && $business_member_joining_date->format('Y-m-d') <= $end_date;
+    }
+    /**
+     * @param $employee_attendance
+     * @param Request $request
+     * @return mixed
+     */
+    private function searchWithEmployeeName($employee_attendance, Request $request)
+    {
+        return $employee_attendance->filter(function ($attendance) use ($request) {
+            return str_contains(strtoupper($attendance['member']['name']), strtoupper($request->search));
+        });
+    }
+
+    /**
+     * @param $employee_attendance
+     * @param string $sort
+     * @return mixed
+     */
+    private function attendanceSortOnAbsent($employee_attendance, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return $employee_attendance->$sort_by(function ($attendance, $key) {
+            return strtoupper($attendance['attendance']['absent']);
+        });
+    }
+
+    /**
+     * @param $employee_attendance
+     * @param string $sort
+     * @return mixed
+     */
+    private function attendanceSortOnPresent($employee_attendance, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return $employee_attendance->$sort_by(function ($attendance, $key) {
+            return strtoupper($attendance['attendance']['present']);
+        });
+    }
+
+    /**
+     * @param $employee_attendance
+     * @param string $sort
+     * @return mixed
+     */
+    private function attendanceSortOnLeave($employee_attendance, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return $employee_attendance->$sort_by(function ($attendance, $key) {
+            return strtoupper($attendance['attendance']['on_leave']);
+        });
+    }
+
+    /**
+     * @param $employee_attendance
+     * @param string $sort
+     * @return mixed
+     */
+    private function attendanceSortOnLate($employee_attendance, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return $employee_attendance->$sort_by(function ($attendance, $key) {
+            return strtoupper($attendance['attendance']['late']);
+        });
+    }
+
+    /**
+     * @param $attendances
+     * @param string $sort
+     * @return mixed
+     */
+    private function attendanceSortOnOvertime($attendances, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return $attendances->$sort_by(function ($attendance, $key) {
+            return $attendance['overtime_in_minutes'];
+        });
+    }
+
+    /**
+     * @param $attendances
+     * @param string $sort
+     * @return mixed
+     */
+    private function attendanceCustomSortOnOvertime($attendances, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return $attendances->$sort_by(function ($attendance, $key) {
+            return $attendance['attendance']['overtime_in_minutes'];
+        });
+    }
+
+    /**
+     * @param $employee_attendance
+     * @return mixed
+     */
+    private function filterInactiveCoWorkersWithData($employee_attendance)
+    {
+        return $employee_attendance->filter(function ($attendance) {
+            if ($attendance['status'] === 'inactive') {
+                return $attendance['attendance']['present'] || $attendance['attendance']['on_leave'];
+            } else {
+                return true;
+            }
+        });
+    }
+
+    /**
+     * @param $month
+     * @param $year
+     * @return bool
+     */
+    private function isShowRunningMonthsAttendance($year, $month)
+    {
+        return (Carbon::now()->month == (int)$month && Carbon::now()->year == (int)$year);
     }
 }

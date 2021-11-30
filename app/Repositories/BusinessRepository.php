@@ -124,6 +124,7 @@ class BusinessRepository
         $joinRequest->status = 'Pending';
         $joinRequest->save();
         if ($joinRequest->profile_email != '') {
+            config()->set('services.mailgun.domain', config('services.mailgun.business_domain'));
             $this->dispatch(new SendBusinessRequestEmail($joinRequest->profile_email));
             $joinRequest->mail_sent = 1;
             $joinRequest->update();
