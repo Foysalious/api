@@ -21,7 +21,6 @@ class PosOrderDataMigration
     private $partnerPosOrderIds;
     /** @var InventoryServerClient */
     private $inventoryServerClient;
-    private $partnerInfo;
     private $posOrders;
     private $posOrderItems;
     private $posOrderPayments;
@@ -103,27 +102,17 @@ class PosOrderDataMigration
     public function migrate()
     {
         $this->generateMigrationData();
-        $this->migratePartner($this->partnerInfo);
         $this->migrateOrders($this->posOrders);
     }
 
     private function generateMigrationData()
     {
-        $this->partnerInfo = $this->generatePartnerMigrationData();
         $this->posOrders = $this->generatePosOrdersMigrationData();
         $this->posOrderItems = $this->generatePosOrderItemsData();
         $this->posCustomers = collect($this->generatePosCustomersData());
         $this->posOrderPayments = collect($this->generatePosOrderPaymentsData());
         $this->posOrderDiscounts = collect($this->generatePartnerPosOrderDiscountsMigrationData());
         $this->posOrderLogs = $this->generatePosOrderLogsMigrationData();
-    }
-
-    private function migratePartner($data)
-    {
-        $this->setRedisKey();
-        $this->shouldQueue ? dispatch(new PartnerDataMigrationToPosOrderJob($this->partner, ['partner_info' => $data], $this->currentChunk, $this->currentQueue, $this->queue_and_connection_name, $this->shouldQueue)) :
-            dispatchJobNow(new PartnerDataMigrationToPosOrderJob($this->partner, ['partner_info' => $data], $this->currentChunk, $this->currentQueue, $this->queue_and_connection_name, $this->shouldQueue));
-        $this->increaseCurrentQueueValue();
     }
 
     private function migrateOrders($data)
@@ -151,26 +140,6 @@ class PosOrderDataMigration
             ], $this->currentChunk, $this->currentQueue, $this->queue_and_connection_name, $this->shouldQueue));
             $this->increaseCurrentQueueValue();
         }
-    }
-
-    private function generatePartnerMigrationData()
-    {
-        $pos_setting = $this->partner->posSetting;
-        return [
-            'id' => $this->partner->id,
-            'name' => $this->partner->name,
-            'sub_domain' => $this->partner->sub_domain,
-            'qr_code_account_type' => $this->partner->qr_code_account_type,
-            'qr_code_image' => $this->partner->qr_code_image,
-            'sms_invoice' => $pos_setting ? $this->partner->posSetting->sms_invoice : 0,
-            'auto_printing' => $pos_setting ? $this->partner->posSetting->auto_printing : 0,
-            'printer_name' => $pos_setting ? $this->partner->posSetting->printer_name : null,
-            'printer_model' => $pos_setting ? $this->partner->posSetting->printer_model : null,
-            'created_at' => $this->partner->created_at->subHours(6)->format('Y-m-d H:i:s'),
-            'created_by_name' => $this->partner->created_by_name,
-            'updated_at' => $this->partner->updated_at->subHours(6)->format('Y-m-d H:i:s'),
-            'updated_by_name' => $this->partner->updated_by_name,
-        ];
     }
 
     private function generatePosOrdersMigrationData()
