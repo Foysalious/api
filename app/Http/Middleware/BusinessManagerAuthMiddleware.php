@@ -13,6 +13,9 @@ class BusinessManagerAuthMiddleware extends AccessTokenMiddleware
         $auth_user = $request->auth_user;
         $member = Member::find($auth_user->getMemberId());
         if (!$member) throw new NotFoundException('Member not found.', 404);
+
+        if (!(int)$request->business) throw new NotFoundException('Business should not be undefined.', 404);
+
         $business = Business::find((int)$request->business);
         if (!$business) throw new NotFoundException('Business not found.', 404);
 
