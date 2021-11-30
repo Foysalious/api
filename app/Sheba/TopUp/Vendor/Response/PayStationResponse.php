@@ -17,7 +17,7 @@ class PayStationResponse extends TopUpResponse
      */
     public function getTransactionId()
     {
-        return $this->response->Transiction_id;
+        return $this->response->Reference;
     }
 
     /**
@@ -46,6 +46,6 @@ class PayStationResponse extends TopUpResponse
 
     public function isPending()
     {
-        return $this->hasSuccess();
+        return $this->response && $this->response->Status == "REQUEST ACCEPTED";
     }
 }

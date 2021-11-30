@@ -2,8 +2,9 @@
 
 use App\Models\TopUpOrder;
 use App\Sheba\TopUp\Exception\BdRechargeTopUpStillProcessing;
-use App\Sheba\TopUp\Vendor\Response\Ipn\BdRecharge\BdRechargeFailResponse;
-use App\Sheba\TopUp\Vendor\Response\Ipn\BdRecharge\BdRechargeSuccessResponse;
+use Sheba\TopUp\Exception\UnknownIpnStatusException;
+use Sheba\TopUp\Vendor\Response\Ipn\BdRecharge\BdRechargeFailResponse;
+use Sheba\TopUp\Vendor\Response\Ipn\BdRecharge\BdRechargeSuccessResponse;
 use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\TopUp\Exception\GatewayTimeout;
 use Sheba\TopUp\Gateway\Clients\BdRechargeClient;
@@ -13,7 +14,7 @@ use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 use Sheba\TPProxy\TPProxyServerError;
 
-class BdRecharge implements Gateway
+class BdRecharge implements Gateway, HasIpn
 {
     CONST SHEBA_COMMISSION = 0.0;
     CONST SUCCESS = 1;
@@ -61,7 +62,7 @@ class BdRecharge implements Gateway
      * @return IpnResponse
      * @throws TPProxyServerError | BdRechargeTopUpStillProcessing | GatewayTimeout
      */
-    public function enquireIpnResponse(TopUpOrder $topup_order): IpnResponse
+    public function enquire(TopUpOrder $topup_order): IpnResponse
     {
         $response = $this->client->enquiry($topup_order);
         /** @var IpnResponse $ipn_response */
@@ -82,5 +83,19 @@ class BdRecharge implements Gateway
     public function getFailedReason(): FailedReason
     {
         return new BdRechargeFailedReason();
+    }
+
+    /**
+     * @throws UnknownIpnStatusException
+     */
+    public function buildIpnResponse($request_data)
+    {
+        if( $request_data['status'] == 1) {
+            return app(BdRechargeSuccessResponse::class);
+        } elseif ($request_data['status'] == 2) {
+            return app(BdRechargeFailResponse::class);
+        }
+
+        throw new UnknownIpnStatusException();
     }
 }

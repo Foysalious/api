@@ -48,7 +48,7 @@ class Paywell implements Gateway
      * @return IpnResponse
      * @throws TPProxyServerError | PaywellTopUpStillNotResolved
      */
-    public function enquireIpnResponse(TopUpOrder $topup_order): IpnResponse
+    public function enquire(TopUpOrder $topup_order): IpnResponse
     {
         $response = $this->paywell->enquiry($topup_order);
 
