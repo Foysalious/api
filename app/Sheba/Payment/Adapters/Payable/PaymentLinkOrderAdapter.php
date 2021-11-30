@@ -98,7 +98,11 @@ class PaymentLinkOrderAdapter implements PayableAdapter
     {
         $target = $this->paymentLink->getTarget();
         if ($target && $target instanceof PosOrderObject && $target->sales_channel == SalesChannels::WEBSTORE) {
-            return ($target->is_migrated ? config('sheba.new_webstore_url') : config('sheba.webstore_url')) . '/' . $target->partner->sub_domain .'/redirect-after-payment/' . $target->id;
+            if ($target->is_migrated) {
+                return config('sheba.new_webstore_url') . '/' . $target->partner->sub_domain .'/orders/' . $target->id . '/success';
+            } else {
+                return config('sheba.webstore_url') . '/' . $target->partner->sub_domain .'/redirect-after-payment/' . $target->id;
+            }
         } else {
             return config('sheba.payment_link_web_url') . '/' . $this->paymentLink->getLinkIdentifier() . '/success';
         }
