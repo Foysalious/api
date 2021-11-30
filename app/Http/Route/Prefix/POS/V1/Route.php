@@ -194,7 +194,7 @@ class Route
                 $api->post('cancel-order', 'Pos\\DeliveryController@cancelOrderV2');
                 $api->post('orders', 'Pos\\DeliveryController@orderPlaceV2');
                 $api->post('select-method', 'Pos\\DeliveryController@vendorUpdateV2');
-                $api->get('vendors', 'Pos\DeliveryController@getVendorListV2');
+                $api->get('delivery-settings', 'Pos\DeliveryController@getVendorListV2');
                 $api->get('/order-information/{order_id}', 'Pos\\DeliveryController@getOrderInformationV2');
             });
             /**
