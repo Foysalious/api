@@ -1,6 +1,7 @@
 <?php namespace Sheba\TopUp\Gateway;
 
 use App\Models\TopUpOrder;
+use InvalidArgumentException;
 use Sheba\TopUp\Gateway\Pretups\Operator\Airtel;
 use Sheba\TopUp\Gateway\Pretups\Operator\Robi;
 use Sheba\TopUp\Gateway\Pretups\Operator\Banglalink;
@@ -19,7 +20,20 @@ class GatewayFactory
         if ($name == Names::PAYWELL) return app(Paywell::class);
         if ($name == Names::BD_RECHARGE) return app(BdRecharge::class);
         if ($name == Names::PAY_STATION) return app(PayStation::class);
-        else return app(Ssl::class);
+        return app(Ssl::class);
+    }
+
+    /**
+     * @param $name
+     * @return HasIpn
+     */
+    public static function getIpnGatewayByName($name)
+    {
+        if ($name == Names::SSL) return app(Ssl::class);
+        if ($name == Names::BD_RECHARGE) return app(BdRecharge::class);
+        if ($name == Names::PAY_STATION) return app(PayStation::class);
+
+        throw new InvalidArgumentException("$name does not support ipn.");
     }
 
     /**

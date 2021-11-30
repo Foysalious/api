@@ -1,12 +1,16 @@
 <?php namespace Sheba\TopUp\Gateway;
 
 use App\Models\TopUpOrder;
+use BadMethodCallException;
 use InvalidArgumentException;
 use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\TopUp\Exception\GatewayTimeout;
 use Sheba\TopUp\Exception\PayStationNotWorkingException;
+use Sheba\TopUp\Exception\UnknownIpnStatusException;
 use Sheba\TopUp\Gateway\FailedReason\PayStationFailedReason;
 use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
+use Sheba\TopUp\Vendor\Response\Ipn\PayStation\PayStationFailResponse;
+use Sheba\TopUp\Vendor\Response\Ipn\PayStation\PayStationSuccessResponse;
 use Sheba\TopUp\Vendor\Response\PayStationResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 use Sheba\TPProxy\TPProxyClient;
@@ -14,7 +18,7 @@ use Sheba\TPProxy\TPProxyServerError;
 use Sheba\TPProxy\TPProxyServerTimeout;
 use Sheba\TPProxy\TPRequest;
 
-class PayStation implements Gateway
+class PayStation implements Gateway, HasIpn
 {
     CONST SHEBA_COMMISSION = 0.0;
     CONST SUCCESS = 1;
@@ -43,7 +47,6 @@ class PayStation implements Gateway
     public function recharge(TopUpOrder $topup_order): TopUpResponse
     {
         $api_response = $this->call($this->makeUrl($topup_order));
-        dump($api_response);
 
         $response = new PayStationResponse();
         $response->setResponse($api_response);
@@ -60,9 +63,9 @@ class PayStation implements Gateway
         return Names::PAY_STATION;
     }
 
-    public function enquireIpnResponse(TopUpOrder $topup_order): IpnResponse
+    public function enquire(TopUpOrder $topup_order): IpnResponse
     {
-        // TODO: Implement enquireIpnResponse() method.
+        throw new BadMethodCallException("Enquire not supported by pay-station");
     }
 
     public function getInitialStatus()
@@ -125,8 +128,6 @@ class PayStation implements Gateway
             ->setUrl($url)
             ->setTimeout(60);
 
-        dump($tp_request);
-
         try {
             return $this->tpClient->call($tp_request);
         } catch (TPProxyServerTimeout $e) {
@@ -134,5 +135,16 @@ class PayStation implements Gateway
         } catch (TPProxyServerError $e) {
             throw new PayStationNotWorkingException($e->getMessage());
         }
+    }
+
+    public function buildIpnResponse($request_data)
+    {
+        if ($request_data['Status'] == "SUCCESS") {
+            return app(PayStationSuccessResponse::class);
+        } elseif ($request_data['status'] == "Failed") {
+            return app(PayStationFailResponse::class);
+        }
+
+        throw new UnknownIpnStatusException();
     }
 }
