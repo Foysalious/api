@@ -180,7 +180,7 @@ abstract class ReturnPosItem extends RefundNature
                 $originalSvc = $services->find($value['id'])->service;
                 if ($originalSvc) {
                     $sellingPrice = isset($value['updated_price']) && $value['updated_price'] ? $value['updated_price'] : $originalSvc->price;
-                    $unitPrice = $original_service->cost ?? $sellingPrice;
+                    $unitPrice = $originalSvc->partner->isMigratedToAccounting() ? $originalSvc->getLastCost() : ($originalSvc->cost ?? $sellingPrice);
                     // Full return
                     if ($value['quantity'] == 0 && $product->quantity != 0) {
                         $inventory_products[] = $this->makeInventoryData(
