@@ -2,30 +2,21 @@
 
 use App\Jobs\Business\SendLeaveSubstitutionPushNotificationToEmployee;
 use App\Models\Business;
-use App\Models\BusinessDepartment;
 use App\Models\BusinessMember;
-use App\Models\BusinessRole;
-use App\Models\Member;
-use App\Models\Profile;
 use App\Sheba\Attachments\Attachments;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Exception;
-use Illuminate\Database\QueryException;
-use Illuminate\Foundation\Application;
 use Illuminate\Http\UploadedFile;
 use Sheba\Business\ApprovalRequest\Creator as ApprovalRequestCreator;
 use Sheba\Business\ApprovalSetting\FindApprovalSettings;
 use Sheba\Business\ApprovalSetting\FindApprovers;
-use Sheba\Business\ApprovalSetting\MakeDefaultApprovalSetting;
-use Sheba\Dal\ApprovalFlow\Type;
+use Sheba\Business\Attendance\CheckWeekend;
 use Sheba\Dal\ApprovalSetting\ApprovalSetting;
-use Sheba\Dal\ApprovalSetting\ApprovalSettingRepository;
-use Sheba\Dal\ApprovalSetting\Targets;
-use Sheba\Dal\ApprovalSettingApprover\Types;
 use Sheba\Dal\ApprovalSettingModule\Modules;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
+use Sheba\Dal\BusinessWeekendSettings\BusinessWeekendSettingsRepo;
 use Sheba\Dal\Leave\EloquentImplementation as LeaveRepository;
 use Sheba\Helpers\HasErrorCodeAndMessage;
 use Sheba\Helpers\TimeFrame;
@@ -77,6 +68,8 @@ class Creator
     private $findApprovalSetting;
     /** @var FindApprovers $findApprovers */
     private $findApprovers;
+    /** @var BusinessWeekendSettingsRepo $businessWeekendRepo */
+    private $businessWeekendRepo;
 
     /**
      * Creator constructor.
@@ -105,6 +98,7 @@ class Creator
         $this->businessWeekend = $business_weekend_repo;
         $this->findApprovalSetting = app(FindApprovalSettings::class);
         $this->findApprovers = app(FindApprovers::class);
+        $this->businessWeekendRepo = app(BusinessWeekendSettingsRepo::class);
         $this->approvers = [];
     }
 
@@ -249,11 +243,13 @@ class Creator
         $leave_day_into_holiday_or_weekend = 0;
         if (!$this->business->is_sandwich_leave_enable) {
             $business_holiday = $this->businessHoliday->getAllDateArrayByBusiness($this->business);
-            $business_weekend = $this->businessWeekend->getAllByBusiness($this->business)->pluck('weekday_name')->toArray();
+            $business_weekend_settings = $this->businessWeekendRepo->getAllByBusiness($this->business);
 
             $period = CarbonPeriod::create($this->startDate, $this->endDate);
+            $check_weekend = new CheckWeekend();
             foreach ($period as $date) {
                 $day_name_in_lower_case = strtolower($date->format('l'));
+                $business_weekend = $check_weekend->getWeekendDays($date, $business_weekend_settings);
                 if (in_array($day_name_in_lower_case, $business_weekend)) {
                     $leave_day_into_holiday_or_weekend++;
                     continue;
