@@ -302,7 +302,7 @@ class AttendanceList
         if ($this->businessMemberId) $business_member_ids = [$this->businessMemberId];
         elseif ($this->business) $business_member_ids = $this->getBusinessMemberIds();
         $attendances = $this->attendanceRepositoryInterface->builder()
-            ->select('id', 'business_member_id', 'checkin_time', 'checkout_time', 'staying_time_in_minutes', 'overtime_in_minutes', 'status', 'date')
+            ->select('id', 'business_member_id', 'checkin_time', 'checkout_time', 'staying_time_in_minutes', 'overtime_in_minutes', 'status', 'date', 'is_attendance_reconciled')
             ->whereIn('business_member_id', $business_member_ids)
             ->where('date', '>=', $this->startDate->toDateString())
             ->where('date', '<=', $this->endDate->toDateString())
@@ -501,6 +501,7 @@ class AttendanceList
                         'is_holiday' => $is_weekend_or_holiday ? 1 : 0,
                         'weekend_or_holiday' => $is_weekend_or_holiday ? $this->isWeekendOrHoliday() : null,
                         'is_half_day_leave' => $is_on_half_day_leave,
+                        'is_attendance_reconciled' => $attendance->is_attendance_reconciled
                         'which_half_day_leave' => $which_half_day,
                         'leave_type' => $is_on_leave ? $leave_type : null,
                         'holiday_name' => $is_weekend_or_holiday ? $this->getHolidayName() : null,
@@ -534,7 +535,6 @@ class AttendanceList
 
         if ($this->search)
             $final_data = collect($this->searchWithEmployeeName($final_data))->values();
-
         return $final_data;
     }
 
