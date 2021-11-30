@@ -44,15 +44,15 @@ class PayRunBulkExcel
         $header = $this->getHeaders();
         $this->makeData();
         $file_name = 'Pay_run_sample_excel';
-        $max_bold_cell = 'A1:'.PHPExcel_Cell::stringFromColumnIndex($this->maxCell - 1).'1';
-        Excel::create($file_name, function ($excel) use ($header, $max_bold_cell){
-            $excel->sheet('data', function ($sheet) use ($header, $max_bold_cell){
+        //$max_bold_cell = 'A1:'.PHPExcel_Cell::stringFromColumnIndex($this->maxCell - 1).'1';
+        Excel::create($file_name, function ($excel) use ($header){
+            $excel->sheet('data', function ($sheet) use ($header){
                 $sheet->fromArray($this->data, null, 'A1', true, false);
                 $sheet->prependRow($header);
                 $sheet->freezeFirstRow();
-                $sheet->cell($max_bold_cell, function ($cells) {
+                /*$sheet->cell($max_bold_cell, function ($cells) {
                     $cells->setFontWeight('bold');
-                });
+                });*/
                 $sheet->getDefaultStyle()->getAlignment()->applyFromArray(
                     array('horizontal' => 'left')
                 );
