@@ -1,6 +1,5 @@
 <?php namespace Sheba\TopUp\Vendor\Response\Ipn;
 
-
 use App\Models\TopUpOrder;
 use Sheba\TopUp\TopUpLifecycleManager;
 

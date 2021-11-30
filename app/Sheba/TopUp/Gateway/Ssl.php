@@ -11,7 +11,7 @@ use Sheba\TopUp\Vendor\Response\Ipn\Ssl\SslSuccessResponse;
 use Sheba\TopUp\Vendor\Response\SslResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
-class Ssl implements Gateway
+class Ssl implements Gateway, HasIpn
 {
     CONST SHEBA_COMMISSION = 0.0;
 
@@ -77,7 +77,7 @@ class Ssl implements Gateway
      * @return IpnResponse
      * @throws Exception
      */
-    public function enquireIpnResponse(TopUpOrder $topup_order): IpnResponse
+    public function enquire(TopUpOrder $topup_order): IpnResponse
     {
         $response = $this->getRecharge($this->getRefId($topup_order));
         /** @var IpnResponse $ipn_response */
@@ -120,5 +120,14 @@ class Ssl implements Gateway
     public function getFailedReason(): FailedReason
     {
         return new SslFailedReason();
+    }
+
+    public function buildIpnResponse($request_data)
+    {
+        if( $request_data['is_from_success_url']) {
+            return app(SslSuccessResponse::class);
+        } else {
+            return app(SslFailResponse::class);
+        }
     }
 }
