@@ -31,7 +31,6 @@ class InventoryDataMigration
     private $partnerPosServiceImages;
     private $partnerPosServiceLogs;
     private $partnerPosServiceDiscounts;
-    private $partnerInfo;
     private $partnerPosCategories;
     private $partnerPosServices;
     private $posCategories;
@@ -100,7 +99,6 @@ class InventoryDataMigration
     public function migrate()
     {
         $this->generateMigrationData();
-        $this->migratePartner($this->partnerInfo);
         $this->migrateCategories($this->posCategories);
         $this->migrateCategoryPartner($this->partnerPosCategories);
         $this->migrateProducts($this->partnerPosServices);
@@ -108,7 +106,6 @@ class InventoryDataMigration
 
     private function generateMigrationData()
     {
-        $this->partnerInfo = $this->generatePartnerMigrationData();
         $this->posCategories = $this->generatePosCategoriesMigrationData();
         $this->partnerPosCategories = $this->generatePartnerPosCategoriesMigrationData();
         $this->partnerPosServices = $this->generatePartnerPosServicesMigrationData();
@@ -116,14 +113,6 @@ class InventoryDataMigration
         $this->partnerPosServiceImages = collect($this->generatePartnerPosServiceImageGalleryData());
         $this->partnerPosServiceLogs = collect($this->generatePartnerPosServiceLogsMigrationData());
         $this->partnerPosServiceDiscounts = collect($this->generatePartnerPosServiceDiscountsMigrationData());
-    }
-
-    private function migratePartner($data)
-    {
-        $this->setRedisKey();
-        $this->shouldQueue ? dispatch(new PartnerDataMigrationToInventoryJob($this->partner, ['partner_info' => $data], $this->currentQueue, $this->queue_and_connection_name, $this->shouldQueue)) :
-            dispatchJobNow(new PartnerDataMigrationToInventoryJob($this->partner, ['partner_info' => $data], $this->currentQueue, $this->queue_and_connection_name, $this->shouldQueue));
-        $this->increaseCurrentQueueValue();
     }
 
     private function migrateCategories($data)
@@ -171,19 +160,6 @@ class InventoryDataMigration
                 ], $this->currentQueue, $this->queue_and_connection_name, $this->shouldQueue));
             $this->increaseCurrentQueueValue();
         }
-    }
-
-    private function generatePartnerMigrationData(): array
-    {
-        return [
-            'id' => $this->partner->id,
-            'sub_domain' => $this->partner->sub_domain,
-            'vat_percentage' => $this->partner->posSetting ? $this->partner->posSetting->vat_percentage : 0.0,
-            'created_at' => $this->partner->created_at->subHour(6)->format('Y-m-d H:i:s'),
-            'created_by_name' => $this->partner->created_by_name,
-            'updated_at' => $this->partner->updated_at->subHour(6)->format('Y-m-d H:i:s'),
-            'updated_by_name' => $this->partner->updated_by_name,
-        ];
     }
 
     private function generatePosCategoriesMigrationData(): array
