@@ -50,10 +50,10 @@ class EmployeeRoute
                 $api->get('{employee_id}', 'Employee\MyTeamController@employeeDetails');
             });
             //$api->post('password', 'Employee\EmployeeController@updateMyPassword');
-            $api->get('dashboard', 'Employee\EmployeeController@getDashboard');
+            $api->get('dashboard', 'Employee\EmployeeController@getDashboard')->middleware('throttle:200');
             $api->get('dashboard-menu', 'Employee\DashboardController@index');
             $api->get('notifications', 'Employee\NotificationController@index');
-            $api->get('last-notifications', 'Employee\NotificationController@lastNotificationCount');
+            $api->get('last-notifications', 'Employee\NotificationController@lastNotificationCount')->middleware('throttle:200');
             $api->get('test-notification', 'Employee\NotificationController@test');
             $api->post('notifications/seen', 'Employee\NotificationController@seen');
             $api->group(['prefix' => 'supports'], function ($api) {
@@ -83,10 +83,10 @@ class EmployeeRoute
             });
             $api->group(['prefix' => 'attendances'], function ($api) {
                 $api->get('/', 'Employee\AttendanceController@index');
-                $api->get('/info', 'Employee\AttendanceController@attendanceInfo');
-                $api->post('action', 'Employee\AttendanceController@takeAction');
-                $api->get('today', 'Employee\AttendanceController@getTodaysInfo');
-                $api->post('note', 'Employee\AttendanceController@storeNote');
+                $api->get('/info', 'Employee\AttendanceController@attendanceInfo')->middleware('throttle:200');
+                $api->post('action', 'Employee\AttendanceController@takeAction')->middleware('throttle:200');
+                $api->get('today', 'Employee\AttendanceController@getTodaysInfo')->middleware('throttle:200');
+                $api->post('note', 'Employee\AttendanceController@storeNote')->middleware('throttle:200');
             });
             $api->group(['prefix' => 'leaves'], function ($api) {
                 $api->get('/', 'Employee\LeaveController@index');
@@ -122,14 +122,14 @@ class EmployeeRoute
             $api->get('/{employee}', 'Employee\EmployeeController@show');
 
             $api->group(['prefix' => 'appreciate'], function ($api) {
-                $api->get('/new-joiner', 'Employee\AppreciateController@getNewJoiner');
+                $api->get('/new-joiner', 'Employee\AppreciateController@getNewJoiner')->middleware('throttle:200');
                 $api->get('/coworker', 'Employee\AppreciateController@index');
                 $api->post('/', 'Employee\AppreciateController@store');
                 $api->post('/{id}', 'Employee\AppreciateController@update');
                 $api->get('/stickers', 'Employee\AppreciateController@categoryWiseStickers');
                 $api->get('/my-stickers', 'Employee\AppreciateController@myStickers');
                 $api->get('/{id}/coworker-stickers', 'Employee\AppreciateController@coworkerStickers');
-                $api->get('/badge-counter', 'Employee\AppreciateController@badgeCounter');
+                $api->get('/badge-counter', 'Employee\AppreciateController@badgeCounter')->middleware('throttle:200');
                 $api->get('/badge-seen', 'Employee\AppreciateController@badgeSeen');
             });
         });
