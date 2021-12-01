@@ -1,42 +1,28 @@
-<?php namespace App\Sheba\Business\Payslip\TaxHistory;
+<?php namespace Sheba\Business\Payslip\TaxHistory;
 
-use Excel as TaxHistory;
+use Illuminate\Support\Collection;
+use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class TaxHistoryExcel
+class TaxHistoryExcel implements FromCollection, WithHeadings, ShouldAutoSize, WithStyles
 {
     private $taxHistoryData;
-    private $data = [];
 
-    public function setTaxHistoryData(array $tax_history_data)
+    public function __construct(array $tax_history_data)
     {
         $this->taxHistoryData = $tax_history_data;
-        return $this;
     }
 
-    public function get()
+    public function collection(): Collection
     {
-        $this->makeData();
-        TaxHistory::create('Tax_History', function ($excel) {
-            $excel->sheet('data', function ($sheet) {
-                $sheet->fromArray($this->data, null, 'A1', true, false);
-                $sheet->prependRow($this->getHeaders());
-                $sheet->freezeFirstRow();
-                $sheet->cell('A1:R1', function ($cells) {
-                    $cells->setFontWeight('bold');
-                });
-                $sheet->freezePane('D2');
-                $sheet->getDefaultStyle()->getAlignment()->applyFromArray(
-                    array('horizontal' => 'left')
-                );
-                $sheet->setAutoSize(true);
-            });
-        })->export('xlsx');
-    }
+        $data = collect([]);
 
-    private function makeData()
-    {
         foreach ($this->taxHistoryData as $tax_history) {
-            array_push($this->data, [
+            $data->push([
                 'employee_id' => $tax_history['employee_id'],
                 'employee_name' => $tax_history['employee_name'],
                 'department' => $tax_history['department'],
@@ -57,13 +43,28 @@ class TaxHistoryExcel
                 'total_tax_amount_monthly' => $tax_history['total_tax_amount_monthly'],
             ]);
         }
+
+        return $data;
     }
 
-    private function getHeaders()
+    public function headings(): array
     {
-        return ['Employee ID', 'Employee Name', 'Department', 'Basic', 'House Rent', 'Conveyance', 'Medical', 'Others', 'Total Taxable Income', 'Exemption Amount', 'Remaining Taxable Income', '5 % slab', '10 % slab', '15 % slab', '20 % slab', '25 % slab', 'Total Tax Amount(Yearly)', 'Total Tax Amount(Monthly)'];
-
-
+        return [
+            'Employee ID', 'Employee Name', 'Department', 'Basic', 'House Rent', 'Conveyance', 'Medical', 'Others',
+            'Total Taxable Income', 'Exemption Amount', 'Remaining Taxable Income',
+            '5 % slab', '10 % slab', '15 % slab', '20 % slab', '25 % slab',
+            'Total Tax Amount(Yearly)', 'Total Tax Amount(Monthly)'
+        ];
     }
 
+    /**
+     * @throws \PhpOffice\PhpSpreadsheet\Exception
+     */
+    public function styles(Worksheet $sheet)
+    {
+        $sheet->freezePane('A1');
+        $sheet->freezePane('D2');
+        $sheet->getStyle('A1:R1')->getFont()->setBold(true);
+        $sheet->getParent()->getDefaultStyle()->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+    }
 }

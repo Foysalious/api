@@ -259,6 +259,7 @@ class AttendanceController extends Controller
      * @param TimeFrame $time_frame
      * @param AttendanceList $list
      * @return JsonResponse|BinaryFileResponse
+     * @throws \Illuminate\Validation\ValidationException
      */
     public function showStat($business, $member, Request $request, BusinessHolidayRepoInterface $business_holiday_repo,
                              BusinessWeekendSettingsRepo $business_weekend_settings_repo, AttendanceRepoInterface $attendance_repo,

@@ -5,7 +5,7 @@ use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Sheba\Business\BusinessBasicInformation;
 use App\Sheba\Business\PayrollSetting\PayrollConstGetter;
-use App\Sheba\Business\Payslip\TaxHistory\TaxHistoryExcel;
+use Sheba\Business\Payslip\TaxHistory\TaxHistoryExcel;
 use App\Sheba\Business\Payslip\TaxHistoryList;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -17,6 +17,7 @@ use Sheba\Dal\PayrollSetting\PayrollSettingRepository;
 use Sheba\Dal\Payslip\PayslipRepository;
 use Sheba\Dal\TaxHistory\TaxHistoryRepository;
 use Sheba\Helpers\TimeFrame;
+use Maatwebsite\Excel\Facades\Excel as MaatwebsiteExcel;
 
 class TaxHistoryController extends Controller
 {
@@ -41,7 +42,7 @@ class TaxHistoryController extends Controller
         $this->payrollComponentRepo = $payroll_component_repo;
     }
 
-    public function index(Request $request, TaxHistoryList $tax_history_list, TaxHistoryExcel $tax_history_excel)
+    public function index(Request $request, TaxHistoryList $tax_history_list)
     {
         /** @var Business $business */
         $business = $request->business;
@@ -57,7 +58,10 @@ class TaxHistoryController extends Controller
 
         $total_report_count = $tax_report->count();
         $total_tax_amount = $tax_report->sum('total_tax_amount_monthly');
-        if ($request->file == 'excel') return $tax_history_excel->setTaxHistoryData($tax_report->toArray())->get();
+        if ($request->file == 'excel') {
+            $excel = new TaxHistoryExcel($tax_report->toArray());
+            return MaatwebsiteExcel::download($excel, 'Tax_History.xlsx');
+        }
         $tax_report = collect($tax_report)->splice($offset, $limit);
         return api_response($request, null, 200, ['tax_history' => $tax_report, 'total_tax_amount' => $total_tax_amount, 'show_download_report_banner' => $business->payrollSetting->show_tax_report_download_banner, 'total' => $total_report_count]);
     }
