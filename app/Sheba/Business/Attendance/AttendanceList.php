@@ -88,6 +88,8 @@ class AttendanceList
      * @param LeaveRepositoryInterface $leave_repository_interface
      * @param BusinessHolidayRepoInterface $business_holiday_repo
      * @param BusinessWeekendRepoInterface $business_weekend_repo
+     * @param BusinessWeekendSettingsRepo $business_weekend_settings_repo
+     * @param \Sheba\Business\Attendance\CheckWeekend $check_weekend
      */
     public function __construct(AttendanceRepositoryInterface          $attendance_repository_interface,
                                 AttendanceActionLogRepositoryInterface $attendance_action_log_repository_interface,
