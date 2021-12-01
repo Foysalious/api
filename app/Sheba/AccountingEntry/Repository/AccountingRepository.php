@@ -171,6 +171,7 @@ class AccountingRepository extends BaseRepository
         $data['note'] = $request->note ?? null;
         $data['amount_cleared'] = $request->amount_cleared ?? 0;
         $data['reconcile_amount'] = $request->reconcile_amount ?? 0;
+        $data['updated_entry_amount'] = $request->updated_entry_amount ?? 0;
         $data['customer_id'] = $request->customer_id ?? null;
         $data['customer_name'] = $request->customer_name ?? null;
         $data['customer_mobile'] = $request->customer_mobile ?? null;

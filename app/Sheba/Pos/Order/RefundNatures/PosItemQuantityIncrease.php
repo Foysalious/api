@@ -15,6 +15,7 @@ class PosItemQuantityIncrease extends ReturnPosItem
     public function update()
     {
         try {
+            $oldOrder = clone $this->order;
             $this->old_services = $this->new ? $this->order->items->pluckMultiple([
                 'quantity',
                 'unit_price'
@@ -29,8 +30,7 @@ class PosItemQuantityIncrease extends ReturnPosItem
             $this->generateDetails($this->order);
             $this->saveLog();
             if ($this->order) {
-                Log::info("checking refund 3");
-                $this->updateEntry($this->order, 'quantity_increase');
+                $this->updateEntry($this->order, $oldOrder, 'quantity_increase');
                 $this->updateIncome($this->order);
             }
         } catch (ExpenseTrackingServerError $e) {

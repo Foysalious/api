@@ -54,7 +54,7 @@ abstract class ReturnPosItem extends RefundNature
             $this->saveLog();
             if ($this->order) {
                 $this->returnItem($this->order);
-                $this->updateEntry($this->order, 'refund');
+                $this->updateEntry($this->order, $this->oldOrder, 'refund');
             }
             $this->updateIncome($this->order);
         } catch (ExpenseTrackingServerError $e) {
@@ -138,18 +138,19 @@ abstract class ReturnPosItem extends RefundNature
 
     /**
      * @param PosOrder $order
+     * @param PosOrder $oldOrder
      * @param $refundType
      * @throws AccountingEntryServerError
      */
-    protected function updateEntry(PosOrder $order, $refundType)
+    protected function updateEntry(PosOrder $order, PosOrder $oldOrder, $refundType)
     {
-        $this->additionalAccountingData($order, $refundType);
+        $this->additionalAccountingData($order, $oldOrder, $refundType);
         /** @var AccountingRepository $accounting_repo */
         $accounting_repo = app()->make(AccountingRepository::class);
         $accounting_repo->updateEntryBySource($this->request, $order->id, EntryTypes::POS);
     }
 
-    private function additionalAccountingData(PosOrder $order, $refundType)
+    private function additionalAccountingData(PosOrder $order, PosOrder $oldOrder, $refundType)
     {   $orderCalculate = $this->order->calculate();
         $netBill = (double)$orderCalculate->getNetBill();
         $previouslyPaidAmount = $orderCalculate->getPaid();
@@ -161,8 +162,9 @@ abstract class ReturnPosItem extends RefundNature
                 "to_account_key" => (new Accounts())->income->sales::SALES_FROM_POS,
                 "amount" => $netBill,
                 "amount_cleared" => (double)($this->data['paid_amount'] > 0 && $totalPaidAmount > $netBill ? $netBill : $totalPaidAmount),
+                "updated_entry_amount" => (double)($oldOrder->getNetBill() - $netBill),
                 // amount in negative if refund
-                "reconcile_amount" =>(double)($this->data['paid_amount'] > 0 ? ($previouslyPaidAmount - $this->data['paid_amount']): $this->data['paid_amount']),
+                "reconcile_amount" =>(double)($this->data['paid_amount'] > 0 ? ($this->data['paid_amount'] - $previouslyPaidAmount): $this->data['paid_amount']),
                 "note" => $refundType,
                 "source_id" => $order->id,
                 "customer_id" => isset($order->customer) ? $order->customer->id : null,
