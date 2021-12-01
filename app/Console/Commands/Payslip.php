@@ -145,9 +145,7 @@ class Payslip extends Command
                             });
                         }
                     } catch (Throwable $e) {
-                        $sentry = app('sentry');
-                        $sentry->user_context(['business_member' => $business_member]);
-                        $sentry->captureException($e);
+                        app('sentry')->captureException($e);
                     }
                 }
                 $package_generate_information = $this->payrollComponentSchedulerCalculation->getPackageGenerateData();
