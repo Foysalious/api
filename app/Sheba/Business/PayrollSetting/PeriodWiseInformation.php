@@ -2,8 +2,9 @@
 
 use App\Sheba\Business\Attendance\AttendanceBasicInfo;
 use Carbon\Carbon;
+use Sheba\Business\Attendance\CheckWeekend;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
-use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
+use Sheba\Dal\BusinessWeekendSettings\BusinessWeekendSettingsRepo;
 
 class PeriodWiseInformation
 {
@@ -19,7 +20,7 @@ class PeriodWiseInformation
     public function __construct()
     {
         $this->businessHolidayRepo = app(BusinessHolidayRepoInterface::class);
-        $this->businessWeekendRepo = app(BusinessWeekendRepoInterface::class);
+        $this->businessWeekendRepo = app(BusinessWeekendSettingsRepo::class);
         $this->periodWiseInformation = collect();
     }
 
@@ -59,7 +60,7 @@ class PeriodWiseInformation
     }
     public function get()
     {
-        $business_weekend = $this->businessWeekendRepo->getAllByBusiness($this->business)->pluck('weekday_name')->toArray();
+        $business_weekend_settings = $this->businessWeekendRepo->getAllByBusiness($this->business);
         $business_holiday = $this->businessHolidayRepo->getAllByBusiness($this->business);
         $dates_of_holidays_formatted = $this->getHolidaysFormatted($business_holiday);
         $weekend_or_holiday_count = $weekend_count = 0;
@@ -69,7 +70,9 @@ class PeriodWiseInformation
         $total_early_checkout = 0;
         $total_present = 0;
         $grace_time_over = 0;
+        $check_weekend = new CheckWeekend();
         foreach ($this->period as $date) {
+            $business_weekend = $check_weekend->getWeekendDays($date, $business_weekend_settings);
             $is_weekend_or_holiday = $this->isWeekendHoliday($date, $business_weekend, $dates_of_holidays_formatted);
             $is_weekend = $this->isWeekend($date, $business_weekend);
             $weekend_or_holiday_count = $is_weekend_or_holiday ? ($weekend_or_holiday_count + 1) : $weekend_or_holiday_count;

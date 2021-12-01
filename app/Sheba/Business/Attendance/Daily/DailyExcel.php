@@ -134,6 +134,7 @@ class DailyExcel implements FromCollection, WithHeadings, ShouldAutoSize, WithSt
                 'overtime' => $this->overtime,
                 'late_check_in_note' => $this->lateNote,
                 'left_early_note' => $this->leftEarlyNote,
+                'attendance_reconciled' => $attendance['is_attendance_reconciled'] ? 'Yes' : 'No'
             ]);
         }
 
@@ -146,8 +147,8 @@ class DailyExcel implements FromCollection, WithHeadings, ShouldAutoSize, WithSt
             'Date', 'Employee ID', 'Employee Name', 'Department',
             'Status', 'Check in time', 'Check in status', 'Check in location',
             'Check in address', 'Check out time', 'Check out status',
-            'Check out location', 'Check out address', 'Total Hours', 'Overtime',
-            'Late check in note', 'Left early note'
+            'Check out location', 'Check out address', 'Total Hours', 'Overtime', 
+            'Late check in note', 'Left early note', 'Attendance Reconciliation'
         ];
     }
 
@@ -157,7 +158,7 @@ class DailyExcel implements FromCollection, WithHeadings, ShouldAutoSize, WithSt
     public function styles(Worksheet $sheet)
     {
         $sheet->freezePane('A1');
-        $sheet->getStyle('A1:Q1')->getFont()->setBold(true);
-        $sheet->getStyle('A:Q')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+        $sheet->getStyle('A1:R1')->getFont()->setBold(true);
+        $sheet->getStyle('A:R')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
     }
 }

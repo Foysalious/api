@@ -32,6 +32,7 @@ class DetailsExcel implements FromCollection, WithHeadings, ShouldAutoSize, With
     /** @var TimeFrame */
     private $timeFrame;
     private $overtime;
+    private $attendanceReconciled;
 
     public function __construct(BusinessMember $business_member, array $detailed_data, TimeFrame $time_frame)
     {
@@ -64,7 +65,35 @@ class DetailsExcel implements FromCollection, WithHeadings, ShouldAutoSize, With
 
     public function collection(): Collection
     {
-        $data = collect([]);
+        $this->department = $department;
+        return $this;
+    }
+
+    public function download()
+    {
+        $this->makeData();
+
+        $file_name = $this->businessMember->employee_id ?
+            $this->profile->name . '_' . $this->department->name . '_' . $this->businessMember->employee_id :
+            $this->profile->name . '_' . $this->department->name;
+
+        $sheet_name = $this->startDate . ' - ' . $this->endDate;
+
+        Excel::create($file_name, function ($excel) use ($sheet_name) {
+            $excel->sheet($sheet_name, function ($sheet) {
+                $sheet->fromArray($this->data, null, 'A1', false, false);
+                $sheet->prependRow($this->getHeaders());
+                $sheet->freezeFirstRow();
+                $sheet->cell('A1:O1', function ($cells) {
+                    $cells->setFontWeight('bold');
+                });
+                $sheet->setAutoSize(true);
+            });
+        })->export('xlsx');
+    }
+
+    private function makeData()
+    {
         foreach ($this->breakdownData as $attendance) {
             $this->date = null;
             $this->status = null;
@@ -83,6 +112,7 @@ class DetailsExcel implements FromCollection, WithHeadings, ShouldAutoSize, With
             $this->overtime = '-';
             $this->lateNote = null;
             $this->leftEarlyNote = null;
+            $this->attendanceReconciled = '-';
             if (!$attendance['weekend_or_holiday_tag']) {
                 if ($attendance['show_attendance'] == 1) {
                     $this->date = $attendance['date'];
@@ -129,9 +159,17 @@ class DetailsExcel implements FromCollection, WithHeadings, ShouldAutoSize, With
                 'overtime' => $this->overtime,
                 'late_check_in_note' => $this->lateNote,
                 'left_early_note' => $this->leftEarlyNote,
+                'attendance_reconciled' => $this->attendanceReconciled
             ]);
         }
         return $data;
+    }
+
+    private function getHeaders()
+    {
+        return ['Date', 'Status', 'Check in time', 'Check in status', 'Check in location',
+            'Check in address', 'Check out time', 'Check out status',
+            'Check out location', 'Check out address', 'Total Hours', 'Overtime', 'Late check in note', 'Left early note', 'Attendance Reconciliation'];
     }
 
     private function checkInOutLogics($attendance)
@@ -186,6 +224,7 @@ class DetailsExcel implements FromCollection, WithHeadings, ShouldAutoSize, With
 
         $this->lateNote = $attendance['attendance']['late_note'];
         $this->leftEarlyNote = $attendance['attendance']['left_early_note'];
+        $this->attendanceReconciled = $attendance['attendance']['is_attendance_reconciled'] ? 'Yes' : 'No';
     }
 
     /**
