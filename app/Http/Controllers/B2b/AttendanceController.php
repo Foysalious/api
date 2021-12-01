@@ -21,7 +21,7 @@ use Sheba\Business\Attendance\AttendanceList;
 use Sheba\Business\Attendance\Daily\DailyExcel;
 use Sheba\Business\Attendance\Detail\DetailsExcel as DetailsExcel;
 use Sheba\Business\Attendance\HalfDaySetting\Updater as HalfDaySettingUpdater;
-use Sheba\Business\Attendance\Monthly\Excel;
+use Sheba\Business\Attendance\Monthly\MonthlyExcel;
 use Sheba\Business\Attendance\Setting\ActionType;
 use Sheba\Business\Attendance\Setting\AttendanceSettingTransformer;
 use Sheba\Business\Attendance\Setting\Creator as SettingCreator;
@@ -151,12 +151,12 @@ class AttendanceController extends Controller
      * @param TimeFrame $time_frame
      * @param BusinessHolidayRepoInterface $business_holiday_repo
      * @param BusinessWeekendSettingsRepo $business_weekend_settings_repo
-     * @param Excel $monthly_excel
-     * @return JsonResponse|void
+     * @return BinaryFileResponse|JsonResponse
+     * @throws \Illuminate\Validation\ValidationException
      */
     public function getMonthlyStats($business, Request $request, AttendanceRepoInterface $attendance_repo,
                                     TimeFrame $time_frame, BusinessHolidayRepoInterface $business_holiday_repo,
-                                    BusinessWeekendSettingsRepo $business_weekend_settings_repo, Excel $monthly_excel)
+                                    BusinessWeekendSettingsRepo $business_weekend_settings_repo)
     {
         ini_set('memory_limit', '6096M');
         ini_set('max_execution_time', 480);
@@ -240,7 +240,9 @@ class AttendanceController extends Controller
         if ($request->has('limit')) $all_employee_attendance = $all_employee_attendance->splice($offset, $limit);
 
         if ($request->file == 'excel') {
-            return $monthly_excel->setMonthlyData($all_employee_attendance->toArray())->setStartDate($request->start_date)->setEndDate($request->end_date)->get();
+            $time_frame = $time_frame->forDateRange($request->start_date, $request->end_date);
+            $excel = new MonthlyExcel($all_employee_attendance->toArray(), $time_frame);
+            return MaatwebsiteExcel::download($excel, 'Custom_attendance_report.xlsx');
         }
 
         return api_response($request, $all_employee_attendance, 200, ['all_employee_attendance' => $all_employee_attendance, 'total_members' => $total_members]);
