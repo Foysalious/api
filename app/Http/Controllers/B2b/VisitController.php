@@ -6,7 +6,7 @@ use App\Sheba\Business\CoWorker\ManagerSubordinateEmployeeList;
 use Carbon\Carbon;
 use Sheba\Business\EmployeeTracking\EmployeeVisit\EmployeeVisitExcel;
 use Maatwebsite\Excel\Facades\Excel as MaatwebsiteExcel;
-use Sheba\Business\EmployeeTracking\MyVisit\Excel as MyVisitExcel;
+use Sheba\Business\EmployeeTracking\MyVisit\MyVisitExcel;
 use App\Transformers\Business\MyVisitListTransformer;
 use App\Transformers\Business\TeamVisitListTransformer;
 use App\Transformers\Business\VisitDetailsTransformer;
@@ -104,10 +104,9 @@ class VisitController extends Controller
     /**
      * @param Request $request
      * @param TimeFrame $time_frame
-     * @param MyVisitExcel $my_visit_excel
-     * @return JsonResponse
+     * @return JsonResponse|BinaryFileResponse
      */
-    public function getMyVisits(Request $request, TimeFrame $time_frame, MyVisitExcel $my_visit_excel)
+    public function getMyVisits(Request $request, TimeFrame $time_frame)
     {
         /** @var Business $business */
         $business = $request->business;
@@ -139,7 +138,11 @@ class VisitController extends Controller
         #$limit = $this->getLimit($request, $limit, $total_visits);
         if ($request->has('limit') && !$request->has('file')) $visits = collect($visits)->splice($offset, $limit);
 
-        if ($request->has('file') && $request->file == 'excel') return $my_visit_excel->setMyVisitData($visits->toArray())->get();
+        if ($request->has('file') && $request->file == 'excel') {
+            $file_name = 'My_visit_report_' . Carbon::now()->timestamp;
+            $excel = new MyVisitExcel($visits->toArray());
+            return MaatwebsiteExcel::download($excel, "$file_name.xlsx");
+        }
 
         return api_response($request, $visits, 200, [
             'employees' => $visits,
