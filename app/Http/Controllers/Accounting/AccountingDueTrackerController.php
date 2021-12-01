@@ -35,7 +35,7 @@ class AccountingDueTrackerController extends Controller
         $this->validate($request, [
             'amount' => 'required',
             'entry_type' => 'required|in:due,deposit',
-            'account_key' => 'required',
+            'account_key' => 'sometimes|string',
             'customer_id' => 'required|integer',
             'date' => 'required|date_format:Y-m-d H:i:s',
             'partner_wise_order_id' => 'sometimes|numeric'
