@@ -30,7 +30,8 @@ class PartnerCancelRequestController extends Controller
             $preferred_time_start = $job->preferred_time_start;
             $preparation_time_start = $preferred_time_start ? Carbon::parse($preferred_time_start)->subMinutes($job->category->preparation_time_minutes) : null;
             $now = Carbon::now();
-            if ($preparation_time_start && !in_array($job->status, [JobStatuses::PROCESS, JobStatuses::SERVE_DUE]) && (($now->between($preparation_time_start, $preferred_time_start) && $job->status == JobStatuses::ACCEPTED) || $job->status == JobStatuses::SCHEDULE_DUE)) {
+            $between_prep_and_preferred_time = $now->between($preparation_time_start, $preferred_time_start);
+            if ($preparation_time_start && !in_array($job->status, [JobStatuses::PROCESS, JobStatuses::SERVE_DUE]) && ($between_prep_and_preferred_time || $job->status == JobStatuses::SCHEDULE_DUE || (($now > $preferred_time_start) && $job->status == JobStatuses::ACCEPTED))) {
                 return api_response($request, null, 400, ['message' => "You cannot request for cancel right before the schedule date and time or when job is in process"]);
             }
         }
