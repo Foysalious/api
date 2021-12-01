@@ -58,42 +58,17 @@ class DetailsExcel implements FromCollection, WithHeadings, ShouldAutoSize, With
 
     public function headings(): array
     {
-        return ['Date', 'Status', 'Check in time', 'Check in status', 'Check in location',
+        return [
+            'Date', 'Status', 'Check in time', 'Check in status', 'Check in location',
             'Check in address', 'Check out time', 'Check out status',
-            'Check out location', 'Check out address', 'Total Hours', 'Overtime', 'Late check in note', 'Left early note'];
+            'Check out location', 'Check out address', 'Total Hours', 'Overtime',
+            'Late check in note', 'Left early note', 'Attendance Reconciliation'
+        ];
     }
 
     public function collection(): Collection
     {
-        $this->department = $department;
-        return $this;
-    }
-
-    public function download()
-    {
-        $this->makeData();
-
-        $file_name = $this->businessMember->employee_id ?
-            $this->profile->name . '_' . $this->department->name . '_' . $this->businessMember->employee_id :
-            $this->profile->name . '_' . $this->department->name;
-
-        $sheet_name = $this->startDate . ' - ' . $this->endDate;
-
-        Excel::create($file_name, function ($excel) use ($sheet_name) {
-            $excel->sheet($sheet_name, function ($sheet) {
-                $sheet->fromArray($this->data, null, 'A1', false, false);
-                $sheet->prependRow($this->getHeaders());
-                $sheet->freezeFirstRow();
-                $sheet->cell('A1:O1', function ($cells) {
-                    $cells->setFontWeight('bold');
-                });
-                $sheet->setAutoSize(true);
-            });
-        })->export('xlsx');
-    }
-
-    private function makeData()
-    {
+        $data = collect([]);
         foreach ($this->breakdownData as $attendance) {
             $this->date = null;
             $this->status = null;
@@ -165,13 +140,6 @@ class DetailsExcel implements FromCollection, WithHeadings, ShouldAutoSize, With
         return $data;
     }
 
-    private function getHeaders()
-    {
-        return ['Date', 'Status', 'Check in time', 'Check in status', 'Check in location',
-            'Check in address', 'Check out time', 'Check out status',
-            'Check out location', 'Check out address', 'Total Hours', 'Overtime', 'Late check in note', 'Left early note', 'Attendance Reconciliation'];
-    }
-
     private function checkInOutLogics($attendance)
     {
         $attendance_check_in = $attendance['attendance']['check_in'];
@@ -233,7 +201,7 @@ class DetailsExcel implements FromCollection, WithHeadings, ShouldAutoSize, With
     public function styles(Worksheet $sheet)
     {
         $sheet->freezePane('A1');
-        $sheet->getStyle('A1:N1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:O1')->getFont()->setBold(true);
     }
 
     public function title(): string
