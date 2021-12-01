@@ -6,6 +6,7 @@ class EmployeeRoute
     {
         $api->post('employee/login', 'Employee\EmployeeController@login');
         $api->group(['prefix' => 'employee', 'middleware' => ['jwtAuth']], function ($api) {
+
             $api->group(['prefix' => 'me'], function ($api) {
                 $api->get('/', 'Employee\EmployeeController@me');
                 $api->post('/', 'Employee\EmployeeController@updateMe');
@@ -41,6 +42,12 @@ class EmployeeRoute
                     $api->delete('photo/{id}', 'Employee\VisitController@deletePhoto');
                     $api->post('status-update', 'Employee\VisitController@updateStatus');
                 });
+            });
+            $api->group(['prefix' => 'my-team'], function ($api) {
+                $api->get('/', 'Employee\MyTeamController@myTeam');
+                $api->get('attendance-summary', 'Employee\MyTeamController@attendanceSummary');
+                $api->get('attendance-summary-details', 'Employee\MyTeamController@attendanceSummaryDetails');
+                $api->get('{employee_id}', 'Employee\MyTeamController@employeeDetails');
             });
             //$api->post('password', 'Employee\EmployeeController@updateMyPassword');
             $api->get('dashboard', 'Employee\EmployeeController@getDashboard');
