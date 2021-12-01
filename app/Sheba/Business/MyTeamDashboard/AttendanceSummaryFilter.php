@@ -3,11 +3,13 @@
 use App\Models\Business;
 use App\Models\BusinessMember;
 use Carbon\Carbon;
+use Sheba\Business\Attendance\CheckWeekend;
 use Sheba\Dal\Attendance\Contract as AttendanceRepositoryInterface;
 use Sheba\Dal\Attendance\Statuses;
 use Sheba\Dal\AttendanceActionLog\Actions;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
+use Sheba\Dal\BusinessWeekendSettings\BusinessWeekendSettingsRepo;
 use Sheba\Dal\Leave\Contract as LeaveRepositoryInterface;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
@@ -46,6 +48,8 @@ class AttendanceSummaryFilter
     private $isWeekendOrHoliday;
     private $teamBusinessMemberIds;
     private $statuses = [Statuses::ON_TIME, Statuses::LATE, Statuses::LEFT_TIMELY, Statuses::LEFT_EARLY];
+    private $businessWeekendSettingsRepo;
+    private $checkWeekend;
 
     /**
      * @param AttendanceRepositoryInterface $attendance_repository_interface
@@ -58,13 +62,17 @@ class AttendanceSummaryFilter
                                 LeaveRepositoryInterface          $leave_repository_interface,
                                 BusinessMemberRepositoryInterface $business_member_repository,
                                 BusinessWeekendRepoInterface      $business_weekend_repo,
-                                CommonFunctions                   $common_functions)
+                                CommonFunctions                   $common_functions,
+                                BusinessWeekendSettingsRepo       $business_weekend_settings_repo,
+                                CheckWeekend                      $check_weekend)
     {
         $this->attendanceRepositoryInterface = $attendance_repository_interface;
         $this->leaveRepositoryInterface = $leave_repository_interface;
         $this->businessMemberRepository = $business_member_repository;
         $this->businessWeekend = $business_weekend_repo;
         $this->commonFunctions = $common_functions;
+        $this->businessWeekendSettingsRepo = $business_weekend_settings_repo;
+        $this->checkWeekend = $check_weekend;
     }
 
     /**
@@ -426,8 +434,8 @@ class AttendanceSummaryFilter
      */
     private function isWeekendOrHoliday()
     {
-        $business_weekend = $this->businessWeekend->getAllByBusiness($this->business);
-        $weekend_day = $business_weekend->pluck('weekday_name')->toArray();
+        $weekend_settings = $this->businessWeekendSettingsRepo->getAllByBusiness($this->business);
+        $weekend_day = $this->checkWeekend->getWeekendDays($this->startDate, $weekend_settings);
 
         return $this->isWeekend($this->startDate, $weekend_day) ? 'weekend' : 'holiday';
     }
