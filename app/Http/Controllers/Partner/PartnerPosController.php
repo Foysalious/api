@@ -19,7 +19,7 @@ class PartnerPosController extends Controller
         try {
             $is_shop = $request->is_shop ? $request->is_shop : 0;
             $products = $product_list->setIsPublishedForShop($is_shop);
-            $pintroducts = is_numeric($partner) ? $products->setPartnerId((int)$partner) : $products->setPartnerSlug($partner);
+            $products = is_numeric($partner) ? $products->setPartnerId((int)$partner) : $products->setPartnerSlug($partner);
             $products = $products->getAvailableProducts();
 
             if (count($products) > 0) {
