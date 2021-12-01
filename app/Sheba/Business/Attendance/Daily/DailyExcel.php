@@ -1,6 +1,6 @@
 <?php namespace Sheba\Business\Attendance\Daily;
 
-use App\Sheba\Business\Attendance\AttendanceConstGetter;
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -55,7 +55,7 @@ class DailyExcel implements FromCollection, WithHeadings, ShouldAutoSize, WithSt
         $this->leftEarlyNote = '-';
     }
 
-    public function collection()
+    public function collection(): Collection
     {
         $data = [];
         foreach ($this->dailyData as $attendance) {
@@ -148,8 +148,8 @@ class DailyExcel implements FromCollection, WithHeadings, ShouldAutoSize, WithSt
             'Date', 'Employee ID', 'Employee Name', 'Department',
             'Status', 'Check in time', 'Check in status', 'Check in location',
             'Check in address', 'Check out time', 'Check out status',
-            'Check out location', 'Check out address', 'Total Hours', 'Overtime',
-            'Late check in note', 'Left early note'
+            'Check out location', 'Check out address', 'Total Hours', 'Overtime', 
+            'Late check in note', 'Left early note', 'Attendance Reconciliation'
         ];
     }
 
@@ -159,7 +159,7 @@ class DailyExcel implements FromCollection, WithHeadings, ShouldAutoSize, WithSt
     public function styles(Worksheet $sheet)
     {
         $sheet->freezePane('A1');
-        $sheet->getStyle('A1:Q1')->getFont()->setBold(true);
-        $sheet->getStyle('A:Q')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+        $sheet->getStyle('A1:R1')->getFont()->setBold(true);
+        $sheet->getStyle('A:R')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
     }
 }

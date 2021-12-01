@@ -2,6 +2,7 @@
 
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Helpers\TimeFrame;
 use Sheba\Transactions\Types as TransactionTypes;
 
 class BusinessTransaction extends Model
@@ -34,5 +35,10 @@ class BusinessTransaction extends Model
     public function balance($balance_before)
     {
         return $balance_before + (($this->isDebit() ? -1 : 1) * $this->amount);
+    }
+
+    public function scopeCreatedAtBetweenTimeFrame($query, TimeFrame $time_frame)
+    {
+        return $query->whereBetween('created_at', $time_frame->getArray());
     }
 }

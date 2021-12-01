@@ -6,7 +6,7 @@ use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Models\Member;
 use Sheba\Business\Payslip\PayslipExcel;
-use App\Sheba\Business\Payslip\PayRun\PayRunBulkExcel;
+use Sheba\Business\Payslip\PayRun\PayRunBulkExcel;
 use App\Sheba\Business\Payslip\PayrunList;
 use App\Sheba\Business\Payslip\PendingMonths;
 use Illuminate\Http\JsonResponse;
@@ -49,10 +49,9 @@ class PayRunController extends Controller
     /**
      * @param Request $request
      * @param PayrunList $payrun_list
-     * @param PayRunBulkExcel $pay_run_bulk_excel
      * @return JsonResponse|BinaryFileResponse
      */
-    public function index(Request $request, PayrunList $payrun_list, PayRunBulkExcel $pay_run_bulk_excel)
+    public function index(Request $request, PayrunList $payrun_list)
     {
         ini_set('memory_limit', '4096M');
         ini_set('max_execution_time', 480);
@@ -82,7 +81,10 @@ class PayRunController extends Controller
         $addition_payroll_components = $business->payrollSetting->components->where('type', Type::ADDITION)->sortBy('name');
         $deduction_payroll_components = $business->payrollSetting->components->where('type', Type::DEDUCTION)->sortBy('name');
         $payroll_components = $addition_payroll_components->merge($deduction_payroll_components);
-        if ($request->generate_sample) $pay_run_bulk_excel->setBusiness($business)->setPayslips($payslip)->setPayrollComponent($payroll_components)->get();
+        if ($request->generate_sample) {
+            $excel = new PayRunBulkExcel($payslip, $payroll_components);
+            return MaatwebsiteExcel::download($excel, 'Pay_run_sample_excel.xlsx');
+        }
         
         $payslip = collect($payslip)->splice($offset, $limit);
 

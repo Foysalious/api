@@ -59,9 +59,12 @@ class DetailsExcel implements FromCollection, WithHeadings, ShouldAutoSize, With
 
     public function headings(): array
     {
-        return ['Date', 'Status', 'Check in time', 'Check in status', 'Check in location',
+        return [
+            'Date', 'Status', 'Check in time', 'Check in status', 'Check in location',
             'Check in address', 'Check out time', 'Check out status',
-            'Check out location', 'Check out address', 'Total Hours', 'Overtime', 'Late check in note', 'Left early note'];
+            'Check out location', 'Check out address', 'Total Hours', 'Overtime',
+            'Late check in note', 'Left early note', 'Attendance Reconciliation'
+        ];
     }
 
     public function collection(): Collection
@@ -199,7 +202,7 @@ class DetailsExcel implements FromCollection, WithHeadings, ShouldAutoSize, With
     public function styles(Worksheet $sheet)
     {
         $sheet->freezePane('A1');
-        $sheet->getStyle('A1:N1')->getFont()->setBold(true);
+        $sheet->getStyle('A1:O1')->getFont()->setBold(true);
     }
 
     public function title(): string
