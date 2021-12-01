@@ -104,7 +104,7 @@ class AccountController extends Controller
     {
         $response = $this->accountRepo->deleteAccount($accountId, $request->partner->id);
         if (is_numeric($response)) {
-            throw new DoNotReportException("উপরোক্ত অ্যাকাউন্টটি " . en2bnNumber($response) . "টি লেনদেনের সাথে জড়িত থাকায় ডিলিট করা সম্ভব নয়।", 401);
+            throw new DoNotReportException("উপরোক্ত অ্যাকাউন্টটি " . en2bnNumber($response) . "টি লেনদেনের সাথে জড়িত থাকায় ডিলিট করা সম্ভব নয়।", 403);
         }
         return api_response($request, $response, 200, ['data' => $response]);
     }
