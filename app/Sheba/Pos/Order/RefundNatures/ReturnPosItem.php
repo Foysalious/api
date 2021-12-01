@@ -150,10 +150,11 @@ abstract class ReturnPosItem extends RefundNature
     }
 
     private function additionalAccountingData(PosOrder $order, $refundType)
-    {
-        $netBill = (double)$this->order->calculate()->getNetBill();
-        $previouslyPaidAmount = $this->order->calculate()->getPaid();
+    {   $orderCalculate = $this->order->calculate();
+        $netBill = (double)$orderCalculate->getNetBill();
+        $previouslyPaidAmount = $orderCalculate->getPaid();
         $totalPaidAmount = $previouslyPaidAmount + $this->data['paid_amount'];
+        Log::debug(["amount history", $this->oldOrder->netBill(), $netBill, $previouslyPaidAmount, $totalPaidAmount]);
         $this->request->merge(
             [
                 "from_account_key" => (new Accounts())->asset->cash::CASH,
