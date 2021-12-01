@@ -176,7 +176,7 @@ class AvailableMethods
         $repo = app(PaymentLinkRepositoryInterface::class);
         $payment_link = $repo->findByIdentifier($payment_link_identifier);
         $receiver = ($payment_link->getPaymentReceiver());
-        if($receiver instanceof Partner) return (new AvailableMethods())->getPartnerPaymentGateways($receiver);
+        if($receiver instanceof Partner) return (new AvailableMethods())->getPublishedPartnerPaymentGateways($receiver);
 
         return [
             PaymentStrategy::BKASH,
@@ -192,7 +192,7 @@ class AvailableMethods
      * @param $partner
      * @return array
      */
-    private function getPartnerPaymentGateways($partner): array
+    public function getPublishedPartnerPaymentGateways($partner): array
     {
         $payment_methods = array();
         $partnerStoreAccounts = $partner->pgwStoreAccounts()->published()->with('pgw_store')->get();
@@ -201,7 +201,6 @@ class AvailableMethods
             $payment_methods[] = $name;
         }
         return $payment_methods;
-
     }
 
 
