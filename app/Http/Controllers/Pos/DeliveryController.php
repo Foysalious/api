@@ -67,8 +67,8 @@ class DeliveryController extends Controller
             $registration = $this->registerCore($request, $delivery_service);
             return http_response($request, null, 200, ['messages' => 'আপনার রেজিস্ট্রেশন সফল হয়েছে', 'data' => $registration['data']]);
         } catch (GuzzleException $e) {
-            list($http_code,$message) = $this->resolveError($e);
-            if ($http_code > 399 && $http_code < 500) return http_response($request, null, $http_code, ['message' => $message]);
+            list($http_code,$message) = $this->resolveRegistrationError($e);
+            if ($http_code > 399 && $http_code < 500) return http_response($request, null, $http_code, ['error_messages' => $message]);
             return http_response($request, null, $http_code, ['message' => $e->getMessage()]);
         }
     }
@@ -126,6 +126,24 @@ class DeliveryController extends Controller
         $decoded_message = json_decode($message, true);
         if (isset($decoded_message['errors']))
             $message = array_values($decoded_message['errors'])[0][0];
+        else
+            $message = $decoded_message['message'];
+        return [$http_code,$message];
+    }
+
+    private function resolveRegistrationError(GuzzleException $e)
+    {
+        $res = $e->getResponse();
+        $http_code = $res->getStatusCode();
+        $message = $res->getBody()->getContents();
+        $decoded_message = json_decode($message, true);
+        if (isset($decoded_message['errors']))
+        {
+            $converted_message = [];
+            foreach($decoded_message['errors'] as $key => $value)
+                $converted_message[$key] = $value[0];
+            return [400,$converted_message];
+        }
         else
             $message = $decoded_message['message'];
         return [$http_code,$message];
