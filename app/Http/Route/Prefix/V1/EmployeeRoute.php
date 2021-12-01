@@ -76,17 +76,17 @@ class EmployeeRoute
                 $api->post('/', 'Employee\ExpenseController@store');
             });
             $api->group(['prefix' => 'announcements'], function ($api) {
-                $api->get('/', 'Employee\AnnouncementController@index');
+                $api->get('/', 'Employee\AnnouncementController@index')->middleware('throttle:400');
                 $api->group(['prefix' => '{announcement}'], function ($api) {
                     $api->get('/', 'Employee\AnnouncementController@show');
                 });
             });
             $api->group(['prefix' => 'attendances'], function ($api) {
                 $api->get('/', 'Employee\AttendanceController@index');
-                $api->get('/info', 'Employee\AttendanceController@attendanceInfo')->middleware('throttle:200');
-                $api->post('action', 'Employee\AttendanceController@takeAction')->middleware('throttle:200');
-                $api->get('today', 'Employee\AttendanceController@getTodaysInfo')->middleware('throttle:200');
-                $api->post('note', 'Employee\AttendanceController@storeNote')->middleware('throttle:200');
+                $api->get('/info', 'Employee\AttendanceController@attendanceInfo')->middleware('throttle:400');
+                $api->post('action', 'Employee\AttendanceController@takeAction')->middleware('throttle:400');
+                $api->get('today', 'Employee\AttendanceController@getTodaysInfo')->middleware('throttle:400');
+                $api->post('note', 'Employee\AttendanceController@storeNote')->middleware('throttle:400');
             });
             $api->group(['prefix' => 'leaves'], function ($api) {
                 $api->get('/', 'Employee\LeaveController@index');
@@ -122,14 +122,14 @@ class EmployeeRoute
             $api->get('/{employee}', 'Employee\EmployeeController@show');
 
             $api->group(['prefix' => 'appreciate'], function ($api) {
-                $api->get('/new-joiner', 'Employee\AppreciateController@getNewJoiner')->middleware('throttle:200');
+                $api->get('/new-joiner', 'Employee\AppreciateController@getNewJoiner')->middleware('throttle:400');
                 $api->get('/coworker', 'Employee\AppreciateController@index');
                 $api->post('/', 'Employee\AppreciateController@store');
                 $api->post('/{id}', 'Employee\AppreciateController@update');
                 $api->get('/stickers', 'Employee\AppreciateController@categoryWiseStickers');
                 $api->get('/my-stickers', 'Employee\AppreciateController@myStickers');
                 $api->get('/{id}/coworker-stickers', 'Employee\AppreciateController@coworkerStickers');
-                $api->get('/badge-counter', 'Employee\AppreciateController@badgeCounter')->middleware('throttle:200');
+                $api->get('/badge-counter', 'Employee\AppreciateController@badgeCounter')->middleware('throttle:400');
                 $api->get('/badge-seen', 'Employee\AppreciateController@badgeSeen');
             });
         });
