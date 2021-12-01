@@ -396,6 +396,14 @@ class Creator
         return (isset($discount) && isset($discount['amount'])) ? $discount['amount'] : 0;
     }
 
+    private function getDeliveryVendorName()
+    {
+        $partnerDeliveryInformation = $this->partner->deliveryInformation;
+        if ($partnerDeliveryInformation && $partnerDeliveryInformation->delivery_vendor != Methods::OWN_DELIVERY) return Methods::SDELIVERY;
+        return Methods::OWN_DELIVERY;
+    }
+
+
     /**
      * @param PosOrder $order
      * @throws AccountingEntryServerError
@@ -440,10 +448,4 @@ class Creator
         return false;
     }
 
-    private function getDeliveryVendorName()
-    {
-        $partnerDeliveryInformation = $this->partner->deliveryInformation;
-        if ($partnerDeliveryInformation && $partnerDeliveryInformation->delivery_vendor != Methods::OWN_DELIVERY) return Methods::SDELIVERY;
-        return Methods::OWN_DELIVERY;
-    }
 }
