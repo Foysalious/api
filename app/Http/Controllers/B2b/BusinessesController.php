@@ -9,23 +9,21 @@ use App\Models\Partner;
 use App\Models\Profile;
 use App\Models\Resource;
 use App\Sheba\BankingInfo\GeneralBanking;
+use Maatwebsite\Excel\Facades\Excel as MaatwebsiteExcel;
 use Sheba\Sms\BusinessType;
 use Sheba\Sms\FeatureType;
 use App\Transformers\Business\VendorDetailsTransformer;
 use App\Transformers\Business\VendorListTransformer;
 use App\Transformers\CustomSerializer;
-use Carbon\Carbon;
-use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redis;
-use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use League\Fractal\Serializer\ArraySerializer;
-use Sheba\Business\TransactionReportData;
+use Sheba\Business\TransactionReportExcel;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use App\Models\Business;
@@ -34,11 +32,10 @@ use Sheba\OAuth2\AccountServer;
 use Sheba\OAuth2\AccountServerAuthenticationError;
 use Sheba\OAuth2\AccountServerNotWorking;
 use Sheba\Partner\PartnerStatuses;
-use Sheba\Reports\ExcelHandler;
-use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Sheba\Sms\Sms;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Throwable;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
@@ -272,19 +269,14 @@ class BusinessesController extends Controller
     /**
      * @param $business
      * @param TimeFrameReportRequest $request
-     * @param ExcelHandler $excel
-     * @param TransactionReportData $data
-     * @throws NotAssociativeArray
-     * @throws Exception
+     * @return BinaryFileResponse
      */
-    public function downloadTransactionReport($business, TimeFrameReportRequest $request, ExcelHandler $excel, TransactionReportData $data)
+    public function downloadTransactionReport($business, TimeFrameReportRequest $request)
     {
-        if (!$request->isLifetime()) $data->setTimeFrame($request->getTimeFrame());
         $business = $request->business instanceof Business ? $request->business : Business::find((int)$request->business);
-        $data->setBusiness($business);
-        $excel->setName('Transactions')
-            ->createReport($data->get())
-            ->download();
+        $excel = new TransactionReportExcel($business);
+        if ($request->isNotLifetime()) $excel->setTimeFrame($request->getTimeFrame());
+        return MaatwebsiteExcel::download($excel, 'Transactions.xlsx');
     }
 
     public function contactUs(Request $request)

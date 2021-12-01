@@ -34,6 +34,11 @@ class TimeFrameReportRequest extends ApiRequest
         return $this->request->has('is_lifetime') && $this->request->get('is_lifetime');
     }
 
+    public function isNotLifetime()
+    {
+        return !$this->isLifetime();
+    }
+
     /**
      * @return TimeFrame | null
      */
