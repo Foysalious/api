@@ -6,6 +6,7 @@ use App\Models\BusinessRole;
 use App\Models\Member;
 use App\Models\Profile;
 use League\Fractal\TransformerAbstract;
+use Sheba\Business\CoWorker\Statuses;
 
 class CoWorkerManagerListTransformer extends TransformerAbstract
 {
@@ -33,6 +34,7 @@ class CoWorkerManagerListTransformer extends TransformerAbstract
             'department_id' => $department ? $department->id : null,
             'department' => $department ? $department->name : null,
             'manager_id' => $business_member->manager_id,
+            'is_active' => $business_member->status === Statuses::ACTIVE ? 1 : 0
         ];
     }
 

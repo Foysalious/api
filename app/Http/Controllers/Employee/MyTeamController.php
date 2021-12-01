@@ -110,6 +110,9 @@ class MyTeamController extends Controller
 
         $my_team = $this->subordinateEmployeeList->get($business_member);
         $my_team = $this->subordinateEmployeeList->removeSpecificBusinessMemberIdFormUniqueManagersData($business_member, $my_team);
+        $my_team = array_filter($my_team, function ($item) {
+            return $item['is_active'];
+        });
 
         $summary = $attendance_summary->setBusiness($business)
                                       ->setSelectedDate($selected_date)
@@ -144,6 +147,9 @@ class MyTeamController extends Controller
 
         $my_team = $this->subordinateEmployeeList->get($business_member);
         $my_team = $this->subordinateEmployeeList->removeSpecificBusinessMemberIdFormUniqueManagersData($business_member, $my_team);
+        $my_team = array_filter($my_team, function ($item) {
+            return $item['is_active'];
+        });
 
         $attendances = $attendance_summary_filter->setBusiness($business)
                                                  ->setSelectedDate($selected_date)
