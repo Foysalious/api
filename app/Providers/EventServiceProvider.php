@@ -1,8 +1,6 @@
 <?php namespace App\Providers;
 
 use App\Jobs\WebstoreSettingsSyncJob;
-use App\Sheba\InventoryService\Partner\Events\Created as PartnerCreatedEvent;
-use App\Sheba\InventoryService\Partner\Listeners\Created as PartnerCreatedListener ;
 use App\Sheba\InventoryService\Partner\Events\Updated as PartnerUpdatedEvent;
 use App\Sheba\InventoryService\Partner\Listeners\Updated as PartnerUpdatedListener;
 
@@ -53,9 +51,6 @@ class EventServiceProvider extends ServiceProvider
         ],
         BusinessMemberDeleted::class => [
             BusinessMemberDeletedListener::class
-        ],
-        PartnerCreatedEvent::class => [
-            PartnerCreatedListener::class,
         ],
         PartnerUpdatedEvent::class => [
             PartnerUpdatedListener::class,
