@@ -50,10 +50,10 @@ class EmployeeRoute
                 $api->get('{employee_id}', 'Employee\MyTeamController@employeeDetails');
             });
             //$api->post('password', 'Employee\EmployeeController@updateMyPassword');
-            $api->get('dashboard', 'Employee\EmployeeController@getDashboard')->middleware('throttle:200');
+            $api->get('dashboard', 'Employee\EmployeeController@getDashboard')->middleware('throttle:400');
             $api->get('dashboard-menu', 'Employee\DashboardController@index');
-            $api->get('notifications', 'Employee\NotificationController@index');
-            $api->get('last-notifications', 'Employee\NotificationController@lastNotificationCount')->middleware('throttle:200');
+            $api->get('notifications', 'Employee\NotificationController@index')->middleware('throttle:400');
+            $api->get('last-notifications', 'Employee\NotificationController@lastNotificationCount')->middleware('throttle:400');
             $api->get('test-notification', 'Employee\NotificationController@test');
             $api->post('notifications/seen', 'Employee\NotificationController@seen');
             $api->group(['prefix' => 'supports'], function ($api) {
