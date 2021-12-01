@@ -162,7 +162,7 @@ abstract class ReturnPosItem extends RefundNature
                 "to_account_key" => (new Accounts())->income->sales::SALES_FROM_POS,
                 "amount" => $netBill,
                 "amount_cleared" => (double)($this->data['paid_amount'] > 0 && $totalPaidAmount > $netBill ? $netBill : $totalPaidAmount),
-                "updated_entry_amount" => (double)($oldOrder->getNetBill() - $netBill),
+                "updated_entry_amount" => (double)($netBill - $oldOrder->getNetBill()),
                 // amount in negative if refund
                 "reconcile_amount" =>(double)($this->data['paid_amount'] > 0 ? ($this->data['paid_amount'] - $previouslyPaidAmount): $this->data['paid_amount']),
                 "note" => $refundType,
