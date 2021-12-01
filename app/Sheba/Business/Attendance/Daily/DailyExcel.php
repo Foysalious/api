@@ -1,5 +1,6 @@
 <?php namespace Sheba\Business\Attendance\Daily;
 
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -54,7 +55,7 @@ class DailyExcel implements FromCollection, WithHeadings, ShouldAutoSize, WithSt
         $this->leftEarlyNote = '-';
     }
 
-    public function collection()
+    public function collection(): Collection
     {
         $data = [];
         foreach ($this->dailyData as $attendance) {

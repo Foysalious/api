@@ -3,7 +3,9 @@
 use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Sheba\Business\CoWorker\ManagerSubordinateEmployeeList;
-use Sheba\Business\EmployeeTracking\EmployeeVisit\Excel as EmployeeVisitExcel;
+use Carbon\Carbon;
+use Sheba\Business\EmployeeTracking\EmployeeVisit\EmployeeVisitExcel;
+use Maatwebsite\Excel\Facades\Excel as MaatwebsiteExcel;
 use Sheba\Business\EmployeeTracking\MyVisit\Excel as MyVisitExcel;
 use App\Transformers\Business\MyVisitListTransformer;
 use App\Transformers\Business\TeamVisitListTransformer;
@@ -19,6 +21,7 @@ use League\Fractal\Manager;
 use Sheba\Dal\Visit\VisitRepository;
 use Illuminate\Support\Arr;
 use Sheba\Helpers\TimeFrame;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class VisitController extends Controller
 {
@@ -40,10 +43,9 @@ class VisitController extends Controller
     /**
      * @param Request $request
      * @param TimeFrame $time_frame
-     * @param EmployeeVisitExcel $employee_visit_excel
-     * @return JsonResponse
+     * @return JsonResponse|BinaryFileResponse
      */
-    public function getTeamVisits(Request $request, TimeFrame $time_frame, EmployeeVisitExcel $employee_visit_excel)
+    public function getTeamVisits(Request $request, TimeFrame $time_frame)
     {
         /** @var Business $business */
         $business = $request->business;
@@ -87,7 +89,11 @@ class VisitController extends Controller
         #$limit = $this->getLimit($request, $limit, $total_visits);
         if ($request->has('limit') && !$request->has('file')) $visits = collect($visits)->splice($offset, $limit);
 
-        if ($request->has('file') && $request->file == 'excel') return $employee_visit_excel->setEmployeeVisitData($visits->toArray())->get();
+        if ($request->has('file') && $request->file == 'excel') {
+            $file_name = 'Employee_visit_report_'. Carbon::now()->timestamp;
+            $excel = new EmployeeVisitExcel($visits->toArray());
+            return MaatwebsiteExcel::download($excel, "$file_name.xlsx");
+        }
 
         return api_response($request, $visits, 200, [
             'employees' => $visits,
