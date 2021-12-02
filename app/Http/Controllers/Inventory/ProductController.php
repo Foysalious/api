@@ -49,6 +49,7 @@ class ProductController extends Controller
         $response = $this->productService
             ->setPartnerId($partner->id)
             ->setCategoryId($request->category_id)
+            ->setSubCategoryId($request->sub_category_id)
             ->setName($request->name)
             ->setDescription($request->description)
             ->setWarranty($request->warranty)
@@ -83,6 +84,7 @@ class ProductController extends Controller
             ->setPartnerId($partner->id)
             ->setProductId($productId)
             ->setCategoryId($request->category_id)
+            ->setSubCategoryId($request->sub_category_id)
             ->setName($request->name)
             ->setDescription($request->description)
             ->setWarranty($request->warranty)
