@@ -6,6 +6,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use App\Sheba\Business\BusinessEmailQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class SendBusinessRequestEmail extends BusinessEmailQueue
@@ -34,7 +35,10 @@ class SendBusinessRequestEmail extends BusinessEmailQueue
     {
         if ($this->attempts() > 1) return;
 
+        Log::info("Employee Invitation# " . $this->email . ' CONFIG MAILGUN: ' . config('services.mailgun.domain') . ' CONFIG BUSINESS MAILGUN: ' . config('services.mailgun.business_domain'));
         config()->set('services.mailgun.domain', config('services.mailgun.business_domain'));
+        Log::info("Employee Invitation# " . $this->email . ' CONFIG MAILGUN: ' . config('services.mailgun.domain') . ' CONFIG BUSINESS MAILGUN: ' . config('services.mailgun.business_domain'));
+
         $template = $this->template ?: 'emails.profile-creation';
         $subject = $this->subject ?: 'Profile Creation';
         $email = $this->email;

@@ -8,14 +8,14 @@ class IndexRoute
     {
         $api->group(['prefix' => '{partner}', 'middleware' => ['manager.auth']], function ($api) {
             $api->get('dashboard', 'Partner\DashboardController@get');
-            $api->get('new-homepage', 'Partner\DashboardController@getNewHomePage');
+            $api->get('new-homepage', 'Partner\DashboardController@getNewHomePage')->name('partner.new-homepage');
             $api->get('bkash', 'Partner\DashboardController@getBkashNo');
             $api->get('geo-information', 'Partner\DashboardController@getGeoInformation');
-            $api->get('current-subscription-package', 'Partner\DashboardController@getCurrentPackage');
+            $api->get('current-subscription-package', 'Partner\DashboardController@getCurrentPackage')->name('partner.current-subscription-package');
             $api->get('webstore-dashboard', 'Partner\Webstore\WebstoreDashboardController@getDashboard');
             $api->get('home-setting', 'Partner\DashboardController@getHomeSetting');
             $api->post('home-setting', 'Partner\DashboardController@updateHomeSetting');
-            $api->get('wallet-balance', 'PartnerController@getWalletBalance');
+            $api->get('wallet-balance', 'PartnerController@getWalletBalance')->name('partner.wallet-balance');
             $api->post('help', 'HelpController@create');
             $api->get('qr-code', 'PartnerController@getQRCode');
             $api->post('qr-code', 'PartnerController@setQRCode');
@@ -118,7 +118,7 @@ class IndexRoute
                 });
                 $api->resources(['customers' => 'Pos\CustomerController']);
                 $api->group(['prefix' => 'settings'], function ($api) {
-                    $api->get('/', 'Pos\SettingController@getSettings');
+                    $api->get('/', 'Pos\SettingController@getSettings')->name('pos.settings');
                     $api->get('/printer', 'Pos\SettingController@getPrinterSettings');
                     $api->post('/', 'Pos\SettingController@storePosSetting');
                 });
@@ -277,7 +277,7 @@ class IndexRoute
             });
             $api->post('nid-validate', 'ShebaController@nidValidate');
             $api->group(['prefix' => 'kyc'], function ($api) {
-                $api->get('check-verification', 'Partner\ProfileController@checkVerification');
+                $api->get('check-verification', 'Partner\ProfileController@checkVerification')->name('partner.check-verification');
                 $api->post('submit-data-for-verification', 'Partner\ProfileController@submitDataForVerification');
                 $api->post('verification-message-seen-status', 'Partner\ProfileController@updateSeenStatus');
                 $api->get('check-first-time-user', 'Partner\ProfileController@checkFirstTimeUser');
