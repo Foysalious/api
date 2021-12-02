@@ -9,6 +9,11 @@ class PayStationResponse extends TopUpResponse
      */
     public function hasSuccess(): bool
     {
+        return $this->isCompleted() || $this->isPending();
+    }
+
+    public function isCompleted(): bool
+    {
         return $this->response && $this->response->Status == "SUCCESS";
     }
 
