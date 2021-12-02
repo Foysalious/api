@@ -1,9 +1,10 @@
 <?php namespace App\Sheba\InventoryService\Partner\Listeners;
 
 use App\Jobs\Partner\SyncPartnersSetting;
-use App\Sheba\InventoryService\Partner\Events\Updated as EventsUpdated;
+use App\Sheba\InventoryService\Partner\Events\Updated as EventUpdated;
 use App\Sheba\InventoryService\Services\SyncService\PartnerInventorySetting;
 use App\Sheba\PosOrderService\Services\SyncService\PartnerPosSetting;
+use App\Sheba\UserMigration\Modules;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 
 class Updated
@@ -17,8 +18,12 @@ class Updated
     public function __construct()
     {
     }
-    public function handle(EventsUpdated $event)
+    public function handle(EventUpdated $event)
     {
+        $partner = $event->newModel->partner;
+        if($partner && !$partner->isMigrated(Modules::POS)) {
+            return;
+        }
         $changed_attributes = $this->lookIfTargetAttributesUpdated($event->newModel);
 
         if (is_null($changed_attributes)) return;

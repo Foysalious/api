@@ -15,6 +15,7 @@ class ProductService
     protected $productId;
     protected $partnerId;
     protected $categoryId;
+    protected $subCategoryId;
     protected $name;
     protected $description;
     protected $warranty;
@@ -301,6 +302,15 @@ class ProductService
         return $this;
     }
 
+    /**
+     * @param mixed $subCategoryId
+     */
+    public function setSubCategoryId($subCategoryId)
+    {
+        $this->subCategoryId = $subCategoryId;
+        return $this;
+    }
+
     public function getProducts($partnerId)
     {
         $url = 'api/v1/partners/' . $partnerId . '/products?';
@@ -344,6 +354,7 @@ class ProductService
     {
         $data = [];
         if (isset($this->categoryId)) array_push($data, [ 'name' => 'category_id', 'contents' => $this->categoryId]);
+        if (isset($this->subCategoryId)) array_push($data, [ 'name' => 'sub_category_id', 'contents' => $this->subCategoryId]);
         if (isset($this->name)) array_push($data, [ 'name' => 'name', 'contents' => $this->name]);
         if (isset($this->description)) array_push($data, [ 'name' => 'description', 'contents' => $this->description]);
         if (isset($this->warranty)) array_push($data, [ 'name' => 'warranty', 'contents' => $this->warranty]);
