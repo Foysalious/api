@@ -115,7 +115,7 @@ class Creator
 
     private function updateCheckinAttendance()
     {
-        $this->attendanceRepo->update($this->attendance, ['checkin_time' => $this->checkin]);
+        $this->attendanceRepo->update($this->attendance, ['checkin_time' => $this->checkin, 'is_attendance_reconciled' => self::ATTENDANCE_RECONCILED]);
     }
 
     private function updateAttendanceActionLogs($attendance_action_log, $status)
