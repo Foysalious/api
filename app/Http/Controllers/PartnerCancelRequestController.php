@@ -27,10 +27,14 @@ class PartnerCancelRequestController extends Controller
         $error = $partner_requestor->hasError();
         if ($error) return api_response($request, $error['msg'], $error['code'], ['message' => $error['msg']]);
         if ($job->category->preparation_time_minutes != 0) {
-            $preferred_time_start = $job->preferred_time_start;
+            $schedule_date = Carbon::parse($job->schedule_date);
+            $preferred_time_split = explode (":", $job->preferred_time_start);
+            $schedule_date->hour((int)$preferred_time_split[0]);
+            $schedule_date->minute((int)$preferred_time_split[1]);
+            $preferred_time_start = $schedule_date->second((int)$preferred_time_split[2]);
             $preparation_time_start = $preferred_time_start ? Carbon::parse($preferred_time_start)->subMinutes($job->category->preparation_time_minutes) : null;
             $now = Carbon::now();
-            $between_prep_and_preferred_time = $now->between($preparation_time_start, $preferred_time_start);
+            $between_prep_and_preferred_time = $now->between($preparation_time_start, Carbon::parse($preferred_time_start));
             if ($preparation_time_start && !in_array($job->status, [JobStatuses::PROCESS, JobStatuses::SERVE_DUE]) && ($between_prep_and_preferred_time || $job->status == JobStatuses::SCHEDULE_DUE || (($now > $preferred_time_start) && $job->status == JobStatuses::ACCEPTED))) {
                 return api_response($request, null, 400, ['message' => "You cannot request for cancel right before the schedule date and time or when job is in process"]);
             }
