@@ -134,8 +134,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $entry_repo->setPaymentMethod($this->payment->paymentDetails->last()->readable_method)
             ->setPaymentId($this->payment->id)
             ->setIsPaymentLink(1)
-            ->setIsDueTrackerPaymentLink($this->paymentLink->isDueTrackerPaymentLink())
-            ->setPaidBy($this->paymentLink->getPaidBy());
+            ->setIsDueTrackerPaymentLink($this->paymentLink->isDueTrackerPaymentLink());
 
         if ($this->target instanceof PosOrder) {
             $entry_repo->setIsWebstoreOrder($this->target->sales_channel == SalesChannels::WEBSTORE ? 1 : 0);
@@ -190,6 +189,8 @@ class PaymentLinkOrderComplete extends PaymentComplete
             ->setReceiver($payment_receiver)
             ->setCustomer($customer)
             ->setTarget($this->target)
+            ->setIsDueTrackerPaymentLink($this->paymentLink->isDueTrackerPaymentLink())
+            ->setPaidBy($this->paymentLink->getPaidBy())
             ->create();
     }
 

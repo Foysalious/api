@@ -25,6 +25,8 @@ class PaymentLinkAccountingRepository extends AccountingRepository
     private $customer_is_supplier;
     private $note;
     private $details;
+    private $paidBy;
+    private $is_due_tracker_payment_link;
 
 
     public function __construct(AccountingEntryClient $client)
@@ -49,6 +51,18 @@ class PaymentLinkAccountingRepository extends AccountingRepository
     public function setClient(AccountingEntryClient $client): PaymentLinkAccountingRepository
     {
         $this->client = $client;
+        return $this;
+    }
+
+    public function setIsDueTrackerPaymentLink($is_due_tracker_payment_link)
+    {
+        $this->is_due_tracker_payment_link = $is_due_tracker_payment_link;
+        return $this;
+    }
+
+    public function setPaidBy($paid_by)
+    {
+        $this->paidBy = $paid_by;
         return $this;
     }
 
@@ -250,6 +264,8 @@ class PaymentLinkAccountingRepository extends AccountingRepository
         $data['note'] = $this->note;
         $data['details'] = $this->details;
         $data['partner'] = $userId;
+        $data['is_due_tracker_payment_link'] = $this->is_due_tracker_payment_link;
+        $data['paid_by'] = $this->paidBy;
         return $data;
     }
 }
