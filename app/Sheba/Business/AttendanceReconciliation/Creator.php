@@ -112,10 +112,19 @@ class Creator
             'is_attendance_reconciled' => self::ATTENDANCE_RECONCILED
         ]));
     }
-
+    
     private function updateCheckinAttendance()
     {
-        $this->attendanceRepo->update($this->attendance, ['checkin_time' => $this->checkin, 'is_attendance_reconciled' => self::ATTENDANCE_RECONCILED]);
+        $checkout = $this->attendance->checkout_time;
+        $staying_time_in_minutes = $this->attendance->staying_time_in_minutes;
+        $staying_time_in_minutes = $checkout ? Carbon::parse($checkout)->diffInMinutes(Carbon::parse($this->checkin)) + 1 : $staying_time_in_minutes;
+        $overtime_in_minutes = $checkout ? $this->calculateOvertime($staying_time_in_minutes) : $this->attendance->overtime_in_minutes;
+        $this->attendanceRepo->update($this->attendance, [
+            'checkin_time' => $this->checkin,
+            'staying_time_in_minutes' => $staying_time_in_minutes,
+            'overtime_in_minutes' => $overtime_in_minutes,
+            'is_attendance_reconciled' => self::ATTENDANCE_RECONCILED
+        ]);
     }
 
     private function updateAttendanceActionLogs($attendance_action_log, $status)
