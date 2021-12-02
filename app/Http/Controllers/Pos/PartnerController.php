@@ -24,12 +24,13 @@ class PartnerController extends Controller
 
     public function findById($partner, Request $request)
     {
-        $partner = Partner::where('id', $partner)->select('id', 'name', 'logo', 'sub_domain')->first();
+        $partner = Partner::where('id', $partner)->select('id', 'name', 'logo', 'sub_domain')->with('posSetting')->first();
         if (!$partner) return http_response($request, null, 404);
         list($is_registered_for_sdelivery,$delivery_method,$delivery_charge) = $this->getDeliveryInformation($partner);
         $partner->is_registered_for_sdelivery = $is_registered_for_sdelivery;
         $partner->delivery_method = $delivery_method;
         $partner->delivery_charge = $delivery_charge;
+        $partner->vat_percentage = $partner->posSetting ? $partner->posSetting->vat_percentage : 0.0;
         removeRelationsAndFields($partner, ['webstore_banner']);
         return http_response($request, $partner, 200, ['partner' => $partner]);
     }
