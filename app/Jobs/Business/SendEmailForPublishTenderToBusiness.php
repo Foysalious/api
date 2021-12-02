@@ -1,13 +1,12 @@
 <?php namespace App\Jobs\Business;
 
-use App\Jobs\Job;
 use App\Models\Procurement;
-use Illuminate\Contracts\Queue\ShouldQueue;
+use App\Sheba\Business\BusinessEmailQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Mail;
 
-class SendEmailForPublishTenderToBusiness extends Job implements ShouldQueue
+class SendEmailForPublishTenderToBusiness extends BusinessEmailQueue
 {
     use InteractsWithQueue, SerializesModels;
 
@@ -17,6 +16,7 @@ class SendEmailForPublishTenderToBusiness extends Job implements ShouldQueue
     public function __construct(Procurement $procurement)
     {
         $this->procurement = $procurement;
+        parent::__construct();
     }
 
     public function handle()
