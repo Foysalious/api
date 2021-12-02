@@ -29,11 +29,7 @@ abstract class UserMigrationRepository
 
     abstract public function versionCodeCheck($appVersion, $modulePayload);
 
-<<<<<<< HEAD
     public function setUserId($userId): UserMigrationRepository
-=======
-    public function setUserId($userId)
->>>>>>> feature/pos-rebuild
     {
         $this->userId = $userId;
         return $this;
