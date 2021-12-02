@@ -26,6 +26,8 @@ abstract class UserMigrationRepository
 
     abstract public function getBanner();
 
+    abstract public function versionCodeCheck($appVersion, $modulePayload);
+
     public function setUserId($userId)
     {
         $this->userId = $userId;
