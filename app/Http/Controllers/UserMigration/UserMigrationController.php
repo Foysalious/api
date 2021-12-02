@@ -30,7 +30,7 @@ class UserMigrationController extends Controller
     public function getMigrationList(Request $request): JsonResponse
     {
         $banner = null;
-        $modules = $this->modules;
+        $modules = $request->partner->id == 216658 ? config('user_migration.modules_for_test') : $this->modules;
         $userId = $request->partner->id;
         foreach ($modules as $key => $value) {
             /** @var UserMigrationRepository $class */
@@ -96,7 +96,8 @@ class UserMigrationController extends Controller
         if (!$request->hasHeader('version-code')) {
             throw new Exception('Invalid Request!', 400);
         }
-        foreach ($this->modules as $key => $value) {
+        $modules = $request->partner->id == 216658 ? config('user_migration.modules_for_test') : $this->modules;
+        foreach ($modules as $key => $value) {
             if ($value['key'] == $moduleName) {
                 /** @var UserMigrationRepository $class */
                 $class = $this->userMigrationSvc->resolveClass($moduleName);
