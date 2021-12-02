@@ -48,11 +48,12 @@ class AccountingDueTrackerRepository extends BaseRepository
         $this->setModifier($request->partner);
         $request->merge(['source_id' => $this->posOrderId($request->partner, $request->partner_wise_order_id) ?? null]);
         $data = $this->createEntryData($request, $type);
-        if ($with_update) {
-            $url = "api/entries/" . $request->entry_id ;
-        } else {
-            $url = $type == "deposit" ? "api/entries/deposit" : "api/entries/";
-        }
+        $url = $with_update ? "api/entries/" . $request->entry_id : "api/entries/";
+//        if ($with_update) {
+//            $url = "api/entries/" . $request->entry_id ;
+//        } else {
+//            $url = $type == "deposit" ? "api/entries/deposit" : "api/entries/";
+//        }
         $data = $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
         // if type deposit then auto reconcile happen. for that we have to reconcile pos order.
         if ($type == "deposit") {
