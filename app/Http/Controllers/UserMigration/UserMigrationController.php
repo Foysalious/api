@@ -101,7 +101,7 @@ class UserMigrationController extends Controller
             if ($value['key'] == $moduleName) {
                 /** @var UserMigrationRepository $class */
                 $class = $this->userMigrationSvc->resolveClass($moduleName);
-                $res = $class->versionCodeCheck($request->hasHeader('version-code'), $value);
+                $res = $class->versionCodeCheck($request->header('version-code'), $value);
                 return api_response($request, $res, 200, ['data' => $res]);
             }
         }
