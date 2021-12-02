@@ -7,6 +7,7 @@ use App\Models\PartnerPosSetting;
 use App\Models\PosCustomer;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
 use App\Sheba\InventoryService\Services\PartnerService;
+use App\Sheba\PosOrderService\Services\OrderService;
 use App\Sheba\UserMigration\Modules;
 use Exception;
 use Sheba\Sms\BusinessType;
@@ -31,21 +32,21 @@ class SettingController extends Controller
      * @param PosSettingRepository $repository
      * @return JsonResponse
      */
-    public function getSettings(Request $request, Creator $creator, PosSettingRepository $repository,PartnerService $partnerService)
+    public function getSettings(Request $request, Creator $creator, PosSettingRepository $repository,PartnerService $partnerService, OrderService $orderService)
     {
-        $settings = $this->getSettingsData($request,$creator,$repository,$partnerService);
+        $settings = $this->getSettingsData($request,$creator,$repository,$partnerService,$orderService);
         if(!$settings) return api_response($request, null, 500,null);
         else return api_response($request, $settings,200, ['settings' => $settings]);
     }
 
-    public function getSettingsV2(Request $request, Creator $creator, PosSettingRepository $repository, PartnerService $partnerService)
+    public function getSettingsV2(Request $request, Creator $creator, PosSettingRepository $repository, PartnerService $partnerService, OrderService $orderService)
     {
-        $settings = $this->getSettingsData($request,$creator,$repository,$partnerService);
+        $settings = $this->getSettingsData($request,$creator,$repository,$partnerService,$orderService);
         if(!$settings) return http_response($request, null, 500,null);
         else return http_response($request, $settings,200, ['settings' => $settings]);
     }
 
-    private function getSettingsData(Request $request, Creator $creator, PosSettingRepository $repository,PartnerService $partnerService)
+    private function getSettingsData(Request $request, Creator $creator, PosSettingRepository $repository,PartnerService $partnerService, OrderService $orderService)
     {
         try {
             $partner = resolvePartnerFromAuthMiddleware($request);
@@ -59,7 +60,12 @@ class SettingController extends Controller
             $settings->show_vat_registration_number = $partner->basicInformations->show_vat_registration_number;
             $settings['has_qr_code'] = ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0;
             if($partner->isMigrated(Modules::POS))
+            {
                 $settings->vat_percentage = $partnerService->setPartner($partner)->get()['partner']['vat_percentage'];
+                $partnerDetailsFromOderService = $orderService->setPartnerId($partner->id)->getPartnerDetails();
+                $settings->has_qr_code = $partnerDetailsFromOderService['partner']['qr_code_account_type'] && $partnerDetailsFromOderService['partner']['qr_code_image'] ?  1 : 0;
+            }
+
             removeRelationsAndFields($settings);
             return $settings;
         } catch (Throwable $e) {
@@ -67,10 +73,6 @@ class SettingController extends Controller
             app('sentry')->captureException($e);
             return false;
         }
-        $settings->vat_registration_number = $partner->basicInformations->vat_registration_number;
-        $settings['has_qr_code'] = ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0;
-        removeRelationsAndFields($settings);
-        return api_response($request, $settings,200, ['settings' => $settings]);
     }
 
     public function getPrinterSettings(Request $request, Creator $creator, PosSettingRepository $repository)
