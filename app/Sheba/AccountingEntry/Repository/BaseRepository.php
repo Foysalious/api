@@ -76,7 +76,7 @@ class BaseRepository
         $partner_id = $request->partner->id ?? (int)$request->partner;
         return Partner::find($partner_id);
     }
-
+//TODO: should remove in next release (after pos rebuild)
     public function createPosOrderPayment($amount_cleared, $pos_order_id, $payment_method)
     {
         /** @var PosOrder $order */
