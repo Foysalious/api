@@ -51,6 +51,7 @@ class PaymentLinkTransaction
 
     /*** @var SubscriptionWisePaymentLinkCharges */
     private $paymentLinkCharge;
+    private $is_due_tracker_payment_link;
 
     /**
      * @param Payment                $payment
@@ -81,6 +82,18 @@ class PaymentLinkTransaction
     public function getInterest()
     {
         return $this->interest;
+    }
+
+    public function setIsDueTrackerPaymentLink($is_due_tracker_payment_link)
+    {
+        $this->is_due_tracker_payment_link = $is_due_tracker_payment_link;
+        return $this;
+    }
+
+    public function setPaidBy($paid_by)
+    {
+        $this->paidBy = $paid_by;
+        return $this;
     }
 
     /**
@@ -262,7 +275,8 @@ class PaymentLinkTransaction
         $transaction = $paymentLinkRepo->setAmount($amount)
             ->setBankTransactionCharge($feeTransaction)
             ->setInterest($interest)
-            ->setAmountCleared($amount);
+            ->setAmountCleared($amount)->setPaidBy($this->paidBy)
+            ->setIsDueTrackerPaymentLink($this->is_due_tracker_payment_link);
         if ($customer) {
             $transaction = $transaction->setCustomerId($customer->id)
                     ->setCustomerName(isset($this->customer) ? $this->customer->profile->name: null)
