@@ -3,6 +3,7 @@
 use App\Models\Business;
 use App\Models\Member;
 use App\Sheba\Business\Attendance\AttendanceBasicInfo;
+use App\Sheba\Business\OfficeSetting\BusinessWeekendSettingsCreator;
 use Carbon\Carbon;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\BusinessOfficeHours\Contract as BusinessOfficeHoursRepoInterface;
@@ -25,6 +26,8 @@ class OperationalSetting
     /*** @var BusinessWeekendSettingsRepo $businessWeekendSettingsRepo*/
     private $businessWeekendSettingsRepo;
     private $previousWeekends;
+    /*** @var BusinessWeekendSettingsCreator $businessWeekendSettingsCreator*/
+    private $businessWeekendSettingsCreator;
 
     /**
      * Updater constructor.
@@ -37,6 +40,7 @@ class OperationalSetting
         $this->weekend_repo = $weekend_repo;
         $this->office_hour_repo = $office_hour_repo;
         $this->businessWeekendSettingsRepo = $business_weekend_settings_repo;
+        $this->businessWeekendSettingsCreator = app(BusinessWeekendSettingsCreator::class);
     }
 
     public function setBusiness(Business $business)
@@ -126,11 +130,6 @@ class OperationalSetting
         $business_id = $this->business->id;
         $existing_weekend_setting = $this->businessWeekendSettingsRepo->where('business_id', $business_id)->where('end_date', null)->first();
         $this->businessWeekendSettingsRepo->update($existing_weekend_setting, ['end_date' => Carbon::now()->subDay()->format('Y-m-d')]);
-        $new_setting_data = [
-            'business_id' => $business_id,
-            'start_date' => Carbon::now()->format('Y-m-d'),
-            'weekday_name' => json_encode(array_map('strtolower', $this->weekends))
-        ];
-        $this->businessWeekendSettingsRepo->create($new_setting_data);
+        $this->businessWeekendSettingsCreator->setBusiness($this->business)->setWeekend($this->weekends)->create();
     }
 }

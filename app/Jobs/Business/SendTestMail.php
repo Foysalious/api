@@ -1,12 +1,11 @@
 <?php namespace App\Jobs\Business;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
+use App\Sheba\Business\BusinessEmailQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
-use App\Jobs\Job;
 
-class SendTestMail extends Job implements ShouldQueue
+class SendTestMail extends BusinessEmailQueue
 {
     use InteractsWithQueue, SerializesModels;
 
