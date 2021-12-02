@@ -276,9 +276,9 @@ class ProrateController extends Controller
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 420);
-        if ($request->is_prorated === 'no') return api_response($request, null, 200, ['message' => 'User does not want to prorate']);
+        if ($request->is_prorated === 'no') return api_response($request, null, 400, ['message' => 'User does not want to prorate']);
         $business = $business_member->business;
-        if (!$business->is_leave_prorate_enable) return api_response($request, null, 200, ['message' => 'Leave Prorate is deactivated for this business.']);
+        if (!$business->is_leave_prorate_enable) return api_response($request, null, 400, ['message' => 'Leave Prorate is deactivated for this business.']);
         $run_prorate_on_active_leaves = new RunProrateOnActiveLeaveTypes();
         $run_prorate_on_active_leaves->setBusiness($business)->setProrateType($request->prorate_type)->run();
         return api_response($request, null, 200);
@@ -294,9 +294,9 @@ class ProrateController extends Controller
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 420);
-        if ($request->is_prorated === 'no') return api_response($request, null, 200, ['message' => 'User does not want to prorate']);
+        if ($request->is_prorated === 'no') return api_response($request, null, 400, ['message' => 'User does not want to prorate']);
         $business = $business_member->business;
-        if (!$business->is_leave_prorate_enable) return api_response($request, null, 200, ['message' => 'Leave Prorate is deactivated for this business.']);
+        if (!$business->is_leave_prorate_enable) return api_response($request, null, 400, ['message' => 'Leave Prorate is deactivated for this business.']);
         $leave_type = $leave_type_repo->find($request->leave_type_id);
         if (!$leave_type) return api_response($request, null, 404, ['message' => 'Sorry! Leave Type not found.']);
         $auto_prorate_calculator = new AutoProrateCalculator();
