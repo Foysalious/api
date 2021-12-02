@@ -86,8 +86,10 @@ class CategoryService
     {
         $data =  [
             ['name' => 'name', 'contents' => $this->categoryName],
-            ['name' => 'thumb', 'contents' => $this->thumb ? File::get($this->thumb->getRealPath()) : null, 'filename' => $this->thumb ? $this->thumb->getClientOriginalName() : '']
         ];
+        if($this->thumb) {
+            $data[] = ['name' => 'thumb', 'contents' => $this->thumb ? File::get($this->thumb->getRealPath()) : null, 'filename' => $this->thumb ? $this->thumb->getClientOriginalName() : ''];
+        }
         if ($this->parentId != null) {
             $data = array_merge_recursive($data,[
                 [
@@ -140,14 +142,14 @@ class CategoryService
 
     public function makeStoreDataForCategoryWithSubCategory(): array
     {
-        $data =  [
-            ['name' => 'category_name', 'contents' => $this->categoryName],
-            [
+        $data [] =  ['name' => 'category_name', 'contents' => $this->categoryName];
+        if($this->thumb) {
+            $data [] = [
                 'name' => 'category_thumb',
                 'contents' => $this->thumb ? File::get($this->thumb->getRealPath()) : null,
                 'filename' => $this->thumb ? $this->thumb->getClientOriginalName() : ''
-            ],
-        ];
+            ];
+        }
         if (!$this->subCategories) return $data;
         $sub_category = [];
         foreach ( $this->subCategories as $key=>$value) {
