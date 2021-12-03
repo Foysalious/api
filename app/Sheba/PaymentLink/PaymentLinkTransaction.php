@@ -267,7 +267,8 @@ class PaymentLinkTransaction
         $transaction = $paymentLinkRepo->setAmount($amount)
             ->setBankTransactionCharge($feeTransaction)
             ->setInterest($interest)
-            ->setAmountCleared($amount)->setPaidBy($this->paidBy)
+            ->setAmountCleared(0)
+            ->setPaidBy($this->paidBy)
             ->setIsDueTrackerPaymentLink($this->is_due_tracker_payment_link)
             ->setRealAmount($this->real_amount);
         if ($customer) {
