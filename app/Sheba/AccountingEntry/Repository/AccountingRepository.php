@@ -189,6 +189,7 @@ class AccountingRepository extends BaseRepository
         $data['reference'] = $request->reference ?? null;
         $data['paid_by'] = $request->paid_by ?? null;
         $data['is_due_tracker_payment_link'] = $request->is_due_tracker_payment_link ?? null;
+        $data['real_amount'] = $request->real_amount ?? null;
         return $data;
     }
 }
