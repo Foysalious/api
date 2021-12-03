@@ -27,6 +27,7 @@ class PaymentLinkAccountingRepository extends AccountingRepository
     private $details;
     private $paidBy;
     private $is_due_tracker_payment_link;
+    private $real_amount;
 
 
     public function __construct(AccountingEntryClient $client)
@@ -41,6 +42,12 @@ class PaymentLinkAccountingRepository extends AccountingRepository
     public function setAmount($amount)
     {
         $this->amount = $amount;
+        return $this;
+    }
+
+    public function setRealAmount($real_amount)
+    {
+        $this->real_amount = $real_amount;
         return $this;
     }
 
@@ -266,6 +273,7 @@ class PaymentLinkAccountingRepository extends AccountingRepository
         $data['partner'] = $userId;
         $data['is_due_tracker_payment_link'] = $this->is_due_tracker_payment_link;
         $data['paid_by'] = $this->paidBy;
+        $data['real_amount'] = $this->real_amount;
         return $data;
     }
 }
