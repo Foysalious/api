@@ -128,6 +128,7 @@ class Basic extends PartnerSale
             $data['order_stat_breakdown'] = $this->getMonthlyStatFor($orders, 'order_count');
             $this->formatTimeline($data);
         }
+        $this->formatTimeline($data);
         return $data;
 
     }
