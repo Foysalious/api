@@ -1,9 +1,12 @@
 <?php namespace Sheba\Pos\Product;
 
+use App\Models\Partner;
 use App\Models\PartnerPosService;
 use App\Models\PartnerPosServiceDiscount;
 use App\Repositories\FileRepository;
 use App\Sheba\Pos\Product\Accounting\ExpenseEntry;
+use App\Sheba\UserMigration\Modules;
+use Exception;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
 use Sheba\Dal\PartnerPosServiceBatch\Model as PartnerPosServiceBatch;
@@ -83,11 +86,14 @@ class Updater
         return $this;
     }
 
+    /**
+     * @throws Exception
+     */
     public function update()
     {
         $this->saveImages();
         $this->format();
-        if($this->service->partner->isMigratedToAccounting()) $this->formatBatchData();
+        $this->formatBatchData();
         $image_gallery = [];
         if (isset($this->updatedData['image_gallery'])) {
             $image_gallery = json_decode($this->updatedData['image_gallery'], true);
@@ -96,8 +102,9 @@ class Updater
         $cloned_data = $this->data;
         $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'is_vat_percentage_off', 'is_stock_off', 'image_gallery','accounting_info']);
         if (!empty($this->updatedData)) $this->updatedData = array_except($this->updatedData, 'image_gallery');
-
-        if($this->service->partner->isMigratedToAccounting()) {
+        /** @var Partner $partner */
+        $partner = $this->service->partner;
+        if($partner->isMigrated(Modules::EXPENSE)) {
             $lastBatchData = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->latest()->first();
             $this->setOldCost($lastBatchData->cost);
             $this->setOldStock($lastBatchData->stock);
@@ -291,8 +298,14 @@ class Updater
 
     }
 
+    /**
+     * @throws Exception
+     */
     private function formatBatchData()
     {
+        /** @var Partner $partner */
+        $partner = $this->service->partner;
+        if(!$partner->isMigrated(Modules::EXPENSE)) return;
         if ((isset($this->data['is_stock_off']) && ($this->data['is_stock_off'] == 'true' && $this->service->getStock() != null))) {
             $this->deleteBatchesFifo();
             return;

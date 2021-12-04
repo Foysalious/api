@@ -3,6 +3,8 @@
 use App\Models\Transport\TransportTicketOrder;
 use App\Sheba\InventoryService\Partner\Events\Updated;
 use App\Sheba\Payment\Rechargable;
+use App\Sheba\UserMigration\AccountingUserMigration;
+use App\Sheba\UserMigration\UserMigrationRepository;
 use App\Sheba\UserMigration\UserMigrationService;
 use Carbon\Carbon;
 use DB;
@@ -10,7 +12,6 @@ use Exception;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use Sheba\AccountingEntry\Repository\UserMigrationRepository;
 use Sheba\Business\Bid\Bidder;
 use Sheba\Checkout\CommissionCalculator;
 use Sheba\Dal\ArtisanLeave\ArtisanLeave;
@@ -1066,16 +1067,6 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function pgwStoreAccounts()
     {
         return $this->morphMany(PgwStoreAccount::class, 'user');
-    }
-
-    public function isMigratedToAccounting(): bool
-    {
-        $arr = [self::NOT_ELIGIBLE, UserStatus::PENDING, UserStatus::UPGRADING, UserStatus::FAILED];
-        /** @var UserMigrationRepository $userMigrationRepo */
-        $userMigrationRepo = app(UserMigrationRepository::class);
-        $userStatus = $userMigrationRepo->userStatus($this->id);
-        if (in_array($userStatus, $arr)) return false;
-        return true;
     }
 
     public function userMigration()

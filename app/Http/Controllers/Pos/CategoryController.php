@@ -3,6 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Models\PosCategory;
+use App\Sheba\UserMigration\Modules;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
@@ -19,6 +20,7 @@ class CategoryController extends Controller
     {
         ini_set('memory_limit', '2048M');
         try {
+            /** @var Partner $partner */
             $partner = $request->partner->load(['posServices' => function($q){
                 $q->with('batches')->published();
             }]);
@@ -93,7 +95,7 @@ class CategoryController extends Controller
                 $deleted_services = [];
             });
 
-            $is_migrated_to_accounting = $partner->isMigratedToAccounting();
+            $is_migrated_to_accounting = $partner->isMigrated(Modules::EXPENSE);
 
             $master_categories->each(function ($category) use (&$category_id, &$total_items, &$total_buying_price, &$items_with_buying_price,$is_migrated_to_accounting) {
                 $category_id = $category->id;
