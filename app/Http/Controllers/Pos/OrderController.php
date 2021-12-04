@@ -16,9 +16,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
+use Sheba\Authentication\Exceptions\AuthenticationFailedException;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\Discount\InvalidDiscountType;
-use Sheba\Authentication\Exceptions\AuthenticationFailedException;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\ExpenseTracker\EntryType;
@@ -33,7 +33,6 @@ use Sheba\Pos\Exceptions\InvalidPosOrder;
 use Sheba\Pos\Exceptions\PosExpenseCanNotBeDeleted;
 use Sheba\Pos\Jobs\OrderBillEmail;
 use Sheba\Pos\Jobs\OrderBillSms;
-use Sheba\Pos\Jobs\WebstoreOrderPushNotification;
 use Sheba\Pos\Jobs\WebstoreOrderSms;
 use Sheba\Pos\Notifier\WebstorePushNotificationHandler;
 use Sheba\Pos\Order\Creator;
@@ -173,7 +172,7 @@ class OrderController extends Controller
             $creator->setCustomer($pos_customer);
             $creator->setStatus(OrderStatuses::PENDING);
         }
-        $creator->setPartner($partner)->setData($request->all());
+        $creator->setPartner($partner)->setRequest($request);
         if ($error = $creator->hasDueError())
             return $error;
         /**

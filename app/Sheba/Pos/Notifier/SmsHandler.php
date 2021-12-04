@@ -46,7 +46,6 @@ class SmsHandler
             ->setFeatureType(FeatureType::POS)
             ->shoot();
             $transaction = (new WalletTransactionHandler())->setModel($partner)->setAmount($sms_cost)->setType(Types::debit())->setLog($sms_cost . " BDT has been deducted for sending pos order details sms (order id: {$this->order->id})")->setTransactionDetails([])->setSource(TransactionSources::SMS)->store();
-            $this->storeJournal($partner, $transaction);
         (new WalletTransactionHandler())
             ->setModel($partner)
             ->setAmount($sms_cost)
@@ -55,6 +54,7 @@ class SmsHandler
             ->setTransactionDetails([])
             ->setSource(TransactionSources::SMS)
             ->store();
+        $this->storeJournal($partner, $transaction);
     }
 
     private function storeJournal($partner, $transaction) {
