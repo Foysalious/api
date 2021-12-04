@@ -67,15 +67,14 @@ class Creator
     public $allServicesStockDecreasingArray;
 
     public function __construct(
-        PosOrderRepository            $order_repo,
-        PosOrderItemRepository        $item_repo,
-        PaymentCreator                $payment_creator,
-        StockManager                  $stock_manager,
-        OrderCreateValidator          $create_validator,
-        DiscountHandler               $discount_handler,
+        PosOrderRepository $order_repo,
+        PosOrderItemRepository $item_repo,
+        PaymentCreator $payment_creator,
+        StockManager $stock_manager,
+        OrderCreateValidator $create_validator,
+        DiscountHandler $discount_handler,
         PosServiceRepositoryInterface $posServiceRepo
-    )
-    {
+    ) {
         $this->orderRepo = $order_repo;
         $this->itemRepo = $item_repo;
         $this->paymentCreator = $payment_creator;
@@ -91,13 +90,6 @@ class Creator
     public function hasError()
     {
         return $this->createValidator->hasError();
-    }
-
-    public function setRequest(Request $request)
-    {
-        $this->request = $request;
-        $this->setData($request->all());
-        return $this;
     }
 
     /**
@@ -129,8 +121,19 @@ class Creator
     {
         $this->data = $data;
         $this->createValidator->setServices(json_decode($this->data['services'], true));
-        if (!isset($this->data['payment_method'])) $this->data['payment_method'] = 'cod';
-        if (isset($this->data['customer_address'])) $this->setAddress($this->data['customer_address']);
+        if (!isset($this->data['payment_method'])) {
+            $this->data['payment_method'] = 'cod';
+        }
+        if (isset($this->data['customer_address'])) {
+            $this->setAddress($this->data['customer_address']);
+        }
+        return $this;
+    }
+
+    public function setRequest(Request $request)
+    {
+        $this->request = $request;
+        $this->setData($request->all());
         return $this;
     }
 
@@ -201,7 +204,7 @@ class Creator
                 if ($original_service->is_published_for_shop && isset($service['quantity']) && !empty($service['quantity']) && $service['quantity'] > $original_service->getStock())
                     throw new NotEnoughStockException("Not enough stock", 403);
                 // $is_service_discount_applied = $original_service->discount();
-                $service_wholesale_applicable = (bool)$original_service->wholesale_price;
+                $service_wholesale_applicable = $original_service->wholesale_price ? true : false;
                 $service['service_id'] = $original_service->id;
                 $service['service_name'] = isset($service['name']) ? $service['name'] : $original_service->name;
                 $service['pos_order_id'] = $order->id;
@@ -361,7 +364,6 @@ class Creator
             /** @var PartnerPosService $original_service */
             $original_service = isset($service['id']) && !empty($service['id']) ? $this->posServiceRepo->find($service['id']) : $this->posServiceRepo->defaultInstance($service, $this->partner);
             if (is_null($original_service)) $original_service = $this->posServiceRepo->defaultInstance($service, $this->partner);
-            $service_id[] = isset($service['id']) && !empty($service['id']) ? $service['id'] : 0;
             $service_id[] = isset($service['id']) && !empty($service['id']) ? $service['id'] : 0;
             $service_wholesale_applicable = $original_service->wholesale_price ? true : false;
             $service['unit_price'] = (isset($service['updated_price']) && $service['updated_price']) ? $service['updated_price'] : ($this->isWholesalePriceApplicable($service_wholesale_applicable) ? $original_service->wholesale_price : $original_service->price);

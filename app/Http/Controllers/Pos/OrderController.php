@@ -20,8 +20,6 @@ use Carbon\Carbon;
 use Dingo\Api\Routing\Helpers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\ComplianceInfo\ComplianceInfo;
@@ -46,7 +44,6 @@ use Sheba\Pos\Exceptions\InvalidPosOrder;
 use Sheba\Pos\Exceptions\PosExpenseCanNotBeDeleted;
 use Sheba\Pos\Jobs\OrderBillEmail;
 use Sheba\Pos\Jobs\OrderBillSms;
-use Sheba\Pos\Jobs\WebstoreOrderPushNotification;
 use Sheba\Pos\Jobs\WebstoreOrderSms;
 use Sheba\Pos\Notifier\WebstorePushNotificationHandler;
 use Sheba\Pos\Order\Creator;
@@ -134,8 +131,7 @@ class OrderController extends Controller
 
             $payment_link_target = $order['data']['payment_link_target'];
             $link = app(PaymentLinkRepositoryInterface::class)->getActivePaymentLinkByPosOrder($payment_link_target);
-            if($link)
-            {
+            if($link) {
                 (new PosOrderTransformer())->addPaymentLinkDataToOrder($order, $link);
                 unset($order['data']['payment_link_target']);
             }
@@ -340,19 +336,18 @@ class OrderController extends Controller
     public function update(Request $request, Updater $updater, InvoiceService $invoiceService)
     {
         $this->setModifier($request->manager_resource);
-            /** @var PosOrder $order */
-            $new           = 1;
-            $order         = PosOrder::with('items')->find($request->order);
-            $is_returned   = ($this->isReturned($order, $request, $new));
-            $refund_nature = $is_returned ? Natures::RETURNED : Natures::EXCHANGED;
-            $return_nature = $is_returned ? $this->getReturnType($request, $order) : null;
-            /** @var RefundNature $refund */
-            $refund = NatureFactory::getRefundNature($order, $request->all(), $refund_nature, $return_nature);
-            $request->merge(['refund_nature' => $refund_nature]);
-
-            $refund->setNew($new)->update();
+        /** @var PosOrder $order */
+        $new = 1;
+        $order = PosOrder::with('items')->find($request->order);
+        $is_returned = ($this->isReturned($order, $request, $new));
+        $refund_nature = $is_returned ? Natures::RETURNED : Natures::EXCHANGED;
+        $return_nature = $is_returned ? $this->getReturnType($request, $order) : null;
+        /** @var RefundNature $refund */
+        $refund = NatureFactory::getRefundNature($order, $request->all(), $refund_nature, $return_nature);
+        $request->merge(['refund_nature' => $refund_nature]);
+        $refund->setNew($new)->update();
         $invoiceService->setPosOrder($order)->generateInvoice()->saveInvoiceLink();
-            $order->payment_status = $order->calculate()->getPaymentStatus();
+        $order->payment_status = $order->calculate()->getPaymentStatus();
         return api_response($request, null, 200, [
             'msg' => 'Order Updated Successfully',
             'order' => $order
