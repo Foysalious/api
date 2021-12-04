@@ -1,12 +1,13 @@
 <?php namespace App\Transformers\Partner;
 
+use App\Models\PartnerPosService;
 use League\Fractal\TransformerAbstract;
 
 class PosServiceTransformer extends TransformerAbstract
 {
     public function transform($pos_service)
     {
-
+        /** @var PartnerPosService $pos_service */
         return [
             'id' => $pos_service->id,
             'name' => $pos_service->name,

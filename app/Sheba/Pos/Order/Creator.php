@@ -13,11 +13,8 @@ use App\Models\Profile;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\AccountingRepository;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
-use Illuminate\Database\Eloquent\Model;
-use Sheba\AccountingEntry\Accounts\RootAccounts;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Dal\POSOrder\SalesChannels;
@@ -227,6 +224,7 @@ class Creator
                     $payment_data['method'] = $this->data['payment_method'] ?: 'cod';
                     $this->paymentCreator->credit($payment_data);
                 }
+
 
             $order = $order->calculate();
             $this->discountHandler->setOrder($order)->setType(DiscountTypes::ORDER)->setData($this->data);

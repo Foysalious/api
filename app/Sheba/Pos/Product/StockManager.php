@@ -1,6 +1,8 @@
 <?php namespace Sheba\Pos\Product;
 
+use App\Models\Partner;
 use App\Models\PartnerPosService;
+use App\Sheba\UserMigration\Modules;
 use Sheba\Dal\PartnerPosServiceBatch\Model as PartnerPosServiceBatch;
 use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
 use Sheba\Pos\Repositories\PosServiceRepository;
@@ -49,7 +51,9 @@ class StockManager
 
     private function updatedStock($quantity) : array
     {
-        if($this->service->partner->isMigratedToAccounting()) {
+        /** @var Partner $partner */
+        $partner = $this->service->partner;
+        if($partner->isMigrated(Modules::EXPENSE)) {
             $decreasedBatchesInfo = [];
             while ($quantity > 0) {
                 $firstBatch = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->first();
@@ -74,14 +78,17 @@ class StockManager
         }
         $current_stock = $this->service->stock - $quantity;
         $this->serviceRepo->update($this->service, ['stock' => $current_stock]);
-        return $decreasedBatchesInfo[0] = ['stock' => $current_stock, 'cost' => $this->service->cost];
+        $decreasedBatchesInfo[0] = ['stock' => $current_stock, 'cost' => $this->service->cost];
+        return $decreasedBatchesInfo;
 
 
     }
 
     private function increaseUpdatedStock($quantity)
     {
-        if($this->service->partner->isMigratedToAccounting()) {
+        /** @var Partner $partner */
+        $partner = $this->service->partner;
+        if($partner->isMigrated(Modules::EXPENSE)) {
             $lastBatch = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->latest()->first();
             $lastStock = $lastBatch ? $lastBatch->stock : 0;
             PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->where('id', $lastBatch->id)->update(['stock' => $lastStock + $quantity]);

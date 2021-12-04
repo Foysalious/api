@@ -135,8 +135,7 @@ class AccountingRepository extends BaseRepository
         $inventory_products = [];
         foreach ($services as $key => $service) {
             $original_service = ($service->service);
-            if($original_service)
-            {
+            if($original_service) {
                 $serviceBatches = $servicesStockCostInfo[$original_service->id];
                 foreach ($serviceBatches as $serviceBatch) {
                     $sellingPrice = isset($requested_service[$key]['updated_price']) && $requested_service[$key]['updated_price'] ? $requested_service[$key]['updated_price'] : $original_service->price;
