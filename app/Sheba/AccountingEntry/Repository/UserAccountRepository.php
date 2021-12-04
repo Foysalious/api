@@ -139,13 +139,7 @@ class UserAccountRepository extends BaseRepository
         if (isset($request['root_account'])) {
             $query .= "?root_account=" . $request['root_account'];
         }
-        try {
-            return $this->client->setUserType($userType)->setUserId($userId)->get(
-                $this->api . 'account-types' . $query
-            );
-        } catch (AccountingEntryServerError $e) {
-            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
-        }
+        return $this->client->setUserType($userType)->setUserId($userId)->get($this->api . 'account-types' . $query);
     }
 
     /**
@@ -164,13 +158,7 @@ class UserAccountRepository extends BaseRepository
         if (isset($request['account_type'])) {
             $query .= "&account_type=" . $request['account_type'];
         }
-        try {
-            return $this->client->setUserType($userTYpe)->setUserId($userId)->get(
-                $this->api . $query
-            );
-        } catch (AccountingEntryServerError $e) {
-            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
-        }
+        return $this->client->setUserType($userTYpe)->setUserId($userId)->get($this->api . $query);
     }
 
     /**
@@ -181,12 +169,7 @@ class UserAccountRepository extends BaseRepository
      */
     public function getCashAccounts($userId, string $userType = UserType::PARTNER)
     {
-        try {
-            return $this->client->setUserType($userType)->setUserId($userId)
-                ->get($this->api . 'cash-accounts');
-        } catch (AccountingEntryServerError $e) {
-            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
-        }
+        return $this->client->setUserType($userType)->setUserId($userId)->get($this->api . 'cash-accounts');
     }
 
     /**
@@ -197,24 +180,14 @@ class UserAccountRepository extends BaseRepository
      */
     public function storeAccount($userId, string $userType = UserType::PARTNER)
     {
-        try {
-            $payload = $this->makeData();
-            return $this->client->setUserType($userType)->setUserId($userId)
-                ->post($this->api, $payload);
-        } catch (AccountingEntryServerError $e) {
-            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
-        }
+        $payload = $this->makeData();
+        return $this->client->setUserType($userType)->setUserId($userId)->post($this->api, $payload);
     }
 
     public function updateAccount($accountId, $userId, $userType = UserType::PARTNER)
     {
-        try {
-            $payload = $this->makeData();
-            return $this->client->setUserType($userType)->setUserId($userId)
-                ->put($this->api . $accountId, $payload);
-        } catch (AccountingEntryServerError $e) {
-            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
-        }
+        $payload = $this->makeData();
+        return $this->client->setUserType($userType)->setUserId($userId)->put($this->api . $accountId, $payload);
     }
 
     /**
@@ -226,11 +199,7 @@ class UserAccountRepository extends BaseRepository
      */
     public function deleteAccount($accountId, $userId, string $userType = UserType::PARTNER)
     {
-        try {
-            return $this->client->setUserType($userType)->setUserId($userId)->delete($this->api . $accountId);
-        } catch (AccountingEntryServerError $e) {
-            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
-        }
+        return $this->client->setUserType($userType)->setUserId($userId)->delete($this->api . $accountId);
     }
 
     private function makeData(): array
