@@ -102,7 +102,7 @@ class Basic extends PartnerSale
             if ($this->partner->isMigrated(Modules::POS)) {
                 $sale_stat = [];
                 collect($sales_data['sales_stat_breakdown'])->each(function ($data) use (&$sale_stat) {
-                    array_push($sale_stat, ["value" => $data['day'], "date" => $data["date"], "amount" => $data["amount"]]);
+                    $sale_stat[] = ["value" => $data['day'], "date" => $data["date"], "amount" => $data["amount"]];
                 });
                 $data['sales_stat_breakdown'] = $sale_stat;
             } else {
@@ -118,7 +118,7 @@ class Basic extends PartnerSale
                 $sale_stat = [];
                 $count = 0;
                 collect($sales_data['sales_stat_breakdown'])->each(function ($data) use (&$sale_stat, &$count) {
-                    array_push($sale_stat, ["value" => $count + 1, "amount" => $data["amount"]]);
+                    $sale_stat[] = ["value" => $count + 1, "amount" => $data["amount"]];
                     $count++;
                 });
                 $data['sales_stat_breakdown'] = $sale_stat;
