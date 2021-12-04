@@ -193,6 +193,7 @@ class Creator
             if (isset($order_data['delivery_district'])) $order_data['delivery_vendor_name'] = $this->getDeliveryVendorName();
             $order = $this->orderRepo->save($order_data);
             $services = json_decode($this->data['services'], true);
+            $servicesStockDecreasingInfo = [];
             foreach ($services as $service) {
                 /** @var PartnerPosService $original_service */
                 if(isset($service['id']) && !empty($service['id'])) $original_service = $this->posServiceRepo->find($service['id']);
