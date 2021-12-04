@@ -74,6 +74,6 @@ abstract class UserMigrationRepository
             Redis::del("user-migration:$this->userId");
         }
         $data = ['status' => $status];
-        $info->update($this->withUpdateModificationField($data));
+        return $info->update($this->withUpdateModificationField($data));
     }
 }
