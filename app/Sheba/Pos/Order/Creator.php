@@ -231,13 +231,13 @@ class Creator
         if ($this->discountHandler->hasDiscount()) $this->discountHandler->create($order);
         $this->voucherCalculation($order);
         $this->resolvePaymentMethod();
-        $this->storeIncome($order);
         $this->setAllServicesStockDecreasingArray($servicesStockDecreasingInfo);
+        $this->storeIncome($order);
         if (!$this->request->has('refund_nature')) {
             $this->storeJournal($order);
         }
-            DB::commit();
-            return $order;
+        DB::commit();
+        return $order;
         } catch (Throwable $e) {
             DB::rollback();
             app('sentry')->captureException($e);
