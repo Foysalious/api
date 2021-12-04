@@ -6,9 +6,11 @@ use Illuminate\Support\Facades\Redis;
 use Sheba\Dal\UserMigration\Contract;
 use Exception;
 use Sheba\Dal\UserMigration\UserStatus;
+use Sheba\ModificationFields;
 
 abstract class UserMigrationRepository
 {
+    use ModificationFields;
     const NOT_ELIGIBLE = 'not_eligible';
 
     /** @var Contract */
@@ -75,7 +77,7 @@ abstract class UserMigrationRepository
         if ($status == UserStatus::UPGRADED) {
             Redis::del("user-migration:$this->userId");
         }
-        $info->status = $status;
-        return $info->save();
+        $data = ['status' => $status];
+        return $info->update($this->withUpdateModificationField($data));
     }
 }
