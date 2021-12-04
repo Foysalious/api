@@ -148,7 +148,7 @@ class DueTrackerRepository extends BaseRepository
             $profile = $customerProfile->where('customer.profile.id', $item['profile_id']);
              $cus = $profile->map(
                 function($items) use ($item) {
-                    $item['customer_name'] = $items -> nick_name ?? $items -> customer -> profile -> name;
+                    $item['customer_name'] = $items->nick_name ?? $items->customer->profile->name;
                     $item['customer_mobile'] =  $items->customer->profile->mobile;
                     $item['avatar'] = $items->customer->profile->pro_pic;
                     $item['customer_id'] = $items->customer_id;
@@ -156,7 +156,7 @@ class DueTrackerRepository extends BaseRepository
                     return $item;
                 }
             );
-            return array_merge(...$cus -> toArray());
+            return call_user_func_array('array_merge', $cus->toArray());
         });
     }
 
