@@ -22,6 +22,11 @@ abstract class UserMigrationRepository
     {
         $this->repo = $repo;
     }
+    public function setModifierUser($entity)
+    {
+        $this->setModifier($entity);
+        return $this;
+    }
 
     abstract public function getStatusWiseResponse(): array;
 
@@ -78,6 +83,7 @@ abstract class UserMigrationRepository
             Redis::del("user-migration:$this->userId");
         }
         $data = ['status' => $status];
+
         return $info->update($this->withUpdateModificationField($data));
     }
 }
