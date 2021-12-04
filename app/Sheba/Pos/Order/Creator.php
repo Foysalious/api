@@ -10,6 +10,7 @@ use App\Models\PartnerPosService;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Models\Profile;
+use App\Sheba\Partner\Delivery\Methods;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\AccountingRepository;
 use Illuminate\Http\Request;
@@ -177,16 +178,16 @@ class Creator
             $order_data['address']               = $this->address;
             $order_data['previous_order_id']     = (isset($this->data['previous_order_id']) && $this->data['previous_order_id']) ? $this->data['previous_order_id'] : null;
             $order_data['partner_wise_order_id'] = $this->createPartnerWiseOrderId($this->partner);
-            $order_data['emi_month']             = isset($this->data['emi_month']) ? $this->data['emi_month'] : null;
-            $order_data['sales_channel']         = isset($this->data['sales_channel']) ? $this->data['sales_channel'] : SalesChannels::POS;
-            $order_data['delivery_charge']       = isset($this->data['delivery_charge'])   ? $this->data['delivery_charge'] : 0;
-            $order_data['status']                = $this->status;
-            $order_data['weight']                = isset($this->data['weight'])   ? $this->data['weight'] : 0;
-            $order_data['delivery_district']     = isset($this->data['sales_channel']) && $this->data['sales_channel'] == SalesChannels::WEBSTORE && isset($this->data['delivery_district']) ? $this->data['delivery_district'] : null;
-            $order_data['delivery_thana']        = isset($this->data['sales_channel']) && $this->data['sales_channel'] == SalesChannels::WEBSTORE && isset($this->data['delivery_thana']) ? $this->data['delivery_thana'] : null;
-            $order                               = $this->orderRepo->save($order_data);
-            $services                            = json_decode($this->data['services'], true);
-            $servicesStockDecreasingInfo = [];
+            $order_data['emi_month'] = isset($this->data['emi_month']) ? $this->data['emi_month'] : null;
+            $order_data['sales_channel'] = isset($this->data['sales_channel']) ? $this->data['sales_channel'] : SalesChannels::POS;
+            $order_data['delivery_charge'] = isset($this->data['delivery_charge']) ? $this->data['delivery_charge'] : 0;
+            $order_data['status'] = $this->status;
+            $order_data['weight'] = isset($this->data['weight']) ? $this->data['weight'] : 0;
+            $order_data['delivery_district'] = isset($this->data['sales_channel']) && $this->data['sales_channel'] == SalesChannels::WEBSTORE && isset($this->data['delivery_district']) ? $this->data['delivery_district'] : null;
+            $order_data['delivery_thana'] = isset($this->data['sales_channel']) && $this->data['sales_channel'] == SalesChannels::WEBSTORE && isset($this->data['delivery_thana']) ? $this->data['delivery_thana'] : null;
+            if (isset($order_data['delivery_district'])) $order_data['delivery_vendor_name'] = $this->getDeliveryVendorName();
+            $order = $this->orderRepo->save($order_data);
+            $services = json_decode($this->data['services'], true);
             foreach ($services as $service) {
                 /** @var PartnerPosService $original_service */
                 if(isset($service['id']) && !empty($service['id'])) $original_service = $this->posServiceRepo->find($service['id']);
@@ -393,6 +394,13 @@ class Creator
     private function getDiscountAmount($discount)
     {
         return (isset($discount) && isset($discount['amount'])) ? $discount['amount'] : 0;
+    }
+
+    private function getDeliveryVendorName()
+    {
+        $partnerDeliveryInformation = $this->partner->deliveryInformation;
+        if ($partnerDeliveryInformation && $partnerDeliveryInformation->delivery_vendor != Methods::OWN_DELIVERY) return Methods::SDELIVERY;
+        return Methods::OWN_DELIVERY;
     }
 
     /**

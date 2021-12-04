@@ -2,14 +2,12 @@
 
 use App\Models\Business;
 use App\Models\HyperLocal;
-use App\Models\Procurement;
-use Illuminate\Contracts\Queue\ShouldQueue;
+use App\Sheba\Business\BusinessEmailQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Jobs\Job;
 use Mail;
 
-class SendEmailForFleetToB2bTeam extends Job implements ShouldQueue
+class SendEmailForFleetToB2bTeam extends BusinessEmailQueue
 {
     use InteractsWithQueue, SerializesModels;
 
@@ -26,6 +24,7 @@ class SendEmailForFleetToB2bTeam extends Job implements ShouldQueue
     {
         $this->business = $business;
         $this->toMail = $to_mail;
+        parent::__construct();
     }
 
     public function handle()

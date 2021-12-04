@@ -1,14 +1,13 @@
 <?php namespace App\Jobs\Business;
 
-use App\Jobs\Job;
 use App\Models\Business;
+use App\Sheba\Business\BusinessEmailQueue;
 use Exception;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
 
-class SendTopUpFailMail extends Job implements ShouldQueue
+class SendTopUpFailMail extends BusinessEmailQueue
 {
     use InteractsWithQueue, SerializesModels;
 
@@ -27,6 +26,7 @@ class SendTopUpFailMail extends Job implements ShouldQueue
         $this->email = $email;
         $this->file = $file;
         $this->business = $business;
+        parent::__construct();
     }
 
     /**
