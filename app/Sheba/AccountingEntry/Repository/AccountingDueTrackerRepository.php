@@ -59,7 +59,7 @@ class AccountingDueTrackerRepository extends BaseRepository
         if ($type == "deposit") {
             foreach ($data as $datum) {
                 if ($datum['source_type'] == 'pos' && $datum['amount_cleared'] > 0) {
-                    $this->createPosOrderPayment($datum['amount_cleared'], $datum['source_id'], 'cod');
+                    $this->createPosOrderPayment($datum['amount_cleared'], $datum['source_id'], 'advance_balance');
                 }
             }
         }
