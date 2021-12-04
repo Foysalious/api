@@ -45,7 +45,7 @@ class EntriesRepository extends BaseRepository
                     'customer_id',
                     $data["customer_id"]
                 )->first();
-                $customer_details = $partner_pos_customer->details();
+                $customer_details = $partner_pos_customer ? $partner_pos_customer->details(): null;
                 $data["customer_details"] = $customer_details;
             } else {
                 $data["customer_details"] = null;
