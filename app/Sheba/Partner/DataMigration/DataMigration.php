@@ -9,8 +9,7 @@ use Exception;
 use Illuminate\Support\Facades\Redis;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\ModificationFields;
-use Sheba\Partner\DataMigration\Jobs\PartnerMigrationCompleteJob;
-use Sheba\Partner\DataMigration\Jobs\PartnerMigrationStartJob;
+
 
 class DataMigration
 {
@@ -33,13 +32,23 @@ class DataMigration
      * @var PosOrderDataMigrationChunk
      */
     private $posOrderDataMigrationChunk;
+    /**
+     * @var PartnerDataMigration
+     */
+    private $partnerDataMigration;
 
-    public function __construct(InventoryDataMigration $inventoryDataMigration, PosOrderDataMigration $posOrderDataMigration, SmanagerUserDataMigration $smanagerUserDataMigration, PosOrderDataMigrationChunk $posOrderDataMigrationChunk)
+    public function __construct(
+        InventoryDataMigration $inventoryDataMigration,
+        PosOrderDataMigration $posOrderDataMigration,
+        SmanagerUserDataMigration $smanagerUserDataMigration,
+        PosOrderDataMigrationChunk $posOrderDataMigrationChunk,
+        PartnerDataMigration $partnerDataMigration)
     {
         $this->inventoryDataMigration = $inventoryDataMigration;
         $this->posOrderDataMigration = $posOrderDataMigration;
         $this->smanagerUserDataMigration = $smanagerUserDataMigration;
         $this->posOrderDataMigrationChunk = $posOrderDataMigrationChunk;
+        $this->partnerDataMigration = $partnerDataMigration;
     }
 
     /**
@@ -61,14 +70,23 @@ class DataMigration
         $count = $this->partnerDataCount();
         $shouldQueue = $this->shouldQueue($count);
         $this->deletePreviousRedisKeys();
-        if (!$this->isInventoryMigrated($count)) $this->inventoryDataMigration->setPartner($this->partner)
-            ->setQueueAndConnectionName($queue_and_connection_name)->setShouldQueue($shouldQueue)->migrate();
+        $this->partnerDataMigration->setPartner($this->partner)->setIsInventoryMigrated($this->isInventoryMigrated($count))
+            ->setIsPosOrderMigrated($this->isPosOrderMigrated($count))->setIsPosCustomerMigrated($this->isPosCustomerMigrated($count))->migrate();
 
-        if (!$this->isPosOrderMigrated($count)) $this->posOrderDataMigrationChunk->setPartner($this->partner)
+        if (!$this->isInventoryMigrated($count)) {
+            $this->inventoryDataMigration->setPartner($this->partner)
+                ->setQueueAndConnectionName($queue_and_connection_name)->setShouldQueue($shouldQueue)->migrate();
+        }
+
+        if (!$this->isPosOrderMigrated($count)) {
+            $this->posOrderDataMigrationChunk->setPartner($this->partner)
             ->setQueueAndConnectionName($queue_and_connection_name)->setShouldQueue($shouldQueue)->setOrderCount($count['pos_orders_count'])->generate();
+        }
 
-        if (!$this->isPosCustomerMigrated($count)) $this->smanagerUserDataMigration->setPartner($this->partner)
+        if (!$this->isPosCustomerMigrated($count)) {
+            $this->smanagerUserDataMigration->setPartner($this->partner)
             ->setQueueAndConnectionName($queue_and_connection_name)->setShouldQueue($shouldQueue)->migrate();
+        }
 
         if(!$shouldQueue) {
             /** @var PartnerDataMigrationComplete $migrationComplete */

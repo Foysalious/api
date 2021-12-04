@@ -4,6 +4,7 @@ use App\Models\Partner;
 use App\Models\PosOrder;
 use App\Models\PosOrderPayment;
 use App\Sheba\PosOrderService\PosOrderServerClient;
+use App\Sheba\UserMigration\Modules;
 use Sheba\PosOrderService\Services\PaymentService;
 use Sheba\Repositories\BaseRepository;
 
@@ -56,11 +57,12 @@ class PosOrderPaymentRepository extends BaseRepository
 
         /** @var PosOrder $order */
         $order = PosOrder::find($pos_order_id);
-        if(isset($order)) {
+        if(isset($order) && !$order->partner->isMigrated(Modules::POS)) {
             $order->calculate();
             if ($order->getDue() > 0) {
                 return $this->save($payment_data);
             }
+            return false;
         }
         return $this->saveToNewPosOrderSystem($payment_data);
     }
@@ -79,17 +81,18 @@ class PosOrderPaymentRepository extends BaseRepository
 
     public function removePosOrderPayment($pos_order_id, $amount){
 
-        if(!$this->partner->is_migration_completed)
-            return $this->deleteFromNewPosOrderSystem($pos_order_id,$amount);
-
         $payment = PosOrderPayment::where('pos_order_id', $pos_order_id)
             ->where('amount', $amount)
             ->where('transaction_type', 'Credit')
             ->first();
 
         if($payment)
+        {
             $payment->delete();
-        return true;
+            return true;
+        }
+
+        return $this->deleteFromNewPosOrderSystem($pos_order_id,$amount);
     }
 
 }

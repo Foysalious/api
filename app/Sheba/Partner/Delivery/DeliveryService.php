@@ -8,6 +8,7 @@ use App\Models\Partner;
 use App\Models\PartnerPosService;
 use App\Models\PosOrder;
 use App\Models\PosOrderPayment;
+use App\Sheba\InventoryService\InventoryServerClient;
 use App\Sheba\Notification\Customer\Order;
 use App\Sheba\Partner\Delivery\Exceptions\DeliveryCancelRequestError;
 use App\Sheba\Partner\Delivery\Exceptions\DeliveryCancelRequestHttpError;
@@ -208,13 +209,23 @@ class DeliveryService
      */
     private function countProductWithoutWeight()
     {
+        if(!$this->partner->isMigrated(Modules::POS))
         return PartnerPosService::where('partner_id', $this->partner->id)
             ->where('is_published_for_shop', 1)
             ->where(function ($q) {
                 $q->where('weight', 0)
                     ->orWhere('weight', null);
             })->count();
+        return $this->getCountOfProductsWithoutWeightFromInventory($this->partner->id);
     }
+
+    private function getCountOfProductsWithoutWeightFromInventory($partnerId)
+    {
+        /** @var InventoryServerClient $inventoryService */
+        $inventoryService = app(InventoryServerClient::class);
+        return $inventoryService->get('api/v1/webstore/partners/'.$partnerId.'/product-without-weight-count')['count'];
+    }
+
 
     private function getDeliveryMethod()
     {

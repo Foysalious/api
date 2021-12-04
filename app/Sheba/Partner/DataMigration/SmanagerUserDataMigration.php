@@ -11,7 +11,6 @@ class SmanagerUserDataMigration
     private $currentQueue = 1;
     /** @var Partner */
     private $partner;
-    private $partnerInfo;
     private $posCustomers;
     private $queue_and_connection_name;
     private $shouldQueue;
@@ -49,31 +48,12 @@ class SmanagerUserDataMigration
     public function migrate()
     {
         $this->generateMigrationData();
-        $this->migratePartner($this->partnerInfo);
         $this->migratePosCustomers($this->posCustomers);
     }
 
     private function generateMigrationData()
     {
-        $this->partnerInfo = $this->generatePartnerMigrationData();
         $this->posCustomers = $this->generatePosCustomersMigrationData();
-    }
-
-    private function migratePartner($data)
-    {
-        $this->setRedisKey();
-        $this->shouldQueue ? dispatch(new PartnerDataMigrationToSmanagerUserJob($this->partner, ['partner_info' => $data], $this->currentQueue, $this->queue_and_connection_name, $this->shouldQueue)) :
-            dispatchJobNow(new PartnerDataMigrationToSmanagerUserJob($this->partner, ['partner_info' => $data], $this->currentQueue, $this->queue_and_connection_name, $this->shouldQueue));
-        $this->increaseCurrentQueueValue();
-    }
-
-    private function generatePartnerMigrationData()
-    {
-        return [
-            'originalId' => $this->partner->id,
-            'name' => $this->partner->name,
-            'sub_domain' => $this->partner->sub_domain,
-        ];
     }
 
     private function migratePosCustomers($data)
