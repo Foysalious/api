@@ -2,9 +2,13 @@
 
 namespace Sheba\Pos\Order\RefundNatures;
 
+use App\Models\Partner;
+use App\Models\PartnerPosService;
 use App\Models\PosOrder;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\AccountingRepository;
+use App\Sheba\UserMigration\Modules;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Accounts\Accounts;
@@ -164,6 +168,9 @@ abstract class ReturnPosItem extends RefundNature
         );
     }
 
+    /**
+     * @throws Exception
+     */
     protected function makeInventoryProduct($services, $requestedServices)
     {
         $requested_service = json_decode($requestedServices, true);
@@ -171,10 +178,13 @@ abstract class ReturnPosItem extends RefundNature
         foreach ($requested_service as $key => $value) {
             if ($services->contains($value['id'])) {
                 $product = $services->find($value['id']);
+                /** @var PartnerPosService $originalSvc */
                 $originalSvc = $services->find($value['id'])->service;
+                /** @var Partner $partner */
+                $partner = $originalSvc->partner;
                 if ($originalSvc) {
                     $sellingPrice = isset($value['updated_price']) && $value['updated_price'] ? $value['updated_price'] : $originalSvc->price;
-                    $unitPrice = $originalSvc->partner->isMigratedToAccounting() ? $originalSvc->getLastCost() : ($originalSvc->cost ?? $sellingPrice);
+                    $unitPrice = $partner->isMigrated(Modules::EXPENSE) ? $originalSvc->getLastCost() : ($originalSvc->cost ?? $sellingPrice);
                     // Full return
                     if ($value['quantity'] == 0 && $product->quantity != 0) {
                         $inventory_products[] = $this->makeInventoryData(

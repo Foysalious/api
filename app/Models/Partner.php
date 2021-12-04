@@ -3,12 +3,14 @@
 use App\Models\Transport\TransportTicketOrder;
 use App\Sheba\Payment\Rechargable;
 use App\Sheba\UserMigration\AccountingUserMigration;
+use App\Sheba\UserMigration\UserMigrationRepository;
+use App\Sheba\UserMigration\UserMigrationService;
 use Carbon\Carbon;
 use DB;
+use Exception;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use Sheba\AccountingEntry\Repository\UserMigrationRepository;
 use Sheba\Business\Bid\Bidder;
 use Sheba\Checkout\CommissionCalculator;
 use Sheba\Dal\BaseModel;
@@ -594,7 +596,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
      * @param $package
      * @param null $upgradeRequest
      * @param int $sms
-     * @throws \Exception
+     * @throws Exception
      */
     public function subscriptionUpgrade($package, $upgradeRequest = null, $sms = 1)
     {
@@ -1056,12 +1058,16 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->subscription_rules->payment_gateway_configuration_id;
     }
 
+    /**
+     * @throws Exception
+     */
     public function isMigrated($module_name): bool
     {
         $arr = [self::NOT_ELIGIBLE, UserStatus::PENDING, UserStatus::UPGRADING, UserStatus::FAILED];
-        /** @var AccountingUserMigration $repo */
-        $repo = app(AccountingUserMigration::class);
-        $userStatus = $repo->setUserId($this->id)->setModuleName($module_name)->getStatus();
+        /** @var UserMigrationService $userMigrationService */
+        $userMigrationService = app(UserMigrationService::class);
+        $class = $userMigrationService->resolveClass($module_name);
+        $userStatus = $class->setUserId($this->id)->setModuleName($module_name)->getStatus();
         if (in_array($userStatus, $arr)) return false;
         return true;
     }
