@@ -8,6 +8,7 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\AccountingEntry\Statics\AccountingStatics;
 
 class HomepageController extends Controller
 {
@@ -113,10 +114,7 @@ class HomepageController extends Controller
 
     public function getTrainingVideo(Request $request): JsonResponse
     {
-        $response = [
-            'video_key' => "accounting_dashboard",
-            'faq_url' => 'https://faq.sheba.xyz/dummy'
-        ];
+        $response = AccountingStatics::getFaqAndTrainingVideoKey();
         return api_response($request, $response, 200, ['data' => $response]);
     }
 
