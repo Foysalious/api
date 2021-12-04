@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\UserMigration;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Sheba\UserMigration\Modules;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -69,7 +70,7 @@ class UserMigrationController extends Controller
         if (!in_array($moduleName, Modules::get())) throw new Exception('Invalid Module');
         /** @var UserMigrationRepository $class */
         $class = $this->userMigrationSvc->resolveClass($moduleName);
-        $res = $class->setUserId($userId)->setModuleName($moduleName)->updateStatus($request->status);
+        $res = $class->setUserId($userId)->setModuleName($moduleName)->setModifierUser($request->user)->updateStatus($request->status);
         return api_response($request, $res, 200, ['data' => $res]);
     }
 
@@ -84,7 +85,7 @@ class UserMigrationController extends Controller
         $this->validate($request, ['status' => 'required|string', 'module_name' => 'required|string', 'user_id' => 'required']);
         /** @var UserMigrationRepository $class */
         $class = $this->userMigrationSvc->resolveClass($request->module_name);
-        $res = $class->setUserId($request->user_id)->setModuleName($request->module_name)->updateStatus($request->status);
+        $res = $class->setUserId($request->user_id)->setModuleName($request->module_name)->setModifierUser(User::find(1))->updateStatus($request->status);
         return api_response($request, $res, 200, ['data' => $res]);
     }
 
@@ -100,7 +101,7 @@ class UserMigrationController extends Controller
             if ($value['key'] == $moduleName) {
                 /** @var UserMigrationRepository $class */
                 $class = $this->userMigrationSvc->resolveClass($moduleName);
-                $res = $class->versionCodeCheck($request->hasHeader('version-code'), $value);
+                $res = $class->versionCodeCheck($request->header('version-code'), $value);
                 return api_response($request, $res, 200, ['data' => $res]);
             }
         }

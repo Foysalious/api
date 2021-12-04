@@ -2,8 +2,10 @@
 
 use App\Models\Business;
 use Carbon\Carbon;
+use Sheba\Business\Attendance\CheckWeekend;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
+use Sheba\Dal\BusinessWeekendSettings\BusinessWeekendSettingsRepo;
 use Sheba\Helpers\TimeFrame;
 
 class CommonFunctions
@@ -18,16 +20,24 @@ class CommonFunctions
     private $businessHoliday;
     /** @var BusinessWeekendRepoInterface $businessWeekend */
     private $businessWeekend;
+    private $businessWeekendSettingsRepo;
+    private $checkWeekend;
 
     /**
      * @param BusinessHolidayRepoInterface $business_holiday_repo
+     * @param BusinessWeekendSettingsRepo $business_weekend_settings_repo
+     * @param CheckWeekend $check_weekend
      * @param BusinessWeekendRepoInterface $business_weekend_repo
      */
     public function __construct(BusinessHolidayRepoInterface $business_holiday_repo,
+                                BusinessWeekendSettingsRepo  $business_weekend_settings_repo,
+                                CheckWeekend                 $check_weekend,
                                 BusinessWeekendRepoInterface $business_weekend_repo)
     {
         $this->businessHoliday = $business_holiday_repo;
         $this->businessWeekend = $business_weekend_repo;
+        $this->businessWeekendSettingsRepo = $business_weekend_settings_repo;
+        $this->checkWeekend = $check_weekend;
     }
 
     /**
@@ -56,11 +66,11 @@ class CommonFunctions
      */
     public function isWeekendHoliday()
     {
-        $business_weekend = $this->businessWeekend->getAllByBusiness($this->business);
+        $weekend_settings = $this->businessWeekendSettingsRepo->getAllByBusiness($this->business);
         $business_holiday = $this->businessHoliday->getAllByBusiness($this->business);
 
         $dates_of_holidays_formatted = [];
-        $weekend_day = $business_weekend->pluck('weekday_name')->toArray();
+        $weekend_day = $this->checkWeekend->getWeekendDays($this->startDate, $weekend_settings);
         foreach ($business_holiday as $holiday) {
             $start_date = Carbon::parse($holiday->start_date);
             $end_date = Carbon::parse($holiday->end_date);

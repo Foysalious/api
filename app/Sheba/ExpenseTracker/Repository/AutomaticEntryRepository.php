@@ -30,6 +30,7 @@ class AutomaticEntryRepository extends BaseRepository
     private $isWebstoreOrder = 0;
     private $isPaymentLink = 0;
     private $isDueTrackerPaymentLink=0;
+
     /**
      * @param mixed $paymentMethod
      * @return AutomaticEntryRepository
@@ -270,7 +271,6 @@ class AutomaticEntryRepository extends BaseRepository
             'bank_transaction_charge' => $this->bankTransactionCharge,
             'is_webstore_order'       => $this->isWebstoreOrder,
             'is_payment_link'         => $this->isPaymentLink,
-            'is_due_tracker_payment_link'=>$this->isDueTrackerPaymentLink
         ];
         if (empty($data['amount']))
             $data['amount'] = 0;

@@ -2,9 +2,13 @@
 
 namespace Sheba\Pos\Order\RefundNatures;
 
+use App\Models\Partner;
+use App\Models\PartnerPosService;
 use App\Models\PosOrder;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\AccountingRepository;
+use App\Sheba\UserMigration\Modules;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Accounts\Accounts;
@@ -54,7 +58,7 @@ abstract class ReturnPosItem extends RefundNature
             $this->saveLog();
             if ($this->order) {
                 $this->returnItem($this->order);
-                $this->updateEntry($this->order, 'refund');
+                $this->updateEntry($this->order, $this->oldOrder, 'refund');
             }
             $this->updateIncome($this->order);
         } catch (ExpenseTrackingServerError $e) {
@@ -138,30 +142,33 @@ abstract class ReturnPosItem extends RefundNature
 
     /**
      * @param PosOrder $order
+     * @param PosOrder $oldOrder
      * @param $refundType
      * @throws AccountingEntryServerError
      */
-    protected function updateEntry(PosOrder $order, $refundType)
+    protected function updateEntry(PosOrder $order, PosOrder $oldOrder, $refundType)
     {
-        $this->additionalAccountingData($order, $refundType);
+        $this->additionalAccountingData($order, $oldOrder, $refundType);
         /** @var AccountingRepository $accounting_repo */
         $accounting_repo = app()->make(AccountingRepository::class);
         $accounting_repo->updateEntryBySource($this->request, $order->id, EntryTypes::POS);
     }
 
-    private function additionalAccountingData(PosOrder $order, $refundType)
-    {
-        $netBill = (double)$this->order->calculate()->getNetBill();
-        $previouslyPaidAmount = $this->order->calculate()->getPaid();
+    private function additionalAccountingData(PosOrder $order, PosOrder $oldOrder, $refundType)
+    {   $orderCalculate = $this->order->calculate();
+        $netBill = (double)$orderCalculate->getNetBill();
+        $previouslyPaidAmount = $orderCalculate->getPaid();
         $totalPaidAmount = $previouslyPaidAmount + $this->data['paid_amount'];
+        Log::debug(["amount history", $this->oldOrder->netBill(), $netBill, $previouslyPaidAmount, $totalPaidAmount]);
         $this->request->merge(
             [
                 "from_account_key" => (new Accounts())->asset->cash::CASH,
                 "to_account_key" => (new Accounts())->income->sales::SALES_FROM_POS,
                 "amount" => $netBill,
                 "amount_cleared" => (double)($this->data['paid_amount'] > 0 && $totalPaidAmount > $netBill ? $netBill : $totalPaidAmount),
+                "updated_entry_amount" => (double)($oldOrder->getNetBill() - $netBill),
                 // amount in negative if refund
-                "reconcile_amount" =>(double)($this->data['paid_amount'] > 0 ? ($previouslyPaidAmount - $this->data['paid_amount']): $this->data['paid_amount']),
+                "reconcile_amount" =>(double)($this->data['paid_amount'] > 0 ? ($this->data['paid_amount'] - $previouslyPaidAmount): $this->data['paid_amount']),
                 "note" => $refundType,
                 "source_id" => $order->id,
                 "customer_id" => isset($order->customer) ? $order->customer->id : null,
@@ -169,6 +176,10 @@ abstract class ReturnPosItem extends RefundNature
             ]
         );
     }
+
+    /**
+     * @throws Exception
+     */
     //todo: need to change this block
     protected function makeInventoryProduct($services, $requestedServices)
     {
@@ -177,10 +188,13 @@ abstract class ReturnPosItem extends RefundNature
         foreach ($requested_service as $key => $value) {
             if ($services->contains($value['id'])) {
                 $product = $services->find($value['id']);
+                /** @var PartnerPosService $originalSvc */
                 $originalSvc = $services->find($value['id'])->service;
+                /** @var Partner $partner */
+                $partner = $originalSvc->partner;
                 if ($originalSvc) {
                     $sellingPrice = isset($value['updated_price']) && $value['updated_price'] ? $value['updated_price'] : $originalSvc->price;
-                    $unitPrice = $original_service->cost ?? $sellingPrice;
+                    $unitPrice = $partner->isMigrated(Modules::EXPENSE) ? $originalSvc->getLastCost() : ($originalSvc->cost ?? 0);
                     // Full return
                     if ($value['quantity'] == 0 && $product->quantity != 0) {
                         $inventory_products[] = $this->makeInventoryData(
@@ -207,7 +221,7 @@ abstract class ReturnPosItem extends RefundNature
                     }
                 } else {
                     $sellingPrice = $product->unit_price;
-                    $unitPrice = $product->unit_price;
+                    $unitPrice = 0;
                     $qty = isset($value['quantity']) && $value['quantity'] > 0 ? $value['quantity'] - $product->quantity : $product->quantity;
                     $type = ($value['quantity'] > $product->quantity) ? 'quantity_increase' : 'refund';
                     $inventory_products[] = $this->makeInventoryData($originalSvc, $unitPrice, $sellingPrice, $qty, $type);

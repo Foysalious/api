@@ -3,6 +3,7 @@
 use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
 use App\Models\PosCustomer;
+use App\Models\PosOrder;
 use App\Models\PosOrderPayment;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
@@ -75,15 +76,23 @@ class BaseRepository
         $partner_id = $request->partner->id ?? (int)$request->partner;
         return Partner::find($partner_id);
     }
-
+//TODO: should remove in next release (after pos rebuild)
     public function createPosOrderPayment($amount_cleared, $pos_order_id, $payment_method)
     {
-        $payment_data['pos_order_id'] = $pos_order_id;
-        $payment_data['amount']       = $amount_cleared;
-        $payment_data['method']       = $payment_method;
-        /** @var PaymentCreator $paymentCreator */
-        $paymentCreator = app(PaymentCreator::class);
-        $paymentCreator->credit($payment_data);
+        /** @var PosOrder $order */
+        $order = PosOrder::find($pos_order_id);
+        if(isset($order)) {
+            $order->calculate();
+            if ($order->getDue() > 0) {
+                $payment_data['pos_order_id'] = $pos_order_id;
+                $payment_data['amount']       = $amount_cleared;
+                $payment_data['method']       = $payment_method;
+                /** @var PaymentCreator $paymentCreator */
+                $paymentCreator = app(PaymentCreator::class);
+                $paymentCreator->credit($payment_data);
+                $order->calculate();
+            }
+        }
     }
 
     public function removePosOrderPayment($pos_order_id, $amount)

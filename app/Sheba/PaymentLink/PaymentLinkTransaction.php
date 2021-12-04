@@ -51,6 +51,8 @@ class PaymentLinkTransaction
 
     /*** @var SubscriptionWisePaymentLinkCharges */
     private $paymentLinkCharge;
+    private $is_due_tracker_payment_link;
+    private $real_amount;
 
     /**
      * @param Payment                $payment
@@ -81,6 +83,18 @@ class PaymentLinkTransaction
     public function getInterest()
     {
         return $this->interest;
+    }
+
+    public function setIsDueTrackerPaymentLink($is_due_tracker_payment_link)
+    {
+        $this->is_due_tracker_payment_link = $is_due_tracker_payment_link;
+        return $this;
+    }
+
+    public function setPaidBy($paid_by)
+    {
+        $this->paidBy = $paid_by;
+        return $this;
     }
 
     /**
@@ -210,7 +224,7 @@ class PaymentLinkTransaction
         if ($this->paymentLink->isEmi()) {
             $this->fee = $this->paymentLink->isOld() || $this->isPaidByPartner() ? $this->paymentLink->getBankTransactionCharge() + $this->tax : $this->paymentLink->getBankTransactionCharge() - $this->paymentLink->getPartnerProfit();
         } else {
-            $realAmount = $this->paymentLink->getRealAmount() !== null ? $this->paymentLink->getRealAmount() : $this->calculateRealAmount();
+            $this->real_amount = $realAmount = $this->paymentLink->getRealAmount() !== null ? $this->paymentLink->getRealAmount() : $this->calculateRealAmount();
             $this->fee  = $this->paymentLink->isOld() || $this->isPaidByPartner() ? round(($this->amount * $this->linkCommission / 100) + $this->tax, 2) : round(($realAmount * $this->linkCommission / 100) + $this->tax, 2);
 
         }
@@ -262,7 +276,10 @@ class PaymentLinkTransaction
         $transaction = $paymentLinkRepo->setAmount($amount)
             ->setBankTransactionCharge($feeTransaction)
             ->setInterest($interest)
-            ->setAmountCleared($amount);
+            ->setAmountCleared(0)
+            ->setPaidBy($this->paidBy)
+            ->setIsDueTrackerPaymentLink($this->is_due_tracker_payment_link)
+            ->setRealAmount($this->real_amount);
         if ($customer) {
             $transaction = $transaction->setCustomerId($customer->id)
                     ->setCustomerName(isset($this->customer) ? $this->customer->profile->name: null)

@@ -14,6 +14,7 @@ use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Support\Facades\Log;
 use LaravelFCM\Message\Exceptions\InvalidOptionsException;
 use Sheba\AccountingEntry\Accounts\Accounts;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\ExternalPayment\Model as ExternalPayment;
 use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\ExpenseTracker\AutomaticIncomes;
@@ -132,6 +133,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             ->setPaymentId($this->payment->id)
             ->setIsPaymentLink(1)
             ->setIsDueTrackerPaymentLink($this->paymentLink->isDueTrackerPaymentLink());
+
         if ($this->target instanceof PosOrder) {
             $entry_repo->setIsWebstoreOrder($this->target->sales_channel == SalesChannels::WEBSTORE ? 1 : 0);
             $entry_repo->updateFromSrc();
@@ -185,6 +187,8 @@ class PaymentLinkOrderComplete extends PaymentComplete
             ->setReceiver($payment_receiver)
             ->setCustomer($customer)
             ->setTarget($this->target)
+            ->setIsDueTrackerPaymentLink($this->paymentLink->isDueTrackerPaymentLink())
+            ->setPaidBy($this->paymentLink->getPaidBy())
             ->create();
     }
 
@@ -215,6 +219,9 @@ class PaymentLinkOrderComplete extends PaymentComplete
         }
     }
 
+    /**
+     * @throws AccountingEntryServerError
+     */
     private function storeAccountingJournal($paymentData)
     {
         $partner_pos_customer = PartnerPosCustomer::byPartner($this->target->partner_id)
@@ -231,7 +238,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             ->setDebitAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
             ->setCreditAccountKey((new Accounts())->income->sales::SALES_FROM_POS)
             ->setAmount((double)$paymentData['amount'])
-            ->setAmountCleared((double)$paymentData['amount'])
+            ->setAmountCleared(0)
             ->setDetails('Payment link for pos order')
             ->setNote('payment_link')
             ->updatePaymentLinkEntry($this->target->partner_id);

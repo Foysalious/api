@@ -2,15 +2,17 @@
 
 use App\Models\Partner;
 use App\Models\PartnerPosService;
+use App\Sheba\Pos\Product\Accounting\ExpenseEntry;
+use App\Sheba\UserMigration\Modules;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
+use Sheba\Dal\PartnerPosServiceBatch\PartnerPosServiceBatchRepositoryInterface;
 use Sheba\Dal\PartnerPosServiceImageGallery\Model as PartnerPosServiceImageGallery;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
 use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
-use Sheba\Pos\Repositories\PosServiceRepository;
 use Sheba\RequestIdentification;
 use Sheba\Subscription\Partner\Access\AccessManager;
 use Sheba\Subscription\Partner\Access\Exceptions\AccessRestrictedExceptionForPackage;
@@ -19,19 +21,34 @@ class Creator
 {
     use FileManager, CdnFileManager, ModificationFields;
 
-    private $data;
+    private $data, $accounting_info;
     private $serviceRepo;
     private $imageGalleryRepo;
+    /**
+     * @var ExpenseEntry
+     */
+    private $stockExpenseEntry;
 
-    public function __construct(PosServiceRepositoryInterface $service_repo, PosServiceRepositoryInterface $image_gallery_repo)
+    public function __construct(PosServiceRepositoryInterface $service_repo, PosServiceRepositoryInterface $image_gallery_repo, ExpenseEntry $stockExpenseEntry)
     {
         $this->serviceRepo = $service_repo;
         $this->imageGalleryRepo = $image_gallery_repo;
+        $this->stockExpenseEntry =  $stockExpenseEntry;
     }
 
     public function setData($data)
     {
         $this->data = $data;
+        return $this;
+    }
+
+    /**
+     * @param mixed $accounting_info
+     * @return Creator
+     */
+    public function setAccountingInfo($accounting_info)
+    {
+        $this->accounting_info = $accounting_info;
         return $this;
     }
 
@@ -48,6 +65,18 @@ class Creator
         if ($image_gallery) $this->storeImageGallery($partner_pos_service, json_decode($image_gallery, true));
         return $partner_pos_service;
     }
+
+    private function createExpenseEntry($partner_pos_service, $accounting_info)
+    {
+        $this->stockExpenseEntry->setPartner($partner_pos_service['partner_id'])
+            ->setName($partner_pos_service['name'])
+            ->setId($partner_pos_service['id'])
+            ->setNewStock($partner_pos_service['stock'])
+            ->setCostPerUnit($partner_pos_service['cost'])
+            ->setAccountingInfo($accounting_info)
+            ->create();
+    }
+
 
     private function saveImages()
     {
@@ -110,7 +139,7 @@ class Creator
         $this->data['price'] = (isset($this->data['price']) && $this->data['price'] > 0) ? (double)$this->data['price'] : null;
         $this->data['publication_status'] = isset($this->data['publication_status']) ? $this->data['publication_status'] : 1;
         if (isset($this->data['is_published_for_shop']) && $this->data['is_published_for_shop'] == 1) {
-            if (PartnerPosService::webstorePublishedServiceByPartner($this->data['partner_id'])->count() >= config('pos.maximum_publishable_product_in_webstore_for_free_packages'))
+            if (PartnerPosService::webstorePublishedServiceByPartner($this->data['partner_id'])->count() >= $this->getPartner($this->data['partner_id'])->subscription->getAccessRules()['pos']['ecom']['product_publish_limit'])
                 AccessManager::checkAccess(AccessManager::Rules()->POS->ECOM->PRODUCT_PUBLISH, $this->getPartner($this->data['partner_id'])->subscription->getAccessRules());
         } else {
             $this->data['is_published_for_shop'] = 0;
@@ -152,5 +181,43 @@ class Creator
 
         if (!empty($data))
             PartnerPosCategory::insert($data);
+    }
+
+    public function savePartnerPosServiceBatch($service, $stock = null, $cost = null)
+    {
+        /** @var Partner $partner */
+        $partner = $service->partner;
+        if(!$partner->isMigrated(Modules::EXPENSE)) return true;
+        $batchData = [];
+        $accounting_data = [];
+        $batchData['partner_pos_service_id'] = $service->id;
+        $batchData['stock'] = $stock;
+        $batchData['cost']  = $cost ?? 0.0;
+        if(isset($this->accounting_info)) {
+            $accounting_data = (array) (json_decode($this->accounting_info));
+            $batchData['from_account'] = $accounting_data['from_account'];
+            $batchData['supplier_id'] = $accounting_data['supplier_id'] ?? null;
+        }
+        /** @var PartnerPosServiceBatchRepositoryInterface $partnerPosServiceBatchRepository */
+        $partnerPosServiceBatchRepository = app(PartnerPosServiceBatchRepositoryInterface::class);
+        $partner_pos_service_batch = $partnerPosServiceBatchRepository->create($batchData);
+        $batchData = $this->makeReturnDataForBatch($partner_pos_service_batch);
+        $this->data['stock'] = $batchData['stock'];
+        $this->data['cost'] = $batchData['cost'];
+
+        if(isset($this->accounting_info)) $this->createExpenseEntry($service, $accounting_data);
+        return $batchData;
+    }
+
+    private function makeReturnDataForBatch($partner_pos_service)
+    {
+        $data = [];
+        $data['id'] = $partner_pos_service['partner_pos_service_id'];
+        $data['batch_id'] = $partner_pos_service['id'];
+        $data['stock'] = $partner_pos_service['stock'];
+        $data['cost'] = $partner_pos_service['cost'];
+        $data['from_account'] = $partner_pos_service['from_account'];
+        $data['supplier_id'] = $partner_pos_service['supplier_id'];
+        return $data;
     }
 }
