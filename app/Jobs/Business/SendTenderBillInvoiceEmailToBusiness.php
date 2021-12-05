@@ -5,6 +5,7 @@ use Exception;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
+use Sheba\Mail\BusinessMail;
 
 class SendTenderBillInvoiceEmailToBusiness extends BusinessEmailQueue
 {
@@ -38,7 +39,7 @@ class SendTenderBillInvoiceEmailToBusiness extends BusinessEmailQueue
     {
         if ($this->attempts() <= 1) {
             $subject = $this->data['subject'];
-            Mail::send('emails.tender_bill_invoice', [
+            BusinessMail::send('emails.tender_bill_invoice', [
                 'super_admin_name' => $this->data['super_admin_name'],
                 'order_id' => $this->data['order_id'],
                 'type' => $this->data['type'],

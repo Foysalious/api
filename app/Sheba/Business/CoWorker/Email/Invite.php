@@ -22,7 +22,6 @@ class Invite
     public function sendReInviteMail()
     {
         try {
-            // config()->set('services.mailgun.domain', config('services.mailgun.business_domain'));
             $coworker_invite_email = new SendBusinessRequestEmail($this->profile->email);
             $coworker_invite_email->setPassword($this->updatePassword());
             $coworker_invite_email->setSubject("Invitation from your co-worker to join digiGO")->setTemplate('emails.co-worker-invitation-v3');
@@ -35,7 +34,6 @@ class Invite
     public function sendMailToAddUser()
     {
         try {
-            // config()->set('services.mailgun.domain', config('services.mailgun.business_domain'));
             $coworker_invite_email = new SendBusinessRequestEmail($this->profile->email);
             $coworker_invite_email->setPassword($this->updatePassword());
             $coworker_invite_email->setSubject("Invitation from your co-worker to join digiGO")->setTemplate('emails.co-worker-invitation-v3');

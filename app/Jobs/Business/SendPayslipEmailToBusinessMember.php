@@ -3,7 +3,7 @@
 use App\Sheba\Business\BusinessEmailQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Mail;
+use Sheba\Mail\BusinessMail;
 
 class SendPayslipEmailToBusinessMember extends BusinessEmailQueue
 {
@@ -31,7 +31,7 @@ class SendPayslipEmailToBusinessMember extends BusinessEmailQueue
     {
         if ($this->attempts() <= 1) {
             $subject = 'Payslip of '.$this->timePeriod->start->format('F Y');
-            Mail::send('emails.payslip-email', [
+            BusinessMail::send('emails.payslip-email', [
                 'title' => $subject,
                 'employee_name' => $this->employeeName,
                 'time_period' => $this->timePeriod->start->format('F Y'),
