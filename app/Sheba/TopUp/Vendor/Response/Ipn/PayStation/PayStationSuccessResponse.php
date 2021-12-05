@@ -9,8 +9,8 @@ class PayStationSuccessResponse extends SuccessResponse
     /**
      * @return string | null
      */
-    public function getUpdatedTransactionId()
+    public function getUpdatedTransactionId(): ?string
     {
-        return $this->response['Transiction_id'];
+        return $this->response['transid'];
     }
 }
