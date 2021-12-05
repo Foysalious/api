@@ -181,12 +181,10 @@ class JournalCreateRepository extends BaseRepository
      */
     public function store()
     {
-        Log::info(["top up journal store method", $this->typeId, $this->isMigratedToAccounting($this->typeId)]);
         if(!$this->isMigratedToAccounting($this->typeId)) {
             return true;
         }
         $data = $this->toData();
-        Log::info(["top up journal before inserting", $this->end_point, $data, $this->typeId]);
         return $this->client->setUserId($this->typeId)->setUserType($this->type)->post($this->end_point, $data);
     }
 }

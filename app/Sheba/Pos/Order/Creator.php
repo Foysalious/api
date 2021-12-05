@@ -16,6 +16,7 @@ use App\Sheba\AccountingEntry\Repository\AccountingRepository;
 use Illuminate\Http\Request;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\AccountingEntry\Repository\JournalCreateRepository;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Dal\POSOrder\SalesChannels;
@@ -406,10 +407,16 @@ class Creator
 
     /**
      * @param PosOrder $order
+     * @return void
      * @throws AccountingEntryServerError
      */
-    private function storeJournal(PosOrder $order)
+    private function storeJournal(PosOrder $order): void
     {
+        /** @var JournalCreateRepository $journal_repo */
+        $journal_repo = app()->make(JournalCreateRepository::class);
+        if(!$journal_repo->isMigratedToAccounting($this->partner->id))
+            return;
+
         $this->additionalAccountingData($order);
         /** @var AccountingRepository $accounting_repo */
         $accounting_repo = app()->make(AccountingRepository::class);
