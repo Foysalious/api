@@ -194,7 +194,7 @@ abstract class ReturnPosItem extends RefundNature
                 $partner = $originalSvc->partner;
                 if ($originalSvc) {
                     $sellingPrice = isset($value['updated_price']) && $value['updated_price'] ? $value['updated_price'] : $originalSvc->price;
-                    $unitPrice = $partner->isMigrated(Modules::EXPENSE) ? $originalSvc->getLastCost() : ($originalSvc->cost ?? $sellingPrice);
+                    $unitPrice = $partner->isMigrated(Modules::EXPENSE) ? $originalSvc->getLastCost() : ($originalSvc->cost ?? 0);
                     // Full return
                     if ($value['quantity'] == 0 && $product->quantity != 0) {
                         $inventory_products[] = $this->makeInventoryData(
@@ -221,7 +221,7 @@ abstract class ReturnPosItem extends RefundNature
                     }
                 } else {
                     $sellingPrice = $product->unit_price;
-                    $unitPrice = $product->unit_price;
+                    $unitPrice = 0;
                     $qty = isset($value['quantity']) && $value['quantity'] > 0 ? $value['quantity'] - $product->quantity : $product->quantity;
                     $type = ($value['quantity'] > $product->quantity) ? 'quantity_increase' : 'refund';
                     $inventory_products[] = $this->makeInventoryData($originalSvc, $unitPrice, $sellingPrice, $qty, $type);

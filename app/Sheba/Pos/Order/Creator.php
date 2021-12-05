@@ -10,14 +10,12 @@ use App\Models\PartnerPosService;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Models\Profile;
+use App\Sheba\Partner\Delivery\Methods;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\AccountingRepository;
-use App\Sheba\Partner\Delivery\Methods;
 use Illuminate\Http\Request;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
-use Illuminate\Database\Eloquent\Model;
-use App\Sheba\Pos\Order\Invoice\InvoiceService;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Dal\POSOrder\SalesChannels;
@@ -192,16 +190,20 @@ class Creator
             $order = $this->orderRepo->save($order_data);
             $services = json_decode($this->data['services'], true);
             $servicesStockDecreasingInfo = [];
+            if (isset($order_data['delivery_district'])) $order_data['delivery_vendor_name'] = $this->getDeliveryVendorName();
+            $order = $this->orderRepo->save($order_data);
+            $services = json_decode($this->data['services'], true);
+            $servicesStockDecreasingInfo = [];
             foreach ($services as $service) {
                 /** @var PartnerPosService $original_service */
-                if (isset($service['id']) && !empty($service['id'])) $original_service = $this->posServiceRepo->find($service['id']);
+                if(isset($service['id']) && !empty($service['id'])) $original_service = $this->posServiceRepo->find($service['id']);
                 else {
                     $vat_percentage = $this->partner->posSetting->vat_percentage;
                     $original_service = $this->posServiceRepo->defaultInstance($service, $this->partner);
                 }
-                if (!$original_service)
+                if(!$original_service)
                     throw new DoNotReportException("Service not found with provided ID", 400);
-                if ($original_service->is_published_for_shop && isset($service['quantity']) && !empty($service['quantity']) && $service['quantity'] > $original_service->getStock())
+                if($original_service->is_published_for_shop && isset($service['quantity']) && !empty($service['quantity']) && $service['quantity'] > $original_service->getStock())
                     throw new NotEnoughStockException("Not enough stock", 403);
                 // $is_service_discount_applied = $original_service->discount();
                 $service_wholesale_applicable = $original_service->wholesale_price ? true : false;
@@ -214,7 +216,7 @@ class Creator
                 $service['vat_percentage'] = (!isset($service['is_vat_applicable']) || $service['is_vat_applicable']) ? $original_service->vat_percentage : 0.00;
                 $service['note'] = isset($service['note']) ? $service['note'] : null;
                 $service = array_except($service, ['id', 'name', 'is_vat_applicable', 'updated_price']);
-                $pos_order_item = $this->itemRepo->save($service);
+                $pos_order_item        = $this->itemRepo->save($service);
                 $is_stock_maintainable = $this->stockManager->setPosService($original_service)->isStockMaintainable();
                 if ($is_stock_maintainable) {
                     $servicesStockDecreasingInfo[$original_service->id] = $this->stockManager->decrease($service['quantity']);
@@ -223,24 +225,25 @@ class Creator
                 if ($this->discountHandler->hasDiscount()) $this->discountHandler->setPosOrderItem($pos_order_item)->create($order);
             }
 
-            if (isset($this->data['paid_amount']) && $this->data['paid_amount'] > 0) {
-                $payment_data['pos_order_id'] = $order->id;
-                $payment_data['amount'] = $this->data['paid_amount'];
-                $payment_data['method'] = $this->data['payment_method'] ?: 'cod';
-                $this->paymentCreator->credit($payment_data);
-            }
-            $order = $order->calculate();
-            $this->discountHandler->setOrder($order)->setType(DiscountTypes::ORDER)->setData($this->data);
-            if ($this->discountHandler->hasDiscount()) $this->discountHandler->create($order);
-            $this->voucherCalculation($order);
-            $this->resolvePaymentMethod();
-            $this->storeIncome($order);
-            $this->setAllServicesStockDecreasingArray($servicesStockDecreasingInfo);
-            if (!$this->request->has('refund_nature')) {
-                $this->storeJournal($order);
-            }
-            DB::commit();
-            return $order;
+                if (isset($this->data['paid_amount']) && $this->data['paid_amount'] > 0) {
+                    $payment_data['pos_order_id'] = $order->id;
+                    $payment_data['amount'] = $this->data['paid_amount'];
+                    $payment_data['method'] = $this->data['payment_method'] ?: 'cod';
+                    $this->paymentCreator->credit($payment_data);
+                }
+
+        $order = $order->calculate();
+        $this->discountHandler->setOrder($order)->setType(DiscountTypes::ORDER)->setData($this->data);
+        if ($this->discountHandler->hasDiscount()) $this->discountHandler->create($order);
+        $this->voucherCalculation($order);
+        $this->resolvePaymentMethod();
+        $this->setAllServicesStockDecreasingArray($servicesStockDecreasingInfo);
+        $this->storeIncome($order);
+        if (!$this->request->has('refund_nature')) {
+            $this->storeJournal($order);
+        }
+        DB::commit();
+        return $order;
         } catch (Throwable $e) {
             DB::rollback();
             app('sentry')->captureException($e);
@@ -405,16 +408,18 @@ class Creator
         return Methods::OWN_DELIVERY;
     }
 
-
     /**
      * @param PosOrder $order
      * @throws AccountingEntryServerError
      */
     private function storeJournal(PosOrder $order)
     {
-        $this->additionalAccountingData($order);
         /** @var AccountingRepository $accounting_repo */
         $accounting_repo = app()->make(AccountingRepository::class);
+        if(!$accounting_repo->isMigratedToAccounting($this->partner->id))
+            return;
+
+        $this->additionalAccountingData($order);
         $this->request->merge([
             "inventory_products" => $accounting_repo->getInventoryProducts($order->items, $this->data['services'], $this->allServicesStockDecreasingArray),
         ]);
@@ -428,15 +433,15 @@ class Creator
     {
         $order_discount = $order->discounts->count() > 0 ? $order->discounts()->sum('amount') : 0;
         $this->request->merge([
-            "from_account_key" => $order->sales_channel == SalesChannels::WEBSTORE ? (new Accounts())->income->sales::SALES_FROM_ECOM : (new Accounts())->income->sales::SALES_FROM_POS,
-            "to_account_key" => $order->sales_channel == SalesChannels::WEBSTORE ? (new Accounts())->asset->sheba::SHEBA_ACCOUNT : (new Accounts())->asset->cash::CASH,
-            "amount" => (double)$order->getNetBill(),
-            "amount_cleared" => $order->getPaid(),
-            "total_discount" => $order_discount,
-            "note" => $order->sales_channel == SalesChannels::WEBSTORE ? SalesChannels::WEBSTORE : SalesChannels::POS,
-            "source_id" => $order->id,
-            "total_vat" => $order->getTotalVat(),
-            "delivery_charge" => $order->delivery_charge ?? 0
+            "from_account_key"   => $order->sales_channel == SalesChannels::WEBSTORE ? (new Accounts())->income->sales::SALES_FROM_ECOM : (new Accounts())->income->sales::SALES_FROM_POS,
+            "to_account_key"     => $order->sales_channel == SalesChannels::WEBSTORE ? (new Accounts())->asset->sheba::SHEBA_ACCOUNT : (new Accounts())->asset->cash::CASH,
+            "amount"             => (double)$order->getNetBill(),
+            "amount_cleared"     => $order->getPaid(),
+            "total_discount"     => $order_discount,
+            "note"               => $order->sales_channel == SalesChannels::WEBSTORE ? SalesChannels::WEBSTORE : SalesChannels::POS,
+            "source_id"          => $order->id,
+            "total_vat"          => $order->getTotalVat(),
+            "delivery_charge"    => $order->delivery_charge ?? 0
         ]);
     }
 

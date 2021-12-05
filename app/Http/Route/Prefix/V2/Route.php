@@ -12,12 +12,14 @@ class Route
             (new CategoryRoute())->set($api);
             (new PaymentLinkRoute())->set($api);
             (new AccountingRoute())->set($api);
-            (new CustomerRoute())->set($api);
+            (new EmployeeRoute())->set($api);
+            $api->group(['middleware' => 'marketplace-analytics'], function ($api) {
+                (new CustomerRoute())->set($api);
+                (new ResourceRoute())->set($api);
+            });
             (new AffiliateRoute())->set($api);
             (new PartnerRoute())->set($api);
             (new HelpRoute())->set($api);
-            (new ResourceRoute())->set($api);
-            (new EmployeeRoute())->set($api);
             $api->post('training-status-update', 'ResourceController@trainingStatusUpdate');
             $api->post('profile-check', 'Profile\ProfileController@checkProfile');
             $api->post('newsletter', 'NewsletterController@create');
