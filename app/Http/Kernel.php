@@ -133,11 +133,11 @@ class Kernel extends HttpKernel
         'terminate' => TerminatingMiddleware::class,
         'accounting.auth' => AccountingAuthMiddleware::class,
         'jwtAccessToken' => JwtAccessTokenMiddleware::class,
+        'ip.whitelist' => IpWhitelistMiddleware::class,
         'userMigration.auth' => UserMigrationMiddleware::class,
         'marketplace-analytics' => MarketplaceRequestResponseLogMiddleware::class,
         'partner.status'=> PartnerStatusAuthMiddleware::class,
         'concurrent_request' => ConcurrentRequestMiddleware::class,
-        'ip.whitelist' => IpWhitelistMiddleware::class,
         'userMigration.check_status' => CheckUserMigrationRunningMiddleware::class
     ];
 }

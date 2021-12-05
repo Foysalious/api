@@ -10,12 +10,14 @@ use App\Models\PartnerPosService;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Models\Profile;
+use App\Sheba\Pos\Order\Invoice\InvoiceService;
 use App\Sheba\Partner\Delivery\Methods;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\AccountingRepository;
 use Illuminate\Http\Request;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\AccountingEntry\Repository\JournalCreateRepository;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Dal\POSOrder\SalesChannels;
@@ -167,6 +169,9 @@ class Creator
      * @throws NotEnoughStockException
      * @throws PartnerPosCustomerNotFoundException
      * @throws PosCustomerNotFoundException|ExpenseTrackingServerError|Throwable
+     * @throws ExpenseTrackingServerError
+     * @throws DoNotReportException
+     * @throws NotAssociativeArray
      */
     public function create()
     {
@@ -407,6 +412,7 @@ class Creator
 
     /**
      * @param PosOrder $order
+     * @return bool|void
      * @throws AccountingEntryServerError
      */
     private function storeJournal(PosOrder $order)
@@ -414,7 +420,7 @@ class Creator
         /** @var AccountingRepository $accounting_repo */
         $accounting_repo = app()->make(AccountingRepository::class);
         if(!$accounting_repo->isMigratedToAccounting($this->partner->id))
-            return;
+            return true;
 
         $this->additionalAccountingData($order);
         $this->request->merge([

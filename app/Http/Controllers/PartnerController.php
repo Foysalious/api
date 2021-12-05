@@ -41,6 +41,7 @@ use Illuminate\Support\Facades\Redis;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
 use Sheba\Checkout\Partners\LitePartnerList;
 use Sheba\Checkout\Requests\PartnerListRequest;
+use Sheba\Dal\PartnerService\PartnerService;
 use Sheba\Logistics\Repository\ParcelRepository;
 use Sheba\Manager\JobList;
 use Sheba\ModificationFields;

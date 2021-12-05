@@ -24,9 +24,9 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\ComplianceInfo\ComplianceInfo;
 use Sheba\ComplianceInfo\Statics;
+use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Authentication\Exceptions\AuthenticationFailedException;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
-use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\DueTracker\Exceptions\UnauthorizedRequestFromExpenseTrackerException;
@@ -94,7 +94,8 @@ class OrderController extends Controller
     {
         ini_set('memory_limit', '4096M');
         ini_set('max_execution_time', 420);
-        $status  = $request->status;
+        $status = $request->status;
+
         $partner = resolvePartnerFromAuthMiddleware($request);
         list($offset, $limit) = calculatePagination($request);
         $posOrderList = $posOrderList->setPartner($partner)->setStatus($status)->setOffset($offset)->setLimit($limit);
@@ -154,14 +155,13 @@ class OrderController extends Controller
      * @throws PosCustomerNotFoundException
      * @throws NotEnoughStockException
      * @throws AccountingEntryServerError|ExpenseTrackingServerError
-     * @throws \Sheba\Authentication\Exceptions\AuthenticationFailedException
+     * @return array|false|JsonResponse
      * @return array|false|JsonResponse
      * @return array|JsonResponse
      * @throws ExpenseTrackingServerError
      * @throws NotAssociativeArray
      * @throws DoNotReportException
      * @throws InvalidDiscountType
-     * @throws \Sheba\Authentication\Exceptions\AuthenticationFailedException
      * @throws AuthenticationFailedException
      */
     public function store($partner, Request $request, Creator $creator, ProfileCreator $profileCreator, PosCustomerCreator $posCustomerCreator, PartnerRepository $partnerRepository, PaymentLinkCreator $paymentLinkCreator)

@@ -65,7 +65,7 @@ class CustomerController extends Controller
      */
     public function show($partner, $customer, Request $request, EntryRepository $entry_repo,DueTrackerRepository $dueTrackerRepository, PosCustomerRepository $posCustomerRepository)
     {
-//        try {
+        try {
             /** @var PosCustomer $customer */
             $customer = PosCustomer::find((int)$customer);
             if (!$customer)
@@ -87,21 +87,20 @@ class CustomerController extends Controller
                 $total_purchase_amount += $order->getNetBill();
                 $total_used_promo += !empty($order->voucher_id) ? $this->getVoucherAmount($order) : 0;
             });
-            $customerAmount = $posCustomerRepository->getDueAmountFromDueTracker($request->partner, $customer->id);
+            $customerAmount = $posCustomerRepository->getDueAmountFromDueTracker($request->partner, $customer->id, $request);
             $data['total_purchase_amount'] = $total_purchase_amount;
             $data['total_due_amount']      = $customerAmount['due'];
-            $data['total_payable_amount']  = $customerAmount['payable'];
-            $data['total_purchase_amount'] = $total_purchase_amount;
             $data['total_used_promo']      = $total_used_promo;
-            $data['is_customer_editable']  = $customer->isEditable();
+            $data['total_payable_amount']  = $customerAmount['payable'];
+//            $data['is_customer_editable']  = $customer->isEditable();
             $data['is_customer_editable']  = true;
             $data['note']                  = $partner_pos_customer->note;
             $data['is_supplier']                  = $partner_pos_customer->is_supplier;
             return api_response($request, $customer, 200, ['customer' => $data]);
-//        } catch (Throwable $e) {
-//            app('sentry')->captureException($e);
-//            return api_response($request, null, 500);
-//        }
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 
     /**
