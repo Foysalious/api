@@ -407,15 +407,15 @@ class Creator
 
     /**
      * @param PosOrder $order
-     * @return void
+     * @return bool|void
      * @throws AccountingEntryServerError
      */
-    private function storeJournal(PosOrder $order): void
+    private function storeJournal(PosOrder $order)
     {
         /** @var AccountingRepository $accounting_repo */
         $accounting_repo = app()->make(AccountingRepository::class);
         if(!$accounting_repo->isMigratedToAccounting($this->partner->id))
-            return;
+            return true;
 
         $this->additionalAccountingData($order);
         $this->request->merge([
