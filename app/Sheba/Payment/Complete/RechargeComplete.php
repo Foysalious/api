@@ -80,6 +80,13 @@ class RechargeComplete extends PaymentComplete
         /** @var HasWalletTransaction $user */
         $user = $this->payment->payable->user;
 
+        $payment_gateways = app(PaymentGatewayRepo::class);
+        $this->paymentGateway = $payment_gateways->builder()
+            ->where('service_type', $this->payment->created_by_type)
+            ->where('method_name', $this->payment->paymentDetails->last()->method)
+            ->where('status', 'Published')
+            ->first();
+
         if ($this->paymentGateway && $this->paymentGateway->cash_in_charge > 0) {
             $amount = $this->calculateCommission($this->paymentGateway->cash_in_charge);
             (new WalletTransactionHandler())->setModel($user)
