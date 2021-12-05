@@ -166,7 +166,7 @@ class PayStation implements Gateway, HasIpn
 
     public function buildIpnResponse($request_data)
     {
-        if ($request_data['Status'] == "SUCCESS") {
+        if ($request_data['status'] == "SUCCESS") {
             return app(PayStationSuccessResponse::class);
         } elseif ($request_data['status'] == "Failed") {
             return app(PayStationFailResponse::class);
