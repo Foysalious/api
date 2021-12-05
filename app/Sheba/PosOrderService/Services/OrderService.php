@@ -317,11 +317,14 @@ class OrderService
         return $this->client->delete('api/v1/partners/' . $this->partnerId . '/orders/' . $this->orderId);
     }
 
-    private function makeCustomerUpdateData() : array
+    private function makeCustomerUpdateData()
     {
-        return [
-            'customer_id' => $this->customerId
-        ];
+        if($this->customerId) {
+            return [
+                'customer_id' => $this->customerId
+            ];
+        }
+        return null;
     }
 
     public function orderInvoiceDownload($partner,$order_id)
