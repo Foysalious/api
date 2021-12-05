@@ -5,6 +5,7 @@ use App\Models\BusinessRole;
 use App\Models\BusinessSmsTemplate;
 use App\Sheba\Business\AttendanceType\Creator as InitialAttendanceTypeBusinessCommonInformationCreator;
 use App\Sheba\Business\Holiday\BusinessGovtHolidayCreator;
+use App\Sheba\Business\OfficeSetting\BusinessWeekendSettingsCreator;
 use App\Sheba\Business\OfficeTiming\Creator as InitialOfficeTimeBusinessCommonInformationCreator;
 use App\Sheba\Business\Weekend\Creator as InitialWeekendBusinessCommonInformationCreator;
 use Sheba\Business\AttendanceType\AttendanceType;
@@ -61,6 +62,8 @@ class BusinessCommonInformationCreator
      * @var PayrollSettingCreator
      */
     private $payrollSettingCreator;
+    /*** @var BusinessWeekendSettingsCreator $businessWeekendSettingsCreator*/
+    private $businessWeekendSettingsCreator;
 
     /**
      * BusinessCommonInformationCreator constructor.
@@ -101,6 +104,7 @@ class BusinessCommonInformationCreator
 
         $this->leaveTypeCreator = $leave_type_creator;
         $this->payrollSettingCreator = $payroll_setting_creator;
+        $this->businessWeekendSettingsCreator = app(BusinessWeekendSettingsCreator::class);
     }
 
     /**
@@ -172,6 +176,7 @@ class BusinessCommonInformationCreator
             $this->weekendCreateRequest = $this->weekendCreateRequest->setBusiness($this->business)->setWeekday($weekday);
             $this->weekendCreator->setWeekendCreateRequest($this->weekendCreateRequest)->create();
         }
+        $this->businessWeekendSettingsCreator->setBusiness($this->business)->setWeekend($weekdays)->create();
     }
 
     public function tagAttendanceType()
