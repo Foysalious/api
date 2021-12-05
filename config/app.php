@@ -1,7 +1,5 @@
 <?php
 
-use Sheba\Logistics\Listeners\EventsProvider;
-
 return [
 
     /*
@@ -179,7 +177,8 @@ return [
         Sheba\Report\Listeners\ReportUpdateProvider::class,
         Sheba\Logistics\Listeners\EventsProvider::class,
         Sheba\Database\DatabaseServiceProvider::class,
-        Sheba\Elasticsearch\ServiceProvider::class
+        Sheba\Elasticsearch\ServiceProvider::class,
+        Sheba\Mail\BusinessMailServiceProvider::class
     ],
 
     /*
