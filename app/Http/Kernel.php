@@ -1,6 +1,7 @@
 <?php namespace App\Http;
 
 use App\Http\Middleware\AccessTokenMiddleware;
+use App\Http\Middleware\AccountingAuthMiddleware;
 use App\Http\Middleware\AffiliateAuthMiddleware;
 use App\Http\Middleware\ApiRequestMiddleware;
 use App\Http\Middleware\Authenticate;
@@ -127,6 +128,7 @@ class Kernel extends HttpKernel
         'terminate' => TerminatingMiddleware::class,
         'jwtAccessToken' => JwtAccessTokenMiddleware::class,
         'ip.whitelist' => IpWhitelistMiddleware::class,
+        'accounting.auth' => AccountingAuthMiddleware::class,
         'userMigration.auth' => UserMigrationMiddleware::class,
         'userMigration.check_status' => CheckUserMigrationRunningMiddleware::class,
         'partner.status'=> PartnerStatusAuthMiddleware::class,

@@ -11,7 +11,7 @@ return [
         'blogs.get',
         'training-videos.get',
         'migration.get.module',
-        'migration.can-access',
+        'migration.module-access',
         'migration.list',
         'migration.update-status',
         'migration.update-status-webhook',

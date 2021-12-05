@@ -4,6 +4,7 @@
 use App\Models\PosOrder;
 use App\Sheba\PosOrderService\Services\OrderService;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Redis;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Pos\Repositories\PosOrderRepository;
 
@@ -150,6 +151,7 @@ class OrderPlace
      */
     public function storeDeliveryInformation($info)
     {
+        Redis::set("sDelivery_" . $this->posOrder->id, json_encode($info));
         $data = [
             'delivery_vendor_name' => $info['logistic_partner_id'],
             'address' => $info['delivery_address']['address'],
@@ -162,7 +164,6 @@ class OrderPlace
         if ($this->posOrder && !$this->posOrder->is_migrated) return $this->posOrderRepository->update($this->posOrder, $data);
         return $this->orderService->setPartnerId($this->partner->id)->setOrderId($this->posOrderId)->storeDeliveryInformation($data);
     }
-
 
 
     private function makeData()
