@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\AccessTokenMiddleware;
 use App\Http\Middleware\AffiliateAuthMiddleware;
+use App\Http\Middleware\RequestResponseLog\MarketplaceRequestResponseLogMiddleware;
 use App\Http\Middleware\ApiRequestMiddleware;
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\B2B\OrderMiddleware;
@@ -123,6 +124,7 @@ class Kernel extends HttpKernel
         'apiRequestLog' => ApiRequestMiddleware::class,
         'shebaServer' => ShebaNetworkMiddleware::class,
         'terminate' => TerminatingMiddleware::class,
+        'marketplace-analytics' => MarketplaceRequestResponseLogMiddleware::class,
         'partner.status'=> PartnerStatusAuthMiddleware::class,
         'concurrent_request' => ConcurrentRequestMiddleware::class,
         'userMigration.auth' => UserMigrationMiddleware::class,

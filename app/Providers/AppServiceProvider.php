@@ -1,6 +1,7 @@
 <?php namespace App\Providers;
 
 use App\Http\Middleware\B2B\TerminatingMiddleware;
+use App\Http\Middleware\RequestResponseLog\MarketplaceRequestResponseLogMiddleware;
 use App\Sheba\Algolia\Provider\EventsListenerProvider;
 use App\Sheba\Pos\Order\Providers\EventsListenerProvider as PosOrderInvoiceGenerationEventsListenerProvider;
 use Exception;
@@ -41,6 +42,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->register(CURServiceProvider::class);
         $this->app->register(EventsListenerProvider::class);
         $this->app->singleton(TerminatingMiddleware::class);
+        $this->app->singleton(MarketplaceRequestResponseLogMiddleware::class);
         $this->app->register(PosOrderInvoiceGenerationEventsListenerProvider::class);
     }
 }
