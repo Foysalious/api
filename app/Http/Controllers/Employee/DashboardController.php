@@ -22,7 +22,12 @@ class DashboardController extends Controller
         /** @var PayrollSetting $payroll_setting */
         $payroll_setting = $business->payrollSetting;
 
-        $dashboard_one = [
+        $is_enable_employee_visit = $business->is_enable_employee_visit;
+
+        $manager = $business ? $business->getActiveBusinessMember()->where('manager_id', $business_member->id)->count() : null;
+        $is_manager = $manager ? 1 : 0;
+
+        $dashboard = collect([
             [
                 'title' => 'Support',
                 'target_type' => 'support',
@@ -57,47 +62,26 @@ class DashboardController extends Controller
 
             ],
             [
-                'title' => 'Feedback',
-                'target_type' => 'feedback',
-                'link' => "https://sheba.freshdesk.com/support/tickets/new"
-            ],
-        ];
-        $dashboard_two = [
-            [
-                'title' => 'Support',
-                'target_type' => 'support',
+                'title' => 'Visit',
+                'target_type' => 'visit',
+
             ],
             [
-                'title' => 'Attendance',
-                'target_type' => 'attendance',
-            ],
-            [
-                'title' => 'Notice',
-                'target_type' => 'notice',
-            ],
-            [
-                'title' => 'Expense',
-                'target_type' => 'expense',
-            ],
-            [
-                'title' => 'Leave',
-                'target_type' => 'leave',
-            ],
-            [
-                'title' => 'Approval',
-                'target_type' => 'approval',
-            ],
-            [
-                'title' => 'Phonebook',
-                'target_type' => 'phonebook',
+                'title' => 'My Team',
+                'target_type' => 'my_team',
+
             ],
             [
                 'title' => 'Feedback',
                 'target_type' => 'feedback',
                 'link' => "https://sheba.freshdesk.com/support/tickets/new"
             ],
-        ];
-        $dashboard = $payroll_setting->is_enable ? $dashboard_one : $dashboard_two;
-        return api_response($request, $dashboard, 200, ['dashboard' => $dashboard]);
+        ]);
+
+        if (!$payroll_setting->is_enable) $dashboard->forget(7);
+        if (!$is_enable_employee_visit) $dashboard->forget(8);
+        if (!$is_manager) $dashboard->forget(9);
+
+        return api_response($request, $dashboard, 200, ['dashboard' => $dashboard->values()]);
     }
 }
