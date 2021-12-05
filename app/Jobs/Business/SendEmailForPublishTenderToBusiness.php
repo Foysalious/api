@@ -4,7 +4,7 @@ use App\Models\Procurement;
 use App\Sheba\Business\BusinessEmailQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Mail;
+use Sheba\Mail\BusinessMail;
 
 class SendEmailForPublishTenderToBusiness extends BusinessEmailQueue
 {
@@ -27,7 +27,7 @@ class SendEmailForPublishTenderToBusiness extends BusinessEmailQueue
             $tender_detail = config('sheba.business_url') . "/dashboard/rfq/list/" . $this->procurement->id . "/details";
             $public_tender_detail = config('sheba.business_url') . "/tender/list/" . $this->procurement->id;
 
-            Mail::send('emails.tender-publication', [
+            BusinessMail::send('emails.tender-publication', [
                 'business_contract_person' => $business_contract_person, 'tender_detail' => $tender_detail, 'public_tender_detail' => $public_tender_detail
             ], function ($m) use ($business_email) {
                 $m->from('b2b@sheba.xyz', 'sBusiness.xyz');
