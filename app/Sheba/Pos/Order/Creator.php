@@ -192,8 +192,9 @@ class Creator
             $servicesStockDecreasingInfo = [];
             foreach ($services as $service) {
                 /** @var PartnerPosService $original_service */
-                if(isset($service['id']) && !empty($service['id'])) $original_service = $this->posServiceRepo->find($service['id']);
-                else {
+                if(isset($service['id']) && !empty($service['id'])) {
+                    $original_service = $this->posServiceRepo->find($service['id']);
+                }else {
                     $vat_percentage = $this->partner->posSetting->vat_percentage;
                     $original_service = $this->posServiceRepo->defaultInstance($service, $this->partner);
                 }
