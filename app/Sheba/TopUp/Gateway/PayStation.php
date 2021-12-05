@@ -75,6 +75,7 @@ class PayStation implements Gateway, HasIpn
     {
         $api_response = $this->call($this->makeUrlForEnquiry($topup_order));
         $status = $api_response->Status;
+        /** @var $ipn_response IpnResponse */
         if ($status == 'Success' ) {
             $ipn_response = app(PayStationEnquirySuccessResponse::class);
         } else if ($status == 'Failed') {
