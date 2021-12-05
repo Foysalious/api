@@ -91,22 +91,24 @@ class CategoryService
             $data[] = ['name' => 'thumb', 'contents' => $this->thumb ? File::get($this->thumb->getRealPath()) : null, 'filename' => $this->thumb ? $this->thumb->getClientOriginalName() : ''];
         }
         if ($this->parentId != null) {
-            $data = array_merge_recursive($data,[
-                [
-                    'name' => 'parent_id',
-                    'contents' => $this->parentId,
-                ]
-            ]);
+            $data [] = [
+                'name' => 'parent_id',
+                'contents' => $this->parentId,
+                ];
         }
         return $data;
     }
 
     public function makeUpdateData()
     {
-        return [
-            ['name' => 'name', 'contents' => $this->categoryName],
-            ['name' => 'thumb', 'contents' => $this->thumb ? File::get($this->thumb->getRealPath()) : null, 'filename' => $this->thumb ? $this->thumb->getClientOriginalName() : '']
-        ];
+        $data [] =  ['name' => 'name', 'contents' => $this->categoryName];
+        if($this->thumb) {
+            $data [] = [
+                'name' => 'thumb', 'contents' => $this->thumb ? File::get($this->thumb->getRealPath()) : null,
+                'filename' => $this->thumb ? $this->thumb->getClientOriginalName() : ''
+            ];
+        }
+        return $data;
     }
 
     public function store()
