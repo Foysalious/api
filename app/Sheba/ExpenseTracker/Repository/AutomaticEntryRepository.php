@@ -3,6 +3,7 @@
 use App\Models\Profile;
 use Carbon\Carbon;
 use Exception;
+use Sheba\AccountingEntry\Exceptions\MigratedToAccountingException;
 use Sheba\ExpenseTracker\AutomaticExpense;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\EntryType;
@@ -29,6 +30,7 @@ class AutomaticEntryRepository extends BaseRepository
     private $isWebstoreOrder = 0;
     private $isPaymentLink = 0;
     private $isDueTrackerPaymentLink=0;
+
     /**
      * @param mixed $paymentMethod
      * @return AutomaticEntryRepository
@@ -221,6 +223,9 @@ class AutomaticEntryRepository extends BaseRepository
     public function store()
     {
         try {
+            if ($this->isMigratedToAccounting()) {
+                return true;
+            }
             $data = $this->getData();
             if (empty($data['head_name']))
                 throw new Exception('Head is not found');
@@ -266,7 +271,6 @@ class AutomaticEntryRepository extends BaseRepository
             'bank_transaction_charge' => $this->bankTransactionCharge,
             'is_webstore_order'       => $this->isWebstoreOrder,
             'is_payment_link'         => $this->isPaymentLink,
-            'is_due_tracker_payment_link'=>$this->isDueTrackerPaymentLink
         ];
         if (empty($data['amount']))
             $data['amount'] = 0;
@@ -284,6 +288,9 @@ class AutomaticEntryRepository extends BaseRepository
     public function updateFromSrc()
     {
         try {
+            if ($this->isMigratedToAccounting()) {
+                return true;
+            }
             $data = $this->getData();
             if (empty($data['source_type']) || empty($data['source_id']))
                 throw new Exception('Source Type or Source id is not present');
@@ -301,6 +308,9 @@ class AutomaticEntryRepository extends BaseRepository
     public function updatePartyFromSource()
     {
         try {
+            if ($this->isMigratedToAccounting()) {
+                return true;
+            }
             $data = [
                 'source_type' => $this->sourceType,
                 'source_id'   => $this->sourceId,
@@ -322,6 +332,9 @@ class AutomaticEntryRepository extends BaseRepository
     public function deduct()
     {
         try {
+            if ($this->isMigratedToAccounting()) {
+                return true;
+            }
             $data = $this->getData();
             if (empty($data['source_type']) || empty($data['source_id']))
                 throw new Exception('Source Type or Source id is not present');
@@ -335,6 +348,9 @@ class AutomaticEntryRepository extends BaseRepository
     public function delete()
     {
         try {
+            if ($this->isMigratedToAccounting()) {
+                return true;
+            }
             $data = $this->getData();
             if (empty($data['source_type']) || empty($data['source_id']))
                 throw new Exception('Source Type or Source id is not present');
