@@ -20,6 +20,7 @@ use DB;
 
 class ExpenseController extends Controller
 {
+    const FROM_WEB_PORTAL = 1;
     private $expense_repo;
     use ModificationFields;
     use FilesAttachment;
@@ -206,7 +207,7 @@ class ExpenseController extends Controller
             ]);
             $business_member = $request->business_member;
             if (!$business_member) return api_response($request, null, 401);
-            $data = $this->expense_repo->update($request, $expense, $business_member);
+            $data = $this->expense_repo->update($request, $expense, $business_member, self::FROM_WEB_PORTAL);
             return $data ? api_response($request, $expense, 200, $data) : api_response($request, null, 404);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
