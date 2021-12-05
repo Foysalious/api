@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\Payment;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Payment\Factory\PaymentStrategy;
@@ -16,9 +17,13 @@ class BkashController extends Controller
             $this->validate($request, ['paymentID' => 'required']);
             /** @var Payment $payment */
             $payment = Payment::where('gateway_transaction_id', $request->paymentID)->valid()->first();
-            if (!$payment) return api_response($request, null, 404, ['message' => 'Valid Payment not found.']);
-            if (!$payment->isValid()||$payment->isComplete()){
-                return api_response($request, null, 402,['message'=>"Invalid or completed payment"]);
+            if (!$payment) {
+                app('sentry')->captureException(new Exception("Bkash 404"));
+                return api_response($request, null, 404, ['message' => 'Valid Payment not found.']);
+            }
+            if (!$payment->isValid() || $payment->isComplete()) {
+                app('sentry')->captureException(new Exception("Bkash 402"));
+                return api_response($request, null, 402, ['message' => "Invalid or completed payment"]);
             }
             $payment = $payment_manager->setPayment($payment)->setMethodName(PaymentStrategy::BKASH)->complete();
 
