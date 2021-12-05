@@ -3,6 +3,7 @@
 use App\Http\Middleware\AccessTokenMiddleware;
 use App\Http\Middleware\AccountingAuthMiddleware;
 use App\Http\Middleware\AffiliateAuthMiddleware;
+use App\Http\Middleware\RequestResponseLog\MarketplaceRequestResponseLogMiddleware;
 use App\Http\Middleware\ApiRequestMiddleware;
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\B2B\OrderMiddleware;
@@ -132,11 +133,9 @@ class Kernel extends HttpKernel
         'terminate' => TerminatingMiddleware::class,
         'accounting.auth' => AccountingAuthMiddleware::class,
         'jwtAccessToken' => JwtAccessTokenMiddleware::class,
-        'partner.status'=>PartnerStatusAuthMiddleware::class,
         'userMigration.auth' => UserMigrationMiddleware::class,
+        'marketplace-analytics' => MarketplaceRequestResponseLogMiddleware::class,
         'partner.status'=> PartnerStatusAuthMiddleware::class,
-        'concurrent_request' => ConcurrentRequestMiddleware::class,
-        'userMigration.auth' => UserMigrationMiddleware::class,
         'concurrent_request' => ConcurrentRequestMiddleware::class,
         'ip.whitelist' => IpWhitelistMiddleware::class,
         'userMigration.check_status' => CheckUserMigrationRunningMiddleware::class

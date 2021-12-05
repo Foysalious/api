@@ -1,9 +1,10 @@
 <?php namespace App\Providers;
 
 use App\Http\Middleware\B2B\TerminatingMiddleware;
+
 use Illuminate\Support\Carbon;
 use Sheba\Algolia\Provider\EventsListenerProvider as AlgoliaProvider;
-use Sheba\Algolia\Provider\EventsListenerProvider;
+use App\Http\Middleware\RequestResponseLog\MarketplaceRequestResponseLogMiddleware;
 use App\Sheba\Pos\Order\Providers\EventsListenerProvider as PosOrderInvoiceGenerationEventsListenerProvider;
 use Illuminate\Support\ServiceProvider;
 use Sheba\Dal\Providers\CustomMigrationServiceProvider;
@@ -52,6 +53,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->register(CURServiceProvider::class);
         $this->app->register(AlgoliaProvider::class);
         $this->app->singleton(TerminatingMiddleware::class);
+        $this->app->singleton(MarketplaceRequestResponseLogMiddleware::class);
         $this->app->register(PosOrderInvoiceGenerationEventsListenerProvider::class);
         $this->app->register(SearchServiceProvider::class);
     }

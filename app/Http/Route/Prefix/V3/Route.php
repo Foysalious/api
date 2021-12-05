@@ -5,7 +5,9 @@ class Route
     public function set($api)
     {
         $api->group(['prefix' => 'v3', 'namespace' => 'App\Http\Controllers'], function ($api) {
-            (new CustomerRoute())->set($api);
+            $api->group(['middleware' => 'marketplace-analytics'], function ($api) {
+                (new CustomerRoute())->set($api);
+            });
             (new AffiliateRoute())->set($api);
             (new PartnerRoute())->set($api);
             (new EmiRoute())->set($api);
