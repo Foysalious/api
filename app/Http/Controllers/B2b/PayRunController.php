@@ -53,6 +53,9 @@ class PayRunController extends Controller
      */
     public function index(Request $request, PayrunList $payrun_list, PaySlipExcel $pay_slip_excel, PayRunBulkExcel $pay_run_bulk_excel)
     {
+        ini_set('memory_limit', '4096M');
+        ini_set('max_execution_time', 480);
+
         /** @var Business $business */
         $business = $request->business;
         /** @var BusinessMember $business_member */
