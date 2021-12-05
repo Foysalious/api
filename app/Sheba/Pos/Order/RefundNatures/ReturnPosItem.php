@@ -190,9 +190,9 @@ abstract class ReturnPosItem extends RefundNature
                 $product = $services->find($value['id']);
                 /** @var PartnerPosService $originalSvc */
                 $originalSvc = $services->find($value['id'])->service;
-                /** @var Partner $partner */
-                $partner = $originalSvc->partner;
                 if ($originalSvc) {
+                    /** @var Partner $partner */
+                    $partner = $originalSvc->partner;
                     $sellingPrice = isset($value['updated_price']) && $value['updated_price'] ? $value['updated_price'] : $originalSvc->price;
                     $unitPrice = $partner->isMigrated(Modules::EXPENSE) ? $originalSvc->getLastCost() : ($originalSvc->cost ?? 0);
                     // Full return

@@ -4,13 +4,13 @@ return [
     'modules' => [
         [
             'key'           => 'expense', //accounting - expense given by mobile team
-            'app_version'   => 230700,
+            'app_version'   => 240000,
             'status'        => null,
             'priority'      => 1
         ],
         [
             'key'           => 'pos',
-            'app_version'   => 230600,
+            'app_version'   => 240000,
             'status'        => null,
             'priority'      => 2
         ]
@@ -30,4 +30,5 @@ return [
             'priority'      => 2
         ]
     ]
+
 ];

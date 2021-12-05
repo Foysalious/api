@@ -46,8 +46,8 @@ class RechargeComplete extends PaymentComplete
             }
             $this->paymentRepository->setPayment($this->payment);
             DB::transaction(function () {
-                $transaction=$this->storeTransaction();
-                if ($transaction){
+                $this->storeTransaction();
+                if ($this->transaction) {
                     $this->completePayment();
                     $this->storeCommissionTransaction();
                 }
@@ -108,14 +108,14 @@ class RechargeComplete extends PaymentComplete
         $user = $this->payment->payable->user;
 
         $payment_gateways = app(PaymentGatewayRepo::class);
-        $payment_gateway = $payment_gateways->builder()
+        $this->paymentGateway = $payment_gateways->builder()
             ->where('service_type', $this->payment->created_by_type)
             ->where('method_name', $this->payment->paymentDetails->last()->method)
             ->where('status', 'Published')
             ->first();
 
-        if ($payment_gateway && $payment_gateway->cash_in_charge > 0) {
-            $this->fee = $amount = $this->calculateCommission($payment_gateway->cash_in_charge);
+        if ($this->paymentGateway && $this->paymentGateway->cash_in_charge > 0) {
+            $amount = $this->calculateCommission($this->paymentGateway->cash_in_charge);
             (new WalletTransactionHandler())->setModel($user)
                 ->setAmount($amount)
                 ->setIsNegativeDebitAllowed(true)

@@ -133,7 +133,7 @@ class AccountingRepository extends BaseRepository
                         "name" => $original_service->name ?? $requested_service[$key]['name'],
                         "unit_price" => (double)$unitPrice,
                         "selling_price" => (double)$sellingPrice,
-                        "quantity" => $serviceBatch['stock'] ?? ($requested_service[$key]['quantity'] ?? 1)
+                        "quantity" => $requested_service[$key]['quantity'],
                     ];
                 }
             } else {
@@ -142,8 +142,8 @@ class AccountingRepository extends BaseRepository
                     "id" => 0,
                     "name" => 'Custom Amount',
                     "unit_price" => 0,
-                    "selling_price" => $serviceBatch['cost']  ?? $sellingPrice,
-                    "quantity" => $serviceBatch['stock'] ?? ($requested_service[$key]['quantity'] ?? 1)
+                    "selling_price" => $sellingPrice,
+                    "quantity" => $requested_service[$key]['quantity']
                 ];
             }
         }

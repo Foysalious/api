@@ -60,7 +60,7 @@ class Creator
         $this->data['cost'] = (double)$this->data['cost'];
         $this->format();
         $image_gallery = isset($this->data['image_gallery']) ? $this->data['image_gallery'] : null;
-        $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'image_gallery']);
+        $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'image_gallery','accounting_info']);
         $partner_pos_service = $this->serviceRepo->save($this->data + (new RequestIdentification())->get());
         $this->savePartnerPosServiceBatch($partner_pos_service, $this->data['stock'], $this->data['cost']);
         if ($image_gallery) $this->storeImageGallery($partner_pos_service, json_decode($image_gallery, true));
