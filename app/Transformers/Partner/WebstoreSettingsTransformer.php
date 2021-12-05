@@ -1,8 +1,10 @@
 <?php namespace App\Transformers\Partner;
 
 use App\Models\Partner;
+use App\Sheba\InventoryService\InventoryServerClient;
 use App\Sheba\PosOrderService\Services\OrderService;
 use App\Sheba\UserMigration\Modules;
+use Illuminate\Support\Facades\App;
 use League\Fractal\TransformerAbstract;
 use Sheba\Sms\AdaReach;
 use Sheba\Sms\Infobip;
@@ -22,7 +24,7 @@ class WebstoreSettingsTransformer extends TransformerAbstract
             'is_webstore_published' => $partner->is_webstore_published,
             'logo' => $partner->logo,
             'delivery_charge' => $this->getDeliveryCharge($partner),
-            'is_inventory_empty' => !$partner->posServices()->count() ? 1 : 0,
+            'is_inventory_empty' => $this->isInventoryEmpty($partner),
             'address' => $partner->address,
             'wallet' => $partner->wallet,
             'single_sms_cost' => 0.30, //TODO: have to remove value
@@ -53,6 +55,18 @@ class WebstoreSettingsTransformer extends TransformerAbstract
             return config('sheba.new_webstore_url');
         } else {
             return config('sheba.new_webstore_url');
+        }
+    }
+
+    public function isInventoryEmpty($partner)
+    {
+        if ($partner->isMigrated(Modules::POS)) {
+            $inventoryServerClient = App::make(InventoryServerClient::class);
+            $statistics = $inventoryServerClient->get('api/v1/partners/'.$partner->id.'/statistics');
+            $total_products = $statistics['statistics']['total_products'] ?? 0;
+            return $total_products > 0 ? 0 : 1;
+        } else {
+            return !$partner->posServices()->count() ? 1 : 0;
         }
     }
 }
