@@ -1,7 +1,6 @@
 <?php namespace Sheba\TopUp\Gateway;
 
 use App\Models\TopUpOrder;
-use BadMethodCallException;
 use InvalidArgumentException;
 use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\TopUp\Exception\GatewayTimeout;
@@ -10,6 +9,8 @@ use Sheba\TopUp\Exception\TopUpStillNotResolvedException;
 use Sheba\TopUp\Exception\UnknownIpnStatusException;
 use Sheba\TopUp\Gateway\FailedReason\PayStationFailedReason;
 use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
+use Sheba\TopUp\Vendor\Response\Ipn\PayStation\PayStationEnquiryFailResponse;
+use Sheba\TopUp\Vendor\Response\Ipn\PayStation\PayStationEnquirySuccessResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\PayStation\PayStationFailResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\PayStation\PayStationSuccessResponse;
 use Sheba\TopUp\Vendor\Response\PayStationResponse;
@@ -75,9 +76,9 @@ class PayStation implements Gateway, HasIpn
         $api_response = $this->call($this->makeUrlForEnquiry($topup_order));
         $status = $api_response->Status;
         if ($status == 'Success' ) {
-            $ipn_response = app(PayStationSuccessResponse::class);
+            $ipn_response = app(PayStationEnquirySuccessResponse::class);
         } else if ($status == 'Failed') {
-            $ipn_response = app(PayStationFailResponse::class);
+            $ipn_response = app(PayStationEnquiryFailResponse::class);
         } else if ($status == 'Processing') {
             throw new TopUpStillNotResolvedException($api_response);
         } else {
