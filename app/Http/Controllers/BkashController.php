@@ -18,11 +18,9 @@ class BkashController extends Controller
             /** @var Payment $payment */
             $payment = Payment::where('gateway_transaction_id', $request->paymentID)->valid()->first();
             if (!$payment) {
-                app('sentry')->captureException(new Exception("Bkash 404"));
                 return api_response($request, null, 404, ['message' => 'Valid Payment not found.']);
             }
             if (!$payment->isValid() || $payment->isComplete()) {
-                app('sentry')->captureException(new Exception("Bkash 402"));
                 return api_response($request, null, 402, ['message' => "Invalid or completed payment"]);
             }
             $payment = $payment_manager->setPayment($payment)->setMethodName(PaymentStrategy::BKASH)->complete();
@@ -33,7 +31,6 @@ class BkashController extends Controller
             } elseif ($payment->isFailed()) {
                 return api_response($request, null, 400, ['message' => 'Your payment has been failed due to ' . json_decode($payment->transaction_details)->errorMessage, 'payment' => array('redirect_url' => $redirect_url)]);
             } elseif ($payment->isPassed()) {
-                app('sentry')->captureException(new Exception("Bkash Passed"));
                 return api_response($request, 1, 400, ['message' => 'Your payment has been received but there was a system error. It will take some time to update your transaction. Call 16516 for support.', 'payment' => array('redirect_url' => $redirect_url)]);
             }
         } catch (ValidationException $e) {
