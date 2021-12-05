@@ -6,7 +6,7 @@ class AccountingStatics
 {
     public static function getFaqUrl(): string
     {
-        return config('sheba.partners_url') . "hishab-khata";
+        return config('sheba.partners_base_url') . "/" . "hishab-khata";
     }
 
     public static function getAccountingTrainingVideoKey(): string
