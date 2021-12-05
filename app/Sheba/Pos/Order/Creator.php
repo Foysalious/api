@@ -414,9 +414,12 @@ class Creator
      */
     private function storeJournal(PosOrder $order)
     {
-        $this->additionalAccountingData($order);
         /** @var AccountingRepository $accounting_repo */
         $accounting_repo = app()->make(AccountingRepository::class);
+        if(!$accounting_repo->isMigratedToAccounting($this->partner->id))
+            return;
+
+        $this->additionalAccountingData($order);
         $this->request->merge([
             "inventory_products" => $accounting_repo->getInventoryProducts($order->items, $this->data['services'], $this->allServicesStockDecreasingArray),
         ]);
