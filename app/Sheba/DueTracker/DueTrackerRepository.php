@@ -9,11 +9,16 @@ use App\Models\Profile;
 use App\Repositories\FileRepository;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
 use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
+use Sheba\AccountingEntry\Exceptions\MigratedToAccountingException;
+use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\Sms\BusinessType;
 use Sheba\Sms\FeatureType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Sheba\AccountingEntry\Accounts\Accounts;
+use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Expense\SmsPurchase;
+use Sheba\AccountingEntry\Repository\JournalCreateRepository;
 use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
 use Sheba\ExpenseTracker\AutomaticIncomes;
@@ -115,27 +120,44 @@ class DueTrackerRepository extends BaseRepository
         return $list;
     }
 
+    private function attachCustomerProfile(Collection $list, $customerProfile)
+    {
+        return $list->map(function ($item) use ($customerProfile) {
+            $profile = $customerProfile->where('customer.profile.id', $item['profile_id']);
+             $cus = $profile->map(
+                function($items) use ($item) {
+                    $item['customer_name'] = $items->nick_name ?? $items->customer->profile->name;
+                    $item['customer_mobile'] =  $items->customer->profile->mobile;
+                    $item['avatar'] = $items->customer->profile->pro_pic;
+                    $item['customer_id'] = $items->customer_id;
+                    $item['is_supplier'] = $items->is_supplier;
+                    return $item;
+                }
+            );
+            return call_user_func_array('array_merge', $cus->toArray());
+        });
+    }
+
     /**
      * @param Partner $partner
-     * @param Request $request
-     * @param bool    $paginate
+     * @param $customerId
+     * @param $request
      * @return array
      * @throws ExpenseTrackingServerError
      * @throws InvalidPartnerPosCustomer
      */
-    public function getDueListByProfile(Partner $partner, Request $request)
+    public function getDueListByProfile(Partner $partner, $customerId, $request = null): array
     {
-        $partner_pos_customer = PartnerPosCustomer::byPartner($partner->id)->where('customer_id', $request->customer_id)->with(['customer'])->first();
-        $customer             = PosCustomer::find($request->customer_id);
-        if (!empty($partner_pos_customer)) {
-            $customer = $partner_pos_customer->customer;
+        $partner_pos_customer = PartnerPosCustomer::byPartner($partner->id)->where('customer_id', $customerId)->with(['customer'])->first();
+        $customer = $partner_pos_customer->customer ?? PosCustomer ::find($customerId);
+        if (empty($customer)) {
+            throw new InvalidPartnerPosCustomer();
         }
-        if (empty($customer)) throw new InvalidPartnerPosCustomer();
         $url    = "accounts/$this->accountId/entries/due-list/$customer->profile_id?";
-        $url    = $this->updateRequestParam($request, $url);
+        $url    = $request ? $this->updateRequestParam($request, $url) : $url;
         $result = $this->client->get($url);
         $due_list = collect($result['data']['list']);
-        if(isset($request['offset']) && isset($request['limit'])) {
+        if ($request && isset($request['offset'], $request['limit'])) {
             list($offset, $limit) = calculatePagination($request);
             $due_list               = $due_list->slice($offset)->take($limit)->values();
         }
@@ -170,8 +192,8 @@ class DueTrackerRepository extends BaseRepository
                 'name'              => !empty($partner_pos_customer) && $partner_pos_customer->nick_name ? $partner_pos_customer->nick_name : $customer->profile->name,
                 'mobile'            => $customer->profile->mobile,
                 'avatar'            => $customer->profile->pro_pic,
-                'due_date_reminder' => !empty($partner_pos_customer) ? $partner_pos_customer->due_date_reminder : null,
-                'is_supplier' => !empty($partner_pos_customer) ? $partner_pos_customer->is_supplier : 0
+                'due_date_reminder' => $partner_pos_customer -> due_date_reminder ?? null,
+                'is_supplier' => $partner_pos_customer -> is_supplier ?? 0
             ],
             'partner'    => $this->getPartnerInfo($partner),
             'other_info' => [
@@ -204,11 +226,14 @@ class DueTrackerRepository extends BaseRepository
     /**
      * @param Partner $partner
      * @param Request $request
-     * @return array
-     * @throws ExpenseTrackingServerError
+     * @return array|bool
+     * @throws ExpenseTrackingServerError|MigratedToAccountingException
      */
     public function store(Partner $partner, Request $request)
     {
+        if ($this->isMigratedToAccounting()) {
+            return true;
+        }
         $partner_pos_customer = PartnerPosCustomer::byPartner($partner->id)->where('customer_id', $request->customer_id)->with(['customer'])->first();
         if (empty($partner_pos_customer))
             $partner_pos_customer = PartnerPosCustomer::create(['partner_id' => $partner->id, 'customer_id' => $request->customer_id]);
@@ -225,11 +250,13 @@ class DueTrackerRepository extends BaseRepository
      * @param Partner $partner
      * @param Request $request
      * @return mixed
-     * @throws ExpenseTrackingServerError
-     * @throws InvalidPartnerPosCustomer
+     * @throws ExpenseTrackingServerError|MigratedToAccountingException
      */
     public function update(Partner $partner, Request $request)
     {
+        if ($this->isMigratedToAccounting()) {
+            return true;
+        }
         $partner_pos_customer = PartnerPosCustomer::byPartner($partner->id)->where('customer_id', $request->customer_id)->with(['customer'])->first();
         if (empty($partner_pos_customer))
             $partner_pos_customer = PartnerPosCustomer::create(['partner_id' => $partner->id, 'customer_id' => $request->customer_id]);
@@ -257,6 +284,9 @@ class DueTrackerRepository extends BaseRepository
 
     public function createPosOrderPayment($amount_cleared, $pos_order_id, $payment_method)
     {
+        if ($this->isMigratedToAccounting()) {
+            return true;
+        }
         /** @var PosOrder $order */
         $order = PosOrder::find($pos_order_id);
         if(isset($order)) {
@@ -265,13 +295,18 @@ class DueTrackerRepository extends BaseRepository
                 $payment_data['pos_order_id'] = $pos_order_id;
                 $payment_data['amount']       = $amount_cleared;
                 $payment_data['method']       = $payment_method;
-                $this->paymentCreator->credit($payment_data);
+                /** @var PaymentCreator $paymentCreator */
+                $paymentCreator = app(PaymentCreator::class);
+                $paymentCreator->credit($payment_data);
                 $order->calculate();
             }
         }
     }
 
     public function removePosOrderPayment($pos_order_id, $amount){
+        if ($this->isMigratedToAccounting()) {
+            return true;
+        }
         $payment = PosOrderPayment::where('pos_order_id', $pos_order_id)
             ->where('amount', $amount)
             ->where('transaction_type', 'Credit')
@@ -361,12 +396,16 @@ class DueTrackerRepository extends BaseRepository
         $response['previous'] = [];
         $response['next']     = [];
         foreach ($list['list'] as $item) {
-            $partner_pos_customer = PartnerPosCustomer::byPartnerAndCustomer($partner->id, $item['customer_id'])->first();
+            $partner_pos_customer = PartnerPosCustomer::with([
+                 'customer' => function($q) {
+                     $q->select('id', 'profile_id');
+                 }])->byPartnerAndCustomer($partner->id, $item['customer_id'])->first();
+
             $due_date_reminder    = $partner_pos_customer['due_date_reminder'];
             if ($partner_pos_customer && $due_date_reminder) {
                 $temp['customer_name']     = $item['customer_name'];
                 $temp['customer_id']       = $item['customer_id'];
-                $temp['profile_id']        = $item['profile_id'];
+                $temp['profile_id']        = $partner_pos_customer->customer->profile_id;
                 $temp['phone']             = $partner_pos_customer->details()['phone'];
                 $temp['balance']           = $item['balance'];
                 $temp['due_date_reminder'] = $due_date_reminder;
@@ -456,10 +495,11 @@ class DueTrackerRepository extends BaseRepository
         if (empty($partner_pos_customer)) throw new InvalidPartnerPosCustomer();
         /** @var PosCustomer $customer */
         $customer = $partner_pos_customer->customer;
+        $type = $request->type == 'receivable' ? 'due' : 'deposit';
         /** @var Partner $partner */
         $partner=$request->partner;
         $data     = [
-            'type'          => $request->type,
+            'type'          => $type,
             'partner_name'  => $partner->name,
             'customer_name' => $partner_pos_customer->nick_name ? : $customer->profile->name,
             'mobile'        => $customer->profile->mobile,
@@ -477,9 +517,8 @@ class DueTrackerRepository extends BaseRepository
         //freeze money amount check
         WalletTransactionHandler::isDebitTransactionAllowed($request->partner, $sms_cost, 'এস-এম-এস পাঠানোর');
         $sms->setBusinessType(BusinessType::SMANAGER)->setFeatureType(FeatureType::DUE_TRACKER);
-        $sms->shoot();
-
-        (new WalletTransactionHandler())
+        if(config('sms.is_on')) $sms->shoot();
+        $transaction = (new WalletTransactionHandler())
             ->setModel($request->partner)
             ->setAmount($sms_cost)
             ->setType(Types::debit())
@@ -487,7 +526,19 @@ class DueTrackerRepository extends BaseRepository
             ->setTransactionDetails([])
             ->setSource(TransactionSources::SMS)
             ->store();
+        $this->storeJournal($request->partner, $transaction);
         return true;
+    }
+
+    private function storeJournal($partner,  $transaction) {
+        (new JournalCreateRepository())->setTypeId($partner->id)
+            ->setSource($transaction)
+            ->setAmount($transaction->amount)
+            ->setDebitAccountKey(SmsPurchase::SMS_PURCHASE_FROM_SHEBA)
+            ->setCreditAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
+            ->setDetails("Due tracker sms sent charge")
+            ->setReference("")
+            ->store();
     }
 
     public function getSms($data)

@@ -31,6 +31,7 @@ abstract class TopUpCommission
     /** @var TopUpVendorCommission */
     protected $vendorCommission;
     protected $amount;
+    protected $transaction;
     protected $subscriptionWiseTopUpCommission;
 
     /**
@@ -41,7 +42,6 @@ abstract class TopUpCommission
     {
         $this->topUpOrder = $top_up_order;
         $this->amount = $this->topUpOrder->amount;
-
         $this->setAgent($top_up_order->agent)->setTopUpVendor($top_up_order->vendor)->setVendorCommission();
 
         unset($top_up_order->agent);
@@ -114,7 +114,8 @@ abstract class TopUpCommission
             ->setLog($log_message)
             ->setTopUpOrder($this->topUpOrder)
             ->setIsRobiTopUp($this->topUpOrder->isRobiWalletTopUp());
-        $this->agent->topUpTransaction($transaction);
+
+        $this->transaction =  $this->agent->topUpTransaction($transaction);
     }
 
     /**
@@ -180,27 +181,28 @@ abstract class TopUpCommission
             logError($exception);
             $commission = $this->getDefaultCommission($amount);
         }
-        $otf_commission = $this->topUpOrder->otf_agent_commission ?? 0;
+
+        $otf_commission          = $this->topUpOrder->otf_agent_commission ?? 0;
         $amount_after_commission = round($amount - $commission - $otf_commission, 2);
-        $log = "Your recharge TK $amount to {$this->topUpOrder->payee_mobile} has failed, TK $amount_after_commission is refunded in your account.";
-        $this->refundUser($amount_after_commission, $log,$this->topUpOrder->isRobiWalletTopUp());
+        $log                     = "Your recharge TK $amount to {$this->topUpOrder->payee_mobile} has failed, TK $amount_after_commission is refunded in your account.";
+        $this->transaction       = $this->refundUser($amount_after_commission, $log,$this->topUpOrder->isRobiWalletTopUp());
     }
 
     private function refundUser($amount, $log, $isRobiTopUp=false)
     {
-        if ($amount == 0) return;
+        if ($amount == 0) return 0;
 
         /** @var HasWalletTransaction $model */
         $model = $this->agent;
 
         if (!$isRobiTopUp)
-            (new WalletTransactionHandler())
+            return (new WalletTransactionHandler())
                 ->setModel($model)
                 ->setSource(TransactionSources::TOP_UP)
                 ->setType(Types::credit())
                 ->setAmount($amount)
                 ->setLog($log)
-                ->dispatch();
+                ->store();
         else {
             (new RobiTopupWalletTransactionHandler())
                 ->setModel($model)
@@ -210,6 +212,11 @@ abstract class TopUpCommission
                 ->store();
         }
 
+    }
+
+    public function getTransaction()
+    {
+        return $this->transaction;
     }
 
     /**
