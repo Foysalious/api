@@ -20,6 +20,8 @@ abstract class IpnResponse
 
     public function setResponse($response)
     {
+        if (is_object($response)) $response = json_decode(json_encode($response), true);
+
         $this->response = $response;
     }
 
