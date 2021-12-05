@@ -63,7 +63,7 @@ return [
         ]
     ],
     'pay_station' => [
-        'recharge_url' => env('PAY_STATION_RECHARGE_URL'),
+        'base_url' => env('PAY_STATION_BASE_URL'),
         'user_name' => env('PAY_STATION_USER_NAME'),
         'password' => env('PAY_STATION_PASSWORD'),
     ]

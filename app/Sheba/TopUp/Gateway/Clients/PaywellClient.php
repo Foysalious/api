@@ -4,13 +4,10 @@ use App\Models\TopUpOrder;
 use Exception;
 use InvalidArgumentException;
 use Sheba\TopUp\Exception\GatewayTimeout;
-use Sheba\TopUp\Exception\PaywellTopUpStillNotResolved;
-use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
-use Sheba\TopUp\Vendor\Response\Ipn\Paywell\PaywellFailResponse;
-use Sheba\TopUp\Vendor\Response\Ipn\Paywell\PaywellSuccessResponse;
 use Sheba\TopUp\Vendor\Response\PaywellResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 use Sheba\TPProxy\TPProxyClient;
+use Sheba\TPProxy\TPProxyServerError;
 use Sheba\TPProxy\TPProxyServerTimeout;
 use Sheba\TPProxy\TPRequest;
 
@@ -26,18 +23,15 @@ class PaywellClient
     private $encryptionKey;
     private $singleTopupUrl;
     private $topupEnquiryUrl;
-    /** @var TPRequest $tpRequest */
-    private $tpRequest;
 
     /**
      * PaywellClient constructor.
+     *
      * @param TPProxyClient $client
-     * @param TPRequest $request
      */
-    public function __construct(TPProxyClient $client, TPRequest $request)
+    public function __construct(TPProxyClient $client)
     {
         $this->tpClient = $client;
-        $this->tpRequest = $request;
 
         $this->username = config('topup.paywell.username');
         $this->password = config('topup.paywell.password');
@@ -121,7 +115,7 @@ class PaywellClient
     /**
      * @param TopUpOrder $topup_order
      * @return mixed
-     * @throws \Sheba\TPProxy\TPProxyServerError
+     * @throws TPProxyServerError
      * @throws Exception
      */
     public function enquiry(TopUpOrder $topup_order)
@@ -147,7 +141,7 @@ class PaywellClient
      * @return string[]
      * @throws Exception
      */
-    private function getHeaders($request_data)
+    private function getHeaders($request_data): array
     {
         $security_token = $this->getToken();
         $hashed_data = hash_hmac('sha256', json_encode($request_data), $this->encryptionKey);
@@ -159,7 +153,7 @@ class PaywellClient
         ];
     }
 
-    private function getRefId(TopUpOrder $topup_order)
+    private function getRefId(TopUpOrder $topup_order): string
     {
         return str_pad($topup_order->getGatewayRefId(), 15, '0', STR_PAD_LEFT);
     }

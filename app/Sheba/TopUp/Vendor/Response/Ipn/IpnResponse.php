@@ -23,17 +23,17 @@ abstract class IpnResponse
         $this->response = $response;
     }
 
-    public function getTransactionDetails()
+    public function getTransactionDetails(): array
     {
         return $this->response;
     }
 
-    public function getResponse()
+    public function getResponse(): array
     {
         return $this->response;
     }
 
-    public function setTopUpOrder(TopUpOrder $order)
+    public function setTopUpOrder(TopUpOrder $order): IpnResponse
     {
         $this->topUpOrder = $order;
         return $this;
@@ -52,7 +52,7 @@ abstract class IpnResponse
     /**
      * @return string
      */
-    public function getTransactionDetailsString()
+    public function getTransactionDetailsString(): string
     {
         return json_encode($this->getTransactionDetails());
     }

@@ -1,15 +1,13 @@
-<?php
+<?php namespace Sheba\TopUp\Exception;
 
-
-namespace App\Sheba\TopUp\Exception;
-
+use Exception;
 use Throwable;
 
-class BdRechargeTopUpStillProcessing extends \Exception
+class TopUpStillNotResolvedException extends Exception
 {
     private $response;
 
-    public function __construct($response, $message = "Still processing", $code = 404, Throwable $previous = null)
+    public function __construct($response, $message = "Still not resolved", $code = 404, Throwable $previous = null)
     {
         $this->response = $response;
         parent::__construct($message, $code, $previous);

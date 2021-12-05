@@ -1,7 +1,7 @@
 <?php namespace Sheba\TopUp\Gateway;
 
 use App\Models\TopUpOrder;
-use App\Sheba\TopUp\Exception\BdRechargeTopUpStillProcessing;
+use Sheba\TopUp\Exception\TopUpStillNotResolvedException;
 use Sheba\TopUp\Exception\UnknownIpnStatusException;
 use Sheba\TopUp\Vendor\Response\Ipn\BdRecharge\BdRechargeFailResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\BdRecharge\BdRechargeSuccessResponse;
@@ -37,22 +37,22 @@ class BdRecharge implements Gateway, HasIpn
         return $response;
     }
 
-    public function getInitialStatus()
+    public function getInitialStatus(): string
     {
         return self::getInitialStatusStatically();
     }
 
-    public static function getInitialStatusStatically()
+    public static function getInitialStatusStatically(): string
     {
         return Statuses::ATTEMPTED;
     }
 
-    public function getShebaCommission()
+    public function getShebaCommission(): float
     {
         return self::SHEBA_COMMISSION;
     }
 
-    public function getName()
+    public function getName(): string
     {
         return Names::BD_RECHARGE;
     }
@@ -60,7 +60,7 @@ class BdRecharge implements Gateway, HasIpn
     /**
      * @param TopUpOrder $topup_order
      * @return IpnResponse
-     * @throws TPProxyServerError | BdRechargeTopUpStillProcessing | GatewayTimeout
+     * @throws TPProxyServerError | TopUpStillNotResolvedException | GatewayTimeout
      */
     public function enquire(TopUpOrder $topup_order): IpnResponse
     {
@@ -74,7 +74,7 @@ class BdRecharge implements Gateway, HasIpn
         } else if ($status == 'failed' || $status == 400) {
             $ipn_response = app(BdRechargeFailResponse::class);
         } else if ($status == 'processing') {
-            throw new BdRechargeTopUpStillProcessing($response);
+            throw new TopUpStillNotResolvedException($response);
         }
         $ipn_response->setResponse($data);
         return $ipn_response;
