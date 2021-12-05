@@ -5,7 +5,7 @@ use App\Models\HyperLocal;
 use App\Sheba\Business\BusinessEmailQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Mail;
+use Sheba\Mail\BusinessMail;
 
 class SendEmailForFleetToB2bTeam extends BusinessEmailQueue
 {
@@ -42,9 +42,7 @@ class SendEmailForFleetToB2bTeam extends BusinessEmailQueue
             $address = $location->name;
             $subject = $company_name . " has shown interest in Fleet management.";
 
-            Mail::send('emails.fleet-mail', [
-                'company_name' => $company_name, 'contact_person_name' => $contact_person_name, 'contact_person_email' => $contact_person_email, 'contact_person_mobile' => $contact_person_mobile, 'address' => $address
-            ], function ($m) use ($subject) {
+            BusinessMail::send('emails.fleet-mail', ['company_name' => $company_name, 'contact_person_name' => $contact_person_name, 'contact_person_email' => $contact_person_email, 'contact_person_mobile' => $contact_person_mobile, 'address' => $address], function ($m) use ($subject) {
                 $m->to($this->toMail)->subject($subject);
             });
         }

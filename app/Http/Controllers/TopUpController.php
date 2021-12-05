@@ -6,6 +6,7 @@ use App\Models\Partner;
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
+use Sheba\TopUp\Exception\TopUpStillNotResolvedException;
 use Sheba\TopUp\Gateway\GatewayFactory;
 use Sheba\TopUp\Gateway\Names;
 use Carbon\Carbon;
@@ -15,7 +16,6 @@ use Illuminate\Http\Request;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\TopUp\Creator;
-use Sheba\TopUp\Exception\PaywellTopUpStillNotResolved;
 use Sheba\TopUp\Jobs\TopUpExcelJob;
 use Sheba\TopUp\Jobs\TopUpJob;
 use Sheba\TopUp\TopUpAgent;
@@ -316,7 +316,7 @@ class TopUpController extends Controller
 
         try {
             $actual_response = $this->lifecycleManager->setTopUpOrder($top_up_order)->reload()->getResponse();
-        } catch (PaywellTopUpStillNotResolved $e) {
+        } catch (TopUpStillNotResolvedException $e) {
             $actual_response = $e->getResponse();
         }
 

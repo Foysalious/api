@@ -6,6 +6,7 @@ use InvalidArgumentException;
 use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\TopUp\Exception\GatewayTimeout;
 use Sheba\TopUp\Exception\PayStationNotWorkingException;
+use Sheba\TopUp\Exception\TopUpStillNotResolvedException;
 use Sheba\TopUp\Exception\UnknownIpnStatusException;
 use Sheba\TopUp\Gateway\FailedReason\PayStationFailedReason;
 use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
@@ -27,7 +28,7 @@ class PayStation implements Gateway, HasIpn
     /** @var TPProxyClient */
     private $tpClient;
 
-    private $rechargeUrl;
+    private $baseUrl;
     private $userName;
     private $password;
 
@@ -35,7 +36,7 @@ class PayStation implements Gateway, HasIpn
     {
         $this->tpClient = $client;
 
-        $this->rechargeUrl = config('topup.pay_station.recharge_url');
+        $this->baseUrl = config('topup.pay_station.base_url');
         $this->userName = config('topup.pay_station.user_name');
         $this->password = config('topup.pay_station.password');
     }
@@ -53,27 +54,45 @@ class PayStation implements Gateway, HasIpn
         return $response;
     }
 
-    public function getShebaCommission()
+    public function getShebaCommission(): float
     {
         return self::SHEBA_COMMISSION;
     }
 
-    public function getName()
+    public function getName(): string
     {
         return Names::PAY_STATION;
     }
 
+    /**
+     * @throws GatewayTimeout
+     * @throws PayStationNotWorkingException
+     * @throws TopUpStillNotResolvedException
+     * @throws UnknownIpnStatusException
+     */
     public function enquire(TopUpOrder $topup_order): IpnResponse
     {
-        throw new BadMethodCallException("Enquire not supported by pay-station");
+        $api_response = $this->call($this->makeUrlForEnquiry($topup_order));
+        $status = $api_response->Status;
+        if ($status == 'Success' ) {
+            $ipn_response = app(PayStationSuccessResponse::class);
+        } else if ($status == 'Failed') {
+            $ipn_response = app(PayStationFailResponse::class);
+        } else if ($status == 'Processing') {
+            throw new TopUpStillNotResolvedException($api_response);
+        } else {
+            throw new UnknownIpnStatusException();
+        }
+        $ipn_response->setResponse($api_response);
+        return $ipn_response;
     }
 
-    public function getInitialStatus()
+    public function getInitialStatus(): string
     {
         return self::getInitialStatusStatically();
     }
 
-    public static function getInitialStatusStatically()
+    public static function getInitialStatusStatically(): string
     {
         return Statuses::ATTEMPTED;
     }
@@ -83,9 +102,9 @@ class PayStation implements Gateway, HasIpn
         return new PayStationFailedReason();
     }
 
-    private function makeUrl(TopUpOrder $topup_order)
+    private function makeUrl(TopUpOrder $topup_order): string
     {
-        return $this->rechargeUrl
+        return $this->baseUrl . "/external-recharge"
             . "?ExternalRecharge=Recharge"
             . "&phone=" . $topup_order->payee_mobile
             . "&operator_type=" . $this->getOperatorType($topup_order->vendor_id)
@@ -96,7 +115,15 @@ class PayStation implements Gateway, HasIpn
             . "&ref=" . $topup_order->getGatewayRefId();
     }
 
-    private function getOperatorType($vendor_id)
+    private function makeUrlForEnquiry(TopUpOrder $topup_order): string
+    {
+        return $this->baseUrl . "/number-check"
+            . "?ref=" . $topup_order->getGatewayRefId()
+            . "&user_name=" . $this->userName
+            . "&password=" . $this->password;
+    }
+
+    private function getOperatorType($vendor_id): string
     {
         if ($vendor_id == 2) return 'RR';
         if ($vendor_id == 3) return 'RA';
@@ -108,7 +135,7 @@ class PayStation implements Gateway, HasIpn
         throw new InvalidArgumentException('Invalid operator for pay station topup.');
     }
 
-    private function getConnectionType($vendor_id, $connection_type)
+    private function getConnectionType($vendor_id, $connection_type): string
     {
         if ($vendor_id == 7) return "Skitto";
         if ($connection_type == "prepaid") return "Pre-paid";

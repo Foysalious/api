@@ -37,7 +37,9 @@ class TopUpLifecycleManager extends TopUpManager
         if ($this->topUpOrder->isSuccess()) return;
 
         $this->doTransaction(function () use ($success_response) {
-            $this->statusChanger->successful($success_response->getTransactionDetailsString());
+            $details = $success_response->getTransactionDetailsString();
+            $id = $success_response->getUpdatedTransactionId();
+            $this->statusChanger->successful($details, $id);
         });
     }
 

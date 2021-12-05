@@ -3,7 +3,7 @@
 use App\Models\TopUpOrder;
 use Exception;
 use Sheba\TopUp\Exception\GatewayTimeout;
-use Sheba\TopUp\Exception\PaywellTopUpStillNotResolved;
+use Sheba\TopUp\Exception\TopUpStillNotResolvedException;
 use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
@@ -23,7 +23,7 @@ interface Gateway
 
     /**
      * @param TopUpOrder $topup_order
-     * @throws PaywellTopUpStillNotResolved
+     * @throws TopUpStillNotResolvedException
      * @return IpnResponse
      */
     public function enquire(TopUpOrder $topup_order): IpnResponse;

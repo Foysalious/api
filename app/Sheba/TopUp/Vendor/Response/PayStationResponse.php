@@ -22,7 +22,7 @@ class PayStationResponse extends TopUpResponse
      */
     public function getTransactionId()
     {
-        return $this->response->Reference;
+        return $this->response->Transiction_id;
     }
 
     /**
@@ -36,7 +36,7 @@ class PayStationResponse extends TopUpResponse
     /**
      * @inheritDoc
      */
-    public function getErrorMessage()
+    public function getErrorMessage(): string
     {
         return $this->response->Message;
     }
@@ -44,12 +44,12 @@ class PayStationResponse extends TopUpResponse
     /**
      * @inheritDoc
      */
-    public function resolveTopUpSuccessStatus()
+    public function resolveTopUpSuccessStatus(): string
     {
         return PayStation::getInitialStatusStatically();
     }
 
-    public function isPending()
+    public function isPending(): bool
     {
         return $this->response && $this->response->Status == "REQUEST ACCEPTED";
     }
