@@ -1,13 +1,13 @@
 <?php namespace App\Jobs\Business;
 
-use App\Jobs\Job;
+use App\Sheba\Business\BusinessEmailQueue;
 use Exception;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Mail;
+use Sheba\Mail\BusinessMail;
 
-class SendTenderBillInvoiceEmailToBusiness extends Job implements ShouldQueue
+class SendTenderBillInvoiceEmailToBusiness extends BusinessEmailQueue
 {
     use InteractsWithQueue, SerializesModels;
 
@@ -26,6 +26,7 @@ class SendTenderBillInvoiceEmailToBusiness extends Job implements ShouldQueue
         $this->email = $email;
         $this->file = $file;
         $this->data = $data;
+        parent::__construct();
     }
 
     /**
@@ -38,7 +39,7 @@ class SendTenderBillInvoiceEmailToBusiness extends Job implements ShouldQueue
     {
         if ($this->attempts() <= 1) {
             $subject = $this->data['subject'];
-            Mail::send('emails.tender_bill_invoice', [
+            BusinessMail::send('emails.tender_bill_invoice', [
                 'super_admin_name' => $this->data['super_admin_name'],
                 'order_id' => $this->data['order_id'],
                 'type' => $this->data['type'],
