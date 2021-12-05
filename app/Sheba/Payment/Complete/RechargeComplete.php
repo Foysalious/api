@@ -28,6 +28,7 @@ class RechargeComplete extends PaymentComplete
             if ($this->payment->isComplete()) return $this->payment;
             $this->paymentRepository->setPayment($this->payment);
             DB::transaction(function () {
+                $this->storeTransaction();
                 if ($this->transaction) {
                     $this->completePayment();
                     $this->storeCommissionTransaction();
