@@ -22,9 +22,11 @@ class TestMailsController extends Controller
 
     public function testMail(Request $request)
     {
-        config()->set('services.mailgun.domain', config('services.mailgun.business_domain'));
-        #$this->dispatch(new SendTestMail());
-        #return api_response($request, null, 200);
+        // config()->set('services.mailgun.domain', config('services.mailgun.business_domain'));
+
+        # $this->dispatch(new SendTestMail());
+        # return api_response($request, null, 200);
+
         $email = $request->email;
         $subject = "This Is Test Mail";
         if ($request->has('design') && $request->design == 1) {

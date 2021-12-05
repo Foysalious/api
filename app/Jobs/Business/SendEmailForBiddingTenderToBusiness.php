@@ -4,7 +4,7 @@ use App\Models\Bid;
 use App\Sheba\Business\BusinessEmailQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Mail;
+use Sheba\Mail\BusinessMail;
 
 class SendEmailForBiddingTenderToBusiness extends BusinessEmailQueue
 {
@@ -30,9 +30,7 @@ class SendEmailForBiddingTenderToBusiness extends BusinessEmailQueue
             $bid_detail = config('sheba.business_url') . "/dashboard/rfq/list/" . $tender_id . "/biddings/" . $this->bid->id;
             $subject = "$vendor_name participated in your tender $tender_id";
 
-            Mail::send('emails.tender-bidding', [
-                'business_contract_person' => $business_contract_person, 'vendor_name' => $vendor_name, 'bid_detail' => $bid_detail, 'tender_id' => $tender_id
-            ], function ($m) use ($subject, $business_email) {
+            BusinessMail::send('emails.tender-bidding', ['business_contract_person' => $business_contract_person, 'vendor_name' => $vendor_name, 'bid_detail' => $bid_detail, 'tender_id' => $tender_id], function ($m) use ($subject, $business_email) {
                 $m->from('b2b@sheba.xyz', 'sBusiness.xyz');
                 $m->to($business_email)->subject($subject);
             });
