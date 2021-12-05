@@ -151,89 +151,94 @@ class TopUpOrder extends BaseModel implements PayableType
         elseif ($this->isAgentAffiliate()) return $this->agent->profile->mobile;
     }
 
-    public function isAgentPartner()
+    public function isAgentPartner(): bool
     {
         return $this->agent_type == Partner::class;
     }
 
-    public function isAgentAffiliate()
+    public function isAgentAffiliate(): bool
     {
         return $this->agent_type == Affiliate::class;
     }
 
-    public function isFailed()
+    public function isFailed(): bool
     {
         return $this->status == Statuses::FAILED;
     }
 
-    public function isFailedDueToGatewayTimeout()
+    public function isFailedDueToGatewayTimeout(): bool
     {
         return $this->isFailed() && $this->failed_reason == FailedReason::GATEWAY_TIMEOUT;
     }
 
-    public function isSuccess()
+    public function isSuccess(): bool
     {
         return $this->status == Statuses::SUCCESSFUL;
     }
 
-    public function isPending()
+    public function isPending(): bool
     {
         return $this->status == Statuses::PENDING;
     }
 
-    public function isAttempted()
+    public function isAttempted(): bool
     {
         return $this->status == Statuses::ATTEMPTED;
     }
 
-    public function isProcessed()
+    public function isProcessed(): bool
     {
         return $this->isFailed() || $this->isSuccess();
     }
 
-    public function canRefresh()
+    public function canRefresh(): bool
     {
         return $this->isPending() || $this->isAttempted();
     }
 
-    public function getStatusForAgent()
+    public function getStatusForAgent(): string
     {
         return Statuses::getForAgent($this->status);
     }
 
-    public function getOriginalMobile()
+    public function getOriginalMobile(): string
     {
         return getOriginalMobileNumber($this->payee_mobile);
     }
 
-    public function isRobiWalletTopUp()
+    public function isRobiWalletTopUp(): bool
     {
         return !!$this->is_robi_topup_wallet;
     }
 
-    public function isAgentDebited()
+    public function isAgentDebited(): bool
     {
         return (boolean) $this->is_agent_debited;
     }
 
-    public function isViaPaywell()
+    public function isViaPaywell(): bool
     {
         return $this->gateway == Names::PAYWELL;
     }
 
-    public function isViaSsl()
+    public function isViaSsl(): bool
     {
         return $this->gateway == Names::SSL;
     }
 
-    public function isViaPretups()
+    public function isViaPretups(): bool
     {
         return in_array($this->gateway, [Names::ROBI, Names::AIRTEL, Names::BANGLALINK]);
     }
 
-    public function isViaBdRecharge()
+    public function isViaBdRecharge(): bool
     {
         return $this->gateway == Names::BD_RECHARGE;
+    }
+
+    public function isViaPayStation(): bool
+    {
+        return $this->gateway == Names::PAY_STATION;
     }
 
     public function getTransactionDetailsObject()
@@ -241,14 +246,14 @@ class TopUpOrder extends BaseModel implements PayableType
         return json_decode($this->transaction_details);
     }
 
-    public function isGatewayRefUniform()
+    private function isUsingUniformGatewayRef(): bool
     {
         return $this->id > config('topup.non_uniform_gateway_ref_last_id');
     }
 
     public function getGatewayRefId()
     {
-        if ($this->isGatewayRefUniform()) return dechex($this->id);
+        if ($this->isUsingUniformGatewayRef()) return dechex($this->id);
 
         if ($this->isViaPaywell()) return $this->id;
 
@@ -259,5 +264,10 @@ class TopUpOrder extends BaseModel implements PayableType
         if ($this->isViaBdRecharge()) return $this->id;
 
         return "";
+    }
+
+    public static function getIdFromUniformGatewayRefId($ref_id): int
+    {
+        return hexdec($ref_id);
     }
 }
