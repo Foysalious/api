@@ -161,34 +161,35 @@ class AccountingDueTrackerRepository extends BaseRepository
      * @param $customerId
      * @return array
      * @throws AccountingEntryServerError
-     * @throws InvalidPartnerPosCustomer
      */
     public function dueListBalanceByCustomer($customerId): array
     {
-        $partner_pos_customer = PartnerPosCustomer::byPartner($this->partner->id)->where(
-            'customer_id',
-            $customerId
-        )->with(['customer'])->first();
-        $customer = PosCustomer::find($customerId);
-        if (!empty($partner_pos_customer)) {
-            $customer = $partner_pos_customer->customer;
-        }
-        if (empty($customer)) {
-            throw new InvalidPartnerPosCustomer();
-        }
+        //todo: need to refactor this method
+//        $partner_pos_customer = PartnerPosCustomer::byPartner($this->partner->id)->where(
+//            'customer_id',
+//            $customerId
+//        )->with(['customer'])->first();
+//        $customer = PosCustomer::find($customerId);
+//        if (!empty($partner_pos_customer)) {
+//            $customer = $partner_pos_customer->customer;
+//        }
+//        if (empty($customer)) {
+//            throw new InvalidPartnerPosCustomer();
+//        }
         $url = "api/due-list/" . $customerId . "/balance";
         $result = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
         $total_debit = $result['other_info']['total_debit'];
         $total_credit = $result['other_info']['total_credit'];
         $result['balance']['color'] = $total_debit > $total_credit ? '#219653' : '#DC1E1E';
+
         return [
             'customer' => [
-                'id' => $customer->id,
-                'name' => !empty($partner_pos_customer) && $partner_pos_customer->nick_name ? $partner_pos_customer->nick_name : $customer->profile->name,
-                'mobile' => $customer->profile->mobile,
-                'avatar' => $customer->profile->pro_pic,
-                'due_date_reminder' => !empty($partner_pos_customer) ? $partner_pos_customer->due_date_reminder : null,
-                'is_supplier' => !empty($partner_pos_customer) ? $partner_pos_customer->is_supplier : 0
+                'id' => $result['customer']['id'],
+                'name' => $result['customer']['name'],
+                'mobile' => $result['customer']['mobile'],
+                'avatar' => $result['customer']['proPic'],
+                'due_date_reminder' => null, //todo: have to implement due_date somewhere
+                'is_supplier' => (bool) $result['customer']['isSupplier']
             ],
             'partner' => $this->getPartnerInfo($this->partner),
             'stats' => $result['stats'],
