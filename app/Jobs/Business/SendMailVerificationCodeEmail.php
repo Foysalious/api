@@ -1,15 +1,14 @@
 <?php namespace App\Jobs\Business;
 
-use App\Jobs\Job;
 use App\Models\Profile;
+use App\Sheba\Business\BusinessEmailQueue;
 use Exception;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Redis;
-use Illuminate\Support\Facades\Mail;
+use Sheba\Mail\BusinessMail;
 
-class SendMailVerificationCodeEmail extends Job implements ShouldQueue
+class SendMailVerificationCodeEmail extends BusinessEmailQueue
 {
     use InteractsWithQueue, SerializesModels;
     private $profile;
@@ -22,6 +21,7 @@ class SendMailVerificationCodeEmail extends Job implements ShouldQueue
     public function __construct($profile)
     {
         $this->profile = $profile instanceof Profile ? $profile : Profile::find($profile);
+        parent::__construct();
     }
 
     /**
@@ -37,9 +37,11 @@ class SendMailVerificationCodeEmail extends Job implements ShouldQueue
             $key_name = 'email_verification_code_' . $verification_code;
             Redis::set($key_name, json_encode(["profile_id" => $this->profile->id, 'code' => $verification_code]));
             Redis::expire($key_name, 600);
+
             $email = $this->profile->email;
             $subject = $verification_code . " is sBusiness login code";
-            Mail::send('emails.email_verification_V3', ['code' => $verification_code], function ($m) use ($email, $subject) {
+
+            BusinessMail::send('emails.email_verification_V3', ['code' => $verification_code], function ($m) use ($email, $subject) {
                 $m->from('b2b@sheba.xyz', 'sBusiness.xyz');
                 $m->to($email)->subject($subject);
             });

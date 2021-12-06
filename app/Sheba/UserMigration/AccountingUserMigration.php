@@ -2,14 +2,15 @@
 
 namespace App\Sheba\UserMigration;
 
-use Sheba\Dal\UserMigration\UserStatus;
 use Exception;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\Dal\UserMigration\UserStatus;
 
 class AccountingUserMigration extends UserMigrationRepository
 {
-    public function getBanner()
+    public function getBanner(): string
     {
-        return 'accounting-banner';
+        return Constants::$accounting_migration_url . "/accounting_migration_banner.png";
     }
 
     public function getStatusWiseResponse(): array
@@ -27,17 +28,21 @@ class AccountingUserMigration extends UserMigrationRepository
         }
         return [
             'status' => $status,
-            'data'   => $response
+            'data' => $response
         ];
     }
 
     /**
+     * @throws AccountingEntryServerError
      * @throws Exception
      */
     public function updateStatus($status)
     {
         if ($status == UserStatus::UPGRADING) {
-            //todo: run accounting migration
+            $currentStatus = $this->getStatus();
+            /** @var \Sheba\AccountingEntry\Repository\UserMigrationRepository $accUpgradeRepo */
+            $accUpgradeRepo = app(\Sheba\AccountingEntry\Repository\UserMigrationRepository::class);
+            $accUpgradeRepo->migrateInAccounting($this->userId, $currentStatus);
         }
         return $this->updateMigrationStatus($status);
     }
@@ -47,7 +52,7 @@ class AccountingUserMigration extends UserMigrationRepository
         return [
             "icon" => Constants::$accounting_migration_url . '/accounting_pending.png',
             "header" => "হিসাব খাতা আপগ্রেড করুন।",
-            "body" => '<center> হিসাবখাতা ব্যাবহার করতে নতুন সিস্টেম এ আপগ্রেড করা জরুরী। <br />  নতুন হিসাবখাতায় যা যা থাকছে <br /> <b>- লাভ ক্ষতির হিসাব</b><br /><b>- ক্যাশ হিসাব</b><br /><b>- আর অনেক</b></center>',
+            "body" => '<center> নতুন হিসাব খাতা ব্যবহার করতে নতুন সিস্টেমে আপগ্রেড করা আবশ্যক। <br />  নতুন হিসাব খাতায় থাকছে: <br /> <b>• লাভ ক্ষতির হিসাব</b><br /><b>• ক্যাশ লেনদেনের বিস্তারিত হিসাব</b><br /><b>• আরও অনেক কিছু</b></center>',
             "confirm_text" => "আপগ্রেড করুন",
             "cancel_text" => "পুরাতন হিসাব খাতায় থাকতে চাই",
             "dialog_cancelable" => false,
@@ -81,7 +86,7 @@ class AccountingUserMigration extends UserMigrationRepository
         return [
             "icon" => Constants::$accounting_migration_url . "/accounting_failed.png",
             "header" => "দুঃখিত",
-            "dialog_text" => "হহিসাবখাতা আপগ্রেড হয়নি।",
+            "dialog_text" => "হিসাবখাতা আপগ্রেড হয়নি।",
             "button_text" => "আবার চেষ্টা করুন",
             "dialog_cancelable" => false,
             "migrating_icon" => Constants::$accounting_migration_url . "/accounting_upgrading.png",
@@ -91,6 +96,19 @@ class AccountingUserMigration extends UserMigrationRepository
 
     public function versionCodeCheck($appVersion, $modulePayload)
     {
-        // TODO: Implement canAccessModule() method.
+        if ((int)$appVersion >= $modulePayload['app_version']) {
+            return [
+                "access" => true,
+                'message' => 'You are allowed to use.'
+            ];
+
+        }
+        return [
+            "access" => false,
+            "icon" => Constants::$accounting_migration_url . '/accounting_pending.png',
+            "header" => "নতুন হিসাব খাতায় আপগ্রেড করেছেন।",
+            "message" => "<center>নতুন হিসাব খাতা ব্যবহার করতে নতুন সিস্টেম <br /> প্লে-স্টোর থেকে আপগ্রেড করা আবশ্যক।<br /> নতুন হিসাব খাতায় থাকছে: <br /><b>• লাভ ক্ষতির হিসাব</b><br /><b>• ক্যাশ লেনদেনের বিস্তারিত হিসাব</b><br /><b>• আরও অনেক কিছু</b></center>"
+        ];
+
     }
 }
