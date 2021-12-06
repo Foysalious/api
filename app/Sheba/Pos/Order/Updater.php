@@ -91,18 +91,18 @@ class Updater
      */
     public function manageStock(PosOrderItem $item, $service_id, $service_quantity)
     {
-        if (!$service_id)
-            return;
+        if (!$service_id) return;
         $partner_pos_service = $this->serviceRepo->find($service_id);
         if (empty($partner_pos_service))
             return;
         $is_stock_maintainable = $this->stockManager->setPosService($partner_pos_service)->isStockMaintainable();
         if ($is_stock_maintainable) {
-            if ($item->service->is_published_for_shop  && $service_quantity > $item->service->stock)
+            if ($item->service->is_published_for_shop  && $service_quantity > $item->service->getStock())
                 throw new NotEnoughStockException("Not enough stock", 403);
             $changed_quantity = abs($service_quantity - $item->quantity);
             if ($item->quantity > $service_quantity)
-                $this->stockManager->increase($changed_quantity); elseif ($item->quantity < $service_quantity)
+                $this->stockManager->increase($changed_quantity);
+            elseif ($item->quantity < $service_quantity)
                 $this->stockManager->decrease($changed_quantity);
         }
     }

@@ -56,9 +56,23 @@ class OperationController extends Controller
 
     public function store($partner, Request $request)
     {
-        $this->validate($request, ['address' => "sometimes|required|string", 'locations' => "sometimes|required", 'working_schedule' => "sometimes|required", 'is_home_delivery_available' => "sometimes|required", 'is_on_premise_available' => "sometimes|required", 'delivery_charge' => "sometimes|required",]);
-        if (($request->has('is_home_delivery_available') && !$request->is_home_delivery_available) && ($request->has('is_on_premise_available') && !$request->is_on_premise_available)) {
-            return api_response($request, null, 400, ['message' => "You have to select at least one delivery option"]);
+        try {
+            $this->validate($request, ['address' => "sometimes|required|string", 'locations' => "sometimes|required", 'working_schedule' => "sometimes|required", 'is_home_delivery_available' => "sometimes|required", 'is_on_premise_available' => "sometimes|required", 'delivery_charge' => "sometimes|required",]);
+            if (($request->has('is_home_delivery_available') && !$request->is_home_delivery_available) && ($request->has('is_on_premise_available') && !$request->is_on_premise_available)) {
+                return api_response($request, null, 400, ['message' => "You have to select at least one delivery option"]);
+            }
+
+            $partner = $request->partner;
+            $this->setModifier($partner);
+
+//            return $this->saveInDatabase($partner, $request) ? api_response($request, $partner, 200) : api_response($request, $partner, 500);
+            return api_response($request, null, 403, ['message' => 'You do not have permission to update location.']);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
         }
 
         $partner = $request->partner;

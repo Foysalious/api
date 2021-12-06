@@ -1,6 +1,7 @@
 <?php namespace App\Http;
 
 use App\Http\Middleware\AccessTokenMiddleware;
+use App\Http\Middleware\AccountingAuthMiddleware;
 use App\Http\Middleware\AffiliateAuthMiddleware;
 use App\Http\Middleware\ApiRequestMiddleware;
 use App\Http\Middleware\Authenticate;
@@ -128,6 +129,8 @@ class Kernel extends HttpKernel
         'apiRequestLog' => ApiRequestMiddleware::class,
         'shebaServer' => ShebaNetworkMiddleware::class,
         'terminate' => TerminatingMiddleware::class,
+        'accounting.auth' => AccountingAuthMiddleware::class,
+        'userMigration.auth' => UserMigrationMiddleware::class,
         'partner.status'=> PartnerStatusAuthMiddleware::class,
         'concurrent_request' => ConcurrentRequestMiddleware::class,
         'userMigration.auth' => UserMigrationMiddleware::class,

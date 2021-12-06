@@ -54,6 +54,7 @@ class AccessTokenMiddleware
                 throw new AccessTokenNotValidException();
             }
             $this->setAuthorizationToken($access_token);
+
             $request->merge(['access_token' => $access_token, 'auth_user' => AuthUser::create()]);
             $partner = $request->auth_user->getPartner();
             if (!$this->isRouteAccessAllowed($partner)) {

@@ -1,12 +1,11 @@
 <?php namespace App\Jobs\Business;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
+use App\Sheba\Business\BusinessEmailQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Mail;
-use App\Jobs\Job;
+use Sheba\Mail\BusinessMail;
 
-class SendTestMail extends Job implements ShouldQueue
+class SendTestMail extends BusinessEmailQueue
 {
     use InteractsWithQueue, SerializesModels;
 
@@ -15,7 +14,7 @@ class SendTestMail extends Job implements ShouldQueue
         if ($this->attempts() <= 1) {
             $email = request()->email;
             $subject = "This Is Test Mail";
-            Mail::send('emails.test-mail', [], function ($m) use ($email, $subject) {
+            BusinessMail::send('emails.test-mail', [], function ($m) use ($email, $subject) {
                 $m->to($email)->subject($subject);
             });
         }
