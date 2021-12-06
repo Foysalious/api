@@ -387,6 +387,7 @@ class ShebaController extends Controller
             $emi_data     = [
                 "emi"   => $emi_calculator->getCharges($amount),
                 "banks" => (new Banks())->setAmount($amount)->get(),
+                "minimum_amount" => number_format(config('sheba.min_order_amount_for_emi')),
                 "static_info"    => [
                     "how_emi_works"        => [
                         "EMI (Equated Monthly Installment) is one of the payment methods of online purchasing, only for the customers using any of the accepted Credit Cards on Sheba.xyz.* It allows customers to pay for their ordered services  in easy equal monthly installments.*",
