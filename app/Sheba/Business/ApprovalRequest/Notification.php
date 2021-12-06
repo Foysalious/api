@@ -1,6 +1,7 @@
 <?php namespace Sheba\Business\ApprovalRequest;
 
 use App\Jobs\Business\SendLeavePushNotificationToEmployee;
+use App\Jobs\Business\SendNotificationToWebPortal;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use App\Models\BusinessMember;
 use App\Models\Profile;
@@ -26,18 +27,6 @@ class Notification
      */
     public function sendShebaNotificationToApprover(ApprovalRequest $approval_request, Profile $profile)
     {
-        /** @var BusinessMember $business_member */
-        $business_member = $approval_request->approver;
-        /** @var Member $member */
-        $member = $business_member->member;
-        $leave_applicant = $profile->name ? $profile->name : 'n/s';
-
-        $title = "$leave_applicant requested for a leave";
-        notify()->member($member)->send([
-            'title' => $title,
-            'type' => 'Info',
-            'event_type' => get_class($approval_request),
-            'event_id' => $approval_request->id
-        ]);
+        dispatch(new SendNotificationToWebPortal($approval_request, $profile));
     }
 }
