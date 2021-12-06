@@ -117,7 +117,7 @@ class Reschedule
             $response['code'] = 200;
             $response['msg'] = "Order Rescheduled Successfully!";
             $response['job_id'] = $this->job->id;
-        } else {
+        } elseif($response['code'] === 200) {
             $this->notifyPartnerAboutReschedule();
         }
 
@@ -127,6 +127,7 @@ class Reschedule
     private function notifyPartnerAboutReschedule()
     {
         $partner = $this->job->partnerOrder->partner;
+        $resource = $this->job->resource;
         if(!$partner) return;
         $sender_id = $this->job->partnerOrder->order->customer_id;
         $sender_type = 'customer';
@@ -142,6 +143,8 @@ class Reschedule
         $topic   = config('sheba.push_notification_topic_name.manager') . $this->job->partnerOrder->partner_id;
         $channel = config('sheba.push_notification_channel_name.manager');
         $sound   = config('sheba.push_notification_sound.manager');
+        $message = "আপনার ". $this->job->partnerOrder->code() . " অর্ডার টি শিডিউল পরিবর্তন হয়েছে";
+        if(!$resource) $message .= ", রিসোর্স আসাইন করুন";
         (new PushNotificationHandler())->send([
             "title"      => 'Order Reschedule',
             "message"    => "আপনার ". $this->job->partnerOrder->code() . " অর্ডার টি শিডিউল পরিবর্তন হয়েছে, রিসোর্স আসাইন করুন",
