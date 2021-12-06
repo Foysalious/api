@@ -147,7 +147,7 @@ class Reschedule
         if(!$resource) $message .= ", রিসোর্স আসাইন করুন";
         (new PushNotificationHandler())->send([
             "title"      => 'Order Reschedule',
-            "message"    => "আপনার ". $this->job->partnerOrder->code() . " অর্ডার টি শিডিউল পরিবর্তন হয়েছে, রিসোর্স আসাইন করুন",
+            "message"    => $message,
             "event_type" => 'PartnerOrder',
             "event_id"   => $this->job->partnerOrder->id,
             "link"       => null,
