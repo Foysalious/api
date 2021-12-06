@@ -2,6 +2,8 @@
 
 use App\Models\Partner;
 use App\Models\PosOrder;
+use App\Sheba\AccountingEntry\Constants\EntryTypes;
+use App\Sheba\AccountingEntry\Repository\AccountingRepository;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
@@ -36,6 +38,7 @@ class Deleter
             $expense = self::updateExpense($this->order,$this->partner);
             if ($expense) {
                 $this->updateStock();
+                $this->deletePosOrderEntry($this->partner, $this->order);
                 $this->order->delete();
             } else {
                 throw new PosExpenseCanNotBeDeleted();
@@ -67,6 +70,13 @@ class Deleter
         /** @var AutomaticEntryRepository $entry */
         $entry = app(AutomaticEntryRepository::class);
         return $entry->setPartner($partner)->setSourceId($order->id)->setSourceType(class_basename($order))->delete();
+    }
+
+    private function deletePosOrderEntry(Partner $partner, $order)
+    {
+        /** @var AccountingRepository $accountingRepo */
+        $accountingRepo = app(AccountingRepository::class);
+        return $accountingRepo->deleteEntryBySource($partner, EntryTypes::POS, $order->id);
     }
 
     /**
