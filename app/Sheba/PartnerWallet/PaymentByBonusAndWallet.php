@@ -3,6 +3,7 @@
 use App\Models\Partner;
 use App\Models\PartnerOrder;
 use Exception;
+use Illuminate\Database\Eloquent\Model;
 use Sheba\Reward\BonusCredit;
 
 class PaymentByBonusAndWallet
@@ -33,6 +34,7 @@ class PaymentByBonusAndWallet
      * @param $amount
      * @param $log
      * @param $tags
+     * @return Model|null
      * @throws Exception
      */
     public function pay($amount, $log, $tags = null)
@@ -45,7 +47,8 @@ class PaymentByBonusAndWallet
         if ($this->payFromWallet) {
             $log = str_replace("%d", $this->payFromWallet, $log);
             $partner_order = $this->spentOn instanceof PartnerOrder ? $this->spentOn : null;
-            $this->partnerTransaction->debit($this->payFromWallet, $log, $partner_order, $tags);
+            return $this->partnerTransaction->debit($this->payFromWallet, $log, $partner_order, $tags);
         }
+        return null;
     }
 }
