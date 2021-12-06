@@ -3,11 +3,12 @@
 
 use App\Models\PosOrder;
 use Exception;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Sheba\Pos\Notifier\WebstorePushNotificationHandler;
 
-class WebstoreOrderPushNotification
+class WebstoreOrderPushNotification implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
 

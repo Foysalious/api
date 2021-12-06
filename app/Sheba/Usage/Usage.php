@@ -2,6 +2,12 @@
 
 namespace Sheba\Usage;
 
+use ReflectionClass;
+use Sheba\AccountingEntry\Accounts\Accounts;
+use Sheba\AccountingEntry\Repository\JournalCreateRepository;
+use App\Models\PartnerUsageHistory;
+use App\Sheba\Usage\PartnerUsageUpgradeJob;
+use Illuminate\Database\Query\Builder;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
 use Sheba\Transactions\Types;
@@ -37,26 +43,21 @@ class Usage
 
     public function setUser($user)
     {
-        $this->user = $user;
+        $this->user = $user instanceof Builder? $user->first():$user;
         return $this;
     }
 
     public function create($modifier = null)
     {
-        if (empty($this->type))
-            return 0;
-        $data = ['type' => $this->type];
-        if (!empty($modifier))
-            $this->setModifier($modifier);
-        $history = $this->user->usage()->create($this->withCreateModificationField($data));
-        if (!empty($this->user->referredBy))
-            $this->updateUserLevel();
-        return $history;
+        dispatch((new PartnerUsageUpgradeJob( $this->user, $modifier, $this->type)));
     }
 
-    private function updateUserLevel()
+    public static function isRefEnabled(){
+        return !!config('partner.referral_enabled');
+    }
+    public function updateUserLevel()
     {
-        $usage = $this->user->usage()->selectRaw('COUNT(DISTINCT(DATE(`partner_usages_history`.`created_at`))) as usages')->first();
+        $usage = PartnerUsageHistory::query()->where('partner_id',$this->user_id)->selectRaw('COUNT(DISTINCT(DATE(`partner_usages_history`.`created_at`))) as usages')->first();
         $usage = $usage ? $usage->usages : 0;
         $this->findAndUpgradeLevel($usage);
 
@@ -68,7 +69,7 @@ class Usage
         foreach ($this->config as $index => $level) {
             $duration      += $level['duration'];
             $duration_pass = $usage >= $duration;
-            $nid_pass=$level['nid_verification']?$this->user->isNIDVerified():true;
+            $nid_pass= !$level['nid_verification'] || $this->user->isNIDVerified();
             if ($nid_pass&&$duration_pass) $this->upgradeLevel($index+1,true);
         }
         return -1;
@@ -82,8 +83,24 @@ class Usage
             $this->user->referrer_income += $amount;
             $this->user->save();
             if ($amount > 0) {
-                (new WalletTransactionHandler())->setModel($this->user->referredBy)->setSource(TransactionSources::SHEBA_WALLET)->setType(Types::credit())->setAmount($amount)->setLog("$amount BDT has been credited for partner referral from usage of name: " . $this->user->name . ', ID: ' . $this->user->id)->store();
+                $transaction = (new WalletTransactionHandler())->setModel($this->user->referredBy)->setSource(TransactionSources::SHEBA_WALLET)->setType(Types::credit())->setAmount($amount)->setLog("$amount BDT has been credited for partner referral from usage of name: " . $this->user->name . ', ID: ' . $this->user->id)->store();
+                try {
+                    $reference = (new \ReflectionClass($this->user->referredBy))->getShortName() ?? 'referral';
+                } catch (\ReflectionException $e) {
+                    $reference = 'referral';
+                }
+                $this->storeJournal($this->user->id, $transaction, $amount, $reference);
             }
         }
+    }
+
+    private function storeJournal($typeId, $sourceType, $amount, $reference) {
+        return (new JournalCreateRepository())->setTypeId($typeId)->setSource($sourceType)
+            ->setAmount($amount)
+            ->setDebitAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
+            ->setCreditAccountKey((new Accounts())->income->reffer::REFFER)
+            ->setDetails("Referral Bonus")
+            ->setReference($reference)
+            ->store();
     }
 }

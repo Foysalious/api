@@ -2,11 +2,22 @@
 
 use App\Http\Route\Prefix\V1\Partner\PartnerRoute;
 use App\Http\Route\Prefix\V1\Resource\ResourceRoute;
+use Sheba\Dal\SmsCampaignOrder\SmsCampaignOrderRepository;
 
 class Route
 {
     public function set($api)
     {
+        $api->get('test', function (SmsCampaignOrderRepository $orderRepository){
+            $order = $orderRepository->create([
+                'title' => 'title',
+                'message' => 'message',
+                'partner_id' => 216648,
+                'rate_per_sms' => .01,
+                'bulk_id' => null
+            ]);
+            return $order->id;
+        });
         $api->group(['prefix' => 'v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
             $api->get('hour-logs', 'ShebaController@getHourLogs');
             $api->group(['middleware' => 'terminate'], function ($api) {
@@ -77,7 +88,7 @@ class Route
                 $api->get('{offer}', 'OfferController@show');
             });
             $api->group(['prefix' => 'blogs'], function ($api) {
-                $api->get('/', 'BlogController@index');
+                $api->get('/', 'BlogController@index')->name('blogs.get');
             });
             $api->group(['prefix' => 'feedback', 'middleware' => ['manager.auth']], function ($api) {
                 $api->post('/', 'FeedbackController@create');
@@ -238,8 +249,8 @@ class Route
 
                         $api->group(['prefix' => 'materials'], function ($api) {
                             $api->get('/', 'PartnerJobController@getMaterials');
-                            $api->post('/', 'PartnerJobController@addMaterial');
-                            $api->put('/', 'PartnerJobController@updateMaterial');
+                            $api->post('/', 'PartnerJobController@addMaterial')->middleware('concurrent_request:partner,update');
+                            $api->put('/', 'PartnerJobController@updateMaterial')->middleware('concurrent_request:partner,update');
                         });
                     });
                 });

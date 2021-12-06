@@ -1,12 +1,15 @@
 <?php namespace App\Http;
 
 use App\Http\Middleware\AccessTokenMiddleware;
+use App\Http\Middleware\AccountingAuthMiddleware;
 use App\Http\Middleware\AffiliateAuthMiddleware;
 use App\Http\Middleware\ApiRequestMiddleware;
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\B2B\OrderMiddleware;
 use App\Http\Middleware\B2B\TerminatingMiddleware;
 use App\Http\Middleware\BusinessManagerAuthMiddleware;
+use App\Http\Middleware\ConcurrentRequestMiddleware;
+use App\Http\Middleware\CheckUserMigrationRunningMiddleware;
 use App\Http\Middleware\Cors2MiddleWare;
 use App\Http\Middleware\CriticalAppVersionMiddleware;
 use App\Http\Middleware\CustomerAuthMiddleware;
@@ -23,6 +26,7 @@ use App\Http\Middleware\MemberAuthMiddleware;
 use App\Http\Middleware\PartnerJobAuthMiddleware;
 use App\Http\Middleware\PartnerOrderAuthMiddleware;
 use App\Http\Middleware\PartnerResourceAuthMiddleware;
+use App\Http\Middleware\PartnerStatusAuthMiddleware;
 use App\Http\Middleware\PaymentLinkAuthMiddleware;
 use App\Http\Middleware\ProfileAuthMiddleware;
 use App\Http\Middleware\RedirectIfAuthenticated;
@@ -31,6 +35,7 @@ use App\Http\Middleware\SetRequestToJwtWhileTesting;
 use App\Http\Middleware\Sheba\ShebaNetworkMiddleware;
 use App\Http\Middleware\ThrottleRequests;
 use App\Http\Middleware\TopUpAuthMiddleware;
+use App\Http\Middleware\UserMigrationMiddleware;
 use App\Http\Middleware\VendorMiddleware;
 use App\Http\Middleware\VerifyCsrfToken;
 use App\Http\Middleware\XSS;
@@ -119,6 +124,11 @@ class Kernel extends HttpKernel
         'apiRequestLog' => ApiRequestMiddleware::class,
         'shebaServer' => ShebaNetworkMiddleware::class,
         'terminate' => TerminatingMiddleware::class,
-
+        'accounting.auth' => AccountingAuthMiddleware::class,
+        'userMigration.auth' => UserMigrationMiddleware::class,
+        'partner.status'=> PartnerStatusAuthMiddleware::class,
+        'concurrent_request' => ConcurrentRequestMiddleware::class,
+        'userMigration.auth' => UserMigrationMiddleware::class,
+        'userMigration.check_status' => CheckUserMigrationRunningMiddleware::class
     ];
 }

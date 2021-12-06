@@ -21,6 +21,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use League\Fractal\Resource\Item;
 use App\Models\BusinessMember;
+use Sheba\Dal\BusinessWeekendSettings\BusinessWeekendSettingsRepo;
 use Sheba\Location\Geo;
 use Sheba\Map\Client\BarikoiClient;
 use Sheba\ModificationFields;
@@ -35,37 +36,53 @@ class AttendanceController extends Controller
 {
     use ModificationFields, BusinessBasicInformation;
 
+    const FIRST_DAY_OF_MONTH = 1;
+
     /**
      * @param Request $request
      * @param AttendanceRepoInterface $attendance_repo
      * @param TimeFrame $time_frame
      * @param BusinessHolidayRepoInterface $business_holiday_repo
-     * @param BusinessWeekendRepoInterface $business_weekend_repo
+     * @param BusinessWeekendSettingsRepo $business_weekend_settings_repo
      * @return JsonResponse
      */
-    public function index(Request                      $request, AttendanceRepoInterface $attendance_repo, TimeFrame $time_frame, BusinessHolidayRepoInterface $business_holiday_repo,
-                          BusinessWeekendRepoInterface $business_weekend_repo)
+    public function index(Request                     $request, AttendanceRepoInterface $attendance_repo, TimeFrame $time_frame, BusinessHolidayRepoInterface $business_holiday_repo,
+                          BusinessWeekendSettingsRepo $business_weekend_settings_repo)
     {
         $this->validate($request, ['year' => 'required|string', 'month' => 'required|string']);
         $year = $request->year;
         $month = $request->month;
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
-
         $time_frame = $time_frame->forAMonth($month, $year);
+        $business_member_joining_date = $business_member->join_date;
+        $joining_date = null;
+        if ($this->checkJoiningDate($business_member_joining_date, $month, $year)){
+            $joining_date = $business_member_joining_date->format('d F');
+            $start_date = $business_member_joining_date;
+            $end_date = Carbon::now()->month($month)->year($year)->lastOfMonth();
+            $time_frame = $time_frame->forDateRange($start_date, $end_date);
+        }
         $business_member_leave = $business_member->leaves()->accepted()->between($time_frame)->get();
         $time_frame->end = $this->isShowRunningMonthsAttendance($year, $month) ? Carbon::now() : $time_frame->end;
         $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
 
         $business_holiday = $business_holiday_repo->getAllByBusiness($business_member->business);
-        $business_weekend = $business_weekend_repo->getAllByBusiness($business_member->business);
+        $weekend_settings = $business_weekend_settings_repo->getAllByBusiness($business_member->business);
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($attendances, new AttendanceTransformer($time_frame, $business_holiday, $business_weekend, $business_member_leave));
+        $resource = new Item($attendances, new AttendanceTransformer($time_frame, $business_holiday, $weekend_settings, $business_member_leave));
         $attendances_data = $manager->createData($resource)->toArray()['data'];
 
-        return api_response($request, null, 200, ['attendance' => $attendances_data]);
+        return api_response($request, null, 200, ['attendance' => $attendances_data, 'joining_date' => $joining_date]);
+    }
+
+    private function checkJoiningDate($business_member_joining_date, $month, $year)
+    {
+        if (!$business_member_joining_date) return false;
+        if ($business_member_joining_date->format('d') == self::FIRST_DAY_OF_MONTH) return false;
+        return $business_member_joining_date->format('m-Y') === Carbon::now()->month($month)->year($year)->format('m-Y');
     }
 
     /**

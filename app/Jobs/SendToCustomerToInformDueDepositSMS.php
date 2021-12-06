@@ -8,6 +8,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Sheba\PartnerWallet\PartnerTransactionHandler;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 
 class SendToCustomerToInformDueDepositSMS extends Job implements ShouldQueue
@@ -54,11 +55,14 @@ class SendToCustomerToInformDueDepositSMS extends Job implements ShouldQueue
 
             $sms = $sms_handler
                 ->setBusinessType(BusinessType::SMANAGER)
-                ->setFeatureType(FeatureType::DUE_TRACKER)
-                ->send($this->data['mobile'], $message_data);
+                ->setFeatureType(FeatureType::DUE_TRACKER);
+            $sms_cost = $sms_handler->estimateCharge();
+            //wallet amount check
+            WalletTransactionHandler::isDebitTransactionAllowed($this->partner, $sms_cost, 'এস-এম-এস পাঠানোর');
+            $sms->send($this->data['mobile'], $message_data);
 
             // TODO
-            $sms_cost = $sms->getCost();
+//            $sms_cost = $sms->getCost();
             $partner_transaction_handler = new PartnerTransactionHandler($this->partner);
             $partner_transaction_handler->debit($sms_cost, $sms_cost . $log, null, null);
 
