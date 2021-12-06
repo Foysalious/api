@@ -6,6 +6,7 @@ return [
         'half_yearly' => 'half_yearly',
         'yearly'      => 'yearly'
     ],
+    'referral_enabled'=> false,
     'referral_steps'                   => [
         [
             'step'             => '১ম ধাপ',

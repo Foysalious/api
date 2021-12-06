@@ -1,6 +1,9 @@
 <?php namespace App\Http\Controllers\Pos;
 
 use App\Exceptions\DoNotReportException;
+use App\Exceptions\Pos\Customer\PartnerPosCustomerNotFoundException;
+use App\Exceptions\Pos\Customer\PosCustomerNotFoundException;
+use App\Exceptions\Pos\Order\NotEnoughStockException;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\PaymentLink\PaymentLinkController;
 use App\Models\Partner;
@@ -19,6 +22,8 @@ use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Dal\Discount\InvalidDiscountType;
+use Sheba\Authentication\Exceptions\AuthenticationFailedException;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\DueTracker\Exceptions\UnauthorizedRequestFromExpenseTrackerException;
@@ -35,8 +40,8 @@ use Sheba\Pos\Exceptions\InvalidPosOrder;
 use Sheba\Pos\Exceptions\PosExpenseCanNotBeDeleted;
 use Sheba\Pos\Jobs\OrderBillEmail;
 use Sheba\Pos\Jobs\OrderBillSms;
-use Sheba\Pos\Jobs\WebstoreOrderPushNotification;
 use Sheba\Pos\Jobs\WebstoreOrderSms;
+use Sheba\Pos\Notifier\WebstorePushNotificationHandler;
 use Sheba\Pos\Order\Creator;
 use Sheba\Pos\Order\Deleter as PosOrderDeleter;
 use Sheba\Pos\Order\PosOrderList;
@@ -60,6 +65,7 @@ use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Subscription\Partner\Access\AccessManager;
 use Sheba\Subscription\Partner\Access\Exceptions\AccessRestrictedExceptionForPackage;
 use Sheba\Transactions\Types;
+use Sheba\Transactions\Wallet\WalletDebitForbiddenException;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Sheba\Usage\Usage;
 use Throwable;
@@ -136,12 +142,20 @@ class OrderController extends Controller
      * @param PartnerRepository $partnerRepository
      * @param PaymentLinkCreator $paymentLinkCreator
      * @return array|false|JsonResponse
+     * @throws DoNotReportException
+     * @throws InvalidDiscountType
+     * @throws PartnerPosCustomerNotFoundException
+     * @throws PosCustomerNotFoundException
+     * @throws NotEnoughStockException
+     * @throws AccountingEntryServerError|ExpenseTrackingServerError
+     * @return array|false|JsonResponse
      * @return array|JsonResponse
      * @throws ExpenseTrackingServerError
      * @throws NotAssociativeArray
      * @throws DoNotReportException
      * @throws InvalidDiscountType
      * @throws \Sheba\Authentication\Exceptions\AuthenticationFailedException
+     * @throws AuthenticationFailedException
      */
     public function store($partner, Request $request, Creator $creator, ProfileCreator $profileCreator, PosCustomerCreator $posCustomerCreator, PartnerRepository $partnerRepository, PaymentLinkCreator $paymentLinkCreator)
     {
@@ -183,7 +197,7 @@ class OrderController extends Controller
             $creator->setCustomer($pos_customer);
             $creator->setStatus(OrderStatuses::PENDING);
         }
-        $creator->setPartner($partner)->setData($request->all());
+        $creator->setPartner($partner)->setRequest($request);
         if ($error = $creator->hasDueError())
             return $error;
         /**
@@ -310,21 +324,22 @@ class OrderController extends Controller
     public function update(Request $request, Updater $updater, InvoiceService $invoiceService)
     {
         $this->setModifier($request->manager_resource);
-        /** @var PosOrder $order */
-        $new = 1;
-        $order = PosOrder::with('items')->find($request->order);
-        $is_returned = ($this->isReturned($order, $request, $new));
-        $refund_nature = $is_returned ? Natures::RETURNED : Natures::EXCHANGED;
-        $return_nature = $is_returned ? $this->getReturnType($request, $order) : null;
-        /** @var RefundNature $refund */
-        $refund = NatureFactory::getRefundNature($order, $request->all(), $refund_nature, $return_nature);
-        $refund->setNew($new)->update();
+            /** @var PosOrder $order */
+            $new           = 1;
+            $order         = PosOrder::with('items')->find($request->order);
+            $is_returned   = ($this->isReturned($order, $request, $new));
+            $refund_nature = $is_returned ? Natures::RETURNED : Natures::EXCHANGED;
+            $return_nature = $is_returned ? $this->getReturnType($request, $order) : null;
+            /** @var RefundNature $refund */
+            $refund = NatureFactory::getRefundNature($order, $request->all(), $refund_nature, $return_nature);
+            $request->merge(['refund_nature' => $refund_nature]);
+            $refund->setNew($new)->update();
         $invoiceService->setPosOrder($order)->generateInvoice()->saveInvoiceLink();
-        $order->payment_status = $order->calculate()->getPaymentStatus();
-        return api_response($request, null, 200, [
-            'msg' => 'Order Updated Successfully',
-            'order' => $order
-        ]);
+            $order->payment_status = $order->calculate()->getPaymentStatus();
+            return api_response($request, null, 200, [
+                'msg'   => 'Order Updated Successfully',
+                'order' => $order
+            ]);
     }
 
     /**
@@ -379,7 +394,7 @@ class OrderController extends Controller
      * @param Request $request
      * @param Updater $updater
      * @return JsonResponse
-     * @throws \Sheba\Transactions\Wallet\WalletDebitForbiddenException
+     * @throws WalletDebitForbiddenException
      */
     public function sendSms(Request $request, Updater $updater)
     {
@@ -535,7 +550,11 @@ class OrderController extends Controller
      */
     private function sendOrderPlacePushNotificationToPartner(PosOrder $order)
     {
-        dispatch(new WebstoreOrderPushNotification($order));
+        try {
+            (new WebstorePushNotificationHandler())->setOrder($order)->handle();
+        } catch (Throwable $e) {
+            logError($e);
+        }
     }
 
     /**
@@ -559,6 +578,7 @@ class OrderController extends Controller
         if (!$requested_customer)
             return api_response($request, null, 401, ['msg' => 'Customer not found']);
         $updater->setOrder($order)->setData(['customer_id' => $requested_customer->id])->update();
+        /** @var AutomaticEntryRepository $entry */
         $entry = app(AutomaticEntryRepository::class);
         $entry->setPartner($order->partner)->setFor(EntryType::INCOME)->setSourceType(class_basename($order))->setSourceId($order->id)->setParty($requested_customer->profile)->updatePartyFromSource();
         return api_response($request, null, 200, ['msg' => 'Customer tagged Successfully']);

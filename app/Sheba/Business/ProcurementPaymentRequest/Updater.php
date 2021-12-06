@@ -139,7 +139,7 @@ class Updater
                     $partner = $this->procurement->getActiveBid()->bidder;
                     $log = 'Received money for RFQ Order #' . $this->procurement->id;
                     // $partner->minusWallet($amount, ['log' => 'Received money for RFQ Order #' . $this->procurement->id]);
-                    $this->walletTransactionHandler->setModel($partner)->setType(Types::debit())->setAmount($amount)->setLog($log)->store();
+                    $this->walletTransactionHandler->setModel($partner)->setType(Types::debit())->setAmount($amount)->setLog($log)->setIsNegativeDebitAllowed(true)->store();
 
                     $this->procurementRepository->update($this->procurement, ['partner_collection' => $this->procurement->partner_collection + $amount]);
                     $this->orderClosedHandler->setProcurement($this->procurement)->run();
