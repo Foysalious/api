@@ -83,7 +83,7 @@ class Creator
     {
         if ($this->hasFile('app_thumb')) $this->data['app_thumb'] = $this->saveAppThumbImage();
 
-        if (isset($this->data['image_gallery'])) $this->data['image_gallery'] = $this->saveImageGallery($this->data['image_gallery']);
+        if (isset($this->data['image_gallery']) && $this->data['image_gallery'] != null) $this->data['image_gallery'] = $this->saveImageGallery($this->data['image_gallery']);
 
     }
 

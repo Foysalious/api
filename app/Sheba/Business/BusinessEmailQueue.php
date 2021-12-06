@@ -14,5 +14,4 @@ class BusinessEmailQueue extends Job implements ShouldQueue
         $this->connection = 'business_email';
         $this->queue = 'business_email';
     }
-
 }

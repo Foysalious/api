@@ -3,7 +3,7 @@
 use App\Sheba\Business\BusinessEmailQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Mail;
+use Sheba\Mail\BusinessMail;
 
 class SendTestMail extends BusinessEmailQueue
 {
@@ -14,7 +14,7 @@ class SendTestMail extends BusinessEmailQueue
         if ($this->attempts() <= 1) {
             $email = request()->email;
             $subject = "This Is Test Mail";
-            Mail::send('emails.test-mail', [], function ($m) use ($email, $subject) {
+            BusinessMail::send('emails.test-mail', [], function ($m) use ($email, $subject) {
                 $m->to($email)->subject($subject);
             });
         }

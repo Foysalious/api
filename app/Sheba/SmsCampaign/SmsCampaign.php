@@ -102,7 +102,7 @@ class SmsCampaign
         }
 
         $this->createTransactions($campaign_order, $response->getTotalCharge());
-        $this->storeJournal($amount_to_be_deducted, $campaign_order->id);
+        $this->storeJournal($response->getTotalCharge(), $campaign_order->id);
         $this->smsStatusChanger->processPendingSms();
 
         return true;

@@ -495,7 +495,14 @@ class DueTrackerRepository extends BaseRepository
         if (empty($partner_pos_customer)) throw new InvalidPartnerPosCustomer();
         /** @var PosCustomer $customer */
         $customer = $partner_pos_customer->customer;
-        $type = $request->type == 'receivable' ? 'due' : 'deposit';
+        $smsType = [
+            'receivable' => 'due',
+            'payable' => 'deposit',
+            'due' => 'due',
+            'deposit' => 'deposit',
+        ];
+        $type = $smsType[$request->type];
+
         /** @var Partner $partner */
         $partner=$request->partner;
         $data     = [
