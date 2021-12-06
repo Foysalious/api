@@ -100,8 +100,13 @@ class TopUpController extends Controller
      * @param Creator $creator
      * @param UserAgentInformation $userAgentInformation
      * @param VerifyPin $verifyPin
+     * @param TopUpAgentBlocker $agent_blocker
      * @return JsonResponse
-     * @throws Exception
+     * @throws \App\Exceptions\DoNotReportException
+     * @throws \Sheba\OAuth2\AccountServerAuthenticationError
+     * @throws \Sheba\OAuth2\AccountServerNotWorking
+     * @throws \Sheba\OAuth2\WrongPinError
+     * @throws \Sheba\TopUp\Exception\PinMismatchException
      */
     public function topUp(Request $request, $user, TopUpRequest $top_up_request, Creator $creator, UserAgentInformation $userAgentInformation, VerifyPin $verifyPin, TopUpAgentBlocker $agent_blocker)
     {

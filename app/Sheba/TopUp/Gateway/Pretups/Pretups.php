@@ -37,7 +37,7 @@ abstract class Pretups
      * @return IpnResponse
      * @throws GatewayTimeout
      */
-    public function enquireIpnResponse(TopUpOrder $topup_order): IpnResponse
+    public function enquire(TopUpOrder $topup_order): IpnResponse
     {
         return $this->makePretups()->checkStatus($topup_order);
     }
