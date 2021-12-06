@@ -54,7 +54,7 @@ class BusinessMailServiceProvider extends MailServiceProvider
         // Once we have the transporter registered, we will register the actual Swift
         // mailer instance, passing in the transport instances, which allows us to
         // override this transporter instances during app start-up if necessary.
-        $this->app['swift.business_mailer'] = $this->app->share(function ($app) {
+        $this->app['swift.business_mailer'] = $this->app->bind(function ($app) {
             return new Swift_Mailer($app['swift.business_transport']->driver());
         });
     }
@@ -66,7 +66,7 @@ class BusinessMailServiceProvider extends MailServiceProvider
      */
     protected function registerSwiftTransport()
     {
-        $this->app['swift.business_transport'] = $this->app->share(function ($app) {
+        $this->app['swift.business_transport'] = $this->app->bind(function ($app) {
             return new BusinessTransportManager($app);
         });
     }
