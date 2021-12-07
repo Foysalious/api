@@ -1,8 +1,10 @@
 <?php namespace Sheba\Payment;
 
+use App\Models\Partner;
 use Exception;
 use Sheba\Payment\Factory\PaymentStrategy;
 use Sheba\Payment\Presenter\PaymentMethodDetails;
+use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 
 class AvailableMethods
 {
@@ -160,6 +162,13 @@ class AvailableMethods
     public static function getPaymentLinkPayments($payment_link_identifier)
     {
 
+
+        /** @var PaymentLinkRepositoryInterface $repo */
+        $repo = app(PaymentLinkRepositoryInterface::class);
+        $payment_link = $repo->findByIdentifier($payment_link_identifier);
+        $receiver = ($payment_link->getPaymentReceiver());
+        if($receiver instanceof Partner) return (new AvailableMethods())->getPublishedPartnerPaymentGateways($receiver);
+
         return [
             PaymentStrategy::BKASH,
             PaymentStrategy::NAGAD,
@@ -168,6 +177,21 @@ class AvailableMethods
             PaymentStrategy::ONLINE,
             PaymentStrategy::SSL_DONATION
         ];
+    }
+
+    /**
+     * @param $partner
+     * @return array
+     */
+    public function getPublishedPartnerPaymentGateways($partner): array
+    {
+        $payment_methods = array();
+        $partnerStoreAccounts = $partner->pgwStoreAccounts()->published()->with('pgw_store')->get();
+        foreach ($partnerStoreAccounts as $storeAccount) {
+            $name = $storeAccount->pgw_store->key;
+            $payment_methods[] = $name;
+        }
+        return $payment_methods;
     }
 
 

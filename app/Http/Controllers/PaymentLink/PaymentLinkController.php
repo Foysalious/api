@@ -19,6 +19,7 @@ use Sheba\ComplianceInfo\ComplianceInfo;
 use Sheba\ComplianceInfo\Statics;
 use Sheba\ModificationFields;
 use Sheba\Partner\PartnerStatuses;
+use Sheba\Payment\AvailableMethods;
 use Sheba\PaymentLink\Creator;
 use Sheba\PaymentLink\PaymentLink;
 use Sheba\PaymentLink\PaymentLinkClient;
@@ -44,9 +45,9 @@ class PaymentLinkController extends Controller
 
     public function __construct(PaymentLinkClient $payment_link_client, PaymentLinkRepository $payment_link_repo, Creator $creator)
     {
-        $this->paymentLinkClient = $payment_link_client;
-        $this->paymentLinkRepo = $payment_link_repo;
-        $this->creator = $creator;
+        $this->paymentLinkClient        = $payment_link_client;
+        $this->paymentLinkRepo          = $payment_link_repo;
+        $this->creator                  = $creator;
         $this->paymentDetailTransformer = new PaymentDetailTransformer();
 
     }
@@ -58,19 +59,23 @@ class PaymentLinkController extends Controller
      */
     public function getDashboard(Request $request, PaymentLink $link)
     {
-        if (!$request->user) return api_response($request, null, 404, ['message' => 'User not found']);
-
-        $default_payment_link = $this->paymentLinkClient->defaultPaymentLink($request);
-        if ($default_payment_link) {
-            $link->defaultPaymentLinkData($default_payment_link);
-        } else {
-            $request->merge(['isDefault' => 1]);
-            $this->creator->setIsDefault($request->isDefault)->setAmount($request->amount)->setReason($request->purpose)->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type);
-            $store_default_link = $this->creator->save();
-            $link->defaultPaymentLinkData($store_default_link, 0);
+        try {
+            if (!$request->user) return api_response($request, null, 404, ['message' => 'User not found']);
+            $default_payment_link = $this->paymentLinkClient->defaultPaymentLink($request);
+            if ($default_payment_link) {
+                $link->defaultPaymentLinkData($default_payment_link);
+            } else {
+                $request->merge(['isDefault' => 1]);
+                $this->creator->setIsDefault($request->isDefault)->setAmount($request->amount)->setReason($request->purpose)->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type);
+                $store_default_link = $this->creator->save();
+                $link->defaultPaymentLinkData($store_default_link, 0);
+            }
+            $dashboard = $link->dashboard();
+            return api_response($request, $dashboard, 200, ["data" => $dashboard]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
         }
-        $dashboard = $link->dashboard();
-        return api_response($request, $dashboard, 200, ["data" => $dashboard]);
     }
 
     public function index(Request $request)
@@ -108,21 +113,29 @@ class PaymentLinkController extends Controller
 
     public function show($identifier, Request $request, PaymentLinkRepositoryInterface $paymentLinkRepository)
     {
-        $link = $paymentLinkRepository->findByIdentifier($identifier);
-        if (!$link) return api_response($request, null, 404);;
-        $receiver = $link->getPaymentReceiver();
-        if($receiver instanceof Partner) {
-            $status = (new ComplianceInfo())->setPartner($receiver)->getComplianceStatus();
-            if ($status === Statics::REJECTED)
-                return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
-        }
-        if ($receiver instanceof Partner) {
-            if (!AccessManager::canAccess(AccessManager::Rules()->DIGITAL_COLLECTION, $receiver->subscription->getAccessRules()) || in_array($receiver->status, [PartnerStatuses::BLACKLISTED, PartnerStatuses::PAUSED]) || !(int)$link->getIsActive())
-                return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
+        try {
+            $link = $paymentLinkRepository->findByIdentifier($identifier);
+            if ($link) {
+                $receiver = $link->getPaymentReceiver();
+                if ($receiver instanceof Partner) {
+                    if (!AccessManager::canAccess(AccessManager::Rules()->DIGITAL_COLLECTION, $receiver->subscription->getAccessRules()) || in_array($receiver->status, [PartnerStatuses::BLACKLISTED, PartnerStatuses::PAUSED]) || !(int)$link->getIsActive())
+                        return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
+                    $available_methods = (new AvailableMethods())->getPublishedPartnerPaymentGateways($receiver);
+                    if(!count($available_methods))
+                        return api_response($request, $link, 404, ['message' => "No active payment method found"]);
 
-        }
-        if ((int)$link->getIsActive()) {
-            return api_response($request, $link, 200, ['link' => $link->toArray()]);
+                }
+                if ((int)$link->getIsActive()) {
+                    return api_response($request, $link, 200, ['link' => $link->toArray()]);
+                }
+            }
+            return api_response($request, null, 404);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
         }
     }
 
@@ -214,36 +227,45 @@ class PaymentLinkController extends Controller
 
     public function createPaymentLinkForDueCollection(Request $request)
     {
-        $this->validate($request, [
-            'amount' => 'required|numeric',
-            'customer_id' => 'sometimes|integer|exists:pos_customers,id',
-            'emi_month' => 'sometimes|integer|in:' . implode(',', config('emi.valid_months')),
-            'interest_paid_by' => 'sometimes|in:' . implode(',', PaymentLinkStatics::paidByTypes()),
-            'transaction_charge' => 'sometimes|numeric|min:' . PaymentLinkStatics::get_payment_link_commission()
-        ]);
-        $purpose = 'Due Collection';
-        if (!$request->user) return api_response($request, null, 404, ['message' => 'User not found']);
-        $userStatusCheck = $this->userStatusCheck($request);
-        if ($userStatusCheck !== true) return $userStatusCheck;
-        if ($request->has('customer_id')) $customer = PosCustomer::find($request->customer_id);
+        try {
+            $this->validate($request, [
+                'amount'             => 'required|numeric',
+                'customer_id'        => 'sometimes|integer|exists:pos_customers,id',
+                'emi_month'          => 'sometimes|integer|in:' . implode(',', config('emi.valid_months')),
+                'interest_paid_by'   => 'sometimes|in:' . implode(',', PaymentLinkStatics::paidByTypes()),
+                'transaction_charge' => 'sometimes|numeric|min:' . PaymentLinkStatics::get_payment_link_commission()
+            ]);
+            $purpose = 'Due Collection';
+            if (!$request->user) return api_response($request, null, 404, ['message' => 'User not found']);
+            if ($request->has('customer_id')) $customer = PosCustomer::find($request->customer_id);
 
-        $this->creator->setAmount($request->amount)
-            ->setReason($purpose)
-            ->setUserName($request->user->name)
-            ->setUserId($request->user->id)
-            ->setUserType($request->type)
-            ->setEmiMonth($request->emi_month ?: 0)
-            ->setPaidBy($request->interest_paid_by ?: PaymentLinkStatics::paidByTypes()[($request->has("emi_month") ? 1 : 0)])
-            ->setTransactionFeePercentage($request->transaction_charge);
-        if (isset($customer) && !empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
-        $this->creator->setTargetType('due_tracker')->setTargetId(1)->calculate();
-        $payment_link_store = $this->creator->save();
-        if (!$payment_link_store) return api_response($request, null, 500);
-        $payment_link = $this->creator->getPaymentLinkData();
-        if (!$request->has('emi_month')) {
-            $this->creator->sentSms();
+            $this->creator->setAmount($request->amount)
+                ->setReason($purpose)
+                ->setUserName($request->user->name)
+                ->setUserId($request->user->id)
+                ->setUserType($request->type)
+                ->setEmiMonth($request->emi_month ?: 0)
+                ->setPaidBy($request->interest_paid_by ?: PaymentLinkStatics::paidByTypes()[($request->has("emi_month") ? 1 : 0)])
+                ->setTransactionFeePercentage($request->transaction_charge);
+            if (isset($customer) && !empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
+            $this->creator->setTargetType('due_tracker')->setTargetId(1)->calculate();
+            $payment_link_store = $this->creator->save();
+            if ($payment_link_store) {
+                $payment_link = $this->creator->getPaymentLinkData();
+                if (!$request->has('emi_month')) {
+                    $this->creator->sentSms();
+                }
+                return api_response($request, $payment_link, 200, ['payment_link' => $payment_link]);
+            } else {
+                return api_response($request, null, 500);
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
         }
-        return api_response($request, $payment_link, 200, ['payment_link' => $payment_link]);
     }
 
     private function userStatusCheck($request)
@@ -257,87 +279,124 @@ class PaymentLinkController extends Controller
 
     public function statusChange($link, Request $request)
     {
-        $this->validate($request, [
-            'status' => 'required'
-        ]);
-        $this->creator->setStatus($request->status)->setPaymentLinkId($link);
-        $payment_link_status_change = $this->creator->editStatus();
-        if (!$payment_link_status_change) return api_response($request, null, 500, $this->creator->getErrorMessage($request->status));
-
-        return api_response($request, 1, 200, $this->creator->getSuccessMessage($request->status));
+        try {
+            $this->validate($request, [
+                'status' => 'required'
+            ]);
+            $this->creator->setStatus($request->status)->setPaymentLinkId($link);
+            $payment_link_status_change = $this->creator->editStatus();
+            if ($payment_link_status_change) {
+                return api_response($request, 1, 200, $this->creator->getSuccessMessage($request->status));
+            } else {
+                return api_response($request, null, 500, $this->creator->getErrorMessage($request->status));
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message, 'title' => "validation fail"]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500, $this->creator->getErrorMessage($request->status));
+        }
     }
 
     public function getDefaultLink(Request $request)
     {
-        if (!$request->user) return api_response($request, null, 404, ['message' => 'User not found']);
-        $default_payment_link = $this->paymentLinkClient->defaultPaymentLink($request);
-        if ($default_payment_link) {
-            $default_payment_link = [
-                'link_id' => $default_payment_link[0]['linkId'],
-                'link' => $default_payment_link[0]['link'],
-                'amount' => $default_payment_link[0]['amount'],
-            ];
-            return api_response($request, $default_payment_link, 200, ['default_payment_link' => $default_payment_link]);
+        try {
+            if (!$request->user) return api_response($request, null, 404, ['message' => 'User not found']);
+            $default_payment_link = $this->paymentLinkClient->defaultPaymentLink($request);
+            if ($default_payment_link) {
+                $default_payment_link = [
+                    'link_id' => $default_payment_link[0]['linkId'],
+                    'link'    => $default_payment_link[0]['link'],
+                    'amount'  => $default_payment_link[0]['amount'],
+                ];
+                return api_response($request, $default_payment_link, 200, ['default_payment_link' => $default_payment_link]);
+            } else {
+                $request->merge(['isDefault' => 1]);
+                if (empty($request->user->name)) $request->user->name = "UnknownName";
+                $this->creator->setIsDefault($request->isDefault)->setAmount($request->amount)->setReason($request->purpose)->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type);
+                $store_default_link   = $this->creator->save();
+                $default_payment_link = [
+                    'link_id' => $store_default_link->linkId,
+                    'link'    => $store_default_link->link,
+                    'amount'  => $store_default_link->amount,
+                ];
+                return api_response($request, $default_payment_link, 200, ['default_payment_link' => $default_payment_link]);
+            }
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
         }
-
-        $request->merge(['isDefault' => 1]);
-        if (empty($request->user->name)) $request->user->name = "UnknownName";
-        $this->creator->setIsDefault($request->isDefault)->setAmount($request->amount)->setReason($request->purpose)->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type);
-        $store_default_link = $this->creator->save();
-        $default_payment_link = [
-            'link_id' => $store_default_link->linkId,
-            'link' => $store_default_link->link,
-            'amount' => $store_default_link->amount,
-        ];
-        return api_response($request, $default_payment_link, 200, ['default_payment_link' => $default_payment_link]);
     }
 
     public function getPaymentLinkPayments($link, Request $request)
     {
-        $payment_link_details = $this->paymentLinkClient->paymentLinkDetails($link);
-        if (!$payment_link_details) return api_response($request, 1, 404);
-
-        $payments    = $this->paymentLinkRepo->payables($payment_link_details);
-        $all_payment = [];
-        foreach ($payments->get() as $payment) {
-            $payment = [
-                'id'         => $payment->id,
-                'code'       => '#' . $payment->id,
-                'name'       => $payment->payable->getName(),
-                'amount'     => $payment->amount,
-                'created_at' => Carbon::parse($payment->created_at)->format('Y-m-d h:i a'),
-            ];
-            array_push($all_payment, $payment);
+        try {
+            $payment_link_details = $this->paymentLinkClient->paymentLinkDetails($link);
+            if ($payment_link_details) {
+                $payments    = $this->paymentLinkRepo->payables($payment_link_details);
+                $all_payment = [];
+                foreach ($payments->get() as $payment) {
+                    $payment = [
+                        'id'         => $payment->id,
+                        'code'       => '#' . $payment->id,
+                        'name'       => $payment->payable->getName(),
+                        'amount'     => $payment->amount,
+                        'created_at' => Carbon::parse($payment->created_at)->format('Y-m-d h:i a'),
+                    ];
+                    array_push($all_payment, $payment);
+                }
+                $payment_link_payments = [
+                    'id'             => $payment_link_details['linkId'],
+                    'code'           => '#' . $payment_link_details['linkId'],
+                    'purpose'        => $payment_link_details['reason'],
+                    'status'         => $payment_link_details['isActive'] == 1 ? 'active' : 'inactive',
+                    'payment_link'   => $payment_link_details['link'],
+                    'amount'         => $payment_link_details['amount'],
+                    'total_payments' => $payments->count(),
+                    'created_at'     => date('Y-m-d h:i a', $payment_link_details['createdAt'] / 1000),
+                    'payments'       => $all_payment
+                ];
+                return api_response($request, $payment_link_payments, 200, ['payment_link_payments' => $payment_link_payments]);
+            } else {
+                return api_response($request, 1, 404);
+            }
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
         }
-        $payment_link_payments = [
-            'id'             => $payment_link_details['linkId'],
-            'code'           => '#' . $payment_link_details['linkId'],
-            'purpose'        => $payment_link_details['reason'],
-            'status'         => $payment_link_details['isActive'] == 1 ? 'active' : 'inactive',
-            'payment_link'   => $payment_link_details['link'],
-            'amount'         => $payment_link_details['amount'],
-            'total_payments' => $payments->count(),
-            'created_at'     => date('Y-m-d h:i a', $payment_link_details['createdAt'] / 1000),
-            'payments'       => $all_payment
-        ];
-        return api_response($request, $payment_link_payments, 200, ['payment_link_payments' => $payment_link_payments]);
     }
 
     public function paymentLinkPaymentDetails($link, $payment, Request $request)
     {
-        $payment_link_payment_details = $this->paymentLinkRepo->paymentLinkDetails($link);
-        $payment                      = $payment_link_payment_details ? $this->paymentLinkRepo->payment($payment) : null;
-        if (!($payment && $payment_link_payment_details)) return api_response($request, 1, 404);
-
-        $payment_detail  = $payment->paymentDetails ? $payment->paymentDetails->last() : null;
-        $payment_details = $this->paymentDetailTransformer->transform($payment, $payment_detail, $payment_link_payment_details);
-        return api_response($request, $payment_details, 200, ['payment_details' => $payment_details]);
+        try {
+            $payment_link_payment_details = $this->paymentLinkRepo->paymentLinkDetails($link);
+            $payment                      = $payment_link_payment_details ? $this->paymentLinkRepo->payment($payment) : null;
+            if ($payment && $payment_link_payment_details) {
+                $payment_detail  = $payment->paymentDetails ? $payment->paymentDetails->last() : null;
+                $payment_details = $this->paymentDetailTransformer->transform($payment, $payment_detail, $payment_link_payment_details);
+                return api_response($request, $payment_details, 200, ['payment_details' => $payment_details]);
+            } else {
+                return api_response($request, 1, 404);
+            }
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 
     public function transactionList(Request $request, Payable $payable)
     {
-        $data = $this->paymentLinkRepo->getPaymentList($request);
-        if (!$data) $data = [];
-        return api_response($request, null, 200, ['data' => $data]);
+        try {
+            $data = $this->paymentLinkRepo->getPaymentList($request);
+            if ($data) {
+                return api_response($request, null, 200, ['data' => $data]);
+            } else {
+                return api_response($request, null, 200, ['data' => []]);
+            }
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
     }
 }
