@@ -8,5 +8,6 @@ class Cash
 {
     const CASH       = 'cash';
     const PETTY_CASH = 'petty_cash';
+    const SSL        = 'ssl';
 
 }
