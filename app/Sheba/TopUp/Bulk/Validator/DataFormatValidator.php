@@ -79,7 +79,7 @@ class DataFormatValidator extends Validator
         $this->excelDataFormatError->setAgent($this->agent)->setFile($this->filePath);
         if ($this->total <= 0){
             $top_up_excel_data_format_errors = $this->excelDataFormatError->takeCompletedAction();
-            throw new InvalidTopupData($top_up_excel_data_format_errors, 'Check The Excel Data Format Properly. There may be excel header or column missing.', 420);
+            throw new InvalidTopupData($top_up_excel_data_format_errors, 'Check The Excel Data Format Properly. There may be excel header or column missing.', 406);
         }
         $total_recharge_amount = 0;
 
