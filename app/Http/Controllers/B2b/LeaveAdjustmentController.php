@@ -2,8 +2,10 @@
 
 use App\Models\Business;
 use Carbon\Carbon;
+use Maatwebsite\Excel\Reader;
 use Sheba\Business\ApprovalRequest\Leave\SuperAdmin\StatusUpdater as StatusUpdater;
 use Sheba\Business\LeaveAdjustment\LeaveAdjustmentExcel;
+use Sheba\Business\LeaveAdjustment\LeaveAdjustmentExcelCreator;
 use Sheba\Business\LeaveAdjustment\LeaveAdjustmentExcelUploadError;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
@@ -21,9 +23,9 @@ use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use App\Models\Member;
 use Exception;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Throwable;
-use Excel;
-use Sheba\Dal\Leave\Model as Leave;
+use Maatwebsite\Excel\Facades\Excel as MaatwebsiteExcel;
 
 class LeaveAdjustmentController extends Controller
 {
@@ -255,47 +257,20 @@ class LeaveAdjustmentController extends Controller
     /**
      * @param $business
      * @param Request $request
-     * @param LeaveAdjustmentExcel $leave_adjustment_excel
-     * @return JsonResponse
+     * @param LeaveAdjustmentExcelCreator $creator
+     * @return JsonResponse|BinaryFileResponse
+     * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
+     * @throws \PhpOffice\PhpSpreadsheet\Exception
      */
-    public function generateAdjustmentExcel($business, Request $request, LeaveAdjustmentExcel $leave_adjustment_excel)
+    public function generateAdjustmentExcel($business, Request $request, LeaveAdjustmentExcelCreator $creator)
     {
-        if ($business != $request->business->id) return api_response($request, null, 400, ['message' => 'Not found']);
-        /** @var Business $business */
-        $business = $request->business;
-
-        $leave_types = [];
-        $business->leaveTypes()->whereNull('deleted_at')->select('id', 'title', 'total_days', 'deleted_at')->get()
-            ->each(function ($leave_type) use (&$leave_types) {
-                $leave_type_data = ['id' => $leave_type->id, 'title' => $leave_type->title, 'total_days' => $leave_type->total_days];
-                array_push($leave_types, $leave_type_data);
-            });
-
-        $url = 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/bulk_upload_template/leave_adjustment_bulk_attachment_file.xlsx';
-        $file_path = storage_path('exports') . DIRECTORY_SEPARATOR . basename($url);
-        file_put_contents($file_path, file_get_contents($url));
-
-        foreach ($leave_types as $key => $leave_type) {
-            $leave_adjustment_excel->setAgent($business)
-                ->setFile($file_path)
-                ->setRow($key + 9)
-                ->updateLeaveTypeId($leave_type['id'])
-                ->updateLeaveTypeTile($leave_type['title'])
-                ->updateLeaveTotalDays($leave_type['total_days']);
+        if ($business != $request->business->id) {
+            return api_response($request, null, 400, ['message' => 'Not found']);
         }
 
-        $super_admins = $business->getAccessibleBusinessMember()->where('is_super', 1)->get();
-        foreach ($super_admins as $key => $admin) {
-            $profile = $admin->member->profile;
-            $leave_adjustment_excel->setAgent($business)
-                ->setFile($file_path)
-                ->setRow($key + 9)
-                ->updateSuperAdminId($admin->id)
-                ->updateSuperAdminName($profile->name);
-        }
+        $export_path = $creator->setBusiness($request->business)->create();
 
-        $leave_adjustment_excel->takeCompletedAction();
-        return api_response($request, null, 200);
+        return response()->download($export_path, basename($export_path))->deleteFileAfterSend(true);
     }
 
     /**

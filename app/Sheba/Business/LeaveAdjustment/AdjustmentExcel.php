@@ -5,6 +5,8 @@ class AdjustmentExcel
 {
     const SHEET = "data";
 
+    const LEAVE_DATA_START_ROW = 9;
+
     const USERS_MAIL_COLUMN = "A";
     const LEAVE_TYPE_ID_COLUMN = "B";
     const START_DATE_COLUMN = "C";
@@ -31,4 +33,34 @@ class AdjustmentExcel
     const HALF_DAY_CONFIGURATION_COLUMN_TITLE = "half_day_configuration";
     const APPROVER_ID_COLUMN_TITLE = "approver_id";
     const MESSAGE_COLUMN_TITLE = "message";
+
+    public static function cellName($column, $row): string
+    {
+        return $column . ($row + self::LEAVE_DATA_START_ROW);
+    }
+
+    public static function superAdminIdCell($row): string
+    {
+        return self::cellName(self::SUPER_ADMIN_ID, $row);
+    }
+
+    public static function superAdminNameCell($row): string
+    {
+        return self::cellName(self::SUPER_ADMIN_NAME, $row);
+    }
+
+    public static function leaveTypeIdCell($row): string
+    {
+        return self::cellName(self::LEAVE_TYPE_ID, $row);
+    }
+
+    public static function leaveTypeTitleCell($row): string
+    {
+        return self::cellName(self::LEAVE_TYPE_TITLE, $row);
+    }
+
+    public static function totalDaysCell($row): string
+    {
+        return self::cellName(self::TOTAL_DAYS, $row);
+    }
 }
