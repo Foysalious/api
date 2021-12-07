@@ -175,7 +175,7 @@ class PaymentLinkController extends Controller
             ->calculate();
         $interest = 0;
         $bank_transaction_charge = 0;
-        if ($request->has('pos_order_id')) {
+        if ($request->has('pos_order_id') && $request->pos_order_id) {
             /** @var PosOrderResolver $posOrderResolver */
             $posOrderResolver = (app(PosOrderResolver::class));
             $pos_order = $posOrderResolver->setOrderId($request->pos_order_id)->get();
@@ -187,7 +187,7 @@ class PaymentLinkController extends Controller
                 $bank_transaction_charge = $this->creator->getBankTransactionCharge();
             }
         }
-        if ($request->has('customer_id')) {
+        if ($request->has('customer_id') && $request->customer_id) {
             /** @var PosCustomerResolver $posCustomerResolver */
             $posCustomerResolver = app(PosCustomerResolver::class);
             $customer = $posCustomerResolver->setCustomerId($request->customer_id)->setPartner($request->partner)->get();
