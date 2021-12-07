@@ -81,7 +81,7 @@ class SmanagerUserDataMigration
             ->join('pos_customers', 'partner_pos_customers.customer_id', '=', 'pos_customers.id')
             ->join('profiles', 'pos_customers.profile_id', '=', 'profiles.id')
             ->select('partner_pos_customers.id', 'partner_pos_customers.customer_id as previous_id', 'partner_pos_customers.partner_id', $query,
-                'partner_pos_customers.is_supplier', 'partner_pos_customers.note', 'profiles.mobile', 'profiles.email', 'profiles.fb_id', 'profiles.google_id',
+                'partner_pos_customers.is_supplier', 'partner_pos_customers.note', DB::raw('SUBTIME(partner_pos_customers.due_date_reminder,"6:00:00") as due_date_reminder'),  'profiles.mobile', 'profiles.email', 'profiles.fb_id', 'profiles.google_id',
                 'profiles.mobile_verified', 'profiles.email_verified', 'profiles.email_verified_at', 'profiles.address', 'profiles.gender',
                 'profiles.dob', 'profiles.pro_pic', 'profiles.created_by_name', 'profiles.updated_by_name',
                 DB::raw('SUBTIME(profiles.created_at,"6:00:00") as created_at, SUBTIME(profiles.updated_at,"6:00:00") as updated_at'))
