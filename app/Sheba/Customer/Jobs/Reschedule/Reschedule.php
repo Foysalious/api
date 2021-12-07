@@ -127,6 +127,7 @@ class Reschedule
     private function notifyPartnerAboutReschedule()
     {
         $partner = $this->job->partnerOrder->partner;
+        $this->job = $this->job->fresh();
         $resource = $this->job->resource;
         if(!$partner) return;
         $sender_id = $this->job->partnerOrder->order->customer_id;
