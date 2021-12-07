@@ -155,7 +155,7 @@ class DailyExcel
                 'overtime' => $this->overtime,
                 'late_check_in_note' => $this->lateNote,
                 'left_early_note' => $this->leftEarlyNote,
-                'attendance_reconciled' => $attendance['is_attendance_reconciled'] ? 'Yes' : 'No'
+                'attendance_reconciled' => !isset($attendance['is_attendance_reconciled']) ? '-' : ($attendance['is_attendance_reconciled'] ? 'Yes' : 'No')
             ]);
         }
     }
