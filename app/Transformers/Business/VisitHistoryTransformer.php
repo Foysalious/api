@@ -8,11 +8,13 @@ class VisitHistoryTransformer extends TransformerAbstract
 {
     public function transform($own_visits)
     {
+        $schedule_date = $own_visits->schedule_date;
         return [
             'id' =>   $own_visits->id,
             'title' => $own_visits->title,
             'status' => $own_visits->status,
-            'schedule_date' => $own_visits->schedule_date->toDateTimeString(),
+            'schedule_date' => $schedule_date->toDateTimeString(),
+            'date' => $schedule_date->format('d M'),
             'timings' => [
                 'start_time' => $own_visits->start_date_time ? $own_visits->start_date_time->format('h:i A') : $own_visits->schedule_date->format('h:i A'),
                 'end_time' => $own_visits->end_date_time ? $own_visits->end_date_time->format('h:i A') : null,
