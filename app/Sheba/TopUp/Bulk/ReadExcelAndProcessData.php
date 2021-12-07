@@ -19,6 +19,7 @@ class ReadExcelAndProcessData
     /** @var TopUpAgent $agent */
     private $agent;
     private $fileExt;
+    private $headingError;
 
     /**
      * @param TopUpAgent $agent
@@ -42,8 +43,8 @@ class ReadExcelAndProcessData
         $data = Excel::selectSheets(TopUpExcel::SHEET)->load($this->filePath, function (LaravelExcelReader $reader) {
             $reader->formatDates(false)->ignoreEmpty();
         })->get();
-
         $this->data = $data->filter(function ($row) {
+            if (!$row->mobile || !$row->operator || !$row->connection_type || !$row->amount) return false;
             return ($row->mobile && $row->operator && $row->connection_type && $row->amount);
         });
 
