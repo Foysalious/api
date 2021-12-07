@@ -23,7 +23,7 @@ class AvailableMethods
 
         $details = [];
         foreach ($methods as $method) {
-            $detail = new PaymentMethodDetails($method);
+            $detail = new PaymentMethodDetails($method, $payable_type);
             if ($method == PaymentStrategy::CBL) {
                 $detail->setIsPublished(self::getCblStatus($version_code, $platform_name));
             }
