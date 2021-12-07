@@ -154,7 +154,7 @@ class PosOrderDataMigration
            'image'  => config('pos_delivery.vendor_list_v2.paperfly.icon')
         ]);
 
-        $delivery_vendor_query = DB::raw("(CASE WHEN pos_orders.delivery_vendor_name = 'own_delivery' THEN '$own_delivery'  ELSE IF pos_orders.delivery_vendor_name = 'sdelivery' THEN '$paperfly' ELSE NULL END) as delivery_vendor");
+        $delivery_vendor_query = DB::raw("(CASE WHEN pos_orders.delivery_vendor_name = 'own_delivery' THEN '$own_delivery'  WHEN pos_orders.delivery_vendor_name = 'sdelivery' THEN '$paperfly' ELSE NULL END) as delivery_vendor");
 
         $pos_orders = PosOrder::where('partner_id', $this->partner->id)->where(function ($q) {
             $q->where('is_migrated', null)->orWhere('is_migrated', 0);
