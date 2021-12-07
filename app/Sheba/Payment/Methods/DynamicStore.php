@@ -16,9 +16,9 @@ trait DynamicStore
         $this->partner = $receiver;
     }
 
-    protected function getStoreAccount($payment_method)
+    protected function getStoreAccount($key)
     {
         return $this->partner->pgwStoreAccounts()->join('pgw_stores', 'pgw_store_id', '=', 'pgw_stores.id')
-            ->where('pgw_stores.name', $payment_method)->first();
+            ->where('pgw_stores.key', $key)->first();
     }
 }
