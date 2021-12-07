@@ -13,7 +13,6 @@ use Sheba\TopUp\ConnectionType;
 use Sheba\TopUp\OTF\OtfAmountCheck;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpExcel;
-use Sheba\TopUp\TopUpSpecialAmount;
 
 class DataFormatValidator extends Validator
 {
@@ -28,13 +27,9 @@ class DataFormatValidator extends Validator
     private $data;
     /** @var mixed $total */
     private $total;
-    /** @var string $filePath */
-    private $filePath;
     /** @var string $bulkExcelCdnFilePath */
     private $bulkExcelCdnFilePath;
-    /**
-     * @var OtfAmountCheck
-     */
+    /** @var OtfAmountCheck */
     private $otfAmountCheck;
 
     public function __construct()
@@ -67,18 +62,20 @@ class DataFormatValidator extends Validator
      * @return bool
      * @throws InvalidTopupData
      * @throws InvalidTotalAmount
+     * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
      */
     public function check(): bool
     {
         $this->excel->setAgent($this->agent)->setExcel($this->file);
         $this->total = $this->excel->getTotal();
         $this->data = $this->excel->getData();
-        $this->filePath = $this->excel->getFilePath();
-        $excel_error = null;
+        $filePath = $this->excel->getFilePath();
+
         $halt_top_up = false;
-        $this->excelDataFormatError->setAgent($this->agent)->setFile($this->filePath);
-        if ($this->total <= 0){
+        $this->excelDataFormatError->setAgent($this->agent)->setFile($filePath);
+        if ($this->total <= 0) {
             $top_up_excel_data_format_errors = $this->excelDataFormatError->takeCompletedAction();
+            unlink($filePath);
             throw new InvalidTopupData($top_up_excel_data_format_errors, 'Check The Excel Data Format Properly. There may be excel header or column missing.', 420);
         }
         $total_recharge_amount = 0;
@@ -88,7 +85,7 @@ class DataFormatValidator extends Validator
         $operator_field = TopUpExcel::VENDOR_COLUMN_TITLE;
         $connection_type = TopUpExcel::TYPE_COLUMN_TITLE;
 
-        $this->data->each(function ($value, $key) use ($excel_error, &$halt_top_up, &$total_recharge_amount, $mobile_field, $amount_field, $operator_field, $connection_type) {
+        $this->data->each(function ($value, $key) use (&$halt_top_up, &$total_recharge_amount, $mobile_field, $amount_field, $operator_field, $connection_type) {
             if (!$this->isMobileNumberValid($value->$mobile_field) && !$this->isAmountInteger($value->$amount_field)) {
                 $halt_top_up = true;
                 $excel_error = 'Mobile number Invalid, Amount Should be Integer';
@@ -113,15 +110,20 @@ class DataFormatValidator extends Validator
         });
 
         $agent_wallet = floatval($this->agent->wallet);
-        if ($total_recharge_amount > $agent_wallet)
+        if ($total_recharge_amount > $agent_wallet) {
+            unlink($filePath);
             throw new InvalidTotalAmount($total_recharge_amount, $agent_wallet, 'You do not have sufficient balance to recharge.', 403);
+        }
 
         if ($halt_top_up) {
             $top_up_excel_data_format_errors = $this->excelDataFormatError->takeCompletedAction();
+            unlink($filePath);
             throw new InvalidTopupData($top_up_excel_data_format_errors, 'Check The Excel Data Format Properly.', 420);
         }
 
         $this->bulkExcelCdnFilePath = $this->excel->saveTopupFileToCDN();
+
+        unlink($filePath);
 
         return parent::check();
     }
@@ -208,14 +210,6 @@ class DataFormatValidator extends Validator
     public function getTotal()
     {
         return $this->total;
-    }
-
-    /**
-     * @return string
-     */
-    public function getFilePath(): string
-    {
-        return $this->filePath;
     }
 
     /**

@@ -1,6 +1,7 @@
 <?php namespace Sheba\Business\LeaveAdjustment;
 
-use PhpOffice\PhpSpreadsheet\Reader\Xlsx;
+use PhpOffice\PhpSpreadsheet\Reader\Xlsx as Reader;
+use \PhpOffice\PhpSpreadsheet\Writer\Xlsx as Writer;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
@@ -16,7 +17,7 @@ class LeaveAdjustmentExcel
 
     public static function load($file): LeaveAdjustmentExcel
     {
-        return new LeaveAdjustmentExcel((new Xlsx())->load($file));
+        return new LeaveAdjustmentExcel((new Reader())->load($file));
     }
 
     public function __construct(Spreadsheet $spreadsheet)
@@ -67,6 +68,6 @@ class LeaveAdjustmentExcel
      */
     public function save($file)
     {
-        (new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($this->spreadsheet))->save($file);
+        (new Writer($this->spreadsheet))->save($file);
     }
 }

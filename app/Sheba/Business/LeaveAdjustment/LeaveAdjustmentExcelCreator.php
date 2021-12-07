@@ -22,18 +22,21 @@ class LeaveAdjustmentExcelCreator
      */
     public function create(): string
     {
-        $this->loadExcel();
+        $file_path = $this->loadExcel();
         $this->addLeaves();
         $this->addSuperAdmins();
-        return $this->export();
+        $export_path = $this->export();
+        unlink($file_path);
+        return $export_path;
     }
 
-    private function loadExcel()
+    private function loadExcel(): string
     {
         $url = 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/bulk_upload_template/leave_adjustment_bulk_attachment_file.xlsx';
         $file_path = storage_path('exports') . DIRECTORY_SEPARATOR . basename($url);
         file_put_contents($file_path, file_get_contents($url));
         $this->excel = LeaveAdjustmentExcel::load($file_path);
+        return $file_path;
     }
 
     /**

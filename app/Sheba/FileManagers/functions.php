@@ -1535,6 +1535,18 @@ if (!function_exists('getNameWithExtension')) {
     }
 }
 
+if (!function_exists('getExtensionFromPath')) {
+    /**
+     * @param $path
+     * @return mixed|string
+     */
+    function getExtensionFromPath($path)
+    {
+        $info = pathinfo($path);
+        return $info['extension'];
+    }
+}
+
 if (!function_exists('getStorageExportFolder')) {
     /**
      * @return string

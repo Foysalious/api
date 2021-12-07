@@ -1,13 +1,14 @@
 <?php namespace Sheba\TopUp\Jobs;
 
 use App\Models\TopUpOrder;
+use PhpOffice\PhpSpreadsheet\Reader\Xlsx as Reader;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx as Writer;
 use Sheba\Sms\BusinessType;
 use Sheba\Sms\FeatureType;
-use Excel;
 use Exception;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Storage;
-use Maatwebsite\Excel\Readers\LaravelExcelReader;
 use Sheba\Dal\TopUpBulkRequest\Statuses;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
@@ -23,13 +24,17 @@ class TopUpExcelJob extends TopUpJob
     private $file;
     private $row;
     private $totalRow;
-    /** @var LaravelExcelReader */
-    private $excel = null;
     /** @var TopUpBulkRequest */
     private $bulk;
 
+    /** @var Spreadsheet */
+    private $spreadsheet;
+    /** @var Worksheet */
+    private $worksheet;
+
     /**
      * TopUpExcelJob constructor.
+     *
      * @param $agent
      * @param TopUpOrder $topup_order
      * @param $row
@@ -44,6 +49,14 @@ class TopUpExcelJob extends TopUpJob
         $this->row = $row;
         $this->totalRow = $total_row;
         $this->bulk = $bulk;
+        $this->setsheet();
+    }
+
+    private function setSheet()
+    {
+        $this->file = $this->getFile($this->bulk);
+        $this->spreadsheet = (new Reader())->load($this->file);
+        $this->worksheet = $this->spreadsheet->getActiveSheet();
     }
 
     /**
@@ -64,39 +77,32 @@ class TopUpExcelJob extends TopUpJob
         $this->takeCompletedAction();
     }
 
-    private function getExcel(): LaravelExcelReader
-    {
-        $this->file = $this->getFile($this->bulk);
-        if (!$this->excel) $this->excel = Excel::selectSheets(TopUpExcel::SHEET)->load($this->file);
-        return $this->excel;
-    }
-
     private function updateExcel($status, $message = null)
     {
-        $this->getExcel()->getActiveSheet()->setCellValue(TopUpExcel::STATUS_COLUMN . $this->row, $status);
+        $this->worksheet->setCellValue(TopUpExcel::STATUS_COLUMN . $this->row, $status);
         if ($message) {
-            $this->getExcel()->getActiveSheet()->setCellValue(TopUpExcel::MESSAGE_COLUMN . $this->row, $message);
+            $this->worksheet->setCellValue(TopUpExcel::MESSAGE_COLUMN . $this->row, $message);
         }
-        $this->excel->save();
+        (new Writer($this->spreadsheet))->save($this->file);
     }
 
     private function takeCompletedAction()
     {
-        if ($this->row == $this->totalRow + 1) {
-            $name = strtolower(class_basename($this->agent)) . '_' . $this->agent->id;
-            $file_name = $this->uniqueFileName($this->file, $name, $this->getExcel()->ext);
-            $file_path = $this->saveFileToCDN($this->file, getBulkTopUpFolder(), $file_name);
-            unlink($this->file);
+        if ($this->row != $this->totalRow + 1) return;
 
-            $this->updateBulkTopUpStatus(Statuses::COMPLETED, $file_path);
+        $name = strtolower(class_basename($this->agent)) . '_' . $this->agent->id;
+        $file_name = $this->uniqueFileName($this->file, $name, getExtensionFromPath($this->file));
+        $file_path = $this->saveFileToCDN($this->file, getBulkTopUpFolder(), $file_name);
+        unlink($this->file);
 
-            $msg = "Your top up request has been processed. You can find the results here: " . $file_path;
+        $this->updateBulkTopUpStatus(Statuses::COMPLETED, $file_path);
 
-            (new Sms())
-                ->setFeatureType(FeatureType::TOP_UP)
-                ->setBusinessType(BusinessType::BONDHU)
-                ->shoot($this->agent->getMobile(), $msg);
-        }
+        $msg = "Your top up request has been processed. You can find the results here: " . $file_path;
+
+        (new Sms())
+            ->setFeatureType(FeatureType::TOP_UP)
+            ->setBusinessType(BusinessType::BONDHU)
+            ->shoot($this->agent->getMobile(), $msg);
     }
 
     /**
