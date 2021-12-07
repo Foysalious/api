@@ -87,6 +87,12 @@ return [
                 'queue' => 'invoice_generation',
                 'expire' => 60
             ],
+            'business_email' => [
+                'driver' => 'redis',
+                'connection' => 'default',
+                'queue' => 'business_email',
+                'expire' => 60
+            ],
             'pos_rebuild_data_migration_1' => [
                 'driver' => 'redis',
                 'connection' => 'default',

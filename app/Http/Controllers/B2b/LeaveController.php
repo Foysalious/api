@@ -91,7 +91,17 @@ class LeaveController extends Controller
         $business = $request->business;
 
         list($offset, $limit) = calculatePagination($request);
-        $leave_approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMemberFilterBy($business_member, Type::LEAVE, $request->list_type);
+        $approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMemberFilterBy($business_member, Type::LEAVE, $request->list_type);
+        $leave_approval_requests = collect();
+        foreach ($approval_requests as $leave_approval_request) {
+            /** @var Leave $requestable */
+            $requestable = $leave_approval_request->requestable;
+            /** @var BusinessMember $business_member */
+            $business_member = $requestable->businessMember;
+            if (!$business_member || $business_member->status != 'active') continue;
+            $leave_approval_requests->push($leave_approval_request);
+        }
+
         if ($request->has('status')) $leave_approval_requests = $leave_approval_requests->where('status', $request->status);
         if ($request->has('department')) $leave_approval_requests = $this->filterWithDepartment($leave_approval_requests, $request);
         if ($request->has('employee')) $leave_approval_requests = $this->filterWithEmployee($leave_approval_requests, $request);
@@ -593,7 +603,8 @@ class LeaveController extends Controller
         });
     }
 
-    private function filterByPeriod($leave_approval_requests, Request $request) {
+    private function filterByPeriod($leave_approval_requests, Request $request)
+    {
         $period_data = [
             'period_start' => Carbon::parse($request->period_start),
             'period_end' => Carbon::parse($request->period_end)->endOfDay()
@@ -617,7 +628,8 @@ class LeaveController extends Controller
         });
     }
 
-    private function membersFilterByStatus($business_members, Request $request) {
+    private function membersFilterByStatus($business_members, Request $request)
+    {
         return $business_members->where('status', $request->status);
     }
 }

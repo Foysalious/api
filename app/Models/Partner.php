@@ -4,6 +4,8 @@ use App\Models\Transport\TransportTicketOrder;
 use App\Sheba\InventoryService\Partner\Events\Updated;
 use App\Sheba\Payment\Rechargable;
 use App\Sheba\UserMigration\UserMigrationService;
+use App\Sheba\UserMigration\AccountingUserMigration;
+use App\Sheba\UserMigration\UserMigrationRepository;
 use Carbon\Carbon;
 use DB;
 use Exception;
@@ -671,9 +673,9 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function topUpTransaction(TopUpTransaction $transaction)
     {
-        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())
+        return (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())
             ->setSource(TransactionSources::TOP_UP)->setType(Types::debit())->setLog($transaction->getLog())
-            ->dispatch();
+            ->store();
     }
 
     public function todayJobs($jobs = null)
@@ -1074,22 +1076,22 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function lastUpdatedUserMigration()
     {
-        return $this->userMigration->max('updated_at');
+        return $this->userMigration->max('updated_at') ?? null;
     }
 
     public function lastUpdatedSubscription()
     {
-        return $this->subscription->updated_at;
+        return $this->subscription->updated_at ?? null;
     }
 
     public function lastUpdatedPosSetting()
     {
-        return $this->posSetting->updated_at;
+        return $this->posSetting->updated_at ?? null;
     }
 
     public function lastBilledDate()
     {
-        return $this->last_billed_date;
+        return $this->last_billed_date ?? null;
     }
 
     /**

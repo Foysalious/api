@@ -61,7 +61,7 @@ class PayrunList
     public function setBusiness(Business $business)
     {
         $this->business = $business;
-        $this->businessMemberIds = $this->business->getAccessibleBusinessMember()->pluck('id')->toArray();
+        $this->businessMemberIds = $this->business->getActiveBusinessMember()->pluck('id')->toArray();
         return $this;
     }
 

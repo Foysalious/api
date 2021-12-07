@@ -46,7 +46,7 @@ class SmsHandler
         $sms->setBusinessType(BusinessType::SMANAGER)
             ->setFeatureType(FeatureType::POS)
             ->shoot();
-
+            $transaction = (new WalletTransactionHandler())->setModel($partner)->setAmount($sms_cost)->setType(Types::debit())->setLog($sms_cost . " BDT has been deducted for sending pos order details sms (order id: {$this->order->id})")->setTransactionDetails([])->setSource(TransactionSources::SMS)->store();
         (new WalletTransactionHandler())
             ->setModel($partner)
             ->setAmount($sms_cost)
@@ -54,6 +54,18 @@ class SmsHandler
             ->setLog($sms_cost . " BDT has been deducted for sending pos order details sms (order id: {$this->order->id})")
             ->setTransactionDetails([])
             ->setSource(TransactionSources::SMS)
+            ->store();
+        $this->storeJournal($partner, $transaction);
+    }
+
+    private function storeJournal($partner, $transaction) {
+        (new JournalCreateRepository())->setTypeId($partner->id)
+            ->setSource($transaction)
+            ->setAmount($transaction->amount)
+            ->setDebitAccountKey(SmsPurchase::SMS_PURCHASE_FROM_SHEBA)
+            ->setCreditAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
+            ->setDetails("Pos sms sent charge")
+            ->setReference("")
             ->store();
     }
 

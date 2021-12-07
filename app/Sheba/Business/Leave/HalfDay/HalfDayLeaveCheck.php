@@ -82,4 +82,26 @@ class HalfDayLeaveCheck
         }
         return HalfDayType::SECOND_HALF;
     }
+
+    /**
+     * @return bool
+     */
+    public function checkFullDayLeave()
+    {
+        $leaves_date_with_half_and_full_day = $this->formatLeaveAsDateArray();
+        return $this->isFullDayLeave(Carbon::now(), $leaves_date_with_half_and_full_day);
+    }
+
+    /**
+     * @param Carbon $date
+     * @param array $leaves_date_with_half_and_full_day
+     * @return bool
+     */
+    private function isFullDayLeave(Carbon $date, array $leaves_date_with_half_and_full_day)
+    {
+        if (array_key_exists($date->format('Y-m-d'), $leaves_date_with_half_and_full_day)) {
+            if ($leaves_date_with_half_and_full_day[$date->format('Y-m-d')]['is_half_day_leave'] == 0) return true;
+        }
+        return false;
+    }
 }

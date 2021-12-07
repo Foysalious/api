@@ -13,6 +13,7 @@ class Partner
     const DUE_TRACKER_TRANSACTION     = 'due_tracker_transaction';
 
     const TRANSACTION_COMPLETE        = 'transaction_complete';
+    const TOPUP_COMPLETE              = 'topup_complete';
 
 
     const CREATE_CUSTOMER             = 'customer_create';

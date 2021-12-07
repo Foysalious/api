@@ -139,7 +139,9 @@ class PosCustomerService
     {
         $customer_info = $this->getCustomerInfoFromSmanagerUserService();
         list($total_purchase_amount, $total_used_promo) = $this->getPurchaseAmountAndTotalUsedPromo();
-        list($total_due_amount, $total_payable_amount) = $this->getDueAndPayableAmount();
+        $getDueAndPayableAmount = $this->getDueAndPayableAmount();
+        $total_due_amount = $getDueAndPayableAmount['due'];
+        $total_payable_amount = $getDueAndPayableAmount['payable'];
         $created_at = isset($customer_info['created_at']) ? Carbon::parse($customer_info['created_at']) : null;
         $customer_details = [];
         $customer_details['id'] = $customer_info['_id'] ?? null;
@@ -173,8 +175,7 @@ class PosCustomerService
     {
         $this->deleteCustomerFromSmanagerUserService();
         $this->deleteCustomerFromPosOrderService();
-        //todo: have to add support for new customer module
-//        $this->deleteUserFromAccountingService();
+        $this->deleteUserFromAccountingService();
         return true;
     }
 
@@ -270,7 +271,7 @@ class PosCustomerService
             $response = $this->posOrderServerClient->get('api/v1/partners/' . $this->partner->id . '/customers/' . $this->customerId . '/purchase-amount-promo-usage');
             return [$response['data']['total_purchase_amount'], $response['data']['total_used_promo']];
         } catch (\Exception $exception) {
-            return [null,null];
+            return [null, null];
         }
 
     }
