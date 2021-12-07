@@ -5,6 +5,7 @@ use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
 use App\Sheba\PosCustomerService\SmanagerUserServerClient;
 use App\Sheba\UserMigration\Modules;
+use Exception;
 
 class PosCustomerResolver
 {
@@ -43,13 +44,22 @@ class PosCustomerResolver
         return $this;
     }
 
-    public function get(): PosCustomerObject
+    /**
+     * @return PosCustomerObject|null
+     * @throws Exception
+     */
+    public function get(): ?PosCustomerObject
     {
         if ($this->partner->isMigrated(Modules::POS)) {
-            $customer = $this->smanagerUserServerClient->get('api/v1/partners/' . $this->partner->id . '/users/' . $this->customerId);
-            return $this->posCustomerObject->setId($customer['_id'])->setPartnerId($customer['partner_id'])->setName($customer['name'])
-                ->setIsSupplier($customer['is_supplier'])->setMobile($customer['mobile'])->setEmail($customer['email'])
-                ->setGender($customer['gender'])->setDob($customer['dob'])->setProPic($customer['pro_pic']);
+            try {
+                $customer = $this->smanagerUserServerClient->get('api/v1/partners/' . $this->partner->id . '/users/' . $this->customerId);
+                return $this->posCustomerObject->setId($customer['_id'])->setPartnerId($customer['partner_id'])->setName($customer['name'])
+                    ->setIsSupplier($customer['is_supplier'])->setMobile($customer['mobile'])->setEmail($customer['email'])
+                    ->setGender($customer['gender'])->setDob($customer['dob'])->setProPic($customer['pro_pic']);
+            } catch (Exception $e) {
+                app('sentry')->captureException($e);
+                return null;
+            }
 
         }
         $partner_pos_customer = PartnerPosCustomer::where('customer_id', $this->customerId)->where('partner_id', $this->partner->id)
