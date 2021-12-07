@@ -248,7 +248,6 @@ class DueTrackerRepository extends BaseRepository
         return $response['data'];
     }
 
-
     /**
      * @param Partner $partner
      * @param Request $request
@@ -409,7 +408,7 @@ class DueTrackerRepository extends BaseRepository
             if ($partner_pos_customer && $due_date_reminder) {
                 $temp['customer_name']     = $item['customer_name'];
                 $temp['customer_id']       = $item['customer_id'];
-                $temp['profile_id']        = $partner_pos_customer->customer->profile_id;
+//                $temp['profile_id']        = $partner_pos_customer->customer->profile_id;
                 $temp['phone']             = $partner_pos_customer->details()['phone'];
                 $temp['balance']           = $item['balance'];
                 $temp['due_date_reminder'] = $due_date_reminder;
@@ -425,7 +424,6 @@ class DueTrackerRepository extends BaseRepository
         }
         return $response;
     }
-
 
     /**
      * @param array   $dueList
