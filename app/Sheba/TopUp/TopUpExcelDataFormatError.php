@@ -1,10 +1,12 @@
 <?php namespace App\Sheba\TopUp;
 
-use Maatwebsite\Excel\Readers\LaravelExcelReader;
+use PhpOffice\PhpSpreadsheet\Reader\Xlsx as Reader;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx as Writer;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\TopUp\TopUpExcel;
-use Excel;
 
 class TopUpExcelDataFormatError
 {
@@ -13,9 +15,11 @@ class TopUpExcelDataFormatError
     private $agent;
     private $file;
     private $row;
-    private $totalRow;
-    /** @var LaravelExcelReader */
-    private $excel = null;
+
+    /** @var Spreadsheet */
+    private $spreadsheet;
+    /** @var Worksheet */
+    private $worksheet;
 
     public function setAgent($agent): TopUpExcelDataFormatError
     {
@@ -26,6 +30,10 @@ class TopUpExcelDataFormatError
     public function setFile($file): TopUpExcelDataFormatError
     {
         $this->file = $file;
+
+        $this->spreadsheet = (new Reader())->load($file);
+        $this->worksheet = $this->spreadsheet->getActiveSheet();
+
         return $this;
     }
 
@@ -35,30 +43,23 @@ class TopUpExcelDataFormatError
         return $this;
     }
 
-    private function getExcel(): LaravelExcelReader
-    {
-        if (!$this->excel) $this->excel = Excel::selectSheets(TopUpExcel::SHEET, 'suggestion')->load($this->file);
-        return $this->excel;
-    }
-
     /**
      * @param null $message
+     * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
      */
     public function updateExcel($message = null)
     {
-        if ($message) {
-            $this->getExcel()->getActiveSheet()->setCellValue(TopUpExcel::MESSAGE_COLUMN . $this->row, $message);
-            $this->excel->save();
-        }
+        if (empty($message)) return;
+
+        $this->worksheet->setCellValue(TopUpExcel::MESSAGE_COLUMN . $this->row, $message);
+
+        (new Writer($this->spreadsheet))->save($this->file);
     }
 
     public function takeCompletedAction(): string
     {
         $name = strtolower(class_basename($this->agent)) . '_' . dechex($this->agent->id);
-        $file_name = $this->uniqueFileName($this->file, $name, $this->getExcel()->ext);
-        $file_path = $this->saveFileToCDN($this->file, getBulkTopUpFolder(), $file_name);
-        unlink($this->file);
-
-        return $file_path;
+        $file_name = $this->uniqueFileName($this->file, $name, getExtensionFromPath($this->file));
+        return $this->saveFileToCDN($this->file, getBulkTopUpFolder(), $file_name);
     }
 }

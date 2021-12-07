@@ -453,12 +453,9 @@ class DashboardController extends Controller
     {
         $partner = $request->partner;
         if (!$partner instanceof Partner) {
-            $partner = Partner::find($partner);
+            return api_response($request, null, 404);
         }
         $modules = config('partner_setting_modules');
-        if (!$partner instanceof Partner) {
-            $partner = Partner::find($partner);
-        }
 
         foreach ($modules as $key => $module) {
             if ($modules[$key]['function']) {

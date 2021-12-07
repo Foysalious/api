@@ -12,8 +12,7 @@ class ExtensionValidator extends Validator
     {
         $valid_extensions = ["xls", "xlsx", "xlm", "xla", "xlc", "xlt", "xlw"];
         $extension = $this->file->getClientOriginalExtension();
-        if (!in_array($extension, $valid_extensions))
-            throw new InvalidExtension();
+        if (!in_array($extension, $valid_extensions)) throw new InvalidExtension();
 
         return parent::check();
     }

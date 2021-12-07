@@ -1,12 +1,10 @@
 <?php namespace Sheba\TopUp\Bulk;
 
-use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
-use Maatwebsite\Excel\Readers\LaravelExcelReader;
+use Maatwebsite\Excel\Facades\Excel as MaatwebsiteExcel;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpExcel;
-use Excel;
 
 class ReadExcelAndProcessData
 {
@@ -37,15 +35,26 @@ class ReadExcelAndProcessData
      */
     public function setExcel(UploadedFile $file): ReadExcelAndProcessData
     {
-        $file = Excel::selectSheets(TopUpExcel::SHEET)->load($file)->save();
-        $this->fileExt = $file->ext;
-        $this->filePath = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $this->fileExt;
-        $data = Excel::selectSheets(TopUpExcel::SHEET)->load($this->filePath, function (LaravelExcelReader $reader) {
+        $this->fileExt = $file->getClientOriginalExtension();
+        $upload_path = $file->storeAs("top_up_bulk", $this->makeFileName());
+        $this->filePath = storage_path('app') . "/" . $upload_path;
+
+        $data = MaatwebsiteExcel::toArray(new \stdClass(), $file)[0];
+
+        /*$data = Excel::selectSheets(TopUpExcel::SHEET)->load($this->filePath, function (LaravelExcelReader $reader) {
             $reader->formatDates(false)->ignoreEmpty();
-        })->get();
-        $this->data = $data->filter(function ($row) {
-            if (!$row->mobile || !$row->operator || !$row->connection_type || !$row->amount) return false;
-            return ($row->mobile && $row->operator && $row->connection_type && $row->amount);
+        })->get();*/
+
+        $this->data = collect($data)->filter(function ($row) {
+            if ($row[0] == "mobile") return false;
+            return ($row[0] && $row[1] && $row[2] && $row[3]);
+        })->map(function ($row) {
+            return (object)[
+                'mobile' => $row[0],
+                'operator' => $row[1],
+                'connection_type' => $row[2],
+                'amount' => $row[3],
+            ];
         });
 
         $this->total = $this->data->count();
@@ -82,7 +91,12 @@ class ReadExcelAndProcessData
      */
     public function saveTopupFileToCDN(): string
     {
-        $file_name = Carbon::now()->timestamp . "_bulk_topup_excel_". strtolower(class_basename($this->agent)) . "_" . $this->agent->id . "." . $this->fileExt;
+        $file_name = $this->makeFileName();
         return $this->saveFileToCDN($this->filePath, getBulkTopUpFolder(), $file_name);
+    }
+
+    private function makeFileName(): string
+    {
+        return now()->timestamp . "_bulk_topup_excel_". strtolower(class_basename($this->agent)) . "_" . $this->agent->id . "." . $this->fileExt;
     }
 }

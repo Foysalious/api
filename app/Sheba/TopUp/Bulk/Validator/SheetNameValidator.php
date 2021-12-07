@@ -1,8 +1,8 @@
 <?php namespace Sheba\TopUp\Bulk\Validator;
 
+use PhpOffice\PhpSpreadsheet\Reader\Xlsx as Reader;
 use Sheba\TopUp\Bulk\Exception\InvalidSheetName;
 use Sheba\TopUp\TopUpExcel;
-use Excel;
 
 class SheetNameValidator extends Validator
 {
@@ -12,9 +12,9 @@ class SheetNameValidator extends Validator
      */
     public function check(): bool
     {
-        $sheet_names = Excel::load($this->file)->getSheetNames();
-        if (!in_array(TopUpExcel::SHEET, $sheet_names))
-            throw new InvalidSheetName();
+        $reader = (new Reader())->load($this->file->getRealPath());
+
+        if (!$reader->sheetNameExists(TopUpExcel::SHEET)) throw new InvalidSheetName();
 
         return parent::check();
     }

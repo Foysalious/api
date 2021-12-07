@@ -1,83 +1,73 @@
 <?php namespace Sheba\Business\LeaveAdjustment;
 
-use Maatwebsite\Excel\Readers\LaravelExcelReader;
-use Sheba\FileManagers\CdnFileManager;
-use Sheba\FileManagers\FileManager;
-use Excel;
+use PhpOffice\PhpSpreadsheet\Reader\Xlsx as Reader;
+use \PhpOffice\PhpSpreadsheet\Writer\Xlsx as Writer;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class LeaveAdjustmentExcel
 {
-    use FileManager, CdnFileManager;
+    /** @var Spreadsheet */
+    private $spreadsheet;
+    /** @var Worksheet */
+    private $worksheet;
 
-    private $agent;
-    private $file;
-    private $row;
-    private $totalRow;
-    /** @var LaravelExcelReader $excel */
-    private $excel = null;
+    private $leaveDataCurrentRow = 0;
+    private $adminDataCurrentRow = 0;
 
-    public function setAgent($agent)
+    public static function load($file): LeaveAdjustmentExcel
     {
-        $this->agent = $agent;
-        return $this;
+        return new LeaveAdjustmentExcel((new Reader())->load($file));
     }
 
-    public function setFile($file)
+    public function __construct(Spreadsheet $spreadsheet)
     {
-        $this->file = $file;
-        return $this;
+        $this->spreadsheet = $spreadsheet;
+        $this->worksheet = $this->spreadsheet->getActiveSheet();
     }
 
-    public function setRow($row)
+    /**
+     * @throws \PhpOffice\PhpSpreadsheet\Exception
+     */
+    public function addSuperAdmin($id, $name)
     {
-        $this->row = $row;
-        return $this;
+        $this->worksheet
+            ->getCell(AdjustmentExcel::superAdminIdCell($this->adminDataCurrentRow))
+            ->setValue($id);
+
+        $this->worksheet
+            ->getCell(AdjustmentExcel::superAdminNameCell($this->adminDataCurrentRow))
+            ->setValue($name);
+
+        $this->adminDataCurrentRow++;
     }
 
-    public function updateSuperAdminId($message)
+    /**
+     * @throws \PhpOffice\PhpSpreadsheet\Exception
+     */
+    public function addLeave($id, $title, $total_days)
     {
-        $this->getExcel()->getActiveSheet()->setCellValue(AdjustmentExcel::SUPER_ADMIN_ID . $this->row, $message);
-        $this->excel->save();
-        return $this;
+        $this->worksheet
+            ->getCell(AdjustmentExcel::leaveTypeIdCell($this->leaveDataCurrentRow))
+            ->setValue($id);
+
+        $this->worksheet
+            ->getCell(AdjustmentExcel::leaveTypeTitleCell($this->leaveDataCurrentRow))
+            ->setValue($title);
+
+
+        $this->worksheet
+            ->getCell(AdjustmentExcel::totalDaysCell($this->leaveDataCurrentRow))
+            ->setValue($total_days);
+
+        $this->leaveDataCurrentRow++;
     }
 
-    private function getExcel()
+    /**
+     * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
+     */
+    public function save($file)
     {
-        if (!$this->excel) $this->excel = Excel::selectSheets(AdjustmentExcel::SHEET)->load($this->file);
-        return $this->excel;
-    }
-
-    public function updateSuperAdminName($message)
-    {
-        $this->getExcel()->getActiveSheet()->setCellValue(AdjustmentExcel::SUPER_ADMIN_NAME . $this->row, $message);
-        $this->excel->save();
-        return $this;
-    }
-
-    public function updateLeaveTypeId($message)
-    {
-        $this->getExcel()->getActiveSheet()->setCellValue(AdjustmentExcel::LEAVE_TYPE_ID . $this->row, $message);
-        $this->excel->save();
-        return $this;
-    }
-
-    public function updateLeaveTypeTile($message)
-    {
-        $this->getExcel()->getActiveSheet()->setCellValue(AdjustmentExcel::LEAVE_TYPE_TITLE . $this->row, $message);
-        $this->excel->save();
-        return $this;
-    }
-
-    public function updateLeaveTotalDays($message)
-    {
-        $this->getExcel()->getActiveSheet()->setCellValue(AdjustmentExcel::TOTAL_DAYS . $this->row, $message);
-        $this->excel->save();
-        return $this;
-    }
-
-    public function takeCompletedAction()
-    {
-        $this->excel->download('xlsx');
-        unlink($this->file);
+        (new Writer($this->spreadsheet))->save($file);
     }
 }

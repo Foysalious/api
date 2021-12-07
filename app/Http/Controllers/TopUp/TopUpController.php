@@ -213,6 +213,7 @@ class TopUpController extends Controller
                               Creator $creator, TopUpSpecialAmount $special_amount): JsonResponse
     {
         $this->validate($request, ['file' => 'required|file', 'password' => 'required']);
+        $request->merge(['user' => Business::find(192)]);
 
         /** @var TopUpAgent $agent */
         $agent = $this->getAgent($request, $user);
@@ -233,7 +234,6 @@ class TopUpController extends Controller
 
         $data = $data_validator->getData();
         $total = $data_validator->getTotal();
-        $file_path = $data_validator->getFilePath();
 
         $operator_field = TopUpExcel::VENDOR_COLUMN_TITLE;
         $type_field = TopUpExcel::TYPE_COLUMN_TITLE;
@@ -242,7 +242,7 @@ class TopUpController extends Controller
         $name_field = TopUpExcel::NAME_COLUMN_TITLE;
 
         $data->each(function ($value, $key) use (
-            $creator, $vendor, $agent, $file_path, $top_up_request, $total, $bulk_request,
+            $creator, $vendor, $agent, $top_up_request, $total, $bulk_request,
             $operator_field, $type_field, $mobile_field, $amount_field, $name_field
         ) {
             if (!$value->$operator_field) return;
@@ -270,10 +270,9 @@ class TopUpController extends Controller
             dispatch(new TopUpExcelJob($agent, $topup_order, $key + 2, $total, $bulk_request));
         });
 
-        unlink($file_path);
-        $response_msg = "Your top-up request has been received and will be transferred and notified shortly.";
-
-        return api_response($request, null, 200, ['message' => $response_msg]);
+        return api_response($request, null, 200, [
+            'message' => "Your top-up request has been received and will be transferred and notified shortly."
+        ]);
     }
 
     /**
