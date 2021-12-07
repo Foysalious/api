@@ -56,25 +56,20 @@ class PosOrderResolver
                 ->setCustomer($customerObject)->setPartner($partnerObject)->setType(PosOrderTypes::OLD_SYSTEM)
                 ->setCreatedAt($oldPosOrder->created_at)->setEmiMonth($oldPosOrder->emi_month);
         } else {
-            try {
-                $response = $this->client->get('api/v1/orders/' . $this->orderId);
-                $newPosOrder = json_decode(json_encode($response['order']), FALSE);
-                $customer = $newPosOrder->customer;
-                $partner = $newPosOrder->partner;
-                $partnerObject = $this->partnerObject->setId($partner->id)->setSubDomain($partner->sub_domain);
-                if ($newPosOrder->customer_id) {
-                    $customerObject = $this->customerObject->setId($customer->id)->setName($customer->name)->setMobile($customer->mobile);
-                } else {
-                    $customerObject = null;
-                }
-                $this->order = $this->posOrderObject->setId($newPosOrder->id)->setCustomerId($newPosOrder->customer_id)->setPartnerId($newPosOrder->partner_id)
-                    ->setDue($newPosOrder->due)->setSalesChannel($newPosOrder->sales_channel)->setIsMigrated(1)
-                    ->setCustomer($customerObject)->setPartner($partnerObject)->setType(PosOrderTypes::NEW_SYSTEM)
-                    ->setCreatedAt($newPosOrder->created_at)->setEmiMonth($newPosOrder->emi_month);
-            } catch (\Exception $e) {
-                app('sentry')->captureException($e);
-                return null;
+            $response = $this->client->get('api/v1/orders/' . $this->orderId);
+            $newPosOrder = json_decode(json_encode($response['order']), FALSE);
+            $customer = $newPosOrder->customer;
+            $partner = $newPosOrder->partner;
+            $partnerObject = $this->partnerObject->setId($partner->id)->setSubDomain($partner->sub_domain);
+            if ($newPosOrder->customer_id) {
+                $customerObject = $this->customerObject->setId($customer->id)->setName($customer->name)->setMobile($customer->mobile);
+            } else {
+                $customerObject = null;
             }
+            $this->order = $this->posOrderObject->setId($newPosOrder->id)->setCustomerId($newPosOrder->customer_id)->setPartnerId($newPosOrder->partner_id)
+                ->setDue($newPosOrder->due)->setSalesChannel($newPosOrder->sales_channel)->setIsMigrated(1)
+                ->setCustomer($customerObject)->setPartner($partnerObject)->setType(PosOrderTypes::NEW_SYSTEM)
+                ->setCreatedAt($newPosOrder->created_at)->setEmiMonth($newPosOrder->emi_month);
 
         }
         return $this;
