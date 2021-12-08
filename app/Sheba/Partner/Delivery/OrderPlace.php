@@ -159,7 +159,7 @@ class OrderPlace
             'delivery_thana' => $info['delivery_address']['thana'],
             'delivery_status' => $info['status'],
             'delivery_request_id' => $info['uid'],
-            'status' => OrderStatuses::SHIPPED
+            //'status' => OrderStatuses::SHIPPED
         ];
         if ($this->posOrder && !$this->posOrder->is_migrated) return $this->posOrderRepository->update($this->posOrder, $data);
         return $this->orderService->setPartnerId($this->partner->id)->setOrderId($this->posOrderId)->storeDeliveryInformation($data);
