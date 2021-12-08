@@ -235,10 +235,10 @@ if (!function_exists('isStringInt')) {
 
 if (!function_exists('simplifyExceptionTrace')) {
     /**
-     * @param \Throwable $e
+     * @param Throwable $e
      * @return array
      */
-    function simplifyExceptionTrace(\Throwable $e)
+    function simplifyExceptionTrace(Throwable $e)
     {
         return collect(explode(PHP_EOL, $e->getTraceAsString()))->mapWithKeys(function ($trace) {
             $trace = explode(": ", preg_replace('/^(#\d+ )(.*)$/', '$2', $trace));
@@ -250,11 +250,39 @@ if (!function_exists('simplifyExceptionTrace')) {
 
 if (!function_exists('dde')) {
     /**
-     * @param \Throwable $e
+     * @param Throwable $e
      */
-    function dde(\Throwable $e)
+    function dde(Throwable $e)
     {
-        dd(get_class($e), $e->getMessage(), $e->getFile(), $e->getLine(), simplifyExceptionTrace($e));
+        dd(simpleExceptionInfo($e));
+    }
+}
+
+if (!function_exists('simpleExceptionInfo')) {
+    /**
+     * @param Throwable $e
+     * @return array
+     */
+    function simpleExceptionInfo(Throwable $e)
+    {
+        return [
+            'class' => get_class($e),
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => simplifyExceptionTrace($e)
+        ];
+    }
+}
+
+if (!function_exists('simpleExceptionString')) {
+    /**
+     * @param Throwable $e
+     * @return string
+     */
+    function simpleExceptionString(Throwable $e)
+    {
+        return json_encode(simpleExceptionInfo($e));
     }
 }
 
