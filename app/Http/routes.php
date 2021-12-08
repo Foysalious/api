@@ -9,7 +9,7 @@ Route::get('/check-instance', function () {
     $ip = request()->ip();
     try {
         $instance_id = file_get_contents("http://instance-data/latest/meta-data/instance-id");
-    } catch (Exception $e) {};
+    } catch (Exception $e) {}
 
     return [
         'code' => 200,
