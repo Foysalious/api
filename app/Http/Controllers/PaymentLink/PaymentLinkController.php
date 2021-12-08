@@ -152,6 +152,10 @@ class PaymentLinkController extends Controller
         ]);
         $userStatusCheck = $this->userStatusCheck($request);
         if ($userStatusCheck !== true) return $userStatusCheck;
+
+        $available_methods = (new AvailableMethods())->getPublishedPartnerPaymentGateways($request->user);
+        if(!count($available_methods))
+            return api_response($request, null, 404, ['message' => "No active payment method found"]);
         $emi_month_invalidity = Creator::validateEmiMonth($request->all());
         if ($emi_month_invalidity !== false) return api_response($request, null, 400, ['message' => $emi_month_invalidity]);
         if ($request->user instanceof Partner) {
