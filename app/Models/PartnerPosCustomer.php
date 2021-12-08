@@ -8,7 +8,7 @@ class PartnerPosCustomer extends BaseModel
 {
     protected $guarded = ['id'];
 
-    public static $savedEventClass = AccountingCustomerCreate::class;
+    public static $createdEventClass = AccountingCustomerCreate::class;
     public static $updatedEventClass = AccountingCustomerUpdate::class;
 
     public function customer()
