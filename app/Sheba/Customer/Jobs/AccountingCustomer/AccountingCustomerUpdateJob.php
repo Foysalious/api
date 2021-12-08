@@ -6,7 +6,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
-class AccountingCustomerJob extends Job implements ShouldQueue
+class AccountingCustomerUpdateJob extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
 
@@ -32,6 +32,6 @@ class AccountingCustomerJob extends Job implements ShouldQueue
         if ($this->attempts() > 2) return;
         /** @var AccountingCustomerCreator $service */
         $service = app(AccountingCustomerCreator::class);
-        $service->setPartnerId($this->event->getCustomerPartnerID())->setCustomerId($this->event->getCustomerId())->setCustomerMobile($this->event->getCustomerMobile())->setCustomerName($this->event->getCustomerName())->storeAccountingCustomer();
+        $service->setPartnerId($this->event->getCustomerPartnerID())->setCustomerId($this->event->getCustomerId())->setCustomerMobile($this->event->getCustomerMobile())->setCustomerName($this->event->getCustomerName())->updateAccountingCustomer();
     }
 }

@@ -9,9 +9,7 @@ class AccountingCustomerCreator
     private $name;
     private $mobile;
     private $partner;
-    /**
-     * @var AccountingEntryClient
-     */
+
     private $client;
 
     public function __construct(AccountingEntryClient $client)
@@ -43,7 +41,7 @@ class AccountingCustomerCreator
         return $this;
     }
 
-    private function makeData()
+    private function makeData(): array
     {
         return [
             'id' => $this->id,
@@ -52,10 +50,26 @@ class AccountingCustomerCreator
         ];
     }
 
+    private function makeUpdateData(): array
+    {
+        $data = [];
+        if (isset($this->id)) $data['id'] = $this->id;
+        if (isset($this->name)) $data['name'] = $this->name;
+        if (isset($this->mobile)) $data['mobile'] = $this->mobile;
+        return $data;
+    }
+
     public function storeAccountingCustomer()
     {
         $userType = EntryType::PARTNER;
         $userId = $this->partner;
-        return $this->client->setUserType($userType)->setUserId($userId)->post('api/customers', $this->makeData());
+        return $this->client->setUserType($userType)->setUserId($userId)->post('api/customers/' . $this->id . '/', $this->makeUpdateData());
+    }
+
+    public function updateAccountingCustomer()
+    {
+        $userType = EntryType::PARTNER;
+        $userId = $this->partner;
+        return $this->client->setUserType($userType)->setUserId($userId)->post('api/customers/', $this->makeData());
     }
 }

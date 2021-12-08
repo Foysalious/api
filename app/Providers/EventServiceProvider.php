@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Sheba\Customer\Events\AccountingCustomerCreate;
+use App\Sheba\Customer\Events\AccountingCustomerUpdate;
 use App\Sheba\Customer\Listeners\AccountingCustomerCreateListener;
+use App\Sheba\Customer\Listeners\AccountingCustomerUpdateListener;
 use Illuminate\Contracts\Events\Dispatcher as DispatcherContract;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Sheba\Business\BusinessMember\Events\BusinessMemberCreated;
@@ -27,6 +29,9 @@ class EventServiceProvider extends ServiceProvider
     protected $listen = [
         AccountingCustomerCreate::class => [
             AccountingCustomerCreateListener::class
+        ],
+        AccountingCustomerUpdate::class => [
+            AccountingCustomerUpdateListener::class
         ],
         TopUpRequestOfBlockedNumberEvent::class => [
             TopUpRequestOfBlockedNumber::class
