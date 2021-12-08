@@ -41,6 +41,7 @@ class TopUpJob extends MonitoredJob implements ShouldQueue
      * @param TopUpRechargeManager $top_up
      * @param FailedJobProviderInterface|null $logger
      * @return void
+     * @throws \Throwable
      */
     public function handle(TopUpRechargeManager $top_up, FailedJobProviderInterface $logger = null)
     {
@@ -59,7 +60,7 @@ class TopUpJob extends MonitoredJob implements ShouldQueue
     /**
      * @return string
      */
-    private function getConnectionName()
+    private function getConnectionName(): string
     {
         $connections = config('topup_queues.agent_connections');
         $agent_type = strtolower(class_basename($this->agent));
@@ -134,7 +135,7 @@ class TopUpJob extends MonitoredJob implements ShouldQueue
     /**
      * @return TopUpVendor
      */
-    public function getVendor()
+    public function getVendor(): TopUpVendor
     {
         return $this->topUpOrder->vendor;
     }
@@ -142,7 +143,7 @@ class TopUpJob extends MonitoredJob implements ShouldQueue
     /**
      * @return TopUpAgent
      */
-    public function getAgent()
+    public function getAgent(): TopUpAgent
     {
         return $this->topUpOrder->agent;
     }
@@ -150,7 +151,7 @@ class TopUpJob extends MonitoredJob implements ShouldQueue
     private function handleException(Exception $e)
     {
         $payload = $this->job->getRawBody();
-        $id = $this->failedJobLogger->log($this->connection, $this->queue, $payload);
+        $id = $this->failedJobLogger->log($this->connection, $this->queue, $payload, $e);
         logErrorWithExtra($e, [
             config('queue.failed.table') . ".id" => $id
         ]);
