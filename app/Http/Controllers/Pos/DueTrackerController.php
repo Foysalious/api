@@ -190,33 +190,6 @@ class DueTrackerController extends Controller
     /**
      * @param Request $request
      * @param DueTrackerRepository $dueTrackerRepository
-     * @return JsonResponse
-     */
-    public function getDueCalender(Request $request, DueTrackerRepository $dueTrackerRepository) {
-        try {
-            $this->validate($request, ['month' => 'required', 'year' => 'required']);
-            $request->merge(['balance_type' => 'due']);
-            // checking the partner is migrated to accounting
-            if ($accountingDueTrackerRepository->isMigratedToAccounting($request->partner->id)) {
-                $dueList = $accountingDueTrackerRepository->setPartner($request->partner)->getDueList($request, false);
-            } else {
-                $dueList = $dueTrackerRepository->setPartner($request->partner)->getDueList($request, false);
-            }
-            $response = $dueTrackerRepository->generateDueCalender($dueList, $request);
-            return api_response($request, null, 200, ['data' => $response]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            logError($e);
-            return api_response($request, null, 500);
-        }
-
-    }
-
-    /**
-     * @param Request $request
-     * @param DueTrackerRepository $dueTrackerRepository
      * @param $partner
      * @param $entry_id
      * @return JsonResponse
