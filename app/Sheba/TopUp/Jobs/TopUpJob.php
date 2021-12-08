@@ -144,14 +144,18 @@ class TopUpJob extends MonitoredJob implements ShouldQueue
 
     private function handleException(Exception $e)
     {
-        $payload = $this->job->getRawBody();
-        $id = $this->failedJobLogger->log($this->connection, $this->queue, $payload, $e);
+        $id = $this->failedJobLogger->log($this->connection, $this->queue, $this->getPayload(), $e);
         logErrorWithExtra($e, [
             config('queue.failed.table') . ".id" => $id
         ]);
     }
 
-    protected function getTitle(): string
+    protected function getPayload(): string
+    {
+        return $this->job->getRawBody();
+    }
+
+    protected function getTitle()
     {
         $agent = $this->getAgent();
         return "Top up to " . $this->topUpOrder->payee_mobile . " by " . class_basename($agent) . "#" . $agent->id;
