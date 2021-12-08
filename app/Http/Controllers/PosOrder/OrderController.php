@@ -94,6 +94,7 @@ class OrderController extends Controller
         $response = $this->orderService
             ->setPartnerId($partner->id)
             ->setOrderId($order_id)
+            ->setCustomerId($request->customer_id)
             ->setSalesChannelId($request->sales_channel_id)
             ->setSkus($request->skus)
             ->setEmiMonth($request->emi_month)
