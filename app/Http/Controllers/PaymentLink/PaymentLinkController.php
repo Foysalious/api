@@ -150,7 +150,11 @@ class PaymentLinkController extends Controller
                 'interest_paid_by'   => 'sometimes|in:' . implode(',', PaymentLinkStatics::paidByTypes()),
                 'transaction_charge' => 'sometimes|numeric|min:' . PaymentLinkStatics::get_payment_link_commission()
             ]);
+
             if (!$request->user) return api_response($request, null, 404, ['message' => 'User not found']);
+            $available_methods = (new AvailableMethods())->getPublishedPartnerPaymentGateways($request->user);
+            if(!count($available_methods))
+                return api_response($request, null, 404, ['message' => "No active payment method found"]);
             $emi_month_invalidity = Creator::validateEmiMonth($request->all());
             if ($emi_month_invalidity !== false) return api_response($request, null, 400, ['message' => $emi_month_invalidity]);
             $this->creator
