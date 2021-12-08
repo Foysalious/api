@@ -25,11 +25,13 @@ class DueTrackerController extends Controller
     use ModificationFields;
     private $entryRepo;
     private $paymentLinkCreator;
+    private $accDueTrackerRepository;
 
-    public function __construct(EntryRepository $entry_repo, PaymentLinkCreator $paymentLinkCreator)
+    public function __construct(EntryRepository $entry_repo, PaymentLinkCreator $paymentLinkCreator, AccountingDueTrackerRepository $accDueTrackerRepository)
     {
         $this->entryRepo = $entry_repo;
         $this->paymentLinkCreator = $paymentLinkCreator;
+        $this->accDueTrackerRepository = $accDueTrackerRepository;
     }
 
     /**
@@ -150,29 +152,30 @@ class DueTrackerController extends Controller
     public function setDueDateReminder(Request $request, PartnerPosCustomerRepository $partner_pos_customer_repo)
     {
         $this->validate($request, ['due_date_reminder' => 'required|date']);
-        $partner_pos_customer = PartnerPosCustomer::byPartnerAndCustomer($request->partner->id, $request->customer_id)->first();
-        if (empty($partner_pos_customer)) throw new InvalidPartnerPosCustomer();
-        $this->setModifier($request->partner);
-        $partner_pos_customer_repo->update($partner_pos_customer, ['due_date_reminder' => $request->due_date_reminder]);
+        $data = ['due_date_reminder' => $request->due_date_reminder];
+        if ($this->accDueTrackerRepository->isMigratedToAccounting($request->partner->id)) {
+            $this->accDueTrackerRepository->updateDueDate($request->customer_id, $data);
+        } else {
+            $partner_pos_customer = PartnerPosCustomer::byPartnerAndCustomer($request->partner->id, $request->customer_id)->first();
+            if (empty($partner_pos_customer)) throw new InvalidPartnerPosCustomer();
+            $this->setModifier($request->partner);
+            $partner_pos_customer_repo->update($partner_pos_customer, $data);
+        }
         return api_response($request, null, 200);
     }
 
     /**
      * @param Request $request
      * @param DueTrackerRepository $dueTrackerRepository
-     * @param AccountingDueTrackerRepository $accountingDueTrackerRepository
      * @return JsonResponse
      */
-    public function dueDateWiseCustomerList(
-        Request $request,
-        DueTrackerRepository $dueTrackerRepository,
-        AccountingDueTrackerRepository $accountingDueTrackerRepository
-    ) {
+    public function dueDateWiseCustomerList(Request $request, DueTrackerRepository $dueTrackerRepository)
+    {
         try {
             $request->merge(['balance_type' => 'due']);
             // checking the partner is migrated to accounting
-            if ($accountingDueTrackerRepository->isMigratedToAccounting($request->partner->id)) {
-                $dueList = $accountingDueTrackerRepository->setPartner($request->partner)->getDueList($request, false);
+            if ($this->accDueTrackerRepository->isMigratedToAccounting($request->partner->id)) {
+                $dueList = $this->accDueTrackerRepository->setPartner($request->partner)->getDueList($request, false);
             } else {
                 $dueList = $dueTrackerRepository->setPartner($request->partner)->getDueList($request, false);
             }
@@ -187,14 +190,9 @@ class DueTrackerController extends Controller
     /**
      * @param Request $request
      * @param DueTrackerRepository $dueTrackerRepository
-     * @param AccountingDueTrackerRepository $accountingDueTrackerRepository
      * @return JsonResponse
      */
-    public function getDueCalender(
-        Request $request,
-        DueTrackerRepository $dueTrackerRepository,
-        AccountingDueTrackerRepository $accountingDueTrackerRepository
-    ) {
+    public function getDueCalender(Request $request, DueTrackerRepository $dueTrackerRepository) {
         try {
             $this->validate($request, ['month' => 'required', 'year' => 'required']);
             $request->merge(['balance_type' => 'due']);
