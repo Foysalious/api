@@ -152,7 +152,7 @@ class DueTrackerController extends Controller
     public function setDueDateReminder(Request $request, PartnerPosCustomerRepository $partner_pos_customer_repo)
     {
         $this->validate($request, ['due_date_reminder' => 'required|date']);
-        $data = ['due_date_reminder' => $request->due_date_reminder];
+        $data['due_date_reminder'] = $request->due_date_reminder;
         if ($this->accDueTrackerRepository->isMigratedToAccounting($request->partner->id)) {
             $this->accDueTrackerRepository->updateDueDate($request->customer_id, $data);
         } else {
