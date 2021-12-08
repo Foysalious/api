@@ -183,8 +183,8 @@ class AccountingRepository extends BaseRepository
         $data['total_discount'] = isset($request->total_discount) ? (double)$request->total_discount : 0;
         $data['total_vat'] = isset($request->total_vat) ? (double)$request->total_vat : 0;
         $data['delivery_charge'] = isset($request->delivery_charge) ? (double)$request->delivery_charge : 0;
-        $data['bank_transaction_charge'] = 0;
-        $data['interest'] = 0;
+        $data['bank_transaction_charge'] = $request->bank_transaction_charge ?? 0;
+        $data['interest'] = $request->interest ?? 0;
         $data['details'] = $request->details ?? null;
         $data['reference'] = $request->reference ?? null;
         $data['paid_by'] = $request->paid_by ?? null;
