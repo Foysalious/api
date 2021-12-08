@@ -237,6 +237,11 @@ class PaymentLinkController extends Controller
             ]);
             $purpose = 'Due Collection';
             if (!$request->user) return api_response($request, null, 404, ['message' => 'User not found']);
+            if ($request->user instanceof Partner) {
+                $available_methods = (new AvailableMethods())->getPublishedPartnerPaymentGateways($request->user);
+                if (!count($available_methods))
+                    return api_response($request, null, 404, ['message' => "No active payment method found"]);
+            }
             if ($request->has('customer_id')) $customer = PosCustomer::find($request->customer_id);
 
             $this->creator->setAmount($request->amount)
