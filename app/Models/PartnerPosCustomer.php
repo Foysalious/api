@@ -1,11 +1,13 @@
 <?php namespace App\Models;
 
+use App\Sheba\Customer\Events\AccountingCustomerCreate;
 use Illuminate\Database\Eloquent\Model;
 
 class PartnerPosCustomer extends Model
 {
     protected $guarded = ['id'];
 
+    public static $savedEventClass =AccountingCustomerCreate::class;
     public function customer()
     {
         return $this->belongsTo(PosCustomer::class);
