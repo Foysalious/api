@@ -190,12 +190,21 @@ class PosCustomerService
 
     private function deleteCustomerFromPosOrderService()
     {
-        $this->posOrderServerClient->delete('api/v1/partners/' . $this->partner->id . '/customers/' . $this->customerId);
+        try {
+            $this->posOrderServerClient->delete('api/v1/partners/' . $this->partner->id . '/customers/' . $this->customerId);
+        } catch (\Exception $e) {
+            return true;
+        }
+
     }
 
     private function deleteUserFromAccountingService()
     {
-        $this->posCustomerRepository->deleteCustomerFromDueTracker($this->partner, $this->customerId);
+        try {
+            $this->posCustomerRepository->deleteCustomerFromDueTracker($this->partner, $this->customerId);
+        } catch (AccountingEntryServerError $e) {
+            return true;
+        }
     }
 
     public function showCustomerListByPartnerId()
