@@ -105,6 +105,12 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Sheba Platform Ltd.'),
     ],
 
+
+    'business_from' => [
+        'address' => env('BUSINESS_MAIL_FROM_ADDRESS', 'noreply@sheba-business.com'),
+        'name' => env('BUSINESS_MAIL_FROM_NAME', 'sBusiness'),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Sendmail System Path
