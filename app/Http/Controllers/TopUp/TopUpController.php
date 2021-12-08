@@ -241,8 +241,9 @@ class TopUpController extends Controller
                 ->setMobile(BDMobileFormatter::format($value->$mobile_field))
                 ->setAmount($value->$amount_field)
                 ->setAgent($agent)
-                ->setVendorId($vendor_id)
-                ->setName($value->$name_field);
+                ->setVendorId($vendor_id);
+
+            if (property_exists($value, $name_field)) $request->setName($value->$name_field);
 
             $topup_order = $creator->setTopUpRequest($request)->create();
             if (!$topup_order) return;
