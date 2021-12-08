@@ -153,13 +153,13 @@ class OrderPlace
     {
         Redis::set("sDelivery_" . $this->posOrder->id, json_encode($info));
         $data = [
-            'delivery_vendor_name' => $info['logistic_partner_id'],
+            //'delivery_vendor_name' => $info['logistic_partner_id'],
             'address' => $info['delivery_address']['address'],
             'delivery_district' => $info['delivery_address']['district'],
             'delivery_thana' => $info['delivery_address']['thana'],
             'delivery_status' => $info['status'],
             'delivery_request_id' => $info['uid'],
-            'status' => OrderStatuses::SHIPPED
+            //'status' => OrderStatuses::SHIPPED
         ];
         if ($this->posOrder && !$this->posOrder->is_migrated) return $this->posOrderRepository->update($this->posOrder, $data);
         return $this->orderService->setPartnerId($this->partner->id)->setOrderId($this->posOrderId)->storeDeliveryInformation($data);

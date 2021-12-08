@@ -144,6 +144,18 @@ class PosOrderDataMigration
 
     private function generatePosOrdersMigrationData()
     {
+        $own_delivery = json_encode([
+           'name' => 'own_delivery',
+           'image' => null
+        ]);
+
+        $paperfly = json_encode([
+           'name' => 'paperfly',
+           'image'  => config('pos_delivery.vendor_list_v2.paperfly.icon')
+        ]);
+
+        $delivery_vendor_query = DB::raw("(CASE WHEN pos_orders.delivery_vendor_name = 'own_delivery' THEN '$own_delivery'  WHEN pos_orders.delivery_vendor_name = 'sdelivery' THEN '$paperfly' ELSE NULL END) as delivery_vendor");
+
         $pos_orders = PosOrder::where('partner_id', $this->partner->id)->where(function ($q) {
             $q->where('is_migrated', null)->orWhere('is_migrated', 0);
         })->withTrashed()
@@ -158,7 +170,7 @@ class PosOrderDataMigration
                         ELSE "2" 
                         END) AS sales_channel_id'), 'pos_orders.emi_month',
                 'pos_orders.bank_transaction_charge', 'pos_orders.interest', 'pos_orders.delivery_charge',
-                'pos_orders.address AS delivery_address', 'pos_orders.delivery_vendor_name', 'pos_orders.delivery_request_id',
+                'pos_orders.address AS delivery_address', $delivery_vendor_query, 'pos_orders.delivery_request_id',
                 'pos_orders.delivery_thana', 'pos_orders.delivery_district', 'pos_orders.note', 'pos_orders.status','pos_orders.voucher_id',
                 DB::raw('SUBTIME(pos_orders.created_at,"6:00:00") as created_at, SUBTIME(pos_orders.updated_at,"6:00:00") as updated_at, 
                 SUBTIME(pos_orders.deleted_at,"6:00:00") as deleted_at'),

@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use phpDocumentor\Reflection\Types\Null_;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
+use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\Pos\Repositories\PosCustomerRepository;
 
 class PosCustomerService
@@ -189,12 +190,21 @@ class PosCustomerService
 
     private function deleteCustomerFromPosOrderService()
     {
-        $this->posOrderServerClient->delete('api/v1/partners/' . $this->partner->id . '/customers/' . $this->customerId);
+        try {
+            $this->posOrderServerClient->delete('api/v1/partners/' . $this->partner->id . '/customers/' . $this->customerId);
+        } catch (\Exception $e) {
+            return true;
+        }
+
     }
 
     private function deleteUserFromAccountingService()
     {
-        $this->posCustomerRepository->deleteCustomerFromDueTracker($this->partner, $this->customerId);
+        try {
+            $this->posCustomerRepository->deleteCustomerFromDueTracker($this->partner, $this->customerId);
+        } catch (AccountingEntryServerError $e) {
+            return true;
+        }
     }
 
     public function showCustomerListByPartnerId()
@@ -281,7 +291,16 @@ class PosCustomerService
      */
     private function getDueAndPayableAmount()
     {
-        return $this->posCustomerRepository->getDueAmountFromDueTracker($this->partner, $this->customerId);
+        $data = ['due' => null, 'payable' => null];
+        try {
+            return $this->posCustomerRepository->getDueAmountFromDueTracker($this->partner, $this->customerId);
+        } catch (AccountingEntryServerError $e) {
+            return $data;
+        } catch (InvalidPartnerPosCustomer $e) {
+            return $data;
+        } catch (ExpenseTrackingServerError $e) {
+            return $data;
+        }
     }
 
     private function getCustomerListByPartnerId()

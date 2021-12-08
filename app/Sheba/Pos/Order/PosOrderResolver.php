@@ -35,9 +35,9 @@ class PosOrderResolver
 
     /**
      * @param mixed $orderId
-     * @return PosOrderResolver
+     * @return PosOrderResolver|null
      */
-    public function setOrderId($orderId)
+    public function setOrderId($orderId): ?PosOrderResolver
     {
         $this->orderId = $orderId;
         $oldPosOrder = PosOrder::where('id', $orderId)->select('id', 'sales_channel', 'customer_id', 'partner_id', 'is_migrated', 'created_at', 'emi_month')->first();
@@ -70,6 +70,7 @@ class PosOrderResolver
                 ->setDue($newPosOrder->due)->setSalesChannel($newPosOrder->sales_channel)->setIsMigrated(1)
                 ->setCustomer($customerObject)->setPartner($partnerObject)->setType(PosOrderTypes::NEW_SYSTEM)
                 ->setCreatedAt($newPosOrder->created_at)->setEmiMonth($newPosOrder->emi_month);
+
         }
         return $this;
     }

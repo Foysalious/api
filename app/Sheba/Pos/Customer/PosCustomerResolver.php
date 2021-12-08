@@ -5,6 +5,7 @@ use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
 use App\Sheba\PosCustomerService\SmanagerUserServerClient;
 use App\Sheba\UserMigration\Modules;
+use Exception;
 
 class PosCustomerResolver
 {
@@ -43,7 +44,11 @@ class PosCustomerResolver
         return $this;
     }
 
-    public function get(): PosCustomerObject
+    /**
+     * @return PosCustomerObject|null
+     * @throws Exception
+     */
+    public function get(): ?PosCustomerObject
     {
         if ($this->partner->isMigrated(Modules::POS)) {
             $customer = $this->smanagerUserServerClient->get('api/v1/partners/' . $this->partner->id . '/users/' . $this->customerId);
