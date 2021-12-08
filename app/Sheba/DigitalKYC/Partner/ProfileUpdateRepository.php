@@ -14,11 +14,12 @@ class ProfileUpdateRepository
     public function createData(Request $request)
     {
         $profile = $request->manager_resource->profile;
+        $dob = date("y-m-d", strtotime($request->dob));
 
         if ($request->type != 'image') {
             $data['name'] = $request->name;
             $data['nid_no'] = $profile->nid_verified == 1 ? $profile->nid_no : $request->nid_no;
-            $data['dob'] = $request->dob;
+            $data['dob'] = $dob;
         }
         if ($request->type != 'info') {
             $data['nid_image_front'] = $request->nid_image_front;
