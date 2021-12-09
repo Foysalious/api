@@ -16,5 +16,5 @@ abstract class MonitoredJob extends Job
         $this->title = $this->getTitle();
     }
 
-    abstract protected function getTitle();
+    abstract protected function getTitle(): string;
 }
