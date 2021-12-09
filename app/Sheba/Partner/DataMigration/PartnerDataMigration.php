@@ -2,6 +2,7 @@
 
 
 use App\Models\Partner;
+use App\Models\PosCategory;
 use App\Sheba\InventoryService\InventoryServerClient;
 use App\Sheba\PosCustomerService\SmanagerUserServerClient;
 use App\Sheba\PosOrderService\PosOrderServerClient;
@@ -10,9 +11,11 @@ use App\Sheba\UserMigration\UserMigrationRepository;
 use App\Sheba\UserMigration\UserMigrationService;
 use Exception;
 use Sheba\Dal\UserMigration\UserStatus;
+use DB;
 
 class PartnerDataMigration
 {
+    const CHUNK_SIZE = 10;
 
     /**
      * @var Partner
@@ -107,9 +110,14 @@ class PartnerDataMigration
     public function migrate()
     {
         try {
+            $data = $this->getShebaPublishedPosCategoriesForMigration();
+            $chunks = array_chunk($data, self::CHUNK_SIZE);
+            /** @var InventoryServerClient $InventoryClient */
+            $InventoryClient = app(InventoryServerClient::class);
+            foreach ($chunks as $chunk) {
+                $InventoryClient->post('api/v1/partners/'.$this->partner->id.'/migrate', ['pos_categories' => $chunk]);
+            }
             if (!$this->isInventoryMigrated || $this->partner->posSetting) {
-                /** @var InventoryServerClient $InventoryClient */
-                $InventoryClient = app(InventoryServerClient::class);
                 $InventoryClient->post('api/v1/partners/'.$this->partner->id.'/migrate', ['partner_info' => $this->generatePartnerMigrationDataForInventory()]);
             }
             if (!$this->isPosOrderMigrated || $this->partner->posSetting || $this->partner->qr_code_account_type || $this->partner->qr_code_image) {
@@ -138,5 +146,18 @@ class PartnerDataMigration
             $class = $userMigrationSvc->resolveClass(Modules::POS);
             $class->setUserId($this->partner->id)->setModuleName(Modules::POS)->updateStatus(UserStatus::FAILED);
         }
+    }
+
+    public function getShebaPublishedPosCategoriesForMigration()
+    {
+        return PosCategory::where(function ($q) {
+            $q->where('is_published_for_sheba', 1);
+        })->where(function ($q) {
+            $q->where('is_migrated', null)->orWhere('is_migrated', 0);
+        })->select('id', 'parent_id', 'name', 'thumb',
+            'banner', 'app_thumb', 'app_banner', 'is_published_for_sheba','order',
+            'icon', 'icon_png', 'created_by_name', 'updated_by_name',
+            DB::raw('SUBTIME(created_at,"6:00:00") as created_at, SUBTIME(updated_at,"6:00:00") as updated_at')
+        )->get()->toArray();
     }
 }
