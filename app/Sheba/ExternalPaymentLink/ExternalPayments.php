@@ -236,11 +236,12 @@ class ExternalPayments
     }
 
     /**
+     * @param null $partner
      * @return bool
      */
-    public function getGatewayStatus()
+    public function getGatewayStatus($partner = null): bool
     {
-        $partner = $this->client->partner;
-        return PgwStoreAccount::where('user_id', $partner->id)->where('user_type', get_class($partner))->where('status', 1)->first() ? true : false;
+        $partner = $partner ? : $this->client->partner;
+        return (bool)$partner->pgwStoreAccounts()->published()->first();
     }
 }
