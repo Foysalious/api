@@ -5,7 +5,7 @@ use App\Models\PartnerPosCustomer;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Queue\SerializesModels;
 
-class AccountingCustomerUpdate extends Event
+class PartnerPosCustomerEvent extends Event
 {
     use SerializesModels, DispatchesJobs;
 
