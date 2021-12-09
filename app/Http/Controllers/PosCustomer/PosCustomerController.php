@@ -84,7 +84,7 @@ class PosCustomerController extends Controller
     {
         $partner = $request->auth_user->getPartner();
         $orders = $this->posCustomerService->setPartner($partner)->setCustomerId($customerId)->getOrders();
-        return http_response($request, null, 200, ['message' => 'Successful', 'data' => $orders]);
+        return http_response($request, null, 200, ['message' => 'Successful', 'data' => $orders['data']]);
     }
 
     /**
