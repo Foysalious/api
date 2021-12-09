@@ -36,6 +36,9 @@ class Partner extends TopUpCommission
     {
         /** @var \App\Models\Partner $partner */
         $partner = $this->agent;
+        if (!$this->transaction) {
+            return;
+        }
         (new JournalCreateRepository())
             ->setTypeId($partner->id)
             ->setSource($this->transaction)
@@ -71,6 +74,9 @@ class Partner extends TopUpCommission
     {
         /** @var \App\Models\Partner $partner */
         $partner = $this->agent;
+        if (!$this->transaction) {
+            return;
+        }
         (new JournalCreateRepository())
             ->setTypeId($partner->id)
             ->setSource($this->transaction)

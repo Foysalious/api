@@ -1,5 +1,6 @@
 <?php namespace App\Http\Middleware;
 
+use App\Exceptions\NotFoundException;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Redis;
 use Sheba\AccessToken\Exception\AccessTokenNotValidException;
@@ -60,6 +61,8 @@ class AccessTokenMiddleware
             if (!$this->isRouteAccessAllowed($partner)) {
                 return api_response($request, null, 403, ["message" => "Sorry! Your migration is running. Please be patient."]);
             }
+
+            $this->setExtraDataToRequest($request);
         } catch (JWTException $e) {
             if ($is_digigo) Redis::set($key_name, "4 (" . $e->getMessage() . "): $now : " . (isset($token) ? $token : "null"));
             return $this->formApiResponse($request, null, 401, ['message' => "Your session has expired. Try Login"]);
@@ -68,8 +71,6 @@ class AccessTokenMiddleware
         } catch (AccessTokenNotValidException $e) {
             return $this->formApiResponse($request, null, 401, ['message' => "Your session has expired. Try Login"]);
         }
-
-        $this->setExtraDataToRequest($request);
 
         return $next($request);
     }
