@@ -17,6 +17,7 @@ class PartnerPosCustomerEvent extends Event
     private $name;
     private $mobile;
     private $partner_id;
+    private $pro_pic;
 
     public function getCustomerId()
     {
@@ -38,6 +39,11 @@ class PartnerPosCustomerEvent extends Event
         return $this->mobile;
     }
 
+    public function getCustomerProfilePicture()
+    {
+        return $this->pro_pic;
+    }
+
     /**
      * AccountingCustomerCreate constructor.
      * @param PartnerPosCustomer $customer
@@ -46,8 +52,8 @@ class PartnerPosCustomerEvent extends Event
     {
         $this->id = $customer->customer_id;
         $this->partner_id = $customer->partner_id;
-        $this->name = $customer->customer->profile->name;
+        $this->name = $customer->nick_name??$customer->customer->profile->name;
         $this->mobile = $customer->customer->profile->mobile;
-
+        $this->pro_pic = $customer->customer->profile->pro_pic;
     }
 }

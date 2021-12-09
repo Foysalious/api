@@ -11,6 +11,7 @@ class AccountingCustomerCreator
     private $partner;
 
     private $client;
+    private $picture;
 
     public function __construct(AccountingEntryClient $client)
     {
@@ -35,6 +36,12 @@ class AccountingCustomerCreator
         return $this;
     }
 
+    public function setCustomerProfilePicture($picture)
+    {
+        $this->picture = $picture;
+        return $this;
+    }
+
     public function setCustomerMobile($mobile)
     {
         $this->mobile = $mobile;
@@ -46,7 +53,8 @@ class AccountingCustomerCreator
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'mobile' => $this->mobile
+            'mobile' => $this->mobile,
+            'pro_pic'=> $this->picture
         ];
     }
 
