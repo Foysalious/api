@@ -155,7 +155,7 @@ class TopUpJob extends MonitoredJob implements ShouldQueue
         return $this->job->getRawBody();
     }
 
-    protected function getTitle()
+    protected function getTitle(): string
     {
         $agent = $this->getAgent();
         return "Top up to " . $this->topUpOrder->payee_mobile . " by " . class_basename($agent) . "#" . $agent->id;
