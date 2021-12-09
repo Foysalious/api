@@ -597,6 +597,12 @@ return [
             'short_name' => 'DDN',
             'prefix' => 'D',
             'department' => 'AC'
+        ],
+        'KAM'        => [
+            'name'      => 'KAM',
+            'short_name'=> 'KAM',
+            'prefix'    =>  'K',
+            'department'=>  'SD'
         ]
     ],
     'SERVICE_UNITS' => [
