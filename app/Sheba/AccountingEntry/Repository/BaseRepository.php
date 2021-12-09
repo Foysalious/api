@@ -139,11 +139,4 @@ class BaseRepository
         if (in_array($userStatus, $arr)) return false;
         return true;
     }
-
-    public function updateDueDate($customerId, array $data)
-    {
-        /** @var AccountingCustomerRepository $customerRepo */
-        $customerRepo = app(AccountingCustomerRepository::class);
-        return $customerRepo->updateCustomer($customerId, $data);
-    }
 }
