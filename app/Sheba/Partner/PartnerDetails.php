@@ -6,6 +6,7 @@ use App\Models\PartnerResource;
 use App\Models\ReviewQuestionAnswer;
 use App\Repositories\ReviewRepository;
 use App\Sheba\Partner\Delivery\Methods;
+use App\Sheba\PosOrderService\Services\OrderService;
 use App\Sheba\UserMigration\Modules;
 use Carbon\Carbon;
 use Exception;
@@ -94,11 +95,11 @@ class PartnerDetails
             'status',
             'logo',
             'address',
-            'delivery_charge',
             'is_webstore_published'
         ]);
         $info->put('mobile', $partner->getContactNumber());
         $info->put('banner', $this->getWebStoreBanner());
+        $info->put('delivery_charge', $this->getdeliveryCharge());
         $info->put('delivery_method', $this->getDeliveryMethod());
         $can_use_webstore = $partner->isMigrated(Modules::POS) ? 1 : 0;
         $info->put('can_use_webstore', $can_use_webstore);
@@ -120,6 +121,15 @@ class PartnerDetails
         // $info->put('badge', $this->partner->resolveBadge());
         // $info->put('geo_informations', $this->getGeoInfo());
         return $info;
+    }
+
+    public function getDeliveryCharge()
+    {
+        if(!$this->partner->isMigrated(Modules::POS))
+            return $this->partner->delivery_charge;
+        /** @var OrderService $orderService */
+        $orderService = app(OrderService::class);
+        return $orderService->setPartnerId($this->partner->id)->getPartnerDetails()['partner']['delivery_charge'];
     }
 
     private function getDeliveryMethod()
