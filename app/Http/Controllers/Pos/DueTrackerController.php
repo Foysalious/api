@@ -176,11 +176,12 @@ class DueTrackerController extends Controller
             $request->merge(['balance_type' => 'due']);
             // checking the partner is migrated to accounting
             if ($this->accDueTrackerRepository->isMigratedToAccounting($request->partner->id)) {
-                $dueList = $this->accDueTrackerRepository->setPartner($request->partner)->getDueList($request, false);
+                $response = $this->accDueTrackerRepository->setPartner($request->partner)->dueDateWiseCustomerList();
             } else {
                 $dueList = $dueTrackerRepository->setPartner($request->partner)->getDueList($request, false);
+                $response = $dueTrackerRepository->generateDueReminders($dueList, $request->partner);
             }
-            $response = $dueTrackerRepository->generateDueReminders($dueList, $request->partner);
+
             return api_response($request, null, 200, ['data' => $response]);
         } catch (\Throwable $e) {
             logError($e);
