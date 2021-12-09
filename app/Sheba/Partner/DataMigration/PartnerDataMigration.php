@@ -2,6 +2,7 @@
 
 
 use App\Models\Partner;
+use App\Models\PartnerPosService;
 use App\Models\PosCategory;
 use App\Sheba\InventoryService\InventoryServerClient;
 use App\Sheba\PosCustomerService\SmanagerUserServerClient;
@@ -10,6 +11,7 @@ use App\Sheba\UserMigration\Modules;
 use App\Sheba\UserMigration\UserMigrationRepository;
 use App\Sheba\UserMigration\UserMigrationService;
 use Exception;
+use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\Dal\UserMigration\UserStatus;
 use DB;
 
@@ -109,14 +111,22 @@ class PartnerDataMigration
 
     public function migrate()
     {
-        try {
-            $data = $this->getShebaPublishedPosCategoriesForMigration();
-            $chunks = array_chunk($data, self::CHUNK_SIZE);
-            /** @var InventoryServerClient $InventoryClient */
-            $InventoryClient = app(InventoryServerClient::class);
-            foreach ($chunks as $chunk) {
-                $InventoryClient->post('api/v1/partners/'.$this->partner->id.'/migrate', ['pos_categories' => $chunk]);
+
+        $data = $this->getShebaPublishedPosCategoriesForMigration();
+        $chunks = array_chunk($data, self::CHUNK_SIZE);
+        /** @var InventoryServerClient $InventoryClient */
+        $InventoryClient = app(InventoryServerClient::class);
+        foreach ($chunks as $chunk) {
+            try {
+                $InventoryClient->post('api/v1/partners/' . $this->partner->id . '/migrate', ['pos_categories' => $chunk]);
+                $this->storeLogs(1, $chunk);
+            } catch (Exception $e) {
+                $this->storeLogs(0, $chunk);
+                app('sentry')->captureException($e);
             }
+        }
+
+        try {
             if (!$this->isInventoryMigrated || $this->partner->posSetting) {
                 $InventoryClient->post('api/v1/partners/'.$this->partner->id.'/migrate', ['partner_info' => $this->generatePartnerMigrationDataForInventory()]);
             }
@@ -137,7 +147,7 @@ class PartnerDataMigration
 
     }
 
-    private function storeLogs($isMigrated = 1)
+    private function storeLogs($isMigrated = 1, $chunk = [])
     {
         if ($isMigrated == 0) {
             /** @var UserMigrationService $userMigrationSvc */
@@ -145,6 +155,10 @@ class PartnerDataMigration
             /** @var UserMigrationRepository $class */
             $class = $userMigrationSvc->resolveClass(Modules::POS);
             $class->setUserId($this->partner->id)->setModuleName(Modules::POS)->updateStatus(UserStatus::FAILED);
+        }
+        if (!empty($chunk)) {
+            $ids = array_column($chunk, 'id');
+            PosCategory::whereIn('id', $ids)->update(['is_migrated' => $isMigrated]);
         }
     }
 
