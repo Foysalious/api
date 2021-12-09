@@ -10,7 +10,7 @@ if (!function_exists('logError')) {
      * @param array $extra
      * @return void
      */
-    function logError(Throwable $exception, $request = null, $message = null, $extra = [])
+    function logError(Throwable $exception, $request = null, $message = null, array $extra = [])
     {
         $log = (new ErrorLog())->setException($exception);
         if ($request) $log->setRequest($request);
@@ -19,7 +19,6 @@ if (!function_exists('logError')) {
         $log->send();
     }
 }
-
 
 if (!function_exists('logErrorWithExtra')) {
     /**
