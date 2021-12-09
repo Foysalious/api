@@ -5,6 +5,11 @@ use App\Models\Partner;
 use App\Sheba\InventoryService\InventoryServerClient;
 use App\Sheba\PosCustomerService\SmanagerUserServerClient;
 use App\Sheba\PosOrderService\PosOrderServerClient;
+use App\Sheba\UserMigration\Modules;
+use App\Sheba\UserMigration\UserMigrationRepository;
+use App\Sheba\UserMigration\UserMigrationService;
+use Exception;
+use Sheba\Dal\UserMigration\UserStatus;
 
 class PartnerDataMigration
 {
@@ -101,20 +106,37 @@ class PartnerDataMigration
 
     public function migrate()
     {
-        if (!$this->isInventoryMigrated || $this->partner->posSetting) {
-            /** @var InventoryServerClient $InventoryClient */
-            $InventoryClient = app(InventoryServerClient::class);
-            $InventoryClient->post('api/v1/partners/'.$this->partner->id.'/migrate', ['partner_info' => $this->generatePartnerMigrationDataForInventory()]);
+        try {
+            if (!$this->isInventoryMigrated || $this->partner->posSetting) {
+                /** @var InventoryServerClient $InventoryClient */
+                $InventoryClient = app(InventoryServerClient::class);
+                $InventoryClient->post('api/v1/partners/'.$this->partner->id.'/migrate', ['partner_info' => $this->generatePartnerMigrationDataForInventory()]);
+            }
+            if (!$this->isPosOrderMigrated || $this->partner->posSetting || $this->partner->qr_code_account_type || $this->partner->qr_code_image) {
+                /** @var PosOrderServerClient $posOrderClient */
+                $posOrderClient = app(PosOrderServerClient::class);
+                $posOrderClient->post('api/v1/partners/'.$this->partner->id.'/migrate', ['partner_info' => $this->generatePartnerMigrationDataForPosOrder()]);
+            }
+            if (!$this->isPosCustomerMigrated) {
+                /** @var SmanagerUserServerClient $userClient */
+                $userClient = app(SmanagerUserServerClient::class);
+                $userClient->post('api/v1/partners/'.$this->partner->id.'/migrate', ['partner_info' => $this->generatePartnerMigrationDataToSmanagerUser()]);
+            }
+        } catch (Exception $e) {
+            $this->storeLogs(0);
+            app('sentry')->captureException($e);
         }
-        if (!$this->isPosOrderMigrated || $this->partner->posSetting || $this->partner->qr_code_account_type || $this->partner->qr_code_image) {
-            /** @var PosOrderServerClient $posOrderClient */
-            $posOrderClient = app(PosOrderServerClient::class);
-            $posOrderClient->post('api/v1/partners/'.$this->partner->id.'/migrate', ['partner_info' => $this->generatePartnerMigrationDataForPosOrder()]);
-        }
-        if (!$this->isPosCustomerMigrated) {
-            /** @var SmanagerUserServerClient $userClient */
-            $userClient = app(SmanagerUserServerClient::class);
-            $userClient->post('api/v1/partners/'.$this->partner->id.'/migrate', ['partner_info' => $this->generatePartnerMigrationDataToSmanagerUser()]);
+
+    }
+
+    private function storeLogs($isMigrated = 1)
+    {
+        if ($isMigrated == 0) {
+            /** @var UserMigrationService $userMigrationSvc */
+            $userMigrationSvc = app(UserMigrationService::class);
+            /** @var UserMigrationRepository $class */
+            $class = $userMigrationSvc->resolveClass(Modules::POS);
+            $class->setUserId($this->partner->id)->setModuleName(Modules::POS)->updateStatus(UserStatus::FAILED);
         }
     }
 }
