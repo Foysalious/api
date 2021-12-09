@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\PartnerPosCustomer;
 use App\Sheba\AccountingEntry\Repository\AccountingDueTrackerRepository;
 use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -152,9 +153,9 @@ class DueTrackerController extends Controller
     public function setDueDateReminder(Request $request, PartnerPosCustomerRepository $partner_pos_customer_repo)
     {
         $this->validate($request, ['due_date_reminder' => 'required|date']);
-        $data['due_date_reminder'] = $request->due_date_reminder;
+        $data['due_date_reminder'] = Carbon::parse($request->due_date_reminder)->format('Y-m-d H:i:s');
         if ($this->accDueTrackerRepository->isMigratedToAccounting($request->partner->id)) {
-            $this->accDueTrackerRepository->updateDueDate($request->customer_id, $data);
+            $this->accDueTrackerRepository->updateDueDate($request->customer_id, $request->partner->id, $data);
         } else {
             $partner_pos_customer = PartnerPosCustomer::byPartnerAndCustomer($request->partner->id, $request->customer_id)->first();
             if (empty($partner_pos_customer)) throw new InvalidPartnerPosCustomer();
