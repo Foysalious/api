@@ -31,7 +31,7 @@ class UserMigrationController extends Controller
     public function getMigrationList(Request $request): JsonResponse
     {
         $banner = null;
-        $modules = $request->partner->id == 216938 ? config('user_migration.modules_for_test') : $this->modules;
+        $modules = $request->partner->id == 216939 ? config('user_migration.modules_for_test') : $this->modules;
         $userId = $request->partner->id;
         foreach ($modules as $key => $value) {
             /** @var UserMigrationRepository $class */
