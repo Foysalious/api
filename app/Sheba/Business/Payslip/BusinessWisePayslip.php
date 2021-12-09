@@ -94,8 +94,8 @@ class BusinessWisePayslip
                 $joining_date = $business_member->join_date;
                 if ($last_pay_day && $joining_date <= Carbon::parse($last_pay_day) || !$last_pay_day && $joining_date <= Carbon::now()->subMonth()) $joining_date = null;
                 $prorated_time_frame = null;
-                $start_date = $start_date ? $start_date->subMonth()->format('Y-m-d') : ($last_pay_day ? Carbon::parse($last_pay_day)->format('Y-m-d') : Carbon::now()->subMonth()->format('Y-m-d'));
-                $end_date = $end_date ? $end_date->subDay()->format('Y-m-d') : Carbon::now()->subDay()->format('Y-m-d');
+                $start_date = $start_date ? Carbon::parse($start_date)->subMonth()->format('Y-m-d') : ($last_pay_day ? Carbon::parse($last_pay_day)->format('Y-m-d') : Carbon::now()->subMonth()->format('Y-m-d'));
+                $end_date = $end_date ? Carbon::parse($end_date)->subDay()->format('Y-m-d') : Carbon::now()->subDay()->format('Y-m-d');
                 $time_frame = $this->timeFrame->forDateRange($start_date, $end_date);
                 if ($joining_date) {
                     $prorated_time_frame = app(TimeFrame::class);
