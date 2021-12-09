@@ -43,7 +43,8 @@ class PosCustomerController extends Controller
                 unset($customer_list[$i]['mobile']);
             }
             unset($customer_list[$i]['_id']);
-
+            $customer_list[$i]['image'] = $customer_list[$i]['pro_pic'];
+            unset($customer_list[$i]['pro_pic']);
         }
         return http_response($request, null, 200, ["code" => 200, 'message' => 'Successful', 'customers' => $customer_list]);
     }
