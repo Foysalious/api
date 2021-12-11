@@ -232,7 +232,7 @@ class PartnerPosService extends BaseModel
         /** @var Partner $partner */
         $partner = $this->partner;
         if(!$partner->isMigrated(Modules::EXPENSE)) return $this->stock;
-        return $this->batches()->latest()->first()->stock ? $this->batches()->latest()->first()->stock : null;
+        return $this->batches()->latest()->first() ? $this->batches()->latest()->first()->stock : null;
     }
 
     public function getStock()
@@ -248,6 +248,6 @@ class PartnerPosService extends BaseModel
         /** @var Partner $partner */
         $partner = $this->partner;
         if(!$partner->isMigrated(Modules::EXPENSE)) return $this->cost;
-        return $this->batches()->latest()->first()->cost ? $this->batches()->latest()->first()->cost : 0.0;
+        return $this->batches()->latest()->first() ? $this->batches()->latest()->first()->cost : 0.0;
     }
 }
