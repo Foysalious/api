@@ -41,6 +41,8 @@ class PartnerDataMigrationToPosOrderJob extends Job implements ShouldQueue
         try {
             $this->attempts < 2 ? $this->migrate() : $this->storeLogs(0);;
         } catch (Exception $e) {
+            $this->data['message'] = $e->getMessage();
+            Redis::set("MigrationFail::" . $this->partner->id . '::order::' . $this->queueNo, json_encode($this->data));
             $this->storeLogs(0);
             app('sentry')->captureException($e);
         }
