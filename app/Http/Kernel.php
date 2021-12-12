@@ -130,7 +130,6 @@ class Kernel extends HttpKernel
         'shebaServer' => ShebaNetworkMiddleware::class,
         'terminate' => TerminatingMiddleware::class,
         'accounting.auth' => AccountingAuthMiddleware::class,
-        'userMigration.auth' => UserMigrationMiddleware::class,
         'partner.status'=> PartnerStatusAuthMiddleware::class,
         'concurrent_request' => ConcurrentRequestMiddleware::class,
         'userMigration.auth' => UserMigrationMiddleware::class,
