@@ -105,7 +105,7 @@ class JobDiscountHandler
 
     public function hasDiscount()
     {
-        return !is_null($this->discount) && (double) $this->discount !== 0;
+        return !is_null($this->discount) && $this->discount !== 0;
     }
 
     public function create(Job $job)
