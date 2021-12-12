@@ -185,10 +185,7 @@ class InventoryDataMigration
                 $q->where('is_migrated', null)->orWhere('is_migrated', 0);
             })->withTrashed()->select('id', 'partner_id', 'pos_category_id AS category_id', 'name', 'app_thumb',
                 'description', 'price', 'unit', 'wholesale_price', 'warranty', 'warranty_unit', 'weight', 'weight_unit',
-                'vat_percentage', 'publication_status', 'is_published_for_shop', DB::raw('(CASE 
-                        WHEN name = "Others" THEN "1" 
-                        ELSE "0" 
-                        END) AS is_default'), 'created_by_name', 'updated_by_name',
+                'vat_percentage', 'publication_status', 'is_published_for_shop', 'created_by_name', 'updated_by_name',
                 DB::raw('SUBTIME(created_at,"6:00:00") as created_at, 
                 SUBTIME(updated_at,"6:00:00") as updated_at, 
                 SUBTIME(deleted_at,"6:00:00") as deleted_at'))
