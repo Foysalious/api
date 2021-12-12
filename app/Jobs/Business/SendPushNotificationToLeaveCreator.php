@@ -17,22 +17,24 @@ class SendPushNotificationToLeaveCreator extends BusinessQueue
 
     public function handle()
     {
-        $status = LeaveStatusPresenter::statuses()[$this->leave->status];
-        $business_member = $this->leave->businessMember;
+        if ($this->attempts() < 2) {
+            $status = LeaveStatusPresenter::statuses()[$this->leave->status];
+            $business_member = $this->leave->businessMember;
 
-        $topic = config('sheba.push_notification_topic_name.employee') . $business_member->member->id;
-        $channel = config('sheba.push_notification_channel_name.employee');
-        $sound = config('sheba.push_notification_sound.employee');
-        $push_notification_data = [
-            "title" => 'Leave request update',
-            "message" => "Your leave request has been $status",
-            "event_type" => 'leave',
-            "event_id" => $this->leave->id,
-            "sound" => "notification_sound",
-            "channel_id" => $channel,
-            "click_action" => "FLUTTER_NOTIFICATION_CLICK"
-        ];
+            $topic = config('sheba.push_notification_topic_name.employee') . $business_member->member->id;
+            $channel = config('sheba.push_notification_channel_name.employee');
+            $sound = config('sheba.push_notification_sound.employee');
+            $push_notification_data = [
+                "title" => 'Leave request update',
+                "message" => "Your leave request has been $status",
+                "event_type" => 'leave',
+                "event_id" => $this->leave->id,
+                "sound" => "notification_sound",
+                "channel_id" => $channel,
+                "click_action" => "FLUTTER_NOTIFICATION_CLICK"
+            ];
 
-        $this->pushNotification->send($push_notification_data, $topic, $channel, $sound);
+            $this->pushNotification->send($push_notification_data, $topic, $channel, $sound);
+        }
     }
 }
