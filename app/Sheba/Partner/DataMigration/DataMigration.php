@@ -14,7 +14,7 @@ use Sheba\ModificationFields;
 class DataMigration
 {
     const MAX_PARTNER_POS_CATEGORIES = 50;
-    const MAX_PARTNER_POS_SERVICES = 20;
+    const MAX_PARTNER_POS_SERVICES = 50;
     const MAX_POS_ORDERS = 50;
     const MAX_PARTNER_POS_CUSTOMERS = 50;
     use ModificationFields;
