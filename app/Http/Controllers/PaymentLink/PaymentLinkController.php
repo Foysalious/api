@@ -15,6 +15,7 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use Sheba\ModificationFields;
 use Sheba\Partner\PartnerStatuses;
+use Sheba\Payment\AvailableMethods;
 use Sheba\PaymentLink\Creator;
 use Sheba\PaymentLink\PaymentLink;
 use Sheba\PaymentLink\PaymentLinkClient;
@@ -119,6 +120,9 @@ class PaymentLinkController extends Controller
                 if ($receiver instanceof Partner) {
                     if (!AccessManager::canAccess(AccessManager::Rules()->DIGITAL_COLLECTION, $receiver->subscription->getAccessRules()) || in_array($receiver->status, [PartnerStatuses::BLACKLISTED, PartnerStatuses::PAUSED]) || !(int)$link->getIsActive())
                         return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
+                    $available_methods = (new AvailableMethods())->getPublishedPartnerPaymentGateways($receiver);
+                    if(!count($available_methods))
+                        return api_response($request, $link, 404, ['message' => "No active payment method found"]);
 
                 }
                 if ((int)$link->getIsActive()) {
@@ -146,7 +150,13 @@ class PaymentLinkController extends Controller
                 'interest_paid_by'   => 'sometimes|in:' . implode(',', PaymentLinkStatics::paidByTypes()),
                 'transaction_charge' => 'sometimes|numeric|min:' . PaymentLinkStatics::get_payment_link_commission()
             ]);
+
             if (!$request->user) return api_response($request, null, 404, ['message' => 'User not found']);
+            if ($request->user instanceof Partner) {
+                $available_methods = (new AvailableMethods())->getPublishedPartnerPaymentGateways($request->user);
+                if (!count($available_methods))
+                    return api_response($request, null, 404, ['message' => "No active payment method found"]);
+            }
             $emi_month_invalidity = Creator::validateEmiMonth($request->all());
             if ($emi_month_invalidity !== false) return api_response($request, null, 400, ['message' => $emi_month_invalidity]);
             $this->creator
@@ -227,6 +237,11 @@ class PaymentLinkController extends Controller
             ]);
             $purpose = 'Due Collection';
             if (!$request->user) return api_response($request, null, 404, ['message' => 'User not found']);
+            if ($request->user instanceof Partner) {
+                $available_methods = (new AvailableMethods())->getPublishedPartnerPaymentGateways($request->user);
+                if (!count($available_methods))
+                    return api_response($request, null, 404, ['message' => "No active payment method found"]);
+            }
             if ($request->has('customer_id')) $customer = PosCustomer::find($request->customer_id);
 
             $this->creator->setAmount($request->amount)
