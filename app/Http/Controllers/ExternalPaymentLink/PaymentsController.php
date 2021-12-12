@@ -93,13 +93,13 @@ class PaymentsController extends Controller
         try {
             $ip = getIp();
             if(!in_array($ip, config('external_payment_link.sales_validated_ip')))
-                return api_response($request, null, 502, ["message" => "The ip `$ip` you are accessing from is not whitelisted."]);
+                return response()->json(["message" => "The ip `$ip` you are accessing from is not whitelisted.", "code" => 502], 502);
             $partner = Partner::find($partner_id);
             $status = $payments->getGatewayStatus($partner);
-            return api_response($request, $payments, 200, ['data' => $status]);
+            return response()->json(['data' => $status, "message" => "Successful", "code" => 200]);
         }  catch (\Throwable $e) {
             logError($e);
-            return api_response($request, null, 500);
+            return response()->json(["message" => "Something went wrong", "code" => 500], 500);
         }
     }
 }
