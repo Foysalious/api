@@ -15,7 +15,7 @@ class InvalidTopupDataHandler extends Handler
         $response = [
             'code' => $this->getCode(),
             'message' => $this->getMessage(),
-            'excel_errors' => $exception->getExcelErrors()
+            'excel_errors' => $exception->getExcelErrorsFileLink()
         ];
 
         return response()->json($response);

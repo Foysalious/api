@@ -63,6 +63,7 @@ class DataFormatValidator extends Validator
      * @throws InvalidTopupData
      * @throws InvalidTotalAmount
      * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
+     * @throws Exception
      */
     public function check(): bool
     {
@@ -74,40 +75,29 @@ class DataFormatValidator extends Validator
         $halt_top_up = false;
         $this->excelDataFormatError->setAgent($this->agent)->setFile($filePath);
         if ($this->total <= 0) {
-            $top_up_excel_data_format_errors = $this->excelDataFormatError->takeCompletedAction();
+            $file_with_errors = $this->excelDataFormatError->uploadFileToCdnAndGetLink();
             unlink($filePath);
-            throw new InvalidTopupData($top_up_excel_data_format_errors, 'Check The Excel Data Format Properly. There may be excel header or column missing.', 406);
+            throw new InvalidTopupData($file_with_errors, 'Check The Excel Data Format Properly. There may be excel header or column missing.', 420);
         }
         $total_recharge_amount = 0;
 
-        $mobile_field = TopUpExcel::MOBILE_COLUMN_TITLE;
-        $amount_field = TopUpExcel::AMOUNT_COLUMN_TITLE;
-        $operator_field = TopUpExcel::VENDOR_COLUMN_TITLE;
-        $connection_type = TopUpExcel::TYPE_COLUMN_TITLE;
+        $this->data->each(function ($value, $key) use (&$halt_top_up, &$total_recharge_amount) {
 
-        $this->data->each(function ($value, $key) use (&$halt_top_up, &$total_recharge_amount, $mobile_field, $amount_field, $operator_field, $connection_type) {
-            if (!$this->isMobileNumberValid($value->$mobile_field) && !$this->isAmountInteger($value->$amount_field)) {
-                $halt_top_up = true;
-                $excel_error = 'Mobile number Invalid, Amount Should be Integer';
-            } elseif (!$this->isMobileNumberValid($value->$mobile_field)) {
-                $halt_top_up = true;
-                $excel_error = 'Mobile number Invalid';
-            } elseif (!$this->isAmountInteger($value->$amount_field)) {
-                $halt_top_up = true;
-                $excel_error = 'Amount Should be Integer';
-            } elseif ($this->isOtfNumberBlockedForBusiness() && $this->isAmountBlocked($value->$operator_field, $value->$connection_type,$value->$amount_field)) {
-                $halt_top_up = true;
-                $excel_error = 'The recharge amount is blocked due to OTF activation issue';
-            } elseif ($this->isPrepaidAmountLimitExceedForBusiness($amount_field, $value, $connection_type)) {
-                $halt_top_up = true;
-                $excel_error = 'The amount exceeded your topUp prepaid limit';
+            $excel_error = $this->hasErrorOnColumn($value);
+
+            if (is_null($excel_error)) {
+                $total_recharge_amount += $value->{TopUpExcel::AMOUNT_COLUMN_TITLE};
             } else {
-                $excel_error = null;
+                $this->excelDataFormatError->setRow($key + 2)->updateExcel($excel_error);
+                $halt_top_up = true;
             }
-
-            $total_recharge_amount += $value->$amount_field;
-            $this->excelDataFormatError->setRow($key + 2)->updateExcel($excel_error);
         });
+
+        if ($halt_top_up) {
+            $file_with_errors = $this->excelDataFormatError->uploadFileToCdnAndGetLink();
+            unlink($filePath);
+            throw new InvalidTopupData($file_with_errors, 'Check The Excel Data Format Properly.', 420);
+        }
 
         $agent_wallet = floatval($this->agent->wallet);
         if ($total_recharge_amount > $agent_wallet) {
@@ -115,17 +105,41 @@ class DataFormatValidator extends Validator
             throw new InvalidTotalAmount($total_recharge_amount, $agent_wallet, 'You do not have sufficient balance to recharge.', 403);
         }
 
-        if ($halt_top_up) {
-            $top_up_excel_data_format_errors = $this->excelDataFormatError->takeCompletedAction();
-            unlink($filePath);
-            throw new InvalidTopupData($top_up_excel_data_format_errors, 'Check The Excel Data Format Properly.', 420);
-        }
-
         $this->bulkExcelCdnFilePath = $this->excel->saveTopupFileToCDN();
 
         unlink($filePath);
 
         return parent::check();
+    }
+
+    /**
+     * @param $value
+     * @return string|null
+     * @throws Exception
+     */
+    private function hasErrorOnColumn($value): ?string
+    {
+        $mobile_field = TopUpExcel::MOBILE_COLUMN_TITLE;
+        $amount_field = TopUpExcel::AMOUNT_COLUMN_TITLE;
+        $operator_field = TopUpExcel::VENDOR_COLUMN_TITLE;
+        $connection_type = TopUpExcel::TYPE_COLUMN_TITLE;
+
+        $is_mobile_invalid = !$this->isMobileNumberValid($value->$mobile_field);
+        $is_amount_invalid = !$this->isAmountInteger($value->$amount_field);
+
+        if ($is_mobile_invalid && $is_amount_invalid) {
+            return 'Mobile number Invalid, Amount Should be Integer';
+        } elseif ($is_mobile_invalid) {
+            return 'Mobile number Invalid';
+        } elseif ($is_amount_invalid) {
+            return 'Amount Should be Integer';
+        } elseif ($this->isOtfNumberBlockedForBusiness() && $this->isAmountBlocked($value->$operator_field, $value->$connection_type, $value->$amount_field)) {
+            return 'The recharge amount is blocked due to OTF activation issue';
+        } elseif ($this->isPrepaidAmountLimitExceedForBusiness($amount_field, $value, $connection_type)) {
+            return 'The amount exceeded your topUp prepaid limit';
+        } else {
+           return null;
+        }
     }
 
     /**
@@ -143,8 +157,7 @@ class DataFormatValidator extends Validator
      */
     private function isAmountInteger($amount): bool
     {
-        if (preg_match('/^\d+$/', $amount)) return true;
-        return false;
+        return preg_match('/^\d+$/', $amount);
     }
 
     /**
