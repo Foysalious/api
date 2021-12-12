@@ -275,4 +275,17 @@ class AccountingDueTrackerRepository extends BaseRepository
             return null;
         }
     }
+
+    public function updateDueDate($customerId, $partnerId, array $data)
+    {
+        /** @var AccountingCustomerRepository $customerRepo */
+        $customerRepo = app(AccountingCustomerRepository::class);
+        return $customerRepo->setUserId($partnerId)->updateCustomer($customerId, $data);
+    }
+
+    public function dueDateWiseCustomerList()
+    {
+        $url = "api/due-list/due-date-wise-customer-list";
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
+    }
 }
