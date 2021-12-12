@@ -91,7 +91,7 @@ class CategoryController extends Controller
     {
         $partner = $request->auth_user->getPartner();
         $categoryList = $this->categoryService->getPartnerWiseCategoryList($partner->id);
-        return http_response($request, null, 201, $categoryList);
+        return http_response($request, null, 200, $categoryList);
     }
 
 }
