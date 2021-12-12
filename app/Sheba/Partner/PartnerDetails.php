@@ -99,7 +99,7 @@ class PartnerDetails
         ]);
         $info->put('mobile', $partner->getContactNumber());
         $info->put('banner', $this->getWebStoreBanner());
-        $info->put('delivery_charge', $this->getdeliveryCharge());
+        $info->put('delivery_charge', (double) $this->getdeliveryCharge());
         $info->put('delivery_method', $this->getDeliveryMethod());
         $can_use_webstore = $partner->isMigrated(Modules::POS) ? 1 : 0;
         $info->put('can_use_webstore', $can_use_webstore);
