@@ -65,9 +65,7 @@ class ErrorLog
         if ($this->errorMessage) $this->context['message'] = $this->errorMessage;
         if (count($this->context) > 0) {
             $this->sentry->configureScope(function (Scope $scope) {
-                foreach ($this->context as $key => $value) {
-                    $scope->setContext($key, $value);
-                }
+                $scope->setContext("custom_context", $this->context);
             });
         }
 
