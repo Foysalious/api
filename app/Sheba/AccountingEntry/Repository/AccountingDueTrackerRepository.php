@@ -156,28 +156,35 @@ class AccountingDueTrackerRepository extends BaseRepository
     {
         $url = "api/due-list/" . $customerId . "/balance";
         $result = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
-        $customer = $result['customer'];
-        if (is_null($customer)) {
+        $customer = [];
+
+        if (is_null($result['customer'])) {
             /** @var PosCustomerResolver $posCustomerResolver */
             $posCustomerResolver = app(PosCustomerResolver::class);
-            $customer = $posCustomerResolver->setCustomerId($customerId)->setPartner($this->partner->id)->get();
-            if (empty($customer)) {
+            $posCustomer = $posCustomerResolver->setCustomerId($customerId)->setPartner($this->partner->id)->get();
+            if (empty($posCustomer)) {
                 throw new InvalidPartnerPosCustomer();
             }
+            $customer['id'] = $posCustomer->id;
+            $customer['name'] = $posCustomer->name;
+            $customer['mobile'] = $posCustomer->mobile;
+            $customer['avatar'] = $posCustomer->pro_pic;
+            $customer['due_date_reminder'] = null;
+            $customer['is_supplier'] = $posCustomer->is_supplier;
+        } else {
+            $customer['id'] = $result['customer']['id'];
+            $customer['name'] = $result['customer']['name'];
+            $customer['mobile'] = $result['customer']['mobile'];
+            $customer['avatar'] = $result['customer']['proPic'];
+            $customer['due_date_reminder'] = $result['customer']['dueDateReminder'];
+            $customer['is_supplier'] = (bool) $result['customer']['isSupplier'];
         }
 
         $total_debit = $result['other_info']['total_debit'];
         $total_credit = $result['other_info']['total_credit'];
         $result['balance']['color'] = $total_debit > $total_credit ? '#219653' : '#DC1E1E';
         return [
-            'customer' => [
-                'id' => $customer->id,
-                'name' => !empty($partner_pos_customer) && $partner_pos_customer->nick_name ? $partner_pos_customer->nick_name : $customer->profile->name,
-                'mobile' => $customer->profile->mobile,
-                'avatar' => $customer->profile->pro_pic,
-                'due_date_reminder' => !empty($partner_pos_customer) ? $partner_pos_customer->due_date_reminder : null,
-                'is_supplier' => !empty($partner_pos_customer) ? $partner_pos_customer->is_supplier : 0
-            ],
+            'customer' => $customer,
             'partner' => $this->getPartnerInfo($this->partner),
             'stats' => $result['stats'],
             'other_info' => $result['other_info'],
