@@ -106,15 +106,18 @@ class Updater
         $partner = $this->service->partner;
         if($partner->isMigrated(Modules::EXPENSE)) {
             $lastBatchData = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->latest()->first();
+            if(!$lastBatchData)
+                $lastBatchData = PartnerPosServiceBatch::create(["partner_pos_service_id" => $this->service->id]);
             $this->setOldCost($lastBatchData->cost);
             $this->setOldStock($lastBatchData->stock);
         }
+
         if (!empty($this->updatedData)) {
             $old_service = clone $this->service;
             $this->serviceRepo->update($this->service, $this->updatedData);
             $this->storeLogs($old_service, $this->updatedData);
         }
-        if(!empty($this->batchData)) {
+        if(!empty($this->batchData) && isset($lastBatchData)) {
             $this->batchData['partner_pos_service_id'] = $this->service->id;
             $lastBatchData->update($this->batchData);
         }
