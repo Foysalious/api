@@ -161,7 +161,7 @@ class AccountingDueTrackerRepository extends BaseRepository
         if (is_null($result['customer'])) {
             /** @var PosCustomerResolver $posCustomerResolver */
             $posCustomerResolver = app(PosCustomerResolver::class);
-            $posCustomer = $posCustomerResolver->setCustomerId($customerId)->setPartner($this->partner->id)->get();
+            $posCustomer = $posCustomerResolver->setCustomerId($customerId)->setPartner($this->partner)->get();
             if (empty($posCustomer)) {
                 throw new InvalidPartnerPosCustomer();
             }
