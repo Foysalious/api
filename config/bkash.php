@@ -32,5 +32,19 @@ return [
         'username' => env('BKASH_PAYOUT_USERNAME'),
         'password' => env('BKASH_PAYOUT_PASSWORD'),
         'url' => env('BKASH_PAYOUT_URL')
+    ],
+    'sManager'=>[
+        'app_key' => env('BKASH_APP_KEY_SMANAGER'),
+        'app_secret' => env('BKASH_APP_SECRET_SMANAGER'),
+        'username' => env('BKASH_USERNAME_SMANAGER'),
+        'password' => env('BKASH_PASSWORD_SMANAGER'),
+        'url' => env('BKASH_URL_SMANAGER')
+    ],
+    'marketplace'=>[
+        'app_key' => env('BKASH_APP_KEY_MARKETPLACE'),
+        'app_secret' => env('BKASH_APP_SECRET_MARKETPLACE'),
+        'username' => env('BKASH_USERNAME_MARKETPLACE'),
+        'password' => env('BKASH_PASSWORD_MARKETPLACE'),
+        'url' => env('BKASH_URL_MARKETPLACE')
     ]
 ];

@@ -60,4 +60,11 @@ class BkashAuthBuilder
             throw new Exception('Invalid User Type');
         }
     }
+
+    public static function sManagerStore(){
+        return self::generateBkashAuth('smanager');
+    }
+    public static function marketplaceStore(){
+        return self::generateBkashAuth('marketplace');
+    }
 }
