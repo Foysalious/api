@@ -14,7 +14,7 @@
             <td style="width: 8%">{{++$key}}</td>
             <td style="width: 40%">{{$item['customer_name']}}</td>
             <td style="text-align: center; width: 20%">{{$item['customer_mobile']}}</td>
-            @if($item['balance_type'] === 'account_receivable')
+            @if($item['balance_type'] === 'account_receivable' || $item['balance_type'] === 'due')
                 <td style="text-align: center;color: #219653; width: 16%">0</td>
                 <td style="text-align: center;color: #DC1E1E; width: 16%">{{$item['balance'] }}</td>
             @else
