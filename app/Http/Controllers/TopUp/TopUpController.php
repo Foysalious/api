@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\TopUp;
 
+use App\Exceptions\DoNotReportException;
 use App\Http\Controllers\Controller;
 use App\Models\Affiliate;
 use App\Models\Business;
@@ -10,12 +11,21 @@ use App\Sheba\TopUp\TopUpBulkRequest\Formatter as TopUpBulkRequestFormatter;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\ValidationException;
+use Jose\Factory\JWEFactory;
+use Jose\Factory\JWKFactory;
+use Sheba\ComplianceInfo\ComplianceInfo;
+use Sheba\ComplianceInfo\Statics;
 use Sheba\Dal\AuthenticationRequest\Purpose;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
 
 use Sheba\Dal\TopupOrder\TopUpOrderRepository;
 use Sheba\ModificationFields;
+use Sheba\OAuth2\AccountServerAuthenticationError;
+use Sheba\OAuth2\AccountServerNotWorking;
+use Sheba\OAuth2\WrongPinError;
+use Sheba\TopUp\Bulk\Exception\InvalidExtension;
 use Sheba\TopUp\Bulk\RequestStatus;
 use Sheba\TopUp\Bulk\Validator\DataFormatValidator;
 use Sheba\TopUp\Bulk\Validator\ExtensionValidator;
@@ -23,6 +33,7 @@ use Sheba\TopUp\Bulk\Validator\SheetNameValidator;
 
 use Sheba\TopUp\ConnectionType;
 use Sheba\OAuth2\AuthUser;
+use Sheba\TopUp\Exception\PinMismatchException;
 use Sheba\TopUp\History\RequestBuilder;
 use Sheba\TopUp\OTF\OtfAmount;
 use Sheba\TopUp\TopUpAgent;
@@ -90,11 +101,11 @@ class TopUpController extends Controller
      * @param VerifyPin $verifyPin
      * @param TopUpAgentBlocker $agent_blocker
      * @return JsonResponse
-     * @throws \App\Exceptions\DoNotReportException
-     * @throws \Sheba\OAuth2\AccountServerAuthenticationError
-     * @throws \Sheba\OAuth2\AccountServerNotWorking
-     * @throws \Sheba\OAuth2\WrongPinError
-     * @throws \Sheba\TopUp\Exception\PinMismatchException
+     * @throws DoNotReportException
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     * @throws WrongPinError
+     * @throws PinMismatchException
      */
     public function topUp(Request $request, $user, TopUpRequest $top_up_request, Creator $creator, UserAgentInformation $userAgentInformation, VerifyPin $verifyPin, TopUpAgentBlocker $agent_blocker)
     {
@@ -194,12 +205,18 @@ class TopUpController extends Controller
      * @param VendorFactory $vendor
      * @param TopUpRequest $top_up_request
      * @param Creator $creator
-     * @param TopUpSpecialAmount $special_amount
      * @return JsonResponse
+     * @throws ValidationException
+     * @throws DoNotReportException
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     * @throws WrongPinError
+     * @throws InvalidExtension
+     * @throws PinMismatchException
      * @throws Exception
      */
     public function bulkTopUp(Request $request, VerifyPin $verifyPin, VendorFactory $vendor, TopUpRequest $top_up_request,
-                              Creator $creator, TopUpSpecialAmount $special_amount): JsonResponse
+                              Creator $creator): JsonResponse
     {
         $this->validate($request, ['file' => 'required|file', 'password' => 'required']);
         $request->merge(['user' => Business::find(192)]);
@@ -230,29 +247,30 @@ class TopUpController extends Controller
         $name_field = TopUpExcel::NAME_COLUMN_TITLE;
 
         $data->each(function ($value, $key) use (
-            $creator, $vendor, $agent, $top_up_request, $total, $bulk_request,
+            $request, $creator, $vendor, $agent, $top_up_request, $total, $bulk_request,
             $operator_field, $type_field, $mobile_field, $amount_field, $name_field
         ) {
             if (!$value->$operator_field) return;
 
             $vendor_id = $vendor->getIdByName($value->$operator_field);
-            $request = $top_up_request->setType($value->$type_field)
+            $top_up_request = $top_up_request->setType($value->$type_field)
                 ->setBulkId($bulk_request->id)
                 ->setMobile(BDMobileFormatter::format($value->$mobile_field))
                 ->setAmount($value->$amount_field)
                 ->setAgent($agent)
                 ->setVendorId($vendor_id);
 
-            if (property_exists($value, $name_field)) $request->setName($value->$name_field);
+            if (property_exists($value, $name_field)) $top_up_request->setName($value->$name_field);
 
-            $topup_order = $creator->setTopUpRequest($request)->create();
+            $topup_order = $creator->setTopUpRequest($top_up_request)->create();
             if (!$topup_order) return;
 
             $this->storeBulkRequestNumbers($bulk_request->id, BDMobileFormatter::format($value->$mobile_field), $topup_order->vendor_id);
             if ($top_up_request->hasError()) {
-                $sentry = app('sentry');
-                $sentry->user_context(['request' => $request->all(), 'message' => $top_up_request->getErrorMessage()]);
-                $sentry->captureException(new Exception("Bulk Topup request error"));
+                logErrorWithExtra(new Exception("Bulk Topup request error"), [
+                    'request' => $request->all(),
+                    'message' => $top_up_request->getErrorMessage()
+                ]);
                 return;
             }
 

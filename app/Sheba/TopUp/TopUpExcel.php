@@ -3,6 +3,7 @@
 class TopUpExcel
 {
     const SHEET = "data";
+    const SHEET_INDEX = 0;
 
     const MOBILE_COLUMN = "A";
     const VENDOR_COLUMN = "B";
@@ -21,4 +22,9 @@ class TopUpExcel
     const NAME_COLUMN_TITLE = "name";
     const CREATED_DATE_TITLE = "created_date";
     const MESSAGE_COLUMN_TITLE = "message";
+
+    const MOBILE_COLUMN_INDEX = 0;
+    const VENDOR_COLUMN_INDEX = 1;
+    const TYPE_COLUMN_INDEX = 2;
+    const AMOUNT_COLUMN_INDEX = 3;
 }
