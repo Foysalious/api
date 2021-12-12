@@ -29,11 +29,13 @@ class PayReportDetailsTransformer extends TransformerAbstract
     public function transform(Payslip $payslip)
     {
         $payroll_components = $payslip->salaryBreakdown()['payroll_component'];
+        $joining_log = $payslip->joining_log;
         return [
             'employee_info' => $this->employeeInfo(),
             'addition' => $this->getPayrollComponentBreakdown($payroll_components, Type::ADDITION),
             'deduction' => $this->getPayrollComponentBreakdown($payroll_components, Type::DEDUCTION),
             'salary_info' => $this->salaryInfo($payslip),
+            'joining_month' => $joining_log ? Carbon::parse($joining_log)->format('F') : null
         ];
     }
 

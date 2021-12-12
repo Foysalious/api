@@ -13,6 +13,9 @@ class MemberAuthMiddleware extends AccessTokenMiddleware
         $auth_user = $request->auth_user;
         $member = Member::find($auth_user->getMemberId());
         if (!$member) throw new NotFoundException('Member not found.', 404);
+
+        if (!(int)$request->member) throw new NotFoundException('Member should not be undefined.', 404);
+
         if ($member->id != (int)$request->member) throw new NotFoundException("Member doesn't match .", 409);
         $request->merge(['member' => $member]);
         $business = $member->businesses->first();

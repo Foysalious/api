@@ -3,9 +3,15 @@
 use App\Models\Partner;
 use App\Models\PosOrder;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
+use App\Sheba\Pos\Order\Invoice\InvoiceService;
+use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Sms\BusinessType;
 use Sheba\Sms\FeatureType;
 use Exception;
+use Sheba\AccountingEntry\Accounts\Accounts;
+use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Expense\SmsPurchase;
+use Sheba\AccountingEntry\Accounts\RootAccounts;
+use Sheba\AccountingEntry\Repository\JournalCreateRepository;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
@@ -30,24 +36,16 @@ class SmsHandler
         $partner = $this->order->partner;
         $partner->reload();
         if (empty($this->order->customer)) return;
-
-        $service_break_down = [];
-        $this->order->items->each(function ($item) use (&$service_break_down) {
-            $service_break_down[$item->id] = $item->service_name . ': ' . $item->getTotal();
-        });
-
-        $service_break_down = implode(',', $service_break_down);
-        $sms                = $this->getSms($service_break_down);
+        $sms                = $this->getSms();
         $sms_cost           = $sms->estimateCharge();
         if ((double)$partner->wallet < $sms_cost) return;
+        //freeze money amount check
+        WalletTransactionHandler::isDebitTransactionAllowed($partner, $sms_cost, 'এস-এম-এস পাঠানোর');
 
-        try {
-            $sms->setBusinessType(BusinessType::SMANAGER)
-                ->setFeatureType(FeatureType::POS)
-                ->shoot();
-        } catch(\Throwable $e) {
-        }
-
+        $sms->setBusinessType(BusinessType::SMANAGER)
+            ->setFeatureType(FeatureType::POS)
+            ->shoot();
+            $transaction = (new WalletTransactionHandler())->setModel($partner)->setAmount($sms_cost)->setType(Types::debit())->setLog($sms_cost . " BDT has been deducted for sending pos order details sms (order id: {$this->order->id})")->setTransactionDetails([])->setSource(TransactionSources::SMS)->store();
         (new WalletTransactionHandler())
             ->setModel($partner)
             ->setAmount($sms_cost)
@@ -56,20 +54,35 @@ class SmsHandler
             ->setTransactionDetails([])
             ->setSource(TransactionSources::SMS)
             ->store();
+        $this->storeJournal($partner, $transaction);
+    }
+
+    private function storeJournal($partner, $transaction) {
+        (new JournalCreateRepository())->setTypeId($partner->id)
+            ->setSource($transaction)
+            ->setAmount($transaction->amount)
+            ->setDebitAccountKey(SmsPurchase::SMS_PURCHASE_FROM_SHEBA)
+            ->setCreditAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
+            ->setDetails("Pos sms sent charge")
+            ->setReference("")
+            ->store();
     }
 
     /**
-     * @param $service_break_down
      * @return SmsHandlerRepo
      * @throws Exception
      */
-    private function getSms($service_break_down)
+    private function getSms()
     {
+        $invoice_link =   $this->order->invoice ? : $this->resolveInvoiceLink() ;
+        /** @var Partner $partner */
+        $partner=$this->order->partner;
         $message_data = [
             'order_id'           => $this->order->partner_wise_order_id,
-            'service_break_down' => $service_break_down,
             'total_amount'       => $this->order->getNetBill(),
-            'partner_name'       => $this->order->partner->name
+            'partner_name'       => $this->order->partner->name,
+            'invoice_link'       => $invoice_link,
+            'company_number'     => $partner->getContactNumber()
         ];
 
         if ($this->order->getDue() > 0) {
@@ -84,5 +97,15 @@ class SmsHandler
             ->setFeatureType(FeatureType::POS)
             ->setBusinessType(BusinessType::SMANAGER)
             ->setMessage($message_data);
+    }
+
+    /**
+     * @throws NotAssociativeArray
+     */
+    private function resolveInvoiceLink()
+    {
+        /** @var InvoiceService $invoiceService */
+        $invoiceService = app(InvoiceService::class)->setPosOrder($this->order);
+        return $invoiceService->generateInvoice()->saveInvoiceLink()->getInvoiceLink();
     }
 }

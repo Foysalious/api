@@ -18,8 +18,9 @@ class ExpenseRepo
     public function index(Request $request, $member)
     {
         try {
-            $expenses = Expense::where('member_id', $member->id)
-                ->select('id', 'member_id', 'amount', 'status', 'remarks', 'type', 'created_at')
+            $business_member = $member->activeBusinessMember->first();
+            $expenses = Expense::where('business_member_id', $business_member->id)
+                ->select('id', 'member_id', 'amount', 'status', 'is_updated_by_super_admin', 'remarks', 'type', 'created_at')
                 ->orderBy('id', 'desc');
 
             if ($request->has('status')) $expenses = $expenses->where('status', $request->status);
@@ -42,9 +43,9 @@ class ExpenseRepo
     {
         try {
             $date = Carbon::createFromFormat('m', $month);
-            $start_date= $date->startOfMonth()->toDateTimeString();
-            $end_date=$date->endOfMonth()->toDateTimeString();
-            $expenses= Expense::where('business_member_id', $request->business_member_id)
+            $start_date = $date->startOfMonth()->toDateTimeString();
+            $end_date = $date->endOfMonth()->toDateTimeString();
+            $expenses = Expense::where('business_member_id', $request->business_member_id)
                 ->whereBetween('created_at', [$start_date, $end_date])
                 ->select('id', 'member_id', 'business_member_id', 'amount', 'status', 'remarks', 'type', 'created_at')
                 ->orderBy('id', 'desc')
@@ -58,7 +59,7 @@ class ExpenseRepo
                 unset($expense->member);
             }
             return $expenses;
-        } catch (Throwable $e){
+        } catch (Throwable $e) {
             return false;
         }
 
@@ -66,13 +67,16 @@ class ExpenseRepo
 
     public function store(Request $request, $member)
     {
+
         try {
+            $business_member = $member->activeBusinessMember->first();
             $expense = new Expense();
             $expense->amount = $request->amount;
             $expense->member_id = $member->id;
-            $expense->business_member_id = $member->businessMember->id;
+            $expense->business_member_id = $business_member->id;
             $expense->remarks = $request->remarks;
             $expense->type = $request->type;
+
             $expense->save();
 
             if ($request['file']) {
@@ -90,13 +94,14 @@ class ExpenseRepo
         try {
             $expense = Expense::where('id', $expense)
                 ->orderBy('created_at', 'DESC')
-                ->select('id', 'member_id', 'business_member_id', 'amount', 'status', 'remarks', 'type', 'created_at')->first();
+                ->select('id', 'member_id', 'business_member_id', 'amount', 'status', 'is_updated_by_super_admin', 'remarks', 'type', 'created_at', 'updated_at')->first();
 
             if (!$expense) return false;
 
             $expense['date'] = $expense->created_at ? $expense->created_at->format('M d') : null;
             $expense['time'] = $expense->created_at ? $expense->created_at->format('h:i A') : null;
-            $expense['can_edit'] = $this->canEdit($expense);
+            $expense['can_edit'] = $expense->is_updated_by_super_admin ? 0 : $this->canEdit($expense);
+            $expense['reason'] = $expense->is_updated_by_super_admin ? "Expense already updated by admin at " .$expense->updated_at->format('d-M-Y h:i A') : null;
 
             if ($this->getAttachments($expense, $request)) $expense['attachment'] = $this->getAttachments($expense, $request);
 
@@ -114,7 +119,7 @@ class ExpenseRepo
         return Carbon::now()->lte($can_edit_until) ? 1 : 0;
     }
 
-    public function update(Request $request, $expense, $member)
+    public function update(Request $request, $expense, $member, $from_web_portal = null)
     {
         try {
             $expense = Expense::find($expense);
@@ -123,6 +128,7 @@ class ExpenseRepo
             $expense->amount = $request->amount;
             if ($request->remarks) $expense->remarks = $request->remarks;
             if ($request->type) $expense->type = $request->type;
+            if ($from_web_portal) $expense->is_updated_by_super_admin = 1;
             $expense->save();
 
             if ($request['file']) $this->storeAttachment($expense, $request, $member);
@@ -184,25 +190,25 @@ class ExpenseRepo
     public function getExpenseByMember($members_ids)
     {
         return Expense::whereIn('member_id', $members_ids)->with([
-                'member' => function ($query) {
-                    $query->select('members.id', 'members.profile_id')->with([
-                        'profile' => function ($query) {
-                            $query->select('profiles.id', 'profiles.name', 'profiles.email', 'profiles.mobile');
-                        },
-                        'businessMember' => function ($q) {
-                            $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id')->with([
-                                'role' => function ($q) {
-                                    $q->select('business_roles.id', 'business_department_id', 'name')->with([
-                                        'businessDepartment' => function ($q) {
-                                            $q->select('business_departments.id', 'business_id', 'name');
-                                        }
-                                    ]);
-                                }
-                            ]);
-                        }
-                    ]);
-                }
-            ])->select('id', 'member_id', 'business_member_id', 'amount', 'type', 'created_at', DB::raw('YEAR(created_at) year, MONTH(created_at) month'), DB::raw('SUM(amount) amount'))
+            'member' => function ($query) {
+                $query->select('members.id', 'members.profile_id')->with([
+                    'profile' => function ($query) {
+                        $query->select('profiles.id', 'profiles.name', 'profiles.email', 'profiles.mobile');
+                    },
+                    'businessMember' => function ($q) {
+                        $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id')->with([
+                            'role' => function ($q) {
+                                $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                                    'businessDepartment' => function ($q) {
+                                        $q->select('business_departments.id', 'business_id', 'name');
+                                    }
+                                ]);
+                            }
+                        ]);
+                    }
+                ]);
+            }
+        ])->select('id', 'member_id', 'business_member_id', 'amount', 'type', 'created_at', DB::raw('YEAR(created_at) year, MONTH(created_at) month'), DB::raw('SUM(amount) amount'))
             ->groupby('year', 'month', 'member_id', 'type')
             ->orderBy('created_at', 'desc');
     }

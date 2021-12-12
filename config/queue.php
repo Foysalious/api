@@ -80,7 +80,19 @@ return [
             'connection' => 'default',
             'queue' => 'business_notification',
             'expire' => 60
-        ]
+        ],
+        'invoice_generation' => [
+            'driver' => 'redis',
+            'connection' => 'default',
+            'queue' => 'invoice_generation',
+            'expire' => 60
+        ],
+        'business_email' => [
+            'driver' => 'redis',
+            'connection' => 'default',
+            'queue' => 'business_email',
+            'expire' => 60
+        ],
         ] + $top_up_queues,
 
     /*

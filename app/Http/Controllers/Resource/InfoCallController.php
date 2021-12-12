@@ -169,9 +169,8 @@ class InfoCallController extends Controller
         $resource = $auth_user->getResource();
         $this->setModifier($resource);
         $service = Service::select('name')->where('id', $request->service_id)->get();
-        if ($request->has('service_id')) $service_name = $service[0]['name'];
-        else $service_name = $request->service_name;
-        $profile_exists = Profile::select('id', 'name', 'address','email')->where('mobile', 'like', '%'.$request->mobile.'%')->get()->toArray();
+        $service_name = $request->has('service_id') ? $service[0]['name'] : $request->service_name;
+
         $data = [
             'priority' => 'High',
             'flag' => 'Red',
@@ -186,13 +185,17 @@ class InfoCallController extends Controller
             'follow_up_date' => Carbon::now()->addMinutes(30),
             'intended_closing_date' => Carbon::now()->addMinutes(30)
         ];
+
+        $profile_exists = Profile::select('id', 'name', 'address','email')->where('mobile', formatMobile($request->mobile))->first();
+
         if ($profile_exists) {
-            $customer = Customer::where('profile_id', $profile_exists[0]['id'])->get();
-            $profile = $customer[0]->profile;
-            $data['customer_id'] = $customer[0]->id;
-            $data['customer_name'] = $profile->name;
-            $data['customer_email'] = $profile->email;
-            $data['customer_address'] = $profile->address;
+            $customer = $profile_exists->customer;
+            if ($customer) {
+                $data['customer_id'] = $customer->id;
+                $data['customer_name'] = $profile_exists->name;
+                $data['customer_email'] = $profile_exists->email;
+                $data['customer_address'] = $profile_exists->address;
+            }
         }
         $info_call = $this->infoCallRepository->create($data);
         return api_response($request, $info_call, 200, ['message'=>'Successful','info_call' => $info_call]);

@@ -1,5 +1,6 @@
 <?php namespace App\Console;
 
+use App\Console\Commands\GeneratePayslip;
 use App\Console\Commands\ProductUpload;
 use App\Console\Commands\SetReleaseVersion;
 use App\Console\Commands\TestCommand;
@@ -23,6 +24,7 @@ class Kernel extends ConsoleKernel
         TopUpTestCommand::class,
         Payslip::class,
         TestCommand::class,
+        GeneratePayslip::class
     ];
 
     /**

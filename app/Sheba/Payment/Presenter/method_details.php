@@ -30,7 +30,7 @@ $cbl            = [
     'name'           => 'City Bank (American Express)',
     'name_bn'        => null,
     'asset'          => 'cbl',
-    'method_name'    => 'cbl',
+    'method_name'    => 'online',
     'icon'           => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/payments/City+Bank.png',
     'cash_in_charge' => 0,
 ];

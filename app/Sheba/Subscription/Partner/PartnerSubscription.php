@@ -21,7 +21,7 @@ class PartnerSubscription
 
     public function setRequestedPackage($id = null)
     {
-        $package_id = $id ? $id : config('sheba.partner_basic_packages_id');
+        $package_id = $id ? $id : config('sheba.partner_registration_package_id');
         $this->requested_package = PartnerSubscriptionPackage::find($package_id);
         return $this;
     }
@@ -78,12 +78,12 @@ class PartnerSubscription
             'last_billing_date'          => $partner->last_billed_date ? $partner->last_billed_date->format('Y-m-d') : null,
             'next_billing_date'          => $partner->periodicBillingHandler()->nextBillingDate() ? $partner->periodicBillingHandler()->nextBillingDate()->format('Y-m-d'): null,
             'validity_remaining_in_days' => $partner->last_billed_date ? $partner->periodicBillingHandler()->remainingDay() : null,
-            'is_auto_billing_activated'  => ($partner->auto_billing_activated) ? true : false,
+            'is_auto_billing_activated'  => (bool)($partner->auto_billing_activated),
             'static_message'             => $partner_subscription_package->id === (int)SubscriptionStatics::getLitePackageID() ? SubscriptionStatics::getLitePackageMessage() : '',
             'dynamic_message'            => SubscriptionStatics::getPackageMessage($partner, $price_bn),
             'price_bn'                   => $price_bn,
             'billing_type_bn'            => $billing_type_bn,
-            'subscription_renewal_warning' => (bool)$partner->subscription_renewal_warning,
+            'subscription_renewal_warning' => (bool)($partner->subscription_renewal_warning),
             'renewal_warning_days'       => $partner->renewal_warning_days,
         ];
     }
