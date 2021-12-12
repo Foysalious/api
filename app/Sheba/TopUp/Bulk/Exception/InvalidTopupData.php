@@ -5,26 +5,27 @@ use Throwable;
 
 class InvalidTopupData extends DoNotReportException
 {
-    private $excelErrors;
+    private $excelErrorsFileLink;
 
     /**
      * InvalidTotalAmount constructor.
-     * @param $excel_errors
+     *
+     * @param $excel_errors_file_link
      * @param string $message
      * @param int $code
      * @param Throwable|null $previous
      */
-    public function __construct($excel_errors, $message = 'Check The Excel Data Format Properly.', $code = 400, Throwable $previous = null)
+    public function __construct($excel_errors_file_link, $message = 'Check The Excel Data Format Properly.', $code = 400, Throwable $previous = null)
     {
-        $this->excelErrors = $excel_errors;
+        $this->excelErrorsFileLink = $excel_errors_file_link;
         parent::__construct($message, $code, $previous);
     }
 
     /**
      * @return mixed
      */
-    public function getExcelErrors()
+    public function getExcelErrorsFileLink()
     {
-        return $this->excelErrors;
+        return $this->excelErrorsFileLink;
     }
 }
