@@ -53,7 +53,6 @@ class DueTrackerController extends Controller
         }
         $data = $dueTrackerRepository->setPartner($request->partner)->getDueList($request);
         if (($request->has('download_pdf')) && ($request->download_pdf == 1)){
-            dd($data);
             $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
             $data['end_date'] = $request->has("end_date") ? $request->end_date : null;
             $pdf_link = (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile('due_tracker_due_list')->save(true);
