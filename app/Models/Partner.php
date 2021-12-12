@@ -20,6 +20,7 @@ use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInformation;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
+use Sheba\Dal\PgwStoreAccount\Model as PgwStoreAccount;
 use Sheba\Dal\UserMigration\UserStatus;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Jobs\JobStatuses;
@@ -1077,5 +1078,10 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         $userStatus = $class->setUserId($this->id)->setModuleName($module_name)->getStatus();
         if (in_array($userStatus, $arr)) return false;
         return true;
+    }
+
+    public function pgwStoreAccounts()
+    {
+        return $this->morphMany(PgwStoreAccount::class, 'user');
     }
 }

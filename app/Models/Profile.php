@@ -154,4 +154,9 @@ class Profile extends Model
     {
         return self::where('nid_no',$nid)->where('id','!=',$this->id)->first();
     }
+
+    public function searchOtherUsingVerifiedNid($nid)
+    {
+        return self::where('nid_no',$nid)->where('id','!=',$this->id)->where('nid_verified', 1)->first();
+    }
 }

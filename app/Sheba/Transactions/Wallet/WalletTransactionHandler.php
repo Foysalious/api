@@ -13,6 +13,7 @@ use Sheba\FraudDetection\Repository\TransactionRepository;
 use Sheba\ModificationFields;
 use Sheba\RequestIdentification;
 use Sheba\Transactions\Types;
+use Sheba\Transactions\UserThirdPartyTransaction;
 use Sheba\Transactions\Wallet\Jobs\FraudTransactionJob;
 use Sheba\Transactions\Wallet\Jobs\WalletTransactionJob;
 use Sheba\Wallet\WalletUpdateEvent;
@@ -20,6 +21,7 @@ use Sheba\Wallet\WalletUpdateEvent;
 class WalletTransactionHandler extends WalletTransaction
 {
     use ModificationFields;
+    use UserThirdPartyTransaction;
 
     protected $amount;
     protected $log;
@@ -87,6 +89,7 @@ class WalletTransactionHandler extends WalletTransaction
                 'balance'   => $wallet,
                 'log'       => $this->log,
                 'created_at'=> Carbon::now(),
+                'third_party_transaction_id' => $this->transaction_details ? $this->thirdPartyTransactionId($this->transaction_details->toString()) : null,
                 'transaction_details' => $this->transaction_details ? $this->transaction_details->toString() : null
             ]);
 

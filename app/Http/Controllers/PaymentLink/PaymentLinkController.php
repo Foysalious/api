@@ -15,6 +15,7 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use Sheba\ModificationFields;
 use Sheba\Partner\PartnerStatuses;
+use Sheba\Payment\AvailableMethods;
 use Sheba\PaymentLink\Creator;
 use Sheba\PaymentLink\PaymentLink;
 use Sheba\PaymentLink\PaymentLinkClient;
@@ -94,20 +95,30 @@ class PaymentLinkController extends Controller
 
     public function show($identifier, Request $request, PaymentLinkRepositoryInterface $paymentLinkRepository)
     {
-        $link = $paymentLinkRepository->findByIdentifier($identifier);
-        if ($link) {
-            $receiver = $link->getPaymentReceiver();
-            if ($receiver instanceof Partner && $receiver->status == PartnerStatuses::BLACKLISTED) {
-                return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
+        try {
+            $link = $paymentLinkRepository->findByIdentifier($identifier);
+            if ($link) {
+                $receiver = $link->getPaymentReceiver();
+                if ($receiver instanceof Partner) {
+                    if (!AccessManager::canAccess(AccessManager::Rules()->DIGITAL_COLLECTION, $receiver->subscription->getAccessRules()) || in_array($receiver->status, [PartnerStatuses::BLACKLISTED, PartnerStatuses::PAUSED]) || !(int)$link->getIsActive())
+                        return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
+                    $available_methods = (new AvailableMethods())->getPublishedPartnerPaymentGateways($receiver);
+                    if(!count($available_methods))
+                        return api_response($request, $link, 404, ['message' => "No active payment method found"]);
+
+                }
+                if ((int)$link->getIsActive()) {
+                    return api_response($request, $link, 200, ['link' => $link->toArray()]);
+                }
             }
+            return api_response($request, null, 404);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
         }
-        if ($link && !(int)$link->getIsActive()) {
-            return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
-        }
-        if ($link && (int)$link->getIsActive()) {
-            return api_response($request, $link, 200, ['link' => $link->toArray()]);
-        }
-        return api_response($request, null, 404);
     }
 
     public function store(Request $request)
@@ -121,7 +132,13 @@ class PaymentLinkController extends Controller
                 'interest_paid_by'   => 'sometimes|in:' . implode(',', PaymentLinkStatics::paidByTypes()),
                 'transaction_charge' => 'sometimes|numeric|min:' . PaymentLinkStatics::get_payment_link_commission()
             ]);
+
             if (!$request->user) return api_response($request, null, 404, ['message' => 'User not found']);
+            if ($request->user instanceof Partner) {
+                $available_methods = (new AvailableMethods())->getPublishedPartnerPaymentGateways($request->user);
+                if (!count($available_methods))
+                    return api_response($request, null, 404, ['message' => "No active payment method found"]);
+            }
             $emi_month_invalidity = Creator::validateEmiMonth($request->all());
             if ($emi_month_invalidity !== false) return api_response($request, null, 400, ['message' => $emi_month_invalidity]);
             $this->creator
@@ -186,36 +203,50 @@ class PaymentLinkController extends Controller
 
     public function createPaymentLinkForDueCollection(Request $request)
     {
-        $this->validate($request, [
-            'amount'             => 'required|numeric',
-            'customer_id'        => 'sometimes|integer|exists:pos_customers,id',
-            'emi_month'          => 'sometimes|integer|in:' . implode(',', config('emi.valid_months')),
-            'interest_paid_by'   => 'sometimes|in:' . implode(',', PaymentLinkStatics::paidByTypes()),
-            'transaction_charge' => 'sometimes|numeric|min:' . PaymentLinkStatics::get_payment_link_commission()
-        ]);
-        $purpose = 'Due Collection';
-        if (!$request->user) return api_response($request, null, 404, ['message' => 'User not found']);
-        if ($request->has('customer_id')) $customer = PosCustomer::find($request->customer_id);
+        try {
+            $this->validate($request, [
+                'amount'             => 'required|numeric',
+                'customer_id'        => 'sometimes|integer|exists:pos_customers,id',
+                'emi_month'          => 'sometimes|integer|in:' . implode(',', config('emi.valid_months')),
+                'interest_paid_by'   => 'sometimes|in:' . implode(',', PaymentLinkStatics::paidByTypes()),
+                'transaction_charge' => 'sometimes|numeric|min:' . PaymentLinkStatics::get_payment_link_commission()
+            ]);
+            $purpose = 'Due Collection';
+            if (!$request->user) return api_response($request, null, 404, ['message' => 'User not found']);
+            if ($request->user instanceof Partner) {
+                $available_methods = (new AvailableMethods())->getPublishedPartnerPaymentGateways($request->user);
+                if (!count($available_methods))
+                    return api_response($request, null, 404, ['message' => "No active payment method found"]);
+            }
+            if ($request->has('customer_id')) $customer = PosCustomer::find($request->customer_id);
 
-        $this->creator->setAmount($request->amount)
-                      ->setReason($purpose)
-                      ->setUserName($request->user->name)
-                      ->setUserId($request->user->id)
-                      ->setUserType($request->type)
-                      ->setEmiMonth($request->emi_month ?: 0)
-                      ->setPaidBy($request->interest_paid_by ?: PaymentLinkStatics::paidByTypes()[($request->has("emi_month") ? 1 : 0)])
-                      ->setTransactionFeePercentage($request->transaction_charge);
-        if (isset($customer) && !empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
-        $this->creator->setTargetType('due_tracker')->setTargetId(1)->calculate();
-
-        $payment_link_store = $this->creator->save();
-        if (!$payment_link_store) return api_response($request, null, 500);
-
-        $payment_link = $this->creator->getPaymentLinkData();
-        if (!$request->has('emi_month')) {
-            $this->creator->sentSms();
+            $this->creator->setAmount($request->amount)
+                ->setReason($purpose)
+                ->setUserName($request->user->name)
+                ->setUserId($request->user->id)
+                ->setUserType($request->type)
+                ->setEmiMonth($request->emi_month ?: 0)
+                ->setPaidBy($request->interest_paid_by ?: PaymentLinkStatics::paidByTypes()[($request->has("emi_month") ? 1 : 0)])
+                ->setTransactionFeePercentage($request->transaction_charge);
+            if (isset($customer) && !empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
+            $this->creator->setTargetType('due_tracker')->setTargetId(1)->calculate();
+            $payment_link_store = $this->creator->save();
+            if ($payment_link_store) {
+                $payment_link = $this->creator->getPaymentLinkData();
+                if (!$request->has('emi_month')) {
+                    $this->creator->sentSms();
+                }
+                return api_response($request, $payment_link, 200, ['payment_link' => $payment_link]);
+            } else {
+                return api_response($request, null, 500);
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
         }
-        return api_response($request, $payment_link, 200, ['payment_link' => $payment_link]);
     }
 
     public function statusChange($link, Request $request)
