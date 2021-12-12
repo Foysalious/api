@@ -129,12 +129,6 @@ class CategoryService
         return $this->client->post('api/v1/partners/' . $this->partnerId . '/category-with-sub-category', $data, true);
     }
 
-    public function update()
-    {
-        $data = $this->makeUpdateData();
-        return $this->client->put('api/v1/partners/'.$this->partnerId.'/categories/'.$this->categoryId, $data, true);
-    }
-
     public function delete()
     {
         return $this->client->delete('api/v1/partners/' . $this->partnerId . '/categories/' . $this->categoryId);
