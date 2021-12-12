@@ -206,7 +206,7 @@
                 <tr>
                     <td style="font-family: 'Poppins', sans-serif; padding-bottom: 5px; font-size: 12px; color: #000000; opacity: 0.8">Net Payable</td>
                     <td style="font-family: 'Poppins', sans-serif; padding-bottom: 5px; font-size: 12px; color: #000000; opacity: 0.8">:</td>
-                    <td style="padding-left: 10px; padding-bottom: 5px; font-family: 'Poppins', sans-serif; font-size: 12px; font-weight:bold; color: #000000; opacity: 0.8">{{ number_format($pay_report_detail['salary_info']['net_payable'],2) }}</td>
+                    <td style="padding-left: 10px; padding-bottom: 5px; font-family: 'Poppins', sans-serif; font-size: 12px; font-weight:bold; color: #000000; opacity: 0.8">@if (is_numeric($pay_report_detail['salary_info']['net_payable'])) {{ number_format($pay_report_detail['salary_info']['net_payable'],2) }} @else 0 @endif</td>
                 </tr>
                 <tr style="width: 100%;">
                     <td style="font-family: 'Poppins', sans-serif; padding-bottom: 5px; font-size: 12px; color: #000000; opacity: 0.8">In Words</td>
@@ -237,7 +237,7 @@
                 {{ ucfirst($key) }}
             </td>
             <td style="font-size: 12px; opacity: 0.8; font-weight: normal; font-family: 'Poppins', sans-serif; padding: 5px;border: solid 1px #d2d8e6;width:120px;text-align: right">
-                {{ number_format($value,2) }}
+                @if (is_numeric($value)) {{ number_format($value,2) }} @else 0 @endif
             </td>
         </tr>
     @endforeach
@@ -249,7 +249,7 @@
             Total
         </td>
         <td style="font-size: 12px; font-weight: bold; opacity: 0.8; font-weight: bold; font-family: 'Poppins', sans-serif; text-align: right; padding: 5px;border-right: solid 1px #d2d8e6;width: 100%">
-            {{ number_format($pay_report_detail['addition']['total'],2) }}
+            @if(is_numeric($pay_report_detail['addition']['total'])) {{ number_format($pay_report_detail['addition']['total'],2) }} @else 0 @endif
         </td>
     </tr>
 
@@ -277,7 +277,7 @@
                 {{ ucfirst($key) }}
             </td>
             <td style="font-size: 12px; opacity: 0.8; font-weight: normal; font-family: 'Poppins', sans-serif; padding: 5px;border: solid 1px #d2d8e6;width:120px;text-align: right">
-                {{ number_format($value,2) }}
+                @if (is_numeric($value)){{ number_format($value,2) }} @else 0 @endif
             </td>
         </tr>
     @endforeach
@@ -289,7 +289,7 @@
             Total
         </td>
         <td style="font-size: 12px; font-weight: bold; opacity: 0.8; font-weight: bold; font-family: 'Poppins', sans-serif; text-align: right; padding: 5px;border-right: solid 1px #d2d8e6;width: 100%">
-            {{ number_format($pay_report_detail['deduction']['total'],2) }}
+            @if (is_numeric($pay_report_detail['deduction']['total'])) {{ number_format($pay_report_detail['deduction']['total'],2) }} @else 0 @endif
         </td>
     </tr>
 
@@ -305,7 +305,7 @@
             Gross Salary
         </td>
         <td style="font-size: 12px; opacity: 1; font-weight: bold; font-family: 'Poppins', sans-serif; padding: 5px;border: solid 1px #d2d8e6;width:20%;text-align: right">
-            {{ number_format($pay_report_detail['salary_info']['gross_salary'],2) }}
+            @if(is_numeric($pay_report_detail['salary_info']['gross_salary'])) {{number_format($pay_report_detail['salary_info']['gross_salary'],2) }} @else 0 @endif
         </td>
     </tr>
     <tr style="width: 100%">
@@ -313,7 +313,7 @@
             Total Addition
         </td>
         <td style="font-size: 12px; opacity: 1; font-weight: bold; font-family: 'Poppins', sans-serif; padding: 5px;border: solid 1px #d2d8e6;width:20%;text-align: right">
-            {{ number_format($pay_report_detail['addition']['total'],2) }}
+            @if(is_numeric($pay_report_detail['addition']['total'])) {{ number_format($pay_report_detail['addition']['total'],2) }} @else 0 @endif
         </td>
     </tr>
     <tr style="width: 100%">
@@ -321,7 +321,8 @@
             Total Deduction
         </td>
         <td style="font-size: 12px; opacity: 1; font-weight: bold; font-family: 'Poppins', sans-serif; padding: 5px;border: solid 1px #d2d8e6;width:20%;text-align: right">
-            {{ number_format($pay_report_detail['deduction']['total'],2) }}
+            @if(is_numeric($pay_report_detail['deduction']['total'])) {{ number_format($pay_report_detail['deduction']['total'],2) }} @else 0 @endif
+
         </td>
     </tr>
     <tr style="width: 100%">
@@ -329,7 +330,8 @@
             Net Payable
         </td>
         <td style="font-size: 12px; opacity: 1; font-weight: bold; font-family: 'Poppins', sans-serif; padding: 5px;border: solid 1px #d2d8e6;width:20%;text-align: right">
-            {{ number_format($pay_report_detail['salary_info']['net_payable'],2) }}
+            @if(is_numeric($pay_report_detail['salary_info']['net_payable'])) {{ number_format($pay_report_detail['salary_info']['net_payable'],2) }} @else 0 @endif
+
         </td>
     </tr>
 

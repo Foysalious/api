@@ -268,6 +268,9 @@ class Updater
         if ((isset($this->data['category_id']) && $this->data['category_id'] != $this->service->pos_category_id)) {
             $this->updatedData['pos_category_id'] = $this->data['category_id'];
         }
+        if ((isset($this->data['cost']) && $this->data['cost'] != $this->service->cost) && !$this->service->partner->isMigrated(Modules::EXPENSE)) {
+            $this->updatedData['cost'] = $this->data['cost'];
+        }
         if ((isset($this->data['unit']) && $this->data['unit'] != $this->service->unit)) {
             $this->updatedData['unit'] = $this->data['unit'];
         }
