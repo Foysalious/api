@@ -215,11 +215,9 @@ class TopUpController extends Controller
      * @throws PinMismatchException
      * @throws Exception
      */
-    public function bulkTopUp(Request $request, VerifyPin $verifyPin, VendorFactory $vendor, TopUpRequest $top_up_request,
-                              Creator $creator): JsonResponse
+    public function bulkTopUp(Request $request, VerifyPin $verifyPin, VendorFactory $vendor, TopUpRequest $top_up_request, Creator $creator): JsonResponse
     {
         $this->validate($request, ['file' => 'required|file', 'password' => 'required']);
-        $request->merge(['user' => Business::find(192)]);
 
         $agent = $request->user;
         $this->setModifier($agent);
