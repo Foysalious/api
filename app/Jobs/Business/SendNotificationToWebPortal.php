@@ -17,18 +17,20 @@ class SendNotificationToWebPortal extends BusinessQueue
 
     public function handle()
     {
-        /** @var BusinessMember $business_member */
-        $business_member = $this->approvalRequest->approver;
-        /** @var Member $member */
-        $member = $business_member->member;
-        $leave_applicant = $this->profile->name ? $this->profile->name : 'n/s';
+        if ($this->attempts() < 2) {
+            /** @var BusinessMember $business_member */
+            $business_member = $this->approvalRequest->approver;
+            /** @var Member $member */
+            $member = $business_member->member;
+            $leave_applicant = $this->profile->name ? $this->profile->name : 'n/s';
+            $title = "$leave_applicant requested for a leave";
 
-        $title = "$leave_applicant requested for a leave";
-        notify()->member($member)->send([
-            'title' => $title,
-            'type' => 'Info',
-            'event_type' => get_class($this->approvalRequest),
-            'event_id' => $this->approvalRequest->id
-        ]);
+            notify()->member($member)->send([
+                'title' => $title,
+                'type' => 'Info',
+                'event_type' => get_class($this->approvalRequest),
+                'event_id' => $this->approvalRequest->id
+            ]);
+        }
     }
 }

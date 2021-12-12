@@ -139,8 +139,10 @@ class AccountingDueTrackerRepository extends BaseRepository
                 $item['partner_wise_order_id'] = isset($pos_order) ? $pos_order->partner_wise_order_id : null;
                 if ($pos_order) {
                     $item['source_type'] = 'PosOrder';
+                    $item['head'] = 'POS sales';
+                    $item['head_bn'] = 'সেলস';
                     if ($pos_order->sales_channel == SalesChannels::WEBSTORE) {
-                        $item['source_type'] = 'WebstoreOrder';
+                        $item['source_type'] = 'Webstore Order';
                         $item['head'] = 'Webstore sales';
                         $item['head_bn'] = 'ওয়েবস্টোর সেলস';
                     }
