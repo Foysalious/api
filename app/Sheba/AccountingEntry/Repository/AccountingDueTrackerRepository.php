@@ -2,20 +2,17 @@
 
 namespace App\Sheba\AccountingEntry\Repository;
 
-use App\Models\PartnerPosCustomer;
-use App\Models\PosCustomer;
 use App\Models\PosOrder;
-use App\Models\Profile;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Constants\UserType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
 use Sheba\RequestIdentification;
+use Sheba\Pos\Customer\PosCustomerResolver;
 
 class AccountingDueTrackerRepository extends BaseRepository
 {
@@ -49,11 +46,6 @@ class AccountingDueTrackerRepository extends BaseRepository
         $request->merge(['source_id' => $this->posOrderId($request->partner, $request->partner_wise_order_id) ?? null]);
         $data = $this->createEntryData($request, $type);
         $url = $with_update ? "api/entries/" . $request->entry_id : "api/entries/";
-//        if ($with_update) {
-//            $url = "api/entries/" . $request->entry_id ;
-//        } else {
-//            $url = $type == "deposit" ? "api/entries/deposit" : "api/entries/";
-//        }
         $data = $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
         // if type deposit then auto reconcile happen. for that we have to reconcile pos order.
         if ($type == "deposit") {
@@ -72,16 +64,11 @@ class AccountingDueTrackerRepository extends BaseRepository
      */
     public function deleteCustomer($customerId)
     {
-        try{
-            if (!$this->isMigratedToAccounting($this->partner->id)) {
-                return true;
-            }
-            $url = "api/due-list/" . $customerId;
-            return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->delete($url);
-        } catch (AccountingEntryServerError $e) {
-            logError($e);
-            return null;
+        if (!$this->isMigratedToAccounting($this->partner->id)) {
+            return true;
         }
+        $url = "api/due-list/" . $customerId;
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->delete($url);
     }
 
     /**
@@ -161,102 +148,47 @@ class AccountingDueTrackerRepository extends BaseRepository
      * @param $customerId
      * @return array
      * @throws AccountingEntryServerError
+     * @throws InvalidPartnerPosCustomer
+     * @throws \Exception
      */
     public function dueListBalanceByCustomer($customerId): array
     {
-        //todo: need to refactor this method
-//        $partner_pos_customer = PartnerPosCustomer::byPartner($this->partner->id)->where(
-//            'customer_id',
-//            $customerId
-//        )->with(['customer'])->first();
-//        $customer = PosCustomer::find($customerId);
-//        if (!empty($partner_pos_customer)) {
-//            $customer = $partner_pos_customer->customer;
-//        }
-//        if (empty($customer)) {
-//            throw new InvalidPartnerPosCustomer();
-//        }
         $url = "api/due-list/" . $customerId . "/balance";
         $result = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
+        $customer = [];
+
+        if (is_null($result['customer'])) {
+            /** @var PosCustomerResolver $posCustomerResolver */
+            $posCustomerResolver = app(PosCustomerResolver::class);
+            $posCustomer = $posCustomerResolver->setCustomerId($customerId)->setPartner($this->partner->id)->get();
+            if (empty($posCustomer)) {
+                throw new InvalidPartnerPosCustomer();
+            }
+            $customer['id'] = $posCustomer->id;
+            $customer['name'] = $posCustomer->name;
+            $customer['mobile'] = $posCustomer->mobile;
+            $customer['avatar'] = $posCustomer->pro_pic;
+            $customer['due_date_reminder'] = null;
+            $customer['is_supplier'] = $posCustomer->is_supplier;
+        } else {
+            $customer['id'] = $result['customer']['id'];
+            $customer['name'] = $result['customer']['name'];
+            $customer['mobile'] = $result['customer']['mobile'];
+            $customer['avatar'] = $result['customer']['proPic'];
+            $customer['due_date_reminder'] = $result['customer']['dueDateReminder'];
+            $customer['is_supplier'] = (bool) $result['customer']['isSupplier'];
+        }
+
         $total_debit = $result['other_info']['total_debit'];
         $total_credit = $result['other_info']['total_credit'];
         $result['balance']['color'] = $total_debit > $total_credit ? '#219653' : '#DC1E1E';
-
         return [
-            'customer' => [
-                'id' => $result['customer']['id'],
-                'name' => $result['customer']['name'],
-                'mobile' => $result['customer']['mobile'],
-                'avatar' => $result['customer']['proPic'],
-                'due_date_reminder' => null, //todo: have to implement due_date somewhere
-                'is_supplier' => (bool) $result['customer']['isSupplier']
-            ],
+            'customer' => $customer,
             'partner' => $this->getPartnerInfo($this->partner),
             'stats' => $result['stats'],
             'other_info' => $result['other_info'],
             'balance' => $result['balance']
         ];
-    }
-
-    /**
-     * @param Collection $list
-     * @return Collection
-     */
-    private function attachProfile(Collection $list): Collection
-    {
-        return $list->map(
-            function ($item) {
-                $customerId = $item['party_id'];
-                /** @var PosCustomer $posCustomer */
-                $posCustomer = PosCustomer::find($customerId);
-                if ($posCustomer) {
-                    $profile_id = $posCustomer->profile_id;
-                    /** @var Profile $profile */
-                    $profile = Profile::select('name', 'mobile', 'id', 'pro_pic')->find($profile_id);
-                    $customerId = $profile && isset($profile->posCustomer) ? $profile->posCustomer->id : null;
-                    if (isset($customerId)) {
-                        $posProfile = PartnerPosCustomer::byPartner($this->partner->id)->where(
-                            'customer_id',
-                            $customerId
-                        )->first();
-                    }
-                    if (isset($posProfile) && isset($posProfile->nick_name)) {
-                        $item['customer_name'] = $posProfile->nick_name;
-                    } else {
-                        $item['customer_name'] = $profile ? $profile->name : "Unknown";
-                    }
-                    $item['customer_mobile'] = $profile ? $profile->mobile : null;
-                    $item['avatar'] = $profile ? $profile->pro_pic : null;
-                    $item['customer_id'] = $customerId;
-                    $item['is_supplier'] = isset($posProfile) ? $posProfile->is_supplier : 0;
-                    return $item;
-                }
-                return false;
-            }
-        );
-    }
-
-    /**
-     * @param Collection $list
-     * @param $customerProfile
-     * @return Collection
-     */
-    private function attachCustomerProfile(Collection $list, $customerProfile): Collection
-    {
-        return $list->map(function ($item) use ($customerProfile) {
-            $profile = $customerProfile->where('customer_id', (int)$item['party_id']);
-            $cus = $profile->map(
-                function ($items) use ($item) {
-                    $item['customer_name'] = $items->nick_name ?? $items->customer->profile->name;
-                    $item['customer_mobile'] = $items->customer->profile->mobile;
-                    $item['avatar'] = $items->customer->profile->pro_pic;
-                    $item['customer_id'] = $items->customer_id;
-                    $item['is_supplier'] = $items->is_supplier;
-                    return $item;
-                }
-            );
-            return $cus->count() > 0 ? call_user_func_array('array_merge', $cus->toArray()) : [];
-        });
     }
 
     /**
@@ -342,7 +274,7 @@ class AccountingDueTrackerRepository extends BaseRepository
      */
     private function posOrderId($partner, $partnerWiseOrderId)
     {
-        try{
+        try {
             $posOrder = PosOrder::where('partner_id', $partner->id)->where('partner_wise_order_id', $partnerWiseOrderId)->first();
             return $posOrder->id;
         } catch (\Exception $e) {

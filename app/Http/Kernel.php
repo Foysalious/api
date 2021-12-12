@@ -134,6 +134,7 @@ class Kernel extends HttpKernel
         'accounting.auth' => AccountingAuthMiddleware::class,
         'jwtAccessToken' => JwtAccessTokenMiddleware::class,
         'ip.whitelist' => IpWhitelistMiddleware::class,
+        'accounting.auth' => AccountingAuthMiddleware::class,
         'userMigration.auth' => UserMigrationMiddleware::class,
         'marketplace-analytics' => MarketplaceRequestResponseLogMiddleware::class,
         'partner.status'=> PartnerStatusAuthMiddleware::class,
