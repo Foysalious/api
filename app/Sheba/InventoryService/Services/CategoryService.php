@@ -77,32 +77,32 @@ class CategoryService
 
     public function getAllMasterCategories($partner_id)
     {
-        $url = 'api/v1/partners/'.$partner_id.'/categories?';
-        if($this->updatedAfter) $url .= 'updated_after='.$this->updatedAfter;
+        $url = 'api/v1/partners/' . $partner_id . '/categories?';
+        if ($this->updatedAfter) $url .= 'updated_after=' . $this->updatedAfter;
         return $this->client->get($url);
     }
 
     public function makeStoreData()
     {
-        $data =  [
+        $data = [
             ['name' => 'name', 'contents' => $this->categoryName],
         ];
-        if($this->thumb) {
+        if ($this->thumb) {
             $data[] = ['name' => 'thumb', 'contents' => $this->thumb ? File::get($this->thumb->getRealPath()) : null, 'filename' => $this->thumb ? $this->thumb->getClientOriginalName() : ''];
         }
         if ($this->parentId != null) {
             $data [] = [
                 'name' => 'parent_id',
                 'contents' => $this->parentId,
-                ];
+            ];
         }
         return $data;
     }
 
     public function makeUpdateData()
     {
-        $data [] =  ['name' => 'name', 'contents' => $this->categoryName];
-        if($this->thumb) {
+        $data [] = ['name' => 'name', 'contents' => $this->categoryName];
+        if ($this->thumb) {
             $data [] = [
                 'name' => 'thumb', 'contents' => $this->thumb ? File::get($this->thumb->getRealPath()) : null,
                 'filename' => $this->thumb ? $this->thumb->getClientOriginalName() : ''
@@ -114,38 +114,38 @@ class CategoryService
     public function store()
     {
         $data = $this->makeStoreData();
-        return $this->client->post('api/v1/partners/'.$this->partnerId.'/categories', $data, true);
+        return $this->client->post('api/v1/partners/' . $this->partnerId . '/categories', $data, true);
     }
 
     public function update()
     {
         $data = $this->makeUpdateData();
-        return $this->client->put('api/v1/partners/'.$this->partnerId.'/categories/'.$this->categoryId, $data, true);
+        return $this->client->put('api/v1/partners/' . $this->partnerId . '/categories/' . $this->categoryId, $data, true);
     }
 
     public function storeCategoryWithSubCategory()
     {
         $data = $this->makeStoreDataForCategoryWithSubCategory();
-        return $this->client->post('api/v1/partners/'.$this->partnerId.'/category-with-sub-category', $data, true);
+        return $this->client->post('api/v1/partners/' . $this->partnerId . '/category-with-sub-category', $data, true);
     }
 
     public function delete()
     {
-        return $this->client->delete('api/v1/partners/'.$this->partnerId.'/categories/'.$this->categoryId);
+        return $this->client->delete('api/v1/partners/' . $this->partnerId . '/categories/' . $this->categoryId);
     }
 
     public function getallcategory($partner_id)
     {
-        $url = 'api/v1/partners/'.$partner_id.'/category-tree?';
-        if($this->updatedAfter) $url .= 'updated_after='.$this->updatedAfter;
+        $url = 'api/v1/partners/' . $partner_id . '/category-tree?';
+        if ($this->updatedAfter) $url .= 'updated_after=' . $this->updatedAfter;
 
         return $this->client->get($url);
     }
 
     public function makeStoreDataForCategoryWithSubCategory(): array
     {
-        $data [] =  ['name' => 'category_name', 'contents' => $this->categoryName];
-        if($this->thumb) {
+        $data [] = ['name' => 'category_name', 'contents' => $this->categoryName];
+        if ($this->thumb) {
             $data [] = [
                 'name' => 'category_thumb',
                 'contents' => $this->thumb ? File::get($this->thumb->getRealPath()) : null,
@@ -154,9 +154,9 @@ class CategoryService
         }
         if (!$this->subCategories) return $data;
         $sub_category = [];
-        foreach ( $this->subCategories as $key=>$value) {
-            $sub_category [] =  ['name' => "sub_category[$key][name]", 'contents' => $value['name']];
-            if(isset($value['thumb'])) {
+        foreach ($this->subCategories as $key => $value) {
+            $sub_category [] = ['name' => "sub_category[$key][name]", 'contents' => $value['name']];
+            if (isset($value['thumb'])) {
                 $this->thumb = $value['thumb'];
                 $sub_category [] = [
                     'name' => "sub_category[$key][thumb]",
@@ -165,11 +165,16 @@ class CategoryService
                 ];
             }
         }
-        return array_merge_recursive($data,$sub_category);
+        return array_merge_recursive($data, $sub_category);
     }
 
     public function getCategoryDetail()
     {
-        return $this->client->get('api/v1/partners/' . $this->partnerId.'/categories/' . $this->categoryId);
+        return $this->client->get('api/v1/partners/' . $this->partnerId . '/categories/' . $this->categoryId);
+    }
+
+    public function getPartnerWiseCategoryList($partner)
+    {
+        return $this->client->get('api/v1/webstore/partners/' . $partner . '/categories');
     }
 }
