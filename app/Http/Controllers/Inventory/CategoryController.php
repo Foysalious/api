@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Sheba\InventoryService\Services\CategoryService;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -17,7 +18,7 @@ class CategoryController extends Controller
     /**
      * @param Request $request
      * @return JsonResponse
-     * @throws \Exception
+     * @throws Exception
      */
     public function index(Request $request)
     {
@@ -29,17 +30,17 @@ class CategoryController extends Controller
     /**
      * @param Request $request
      * @return JsonResponse
-     * @throws \Exception
+     * @throws Exception
      */
-    public function store(Request $request)
+    public function createSubCategory(Request $request)
     {
         $partner = $request->auth_user->getPartner();
         $response = $this->categoryService
             ->setPartner($partner->id)
             ->setCategoryName($request->name)
             ->setThumb($request->thumb)
-            ->setParentId($request->has('parent_id') ? $request->parent_id : null)
-            ->store();
+            ->setParentId($request->parent_id)
+            ->createSubCategory();
         return http_response($request, null, 201, $response);
     }
 
@@ -68,7 +69,7 @@ class CategoryController extends Controller
         return http_response($request, null, 200, $categories);
     }
 
-    public function createCategoryWithSubCategory(Request $request)
+    public function createCategory(Request $request)
     {
         $partner = $request->auth_user->getPartner();
         $response = $this->categoryService

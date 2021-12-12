@@ -82,7 +82,7 @@ class CategoryService
         return $this->client->get($url);
     }
 
-    public function makeStoreData()
+    public function makeSubCategoryStoreData()
     {
         $data =  [
             ['name' => 'name', 'contents' => $this->categoryName],
@@ -102,19 +102,19 @@ class CategoryService
     public function makeUpdateData()
     {
         $data [] =  ['name' => 'name', 'contents' => $this->categoryName];
-        if($this->thumb) {
+        if($this->thumb && is_file($this->thumb)) {
             $data [] = [
-                'name' => 'thumb', 'contents' => $this->thumb ? File::get($this->thumb->getRealPath()) : null,
-                'filename' => $this->thumb ? $this->thumb->getClientOriginalName() : ''
+                'name' => 'thumb', 'contents' => File::get($this->thumb->getRealPath()),
+                'filename' => $this->thumb->getClientOriginalName(),
             ];
         }
         return $data;
     }
 
-    public function store()
+    public function createSubCategory()
     {
-        $data = $this->makeStoreData();
-        return $this->client->post('api/v1/partners/'.$this->partnerId.'/categories', $data, true);
+        $data = $this->makeSubCategoryStoreData();
+        return $this->client->post('api/v1/partners/'.$this->partnerId.'/categories/sub-category', $data, true);
     }
 
     public function update()
@@ -126,7 +126,7 @@ class CategoryService
     public function storeCategoryWithSubCategory()
     {
         $data = $this->makeStoreDataForCategoryWithSubCategory();
-        return $this->client->post('api/v1/partners/'.$this->partnerId.'/category-with-sub-category', $data, true);
+        return $this->client->post('api/v1/partners/'.$this->partnerId.'/categories', $data, true);
     }
 
     public function delete()
@@ -145,23 +145,23 @@ class CategoryService
     public function makeStoreDataForCategoryWithSubCategory(): array
     {
         $data [] =  ['name' => 'category_name', 'contents' => $this->categoryName];
-        if($this->thumb) {
+        if($this->thumb && is_file($this->thumb)) {
             $data [] = [
                 'name' => 'category_thumb',
-                'contents' => $this->thumb ? File::get($this->thumb->getRealPath()) : null,
-                'filename' => $this->thumb ? $this->thumb->getClientOriginalName() : ''
+                'contents' => File::get($this->thumb->getRealPath()),
+                'filename' => $this->thumb->getClientOriginalName()
             ];
         }
         if (!$this->subCategories) return $data;
         $sub_category = [];
         foreach ( $this->subCategories as $key=>$value) {
             $sub_category [] =  ['name' => "sub_category[$key][name]", 'contents' => $value['name']];
-            if(isset($value['thumb'])) {
+            if(isset($value['thumb']) && is_file($value['thumb'])) {
                 $this->thumb = $value['thumb'];
                 $sub_category [] = [
                     'name' => "sub_category[$key][thumb]",
-                    'contents' => $this->thumb ? File::get($this->thumb->getRealPath()) : null,
-                    'filename' => $this->thumb ? $this->thumb->getClientOriginalName() : ''
+                    'contents' => File::get($this->thumb->getRealPath()),
+                    'filename' => $this->thumb->getClientOriginalName(),
                 ];
             }
         }
