@@ -27,6 +27,7 @@ class PartnerDataMigrationToInventoryJob extends Job implements ShouldQueue
     private $queueNo;
     private $client;
     private $shouldQueue;
+    protected $tries = 1;
 
     public function __construct($partner, $data, $queueNo, $queue_and_connection_name, $shouldQueue)
     {
