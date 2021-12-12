@@ -27,6 +27,7 @@ class PartnerDataMigrationToInventoryJob extends Job implements ShouldQueue
     private $queueNo;
     private $client;
     private $shouldQueue;
+    protected $tries = 1;
 
     public function __construct($partner, $data, $queueNo, $queue_and_connection_name, $shouldQueue)
     {
@@ -44,6 +45,8 @@ class PartnerDataMigrationToInventoryJob extends Job implements ShouldQueue
         try {
             $this->attempts < 2 ? $this->migrate() : $this->storeLogs(0);
         } catch (Exception $e) {
+            $this->data['message'] = $e->getMessage();
+            Redis::set("MigrationFail::" . $this->partner->id . '::inventory::' . $this->queueNo, json_encode($this->data));
             $this->storeLogs(0);
             app('sentry')->captureException($e);
         }

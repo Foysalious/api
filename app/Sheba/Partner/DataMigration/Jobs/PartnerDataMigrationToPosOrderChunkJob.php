@@ -18,6 +18,7 @@ class PartnerDataMigrationToPosOrderChunkJob extends Job implements ShouldQueue
     private $queueNo;
     private $queue_and_connection_name;
     private $shouldQueue;
+    protected $tries = 1;
 
     public function __construct($skip, $take, $partner, $queueNo, $queue_and_connection_name, $shouldQueue)
     {

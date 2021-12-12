@@ -27,6 +27,7 @@ class PartnerDataMigrationToSmanagerUserJob extends Job implements ShouldQueue
     private $queueNo;
     private $attempts = 0;
     private $shouldQueue;
+    protected $tries = 1;
 
     public function __construct($partner, $data, $queueNo, $queue_and_connection_name, $shouldQueue)
     {
@@ -43,6 +44,7 @@ class PartnerDataMigrationToSmanagerUserJob extends Job implements ShouldQueue
         try {
             $this->attempts < 2 ? $this->migrate() : $this->storeLogs(0);;
         } catch (Exception $e) {
+            Redis::set("MigrationFail::" . $this->partner->id . '::customer::' . $this->queueNo, json_encode($this->data));
             $this->storeLogs(0);
             app('sentry')->captureException($e);
         }
