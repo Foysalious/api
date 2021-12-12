@@ -52,8 +52,9 @@ class ResourceRepository extends BaseRepository
     private function resourceDataFormat($data, $resource = null)
     {
         return [
+            'mother_name' => $data['mother_name'],
             'father_name' => $data['father_name'],
-            'spouse_name' => isset($data['spouse_name']) ? $data['spouse_name'] : null,
+            'spouse_name' => isset($data['spouse_name']) ? $data['spouse_name'] : $data['father_name'],
             'nid_no' => $data['nid_no'],
             'nid_image' => isset($data['nid_image']) ? $data['nid_image'] : ($resource ? $resource->nid_image : null),
             'is_trained' => isset($data['is_trained']) ? $data['is_trained'] : 0
@@ -86,7 +87,6 @@ class ResourceRepository extends BaseRepository
         $resource = (!($resource instanceof ReSrc)) ? ReSrc::find($resource) : $resource;
         $resource_data = $this->resourceDataFormat($data, $resource);
         $resource->update($this->withUpdateModificationField($resource_data));
-        $data['mobile'] = formatMobileAux($data['mobile']);
         $this->profileRepo->update($resource->profile, $data);
     }
 

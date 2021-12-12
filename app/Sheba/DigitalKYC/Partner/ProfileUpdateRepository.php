@@ -29,6 +29,14 @@ class ProfileUpdateRepository
         return $data;
     }
 
+    public function createDataForNidOcr($nid_image_front, $nid_image_back, $nid_no): array
+    {
+        $data['nid_image_front'] = $nid_image_front;
+        $data['nid_image_back']  = $nid_image_back;
+        $data['nid_no']          = $nid_no;
+        return $data;
+    }
+
     /**
      * @param Request $request
      * @return array
