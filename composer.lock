@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "5443c4fb6ad2349f8559e7881fbc9040",
+    "content-hash": "97c86a57b24d769103e8bd815d5956b2",
     "packages": [
         {
             "name": "algolia/algoliasearch-client-php",
@@ -2594,7 +2594,7 @@
             ],
             "authors": [
                 {
-                    "name": "Matěj Humpál",
+                    "name": "MatÄ›j HumpÃ¡l",
                     "role": "Developer, maintainer"
                 },
                 {
@@ -3716,6 +3716,10 @@
                 "mime",
                 "mime type"
             ],
+            "support": {
+                "issues": "https://github.com/rosell-dk/image-mime-type-guesser/issues",
+                "source": "https://github.com/rosell-dk/image-mime-type-guesser/tree/0.3"
+            },
             "time": "2019-03-29T09:33:28+00:00"
         },
         {
@@ -3792,6 +3796,10 @@
                 "png",
                 "png2webp"
             ],
+            "support": {
+                "issues": "https://github.com/rosell-dk/webp-convert/issues",
+                "source": "https://github.com/rosell-dk/webp-convert/tree/2.4.0"
+            },
             "time": "2020-11-10T11:24:50+00:00"
         },
         {
@@ -4034,7 +4042,7 @@
             "source": {
                 "type": "git",
                 "url": "https://bitbucket.org/startern/sheba_dal.git",
-                "reference": "830b958c9e6931723b136758c81c6f4c3f1cef55"
+                "reference": "38761871540d9baadd7cd42c072181c8e255d981"
             },
             "require": {
                 "php": ">=5.4"
@@ -4061,7 +4069,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2021-11-29T05:15:34+00:00"
+            "time": "2021-12-12T08:12:25+00:00"
         },
         {
             "name": "sheba/elasticsearch",
@@ -7069,7 +7077,6 @@
         "ext-calendar": "*",
         "ext-simplexml": "*",
         "ext-openssl": "^7.0",
-        "ext-mcrypt": "^7.0",
         "ext-redis": "*",
         "ext-mysql_xdevapi": "*",
         "ext-intl": "*"
