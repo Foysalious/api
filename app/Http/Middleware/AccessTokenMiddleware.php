@@ -1,5 +1,6 @@
 <?php namespace App\Http\Middleware;
 
+use App\Exceptions\NotFoundException;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Redis;
 use Sheba\AccessToken\Exception\AccessTokenNotValidException;
@@ -14,6 +15,8 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AccessTokenMiddleware
 {
+    use UserMigrationCheckMiddleware;
+
     /** @var AuthorizationToken */
     protected $authorizationToken;
     /** @var AuthorizationTokenRepositoryInterface */
@@ -52,13 +55,20 @@ class AccessTokenMiddleware
                 throw new AccessTokenNotValidException();
             }
             $this->setAuthorizationToken($access_token);
-            $request->merge(['access_token' => $access_token, 'auth_user' => AuthUser::create()]);
-        } catch (JWTException $e) {
-            if ($is_digigo) Redis::set($key_name, "4 (". $e->getMessage() . "): $now : " . (isset($token) ? $token : "null") );
-            return api_response($request, null, 401, ['message' => "Your session has expired. Try Login"]);
-        }
 
-        $this->setExtraDataToRequest($request);
+            $request->merge(['access_token' => $access_token, 'auth_user' => AuthUser::create()]);
+            $partner = $request->auth_user->getPartner();
+            if (!$this->isRouteAccessAllowed($partner)) {
+                return api_response($request, null, 403, ["message" => "Sorry! Your migration is running. Please be patient."]);
+            }
+
+            $this->setExtraDataToRequest($request);
+        } catch (JWTException $e) {
+            if ($is_digigo) Redis::set($key_name, "4 (" . $e->getMessage() . "): $now : " . (isset($token) ? $token : "null"));
+            return api_response($request, null, 401, ['message' => "Your session has expired. Try Login"]);
+        } catch (NotFoundException $e) {
+            return api_response($request, null, 404, ['message' => $e->getMessage()]);
+        }
 
         return $next($request);
     }

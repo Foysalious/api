@@ -20,6 +20,7 @@ use App\Sheba\Partner\KYC\Statuses;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 use Sheba\Analysis\PartnerPerformance\PartnerPerformance;
@@ -39,6 +40,7 @@ use Sheba\Pos\Order\OrderPaymentStatuses;
 use Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
 use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Reward\PartnerReward;
+use Sheba\Subscription\Partner\Access\AccessManager;
 use Throwable;
 
 class DashboardController extends Controller
@@ -51,12 +53,12 @@ class DashboardController extends Controller
         ini_set('max_execution_time', 660);
         try {
             /** @var Partner $partner */
-            $partner       = $request->partner;
+            $partner = $request->partner;
             $slider_portal = SliderPortal::with('slider.slides')->where('portal_name', 'manager-app')->where('screen', 'home')->get();
             $slides_query = !$slider_portal->isEmpty() ? $slider_portal->last()->slider->slides()->where('location_id', $this->location)->orderBy('id', 'desc') : null;
-            $slide        = null;
-            $all_slides   = $slides_query ? $slides_query->get() : null;
-            $videos       = [];
+            $slide = null;
+            $all_slides = $slides_query ? $slides_query->get() : null;
+            $videos = [];
             if ($all_slides && !$all_slides->isEmpty()) {
                 foreach ($all_slides as $key => $item) {
                     if ($item && json_decode($item->video_info)) {
@@ -69,106 +71,106 @@ class DashboardController extends Controller
             $details = (new PartnerRepository($partner))->featureVideos();
             $performance->setPartner($partner)->setTimeFrame((new TimeFrame())->forCurrentWeek())->calculate();
             $performanceStats = $performance->getData();
-            $rating             = (new ReviewRepository)->getAvgRating($partner->reviews);
-            $rating             = (string)(is_null($rating) ? 0 : $rating);
-            $successful_jobs    = $partner->jobs()->whereDoesntHave('cancelRequest', function ($q) {
+            $rating = (new ReviewRepository)->getAvgRating($partner->reviews);
+            $rating = (string)(is_null($rating) ? 0 : $rating);
+            $successful_jobs = $partner->jobs()->whereDoesntHave('cancelRequest', function ($q) {
                 $q->where('status', CancelRequestStatuses::PENDING)->orWhere('status', CancelRequestStatuses::APPROVED);
             })->select('jobs.id', 'schedule_date', 'status')->get();
-            $sales_stats        = (new PartnerSalesStatistics($partner))->calculate();
+            $sales_stats = (new PartnerSalesStatistics($partner))->calculate();
             $upgradable_package = null;
-            $new_order          = $this->newOrdersCount($partner, $request);
+            $new_order = $this->newOrdersCount($partner, $request);
             $dashboard = [
-                'name'                         => $partner->name,
-                'logo'                         => $partner->logo,
-                'geo_informations'             => json_decode($partner->geo_informations),
+                'name' => $partner->name,
+                'logo' => $partner->logo,
+                'geo_informations' => json_decode($partner->geo_informations),
                 'current_subscription_package' => [
-                    'id'            => $partner->subscription->id,
-                    'name'          => $partner->subscription->name,
-                    'name_bn'       => $partner->subscription->show_name_bn,
+                    'id' => $partner->subscription->id,
+                    'name' => $partner->subscription->name,
+                    'name_bn' => $partner->subscription->show_name_bn,
                     'remaining_day' => $partner->last_billed_date ? $partner->periodicBillingHandler()->remainingDay() : 0,
-                    'billing_type'  => $partner->billing_type,
-                    'rules'         => $partner->subscription->getAccessRules(),
-                    'is_light'      => $partner->subscription->id == (int)config('sheba.partner_lite_packages_id')
+                    'billing_type' => $partner->billing_type,
+                    'rules' => $partner->subscription->getAccessRules(),
+                    'is_light' => $partner->subscription->id == (int)config('sheba.partner_lite_packages_id')
                 ],
-                'badge'                        => $partner->resolveBadge(),
-                'rating'                       => $rating,
-                'status'                       => $partner->getStatusToCalculateAccess(),
-                'show_status'                  => constants('PARTNER_STATUSES_SHOW')[$partner['status']]['partner'],
-                'balance'                      => $partner->totalWalletAmount(),
-                'credit'                       => $partner->wallet,
-                'is_credit_limit_exceed'       => $partner->isCreditLimitExceed(),
-                'is_on_leave'                  => $partner->runningLeave() ? 1 : 0,
-                'bonus_credit'                 => $partner->bonusWallet(),
-                'reward_point'                 => $partner->reward_point,
-                'bkash_no'                     => $partner->bkash_no,
-                'current_stats'                => [
-                    'total_new_order'     => count($new_order) > 0 ? $new_order->total_new_orders : 0,
-                    'total_order'         => $partner->orders()->count(),
+                'badge' => $partner->resolveBadge(),
+                'rating' => $rating,
+                'status' => $partner->getStatusToCalculateAccess(),
+                'show_status' => constants('PARTNER_STATUSES_SHOW')[$partner['status']]['partner'],
+                'balance' => $partner->totalWalletAmount(),
+                'credit' => $partner->wallet,
+                'is_credit_limit_exceed' => $partner->isCreditLimitExceed(),
+                'is_on_leave' => $partner->runningLeave() ? 1 : 0,
+                'bonus_credit' => $partner->bonusWallet(),
+                'reward_point' => $partner->reward_point,
+                'bkash_no' => $partner->bkash_no,
+                'current_stats' => [
+                    'total_new_order' => count($new_order) > 0 ? $new_order->total_new_orders : 0,
+                    'total_order' => $partner->orders()->count(),
                     'total_ongoing_order' => (new JobList($partner))->ongoing()->count(),
-                    'today_order'         => $partner->todayJobs($successful_jobs)->count(),
-                    'tomorrow_order'      => $partner->tomorrowJobs($successful_jobs)->count(),
-                    'not_responded'       => $partner->notRespondedJobs($successful_jobs)->count(),
-                    'schedule_due'        => $partner->scheduleDueJobs($successful_jobs)->count(),
-                    'serve_due'           => $partner->serveDueJobs($successful_jobs)->count(),
-                    'complain'            => $partner->complains()->notClosed()->count()
+                    'today_order' => $partner->todayJobs($successful_jobs)->count(),
+                    'tomorrow_order' => $partner->tomorrowJobs($successful_jobs)->count(),
+                    'not_responded' => $partner->notRespondedJobs($successful_jobs)->count(),
+                    'schedule_due' => $partner->scheduleDueJobs($successful_jobs)->count(),
+                    'serve_due' => $partner->serveDueJobs($successful_jobs)->count(),
+                    'complain' => $partner->complains()->notClosed()->count()
                 ],
-                'sales'                        => [
-                    'today'                    => [
+                'sales' => [
+                    'today' => [
                         'timeline' => date("jS F", strtotime(Carbon::today())),
-                        'amount'   => $sales_stats->today->orderTotalPrice + $sales_stats->today->posSale
+                        'amount' => $sales_stats->today->orderTotalPrice + $sales_stats->today->posSale
                     ],
-                    'week'                     => [
+                    'week' => [
                         'timeline' => date("jS F", strtotime(Carbon::today()->startOfWeek())) . "-" . date("jS F", strtotime(Carbon::today())),
-                        'amount'   => $sales_stats->week->orderTotalPrice + $sales_stats->week->posSale
+                        'amount' => $sales_stats->week->orderTotalPrice + $sales_stats->week->posSale
                     ],
-                    'month'                    => [
+                    'month' => [
                         'timeline' => date("jS F", strtotime(Carbon::today()->startOfMonth())) . "-" . date("jS F", strtotime(Carbon::today())),
-                        'amount'   => $sales_stats->month->orderTotalPrice + $sales_stats->month->posSale
+                        'amount' => $sales_stats->month->orderTotalPrice + $sales_stats->month->posSale
                     ],
                     'total_due_for_pos_orders' => 0,
                 ],
-                'is_nid_verified'              => (int)$request->manager_resource->profile->nid_verified ? true : false,
-                'weekly_performance'           => [
-                    'timeline'                   => date("jS F", strtotime(Carbon::today()->startOfWeek())) . "-" . date("jS F", strtotime(Carbon::today())),
-                    'successfully_completed'     => [
-                        'count'       => $performanceStats['completed']['total'],
+                'is_nid_verified' => (int)$request->manager_resource->profile->nid_verified ? true : false,
+                'weekly_performance' => [
+                    'timeline' => date("jS F", strtotime(Carbon::today()->startOfWeek())) . "-" . date("jS F", strtotime(Carbon::today())),
+                    'successfully_completed' => [
+                        'count' => $performanceStats['completed']['total'],
                         'performance' => $this->formatRate($performanceStats['completed']['rate']),
                         'is_improved' => $performanceStats['completed']['is_improved']
                     ],
                     'completed_without_complain' => [
-                        'count'       => $performanceStats['no_complain']['total'],
+                        'count' => $performanceStats['no_complain']['total'],
                         'performance' => $this->formatRate($performanceStats['no_complain']['rate']),
                         'is_improved' => $performanceStats['no_complain']['is_improved']
                     ],
-                    'timely_accepted'            => [
-                        'count'       => $performanceStats['timely_accepted']['total'],
+                    'timely_accepted' => [
+                        'count' => $performanceStats['timely_accepted']['total'],
                         'performance' => $this->formatRate($performanceStats['timely_accepted']['rate']),
                         'is_improved' => $performanceStats['timely_accepted']['is_improved']
                     ],
-                    'timely_started'             => [
-                        'count'       => $performanceStats['timely_processed']['total'],
+                    'timely_started' => [
+                        'count' => $performanceStats['timely_processed']['total'],
                         'performance' => $this->formatRate($performanceStats['timely_processed']['rate']),
                         'is_improved' => $performanceStats['timely_processed']['is_improved']
                     ]
                 ],
-                'subscription_promotion'       => $upgradable_package ? [
-                    'package'         => $upgradable_package->name,
+                'subscription_promotion' => $upgradable_package ? [
+                    'package' => $upgradable_package->name,
                     'package_name_bn' => $upgradable_package->name_bn,
-                    'package_badge'   => $upgradable_package->badge,
-                    'package_usp_bn'  => json_decode($upgradable_package->usps, 1)['usp_bn']
+                    'package_badge' => $upgradable_package->badge,
+                    'package_usp_bn' => json_decode($upgradable_package->usps, 1)['usp_bn']
                 ] : null,
-                'leave_info'                   => (new LeaveStatus($partner))->getCurrentStatus(),
-                'sheba_order'                  => $partner->orders->isEmpty() ? 0 : 1,
-                'manager_dashboard_banner'     => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner_assets/dashboard/manager_dashboard.png',
-                'video'                        => $slide ? json_decode($slide->video_info) : null,
-                'has_pos_inventory'            => $partner->posServices->isEmpty() ? 0 : 1,
-                'has_kyc_profile_completed'    => $this->getSpLoanInformationCompletion($partner, $request),
-                'has_pos_due_order'            => 0,
-                'has_pos_paid_order'           => 0,
-                'home_videos'    => $videos ? $videos : null,
+                'leave_info' => (new LeaveStatus($partner))->getCurrentStatus(),
+                'sheba_order' => $partner->orders->isEmpty() ? 0 : 1,
+                'manager_dashboard_banner' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner_assets/dashboard/manager_dashboard.png',
+                'video' => $slide ? json_decode($slide->video_info) : null,
+                'has_pos_inventory' => $partner->posServices->isEmpty() ? 0 : 1,
+                'has_kyc_profile_completed' => $this->getSpLoanInformationCompletion($partner, $request),
+                'has_pos_due_order' => 0,
+                'has_pos_paid_order' => 0,
+                'home_videos' => $videos ? $videos : null,
                 'feature_videos' => $details,
-                'has_qr_code'    => ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0,
-                'has_webstore'   => $partner->has_webstore,
+                'has_qr_code' => ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0,
+                'has_webstore' => $partner->has_webstore,
                 'is_webstore_published' => $partner->is_webstore_published,
                 'is_registered_for_delivery' => $partner->deliveryInformation ? 1 : 0
             ];
@@ -185,25 +187,26 @@ class DashboardController extends Controller
     {
         try {
             $sp_loan_information_completion = new SpLoanInformationCompletion();
-            $sp_information_completion      = $sp_loan_information_completion->getLoanInformationCompletion($partner, $request)->getData()->completion;
-            $personal                       = $sp_information_completion->personal->completion_percentage;
-            $business                       = $sp_information_completion->business->completion_percentage;
-            $finance                        = $sp_information_completion->finance->completion_percentage;
-            $nominee                        = $sp_information_completion->nominee->completion_percentage;
-            $documents                      = $sp_information_completion->documents->completion_percentage;
+            $sp_information_completion = $sp_loan_information_completion->getLoanInformationCompletion($partner, $request)->getData()->completion;
+            $personal = $sp_information_completion->personal->completion_percentage;
+            $business = $sp_information_completion->business->completion_percentage;
+            $finance = $sp_information_completion->finance->completion_percentage;
+            $nominee = $sp_information_completion->nominee->completion_percentage;
+            $documents = $sp_information_completion->documents->completion_percentage;
             return ($personal == 100 && $business == 100 && $finance == 100 && $nominee == 100 && $documents == 100) ? 1 : 0;
         } catch (Throwable $e) {
             return 0;
         }
     }
 
-    public function getV3DashBoard(Request $request, PartnerPerformance $performance) {
+    public function getV3DashBoard(Request $request, PartnerPerformance $performance)
+    {
         ini_set('memory_limit', '6096M');
         ini_set('max_execution_time', 660);
         try {
             /** @var Partner $partner */
-            $partner       = $request->partner;
-            $data     = (new PartnerRepository($partner))->getNewDashboard($request, $performance);
+            $partner = $request->partner;
+            $data = (new PartnerRepository($partner))->getNewDashboard($request, $performance);
             if (request()->hasHeader('Portal-Name'))
                 $this->setDailyUsageRecord($partner, request()->header('Portal-Name'));
             return api_response($request, $data, 200, ['data' => $data]);
@@ -213,22 +216,23 @@ class DashboardController extends Controller
         }
     }
 
-    public function getNewHomePage(Request $request) {
+    public function getNewHomePage(Request $request)
+    {
         try {
             /** @var Partner $partner */
-            $partner       = $request->partner;
+            $partner = $request->partner;
             /** @var Resource $resource */
             $resource = $request->manager_resource;
             $resource_status = $resource->status;
             $data = [
-                'name'                         => $partner->name,
-                'logo'                         => $partner->logo,
-                'resource_kyc_status'          => $resource_status,
-                'is_nid_verified'              => (bool)((int)$request->manager_resource->profile->nid_verified),
-                'is_webstore_published'        =>$partner->is_webstore_published,
-                'new_notification_count'       => $partner->notifications()->where('is_seen', '0')->count()
+                'name' => $partner->name,
+                'logo' => $partner->logo,
+                'resource_kyc_status' => $resource_status,
+                'is_nid_verified' => (bool)((int)$request->manager_resource->profile->nid_verified),
+                'is_webstore_published' => $partner->is_webstore_published,
+                'new_notification_count' => $partner->notifications()->where('is_seen', '0')->count()
             ];
-            if ($resource_status === Statuses::VERIFIED){
+            if ($resource_status === Statuses::VERIFIED) {
                 $data['message_seen'] = (bool)((int)$resource->verification_message_seen);
             }
             return api_response($request, $data, 200, ['data' => $data]);
@@ -243,7 +247,7 @@ class DashboardController extends Controller
         try {
             $request->merge(['getCount' => 1]);
             $partner_order = new PartnerOrderController();
-            $new_order     = $partner_order->newOrders($partner, $request)->getData();
+            $new_order = $partner_order->newOrders($partner, $request)->getData();
             return $new_order;
         } catch (Throwable $e) {
             return array();
@@ -266,8 +270,8 @@ class DashboardController extends Controller
     private function setDailyUsageRecord(Partner $partner, $portal_name)
     {
         $daily_usages_record_namespace = 'PartnerDailyAppUsages:partner_' . $partner->id;
-        $daily_uses_count              = Redis::get($daily_usages_record_namespace);
-        $daily_uses_count              = !is_null($daily_uses_count) ? (int)$daily_uses_count + 1 : 1;
+        $daily_uses_count = Redis::get($daily_usages_record_namespace);
+        $daily_uses_count = !is_null($daily_uses_count) ? (int)$daily_uses_count + 1 : 1;
         $second_left = Carbon::now()->diffInSeconds(Carbon::today()->endOfDay(), false);
         Redis::set($daily_usages_record_namespace, $daily_uses_count);
         if ($daily_uses_count == 1) {
@@ -283,7 +287,7 @@ class DashboardController extends Controller
             $partner = $request->partner;
             /** @var Resource $resource */
             $resource = $request->manager_resource;
-            $data     = (new PartnerRepository($partner))->getDashboard($resource);
+            $data = (new PartnerRepository($partner))->getDashboard($resource);
             return api_response($request, $data, 200, ['data' => $data]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
@@ -297,7 +301,7 @@ class DashboardController extends Controller
             $this->validate($request, [
                 'type' => 'sometimes|required|in:payment_link,pos,inventory,referral,due',
             ]);
-            $repository=(new PartnerRepository($request->partner));
+            $repository = (new PartnerRepository($request->partner));
             $videos = $repository->featureVideos($request->type);
             return api_response($request, $videos, 200, ['feature_videos' => $videos]);
         } catch (ValidationException $e) {
@@ -344,7 +348,23 @@ class DashboardController extends Controller
                     in_array($setting['key'], NewFeatures::get()) ? $setting['is_new'] = 1 : $setting['is_new'] = 0;
                 }
             }
-            return api_response($request, null, 200, ['data' => $home_page_setting]);
+            $updated_setting = [];
+            if (!AccessManager::canAccess(AccessManager::Rules()->DIGITAL_COLLECTION, $request->partner->subscription->getAccessRules())) {
+                if (is_array($home_page_setting)) {
+                    $updated_setting = array_values(array_filter($home_page_setting, function ($item) {
+                        $key = is_object($item) ? $item->key : $item['key'];
+                        return !in_array($key, ['payment_link', 'emi']);
+                    }, ARRAY_FILTER_USE_BOTH));
+                } elseif ($home_page_setting instanceof Collection) {
+                    $updated_setting = $home_page_setting->filter(function ($item) {
+                        $key = is_object($item) ? $item->key : $item['key'];
+                        return !in_array($key, ['payment_link', 'emi']);
+                    })->values();
+                }
+            } else {
+                $updated_setting = $home_page_setting;
+            }
+            return api_response($request, null, 200, ['data' => $updated_setting]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -360,13 +380,13 @@ class DashboardController extends Controller
     public function updateHomeSetting(Request $request, PartnerRepositoryInterface $partner_repo, CacheManager $cache_manager)
     {
         try {
-            $home_page_setting         = $request->home_page_setting;
+            $home_page_setting = $request->home_page_setting;
             $data['home_page_setting'] = $home_page_setting;
             $partner_repo->update($request->partner, $data);
             $cache_manager->setPartner($request->partner)->store(json_decode($data['home_page_setting'], true));
             return api_response($request, null, 200, [
                 'message' => 'Dashboard Setting updated successfully',
-                'data'    => json_decode($home_page_setting)
+                'data' => json_decode($home_page_setting)
             ]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
@@ -382,12 +402,12 @@ class DashboardController extends Controller
     public function updateHomeSettingV3(Request $request, PartnerRepositoryInterface $partner_repo)
     {
         try {
-            $home_page_setting         = $request->home_page_setting;
+            $home_page_setting = $request->home_page_setting;
             $data['home_page_setting_new'] = $home_page_setting;
             $partner_repo->update($request->partner, $data);
             return api_response($request, null, 200, [
                 'message' => 'Dashboard Setting updated successfully',
-                'data'    => json_decode($home_page_setting)
+                'data' => json_decode($home_page_setting)
             ]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
@@ -408,8 +428,8 @@ class DashboardController extends Controller
 
             $is_updated = 1;
             $last_updated = DefaultSettingV3::getLastUpdatedAt();
-            if($request->has('last_updated'))
-            $is_updated = Carbon::parse($last_updated) > Carbon::parse($request->last_updated) ? 1 : 0;
+            if ($request->has('last_updated'))
+                $is_updated = Carbon::parse($last_updated) > Carbon::parse($request->last_updated) ? 1 : 0;
             $data = [
                 'is_updated' => $is_updated,
                 'last_updated' => $last_updated
@@ -430,12 +450,13 @@ class DashboardController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function getBkashNo(Request $request) {
+    public function getBkashNo(Request $request)
+    {
         try {
             /** @var Partner $partner */
-            $partner       = $request->partner;
+            $partner = $request->partner;
             $data = [
-                'bkash_no'                     => $partner->bkash_no,
+                'bkash_no' => $partner->bkash_no,
             ];
             return api_response($request, $data, 200, ['data' => $data]);
         } catch (Throwable $e) {
@@ -448,12 +469,13 @@ class DashboardController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function getGeoInformation(Request $request) {
+    public function getGeoInformation(Request $request)
+    {
         try {
             /** @var Partner $partner */
-            $partner       = $request->partner;
+            $partner = $request->partner;
             $data = [
-                'geo_informations'  => json_decode($partner->geo_informations)
+                'geo_informations' => json_decode($partner->geo_informations)
             ];
             return api_response($request, $data, 200, ['data' => $data]);
         } catch (Throwable $e) {
@@ -462,21 +484,22 @@ class DashboardController extends Controller
         }
     }
 
-    public function getCurrentPackage(Request $request) {
+    public function getCurrentPackage(Request $request)
+    {
         try {
             /** @var Partner $partner */
-            $partner       = $request->partner;
+            $partner = $request->partner;
             $data = [
                 'current_subscription_package' => [
-                    'id'            => $partner->subscription->id,
-                    'name'          => $partner->subscription->name,
-                    'name_bn'       => $partner->subscription->show_name_bn,
+                    'id' => $partner->subscription->id,
+                    'name' => $partner->subscription->name,
+                    'name_bn' => $partner->subscription->show_name_bn,
                     'remaining_day' => $partner->last_billed_date ? $partner->periodicBillingHandler()->remainingDay() : 0,
-                    'last_billing_date'  => $partner->last_billed_date ? $partner->last_billed_date->format('Y-m-d') : null,
-                    'next_billing_date'  => $partner->periodicBillingHandler()->nextBillingDate() ? $partner->periodicBillingHandler()->nextBillingDate()->format('Y-m-d'): null,
-                    'billing_type'  => $partner->billing_type,
-                    'rules'         => $partner->subscription->getAccessRules(),
-                    'is_light'      => $partner->subscription->id == (int)config('sheba.partner_lite_packages_id'),
+                    'last_billing_date' => $partner->last_billed_date ? $partner->last_billed_date->format('Y-m-d') : null,
+                    'next_billing_date' => $partner->periodicBillingHandler()->nextBillingDate() ? $partner->periodicBillingHandler()->nextBillingDate()->format('Y-m-d') : null,
+                    'billing_type' => $partner->billing_type,
+                    'rules' => $partner->subscription->getAccessRules(),
+                    'is_light' => $partner->subscription->id == (int)config('sheba.partner_lite_packages_id'),
                     'auto_billing_activated' => (bool)($partner->auto_billing_activated),
                     'subscription_renewal_warning' => (bool)($partner->subscription_renewal_warning),
                     'renewal_warning_days' => $partner->renewal_warning_days,
@@ -488,5 +511,25 @@ class DashboardController extends Controller
             logError($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function settingLastUpdatedDetails(Request $request)
+    {
+        $partner = $request->partner;
+        if (!$partner instanceof Partner) {
+            return api_response($request, null, 404);
+        }
+        $modules = config('partner_setting_modules');
+
+        foreach ($modules as $key => $module) {
+            if ($modules[$key]['function']) {
+                $modules[$key]['updated_at'] = Carbon::parse(call_user_func_array([$partner, $module['function']], []))->toDateTimeString();
+            } else {
+                $modules[$key]['updated_at'] = Carbon::now()->toDateString() . ' 00:01:01';
+            }
+
+            unset($modules[$key]['function']);
+        }
+        return api_response($request, $modules, 200, ['data' => $modules]);
     }
 }
