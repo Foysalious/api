@@ -6,7 +6,7 @@ use App\Models\Profile;
 use App\Sheba\Business\BusinessQueue;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 
-class SendNotificationToWebPortal extends BusinessQueue
+class SendNotificationToApprover extends BusinessQueue
 {
     public function __construct(ApprovalRequest $approval_request, Profile $profile)
     {
@@ -27,7 +27,7 @@ class SendNotificationToWebPortal extends BusinessQueue
 
             notify()->member($member)->send([
                 'title' => $title,
-                'type' => 'Info',
+                'type' => 'info',
                 'event_type' => get_class($this->approvalRequest),
                 'event_id' => $this->approvalRequest->id
             ]);
