@@ -43,7 +43,7 @@ class OrderBillSms extends Job implements ShouldQueue
         $this->generateCommonData();
         if (!$this->partner->isMigrated(Modules::POS)) $this->generateDataForOldSystem();
         else $this->generateDataForNewSystem();
-        $handler->setData($this->partner)->setData($this->data)->handle();
+        $handler->setPartner($this->partner)->setData($this->data)->handle();
     }
 
     private function resolvePosOrder()
@@ -74,10 +74,6 @@ class OrderBillSms extends Job implements ShouldQueue
 
     private function generateDataForOldSystem()
     {
-        $this->order->items->each(function ($item) {
-            $this->serviceBreakDown[$item->id] = $item->service_name . ': ' . $item->getTotal();
-        });
-        $this->data['service_break_down'] = implode(',', $this->serviceBreakDown);
         $this->due_amount = $this->order->getDue();
         $this->data['mobile'] = $this->order->customer->profile->mobile;
         $this->data['order_id'] = $this->order->id;
@@ -88,10 +84,6 @@ class OrderBillSms extends Job implements ShouldQueue
 
     private function generateDataForNewSystem()
     {
-        $items = $this->order['items'];
-        foreach ($items as $item)
-            $this->serviceBreakDown[$item['id']] = $item['name'] . ': ' . ($item['quantity'] * $item['unit_price']);
-        $this->data['service_break_down'] = $this->serviceBreakDown = implode(',', $this->serviceBreakDown);
         $this->due_amount = $this->order['price']['due'];
         $this->data['mobile'] = $this->order['customer']['mobile'];
         $this->data['order_id'] = $this->order['partner_wise_order_id'];
@@ -105,7 +97,6 @@ class OrderBillSms extends Job implements ShouldQueue
         $invoice_link =   $this->order->invoice ? : $this->resolveInvoiceLink();
         $data = [
             'order_id' => $this->order->partner_wise_order_id,
-            'service_break_down' => $this->serviceBreakDown,
             'total_amount' => $this->order->getNetBill(),
             'partner_name' => $this->partner->name,
             'invoice_link' => $invoice_link
@@ -119,7 +110,6 @@ class OrderBillSms extends Job implements ShouldQueue
     {
         $data = [
             'order_id' => $this->order['partner_wise_order_id'],
-            'service_break_down' => $this->serviceBreakDown,
             'total_amount' => $this->order['price']['original_price'],
             'partner_name' => $this->partner->name,
             'invoice_link' => $this->order['invoice']
