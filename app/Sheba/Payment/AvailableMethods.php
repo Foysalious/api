@@ -4,6 +4,7 @@ use App\Models\Partner;
 use Exception;
 use Sheba\Payment\Factory\PaymentStrategy;
 use Sheba\Payment\Presenter\PaymentMethodDetails;
+use Sheba\PaymentLink\Exceptions\InvalidPaymentLinkIdentifierException;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 
 class AvailableMethods
@@ -158,6 +159,11 @@ class AvailableMethods
         ];
     }
 
+    /**
+     * @param $payment_link_identifier
+     * @return array
+     * @throws InvalidPaymentLinkIdentifierException
+     */
     public static function getPaymentLinkPayments($payment_link_identifier)
     {
         /*
@@ -171,10 +177,11 @@ class AvailableMethods
          *
          */
 
-
         /** @var PaymentLinkRepositoryInterface $repo */
         $repo = app(PaymentLinkRepositoryInterface::class);
         $payment_link = $repo->findByIdentifier($payment_link_identifier);
+        if(!isset($payment_link)) throw new InvalidPaymentLinkIdentifierException();
+
         $receiver = ($payment_link->getPaymentReceiver());
         if($receiver instanceof Partner) return (new AvailableMethods())->getPublishedPartnerPaymentGateways($receiver);
 
