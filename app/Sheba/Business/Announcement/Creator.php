@@ -113,9 +113,9 @@ class Creator
         /** @var Announcement $announcement */
         $announcement = $this->announcementRepository->create($this->data);
 
-        $members_id = BusinessMember::where('business_id', $this->business->id)->where('status', Statuses::ACTIVE)->pluck('member_id')->toArray();
-        dispatch(new SendAnnouncementNotificationToEmployee($members_id, $announcement));
-        foreach ($members_id as $member) {
+        $members_ids = $this->business->getActiveBusinessMember()->pluck('member_id')->toArray();
+        dispatch(new SendAnnouncementNotificationToEmployee($members_ids, $announcement));
+        foreach ($members_ids as $member) {
             dispatch(new SendAnnouncementPushNotificationToEmployee($member, $announcement));
         }
 

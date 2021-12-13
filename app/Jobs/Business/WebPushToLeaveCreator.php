@@ -2,9 +2,13 @@
 
 use App\Sheba\Business\BusinessQueue;
 use Sheba\Dal\Leave\LeaveStatusPresenter as LeaveStatusPresenter;
+use Sheba\Dal\Leave\Model as Leave;
 
 class WebPushToLeaveCreator extends BusinessQueue
 {
+    /** @var Leave $leave */
+    private $leave;
+
     public function __construct($leave)
     {
         $this->leave = $leave;
