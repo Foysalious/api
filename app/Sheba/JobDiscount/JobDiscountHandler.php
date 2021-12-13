@@ -107,9 +107,9 @@ class JobDiscountHandler
     {
         if ($category_ids) {
             $discount_applicable_category_id = $this->discount ? $this->discount->applicables->whereIn('applicable_id', $category_ids)->where('applicable_type',"Sheba\\Dal\\Category\\Category")->toArray() : null;
-            return !is_null($this->discount) && $this->discount !== 0 && $discount_applicable_category_id;
+            return !is_null($this->discount) && (double) $this->discount->amount !== 0.0 && $discount_applicable_category_id;
         }
-        else return !is_null($this->discount) && $this->discount !== 0;
+        else return !is_null($this->discount) && (double) $this->discount->amount !== 0.0;
     }
 
     public function create(Job $job)
