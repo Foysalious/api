@@ -1,17 +1,17 @@
 <?php namespace Sheba\Pos\Jobs;
 
 use App\Jobs\Job;
-use App\Models\Partner;
 use App\Models\PosOrder;
 use App\Sheba\PosOrderService\Services\OrderService;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
-use App\Sheba\UserMigration\Modules;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Sheba\Pos\Notifier\SmsHandler;
+use App\Sheba\UserMigration\Modules;
+use App\Sheba\Pos\Order\Invoice\InvoiceService;
 
 class OrderBillSms extends Job implements ShouldQueue
 {
@@ -21,7 +21,6 @@ class OrderBillSms extends Job implements ShouldQueue
     private $order;
     protected $tries = 1;
     private $data = [];
-    /** @var Partner */
     private $partner;
     private $serviceBreakDown = [];
     private $due_amount;
@@ -44,7 +43,7 @@ class OrderBillSms extends Job implements ShouldQueue
         $this->generateCommonData();
         if (!$this->partner->isMigrated(Modules::POS)) $this->generateDataForOldSystem();
         else $this->generateDataForNewSystem();
-        $handler->setData($this->data)->handle();
+        $handler->setData($this->partner)->setData($this->data)->handle();
     }
 
     private function resolvePosOrder()
@@ -103,12 +102,13 @@ class OrderBillSms extends Job implements ShouldQueue
 
     private function getMessageDataForOldSystem()
     {
+        $invoice_link =   $this->order->invoice ? : $this->resolveInvoiceLink();
         $data = [
             'order_id' => $this->order->partner_wise_order_id,
             'service_break_down' => $this->serviceBreakDown,
             'total_amount' => $this->order->getNetBill(),
             'partner_name' => $this->partner->name,
-            'invoice_link' => $this->order->invoice
+            'invoice_link' => $invoice_link
         ];
         if ($this->due_amount > 0)
             $data['total_due_amount'] = $this->due_amount;
@@ -122,9 +122,16 @@ class OrderBillSms extends Job implements ShouldQueue
             'service_break_down' => $this->serviceBreakDown,
             'total_amount' => $this->order['price']['original_price'],
             'partner_name' => $this->partner->name,
-            'invoice_link' => 'static'
+            'invoice_link' => $this->order['invoice']
         ];
         if ($this->due_amount > 0) $data['total_due_amount'] = $this->due_amount;
         return $this->data['message'] = $data;
+    }
+
+    private function resolveInvoiceLink()
+    {
+        /** @var InvoiceService $invoiceService */
+        $invoiceService = app(InvoiceService::class)->setPosOrder($this->order);
+        return $invoiceService->generateInvoice()->saveInvoiceLink()->getInvoiceLink();
     }
 }
