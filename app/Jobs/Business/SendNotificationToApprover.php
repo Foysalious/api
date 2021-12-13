@@ -11,6 +11,10 @@ class SendNotificationToApprover extends BusinessQueue
     public function __construct(ApprovalRequest $approval_request, Profile $profile)
     {
         $this->approvalRequest = $approval_request;
+        /** @var BusinessMember $business_member */
+        $business_member = $this->approvalRequest->approver;
+        /**@var Member $member */
+        $this->member = $business_member->member;
         $this->profile = $profile;
         parent::__construct();
     }
@@ -18,19 +22,19 @@ class SendNotificationToApprover extends BusinessQueue
     public function handle()
     {
         if ($this->attempts() < 2) {
-            /** @var BusinessMember $business_member */
-            $business_member = $this->approvalRequest->approver;
-            /** @var Member $member */
-            $member = $business_member->member;
-            $leave_applicant = $this->profile->name ? $this->profile->name : 'n/s';
-            $title = "$leave_applicant requested for a leave";
+            try {
+                $leave_applicant = $this->profile->name ? $this->profile->name : 'n/s';
+                $title = "$leave_applicant requested for a leave";
 
-            notify()->member($member)->send([
-                'title' => $title,
-                'type' => 'info',
-                'event_type' => get_class($this->approvalRequest),
-                'event_id' => $this->approvalRequest->id
-            ]);
+                notify()->member($this->member)->send([
+                    'title' => $title,
+                    'type' => 'info',
+                    'event_type' => get_class($this->approvalRequest),
+                    'event_id' => $this->approvalRequest->id
+                ]);
+            }catch (\Throwable $e){
+                dd($e->getTraceAsString());
+            }
         }
     }
 }
