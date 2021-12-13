@@ -101,7 +101,7 @@ class NidFaceVerification
         $image=explode(",",$image);
         $image=base64_decode($image['1']);
         $png_url = "user-".time().".jpg";
-        $path = public_path($png_url);
+        $path = public_path("temp/$png_url");
         Image::make($image)->save($path);
         /** @var ProfileRepository $profile_repo */
         $profile_repo  = app()->make(ProfileRepository::class);

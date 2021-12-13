@@ -1,4 +1,4 @@
-<?php namespace Sheba\TopUp\Vendor\Internal\Pretups;
+<?php namespace Sheba\TopUp\Gateway\Clients;
 
 use App\Models\TopUpOrder;
 use Exception;
@@ -11,7 +11,7 @@ use Sheba\TopUp\Vendor\Response\PretupsResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 use Carbon\Carbon;
 
-class Client
+class PretupsClient
 {
     /** @var HttpClient */
     private $httpClient;

@@ -1,8 +1,4 @@
-<?php
-
-
-namespace App\Sheba\TopUp\Vendor\Response\Ipn\BdRecharge;
-
+<?php namespace Sheba\TopUp\Vendor\Response\Ipn\BdRecharge;
 
 use App\Models\TopUpOrder;
 use Sheba\TopUp\Gateway\Names;
