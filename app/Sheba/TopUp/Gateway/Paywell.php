@@ -2,10 +2,10 @@
 
 use App\Models\TopUpOrder;
 use Exception;
-use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\TopUp\Exception\GatewayTimeout;
-use Sheba\TopUp\Exception\PaywellTopUpStillNotResolved;
-use Sheba\TopUp\Vendor\Internal\PaywellClient;
+use Sheba\TopUp\Exception\TopUpStillNotResolvedException;
+use Sheba\TopUp\Gateway\Clients\PaywellClient;
+use Sheba\TopUp\Gateway\FailedReason\PaywellFailedReason;
 use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\Paywell\PaywellFailResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\Paywell\PaywellSuccessResponse;
@@ -33,12 +33,12 @@ class Paywell implements Gateway
         return $this->paywell->recharge($topup_order);
     }
 
-    public function getShebaCommission()
+    public function getShebaCommission(): float
     {
         return self::SHEBA_COMMISSION;
     }
 
-    public function getName()
+    public function getName(): string
     {
         return Names::PAYWELL;
     }
@@ -46,22 +46,26 @@ class Paywell implements Gateway
     /**
      * @param TopUpOrder $topup_order
      * @return IpnResponse
-     * @throws TPProxyServerError | PaywellTopUpStillNotResolved
+     * @throws TPProxyServerError | TopUpStillNotResolvedException
      */
-    public function enquireIpnResponse(TopUpOrder $topup_order): IpnResponse
+    public function enquire(TopUpOrder $topup_order): IpnResponse
     {
         $response = $this->paywell->enquiry($topup_order);
 
         /** @var IpnResponse $ipn_response */
-        $ipn_response = null;
         if ($response->status_code == "200") {
             $ipn_response = app(PaywellSuccessResponse::class);
         } else if ($response->status_code != "100") {
             $ipn_response = app(PaywellFailResponse::class);
         } else {
-            throw new PaywellTopUpStillNotResolved($response);
+            throw new TopUpStillNotResolvedException($response);
         }
         $ipn_response->setResponse($response);
         return $ipn_response;
+    }
+
+    public function getFailedReason(): FailedReason
+    {
+        return new PaywellFailedReason();
     }
 }

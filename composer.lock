@@ -7077,6 +7077,7 @@
         "ext-calendar": "*",
         "ext-simplexml": "*",
         "ext-openssl": "^7.0",
+        "ext-mcrypt": "^7.0",
         "ext-redis": "*",
         "ext-mysql_xdevapi": "*",
         "ext-intl": "*"

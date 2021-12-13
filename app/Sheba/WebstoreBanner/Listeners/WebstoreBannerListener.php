@@ -1,6 +1,6 @@
 <?php namespace App\Sheba\WebstoreBanner\Listeners;
 
-use App\Jobs\WebstoreSettingsSyncJob;
+//use App\Jobs\WebstoreSettingsSyncJob;
 use App\Sheba\WebstoreBanner\Events\WebstoreBannerUpdate;
 
 
@@ -13,6 +13,6 @@ class WebstoreBannerListener
 
     public function handle(WebstoreBannerUpdate $event)
     {
-        dispatch(new WebStoreSettingsSyncJob($event->getPartnerId()));
+//        dispatch(new WebStoreSettingsSyncJob($event->getPartnerId()));
     }
 }
