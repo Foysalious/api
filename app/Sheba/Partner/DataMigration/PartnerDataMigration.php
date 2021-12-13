@@ -93,6 +93,7 @@ class PartnerDataMigration
             'auto_printing' => $pos_setting ? $this->partner->posSetting->auto_printing : 0,
             'printer_name' => $pos_setting ? $this->partner->posSetting->printer_name : null,
             'printer_model' => $pos_setting ? $this->partner->posSetting->printer_model : null,
+            'delivery_charge' => $this->partner->delivery_charge,
             'created_at' => $this->partner->created_at->subHours(6)->format('Y-m-d H:i:s'),
             'created_by_name' => $this->partner->created_by_name,
             'updated_at' => $this->partner->updated_at->subHours(6)->format('Y-m-d H:i:s'),
@@ -170,7 +171,10 @@ class PartnerDataMigration
             $q->where('is_migrated', null)->orWhere('is_migrated', 0);
         })->select('id', 'parent_id', 'name', 'thumb',
             'banner', 'app_thumb', 'app_banner', 'is_published_for_sheba','order',
-            'icon', 'icon_png', 'created_by_name', 'updated_by_name',
+            'icon', 'icon_png', DB::raw('(CASE 
+                        WHEN name= "Others" THEN "1" 
+                        ELSE "0" 
+                        END) AS is_default'), 'created_by_name', 'updated_by_name',
             DB::raw('SUBTIME(created_at,"6:00:00") as created_at, SUBTIME(updated_at,"6:00:00") as updated_at')
         )->get()->toArray();
     }
