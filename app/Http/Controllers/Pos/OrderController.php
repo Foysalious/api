@@ -588,7 +588,7 @@ class OrderController extends Controller
     {
         $partner = resolvePartnerFromAuthMiddleware($request);
         $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
-        $this->dispatch(new OrderBillSms($partner, $request->order));
+        $this->dispatch(new OrderBillSms($partner, $request->order->id));
     }
 
     private function sendEmailCore(Request $request)
