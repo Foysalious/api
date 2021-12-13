@@ -120,7 +120,7 @@ class ExpenseEntry
             $negativeEntryData = $this->makeNegativeEntryData();
             $this->accountingRepo->storeEntry((object)$negativeEntryData, EntryTypes::INVENTORY);
         }
-        if(is_null($this->stock)) return;
+        if($this->stock == 0 || is_null($this->stock)) return;
         $data = $this->makeData();
         $this->accountingRepo->storeEntry((object)$data, EntryTypes::INVENTORY);
     }
