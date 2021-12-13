@@ -33,6 +33,7 @@ class TopUpJob extends MonitoredJob implements ShouldQueue
         $this->agent = $this->topUpOrder->agent;
         $this->connection = $this->getConnectionName();
         $this->queue = $this->connection;
+        parent::__construct();
     }
 
     /**
@@ -132,17 +133,11 @@ class TopUpJob extends MonitoredJob implements ShouldQueue
         ]);
     }
 
-    /**
-     * @return TopUpVendor
-     */
     public function getVendor(): TopUpVendor
     {
         return $this->topUpOrder->vendor;
     }
 
-    /**
-     * @return TopUpAgent
-     */
     public function getAgent(): TopUpAgent
     {
         return $this->topUpOrder->agent;

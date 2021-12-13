@@ -1,8 +1,8 @@
-<?php namespace Sheba\TopUp\FailedReason;
+<?php namespace Sheba\TopUp\Gateway\FailedReason;
 
-use Throwable;
+use Sheba\TopUp\Gateway\FailedReason;
 
-class PaywellFailedReason extends FailedReason
+class PayStationFailedReason extends FailedReason
 {
     public function getReason()
     {
@@ -10,8 +10,12 @@ class PaywellFailedReason extends FailedReason
             $transaction_details = json_decode($this->transaction, true);
             if (array_key_exists('response', $transaction_details)) {
                 if (!$transaction_details['response']) return "The Recharge could not be processed due to a technical issue. Pls try again later.";
-                if (array_key_exists('message', $transaction_details['response']))
+                if (array_key_exists('message', $transaction_details['response'])) {
                     return $transaction_details['response']['message'];
+                }
+                if (array_key_exists('error', $transaction_details['response'])) {
+                    return $transaction_details['response']['error'];
+                }
             }
         } catch (Throwable $e) {
             logError($e);

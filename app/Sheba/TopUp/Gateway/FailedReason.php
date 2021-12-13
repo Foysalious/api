@@ -1,4 +1,4 @@
-<?php namespace Sheba\TopUp\FailedReason;
+<?php namespace Sheba\TopUp\Gateway;
 
 abstract class FailedReason
 {
