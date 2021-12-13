@@ -1,7 +1,7 @@
 <?php namespace App\Transformers\Affiliate;
 
 use App\Models\Profile;
-use App\Sheba\Gender\Gender;
+use Sheba\Gender\Gender;
 use League\Fractal\TransformerAbstract;
 
 class ProfileDetailTransformer extends TransformerAbstract

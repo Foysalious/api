@@ -11,6 +11,7 @@ use App\Sheba\Business\CoWorker\ProfileInformation\OfficialInfoUpdater;
 use App\Sheba\Business\CoWorker\ProfileInformation\PersonalInfoUpdater;
 use App\Sheba\Business\CoWorker\ProfileInformation\ProfileRequester;
 use App\Sheba\Business\CoWorker\ProfileInformation\ProfileUpdater;
+use Sheba\Gender\Gender;
 use App\Transformers\Business\CoWorkerMinimumTransformer;
 use App\Transformers\Business\EmergencyContactInfoTransformer;
 use App\Transformers\Business\FinancialInfoTransformer;
@@ -108,7 +109,7 @@ class EmployeeController extends Controller
             'name' => 'string',
             'date_of_birth' => 'date',
             'profile_picture' => 'file',
-            'gender' => 'in:Female,Male,Other',
+            'gender' => 'in:' . Gender::implodeEnglish(),
             'address' => 'string',
             'blood_group' => 'in:' . implode(',', getBloodGroupsList(false)),
         ]);
@@ -467,7 +468,7 @@ class EmployeeController extends Controller
             'department' => 'required|string',
             'designation' => 'required|string',
             'joining_date' => 'required|date',
-            'gender' => 'required|string|in:Female,Male,Other'
+            'gender' => 'required|string|in:' . Gender::implodeEnglish()
         ]);
 
         try {

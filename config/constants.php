@@ -949,23 +949,6 @@ return [
             'bn' => 'অন্যান্য'
         ]
     ],
-    'GENDER' => [
-        [
-            'key' => 'female',
-            'en' => 'Female',
-            'bn' => 'মহিলা'
-        ],
-        [
-            'key' => 'male',
-            'en' => 'Male',
-            'bn' => 'পুরুষ'
-        ],
-        [
-            'key' => 'other',
-            'en' => 'Other',
-            'bn' => 'অন্যান্য'
-        ]
-    ],
     'LOAN_STATUS' => [
         'applied' => 'applied',
         'submitted' => 'submitted',
