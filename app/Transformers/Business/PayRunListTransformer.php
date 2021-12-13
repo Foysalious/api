@@ -28,7 +28,8 @@ class PayRunListTransformer extends TransformerAbstract
     public function transform(Payslip $payslip)
     {
         $business_member = $payslip->businessMember;
-        $department = $business_member->department();
+        $business_member_role = $payslip->businessMember->role;
+        $business_member_department = $business_member_role ? $business_member_role->businessDepartment->name : 'N/A';
         $salary_breakdown = $payslip->salaryBreakdown();
         if ($this->isProratedFilterApplicable === 0 && $payslip->joining_log) $this->isProratedFilterApplicable = 1;
         $gross_salary_breakdown = $this->getGrossBreakdown($salary_breakdown);
@@ -37,7 +38,7 @@ class PayRunListTransformer extends TransformerAbstract
             'business_member_id' => $payslip->business_member_id,
             'employee_id' => $business_member->employee_id ? $business_member->employee_id : 'N/A',
             'employee_name' => $this->profiles[$business_member->id],
-            'department' => $department ? $department->name : 'N/A',
+            'department' => $business_member_department,
             'schedule_date' => Carbon::parse($payslip->schedule_date)->format('Y-m-d'),
             'schedule_type' => $payslip->generation_type,
             'gross_salary' => $this->grossSalary,
