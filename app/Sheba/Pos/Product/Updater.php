@@ -99,22 +99,25 @@ class Updater
             $image_gallery = json_decode($this->updatedData['image_gallery'], true);
             $this->storeImageGallery($image_gallery);
         }
-        $cloned_data = $this->data;
+        $cloned_data = $this->data;;
         $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'is_vat_percentage_off', 'is_stock_off', 'image_gallery','accounting_info']);
         if (!empty($this->updatedData)) $this->updatedData = array_except($this->updatedData, 'image_gallery');
         /** @var Partner $partner */
         $partner = $this->service->partner;
         if($partner->isMigrated(Modules::EXPENSE)) {
             $lastBatchData = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->latest()->first();
+            if(!$lastBatchData)
+                $lastBatchData = PartnerPosServiceBatch::create(["partner_pos_service_id" => $this->service->id]);
             $this->setOldCost($lastBatchData->cost);
             $this->setOldStock($lastBatchData->stock);
         }
+
         if (!empty($this->updatedData)) {
             $old_service = clone $this->service;
             $this->serviceRepo->update($this->service, $this->updatedData);
             $this->storeLogs($old_service, $this->updatedData);
         }
-        if(!empty($this->batchData)) {
+        if(!empty($this->batchData) && isset($lastBatchData)) {
             $this->batchData['partner_pos_service_id'] = $this->service->id;
             $lastBatchData->update($this->batchData);
         }
@@ -269,6 +272,9 @@ class Updater
         if ((isset($this->data['category_id']) && $this->data['category_id'] != $this->service->pos_category_id)) {
             $this->updatedData['pos_category_id'] = $this->data['category_id'];
         }
+        if ((isset($this->data['cost']) && $this->data['cost'] != $this->service->cost) && !$this->service->partner->isMigrated(Modules::EXPENSE)) {
+            $this->updatedData['cost'] = $this->data['cost'];
+        }
         if ((isset($this->data['unit']) && $this->data['unit'] != $this->service->unit)) {
             $this->updatedData['unit'] = $this->data['unit'];
         }
@@ -305,6 +311,7 @@ class Updater
     {
         /** @var Partner $partner */
         $partner = $this->service->partner;
+
         if(!$partner->isMigrated(Modules::EXPENSE)) return;
         if ((isset($this->data['is_stock_off']) && ($this->data['is_stock_off'] == 'true' && $this->service->getStock() != null))) {
             $this->deleteBatchesFifo();

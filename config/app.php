@@ -174,7 +174,7 @@ return [
         Sheba\Report\Listeners\ReportUpdateProvider::class,
         Sheba\Logistics\Listeners\EventsProvider::class,
         Sheba\Elasticsearch\ServiceProvider::class,
-        // Sheba\Mail\BusinessMailServiceProvider::class
+        Sheba\Mail\BusinessMailServiceProvider::class
     ],
 
     /*

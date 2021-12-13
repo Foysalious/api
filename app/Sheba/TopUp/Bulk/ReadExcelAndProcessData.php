@@ -39,7 +39,7 @@ class ReadExcelAndProcessData
         $upload_path = $file->storeAs("top_up_bulk", $this->makeFileName());
         $this->filePath = storage_path('app') . "/" . $upload_path;
 
-        $data = MaatwebsiteExcel::toArray(new \stdClass(), $file)[0];
+        $data = MaatwebsiteExcel::toArray(new \stdClass(), $file)[TopUpExcel::SHEET_INDEX];
 
         /*$data = Excel::selectSheets(TopUpExcel::SHEET)->load($this->filePath, function (LaravelExcelReader $reader) {
             $reader->formatDates(false)->ignoreEmpty();
@@ -47,13 +47,16 @@ class ReadExcelAndProcessData
 
         $this->data = collect($data)->filter(function ($row) {
             if ($row[0] == "mobile") return false;
-            return ($row[0] && $row[1] && $row[2] && $row[3]);
+            return $row[TopUpExcel::MOBILE_COLUMN_INDEX] &&
+                $row[TopUpExcel::VENDOR_COLUMN_INDEX] &&
+                $row[TopUpExcel::TYPE_COLUMN_INDEX] &&
+                $row[TopUpExcel::AMOUNT_COLUMN_INDEX];
         })->map(function ($row) {
             return (object)[
-                'mobile' => $row[0],
-                'operator' => $row[1],
-                'connection_type' => $row[2],
-                'amount' => $row[3],
+                TopUpExcel::MOBILE_COLUMN_TITLE => $row[TopUpExcel::MOBILE_COLUMN_INDEX],
+                TopUpExcel::VENDOR_COLUMN_TITLE => $row[TopUpExcel::VENDOR_COLUMN_INDEX],
+                TopUpExcel::TYPE_COLUMN_TITLE => $row[TopUpExcel::TYPE_COLUMN_INDEX],
+                TopUpExcel::AMOUNT_COLUMN_TITLE => $row[TopUpExcel::AMOUNT_COLUMN_INDEX],
             ];
         });
 

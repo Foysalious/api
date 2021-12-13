@@ -56,7 +56,7 @@ class TopUpExcelDataFormatError
         (new Writer($this->spreadsheet))->save($this->file);
     }
 
-    public function takeCompletedAction(): string
+    public function uploadFileToCdnAndGetLink(): string
     {
         $name = strtolower(class_basename($this->agent)) . '_' . dechex($this->agent->id);
         $file_name = $this->uniqueFileName($this->file, $name, getExtensionFromPath($this->file));

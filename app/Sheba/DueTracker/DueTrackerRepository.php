@@ -455,7 +455,7 @@ class DueTrackerRepository extends BaseRepository
             foreach ($items as $item) {
                 $temp['customer_name'] = $item['customer_name'];
                 $temp['customer_id']   = $item['customer_id'];
-                $temp['profile_id']    = $item['profile_id'];
+//                $temp['profile_id']    = $item['profile_id'];
                 $temp['balance']       = $item['balance'];
                 array_push($data['customers'], $temp);
             }

@@ -1,7 +1,5 @@
 <?php namespace App\Jobs;
 
-use App\Exceptions\MailgunClientException;
-use Exception;
 use App\Sheba\Business\BusinessEmailQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
@@ -27,7 +25,6 @@ class SendBusinessRequestEmail extends BusinessEmailQueue
      * Execute the job.
      *
      * @return void
-     * @throws MailgunClientException
      */
     public function handle()
     {
@@ -37,14 +34,10 @@ class SendBusinessRequestEmail extends BusinessEmailQueue
         $subject = $this->subject ?: 'Profile Creation';
         $email = $this->email;
 
-        try {
-            BusinessMail::send($template, ['email' => $email, 'password' => $this->password], function ($m) use ($subject, $email) {
-                $m->from('noreply@sheba-business.com', 'Sheba Platform Limited');
-                $m->to($email)->subject($subject);
-            });
-        } catch (Exception $exception) {
-            throw new MailgunClientException();
-        }
+        BusinessMail::send($template, ['email' => $email, 'password' => $this->password], function ($m) use ($subject, $email) {
+            $m->from('noreply@sheba-business.com', 'Sheba Platform Limited');
+            $m->to($email)->subject($subject);
+        });
     }
 
     /**

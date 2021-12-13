@@ -5,6 +5,7 @@ use PhpOffice\PhpSpreadsheet\Reader\Xlsx as Reader;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx as Writer;
+use ReflectionClass;
 use Sheba\Sms\BusinessType;
 use Sheba\Sms\FeatureType;
 use Exception;
@@ -129,5 +130,21 @@ class TopUpExcelJob extends TopUpJob
             File::put(getStorageExportFolder() . $file_name, file_get_contents($bulk->file));
 
         return $file_name_with_folder;
+    }
+
+    /**
+     * Can't insert payload to db as serialized spreadsheets are too big (packet bigger than 'max_allowed_packet').
+     * Would be good if serialization could be done without spreadsheets
+     * Didn't touch that as serialization can be used elsewhere
+     *
+     * @return string
+     */
+    protected function getPayload(): string
+    {
+        return json_encode([
+            'topup_order_id' => $this->topUpOrder->id,
+            'row' => $this->row,
+            'total_row' => $this->totalRow,
+        ]);
     }
 }

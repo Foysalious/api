@@ -3,6 +3,8 @@
 use App\Sheba\Release\Release;
 use Illuminate\Http\Request;
 use InvalidArgumentException;
+use Sentry\State\Hub;
+use Sentry\State\Scope;
 use Throwable;
 
 class ErrorLog
@@ -14,32 +16,37 @@ class ErrorLog
     private $errorMessage;
     private $context;
 
+    /** @var Hub */
+    private $sentry;
+
     public function __construct()
     {
         $this->request = null;
         $this->errorMessage = null;
         $this->context = [];
+
+        if (app()->bound('sentry')) $this->sentry = app('sentry');
     }
 
-    public function setException(Throwable $exception)
+    public function setException(Throwable $exception): ErrorLog
     {
         $this->exception = $exception;
         return $this;
     }
 
-    public function setRequest(Request $request)
+    public function setRequest(Request $request): ErrorLog
     {
         $this->request = $request;
         return $this;
     }
 
-    public function setErrorMessage($message)
+    public function setErrorMessage($message): ErrorLog
     {
         $this->errorMessage = $message;
         return $this;
     }
 
-    public function setExtra(array $extra)
+    public function setExtra(array $extra): ErrorLog
     {
         if (!isAssoc($extra)) throw new InvalidArgumentException("Extra must be an associative array.");
 
@@ -52,16 +59,20 @@ class ErrorLog
 
     public function send()
     {
-        if (!app()->bound('sentry')) return;
+        if ($this->sentry == null) return;
 
-        $sentry = app('sentry');
         if ($this->request) $this->context['request'] = $this->request->all();
         if ($this->errorMessage) $this->context['message'] = $this->errorMessage;
-        if (count($this->context) > 0) $sentry->user_context($this->context);
+        if (count($this->context) > 0) {
+            $this->sentry->configureScope(function (Scope $scope) {
+                $scope->setContext("custom_context", $this->context);
+            });
+        }
 
-        if ($version = (new Release())->get()) $sentry->setRelease($version);
+        /*$version = (new Release())->get();
+        if ($version) $this->sentry->setRelease($version);*/
 
-        $sentry->captureException($this->exception);
+        $this->sentry->captureException($this->exception);
     }
 
 }

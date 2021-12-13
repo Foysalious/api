@@ -81,6 +81,7 @@ class Route
                     $api->delete('/{customer_id}', 'PosCustomer\PosCustomerController@delete');
                 });
                 $api->get('/category-tree', 'Inventory\CategoryController@allCategory');
+                $api->get('/partner-categories', 'Inventory\CategoryController@getPartnerCategory');
                 $api->group(['prefix' => 'products'], function ($api) {
                     $api->get('/', 'Inventory\ProductController@index');
                     $api->post('/', 'Inventory\ProductController@store');
@@ -112,8 +113,8 @@ class Route
                     $api->get('/', 'Inventory\CategoryController@index');
                     $api->get('/{category_id}', 'Inventory\CategoryController@show');
                     $api->get('/allCategory', 'Inventory\CategoryController@allCategory');
-                    $api->post('/', 'Inventory\CategoryController@store');
-                    $api->post('/category-with-sub-category', 'Inventory\CategoryController@createCategoryWithSubCategory');
+                    $api->post('/sub-category', 'Inventory\CategoryController@createSubCategory');
+                    $api->post('/', 'Inventory\CategoryController@createCategory');
                     $api->put('/{category_id}', 'Inventory\CategoryController@update');
                     $api->delete('/{category_id}', 'Inventory\CategoryController@delete');
                 });

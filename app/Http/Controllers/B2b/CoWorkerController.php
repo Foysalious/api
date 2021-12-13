@@ -2,6 +2,7 @@
 
 use App\Jobs\Business\SendEmailForPublishTenderToBusiness;
 use App\Models\Business;
+use Sheba\Gender\Gender;
 use App\Transformers\Business\CoWorkerReportDetailsTransformer;
 use Carbon\Carbon;
 use Exception;
@@ -215,7 +216,7 @@ class CoWorkerController extends Controller
             'email' => 'required|email',
             'department' => 'required|integer',
             'role' => 'required|string',
-            'gender' => 'required|string|in:Female,Male,Other',
+            'gender' => 'required|string|in:' . Gender::implodeEnglish(),
             'join_date' => 'required|date|date_format:Y-m-d'
         ]);
 
@@ -323,7 +324,7 @@ class CoWorkerController extends Controller
     public function personalInfoEdit($business, $business_member_id, Request $request)
     {
         $validation_data = [
-            'gender' => 'required|string|in:Female,Male,Other',
+            'gender' => 'required|string|in:' . Gender::implodeEnglish(),
             'mobile' => 'sometimes|required',
             'date_of_birth' => 'sometimes|required',
             'address' => 'sometimes|required',

@@ -15,9 +15,5 @@ abstract class MonitoredJob extends Job
         $this->createdAt = Carbon::now()->toDateTimeString();
         $this->title = $this->getTitle();
     }
-
-    /**
-     * @return string
-     */
     abstract protected function getTitle(): string;
 }
