@@ -25,17 +25,6 @@ class Notification
      */
     public function sendShebaNotificationToApprover(ApprovalRequest $approval_request, Profile $profile)
     {
-        $business_member = $approval_request->approver;
-        $member = $business_member->member;
-        $leave_applicant = $profile->name ? $profile->name : 'n/s';
-
-        $title = "$leave_applicant requested for a leave";
-        notify()->member($member)->send([
-            'title' => $title,
-            'type' => 'Info',
-            'event_type' => get_class($approval_request),
-            'event_id' => $approval_request->id
-        ]);
-        #dispatch(new SendNotificationToApprover($approval_request, $profile));
+        dispatch(new SendNotificationToApprover($approval_request, $profile));
     }
 }
