@@ -6,11 +6,14 @@ use Illuminate\Support\Facades\Redis;
 use Sheba\Dal\UserMigration\Contract;
 use Exception;
 use Sheba\Dal\UserMigration\UserStatus;
+use Sheba\ModificationFields;
 
 abstract class UserMigrationRepository
 {
+    use ModificationFields;
     const NOT_ELIGIBLE = 'not_eligible';
-    /** @var  Contract */
+
+    /** @var Contract */
     private $repo;
     protected $userId;
     protected $moduleName;
@@ -19,6 +22,11 @@ abstract class UserMigrationRepository
     {
         $this->repo = $repo;
     }
+    public function setModifierUser($entity)
+    {
+        $this->setModifier($entity);
+        return $this;
+    }
 
     abstract public function getStatusWiseResponse(): array;
 
@@ -26,13 +34,15 @@ abstract class UserMigrationRepository
 
     abstract public function getBanner();
 
-    public function setUserId($userId)
+    abstract public function versionCodeCheck($appVersion, $modulePayload);
+
+    public function setUserId($userId): UserMigrationRepository
     {
         $this->userId = $userId;
         return $this;
     }
 
-    public function setModuleName($moduleName)
+    public function setModuleName($moduleName): UserMigrationRepository
     {
         $this->moduleName = $moduleName;
         return $this;
@@ -41,7 +51,7 @@ abstract class UserMigrationRepository
     /**
      * @return string
      */
-    public function getStatus()
+    public function getStatus(): string
     {
         $info = $this->repo->builder()->where('user_id', $this->userId)->where('module_name', $this->moduleName)->first();
         if ($info) {
@@ -50,6 +60,9 @@ abstract class UserMigrationRepository
         return self::NOT_ELIGIBLE;
     }
 
+    /**
+     * @throws Exception
+     */
     protected function updateMigrationStatus($status)
     {
         $info = $this->repo->builder()->where('user_id', $this->userId)->where('module_name', $this->moduleName)->first();
@@ -66,10 +79,11 @@ abstract class UserMigrationRepository
             Redis::set("user-migration:$this->userId", "$this->moduleName");
         }
         // Api call will be halt if migration failed.
-        if (in_array($status, [UserStatus::UPGRADED])) {
+        if ($status == UserStatus::UPGRADED) {
             Redis::del("user-migration:$this->userId");
         }
-        $info->status = $status;
-        return $info->save();
+        $data = ['status' => $status];
+
+        return $info->update($this->withUpdateModificationField($data));
     }
 }

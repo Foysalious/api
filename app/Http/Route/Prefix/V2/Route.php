@@ -11,6 +11,7 @@ class Route
             (new UserRoute())->set($api);
             (new CategoryRoute())->set($api);
             (new PaymentLinkRoute())->set($api);
+            (new AccountingRoute())->set($api);
             (new CustomerRoute())->set($api);
             (new AffiliateRoute())->set($api);
             (new PartnerRoute())->set($api);
@@ -49,7 +50,7 @@ class Route
             $api->get('top-up/success/ssl', 'TopUpController@sslSuccess');
             $api->post('top-up/status-update', 'TopUpController@statusUpdate');
             $api->post('top-up/bdrecharge/status', 'TopUpController@bdRechargeStatusUpdate');
-            $api->get('top-up/restart-queue', 'TopUpController@restartQueue');
+            $api->get('top-up/paystation/status', 'TopUpController@payStationStatusUpdate');
             $api->group(['prefix' => 'wallet'], function ($api) {
                 $api->post('recharge', 'WalletController@recharge');
                 $api->post('purchase', 'WalletController@purchase');

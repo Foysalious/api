@@ -2,10 +2,8 @@
 
 use App\Models\TopUpOrder;
 use Exception;
-use GuzzleHttp\Exception\GuzzleException;
-use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\TopUp\Exception\GatewayTimeout;
-use Sheba\TopUp\Vendor\Internal\Pretups\Client as PretupsClient;
+use Sheba\TopUp\Gateway\Clients\PretupsClient;
 use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
@@ -39,7 +37,7 @@ abstract class Pretups
      * @return IpnResponse
      * @throws GatewayTimeout
      */
-    public function enquireIpnResponse(TopUpOrder $topup_order): IpnResponse
+    public function enquire(TopUpOrder $topup_order): IpnResponse
     {
         return $this->makePretups()->checkStatus($topup_order);
     }

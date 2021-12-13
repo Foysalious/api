@@ -12,6 +12,7 @@ use Sheba\Dal\ApprovalRequest\Type as ApprovalRequestType;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\Dal\Leave\Status as LeaveStatus;
 use Sheba\ModificationFields;
+use function Composer\Autoload\includeFile;
 
 class UpdaterV2
 {
@@ -100,7 +101,7 @@ class UpdaterV2
 
         $leave = $this->requestable;
 
-        if ($this->requestableType == ApprovalRequestType::LEAVE && $this->approvalRequest->status == Status::ACCEPTED) {
+        if ($this->isApprovalRequestAccepted()) {
             $remaining_approval_request = $leave->requests()->orderBy('order', 'ASC')->where('is_notified', 0)->first();
 
             if ($remaining_approval_request) {
@@ -111,18 +112,41 @@ class UpdaterV2
                 } catch (Exception $e) {
                 }
             }
-            if (!$remaining_approval_request && $leave->status == LeaveStatus::PENDING) {
-                $this->leaveUpdater->setLeave($leave)->setStatus(LeaveStatus::ACCEPTED)->setBusinessMember($this->businessMember)->updateStatus();
-            }
+            if ($this->isLeaveStatusStillPending($remaining_approval_request, $leave)) $this->acceptTheLeave($leave);
         }
 
-        if ($this->requestableType == ApprovalRequestType::LEAVE && $this->approvalRequest->status == Status::REJECTED && $leave->status == LeaveStatus::PENDING) {
-            $this->leaveUpdater->setLeave($leave)
-                ->setStatus(LeaveStatus::REJECTED)
-                ->setBusinessMember($this->businessMember)
-                ->setLeaveRejectionRequester($this->leaveRejectionRequester)
-                ->updateStatus();
-        }
+        if ($this->isApprovalRequestRejectedAndLeaveStillPending($leave)) $this->rejectTheLeave($leave);
+
+    }
+
+    private function isApprovalRequestAccepted()
+    {
+        if ($this->requestableType == ApprovalRequestType::LEAVE && $this->approvalRequest->status == Status::ACCEPTED) return true;
+        return false;
+    }
+
+    private function isLeaveStatusStillPending($remaining_approval_request, $leave)
+    {
+        if (!$remaining_approval_request && $leave->status == LeaveStatus::PENDING) return true;
+        return false;
+    }
+
+    private function acceptTheLeave($leave)
+    {
+        $this->leaveUpdater->setLeave($leave)->setStatus(LeaveStatus::ACCEPTED)->setBusinessMember($this->businessMember)->updateStatus();
+    }
+
+    private function isApprovalRequestRejectedAndLeaveStillPending($leave)
+    {
+        if ($this->requestableType == ApprovalRequestType::LEAVE && $this->approvalRequest->status == Status::REJECTED && $leave->status == LeaveStatus::PENDING) return true;
+        return false;
+    }
+
+    private function rejectTheLeave($leave)
+    {
+        $this->leaveUpdater->setLeave($leave)->setStatus(LeaveStatus::REJECTED)->setBusinessMember($this->businessMember)
+            ->setLeaveRejectionRequester($this->leaveRejectionRequester)
+            ->updateStatus();
     }
 }
 

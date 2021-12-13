@@ -2,6 +2,9 @@
 
 use App\Jobs\Job;
 use App\Models\Partner;
+use Sheba\AccountingEntry\Accounts\Accounts;
+use Sheba\AccountingEntry\Accounts\RootAccounts;
+use Sheba\AccountingEntry\Repository\JournalCreateRepository;
 use Sheba\Dal\SmsCampaignOrderReceiver\SmsCampaignOrderReceiver;
 use Sheba\Dal\SmsCampaignOrderReceiver\SmsCampaignOrderReceiverRepository;
 use Sheba\Dal\SmsCampaignOrderReceiver\Status;
@@ -88,6 +91,7 @@ class CampaignSmsStatusChangeJob extends Job implements ShouldQueue
         $refund_receiver = $this->campaignOrderReceiver->smsCampaignOrder->partner;
         $sms_count       = $this->campaignOrderReceiver->sms_count;
         $this->refund->setRefundReceiver($refund_receiver)->setNumberOfSms($sms_count)->adjustWallet();
+        $this->storeJournal($refund_receiver);
         $this->deductLog($sms_count * constants('SMS_CAMPAIGN.rate_per_sms'));
     }
 
@@ -109,5 +113,16 @@ class CampaignSmsStatusChangeJob extends Job implements ShouldQueue
             ->setSourceType(class_basename($this->campaignOrderReceiver->smsCampaignOrder))
             ->setSourceId($this->campaignOrderReceiver->smsCampaignOrder->id)
             ->deduct();
+    }
+
+    private function storeJournal($partner){
+        (new JournalCreateRepository())->setTypeId($partner->id)
+            ->setSource($this->refund->getTransaction())
+            ->setAmount($this->refund->getAmount())
+            ->setDebitAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
+            ->setCreditAccountKey(\Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Income\Refund::GENERAL_REFUNDS)
+            ->setDetails("SMS marketing")
+            ->setReference($this->campaignOrderReceiver->id)
+            ->store();
     }
 }
