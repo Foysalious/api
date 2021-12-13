@@ -6,33 +6,24 @@ use App\Models\Partner;
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
-use App\Sheba\TopUp\Vendor\Internal\BdRechargeClient;
-use App\Sheba\TopUp\Vendor\Response\Ipn\BdRecharge\BdRechargeFailResponse;
-use App\Sheba\TopUp\Vendor\Response\Ipn\BdRecharge\BdRechargeSuccessResponse;
+use Sheba\TopUp\Exception\TopUpStillNotResolvedException;
+use Sheba\TopUp\Gateway\GatewayFactory;
+use Sheba\TopUp\Gateway\Names;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Redis;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
-use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\TopUp\Creator;
-use Sheba\TopUp\Exception\PaywellTopUpStillNotResolved;
-use Sheba\TopUp\Gateway\BdRecharge;
 use Sheba\TopUp\Jobs\TopUpExcelJob;
 use Sheba\TopUp\Jobs\TopUpJob;
 use Sheba\TopUp\TopUpAgent;
-use Sheba\TopUp\TopUpChargesSubscriptionWise;
 use Sheba\TopUp\TopUpDataFormat;
 use Sheba\TopUp\TopUpExcel;
 use Sheba\TopUp\TopUpLifecycleManager;
 use Sheba\TopUp\TopUpRequest;
 use Sheba\TopUp\TopUpStatics;
-use Sheba\TopUp\Vendor\Response\Ipn\FailResponse;
-use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
-use Sheba\TopUp\Vendor\Response\Ipn\Ssl\SslSuccessResponse;
-use Sheba\TopUp\Vendor\Response\Ipn\Ssl\SslFailResponse;
 use Sheba\TopUp\Vendor\VendorFactory;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Sheba\UserAgentInformation;
@@ -49,6 +40,14 @@ class TopUpController extends Controller
 {
     const MINIMUM_TOPUP_INTERVAL_BETWEEN_TWO_TOPUP_IN_SECOND = 10;
     use ModificationFields;
+
+    /** @var TopUpLifecycleManager */
+    private $lifecycleManager;
+
+    public function __construct(TopUpLifecycleManager $lifecycle_manager)
+    {
+        $this->lifecycleManager = $lifecycle_manager;
+    }
 
     public function getVendor(Request $request)
     {
@@ -175,25 +174,27 @@ class TopUpController extends Controller
 
     /**
      * @param Request $request
-     * @param SslFailResponse $error_response
      * @return JsonResponse
      * @throws Exception
+     * @throws Throwable
      */
-    public function sslFail(Request $request, SslFailResponse $error_response)
+    public function sslFail(Request $request)
     {
-        $this->ipnHandle($error_response, $request);
+        $request->merge(['is_from_success_url' => false]);
+        $this->ipnHandle($request, Names::SSL);
         return api_response($request, 1, 200);
     }
 
     /**
      * @param Request $request
-     * @param SslSuccessResponse $success_response
      * @return JsonResponse
      * @throws Exception
+     * @throws Throwable
      */
-    public function sslSuccess(Request $request, SslSuccessResponse $success_response)
+    public function sslSuccess(Request $request)
     {
-        $this->ipnHandle($success_response, $request);
+        $request->merge(['is_from_success_url' => true]);
+        $this->ipnHandle($request, Names::SSL);
         return api_response($request, 1, 200);
     }
 
@@ -215,15 +216,6 @@ class TopUpController extends Controller
             case 'business': case 'Company': return Business::class;
             default: return '';
         }
-    }
-
-    public function restartQueue()
-    {
-        $queue_name = isInProduction() ? "sheba_queues:topup_00" : "sheba_queues:topup";
-        $folder = isInProduction() ? "/var/www/api" : "/var/www/sheba_new_api";
-        exec("sudo supervisorctl restart $queue_name");
-        exec("cd $folder && php artisan queue:restart");
-        return ['code' => 200, 'message' => "Done."];
     }
 
     private function hasLastTopupWithinIntervalTime(TopUpAgent $agent)
@@ -306,11 +298,10 @@ class TopUpController extends Controller
 
     /**
      * @param Request $request
-     * @param TopUpLifecycleManager $lifecycle
      * @return JsonResponse
-     * @throws \Throwable
+     * @throws Throwable
      */
-    public function statusUpdate(Request $request, TopUpLifecycleManager $lifecycle)
+    public function statusUpdate(Request $request)
     {
         /** @var TopUpOrder $top_up_order */
         $top_up_order = TopUpOrder::find($request->topup_order_id);
@@ -323,44 +314,43 @@ class TopUpController extends Controller
         }
 
         try {
-            $actual_response = $lifecycle->setTopUpOrder($top_up_order)->reload()->getResponse();
-        } catch (PaywellTopUpStillNotResolved $e) {
+            $actual_response = $this->lifecycleManager->setTopUpOrder($top_up_order)->reload()->getResponse();
+        } catch (TopUpStillNotResolvedException $e) {
             $actual_response = $e->getResponse();
         }
 
-        return api_response($actual_response, json_encode($actual_response), 200);
+        return api_response($request, 1, 200, [
+            'actual_response' => $actual_response
+        ]);
     }
 
     /**
      * @param Request $request
-     * @param BdRechargeSuccessResponse $success_response
-     * @param BdRechargeFailResponse $fail_response
      * @return JsonResponse
-     * @throws Exception
+     * @throws Exception|Throwable
      */
-    public function bdRechargeStatusUpdate(Request $request, BdRechargeSuccessResponse $success_response, BdRechargeFailResponse $fail_response)
+    public function bdRechargeStatusUpdate(Request $request)
     {
-        $data = $request->all();
-        if( $data['status'] == BdRecharge::SUCCESS){
-            $this->ipnHandle($success_response, $request);
-        }
-        elseif ($data['status'] == BdRecharge::FAILED){
-            $this->ipnHandle($fail_response, $request);
-        }
+        $this->ipnHandle($request, Names::BD_RECHARGE);
         return api_response($request, 1, 200);
     }
 
-    private function ipnHandle(IpnResponse $ipn_response, Request $request){
-        $data = $request->all();
-        $ipn_response->setResponse($data);
-        $ipn_response->handleTopUp();
-        $this->logIpn($ipn_response, $data);
+    /**
+     * @throws Throwable
+     */
+    public function payStationStatusUpdate(Request $request)
+    {
+        $this->ipnHandle($request, Names::PAY_STATION);
+        return api_response($request, 1, 200);
     }
 
-    private function logIpn(IpnResponse $ipn_response, $request_data)
+    /**
+     * @throws Throwable
+     */
+    private function ipnHandle(Request $request, $gateway_name)
     {
-        $key = 'Topup::' . ($ipn_response instanceof FailResponse ? "Failed:failed" : "Success:success") . "_";
-        $key .= Carbon::now()->timestamp . '_' . $ipn_response->getTopUpOrder()->id;
-        Redis::set($key, json_encode($request_data));
+        $gateway = GatewayFactory::getIpnGatewayByName($gateway_name);
+        $data = $request->all();
+        $this->lifecycleManager->handleIpn($gateway, $data);
     }
 }

@@ -77,24 +77,24 @@ class CategoryService
 
     public function getAllMasterCategories($partner_id)
     {
-        $url = 'api/v1/partners/'.$partner_id.'/categories?';
-        if($this->updatedAfter) $url .= 'updated_after='.$this->updatedAfter;
+        $url = 'api/v1/partners/' . $partner_id . '/categories?';
+        if ($this->updatedAfter) $url .= 'updated_after=' . $this->updatedAfter;
         return $this->client->get($url);
     }
 
     public function makeSubCategoryStoreData()
     {
-        $data =  [
+        $data = [
             ['name' => 'name', 'contents' => $this->categoryName],
         ];
-        if($this->thumb) {
+        if ($this->thumb) {
             $data[] = ['name' => 'thumb', 'contents' => $this->thumb ? File::get($this->thumb->getRealPath()) : null, 'filename' => $this->thumb ? $this->thumb->getClientOriginalName() : ''];
         }
         if ($this->parentId != null) {
             $data [] = [
                 'name' => 'parent_id',
                 'contents' => $this->parentId,
-                ];
+            ];
         }
         return $data;
     }
@@ -120,7 +120,7 @@ class CategoryService
     public function update()
     {
         $data = $this->makeUpdateData();
-        return $this->client->put('api/v1/partners/'.$this->partnerId.'/categories/'.$this->categoryId, $data, true);
+        return $this->client->put('api/v1/partners/' . $this->partnerId . '/categories/' . $this->categoryId, $data, true);
     }
 
     public function storeCategoryWithSubCategory()
@@ -131,13 +131,13 @@ class CategoryService
 
     public function delete()
     {
-        return $this->client->delete('api/v1/partners/'.$this->partnerId.'/categories/'.$this->categoryId);
+        return $this->client->delete('api/v1/partners/' . $this->partnerId . '/categories/' . $this->categoryId);
     }
 
     public function getallcategory($partner_id)
     {
-        $url = 'api/v1/partners/'.$partner_id.'/category-tree?';
-        if($this->updatedAfter) $url .= 'updated_after='.$this->updatedAfter;
+        $url = 'api/v1/partners/' . $partner_id . '/category-tree?';
+        if ($this->updatedAfter) $url .= 'updated_after=' . $this->updatedAfter;
 
         return $this->client->get($url);
     }
@@ -165,11 +165,16 @@ class CategoryService
                 ];
             }
         }
-        return array_merge_recursive($data,$sub_category);
+        return array_merge_recursive($data, $sub_category);
     }
 
     public function getCategoryDetail()
     {
-        return $this->client->get('api/v1/partners/' . $this->partnerId.'/categories/' . $this->categoryId);
+        return $this->client->get('api/v1/partners/' . $this->partnerId . '/categories/' . $this->categoryId);
+    }
+
+    public function getPartnerWiseCategoryList($partner)
+    {
+        return $this->client->get('api/v1/webstore/partners/' . $partner . '/categories');
     }
 }

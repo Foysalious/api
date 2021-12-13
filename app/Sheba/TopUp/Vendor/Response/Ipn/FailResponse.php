@@ -2,7 +2,7 @@
 
 abstract class FailResponse extends IpnResponse
 {
-    public function isFailed()
+    public function isFailed(): bool
     {
         return true;
     }

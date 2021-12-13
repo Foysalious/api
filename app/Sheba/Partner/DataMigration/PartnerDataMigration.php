@@ -93,6 +93,7 @@ class PartnerDataMigration
             'auto_printing' => $pos_setting ? $this->partner->posSetting->auto_printing : 0,
             'printer_name' => $pos_setting ? $this->partner->posSetting->printer_name : null,
             'printer_model' => $pos_setting ? $this->partner->posSetting->printer_model : null,
+            'delivery_charge' => $this->partner->delivery_charge,
             'created_at' => $this->partner->created_at->subHours(6)->format('Y-m-d H:i:s'),
             'created_by_name' => $this->partner->created_by_name,
             'updated_at' => $this->partner->updated_at->subHours(6)->format('Y-m-d H:i:s'),

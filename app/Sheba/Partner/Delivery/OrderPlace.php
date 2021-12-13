@@ -151,7 +151,6 @@ class OrderPlace
      */
     public function storeDeliveryInformation($info)
     {
-        Redis::set("sDelivery_" . $this->posOrder->id, json_encode($info));
         $data = [
             //'delivery_vendor_name' => $info['logistic_partner_id'],
             'address' => $info['delivery_address']['address'],
