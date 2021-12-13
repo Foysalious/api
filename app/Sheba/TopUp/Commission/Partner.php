@@ -27,7 +27,6 @@ class Partner extends TopUpCommission
     }
 
     /**
-     * @throws ReflectionException
      * @throws AccountingEntryServerError
      * @throws InvalidSourceException
      * @throws KeyNotFoundException
@@ -46,7 +45,9 @@ class Partner extends TopUpCommission
             ->setDebitAccountKey(AccountKeys\Asset\Cash::CASH)
             ->setCreditAccountKey(AccountKeys\Income\TopUp::TOP_UP)
             ->setDetails("TopUp for sale")
-            ->setReference("TopUp sales amount is" . $this->transaction->amount . " tk.")
+            ->setReference("TopUp sales amount is " . $this->transaction->amount . " tk.")
+            ->setCommission($this->amount - $this->transaction->amount)
+            ->setEndPoint('api/journals/top-up')
             ->store();
     }
 
