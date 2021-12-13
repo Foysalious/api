@@ -1,4 +1,4 @@
-<?php namespace Sheba;
+<?php namespace Sheba\Helpers\Converters;
 
 class BanglaToEnglish
 {

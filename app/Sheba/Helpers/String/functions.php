@@ -1,6 +1,6 @@
 <?php
 
-use Sheba\BanglaToEnglish;
+use Sheba\Helpers\Converters\BanglaToEnglish;
 
 if (!function_exists('randomString')) {
     /**
