@@ -2,11 +2,14 @@
 
 use Sheba\Dal\Leave\LeaveStatusPresenter as LeaveStatusPresenter;
 use App\Sheba\Business\BusinessQueue;
+use Sheba\Dal\Leave\Model as Leave;
 use Sheba\PushNotificationHandler;
 
 class SendPushNotificationToLeaveCreator extends BusinessQueue
 {
     private $pushNotification;
+    /** @var Leave $leave */
+    private $leave;
 
     public function __construct($leave)
     {
