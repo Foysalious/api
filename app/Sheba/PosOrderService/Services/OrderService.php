@@ -262,9 +262,9 @@ class OrderService
     private function makePartnerUpdateData()
     {
         $data = [];
-        if ($this->qrCodeAccountType) $data['qr_code_account_type'] = $this->qrCodeAccountType;
-        if ($this->qrCodeImage) $data['qr_code_image'] = $this->qrCodeImage;
-        if ($this->deliveryCharge) $data['delivery_charge'] = $this->deliveryCharge;
+        if (isset($this->qrCodeAccountType)) $data['qr_code_account_type'] = $this->qrCodeAccountType;
+        if (isset($this->qrCodeImage)) $data['qr_code_image'] = $this->qrCodeImage;
+        if (isset($this->deliveryCharge)) $data['delivery_charge'] = $this->deliveryCharge;
         return $data;
     }
 
@@ -350,6 +350,7 @@ class OrderService
         if (isset($this->discount)) $data['discount']                                   = $this->discount;
         if (isset($this->paidAmount)) $data['paid_amount']                              = $this->paidAmount;
         if (isset($this->paymentMethod)) $data['payment_method']                        = $this->paymentMethod;
+        if (isset($this->customerId)) $data['customer_id']                              = $this->customerId;
         return $data;
     }
 

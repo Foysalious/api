@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
-    Private $categoryService;
+    private $categoryService;
 
     public function __construct(CategoryService $category_service)
     {
@@ -43,10 +43,10 @@ class CategoryController extends Controller
         return http_response($request, null, 201, $response);
     }
 
-    public function update(Request $request,$category_id)
+    public function update(Request $request, $category_id)
     {
         $partner = $request->auth_user->getPartner();
-        $response =  $this->categoryService->setPartner($partner->id)
+        $response = $this->categoryService->setPartner($partner->id)
             ->setCategoryId($category_id)
             ->setCategoryName($request->name)
             ->setThumb($request->thumb)
@@ -54,10 +54,10 @@ class CategoryController extends Controller
         return http_response($request, null, 200, $response);
     }
 
-    public function delete(Request $request,$category_id)
+    public function delete(Request $request, $category_id)
     {
         $partner = $request->auth_user->getPartner();
-        $response =  $this->categoryService->setPartner($partner->id)->setCategoryId($category_id)->setCategoryName($request->name)->delete();
+        $response = $this->categoryService->setPartner($partner->id)->setCategoryId($category_id)->setCategoryName($request->name)->delete();
         return http_response($request, null, 200, $response);
     }
 
@@ -85,6 +85,13 @@ class CategoryController extends Controller
         $partner = $request->auth_user->getPartner();
         $details = $this->categoryService->setCategoryId($category_id)->setPartner($partner->id)->getCategoryDetail();
         return http_response($request, null, 201, $details);
+    }
+
+    public function getPartnerCategory(Request $request)
+    {
+        $partner = $request->auth_user->getPartner();
+        $categoryList = $this->categoryService->getPartnerWiseCategoryList($partner->id);
+        return http_response($request, null, 200, $categoryList);
     }
 
 }

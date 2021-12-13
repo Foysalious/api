@@ -81,6 +81,7 @@ class Route
                     $api->delete('/{customer_id}', 'PosCustomer\PosCustomerController@delete');
                 });
                 $api->get('/category-tree', 'Inventory\CategoryController@allCategory');
+                $api->get('/partner-categories', 'Inventory\CategoryController@getPartnerCategory');
                 $api->group(['prefix' => 'products'], function ($api) {
                     $api->get('/', 'Inventory\ProductController@index');
                     $api->post('/', 'Inventory\ProductController@store');

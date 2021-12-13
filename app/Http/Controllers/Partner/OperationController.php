@@ -74,7 +74,8 @@ class OperationController extends Controller
             $partner = $request->partner;
             $this->setModifier($partner);
 
-            return $this->saveInDatabase($partner, $request) ? api_response($request, $partner, 200) : api_response($request, $partner, 500);
+//            return $this->saveInDatabase($partner, $request) ? api_response($request, $partner, 200) : api_response($request, $partner, 500);
+            return api_response($request, null, 403, ['message' => 'You do not have permission to update location.']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
