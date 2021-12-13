@@ -173,7 +173,7 @@ class PartnerDataMigration
             'banner', 'app_thumb', 'app_banner', 'is_published_for_sheba','order',
             'icon', 'icon_png', DB::raw('(CASE 
                         WHEN name= "Others" THEN "1" 
-                        ELSE "2" 
+                        ELSE "0" 
                         END) AS is_default'), 'created_by_name', 'updated_by_name',
             DB::raw('SUBTIME(created_at,"6:00:00") as created_at, SUBTIME(updated_at,"6:00:00") as updated_at')
         )->get()->toArray();
