@@ -2,12 +2,12 @@
 
 use App\Exceptions\MailgunClientException;
 use Exception;
-use Illuminate\Contracts\Queue\ShouldQueue;
+use App\Sheba\Business\BusinessEmailQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Mail;
+use Sheba\Mail\BusinessMail;
 
-class SendBusinessRequestEmail extends Job implements ShouldQueue
+class SendBusinessRequestEmail extends BusinessEmailQueue
 {
     use InteractsWithQueue, SerializesModels;
 
@@ -20,6 +20,7 @@ class SendBusinessRequestEmail extends Job implements ShouldQueue
     public function __construct($email)
     {
         $this->email = $email;
+        parent::__construct();
     }
 
     /**
@@ -32,13 +33,12 @@ class SendBusinessRequestEmail extends Job implements ShouldQueue
     {
         if ($this->attempts() > 1) return;
 
-        config()->set('services.mailgun.domain', config('services.mailgun.business_domain'));
         $template = $this->template ?: 'emails.profile-creation';
         $subject = $this->subject ?: 'Profile Creation';
         $email = $this->email;
 
         try {
-            Mail::send($template, ['email' => $email, 'password' => $this->password], function ($m) use ($subject, $email) {
+            BusinessMail::send($template, ['email' => $email, 'password' => $this->password], function ($m) use ($subject, $email) {
                 $m->from('noreply@sheba-business.com', 'Sheba Platform Limited');
                 $m->to($email)->subject($subject);
             });
