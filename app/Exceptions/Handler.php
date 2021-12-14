@@ -29,7 +29,7 @@ class Handler extends ExceptionHandler
         AccessRestrictedExceptionForPackage::class,
         PinMismatchException::class,
         InsufficientBalanceException::class,
-        ProductNotFoundException::class
+        NotFoundAndDoNotReportException::class
     ];
 
     /**
