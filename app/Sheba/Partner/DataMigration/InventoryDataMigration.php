@@ -236,10 +236,10 @@ class InventoryDataMigration
 
     private function getProductsRelatedData($productIds): array
     {
-        $images = $this->partnerPosServiceImages->whereIn('product_id', $productIds)->toArray();
-        $logs = $this->partnerPosServiceLogs->whereIn('product_id', $productIds)->toArray();
-        $discounts = $this->partnerPosServiceDiscounts->whereIn('type_id', $productIds)->toArray();
-        $batches = $this->partnerPosServiceBatches->whereIn('product_id', $productIds)->toArray();
+        $images = $this->partnerPosServiceImages->whereIn('product_id', $productIds)->values()->toArray();
+        $logs = $this->partnerPosServiceLogs->whereIn('product_id', $productIds)->values()->toArray();
+        $discounts = $this->partnerPosServiceDiscounts->whereIn('type_id', $productIds)->values()->toArray();
+        $batches = $this->partnerPosServiceBatches->whereIn('product_id', $productIds)->values()->toArray();
         return [$images, $logs, $discounts, $batches];
     }
 
