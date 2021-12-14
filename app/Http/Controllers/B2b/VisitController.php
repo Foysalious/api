@@ -85,9 +85,9 @@ class VisitController extends Controller
 
         if ($request->has('search')) $visits = $this->searchWithEmployeeName($visits, $request);
 
-        $total_visits = count($visits);
+        $total_visits = $visits->count();
         #$limit = $this->getLimit($request, $limit, $total_visits);
-        if ($request->has('limit') && !$request->has('file')) $visits = collect($visits)->splice($offset, $limit);
+        if ($request->has('limit') && !$request->has('file')) $visits = $visits->splice($offset, $limit);
 
         if ($request->has('file') && $request->file == 'excel') {
             $file_name = 'Employee_visit_report_'. Carbon::now()->timestamp;
@@ -134,9 +134,9 @@ class VisitController extends Controller
 
         if ($request->has('search')) $visits = $this->searchWithVisitTitle($visits, $request);
 
-        $total_visits = count($visits);
+        $total_visits = $visits->count();
         #$limit = $this->getLimit($request, $limit, $total_visits);
-        if ($request->has('limit') && !$request->has('file')) $visits = collect($visits)->splice($offset, $limit);
+        if ($request->has('limit') && !$request->has('file')) $visits = $visits->splice($offset, $limit);
 
         if ($request->has('file') && $request->file == 'excel') {
             $file_name = 'My_visit_report_' . Carbon::now()->timestamp;
