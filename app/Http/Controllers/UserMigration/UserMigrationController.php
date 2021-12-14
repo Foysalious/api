@@ -66,6 +66,8 @@ class UserMigrationController extends Controller
      */
     public function updateMigrationStatus(Request $request, $moduleName): JsonResponse
     {
+        ini_set('memory_limit', '4096M');
+        ini_set('max_execution_time', 120);
         $this->validate($request, ['status' => 'required|string']);
         if (is_string($request->partner)) {
             $partner = Partner::find($request->partner);
