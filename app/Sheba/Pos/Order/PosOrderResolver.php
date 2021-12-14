@@ -5,6 +5,7 @@ use App\Models\PosOrder;
 use App\Sheba\Pos\Order\Customer\CustomerObject;
 use App\Sheba\Pos\Order\Partner\PartnerObject;
 use App\Sheba\Pos\Order\PosOrderObject;
+use App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError;
 use App\Sheba\PosOrderService\PosOrderServerClient;
 
 class PosOrderResolver
@@ -36,6 +37,7 @@ class PosOrderResolver
     /**
      * @param mixed $orderId
      * @return PosOrderResolver|null
+     * @throws PosOrderServiceServerError
      */
     public function setOrderId($orderId)
     {

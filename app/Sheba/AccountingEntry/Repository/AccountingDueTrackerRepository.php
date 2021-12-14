@@ -2,7 +2,6 @@
 
 namespace App\Sheba\AccountingEntry\Repository;
 
-use App\Models\PosOrder;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Constants\UserType;
 use App\Sheba\Pos\Order\PosOrderObject;
@@ -51,7 +50,7 @@ class AccountingDueTrackerRepository extends BaseRepository
         $url = $with_update ? "api/entries/" . $request->entry_id : "api/entries/";
         $data = $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
         // if type deposit then auto reconcile happen. for that we have to reconcile pos order.
-        if ($type == "deposit") {
+        if ($type == "deposit" && !$with_update) {
             foreach ($data as $datum) {
                 if ($datum['source_type'] == 'pos' && $datum['amount_cleared'] > 0) {
                     $this->createPosOrderPayment($datum['amount_cleared'], $datum['source_id'], 'advance_balance');
@@ -83,7 +82,7 @@ class AccountingDueTrackerRepository extends BaseRepository
      */
     public function getDueList($request, bool $paginate = false): array
     {
-        $url = "api/due-list?";
+        $url = "api/due-list/?";
         $url = $this->updateRequestParam($request, $url);
         return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
     }
@@ -129,8 +128,10 @@ class AccountingDueTrackerRepository extends BaseRepository
                 $item['partner_wise_order_id'] = isset($pos_order) ? $pos_order->partner_wise_order_id : null;
                 if ($pos_order) {
                     $item['source_type'] = 'PosOrder';
+                    $item['head'] = 'POS sales';
+                    $item['head_bn'] = 'সেলস';
                     if ($pos_order->sales_channel == SalesChannels::WEBSTORE) {
-                        $item['source_type'] = 'WebstoreOrder';
+                        $item['source_type'] = 'Webstore Order';
                         $item['head'] = 'Webstore sales';
                         $item['head_bn'] = 'ওয়েবস্টোর সেলস';
                     }
@@ -198,7 +199,7 @@ class AccountingDueTrackerRepository extends BaseRepository
     private function updateRequestParam(Request $request, $url)
     {
         $order_by = $request->order_by;
-        if (!empty($order_by) && $order_by != "name") {
+        if (!empty($order_by)) {
             $order = !empty($request->order) ? strtolower($request->order) : 'desc';
             $url .= "&order_by=$order_by&order=$order";
         }

@@ -41,6 +41,7 @@ class AppVisitDetailsTransformer extends TransformerAbstract
             'description' => $visit->description,
             'status' => ucfirst($visit->status),
             'schedule' => $visit->schedule_date->format('F d, Y'),
+            'schedule_date' => $visit->schedule_date->format('d-m-Y'),
             'visitor' => $visit->visitor ? $this->getProfile($visit->visitor) : null,
             'assignee' => $visit->assignee ? $this->getProfile($visit->assignee) : null
         ];
