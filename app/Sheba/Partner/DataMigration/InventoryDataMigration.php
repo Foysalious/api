@@ -142,6 +142,10 @@ class InventoryDataMigration
         $chunks = array_chunk($data, 1);
         foreach ($chunks as $chunk) {
             $productIds = array_column($chunk, 'id');
+            $searchCatIds = array_column($chunk, 'category_id');
+            $allCategoryIds = array_merge(array_column($this->posCategories, 'id'), array_column($this->partnerPosCategories, 'category_id'));
+            $diff = array_diff($searchCatIds, $allCategoryIds);
+            $notTaggedCategories = !empty($diff) ? $this->getNotTaggedCategories($diff)->first()->toArray() : [];
             list($images, $logs, $discounts, $batches) = $this->getProductsRelatedData($productIds);
             $this->setRedisKey();
             $this->shouldQueue ? dispatch(new PartnerDataMigrationToInventoryJob($this->partner, [
@@ -150,6 +154,7 @@ class InventoryDataMigration
                 'partner_pos_service_image_gallery' => $images,
                 'partner_pos_services_logs' => $logs,
                 'partner_pos_service_discounts' => $discounts,
+                'not_tagged_categories' => $notTaggedCategories,
             ], $this->currentQueue, $this->queue_and_connection_name, $this->shouldQueue)) :
                 dispatchJobNow(new PartnerDataMigrationToInventoryJob($this->partner, [
                     'products' => $chunk,
@@ -157,6 +162,7 @@ class InventoryDataMigration
                     'partner_pos_service_image_gallery' => $images,
                     'partner_pos_services_logs' => $logs,
                     'partner_pos_service_discounts' => $discounts,
+                    'not_tagged_categories' => $notTaggedCategories,
                 ], $this->currentQueue, $this->queue_and_connection_name, $this->shouldQueue));
             $this->increaseCurrentQueueValue();
         }
@@ -255,5 +261,17 @@ class InventoryDataMigration
     private function increaseCurrentQueueValue()
     {
         $this->currentQueue += 1;
+    }
+
+    private function getNotTaggedCategories($diff)
+    {
+        return $this->posCategoryRepository->builder()->whereIn('id', $diff)->select('parent_id', 'name', 'thumb',
+            'banner', 'app_thumb', 'app_banner', 'is_published_for_sheba','order',
+            'icon', 'icon_png', DB::raw('(CASE 
+                        WHEN name= "Others" THEN "1" 
+                        ELSE "0" 
+                        END) AS is_default'), 'created_by_name', 'updated_by_name',
+            DB::raw('SUBTIME(created_at,"6:00:00") as created_at, SUBTIME(updated_at,"6:00:00") as updated_at')
+        )->with('parent')->get();
     }
 }
