@@ -31,7 +31,18 @@ class Excel
                 $sheet->getDefaultStyle()->getAlignment()->applyFromArray(
                     array('horizontal' => 'left')
                 );
-                $sheet->setAutoSize(true);
+
+
+                $sheet->setAutoSize(array(
+                    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'J', 'L', 'N', 'O', 'P', 'Q', 'S'
+                ));
+                $sheet->getColumnDimension('H')->setWidth(35);
+                $sheet->getColumnDimension('I')->setWidth(30);
+                $sheet->getColumnDimension('K')->setWidth(30);
+                $sheet->getColumnDimension('M')->setWidth(30);
+                $sheet->getColumnDimension('R')->setWidth(30);
+
+                $sheet->setAutoSize(false);
             });
         })->export('xlsx');
     }
