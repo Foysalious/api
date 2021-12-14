@@ -193,7 +193,7 @@ class EmployeeController extends Controller
         $profile_completion_score = $completion_calculator->setBusinessMember($business_member)->getDigiGoScore();
 
         $pending_visit = $visit_repository->where('visitor_id', $business_member->id)
-            ->whereIn('status', [Status::STARTED, Status::REACHED]);
+            ->whereIn('status', [Status::CREATED, Status::STARTED, Status::REACHED]);
         $pending_visit_count = $pending_visit->count();
 
         $current_visit = $visit_repository->where('visitor_id', $business_member->id)

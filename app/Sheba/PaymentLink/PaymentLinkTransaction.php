@@ -37,7 +37,7 @@ class PaymentLinkTransaction
      * @var Payment
      */
     private $payment;
-    private $rechargeTransaction;
+//    private $rechargeTransaction;
     private $linkCommission;
     /**
      * @var string[]
@@ -168,28 +168,15 @@ class PaymentLinkTransaction
     public function create()
     {
         $this->walletTransactionHandler->setModel($this->receiver);
-        $paymentLinkTransaction = $this->amountTransaction()->interestTransaction()->configurePaymentLinkCharge()->feeTransaction()->setEntryAmount();
+        $paymentLinkTransaction = $this->amountTransaction()->configurePaymentLinkCharge()->feeTransaction()->setEntryAmount();
         $this->storePaymentLinkEntry($this->amount, $this->fee, $this->interest);
         return $paymentLinkTransaction;
-
     }
 
     private function amountTransaction()
     {
         $this->amount                  = $this->payment->payable->amount;
         $this->formattedRechargeAmount = number_format($this->amount, 2);
-        $recharge_log                  = "$this->formattedRechargeAmount TK has been collected from {$this->payment->payable->getName()}, {$this->paymentLink->getReason()}";
-        $this->rechargeTransaction     = $this->walletTransactionHandler->setType(Types::credit())->setAmount($this->amount)->setSource(TransactionSources::PAYMENT_LINK)->setTransactionDetails($this->payment->getShebaTransaction()->toArray())->setLog($recharge_log)->store();
-        return $this;
-    }
-
-    private function interestTransaction()
-    {
-        if ($this->paymentLink->isEmi()) {
-            $formatted_interest = number_format($this->interest, 2);
-            $log                = "$formatted_interest TK has been charged as emi interest fees against of Transc ID {$this->rechargeTransaction->id}, and Transc amount $this->formattedRechargeAmount";
-            $this->walletTransactionHandler->setLog($log)->setType(Types::debit())->setAmount($this->interest)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
-        }
         return $this;
     }
 
@@ -226,11 +213,7 @@ class PaymentLinkTransaction
         } else {
             $this->real_amount = $realAmount = $this->paymentLink->getRealAmount() !== null ? $this->paymentLink->getRealAmount() : $this->calculateRealAmount();
             $this->fee  = $this->paymentLink->isOld() || $this->isPaidByPartner() ? round(($this->amount * $this->linkCommission / 100) + $this->tax, 2) : round(($realAmount * $this->linkCommission / 100) + $this->tax, 2);
-
         }
-        $formatted_minus_amount = number_format($this->fee, 2);
-        $minus_log              = "($this->tax" . "TK + $this->linkCommission%) $formatted_minus_amount TK has been charged as link service fees against of Transc ID: {$this->rechargeTransaction->id}, and Transc amount: $this->formattedRechargeAmount";
-        $this->walletTransactionHandler->setLog($minus_log)->setType(Types::debit())->setAmount($this->fee)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
         return $this;
     }
 

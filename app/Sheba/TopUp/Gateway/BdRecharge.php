@@ -1,26 +1,25 @@
-<?php
-
-
-namespace Sheba\TopUp\Gateway;
-
+<?php namespace Sheba\TopUp\Gateway;
 
 use App\Models\TopUpOrder;
-use App\Sheba\TopUp\Exception\BdRechargeTopUpStillProcessing;
-use App\Sheba\TopUp\Vendor\Internal\BdRechargeClient;
-use App\Sheba\TopUp\Vendor\Response\Ipn\BdRecharge\BdRechargeFailResponse;
-use App\Sheba\TopUp\Vendor\Response\Ipn\BdRecharge\BdRechargeSuccessResponse;
-use Exception;
+use Sheba\TopUp\Exception\TopUpStillNotResolvedException;
+use Sheba\TopUp\Exception\UnknownIpnStatusException;
+use Sheba\TopUp\Vendor\Response\Ipn\BdRecharge\BdRechargeFailResponse;
+use Sheba\TopUp\Vendor\Response\Ipn\BdRecharge\BdRechargeSuccessResponse;
 use Sheba\Dal\TopupOrder\Statuses;
+use Sheba\TopUp\Exception\GatewayTimeout;
+use Sheba\TopUp\Gateway\Clients\BdRechargeClient;
+use Sheba\TopUp\Gateway\FailedReason\BdRechargeFailedReason;
 use Sheba\TopUp\Vendor\Response\BdRechargeResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 use Sheba\TPProxy\TPProxyServerError;
 
-class BdRecharge implements Gateway
+class BdRecharge implements Gateway, HasIpn
 {
     CONST SHEBA_COMMISSION = 0.0;
     CONST SUCCESS = 1;
     CONST FAILED = 2;
+
     private $client;
 
     public function __construct(BdRechargeClient $client)
@@ -38,22 +37,22 @@ class BdRecharge implements Gateway
         return $response;
     }
 
-    public function getInitialStatus()
+    public function getInitialStatus(): string
     {
         return self::getInitialStatusStatically();
     }
 
-    public static function getInitialStatusStatically()
+    public static function getInitialStatusStatically(): string
     {
         return Statuses::ATTEMPTED;
     }
 
-    public function getShebaCommission()
+    public function getShebaCommission(): float
     {
         return self::SHEBA_COMMISSION;
     }
 
-    public function getName()
+    public function getName(): string
     {
         return Names::BD_RECHARGE;
     }
@@ -61,9 +60,9 @@ class BdRecharge implements Gateway
     /**
      * @param TopUpOrder $topup_order
      * @return IpnResponse
-     * @throws TPProxyServerError | BdRechargeTopUpStillProcessing
+     * @throws TPProxyServerError | TopUpStillNotResolvedException | GatewayTimeout
      */
-    public function enquireIpnResponse(TopUpOrder $topup_order): IpnResponse
+    public function enquire(TopUpOrder $topup_order): IpnResponse
     {
         $response = $this->client->enquiry($topup_order);
         /** @var IpnResponse $ipn_response */
@@ -75,9 +74,28 @@ class BdRecharge implements Gateway
         } else if ($status == 'failed' || $status == 400) {
             $ipn_response = app(BdRechargeFailResponse::class);
         } else if ($status == 'processing') {
-            Throw new BdRechargeTopUpStillProcessing($response);
+            throw new TopUpStillNotResolvedException($response);
         }
         $ipn_response->setResponse($data);
         return $ipn_response;
+    }
+
+    public function getFailedReason(): FailedReason
+    {
+        return new BdRechargeFailedReason();
+    }
+
+    /**
+     * @throws UnknownIpnStatusException
+     */
+    public function buildIpnResponse($request_data)
+    {
+        if( $request_data['status'] == 1) {
+            return app(BdRechargeSuccessResponse::class);
+        } elseif ($request_data['status'] == 2) {
+            return app(BdRechargeFailResponse::class);
+        }
+
+        throw new UnknownIpnStatusException();
     }
 }
