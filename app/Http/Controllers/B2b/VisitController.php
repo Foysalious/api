@@ -83,9 +83,9 @@ class VisitController extends Controller
 
         if ($request->has('search')) $visits = $this->searchWithEmployeeName($visits, $request);
 
-        $total_visits = count($visits);
+        $total_visits = $visits->count();
         #$limit = $this->getLimit($request, $limit, $total_visits);
-        if ($request->has('limit') && !$request->has('file')) $visits = collect($visits)->splice($offset, $limit);
+        if ($request->has('limit') && !$request->has('file')) $visits = $visits->splice($offset, $limit);
 
         if ($request->has('file') && $request->file == 'excel') return $employee_visit_excel->setEmployeeVisitData($visits->toArray())->get();
 
@@ -129,9 +129,9 @@ class VisitController extends Controller
 
         if ($request->has('search')) $visits = $this->searchWithVisitTitle($visits, $request);
 
-        $total_visits = count($visits);
+        $total_visits = $visits->count();
         #$limit = $this->getLimit($request, $limit, $total_visits);
-        if ($request->has('limit') && !$request->has('file')) $visits = collect($visits)->splice($offset, $limit);
+        if ($request->has('limit') && !$request->has('file')) $visits = $visits->splice($offset, $limit);
 
         if ($request->has('file') && $request->file == 'excel') return $my_visit_excel->setMyVisitData($visits->toArray())->get();
 
