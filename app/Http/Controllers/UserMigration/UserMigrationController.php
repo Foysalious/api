@@ -64,7 +64,7 @@ class UserMigrationController extends Controller
     /**
      * @throws Exception
      */
-    public function updateMigrationStatus(Request $request, $moduleName, $partner): JsonResponse
+    public function updateMigrationStatus(Request $request, $moduleName, $partner=null): JsonResponse
     {
         ini_set('memory_limit', '4096M');
         ini_set('max_execution_time', 120);
