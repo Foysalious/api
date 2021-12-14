@@ -1,17 +1,17 @@
 <?php namespace Sheba\Pos\Jobs;
 
 use App\Jobs\Job;
-use App\Models\Partner;
 use App\Models\PosOrder;
 use App\Sheba\PosOrderService\Services\OrderService;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
-use App\Sheba\UserMigration\Modules;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Sheba\Pos\Notifier\SmsHandler;
+use App\Sheba\UserMigration\Modules;
+use App\Sheba\Pos\Order\Invoice\InvoiceService;
 
 class OrderBillSms extends Job implements ShouldQueue
 {
@@ -21,7 +21,6 @@ class OrderBillSms extends Job implements ShouldQueue
     private $order;
     protected $tries = 1;
     private $data = [];
-    /** @var Partner */
     private $partner;
     private $serviceBreakDown = [];
     private $due_amount;
@@ -39,12 +38,12 @@ class OrderBillSms extends Job implements ShouldQueue
      */
     public function handle(SmsHandler $handler)
     {
-        if ($this->attempts() > $this->tries) return;
+        if ($this->attempts() > 2) return;
         $this->resolvePosOrder();
         $this->generateCommonData();
         if (!$this->partner->isMigrated(Modules::POS)) $this->generateDataForOldSystem();
         else $this->generateDataForNewSystem();
-        $handler->setData($this->data)->handle();
+        $handler->setPartner($this->partner)->setData($this->data)->handle();
     }
 
     private function resolvePosOrder()
@@ -75,10 +74,6 @@ class OrderBillSms extends Job implements ShouldQueue
 
     private function generateDataForOldSystem()
     {
-        $this->order->items->each(function ($item) {
-            $this->serviceBreakDown[$item->id] = $item->service_name . ': ' . $item->getTotal();
-        });
-        $this->data['service_break_down'] = implode(',', $this->serviceBreakDown);
         $this->due_amount = $this->order->getDue();
         $this->data['mobile'] = $this->order->customer->profile->mobile;
         $this->data['order_id'] = $this->order->id;
@@ -89,10 +84,6 @@ class OrderBillSms extends Job implements ShouldQueue
 
     private function generateDataForNewSystem()
     {
-        $items = $this->order['items'];
-        foreach ($items as $item)
-            $this->serviceBreakDown[$item['id']] = $item['name'] . ': ' . ($item['quantity'] * $item['unit_price']);
-        $this->data['service_break_down'] = $this->serviceBreakDown = implode(',', $this->serviceBreakDown);
         $this->due_amount = $this->order['price']['due'];
         $this->data['mobile'] = $this->order['customer']['mobile'];
         $this->data['order_id'] = $this->order['partner_wise_order_id'];
@@ -103,12 +94,12 @@ class OrderBillSms extends Job implements ShouldQueue
 
     private function getMessageDataForOldSystem()
     {
+        $invoice_link =   $this->order->invoice ? : $this->resolveInvoiceLink();
         $data = [
             'order_id' => $this->order->partner_wise_order_id,
-            'service_break_down' => $this->serviceBreakDown,
             'total_amount' => $this->order->getNetBill(),
             'partner_name' => $this->partner->name,
-            'invoice_link' => $this->order->invoice
+            'invoice_link' => $invoice_link
         ];
         if ($this->due_amount > 0)
             $data['total_due_amount'] = $this->due_amount;
@@ -119,12 +110,18 @@ class OrderBillSms extends Job implements ShouldQueue
     {
         $data = [
             'order_id' => $this->order['partner_wise_order_id'],
-            'service_break_down' => $this->serviceBreakDown,
             'total_amount' => $this->order['price']['original_price'],
             'partner_name' => $this->partner->name,
-            'invoice_link' => 'static'
+            'invoice_link' => $this->order['invoice']
         ];
         if ($this->due_amount > 0) $data['total_due_amount'] = $this->due_amount;
         return $this->data['message'] = $data;
+    }
+
+    private function resolveInvoiceLink()
+    {
+        /** @var InvoiceService $invoiceService */
+        $invoiceService = app(InvoiceService::class)->setPosOrder($this->order);
+        return $invoiceService->generateInvoice()->saveInvoiceLink()->getInvoiceLink();
     }
 }

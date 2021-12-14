@@ -84,7 +84,7 @@ class ProfileController extends Controller
             $this->setModifier($resource);
             $repository->update($profile, $data);
             if($request->type != 'info')
-                $this->increase_verification_request_count($profile);
+                $repository->increase_verification_request_count($profile);
             if ($request->type != 'image') {
                 $this->shootStatusChangeLog($resource);
                 $this->setToPendingStatus($resource);
@@ -100,16 +100,6 @@ class ProfileController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500, ['message' => ['title' => 'সফল হয়নি','en'=> 'Internal Server Error' , 'bn' => 'আপনার আবেদনটি সফল হয়নি। অনুগ্রহ করে কিছুক্ষণ অপেক্ষা করে আবার চেষ্টা করুন','existing_no' => null]]);
         }
-    }
-
-    /**
-     * @param $profile
-     */
-    public function increase_verification_request_count($profile)
-    {
-        $profile->nid_verification_request_count = $profile->nid_verification_request_count + 1 ;
-        $profile->last_nid_verification_request_date = Carbon::now();
-        $profile->update();
     }
 
     /**

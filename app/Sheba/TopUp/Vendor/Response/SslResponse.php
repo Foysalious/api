@@ -29,7 +29,7 @@ class SslResponse extends TopUpResponse
      */
     public function getErrorMessage()
     {
-        return $this->response->Message;
+        return $this->response->message;
     }
 
     public function isPending()

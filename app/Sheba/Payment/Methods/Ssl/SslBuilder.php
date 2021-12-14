@@ -1,13 +1,18 @@
 <?php namespace Sheba\Payment\Methods\Ssl;
 
 use App\Models\Customer;
+use App\Models\Partner;
 use App\Models\Payable;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
+use Sheba\Payment\Exceptions\StoreNotFoundException;
+use Sheba\Payment\Factory\PaymentStrategy;
 use Sheba\Payment\Methods\Ssl\Stores\DefaultStore;
 use Sheba\Payment\Methods\Ssl\Stores\Donation;
+use Sheba\Payment\Methods\Ssl\Stores\DynamicSslStore;
 use Sheba\Payment\Methods\Ssl\Stores\MarketPlace;
 use Sheba\Payment\Methods\Ssl\Stores\SslStore;
 use Sheba\Payment\PayableUser;
+
 
 class SslBuilder
 {
@@ -39,6 +44,7 @@ class SslBuilder
      * @param Payable $payable
      * @return SslStore
      * @throws InvalidPaymentMethod
+     * @throws StoreNotFoundException
      */
     public static function getStore(Payable $payable)
     {
@@ -90,13 +96,16 @@ class SslBuilder
     /**
      * @param Payable $payable
      * @return SslStore
-     * @throws InvalidPaymentMethod
+     * @throws InvalidPaymentMethod|StoreNotFoundException
      */
     public static function getStoreForPaymentLink(Payable $payable)
     {
         $payment_link = $payable->getPaymentLink();
+        $receiver = ($payment_link->getPaymentReceiver());
 
         if ($payment_link->isForMissionSaveBangladesh()) return new Donation();
+
+        if ($receiver instanceof Partner) return (new DynamicSslStore($receiver))->set();
 
         return new DefaultStore();
 

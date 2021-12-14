@@ -281,9 +281,9 @@ class ShebaController extends Controller
 
     /**
      * @param Request $request
-     * @param \Sheba\Dal\PaymentGateway\Contract $paymentGateWayRepository
+     * @param PaymentGatewayRepository $paymentGateWayRepository
      * @return JsonResponse
-     * @throws \Exception
+     * @throws Exception
      */
     public function getPayments(Request $request, PaymentGatewayRepository $paymentGateWayRepository)
     {

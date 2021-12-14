@@ -2,6 +2,7 @@
 
 use App\Helper\BangladeshiMobileValidator;
 use App\Models\Profile;
+use Carbon\Carbon;
 use FontLib\Table\Type\name;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -242,5 +243,12 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
     {
         list($nid, $nid_filename) = $this->makeThumb($nid_image, $name);
         return $this->saveImageToCDN($nid, getNIDFolder(), $nid_filename);
+    }
+
+    public function increase_verification_request_count($profile)
+    {
+        $profile->nid_verification_request_count = $profile->nid_verification_request_count + 1 ;
+        $profile->last_nid_verification_request_date = Carbon::now();
+        $profile->update();
     }
 }
