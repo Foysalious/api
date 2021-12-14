@@ -13,10 +13,10 @@ use Sheba\ModificationFields;
 
 class DataMigration
 {
-    const MAX_PARTNER_POS_CATEGORIES = 300;
-    const MAX_PARTNER_POS_SERVICES = 300;
-    const MAX_POS_ORDERS = 300;
-    const MAX_PARTNER_POS_CUSTOMERS = 300;
+    const MAX_PARTNER_POS_CATEGORIES = 500;
+    const MAX_PARTNER_POS_SERVICES = 500;
+    const MAX_POS_ORDERS = 500;
+    const MAX_PARTNER_POS_CUSTOMERS = 500;
     use ModificationFields;
 
     /** @var Partner */
