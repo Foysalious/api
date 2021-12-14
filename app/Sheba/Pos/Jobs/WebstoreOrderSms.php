@@ -3,14 +3,16 @@
 use App\Jobs\Job;
 use App\Models\Partner;
 use App\Models\PosOrder;
+use App\Sheba\Pos\Order\Invoice\InvoiceService;
 use App\Sheba\PosOrderService\Services\OrderService;
-use App\Sheba\Sms\BusinessType;
-use App\Sheba\Sms\FeatureType;
 use App\Sheba\UserMigration\Modules;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
 use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Pos\Notifier\SmsHandler;
 
 class WebstoreOrderSms extends Job implements ShouldQueue
@@ -42,14 +44,14 @@ class WebstoreOrderSms extends Job implements ShouldQueue
      */
     public function handle(SmsHandler $handler)
     {
-        if ($this->attempts() > $this->tries) return;
+        if ($this->attempts() > 2) return;
         $this->resolvePosOrder();
         $this->generateCommonData();
         if (!$this->partner->isMigrated(Modules::POS))
             $this->generateDataForOldWebstoreSms();
         else
             $this->generateDataForNewWebstoreSms();
-        $handler->setData($this->data)->handle();
+        $handler->setPartner($this->partner)->setData($this->data)->handle();
     }
 
     private function resolvePosOrder()
@@ -90,6 +92,7 @@ class WebstoreOrderSms extends Job implements ShouldQueue
 
     private function generateDataForOldWebstoreSms()
     {
+        $invoice_link =   $this->order->invoice ? : $this->resolveInvoiceLink();
         $this->data['mobile'] = $this->order->customer->profile->mobile;
         $this->data['order_id'] = $this->order->id;
         $this->data['log'] = " BDT has been deducted for sending pos order update sms to customer(order id: {$this->order->id})";
@@ -97,7 +100,9 @@ class WebstoreOrderSms extends Job implements ShouldQueue
             $this->data['message'] = [
                 'order_id' => $this->order->partner_wise_order_id,
                 'net_bill' => $this->order->getNetBill(),
-                'payment_status' => $this->order->getPaid() ? 'প্রদত্ত' : 'বকেয়া'
+                'payment_status' => $this->order->getPaid() ? 'প্রদত্ত' : 'বকেয়া',
+                'store_name' => $this->partner->name,
+                'invoice_link' => $invoice_link
             ];
         else
             $this->data['message'] = [
@@ -114,11 +119,20 @@ class WebstoreOrderSms extends Job implements ShouldQueue
             $this->data['message'] = [
                 'order_id' => $this->order['partner_wise_order_id'],
                 'net_bill' => $this->order['price']['original_price'],
-                'payment_status' => $this->order['price']['due'] > 0 ? 'প্রদত্ত' : 'বকেয়া'
+                'payment_status' => $this->order['price']['due'] > 0 ? 'প্রদত্ত' : 'বকেয়া',
+                'store_name' => $this->partner->name,
+                'invoice_link' => $this->order['invoice']
             ];
         else
             $this->data['message'] = [
                 'order_id' => $this->order['partner_wise_order_id']
             ];
+    }
+
+    private function resolveInvoiceLink()
+    {
+        /** @var InvoiceService $invoiceService */
+        $invoiceService = app(InvoiceService::class)->setPosOrder($this->order);
+        return $invoiceService->generateInvoice()->saveInvoiceLink()->getInvoiceLink();
     }
 }

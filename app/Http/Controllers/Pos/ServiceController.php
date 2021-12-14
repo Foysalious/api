@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\PartnerPosService;
 use App\Models\PartnerPosServiceDiscount;
 use App\Models\PosCategory;
+use App\Sheba\UserMigration\Modules;
 use App\Transformers\PosServiceTransformer;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -127,6 +128,8 @@ class ServiceController extends Controller
      */
     public function store(Request $request, ProductCreator $creator)
     {
+        $partner = $request->partner;
+        if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403);
         $sub_categories = PosCategory::child()->pluck('id')->toArray();
         $master_categories = PosCategory::parents()->pluck('id')->toArray();
         $this->validate($request, [
@@ -270,6 +273,8 @@ class ServiceController extends Controller
      */
     public function update(Request $request, ProductUpdater $updater, PosServiceDiscountRepository $discount_repo)
     {
+        $partner = $request->partner;
+        if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403);
         $rules = [
             'unit' => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS'))),
             'image_gallery' => 'sometimes|required',
@@ -359,6 +364,8 @@ class ServiceController extends Controller
     public function destroy(Request $request, Deleter $deleter)
     {
         try {
+            $partner = $request->partner;
+            if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403);
             $this->setModifier($request->manager_resource);
             $deleter->delete($request->service);
 
