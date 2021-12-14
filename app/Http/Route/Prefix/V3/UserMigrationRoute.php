@@ -10,7 +10,7 @@ class UserMigrationRoute
             $api->post('/','UserMigration\UserMigrationController@updateStatusWebHook')->name('migration.update-status-webhook');
         });
         $api->group(['prefix'=>'user-migration','middleware'=>['shebaServer']],function($api){
-            $api->post('/migrate/{partner}/{moduleName}'.'UserMigration\UserMigrationController@updateMigrationStatus')->name('migration.update-status-admin');
+            $api->post('/migrate/{partner}/{moduleName}','UserMigration\UserMigrationController@updateMigrationStatus')->name('migration.update-status-admin');
         });
         $api->group(['prefix' => 'user-migration', 'middleware' => ['userMigration.auth']], function ($api) {
             $api->get('/module-access/{moduleName}','UserMigration\UserMigrationController@checkModuleAccess')->name('migration.module-access');
