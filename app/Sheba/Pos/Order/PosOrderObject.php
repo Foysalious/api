@@ -15,6 +15,7 @@ class PosOrderObject
     private $created_at;
     private $due;
     private $emi_month;
+    private $partner_wise_order_id;
     protected $type = PosOrderTypes::OLD_SYSTEM;
 
     /**
@@ -127,10 +128,21 @@ class PosOrderObject
         $this->emi_month = $emi_month;
         return $this;
     }
+    /**
+     * @param mixed $partner_wise_order_id
+     * @return PosOrderObject
+     */
+    public function setPartnerWiseOrderId($partner_wise_order_id)
+    {
+        $this->partner_wise_order_id = $partner_wise_order_id;
+        return $this;
+    }
 
     public function __get($value)
     {
         return $this->{$value};
     }
+
+
 
 }
