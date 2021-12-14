@@ -63,14 +63,15 @@ class UserMigrationController extends Controller
     /**
      * @throws Exception
      */
-    public function updateMigrationStatus(Request $request, $moduleName): JsonResponse
+    public function updateMigrationStatus(Request $request, $moduleName, $partner=null): JsonResponse
     {
         ini_set('memory_limit', '4096M');
         ini_set('max_execution_time', 120);
         $this->validate($request, ['status' => 'required|string']);
-        if (is_string($request->partner)) {
-            $partner = Partner::find($request->partner);
-            $request->merge(['partner' => $partner, 'user' => User::find(1)]);
+        if (!empty($partner)) {
+            $partner_    = Partner::find($moduleName);
+            $moduleName = $partner;
+            $request->merge(['partner' => $partner_, 'user' => User::find(1)]);
         }
         $userId = $request->partner->id;
         if (!in_array($request->status, UserStatus::get())) throw new Exception('Invalid Status');
