@@ -5,6 +5,7 @@ use App\Models\PosOrder;
 use App\Sheba\Pos\Order\Customer\CustomerObject;
 use App\Sheba\Pos\Order\Partner\PartnerObject;
 use App\Sheba\Pos\Order\PosOrderObject;
+use App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError;
 use App\Sheba\PosOrderService\PosOrderServerClient;
 
 class PosOrderResolver
@@ -36,8 +37,9 @@ class PosOrderResolver
     /**
      * @param mixed $orderId
      * @return PosOrderResolver|null
+     * @throws PosOrderServiceServerError
      */
-    public function setOrderId($orderId): ?PosOrderResolver
+    public function setOrderId($orderId)
     {
         $this->orderId = $orderId;
         $oldPosOrder = PosOrder::where('id', $orderId)->select('id', 'sales_channel', 'customer_id', 'partner_id', 'is_migrated', 'created_at', 'emi_month')->first();
