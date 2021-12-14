@@ -39,17 +39,27 @@ class PosOrderResolver
      */
     public function setOrderId($orderId)
     {
-        $oldPosOrder = PosOrder::where('id', $orderId)->select('id', 'sales_channel', 'customer_id', 'partner_id', 'is_migrated', 'created_at', 'emi_month')->first();
+        $this->orderId = $orderId;
+        $oldPosOrder = PosOrder::where('id', $orderId)->select('id', 'partner_wise_order_id','sales_channel', 'customer_id', 'partner_id', 'is_migrated', 'created_at', 'emi_month')->first();
         if ($oldPosOrder && !$oldPosOrder->is_migrated) $this->setOldPosOrderObject($oldPosOrder);
-        else $this->setNewPosOrderObject();
+        else
+        {
+            $response = $this->client->get('api/v1/orders/' . $this->orderId);
+            $newPosOrder = json_decode(json_encode($response['order']), FALSE);
+            $this->setNewPosOrderObject($newPosOrder);
+        }
         return $this;
     }
 
     public function setPartnerWiseOrderId($partnerId, $partnerWiseOrderId)
     {
-        $oldPosOrder = PosOrder::where('partner_wise_order_id', $partnerWiseOrderId)->where('partner_id', $partnerId)->select('id', 'sales_channel', 'customer_id', 'partner_id', 'is_migrated', 'created_at', 'emi_month')->first();
+        $oldPosOrder = PosOrder::where('partner_wise_order_id', $partnerWiseOrderId)->where('partner_id', $partnerId)->select('id','partner_wise_order_id', 'sales_channel', 'customer_id', 'partner_id', 'is_migrated', 'created_at', 'emi_month')->first();
         if ($oldPosOrder && !$oldPosOrder->is_migrated) $this->setOldPosOrderObject($oldPosOrder);
-        else $this->setNewPosOrderObject();
+        else{
+            $response = $this->client->get('api/v1/partners/'.$partnerId.'order-by-partner-wise-order-id/' . $this->orderId);
+            $newPosOrder = json_decode(json_encode($response['order']), FALSE);
+            $this->setNewPosOrderObject($newPosOrder);
+        }
         return $this;
     }
 
@@ -65,17 +75,15 @@ class PosOrderResolver
         } else {
             $customerObject = null;
         }
-        $this->posOrderObject->setId($oldPosOrder->id)->setCustomerId($oldPosOrder->customer_id)->setPartnerId($oldPosOrder->partner_id)
+        $this->posOrderObject->setId($oldPosOrder->id)->setPartnerWiseOrderId($oldPosOrder->partner_wise_order_id)->setCustomerId($oldPosOrder->customer_id)->setPartnerId($oldPosOrder->partner_id)
             ->setDue($oldPosOrder->getDue())->setSalesChannel($oldPosOrder->sales_channel)->setIsMigrated(0)
             ->setCustomer($customerObject)->setPartner($partnerObject)->setType(PosOrderTypes::OLD_SYSTEM)
             ->setCreatedAt($oldPosOrder->created_at)->setEmiMonth($oldPosOrder->emi_month);
         $this->setOrder($this->posOrderObject);
     }
 
-    private function setNewPosOrderObject()
+    private function setNewPosOrderObject($newPosOrder)
     {
-        $response = $this->client->get('api/v1/orders/' . $this->orderId);
-        $newPosOrder = json_decode(json_encode($response['order']), FALSE);
         $this->orderId = $newPosOrder->id;
         $customer = $newPosOrder->customer;
         $partner = $newPosOrder->partner;
@@ -85,7 +93,7 @@ class PosOrderResolver
         } else {
             $customerObject = null;
         }
-        $this->posOrderObject->setId($newPosOrder->id)->setCustomerId($newPosOrder->customer_id)->setPartnerId($newPosOrder->partner_id)
+        $this->posOrderObject->setId($newPosOrder->id)->setPartnerWiseOrderId($newPosOrder->partner_wise_order_id)->setCustomerId($newPosOrder->customer_id)->setPartnerId($newPosOrder->partner_id)
             ->setDue($newPosOrder->due)->setSalesChannel($newPosOrder->sales_channel)->setIsMigrated(1)
             ->setCustomer($customerObject)->setPartner($partnerObject)->setType(PosOrderTypes::NEW_SYSTEM)
             ->setCreatedAt($newPosOrder->created_at)->setEmiMonth($newPosOrder->emi_month);
