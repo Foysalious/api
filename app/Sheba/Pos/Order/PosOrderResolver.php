@@ -55,8 +55,8 @@ class PosOrderResolver
     {
         $oldPosOrder = PosOrder::where('partner_wise_order_id', $partnerWiseOrderId)->where('partner_id', $partnerId)->select('id','partner_wise_order_id', 'sales_channel', 'customer_id', 'partner_id', 'is_migrated', 'created_at', 'emi_month')->first();
         if ($oldPosOrder && !$oldPosOrder->is_migrated) $this->setOldPosOrderObject($oldPosOrder);
-        else{
-            $response = $this->client->get('api/v1/partners/'.$partnerId.'order-by-partner-wise-order-id/' . $this->orderId);
+        else {
+            $response = $this->client->get('api/v1/partners/' . $partnerId . '/order-by-partner-wise-order-id/' . $partnerWiseOrderId);
             $newPosOrder = json_decode(json_encode($response['order']), FALSE);
             $this->setNewPosOrderObject($newPosOrder);
         }
