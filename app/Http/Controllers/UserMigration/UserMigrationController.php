@@ -67,9 +67,9 @@ class UserMigrationController extends Controller
     {
         $this->validate($request, ['status' => 'required|string']);
         if (!empty($partner)) {
+            $partner_    = Partner::find($moduleName);
             $moduleName = $partner;
-            $partner    = Partner::find($moduleName);
-            $request->merge(['partner' => $partner, 'user' => User::find(1)]);
+            $request->merge(['partner' => $partner_, 'user' => User::find(1)]);
         }
         $userId = $request->partner->id;
         if (!in_array($request->status, UserStatus::get())) throw new Exception('Invalid Status');
