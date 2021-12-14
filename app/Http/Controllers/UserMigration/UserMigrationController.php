@@ -63,11 +63,12 @@ class UserMigrationController extends Controller
     /**
      * @throws Exception
      */
-    public function updateMigrationStatus(Request $request, $moduleName): JsonResponse
+    public function updateMigrationStatus(Request $request, $moduleName, $partner): JsonResponse
     {
         $this->validate($request, ['status' => 'required|string']);
-        if (is_string($request->partner)) {
-            $partner = Partner::find($request->partner);
+        if (!empty($partner)) {
+            $moduleName = $partner;
+            $partner    = Partner::find($moduleName);
             $request->merge(['partner' => $partner, 'user' => User::find(1)]);
         }
         $userId = $request->partner->id;
