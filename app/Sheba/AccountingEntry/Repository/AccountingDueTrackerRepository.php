@@ -5,6 +5,7 @@ namespace App\Sheba\AccountingEntry\Repository;
 use App\Models\PosOrder;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Constants\UserType;
+use App\Sheba\Pos\Order\PosOrderObject;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Sheba\AccountingEntry\Accounts\Accounts;
@@ -13,6 +14,7 @@ use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
 use Sheba\RequestIdentification;
 use Sheba\Pos\Customer\PosCustomerResolver;
+use Sheba\Pos\Order\PosOrderResolver;
 
 class AccountingDueTrackerRepository extends BaseRepository
 {
@@ -43,7 +45,8 @@ class AccountingDueTrackerRepository extends BaseRepository
         }
         $this->getCustomer($request);
         $this->setModifier($request->partner);
-        $request->merge(['source_id' => $this->posOrderId($request->partner, $request->partner_wise_order_id) ?? null]);
+        $posOrder = $this->posOrderByPartnerWiseOrderId($request->partner, $request->partner_wise_order_id);
+        $request->merge(['source_id' =>  $posOrder? $posOrder->id : null]);
         $data = $this->createEntryData($request, $type);
         $url = $with_update ? "api/entries/" . $request->entry_id : "api/entries/";
         $data = $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
@@ -82,12 +85,7 @@ class AccountingDueTrackerRepository extends BaseRepository
     {
         $url = "api/due-list?";
         $url = $this->updateRequestParam($request, $url);
-        $list = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
-        if (!empty($order_by) && $order_by == "name") {
-            $order = ($request->order == 'desc') ? 'sortByDesc' : 'sortBy';
-            $list = $list->$order('customer_name', SORT_NATURAL | SORT_FLAG_CASE)->values();
-        }
-        return $list;
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
     }
 
     /**
@@ -127,7 +125,7 @@ class AccountingDueTrackerRepository extends BaseRepository
                 }
                 $item['created_at'] = Carbon::parse($item['created_at'])->format('Y-m-d h:i A');
                 $item['entry_at'] = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
-                $pos_order = PosOrder::withTrashed()->find($item['source_id']);
+                $pos_order = $this->posOrderByOrderId($item['source_id']);
                 $item['partner_wise_order_id'] = isset($pos_order) ? $pos_order->partner_wise_order_id : null;
                 if ($pos_order) {
                     $item['source_type'] = 'PosOrder';
@@ -271,13 +269,29 @@ class AccountingDueTrackerRepository extends BaseRepository
     /**
      * @param $partner
      * @param $partnerWiseOrderId
-     * @return int|null
+     * @return PosOrderObject
      */
-    private function posOrderId($partner, $partnerWiseOrderId)
+    private function posOrderByPartnerWiseOrderId($partner, $partnerWiseOrderId)
     {
         try {
-            $posOrder = PosOrder::where('partner_id', $partner->id)->where('partner_wise_order_id', $partnerWiseOrderId)->first();
-            return $posOrder->id;
+            /** @var PosOrderResolver $posOrderResolver */
+            $posOrderResolver = app(PosOrderResolver::class);
+            return $posOrderResolver->setPartnerWiseOrderId($partner->id, $partnerWiseOrderId)->get();
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * @param null $orderId
+     * @return PosOrderObject
+     */
+    private function posOrderByOrderId($orderId)
+    {
+        try {
+            /** @var PosOrderResolver $posOrderResolver */
+            $posOrderResolver = app(PosOrderResolver::class);
+            return $posOrderResolver->setOrderId($orderId)->get();
         } catch (\Exception $e) {
             return null;
         }
