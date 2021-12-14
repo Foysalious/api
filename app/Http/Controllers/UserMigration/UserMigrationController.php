@@ -63,7 +63,7 @@ class UserMigrationController extends Controller
     /**
      * @throws Exception
      */
-    public function updateMigrationStatus(Request $request, $moduleName, $partner): JsonResponse
+    public function updateMigrationStatus(Request $request, $moduleName, $partner=null): JsonResponse
     {
         $this->validate($request, ['status' => 'required|string']);
         if (!empty($partner)) {
