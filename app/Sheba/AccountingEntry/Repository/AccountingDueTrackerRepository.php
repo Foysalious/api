@@ -88,7 +88,7 @@ class AccountingDueTrackerRepository extends BaseRepository
      */
     public function getDueList($request, bool $paginate = false): array
     {
-        $url = "api/due-list?";
+        $url = "api/due-list/?";
         $url = $this->updateRequestParam($request, $url);
         $list = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
         if (!empty($order_by) && $order_by == "name") {
