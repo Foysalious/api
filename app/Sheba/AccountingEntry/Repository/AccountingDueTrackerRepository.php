@@ -81,12 +81,12 @@ class AccountingDueTrackerRepository extends BaseRepository
     {
         $url = "api/due-list?";
         $url = $this->updateRequestParam($request, $url);
-        $list = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
-        if (!empty($order_by) && $order_by == "name") {
-            $order = ($request->order == 'desc') ? 'sortByDesc' : 'sortBy';
-            $list = $list->$order('customer_name', SORT_NATURAL | SORT_FLAG_CASE)->values();
-        }
-        return $list;
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
+//        if (!empty($order_by) && $order_by == "name") {
+//            $order = ($request->order == 'desc') ? 'sortByDesc' : 'sortBy';
+//            $list = $list->$order('customer_name', SORT_NATURAL | SORT_FLAG_CASE)->values();
+//        }
+//        return $list;
     }
 
     /**
@@ -201,7 +201,7 @@ class AccountingDueTrackerRepository extends BaseRepository
     private function updateRequestParam(Request $request, $url)
     {
         $order_by = $request->order_by;
-        if (!empty($order_by) && $order_by != "name") {
+        if (!empty($order_by)) {
             $order = !empty($request->order) ? strtolower($request->order) : 'desc';
             $url .= "&order_by=$order_by&order=$order";
         }
