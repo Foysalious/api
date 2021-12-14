@@ -6,6 +6,7 @@ use App\Models\PartnerPosCustomer;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Sheba\AccountingEntry\Repository\AccountingDueTrackerRepository;
+use App\Sheba\UserMigration\Modules;
 use App\Transformers\CustomSerializer;
 use App\Transformers\PosOrderTransformer;
 use Carbon\Carbon;
@@ -111,6 +112,8 @@ class CustomerController extends Controller
     public function store(Request $request, Creator $creator)
     {
         try {
+            $partner = $request->partner;
+            if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403,["message" =>'অনুগ্রহ করে অ্যাপটি প্লে-স্টোর থেকে আপডেট করুন']);
             $this->validate($request, [
                 'mobile'        => 'required|mobile:bd',
                 'name'          => 'required',
@@ -148,6 +151,8 @@ class CustomerController extends Controller
      */
     public function update(Request $request, $partner, PosCustomer $customer, Updater $updater)
     {
+        $partner = $request->partner;
+        if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403,["message" =>'অনুগ্রহ করে অ্যাপটি প্লে-স্টোর থেকে আপডেট করুন']);
         $this->validate($request, ['mobile' => 'required|mobile:bd']);
         $this->setModifier($request->manager_resource);
         $updater->setCustomer($customer)->setPartner($request->partner)->setData($request->except(['partner_id', 'remember_token']));
@@ -242,6 +247,8 @@ class CustomerController extends Controller
         DueTrackerRepository $dueTrackerRepository,
         AccountingDueTrackerRepository $accDueTrackerRepository
     ): JsonResponse {
+        $partner = $request->partner;
+        if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403,["message" =>'অনুগ্রহ করে অ্যাপটি প্লে-স্টোর থেকে আপডেট করুন']);
         $partner_pos_customer = PartnerPosCustomer::byPartner($request->partner->id)->where(
                 'customer_id',
                 $customer
