@@ -129,7 +129,7 @@ class ServiceController extends Controller
     public function store(Request $request, ProductCreator $creator)
     {
         $partner = $request->partner;
-        if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403);
+        if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403,["message" =>'অনুগ্রহ করে অ্যাপটি প্লে-স্টোর থেকে আপডেট করুন']);
         $sub_categories = PosCategory::child()->pluck('id')->toArray();
         $master_categories = PosCategory::parents()->pluck('id')->toArray();
         $this->validate($request, [
@@ -273,7 +273,7 @@ class ServiceController extends Controller
     public function update(Request $request, ProductUpdater $updater, PosServiceDiscountRepository $discount_repo)
     {
         $partner = $request->partner;
-        if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403);
+        if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403,["message" =>'অনুগ্রহ করে অ্যাপটি প্লে-স্টোর থেকে আপডেট করুন']);
         $rules = [
             'unit' => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS'))),
             'image_gallery' => 'sometimes|required',
@@ -363,7 +363,7 @@ class ServiceController extends Controller
     {
         try {
             $partner = $request->partner;
-            if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403);
+            if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403,["message" =>'অনুগ্রহ করে অ্যাপটি প্লে-স্টোর থেকে আপডেট করুন']);
             $this->setModifier($request->manager_resource);
             $deleter->delete($request->service);
 

@@ -160,7 +160,7 @@ class OrderController extends Controller
     public function store($partner, Request $request, Creator $creator, ProfileCreator $profileCreator, PosCustomerCreator $posCustomerCreator, PartnerRepository $partnerRepository, PaymentLinkCreator $paymentLinkCreator)
     {
         $partner = $request->partner;
-        if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403);
+        if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403,["message" =>'অনুগ্রহ করে অ্যাপটি প্লে-স্টোর থেকে আপডেট করুন']);
         $this->validate($request, [
             'services' => 'required|string',
             'paid_amount' => 'sometimes|required|numeric',
@@ -277,7 +277,7 @@ class OrderController extends Controller
     {
         try {
             $partner = $request->partner;
-            if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403);
+            if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403,["message" =>'অনুগ্রহ করে অ্যাপটি প্লে-স্টোর থেকে আপডেট করুন']);
             $deleter->setPartner($request->partner)->setOrder($order)->delete();
             return api_response($request, true, 200);
         } catch (PosExpenseCanNotBeDeleted $e) {
@@ -328,7 +328,7 @@ class OrderController extends Controller
     public function update(Request $request, Updater $updater, InvoiceService $invoiceService)
     {
         $partner = $request->partner;
-        if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403);
+        if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403,["message" =>'অনুগ্রহ করে অ্যাপটি প্লে-স্টোর থেকে আপডেট করুন']);
         $this->setModifier($request->manager_resource);
             /** @var PosOrder $order */
             $new           = 1;
@@ -357,7 +357,7 @@ class OrderController extends Controller
     public function updateStatus(Request $request, StatusChanger $statusChanger)
     {
         $partner = $request->partner;
-        if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403);
+        if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403,["message" =>'অনুগ্রহ করে অ্যাপটি প্লে-স্টোর থেকে আপডেট করুন']);
         $this->setModifier($request->manager_resource);
         $order = PosOrder::with('items')->find($request->order);
         $statusChanger->setOrder($order)->setStatus($request->status)->setModifier($request->manager_resource)->changeStatus();
