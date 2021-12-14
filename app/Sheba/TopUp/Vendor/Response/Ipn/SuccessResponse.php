@@ -2,7 +2,7 @@
 
 abstract class SuccessResponse extends IpnResponse
 {
-    public function isFailed()
+    public function isFailed(): bool
     {
         return false;
     }
@@ -10,5 +10,13 @@ abstract class SuccessResponse extends IpnResponse
     protected function _handleTopUp()
     {
         $this->topUp->success($this);
+    }
+
+    /**
+     * @return string | null
+     */
+    public function getUpdatedTransactionId()
+    {
+        return null;
     }
 }

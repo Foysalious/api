@@ -331,6 +331,16 @@ class Route
             $api->get('profiles', 'Profile\ProfileController@getDetail')->middleware('jwtGlobalAuth');
 
             $api->post('register-mobile', 'ShebaController@registerCustomer');
+
+            $api->group(['prefix'=>'ekyc', 'middleware' => 'jwtGlobalAuth'], function ($api) {
+                $api->post('nid-ocr-data', 'EKYC\NidOcrController@storeNidOcrData');
+                $api->post('face-verification', 'EKYC\FaceVerificationController@faceVerification');
+                $api->get('get-liveliness-credentials', 'EKYC\FaceVerificationController@getLivelinessCredentials');
+                $api->get('get-user-data', 'EKYC\FaceVerificationController@getUserNidData');
+            });
+            $api->group(['prefix'=>'ekyc', 'middleware' => 'shebaServer'], function ($api) {
+                $api->get('resubmit-nid/{id}', 'EKYC\FaceVerificationController@resubmitToPorichoy');
+            });
         });
         return $api;
     }

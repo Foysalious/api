@@ -25,7 +25,7 @@ class StatusChanger
         $this->statusRepo = $status_repo;
     }
 
-    public function setOrder(TopUpOrder $order)
+    public function setOrder(TopUpOrder $order): StatusChanger
     {
         $this->order = $order;
         $this->oldOrder = clone $order;
@@ -35,7 +35,7 @@ class StatusChanger
     /**
      * @return TopUpOrder
      */
-    public function attempted()
+    public function attempted(): TopUpOrder
     {
         return $this->update(Statuses::ATTEMPTED);
     }
@@ -45,7 +45,7 @@ class StatusChanger
      * @param $transaction_id
      * @return TopUpOrder
      */
-    public function pending($transaction_details, $transaction_id)
+    public function pending($transaction_details, $transaction_id): TopUpOrder
     {
         return $this->update(Statuses::PENDING, [
             "transaction_id" => $transaction_id,
@@ -58,7 +58,7 @@ class StatusChanger
      * @param $transaction_id
      * @return TopUpOrder
      */
-    public function successful($transaction_details, $transaction_id = null)
+    public function successful($transaction_details, $transaction_id = null): TopUpOrder
     {
         $data = [
             "transaction_details" => $transaction_details,
@@ -73,7 +73,7 @@ class StatusChanger
      * @param $transaction_details
      * @return TopUpOrder
      */
-    public function failed($reason, $transaction_details)
+    public function failed($reason, $transaction_details): TopUpOrder
     {
         return $this->update(Statuses::FAILED, [
             "failed_reason" => $reason,
@@ -84,17 +84,17 @@ class StatusChanger
     /**
      * @return TopUpOrder
      */
-    public function systemError()
+    public function systemError(): TopUpOrder
     {
         return $this->update( Statuses::SYSTEM_ERROR);
     }
 
     /**
      * @param $status
-     * @param $data
+     * @param array $data
      * @return TopUpOrder
      */
-    private function update($status, $data = [])
+    private function update($status, array $data = []): TopUpOrder
     {
         DB::transaction(function () use ($data, $status) {
             $data["status"] = $status;
