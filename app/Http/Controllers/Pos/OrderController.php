@@ -301,6 +301,7 @@ class OrderController extends Controller
             'payment_method' => 'required|string|in:' . implode(',', config('pos.payment_method'))*/
         ]);
         $partner = $request->partner;
+        if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403,["message" =>'অনুগ্রহ করে অ্যাপটি প্লে-স্টোর থেকে আপডেট করুন']);
         $this->setModifier($request->manager_resource);
         $order = $creator->setPartner($partner)->setData($request->all())->create();
         $order = $order->calculate();
