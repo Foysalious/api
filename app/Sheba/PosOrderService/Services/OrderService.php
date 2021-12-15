@@ -63,7 +63,7 @@ class OrderService
      */
     public function setPaidAmount($paid_amount)
     {
-        $this->paidAmount = $paid_amount;
+        $this->paidAmount = (float) $paid_amount;
         return $this;
     }
 
