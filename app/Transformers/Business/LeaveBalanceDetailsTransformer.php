@@ -95,7 +95,7 @@ class LeaveBalanceDetailsTransformer extends TransformerAbstract
                 'allowed_leaves' => (int)$leave_type_total_days,
                 'used_leaves' => $used_leave_days,
                 'is_leave_days_exceeded' => ($used_leave_days > (int)$leave_type_total_days),
-                'leave_prorate_id' => $prorated_leave ? $prorated_leave->id : null
+                'leave_prorate_id' => $prorated_leave ? 1 : 0
             ]);
         }
 
