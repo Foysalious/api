@@ -48,7 +48,7 @@ class PosCustomerResolver
      * @return PosCustomerObject|null
      * @throws Exception
      */
-    public function get(): ?PosCustomerObject
+    public function get()
     {
         if ($this->partner->isMigrated(Modules::POS)) {
             $customer = $this->smanagerUserServerClient->get('api/v1/partners/' . $this->partner->id . '/users/' . $this->customerId);
