@@ -278,8 +278,8 @@ class EmployeeController extends Controller
      */
     public function lazyLoadingStrategy($business, $request)
     {
-        $cache_key = ':phonebook_' . (int)$business->id;
-        return Cache::store('redis')->remember($cache_key, 1, function () use ($business, $request) {
+        $cache_key = 'phonebook:' . (int)$business->id;
+        return Cache::store('redis')->remember($cache_key, 5, function () use ($business, $request) {
             $business_members = $this->accessibleBusinessMembers($business, $request);
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
