@@ -10,7 +10,7 @@ return [
         ],
         [
             'key'           => 'pos',
-            'app_version'   => 240000,
+            'app_version'   => 300000,
             'status'        => null,
             'priority'      => 2
         ]
