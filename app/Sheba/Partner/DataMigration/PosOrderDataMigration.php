@@ -272,7 +272,7 @@ class PosOrderDataMigration
             ->select('pos_order_id AS order_id', DB::raw('(CASE 
                         WHEN type = "voucher" THEN "voucher"
                         WHEN type = "service" THEN "sku"
-                        ELSE order 
+                        ELSE "order" 
                         END) AS type'), 'amount', 'original_amount',
                 'is_percentage', 'cap', 'discount_id', 'item_id AS type_id', 'created_by_name', 'updated_by_name',
             DB::raw('SUBTIME(created_at,"6:00:00") as created_at, SUBTIME(updated_at,"6:00:00") as updated_at'))
