@@ -59,8 +59,9 @@ class PosCustomerController extends Controller
         $customer = $this->posCustomerService->setPartner($partner)->setNote($request->note)->setName($request->name)->setBnName($request->bnName)->setMobile($request->mobile)
             ->setEmail($request->email)->setAddress($request->address)->setSupplier($request->is_supplier)->setGender($request->gender)->setBloodGroup($request->blood_group)->setDob($request->dob)->setproPic($image)
             ->storePosCustomer();
+        $customer['id'] = $customer['_id'];
+        unset($customer['_id']);
         return http_response($request, null, 200, ['message' => 'Successful', 'data' => $customer]);
-
     }
 
     public function updatePosCustomer(Request $request)

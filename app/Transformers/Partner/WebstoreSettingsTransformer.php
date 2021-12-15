@@ -10,6 +10,10 @@ use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
 
 class WebstoreSettingsTransformer extends TransformerAbstract
 {
+    /** @todo need to delete the banner property after january release 100% rollout
+     * @param $partner
+     * @return array
+     */
     public function transform($partner)
     {
         $banner_settings = PartnerWebstoreBanner::where('partner_id', $partner->id)->first();
