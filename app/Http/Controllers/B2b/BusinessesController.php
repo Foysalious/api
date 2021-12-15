@@ -276,6 +276,7 @@ class BusinessesController extends Controller
         }
     }
 
+
     /**
      * @param $business
      * @param TimeFrameReportRequest $request
@@ -439,10 +440,10 @@ class BusinessesController extends Controller
         $this->validate($request, ['verification_token' => 'required']);
         $redis_name_space = 'TopUpPortal::topup-portal_' . $request->verification_token;
         $verification_token = Redis::get($redis_name_space);
-        if (!$verification_token) return api_response($request, null,400, ['message' => 'Code do not match']);
+        if (!$verification_token) return api_response($request, null, 400, ['message' => 'Code do not match']);
         $verification_token = json_decode($verification_token, 1);
         Redis::del(Redis::keys($redis_name_space));
-        return api_response($request, null, 200,['token' => $verification_token['jwt_token']]);
+        return api_response($request, null, 200, ['token' => $verification_token['jwt_token']]);
     }
 
     /**

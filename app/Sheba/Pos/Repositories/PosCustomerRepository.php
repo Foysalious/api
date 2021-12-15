@@ -8,6 +8,7 @@ use Sheba\DueTracker\DueTrackerRepository;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\Repositories\BaseRepository;
+use Throwable;
 
 class PosCustomerRepository extends BaseRepository
 {
@@ -31,26 +32,31 @@ class PosCustomerRepository extends BaseRepository
     public function getDueAmountFromDueTracker(Partner $partner, $customerId): array
     {
         $response = [
-            'due' => 0,
-            'payable' => 0
+            'due' => null,
+            'payable' => null
         ];
-        /** @var AccountingDueTrackerRepository $accDueTrackerRepository */
-        $accDueTrackerRepository = app(AccountingDueTrackerRepository::class);
-        // checking the partner is migrated to accounting
-        if ($accDueTrackerRepository->isMigratedToAccounting($partner->id)) {
-            $data = $accDueTrackerRepository->setPartner($partner)->dueListBalanceByCustomer($customerId);
-        } else {
-            /** @var DueTrackerRepository $dueTrackerRepo */
-            $dueTrackerRepo = app(DueTrackerRepository::class);
-            $data = $dueTrackerRepo->setPartner($partner)->getDueListByProfile($partner, $customerId);
+        try {
+            /** @var AccountingDueTrackerRepository $accDueTrackerRepository */
+            $accDueTrackerRepository = app(AccountingDueTrackerRepository::class);
+            // checking the partner is migrated to accounting
+            if ($accDueTrackerRepository->isMigratedToAccounting($partner->id)) {
+                $data = $accDueTrackerRepository->setPartner($partner)->dueListBalanceByCustomer($customerId);
+            } else {
+                /** @var DueTrackerRepository $dueTrackerRepo */
+                $dueTrackerRepo = app(DueTrackerRepository::class);
+                $data = $dueTrackerRepo->setPartner($partner)->getDueListByProfile($partner, $customerId);
+            }
+            if ($data['balance']['type'] === 'receivable') {
+                $response['due'] = $data['balance']['amount'];
+            }
+            else {
+                $response['payable'] = $data['balance']['amount'];
+            }
+            return $response;
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return $response;
         }
-        if ($data['balance']['type'] === 'receivable') {
-            $response['due'] = $data['balance']['amount'];
-        }
-        else {
-            $response['payable'] = $data['balance']['amount'];
-        }
-        return $response;
     }
 
     public function deleteCustomerFromDueTracker(Partner $partner, $customerId)

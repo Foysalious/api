@@ -145,8 +145,7 @@ class PosOrderDataMigration
     private function generatePosOrdersMigrationData()
     {
         $own_delivery = json_encode([
-           'name' => 'own_delivery',
-           'image' => null
+           'name' => 'own_delivery'
         ]);
 
         $paperfly = json_encode([
@@ -168,7 +167,7 @@ class PosOrderDataMigration
                         END) AS paid_at'), DB::raw('(CASE 
                         WHEN pos_orders.sales_channel = "pos" THEN "1" 
                         ELSE "2" 
-                        END) AS sales_channel_id'), 'pos_orders.emi_month',
+                        END) AS sales_channel_id'), 'pos_orders.emi_month', 'pos_orders.invoice',
                 'pos_orders.bank_transaction_charge', 'pos_orders.interest', 'pos_orders.delivery_charge',
                 'pos_orders.address AS delivery_address', $delivery_vendor_query, 'pos_orders.delivery_request_id',
                 'pos_orders.delivery_thana', 'pos_orders.delivery_district', 'pos_orders.note', 'pos_orders.status','pos_orders.voucher_id',
