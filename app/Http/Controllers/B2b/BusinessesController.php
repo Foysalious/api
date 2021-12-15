@@ -9,6 +9,7 @@ use App\Models\Partner;
 use App\Models\Profile;
 use App\Models\Resource;
 use App\Sheba\BankingInfo\GeneralBanking;
+use Sheba\Business\BusinessTransaction\TransactionExcel;
 use Sheba\Sms\BusinessType;
 use Sheba\Sms\FeatureType;
 use App\Transformers\Business\VendorDetailsTransformer;
@@ -269,22 +270,24 @@ class BusinessesController extends Controller
         }
     }
 
+
     /**
      * @param $business
      * @param TimeFrameReportRequest $request
-     * @param ExcelHandler $excel
      * @param TransactionReportData $data
-     * @throws NotAssociativeArray
-     * @throws Exception
+     * @param TransactionExcel $transaction_excel
+     * @return void
      */
-    public function downloadTransactionReport($business, TimeFrameReportRequest $request, ExcelHandler $excel, TransactionReportData $data)
+    public function downloadTransactionReport($business, TimeFrameReportRequest $request, TransactionReportData $data, TransactionExcel $transaction_excel)
     {
+        ini_set('memory_limit', '6096M');
+        ini_set('max_execution_time', 480);
+
         if (!$request->isLifetime()) $data->setTimeFrame($request->getTimeFrame());
-        $business = $request->business instanceof Business ? $request->business : Business::find((int)$request->business);
+        /** @var Business $business */
+        $business = $request->business;
         $data->setBusiness($business);
-        $excel->setName('Transactions')
-            ->createReport($data->get())
-            ->download();
+        return $transaction_excel->setTransactionData($data->get())->get();
     }
 
     public function contactUs(Request $request)
@@ -437,10 +440,10 @@ class BusinessesController extends Controller
         $this->validate($request, ['verification_token' => 'required']);
         $redis_name_space = 'TopUpPortal::topup-portal_' . $request->verification_token;
         $verification_token = Redis::get($redis_name_space);
-        if (!$verification_token) return api_response($request, null,400, ['message' => 'Code do not match']);
+        if (!$verification_token) return api_response($request, null, 400, ['message' => 'Code do not match']);
         $verification_token = json_decode($verification_token, 1);
         Redis::del(Redis::keys($redis_name_space));
-        return api_response($request, null, 200,['token' => $verification_token['jwt_token']]);
+        return api_response($request, null, 200, ['token' => $verification_token['jwt_token']]);
     }
 
     /**
