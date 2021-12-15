@@ -145,8 +145,7 @@ class PosOrderDataMigration
     private function generatePosOrdersMigrationData()
     {
         $own_delivery = json_encode([
-           'name' => 'own_delivery',
-           'image' => null
+           'name' => 'own_delivery'
         ]);
 
         $paperfly = json_encode([
