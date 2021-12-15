@@ -113,7 +113,11 @@ class PaymentLinkTransformer
     {
         $order = $this->getTarget();
         if ($order && $order instanceof ExternalPayment) return $this->getPaymentLinkPayer();
-        if ($order && $order instanceof PosOrderObject) return $order->customer;
+        if ($order && $order instanceof PosOrderObject) {
+            /** @var PosCustomerResolver $posCustomerResolver */
+            $posCustomerResolver = app(PosCustomerResolver::class);
+            return $posCustomerResolver->setCustomerId($order->customer_id)->setPartner(Partner::find($order->partner_id))->get();
+        }
         return $this->getPaymentLinkPayer();
     }
 
@@ -168,7 +172,7 @@ class PaymentLinkTransformer
             /** @var PosCustomerResolver $posCustomerResolver */
             $posCustomerResolver = app(PosCustomerResolver::class);
             /** @var Partner $partner */
-            $partner=$this->getPaymentReceiver();
+            $partner = $this->getPaymentReceiver();
             return $posCustomerResolver->setCustomerId($this->response->payerId)->setPartner($partner)->get();
 //            $model_name = $model_name . pamelCase($this->response->payerType);
 //            /** @var PosCustomer $customer */
@@ -218,33 +222,33 @@ class PaymentLinkTransformer
 
     public function toArray()
     {
-        $user       = $this->getPaymentReceiver();
-        $payer      = $this->getPayer();
+        $user = $this->getPaymentReceiver();
+        $payer = $this->getPayer();
         $isExternal = $this->isExternalPayment();
         return [
-                   'id'                    => $this->getLinkID(),
-                   'identifier'            => $this->getLinkIdentifier(),
-                   'purpose'               => $this->getReason(),
-                   'amount'                => $this->getAmount(),
-                   'emi_month'             => $this->getEmiMonth(),
-                   'paid_by'               => $this->getPaidBy(),
-                   'partner_profit'        => $this->getPartnerProfit(),
-                   'is_old'                => $this->isOld(),
-                   'interest'              => $this->getInterest(),
-                   'bank_transaction_fee'  => $this->getBankTransactionCharge(),
-                   'payment_receiver'      => [
-                       'name'  => $user->name,
-                       'image' => $user->logo,
-                       'id'    => $user->id,
-                   ],
-                   'payer'                 => $payer ? [
-                       'id'     => $payer->id,
-                       'name'   => $payer->name,
-                       'mobile' => $payer->mobile
-                   ] : null,
-                   'is_external_payment'   => $isExternal,
-                   'installment_per_month' => $this->getInstallmentPerMonth()
-               ] + ($isExternal ? ['success_url' => $this->getSuccessUrl(), 'fail_url' => $this->getFailUrl()] : []);
+                'id' => $this->getLinkID(),
+                'identifier' => $this->getLinkIdentifier(),
+                'purpose' => $this->getReason(),
+                'amount' => $this->getAmount(),
+                'emi_month' => $this->getEmiMonth(),
+                'paid_by' => $this->getPaidBy(),
+                'partner_profit' => $this->getPartnerProfit(),
+                'is_old' => $this->isOld(),
+                'interest' => $this->getInterest(),
+                'bank_transaction_fee' => $this->getBankTransactionCharge(),
+                'payment_receiver' => [
+                    'name' => $user->name,
+                    'image' => $user->logo,
+                    'id' => $user->id,
+                ],
+                'payer' => $payer ? [
+                    'id' => $payer->id,
+                    'name' => $payer->name,
+                    'mobile' => $payer->mobile
+                ] : null,
+                'is_external_payment' => $isExternal,
+                'installment_per_month' => $this->getInstallmentPerMonth()
+            ] + ($isExternal ? ['success_url' => $this->getSuccessUrl(), 'fail_url' => $this->getFailUrl()] : []);
 
     }
 
@@ -252,25 +256,25 @@ class PaymentLinkTransformer
     {
         $user = $this->getPaymentReceiver();
         return [
-            'name'   => $user->name,
+            'name' => $user->name,
             'mobile' => $user->getContactNumber()
         ];
     }
 
     public function getPaymentLinkData()
     {
-        $payer     = null;
+        $payer = null;
         $payerInfo = $this->getPayerInfo();
 
         return array_merge([
-            'link_id'                 => $this->getLinkID(),
-            'reason'                  => $this->getReason(),
-            'type'                    => $this->getType(),
-            'status'                  => $this->response->isActive == 1 ? 'active' : 'inactive',
-            'amount'                  => $this->getAmount(),
-            'link'                    => $this->response->link,
-            'emi_month'               => $this->response->emiMonth,
-            'interest'                => $this->response->interest,
+            'link_id' => $this->getLinkID(),
+            'reason' => $this->getReason(),
+            'type' => $this->getType(),
+            'status' => $this->response->isActive == 1 ? 'active' : 'inactive',
+            'amount' => $this->getAmount(),
+            'link' => $this->response->link,
+            'emi_month' => $this->response->emiMonth,
+            'interest' => $this->response->interest,
             'bank_transaction_charge' => $this->response->bankTransactionCharge
         ], $payerInfo);
     }
@@ -281,13 +285,13 @@ class PaymentLinkTransformer
         if ($this->response->payerId) {
             try {
                 /** @var PosCustomer $payer */
-                $payer   = app('App\\Models\\' . pamelCase($this->response->payerType))::find($this->response->payerId);
+                $payer = app('App\\Models\\' . pamelCase($this->response->payerType))::find($this->response->payerId);
                 $details = $payer ? $payer->details() : null;
                 if ($details) {
                     $payerInfo = [
                         'payer' => [
-                            'id'     => $details['id'],
-                            'name'   => $details['name'],
+                            'id' => $details['id'],
+                            'name' => $details['name'],
                             'mobile' => $details['phone']
                         ]
                     ];
