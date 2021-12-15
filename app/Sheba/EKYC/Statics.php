@@ -9,6 +9,7 @@ class Statics
     CONST UNVERIFIED       = "unverified";
     CONST PENDING          = "pending";
     CONST REJECTED         = "rejected";
+    CONST INCOMPLETE       = "incomplete";
     CONST SUCCESS_MESSAGE  = "আপনার NID-এর তথ্য এবং ছবি সফলভাবে বাংলাদেশ সরকার কর্তিক ভেরিফাইড হয়েছে।";
     CONST FAIL_MESSAGE     = "দুঃখিত! আপনার আবেদনটি সফল হয়নি। যেকোনো তথ্যের জন্য কল করুন ১৬৫১৬ নাম্বারে।";
 
