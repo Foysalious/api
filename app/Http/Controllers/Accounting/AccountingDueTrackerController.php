@@ -36,7 +36,7 @@ class AccountingDueTrackerController extends Controller
             'amount' => 'required',
             'entry_type' => 'required|in:due,deposit',
             'account_key' => 'sometimes|string',
-            'customer_id' => 'required|integer',
+            'customer_id' => 'required',
             'date' => 'required|date_format:Y-m-d H:i:s',
             'partner_wise_order_id' => 'sometimes|numeric'
         ]);
@@ -54,7 +54,7 @@ class AccountingDueTrackerController extends Controller
             'amount' => 'required',
             'entry_type' => 'required|in:due,deposit',
             'account_key' => 'required',
-            'customer_id' => 'required|integer',
+            'customer_id' => 'required',
             'date' => 'required|date_format:Y-m-d H:i:s',
             'attachment_should_remove' => 'sometimes|array'
         ]);
