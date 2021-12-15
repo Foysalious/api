@@ -1,7 +1,6 @@
 <?php namespace App\Sheba\AccountingEntry\Repository;
 
 use App\Models\Partner;
-use App\Models\PosOrder;
 use App\Models\PosOrderPayment;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
@@ -39,6 +38,9 @@ class BaseRepository
     public function getCustomer($request)
     {
         if (!$request->customer_id) return $request;
+        if ($request->customer_name && $request->customer_mobile) {
+            return $request;
+        }
         $partner = $this->getPartner($request);
         /** @var PosCustomerResolver $posCustomerResolver */
         $posCustomerResolver = app(PosCustomerResolver::class);
