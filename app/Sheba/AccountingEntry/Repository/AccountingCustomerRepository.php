@@ -9,6 +9,8 @@ use Sheba\AccountingEntry\Repository\AccountingEntryClient;
 class AccountingCustomerRepository extends BaseRepository
 {
     private $api = 'api/customers/';
+    private $userId;
+    private $userType = UserType::PARTNER;
 
     public function __construct()
     {
@@ -17,12 +19,33 @@ class AccountingCustomerRepository extends BaseRepository
         parent::__construct($client);
     }
 
-    public function getAccountingCustomerDetails($customerId, $userId, $userType = UserType::PARTNER)
+    /**
+     * @param mixed $userId
+     * @return AccountingCustomerRepository
+     */
+    public function setUserId($userId)
     {
-        try {
-            return $this->client->setUserType($userType)->setUserId($userId)->get($this->api . $customerId);
-        } catch (AccountingEntryServerError $e) {
-            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
-        }
+        $this->userId = $userId;
+        return $this;
+    }
+
+    /**
+     * @param string $userType
+     * @return AccountingCustomerRepository
+     */
+    public function setUserType(string $userType): AccountingCustomerRepository
+    {
+        $this->userType = $userType;
+        return $this;
+    }
+
+    public function getAccountingCustomerDetails($customerId)
+    {
+        return $this->client->setUserType($this->userType)->setUserId($this->userId)->get($this->api . $customerId);
+    }
+
+    public function updateCustomer($customerId, array $data)
+    {
+        return $this->client->setUserType($this->userType)->setUserId($this->userId)->put($this->api . $customerId, $data);
     }
 }

@@ -166,8 +166,10 @@ return [
     'mission_save_bangladesh_partner_id' => env('MISSION_SAVE_BANGLADESH_PARTNER_ID'),
     'topup_special_amount_get_url_by_ssl' => env('TOPUP_SPECIAL_AMOUNT_GET_URL_BY_SSL', 'http://vrapi.sslwireless.com/rest/specialAmount/v2/'),
     'webstore_url' => env('SHEBA_WEBSTORE_URL'),
+    'new_webstore_url' => env('SHEBA_NEW_WEBSTORE_URL'),
     'last_job_before_commission' => env('LAST_JOB_BEFORE_PARTNER_COMMISSION_DEPLOY'),
     'sheba_services_vendor_id' => env('SHEBA_SERVICES_VENDOR_ID', '60cb5b0f6fe71675a8564683'),
     'notification_services_app_key' => env('SHEBA_NOTIFICATION_SERVICES_APP_KEY', 'sheba1234'),
     'notification_services_app_secret' => env('SHEBA_NOTIFICATION_SERVICES_APP_SECRET', 'sheba1234'),
+    'whitelisted_ip_redis_key_name' => env('WHITELISTED_IP_REDIS_KEY_NAME','')
 ];

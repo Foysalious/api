@@ -4,6 +4,8 @@
 use App\Exceptions\DoNotReportException;
 use App\Models\Partner;
 use App\Repositories\PartnerRepository;
+use App\Sheba\PosOrderService\Services\OrderService;
+use App\Sheba\UserMigration\Modules;
 
 class WebstoreSettingsUpdateRequest
 {
@@ -100,7 +102,7 @@ class WebstoreSettingsUpdateRequest
         if (isset($this->isWebstorePublished)) $data['is_webstore_published'] = $this->isWebstorePublished;
         if (isset($this->name)) $data['name'] = $this->name;
         if (isset($this->subDomain)) $data['sub_domain'] = $this->subDomain;
-        if (isset($this->deliveryCharge)) $data['delivery_charge'] = (double)$this->deliveryCharge;
+        if (isset($this->deliveryCharge) && !$this->partner->isMigrated(Modules::POS)) $data['delivery_charge'] = (double)$this->deliveryCharge;
         if (isset($this->hasWebstore)) $data['has_webstore'] = $this->hasWebstore;
         return $data;
     }
@@ -110,6 +112,16 @@ class WebstoreSettingsUpdateRequest
         $data = $this->makeData();
         $repo = new PartnerRepository($this->partner);
         $repo->updateWebstoreSettings($data);
+        if($this->partner->isMigrated(Modules::POS) && isset($this->deliveryCharge))
+            $this->storeDeliveryChargeInPosOrderService();
+    }
+
+    private function storeDeliveryChargeInPosOrderService()
+    {
+        /** @var OrderService $orderService */
+        $orderService = app(OrderService::class);
+        $orderService->setPartnerId($this->partner->id)->setDeliveryCharge($this->deliveryCharge)->updatePartnerDetails();
+
     }
 
     private function removeRestrictedCharacters($sub_domain)

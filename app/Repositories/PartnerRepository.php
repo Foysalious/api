@@ -1,6 +1,8 @@
 <?php namespace App\Repositories;
 
 use App\Http\Controllers\PartnerOrderController;
+use App\Sheba\PosOrderService\Services\OrderService;
+use App\Sheba\UserMigration\Modules;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
 use Sheba\CancelRequest\CancelRequestStatuses;
 use Sheba\Dal\Category\Category;
@@ -306,9 +308,7 @@ class PartnerRepository
             ]
         ];
     }
-
-    public function getDashboard(Resource $manager_resource)
-    {
+    public function getDashboard(Resource $manager_resource, OrderService $orderService){
         $partner=$this->partner;
         $profile        = $manager_resource->profile;
         $rating = (new ReviewRepository)->getAvgRating($partner->reviews);
@@ -341,12 +341,18 @@ class PartnerRepository
             'has_pos_inventory' => $partner->posServices->isEmpty() ? 0 : 1,
             /*'has_pos_due_order' => $total_due_for_pos_orders > 0 ? 1 : 0,
             'has_pos_paid_order' => $has_pos_paid_order,*/
-            'has_qr_code' => ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0
+            'has_qr_code' => $this->hasQrCode($orderService,$partner),
         ];
     }
 
-    public function getNewDashboard($request, $performance)
+    private function hasQrCode(OrderService $orderService, Partner $partner)
     {
+        if(!$partner->isMigrated(Modules::POS))
+            return ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0;
+        $partnerInfo = $orderService->setPartnerId($partner->id)->getPartnerDetails();
+        return $partnerInfo['partner']['qr_code_account_type'] && $partnerInfo['partner']['qr_code_image'] ? 1 : 0;
+    }
+    public function getNewDashboard($request, $performance) {
         $performance->setPartner($this->partner)->setTimeFrame((new TimeFrame())->forCurrentWeek())->calculate();
         $performanceStats = $performance->getData();
         $rating             = (new ReviewRepository)->getAvgRating($this->partner->reviews);

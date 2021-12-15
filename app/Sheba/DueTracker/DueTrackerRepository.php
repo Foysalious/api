@@ -4,7 +4,6 @@ use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
-use App\Models\PosOrderPayment;
 use App\Models\Profile;
 use App\Repositories\FileRepository;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
@@ -453,7 +452,7 @@ class DueTrackerRepository extends BaseRepository
             foreach ($items as $item) {
                 $temp['customer_name'] = $item['customer_name'];
                 $temp['customer_id']   = $item['customer_id'];
-                $temp['profile_id']    = $item['profile_id'];
+//                $temp['profile_id']    = $item['profile_id'];
                 $temp['balance']       = $item['balance'];
                 array_push($data['customers'], $temp);
             }
