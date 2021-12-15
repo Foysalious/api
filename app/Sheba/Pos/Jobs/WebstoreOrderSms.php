@@ -114,7 +114,7 @@ class WebstoreOrderSms extends Job implements ShouldQueue
     {
         if ($this->order['status'] == OrderStatuses::PROCESSING)
             $this->template = 'pos-order-accept-customer';
-        elseif ($this->order['status'] == OrderStatuses::CANCELLED || $this->order->status == OrderStatuses::DECLINED)
+        elseif ($this->order['status'] == OrderStatuses::CANCELLED || $this->order['status'] == OrderStatuses::DECLINED)
             $this->template = 'pos-order-cancelled-customer';
         elseif ($this->order['status'] == OrderStatuses::SHIPPED)
             $this->template = 'pos-order-shipped-customer';
