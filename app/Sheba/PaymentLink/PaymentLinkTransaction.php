@@ -8,8 +8,10 @@ use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\PaymentLinkAccountingRepository;
+use App\Sheba\Pos\Order\PosOrderObject;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\FraudDetection\TransactionSources;
+use Sheba\Pos\Customer\PosCustomerResolver;
 use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
@@ -250,10 +252,7 @@ class PaymentLinkTransaction
      * @throws AccountingEntryServerError
      */
     private function storePaymentLinkEntry($amount, $feeTransaction, $interest) {
-        $customer = null;
-        if (isset($this->customer)) {
-            $customer = PosCustomer::where('profile_id', $this->customer->profile->id)->first();
-        }
+        $customer = $this->paymentLink->getPayer();
         /** @var PaymentLinkAccountingRepository $paymentLinkRepo */
         $paymentLinkRepo =  app(PaymentLinkAccountingRepository::class);
         $transaction = $paymentLinkRepo->setAmount($amount)
@@ -265,11 +264,12 @@ class PaymentLinkTransaction
             ->setRealAmount($this->real_amount);
         if ($customer) {
             $transaction = $transaction->setCustomerId($customer->id)
-                    ->setCustomerName(isset($this->customer) ? $this->customer->profile->name: null)
-                    ->setCustomerMobile(isset($this->customer) ? $this->customer->profile->mobile: null)
-                    ->setCustomerProPic(isset($this->customer) ? $this->customer->profile->pro_pic: null);
+                    ->setCustomerName($customer->name)
+                    ->setCustomerMobile($customer->mobile)
+                    ->setCustomerProPic($customer->pro_pic)
+                    ->setCustomerIsSupplier($customer->is_supplier);
         }
-        if ($this->target instanceof PosOrder) {
+        if ($this->target instanceof PosOrderObject) {
             $transaction = $transaction->setSourceId($this->target->id)->setSourceType(EntryTypes::POS);
         }
         $transaction->store($this->receiver->id);
