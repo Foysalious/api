@@ -9,8 +9,10 @@ use App\Sheba\Business\Appreciation\EmployeeAppreciations;
 use App\Transformers\Business\AppreciationEmployeeTransformer;
 use App\Transformers\Business\StickerCategoryList;
 use App\Sheba\Business\BusinessBasicInformation;
+use App\Transformers\BusinessEmployeesTransformer;
 use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use League\Fractal\Resource\Item;
 use Sheba\Dal\Appreciation\Appreciation;
 use Sheba\Dal\BusinessMemberBadge\BusinessMemberBadgeRepository;
@@ -135,12 +137,23 @@ class AppreciateController extends Controller
      */
     public function categoryWiseStickers(Request $request)
     {
-        $sticker_categories = StickerCategory::all(['id', 'name', 'title']);
-
-        $fractal = new Manager();
-        $resource = new Collection($sticker_categories, new StickerCategoryList());
-        $sticker_categories = $fractal->createData($resource)->toArray()['data'];
+        $sticker_categories = $this->lazyLoadingStrategy($request);
         return api_response($request, $sticker_categories, 200, ['stickers' => $sticker_categories]);
+    }
+
+    /**
+     * @param $request
+     * @return mixed
+     */
+    public function lazyLoadingStrategy($request)
+    {
+        $cache_key = 'appreciation_stickers';
+        return Cache::store('redis')->remember($cache_key, 60, function () use ($request) {
+            $sticker_categories = StickerCategory::all(['id', 'name', 'title']);
+            $fractal = new Manager();
+            $resource = new Collection($sticker_categories, new StickerCategoryList());
+            return $fractal->createData($resource)->toArray()['data'];
+        });
     }
 
     /**
@@ -198,7 +211,7 @@ class AppreciateController extends Controller
                 });
             });
         }
-        
+
         $new_employers = [];
         foreach ($business_members->get() as $business_member) {
             if (!$business_member->isNewJoiner()) continue;
