@@ -50,7 +50,7 @@ class AccountingDueTrackerRepository extends BaseRepository
         $url = $with_update ? "api/entries/" . $request->entry_id : "api/entries/";
         $data = $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
         // if type deposit then auto reconcile happen. for that we have to reconcile pos order.
-        if ($type == "deposit" && !$with_update) {
+        if ($type == "deposit") {
             foreach ($data as $datum) {
                 if ($datum['source_type'] == 'pos' && $datum['amount_cleared'] > 0) {
                     $this->createPosOrderPayment($datum['amount_cleared'], $datum['source_id'], 'advance_balance');
