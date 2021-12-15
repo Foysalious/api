@@ -53,6 +53,7 @@ use App\Transformers\Business\EmployeeTransformer;
 use Illuminate\Http\Request;
 use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
 use Throwable;
+use Illuminate\Support\Facades\Cache;
 
 class EmployeeController extends Controller
 {
@@ -263,40 +264,28 @@ class EmployeeController extends Controller
         if (!$business_member) return api_response($request, null, 404);
         /** @var Business $business */
         $business = $this->getBusiness($request);
-
-        #Redis::del('phonebook:' . (int)$business->id);
-        $employees_with_dept_data = json_decode($this->lazyLoadingStrategy($business, $request), 1);
+        $employees_with_dept_data = $this->lazyLoadingStrategy($business, $request);
         return api_response($request, null, 200, [
             'employees' => $employees_with_dept_data['employees'],
             'departments' => $employees_with_dept_data['departments']
         ]);
     }
 
+    /**
+     * @param $business
+     * @param $request
+     * @return mixed
+     */
     public function lazyLoadingStrategy($business, $request)
     {
-        $cached_phonebook = Redis::get('phonebook:' . (int)$business->id);
-
-        if (isset($cached_phonebook)) {
-            return $cached_phonebook;
-        } else {
-            // Database Server is called outside the Cache Server.
+        $cache_key = ':phonebook_' . (int)$business->id;
+        return Cache::store('redis')->remember($cache_key, 1, function () use ($business, $request) {
             $business_members = $this->accessibleBusinessMembers($business, $request);
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
             $resource = new Item($business_members->get(), new BusinessEmployeesTransformer());
-            $employees_with_dept_data = $manager->createData($resource)->toArray()['data'];
-            $stringify_employees_with_dept_data = json_encode($employees_with_dept_data);
-            // Set a new key with the phonebook
-            Redis::set('phonebook:' . (int)$business->id, $stringify_employees_with_dept_data);
-            Redis::get('phonebook:' . (int)$business->id);
-            Redis::expire('phonebook:' . (int)$business->id, 1000);
-            $cached_phonebook = Redis::get('phonebook:' . (int)$business->id);
-            if (isset($cached_phonebook)) {
-                return $cached_phonebook;
-            } else {
-                return $stringify_employees_with_dept_data;
-            }
-        }
+            return $manager->createData($resource)->toArray()['data'];
+        });
     }
 
     /**
