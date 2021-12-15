@@ -154,13 +154,17 @@ class PosOrderDataMigration
         ]);
 
         $delivery_vendor_query = DB::raw("(CASE WHEN pos_orders.delivery_vendor_name = 'own_delivery' THEN '$own_delivery'  WHEN pos_orders.delivery_vendor_name = 'sdelivery' THEN '$paperfly' ELSE NULL END) as delivery_vendor");
-
-        $pos_orders = PosOrder::where('partner_id', $this->partner->id)->where(function ($q) {
-            $q->where('is_migrated', null)->orWhere('is_migrated', 0);
+        $delivery_name = DB::raw("(CASE WHEN partner_pos_customers.nick_name IS NOT NULL THEN partner_pos_customers.nick_name ELSE profiles.name END) as delivery_name");
+        $pos_orders = PosOrder::where('pos_orders.partner_id', $this->partner->id)->where(function ($q) {
+            $q->where('pos_orders.is_migrated', null)->orWhere('pos_orders.is_migrated', 0);
         })->withTrashed()
             ->leftJoin('pos_order_payments', 'pos_orders.id', '=', 'pos_order_payments.pos_order_id')
             ->leftJoin('pos_customers', 'pos_orders.customer_id', '=', 'pos_customers.id')
             ->leftJoin('profiles', 'profiles.id', '=', 'pos_customers.profile_id')
+            ->leftJoin('partner_pos_customers', function($join) {
+                $join->on('pos_customers.id', '=', 'partner_pos_customers.customer_id');
+                $join->on('partner_pos_customers.partner_id','=','pos_orders.partner_id');
+            })
             ->select('pos_orders.id', 'pos_orders.partner_wise_order_id', 'pos_orders.partner_id', 'pos_orders.customer_id', DB::raw('(CASE 
                         WHEN pos_orders.payment_status = "Paid" THEN SUBTIME(pos_order_payments.created_at,"6:00:00") 
                         ELSE NULL 
@@ -174,7 +178,7 @@ class PosOrderDataMigration
                 DB::raw('SUBTIME(pos_orders.created_at,"6:00:00") as created_at, SUBTIME(pos_orders.updated_at,"6:00:00") as updated_at, 
                 SUBTIME(pos_orders.deleted_at,"6:00:00") as deleted_at'),
                 'pos_orders.created_by_name', 'pos_orders.updated_by_name',
-                'profiles.name AS delivery_name', 'profiles.mobile AS delivery_mobile')
+                $delivery_name, 'profiles.mobile AS delivery_mobile')
             ->skip($this->skip)->take($this->take)->groupBy('id')->get()->toArray();
         $this->partnerPosOrderIds = array_column($pos_orders, 'id');
 
