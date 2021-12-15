@@ -13,6 +13,7 @@ use App\Models\Profile;
 use App\Models\Resource;
 use App\Sheba\BankingInfo\GeneralBanking;
 use Sheba\Business\BusinessTransaction\TransactionExcel;
+use Sheba\Business\TransactionReportData;
 use Sheba\Sms\BusinessType;
 use Sheba\Sms\FeatureType;
 use App\Transformers\Business\VendorDetailsTransformer;
