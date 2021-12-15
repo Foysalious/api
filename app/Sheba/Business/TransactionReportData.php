@@ -1,6 +1,5 @@
 <?php namespace Sheba\Business;
 
-
 use App\Models\Business;
 use App\Models\BusinessTransaction;
 use Sheba\Helpers\TimeFrame;
@@ -56,7 +55,7 @@ class TransactionReportData
 
     private function isInsideTimeFrame(BusinessTransaction $transaction)
     {
-        if(!$this->timeFrame) return true;
+        if (!$this->timeFrame) return true;
         return $transaction->created_at->between($this->timeFrame->start, $this->timeFrame->end);
     }
 }
