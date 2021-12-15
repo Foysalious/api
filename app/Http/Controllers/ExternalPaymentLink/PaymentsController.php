@@ -91,9 +91,6 @@ class PaymentsController extends Controller
     public function checkGatewayStatus(Request $request, $partner_id, ExternalPayments $payments): JsonResponse
     {
         try {
-            $ip = getIp();
-            if(!in_array($ip, config('external_payment_link.sales_validated_ip')))
-                return response()->json(["message" => "The ip `$ip` you are accessing from is not whitelisted.", "code" => 502], 502);
             $partner = Partner::find($partner_id);
             $status = $payments->getGatewayStatus($partner);
             return response()->json(['data' => $status, "message" => "Successful", "code" => 200]);
