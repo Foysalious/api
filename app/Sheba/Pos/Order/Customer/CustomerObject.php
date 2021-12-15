@@ -6,6 +6,16 @@ class CustomerObject
     private $id;
     private $name;
     private $mobile;
+    private $pro_pic;
+
+    /**
+     * @param mixed $pro_pic
+     */
+    public function setProPic($pro_pic): CustomerObject
+    {
+        $this->pro_pic = $pro_pic;
+        return $this;
+    }
 
     /**
      * @param mixed $id

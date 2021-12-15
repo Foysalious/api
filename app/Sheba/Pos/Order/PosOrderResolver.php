@@ -73,7 +73,7 @@ class PosOrderResolver
         $partner = $oldPosOrder->partner;
         $partnerObject = $this->partnerObject->setId($partner->id)->setSubDomain($partner->sub_domain);
         if ($oldPosOrder->customer_id) {
-            $customerObject = $this->customerObject->setId($customer->id)->setName($customer->nicak_name ?: $customer->profile->name)->setMobile($customer->profile->mobile);
+            $customerObject = $this->customerObject->setId($customer->id)->setName($customer->nicak_name ?: $customer->profile->name)->setMobile($customer->profile->mobile)->setProPic($customer->profile->pro_pic);
         } else {
             $customerObject = null;
         }
@@ -91,7 +91,7 @@ class PosOrderResolver
         $partner = $newPosOrder->partner;
         $partnerObject = $this->partnerObject->setId($partner->id)->setSubDomain($partner->sub_domain);
         if ($newPosOrder->customer_id) {
-            $customerObject = $this->customerObject->setId($customer->id)->setName($customer->name)->setMobile($customer->mobile);
+            $customerObject = $this->customerObject->setId($customer->id)->setName($customer->name)->setMobile($customer->mobile)->setProPic($customer->pro_pic);
         } else {
             $customerObject = null;
         }
