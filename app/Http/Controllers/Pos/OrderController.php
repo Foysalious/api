@@ -166,9 +166,7 @@ class OrderController extends Controller
      */
     public function store($partner, Request $request, Creator $creator, ProfileCreator $profileCreator, PosCustomerCreator $posCustomerCreator, PartnerRepository $partnerRepository, PaymentLinkCreator $paymentLinkCreator)
     {
-        $partner = $request->partner;
-        if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403,["message" =>'অনুগ্রহ করে অ্যাপটি প্লে-স্টোর থেকে আপডেট করুন']);
-        $this->validate($request, [
+            $this->validate($request, [
             'services' => 'required|string',
             'paid_amount' => 'sometimes|required|numeric',
             'payment_method' => 'sometimes|required|string|in:' . implode(',', config('pos.payment_method')),
@@ -187,6 +185,7 @@ class OrderController extends Controller
         $link = null;
         if ($request->manager_resource) {
             $partner = $request->partner;
+            if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403,["message" =>'অনুগ্রহ করে অ্যাপটি প্লে-স্টোর থেকে আপডেট করুন']);
             $modifier = $request->manager_resource;
             $usage_type = Usage::Partner()::POS_ORDER_CREATE;
             $this->setModifier($modifier);
@@ -194,6 +193,7 @@ class OrderController extends Controller
         } else {
             /** @var Partner $partner */
             $partner = $partnerRepository->find((int)$partner);
+            if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403,["message" =>'অনুগ্রহ করে অ্যাপটি প্লে-স্টোর থেকে আপডেট করুন']);
             /** @var Profile $profile */
             $profile = $profileCreator->setMobile($request->customer_mobile)->setName($request->customer_name)->create();
             $_data['mobile'] = $request->customer_mobile;
