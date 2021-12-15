@@ -11,6 +11,7 @@ use App\Sheba\Pos\Order\PosOrderObject;
 use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\FraudDetection\TransactionSources;
+use Sheba\Pos\Customer\PosCustomerResolver;
 use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
@@ -172,7 +173,6 @@ class PaymentLinkTransaction
         $paymentLinkTransaction = $this->amountTransaction()->configurePaymentLinkCharge()->feeTransaction()->setEntryAmount();
         $this->storePaymentLinkEntry($this->amount, $this->fee, $this->interest);
         return $paymentLinkTransaction;
-
     }
 
     private function amountTransaction()
@@ -251,12 +251,8 @@ class PaymentLinkTransaction
      * @param $interest
      * @throws AccountingEntryServerError
      */
-    private function storePaymentLinkEntry($amount, $feeTransaction, $interest)
-    {
-        $customer = null;
-        if (isset($this->customer)) {
-            $customer = PosCustomer::where('profile_id', $this->customer->profile->id)->first();
-        }
+    private function storePaymentLinkEntry($amount, $feeTransaction, $interest) {
+        $customer = $this->paymentLink->getPayer();
         /** @var PaymentLinkAccountingRepository $paymentLinkRepo */
         $paymentLinkRepo =  app(PaymentLinkAccountingRepository::class);
         $transaction = $paymentLinkRepo->setAmount($amount)
@@ -268,9 +264,10 @@ class PaymentLinkTransaction
             ->setRealAmount($this->real_amount);
         if ($customer) {
             $transaction = $transaction->setCustomerId($customer->id)
-                    ->setCustomerName(isset($this->customer) ? $this->customer->profile->name: null)
-                    ->setCustomerMobile(isset($this->customer) ? $this->customer->profile->mobile: null)
-                    ->setCustomerProPic(isset($this->customer) ? $this->customer->profile->pro_pic: null);
+                    ->setCustomerName($customer->name)
+                    ->setCustomerMobile($customer->mobile)
+                    ->setCustomerProPic($customer->pro_pic)
+                    ->setCustomerIsSupplier($customer->is_supplier);
         }
         if ($this->target instanceof PosOrderObject) {
             $transaction = $transaction->setSourceId($this->target->id)->setSourceType(EntryTypes::POS);

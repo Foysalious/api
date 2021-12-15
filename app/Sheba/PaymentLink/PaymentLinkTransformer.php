@@ -4,6 +4,8 @@ use App\Models\Partner;
 use App\Models\PosCustomer;
 use App\Sheba\Pos\Order\PosOrderObject;
 use Carbon\Carbon;
+use Sheba\Pos\Customer\PosCustomerObject;
+use Sheba\Pos\Customer\PosCustomerResolver;
 use Sheba\Pos\Order\PosOrderResolver;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Dal\ExternalPayment\Model as ExternalPayment;
@@ -112,7 +114,7 @@ class PaymentLinkTransformer
         $order = $this->getTarget();
         if ($order && $order instanceof ExternalPayment) return $this->getPaymentLinkPayer();
         if ($order && $order instanceof PosOrderObject) return $order->customer;
-        return $order ? $order->customer->profile : $this->getPaymentLinkPayer();
+        return $this->getPaymentLinkPayer();
     }
 
     /**
@@ -154,15 +156,26 @@ class PaymentLinkTransformer
         if ($this->response->targetType == 'due_tracker') return 'due_tracker';
     }
 
+    /**
+     * @return PosCustomerObject|null
+     * @throws \Exception
+     */
     private function getPaymentLinkPayer()
     {
-        $model_name = "App\\Models\\";
+        //TODO: Only Resolving PosCustomer
+//        $model_name = "App\\Models\\";
         if (isset($this->response->payerId)) {
-            $model_name = $model_name . pamelCase($this->response->payerType);
-            /** @var PosCustomer $customer */
-            $customer = $model_name::find($this->response->payerId);
-            return $customer ? $customer->profile : null;
+            /** @var PosCustomerResolver $posCustomerResolver */
+            $posCustomerResolver = app(PosCustomerResolver::class);
+            /** @var Partner $partner */
+            $partner=$this->getPaymentReceiver();
+            return $posCustomerResolver->setCustomerId($this->response->payerId)->setPartner($partner)->get();
+//            $model_name = $model_name . pamelCase($this->response->payerType);
+//            /** @var PosCustomer $customer */
+//            $customer = $model_name::find($this->response->payerId);
+//            return $customer ? $customer->profile : null;
         }
+        return null;
     }
 
     public function isForMissionSaveBangladesh()

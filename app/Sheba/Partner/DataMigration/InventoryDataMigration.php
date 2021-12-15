@@ -235,8 +235,9 @@ class InventoryDataMigration
         return DB::table('partner_pos_service_discounts')
             ->whereIn('partner_pos_service_id', $this->partnerPosServiceIds)
             ->select('partner_pos_service_id AS type_id', DB::raw("'sku_channel' AS type"), 'amount',
-                'is_amount_percentage', 'cap', 'start_date', 'end_date', 'created_by_name', 'updated_by_name',
-                DB::raw('SUBTIME(created_at,"6:00:00") as created_at, SUBTIME(updated_at,"6:00:00") as updated_at'))
+                'is_amount_percentage', 'cap', 'created_by_name', 'updated_by_name',
+                DB::raw('SUBTIME(start_date,"6:00:00") as start_date, SUBTIME(end_date,"6:00:00") as end_date, 
+                SUBTIME(created_at,"6:00:00") as created_at, SUBTIME(updated_at,"6:00:00") as updated_at'))
             ->get();
     }
 
