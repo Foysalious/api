@@ -111,27 +111,24 @@
             "time": "2017-01-30T23:25:00+00:00"
         },
         {
-            "name": "apility/laravel-fcm",
-            "version": "v1.4.4",
+            "name": "brozot/laravel-fcm",
+            "version": "v1.2.5",
             "source": {
                 "type": "git",
-                "url": "https://github.com/apility/Laravel-FCM.git",
-                "reference": "e1484d3831f346d5dc03d64c742e53b6f500f33c"
+                "url": "https://github.com/brozot/Laravel-FCM.git",
+                "reference": "20f2881071cfe7c424f528171c794353d0e5394f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/apility/Laravel-FCM/zipball/e1484d3831f346d5dc03d64c742e53b6f500f33c",
-                "reference": "e1484d3831f346d5dc03d64c742e53b6f500f33c",
+                "url": "https://api.github.com/repos/brozot/Laravel-FCM/zipball/20f2881071cfe7c424f528171c794353d0e5394f",
+                "reference": "20f2881071cfe7c424f528171c794353d0e5394f",
                 "shasum": ""
             },
             "require": {
-                "guzzlehttp/guzzle": "^6.0|^7.0",
-                "illuminate/support": "^5.0|^6.0|^7.0|^8.0",
-                "monolog/monolog": "^1.0|^2.0",
+                "guzzlehttp/guzzle": "~6.0",
+                "illuminate/support": "5.*",
+                "monolog/monolog": "^1.19",
                 "php": ">=5.5.9"
-            },
-            "replace": {
-                "brozot/laravel-fcm": "*"
             },
             "require-dev": {
                 "laravel/laravel": "5.2.*",
@@ -140,17 +137,6 @@
                 "satooshi/php-coveralls": "dev-master"
             },
             "type": "library",
-            "extra": {
-                "laravel": {
-                    "providers": [
-                        "LaravelFCM\\FCMServiceProvider"
-                    ],
-                    "aliases": {
-                        "FCM": "LaravelFCM\\Facades\\FCM",
-                        "FCMGroup": "LaravelFCM\\Facades\\FCMGroup"
-                    }
-                }
-            },
             "autoload": {
                 "psr-4": {
                     "LaravelFCM\\": "src/",
@@ -165,10 +151,6 @@
                 {
                     "name": "Nicolas Brosy",
                     "email": "nicolas.brosy@gmail.com"
-                },
-                {
-                    "name": "Thomas Alrek",
-                    "email": "thomas@apility.no"
                 }
             ],
             "description": "Laravel / Lumen package for Firebase Cloud Messaging ",
@@ -181,10 +163,7 @@
                 "notification",
                 "push"
             ],
-            "support": {
-                "source": "https://github.com/apility/Laravel-FCM/tree/v1.4.4"
-            },
-            "time": "2020-11-19T06:05:53+00:00"
+            "time": "2017-08-28T19:19:39+00:00"
         },
         {
             "name": "aws/aws-sdk-php",
