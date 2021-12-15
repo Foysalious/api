@@ -53,6 +53,7 @@ class VisitController extends Controller
         list($offset, $limit) = calculatePagination($request);
         $visits = $this->visitRepository->getAllVisitsWithRelations()->where('visitor_id', '<>', $business_member->id)->orderBy('id', 'DESC');
         $visits = $visits->whereIn('visitor_id', $this->getBusinessMemberIds($business, $business_member));
+        $show_empty_page = $visits->count() > 0 ? 0 : 1;
 
         /** Department Filter */
         if ($request->has('department_id')) {
@@ -91,7 +92,8 @@ class VisitController extends Controller
 
         return api_response($request, $visits, 200, [
             'employees' => $visits,
-            'total_visits' => $total_visits
+            'total_visits' => $total_visits,
+            'show_empty_page' => $show_empty_page
         ]);
     }
 
@@ -110,6 +112,7 @@ class VisitController extends Controller
 
         list($offset, $limit) = calculatePagination($request);
         $visits = $this->visitRepository->getAllVisitsWithRelations()->where('visitor_id', $business_member->id)->orderBy('id', 'DESC');
+        $show_empty_page = $visits->count() > 0 ? 0 : 1;
 
         /** Status Filter */
         if ($request->has('status')) {
@@ -137,7 +140,8 @@ class VisitController extends Controller
 
         return api_response($request, $visits, 200, [
             'employees' => $visits,
-            'total_visits' => $total_visits
+            'total_visits' => $total_visits,
+            'show_empty_page' => $show_empty_page
         ]);
     }
 
