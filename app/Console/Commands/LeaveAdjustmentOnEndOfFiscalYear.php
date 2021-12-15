@@ -49,7 +49,7 @@ class LeaveAdjustmentOnEndOfFiscalYear extends Command
                     ->setProratedLeaveDays($total_days)
                     ->setPreviousLeaveTypeTotalDays($previous_leave_type_total_days)
                     ->setLeaveType($business_members_leave_type)
-                    ->setLeaveTypeTarget("Sheba\\Dal\\LeaveType\\Model")
+                    ->setLeaveTypeTarget("Sheba\\Dal\\BusinessMemberLeaveType\\Model")
                     ->create();
             }
 
