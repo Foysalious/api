@@ -111,61 +111,6 @@
             "time": "2017-01-30T23:25:00+00:00"
         },
         {
-            "name": "brozot/laravel-fcm",
-            "version": "v1.2.5",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/brozot/Laravel-FCM.git",
-                "reference": "20f2881071cfe7c424f528171c794353d0e5394f"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/brozot/Laravel-FCM/zipball/20f2881071cfe7c424f528171c794353d0e5394f",
-                "reference": "20f2881071cfe7c424f528171c794353d0e5394f",
-                "shasum": ""
-            },
-            "require": {
-                "guzzlehttp/guzzle": "~6.0",
-                "illuminate/support": "5.*",
-                "monolog/monolog": "^1.19",
-                "php": ">=5.5.9"
-            },
-            "require-dev": {
-                "laravel/laravel": "5.2.*",
-                "mockery/mockery": "0.9.*",
-                "phpunit/phpunit": "4.7.*",
-                "satooshi/php-coveralls": "dev-master"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "LaravelFCM\\": "src/",
-                    "LaravelFCM\\Mocks\\": "tests/mocks"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Nicolas Brosy",
-                    "email": "nicolas.brosy@gmail.com"
-                }
-            ],
-            "description": "Laravel / Lumen package for Firebase Cloud Messaging ",
-            "keywords": [
-                "FCM",
-                "Firebase Cloud Messaging",
-                "firebase",
-                "laravel",
-                "lumen",
-                "notification",
-                "push"
-            ],
-            "time": "2017-08-28T19:19:39+00:00"
-        },
-        {
             "name": "aws/aws-sdk-php",
             "version": "3.36.14",
             "source": {
@@ -355,6 +300,61 @@
                 "validation"
             ],
             "time": "2019-05-28T15:27:37+00:00"
+        },
+        {
+            "name": "brozot/laravel-fcm",
+            "version": "v1.2.5",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/brozot/Laravel-FCM.git",
+                "reference": "20f2881071cfe7c424f528171c794353d0e5394f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/brozot/Laravel-FCM/zipball/20f2881071cfe7c424f528171c794353d0e5394f",
+                "reference": "20f2881071cfe7c424f528171c794353d0e5394f",
+                "shasum": ""
+            },
+            "require": {
+                "guzzlehttp/guzzle": "~6.0",
+                "illuminate/support": "5.*",
+                "monolog/monolog": "^1.19",
+                "php": ">=5.5.9"
+            },
+            "require-dev": {
+                "laravel/laravel": "5.2.*",
+                "mockery/mockery": "0.9.*",
+                "phpunit/phpunit": "4.7.*",
+                "satooshi/php-coveralls": "dev-master"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "LaravelFCM\\": "src/",
+                    "LaravelFCM\\Mocks\\": "tests/mocks"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Nicolas Brosy",
+                    "email": "nicolas.brosy@gmail.com"
+                }
+            ],
+            "description": "Laravel / Lumen package for Firebase Cloud Messaging ",
+            "keywords": [
+                "FCM",
+                "Firebase Cloud Messaging",
+                "firebase",
+                "laravel",
+                "lumen",
+                "notification",
+                "push"
+            ],
+            "time": "2017-08-28T19:19:39+00:00"
         },
         {
             "name": "classpreloader/classpreloader",
@@ -2573,7 +2573,7 @@
             ],
             "authors": [
                 {
-                    "name": "MatÄ›j HumpÃ¡l",
+                    "name": "Matěj Humpál",
                     "role": "Developer, maintainer"
                 },
                 {
@@ -3695,10 +3695,6 @@
                 "mime",
                 "mime type"
             ],
-            "support": {
-                "issues": "https://github.com/rosell-dk/image-mime-type-guesser/issues",
-                "source": "https://github.com/rosell-dk/image-mime-type-guesser/tree/0.3"
-            },
             "time": "2019-03-29T09:33:28+00:00"
         },
         {
@@ -3775,10 +3771,6 @@
                 "png",
                 "png2webp"
             ],
-            "support": {
-                "issues": "https://github.com/rosell-dk/webp-convert/issues",
-                "source": "https://github.com/rosell-dk/webp-convert/tree/2.4.0"
-            },
             "time": "2020-11-10T11:24:50+00:00"
         },
         {
@@ -4164,7 +4156,7 @@
             "source": {
                 "type": "git",
                 "url": "https://bitbucket.org/startern/sheba_sms.git",
-                "reference": "074f6a0534e982ce08a7cb768b3d9decf42c8ca4"
+                "reference": "171514b92d5e12800f6097887584557820f9b790"
             },
             "require": {
                 "ext-curl": "*"
@@ -4185,7 +4177,7 @@
                 }
             ],
             "description": "Sms for Sheba",
-            "time": "2021-06-22T08:18:14+00:00"
+            "time": "2021-12-01T04:35:48+00:00"
         },
         {
             "name": "sheba/voucher",
