@@ -2,10 +2,9 @@
 
 namespace App\Sheba\AccountingEntry\Repository;
 
-
-use App\Models\PartnerPosCustomer;
 use App\Sheba\AccountingEntry\Constants\UserType;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\Pos\Customer\PosCustomerResolver;
 
 class EntriesRepository extends BaseRepository
 {
@@ -40,13 +39,16 @@ class EntriesRepository extends BaseRepository
                 $data["attachments"] = json_decode($data["attachments"]);
             }
             if ($data["customer_id"]) {
-                /** @var PartnerPosCustomer $partner_pos_customer */
-                $partner_pos_customer = PartnerPosCustomer::where('partner_id', $this->partner->id)->where(
-                    'customer_id',
-                    $data["customer_id"]
-                )->first();
-                $customer_details = $partner_pos_customer ? $partner_pos_customer->details(): null;
-                $data["customer_details"] = $customer_details;
+                /** @var PosCustomerResolver $posCustomerResolver */
+                $posCustomerResolver = app(PosCustomerResolver::class);
+                $posCustomer = $posCustomerResolver->setCustomerId($data["customer_id"])->setPartner($this->partner)->get();
+                $data["customer_details"] = [
+                    'id' => $posCustomer->id,
+                    'name' => $posCustomer->name,
+                    'phone' => $posCustomer->mobile,
+                    'image' => $posCustomer->pro_pic,
+                    'is_supplier' => $posCustomer->is_supplier
+                ];
             } else {
                 $data["customer_details"] = null;
             }
@@ -71,5 +73,4 @@ class EntriesRepository extends BaseRepository
             logError($e);
         }
     }
-
 }

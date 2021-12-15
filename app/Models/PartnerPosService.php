@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use Sheba\Dal\PartnerPosServiceBatch\Model as PartnerPosServiceBatch;
 use App\Sheba\UserMigration\Modules;
 use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceCreated;
 use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceSaved;
@@ -8,7 +9,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceUpdated;
-use Sheba\Dal\PartnerPosServiceBatch\Model as PartnerPosServiceBatch;
 use Sheba\Dal\PartnerPosServiceImageGallery\Model as PartnerPosServiceImageGallery;
 use Sheba\Elasticsearch\ElasticsearchTrait;
 

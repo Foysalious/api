@@ -116,11 +116,11 @@ class ExpenseEntry
     public function create()
     {
         $lastBatch = PartnerPosServiceBatch::where('partner_pos_service_id', $this->id)->latest()->first();
-        if($this->isUpdate && $lastBatch->from_account) {
+        if($this->isUpdate && $lastBatch->from_account && !is_null($this->oldStock)) {
             $negativeEntryData = $this->makeNegativeEntryData();
             $this->accountingRepo->storeEntry((object)$negativeEntryData, EntryTypes::INVENTORY);
         }
-        if(is_null($this->stock)) return;
+        if($this->stock == 0 || is_null($this->stock)) return;
         $data = $this->makeData();
         $this->accountingRepo->storeEntry((object)$data, EntryTypes::INVENTORY);
     }
