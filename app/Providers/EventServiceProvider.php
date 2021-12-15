@@ -1,5 +1,6 @@
 <?php namespace App\Providers;
 
+
 use App\Jobs\WebstoreSettingsSyncJob;
 use App\Sheba\InventoryService\Partner\Events\Updated as PartnerUpdatedEvent;
 use App\Sheba\InventoryService\Partner\Listeners\Updated as PartnerUpdatedListener;

@@ -111,19 +111,21 @@ class CustomerController extends Controller
      */
     public function store(Request $request, Creator $creator)
     {
-        $partner = $request->partner;
-        if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403,["message" =>'অনুগ্রহ করে অ্যাপটি প্লে-স্টোর থেকে আপডেট করুন']);
-        $this->validate($request, [
-            'mobile'        => 'required|mobile:bd',
-            'name'          => 'required',
-            'profile_image' => 'sometimes|required|mimes:jpeg,png,jpg',
-            'is_supplier' => 'sometimes|required|in:1,0'
-        ]);
-        $this->setModifier($request->manager_resource);
-        $creator = $creator->setData($request->except(['partner_id',
-            'remember_token'
-        ]));
-        if ($error = $creator->hasError()) return api_response($request, null, 400, ['message' => $error['msg']]);
+        try {
+            $partner = $request->partner;
+            if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403,["message" =>'অনুগ্রহ করে অ্যাপটি প্লে-স্টোর থেকে আপডেট করুন']);
+            $this->validate($request, [
+                'mobile'        => 'required|mobile:bd',
+                'name'          => 'required',
+                'profile_image' => 'sometimes|required|mimes:jpeg,png,jpg',
+                'is_supplier' => 'sometimes|required|in:1,0'
+            ]);
+            $this->setModifier($request->manager_resource);
+            $creator = $creator->setData($request->except(['partner_id',
+                'remember_token'
+            ]));
+            if ($error = $creator->hasError())
+                return api_response($request, null, 400, ['message' => $error['msg']]);
 
         $customer = $creator->setPartner($request->partner)->create();
         /**

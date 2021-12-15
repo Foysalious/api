@@ -72,6 +72,15 @@ class WebstoreOrderSms extends Job implements ShouldQueue
 
     private function generateCommonData()
     {
+        $this->data['feature_type'] = FeatureType::WEB_STORE;
+        $this->data['business_type'] = BusinessType::SMANAGER;
+        $this->data['wallet'] = $this->partner->wallet;
+        $this->data['model'] = $this->partner;
+    }
+
+    private function generateDataForOldWebstoreSms()
+    {
+        $invoice_link =   $this->order->invoice ? : $this->resolveInvoiceLink();
         if ($this->order->status == OrderStatuses::PROCESSING)
             $this->template = 'pos-order-accept-customer';
         elseif ($this->order->status == OrderStatuses::CANCELLED || $this->order->status == OrderStatuses::DECLINED)
@@ -84,15 +93,6 @@ class WebstoreOrderSms extends Job implements ShouldQueue
             $this->template = 'pos-order-place-customer';
 
         $this->data['template'] = $this->template;
-        $this->data['feature_type'] = FeatureType::WEB_STORE;
-        $this->data['business_type'] = BusinessType::SMANAGER;
-        $this->data['wallet'] = $this->partner->wallet;
-        $this->data['model'] = $this->partner;
-    }
-
-    private function generateDataForOldWebstoreSms()
-    {
-        $invoice_link =   $this->order->invoice ? : $this->resolveInvoiceLink();
         $this->data['mobile'] = $this->order->customer->profile->mobile;
         $this->data['order_id'] = $this->order->id;
         $this->data['log'] = " BDT has been deducted for sending pos order update sms to customer(order id: {$this->order->id})";
@@ -112,6 +112,18 @@ class WebstoreOrderSms extends Job implements ShouldQueue
 
     private function generateDataForNewWebstoreSms()
     {
+        if ($this->order['status'] == OrderStatuses::PROCESSING)
+            $this->template = 'pos-order-accept-customer';
+        elseif ($this->order['status'] == OrderStatuses::CANCELLED || $this->order['status'] == OrderStatuses::DECLINED)
+            $this->template = 'pos-order-cancelled-customer';
+        elseif ($this->order['status'] == OrderStatuses::SHIPPED)
+            $this->template = 'pos-order-shipped-customer';
+        elseif ($this->order['status'] == OrderStatuses::COMPLETED)
+            $this->template = 'pos-order-delivered-customer';
+        else
+            $this->template = 'pos-order-place-customer';
+
+        $this->data['template'] = $this->template;
         $this->data['mobile'] = $this->order['customer']['mobile'];
         $this->data['order_id'] = $this->order['partner_wise_order_id'];
         $this->data['log'] = " BDT has been deducted for sending pos order update sms to customer(order id: {$this->order['id']})";
