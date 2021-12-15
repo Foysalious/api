@@ -38,6 +38,7 @@ class BaseRepository
      */
     public function getCustomer($request)
     {
+        if (!$request->customer_id) return $request;
         $partner = $this->getPartner($request);
         /** @var PosCustomerResolver $posCustomerResolver */
         $posCustomerResolver = app(PosCustomerResolver::class);
