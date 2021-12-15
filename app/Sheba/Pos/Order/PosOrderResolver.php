@@ -2,11 +2,11 @@
 
 
 use App\Models\PosOrder;
-use App\Sheba\Pos\Order\Customer\CustomerObject;
 use App\Sheba\Pos\Order\Partner\PartnerObject;
 use App\Sheba\Pos\Order\PosOrderObject;
 use App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError;
 use App\Sheba\PosOrderService\PosOrderServerClient;
+use Sheba\Pos\Customer\PosCustomerObject;
 
 class PosOrderResolver
 {
@@ -18,7 +18,7 @@ class PosOrderResolver
     /** @var PosOrderObject */
     private $posOrderObject;
     /**
-     * @var CustomerObject
+     * @var PosCustomerObject
      */
     private $customerObject;
     /**
@@ -26,7 +26,7 @@ class PosOrderResolver
      */
     private $partnerObject;
 
-    public function __construct(PosOrderServerClient $client, PosOrderObject $posOrderObject, CustomerObject $customerObject, PartnerObject $partnerObject)
+    public function __construct(PosOrderServerClient $client, PosOrderObject $posOrderObject, PosCustomerObject $customerObject, PartnerObject $partnerObject)
     {
         $this->client = $client;
         $this->posOrderObject = $posOrderObject;
