@@ -12,8 +12,7 @@ use App\Models\Procurement;
 use App\Models\Profile;
 use App\Models\Resource;
 use App\Sheba\BankingInfo\GeneralBanking;
-use Sheba\Business\BusinessTransaction\TransactionExcel;
-use Sheba\Business\TransactionReportData;
+use Maatwebsite\Excel\Facades\Excel as MaatwebsiteExcel;
 use Sheba\Sms\BusinessType;
 use Sheba\Sms\FeatureType;
 use App\Transformers\Business\VendorDetailsTransformer;
@@ -281,20 +280,14 @@ class BusinessesController extends Controller
     /**
      * @param $business
      * @param TimeFrameReportRequest $request
-     * @param TransactionReportData $data
-     * @param TransactionExcel $transaction_excel
-     * @return void
+     * @return BinaryFileResponse
      */
-    public function downloadTransactionReport($business, TimeFrameReportRequest $request, TransactionReportData $data, TransactionExcel $transaction_excel)
+    public function downloadTransactionReport($business, TimeFrameReportRequest $request)
     {
-        ini_set('memory_limit', '6096M');
-        ini_set('max_execution_time', 480);
-
-        if (!$request->isLifetime()) $data->setTimeFrame($request->getTimeFrame());
-        /** @var Business $business */
-        $business = $request->business;
-        $data->setBusiness($business);
-        return $transaction_excel->setTransactionData($data->get())->get();
+        $business = $request->business instanceof Business ? $request->business : Business::find((int)$request->business);
+        $excel = new TransactionReportExcel($business);
+        if ($request->isNotLifetime()) $excel->setTimeFrame($request->getTimeFrame());
+        return MaatwebsiteExcel::download($excel, 'Transactions.xlsx');
     }
 
     public function contactUs(Request $request)
