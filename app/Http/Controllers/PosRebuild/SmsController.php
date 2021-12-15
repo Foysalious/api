@@ -15,7 +15,7 @@ class SmsController extends Controller
             'type_id' => 'required',
             'partner_id' => 'required'
         ]);
-        $smsService->setPartnerId($request->partnerId)->setType($request->type)->setTypeId($request->type_id)->sendSMS();
+        $smsService->setPartnerId($request->partner_id)->setType($request->type)->setTypeId($request->type_id)->sendSMS();
         return http_response($request, null, 200, ['message' => 'Sms sent successfully']);
     }
 }
