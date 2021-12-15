@@ -167,7 +167,7 @@
                 <tr>
                     <td class="employeeBasicInfo" style="width: 97px">Employee Type</td>
                     <td class="employeeBasicInfo" style="width: 20px">:</td>
-                    <td class="employeeBasicInfo" style="width: 400px">{{ $employee['official_info']['employee_type'] ? ucfirst($employee['official_info']['employee_type']) : 'N/A' }}</td>
+                    <td class="employeeBasicInfo" style="width: 400px">{{ $employee['official_info']['employee_type'] ? ucfirst($employee['official_info']['employee_type']['title']) : 'N/A' }}</td>
                 </tr>
                 <tr>
                     <td class="employeeBasicInfo" style="width: 97px">Employee ID</td>
@@ -281,7 +281,7 @@
     <tr>
         <td class="tableRowValue" style="width: 15%">Bank Name</td>
         <td class="tableRowValue" style="width:3%">:</td>
-        <td class="tableRowValue" style="width: 82%">{{ $employee['financial_info']['bank_name'] ?  : 'N/A' }}</td>
+        <td class="tableRowValue" style="width: 82%">{{ $employee['financial_info']['bank']['name'] ?  : 'N/A' }}</td>
     </tr>
     <tr>
         <td class="tableRowValue" style="width: 15%">Bank Account No</td>
