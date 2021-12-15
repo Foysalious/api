@@ -110,7 +110,7 @@ class OrderBillSms extends Job implements ShouldQueue
     {
         $data = [
             'order_id' => $this->order['partner_wise_order_id'],
-            'total_amount' => $this->order['price']['original_price'],
+            'total_amount' => $this->order['price']['discounted_price'],
             'partner_name' => $this->partner->name,
             'invoice_link' => $this->order['invoice']
         ];
