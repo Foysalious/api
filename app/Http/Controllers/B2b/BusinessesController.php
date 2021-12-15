@@ -280,6 +280,9 @@ class BusinessesController extends Controller
      */
     public function downloadTransactionReport($business, TimeFrameReportRequest $request, TransactionReportData $data, TransactionExcel $transaction_excel)
     {
+        ini_set('memory_limit', '6096M');
+        ini_set('max_execution_time', 480);
+
         if (!$request->isLifetime()) $data->setTimeFrame($request->getTimeFrame());
         /** @var Business $business */
         $business = $request->business;
