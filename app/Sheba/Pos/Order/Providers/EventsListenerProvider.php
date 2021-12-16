@@ -3,6 +3,7 @@
 use App\Sheba\Pos\Order\Listeners\PosOrderSaved as PosOrderSavedListener;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider;
 use Illuminate\Support\Facades\Event;
+use Sheba\Algolia\Listeners\PartnerSaved;
 use Sheba\Dal\POSOrder\Events\PosOrderSaved as PosOrderSavedEvent;
 
 class EventsListenerProvider extends EventServiceProvider
@@ -20,6 +21,6 @@ class EventsListenerProvider extends EventServiceProvider
     public function boot()
     {
         parent::boot();
-        Event::listen(PosOrderSavedEvent::class, PosOrderSavedListener::class);
+        Event::listen(PosOrderSavedEvent::class, PartnerSaved::class);
     }
 }
