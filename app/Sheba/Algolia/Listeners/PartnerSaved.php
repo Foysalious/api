@@ -7,7 +7,7 @@ class PartnerSaved
 {
 
 
-   public function handle(PartnerSavedEvent $event)
+   public function handle()
    {
       /* /** @var Partner $partner */
        /* $partner = $event->model;
