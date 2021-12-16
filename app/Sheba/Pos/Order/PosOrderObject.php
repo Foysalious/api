@@ -1,7 +1,7 @@
 <?php namespace App\Sheba\Pos\Order;
 
 
-use App\Sheba\Pos\Order\Customer\CustomerObject;
+use Sheba\Pos\Customer\PosCustomerObject;
 use Sheba\Pos\Order\PosOrderTypes;
 
 class PosOrderObject
@@ -10,7 +10,7 @@ class PosOrderObject
     private $customer_id;
     private $partner_id;
     private $sales_channel;
-    /** @var CustomerObject */
+    /** @var PosCustomerObject */
     private $customer;
     private $partner;
     private $is_migrated;
@@ -130,6 +130,7 @@ class PosOrderObject
         $this->emi_month = $emi_month;
         return $this;
     }
+
     /**
      * @param mixed $partner_wise_order_id
      * @return PosOrderObject
@@ -144,7 +145,6 @@ class PosOrderObject
     {
         return $this->{$value};
     }
-
 
 
 }
