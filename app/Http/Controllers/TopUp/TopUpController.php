@@ -98,77 +98,84 @@ class TopUpController extends Controller
      */
     public function topUp(Request $request, $user, TopUpRequest $top_up_request, Creator $creator, UserAgentInformation $userAgentInformation, VerifyPin $verifyPin, TopUpAgentBlocker $agent_blocker)
     {
-        $agent = $request->user;
-        $validation_data = [
-            'mobile' => 'required|string|mobile:bd',
-            'connection_type' => 'required|in:prepaid,postpaid',
-            'vendor_id' => 'required|exists:topup_vendors,id',
-            'password' => 'required'
-        ];
+        try {
+            $agent = $request->user;
+            $validation_data = [
+                'mobile' => 'required|string|mobile:bd',
+                'connection_type' => 'required|in:prepaid,postpaid',
+                'vendor_id' => 'required|exists:topup_vendors,id',
+                'password' => 'required'
+            ];
 
-        if ($this->isBusiness($agent) && $this->isPrepaid($request->connection_type)) {
-            $validation_data['amount'] = 'required|numeric|min:10|max:' . $agent->topup_prepaid_max_limit;
-        } elseif ($this->isBusiness($agent) && $this->isPostpaid($request->connection_type)) {
-            $validation_data['amount'] = 'required|numeric|min:10';
-        } else {
-            $validation_data['amount'] = 'required|min:10|max:1000|numeric';
-        }
-
-        $this->validate($request, $validation_data);
-
-        /** @var AuthUser $auth_user */
-        $auth_user = $request->auth_user;
-        if ($user == 'business') $agent = $auth_user->getBusiness();
-        elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
-        elseif ($user == 'partner') {
-            $agent = $auth_user->getPartner();
-            $token = $request->topup_token;
-            if ($token) {
-                try {
-                    $credentials = JWT::decode($request->topup_token, config('jwt.secret'), ['HS256']);
-                } catch (ExpiredException $e) {
-                    return api_response($request, null, 409, ['message' => 'Topup token expired']);
-                } catch (Exception $e) {
-                    return api_response($request, null, 409, ['message' => 'Invalid topup token']);
-                }
-
-                if ($credentials->sub != $agent->id) {
-                    return api_response($request, null, 404, ['message' => 'Not a valid partner request']);
-                }
+            if ($this->isBusiness($agent) && $this->isPrepaid($request->connection_type)) {
+                $validation_data['amount'] = 'required|numeric|min:10|max:' . $agent->topup_prepaid_max_limit;
+            } elseif ($this->isBusiness($agent) && $this->isPostpaid($request->connection_type)) {
+                $validation_data['amount'] = 'required|numeric|min:10';
+            } else {
+                $validation_data['amount'] = 'required|min:10|max:1000|numeric';
             }
 
-        } else return api_response($request, null, 400);
+            $this->validate($request, $validation_data);
 
-        $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setPurpose(Purpose::TOPUP)->setRequest($request)->verify();
+            /** @var AuthUser $auth_user */
+            $auth_user = $request->auth_user;
+            if ($user == 'business') $agent = $auth_user->getBusiness();
+            elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
+            elseif ($user == 'partner') {
+                $agent = $auth_user->getPartner();
+                $token = $request->topup_token;
+                if ($token) {
+                    try {
+                        $credentials = JWT::decode($request->topup_token, config('jwt.secret'), ['HS256']);
+                    } catch (ExpiredException $e) {
+                        logError($e);
+                        return api_response($request, null, 409, ['message' => 'Topup token expired']);
+                    } catch (Exception $e) {
+                        logError($e);
+                        return api_response($request, null, 409, ['message' => 'Invalid topup token']);
+                    }
 
-        $userAgentInformation->setRequest($request);
-        $top_up_request->setAmount($request->amount)
-            ->setMobile($request->mobile)
-            ->setType($request->connection_type)
-            ->setAgent($agent)
-            ->setVendorId($request->vendor_id)
-            ->setLat($request->lat ? $request->lat : null)
-            ->setLong($request->long ? $request->long : null)
-            ->setUserAgent($userAgentInformation->getUserAgent());
+                    if ($credentials->sub != $agent->id) {
+                        return api_response($request, null, 404, ['message' => 'Not a valid partner request']);
+                    }
+                }
 
-        if ($agent instanceof Business && $request->has('is_otf_allow') && !($request->is_otf_allow)) {
-            $top_up_request->setIsOtfAllow(!$request->is_otf_allow);
-        }
+            } else return api_response($request, null, 400);
 
-        if ($top_up_request->hasError()) {
-            return api_response($request, null, $top_up_request->getErrorCode(), ['message' => $top_up_request->getErrorMessage()]);
-        }
-        
-        $topup_order = $creator->setTopUpRequest($top_up_request)->create();
+            $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setPurpose(Purpose::TOPUP)->setRequest($request)->verify();
 
-        $agent_blocker->setAgent($agent)->checkAndBlock();
+            $userAgentInformation->setRequest($request);
+            $top_up_request->setAmount($request->amount)
+                ->setMobile($request->mobile)
+                ->setType($request->connection_type)
+                ->setAgent($agent)
+                ->setVendorId($request->vendor_id)
+                ->setLat($request->lat ? $request->lat : null)
+                ->setLong($request->long ? $request->long : null)
+                ->setUserAgent($userAgentInformation->getUserAgent());
 
-        if ($topup_order) {
-            dispatch((new TopUpJob($topup_order)));
+            if ($agent instanceof Business && $request->has('is_otf_allow') && !($request->is_otf_allow)) {
+                $top_up_request->setIsOtfAllow(!$request->is_otf_allow);
+            }
 
-            return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $topup_order->id]);
-        } else {
-            return api_response($request, null, 500);
+            if ($top_up_request->hasError()) {
+                return api_response($request, null, $top_up_request->getErrorCode(), ['message' => $top_up_request->getErrorMessage()]);
+            }
+
+            $topup_order = $creator->setTopUpRequest($top_up_request)->create();
+
+            $agent_blocker->setAgent($agent)->checkAndBlock();
+
+            if ($topup_order) {
+                dispatch((new TopUpJob($topup_order)));
+
+                return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $topup_order->id]);
+            } else {
+                return api_response($request, null, 500);
+            }
+        } catch (Exception $e) {
+            logError($e);
+            throw $e;
         }
     }
 
