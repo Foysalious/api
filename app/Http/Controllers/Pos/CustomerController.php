@@ -113,10 +113,10 @@ class CustomerController extends Controller
     {
         try {
             $partner = $request->partner;
-            if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403,["message" =>'অনুগ্রহ করে অ্যাপটি প্লে-স্টোর থেকে আপডেট করুন']);
+            if ($partner->isMigrated(Modules::POS)) return api_response($request, null, 403, ["message" => 'অনুগ্রহ করে অ্যাপটি প্লে-স্টোর থেকে আপডেট করুন']);
             $this->validate($request, [
-                'mobile'        => 'required|mobile:bd',
-                'name'          => 'required',
+                'mobile' => 'required|mobile:bd',
+                'name' => 'required',
                 'profile_image' => 'sometimes|required|mimes:jpeg,png,jpg',
                 'is_supplier' => 'sometimes|required|in:1,0'
             ]);
@@ -127,12 +127,19 @@ class CustomerController extends Controller
             if ($error = $creator->hasError())
                 return api_response($request, null, 400, ['message' => $error['msg']]);
 
-        $customer = $creator->setPartner($request->partner)->create();
-        /**
-         * USAGE LOG
-         */
-        // (new Usage())->setUser($request->partner)->setType(Usage::Partner()::CREATE_CUSTOMER)->create($request->manager_resource);
-        return api_response($request, $customer, 200, ['customer' => $customer->details()]);
+            $customer = $creator->setPartner($request->partner)->create();
+            /**
+             * USAGE LOG
+             */
+//            (new Usage())->setUser($request->partner)->setType(Usage::Partner()::CREATE_CUSTOMER)->create($request->manager_resource);
+            return api_response($request, $customer, 200, ['customer' => $customer->details()]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 
     /**
