@@ -37,7 +37,7 @@ class BaseRepository
      */
     public function getCustomer($request)
     {
-        if (!$request->customer_id) {
+        if (!isset($request->customer_id) || $request->customer_id == null) {
             return $request;
         }
         if (isset($request->customer_name) && isset($request->customer_mobile)) {
