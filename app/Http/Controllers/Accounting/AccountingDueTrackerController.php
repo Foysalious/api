@@ -3,13 +3,12 @@
 
 use App\Http\Controllers\Controller;
 use App\Sheba\AccountingEntry\Repository\AccountingDueTrackerRepository;
-use Exception;
+use App\Sheba\AccountingEntry\Repository\EntriesRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Mpdf\MpdfException;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
-use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ModificationFields;
 use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Reports\PdfHandler;
@@ -137,5 +136,18 @@ class AccountingDueTrackerController extends Controller
     {
         $data = $this->dueTrackerRepo->setPartner($request->partner)->dueListBalanceByCustomer($customerId);
         return api_response($request, null, 200, ['data' => $data]);
+    }
+
+    /**
+     * @param Request $request
+     * @param $entry_id
+     * @return JsonResponse
+     */
+    public function deleteEntry(Request $request, $entry_id): JsonResponse
+    {
+        /** @var EntriesRepository $entriesRepo */
+        $entriesRepo = app(EntriesRepository::class);
+        $entriesRepo->setPartner($request->partner)->setEntryId($entry_id)->deleteEntry();
+        return api_response($request, null, 200, ['data' => "Entry delete successful"]);
     }
 }
