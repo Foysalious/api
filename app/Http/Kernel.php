@@ -134,6 +134,5 @@ class Kernel extends HttpKernel
         'userMigration.check_status' => CheckUserMigrationRunningMiddleware::class,
         'partner.status'=> PartnerStatusAuthMiddleware::class,
         'concurrent_request' => ConcurrentRequestMiddleware::class,
-        'topup409Debug' => TopUp409DebugMiddleware::class,
     ];
 }
