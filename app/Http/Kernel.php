@@ -37,6 +37,7 @@ use App\Http\Middleware\ResourceJobAuthMiddleware;
 use App\Http\Middleware\SetRequestToJwtWhileTesting;
 use App\Http\Middleware\Sheba\ShebaNetworkMiddleware;
 use App\Http\Middleware\ThrottleRequests;
+use App\Http\Middleware\TopUp409DebugMiddleware;
 use App\Http\Middleware\TopUpAuthMiddleware;
 use App\Http\Middleware\UserMigrationMiddleware;
 use App\Http\Middleware\VendorMiddleware;
@@ -134,11 +135,11 @@ class Kernel extends HttpKernel
         'accounting.auth' => AccountingAuthMiddleware::class,
         'jwtAccessToken' => JwtAccessTokenMiddleware::class,
         'ip.whitelist' => IpWhitelistMiddleware::class,
-        'accounting.auth' => AccountingAuthMiddleware::class,
         'userMigration.auth' => UserMigrationMiddleware::class,
         'marketplace-analytics' => MarketplaceRequestResponseLogMiddleware::class,
         'partner.status'=> PartnerStatusAuthMiddleware::class,
         'concurrent_request' => ConcurrentRequestMiddleware::class,
-        'userMigration.check_status' => CheckUserMigrationRunningMiddleware::class
+        'userMigration.check_status' => CheckUserMigrationRunningMiddleware::class,
+        'topup409Debug' => TopUp409DebugMiddleware::class,
     ];
 }
