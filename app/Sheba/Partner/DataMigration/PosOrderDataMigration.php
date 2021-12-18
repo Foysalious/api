@@ -269,7 +269,7 @@ class PosOrderDataMigration
     private function generatePartnerPosOrderDiscountsMigrationData()
     {
         $pos_order_discounts =  DB::table('pos_order_discounts')->whereIn('pos_order_discounts.pos_order_id', $this->partnerPosOrderIds)
-            ->join('pos_order_items', 'pos_order_items.id', '=', 'pos_order_discounts.item_id')
+            ->leftJoin('pos_order_items', 'pos_order_items.id', '=', 'pos_order_discounts.item_id')
             ->select('pos_order_discounts.pos_order_id AS order_id', DB::raw('(CASE 
                         WHEN pos_order_discounts.type = "voucher" THEN "voucher"
                         WHEN pos_order_discounts.type = "service" THEN "order_sku"
