@@ -37,8 +37,10 @@ class BaseRepository
      */
     public function getCustomer($request)
     {
-        if (!$request->customer_id) return $request;
-        if ($request->customer_name && $request->customer_mobile) {
+        if (!$request->customer_id) {
+            return $request;
+        }
+        if (isset($request->customer_name) && isset($request->customer_mobile)) {
             return $request;
         }
         $partner = $this->getPartner($request);
