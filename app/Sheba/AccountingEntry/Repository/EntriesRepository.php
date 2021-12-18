@@ -42,13 +42,16 @@ class EntriesRepository extends BaseRepository
                 /** @var PosCustomerResolver $posCustomerResolver */
                 $posCustomerResolver = app(PosCustomerResolver::class);
                 $posCustomer = $posCustomerResolver->setCustomerId($data["customer_id"])->setPartner($this->partner)->get();
-                $data["customer_details"] = [
-                    'id' => $posCustomer->id,
-                    'name' => $posCustomer->name,
-                    'phone' => $posCustomer->mobile,
-                    'image' => $posCustomer->pro_pic,
-                    'is_supplier' => $posCustomer->is_supplier
-                ];
+                $data["customer_details"] = null;
+                if ($posCustomer) {
+                    $data["customer_details"] = [
+                        'id' => $posCustomer->id,
+                        'name' => $posCustomer->name,
+                        'phone' => $posCustomer->mobile,
+                        'image' => $posCustomer->pro_pic,
+                        'is_supplier' => $posCustomer->is_supplier
+                    ];
+                }
             } else {
                 $data["customer_details"] = null;
             }
