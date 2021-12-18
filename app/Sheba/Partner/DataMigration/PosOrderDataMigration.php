@@ -268,15 +268,31 @@ class PosOrderDataMigration
 
     private function generatePartnerPosOrderDiscountsMigrationData()
     {
-        return DB::table('pos_order_discounts')->whereIn('pos_order_id', $this->partnerPosOrderIds)
-            ->select('pos_order_id AS order_id', DB::raw('(CASE 
-                        WHEN type = "voucher" THEN "voucher"
-                        WHEN type = "service" THEN "sku"
-                        ELSE "order" 
-                        END) AS type'), 'amount', 'original_amount',
-                'is_percentage', 'cap', 'discount_id', 'item_id AS type_id', 'created_by_name', 'updated_by_name',
-            DB::raw('SUBTIME(created_at,"6:00:00") as created_at, SUBTIME(updated_at,"6:00:00") as updated_at'))
+        $pos_order_discounts =  DB::table('pos_order_discounts')->whereIn('pos_order_discounts.pos_order_id', $this->partnerPosOrderIds)
+            ->join('pos_order_items', 'pos_order_items.id', '=', 'pos_order_discounts.item_id')
+            ->select('pos_order_discounts.pos_order_id AS order_id', DB::raw('(CASE 
+                        WHEN pos_order_discounts.type = "voucher" THEN "voucher"
+                        WHEN pos_order_discounts.type = "service" THEN "order_sku"
+                        ELSE "order"  
+                        END) AS type'), 'pos_order_discounts.amount', 'pos_order_discounts.original_amount',
+                'pos_order_discounts.is_percentage', 'pos_order_discounts.cap', 'pos_order_discounts.item_id AS type_id',
+                'pos_order_discounts.created_by_name', 'pos_order_discounts.updated_by_name',
+                DB::raw('SUBTIME(pos_order_discounts.created_at,"6:00:00") as created_at, SUBTIME(pos_order_discounts.updated_at,"6:00:00") as updated_at'), 'pos_order_items.service_id AS sku_id')
             ->get();
+
+        if(!is_array($pos_order_discounts)) {
+            $discounts = $pos_order_discounts->toArray();
+        } else {
+            $discounts = $pos_order_discounts;
+        }
+        $service_ids = array_column($discounts, 'sku_id');
+        $sku_ids = $this->getSkuIdsForProducts($service_ids);
+        $skus = $sku_ids['skus'];
+        $pos_order_discounts = collect($pos_order_discounts);
+        $pos_order_discounts->each(function ($discount, $key) use ($skus) {
+            $discount->sku_id = $skus[$discount->sku_id] ?? null;
+        });
+        return $pos_order_discounts;
     }
 
     private function generatePosOrderLogsMigrationData()
@@ -321,11 +337,11 @@ class PosOrderDataMigration
 
     private function getPosOrderRelatedData($orderIds, $posCustomerIds): array
     {
-        $pos_order_items = $this->posOrderItems->whereIn('order_id', $orderIds)->toArray();
-        $pos_order_payments = $this->posOrderPayments->whereIn('order_id', $orderIds)->toArray();
-        $pos_order_discounts = $this->posOrderDiscounts->whereIn('order_id', $orderIds)->toArray();
-        $pos_order_logs = $this->posOrderLogs->whereIn('order_id', $orderIds)->toArray();
-        $pos_customers = $this->posCustomers->whereIn('id', $posCustomerIds)->toArray();
+        $pos_order_items = $this->posOrderItems->whereIn('order_id', $orderIds)->values()->toArray();
+        $pos_order_payments = $this->posOrderPayments->whereIn('order_id', $orderIds)->values()->toArray();
+        $pos_order_discounts = $this->posOrderDiscounts->whereIn('order_id', $orderIds)->values()->toArray();
+        $pos_order_logs = $this->posOrderLogs->whereIn('order_id', $orderIds)->values()->toArray();
+        $pos_customers = $this->posCustomers->whereIn('id', $posCustomerIds)->values()->toArray();
         return [$pos_order_items, $pos_order_payments, $pos_order_discounts, $pos_order_logs, $pos_customers];
     }
 
