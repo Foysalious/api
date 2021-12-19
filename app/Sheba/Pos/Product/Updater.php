@@ -106,18 +106,15 @@ class Updater
         $partner = $this->service->partner;
         if($partner->isMigrated(Modules::EXPENSE)) {
             $lastBatchData = PartnerPosServiceBatch::where('partner_pos_service_id', $this->service->id)->latest()->first();
-            if(!$lastBatchData)
-                $lastBatchData = PartnerPosServiceBatch::create(["partner_pos_service_id" => $this->service->id]);
             $this->setOldCost($lastBatchData->cost);
             $this->setOldStock($lastBatchData->stock);
         }
-
         if (!empty($this->updatedData)) {
             $old_service = clone $this->service;
             $this->serviceRepo->update($this->service, $this->updatedData);
             $this->storeLogs($old_service, $this->updatedData);
         }
-        if(!empty($this->batchData) && isset($lastBatchData)) {
+        if(!empty($this->batchData)) {
             $this->batchData['partner_pos_service_id'] = $this->service->id;
             $lastBatchData->update($this->batchData);
         }
@@ -272,7 +269,7 @@ class Updater
         if ((isset($this->data['category_id']) && $this->data['category_id'] != $this->service->pos_category_id)) {
             $this->updatedData['pos_category_id'] = $this->data['category_id'];
         }
-        if ((isset($this->data['cost']) && $this->data['cost'] != $this->service->cost) && !$this->service->partner->isMigrated(Modules::EXPENSE)) {
+        if ((isset($this->data['cost']) && $this->data['cost'] != $this->service->cost)) {
             $this->updatedData['cost'] = $this->data['cost'];
         }
         if ((isset($this->data['unit']) && $this->data['unit'] != $this->service->unit)) {
@@ -315,7 +312,7 @@ class Updater
         if(!$partner->isMigrated(Modules::EXPENSE)) return;
         if ((isset($this->data['is_stock_off']) && ($this->data['is_stock_off'] == 'true' && $this->service->getStock() != null))) {
             $this->deleteBatchesFifo();
-            return;
+            //return;
         }
 
         if (isset($this->data['is_stock_off']) && $this->data['is_stock_off'] == 'false') {
