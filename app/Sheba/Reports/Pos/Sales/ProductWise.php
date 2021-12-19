@@ -1,9 +1,12 @@
 <?php namespace Sheba\Reports\Pos\Sales;
 
 use App\Models\Partner;
+use App\Sheba\UserMigration\Modules;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Pos\Repositories\PosOrderItemRepository;
+use Sheba\Reports\ExcelHandler;
+use Sheba\Reports\PdfHandler;
 use Sheba\Reports\Pos\PosReport;
 
 class ProductWise extends PosReport
@@ -31,8 +34,13 @@ class ProductWise extends PosReport
      */
     public function prepareData($paginate = true)
     {
-        $full = $this->query->get();
-        $data = $paginate ? $this->query->paginate($this->limit) : $full->toArray();
+        if($this->partner->isMigrated(Modules::POS)){
+            $full =  collect($this->getReportDataFromPosServer(self::class));
+        } else {
+            $full = $this->query->get();
+        }
+
+        $data = $paginate ? $full->paginate($this->limit) : $full->toArray();
         if ($paginate) {
             $this->data['data'] = $data->items();
             $this->data['total_price'] = $full->sum('total_price');

@@ -97,8 +97,9 @@ class InvoiceService
         if ($pos_order->customer) {
             $customer = $pos_order->customer->profile;
             $info['user'] = [
-                'name' => $customer->name,
-                'mobile' => $customer->mobile
+                'name'   => $customer->name,
+                'mobile' => $customer->mobile,
+                'address' => !$pos_order->address? $customer->address: $pos_order->address
             ];
         }
         return $info;
