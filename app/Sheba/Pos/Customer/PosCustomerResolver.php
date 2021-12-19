@@ -51,11 +51,15 @@ class PosCustomerResolver
     public function get()
     {
         if ($this->partner->isMigrated(Modules::POS)) {
-            $customer = $this->smanagerUserServerClient->get('api/v1/partners/' . $this->partner->id . '/users/' . $this->customerId);
-            return $this->posCustomerObject->setId($customer['_id'])->setPartnerId($customer['partner_id'])->setName($customer['name'])
-                ->setIsSupplier($customer['is_supplier'])->setMobile($customer['mobile'])->setEmail($customer['email'])
-                ->setGender($customer['gender'])->setDob($customer['dob'])->setProPic($customer['pro_pic']);
-
+            try {
+                $customer = $this->smanagerUserServerClient->get('api/v1/partners/' . $this->partner->id . '/users/' . $this->customerId);
+                return $this->posCustomerObject->setId($customer['_id'])->setPartnerId($customer['partner_id'])->setName($customer['name'])
+                    ->setIsSupplier($customer['is_supplier'])->setMobile($customer['mobile'])->setEmail($customer['email'])
+                    ->setGender($customer['gender'])->setDob($customer['dob'])->setProPic($customer['pro_pic']);
+            } catch (Exception $e) {
+                app('sentry')->captureException($e);
+                return null;
+            }
         }
         $partner_pos_customer = PartnerPosCustomer::where('customer_id', $this->customerId)->where('partner_id', $this->partner->id)
             ->with(['customer' => function($q) {
