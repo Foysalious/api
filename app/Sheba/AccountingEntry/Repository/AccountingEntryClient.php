@@ -24,12 +24,14 @@ class AccountingEntryClient
     protected $userType;
     protected $userId;
     protected $reportType;
+    const RETRY          = 5;
+    const RETRY_DURATION = 2000;
 
     public function __construct(Client $client)
     {
-        $this->client = $client;
+        $this->client  = $client;
         $this->baseUrl = rtrim(config('accounting_entry.api_url'), '/');
-        $this->apiKey = config('accounting_entry.api_key');
+        $this->apiKey  = config('accounting_entry.api_key');
     }
 
     /**
@@ -93,7 +95,7 @@ class AccountingEntryClient
             $handlerStack = HandlerStack::create(new CurlHandler());
             $handlerStack->push(Middleware::retry($this->retryDecider(), $this->retryDelay()));
             $this->client = new Client(array('handler' => $handlerStack));
-            $res = decodeGuzzleResponse(
+            $res          = decodeGuzzleResponse(
                 $this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data))
             );
             if ($res['code'] != 200) {
@@ -103,7 +105,7 @@ class AccountingEntryClient
 
         } catch (GuzzleException $e) {
             $response = $e->getResponse() ? json_decode($e->getResponse()->getBody()->getContents(), true) : null;
-            $message = $e->getMessage();
+            $message  = $e->getMessage();
             if (isset($response['message'])) {
                 $message = $response['message'];
             } else if (isset($response['detail'])) {
@@ -130,10 +132,10 @@ class AccountingEntryClient
     {
         $options['headers'] = [
             'Content-Type' => 'application/json',
-            'x-api-key' => $this->apiKey,
-            'Accept' => 'application/json',
-            'Ref-Id' => $this->userId,
-            'Ref-Type' => $this->userType
+            'x-api-key'    => $this->apiKey,
+            'Accept'       => 'application/json',
+            'Ref-Id'       => $this->userId,
+            'Ref-Type'     => $this->userType
         ];
         if ($data) {
             $options['json'] = $data;
@@ -172,7 +174,7 @@ class AccountingEntryClient
             RequestException $exception = null
         ) {
             // Limit the number of retries to 5
-            if ($retries >= 5) {
+            if ($retries >= self::RETRY) {
                 return false;
             }
 
@@ -183,7 +185,7 @@ class AccountingEntryClient
 
             if ($response) {
                 // Retry on server errors
-                if ($response->getStatusCode() >= 500 ) {
+                if ($response->getStatusCode() > 500) {
                     return true;
                 }
             }
@@ -191,10 +193,11 @@ class AccountingEntryClient
             return false;
         };
     }
+
     private function retryDelay(): Closure
     {
         return function ($numberOfRetries) {
-            return 1000 * $numberOfRetries;
+            return self::RETRY_DURATION * $numberOfRetries;
         };
     }
 }
