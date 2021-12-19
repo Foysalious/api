@@ -2,6 +2,7 @@
 
 use App\Models\Business;
 use App\Models\BusinessMember;
+use Sheba\Gender\Gender;
 use Carbon\Carbon;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepo;
 use Sheba\Dal\BusinessOffice\Type as WorkingDaysType;
@@ -72,16 +73,16 @@ trait PayrollCommonCalculation
 
     public function getNetTaxableIncome($taxable_income, $gender)
     {
-        if ($gender === 'Male' ||  $gender === null) return ($taxable_income - PayrollConstGetter::MALE_TAX_EXEMPTED) <= 0 ? 0 : ($taxable_income - PayrollConstGetter::MALE_TAX_EXEMPTED);
-        if ($gender === 'Female') return ($taxable_income - PayrollConstGetter::FEMALE_TAX_EXEMPTED) <= 0 ? 0 : ($taxable_income - PayrollConstGetter::FEMALE_TAX_EXEMPTED);
+        if ($gender === Gender::MALE ||  $gender === null) return ($taxable_income - PayrollConstGetter::MALE_TAX_EXEMPTED) <= 0 ? 0 : ($taxable_income - PayrollConstGetter::MALE_TAX_EXEMPTED);
+        if ($gender === Gender::FEMALE) return ($taxable_income - PayrollConstGetter::FEMALE_TAX_EXEMPTED) <= 0 ? 0 : ($taxable_income - PayrollConstGetter::FEMALE_TAX_EXEMPTED);
 
         return ($taxable_income - PayrollConstGetter::SPECIAL_TAX_EXEMPTED) <= 0 ? 0 : ($taxable_income - PayrollConstGetter::SPECIAL_TAX_EXEMPTED);
     }
 
     public function getGenderExemptionAmount($gender)
     {
-        if ($gender === 'Male' ||  $gender === null) return PayrollConstGetter::MALE_TAX_EXEMPTED;
-        if ($gender === 'Female') return PayrollConstGetter::FEMALE_TAX_EXEMPTED;
+        if ($gender === Gender::MALE ||  $gender === null) return PayrollConstGetter::MALE_TAX_EXEMPTED;
+        if ($gender === Gender::FEMALE) return PayrollConstGetter::FEMALE_TAX_EXEMPTED;
         return PayrollConstGetter::SPECIAL_TAX_EXEMPTED;
     }
 

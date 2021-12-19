@@ -38,7 +38,7 @@ class UserMigrationController extends Controller
             /** @var UserMigrationRepository $class */
             $class                   = $this->userMigrationSvc->resolveClass($value['key']);
             $modules[$key]['status'] = $class->setUserId($userId)->setModuleName($value['key'])->getStatus();
-            if ($value['priority'] == 1) {
+            if (!$banner && $modules[$key]['status'] !== UserStatus::UPGRADED) {
                 $banner = $class->getBanner();
             }
         }
