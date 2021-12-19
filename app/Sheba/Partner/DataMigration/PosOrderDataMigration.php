@@ -317,11 +317,12 @@ class PosOrderDataMigration
 
     public function generatePosCustomersData()
     {
+        $name = DB::raw("(CASE WHEN partner_pos_customers.nick_name IS NOT NULL  THEN partner_pos_customers.nick_name  ELSE profiles.name END) as name");
         return DB::table('partner_pos_customers')
             ->where('partner_id', $this->partner->id)
             ->leftJoin('pos_customers', 'partner_pos_customers.customer_id', '=', 'pos_customers.id')
             ->leftJoin('profiles', 'pos_customers.profile_id', '=', 'profiles.id')
-            ->select('partner_pos_customers.customer_id as id', 'partner_pos_customers.partner_id', 'profiles.name',
+            ->select('partner_pos_customers.customer_id as id', 'partner_pos_customers.partner_id', $name,
                 'profiles.mobile', 'profiles.email', 'profiles.pro_pic',
                 DB::raw('SUBTIME(profiles.created_at,"6:00:0") as created_at, 
                 SUBTIME(profiles.updated_at,"6:00:0") as updated_at'))
