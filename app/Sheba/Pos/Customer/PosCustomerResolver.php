@@ -61,6 +61,7 @@ class PosCustomerResolver
             ->with(['customer' => function($q) {
                 $q->with('profile');
             }])->first();
+        if (!$partner_pos_customer) return null;
         return $this->posCustomerObject->setId($partner_pos_customer->customer_id)->setPartnerId($partner_pos_customer->partner_id)
             ->setName($partner_pos_customer->nick_name ?: $partner_pos_customer->customer->profile->name)->setIsSupplier($partner_pos_customer->is_supplier)
             ->setMobile($partner_pos_customer->customer->profile->name)->setEmail($partner_pos_customer->customer->profile->email)
