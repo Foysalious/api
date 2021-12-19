@@ -61,7 +61,7 @@ class PosCustomerController extends Controller
             ->storePosCustomer();
         $customer['id'] = $customer['_id'];
         unset($customer['_id']);
-        return http_response($request, null, 200, ['message' => 'Successful', 'data' => $customer]);
+        return http_response($request, null, 200, ['message' => 'Successful', 'customer' => $customer]);
     }
 
     public function updatePosCustomer(Request $request)

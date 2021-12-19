@@ -126,16 +126,16 @@ class TopUpController extends Controller
             if ($token) {
                 try {
                     $credentials = JWT::decode($request->topup_token, config('jwt.secret'), ['HS256']);
+
+                    if ($credentials->sub != $agent->id) {
+                        // return api_response($request, null, 404, ['message' => 'Not a valid partner request']);
+                    }
                 } catch (ExpiredException $e) {
                     logError($e);
                     // return api_response($request, null, 409, ['message' => 'Topup token expired']);
                 } catch (Exception $e) {
                     logError($e);
                     // return api_response($request, null, 409, ['message' => 'Invalid topup token']);
-                }
-
-                if ($credentials->sub != $agent->id) {
-                    // return api_response($request, null, 404, ['message' => 'Not a valid partner request']);
                 }
             }
 

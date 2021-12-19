@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use Sheba\Gender\Gender;
 use Carbon\Carbon;
 use Sheba\Business\CoWorker\Requests\BasicRequest;
 use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
@@ -176,7 +177,7 @@ class CoWorkerStatusController extends Controller
     {
         $this->validate($request, [
             'name' => 'required|string',
-            'gender' => 'required|string|in:Female,Male,Other',
+            'gender' => 'required|string|in:' . Gender::implodeEnglish(),
             'department' => 'required|integer',
             'role' => 'required|string',
             'join_date' => 'required|date|date_format:Y-m-d',
