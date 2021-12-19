@@ -12,6 +12,7 @@ use App\Models\Profile;
 use App\Models\Resource;
 use App\Repositories\PartnerRepository;
 use App\Repositories\ProfileRepository;
+use Sheba\Gender\Gender;
 use Sheba\Sms\BusinessType;
 use Sheba\Sms\FeatureType;
 use Carbon\Carbon;
@@ -304,6 +305,7 @@ class PartnerRegistrationController extends Controller
             'name' => 'string',
             'number' => 'string',
             'address' => 'string',
+            'gender' => 'string|in:' . Gender::implode(),
             'business_type' => 'string',
             'has_webstore' => 'sometimes|numeric|between:0,1'
         ]);
@@ -329,7 +331,9 @@ class PartnerRegistrationController extends Controller
         $request['billing_type'] = 'monthly';
         $request->merge(['number' => $profile->mobile]);
         if ($request->filled('name')) $profile->update(['name' => $request->name]);
-        if ($request->filled('gender')) $profile->update(['gender' => $request->gender]);
+        if ($request->filled('gender')) {
+            $profile->update(['gender' => Gender::convertBanglaToEnglish($request->gender)]);
+        }
         if ($resource->partnerResources->count() > 0) return api_response($request, null, 403, ['message' => 'You already have a company.']);
 
         $data = $this->makePartnerCreateData($request);

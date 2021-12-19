@@ -3,6 +3,7 @@
 use App\Models\Partner;
 use App\Models\Profile;
 use App\Models\Resource;
+use Sheba\Gender\Gender;
 use Carbon\Carbon;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Http\Request;
@@ -44,7 +45,7 @@ class PersonalInfo implements Arrayable
     public static function getValidators()
     {
         return [
-            'gender'                          => 'string|in:Male,Female,Other',
+            'gender'                          => 'string|in:' . Gender::implodeEnglish(),
             'birthday'                        => 'date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
             'email'                           => 'email',
             'nid_issue_date'                  => 'sometimes|date|date_format:Y-m-d',
@@ -162,7 +163,7 @@ class PersonalInfo implements Arrayable
             } elseif ($key == 'expenses') {
                 $output[$key] = (new Expenses(array_key_exists($key, $data) ? (array)$data[$key] : []))->toArray();
             } elseif ($key == 'genders') {
-                $output[$key] = constants('GENDER');
+                $output[$key] = Gender::toList();
             } elseif ($key == 'occupation_lists') {
                 $output[$key] = constants('SUGGESTED_OCCUPATION');
             } else {
@@ -226,7 +227,7 @@ class PersonalInfo implements Arrayable
         $otherData = [
             'gender'                  => $profile->gender,
             'email'                   => $profile->email,
-            'genders'                 => constants('GENDER'),
+            'genders'                 => Gender::toList(),
             'picture'                 => $profile->pro_pic,
             'present_address'         => $present_address,
             'is_same_address'         => self::isSameAddress($present_address, $permanent_address),
