@@ -5,6 +5,7 @@ namespace Sheba\AccountingEntry\Repository;
 use Closure;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\BadResponseException;
+use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Handler\CurlHandler;
@@ -91,7 +92,7 @@ class AccountingEntryClient
 
             $handlerStack = HandlerStack::create(new CurlHandler());
             $handlerStack->push(Middleware::retry($this->retryDecider(), $this->retryDelay()));
-            $client = new Client(array('handler' => $handlerStack));
+            $this->client = new Client(array('handler' => $handlerStack));
             $res = decodeGuzzleResponse(
                 $this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data))
             );
