@@ -167,6 +167,7 @@ class Route
             $api->group(['prefix' => 'top-up', 'middleware' => ['accessToken']], function ($api) {
                 $api->get('/vendor/{user?}', 'TopUp\TopUpController@getVendor')->where('user', "(business|partner|affiliate)");
                 $api->post('get-topup-token', 'TopUp\TopUpController@generateJwt');
+                $api->get('/check-topup-token', 'TopUp\TopUpController@checkJwt');
                 $api->get('special-amount-data', 'TopUp\TopUpController@specialAmount');
                 $api->post('{user?}', 'TopUp\TopUpController@topUp')->where('user', "(business|partner|affiliate)");
                 $api->post('{user?}/bulk', 'TopUp\TopUpController@bulkTopUp');

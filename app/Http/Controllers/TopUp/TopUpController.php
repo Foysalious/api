@@ -34,6 +34,7 @@ use Sheba\TopUp\Bulk\Validator\SheetNameValidator;
 
 use Sheba\TopUp\ConnectionType;
 use Sheba\OAuth2\AuthUser;
+use Sheba\TopUp\Exception\InvalidTopUpTokenException;
 use Sheba\TopUp\Exception\PinMismatchException;
 use Sheba\TopUp\Exception\InvalidSubscriptionWiseCommission;
 use Sheba\TopUp\History\RequestBuilder;
@@ -45,6 +46,7 @@ use Sheba\TopUp\TopUpDataFormat;
 use Sheba\TopUp\TopUpHistoryExcel;
 use Sheba\TopUp\TopUpSpecialAmount;
 use Sheba\OAuth2\VerifyPin;
+use Sheba\TopUp\TopUpTokenManager;
 use Sheba\UserAgentInformation;
 use DB;
 use Excel;
@@ -58,16 +60,19 @@ use Sheba\TopUp\TopUpExcel;
 use Sheba\TopUp\TopUpRequest;
 use Sheba\TopUp\Vendor\VendorFactory;
 use Storage;
-use Throwable;
 use Validator;
-use Sheba\ShebaAccountKit\Requests\AccessTokenRequest;
-use Sheba\ShebaAccountKit\ShebaAccountKit;
-use Firebase\JWT\ExpiredException;
-use Firebase\JWT\JWT;
 
 class TopUpController extends Controller
 {
     use ModificationFields;
+
+    /** @var TopUpTokenManager */
+    private $tokenManager;
+
+    public function __construct(TopUpTokenManager $token_manager)
+    {
+        $this->tokenManager = $token_manager;
+    }
 
     /**
      * @param Request $request
@@ -127,26 +132,23 @@ class TopUpController extends Controller
 
         $this->validate($request, $validation_data);
 
-        if ($user == 'partner') {
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        if ($user == 'business') $agent = $auth_user->getBusiness();
+        elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
+        elseif ($user == 'partner') {
+            $agent = $auth_user->getPartner();
             $status = (new ComplianceInfo())->setPartner($agent)->getComplianceStatus();
             if ($status === Statics::REJECTED)
                 return api_response($request, null, 412, ["message" => "Precondition Failed", "error_message" => Statics::complianceRejectedMessage()]);
-
-            $token = $request->topup_token;
-            if ($token) {
-                try {
-                    $credentials = JWT::decode($request->topup_token, config('jwt.secret'), ['HS256']);
-
-                    if ($credentials->sub != $agent->id) {
-                        // return api_response($request, null, 404, ['message' => 'Not a valid partner request']);
-                    }
-                } catch (ExpiredException $e) {
-                    return api_response($request, null, 409, ['message' => 'Topup token expired']);
-                } catch (Exception $e) {
-                    return api_response($request, null, 409, ['message' => 'Invalid topup token']);
-                }
             }
-        }
+            
+            try {
+                $this->tokenManager->setPartner($agent)->validate($request->topup_token);
+            } catch (InvalidTopUpTokenException $e) {
+                logError($e);
+            }
+        } else return api_response($request, null, 400);
 
         $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setPurpose(Purpose::TOPUP)->setRequest($request)->verify();
 
@@ -465,35 +467,37 @@ class TopUpController extends Controller
         return api_response($request, null, 200, ['otf_lists' => $special_amount]);
     }
 
-    public function generateJwt(Request $request, AccessTokenRequest $access_token_request, ShebaAccountKit $sheba_accountKit)
+    /**
+     * @throws \Sheba\TopUp\Exception\UnauthorizedTokenCreationException
+     */
+    public function generateJwt(Request $request)
     {
-        $authorizationCode = $request->authorization_code;
-        if (!$authorizationCode) {
-            return api_response($request, null, 400, [
-                'message' => 'Authorization code not provided'
-            ]);
-        }
-        $access_token_request->setAuthorizationCode($authorizationCode);
-        $otpNumber = $sheba_accountKit->getMobile($access_token_request);
+        $this->validate($request, [
+            'authorization_code' => 'required|string'
+        ]);
 
         /** @var AuthUser $user */
         $user = $request->auth_user;
-        $resourceNumber = $user->getPartner()->getContactNumber();
-        if ($otpNumber != $resourceNumber) return api_response($request, null, 403, ['message' => 'Invalid Request']);
-
-        $timeSinceMidnight = time() - strtotime("midnight");
-        $remainingTime = (24 * 3600) - $timeSinceMidnight;
-
-        $payload = [
-            'iss' => "topup-jwt",
-            'sub' => $user->getPartner()->id,
-            'iat' => time(),
-            'exp' => time() + $remainingTime
-        ];
+        $token = $this->tokenManager->setPartner($user->getPartner())->generate($request->authorization_code);
 
         return api_response($request, null, 200, [
-            'topup_token' => JWT::encode($payload, config('jwt.secret'))
+            'topup_token' => $token
         ]);
+    }
+
+    /**
+     * @throws InvalidTopUpTokenException
+     */
+    public function checkJwt(Request $request)
+    {
+        $this->validate($request, [
+            'topup_token' => 'required|string'
+        ]);
+
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $this->tokenManager->setPartner($auth_user->getPartner())->validate($request->topup_token);
+        return api_response($request, null, 200, ['message' => 'Token is valid']);
     }
 
     /**
