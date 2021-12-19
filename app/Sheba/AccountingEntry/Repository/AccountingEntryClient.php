@@ -2,9 +2,17 @@
 
 namespace Sheba\AccountingEntry\Repository;
 
+use Closure;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Handler\CurlHandler;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Middleware;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Response;
+use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 
 class AccountingEntryClient
@@ -80,6 +88,10 @@ class AccountingEntryClient
             if (!$this->userType || !$this->userId) {
                 throw new AccountingEntryServerError('Set user type and user id', 400);
             }
+
+            $handlerStack = HandlerStack::create(new CurlHandler());
+            $handlerStack->push(Middleware::retry($this->retryDecider(), $this->retryDelay()));
+            $client = new Client(array('handler' => $handlerStack));
             $res = decodeGuzzleResponse(
                 $this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data))
             );
@@ -113,7 +125,7 @@ class AccountingEntryClient
      * @param null $data
      * @return array
      */
-    public function getOptions($data = null)
+    public function getOptions($data = null): array
     {
         $options['headers'] = [
             'Content-Type' => 'application/json',
@@ -133,7 +145,7 @@ class AccountingEntryClient
      * @param $userType
      * @return $this
      */
-    public function setUserType($userType)
+    public function setUserType($userType): AccountingEntryClient
     {
         $this->userType = $userType;
         return $this;
@@ -148,5 +160,40 @@ class AccountingEntryClient
     {
         $this->userId = $userId;
         return $this;
+    }
+
+    private function retryDecider(): Closure
+    {
+        return function (
+            $retries,
+            Request $request,
+            Response $response = null,
+            RequestException $exception = null
+        ) {
+            // Limit the number of retries to 5
+            if ($retries >= 5) {
+                return false;
+            }
+
+            // Retry connection exceptions
+            if ($exception instanceof ConnectException) {
+                return true;
+            }
+
+            if ($response) {
+                // Retry on server errors
+                if ($response->getStatusCode() >= 500 ) {
+                    return true;
+                }
+            }
+
+            return false;
+        };
+    }
+    private function retryDelay(): Closure
+    {
+        return function ($numberOfRetries) {
+            return 1000 * $numberOfRetries;
+        };
     }
 }
