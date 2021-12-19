@@ -309,7 +309,6 @@ class Updater
         if(!$partner->isMigrated(Modules::EXPENSE)) return;
         if ((isset($this->data['is_stock_off']) && ($this->data['is_stock_off'] == 'true' && $this->service->getStock() != null))) {
             $this->deleteBatchesFifo();
-            //return;
         }
 
         if (isset($this->data['is_stock_off']) && $this->data['is_stock_off'] == 'false') {
