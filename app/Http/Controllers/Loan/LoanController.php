@@ -100,9 +100,9 @@ class LoanController extends Controller
     public function getBankInterest($partner, Request $request)
     {
         $interest_rate           = constants('LOAN_CONFIG')['interest'];
-        $amount                  = $request->has('amount') ? (double)$request->amount : 0;
-        $duration                = $request->has('duration') ? (int)$request->duration : 1;
-        $month                   = $request->has('month') ? (int)$request->month : 0;
+        $amount                  = $request->filled('amount') ? (double)$request->amount : 0;
+        $duration                = $request->filled('duration') ? (int)$request->duration : 1;
+        $month                   = $request->filled('month') ? (int)$request->month : 0;
         $duration                = $month ? $duration : $duration * 12;
         $interest_per_month      = emi_calculator($interest_rate, $amount, $duration);
         $total_instalment_amount = $interest_per_month * $duration;
@@ -469,24 +469,24 @@ class LoanController extends Controller
         $data['ownership_type'] = config('constants.ownership_type_en.' . $ownership_type);
         $pdf_handler            = new PdfHandler();
         $loan_application_name  = 'loan_application_' . $loan_id;
-        if ($request->has('pdf_type') && $request->pdf_type == constants('BANK_LOAN_PDF_TYPES')['SanctionLetter']) {
+        if ($request->filled('pdf_type') && $request->pdf_type == constants('BANK_LOAN_PDF_TYPES')['SanctionLetter']) {
             $loan_application_name       = 'sanction_letter_' . $loan_id;
             $data['sanction_issue_date'] = $loan->getSanctionIssueDate($loan_id);
             return $pdf_handler->setData($data)->setName($loan_application_name)->setViewFile('partner_loan_sanction_letter_form')->download();
         }
-        if ($request->has('pdf_type') && $request->pdf_type == constants('BANK_LOAN_PDF_TYPES')['ProposalLetter']) {
+        if ($request->filled('pdf_type') && $request->pdf_type == constants('BANK_LOAN_PDF_TYPES')['ProposalLetter']) {
             $loan_application_name = 'proposal_letter_' . $loan_id;
             return $pdf_handler->setData($data)->setName($loan_application_name)->setViewFile('partner_loan_proposal_letter')->download();
         }
         if ($data["loan_type"] === LoanTypes::MICRO) {
             $loan_application_name = 'dana_classic_' . $loan_id;
-            if( $request->has("from_admin")) {
+            if( $request->filled("from_admin")) {
                 $pdf = $pdf_handler->setData($data)->setName($loan_application_name)->setViewFile('dana_classic_application_form')->save(true);
                 return api_response($request, null, 200, ['data' => $pdf]);
             }
             $pdf_handler->setData($data)->setName($loan_application_name)->setViewFile('dana_classic_application_form')->download(true);
         }
-        if( $request->has("from_admin")) {
+        if( $request->filled("from_admin")) {
             $pdf = $pdf_handler->setData($data)->setName($loan_application_name)->setViewFile('partner_loan_application_form')->save();
             return api_response($request, null, 200, ['data' => $pdf]);
         }
@@ -502,7 +502,7 @@ class LoanController extends Controller
      */
     public function downloadDocuments(Request $request, $loan_id, Loan $loan)
     {
-        if ($request->has('url')) {
+        if ($request->filled('url')) {
             $file = $loan->downloadFromUrl($request->get('url'));
             if (!$file) {
                 return api_response($request, null, 404);

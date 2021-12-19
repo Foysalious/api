@@ -249,15 +249,15 @@ class PurchaseRequestController extends Controller
      */
     private function listFiltering(Request $request, $purchase_requests_base_query)
     {
-        if ($request->has('status')) {
+        if ($request->filled('status')) {
             $purchase_requests_base_query = $purchase_requests_base_query->where('status', $request->status);
         }
 
-        if (($request->has('from') && $request->from !== "null")) {
+        if (($request->filled('from') && $request->from !== "null")) {
             $purchase_requests_base_query = $purchase_requests_base_query->whereBetween('created_at', [$request->from . " 00:00:00", $request->to . " 23:59:59"]);
         }
 
-        if (($request->has('q') && $request->q !== "null")) {
+        if (($request->filled('q') && $request->q !== "null")) {
             $purchase_requests_base_query = $purchase_requests_base_query->where('title', 'LIKE', '%' . $request->q . '%');
         }
 

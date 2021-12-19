@@ -58,7 +58,7 @@ class VisitController extends Controller
         $show_empty_page = $visits->count() > 0 ? 0 : 1;
 
         /** Department Filter */
-        if ($request->has('department_id')) {
+        if ($request->filled('department_id')) {
             $visits = $visits->whereHas('visitor', function ($q) use ($request) {
                 $q->whereHas('role', function ($q) use ($request) {
                     $q->whereHas('businessDepartment', function ($q) use ($request) {
@@ -69,12 +69,12 @@ class VisitController extends Controller
         }
 
         /** Status Filter */
-        if ($request->has('status')) {
+        if ($request->filled('status')) {
             $visits = $visits->where('status', $request->status);
         }
 
         /** Month Filter */
-        if ($request->has('start_date') && $request->has('end_date')) {
+        if ($request->filled('start_date') && $request->filled('end_date')) {
             $time_frame = $time_frame->forDateRange($request->start_date, $request->end_date);
             $visits = $visits->whereBetween('schedule_date', [$time_frame->start, $time_frame->end]);
         }
@@ -84,13 +84,13 @@ class VisitController extends Controller
         $visits = new Collection($visits->get(), new TeamVisitListTransformer());
         $visits = collect($manager->createData($visits)->toArray()['data']);
 
-        if ($request->has('search')) $visits = $this->searchWithEmployeeName($visits, $request);
+        if ($request->filled('search')) $visits = $this->searchWithEmployeeName($visits, $request);
 
         $total_visits = $visits->count();
         #$limit = $this->getLimit($request, $limit, $total_visits);
-        if ($request->has('limit') && !$request->has('file')) $visits = $visits->splice($offset, $limit);
+        if ($request->filled('limit') && !$request->filled('file')) $visits = $visits->splice($offset, $limit);
 
-        if ($request->has('file') && $request->file == 'excel') {
+        if ($request->filled('file') && $request->file == 'excel') {
             $file_name = 'Employee_visit_report_'. Carbon::now()->timestamp;
             $excel = new EmployeeVisitExcel($visits->toArray());
             return MaatwebsiteExcel::download($excel, "$file_name.xlsx");
@@ -120,12 +120,12 @@ class VisitController extends Controller
         $show_empty_page = $visits->count() > 0 ? 0 : 1;
 
         /** Status Filter */
-        if ($request->has('status')) {
+        if ($request->filled('status')) {
             $visits = $visits->where('status', $request->status);
         }
 
         /** Month Filter */
-        if ($request->has('start_date') && $request->has('end_date')) {
+        if ($request->filled('start_date') && $request->filled('end_date')) {
             $time_frame = $time_frame->forDateRange($request->start_date, $request->end_date);
             $visits = $visits->whereBetween('schedule_date', [$time_frame->start, $time_frame->end]);
         }
@@ -135,13 +135,13 @@ class VisitController extends Controller
         $visits = new Collection($visits->get(), new MyVisitListTransformer());
         $visits = collect($manager->createData($visits)->toArray()['data']);
 
-        if ($request->has('search')) $visits = $this->searchWithVisitTitle($visits, $request);
+        if ($request->filled('search')) $visits = $this->searchWithVisitTitle($visits, $request);
 
         $total_visits = $visits->count();
         #$limit = $this->getLimit($request, $limit, $total_visits);
-        if ($request->has('limit') && !$request->has('file')) $visits = $visits->splice($offset, $limit);
+        if ($request->filled('limit') && !$request->filled('file')) $visits = $visits->splice($offset, $limit);
 
-        if ($request->has('file') && $request->file == 'excel') {
+        if ($request->filled('file') && $request->file == 'excel') {
             $file_name = 'My_visit_report_' . Carbon::now()->timestamp;
             $excel = new MyVisitExcel($visits->toArray());
             return MaatwebsiteExcel::download($excel, "$file_name.xlsx");

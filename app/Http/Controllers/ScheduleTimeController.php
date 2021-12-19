@@ -25,16 +25,16 @@ class ScheduleTimeController extends Controller
                 'partner' => 'sometimes|required|numeric|min:1',
                 'limit' => 'sometimes|required|numeric|min:1'
             ]);
-            if ($request->has('category') && $request->has('partner')) {
+            if ($request->filled('category') && $request->filled('partner')) {
                 $partnerSchedule->setPartner($request->partner)->setCategory($request->category)->setFor($request->for);
-                $dates = $request->has('limit') ? $partnerSchedule->get($request->limit) : $partnerSchedule->get();
+                $dates = $request->filled('limit') ? $partnerSchedule->get($request->limit) : $partnerSchedule->get();
                 return $dates ? api_response($request, $dates, 200, ['dates' => $dates]) : api_response($request, null, 400, [
                     'message' => $partnerSchedule->getErrorMessage()
                 ]);
             }
             $slots = ScheduleSlot::where([['start', '>=', DB::raw("CAST('" . self::SCHEDULE_START . "' As time)")], ['end', '<=', DB::raw("CAST('" . self::SCHEDULE_END . "' As time)")]])->get();
             $current_time = Carbon::now();
-            if ($request->has('category')) {
+            if ($request->filled('category')) {
                 $current_time->addMinutes($this->getPreparationTime($request->category));
             }
             $time_slots = $valid_time_slots = $sheba_slots = [];
@@ -56,7 +56,7 @@ class ScheduleTimeController extends Controller
                 ));
                 $time_slots[$time_slot_key] = $time_slot_value;
             }
-            if ($request->has('for')) {
+            if ($request->filled('for')) {
                 return api_response($request, $sheba_slots, 200, ['times' => $sheba_slots]);
             } else {
                 return api_response($request, $sheba_slots, 200, ['times' => $time_slots, 'valid_times' => $valid_time_slots]);

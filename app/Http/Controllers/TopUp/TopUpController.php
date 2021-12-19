@@ -155,7 +155,7 @@ class TopUpController extends Controller
         $userAgentInformation->setRequest($request);
         $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id)->setLat($request->lat ? $request->lat : null)->setLong($request->long ? $request->long : null)->setUserAgent($userAgentInformation->getUserAgent());
 
-        if ($agent instanceof Business && $request->has('is_otf_allow') && !($request->is_otf_allow)) {
+        if ($agent instanceof Business && $request->filled('is_otf_allow') && !($request->is_otf_allow)) {
             $top_up_request->setIsOtfAllow(!$request->is_otf_allow);
         }
 
@@ -379,24 +379,24 @@ class TopUpController extends Controller
         /** @var AuthUser $user */
         $user = $this->getAgent($request, $user);
 
-        $is_excel_report = ($request->has('content_type') && $request->content_type == 'excel');
+        $is_excel_report = ($request->filled('content_type') && $request->content_type == 'excel');
         if ($is_excel_report) {
             $offset = 0;
             $limit = 10000;
         }
 
         $request_builder->setOffset($offset)->setLimit($limit)->setAgent($user);
-        if ($request->has('from') && $request->from !== "null") {
+        if ($request->filled('from') && $request->from !== "null") {
             $from_date = Carbon::parse($request->from);
             $to_date = Carbon::parse($request->to)->endOfDay();
             $request_builder->setFromDate($from_date)->setToDate($to_date);
         }
-        if ($request->has('vendor_id') && $request->vendor_id !== "null") $request_builder->setVendorId($request->vendor_id);
-        if ($request->has('status') && $request->status !== "null") $request_builder->setStatus($request->status);
-        if ($request->has('q') && $request->q !== "null") $request_builder->setSearchQuery($request->q);
-        if ($request->has('connection_type') && $request->connection_type !== "null") $request_builder->setConnectionType($request->connection_type);
-        if ($request->has('topup_type') && $request->topup_type == "single") $request_builder->setIsSingleTopup(true);
-        if ($request->has('bulk_id') && $request->bulk_id !== "null" && $request->bulk_id) $request_builder->setBulkRequestId($request->bulk_id);
+        if ($request->filled('vendor_id') && $request->vendor_id !== "null") $request_builder->setVendorId($request->vendor_id);
+        if ($request->filled('status') && $request->status !== "null") $request_builder->setStatus($request->status);
+        if ($request->filled('q') && $request->q !== "null") $request_builder->setSearchQuery($request->q);
+        if ($request->filled('connection_type') && $request->connection_type !== "null") $request_builder->setConnectionType($request->connection_type);
+        if ($request->filled('topup_type') && $request->topup_type == "single") $request_builder->setIsSingleTopup(true);
+        if ($request->filled('bulk_id') && $request->bulk_id !== "null" && $request->bulk_id) $request_builder->setBulkRequestId($request->bulk_id);
 
         $total_topups = $top_up_order_repo->getTotalCountByFilter($request_builder);
         $topups = $top_up_order_repo->getByFilter($request_builder);

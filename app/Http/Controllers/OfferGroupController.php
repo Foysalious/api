@@ -23,9 +23,9 @@ class OfferGroupController extends Controller
                 'lng' => 'required_with:lat'
             ]);
             $location = null;
-            if ($request->has('location')) {
+            if ($request->filled('location')) {
                 $location = Location::find($request->location)->id;
-            } else if ($request->has('lat')) {
+            } else if ($request->filled('lat')) {
                 $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
                 if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
             }

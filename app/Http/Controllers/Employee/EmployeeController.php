@@ -121,15 +121,15 @@ class EmployeeController extends Controller
         $member = $this->repo->find($business_member['member_id']);
 
         $data = [];
-        if ($request->has('name')) $data['name'] = $request->name;
-        if ($request->has('date_of_birth')) $data['dob'] = $request->date_of_birth;
+        if ($request->filled('name')) $data['name'] = $request->name;
+        if ($request->filled('date_of_birth')) $data['dob'] = $request->date_of_birth;
         if ($request->hasFile('profile_picture')) {
             $name = array_key_exists('name', $data) ? $data['name'] : $member->profile->name;
             $data['pro_pic'] = $profile_repo->saveProPic($request->profile_picture, $name);
         }
-        if ($request->has('gender')) $data['gender'] = $request->gender;
-        if ($request->has('address')) $data['address'] = $request->address;
-        if ($request->has('blood_group')) $data['blood_group'] = $request->blood_group;
+        if ($request->filled('gender')) $data['gender'] = $request->gender;
+        if ($request->filled('address')) $data['address'] = $request->address;
+        if ($request->filled('blood_group')) $data['blood_group'] = $request->blood_group;
 
         $profile_repo->updateRaw($member->profile, $data);
 
@@ -329,7 +329,7 @@ class EmployeeController extends Controller
             'designation' => 'required|string'
         ];
 
-        if ($request->has('mobile')) $validation_rules['mobile'] = 'string|mobile:bd';
+        if ($request->filled('mobile')) $validation_rules['mobile'] = 'string|mobile:bd';
         $this->validate($request, $validation_rules);
 
         $business_member = $this->getBusinessMember($request);
@@ -337,8 +337,8 @@ class EmployeeController extends Controller
         $member = $this->repo->find($business_member['member_id']);
         $this->setModifier($member);
 
-        $request->mobile = ($request->has('mobile')) ? BDMobileFormatter::format($request->mobile) : null;
-        $request->manager = ($request->has('manager')) ? $request->manager : null;
+        $request->mobile = ($request->filled('mobile')) ? BDMobileFormatter::format($request->mobile) : null;
+        $request->manager = ($request->filled('manager')) ? $request->manager : null;
         $updater->setBusinessMember($business_member)
             ->setName($request->name)
             ->setMobile($request->mobile)
@@ -438,7 +438,7 @@ class EmployeeController extends Controller
      */
     private function accessibleBusinessMembers(Business $business, Request $request)
     {
-        if ($request->has('for') && $request->for == 'phone_book') return $business->getActiveBusinessMember();
+        if ($request->filled('for') && $request->for == 'phone_book') return $business->getActiveBusinessMember();
         return $business->getAccessibleBusinessMember();
     }
 

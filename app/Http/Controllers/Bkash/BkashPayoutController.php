@@ -37,7 +37,7 @@ class BkashPayoutController extends Controller
                     return api_response($request, $response->getSuccess(), 200, $response->getSuccess());
                 } else {
                     $error_prefix = 'partner_transaction_failed_';
-                    if ($request->has('is_vendor')) {
+                    if ($request->filled('is_vendor')) {
                         $error_prefix = 'vendor_payout_transaction_failed_';
                     }
                     Redis::set($error_prefix . time(), json_encode($response->getError()));

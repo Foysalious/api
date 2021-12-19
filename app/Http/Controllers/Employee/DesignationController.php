@@ -26,7 +26,7 @@ class DesignationController extends Controller
         $designations_list = Designations::getDesignations();
         $all_roles = collect(array_merge($roles,$designations_list))->unique();
 
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $all_roles = array_filter($all_roles->toArray(), function ($role) use ($request) {
                 return str_contains(strtoupper($role), strtoupper($request->search));
             });

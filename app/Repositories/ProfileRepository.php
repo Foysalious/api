@@ -217,7 +217,7 @@ class ProfileRepository
             $this->setModifier($customer);
             new Referral($customer);
 
-            if ($request->has('referral_code')) {
+            if ($request->filled('referral_code')) {
                 $this->updateCustomerOwnVoucherNReferral($customer, $request->referral_code);
             }
         } elseif ($avatar == 'resource') {
@@ -235,7 +235,7 @@ class ProfileRepository
         if (empty($profile->name)) {
             $profile->name = $request->fb_name;
         }
-        if (empty($profile->gender) && $request->has('fb_gender')) {
+        if (empty($profile->gender) && $request->filled('fb_gender')) {
             $profile->gender = $request->fb_gender;
         }
         if (empty($profile->pro_pic) || basename($profile->pro_pic) == 'default.jpg') {
@@ -308,7 +308,7 @@ class ProfileRepository
             $customer->save();
             $this->setModifier($customer);
             new Referral($customer);
-            if ($request->has('referral_code')) {
+            if ($request->filled('referral_code')) {
                 $this->updateCustomerOwnVoucherNReferral($customer, $request->referral_code);
             }
             return $customer;
@@ -397,7 +397,7 @@ class ProfileRepository
             $customer = Customer::find($customer->id);
             $this->setModifier($customer);
             new Referral($customer);
-            if ($request->has('referral_code')) {
+            if ($request->filled('referral_code')) {
                 $this->updateCustomerOwnVoucherNReferral($customer, $request->referral_code);
             }
         } elseif ($avatar == 'resource') {

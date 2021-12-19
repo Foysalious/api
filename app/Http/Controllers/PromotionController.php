@@ -53,7 +53,7 @@ class PromotionController extends Controller
                 }]);
             }]);
             $location = $request->location;
-            if ($request->has('lat') && $request->has('lng')) {
+            if ($request->filled('lat') && $request->filled('lng')) {
                 $hyper_local = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
                 $location = $hyper_local ? $hyper_local->location->id : $location;
             }
@@ -136,7 +136,7 @@ class PromotionController extends Controller
             $location = $request->location;
             $partnerListRequest->setRequest($request)->prepareObject();
 
-            if ($request->has('lat') && $request->has('lng')) {
+            if ($request->filled('lat') && $request->filled('lng')) {
                 $hyper_local = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
                 $location = $hyper_local ? $hyper_local->location->id : $location;
             }
@@ -174,7 +174,7 @@ class PromotionController extends Controller
             $partnerListRequest->setRequest($request)->prepareObject();
             $partner_list = new PartnerList();
             $location = $request->location;
-            if ($request->has('lat') && $request->has('lng')) {
+            if ($request->filled('lat') && $request->filled('lng')) {
                 $hyper_local = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
                 $location = $hyper_local ? $hyper_local->location->id : $location;
             }
@@ -257,7 +257,7 @@ class PromotionController extends Controller
             $customer = $request->customer;
             $location = $request->location;
             $partnerListRequest->setRequest($request)->prepareObject();
-            if ($request->has('lat') && $request->has('lng')) {
+            if ($request->filled('lat') && $request->filled('lng')) {
                 $hyper_local = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
                 $location = $hyper_local ? $hyper_local->location->id : $location;
             }

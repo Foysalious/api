@@ -103,12 +103,12 @@ class LeaveController extends Controller
             $leave_approval_requests->push($leave_approval_request);
         }
 
-        if ($request->has('status')) $leave_approval_requests = $leave_approval_requests->where('status', $request->status);
-        if ($request->has('department')) $leave_approval_requests = $this->filterWithDepartment($leave_approval_requests, $request);
-        if ($request->has('employee')) $leave_approval_requests = $this->filterWithEmployee($leave_approval_requests, $request);
-        if ($request->has('search')) $leave_approval_requests = $this->searchWithEmployeeName($leave_approval_requests, $request);
-        if ($request->has('search')) $leave_approval_requests = $this->searchWithEmployeeName($leave_approval_requests, $request);
-        if ($request->has('period_start') && $request->has('period_end')) $leave_approval_requests = $this->filterByPeriod($leave_approval_requests, $request);
+        if ($request->filled('status')) $leave_approval_requests = $leave_approval_requests->where('status', $request->status);
+        if ($request->filled('department')) $leave_approval_requests = $this->filterWithDepartment($leave_approval_requests, $request);
+        if ($request->filled('employee')) $leave_approval_requests = $this->filterWithEmployee($leave_approval_requests, $request);
+        if ($request->filled('search')) $leave_approval_requests = $this->searchWithEmployeeName($leave_approval_requests, $request);
+        if ($request->filled('search')) $leave_approval_requests = $this->searchWithEmployeeName($leave_approval_requests, $request);
+        if ($request->filled('period_start') && $request->filled('period_end')) $leave_approval_requests = $this->filterByPeriod($leave_approval_requests, $request);
 
         // Differ new & old approval request
         $leave_approval_requests_without_order = $leave_approval_requests->where('order', null);
@@ -124,17 +124,17 @@ class LeaveController extends Controller
         $total_leave_approval_requests = $leave_approval_requests->count();
         $leave_approval_requests = $this->sortByStatus($leave_approval_requests);
 
-        if ($request->has('limit') && !$request->has('file')) $leave_approval_requests = $leave_approval_requests->splice($offset, $limit);
+        if ($request->filled('limit') && !$request->filled('file')) $leave_approval_requests = $leave_approval_requests->splice($offset, $limit);
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
         $resource = new Collection($leave_approval_requests, new LeaveApprovalRequestListTransformer($business, $business_member));
         $leaves = $manager->createData($resource)->toArray()['data'];
 
-        if ($request->has('sort')) {
+        if ($request->filled('sort')) {
             $leaves = $this->leaveOrderByEmployee($leaves, $request->sort_by_employee)->values();
         }
 
-        if ($request->has('sort_by_period')) {
+        if ($request->filled('sort_by_period')) {
             $leaves = $this->leaveOrderByPeriod($leaves, $request->sort_by_period)->values();
         }
 
@@ -278,9 +278,9 @@ class LeaveController extends Controller
             /** @var Profile $profile */
             $profile = $member->profile;
 
-            if ($request->has('department') && $role) return $role->businessDepartment->id == $request->department;
-            if ($request->has('employee')) return $member->id == $request->employee;
-            if ($request->has('search')) return str_contains(strtoupper($profile->name), strtoupper($request->search));
+            if ($request->filled('department') && $role) return $role->businessDepartment->id == $request->department;
+            if ($request->filled('employee')) return $member->id == $request->employee;
+            if ($request->filled('search')) return str_contains(strtoupper($profile->name), strtoupper($request->search));
         });
     }
 
@@ -302,7 +302,7 @@ class LeaveController extends Controller
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 420);
-        if ($request->has('start_date') && $request->has('end_date')) {
+        if ($request->filled('start_date') && $request->filled('end_date')) {
             $time_frame = $time_frame_instance->forTwoDates($request->start_date, $request->end_date);
         } else {
             $time_frame = $business_member->getBusinessFiscalPeriod();
@@ -348,22 +348,22 @@ class LeaveController extends Controller
         ])->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id', 'employee_id', 'status')->get();
 
 
-        if ($request->has('status')) {
+        if ($request->filled('status')) {
             $business_members = $this->membersFilterByStatus($business_members, $request);
         }
 
-        if ($request->has('department') || $request->has('search'))
+        if ($request->filled('department') || $request->filled('search'))
             $business_members = $this->membersFilterByDeptSearchByName($business_members, $request);
 
         $total_records = $business_members->count();
-        if ($request->has('limit')) $business_members = $business_members->splice($offset, $limit);
+        if ($request->filled('limit')) $business_members = $business_members->splice($offset, $limit);
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
         $resource = new Item($business_members, new LeaveBalanceTransformer($leave_types, $business, $time_frame));
         $leave_balances = $manager->createData($resource)->toArray()['data'];
 
-        if ($request->has('sort')) {
+        if ($request->filled('sort')) {
             $leave_balances = $this->leaveBalanceOrderBy($leave_balances, $request->sort)->values()->toArray();
         }
 
@@ -480,20 +480,20 @@ class LeaveController extends Controller
             $is_dept_matched = false;
             $is_name_matched = false;
 
-            if ($request->has('department')) {
+            if ($request->filled('department')) {
                 /** @var BusinessRole $role */
                 $role = $business_member->role;
                 if ($role) $is_dept_matched = $role->businessDepartment->id == $request->department;
             }
 
-            if ($request->has('search')) {
+            if ($request->filled('search')) {
                 /** @var Profile $profile */
                 $profile = $business_member->member->profile;
                 $is_name_matched = str_contains(strtoupper($profile->name), strtoupper($request->search));
             }
 
-            if ($request->has('department') && $request->has('search')) return $is_dept_matched && $is_name_matched;
-            if ($request->has('department') || $request->has('search')) return $is_dept_matched || $is_name_matched;
+            if ($request->filled('department') && $request->filled('search')) return $is_dept_matched && $is_name_matched;
+            if ($request->filled('department') || $request->filled('search')) return $is_dept_matched || $is_name_matched;
         });
     }
 
@@ -579,13 +579,13 @@ class LeaveController extends Controller
         if (!$business_member) return api_response($request, null, 404);
 
         $leaves = $leave_repo->getLeavesByBusinessMember($business_member)->orderBy('id', 'desc');
-        if ($request->has('type')) $leaves = $leaves->where('leave_type_id', $request->type);
+        if ($request->filled('type')) $leaves = $leaves->where('leave_type_id', $request->type);
         $leaves = $leaves->get();
         $fractal = new Manager();
         $resource = new Collection($leaves, new LeaveListTransformer());
         $leaves = $fractal->createData($resource)->toArray()['data'];
 
-        if ($request->has('sort')) {
+        if ($request->filled('sort')) {
             $leaves = $this->leaveHistoryOrderBy($leaves, $request->sort)->values();
         }
 

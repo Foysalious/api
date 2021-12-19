@@ -21,7 +21,7 @@ class ResourceNotificationController extends Controller
         $topic = config('sheba.push_notification_topic_name.resource') . $resource->id;
         $channel = config('sheba.push_notification_channel_name.resource');
 
-        if ($request->has('job_id')) {
+        if ($request->filled('job_id')) {
             $job = Job::find($request->job_id);
             $pushNotificationHandler->send([
                 "title" => 'কাজ এসাইন',
@@ -34,7 +34,7 @@ class ResourceNotificationController extends Controller
             ], $topic, $channel);
         }
 
-        if ($request->has('payment')) {
+        if ($request->filled('payment')) {
             $job = Job::find($request->job_id);
             $pushNotificationHandler->send([
                 "title" => 'Online Payment',
@@ -47,7 +47,7 @@ class ResourceNotificationController extends Controller
             ], $topic, $channel);
         }
 
-        if ($request->has('job_alert')) {
+        if ($request->filled('job_alert')) {
             $job = Job::find($request->job_id);
             $pushNotificationHandler->send([
                 "title" => "তৈরি হয়ে নিন",
@@ -60,7 +60,7 @@ class ResourceNotificationController extends Controller
             ], $topic, $channel);
         }
 
-        if ($request->has('job_extend')) {
+        if ($request->filled('job_extend')) {
             $job = Job::find($request->job_id);
             $pushNotificationHandler->send([
                 "title" => 'Need Extra Time?',

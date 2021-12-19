@@ -41,7 +41,7 @@ class PaymentLinkBillController extends Controller
                 'mobile'     => 'required|string',
             ];
 
-            if ($request->has('emi_month')) {
+            if ($request->filled('emi_month')) {
                 $rules['bank_id'] = 'required|integer';
             } else {
                 $rules['payment_method'] = 'required|in:' . implode(',', AvailableMethods::getPaymentLinkPayments($request->identifier));

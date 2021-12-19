@@ -73,8 +73,8 @@ class SupportController extends Controller
             ->select('id', 'member_id', 'status', 'long_description', 'created_at')
             ->orderBy('id', 'desc');
 
-        if ($request->has('status')) $supports = $supports->where('status', $request->status);
-        if ($request->has('limit')) $supports = $supports->skip($offset)->limit($limit);
+        if ($request->filled('status')) $supports = $supports->where('status', $request->status);
+        if ($request->filled('limit')) $supports = $supports->skip($offset)->limit($limit);
         $supports = $supports->get();
         if (count($supports) == 0) return api_response($request, null, 404);
 

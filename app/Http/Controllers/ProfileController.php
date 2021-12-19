@@ -71,20 +71,20 @@ class ProfileController extends Controller
 
     public function getProfile(Request $request)
     {
-        if ($request->has('mobile') && $request->has('name')) {
+        if ($request->filled('mobile') && $request->filled('name')) {
             $mobile = formatMobile($request->mobile);
             $profile = $this->profileRepo->getIfExist($mobile, 'mobile');
-            if ($request->has('email')) {
+            if ($request->filled('email')) {
                 $emailProfile = $this->profileRepo->getByEmail($request->email);
             }
             if (!$profile) {
                 if (isset($emailProfile)) return api_response($request, null, 401, ['message' => 'Profile email and submitted email does not match']);
                 $data = ['name' => $request->name, 'mobile' => $mobile];
-                if ($request->has('nid_no') && !empty($request->nid_no)) $data['nid_no'] = $request->nid_no;
-                if ($request->has('gender') && !empty($request->gender)) $data['gender'] = $request->gender;
-                if ($request->has('dob') && !empty($request->dob)) $data['dob'] = $request->dob;
-                if ($request->has('email') && !empty($request->email)) $data['email'] = $request->email;
-                if ($request->has('password') && !empty($request->password)) $data['password'] = bcrypt($request->password);
+                if ($request->filled('nid_no') && !empty($request->nid_no)) $data['nid_no'] = $request->nid_no;
+                if ($request->filled('gender') && !empty($request->gender)) $data['gender'] = $request->gender;
+                if ($request->filled('dob') && !empty($request->dob)) $data['dob'] = $request->dob;
+                if ($request->filled('email') && !empty($request->email)) $data['email'] = $request->email;
+                if ($request->filled('password') && !empty($request->password)) $data['password'] = bcrypt($request->password);
                 $profile = $this->profileRepo->store($data);
             } else {
                 if (isset($emailProfile) && $emailProfile->id != $profile->id) {
@@ -101,7 +101,7 @@ class ProfileController extends Controller
                 }
                 $profile->save();
             }
-        } elseif ($request->has('profile_id')) {
+        } elseif ($request->filled('profile_id')) {
             $profile = $this->profileRepo->getIfExist($request->profile_id, 'id');
         } else {
             return api_response($request, null, 404, []);

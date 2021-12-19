@@ -73,7 +73,7 @@ class PersonalInformationController extends Controller
             $partner = $request->partner;
             $resource_types = isset($request->resource_types) ? explode(',', $request->resource_types) : ['Handyman'];
 
-            if ($request->has('resource')) {
+            if ($request->filled('resource')) {
                 $resource = Resource::find((int)$request->resource);
                 $partnerResourceCreator->setPartner($partner);
                 $partnerResourceCreator->setData(['resource_types' => $resource_types, 'category_ids' => $partner->categories->pluck('id')->toArray()]);
@@ -100,7 +100,7 @@ class PersonalInformationController extends Controller
                     'category_ids' => $partner->categories->pluck('id')->toArray(),
                     'resource_types' => $resource_types,
                     'nid_no' => $request->nid_no,
-                    'alternate_contact' => $request->has('additional_mobile') ? $request->additional_mobile : null
+                    'alternate_contact' => $request->filled('additional_mobile') ? $request->additional_mobile : null
                 ));
                 if ($error = $partnerResourceCreator->hasError()) {
                     return api_response($request, 1, 400, ['message' => $error['msg']]);
@@ -156,7 +156,7 @@ class PersonalInformationController extends Controller
             if ($resource->is_verified) {
                 return api_response($request, null, 400, ['message' => "Verified resource can't be updated."]);
             }
-            if ($request->has('mobile')) {
+            if ($request->filled('mobile')) {
                 $mobile = formatMobile($request->mobile);
                 if ($profile->mobile != $mobile) {
                     $mobile_profile = Profile::where('mobile', $mobile)->first();
@@ -169,7 +169,7 @@ class PersonalInformationController extends Controller
                     array_forget($request, 'mobile');
                 }
             }
-            if ($request->has('resource_types')) {
+            if ($request->filled('resource_types')) {
                 $request->resource_types = explode(',', $request->resource_types);
                 $newly_requested_types = array_diff($request->resource_types, $resource->partnerResources->pluck('resource_type')->toArray());
                 if ($resource_cap_error = $this->hasResourceCapError($newly_requested_types, $partner)) {
@@ -242,18 +242,18 @@ class PersonalInformationController extends Controller
             $picture = $request->file('picture');
             $profile->pro_pic = $this->fileRepository->uploadToCDN($this->makeProfilePicName($profile, $picture), $picture, 'images/profiles/');
         }
-        if ($request->has('mobile')) $profile->mobile = formatMobile($request->mobile);
-        if ($request->has('name')) $profile->name = $request->name;
-        if ($request->has('address')) $profile->address = $request->address;
-        if ($request->has('nid_no')) $resource->nid_no = $request->nid_no;
-        if ($request->has('additional_mobile')) $resource->alternate_contact = formatMobile(trim($request->additional_mobile));
+        if ($request->filled('mobile')) $profile->mobile = formatMobile($request->mobile);
+        if ($request->filled('name')) $profile->name = $request->name;
+        if ($request->filled('address')) $profile->address = $request->address;
+        if ($request->filled('nid_no')) $resource->nid_no = $request->nid_no;
+        if ($request->filled('additional_mobile')) $resource->alternate_contact = formatMobile(trim($request->additional_mobile));
         $profile->update();
         if ($request->hasFile('nid_front') && $request->hasFile('nid_back')) {
             $canvas = $this->mergeFrontAndBackNID($request->file('nid_front'), $request->file('nid_back'));
             $resource->nid_image = $this->fileRepository->uploadImageToCDN('images/resources/nid', Carbon::now()->timestamp . '_' . str_slug($profile->name, '_') . '.png', $canvas);
         }
         $resource->update();
-        if ($request->has('resource_types')) $this->associatePartnerResource($request, $resource, $partner);
+        if ($request->filled('resource_types')) $this->associatePartnerResource($request, $resource, $partner);
 
         return $resource;
     }

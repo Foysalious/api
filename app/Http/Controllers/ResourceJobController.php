@@ -43,9 +43,9 @@ class ResourceJobController extends Controller
                     return $job->status == 'Served';
                 });
                 $jobs = $final->where('status', 'Served')->merge($other_jobs);
-                if ($request->has('group_by')) {
+                if ($request->filled('group_by')) {
                     $jobs = collect($jobs)->groupBy('schedule_date');
-                } elseif ($request->has('sort_by')) {
+                } elseif ($request->filled('sort_by')) {
                     $jobs = collect($jobs);
                     $schedule_due_jobs = $jobs->filter(function ($job) {
                         return (Carbon::parse($job->schedule_date) < Carbon::today() && $job->status == 'Schedule Due');
@@ -162,14 +162,14 @@ class ResourceJobController extends Controller
     {
         try {
             $job = $request->job;
-            if ($request->has('status')) {
+            if ($request->filled('status')) {
                 $request->merge(['partner' => $job->partnerOrder->partner]);
                 $response = $this->resourceJobRepository->changeStatus($job->id, $request);
                 if ($response) {
                     return api_response($request, $response, $response->code);
                 }
                 return api_response($request, null, 500);
-            } elseif ($request->has('schedule_date') && $request->has('preferred_time')) {
+            } elseif ($request->filled('schedule_date') && $request->filled('preferred_time')) {
                 $job_time = new JobTime($request->schedule_date, $request->preferred_time);
                 $job_time->validate();
                 if ($job_time->isValid) {

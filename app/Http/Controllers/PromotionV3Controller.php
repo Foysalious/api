@@ -27,7 +27,7 @@ class PromotionV3Controller extends Controller
         $customer = $request->customer;
         $location = $request->location;
 
-        if ($request->has('lat') && $request->has('lng')) {
+        if ($request->filled('lat') && $request->filled('lng')) {
             $hyper_local = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
             $location = $hyper_local ? $hyper_local->location->id : $location;
         }
@@ -63,7 +63,7 @@ class PromotionV3Controller extends Controller
 
         $location = $request->location;
         $price_calculation = $this->resolvePriceCalculation($service_requestObjects[0]->getCategory());
-        if ($request->has('lat') && $request->has('lng')) {
+        if ($request->filled('lat') && $request->filled('lng')) {
             $hyper_local = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
             $location = $hyper_local ? $hyper_local->location->id : $location;
         }

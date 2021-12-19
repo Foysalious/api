@@ -43,7 +43,7 @@ class ServiceController extends Controller
             $services = [];
             $base_query = PartnerPosService::with('discounts', 'batches')->published();
 
-            if ($request->has('category_id') && !empty($request->category_id)) {
+            if ($request->filled('category_id') && !empty($request->category_id)) {
                 $category_ids = explode(',', $request->category_id);
                 $base_query->whereIn('pos_category_id', $category_ids);
             }
@@ -143,10 +143,10 @@ class ServiceController extends Controller
         $this->setModifier($request->manager_resource);
 
         $is_valid_sub_category = (in_array($request->category_id, $sub_categories)) ? 1 : 0;
-        if (!$request->has('master_category_id') && !$is_valid_sub_category)
+        if (!$request->filled('master_category_id') && !$is_valid_sub_category)
             return api_response($request, null, 400, ['message' => 'The selected category id is invalid']);
 
-        if ($request->has('master_category_id') && !$is_valid_sub_category) {
+        if ($request->filled('master_category_id') && !$is_valid_sub_category) {
             $request->request->remove('category_id');
             $request->merge($this->resolveSubcategory($request->master_category_id));
         }
@@ -154,7 +154,7 @@ class ServiceController extends Controller
             ->setAccountingInfo($request->accounting_info)
             ->create();
 
-        if ($request->has('discount_amount') && $request->discount_amount > 0) {
+        if ($request->filled('discount_amount') && $request->discount_amount > 0) {
             $this->createServiceDiscount($request, $partner_pos_service);
         }
         $partner_pos_service->unit = $partner_pos_service->unit ? constants('POS_SERVICE_UNITS')[$partner_pos_service->unit] : null;
@@ -282,19 +282,19 @@ class ServiceController extends Controller
             'is_emi_available' => 'sometimes'
         ];
 
-        if ($request->has('discount_amount') && $request->discount_amount > 0) $rules += ['end_date' => 'required'];
+        if ($request->filled('discount_amount') && $request->discount_amount > 0) $rules += ['end_date' => 'required'];
         $this->validate($request, $rules);
         $this->setModifier($request->manager_resource);
         $partner_pos_service = PartnerPosService::find($request->service);
 
         if (!$partner_pos_service) return api_response($request, null, 400, ['msg' => 'Service Not Found']);
 
-        if ($request->has('master_category_id') || $request->has('category_id')) {
+        if ($request->filled('master_category_id') || $request->filled('category_id')) {
             $sub_categories = PosCategory::child()->pluck('id')->toArray();
             $is_valid_sub_category = (in_array($request->category_id, $sub_categories)) ? 1 : 0;
-            if (!$request->has('master_category_id') && !$is_valid_sub_category)
+            if (!$request->filled('master_category_id') && !$is_valid_sub_category)
                 return api_response($request, null, 400, ['message' => 'The selected category id is invalid']);
-            if ($request->has('master_category_id') && !$is_valid_sub_category) {
+            if ($request->filled('master_category_id') && !$is_valid_sub_category) {
                 $request->request->remove('category_id');
                 $request->merge($this->resolveSubcategory($request->master_category_id));
             }
@@ -304,15 +304,15 @@ class ServiceController extends Controller
         if ($request->discount_id) {
             $discount_data = [];
             $discount = PartnerPosServiceDiscount::find($request->discount_id);
-            if ($request->has('is_discount_off') && $request->is_discount_off == 'true') {
+            if ($request->filled('is_discount_off') && $request->is_discount_off == 'true') {
                 $discount_data = ['end_date' => Carbon::now()];
             } else {
-                $requested_end_date = ($request->has('end_date')) ? Carbon::parse($request->end_date . ' 23:59:59') : $discount->end_date;
-                if ($request->has('end_date') && !$requested_end_date->isSameDay($discount->end_date)) {
+                $requested_end_date = ($request->filled('end_date')) ? Carbon::parse($request->end_date . ' 23:59:59') : $discount->end_date;
+                if ($request->filled('end_date') && !$requested_end_date->isSameDay($discount->end_date)) {
                     $discount_data['end_date'] = $requested_end_date;
                 }
 
-                if ($request->has('discount_amount') && $request->discount_amount != $discount->amount) {
+                if ($request->filled('discount_amount') && $request->discount_amount != $discount->amount) {
                     $discount_data['amount'] = (double)$request->discount_amount;
                 }
             }

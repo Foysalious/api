@@ -99,10 +99,10 @@ class OrderController extends Controller
         $partner = resolvePartnerFromAuthMiddleware($request);
         list($offset, $limit) = calculatePagination($request);
         $posOrderList = $posOrderList->setPartner($partner)->setStatus($status)->setOffset($offset)->setLimit($limit);
-        if ($request->has('sales_channel')) $posOrderList = $posOrderList->setSalesChannel($request->sales_channel);
-        if ($request->has('type')) $posOrderList = $posOrderList->setType($request->type);
-        if ($request->has('order_status')) $posOrderList = $posOrderList->setOrderStatus($request->order_status);
-        if ($request->has('q') && $request->q !== "null") $posOrderList = $posOrderList->setQuery($request->q);
+        if ($request->filled('sales_channel')) $posOrderList = $posOrderList->setSalesChannel($request->sales_channel);
+        if ($request->filled('type')) $posOrderList = $posOrderList->setType($request->type);
+        if ($request->filled('order_status')) $posOrderList = $posOrderList->setOrderStatus($request->order_status);
+        if ($request->filled('q') && $request->q !== "null") $posOrderList = $posOrderList->setQuery($request->q);
         $orders_formatted = $posOrderList->get();
         return api_response($request, $orders_formatted, 200, ['orders' => $orders_formatted]);
     }
@@ -234,7 +234,7 @@ class OrderController extends Controller
         $order->payment_status = $order->getPaymentStatus();
         $order->client_pos_order_id = $request->client_pos_order_id;
         $order->net_bill = $order->getNetBill();
-        $payment_link_amount = $request->has('payment_link_amount') ? $request->payment_link_amount : $order->net_bill;
+        $payment_link_amount = $request->filled('payment_link_amount') ? $request->payment_link_amount : $order->net_bill;
         if ($request->payment_method == 'payment_link' || $request->payment_method == 'emi') {
             (new PartnerStatusAuthentication())->handleInside($partner);
             $status = (new ComplianceInfo())->setPartner($partner)->getComplianceStatus();
@@ -263,7 +263,7 @@ class OrderController extends Controller
             'id' => $order->id,
             'payment_status' => $order->payment_status,
             'net_bill' => $order->net_bill,
-            "client_pos_order_id" => $request->has('client_pos_order_id') ? $request->client_pos_order_id : null,
+            "client_pos_order_id" => $request->filled('client_pos_order_id') ? $request->client_pos_order_id : null,
             'partner_wise_order_id' => $order->partner_wise_order_id
         ];
         app()->make(ActionRewardDispatcher::class)->run('pos_order_create', $partner, $partner, $order, (new RequestIdentification())->get()['portal_name']);
@@ -323,7 +323,7 @@ class OrderController extends Controller
          */
         $this->sendCustomerEmail($order);
         $order->payment_status = $order->getPaymentStatus();
-        $order["client_pos_order_id"] = $request->has('client_pos_order_id') ? $request->client_pos_order_id : null;
+        $order["client_pos_order_id"] = $request->filled('client_pos_order_id') ? $request->client_pos_order_id : null;
         return api_response($request, null, 200, [
             'msg' => 'Order Created Successfully',
             'order' => $order
@@ -476,7 +476,7 @@ class OrderController extends Controller
             'amount' => $request->paid_amount,
             'method' => $request->payment_method
         ];
-        if ($request->has('emi_month')) {
+        if ($request->filled('emi_month')) {
             $payment_data['emi_month'] = $request->emi_month;
         }
         $payment_creator->credit($payment_data);

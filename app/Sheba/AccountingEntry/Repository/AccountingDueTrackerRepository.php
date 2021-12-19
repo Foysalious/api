@@ -203,28 +203,28 @@ class AccountingDueTrackerRepository extends BaseRepository
             $url .= "&order_by=$order_by&order=$order";
         }
 
-        if ($request->has('balance_type')) {
+        if ($request->filled('balance_type')) {
             $url .= "&balance_type=$request->balance_type";
         }
 
-        if ($request->has('start_date') && $request->has('end_date')) {
+        if ($request->filled('start_date') && $request->filled('end_date')) {
             $url .= "&start_date=$request->start_date&end_date=$request->end_date";
         }
 
-        if (($request->has('download_pdf')) && ($request->download_pdf == 1) ||
-            ($request->has('share_pdf')) && ($request->share_pdf == 1)) {
+        if (($request->filled('download_pdf')) && ($request->download_pdf == 1) ||
+            ($request->filled('share_pdf')) && ($request->share_pdf == 1)) {
             return $url;
         }
 
-        if ($request->has('filter_by_supplier') && $request->filter_by_supplier == 1) {
+        if ($request->filled('filter_by_supplier') && $request->filter_by_supplier == 1) {
             $url .= "&filter_by_supplier=$request->filter_by_supplier";
         }
 
-        if ($request->has('q')) {
+        if ($request->filled('q')) {
             $url .= "&q=$request->q";
         }
 
-        if ($request->has('limit') && $request->has('offset')) {
+        if ($request->filled('limit') && $request->filled('offset')) {
             $url .= "&limit=$request->limit&offset=$request->offset";
         }
         return $url;

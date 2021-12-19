@@ -54,15 +54,15 @@ class SupportController extends Controller
         list($offset, $limit) = calculatePagination($request);
         $supports = Support::whereIn('member_id', $members)->select('id', 'member_id', 'status', 'long_description', 'created_at', 'closed_at', 'is_satisfied');
 
-        if ($request->has('status')) $supports = $supports->where('status', $request->status);
+        if ($request->filled('status')) $supports = $supports->where('status', $request->status);
 
-        if ($request->has('start_date') && $request->has('end_date')) {
+        if ($request->filled('start_date') && $request->filled('end_date')) {
             $time_frame = (new TimeFrame())->forTwoDates($request->start_date, $request->end_date);
             $supports = $supports->whereBetween('created_at', $time_frame->getArray());
         }
         $supports_without_limit = clone $supports;
 
-        if ($request->has('limit')) $supports = $supports->skip($offset)->limit($limit);
+        if ($request->filled('limit')) $supports = $supports->skip($offset)->limit($limit);
         $supports = $supports->orderBy('id', 'desc')->get();
         if (count($supports) == 0) return api_response($request, null, 404);
 

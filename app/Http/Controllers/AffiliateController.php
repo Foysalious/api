@@ -67,7 +67,7 @@ class AffiliateController extends Controller
     public function edit($affiliate, Request $request)
     {
         $except_fields = [];
-        if ($request->has('bkash_no')) {
+        if ($request->filled('bkash_no')) {
             $mobile = formatMobile(ltrim($request->bkash_no));
             $request->merge(['bkash_no' => $mobile]);
         } else {
@@ -78,19 +78,19 @@ class AffiliateController extends Controller
             return response()->json(['code' => 500, 'msg' => $msg]);
         }
         $affiliate = Affiliate::find($affiliate);
-        if ($request->has('name') || $request->has('address')) {
+        if ($request->filled('name') || $request->filled('address')) {
             /** @var Profile $profile */
             $profile = $affiliate->profile;
-            if ($request->has('name')) $profile->name = $request->name;
-            if ($request->has('address')) $profile->address = $request->address;
+            if ($request->filled('name')) $profile->name = $request->name;
+            if ($request->filled('address')) $profile->address = $request->address;
             $profile->update();
         }
-        if ($request->has('bkash_no')) {
+        if ($request->filled('bkash_no')) {
             $banking_info = $affiliate->banking_info;
             $banking_info->bKash = $mobile;
             $affiliate->banking_info = json_encode($banking_info);
         }
-        if ($request->has('geolocation')) {
+        if ($request->filled('geolocation')) {
             $affiliate->geolocation = $request->geolocation;
         }
 
@@ -629,19 +629,19 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         list($offset, $limit) = calculatePagination($request);
         $affiliate = Affiliate::find($affiliate);
 
-        $is_excel_report = $request->has('content_type') && $request->content_type == 'excel';
+        $is_excel_report = $request->filled('content_type') && $request->content_type == 'excel';
         if ($is_excel_report) { $offset = 0; $limit = 100000; }
 
         $request_builder->setOffset($offset)->setLimit($limit)->setAgent($affiliate);
-        if ($request->has('from') && $request->from !== "null") {
+        if ($request->filled('from') && $request->from !== "null") {
             $from_date = Carbon::parse($request->from);
             $to_date = Carbon::parse($request->to)->endOfDay();
             $request_builder->setFromDate($from_date)->setToDate($to_date);
         }
-        if ($request->has('vendor_id') && $request->vendor_id !== "null") $request_builder->setVendorId($request->vendor_id);
-        if ($request->has('status') && $request->status !== "null") $request_builder->setStatus($request->status);
-        if ($request->has('q') && $request->q !== "null") $request_builder->setSearchQuery($request->q);
-        if ($request->has('from_robi_topup_wallet') && $request->from_robi_topup_wallet == 1) $request_builder->setIsRobiTopupWallet($request->from_robi_topup_wallet);
+        if ($request->filled('vendor_id') && $request->vendor_id !== "null") $request_builder->setVendorId($request->vendor_id);
+        if ($request->filled('status') && $request->status !== "null") $request_builder->setStatus($request->status);
+        if ($request->filled('q') && $request->q !== "null") $request_builder->setSearchQuery($request->q);
+        if ($request->filled('from_robi_topup_wallet') && $request->from_robi_topup_wallet == 1) $request_builder->setIsRobiTopupWallet($request->from_robi_topup_wallet);
 
         $total_topups = $top_up_order_repo->getTotalCountByFilter($request_builder);
         $topups = $top_up_order_repo->getByFilter($request_builder);
@@ -764,10 +764,10 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         $access_denied = $affiliate->verification_status == Statuses::VERIFIED && !empty(array_intersect($restricted_keys, array_keys($request->all())));
         if ($access_denied) {
             $denied_field = [];
-            if ($request->has('name')) array_push($denied_field, 'Name');
-            if ($request->has('bn_name')) array_push($denied_field, 'Bangla Name');
-            if ($request->has('dob')) array_push($denied_field, 'Date Of Birth');
-            if ($request->has('nid_no')) array_push($denied_field, 'nid no');
+            if ($request->filled('name')) array_push($denied_field, 'Name');
+            if ($request->filled('bn_name')) array_push($denied_field, 'Bangla Name');
+            if ($request->filled('dob')) array_push($denied_field, 'Date Of Birth');
+            if ($request->filled('nid_no')) array_push($denied_field, 'nid no');
             $msg = implode(', ', $denied_field) . ' field not changeable on verified status';
         }
 

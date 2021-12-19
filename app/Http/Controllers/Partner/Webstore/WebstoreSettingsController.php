@@ -133,15 +133,15 @@ class WebstoreSettingsController extends Controller
         $partner_id = $partner->id;
         $this->setModifier($request->manager_resource);
         $webstoreSettingsUpdateRequest->setPartner($partner);
-        if ($request->has('is_webstore_published')) {
+        if ($request->filled('is_webstore_published')) {
             if ($request->is_webstore_published) AccessManager::checkAccess(AccessManager::Rules()->POS->ECOM->WEBSTORE_PUBLISH, $partner->subscription->getAccessRules());
             $webstoreSettingsUpdateRequest->setIsWebstorePublished($request->is_webstore_published);
             $is_webstore_published = 1;
         }
-        if ($request->has('name')) $webstoreSettingsUpdateRequest->setName($request->name);
-        if ($request->has('sub_domain')) $webstoreSettingsUpdateRequest->setSubDomain($request->sub_domain);
-        if ($request->has('delivery_charge')) $webstoreSettingsUpdateRequest->setDeliveryCharge($request->delivery_charge);
-        if ($request->has('has_webstore')) $webstoreSettingsUpdateRequest->setHasWebstore($request->has_webstore);
+        if ($request->filled('name')) $webstoreSettingsUpdateRequest->setName($request->name);
+        if ($request->filled('sub_domain')) $webstoreSettingsUpdateRequest->setSubDomain($request->sub_domain);
+        if ($request->filled('delivery_charge')) $webstoreSettingsUpdateRequest->setDeliveryCharge($request->delivery_charge);
+        if ($request->filled('has_webstore')) $webstoreSettingsUpdateRequest->setHasWebstore($request->has_webstore);
         $webstoreSettingsUpdateRequest->update();
 
         if ($is_webstore_published) {

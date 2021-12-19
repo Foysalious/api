@@ -29,15 +29,15 @@ class TestMailsController extends Controller
 
         $email = $request->email;
         $subject = "This Is Test Mail";
-        if ($request->has('design') && $request->design == 1) {
+        if ($request->filled('design') && $request->design == 1) {
             Mail::send('emails.co-worker-invitation-v2', ['email' => 'miajee@sheba.xyz', 'password' => 123456], function ($m) use ($email, $subject) {
                 $m->to($email)->subject($subject);
             });
-        } elseif ($request->has('complex_design') && $request->complex_design == 1) {
+        } elseif ($request->filled('complex_design') && $request->complex_design == 1) {
             Mail::send('emails.email_verification_V3', ['code' => 1111], function ($m) use ($email, $subject) {
                 $m->to($email)->subject($subject);
             });
-        } elseif ($request->has('invite') && $request->invite == 1) {
+        } elseif ($request->filled('invite') && $request->invite == 1) {
             try {
                 $profile = $this->profileRepository->checkExistingEmail($email);
                 $coworker_invite_email = new SendBusinessRequestEmail($email);

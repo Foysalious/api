@@ -16,7 +16,7 @@ class ResourceAuthMiddleware
      */
     public function handle($request, Closure $next)
     {
-        if ($request->has('remember_token')) {
+        if ($request->filled('remember_token')) {
             $resource = Resource::where('remember_token', $request->input('remember_token'))->first();
             if ($resource) {
                 if ($resource->id == (int)$request->resource) {

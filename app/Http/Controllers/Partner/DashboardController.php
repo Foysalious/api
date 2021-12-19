@@ -387,7 +387,7 @@ class DashboardController extends Controller
         $is_updated = 1;
         $last_updated = (new PartnerSubscriptionPackageRepository($partner->package_id))->getHomepageSettingsUpdatedDate($partner->billing_start_date);
 
-        if ($request->has('last_updated'))
+        if ($request->filled('last_updated'))
             $is_updated = Carbon::parse($last_updated)->toDateString() > Carbon::parse($request->last_updated)->toDateString() ? 1 : 0;
         $data = [
             'is_updated' => $is_updated,

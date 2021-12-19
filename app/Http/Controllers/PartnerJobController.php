@@ -193,7 +193,7 @@ class PartnerJobController extends Controller
             'resource_id' => 'string',
             'status' => 'sometimes|required|in:' . $statuses
         ]);
-        if ($request->has('schedule_date') && $request->has('preferred_time')) {
+        if ($request->filled('schedule_date') && $request->filled('preferred_time')) {
             $job_time = new JobTime($request->day, $request->time);
             $job_time->validate();
             if (!$job_time->isValid) {
@@ -206,7 +206,7 @@ class PartnerJobController extends Controller
             $response = $this->resourceJobRepository->reschedule($job->id, $request);
             return $response ? api_response($request, $response, $response->code) : api_response($request, null, 500);
         }
-        if ($request->has('resource_id')) {
+        if ($request->filled('resource_id')) {
             if ((int)$job->resource_id == (int)$request->resource_id) return api_response($request, null, 403, ['message' => 'অর্ডারটিতে এই রিসোর্স এসাইন করা রয়েছে']);
             if (!scheduler(Resource::find((int)$request->resource_id))->isAvailableForCategory($job->schedule_date, explode('-', $job->preferred_time)[0], $job->category, $job)) {
                 return api_response($request, null, 403, ['message' => 'Resource is not available at this time. Please select different date time or change the resource']);
@@ -217,7 +217,7 @@ class PartnerJobController extends Controller
             }
             return api_response($request, null, 403);
         }
-        if ($request->has('status')) {
+        if ($request->filled('status')) {
             $new_status = $request->status;
             if ($new_status === 'start') $new_status = $this->jobStatuses['Process'];
             elseif ($new_status === 'end') $new_status = $this->jobStatuses['Served'];

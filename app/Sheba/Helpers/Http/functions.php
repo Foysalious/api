@@ -40,8 +40,8 @@ if (!function_exists('calculatePagination')) {
      */
     function calculatePagination($request)
     {
-        $offset = $request->has('offset') ? $request->offset : 0;
-        $limit  = $request->has('limit') ? $request->limit : 50;
+        $offset = $request->filled('offset') ? $request->offset : 0;
+        $limit  = $request->filled('limit') ? $request->limit : 50;
         return [$offset, $limit];
     }
 }
@@ -53,8 +53,8 @@ if (!function_exists('calculatePaginationNew')) {
      */
     function calculatePaginationNew($request)
     {
-        $page  = $request->has('page') ? $request->page : 0;
-        $limit = $request->has('limit') ? $request->limit : 50;
+        $page  = $request->filled('page') ? $request->page : 0;
+        $limit = $request->filled('limit') ? $request->limit : 50;
         return [$page, $limit];
     }
 }
@@ -67,8 +67,8 @@ if (!function_exists('calculateSort')) {
      */
     function calculateSort($request, $default = 'id')
     {
-        $offset = $request->has('sort') ? $request->sort : $default;
-        $limit  = $request->has('sort_order') ? $request->sort_order : 'DESC';
+        $offset = $request->filled('sort') ? $request->sort : $default;
+        $limit  = $request->filled('sort_order') ? $request->sort_order : 'DESC';
         return [$offset, $limit];
     }
 }
@@ -168,6 +168,24 @@ if (!function_exists('isTimeoutException')) {
     function isTimeoutException(ConnectException $exception)
     {
         return starts_with($exception->getMessage(), "cURL error 28: ");
+    }
+}
+
+if (!function_exists('getLocationFromRequest')) {
+    /**
+     * @param $request
+     * @return Location|null
+     */
+    function getLocationFromRequest($request)
+    {
+        if ($request->filled('location')) return Location::find($request->location);
+
+        if ($request->filled('lat')) {
+            $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+            if (!is_null($hyperLocation)) return $hyperLocation->location;
+        }
+
+        return null;
     }
 }
 

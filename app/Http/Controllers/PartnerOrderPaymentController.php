@@ -29,7 +29,7 @@ class PartnerOrderPaymentController extends Controller
                 ->select('partner_order_payments.id', 'partner_order_payments.created_at', 'partner_order_payments.created_by', 'partner_order_payments.amount', 'log', 'method', DB::raw('partner_orders.id as partner_order_id'))
                 ->get();
             $collections = $this->getCollectionInformation($collections);
-            if ($request->has('groupBy')) {
+            if ($request->filled('groupBy')) {
                 $collections = $this->getGroupedCollectionInformation($collections);
             }
             $total = $collections->sum('amount');

@@ -38,9 +38,9 @@ class AffiliateRegistrationController extends Controller
     private function getUpdatableData($request)
     {
         $data = [];
-        if($request->has('name')) $data['name'] = $request->name;
-        if($request->has('address')) $data['address'] = $request->address;
-        if($request->has('gender')) $data['gender'] = $request->gender;
+        if($request->filled('name')) $data['name'] = $request->name;
+        if($request->filled('address')) $data['address'] = $request->address;
+        if($request->filled('gender')) $data['gender'] = $request->gender;
         return $data;
     }
 
@@ -51,9 +51,9 @@ class AffiliateRegistrationController extends Controller
     private function getGeoLocation($request)
     {
         $location = null;
-        if ($request->has('lat') && ($request->has('lon') || $request->has('lng'))) {
+        if ($request->filled('lat') && ($request->filled('lon') || $request->filled('lng'))) {
             $lat = $request->lat;
-            $lon = $request->has('lon') ? $request->lon : $request->lng;
+            $lon = $request->filled('lon') ? $request->lon : $request->lng;
             $location = "{'lat':$lat,'lng':$lon}";
         }
         return $location;

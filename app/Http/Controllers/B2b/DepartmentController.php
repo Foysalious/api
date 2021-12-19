@@ -43,7 +43,7 @@ class DepartmentController extends Controller
         $business = $request->business;
         list($offset, $limit) = calculatePagination($request);
         $business_departments = $this->departmentRepository->getBusinessDepartmentByBusiness($business);
-        if ($request->has('search')) $business_departments = $this->searchByDepartmentName($business_departments, $request);
+        if ($request->filled('search')) $business_departments = $this->searchByDepartmentName($business_departments, $request);
 
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());

@@ -18,7 +18,7 @@ class ManagerAuthMiddleware
      */
     public function handle($request, Closure $next)
     {
-        if ($request->has('remember_token')) {
+        if ($request->filled('remember_token')) {
             /** @var Resource $manager_resource */
             $manager_resource = Resource::where('remember_token', $request->input('remember_token'))->first();
             $partner = Partner::find($request->partner);

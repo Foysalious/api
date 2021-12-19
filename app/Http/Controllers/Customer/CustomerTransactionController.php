@@ -22,7 +22,7 @@ class CustomerTransactionController extends Controller
             $customer = $request->customer;
             $transactions = $customer->transactions();
             $bonus_logs = $customer->bonusLogs();
-            if ($request->has('type')) {
+            if ($request->filled('type')) {
                 $transactions->where('type', ucwords($request->type));
                 $bonus_logs->where('type', ucwords($request->type));
             }

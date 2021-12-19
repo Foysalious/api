@@ -70,7 +70,7 @@ class OnlinePaymentController extends Controller
 
     private function sslIpnHashValidation($request)
     {
-        if ($request->has('verify_key') && $request->verify_sign) {
+        if ($request->filled('verify_key') && $request->verify_sign) {
             $pre_define_key = explode(',', $request->verify_key);
             $new_data = array();
             if (!empty($pre_define_key)) {

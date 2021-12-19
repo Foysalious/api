@@ -118,15 +118,15 @@ class SettingController extends Controller
             $data = [];
             $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
 
-            if ($request->has('vat_percentage') && !$partner->isMigrated(Modules::POS)) $data["vat_percentage"] = $request->vat_percentage;
-            if ($request->has('sms_invoice')) $data["sms_invoice"] = $request->sms_invoice;
-            if ($request->has('auto_printing')) $data["auto_printing"] = $request->auto_printing;
-            if ($request->has('printer_name')) $data["printer_name"] = $request->printer_name;
-            if ($request->has('printer_model')) $data["printer_model"] = $request->printer_model;
+            if ($request->filled('vat_percentage') && !$partner->isMigrated(Modules::POS)) $data["vat_percentage"] = $request->vat_percentage;
+            if ($request->filled('sms_invoice')) $data["sms_invoice"] = $request->sms_invoice;
+            if ($request->filled('auto_printing')) $data["auto_printing"] = $request->auto_printing;
+            if ($request->filled('printer_name')) $data["printer_name"] = $request->printer_name;
+            if ($request->filled('printer_model')) $data["printer_model"] = $request->printer_model;
 
             $partnerPosSetting->update($this->withUpdateModificationField($data));
 
-            if($request->has('vat_percentage') && $partner->isMigrated(Modules::POS)){
+            if($request->filled('vat_percentage') && $partner->isMigrated(Modules::POS)){
                 $partnerService->setPartner($partner)->setVatPercentage($request->vat_percentage)->update();
             }
             return true;

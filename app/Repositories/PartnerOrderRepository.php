@@ -318,7 +318,7 @@ class PartnerOrderRepository
     {
         $orderBy = 'desc';
         $field = 'created_at';
-        if ($request->has('sort')) {
+        if ($request->filled('sort')) {
             $explode = explode(':', $request->get('sort'));
             $field = $explode[0];
             if (isset($explode[1]) && $explode[1] == 'asc') {
@@ -369,9 +369,9 @@ class PartnerOrderRepository
 
     public function getStatusFromRequest($request)
     {
-        if ($request->has('status')) {
+        if ($request->filled('status')) {
             return explode(',', $request->status);
-        } elseif ($request->has('filter')) {
+        } elseif ($request->filled('filter')) {
             return $this->resolveStatus($request->filter);
         } else {
             return JobStatuses::getActuals();

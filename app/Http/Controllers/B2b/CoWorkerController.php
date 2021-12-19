@@ -145,13 +145,13 @@ class CoWorkerController extends Controller
         $business_members = $business->getAllBusinessMember();
         list($offset, $limit) = calculatePagination($request);
 
-        if ($request->has('for') && $request->for == 'prorate') {
+        if ($request->filled('for') && $request->for == 'prorate') {
             $department_info = $this->getEmployeeGroupByDepartment($business);
             return api_response($request, $department_info, 200, ['department_info' => $department_info]);
         }
 
-        if ($request->has('department')) $business_members = $this->coWorkerInfoFilter->filterByDepartment($business_members, $request);
-        if ($request->has('status')) $business_members = $this->coWorkerInfoFilter->filterByStatus($business_members, $request);
+        if ($request->filled('department')) $business_members = $this->coWorkerInfoFilter->filterByDepartment($business_members, $request);
+        if ($request->filled('status')) $business_members = $this->coWorkerInfoFilter->filterByStatus($business_members, $request);
 
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
@@ -345,7 +345,7 @@ class CoWorkerController extends Controller
         $business = $request->business;
         $manager_member = $request->manager_member;
         $this->setModifier($manager_member);
-        if ($request->has('mobile') && $request->mobile != 'null') $request->mobile = formatMobile($request->mobile);
+        if ($request->filled('mobile') && $request->mobile != 'null') $request->mobile = formatMobile($request->mobile);
 
         $this->coWorkerExistenceCheck->setBusiness($business)->setBusinessMember($business_member)->setMobile($request->mobile)->isMobileNumberAlreadyTaken();
         if ($this->coWorkerExistenceCheck->hasError()) {
@@ -476,7 +476,7 @@ class CoWorkerController extends Controller
         $roles = BusinessRole::query()->whereIn('business_department_id', $business_department_ids)->pluck('name')->toArray();
         $designations_list = Designations::getDesignations();
         $all_roles = collect(array_merge($roles, $designations_list))->unique();
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $all_roles = array_filter($all_roles->toArray(), function ($role) use ($request) {
                 return str_contains(strtoupper($role), strtoupper($request->search));
             });
@@ -637,7 +637,7 @@ class CoWorkerController extends Controller
      */
     private function getLimit(Request $request, $limit, $total_employees)
     {
-        if ($request->has('limit') && $request->limit == 'all') return $total_employees;
+        if ($request->filled('limit') && $request->limit == 'all') return $total_employees;
         return $limit;
     }
 
@@ -651,8 +651,8 @@ class CoWorkerController extends Controller
         $business = $request->business;
         $business_members = $business->getAllBusinessMember();
 
-        if ($request->has('department')) $business_members = $this->coWorkerInfoFilter->filterByDepartment($business_members, $request);
-        if ($request->has('status')) $business_members = $this->coWorkerInfoFilter->filterByStatus($business_members, $request);
+        if ($request->filled('department')) $business_members = $this->coWorkerInfoFilter->filterByDepartment($business_members, $request);
+        if ($request->filled('status')) $business_members = $this->coWorkerInfoFilter->filterByStatus($business_members, $request);
 
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());

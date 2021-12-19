@@ -57,7 +57,7 @@ class LocationController extends Controller
     private function isForPartner(Request $request)
     {
         return ($request->hasHeader('Portal-Name') && $request->header('Portal-Name') == 'manager-app') ||
-            ($request->has('for') && $request->for == 'partner');
+            ($request->filled('for') && $request->for == 'partner');
     }
 
     public function getCurrent(Request $request, OutOfZoneEvent $event, Geo $geo)
@@ -77,8 +77,8 @@ class LocationController extends Controller
             return api_response($request, $location, 200,
                 [
                     'location' => collect($location)->only(['id', 'name']),
-                    'service' => $request->has('service') ? $this->calculateModelAvailability($request->service, 'Service', $location) : [],
-                    'category' => $request->has('category') ? $this->calculateModelAvailability($request->category, 'Category', $location) : [],
+                    'service' => $request->filled('service') ? $this->calculateModelAvailability($request->service, 'Service', $location) : [],
+                    'category' => $request->filled('category') ? $this->calculateModelAvailability($request->category, 'Category', $location) : [],
                 ]);
         }
         $geo->setLat($request->lat)->setLng($request->lng);

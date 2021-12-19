@@ -258,10 +258,10 @@ class PartnerController extends Controller
                     'category',
                     'rates'
                 ]);
-                if ($request->has('service_id')) {
+                if ($request->filled('service_id')) {
                     $q->where('service_id', $request->service_id);
                 }
-                if ($request->has('resource_id')) {
+                if ($request->filled('resource_id')) {
                     $q->where('resource_id', $request->resource_id);
                 }
             }
@@ -315,17 +315,17 @@ class PartnerController extends Controller
             'subscription_order_id' => 'sometimes|required|numeric|exists:subscription_orders,id'
         ]);
         $partnerRepo = new PartnerRepository($request->partner);
-        $verified    = $request->has('verified') ? (int)$request->verified : null;
+        $verified    = $request->filled('verified') ? (int)$request->verified : null;
         $category_id = $date = $preferred_time = $job = $subscription_order = null;
-        if ($request->has('job_id')) {
+        if ($request->filled('job_id')) {
             $job            = Job::find((int)$request->job_id);
             $category_id    = $job->category_id;
             $date           = $job->schedule_date;
             $preferred_time = $job->preferred_time;
-        } elseif ($request->has('subscription_order_id')) {
+        } elseif ($request->filled('subscription_order_id')) {
             $subscription_order = SubscriptionOrder::find((int)$request->subscription_order_id);
             $category_id        = $subscription_order->category_id;
-        } elseif ($request->has('category_id') && $request->has('date') && $request->has('time')) {
+        } elseif ($request->filled('category_id') && $request->filled('date') && $request->filled('time')) {
             $category_id    = $request->category_id;
             $date           = $request->date;
             $preferred_time = $request->time;
@@ -527,11 +527,11 @@ class PartnerController extends Controller
             if (!$validation->isValid()) {
                 return api_response($request, $validation->message, 400, ['message' => $validation->message]);
             }
-            $partner = $request->has('partner') ? $request->partner : null;
+            $partner = $request->filled('partner') ? $request->partner : null;
             $partnerListRequest->setRequest($request)->prepareObject();
             $partner_list = new PartnerList();
             $partner_list->setPartnerListRequest($partnerListRequest)->find($partner);
-            if ($request->has('isAvailable')) {
+            if ($request->filled('isAvailable')) {
                 $partners           = $partner_list->partners;
                 $available_partners = $partners->filter(function ($partner) {
                     return $partner->is_available == 1;
@@ -545,7 +545,7 @@ class PartnerController extends Controller
             if ($partner_list->hasPartners) {
                 $partner_list->addPricing();
                 $partner_list->addInfo();
-                if ($request->has('filter') && $request->filter == 'sheba') {
+                if ($request->filled('filter') && $request->filter == 'sheba') {
                     $partner_list->sortByShebaPartnerPriority();
                 } else {
                     $partner_list->sortByShebaSelectedCriteria();
@@ -830,9 +830,9 @@ class PartnerController extends Controller
     public function getAddableServices($partner, $category, Request $request)
     {
         $location = null;
-        if ($request->has('location')) {
+        if ($request->filled('location')) {
             $location = Location::find($request->location);
-        } else if ($request->has('lat') && $request->has('lng')) {
+        } else if ($request->filled('lat') && $request->filled('lng')) {
             $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
             if (!is_null($hyperLocation)) $location = $hyperLocation->location;
         }
@@ -877,16 +877,16 @@ class PartnerController extends Controller
     public function getLocationWiseCategoryService(Request $request, $partner, $category)
     {
         $location = null;
-        if ($request->has('location')) {
+        if ($request->filled('location')) {
             $location = Location::find($request->location);
-        } else if ($request->has('lat') && $request->has('lng')) {
+        } else if ($request->filled('lat') && $request->filled('lng')) {
             $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
             if (!is_null($hyperLocation)) $location = $hyperLocation->location;
         }
         $service_base_query = $request->partner->services()->whereHas('locations', function ($query) use ($location) {
             $query->where('locations.id', $location->id);
         })->where('category_id', $category);
-        if ($request->has('publication_status')) {
+        if ($request->filled('publication_status')) {
             $service_base_query = $request->publication_status ? $service_base_query->where('is_published', 1) : $service_base_query->where('is_published', 0);
         }
         $service = $service_base_query->select('services.id', 'services.name', 'services.variable_type', 'services.app_thumb')->get();
@@ -896,9 +896,9 @@ class PartnerController extends Controller
     public function untaggedCategories(Request $request)
     {
         $location = null;
-        if ($request->has('location')) {
+        if ($request->filled('location')) {
             $location = Location::find($request->location);
-        } else if ($request->has('lat') && $request->has('lng')) {
+        } else if ($request->filled('lat') && $request->filled('lng')) {
             $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
             if (!is_null($hyperLocation))
                 $location = $hyperLocation->location;
@@ -915,7 +915,7 @@ class PartnerController extends Controller
                 $q->where('locations.id', $location->id);
             });
             $master_categories = $master_categories->whereHas('allChildren', function ($q) use ($location, $request) {
-                $request->has('is_business') && (int)$request->is_business ? $q->publishedForBusiness() : $q->published();
+                $request->filled('is_business') && (int)$request->is_business ? $q->publishedForBusiness() : $q->published();
                 $q->whereHas('locations', function ($query) use ($location) {
                     $query->where('locations.id', $location->id);
                 });
@@ -953,7 +953,7 @@ class PartnerController extends Controller
         $this->setModifier($partner);
         if ($category_partner->is_verified) {
             if ($this->isRequestCreatable($request->partner_id, $request->category_id)) {
-                if ($request->has('bulk')) {
+                if ($request->filled('bulk')) {
                     $categories        = $partner->categories()->where('is_logistic_available', true)->pluck('categories.id')->toArray();
                     $category_partners = CategoryPartner::whereIn('category_id', $categories)->where('partner_id', $partner->id);
                     foreach ($category_partners as $current_category_partner) {
@@ -968,9 +968,9 @@ class PartnerController extends Controller
             }
         } else {
             $category_partner->update($this->withUpdateModificationField([
-                'is_home_delivery_applied'   => $request->has('is_home_delivery_applied') ? 1 : 0,
-                'is_partner_premise_applied' => $request->has('on_premise') ? 1 : 0,
-                'delivery_charge'            => $request->has('is_home_delivery_applied') ? $request->delivery_charge : 0,
+                'is_home_delivery_applied'   => $request->filled('is_home_delivery_applied') ? 1 : 0,
+                'is_partner_premise_applied' => $request->filled('on_premise') ? 1 : 0,
+                'delivery_charge'            => $request->filled('is_home_delivery_applied') ? $request->delivery_charge : 0,
                 'uses_sheba_logistic'        => $this->doesUseShebaLogistic(Category::find($category), $request) ? 1 : 0,
             ]));
             return api_response($request, 1, 200);
@@ -1002,9 +1002,9 @@ class PartnerController extends Controller
             'uses_sheba_logistic'        => $category_partner->uses_sheba_logistic
         ];
         $new      = [
-            'is_home_delivery_applied'   => $request->has('is_home_delivery_applied') ? 1 : 0,
-            'is_partner_premise_applied' => $request->has('on_premise') ? 1 : 0,
-            'delivery_charge'            => $request->has('is_home_delivery_applied') ? $request->delivery_charge : 0,
+            'is_home_delivery_applied'   => $request->filled('is_home_delivery_applied') ? 1 : 0,
+            'is_partner_premise_applied' => $request->filled('on_premise') ? 1 : 0,
+            'delivery_charge'            => $request->filled('is_home_delivery_applied') ? $request->delivery_charge : 0,
             'uses_sheba_logistic'        => $this->doesUseShebaLogistic($category, $request),
         ];
         return [ $old, $new ];
@@ -1012,7 +1012,7 @@ class PartnerController extends Controller
 
     private function doesUseShebaLogistic(Category $category, Request $request)
     {
-        return $category->is_home_delivery_applied && $category->is_logistic_available && $request->has('uses_sheba_logistic') && $request->uses_sheba_logistic;
+        return $category->is_home_delivery_applied && $category->is_logistic_available && $request->filled('uses_sheba_logistic') && $request->uses_sheba_logistic;
     }
 
     /**

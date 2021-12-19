@@ -55,16 +55,16 @@ class DueTrackerController extends Controller
             $partner_repo->update($request->partner, $data);
         }
         $data = $dueTrackerRepository->setPartner($request->partner)->getDueList($request);
-        if (($request->has('download_pdf')) && ($request->download_pdf == 1)){
-            $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
-            $data['end_date'] = $request->has("end_date") ? $request->end_date : null;
+        if (($request->filled('download_pdf')) && ($request->download_pdf == 1)){
+            $data['start_date'] = $request->filled("start_date") ? $request->start_date : null;
+            $data['end_date'] = $request->filled("end_date") ? $request->end_date : null;
             $pdf_link = (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile('due_tracker_due_list')->save(true);
             return api_response($request, null, 200, ['message' => 'PDF download successful','pdf_link' => $pdf_link]);
         }
 
-        if (($request->has('share_pdf')) && ($request->share_pdf == 1)){
-            $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
-            $data['end_date'] = $request->has("end_date") ? $request->end_date : null;
+        if (($request->filled('share_pdf')) && ($request->share_pdf == 1)){
+            $data['start_date'] = $request->filled("start_date") ? $request->start_date : null;
+            $data['end_date'] = $request->filled("end_date") ? $request->end_date : null;
             $data['pdf_link'] = (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile('due_tracker_due_list')->save(true);
         }
         return api_response($request, $data, 200, ['data' => $data]);
@@ -88,15 +88,15 @@ class DueTrackerController extends Controller
 
         $request->merge(['customer_id' => $customer_id]);
         $data = $dueTrackerRepository->setPartner($request->partner)->getDueListByProfile($request->partner, $customer_id, $request);
-        if (($request->has('download_pdf')) && ($request->download_pdf == 1)) {
-            $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
-            $data['end_date'] = $request->has("end_date") ? $request->end_date : null;
+        if (($request->filled('download_pdf')) && ($request->download_pdf == 1)) {
+            $data['start_date'] = $request->filled("start_date") ? $request->start_date : null;
+            $data['end_date'] = $request->filled("end_date") ? $request->end_date : null;
             $pdf_link = (new PdfHandler())->setName("due tracker by customer")->setData($data)->setViewFile('due_tracker_due_list_by_customer')->save(true);
             return api_response($request, null, 200, ['message' => 'PDF download successful','link'  => $pdf_link]);
         }
-        if (($request->has('share_pdf')) && ($request->share_pdf == 1)){
-            $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
-            $data['end_date'] = $request->has("end_date") ? $request->end_date : null;
+        if (($request->filled('share_pdf')) && ($request->share_pdf == 1)){
+            $data['start_date'] = $request->filled("start_date") ? $request->start_date : null;
+            $data['end_date'] = $request->filled("end_date") ? $request->end_date : null;
             $data['pdf_link'] = (new PdfHandler())->setName("due tracker by customer")->setData($data)->setViewFile('due_tracker_due_list_by_customer')->save(true);
         }
         return api_response($request, $data, 200, ['data' => $data]);

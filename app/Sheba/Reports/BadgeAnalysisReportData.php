@@ -37,15 +37,15 @@ class BadgeAnalysisReportData extends ReportData
     {
         $partners = Partner::verified();
 
-        if($request->has('badges')) {
+        if($request->filled('badges')) {
             $badges = explode(',', $request->badges);
             $partners->whereIn('badge', $badges);
         }
-        if($request->has('partners')) {
+        if($request->filled('partners')) {
             $partner_ids = explode(',', $request->partners);
             $partners->whereIn('id', $partner_ids);
         }
-        if($request->has('packages')) {
+        if($request->filled('packages')) {
             $packages = explode(',', $request->packages);
             $partners->whereIn('package_id', $packages);
         }

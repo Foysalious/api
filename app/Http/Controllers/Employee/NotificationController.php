@@ -116,7 +116,7 @@ class NotificationController extends Controller
         $channel = config('sheba.push_notification_channel_name.employee');
         $sound  = config('sheba.push_notification_sound.employee');
 
-        if ($request->has('homepage')) {
+        if ($request->filled('homepage')) {
             $pushNotificationHandler->send([
                 "title" => 'Refer digiGO & Earn up to 10000 TK',
                 "message" => "Refer digiGO & win attractive referral fee. Just provide lead information & we do the rest. Visit digiGO Now!",
@@ -128,7 +128,7 @@ class NotificationController extends Controller
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel, $sound);
         }
-        if ($request->has('support_id')) {
+        if ($request->filled('support_id')) {
             $pushNotificationHandler->send([
                 "title" => 'New support created',
                 "message" => "Test support",
@@ -139,7 +139,7 @@ class NotificationController extends Controller
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel, $sound);
         }
-        if ($request->has('announcement_id')) {
+        if ($request->filled('announcement_id')) {
             $pushNotificationHandler->send([
                 "title" => 'New announcement arrived',
                 "message" => "Test announcement",
@@ -150,7 +150,7 @@ class NotificationController extends Controller
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel, $sound);
         }
-        if ($request->has('attendance')) {
+        if ($request->filled('attendance')) {
             $pushNotificationHandler->send([
                 "title" => 'Attendance Alert',
                 "message" => "Have you reached office yet?  You are 5 minutes behind from being late! Hurry up!",
@@ -162,7 +162,7 @@ class NotificationController extends Controller
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel, $sound);
         }
-        if ($request->has('leave_request_id')) {
+        if ($request->filled('leave_request_id')) {
             $pushNotificationHandler->send([
                 "title" => 'New Leave Request Arrived',
                 "message" => "Leave Request Arrived Message",
@@ -173,7 +173,7 @@ class NotificationController extends Controller
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel, $sound);
         }
-        if ($request->has('leave_id')) {
+        if ($request->filled('leave_id')) {
             $pushNotificationHandler->send([
                 "title" => 'Substitute Setup',
                 "message" => "AI choose you a substitute",
@@ -184,7 +184,7 @@ class NotificationController extends Controller
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel, $sound);
         }
-        if ($request->has('cancel_leave_id')) {
+        if ($request->filled('cancel_leave_id')) {
             $pushNotificationHandler->send([
                 "title" => "leave cancel",
                 "message" => "Test canceled his leave",
@@ -195,7 +195,7 @@ class NotificationController extends Controller
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel, $sound);
         }
-        if ($request->has('payslip')) {
+        if ($request->filled('payslip')) {
             $pushNotificationHandler->send([
                 "title" => "Payslip Disbursed",
                 "message" => "Payslip Disbursed of month ".Carbon::parse($request->schedule_date)->format('M Y'),
@@ -206,7 +206,7 @@ class NotificationController extends Controller
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel, $sound);
         }
-        if ($request->has('appreciation')) {
+        if ($request->filled('appreciation')) {
             $pushNotificationHandler->send([
                 "title" => 'Appreciation',
                 "message" => "Test appreciated you",

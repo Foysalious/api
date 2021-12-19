@@ -132,7 +132,7 @@ class ProrateController extends Controller
             return count($employee['employees']) > 0;
         })->values();
 
-        if ($request->has('department')) {
+        if ($request->filled('department')) {
             $department_info = $department_info->filter(function ($employee) use ($request) {
                 return $employee['department_id'] == $request->department;
             })->values();

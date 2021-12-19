@@ -114,25 +114,25 @@ class OrderController extends Controller
             $all_jobs = collect();
         }
 
-        if ($request->has('status') && $request->status != 'all') {
+        if ($request->filled('status') && $request->status != 'all') {
             $all_jobs = $all_jobs->where('status', $request->status)->values();
         }
-        $start_date = $request->has('start_date') ? $request->start_date : null;
-        $end_date = $request->has('end_date') ? $request->end_date : null;
+        $start_date = $request->filled('start_date') ? $request->start_date : null;
+        $end_date = $request->filled('end_date') ? $request->end_date : null;
         if ($start_date && $end_date) {
             $all_jobs = $all_jobs->filter(function ($job) use ($start_date, $end_date) {
                 return ($job['created_at_date_time'] <= $start_date . ' 00:00:00') && ($job['created_at_date_time'] <= $end_date . ' 23:59:59');
             });
         }
 
-        if ($request->has('search')) $all_jobs = $this->searchByTitle($all_jobs, $request)->values();
-        if ($request->has('sort_by_id')) $all_jobs = $this->sortById($all_jobs, $request->sort_by_id)->values();
-        if ($request->has('sort_by_title')) $all_jobs = $this->sortByTitle($all_jobs, $request->sort_by_title)->values();
-        if ($request->has('sort_by_partner_name')) $all_jobs = $this->sortByPartnerName($all_jobs, $request->sort_by_partner_name)->values();
-        if ($request->has('sort_by_status')) $all_jobs = $this->sortByStatus($all_jobs, $request->sort_by_status)->values();
+        if ($request->filled('search')) $all_jobs = $this->searchByTitle($all_jobs, $request)->values();
+        if ($request->filled('sort_by_id')) $all_jobs = $this->sortById($all_jobs, $request->sort_by_id)->values();
+        if ($request->filled('sort_by_title')) $all_jobs = $this->sortByTitle($all_jobs, $request->sort_by_title)->values();
+        if ($request->filled('sort_by_partner_name')) $all_jobs = $this->sortByPartnerName($all_jobs, $request->sort_by_partner_name)->values();
+        if ($request->filled('sort_by_status')) $all_jobs = $this->sortByStatus($all_jobs, $request->sort_by_status)->values();
 
         $total_jobs = count($all_jobs);
-        if ($request->has('limit')) $all_jobs = collect($all_jobs)->splice($offset, $limit);
+        if ($request->filled('limit')) $all_jobs = collect($all_jobs)->splice($offset, $limit);
 
         return api_response($request, null, 200, ['orders' => $all_jobs, 'total_orders' => $total_jobs]);
     }
@@ -290,7 +290,7 @@ class OrderController extends Controller
         $this->validate($request, [
             'payment_method' => 'sometimes|required|in:' . implode(',', AvailableMethods::getRegularPayments()),
         ]);
-        $payment_method = $request->has('payment_method') ? $request->payment_method : 'online';
+        $payment_method = $request->filled('payment_method') ? $request->payment_method : 'online';
         if ($payment_method == 'bkash' && $this->hasPreviousBkashTransaction($request->job->partner_order_id)) {
             return api_response($request, null, 500, ['message' => "Can't send multiple requests within 1 minute."]);
         }
@@ -392,9 +392,9 @@ class OrderController extends Controller
         $request->merge([
             'customer' => $customer,
             'address_id' => $address->id,
-            'name' => $request->has('delivery_name') ? $request->delivery_name : $business->name,
+            'name' => $request->filled('delivery_name') ? $request->delivery_name : $business->name,
             'payment_method' => 'cod',
-            'mobile' => $request->has('mobile') ? $request->mobile : $member->profile->mobile,
+            'mobile' => $request->filled('mobile') ? $request->mobile : $member->profile->mobile,
             'business_id' => $business->id,
             'sales_channel' => $request->sales_channel ?: constants('SALES_CHANNELS')['B2B']['name'],
             'voucher' => $request->voucher
@@ -404,7 +404,7 @@ class OrderController extends Controller
 
         if (!$order) return api_response($request, null, 422, ['message' => "You have selected a partner who doesn't provide service at you area. Please change your delivery address."]);
 
-        if ($request->has('issue_id')) {
+        if ($request->filled('issue_id')) {
             $issue = InspectionItemIssue::find((int)$request->issue_id);
             $issue->update($this->withBothModificationFields(['order_id' => $order->id, 'status' => 'closed']));
         }

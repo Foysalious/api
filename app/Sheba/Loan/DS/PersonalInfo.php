@@ -65,7 +65,7 @@ class PersonalInfo implements Arrayable
      */
     public function update(Request $request, $loan_type = null)
     {
-        if ($request->has('email'))
+        if ($request->filled('email'))
             $this->validateEmail($request->email);
         $profile_data  = array_merge([
             'gender'         => $request->gender,

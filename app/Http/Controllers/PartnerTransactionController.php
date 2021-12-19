@@ -36,7 +36,7 @@ class PartnerTransactionController extends Controller
                 if (isset($transaction['balance'])) $transaction['balance'] = round($transaction['balance'], 2);
                 return $transaction;
             })->sortByDesc('created_at');
-            if ($request->has('month') && $request->has('year')) {
+            if ($request->filled('month') && $request->filled('year')) {
                 $transactions = $transactions->filter(function ($transaction, $key) use ($request) {
                     $created_at = Carbon::parse($transaction['created_at']);
                     return ($created_at->month == $request->month && $created_at->year == $request->year);
@@ -156,7 +156,7 @@ class PartnerTransactionController extends Controller
 
     public function validateTransactionId(Request $request)
     {
-        if (!$request->has('transaction_id')) return api_response($request, null, 500, ['message' => 'Transaction ID is required']);
+        if (!$request->filled('transaction_id')) return api_response($request, null, 500, ['message' => 'Transaction ID is required']);
         $transaction = PartnerTransaction::hasTransactionID($request->transaction_id)->first();
         if (!empty($transaction)) return api_response($request, null, 400, ['message' => 'Transaction is not valid']);
         else return api_response($request, true, 200, ['transaction id is valid']);

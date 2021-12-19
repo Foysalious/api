@@ -57,7 +57,7 @@ class OperationController extends Controller
     public function store($partner, Request $request)
     {
         $this->validate($request, ['address' => "sometimes|required|string", 'locations' => "sometimes|required", 'working_schedule' => "sometimes|required", 'is_home_delivery_available' => "sometimes|required", 'is_on_premise_available' => "sometimes|required", 'delivery_charge' => "sometimes|required",]);
-        if (($request->has('is_home_delivery_available') && !$request->is_home_delivery_available) && ($request->has('is_on_premise_available') && !$request->is_on_premise_available)) {
+        if (($request->filled('is_home_delivery_available') && !$request->is_home_delivery_available) && ($request->filled('is_on_premise_available') && !$request->is_on_premise_available)) {
             return api_response($request, null, 400, ['message' => "You have to select at least one delivery option"]);
         }
 
@@ -72,15 +72,15 @@ class OperationController extends Controller
     {
         DB::transaction(function () use ($request, $partner) {
             $partner_info = [];
-            if ($request->has('locations')) $partner->locations()->sync(json_decode($request->locations));
-            if ($request->has('address')) $partner_info['address'] = $request->address;
-            if ($request->has('lat') && $request->has('lng')) {
+            if ($request->filled('locations')) $partner->locations()->sync(json_decode($request->locations));
+            if ($request->filled('address')) $partner_info['address'] = $request->address;
+            if ($request->filled('lat') && $request->filled('lng')) {
                 $old_geo_informations = $partner->geo_informations;
                 $partner_info['geo_informations'] = json_encode([
                     'lat' => $request->lat,
                     'lng' => $request->lng,
                     'radius' => $partner->geo_informations ? (json_decode($partner->geo_informations)->radius ?: 1) : 1
-                    //'radius' => $request->has('radius') ? ($request->radius / 1000) : (json_decode($partner->geo_informations)->radius ?: 1)
+                    //'radius' => $request->filled('radius') ? ($request->radius / 1000) : (json_decode($partner->geo_informations)->radius ?: 1)
                 ]);
 
                 $geo_change_log_data = ['old_geo_informations' => $old_geo_informations, 'new_geo_informations' => $partner_info['geo_informations'], 'log' => 'Partner Geo Information Updated'];
@@ -92,7 +92,7 @@ class OperationController extends Controller
 
             $partner->update($partner_info);
 
-            if ($request->has('working_schedule')) {
+            if ($request->filled('working_schedule')) {
                 $partner->workingHours()->delete();
                 foreach (json_decode($request->working_schedule) as $working_schedule) {
                     $partner->workingHours()->save(new PartnerWorkingHour(['day' => $working_schedule->day, 'start_time' => $working_schedule->start_time, 'end_time' => $working_schedule->end_time]));
@@ -102,12 +102,12 @@ class OperationController extends Controller
             $category_partner_info = [];
             $should_update_category_partner = 0;
 
-            if ($request->has('is_home_delivery_available') && $request->has('delivery_charge')) {
+            if ($request->filled('is_home_delivery_available') && $request->filled('delivery_charge')) {
                 $category_partner_info['is_home_delivery_applied'] = $request->is_home_delivery_available;
                 $category_partner_info['delivery_charge'] = $request->is_home_delivery_available ? $request->delivery_charge : 0;
                 $should_update_category_partner = 1;
             }
-            if ($request->has('is_on_premise_available')) {
+            if ($request->filled('is_on_premise_available')) {
                 $category_partner_info['is_partner_premise_applied'] = $request->is_on_premise_available;
                 $should_update_category_partner = 1;
             }

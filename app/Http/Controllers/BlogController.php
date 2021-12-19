@@ -22,7 +22,7 @@ class BlogController extends Controller
             $cache_blogs = json_decode(Redis::get($key_name));
             if ($cache_blogs) return api_response($request, $cache_blogs, 200, ['data' => $cache_blogs]);
             $limit = 3;
-            if ($request->has("limit")) $limit = $request->limit;
+            if ($request->filled("limit")) $limit = $request->limit;
             $url = constants('BLOG_URL') . "/wp-json/wp/v2/posts?orderby=date&order=desc&per_page=".$limit;
             $response = (new Client())->get($url)->getBody()->getContents();
             $response = json_decode($response, 1);

@@ -32,15 +32,15 @@ class OfferController extends Controller
             'lng' => 'required_with:lat'
         ]);
 
-        if ($request->has('user') && $request->user == 0) return api_response($request, null, 404);
+        if ($request->filled('user') && $request->user == 0) return api_response($request, null, 404);
         $user = $category = $location = null;
-        if ($request->has('user') && $request->has('user_type') && $request->has('remember_token')) {
+        if ($request->filled('user') && $request->filled('user_type') && $request->filled('remember_token')) {
             $model_name = "App\\Models\\" . ucwords($request->user_type);
             $user = $model_name::with('orders', 'promotions')->where('id', (int)$request->user)->where('remember_token', $request->remember_token)->first();
         }
-        if ($request->has('location')) {
+        if ($request->filled('location')) {
             $location = Location::find($request->location);
-        } else if ($request->has('lat')) {
+        } else if ($request->filled('lat')) {
             $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
             if (!is_null($hyperLocation)) $location = $hyperLocation->location;
         }
@@ -50,7 +50,7 @@ class OfferController extends Controller
         if (count($offers) == 0) return api_response($request, null, 404);
         $offer_filter = new OfferFilter($offers);
         if ($user) $offer_filter->setCustomer($user);
-        if ($request->has('category')) $offer_filter->setCategory(Category::find((int)$request->category));
+        if ($request->filled('category')) $offer_filter->setCategory(Category::find((int)$request->category));
         if ($location) $offer_filter->setLocation($location);
         $offers = $this->getOffersWithFormation($offer_filter->filter()->sortByDesc('amount'));
         if (count($offers) > 0) return api_response($request, $offers, 200, ['offers' => $offers]);
@@ -104,7 +104,7 @@ class OfferController extends Controller
         try {
             $offer = OfferShowcase::active()->where('id', $offer)->first();
             if ($offer) {
-                $customer = $request->has('remember_token') ? Customer::where('remember_token', $request->input('remember_token'))->first() : null;
+                $customer = $request->filled('remember_token') ? Customer::where('remember_token', $request->input('remember_token'))->first() : null;
                 if ($customer) {
                     $offer->customer_id = $customer->id;
                 }

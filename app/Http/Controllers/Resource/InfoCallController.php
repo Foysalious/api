@@ -49,8 +49,8 @@ class InfoCallController extends Controller
         $auth_user_array = $auth_user->toArray();
         $created_by = $auth_user_array['resource']['id'];
         $query = InfoCall::where('created_by', $created_by)->where('created_by_type', get_class($resource));
-        if (!($request->has('year')) && !($request->has('month'))) {
-            if (($request->has('mobile'))) {
+        if (!($request->filled('year')) && !($request->filled('month'))) {
+            if (($request->filled('mobile'))) {
                 $customer_exists = $query->where('customer_mobile','like', '%'. $request->mobile);
                 $info_call_exists = $customer_exists->get()->count();
                 if ($info_call_exists > 0)  $filtered_info_calls = $customer_exists;
@@ -59,9 +59,9 @@ class InfoCallController extends Controller
             else $filtered_info_calls = $query;
         }
         else {
-            if ($request->has('limit')) $info_calls = $infoCallList->setOffset($request->offset)->setLimit($request->limit);
-            if ($request->has('year')) $info_calls = $infoCallList->setYear($request->year);
-            if ($request->has('month')) $info_calls = $infoCallList->setMonth($request->month);
+            if ($request->filled('limit')) $info_calls = $infoCallList->setOffset($request->offset)->setLimit($request->limit);
+            if ($request->filled('year')) $info_calls = $infoCallList->setYear($request->year);
+            if ($request->filled('month')) $info_calls = $infoCallList->setMonth($request->month);
             $filtered_info_calls = $info_calls->getFilteredInfoCalls($query);
         }
         $info_call_list = $filtered_info_calls->get()->sortByDesc('id')->toArray();
@@ -115,9 +115,9 @@ class InfoCallController extends Controller
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
         $resource = $auth_user->getResource();
-        if ($request->has('limit')) $info_calls = $infoCallList->setOffset($request->offset)->setLimit($request->limit);
-        if ($request->has('year')) $info_calls = $infoCallList->setYear($request->year);
-        if ($request->has('month')) $info_calls = $infoCallList->setMonth($request->month);
+        if ($request->filled('limit')) $info_calls = $infoCallList->setOffset($request->offset)->setLimit($request->limit);
+        if ($request->filled('year')) $info_calls = $infoCallList->setYear($request->year);
+        if ($request->filled('month')) $info_calls = $infoCallList->setMonth($request->month);
         $auth_user_array = $auth_user->toArray();
         $created_by = $auth_user_array['resource']['id'];
         $query = InfoCall::where('created_by', $created_by)->where('created_by_type', get_class($resource));
@@ -126,7 +126,7 @@ class InfoCallController extends Controller
             'total_service_requests' => ! ($total_requests) ? 0 : $total_requests,
         ];
         $resource_transaction = DB::table('resource_transactions')->where('resource_id',$auth_user_array['resource']['id'])->where('job_id','<>',null);
-        if (!($request->has('year')) && !($request->has('month'))) {
+        if (!($request->filled('year')) && !($request->filled('month'))) {
             $filtered_reward = ($resource_transaction != null) ? array_sum(array_column($resource_transaction->get()->toArray(), 'amount')) : 0;
             $filtered_info_calls = $query->get();
             $total_orders = $filtered_info_calls->where('status', Statuses::CONVERTED)->count();
@@ -169,7 +169,7 @@ class InfoCallController extends Controller
         $resource = $auth_user->getResource();
         $this->setModifier($resource);
         $service = Service::select('name')->where('id', $request->service_id)->get();
-        $service_name = $request->has('service_id') ? $service[0]['name'] : $request->service_name;
+        $service_name = $request->filled('service_id') ? $service[0]['name'] : $request->service_name;
 
         $data = [
             'priority' => 'High',

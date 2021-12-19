@@ -90,7 +90,7 @@ class ApprovalRequestController extends Controller
         $approval_requests_with_order = $approval_requests->where('is_notified', 1);
         $merged_approval_requests = $approval_requests_with_order->merge($approval_requests_without_order);
 
-        if ($request->has('limit')) $merged_approval_requests = $merged_approval_requests->splice($offset, $limit);
+        if ($request->filled('limit')) $merged_approval_requests = $merged_approval_requests->splice($offset, $limit);
 
         foreach ($merged_approval_requests as $approval_request) {
             if (!$approval_request->requestable) continue;
@@ -217,7 +217,7 @@ class ApprovalRequestController extends Controller
         if (!$business_member) return api_response($request, null, 404);
 
         $leaves = $leave_repo->getLeavesByBusinessMember($business_member)->orderBy('id', 'desc');
-        if ($request->has('type')) $leaves = $leaves->where('leave_type_id', $request->type);
+        if ($request->filled('type')) $leaves = $leaves->where('leave_type_id', $request->type);
         $leaves = $leaves->get();
         $fractal = new Manager();
         $resource = new Collection($leaves, new LeaveListTransformer());

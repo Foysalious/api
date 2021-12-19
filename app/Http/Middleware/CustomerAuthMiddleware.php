@@ -21,7 +21,7 @@ class CustomerAuthMiddleware extends AccessTokenMiddleware
 
         if ($token) return parent::handle($request, $next);
 
-        if (!$request->has('remember_token')) {
+        if (!$request->filled('remember_token')) {
             return api_response($request, null, 400, ["message" => "Authentication token is missing from the request."]);
         }
 
