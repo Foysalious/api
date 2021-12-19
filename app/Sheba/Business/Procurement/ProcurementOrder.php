@@ -72,17 +72,17 @@ class ProcurementOrder
         $resource = new Collection($procurement_orders->get(), new ProcurementOrderListTransformer());
         $procurement_orders = $manager->createData($resource)->toArray()['data'];
 
-        if ($request->has('status') && $request->status != 'all') $procurement_orders = $this->filterWithStatus($procurement_orders, $request->status);
-        if ($request->has('search')) $procurement_orders = $this->searchByTitle($procurement_orders, $request)->values();
-        if ($request->has('sort_by_id')) $procurement_orders = $this->sortById($procurement_orders, $request->sort_by_id)->values();
-        if ($request->has('sort_by_title')) $procurement_orders = $this->sortByTitle($procurement_orders, $request->sort_by_title)->values();
-        if ($request->has('sort_by_vendor')) $procurement_orders = $this->sortByVendor($procurement_orders, $request->sort_by_vendor)->values();
-        if ($request->has('sort_by_status')) $procurement_orders = $this->sortByStatus($procurement_orders, $request->sort_by_status)->values();
-        if ($request->has('sort_by_created_at')) $procurement_orders = $this->sortByCreatedAt($procurement_orders, $request->sort_by_created_at)->values();
+        if ($request->filled('status') && $request->status != 'all') $procurement_orders = $this->filterWithStatus($procurement_orders, $request->status);
+        if ($request->filled('search')) $procurement_orders = $this->searchByTitle($procurement_orders, $request)->values();
+        if ($request->filled('sort_by_id')) $procurement_orders = $this->sortById($procurement_orders, $request->sort_by_id)->values();
+        if ($request->filled('sort_by_title')) $procurement_orders = $this->sortByTitle($procurement_orders, $request->sort_by_title)->values();
+        if ($request->filled('sort_by_vendor')) $procurement_orders = $this->sortByVendor($procurement_orders, $request->sort_by_vendor)->values();
+        if ($request->filled('sort_by_status')) $procurement_orders = $this->sortByStatus($procurement_orders, $request->sort_by_status)->values();
+        if ($request->filled('sort_by_created_at')) $procurement_orders = $this->sortByCreatedAt($procurement_orders, $request->sort_by_created_at)->values();
 
         $total_orders = count($procurement_orders);
         list($offset, $limit) = calculatePagination($request);
-        if ($request->has('limit')) $procurement_orders = collect($procurement_orders)->splice($offset, $limit);
+        if ($request->filled('limit')) $procurement_orders = collect($procurement_orders)->splice($offset, $limit);
 
         return [$procurement_orders, $total_orders];
     }

@@ -129,7 +129,7 @@ class BusinessesController extends Controller
         ]);
         $is_business_has_vendors = $partners->count() ? 1 : 0;
 
-        if ($request->has('status')) $partners = $partners->where('is_active_for_b2b', $request->status);
+        if ($request->filled('status')) $partners = $partners->where('is_active_for_b2b', $request->status);
 
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
@@ -137,9 +137,9 @@ class BusinessesController extends Controller
         $vendors = $manager->createData($vendors)->toArray()['data'];
 
         $vendors = collect($vendors);
-        if ($request->has('search')) $vendors = $this->searchWithName($vendors, $request);
+        if ($request->filled('search')) $vendors = $this->searchWithName($vendors, $request);
         $total_vendors = $vendors->count();
-        if ($request->has('limit')) $vendors = $vendors->splice($offset, $limit);
+        if ($request->filled('limit')) $vendors = $vendors->splice($offset, $limit);
 
         return api_response($request, $vendors, 200, [
             'vendors' => $vendors,
@@ -350,7 +350,7 @@ class BusinessesController extends Controller
                 $vendors->push($vendor);
             });
 
-        if ($request->has('q')) {
+        if ($request->filled('q')) {
             $needle = $request->q;
             $vendors = $vendors->filter(function ($vendor) use ($needle) {
                 return (stripos($vendor['mobile'], $needle) !== false) ||

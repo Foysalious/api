@@ -46,7 +46,7 @@ class SearchController extends Controller
         $services = $query->select('id', 'name', 'thumb', 'banner', 'variables', 'variable_type', 'min_quantity', 'category_id')
             ->take(10)
             ->get();
-        if ($request->has('p_c')) {
+        if ($request->filled('p_c')) {
             $category = Category::find($request->p_c);
             $children_categories = $category->children()->pluck('id');
             $services = $services->whereIn('category_id', $children_categories->values()->all());

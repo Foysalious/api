@@ -31,7 +31,7 @@ class IncomeExpenseController extends Controller
     public function storeIncomeEntry(Request $request): JsonResponse
     {
         $this->validate($request, IncomeExpenseStatics::incomeExpenseEntryValidation());
-        if ($request->has("amount_cleared") && $request->amount > $request->amount_cleared) {
+        if ($request->filled("amount_cleared") && $request->amount > $request->amount_cleared) {
             $this->validate($request, ['customer_id' => 'required']);
         }
         $response = $this->accountingRepo->storeEntry($request, EntryTypes::INCOME);
@@ -47,7 +47,7 @@ class IncomeExpenseController extends Controller
     public function updateIncomeEntry(Request $request, $income_id): JsonResponse
     {
         $this->validate($request, IncomeExpenseStatics::incomeExpenseEntryValidation());
-        if ($request->has("amount_cleared") && $request->amount > $request->amount_cleared) {
+        if ($request->filled("amount_cleared") && $request->amount > $request->amount_cleared) {
             $this->validate($request, ['customer_id' => 'required']);
         }
         $response = $this->accountingRepo->updateEntry($request, EntryTypes::INCOME, $income_id);
@@ -63,7 +63,7 @@ class IncomeExpenseController extends Controller
     {
 
         $this->validate($request, IncomeExpenseStatics::incomeExpenseEntryValidation());
-        if ($request->has("amount_cleared") && $request->amount > $request->amount_cleared) {
+        if ($request->filled("amount_cleared") && $request->amount > $request->amount_cleared) {
             $this->validate($request, ['customer_id' => 'required']);
         }
 //            $product = (json_decode($request->inventory_products, true));
@@ -85,7 +85,7 @@ class IncomeExpenseController extends Controller
     public function updateExpenseEntry(Request $request, $expense_id): JsonResponse
     {
         $this->validate($request, IncomeExpenseStatics::incomeExpenseEntryValidation());
-        if ($request->has("amount_cleared") && $request->amount > $request->amount_cleared) {
+        if ($request->filled("amount_cleared") && $request->amount > $request->amount_cleared) {
             $this->validate($request, ['customer_id' => 'required']);
         }
 //            $product = (json_decode($request->inventory_products, true));

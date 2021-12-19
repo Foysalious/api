@@ -23,10 +23,10 @@ class ExpenseRepo
                 ->select('id', 'member_id', 'amount', 'status', 'is_updated_by_super_admin', 'remarks', 'type', 'created_at')
                 ->orderBy('id', 'desc');
 
-            if ($request->has('status')) $expenses = $expenses->where('status', $request->status);
+            if ($request->filled('status')) $expenses = $expenses->where('status', $request->status);
 
-            $start_date = $request->has('start_date') ? $request->start_date : null;
-            $end_date = $request->has('end_date') ? $request->end_date : null;
+            $start_date = $request->filled('start_date') ? $request->start_date : null;
+            $end_date = $request->filled('end_date') ? $request->end_date : null;
             if ($start_date && $end_date) {
                 $expenses->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
             }

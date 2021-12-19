@@ -39,12 +39,12 @@ class TripRequestController extends Controller
             $list = [];
             list($offset, $limit) = calculatePagination($request);
             $status = $car_type = null;
-            if ($request->has('status')) {
+            if ($request->filled('status')) {
                 if ($request->status == "accept") $status = 'accepted';
                 elseif ($request->status == "reject") $status = 'rejected';
                 else $status = 'pending';
             }
-            if ($request->has('vehicle')) $car_type = $request->vehicle;
+            if ($request->filled('vehicle')) $car_type = $request->vehicle;
             $business = $request->business->load(['businessTripRequests' => function ($q) use ($offset, $limit, $status, $car_type) {
                 $q->with('member.profile')->orderBy('id', 'desc')->skip($offset)->take($limit);
                 if ($status) $q->where('status', $status);
@@ -94,9 +94,9 @@ class TripRequestController extends Controller
             $list = [];
             list($offset, $limit) = calculatePagination($request);
             $from = $to = $vehicle_id = null;
-            if ($request->has('from')) $from = $request->from;
-            elseif ($request->has('to')) $to = $request->to;
-            elseif ($request->has('vehicle_id')) $vehicle_id = $request->vehicle_id;
+            if ($request->filled('from')) $from = $request->from;
+            elseif ($request->filled('to')) $to = $request->to;
+            elseif ($request->filled('vehicle_id')) $vehicle_id = $request->vehicle_id;
             $business = $business = $request->business->load(['businessTrips' => function ($q) use ($offset, $limit, $from, $to, $vehicle_id) {
                 $q->with(['vehicle.basicInformation', 'driver.profile'])->orderBy('id', 'desc')->skip($offset)->take($limit);
                 if ($from && $to) {
@@ -277,7 +277,7 @@ class TripRequestController extends Controller
             $business_member = $request->business_member;
             $will_auto_assign = (int)$business_member->is_super || $business_member->actions()->where('tag', config('business.actions.trip_request.rw'))->first();
             $this->validate($request, ['status' => 'required|string|in:accept,reject']);
-            if ($request->has('trip_request_id')) {
+            if ($request->filled('trip_request_id')) {
                 $business_trip_request = BusinessTripRequest::find((int)$request->trip_request_id);
                 if ($business_trip_request->status != 'pending' && !$will_auto_assign) return api_response($request, null, 403);
             } else {
@@ -286,8 +286,8 @@ class TripRequestController extends Controller
                     ->setEndDate($request->end_date)->setTripType($request->trip_type)->setVehicleType($request->vehicle_type)->setReason($request->reason)
                     ->setDetails($request->details)->setNoOfSeats($request->no_of_seats);
 
-                if ($request->has('pickup_lat')) $trip_request_creator->setPickupGeo((new Geo())->setLat($request->pickup_lat)->setLng($request->pickup_lng));
-                if ($request->has('dropoff_lat')) $trip_request_creator->setPickupGeo((new Geo())->setLat($request->dropoff_lat)->setLng($request->dropoff_lng));
+                if ($request->filled('pickup_lat')) $trip_request_creator->setPickupGeo((new Geo())->setLat($request->pickup_lat)->setLng($request->pickup_lng));
+                if ($request->filled('dropoff_lat')) $trip_request_creator->setPickupGeo((new Geo())->setLat($request->dropoff_lat)->setLng($request->dropoff_lng));
 
                 $business_trip_request = $trip_request_creator->create();
             }
@@ -299,7 +299,7 @@ class TripRequestController extends Controller
                 ->setBusinessTripRequest($business_trip_request)
                 ->setSuperAdmins($super_admins);
 
-            if ($request->has('status') && $request->status == "accept") {
+            if ($request->filled('status') && $request->status == "accept") {
                 $business_trip_request->vehicle_id = $request->vehicle_id;
                 $business_trip_request->driver_id = $request->driver_id;
                 $business_trip_request->status = 'accepted';
@@ -361,8 +361,8 @@ class TripRequestController extends Controller
                 ->setEndDate($request->end_date)->setTripType($request->trip_type)->setVehicleType($request->vehicle_type)->setReason($request->reason)
                 ->setDetails($request->details)->setNoOfSeats($request->no_of_seats);
 
-            if ($request->has('pickup_lat')) $trip_request_creator->setPickupGeo((new Geo())->setLat($request->pickup_lat)->setLng($request->pickup_lng));
-            if ($request->has('dropoff_lat')) $trip_request_creator->setPickupGeo((new Geo())->setLat($request->dropoff_lat)->setLng($request->dropoff_lng));
+            if ($request->filled('pickup_lat')) $trip_request_creator->setPickupGeo((new Geo())->setLat($request->pickup_lat)->setLng($request->pickup_lng));
+            if ($request->filled('dropoff_lat')) $trip_request_creator->setPickupGeo((new Geo())->setLat($request->dropoff_lat)->setLng($request->dropoff_lng));
 
             $business_trip_request = $trip_request_creator->create();
 

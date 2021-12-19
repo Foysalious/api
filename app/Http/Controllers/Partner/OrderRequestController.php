@@ -123,7 +123,7 @@ class OrderRequestController extends Controller
     {
         $order_by = 'desc';
         $field = 'created_at';
-        if ($request->has('sort')) {
+        if ($request->filled('sort')) {
             $explode = explode(':', $request->get('sort'));
             $field = $explode[0] == 'created_at' ? $explode[0] : 'jobs.schedule_date';
             if (isset($explode[1]) && $explode[1] == 'asc') {

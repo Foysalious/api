@@ -87,23 +87,23 @@ class ShebaController extends Controller
 
     public function getImages(Request $request)
     {
-        if ($request->has('is_business') && (int)$request->is_business) {
+        if ($request->filled('is_business') && (int)$request->is_business) {
             $portal_name = 'manager-app';
             $screen      = 'eshop';
 
-            if (!$request->has('location')) $location = 4;
+            if (!$request->filled('location')) $location = 4;
             else $location = $request->location;
-        } else if ($request->has('is_ddn') && (int)$request->is_ddn) {
+        } else if ($request->filled('is_ddn') && (int)$request->is_ddn) {
             $portal_name = 'bondhu-app';
             $screen      = 'eshop';
 
-            if (!$request->has('location')) $location = 4;
+            if (!$request->filled('location')) $location = 4;
             else $location = $request->location;
         } else {
-            if ($request->has('location')) {
+            if ($request->filled('location')) {
                 $location = $request->location;
             } else {
-                if ($request->has('lat') && $request->has('lng')) {
+                if ($request->filled('lat') && $request->filled('lng')) {
                     $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
                     if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
                 }
@@ -122,7 +122,7 @@ class ShebaController extends Controller
          * Previous Codes, Left Written Until QA
          *
          * $images = Slider::select('id', 'image_link', 'small_image_link', 'target_link', 'target_type', 'target_id');
-         * if ($request->has('is_business') && (int)$request->is_business) {
+         * if ($request->filled('is_business') && (int)$request->is_business) {
          * $images = $images->showBusiness()->map(function ($image) {
          * $image['target_type'] = $image['target_type'] ? explode('\\', $image['target_type'])[2] : null;
          * return $image;
@@ -426,7 +426,7 @@ class ShebaController extends Controller
         try {
             $this->validate($request, NidValidation::$RULES);
             $nidValidation = new NidValidation();
-            if ($request->has('manager_resource')) {
+            if ($request->filled('manager_resource')) {
                 $exists = Profile::query()
                     ->where('nid_no', $request->nid)
                     ->whereNotIn('id', [$request->manager_resource->profile->id])

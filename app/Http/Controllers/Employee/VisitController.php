@@ -181,16 +181,16 @@ class VisitController extends Controller
 
         $team_visits = $visit_list->getTeamVisits($this->visitRepository, $business_member);
 
-        if ($request->has('start_date') && $request->has('end_date')) {
+        if ($request->filled('start_date') && $request->filled('end_date')) {
             $time_frame = $time_frame->forDateRange($request->start_date, $request->end_date);
             $team_visits = $team_visits->whereBetween('schedule_date', [$time_frame->start, $time_frame->end]);
         }
 
-        if ($request->has('employees')) {
+        if ($request->filled('employees')) {
             $team_visits = $team_visits->whereIn('visitor_id', json_decode($request->employees, 1));
         }
 
-        if ($request->has('status')) {
+        if ($request->filled('status')) {
             $team_visits = $team_visits->where('status', $request->status);
         }
 

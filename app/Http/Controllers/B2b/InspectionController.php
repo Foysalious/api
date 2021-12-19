@@ -28,19 +28,19 @@ class InspectionController extends Controller
                 ->where('business_id', $business->id)
                 ->orderBy('id', 'DESC');
             $inspection_lists = [];
-            if ($request->has('filter') && $request->filter === 'process') {##Ongoing
+            if ($request->filled('filter') && $request->filter === 'process') {##Ongoing
                 $inspections = $inspections->where(function ($query) {
                     $query->where('status', '<>', 'closed')
                         ->where('status', '<>', 'cancelled')
                         ->where('created_at', '>=', Carbon::today()->toDateString() . ' 00:00:00');
                 })->orderBy('start_date')->skip($offset)->limit($limit);
 
-                if ($request->has('inspection_form')) {
+                if ($request->filled('inspection_form')) {
                     $inspections = $inspections->whereHas('formTemplate', function ($query) use ($request) {
                         $query->where('id', $request->inspection_form);
                     });
                 }
-                if ($request->has('type')) {
+                if ($request->filled('type')) {
                     $inspections = $inspections->where('type', $request->type);
                 }
                 foreach ($inspections->get() as $inspection) {
@@ -55,14 +55,14 @@ class InspectionController extends Controller
                     ];
                     array_push($inspection_lists, $inspection);
                 }
-            } elseif ($request->has('filter') && $request->filter === 'open') {##Schedule
+            } elseif ($request->filled('filter') && $request->filter === 'open') {##Schedule
                 $inspections = $inspections->where('status', 'open')->skip($offset)->limit($limit);
 
-                if ($request->has('inspection_form')) {
+                if ($request->filled('inspection_form')) {
                     $inspections = $inspections->where('form_template_id', $request->inspection_form);
                 }
 
-                if ($request->has('type')) {
+                if ($request->filled('type')) {
                     $inspections->whereHas('vehicle', function ($query) use ($request) {
                         $query->whereHas('basicInformations', function ($query) use ($request) {
                             $query->where('type', $request->type);
@@ -94,17 +94,17 @@ class InspectionController extends Controller
                 }
             } else {
                 $inspections = $inspections->where('status', 'closed')->skip($offset)->limit($limit);##History
-                if ($request->has('inspection_form')) {
+                if ($request->filled('inspection_form')) {
                     $inspections = $inspections->whereHas('formTemplate', function ($query) use ($request) {
                         $query->where('id', $request->inspection_form);
                     });
                 }
-                if ($request->has('type')) {
+                if ($request->filled('type')) {
                     $inspections = $inspections->where('type', $request->type);
                 }
 
-                $start_date = $request->has('start_date') ? $request->start_date : null;
-                $end_date = $request->has('end_date') ? $request->end_date : null;
+                $start_date = $request->filled('start_date') ? $request->start_date : null;
+                $end_date = $request->filled('end_date') ? $request->end_date : null;
                 if ($start_date && $end_date) {
                     $inspections->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
                 }
@@ -311,14 +311,14 @@ class InspectionController extends Controller
             }
 
             $inspection_lists = [];
-            if ($request->has('filter') && $request->filter === 'open') {
+            if ($request->filled('filter') && $request->filter === 'open') {
                 $inspections = $inspections->where('status', 'open')->skip($offset)->limit($limit);
-                if ($request->has('inspection_form')) {
+                if ($request->filled('inspection_form')) {
                     $inspections = $inspections->whereHas('formTemplate', function ($query) use ($request) {
                         $query->where('id', $request->inspection_form);
                     });
                 }
-                if ($request->has('type')) {
+                if ($request->filled('type')) {
                     $inspections->whereHas('vehicle', function ($query) use ($request) {
                         $query->whereHas('basicInformations', function ($query) use ($request) {
                             $query->where('type', $request->type);
@@ -349,14 +349,14 @@ class InspectionController extends Controller
                 }
             } else {
                 $inspections = $inspections->where('status', 'closed')->skip($offset)->limit($limit);
-                if ($request->has('inspection_form')) {
+                if ($request->filled('inspection_form')) {
                     $inspections = $inspections->whereHas('formTemplate', function ($query) use ($request) {
                         $query->where('id', $request->inspection_form);
                     });
                 }
 
-                $start_date = $request->has('start_date') ? $request->start_date : null;
-                $end_date = $request->has('end_date') ? $request->end_date : null;
+                $start_date = $request->filled('start_date') ? $request->start_date : null;
+                $end_date = $request->filled('end_date') ? $request->end_date : null;
                 if ($start_date && $end_date) {
                     $inspections->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
                 }

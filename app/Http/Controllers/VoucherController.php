@@ -87,7 +87,7 @@ class VoucherController extends Controller
     public function index(Request $request)
     {
         try {
-            if ($request->has('amount') || $request->has('pos_services') || $request->has('pos_customer'))
+            if ($request->filled('amount') || $request->filled('pos_services') || $request->filled('pos_customer'))
                 $this->validate($request, ['amount' => 'required']);
 
             $partner = $request->partner;
@@ -97,12 +97,12 @@ class VoucherController extends Controller
             $all_voucher_id = $partner_voucher_query->pluck('id')->toArray();
             $used_voucher_id = PosOrder::byVoucher($all_voucher_id)->pluck('voucher_id')->toArray();
 
-            if ($request->has('filter_type')) {
+            if ($request->filled('filter_type')) {
                 if ($request->filter_type == "used") $partner_voucher_query->whereIn('id', $used_voucher_id);
                 if ($request->filter_type == "valid") $partner_voucher_query->valid();
                 if ($request->filter_type == "invalid") $partner_voucher_query->dateExpire();
             }
-            if ($request->has('q') && !empty($request->q))
+            if ($request->filled('q') && !empty($request->q))
                 $partner_voucher_query = $partner_voucher_query->search($request->q);
 
             $partner_voucher_query = $partner_voucher_query->skip($offset)->take($limit);
@@ -140,17 +140,17 @@ class VoucherController extends Controller
     {
         $is_check_for_promotion = false;
         $pos_order_params = (new CheckParamsForPosOrder());
-        if ($request->has('amount') && !empty($request->amount)) {
+        if ($request->filled('amount') && !empty($request->amount)) {
             $is_check_for_promotion = true;
             $pos_order_params->setOrderAmount($request->amount);
         }
 
-        if ($request->has('pos_services') && !empty($request->pos_services)) {
+        if ($request->filled('pos_services') && !empty($request->pos_services)) {
             $is_check_for_promotion = true;
             $pos_order_params->setPartnerPosService($request->pos_services);
         }
 
-        $pos_customer = $request->has('pos_customer') && !empty($request->pos_customer) ? PosCustomer::find($request->pos_customer) : new PosCustomer();
+        $pos_customer = $request->filled('pos_customer') && !empty($request->pos_customer) ? PosCustomer::find($request->pos_customer) : new PosCustomer();
         $pos_order_params->setApplicant($pos_customer);
 
         return [$is_check_for_promotion, $pos_order_params];
@@ -209,7 +209,7 @@ class VoucherController extends Controller
                 'is_amount_percentage' => $request->is_amount_percentage,
                 'start_date' => Carbon::parse($request->start_date . ' 00:00:00'),
                 'end_date' => Carbon::parse($request->end_date . ' 23:59:59'),
-                'max_customer' => ($request->has('max_customer') && !empty($request->max_customer)) ? $request->max_customer : null,
+                'max_customer' => ($request->filled('max_customer') && !empty($request->max_customer)) ? $request->max_customer : null,
                 'max_order' => 0,
                 'is_created_by_sheba' => 0,
                 'sheba_contribution' => 0.00,
@@ -259,7 +259,7 @@ class VoucherController extends Controller
                 'is_amount_percentage' => $request->is_amount_percentage,
                 'start_date' => Carbon::parse($request->start_date . ' 00:00:00'),
                 'end_date' => Carbon::parse($request->end_date . ' 23:59:59'),
-                'max_customer' => ($request->has('max_customer') && !empty($request->max_customer)) ? $request->max_customer : null,
+                'max_customer' => ($request->filled('max_customer') && !empty($request->max_customer)) ? $request->max_customer : null,
                 'is_created_by_sheba' => 0,
                 'sheba_contribution' => 0.00,
                 'partner_contribution' => 100.00,
@@ -290,14 +290,14 @@ class VoucherController extends Controller
 
         $modules = explode(',', $request->modules);
         $applicant_types = explode(',', $request->applicant_types);
-        if ($request->has('modules')) $rule->setModules($modules);
-        if ($request->has('applicant_types')) $rule->setApplicantTypes($applicant_types);
-        if ($request->has('order_amount')) $rule->setOrderAmount($request->order_amount);
-        if ($request->has('customers') && !empty($request->customers)) {
+        if ($request->filled('modules')) $rule->setModules($modules);
+        if ($request->filled('applicant_types')) $rule->setApplicantTypes($applicant_types);
+        if ($request->filled('order_amount')) $rule->setOrderAmount($request->order_amount);
+        if ($request->filled('customers') && !empty($request->customers)) {
             $mobiles = explode(',', $request->customers);
             $rule->setMobiles($mobiles);
         }
-        if ($request->has('pos_services')) {
+        if ($request->filled('pos_services')) {
             $pos_services = explode(',', $request->pos_services);
             $rule->setPartnerPosService($pos_services);
         }

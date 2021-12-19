@@ -27,7 +27,7 @@ class ApprovalFlowController extends Controller
 
         $approvals_flows = $approval_flow_repo->getApprovalFlowFilterBy($request, $business);
         $total_approvals_flow = $approvals_flows->count();
-        if ($request->has('limit')) $approvals_flows = $approvals_flows->splice($offset, $limit);
+        if ($request->filled('limit')) $approvals_flows = $approvals_flows->splice($offset, $limit);
 
         $approval = [];
         foreach ($approvals_flows as $approval_flow) {

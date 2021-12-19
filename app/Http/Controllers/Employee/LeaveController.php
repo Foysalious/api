@@ -51,7 +51,7 @@ class LeaveController extends Controller
         if (!$business_member) return api_response($request, null, 404);
 
         $leaves = $leave_repo->getLeavesByBusinessMember($business_member)->orderBy('id', 'desc');
-        if ($request->has('type')) $leaves = $leaves->where('leave_type_id', $request->type);
+        if ($request->filled('type')) $leaves = $leaves->where('leave_type_id', $request->type);
         $leaves = $leaves->get();
         $fractal = new Manager();
         $resource = new Collection($leaves, new LeaveListTransformer());
@@ -121,8 +121,8 @@ class LeaveController extends Controller
         $member = $this->getMember($request);
         if (!$business_member) return api_response($request, null, 404);
 
-        $substitute = $request->has('substitute') ? $request->substitute : null;
-        $is_half_day = $request->has('is_half_day') ? $request->is_half_day : 0;
+        $substitute = $request->filled('substitute') ? $request->substitute : null;
+        $is_half_day = $request->filled('is_half_day') ? $request->is_half_day : 0;
 
         $leave = $leave_creator->setTitle($request->title)
             ->setSubstitute($substitute)

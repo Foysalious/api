@@ -47,7 +47,7 @@ class MyTeamController extends Controller
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
         $my_team = $this->subordinateEmployeeList->get($business_member);
-        if ($request->has('search')) $my_team = $this->searchWithEmployeeName($my_team, $request);
+        if ($request->filled('search')) $my_team = $this->searchWithEmployeeName($my_team, $request);
         $total_team = count($my_team);
         if (count($my_team) > 0) return api_response($request, $my_team, 200, [
             'my_team' => $my_team,
@@ -105,7 +105,7 @@ class MyTeamController extends Controller
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
 
-        $date = $request->has('date') ? Carbon::parse($request->date) : Carbon::now();
+        $date = $request->filled('date') ? Carbon::parse($request->date) : Carbon::now();
         $selected_date = $time_frame->forADay($date);
 
         $my_team = $this->subordinateEmployeeList->get($business_member);
@@ -142,7 +142,7 @@ class MyTeamController extends Controller
         /** @var Business $business */
         $business = $this->getBusiness($request);
 
-        $date = $request->has('date') ? Carbon::parse($request->date) : Carbon::now();
+        $date = $request->filled('date') ? Carbon::parse($request->date) : Carbon::now();
         $selected_date = $time_frame->forADay($date);
 
         $my_team = $this->subordinateEmployeeList->get($business_member);

@@ -175,17 +175,17 @@ class ResourceJobController extends Controller
         $resource = $auth_user->getResource();
         if ($resource->id !== $job->resource_id) return api_response($request, $job, 403, ["message" => "You're not authorized to access this job."]);
 
-        if ($request->has('services')) {
+        if ($request->filled('services')) {
             if (!is_array(json_decode($request->services))) return api_response($request, null, 400);
             $updatedBill = $billUpdate->getUpdatedBillForServiceAdd($job);
             return api_response($request, $updatedBill, 200, ['bill' => $updatedBill]);
         }
-        if ($request->has('materials')) {
+        if ($request->filled('materials')) {
             if (!is_array(json_decode($request->materials))) return api_response($request, null, 400);
             $updatedBill = $billUpdate->getUpdatedBillForMaterialAdd($job);
             return api_response($request, $updatedBill, 200, ['bill' => $updatedBill]);
         }
-        if ($request->has('quantity')) {
+        if ($request->filled('quantity')) {
             if (!is_array(json_decode($request->quantity))) return api_response($request, null, 400);
             $updatedBill = $billUpdate->getUpdatedBillForQuantityUpdate($job);
             return api_response($request, $updatedBill, 200, ['bill' => $updatedBill]);
@@ -228,9 +228,9 @@ class ResourceJobController extends Controller
         $auth_user = $request->auth_user;
         $resource = $auth_user->getResource();
         $jobs = $job_list->setResource($resource);
-        if ($request->has('limit')) $jobs = $jobs->setOffset($request->offset)->setLimit($request->limit);
-        if ($request->has('year')) $jobs = $jobs->setYear($request->year);
-        if ($request->has('month')) $jobs = $jobs->setMonth($request->month);
+        if ($request->filled('limit')) $jobs = $jobs->setOffset($request->offset)->setLimit($request->limit);
+        if ($request->filled('year')) $jobs = $jobs->setYear($request->year);
+        if ($request->filled('month')) $jobs = $jobs->setMonth($request->month);
         $jobs = $jobs->getHistoryJobs();
         return api_response($request, $jobs, 200, ['jobs' => ['years' => $jobs]]);
     }
@@ -250,7 +250,7 @@ class ResourceJobController extends Controller
             });
         } else {
             $jobs = $job_list->setResource($resource)->setQuery('"' . $request->q . '"');
-            if ($request->has('limit')) $jobs = $jobs->setOffset($request->offset)->setLimit($request->limit);
+            if ($request->filled('limit')) $jobs = $jobs->setOffset($request->offset)->setLimit($request->limit);
             $jobs = $jobs->getJobsFilteredByServiceOrCustomerName();
         }
         if ($jobs->isEmpty()) return api_response($request, $jobs, 404);

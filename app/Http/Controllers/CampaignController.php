@@ -19,9 +19,9 @@ class CampaignController extends Controller
             $offers = OfferShowcase::active()->campaign()->valid()->orderBy('created_at', 'DESC')->get();
 
             $location = '';
-            if ($request->has('location')) {
+            if ($request->filled('location')) {
                 $location = (int)$request->location;
-            } elseif ($request->has('lat') && $request->has('lng')) {
+            } elseif ($request->filled('lat') && $request->filled('lng')) {
                 $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
                 if (!is_null($hyperLocation)) $location = $hyperLocation->location_id;
             }

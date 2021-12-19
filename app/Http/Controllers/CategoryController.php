@@ -54,11 +54,11 @@ class CategoryController extends Controller
 
     public function index(Request $request)
     {
-        $is_business = $request->has('is_business') && (int)$request->is_business;
-        $is_partner = ($request->has('is_partner') && (int)$request->is_partner) || in_array($request->header('portal-name'), ['manager-app', 'bondhu-app']);
-        $is_b2b = $request->has('is_b2b') && (int)$request->is_b2b;
-        $is_partner_registration = $request->has('is_partner_registration') && (int)$request->is_partner_registration;
-        $is_ddn = $request->has('is_ddn') && (int)$request->is_ddn;
+        $is_business = $request->filled('is_business') && (int)$request->is_business;
+        $is_partner = ($request->filled('is_partner') && (int)$request->is_partner) || in_array($request->header('portal-name'), ['manager-app', 'bondhu-app']);
+        $is_b2b = $request->filled('is_b2b') && (int)$request->is_b2b;
+        $is_partner_registration = $request->filled('is_partner_registration') && (int)$request->is_partner_registration;
+        $is_ddn = $request->filled('is_ddn') && (int)$request->is_ddn;
 
         $filter_publication = function ($q) use ($request, $is_business, $is_partner, $is_b2b, $is_partner_registration,$is_ddn) {
             if ($is_business) {
@@ -80,9 +80,9 @@ class CategoryController extends Controller
 
             $with = '';
             $location = null;
-            if ($request->has('location')) {
+            if ($request->filled('location')) {
                 $location = Location::find($request->location);
-            } else if ($request->has('lat')) {
+            } else if ($request->filled('lat')) {
                 $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
                 if (!is_null($hyperLocation)) $location = $hyperLocation->location;
             }
@@ -105,7 +105,7 @@ class CategoryController extends Controller
                 });
             }
             $categories = $categories->select('id', 'name', 'bn_name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id', 'is_auto_sp_enabled', 'min_order_amount', 'max_order_amount');
-            if ($request->has('with')) {
+            if ($request->filled('with')) {
                 $with = $request->with;
                 if ($with == 'children') {
                     $categories->with(['allChildren' => function ($q) use ($location, $filter_publication, $best_deal_category, $is_business, $is_b2b, $is_ddn) {
@@ -137,7 +137,7 @@ class CategoryController extends Controller
             }
 
             $filter_publication($categories);
-            //$categories = $request->has('is_business') && (int)$request->is_business ? $categories->publishedForBusiness() : $categories->published();
+            //$categories = $request->filled('is_business') && (int)$request->is_business ? $categories->publishedForBusiness() : $categories->published();
             $categories = $categories->get();
 
             foreach ($categories as $key => &$category) {
@@ -295,9 +295,9 @@ class CategoryController extends Controller
             $this->validate($request, ['location' => 'sometimes|numeric', 'lat' => 'sometimes|numeric', 'lng' => 'required_with:lat']);
             $location = null;
             $category = Category::find($category);
-            if ($request->has('location')) {
+            if ($request->filled('location')) {
                 $location = Location::find($request->location);
-            } else if ($request->has('lat')) {
+            } else if ($request->filled('lat')) {
                 $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
                 if (!is_null($hyperLocation)) $location = $hyperLocation->location;
             }
@@ -312,7 +312,7 @@ class CategoryController extends Controller
                     });
                 }
                 $q->whereHas('services', function ($q) use ($location, $request) {
-                    if ($request->has('portal') && $request->portal == 'admin-portal') $q->publishedForAll();
+                    if ($request->filled('portal') && $request->portal == 'admin-portal') $q->publishedForAll();
                     else $q->published();
 
                     if ($location) {
@@ -374,10 +374,10 @@ class CategoryController extends Controller
     {
         ini_set('memory_limit', '2048M');
         $subscription_faq = null;
-        if ($request->has('location')) {
+        if ($request->filled('location')) {
             $location = $request->location != '' ? $request->location : 4;
         } else {
-            if ($request->has('lat') && $request->has('lng')) {
+            if ($request->filled('lat') && $request->filled('lng')) {
                 $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
                 if (!is_null($hyperLocation)) $location = $hyperLocation->location->id; else return api_response($request, null, 404);
             } else $location = 4;
@@ -401,7 +401,7 @@ class CategoryController extends Controller
             $category_slug = $category->getSlug();
             list($offset, $limit) = calculatePagination($request);
             $scope = [];
-            if ($request->has('scope')) $scope = $this->serviceRepository->getServiceScope($request->scope);
+            if ($request->filled('scope')) $scope = $this->serviceRepository->getServiceScope($request->scope);
 
             if ($category->parent_id == null) {
                 if ((int)$request->is_business) {
@@ -446,7 +446,7 @@ class CategoryController extends Controller
                 }]);
             }
 
-            if ($request->has('service_id')) {
+            if ($request->filled('service_id')) {
                 $services = $services->filter(function ($service) use ($request) {
                     return $request->service_id == $service->id;
                 });

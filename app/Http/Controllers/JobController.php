@@ -68,7 +68,7 @@ class JobController extends Controller
             $this->validate($request, [
                 'filter' => 'sometimes|string|in:ongoing,history'
             ]);
-            $filter = $request->has('filter') ? $request->filter : null;
+            $filter = $request->filled('filter') ? $request->filter : null;
             $customer = $request->customer->load(['orders' => function ($q) use ($filter) {
                 $q->with(['partnerOrders' => function ($q) use ($filter) {
                     if ($filter) {
@@ -642,7 +642,7 @@ class JobController extends Controller
             'payment_method' => 'sometimes|required|in:online,wallet,bkash,cbl,partner_wallet,nagad',
             'emi_month' => 'numeric'
         ]);
-        $payment_method = $request->has('payment_method') ? $request->payment_method : 'online';
+        $payment_method = $request->filled('payment_method') ? $request->payment_method : 'online';
         $order_adapter->setPartnerOrder($request->job->partnerOrder)->setPaymentMethod($payment_method)->setEmiMonth($request->emi_month);
         $payment = $payment_manager->setMethodName($payment_method)->setPayable($order_adapter->getPayable())->init();
         return api_response($request, $payment, 200, ['link' => $payment->redirect_url, 'payment' => $payment->getFormattedPayment()]);

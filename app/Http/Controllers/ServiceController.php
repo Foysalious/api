@@ -61,13 +61,13 @@ class ServiceController extends Controller
             }
 
             $scope = ['start_price'];
-            if ($request->has('is_business')) $services = $services->publishedForBusiness();
-            if ($request->has('is_b2b')) $services->publishedForB2B();
-            if ($request->has('is_ddn')) $services->publishedForDdn();
+            if ($request->filled('is_business')) $services = $services->publishedForBusiness();
+            if ($request->filled('is_b2b')) $services->publishedForB2B();
+            if ($request->filled('is_ddn')) $services->publishedForDdn();
             $services = $services->skip($offset)->take($limit)->get();
             $services = $this->serviceRepository->getpartnerServicePartnerDiscount($services);
             $services = $this->serviceRepository->addServiceInfo($services, $scope);
-            if ($request->has('is_business') || $request->has('is_ddn')) {
+            if ($request->filled('is_business') || $request->filled('is_ddn')) {
                 $categories = $services->unique('category_id')->pluck('category_id')->toArray();
                 $master_categories = Category::select('id', 'parent_id')->whereIn('id', $categories)->get()
                     ->pluck('parent_id', 'id')->toArray();
@@ -121,7 +121,7 @@ class ServiceController extends Controller
         $service_breakdown = [];
 
         $location = null;
-        if ($request->has('lat') && $request->has('lng')) {
+        if ($request->filled('lat') && $request->filled('lng')) {
             $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
             if (!is_null($hyperLocation)) $location = $hyperLocation->location_id;
         }
@@ -160,7 +160,7 @@ class ServiceController extends Controller
             ];
         }
 
-        $service = $request->has('is_business') ? $service->publishedForBusiness() : ($request->has('is_ddn') ? $service->publishedForDdn() : $service->publishedForAll());
+        $service = $request->filled('is_business') ? $service->publishedForBusiness() : ($request->filled('is_ddn') ? $service->publishedForDdn() : $service->publishedForAll());
         $service = $service->first();
 
         if ($service == null) return api_response($request, null, 404);
@@ -169,7 +169,7 @@ class ServiceController extends Controller
         }
 
         $scope = [];
-        if ($request->has('scope')) {
+        if ($request->filled('scope')) {
             $scope = $this->serviceRepository->getServiceScope($request->scope);
         }
         if (in_array('discount', $scope) || in_array('start_price', $scope)) {
@@ -244,7 +244,7 @@ class ServiceController extends Controller
         }
 
 
-        if ($request->has('is_business') || $request->has('is_ddn')) {
+        if ($request->filled('is_business') || $request->filled('is_ddn')) {
             $questions = null;
             $service['type'] = 'normal';
             if ($service->variable_type == 'Options') {
@@ -277,12 +277,12 @@ class ServiceController extends Controller
      */
     public function show($service, Request $request, PriceCalculation $price_calculation, DeliveryCharge $delivery_charge, JobDiscountHandler $job_discount_handler)
     {
-        if ($request->has('lat') && $request->has('lng')) {
+        if ($request->filled('lat') && $request->filled('lng')) {
             $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->first();
             if (!is_null($hyperLocation)) $location = $hyperLocation->location_id;
             else return api_response($request, null, 404);
         } else {
-            $location = $request->has('location') ? $request->location : 4;
+            $location = $request->filled('location') ? $request->location : 4;
         }
         $service = Service::find($service);
         if (!$service) return api_response($request, null, 404, ['message' => "We couldn't find service."]);

@@ -42,11 +42,11 @@ class PartnerLocationController extends Controller
         ]);
         $validation = new Validation($request);
         if (!$validation->isValid()) return api_response($request, $validation->message, 400, ['message' => $validation->message]);
-        $partner = $request->has('partner') ? $request->partner : null;
+        $partner = $request->filled('partner') ? $request->partner : null;
         $partnerListRequest->setRequest($request)->prepareObject();
         $partner_list = new PartnerList();
         $partner_list->setPartnerListRequest($partnerListRequest)->find($partner);
-        if ($request->has('isAvailable')) {
+        if ($request->filled('isAvailable')) {
             $partners = $partner_list->partners;
             $available_partners = $partners->filter(function ($partner) {
                 return $partner->is_available == 1;
@@ -54,11 +54,11 @@ class PartnerLocationController extends Controller
             $is_available = count($available_partners) != 0 ? 1 : 0;
             return api_response($request, $is_available, 200, ['is_available' => $is_available, 'available_partners' => count($available_partners)]);
         }
-        if ($request->has('show_reason')) return api_response($request, null, 200, ['reason' => $partner_list->getNotShowingReason()]);
+        if ($request->filled('show_reason')) return api_response($request, null, 200, ['reason' => $partner_list->getNotShowingReason()]);
         if ($partner_list->hasPartners) {
             $partner_list->addPricing();
             $partner_list->addInfo();
-            if ($request->has('filter') && $request->filter == 'sheba') {
+            if ($request->filled('filter') && $request->filter == 'sheba') {
                 $partner_list->sortByShebaPartnerPriority();
             } else {
                 $partner_list->sortByShebaSelectedCriteria();
@@ -76,8 +76,8 @@ class PartnerLocationController extends Controller
                 'services' => 'required|string', 'partner' => 'sometimes|required', 'lat' => 'required|numeric', 'lng' => 'required|numeric', 'partner_count' => 'numeric',
             ]);
             return api_response($request, null, 404, ['message' => 'No partner found.']);
-            $partner = $request->has('partner') ? $request->partner : null;
-            $partner_count = $request->has('partner_count') ? (int)$request->partner_count : 0;
+            $partner = $request->filled('partner') ? $request->partner : null;
+            $partner_count = $request->filled('partner_count') ? (int)$request->partner_count : 0;
             if ($partner_count < 50 && $request->services != 'null') {
                 $partnerListRequest->setRequest($request)->prepareObject();
                 $partner_list = new PartnerList();
@@ -138,11 +138,11 @@ class PartnerLocationController extends Controller
                 }
             ]);
 
-            if ($request->has('q')) $partners = $partners->where('name', 'like', '%' . $request->q . '%');
+            if ($request->filled('q')) $partners = $partners->where('name', 'like', '%' . $request->q . '%');
 
             $partners = $partners->whereIn('id', $nearByPartners->keys())->get();
 
-            if ($request->has('category_id')) $partners = $partners->filter(function ($partner) use ($request) {
+            if ($request->filled('category_id')) $partners = $partners->filter(function ($partner) use ($request) {
                 return in_array($request->category_id, $partner->servingMasterCategoryIds());
             });
 

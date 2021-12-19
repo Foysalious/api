@@ -24,7 +24,7 @@ class CustomerSubscriptionOrderPlaceFactory extends SubscriptionOrderPlaceAbstra
      */
     protected function getCreator(Request $request)
     {
-        if($request->has('partner')) {
+        if($request->filled('partner')) {
             /** @var SubscriptionOrderPlaceWithPartner $creator */
             $creator = app(SubscriptionOrderPlaceWithPartner::class);
         } else {

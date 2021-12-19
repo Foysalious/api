@@ -20,7 +20,7 @@ class SmsController extends Controller
     {
         if (!$this->isFromValidWebsite($request)) return api_response($request, null, 403);
 
-        if ($request->has('mobile')) {
+        if ($request->filled('mobile')) {
             $mobile = formatMobile(ltrim($request->mobile));
             $request->merge(['mobile' => $mobile]);
         }

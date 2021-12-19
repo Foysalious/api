@@ -43,7 +43,7 @@ class CustomerController extends Controller
     {
         $customer = $request->customer;
         $location = null;
-        if ($request->has('lat')) {
+        if ($request->filled('lat')) {
             $hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
             if (!is_null($hyper_location)) $location = $hyper_location->location_id;
         }
@@ -80,7 +80,7 @@ class CustomerController extends Controller
             });
         })->where('created_at', '>=', Carbon::now()->subMonths(6)->toDateTimeString())->orderBy('id', 'desc');
 
-        if ($request->has('category_id')) {
+        if ($request->filled('category_id')) {
             $reviews = $reviews->where('category_id', $request->category_id);
         }
         $reviews = $reviews->get();

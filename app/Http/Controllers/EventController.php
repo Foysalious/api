@@ -44,7 +44,7 @@ class EventController extends Controller
 
     private function setCreatedInformation(Request $request, $event)
     {
-        if ($request->has('user_id') && $request->has('user_type')) {
+        if ($request->filled('user_id') && $request->filled('user_type')) {
             $class_name = "App\\Models\\" . ucfirst($request->user_type);
             $user = $class_name::find((int)$request->user_id);
             $this->setModifier($user);

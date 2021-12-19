@@ -263,7 +263,7 @@ class ComplainController extends Controller
     protected function processJobData(Request $request, Job $job)
     {
         return [
-            'job_id' => $request->has('job_id') ? $request->job_id : $job->id,
+            'job_id' => $request->filled('job_id') ? $request->job_id : $job->id,
             'customer_id' => isset($request->customer_id) ? $request->customer_id : $job->partnerOrder->order->customer_id,
             'partner_id' => empty($request->partner_id) ? $job->partnerOrder->partner_id : $request->partner_id
         ];
@@ -321,12 +321,12 @@ class ComplainController extends Controller
     {
         try {
             $accessor = null;
-            if ($request->has('created_by')) {
+            if ($request->filled('created_by')) {
                 if (ucwords($request->created_by) == 'Partner') $accessor = "Partner";
                 elseif (ucwords($request->created_by) == 'Customer') $accessor = "Customer";
             }
 
-            $complains = $this->complainRepo->partnerComplainList($request->partner->id, $accessor, ($request->has('not_resolved') && $request->not_resolved));
+            $complains = $this->complainRepo->partnerComplainList($request->partner->id, $accessor, ($request->filled('not_resolved') && $request->not_resolved));
             $complains = $complains->sortByDesc('id')->take(20);
             $formatted_complains = collect();
 

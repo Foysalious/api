@@ -6,10 +6,10 @@ class CoWorkerInfoSort
 {
     public function sortCoworkerInList($employees, Request $request)
     {
-        if ($request->has('sort_by_employee_id')) $employees = $this->sortByEmployeeId($employees, $request->sort_by_employee_id)->values();
-        if ($request->has('sort_by_name')) $employees = $this->sortByName($employees, $request->sort_by_name)->values();
-        if ($request->has('sort_by_department')) $employees = $this->sortByDepartment($employees, $request->sort_by_department)->values();
-        if ($request->has('sort_by_status')) $employees = $this->sortByStatus($employees, $request->sort_by_status)->values();
+        if ($request->filled('sort_by_employee_id')) $employees = $this->sortByEmployeeId($employees, $request->sort_by_employee_id)->values();
+        if ($request->filled('sort_by_name')) $employees = $this->sortByName($employees, $request->sort_by_name)->values();
+        if ($request->filled('sort_by_department')) $employees = $this->sortByDepartment($employees, $request->sort_by_department)->values();
+        if ($request->filled('sort_by_status')) $employees = $this->sortByStatus($employees, $request->sort_by_status)->values();
         return $employees;
     }
 

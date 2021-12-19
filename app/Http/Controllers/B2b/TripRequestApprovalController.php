@@ -20,18 +20,18 @@ class TripRequestApprovalController extends Controller
                 ->orderBy('id', 'desc')
                 ->skip($offset)
                 ->limit($limit);
-            if ($request->has('status')) {
+            if ($request->filled('status')) {
                 $trip_request_approvals = $trip_request_approvals->where('status', $request->status);
             }
 
-            if ($request->has('vehicle_type')) {
+            if ($request->filled('vehicle_type')) {
                 $trip_request_approvals = $trip_request_approvals->whereHas('businessTripRequest', function ($query) use ($request) {
                     $query->where('vehicle_type', $request->vehicle_type);
                 });
             }
 
-            $start_date = $request->has('start_date') ? $request->start_date : null;
-            $end_date = $request->has('end_date') ? $request->end_date : null;
+            $start_date = $request->filled('start_date') ? $request->start_date : null;
+            $end_date = $request->filled('end_date') ? $request->end_date : null;
             if ($start_date && $end_date) {
                 $trip_request_approvals->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
             }

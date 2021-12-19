@@ -16,9 +16,9 @@ class ResourceReviewController extends Controller
         $resource = $auth_user->getResource();
         $reviewList->setResource($resource);
         list($offset, $limit) = calculatePagination($request);
-        if ($request->has('limit')) $reviewList = $reviewList->setOffset($offset)->setLimit($limit);
-        if ($request->has('rating')) $reviewList->setRating($request->rating);
-        if ($request->has('category')) $reviewList->setCategory($request->category);
+        if ($request->filled('limit')) $reviewList = $reviewList->setOffset($offset)->setLimit($limit);
+        if ($request->filled('rating')) $reviewList->setRating($request->rating);
+        if ($request->filled('category')) $reviewList->setCategory($request->category);
         $reviews = $reviewList->getReviews();
         return api_response($request, $reviews, 200, ['reviews' => $reviews]);
     }

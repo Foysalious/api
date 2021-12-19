@@ -45,8 +45,8 @@ class CustomerAddressController extends Controller
                 'is_save' => 'numeric|in:0,1',
             ]);
             $address_text = $request->house_no . ',' . $request->road_no;
-            if ($request->has('block_no')) $address_text .= ',' . $request->block_no;
-            if ($request->has('sector_no')) $address_text .= ',' . $request->sector_no;
+            if ($request->filled('block_no')) $address_text .= ',' . $request->block_no;
+            if ($request->filled('sector_no')) $address_text .= ',' . $request->sector_no;
             $address_text .= ',' . $request->city;
             $address->setAddress($address_text);
             $geo = $geo_code->setAddress($address)->getGeo();

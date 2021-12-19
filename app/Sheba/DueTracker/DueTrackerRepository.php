@@ -44,18 +44,18 @@ class DueTrackerRepository extends BaseRepository
         $result   = $this->client->get($url);
         /** @var Collection $list */
         $list = $this->attachProfile(collect($result['data']['list']));
-        if ($request->has('balance_type') && in_array($request->balance_type, [
+        if ($request->filled('balance_type') && in_array($request->balance_type, [
                 'due',
                 'received',
                 'clear'
             ])) {
             $list = $list->where('balance_type', $request->balance_type)->values();
         }
-        if($request->has('filter_by_supplier') && $request->filter_by_supplier == 1)
+        if($request->filled('filter_by_supplier') && $request->filter_by_supplier == 1)
         {
             $list = $list->where('is_supplier', 1)->values();
         }
-        if ($request->has('q') && !empty($request->q)) {
+        if ($request->filled('q') && !empty($request->q)) {
             $query = trim($request->q);
             $list  = $list->filter(function ($item) use ($query) {
                 return strpos(strtolower($item['customer_name']), "$query") !== false || strpos(strtolower($item['customer_mobile']), "$query") !== false;
@@ -86,7 +86,7 @@ class DueTrackerRepository extends BaseRepository
             $order = !empty($request->order) ? strtolower($request->order) : 'desc';
             $url   .= "&order_by=$order_by&order=$order";
         }
-        if ($request->has('start_date') && $request->has('end_date')) {
+        if ($request->filled('start_date') && $request->filled('end_date')) {
             $url .= "&start=$request->start_date&end=$request->end_date";
         }
         return $url;
@@ -260,16 +260,16 @@ class DueTrackerRepository extends BaseRepository
         if (empty($partner_pos_customer))
             $partner_pos_customer = PartnerPosCustomer::create(['partner_id' => $partner->id, 'customer_id' => $request->customer_id]);
         $this->setModifier($partner);
-        if ($request->has('amount'))
+        if ($request->filled('amount'))
             $data['amount'] = $request->amount;
-        if ($request->has('note'))
+        if ($request->filled('note'))
             $data['note'] = $request->note;
-        if ($request->has('created_at'))
+        if ($request->filled('created_at'))
             $data['created_at'] = $request->created_at;
         if ($request->hasFile('attachments')) {
             $data['attachments'] = $this->updateAttachments($request);
         }
-        $data['amount_cleared'] = $request->has('amount_cleared') ? $request->amount_cleared : 0;
+        $data['amount_cleared'] = $request->filled('amount_cleared') ? $request->amount_cleared : 0;
         $data['created_from']   = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
         $data['updated_at']     = $request->updated_at ?: Carbon::now()->format('Y-m-d H:i:s');
 
@@ -363,7 +363,7 @@ class DueTrackerRepository extends BaseRepository
         }
 
         $old_attachments = $request->old_attachments ?: [];
-        if ($request->has('attachment_should_remove') && (!empty($request->attachment_should_remove))) {
+        if ($request->filled('attachment_should_remove') && (!empty($request->attachment_should_remove))) {
             $this->deleteFromCDN($request->attachment_should_remove);
             $old_attachments = array_diff($old_attachments, $request->attachment_should_remove);
         }
@@ -513,7 +513,7 @@ class DueTrackerRepository extends BaseRepository
             'company_number'=> $partner->getContactNumber()
         ];
 
-        if ($request->has('payment_link')) {
+        if ($request->filled('payment_link')) {
             $data['payment_link'] = $request->payment_link;
         }
         /** @var SmsHandlerRepo $sms */

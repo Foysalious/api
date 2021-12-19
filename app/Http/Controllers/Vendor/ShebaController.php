@@ -25,7 +25,7 @@ class ShebaController extends Controller
                 'partner' => 'sometimes|numeric',
                 'limit' => 'sometimes|numeric|min:1',
             ]);
-            $limit = $request->has('limit') ? $request->limit : 1;
+            $limit = $request->filled('limit') ? $request->limit : 1;
             $times = $this->api->get('v2/times?category=' . $request->category . '&partner=' . $request->partner . '&limit=' . $limit);
             $final = [];
             foreach ($times as $time) {

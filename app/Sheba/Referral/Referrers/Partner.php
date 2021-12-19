@@ -228,13 +228,13 @@ class Partner extends Referrer implements ReferrerInterface
     {
         $refers       = $this->attachSelect($this->init());
         $this->refers = $this->filterRefers($request, $refers)->get();
-        if ($request->has('q') && !empty($request->q)) {
+        if ($request->filled('q') && !empty($request->q)) {
             $query = $request->q;
             return $this->formatRefers()->filter(function ($item) use ($query) {
                 return strpos( $item['name'],"$query")!==false || strpos( $item['contact_number'],"$query")!==false;
             })->values();
         }
-        if ($request->has('limit') && !empty($request->limit)) {
+        if ($request->filled('limit') && !empty($request->limit)) {
             list($offset, $limit) = calculatePagination($request);
             return $this->formatRefers()->slice($offset)->take($limit)->values();
         }
@@ -244,14 +244,14 @@ class Partner extends Referrer implements ReferrerInterface
 
     private function filterRefers(Request $request, $query)
     {
-        if ($request->has('order_by')) {
+        if ($request->filled('order_by')) {
             $orderBy = $request->order_by;
             $order   = $request->order ?: 'asc';
             if (!isset($this->orderFilters[$orderBy]))
                 throw new InvalidFilter("$orderBy filter is invalid");
             $query = $query->orderBy($this->orderFilters[$orderBy], $order);
         }
-        if ($request->has('step')) {
+        if ($request->filled('step')) {
             if((int)$request->step == 0)
                 $query = $query->where('ref.refer_level', (int)$request->step)->orWhere('ref.refer_level', null);
             else

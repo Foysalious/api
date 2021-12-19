@@ -153,7 +153,7 @@ class ProcurementController extends Controller
     {
         $tags = Tag::where('taggable_type', 'App\Models\Procurement')->select('id', 'name')->get();
 
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $tags = $tags->filter(function ($tag) use ($request) {
                 return str_contains(strtoupper($tag->name), strtoupper($request->search));
             });
@@ -245,9 +245,9 @@ class ProcurementController extends Controller
 
         $is_procurement_available = $procurements->count() > 0 ? 1 : 0;
 
-        #if ($request->has('status') && $request->status != 'all') $procurements = $this->procurementRepository->filterWithStatus($request->status);
-        $start_date = $request->has('start_date') ? $request->start_date : null;
-        $end_date = $request->has('end_date') ? $request->end_date : null;
+        #if ($request->filled('status') && $request->status != 'all') $procurements = $this->procurementRepository->filterWithStatus($request->status);
+        $start_date = $request->filled('start_date') ? $request->start_date : null;
+        $end_date = $request->filled('end_date') ? $request->end_date : null;
         if ($start_date && $end_date) $procurements = $this->procurementRepository->filterWithCreatedAt($start_date, $end_date);
 
         $bid_counts = $bid_repository->getActiveProcurementBidderCount();
@@ -257,13 +257,13 @@ class ProcurementController extends Controller
         $resource = new Collection($procurements->get(), new ProcurementListTransformer($bid_counts));
         $procurements = $manager->createData($resource)->toArray()['data'];
 
-        if ($request->has('status') && $request->status != 'all') $procurements = $this->filterWithStatus($procurements, $request->status);
-        if ($request->has('search')) $procurements = $this->searchByTitle($procurements, $request)->values();
-        if ($request->has('sort_by_id')) $procurements = $this->sortById($procurements, $request->sort_by_id)->values();
-        if ($request->has('sort_by_title')) $procurements = $this->sortByTitle($procurements, $request->sort_by_title)->values();
-        if ($request->has('sort_by_created_at')) $procurements = $this->sortByCreatedAt($procurements, $request->sort_by_created_at)->values();
+        if ($request->filled('status') && $request->status != 'all') $procurements = $this->filterWithStatus($procurements, $request->status);
+        if ($request->filled('search')) $procurements = $this->searchByTitle($procurements, $request)->values();
+        if ($request->filled('sort_by_id')) $procurements = $this->sortById($procurements, $request->sort_by_id)->values();
+        if ($request->filled('sort_by_title')) $procurements = $this->sortByTitle($procurements, $request->sort_by_title)->values();
+        if ($request->filled('sort_by_created_at')) $procurements = $this->sortByCreatedAt($procurements, $request->sort_by_created_at)->values();
         $total_procurement = count($procurements);
-        if ($request->has('limit')) $procurements = collect($procurements)->splice($offset, $limit);
+        if ($request->filled('limit')) $procurements = collect($procurements)->splice($offset, $limit);
 
         if (count($procurements) > 0) return api_response($request, $procurements, 200, [
             'procurements' => $procurements, 'total_procurement' => $total_procurement, 'is_procurement_available' => $is_procurement_available
@@ -383,17 +383,17 @@ class ProcurementController extends Controller
      */
     public function tenders(Request $request, ProcurementFilterRequest $procurement_filter_request, TimeFrame $time_frame)
     {
-        if ($request->has('min_price') && $request->has('max_price')) $procurement_filter_request->setMinPrice($request->min_price)->setMaxPrice($request->max_price);
-        if ($request->has('start_date') && $request->has('end_date')) {
+        if ($request->filled('min_price') && $request->filled('max_price')) $procurement_filter_request->setMinPrice($request->min_price)->setMaxPrice($request->max_price);
+        if ($request->filled('start_date') && $request->filled('end_date')) {
             $time_frame->set(Carbon::parse($request->start_date), Carbon::parse($request->end_date));
             $start_date = $time_frame->getArray()[0];
             $end_date = $time_frame->getArray()[1];
             $procurement_filter_request->setStartDate($start_date)->setEndDate($end_date);
         }
-        if ($request->has('tag')) $procurement_filter_request->setTagsId(json_decode($request->tag));
-        if ($request->has('category') && $request->category != 'all') $procurement_filter_request->setCategoriesId(json_decode($request->category));
-        if ($request->has('shared_to')) $procurement_filter_request->setSharedTo(json_decode($request->shared_to));
-        if ($request->has('q')) $procurement_filter_request->setSearchQuery($request->q);
+        if ($request->filled('tag')) $procurement_filter_request->setTagsId(json_decode($request->tag));
+        if ($request->filled('category') && $request->category != 'all') $procurement_filter_request->setCategoriesId(json_decode($request->category));
+        if ($request->filled('shared_to')) $procurement_filter_request->setSharedTo(json_decode($request->shared_to));
+        if ($request->filled('q')) $procurement_filter_request->setSearchQuery($request->q);
 
         $procurements = $this->procurementRepository->getProcurementFilterBy($procurement_filter_request);
 
@@ -409,7 +409,7 @@ class ProcurementController extends Controller
         $resource = new Collection($procurements, new TenderTransformer());
         $procurements = $manager->createData($resource)->toArray()['data'];
 
-        if ($request->has('sort'))
+        if ($request->filled('sort'))
             $procurements = $this->procurementOrderBy($procurements, $request->sort)->values()->toArray();
 
         $procurements_with_pagination_data = $this->paginateCollection(collect($procurements), 10);
@@ -697,7 +697,7 @@ class ProcurementController extends Controller
         $procurement = Procurement::find((int)$procurement);
         if (!$procurement) return api_response($request, null, 404);
 
-        if ($request->has('sharing_to')) $creator->setSharingTo($request->sharing_to);
+        if ($request->filled('sharing_to')) $creator->setSharingTo($request->sharing_to);
         $creator->setIsPublished($request->is_published)->changeStatus($procurement);
 
         return api_response($request, null, 200);
@@ -784,8 +784,8 @@ class ProcurementController extends Controller
 
         $is_order_available = $procurement_orders->count() > 0 ? 1 : 0;
 
-        $start_date = $request->has('start_date') ? $request->start_date : null;
-        $end_date = $request->has('end_date') ? $request->end_date : null;
+        $start_date = $request->filled('start_date') ? $request->start_date : null;
+        $end_date = $request->filled('end_date') ? $request->end_date : null;
         if ($start_date && $end_date) {
             $procurement_orders->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
         }
@@ -852,9 +852,9 @@ class ProcurementController extends Controller
         $resource = new Collection($procurement->invitations, new ProcurementInvitationListTransformer($procurement));
         $invited_partners = $manager->createData($resource)->toArray()['data'];
 
-        if ($request->has('sort_by_name')) $invited_partners = $this->sortByName($invited_partners, $request->sort_by_name)->values();
-        if ($request->has('sort_by_date')) $invited_partners = $this->sortByDate($invited_partners, $request->sort_by_date)->values();
-        if ($request->has('sort_by_status')) $invited_partners = $this->sortByStatus($invited_partners, $request->sort_by_status)->values();
+        if ($request->filled('sort_by_name')) $invited_partners = $this->sortByName($invited_partners, $request->sort_by_name)->values();
+        if ($request->filled('sort_by_date')) $invited_partners = $this->sortByDate($invited_partners, $request->sort_by_date)->values();
+        if ($request->filled('sort_by_status')) $invited_partners = $this->sortByStatus($invited_partners, $request->sort_by_status)->values();
 
         $procurement_status = ProcurementStatusCalculator::resolveStatus($procurement);
 

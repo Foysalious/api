@@ -53,7 +53,7 @@ class ExpenseController extends Controller
 
         $expenses = $this->expense_repo->index($request, $member);
 
-        if ($request->has('limit')) $expenses = $expenses->splice($offset, $limit);
+        if ($request->filled('limit')) $expenses = $expenses->splice($offset, $limit);
 
         $sum = $expenses->sum('amount');
 

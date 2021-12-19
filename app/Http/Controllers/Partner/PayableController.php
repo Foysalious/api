@@ -40,7 +40,7 @@ class PayableController extends Controller {
             $this->validate($request, []);
             list($offset, $limit) = calculatePagination($request);
             $payables_generator = $this->entryRepo->setPartner($request->partner)->setOffset($offset)->setLimit($limit);
-            if ($request->has('customer_id') && $request->customer_id) {
+            if ($request->filled('customer_id') && $request->customer_id) {
                 $profile_id        = PosCustomer::find($request->customer_id)->profile_id;
                 $payables_response = $payables_generator->getAllPayablesByCustomer((int)$profile_id);
             } else {

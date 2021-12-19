@@ -30,8 +30,8 @@ class FuelLogController extends Controller
             $fuel_logs = FuelLog::fuelLogs($business);
             $fuel_logs = $fuel_logs->skip($offset)->limit($limit);
 
-            $start_date = $request->has('start_date') ? $request->start_date : null;
-            $end_date = $request->has('end_date') ? $request->end_date : null;
+            $start_date = $request->filled('start_date') ? $request->start_date : null;
+            $end_date = $request->filled('end_date') ? $request->end_date : null;
             if ($start_date && $end_date) {
                 $fuel_logs->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
             }
@@ -40,7 +40,7 @@ class FuelLogController extends Controller
             $total_litres = FuelLog::totalLitres($start_date, $end_date, $business)->sum('volume');
             $total_gallons = FuelLog::totalGallons($start_date, $end_date, $business)->sum('volume');
 
-            if ($request->has('type')) {
+            if ($request->filled('type')) {
                 $fuel_logs = $fuel_logs->whereHas('vehicle', function ($query) use ($request) {
                     $query->whereHas('basicInformations', function ($query) use ($request) {
                         $query->where('type', $request->type);
@@ -150,7 +150,7 @@ class FuelLogController extends Controller
             DB::transaction(function () use (&$fuel_log, $creator, $member, $request) {
                 $fuel_log = $creator->save();
                 if ($request->comment) (new CommentRepository('FuelLog', $fuel_log->id, $member))->store($request->comment);
-                if ($request->has('file')) {
+                if ($request->filled('file')) {
                     foreach ($request->file as $file) {
                         $data = $this->storeAttachmentToCDN($file);
                         $attachment = $fuel_log->attachments()->save(new Attachment($this->withBothModificationFields($data)));

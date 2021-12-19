@@ -62,9 +62,9 @@ class PartnerRewardController extends Controller
     public function history(Request $request)
     {
         try {
-            $start_date = $request->has('start_date') ? Carbon::parse($request->start_date) : Carbon::now();
-            $end_date = $request->has('end_date') ? Carbon::parse($request->end_date) : Carbon::now();
-            $reward_type = $request->has('reward_type') ? [ucfirst($request->reward_type)] : constants('REWARD_TYPE');
+            $start_date = $request->filled('start_date') ? Carbon::parse($request->start_date) : Carbon::now();
+            $end_date = $request->filled('end_date') ? Carbon::parse($request->end_date) : Carbon::now();
+            $reward_type = $request->filled('reward_type') ? [ucfirst($request->reward_type)] : constants('REWARD_TYPE');
 
             $reward_logs = RewardLog::whereHas('reward', function ($query) use ($reward_type) {
                 return $query->whereIn('type', $reward_type);

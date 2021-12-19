@@ -52,7 +52,7 @@ class ExpenseController extends Controller
         $business = $request->business;
         $business_members = $business->getAccessibleBusinessMember();
 
-        if ($request->has('department_id')) {
+        if ($request->filled('department_id')) {
             $business_members = $business_members->whereHas('role', function ($q) use ($request) {
                 $q->whereHas('businessDepartment', function ($q) use ($request) {
                     $q->where('business_departments.id', $request->department_id);
@@ -67,7 +67,7 @@ class ExpenseController extends Controller
         $start_date = date('Y-m-01');
         $end_date = date('Y-m-t');
 
-        if ($request->has('date')) {
+        if ($request->filled('date')) {
             $dates = $this->getStartDateEndDate($request->date);
             $start_date = $dates['start_date'];
             $end_date = $dates['end_date'];
@@ -76,17 +76,17 @@ class ExpenseController extends Controller
         $expenses->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
         $expenses = $expenses->get()->groupBy('member_id');
         $expenses = $expenseList->setData($expenses)->get();
-        if ($request->has('search')) $expenses = $this->searchExpenseList($expenses, $request);
+        if ($request->filled('search')) $expenses = $this->searchExpenseList($expenses, $request);
         $total_calculation = $this->getTotalCalculation($expenses);
 
         $total_expense_count = count($expenses);
 
-        if ($request->has('limit')) $expenses = collect($expenses)->splice($offset, $limit);
+        if ($request->filled('limit')) $expenses = collect($expenses)->splice($offset, $limit);
 
-        if ($request->has('sort_employee_name')) {
+        if ($request->filled('sort_employee_name')) {
             $expenses = $this->sortByName($expenses, $request->sort_employee_name)->values();
         }
-        if ($request->has('sort_amount')) {
+        if ($request->filled('sort_amount')) {
             $expenses = $this->sortByAmount($expenses, $request->sort_amount)->values();
         }
 

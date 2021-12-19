@@ -31,8 +31,8 @@ class CoWorkerInfoFilter
 
     public function filterCoworkerInList($employees, Request $request)
     {
-        if ($request->has('search')) $employees = $this->searchEmployee($employees, $request);
-        if ($request->has('employee_type')) $employees = $this->filterByEmployeeType($employees, $request)->values();
+        if ($request->filled('search')) $employees = $this->searchEmployee($employees, $request);
+        if ($request->filled('employee_type')) $employees = $this->filterByEmployeeType($employees, $request)->values();
         return $employees;
     }
 

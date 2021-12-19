@@ -101,11 +101,11 @@ class CustomerController extends Controller
             'email' => 'email|unique:profiles,email,' . $profile->id,
             'is_old_user' => 'required'
         ]);
-        if ($request->has('name')) $profile->name = ucwords($request->name);
-        if ($request->has('gender')) $profile->gender = $request->gender;
-        if ($request->has('address')) $profile->address = $request->address;
-        if ($request->has('dob')) $profile->dob = Carbon::parse($request->dob)->toDateString();
-        if ($request->has('email')) $profile->email = $request->email;
+        if ($request->filled('name')) $profile->name = ucwords($request->name);
+        if ($request->filled('gender')) $profile->gender = $request->gender;
+        if ($request->filled('address')) $profile->address = $request->address;
+        if ($request->filled('dob')) $profile->dob = Carbon::parse($request->dob)->toDateString();
+        if ($request->filled('email')) $profile->email = $request->email;
         $profile->update();
         $customer->reload();
         if ($request->is_old_user == "1" && $customer->isCompleted() && !$customer->is_completed) {
@@ -242,9 +242,9 @@ class CustomerController extends Controller
     public function changeAddress(Request $request, $customer)
     {
         $customer = Customer::find($customer);
-        if ($request->has('office_address'))
+        if ($request->filled('office_address'))
             $customer->office_address = $request->input('office_address');
-        if ($request->has('address'))
+        if ($request->filled('address'))
             $customer->address = $request->input('address');
         if ($customer->update())
             return response()->json(['msg' => 'successful', 'code' => 200]);

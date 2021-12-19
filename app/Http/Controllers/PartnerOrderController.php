@@ -87,7 +87,7 @@ class PartnerOrderController extends Controller
                 'sort' => 'sometimes|required|string|in:created_at,created_at:asc,created_at:desc,schedule_date,schedule_date:asc,schedule_date:desc',
                 'getCount' => 'sometimes|required|numeric|in:1'
             ]);
-            if ($request->has('getCount')) {
+            if ($request->filled('getCount')) {
                 $partner = $request->partner->load(['jobs' => function ($q) {
                     $q->status([JobStatuses::PENDING, JobStatuses::NOT_RESPONDED])->select('jobs.id', 'jobs.partner_order_id')
                         ->whereDoesntHave('cancelRequests', function ($q) {

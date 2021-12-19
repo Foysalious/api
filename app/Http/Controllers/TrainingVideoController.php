@@ -15,7 +15,7 @@ class TrainingVideoController extends Controller
     public function index(Request $request, TrainingVideoRepository $video_repository)
     {
         try {
-            $data = ($request->has('key')) ? $video_repository->getByScreen($request->key) : $video_repository->getPublished();
+            $data = ($request->filled('key')) ? $video_repository->getByScreen($request->key) : $video_repository->getPublished();
             $link = Response::get($data);
             return api_response($request, $link, 200, ['data' => $link]);
         } catch (\Throwable $e) {

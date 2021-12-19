@@ -77,17 +77,17 @@ class VehiclesController extends Controller
             $this->setModifier($member);
 
             $vehicle_data = [
-                'owner_type' => $request->has('vendor_id') ? "App\Models\Partner" : get_class($business),
-                'owner_id' => $request->has('vendor_id') ? $request->vendor_id : $business->id,
+                'owner_type' => $request->filled('vendor_id') ? "App\Models\Partner" : get_class($business),
+                'owner_id' => $request->filled('vendor_id') ? $request->vendor_id : $business->id,
                 'business_department_id' => $request->department_id,
                 'status' => 'active',
             ];
-            if ($request->has("driver_id")) {
+            if ($request->filled("driver_id")) {
                 $vehicle_data['current_driver_id'] = $request->driver_id;
             }
             $vehicle = Vehicle::create($this->withCreateModificationField($vehicle_data));
 
-            if ($request->has('vendor_id')) {
+            if ($request->filled('vendor_id')) {
                 $data = [
                     'hired_by_type' => get_class($business),
                     'hired_by_id' => $business->id,
@@ -125,7 +125,7 @@ class VehiclesController extends Controller
             ];
             $vehicle->registrationInformations()->create($this->withCreateModificationField($vehicle_registration_information_data));
             $inspection = null;
-            if ($request->has('form_template_id')) {
+            if ($request->filled('form_template_id')) {
                 $request->merge(['vehicle_id' => $vehicle->id, 'inspector_id' => $member->id, 'form_template_id' => $request->form_template_id,
                     'schedule_type_value' => date('Y-m-d'), 'schedule_time' => date('h a')]);
                 /** @var Creator $creation_class */
@@ -324,7 +324,7 @@ class VehiclesController extends Controller
             $member = Member::find($member);
             $business = $member->businesses->first();
             $this->setModifier($member);
-            if ($request->has('trip_request_id')) {
+            if ($request->filled('trip_request_id')) {
                 $business_trip_request = BusinessTripRequest::find((int)$request->trip_request_id);
                 $car_ids = $tripScheduler->setStartDate($business_trip_request->start_date)->setEndDate($business_trip_request->end_date)
                     ->setBusinessDepartment($business_trip_request->member->businessMember->role->businessDepartment)
@@ -339,10 +339,10 @@ class VehiclesController extends Controller
                     })->select('id', 'status', 'current_driver_id', 'business_department_id', 'owner_type', 'owner_id')
                     ->orderBy('id', 'desc')->skip($offset)->limit($limit);
 
-                if ($request->has('status'))
+                if ($request->filled('status'))
                     $vehicles = $vehicles->status($request->status);
 
-                if ($request->has('department')) {
+                if ($request->filled('department')) {
                     $vehicles->where(function ($query) use ($request) {
                         $query->whereHas('businessDepartment', function ($query) use ($request) {
                             $query->where('name', $request->department);
@@ -350,14 +350,14 @@ class VehiclesController extends Controller
                     });
                 }
 
-                if ($request->has('type')) {
+                if ($request->filled('type')) {
                     $vehicles->where(function ($query) use ($request) {
                         $query->whereHas('basicInformations', function ($query) use ($request) {
                             $query->where('type', $request->type);
                         });
                     });
                 }
-                if ($request->has('owner_type')) {
+                if ($request->filled('owner_type')) {
                     if ($request->owner_type == 'own') $vehicles->whoseOwnerIsBusiness($business->id);
                     elseif ($request->owner_type == 'hired') $vehicles->whoseOwnerIsNotBusiness();
                 }

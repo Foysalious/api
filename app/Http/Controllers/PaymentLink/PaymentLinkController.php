@@ -179,12 +179,12 @@ class PaymentLinkController extends Controller
                 ->setTargetId($request->pos_order_id)
                 ->setTargetType('pos_order')
                 ->setEmiMonth((int)$request->emi_month)
-                ->setPaidBy($request->interest_paid_by ?: PaymentLinkStatics::paidByTypes()[($request->has("emi_month") ? 1 : 0)])
+                ->setPaidBy($request->interest_paid_by ?: PaymentLinkStatics::paidByTypes()[($request->filled("emi_month") ? 1 : 0)])
                 ->setTransactionFeePercentage($request->transaction_charge)
                 ->calculate();
             $interest = 0;
             $bank_transaction_charge = 0;
-            if ($request->has('pos_order_id') && $request->pos_order_id) {
+            if ($request->filled('pos_order_id') && $request->pos_order_id) {
                 /** @var PosOrderResolver $posOrderResolver */
                 $posOrderResolver = (app(PosOrderResolver::class));
                 $pos_order = $posOrderResolver->setOrderId($request->pos_order_id)->get();
@@ -196,7 +196,7 @@ class PaymentLinkController extends Controller
                     $bank_transaction_charge = $this->creator->getBankTransactionCharge();
                 }
             }
-            if ($request->has('customer_id') && $request->customer_id) {
+            if ($request->filled('customer_id') && $request->customer_id) {
                 /** @var PosCustomerResolver $posCustomerResolver */
                 $posCustomerResolver = app(PosCustomerResolver::class);
                 $customer = $posCustomerResolver->setCustomerId($request->customer_id)->setPartner($request->partner)->get();
@@ -207,7 +207,7 @@ class PaymentLinkController extends Controller
             $payment_link_store = $this->creator->save();
             if ($payment_link_store) {
                 $payment_link = $this->creator->getPaymentLinkData();
-                if (!$request->has('emi_month')) {
+                if (!$request->filled('emi_month')) {
                     $this->creator->sentSms();
                 }
                 $payment_link['interest'] = $interest;
@@ -261,7 +261,7 @@ class PaymentLinkController extends Controller
                 if (!count($available_methods))
                     return api_response($request, null, 404, ['message' => "No active payment method found"]);
             }
-            if ($request->has('customer_id')) $customer = PosCustomer::find($request->customer_id);
+            if ($request->filled('customer_id')) $customer = PosCustomer::find($request->customer_id);
 
             $this->creator->setAmount($request->amount)
                 ->setReason($purpose)
@@ -269,14 +269,14 @@ class PaymentLinkController extends Controller
                 ->setUserId($request->user->id)
                 ->setUserType($request->type)
                 ->setEmiMonth($request->emi_month ?: 0)
-                ->setPaidBy($request->interest_paid_by ?: PaymentLinkStatics::paidByTypes()[($request->has("emi_month") ? 1 : 0)])
+                ->setPaidBy($request->interest_paid_by ?: PaymentLinkStatics::paidByTypes()[($request->filled("emi_month") ? 1 : 0)])
                 ->setTransactionFeePercentage($request->transaction_charge);
             if (isset($customer) && !empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
             $this->creator->setTargetType('due_tracker')->setTargetId(1)->calculate();
             $payment_link_store = $this->creator->save();
             if ($payment_link_store) {
                 $payment_link = $this->creator->getPaymentLinkData();
-                if (!$request->has('emi_month')) {
+                if (!$request->filled('emi_month')) {
                     $this->creator->sentSms();
                 }
                 return api_response($request, $payment_link, 200, ['payment_link' => $payment_link]);

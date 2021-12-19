@@ -177,10 +177,10 @@ class BidController extends Controller
         $resource = new Collection($bids->get(), new BidListTransformer($procurement));
         $bids = $manager->createData($resource)->toArray()['data'];
 
-        if ($request->has('sort_by_name')) $bids = $this->sortByName($bids, $request->sort_by_name)->values();
-        if ($request->has('sort_by_rating')) $bids = $this->sortByRating($bids, $request->sort_by_rating)->values();
-        if ($request->has('sort_by_price')) $bids = $this->sortByPrice($bids, $request->sort_by_price)->values();
-        if ($request->has('limit')) $bids = collect($bids)->splice($offset, $limit);
+        if ($request->filled('sort_by_name')) $bids = $this->sortByName($bids, $request->sort_by_name)->values();
+        if ($request->filled('sort_by_rating')) $bids = $this->sortByRating($bids, $request->sort_by_rating)->values();
+        if ($request->filled('sort_by_price')) $bids = $this->sortByPrice($bids, $request->sort_by_price)->values();
+        if ($request->filled('limit')) $bids = collect($bids)->splice($offset, $limit);
 
         if (count($bids) > 0) return api_response($request, $bids, 200, ['bids' => $bids]); else return api_response($request, null, 404);
     }

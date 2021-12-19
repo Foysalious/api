@@ -29,10 +29,10 @@ class ReportsController extends Controller
     public function getCustomerWiseReport(Request $request)
     {
         try {
-            if ($request->has('download_excel')) {
+            if ($request->filled('download_excel')) {
                 $name = 'Customer Wise Sales Report';
                 return $this->posReportRepository->getCustomerWise()->prepareQuery($request, $request->partner)->prepareData(false)->downloadExcel($name);
-            } elseif ($request->has('download_pdf')) {
+            } elseif ($request->filled('download_pdf')) {
                 $name = 'Customer Wise Sales Report';
                 $template = 'pos_customer_wise_sales';
                 return $this->posReportRepository->getCustomerWise()->prepareQuery($request, $request->partner)->prepareData(false)->downloadPdf($name, $template);
@@ -53,10 +53,10 @@ class ReportsController extends Controller
     public function getProductWiseReport(Request $request)
     {
         try {
-            if ($request->has('download_excel')) {
+            if ($request->filled('download_excel')) {
                 $name = 'Product Wise Sales Report';
                 return $this->posReportRepository->getProductWise()->prepareQuery($request, $request->partner)->prepareData(false)->downloadExcel($name);
-            } elseif ($request->has('download_pdf')) {
+            } elseif ($request->filled('download_pdf')) {
                 $name = 'Product Wise Sales Report';
                 $template = 'pos_product_wise_sales';
                 return $this->posReportRepository->getProductWise()->prepareQuery($request, $request->partner)->prepareData(false)->downloadPdf($name, $template);

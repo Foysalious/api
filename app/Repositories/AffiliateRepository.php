@@ -14,7 +14,7 @@ class AffiliateRepository
     public function sortAgents($request, $agents)
     {
         $sortBy = 'name';
-        if ($request->has('sort')) {
+        if ($request->filled('sort')) {
             $sortBy = $request->sort;
             if ($sortBy != 'name') {
                 array_multisort(array_column($agents, $sortBy), SORT_DESC, $agents);

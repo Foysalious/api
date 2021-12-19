@@ -120,13 +120,13 @@ class DriverController extends Controller
                 }
             }
 
-            if ($request->has('vehicle_id')) {
+            if ($request->filled('vehicle_id')) {
                 $vehicle = Vehicle::find((int)$request->vehicle_id);
                 $vehicle->current_driver_id = $driver->id;
                 $vehicle->save();
             }
 
-            if ($request->has('vendor_id')) {
+            if ($request->filled('vendor_id')) {
                 $data = [
                     'hired_by_type' => get_class($business),
                     'hired_by_id' => $business->id,
@@ -306,7 +306,7 @@ class DriverController extends Controller
             $member = Member::find($member);
             $business = $member->businesses->first();
             $this->setModifier($member);
-            if ($request->has('trip_request_id')) {
+            if ($request->filled('trip_request_id')) {
                 $business_trip_request = BusinessTripRequest::find((int)$request->trip_request_id);
                 $driver_ids = $vehicleScheduler->setStartDate($business_trip_request->start_date)->setEndDate($business_trip_request->end_date)->setBusiness($request->business)
                     ->getFreeDrivers();
@@ -323,10 +323,10 @@ class DriverController extends Controller
                     $q->whichIsHiredByBusiness($business->id);
                 })->with('profile', 'vehicle.basicInformation')->orderBy('id', 'desc')->skip($offset)->limit($limit);
 
-                if ($request->has('status'))
+                if ($request->filled('status'))
                     $drivers = $drivers->status($request->status);
 
-                if ($request->has('type')) {
+                if ($request->filled('type')) {
                     $drivers->where(function ($query) use ($request) {
                         $query->whereHas('vehicle.basicInformations', function ($query) use ($request) {
                             $query->where('type', $request->type);

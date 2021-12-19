@@ -427,7 +427,7 @@ class DashboardController extends Controller
 
             $is_updated = 1;
             $last_updated = DefaultSettingV3::getLastUpdatedAt();
-            if ($request->has('last_updated'))
+            if ($request->filled('last_updated'))
                 $is_updated = Carbon::parse($last_updated) > Carbon::parse($request->last_updated) ? 1 : 0;
             $data = [
                 'is_updated' => $is_updated,

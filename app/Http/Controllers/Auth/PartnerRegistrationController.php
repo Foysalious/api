@@ -126,36 +126,36 @@ class PartnerRegistrationController extends Controller
     private function makePartnerCreateData(Request $request)
     {
         $data = ['name' => $request->company_name];
-        if ($request->has('from')) {
+        if ($request->filled('from')) {
             if ($request->from == 'manager-app' || $request->from == 'affiliation-app')
                 $data['registration_channel'] = constants('PARTNER_ACQUISITION_CHANNEL')['App']; elseif ($request->from == 'manager-web')
                 $data['registration_channel'] = constants('PARTNER_ACQUISITION_CHANNEL')['Web'];
         } else {
             $data['registration_channel'] = constants('PARTNER_ACQUISITION_CHANNEL')['App'];
         }
-        $data['billing_type'] = $request->has('billing_type') ? $request->billing_type : 'monthly';
-        $data['package_id'] = $request->has('package_id') ? $request->package_id : config('sheba.partner_lite_packages_id');
+        $data['billing_type'] = $request->filled('billing_type') ? $request->billing_type : 'monthly';
+        $data['package_id'] = $request->filled('package_id') ? $request->package_id : config('sheba.partner_lite_packages_id');
         $data['billing_start_date'] = Carbon::today();
         $data['last_billed_date'] = Carbon::today();
         $data['last_billed_amount'] = 0.00;
-        if ($request->has('affiliate_id')) {
+        if ($request->filled('affiliate_id')) {
             $data['affiliate_id'] = $request->affiliate_id;
         }
-        if ($request->has('address')) {
+        if ($request->filled('address')) {
             $data['address'] = $request->address;
         }
-        if ($request->has('number'))
+        if ($request->filled('number'))
             $data['mobile'] = formatMobile($request->number);
-        if ($request->has('geo')) {
+        if ($request->filled('geo')) {
             $geo = json_decode($request->geo);
             $geo->radius = 5;
             $data['geo_informations'] = json_encode($geo);
         }
-        if ($request->has('refer_code'))
+        if ($request->filled('refer_code'))
             $data['refer_code'] = $request->refer_code;
-        if ($request->has('business_type'))
+        if ($request->filled('business_type'))
             $data['business_type'] = $request->business_type;
-        if ($request->has('has_webstore'))
+        if ($request->filled('has_webstore'))
             $data['has_webstore'] = $request->has_webstore;
         return $data;
     }
@@ -328,8 +328,8 @@ class PartnerRegistrationController extends Controller
         $request['package_id'] = config('sheba.partner_lite_packages_id');
         $request['billing_type'] = 'monthly';
         $request->merge(['number' => $profile->mobile]);
-        if ($request->has('name')) $profile->update(['name' => $request->name]);
-        if ($request->has('gender')) $profile->update(['gender' => $request->gender]);
+        if ($request->filled('name')) $profile->update(['name' => $request->name]);
+        if ($request->filled('gender')) $profile->update(['gender' => $request->gender]);
         if ($resource->partnerResources->count() > 0) return api_response($request, null, 403, ['message' => 'You already have a company.']);
 
         $data = $this->makePartnerCreateData($request);

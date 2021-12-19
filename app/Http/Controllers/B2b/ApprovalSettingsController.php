@@ -70,13 +70,13 @@ class ApprovalSettingsController extends Controller
         $approval_settings = $this->approvalSettingsRepo->where('business_id', $business->id)->orderBy('id', 'desc');
 
 
-        if ($request->has('type') && $request->has('target_id')) {
+        if ($request->filled('type') && $request->filled('target_id')) {
             $approval_settings = $approval_settings->where([['target_type', '=', $request->type], ['target_id', '=', $request->target_id]]);
         }
-        if ($request->has('type') && $request->type) {
+        if ($request->filled('type') && $request->type) {
             $approval_settings = $approval_settings->where('target_type', $request->type);
         }
-        if ($request->has('module')) {
+        if ($request->filled('module')) {
             $approval_settings = $approval_settings->whereHas('modules', function ($q) use ($request) {
                 $q->whereIn('modules', json_decode($request->module, 1));
             });
@@ -103,9 +103,9 @@ class ApprovalSettingsController extends Controller
             $approval_settings_list = array_merge([$default_approval_setting], $approval_settings_list);
         }
 
-        if ($request->has('search')) $approval_settings_list = collect($this->searchWithEmployee($approval_settings_list, $request->search))->values();
+        if ($request->filled('search')) $approval_settings_list = collect($this->searchWithEmployee($approval_settings_list, $request->search))->values();
         $total_approval_settings = count($approval_settings_list);
-        if ($request->has('limit')) $approval_settings_list = collect($approval_settings_list)->splice($offset, $limit);
+        if ($request->filled('limit')) $approval_settings_list = collect($approval_settings_list)->splice($offset, $limit);
 
         return api_response($request, null, 200, ['data' => $approval_settings_list, 'total_approval_settings' => $total_approval_settings]);
     }

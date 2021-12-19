@@ -49,7 +49,7 @@ class CustomerSubscriptionController extends Controller
                 'subscription_type' => 'required|string',
                 'filter' => 'string|in:sheba',
             ]);
-            $partner = $request->has('partner') ? $request->partner : null;
+            $partner = $request->filled('partner') ? $request->partner : null;
             $request->merge(['date' => json_decode($request->date)]);
             $partnerListRequest->setRequest($request)->prepareObject();
             if (!$partnerListRequest->isValid()) {
@@ -60,11 +60,11 @@ class CustomerSubscriptionController extends Controller
             $partner_list->filterPartnerByAvailability();
             $partner_list->removeShebaHelpDesk();
             $partners = $partner_list->partners;
-            if ($request->has('show_reason')) return api_response($request, null, 200, ['reason' => $partner_list->getNotShowingReason()]);
+            if ($request->filled('show_reason')) return api_response($request, null, 200, ['reason' => $partner_list->getNotShowingReason()]);
             if ($partners->count() > 0) {
                 $partner_list->addPricing();
                 $partner_list->addInfo();
-                if ($request->has('filter') && $request->filter == 'sheba') {
+                if ($request->filled('filter') && $request->filter == 'sheba') {
                     $partner_list->sortByShebaPartnerPriority();
                 } else {
                     $partner_list->sortByShebaSelectedCriteria();
@@ -150,7 +150,7 @@ class CustomerSubscriptionController extends Controller
             $subscription_order_count = $subscription_orders->count();
             $subscription_orders->skip($offset)->limit($limit);
 
-            if ($request->has('status') && $request->status != 'all') {
+            if ($request->filled('status') && $request->status != 'all') {
                 $subscription_orders = $subscription_orders->status($request->status);
             }
 

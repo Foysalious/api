@@ -46,7 +46,7 @@ class AnnouncementController extends Controller
         $announcements = new Collection($announcements, new AnnouncementTransformer());
         $announcements = collect($manager->createData($announcements)->toArray()['data']);
 
-        if ($request->has('status')) {
+        if ($request->filled('status')) {
             $announcements = $announcements->filter(function ($announcement) use ($request) {
                 return $announcement['status'] == $request->status;
             });

@@ -53,9 +53,9 @@ class HomepageController extends Controller
     {
         $limit = $request->limit ?? 10;
         $nextCursor = $request->next_cursor ?? null;
-        $startDate = $request->has('start_date') ? $this->convertStartDate($request->start_date) : null;
-        $endDate = $request->has('start_date') ? $this->convertEndDate($request->end_date) : null;
-        $sourceType = $request->has('source_type') ? $request->source_type : null;
+        $startDate = $request->filled('start_date') ? $this->convertStartDate($request->start_date) : null;
+        $endDate = $request->filled('start_date') ? $this->convertEndDate($request->end_date) : null;
+        $sourceType = $request->filled('source_type') ? $request->source_type : null;
         $response = $this->homepageRepo->getIncomeExpenseEntries($request->partner->id, $limit, $nextCursor, $startDate, $endDate, $sourceType);
         return api_response($request, $response, 200, ['data' => $response]);
     }
@@ -98,11 +98,11 @@ class HomepageController extends Controller
      */
     public function getAccountListBalance(Request $request): JsonResponse
     {
-        $startDate = $request->has('start_date') ? $this->convertStartDate($request->start_date) : null;
-        $endDate = $request->has('start_date') ? $this->convertEndDate($request->end_date) : null;
-        $limit = $request->has('limit') ? $request->limit : null;
-        $offset = $request->has('offset') ? $request->offset : null;
-        $rootAccount = $request->has('root_account') ? $request->root_account : null;
+        $startDate = $request->filled('start_date') ? $this->convertStartDate($request->start_date) : null;
+        $endDate = $request->filled('start_date') ? $this->convertEndDate($request->end_date) : null;
+        $limit = $request->filled('limit') ? $request->limit : null;
+        $offset = $request->filled('offset') ? $request->offset : null;
+        $rootAccount = $request->filled('root_account') ? $request->root_account : null;
         if ($endDate < $startDate) {
             return api_response($request, null, 400, ['message' => 'End date can not smaller than start date']);
         }

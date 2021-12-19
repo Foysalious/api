@@ -27,7 +27,7 @@ class CommentController extends Controller
             $comments = $commentable->comments()
                 ->skip($offset)->limit($limit);
 
-            if ($request->has('sort')) {
+            if ($request->filled('sort')) {
                 $comments = $comments->orderBy('id', $request->sort);
             } else {
                 $comments = $comments->orderBy('id', 'ASC');

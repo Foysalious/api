@@ -675,20 +675,20 @@ class Loan
 
     private function filterList(Request $request, Collection $output)
     {
-        if ($request->has('q')) {
+        if ($request->filled('q')) {
             $output = $output->filter(function ($item) use ($request) {
                 $query = strtolower($request->q);
                 return str_contains(strtolower($item['name']), $query) || str_contains($item['phone'], $query) || str_contains(strtolower($item['partner']), $query) || str_contains(strtolower($item['bank']['name']), $query);
             });
         }
-        if ($request->has('date')) {
+        if ($request->filled('date')) {
             $output = $output->filter(function ($item) use ($request) {
                 $date      = Carbon::parse($request->date)->format('Y-m-d');
                 $item_date = Carbon::parse($item->created_at)->format('Y-m-d');
                 return $date == $item_date;
             });
         }
-        if ($request->has('status')) {
+        if ($request->filled('status')) {
             $output = $output->filter(function ($item) use ($request) {
                 return $item['status'] == $request->status;
             });
@@ -776,7 +776,7 @@ class Loan
         }
         $old_status  = $partner_bank_loan->status;
         $new_status  = $request->new_status;
-        $description = $request->has('description') ? $request->description : 'Status Changed';
+        $description = $request->filled('description') ? $request->description : 'Status Changed';
         $status      = [
             'applied',
             'submitted',

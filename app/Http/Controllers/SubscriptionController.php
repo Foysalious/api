@@ -29,7 +29,7 @@ class SubscriptionController extends Controller
         try {
             ini_set('memory_limit', '2048M');
 
-            if ($request->has('for') && $request->for == 'business') {
+            if ($request->filled('for') && $request->for == 'business') {
                 list($offset, $limit) = calculatePagination($request);
                 $subscriptions = ServiceSubscription::with(['service' => function ($q) {
                     $q->with(['category' => function ($q) {
@@ -60,7 +60,7 @@ class SubscriptionController extends Controller
                 }
 
                 if (count($b2b_subscriptions) > 0)
-                    if ($request->has('key') && $request->key == 'category') {
+                    if ($request->filled('key') && $request->key == 'category') {
                         return api_response($request, $subscriptions_categories, 200, ['subscriptions_categories' => $subscriptions_categories->unique('category_id')->values()]);
                     } else {
                         return api_response($request, $b2b_subscriptions, 200, ['subscriptions' => $b2b_subscriptions]);

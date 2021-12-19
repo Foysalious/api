@@ -57,7 +57,7 @@ class CustomerDeliveryAddressController extends Controller
         }]);
         $location = null;
         $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'location_id', 'address', 'name', 'geo_informations', 'flat_no')->get();
-        if ($request->has('lat') && $request->has('lng')) {
+        if ($request->filled('lat') && $request->filled('lng')) {
             $hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->first();
             if ($hyper_location) $location = $hyper_location->location;
             if ($location == null) return api_response($request, null, 404, ['message' => "No address at this location"]);
@@ -72,7 +72,7 @@ class CustomerDeliveryAddressController extends Controller
             return $customer_delivery_address;
         });
         if ($location) $customer_delivery_addresses = $customer_delivery_addresses->where('location_id', $location->id);
-        if ($request->has('partner') && (int)$request->partner) {
+        if ($request->filled('partner') && (int)$request->partner) {
             $partner = Partner::find((int)$request->partner);
             $partner_geo = json_decode($partner->geo_informations);
             $to = [new Coords(floatval($partner_geo->lat), floatval($partner_geo->lng), $partner->id)];
@@ -128,7 +128,7 @@ class CustomerDeliveryAddressController extends Controller
             $customer_delivery_address['is_same'] = $geo->isNull() ? false : $address_validator->isSameAddress($geo, $target);
             return $customer_delivery_address;
         });
-        if ($request->has('partner') && (int)$request->partner > 0) {
+        if ($request->filled('partner') && (int)$request->partner > 0) {
             $partner = Partner::find((int)$request->partner);
             $partner_geo = json_decode($partner->geo_informations);
             $to = [new Coords(floatval($partner_geo->lat), floatval($partner_geo->lng), $partner->id)];
@@ -143,7 +143,7 @@ class CustomerDeliveryAddressController extends Controller
                 return $customer_delivery_address;
             });
         }
-        if ($request->has('service')) {
+        if ($request->filled('service')) {
             $service = array_map('intval', json_decode($request->service));
             $location_service = LocationService::whereIn('service_id', $service)->select('location_id')->get();
             $location_ids = count($location_service) > 0 ? $location_service->pluck('location_id')->toArray() : [];
@@ -153,7 +153,7 @@ class CustomerDeliveryAddressController extends Controller
                 return $address;
             });
         }
-        if ($request->has('category')) {
+        if ($request->filled('category')) {
             $category = json_decode($request->category);
             if ($category) {
                 $category = array_map('intval', json_decode($request->category));
@@ -203,15 +203,15 @@ class CustomerDeliveryAddressController extends Controller
      */
     private function setAddressProperties(CustomerDeliveryAddress $delivery_address, $request)
     {
-        if ($request->has('address')) $delivery_address->address = trim($request->address);
-        if ($request->has('name')) $delivery_address->name = trim(ucwords($request->name));
-        if ($request->has('location_id')) $delivery_address->location_id = $request->location_id;
-        if ($request->has('mobile')) $delivery_address->mobile = formatMobile($request->mobile);
-        if ($request->has('flat_no')) $delivery_address->flat_no = trim($request->flat_no);
-        if ($request->has('street_address')) $delivery_address->street_address = trim($request->street_address);
-        if ($request->has('landmark')) $delivery_address->landmark = trim($request->landmark);
-        if ($request->has('lat') && $request->has('lng')) $delivery_address->geo_informations = json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]);
-        if ($request->has('is_save') && !$request->is_save) $delivery_address->deleted_at = Carbon::now();
+        if ($request->filled('address')) $delivery_address->address = trim($request->address);
+        if ($request->filled('name')) $delivery_address->name = trim(ucwords($request->name));
+        if ($request->filled('location_id')) $delivery_address->location_id = $request->location_id;
+        if ($request->filled('mobile')) $delivery_address->mobile = formatMobile($request->mobile);
+        if ($request->filled('flat_no')) $delivery_address->flat_no = trim($request->flat_no);
+        if ($request->filled('street_address')) $delivery_address->street_address = trim($request->street_address);
+        if ($request->filled('landmark')) $delivery_address->landmark = trim($request->landmark);
+        if ($request->filled('lat') && $request->filled('lng')) $delivery_address->geo_informations = json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]);
+        if ($request->filled('is_save') && !$request->is_save) $delivery_address->deleted_at = Carbon::now();
         return $delivery_address;
     }
 
@@ -231,11 +231,11 @@ class CustomerDeliveryAddressController extends Controller
         $delivery_address = CustomerDeliveryAddress::find((int)$delivery_address);
         if (!$delivery_address) return api_response($request, null, 404, ['message' => 'Address not found']);
         if ($delivery_address->customer_id != $customer->id) return api_response($request, null, 403, ['message' => "This is not your address."]);
-        if (!$request->has('lat') && !$request->has('lng')) {
+        if (!$request->filled('lat') && !$request->filled('lng')) {
             $geo = $this->geoBuilder->fromAddressString($request->address);
             if ($geo->isNotNull()) $request->merge($geo->toArray());
         }
-        if ($request->has('lat') && $request->has('lng')) {
+        if ($request->filled('lat') && $request->filled('lng')) {
             $hyper_local = HyperLocal::insidePolygon($request->lat, $request->lng)->with('location')->first();
             if (!$hyper_local) return api_response($request, null, 400, ['message' => "You're out of our service area."]);
             $request->merge(["geo_informations" => json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng])]);
@@ -303,7 +303,7 @@ class CustomerDeliveryAddressController extends Controller
         if (!($profile && $profile->customer)) return api_response($request, [], 404, ['addresses' => []]);
 
         $request_geo = new Geo();
-        if ($request->has('lat') && $request->has('lng')) {
+        if ($request->filled('lat') && $request->filled('lng')) {
             $request_geo->setLng($request->lng)->setLat($request->lat);
         }
 
@@ -344,7 +344,7 @@ class CustomerDeliveryAddressController extends Controller
      */
     private function _create(Request $request, $customer)
     {
-        $hyper_local = $request->has('lat') && $request->has('lng');
+        $hyper_local = $request->filled('lat') && $request->filled('lng');
 
         if (!$hyper_local) {
             $geo = $this->geoBuilder->fromAddressString($request->address);

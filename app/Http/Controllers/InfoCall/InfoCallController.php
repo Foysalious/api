@@ -24,7 +24,7 @@ class InfoCallController extends Controller
                 'mobile' => 'required|string|mobile:bd',
                 'location_id' => 'required|numeric',
             ]);
-            if ($request->has('location_id')) {
+            if ($request->filled('location_id')) {
                 $location = Location::find($request->location_id);
                 if ($location == null) return api_response($request, null, 404, ['message' => 'Location Not Found']);;
             }

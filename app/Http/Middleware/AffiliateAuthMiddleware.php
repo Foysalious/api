@@ -16,7 +16,7 @@ class AffiliateAuthMiddleware
      */
     public function handle($request, Closure $next)
     {
-        if ($request->has('remember_token')) {
+        if ($request->filled('remember_token')) {
             $affiliate = Affiliate::where('remember_token', $request->input('remember_token'))->first();
             if ($affiliate) {
                 if ($affiliate->id == $request->affiliate) {

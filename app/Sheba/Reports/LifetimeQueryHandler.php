@@ -40,8 +40,8 @@ trait LifetimeQueryHandler
      */
     protected function getStartEnd($request)
     {
-        $from_date = $request->has('start_date') ? $request->start_date : '2016-01-01';
-        $to_date = $request->has('end_date') ? $request->end_date : Carbon::today()->toDateString();
+        $from_date = $request->filled('start_date') ? $request->start_date : '2016-01-01';
+        $to_date = $request->filled('end_date') ? $request->end_date : Carbon::today()->toDateString();
         $from_date .= ' 00:00:00';
         $to_date .= ' 23:59:59';
 
@@ -54,8 +54,8 @@ trait LifetimeQueryHandler
      */
     protected function getStartEndCarbon($request)
     {
-        $from_date = $request->has('start_date') ? $request->start_date : '2016-01-01';
-        $to_date = $request->has('end_date') ? $request->end_date : Carbon::tomorrow()->subSecond();
+        $from_date = $request->filled('start_date') ? $request->start_date : '2016-01-01';
+        $to_date = $request->filled('end_date') ? $request->end_date : Carbon::tomorrow()->subSecond();
 
         $from_date = Carbon::parse($from_date);
         $to_date = Carbon::parse($to_date)->endOfDay();

@@ -17,18 +17,18 @@ class ScheduleTimeController extends Controller
             'partner' => 'sometimes|required|numeric',
             'limit' => 'sometimes|required|numeric:min:1'
         ]);
-        if ($request->has('category')) {
+        if ($request->filled('category')) {
             $category = Category::find($request->category);
             if (!$category) throw new NotFoundException('Category does not exists', 404);
             $slot->setCategory($category);
         }
-        if ($request->has('partner')) {
+        if ($request->filled('partner')) {
             $partner = Partner::find($request->partner);
             if (!$partner) throw new NotFoundException('Partner does not exists', 404);
             $slot->setPartner($partner);
         }
-        if ($request->has('limit')) $slot->setLimit($request->limit);
-        if ($request->has('for')) $slot->setPortal($request->for);
+        if ($request->filled('limit')) $slot->setLimit($request->limit);
+        if ($request->filled('for')) $slot->setPortal($request->for);
         $dates = $slot->get();
         return api_response($request, $dates, 200, ['dates' => $dates]);
     }

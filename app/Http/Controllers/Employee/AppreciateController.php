@@ -51,7 +51,7 @@ class AppreciateController extends Controller
         $business = $this->getBusiness($request);
         $business_members = $business->getActiveBusinessMember();
 
-        if ($request->has('department')) {
+        if ($request->filled('department')) {
             $business_members = $business_members->whereHas('role', function ($q) use ($request) {
                 $q->whereHas('businessDepartment', function ($q) use ($request) {
                     $q->where('business_departments.id', $request->department);

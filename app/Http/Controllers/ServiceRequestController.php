@@ -29,19 +29,19 @@ class ServiceRequestController extends Controller
         try {
             DB::transaction(function () use ($request, $service_request) {
                 $this->validate($request, ['category' => 'required', 'location' => 'required',]);
-                $service_request->services = $request->has('services') ? $request->services : null;
-                $service_request->customer_id = $request->has('customer') ? $request->customer : null;
+                $service_request->services = $request->filled('services') ? $request->services : null;
+                $service_request->customer_id = $request->filled('customer') ? $request->customer : null;
                 if ($service_request->customer_id == null) {
-                    $service_request->customer_name = $request->has('customer_name') ? $request->customer_name : null;
-                    $service_request->customer_mobile = $request->has('customer_mobile') ? $request->customer_mobile : null;
-                    $service_request->customer_email = $request->has('customer_email') ? $request->customer_email : null;
+                    $service_request->customer_name = $request->filled('customer_name') ? $request->customer_name : null;
+                    $service_request->customer_mobile = $request->filled('customer_mobile') ? $request->customer_mobile : null;
+                    $service_request->customer_email = $request->filled('customer_email') ? $request->customer_email : null;
                 }
                 $service_request->category_id = $request->category;
                 if (empty($request->category_id)) {
-                    $service_request->category_name = $request->has('category_name') ? $request->category_name : null;
+                    $service_request->category_name = $request->filled('category_name') ? $request->category_name : null;
                 }
                 if (empty($request->location_id)) {
-                    $service_request->location_name = $request->has('location_name') ? $request->location_name : null;
+                    $service_request->location_name = $request->filled('location_name') ? $request->location_name : null;
                 }
                 $service_request->location_id = $request->location;
                 $service_request->save();

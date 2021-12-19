@@ -41,7 +41,7 @@ class SmsCampaignOrderController extends Controller
      */
     public function create($partner_id, Request $request, SmsCampaign $campaign)
     {
-        if ($request->has('customers') && $request->has('param_type')) {
+        if ($request->filled('customers') && $request->filled('param_type')) {
             $customers = json_decode(request()->customers, true);
             $request['customers'] = $customers;
         }
@@ -49,7 +49,7 @@ class SmsCampaignOrderController extends Controller
         $this->setModifier($request['manager_resource']);
 
         $rules = ['title' => 'required', 'message' => 'required'];
-        if ($request->has('customers')) $rules += ['customers' => 'required|array', 'customers.*.mobile' => 'required|mobile:bd'];
+        if ($request->filled('customers')) $rules += ['customers' => 'required|array', 'customers.*.mobile' => 'required|mobile:bd'];
         if ($request->hasFile('file')) $rules += ['file' => 'required|file'];
         $this->validate($request, $rules);
 

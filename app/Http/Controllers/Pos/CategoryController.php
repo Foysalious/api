@@ -25,19 +25,19 @@ class CategoryController extends Controller
             $total_buying_price = 0.00;
 
             $updated_after_clause = function ($q) use ($request) {
-                if ($request->has('updated_after')) {
+                if ($request->filled('updated_after')) {
                     $q->where('updated_at', '>=', $request->updated_after);
                 }
             };
             $deleted_after_clause = function ($q) use ($request, $partner) {
-                if ($request->has('updated_after')) {
+                if ($request->filled('updated_after')) {
                     $q->where('deleted_at', '>=', $request->updated_after);
                 }
             };
             $service_where_query = function ($service_query) use ($partner, $updated_after_clause, $request) {
                 $service_query->partner($partner->id);
 
-                if ($request->has('updated_after')) {
+                if ($request->filled('updated_after')) {
                     $service_query->where(function ($service_where_group_query) use ($updated_after_clause) {
                         $service_where_group_query->where($updated_after_clause)
                             ->orWhereHas('discounts', function ($discounts_query) use ($updated_after_clause) {
@@ -67,7 +67,7 @@ class CategoryController extends Controller
                             }])->select($this->getSelectColumnsOfService())->orderBy('name', 'asc');
 
                         }]);
-                    if ($request->has('updated_after')) {
+                    if ($request->filled('updated_after')) {
                         $q->orWhereHas('deletedServices', $deleted_service_where_query)->with(['deletedServices' => function ($deleted_service_query) use ($deleted_after_clause, $deleted_service_where_query) {
                             $deleted_service_query->where($deleted_after_clause)->where($deleted_service_where_query)->select($this->getSelectColumnsOfDeletedService());
                         }]);
@@ -80,13 +80,13 @@ class CategoryController extends Controller
             $master_categories->each(function ($category) use ($request, &$all_services, &$deleted_services) {
                 $category->children->each(function ($child) use ($request, &$children, &$all_services, &$deleted_services) {
                     array_push($all_services, $child->services->all());
-                    array_push($deleted_services,$request->has('updated_after') ?  $child->deletedServices->all() : [] );
+                    array_push($deleted_services,$request->filled('updated_after') ?  $child->deletedServices->all() : [] );
                 });
                 removeRelationsAndFields($category);
                 if (!empty($all_services)) $all_services = array_merge(... $all_services);
                 if (!empty($deleted_services)) $deleted_services = array_merge(... $deleted_services);
                 $category->setRelation('services', collect($all_services));
-                if ($request->has('updated_after')) {
+                if ($request->filled('updated_after')) {
                     $category->setRelation('deletedServices', collect($deleted_services));
                 }
                 $all_services = [];
@@ -115,7 +115,7 @@ class CategoryController extends Controller
                 });
             });
 
-            if ($request->has('updated_after')) {
+            if ($request->filled('updated_after')) {
                 $master_categories = $master_categories->filter(function ($master_category) {
                     return ($master_category->services->count() > 0) || ($master_category->deletedServices->count() > 0);
                 });

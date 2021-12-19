@@ -31,9 +31,9 @@ class HomePageSettingController extends Controller
         $setting_key = null;
         $location = 4;
 
-        if ($request->has('location')) {
+        if ($request->filled('location')) {
             $location = (int)$request->location;
-        } elseif ($request->has('lat') && $request->has('lng')) {
+        } elseif ($request->filled('lat') && $request->filled('lng')) {
             $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
             if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
         }
@@ -72,13 +72,13 @@ class HomePageSettingController extends Controller
         ]);
         $setting_key = null;
         $location = '';
-        if ($request->has('location')) {
+        if ($request->filled('location')) {
             $location = (int)$request->location;
-        } elseif ($request->has('lat') && $request->has('lng')) {
+        } elseif ($request->filled('lat') && $request->filled('lng')) {
             $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
             if (!is_null($hyperLocation)) $location = $hyperLocation->location_id;
         }
-        if ($request->has('portal') && $request->has('screen')) {
+        if ($request->filled('portal') && $request->filled('screen')) {
             $platform = $this->getPlatform($request);
             $setting_key = 'NewScreenSetting::' . snake_case(camel_case($request->portal)) . '_' . $request->screen . "_" . strtolower($platform) . "_" . $location;
         } else {
@@ -105,7 +105,7 @@ class HomePageSettingController extends Controller
 
     private function getPlatform(Request $request)
     {
-        if ($request->has('platform')) {
+        if ($request->filled('platform')) {
             $platform = $request->platform;
         } elseif ($request->hasHeader('Platform-Name')) {
             $platform = $request->header('Platform-Name');

@@ -34,11 +34,11 @@ class IssueController extends Controller
             })->orderBy('id', 'DESC')->skip($offset)->limit($limit);
 
 
-            if ($request->has('status')) {
+            if ($request->filled('status')) {
                 $inspection_item_issues = $inspection_item_issues->where('status', $request->status);
             }
 
-            if ($request->has('type')) {
+            if ($request->filled('type')) {
                 $inspection_item_issues = $inspection_item_issues->whereHas('inspectionItem', function ($q) use ($request) {
                     $q->whereHas('inspection', function ($q) use ($request) {
                         $q->whereHas('vehicle', function ($query) use ($request) {

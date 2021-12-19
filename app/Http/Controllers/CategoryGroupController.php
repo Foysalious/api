@@ -28,8 +28,8 @@ class CategoryGroupController extends Controller
         ]);
 
         $for = $this->getPublishedFor($request->for);
-        if ($request->has('name') && $request->name == Identifier::HIGH_DEMAND) {
-            $location_id = $request->has('location_id') ? $request->location_id : $this->location;
+        if ($request->filled('name') && $request->name == Identifier::HIGH_DEMAND) {
+            $location_id = $request->filled('location_id') ? $request->location_id : $this->location;
             $secondaries = $recommender->setParams(Carbon::now())->setLocationId($location_id)->get();
             return api_response($request, null, 200, [
                 'category' => [
@@ -38,14 +38,14 @@ class CategoryGroupController extends Controller
                 ]
             ]);
         }
-        if ($request->has('name')) {
+        if ($request->filled('name')) {
             $categories = $this->getCategoryByColumn('name', $request->name, $this->location);
             return $categories ? api_response($request, $categories, 200, ['category' => $categories]) : api_response($request, null, 404);
         }
         $categoryGroups = CategoryGroup::$for()->select('id', 'name')
             ->hasLocation($this->location)
             ->get();
-        if ($request->has('with') && $request->with == 'categories') {
+        if ($request->filled('with') && $request->with == 'categories') {
             $categoryGroups->load(['categories' => function ($query) {
                 $query->publishedWithServiceOnLocation($this->location)->orderBy('category_group_category.order');
                 if (\request()->has('new')) $query->select('id', 'name', 'thumb', 'app_thumb', 'icon_png', 'icon_png_active');
@@ -86,9 +86,9 @@ class CategoryGroupController extends Controller
             'lng' => 'required_with:lat'
         ]);
         $location = null;
-        if ($request->has('location')) {
+        if ($request->filled('location')) {
             $location = Location::find($request->location)->id;
-        } else if ($request->has('lat')) {
+        } else if ($request->filled('lat')) {
             $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
             if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
         }

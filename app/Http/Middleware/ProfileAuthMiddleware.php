@@ -27,8 +27,8 @@ class ProfileAuthMiddleware
      */
     public function handle($request, Closure $next)
     {
-        if ($request->has('remember_token')) {
-            if ($request->has('from')) {
+        if ($request->filled('remember_token')) {
+            if ($request->filled('from')) {
                 $from = $this->profileRepo->getAvatar($request->from);
                 $avatar = null;
                 if ($from == 'customer') {

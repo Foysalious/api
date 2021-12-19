@@ -328,7 +328,7 @@ class MemberController extends Controller
             'name' => 'required|string',
             'email' => 'required|email|string'
         ];
-        if ($request->has('mobile')) $validation_rules['mobile'] = 'string|mobile:bd';
+        if ($request->filled('mobile')) $validation_rules['mobile'] = 'string|mobile:bd';
         $this->validate($request, $validation_rules);
 
         /** @var Member $member */
