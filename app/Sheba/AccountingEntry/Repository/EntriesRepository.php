@@ -38,11 +38,11 @@ class EntriesRepository extends BaseRepository
             if ($data["attachments"]) {
                 $data["attachments"] = json_decode($data["attachments"]);
             }
+            $data["customer_details"] = null;
             if ($data["customer_id"]) {
                 /** @var PosCustomerResolver $posCustomerResolver */
                 $posCustomerResolver = app(PosCustomerResolver::class);
                 $posCustomer = $posCustomerResolver->setCustomerId($data["customer_id"])->setPartner($this->partner)->get();
-                $data["customer_details"] = null;
                 if ($posCustomer) {
                     $data["customer_details"] = [
                         'id' => $posCustomer->id,
@@ -52,8 +52,6 @@ class EntriesRepository extends BaseRepository
                         'is_supplier' => $posCustomer->is_supplier
                     ];
                 }
-            } else {
-                $data["customer_details"] = null;
             }
             return $data;
         } catch (AccountingEntryServerError $e) {
