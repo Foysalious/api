@@ -42,7 +42,7 @@ class AccessTokenMiddleware
             $token = JWTAuth::getToken();
             if (!$token) {
                 if ($is_digigo) Redis::set($key_name, "1: $now : null");
-                return api_response($request, null, 401, ['message' => "Your session has expired. Try Login"]);
+                return $this->formApiResponse($request, null, 401, ['message' => "Your session has expired. Try Login"]);
             }
             if ($request->url() != config('sheba.api_url') . '/v2/top-up/get-topup-token') JWTAuth::getPayload($token);
             $access_token = $this->findAccessToken($token);
@@ -65,9 +65,11 @@ class AccessTokenMiddleware
             $this->setExtraDataToRequest($request);
         } catch (JWTException $e) {
             if ($is_digigo) Redis::set($key_name, "4 (" . $e->getMessage() . "): $now : " . (isset($token) ? $token : "null"));
-            return api_response($request, null, 401, ['message' => "Your session has expired. Try Login"]);
-        } catch (NotFoundException $e) {
-            return api_response($request, null, 404, ['message' => $e->getMessage()]);
+            return $this->formApiResponse($request, null, 401, ['message' => "Your session has expired. Try Login"]);
+        } catch (AccessTokenDoesNotExist $e) {
+            return $this->formApiResponse($request, null, 401, ['message' => "Your session has expired. Try Login"]);
+        } catch (AccessTokenNotValidException $e) {
+            return $this->formApiResponse($request, null, 401, ['message' => "Your session has expired. Try Login"]);
         }
 
         return $next($request);
@@ -90,6 +92,12 @@ class AccessTokenMiddleware
 
     protected function setExtraDataToRequest($request)
     {
+
+    }
+
+    protected function formApiResponse($request, $internal, $code, array $data)
+    {
+        return api_response($request, $internal, $code, $data);
     }
 
     protected function getAuthorizationToken()

@@ -88,8 +88,10 @@ class MonthlyStat
             $weekend_day = $check_weekend->getWeekendDays($date, $this->businessWeekendSettings);
             $is_weekend_or_holiday = $this->isWeekendHoliday($date, $weekend_day, $dates_of_holidays_formatted);
             $is_on_leave = $this->isLeave($date, $leaves);
-            if ($is_weekend_or_holiday) {
+            if ($is_weekend_or_holiday || $is_on_leave) {
                 if ($this->forOneEmployee) $breakdown_data['weekend_or_holiday_tag'] = $this->isWeekendHolidayLeaveTag($date, $leaves_date_with_half_and_full_day, $dates_of_holidays_formatted);
+            }
+            if ($is_weekend_or_holiday) {
                 if (!$this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['working_days']--;
             }
             if ($is_on_leave) {
