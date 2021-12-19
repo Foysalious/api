@@ -111,7 +111,7 @@ class VisitDetailsTransformer extends TransformerAbstract
                 'time' => $visit_status_change_log->created_at->format('h:i A'),
                 'status' => $visit_status_change_log->new_status,
                 'status_title' => $this->statusTitleFormat($visit_status_change_log->new_status),
-                'location' => json_decode($visit_status_change_log->new_location)
+                'location' => $visit_status_change_log->new_location
             ];
         }
         return $status_change_logs ?: null;
