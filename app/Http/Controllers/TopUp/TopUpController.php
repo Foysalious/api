@@ -137,14 +137,16 @@ class TopUpController extends Controller
             if ($token) {
                 try {
                     $credentials = JWT::decode($request->topup_token, config('jwt.secret'), ['HS256']);
-                } catch (ExpiredException $e) {
-                    return api_response($request, null, 409, ['message' => 'Topup token expired']);
-                } catch (Exception $e) {
-                    return api_response($request, null, 409, ['message' => 'Invalid topup token']);
-                }
 
-                if ($credentials->sub != $agent->id) {
-                    return api_response($request, null, 404, ['message' => 'Not a valid partner request']);
+                    if ($credentials->sub != $agent->id) {
+                        // return api_response($request, null, 404, ['message' => 'Not a valid partner request']);
+                    }
+                } catch (ExpiredException $e) {
+                    logError($e);
+                    // return api_response($request, null, 409, ['message' => 'Topup token expired']);
+                } catch (Exception $e) {
+                    logError($e);
+                    // return api_response($request, null, 409, ['message' => 'Invalid topup token']);
                 }
             }
 
@@ -158,8 +160,8 @@ class TopUpController extends Controller
             ->setType($request->connection_type)
             ->setAgent($agent)
             ->setVendorId($request->vendor_id)
-            ->setLat($request->lat ? $request->lat : null)
-            ->setLong($request->long ? $request->long : null)
+            ->setLat($request->lat ?: null)
+            ->setLong($request->long ?: null)
             ->setUserAgent($userAgentInformation->getUserAgent());
 
         if ($agent instanceof Business && $request->has('is_otf_allow') && !($request->is_otf_allow)) {
@@ -169,18 +171,16 @@ class TopUpController extends Controller
         if ($top_up_request->hasError()) {
             return api_response($request, null, $top_up_request->getErrorCode(), ['message' => $top_up_request->getErrorMessage()]);
         }
-        
+
         $topup_order = $creator->setTopUpRequest($top_up_request)->create();
 
         $agent_blocker->setAgent($agent)->checkAndBlock();
 
-        if ($topup_order) {
-            dispatch((new TopUpJob($topup_order)));
+        if (!$topup_order) return api_response($request, null, 500);
 
-            return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $topup_order->id]);
-        } else {
-            return api_response($request, null, 500);
-        }
+        dispatch((new TopUpJob($topup_order)));
+
+        return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $topup_order->id]);
     }
 
     public function isBusiness($agent)

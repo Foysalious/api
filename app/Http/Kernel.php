@@ -36,6 +36,7 @@ use App\Http\Middleware\ResourceJobAuthMiddleware;
 use App\Http\Middleware\SetRequestToJwtWhileTesting;
 use App\Http\Middleware\Sheba\ShebaNetworkMiddleware;
 use App\Http\Middleware\ThrottleRequests;
+use App\Http\Middleware\TopUp409DebugMiddleware;
 use App\Http\Middleware\TopUpAuthMiddleware;
 use App\Http\Middleware\UserMigrationMiddleware;
 use App\Http\Middleware\VendorMiddleware;
