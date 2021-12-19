@@ -139,7 +139,7 @@ class TopUpController extends Controller
         elseif ($user == 'partner') {
             $agent = $auth_user->getPartner();
             $status = (new ComplianceInfo())->setPartner($agent)->getComplianceStatus();
-            if ($status === Statics::REJECTED)
+            if ($status === Statics::REJECTED) {
                 return api_response($request, null, 412, ["message" => "Precondition Failed", "error_message" => Statics::complianceRejectedMessage()]);
             }
             
