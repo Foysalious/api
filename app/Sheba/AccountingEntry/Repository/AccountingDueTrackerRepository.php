@@ -47,7 +47,7 @@ class AccountingDueTrackerRepository extends BaseRepository
         $posOrder = $this->posOrderByPartnerWiseOrderId($request->partner, $request->partner_wise_order_id);
         $request->merge(['source_id' =>  $posOrder? $posOrder->id : null]);
         $data = $this->createEntryData($request, $type);
-        if ($request->has('attachment') && $request->attachment) {
+        if ($request->has('attachments') && $request->attachments) {
             $data['attachments'] = $this->uploadAttachments($request);
         }
         $url = $with_update ? "api/entries/" . $request->entry_id : "api/entries/";
