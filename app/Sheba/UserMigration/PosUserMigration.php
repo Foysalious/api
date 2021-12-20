@@ -62,7 +62,7 @@ class PosUserMigration extends UserMigrationRepository
         return [
             "icon" => config('s3.url') . "pos/migration/icons/pos_migration_pending.png",
             "header" => "নতুন সিস্টেমে আপগ্রেড করুন।",
-            "body" => '<center> নতুন সিস্টেমে আপগ্রেড করলে আপনি যা যা পাচ্ছেনঃ <br />• লাভ ক্ষতির হিসাব<br />• ফেরত ও পরিবর্তন<br />• কাস্টম ডোমেইন<br />• ডেলিভারি সিস্টেম এবং আরও অনেক</center>',
+            "body" => 'নতুন সিস্টেমে আপগ্রেড করলে আপনি যা যা পাচ্ছেনঃ <br />• লাভ ক্ষতির হিসাব<br />• ফেরত ও পরিবর্তন<br />• কাস্টম ডোমেইন<br />• ডেলিভারি সিস্টেম এবং আরও অনেক',
             "confirm_text" => "আপগ্রেড করুন",
             "cancel_text" => "আগের অ্যাপে ফেরত যান",
             "dialog_cancelable" => false,
