@@ -1,5 +1,6 @@
 <?php namespace App\Http\Requests;
 
+use Sheba\Gender\Gender;
 use Carbon\Carbon;
 use Illuminate\Http\Request as HttpRequest;
 
@@ -26,7 +27,7 @@ class SpLoanRequest extends ApiRequest
 
         if (HttpRequest::segment(5) == "personal-info") {
             $rules = [
-                'gender' => 'required|string|in:Male,Female,Other',
+                'gender' => 'required|string|in:' . Gender::implodeEnglish(),
                 'dob' => 'date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
                 'address' => 'required|string',
                 'permanent_address' => 'required|string',
