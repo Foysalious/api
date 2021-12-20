@@ -9,6 +9,7 @@ class EntryType
 
     const INCOME    = 'income';
     const EXPENSE   = 'expense';
+    const PARTNER = 'partner';
 
     /**
      * @param $status

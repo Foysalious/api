@@ -13,6 +13,9 @@ use App\Sheba\PosOrderService\PosSetting\Listeners\Updated as PosSettingUpdatedL
 
 use App\Sheba\WebstoreBanner\Events\WebstoreBannerUpdate;
 use App\Sheba\WebstoreBanner\Listeners\WebstoreBannerListener;
+
+use App\Sheba\Customer\Events\PartnerPosCustomerEvent;
+use App\Sheba\Customer\Listeners\PartnerPosCustomerCreateListener;
 use Illuminate\Contracts\Events\Dispatcher as DispatcherContract;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Sheba\Business\BusinessMember\Events\BusinessMemberCreated;
@@ -34,6 +37,9 @@ class EventServiceProvider extends ServiceProvider
      * @var array
      */
     protected $listen = [
+        PartnerPosCustomerEvent::class => [
+            PartnerPosCustomerCreateListener::class
+        ],
         TopUpRequestOfBlockedNumberEvent::class => [
             TopUpRequestOfBlockedNumber::class
         ],
