@@ -47,6 +47,9 @@ class AccountingDueTrackerRepository extends BaseRepository
         $posOrder = $this->posOrderByPartnerWiseOrderId($request->partner, $request->partner_wise_order_id);
         $request->merge(['source_id' =>  $posOrder? $posOrder->id : null]);
         $data = $this->createEntryData($request, $type);
+        if ($request->has('attachment') && $request->attachment) {
+            $data['attachments'] = $this->uploadAttachments($request);
+        }
         $url = $with_update ? "api/entries/" . $request->entry_id : "api/entries/";
         $data = $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
         // if type deposit then auto reconcile happen. for that we have to reconcile pos order.
@@ -249,7 +252,6 @@ class AccountingDueTrackerRepository extends BaseRepository
         $data['customer_pro_pic'] = $request->pro_pic;
         $data['source_id'] = $request->source_id;
         $data['entry_at'] = $request->date ?: Carbon::now()->format('Y-m-d H:i:s');
-        $data['attachments'] = $this->uploadAttachments($request);
         return $data;
     }
 
