@@ -1,9 +1,18 @@
 <?php namespace App\Transformers\Business;
 
 use League\Fractal\TransformerAbstract;
+use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
 
 class LeaveProrateEmployeeInfoTransformer extends TransformerAbstract
 {
+    /*** @var MemberRepositoryInterface $memberRepository*/
+    private $memberRepository;
+
+    public function __construct()
+    {
+        $this->memberRepository = app(MemberRepositoryInterface::class);
+    }
+
     public function transform($prorate)
     {
         $business_member = $prorate->businessMember;
@@ -11,6 +20,7 @@ class LeaveProrateEmployeeInfoTransformer extends TransformerAbstract
         $member = $business_member->member;
         $profile = $member->profile;
         $department = $business_member->department();
+        $updated_by = $prorate->updated_by_name ? $this->memberRepository->find($prorate->updated_by) : null;
         return [
             'id' => $prorate->id,
             'employee_id' => $business_member->employee_id,
@@ -24,9 +34,13 @@ class LeaveProrateEmployeeInfoTransformer extends TransformerAbstract
             'business_member_joined_date' => $business_member_join_date ? $business_member_join_date->format('F Y') : null,
             'leave_type' => $prorate->leaveType->title,
             'total_days' => $prorate->total_days,
-            'updated_by' => $prorate->updated_by_name,
             'is_auto_prorated' => $prorate->is_auto_prorated,
-            'created_at' => $prorate->created_at->format('Y-m-d H:i:s')
+            'created_at' => $prorate->created_at->format('Y-m-d H:i:s'),
+            'updated_by' => $updated_by ? [
+                'employee_id' => $updated_by->businessMember->employee_id,
+                'profile_pic' => $updated_by->businessMember->profile()->pro_pic,
+                'employee_name' => str_replace('Member-', '', $prorate->updated_by_name),
+            ] : null
         ];
     }
 }
