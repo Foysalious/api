@@ -113,7 +113,7 @@ class OfferFilter
 
     private function isApplicableVoucher(Voucher $voucher)
     {
-        $rules = json_decode($voucher->rules);
+        $rules = json_decode($voucher->rules, 1);
         if (count($rules) == 0) return true;
         if ($voucher->max_order > 0 && $this->customer->orders->where('voucher_id', $voucher->id)->count() >= $voucher->max_order) return false;
         $params = (new CheckParamsForPromotion())->setApplicant($this->customer);
@@ -121,8 +121,7 @@ class OfferFilter
             return false;
         }
         if (array_key_exists('nth_orders', $rules)) {
-            $nth_orders = $rules->nth_orders;
-            if ($this->customer->orders->count() >= max($nth_orders)) return false;
+            if ($this->customer->orders->count() >= max($rules['nth_orders'])) return false;
         }
         return true;
     }
