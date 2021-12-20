@@ -115,31 +115,6 @@ class CustomerDeliveryAddressController extends Controller
         $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
         $location = $hyperLocation ? $hyperLocation->location->id : null;
         $customer = $request->customer;
-        $customer_delivery_addresses = $customer_delivery_address_repo->getAddressesForOrderPlacement($customer->id)->where('location_id',$location)->get();
-        $customer_order_addresses = $customer->orders()->selectRaw('delivery_address,count(*) as c')->groupBy('delivery_address')->orderBy('c', 'desc')->get();
-        $target = new Coords((double)$request->lat, (double)$request->lng);
-        $customer_delivery_addresses = $customer_delivery_addresses->reject(function ($address) {
-            return $address->geo_informations == null;
-        })->map(function (CustomerDeliveryAddress $customer_delivery_address) use ($customer_order_addresses, $target, $address_validator) {
-            $customer_delivery_address['count'] = $this->addressManager->getOrderCount($customer_order_addresses, $customer_delivery_address);
-            $geo = $customer_delivery_address->getGeo();
-            $customer_delivery_address['geo_informations'] = $geo->isNull() ? null : $geo->toArray();
-            $customer_delivery_address['is_valid'] = 1;
-            $customer_delivery_address['is_same'] = $geo->isNull() ? false : $address_validator->isSameAddress($geo, $target);
-            return $customer_delivery_address;
-        });
-        if ($request->filled('partner') && (int)$request->partner > 0) {
-            $partner = Partner::find((int)$request->partner);
-            $partner_geo = json_decode($partner->geo_informations);
-            $to = [new Coords(floatval($partner_geo->lat), floatval($partner_geo->lng), $partner->id)];
-            $distance = (new Distance(DistanceStrategy::$VINCENTY))->matrix();
-            $customer_delivery_addresses = $customer_delivery_addresses->reject(function ($customer_delivery_address) {
-                return $customer_delivery_address->geo_informations == null;
-            })->map(function ($customer_delivery_address) use ($distance, $to, $partner_geo) {
-                $address_geo = $customer_delivery_address->geo_informations;
-                $current = new Coords($address_geo['lat'], $address_geo['lng']);
-                $inside_radius = ($distance->from([$current])->to($to)->sortedDistance()[0][$to[0]->id] <= (double)$partner_geo->radius * 1000) ? 1 : 0;
-                $customer_delivery_address['is_valid'] = $inside_radius;
         $customer_delivery_addresses = null;
         if ($location) {
             $customer_delivery_addresses = $customer_delivery_address_repo->getAddressesForOrderPlacement($customer->id)->where('location_id', $location)->get();
