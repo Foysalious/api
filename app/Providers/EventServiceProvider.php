@@ -3,7 +3,7 @@
 namespace App\Providers;
 
 
-use App\Sheba\Customer\Events\PartnerPosCustomerEvent;
+use App\Sheba\Customer\Events\PartnerPosCustomerSavedEvent;
 use App\Sheba\Customer\Listeners\PartnerPosCustomerCreateListener;
 use Illuminate\Contracts\Events\Dispatcher as DispatcherContract;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -26,7 +26,7 @@ class EventServiceProvider extends ServiceProvider
      * @var array
      */
     protected $listen = [
-        PartnerPosCustomerEvent::class => [
+        PartnerPosCustomerSavedEvent::class => [
             PartnerPosCustomerCreateListener::class
         ],
         TopUpRequestOfBlockedNumberEvent::class => [

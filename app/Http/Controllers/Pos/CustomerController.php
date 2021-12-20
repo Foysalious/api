@@ -1,11 +1,13 @@
 <?php namespace App\Http\Controllers\Pos;
 
+use App\Events\Event;
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Sheba\AccountingEntry\Repository\AccountingDueTrackerRepository;
+use App\Sheba\Customer\Events\PartnerPosCustomerSavedEvent;
 use App\Transformers\CustomSerializer;
 use App\Transformers\PosOrderTransformer;
 use Carbon\Carbon;
@@ -41,9 +43,9 @@ class CustomerController extends Controller
     public function index(Request $request)
     {
         try {
-            $partner           = $request->partner;
+            $partner = $request->partner;
             $partner_customers = PartnerPosCustomer::byPartner($partner->id)->get();
-            $customers         = collect();
+            $customers = collect();
             foreach ($partner_customers as $partner_customer) {
                 /** @var PartnerPosCustomer $partner_customer */
                 $customers->push($partner_customer->details());
@@ -58,12 +60,12 @@ class CustomerController extends Controller
     /**
      * @param                      $partner
      * @param                      $customer
-     * @param Request              $request
-     * @param EntryRepository      $entry_repo
+     * @param Request $request
+     * @param EntryRepository $entry_repo
      * @param DueTrackerRepository $dueTrackerRepository
      * @return JsonResponse
      */
-    public function show($partner, $customer, Request $request, EntryRepository $entry_repo,DueTrackerRepository $dueTrackerRepository, PosCustomerRepository $posCustomerRepository)
+    public function show($partner, $customer, Request $request, EntryRepository $entry_repo, DueTrackerRepository $dueTrackerRepository, PosCustomerRepository $posCustomerRepository)
     {
         try {
             /** @var PosCustomer $customer */
@@ -75,27 +77,27 @@ class CustomerController extends Controller
             if (empty($partner_pos_customer))
                 return api_response($request, null, 404, ['message' => 'Customer Not Found.']);
 
-            $data                             = $customer->details();
-            $data['customer_since']           = $customer->created_at->format('Y-m-d');
+            $data = $customer->details();
+            $data['customer_since'] = $customer->created_at->format('Y-m-d');
             $data['customer_since_formatted'] = $customer->created_at->diffForHumans();
             $data['name'] = PartnerPosCustomer::getPartnerPosCustomerName($request->partner->id, $customer->id);
-            $total_purchase_amount            = 0.00;
-            $total_used_promo                 = 0;
+            $total_purchase_amount = 0.00;
+            $total_used_promo = 0;
             PosOrder::byPartner($partner)->byCustomer($customer->id)->get()->each(function ($order) use (&$total_purchase_amount, &$total_used_promo) {
                 /** @var PosOrder $order */
-                $order                 = $order->calculate();
+                $order = $order->calculate();
                 $total_purchase_amount += $order->getNetBill();
                 $total_used_promo += !empty($order->voucher_id) ? $this->getVoucherAmount($order) : 0;
             });
             $customerAmount = $posCustomerRepository->getDueAmountFromDueTracker($request->partner, $customer->id, $request);
             $data['total_purchase_amount'] = $total_purchase_amount;
-            $data['total_due_amount']      = $customerAmount['due'];
-            $data['total_used_promo']      = $total_used_promo;
-            $data['total_payable_amount']  = $customerAmount['payable'];
+            $data['total_due_amount'] = $customerAmount['due'];
+            $data['total_used_promo'] = $total_used_promo;
+            $data['total_payable_amount'] = $customerAmount['payable'];
 //            $data['is_customer_editable']  = $customer->isEditable();
-            $data['is_customer_editable']  = true;
-            $data['note']                  = $partner_pos_customer->note;
-            $data['is_supplier']                  = $partner_pos_customer->is_supplier;
+            $data['is_customer_editable'] = true;
+            $data['note'] = $partner_pos_customer->note;
+            $data['is_supplier'] = $partner_pos_customer->is_supplier;
             return api_response($request, $customer, 200, ['customer' => $data]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
@@ -112,8 +114,8 @@ class CustomerController extends Controller
     {
         try {
             $this->validate($request, [
-                'mobile'        => 'required|mobile:bd',
-                'name'          => 'required',
+                'mobile' => 'required|mobile:bd',
+                'name' => 'required',
                 'profile_image' => 'sometimes|required|mimes:jpeg,png,jpg',
                 'is_supplier' => 'sometimes|required|in:1,0'
             ]);
@@ -157,6 +159,7 @@ class CustomerController extends Controller
         $customerDetails = $customer->details();
         $customerDetails['name'] = isset($customer['name']) && !empty($customer['name']) ? $customer['name'] : $customerDetails['name'];
         $customerDetails['is_supplier'] = isset($customer['is_supplier']) && !is_null($customer['is_supplier']) ? $customer['is_supplier'] : 0;
+        event(new PartnerPosCustomerSavedEvent(PartnerPosCustomer::find($customer->id)));
         return api_response($request, $customer, 200, ['customer' => $customerDetails]);
     }
 
@@ -171,18 +174,18 @@ class CustomerController extends Controller
         ini_set('memory_limit', '2096M');
         try {
             $partner = $request->partner;
-            $status  = $request->status;
+            $status = $request->status;
             list($offset, $limit) = calculatePagination($request);
             /** @var PosOrder $orders */
-            $orders       = PosOrder::with('items.service.discounts', 'customer', 'payments', 'logs', 'partner')->byPartner($partner->id)->byCustomer($customer->id)->orderBy('created_at', 'desc')->skip($offset)->take($limit)->get();
+            $orders = PosOrder::with('items.service.discounts', 'customer', 'payments', 'logs', 'partner')->byPartner($partner->id)->byCustomer($customer->id)->orderBy('created_at', 'desc')->skip($offset)->take($limit)->get();
             $final_orders = [];
             foreach ($orders as $index => $order) {
                 $order->isRefundable();
                 $order_data = $order->calculate();
-                $manager    = new Manager();
+                $manager = new Manager();
                 $manager->setSerializer(new CustomSerializer());
-                $resource          = new Item($order_data, new PosOrderTransformer());
-                $order_formatted   = $manager->createData($resource)->toArray()['data'];
+                $resource = new Item($order_data, new PosOrderTransformer());
+                $order_formatted = $manager->createData($resource)->toArray()['data'];
                 $order_create_date = $order->created_at->format('Y-m-d');
                 if (!isset($final_orders[$order_create_date]))
                     $final_orders[$order_create_date] = [];
@@ -191,8 +194,8 @@ class CustomerController extends Controller
                 }
             }
             $orders_formatted = [];
-            $pos_orders_repo  = new PosOrderRepository();
-            $pos_sales        = [];
+            $pos_orders_repo = new PosOrderRepository();
+            $pos_sales = [];
             foreach (array_keys($final_orders) as $date) {
                 $timeFrame = new TimeFrame();
                 $timeFrame->forADay(Carbon::parse($date))->getArray();
@@ -200,20 +203,20 @@ class CustomerController extends Controller
                 $pos_orders->map(function ($pos_order) {
                     /** @var PosOrder $pos_order */
                     $pos_order->sale = $pos_order->getNetBill();
-                    $pos_order->due  = $pos_order->getDue();
+                    $pos_order->due = $pos_order->getDue();
                 });
                 $pos_sales[$date] = [
                     'total_sale' => $pos_orders->sum('sale'),
-                    'total_due'  => $pos_orders->sum('due')
+                    'total_due' => $pos_orders->sum('due')
                 ];
             }
             foreach ($final_orders as $key => $value) {
                 if (count($value) > 0) {
                     $order_list = [
-                        'date'       => $key,
+                        'date' => $key,
                         'total_sale' => $pos_sales[$key]['total_sale'],
-                        'total_due'  => $pos_sales[$key]['total_due'],
-                        'orders'     => $value
+                        'total_due' => $pos_sales[$key]['total_due'],
+                        'orders' => $value
                     ];
                     array_push($orders_formatted, $order_list);
                 }
@@ -236,20 +239,21 @@ class CustomerController extends Controller
      * @throws ExpenseTrackingServerError|AccountingEntryServerError
      */
     public function delete(
-        Request $request,
-        $partner,
-        $customer,
-        DueTrackerRepository $dueTrackerRepository,
+        Request                        $request,
+                                       $partner,
+                                       $customer,
+        DueTrackerRepository           $dueTrackerRepository,
         AccountingDueTrackerRepository $accDueTrackerRepository
-    ): JsonResponse {
+    ): JsonResponse
+    {
         $partner_pos_customer = PartnerPosCustomer::byPartner($request->partner->id)->where(
-                'customer_id',
-                $customer
-            )->with(['customer'])->first();
+            'customer_id',
+            $customer
+        )->with(['customer'])->first();
         /** @var PosCustomer $customer */
         if (empty($partner_pos_customer) || empty($partner_pos_customer->customer)) {
             throw new InvalidPartnerPosCustomer();
-            }
+        }
         $customer = $partner_pos_customer->customer;
         // checking the partner is migrated to accounting
         if ($accDueTrackerRepository->isMigratedToAccounting($request->partner->id)) {
@@ -262,15 +266,15 @@ class CustomerController extends Controller
         return api_response($request, true, 200);
     }
 
-    private function deletePosOrder($partner_id,$customer)
+    private function deletePosOrder($partner_id, $customer)
     {
-        $pos_orders = PosOrder::byPartnerAndCustomer($partner_id,$customer)->get();
+        $pos_orders = PosOrder::byPartnerAndCustomer($partner_id, $customer)->get();
         foreach ($pos_orders as $pos_order)
             $pos_order->delete();
     }
 
     private function getVoucherAmount($order)
     {
-        return $order->discounts()->where('type',DiscountTypes::VOUCHER)->sum('amount');
+        return $order->discounts()->where('type', DiscountTypes::VOUCHER)->sum('amount');
     }
 }

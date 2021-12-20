@@ -1,13 +1,13 @@
 <?php namespace App\Models;
 
-use App\Sheba\Customer\Events\PartnerPosCustomerEvent;
+use App\Sheba\Customer\Events\PartnerPosCustomerSavedEvent;
 use Sheba\Dal\BaseModel;
 
 class PartnerPosCustomer extends BaseModel
 {
     protected $guarded = ['id'];
 
-    public static $savedEventClass = PartnerPosCustomerEvent::class;
+    public static $savedEventClass = PartnerPosCustomerSavedEvent::class;
 
     public function customer()
     {
