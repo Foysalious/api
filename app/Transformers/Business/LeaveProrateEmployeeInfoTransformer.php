@@ -39,7 +39,7 @@ class LeaveProrateEmployeeInfoTransformer extends TransformerAbstract
             'updated_by' => $updated_by ? [
                 'employee_id' => $updated_by->businessMember->employee_id,
                 'profile_pic' => $updated_by->businessMember->profile()->pro_pic,
-                'employee_name' => $updated_by->businessMember->profile()->pro_pic,
+                'employee_name' => $updated_by->businessMember->profile()->name,
             ] : null
         ];
     }
