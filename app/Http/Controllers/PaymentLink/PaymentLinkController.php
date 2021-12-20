@@ -87,9 +87,9 @@ class PaymentLinkController extends Controller
 //                    return array_key_exists('targetType', $link) ? $link['targetType'] == null : $link;
 //                });
 //                list($offset, $limit) = calculatePagination($request);
-                $links = collect($payment_links_list);
-                $fractal = new Manager();
-                $resources = new Collection($links, new PaymentLinkArrayTransform());
+                $links         = collect($payment_links_list);
+                $fractal       = new Manager();
+                $resources     = new Collection($links, new PaymentLinkArrayTransform());
                 $payment_links = $fractal->createData($resources)->toArray()['data'];
                 return api_response($request, $payment_links, 200, ['payment_links' => $payment_links]);
             } else {
@@ -111,9 +111,9 @@ class PaymentLinkController extends Controller
         try {
             $payment_links_list = $this->paymentLinkRepo->getPartnerPaymentLinkList($request);
             if ($payment_links_list) {
-                $links = collect($payment_links_list);
-                $fractal = new Manager();
-                $resources = new Collection($links, new PaymentLinkArrayTransform());
+                $links         = collect($payment_links_list);
+                $fractal       = new Manager();
+                $resources     = new Collection($links, new PaymentLinkArrayTransform());
                 $payment_links = $fractal->createData($resources)->toArray()['data'];
                 return api_response($request, $payment_links, 200, ['payment_links' => $payment_links]);
             } else {
@@ -135,7 +135,7 @@ class PaymentLinkController extends Controller
                     if (!AccessManager::canAccess(AccessManager::Rules()->DIGITAL_COLLECTION, $receiver->subscription->getAccessRules()) || in_array($receiver->status, [PartnerStatuses::BLACKLISTED, PartnerStatuses::PAUSED]) || !(int)$link->getIsActive())
                         return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
                     $available_methods = (new AvailableMethods())->getPublishedPartnerPaymentGateways($receiver);
-                    if(!count($available_methods))
+                    if (!count($available_methods))
                         return api_response($request, $link, 404, ['message' => "No active payment method found"]);
 
                 }
@@ -156,100 +156,87 @@ class PaymentLinkController extends Controller
     public function store(Request $request)
     {
         $this->validate($request, [
-            'amount' => 'required',
-            'purpose' => 'required',
-            'customer_id' => 'sometimes',
-            'emi_month' => 'sometimes|integer|in:' . implode(',', config('emi.valid_months')),
-            'interest_paid_by' => 'sometimes|in:' . implode(',', PaymentLinkStatics::paidByTypes()),
+            'amount'             => 'required',
+            'purpose'            => 'required',
+            'customer_id'        => 'sometimes',
+            'emi_month'          => 'sometimes|integer|in:' . implode(',', config('emi.valid_months')),
+            'interest_paid_by'   => 'sometimes|in:' . implode(',', PaymentLinkStatics::paidByTypes()),
             'transaction_charge' => 'sometimes|numeric|min:' . PaymentLinkStatics::get_payment_link_commission(),
-            'pos_order_id' => 'sometimes'
+            'pos_order_id'       => 'sometimes'
         ]);
         $userStatusCheck = $this->userStatusCheck($request);
         if ($userStatusCheck !== true) return $userStatusCheck;
 
-            if (!$request->user) return api_response($request, null, 404, ['message' => 'User not found']);
-            if ($request->user instanceof Partner) {
-                $available_methods = (new AvailableMethods())->getPublishedPartnerPaymentGateways($request->user);
-                if (!count($available_methods))
-                    return api_response($request, null, 404, ['message' => "No active payment method found"]);
-            }
-            $emi_month_invalidity = Creator::validateEmiMonth($request->all());
-            if ($emi_month_invalidity !== false) return api_response($request, null, 400, ['message' => $emi_month_invalidity]);
-            $this->creator
-                ->setIsDefault($request->isDefault)
-                ->setAmount($request->amount)
-                ->setReason($request->purpose)
-                ->setUserName($request->user->name)
-                ->setUserId($request->user->id)
-                ->setUserType($request->type)
-                ->setTargetId($request->pos_order_id)
-                ->setTargetType('pos_order')
-                ->setEmiMonth((int)$request->emi_month)
-                ->setPaidBy($request->interest_paid_by ?: PaymentLinkStatics::paidByTypes()[($request->filled("emi_month") ? 1 : 0)])
-                ->setTransactionFeePercentage($request->transaction_charge)
-                ->calculate();
-            $interest = 0;
-            $bank_transaction_charge = 0;
-            if ($request->filled('pos_order_id') && $request->pos_order_id) {
-                /** @var PosOrderResolver $posOrderResolver */
-                $posOrderResolver = (app(PosOrderResolver::class));
-                $pos_order = $posOrderResolver->setOrderId($request->pos_order_id)->get();
-                $target = new Target(TargetType::POS_ORDER, $request->pos_order_id);
-                $this->deActivatePreviousLink($target);
-                if (!empty($pos_order)) $this->creator->setPayerId($pos_order->customer_id)->setPayerType('pos_customer');
-                if ($this->creator->getPaidBy() == PaymentLinkStatics::paidByTypes()[1]) {
-                    $interest = $this->creator->getInterest();
-                    $bank_transaction_charge = $this->creator->getBankTransactionCharge();
-                }
+        if (!$request->user) return api_response($request, null, 404, ['message' => 'User not found']);
+        if ($request->user instanceof Partner) {
+            $available_methods = (new AvailableMethods())->getPublishedPartnerPaymentGateways($request->user);
+            if (!count($available_methods))
+                return api_response($request, null, 404, ['message' => "No active payment method found"]);
+        }
+        $emi_month_invalidity = Creator::validateEmiMonth($request->all());
+        if ($emi_month_invalidity !== false) return api_response($request, null, 400, ['message' => $emi_month_invalidity]);
+        $this->creator
+            ->setIsDefault($request->isDefault)
+            ->setAmount($request->amount)
+            ->setReason($request->purpose)
+            ->setUserName($request->user->name)
+            ->setUserId($request->user->id)
+            ->setUserType($request->type)
+            ->setTargetId($request->pos_order_id)
+            ->setTargetType('pos_order')
+            ->setEmiMonth((int)$request->emi_month)
+            ->setPaidBy($request->interest_paid_by ?: PaymentLinkStatics::paidByTypes()[($request->filled("emi_month") ? 1 : 0)])
+            ->setTransactionFeePercentage($request->transaction_charge)
+            ->calculate();
+        $interest                = 0;
+        $bank_transaction_charge = 0;
+        if ($request->filled('pos_order_id') && $request->pos_order_id) {
+            /** @var PosOrderResolver $posOrderResolver */
+            $posOrderResolver = (app(PosOrderResolver::class));
+            $pos_order        = $posOrderResolver->setOrderId($request->pos_order_id)->get();
+            $target           = new Target(TargetType::POS_ORDER, $request->pos_order_id);
+            $this->deActivatePreviousLink($target);
+            if (!empty($pos_order)) $this->creator->setPayerId($pos_order->customer_id)->setPayerType('pos_customer');
+            if ($this->creator->getPaidBy() == PaymentLinkStatics::paidByTypes()[1]) {
+                $interest                = $this->creator->getInterest();
+                $bank_transaction_charge = $this->creator->getBankTransactionCharge();
             }
         }
+
         if ($request->filled('customer_id') && $request->customer_id) {
             /** @var PosCustomerResolver $posCustomerResolver */
             $posCustomerResolver = app(PosCustomerResolver::class);
-            $customer = $posCustomerResolver->setCustomerId($request->customer_id)->setPartner($request->partner)->get();
+            $customer            = $posCustomerResolver->setCustomerId($request->customer_id)->setPartner($request->partner)->get();
             if (!empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
             $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
         }
 
-            $payment_link_store = $this->creator->save();
-            if ($payment_link_store) {
-                $payment_link = $this->creator->getPaymentLinkData();
-                if (!$request->filled('emi_month')) {
-                    $this->creator->sentSms();
-                }
-                $payment_link['interest'] = $interest;
-                $payment_link['bank_transaction_charge'] = $bank_transaction_charge;
-                if (isset($request->partner) && isset($pos_order)) {
-                    $this->dispatch(app(PosApiAfterPaymentLinkCreated::class)->setPartnerId($request->partner->id)
-                        ->setPosOrderId($pos_order->id)->setPaymentLink($payment_link));
-                }
-
-                return api_response($request, $payment_link, 200, array_merge(['payment_link' => $payment_link], $this->creator->getSuccessMessage()));
-            } else {
-                return api_response($request, null, 500, $this->creator->getErrorMessage());
+        $payment_link_store = $this->creator->save();
+        if ($payment_link_store) {
+            $payment_link = $this->creator->getPaymentLinkData();
+            if (!$request->filled('emi_month')) {
+                $this->creator->sentSms();
             }
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            $payment_link['interest']                = $interest;
+            $payment_link['bank_transaction_charge'] = $bank_transaction_charge;
+            if (isset($request->partner) && isset($pos_order)) {
+                $this->dispatch(app(PosApiAfterPaymentLinkCreated::class)->setPartnerId($request->partner->id)
+                    ->setPosOrderId($pos_order->id)->setPaymentLink($payment_link));
+            }
+
+            return api_response($request, $payment_link, 200, array_merge(['payment_link' => $payment_link], $this->creator->getSuccessMessage()));
+        } else {
             return api_response($request, null, 500, $this->creator->getErrorMessage());
         }
-        $payment_link['interest'] = $interest;
-        $payment_link['bank_transaction_charge'] = $bank_transaction_charge;
-        if (isset($request->partner) && isset($pos_order)) {
-            $this->dispatch(app(PosApiAfterPaymentLinkCreated::class)->setPartnerId($request->partner->id)
-                ->setPosOrderId($pos_order->id)->setPaymentLink($payment_link));
-        }
 
-        return api_response($request, $payment_link, 200, array_merge(['payment_link' => $payment_link], $this->creator->getSuccessMessage()));
+
     }
 
     private function deActivatePreviousLink(Target $target)
     {
         $payment_link = app(PaymentLinkRepositoryInterface::class)->getPaymentLinksByPosOrder($target);
-        $key = $target->toString();
-        $links = null;
+        $key          = $target->toString();
+        $links        = null;
         if (array_key_exists($key, $payment_link))
             $links = $payment_link[$key];
         if ($links) {
