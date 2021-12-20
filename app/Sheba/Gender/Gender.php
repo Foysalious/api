@@ -10,7 +10,9 @@ class Gender
     const MALE_BN = 'পুরুষ';
     const FEMALE = 'Female';
     const FEMALE_bn = 'নারী';
+    const FEMALE_bn_alt = 'মহিলা';
     const OTHER = 'Other';
+    const OTHER_alt = 'Others';
     const OTHER_bn = 'অন্যান্য';
 
     public static function getAllEnglishWithKeys()
@@ -44,6 +46,7 @@ class Gender
     {
         if ($gender === self::MALE_BN) return self::MALE;
         if ($gender === self::FEMALE_bn) return self::FEMALE;
+        if ($gender === self::FEMALE_bn_alt) return self::FEMALE;
         if ($gender === self::OTHER_bn) return self::OTHER;
         return $gender;
     }
