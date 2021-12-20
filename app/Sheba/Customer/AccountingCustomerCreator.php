@@ -54,7 +54,7 @@ class AccountingCustomerCreator
             'id' => $this->id,
             'name' => $this->name,
             'mobile' => $this->mobile,
-            'pro_pic'=> $this->picture
+            'pro_pic' => $this->picture
         ];
     }
 
@@ -63,6 +63,22 @@ class AccountingCustomerCreator
         $userType = EntryType::PARTNER;
         $userId = $this->partner;
         return $this->client->setUserType($userType)->setUserId($userId)->post('api/customers/', $this->makeData());
+    }
+
+    private function makeUpdatedData()
+    {
+        $data = [];
+        if (isset($this->name)) $data['name'] = $this->name;
+        if (isset($this->mobile)) $data['mobile'] = $this->mobile;
+        if (isset($this->picture)) $data['pro_pic'] = $this->picture;
+        return $data;
+    }
+
+    public function updateAccountingCustomer()
+    {
+        $userType = EntryType::PARTNER;
+        $userId = $this->partner;
+        return $this->client->setUserType($userType)->setUserId($userId)->put('api/customers/'.$this->id, $this->makeUpdatedData());
     }
 
 }
