@@ -9,7 +9,8 @@ class Creator
         'leave_policy' => 'Leave Policy',
         'manual' => 'Manual Prorate',
         'leave_type_create' => 'Leave Type Create',
-        'leave_type_update' => 'Leave Type Update'
+        'leave_type_update' => 'Leave Type Update',
+        'bulk' => 'Bulk Auto Prorate'
     ];
     private $businessMember;
     private $prorateType;
