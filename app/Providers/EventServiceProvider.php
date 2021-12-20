@@ -6,8 +6,11 @@ use App\Sheba\InventoryService\Partner\Events\Updated as PartnerUpdatedEvent;
 use App\Sheba\InventoryService\Partner\Listeners\Updated as PartnerUpdatedListener;
 
 
-use App\Sheba\Customer\Events\PartnerPosCustomerEvent;
+use App\Sheba\Customer\Events\PartnerPosCustomerCreatedEvent;
+use App\Sheba\Customer\Events\PartnerPosCustomerUpdatedEvent;
+use App\Sheba\Customer\Jobs\AccountingCustomer\AccountingCustomerUpdateJob;
 use App\Sheba\Customer\Listeners\PartnerPosCustomerCreateListener;
+use App\Sheba\Customer\Listeners\PartnerPosCustomerUpdateListener;
 use App\Sheba\PosOrderService\PosSetting\Events\Created as PosSettingCreatedEvent;
 use App\Sheba\PosOrderService\PosSetting\Listeners\Created as PosSettingCreatedListener;
 use App\Sheba\PosOrderService\PosSetting\Events\Updated as PosSettingUpdatedEvent;
@@ -38,8 +41,11 @@ class EventServiceProvider extends ServiceProvider
      * @var array
      */
     protected $listen = [
-        PartnerPosCustomerEvent::class => [
+        PartnerPosCustomerCreatedEvent::class => [
             PartnerPosCustomerCreateListener::class
+        ],
+        PartnerPosCustomerUpdatedEvent::class => [
+            PartnerPosCustomerUpdateListener::class
         ],
         TopUpRequestOfBlockedNumberEvent::class => [
             TopUpRequestOfBlockedNumber::class

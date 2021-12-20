@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\Pos;
 
+use App\Events\Event;
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
@@ -7,6 +8,7 @@ use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Sheba\AccountingEntry\Repository\AccountingDueTrackerRepository;
 use App\Sheba\UserMigration\Modules;
+use App\Sheba\Customer\Events\PartnerPosCustomerUpdatedEvent;
 use App\Transformers\CustomSerializer;
 use App\Transformers\PosOrderTransformer;
 use Carbon\Carbon;
@@ -64,7 +66,7 @@ class CustomerController extends Controller
      * @param EntryRepository      $entry_repo
      * @return JsonResponse
      */
-    public function show($partner, $customer, Request $request, EntryRepository $entry_repo,DueTrackerRepository $dueTrackerRepository, PosCustomerRepository $posCustomerRepository)
+    public function show($partner, $customer, Request $request, EntryRepository $entry_repo, DueTrackerRepository $dueTrackerRepository, PosCustomerRepository $posCustomerRepository)
     {
         try {
             /** @var PosCustomer $customer */
@@ -76,27 +78,27 @@ class CustomerController extends Controller
         if (empty($partner_pos_customer))
             return api_response($request, null, 404, ['message' => 'Customer Not Found.']);
 
-            $data                             = $customer->details();
-            $data['customer_since']           = $customer->created_at->format('Y-m-d');
+            $data = $customer->details();
+            $data['customer_since'] = $customer->created_at->format('Y-m-d');
             $data['customer_since_formatted'] = $customer->created_at->diffForHumans();
             $data['name'] = PartnerPosCustomer::getPartnerPosCustomerName($request->partner->id, $customer->id);
-            $total_purchase_amount            = 0.00;
-            $total_used_promo                 = 0;
+            $total_purchase_amount = 0.00;
+            $total_used_promo = 0;
             PosOrder::byPartner($partner)->byCustomer($customer->id)->get()->each(function ($order) use (&$total_purchase_amount, &$total_used_promo) {
                 /** @var PosOrder $order */
-                $order                 = $order->calculate();
+                $order = $order->calculate();
                 $total_purchase_amount += $order->getNetBill();
                 $total_used_promo += !empty($order->voucher_id) ? $this->getVoucherAmount($order) : 0;
             });
             $customerAmount = $posCustomerRepository->getDueAmountFromDueTracker($request->partner, $customer->id, $request);
             $data['total_purchase_amount'] = $total_purchase_amount;
-            $data['total_due_amount']      = $customerAmount['due'];
-            $data['total_used_promo']      = $total_used_promo;
-            $data['total_payable_amount']  = $customerAmount['payable'];
+            $data['total_due_amount'] = $customerAmount['due'];
+            $data['total_used_promo'] = $total_used_promo;
+            $data['total_payable_amount'] = $customerAmount['payable'];
 //            $data['is_customer_editable']  = $customer->isEditable();
-            $data['is_customer_editable']  = true;
-            $data['note']                  = $partner_pos_customer->note;
-            $data['is_supplier']                  = $partner_pos_customer->is_supplier;
+            $data['is_customer_editable'] = true;
+            $data['note'] = $partner_pos_customer->note;
+            $data['is_supplier'] = $partner_pos_customer->is_supplier;
             return api_response($request, $customer, 200, ['customer' => $data]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
@@ -162,6 +164,7 @@ class CustomerController extends Controller
         $customerDetails = $customer->details();
         $customerDetails['name'] = isset($customer['name']) && !empty($customer['name']) ? $customer['name'] : $customerDetails['name'];
         $customerDetails['is_supplier'] = isset($customer['is_supplier']) && !is_null($customer['is_supplier']) ? $customer['is_supplier'] : 0;
+        event(new PartnerPosCustomerUpdatedEvent(PartnerPosCustomer::find($customer->id)));
         return api_response($request, $customer, 200, ['customer' => $customerDetails]);
     }
 
@@ -236,22 +239,22 @@ class CustomerController extends Controller
      * @throws ExpenseTrackingServerError|AccountingEntryServerError
      */
     public function delete(
-        Request $request,
-        $partner,
-        $customer,
-        DueTrackerRepository $dueTrackerRepository,
+        Request                        $request,
+                                       $partner,
+                                       $customer,
+        DueTrackerRepository           $dueTrackerRepository,
         AccountingDueTrackerRepository $accDueTrackerRepository
     ): JsonResponse {
         $partner = $request->partner;
         if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403,["message" =>'অনুগ্রহ করে অ্যাপটি প্লে-স্টোর থেকে আপডেট করুন']);
         $partner_pos_customer = PartnerPosCustomer::byPartner($request->partner->id)->where(
-                'customer_id',
-                $customer
-            )->with(['customer'])->first();
+            'customer_id',
+            $customer
+        )->with(['customer'])->first();
         /** @var PosCustomer $customer */
         if (empty($partner_pos_customer) || empty($partner_pos_customer->customer)) {
             throw new InvalidPartnerPosCustomer();
-            }
+        }
         $customer = $partner_pos_customer->customer;
         // checking the partner is migrated to accounting
         if ($accDueTrackerRepository->isMigratedToAccounting($request->partner->id)) {
@@ -264,9 +267,9 @@ class CustomerController extends Controller
         return api_response($request, true, 200);
     }
 
-    private function deletePosOrder($partner_id,$customer)
+    private function deletePosOrder($partner_id, $customer)
     {
-        $pos_orders = PosOrder::byPartnerAndCustomer($partner_id,$customer)->get();
+        $pos_orders = PosOrder::byPartnerAndCustomer($partner_id, $customer)->get();
         foreach ($pos_orders as $pos_order)
             $pos_order->delete();
     }
@@ -286,6 +289,6 @@ class CustomerController extends Controller
 
     private function getVoucherAmount($order)
     {
-        return $order->discounts()->where('type',DiscountTypes::VOUCHER)->sum('amount');
+        return $order->discounts()->where('type', DiscountTypes::VOUCHER)->sum('amount');
     }
 }
