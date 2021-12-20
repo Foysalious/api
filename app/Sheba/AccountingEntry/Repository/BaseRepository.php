@@ -90,14 +90,14 @@ class BaseRepository
         $paymentCreator->credit($payment_data);
     }
 
-    public function removePosOrderPayment($pos_order_id, $amount)
+    public function removePosOrderPayment($amount_cleared, $pos_order_id, $payment_method)
     {
-        $payment = PosOrderPayment::where('pos_order_id', $pos_order_id)
-            ->where('amount', $amount)
-            ->where('transaction_type', 'Credit')
-            ->first();
-
-        return $payment ? $payment->delete() : false;
+        $payment_data['pos_order_id'] = $pos_order_id;
+        $payment_data['amount']       = $amount_cleared;
+        $payment_data['method']       = $payment_method;
+        /** @var PaymentCreator $paymentCreator */
+        $paymentCreator = app(PaymentCreator::class);
+        $paymentCreator->debit($payment_data);
     }
 
     /**
