@@ -7,13 +7,12 @@ use App\Models\PartnerPosCustomer;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Sheba\AccountingEntry\Repository\AccountingDueTrackerRepository;
-use App\Sheba\Customer\Events\PartnerPosCustomerSavedEvent;
+use App\Sheba\Customer\Events\PartnerPosCustomerUpdatedEvent;
 use App\Transformers\CustomSerializer;
 use App\Transformers\PosOrderTransformer;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
@@ -29,7 +28,6 @@ use Sheba\Pos\Customer\Updater;
 use Sheba\Pos\Discount\DiscountTypes;
 use Sheba\Pos\Repositories\PosCustomerRepository;
 use Sheba\Pos\Repositories\PosOrderRepository;
-use Sheba\Usage\Usage;
 use Throwable;
 
 class CustomerController extends Controller
@@ -159,7 +157,7 @@ class CustomerController extends Controller
         $customerDetails = $customer->details();
         $customerDetails['name'] = isset($customer['name']) && !empty($customer['name']) ? $customer['name'] : $customerDetails['name'];
         $customerDetails['is_supplier'] = isset($customer['is_supplier']) && !is_null($customer['is_supplier']) ? $customer['is_supplier'] : 0;
-        event(new PartnerPosCustomerSavedEvent(PartnerPosCustomer::find($customer->id)));
+        event(new PartnerPosCustomerUpdatedEvent(PartnerPosCustomer::find($customer->id)));
         return api_response($request, $customer, 200, ['customer' => $customerDetails]);
     }
 

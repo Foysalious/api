@@ -1,6 +1,6 @@
 <?php namespace App\Sheba\Customer\Listeners;
 
-use App\Sheba\Customer\Events\PartnerPosCustomerSavedEvent;
+use App\Sheba\Customer\Events\PartnerPosCustomerCreatedEvent;
 use App\Sheba\Customer\Jobs\AccountingCustomer\AccountingCustomerJob;
 
 class PartnerPosCustomerCreateListener
@@ -10,7 +10,7 @@ class PartnerPosCustomerCreateListener
 
     }
 
-    public function handle(PartnerPosCustomerSavedEvent $event)
+    public function handle(PartnerPosCustomerCreatedEvent $event)
     {
         dispatch(new AccountingCustomerJob($event));
     }
