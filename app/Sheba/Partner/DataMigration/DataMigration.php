@@ -166,7 +166,10 @@ class DataMigration
 
     private function deletePreviousRedisKeys()
     {
-        $keys = 'DataMigration::Partner::'.$this->partner->id.'::*';
-        Redis::del(Redis::keys($keys));
+        $regex = 'DataMigration::Partner::'.$this->partner->id.'::*';
+        $keys = Redis::keys($regex);
+        foreach ($keys as $key) {
+            Redis::del($key);
+        }
     }
 }
