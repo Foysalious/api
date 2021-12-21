@@ -318,17 +318,21 @@ class PosOrderDataMigration
     {
         $logs =  PosOrderLog::with(['order' => function ($pos_order) {
             $pos_order->withTrashed()->select('id');
-        }])->whereIn('pos_order_id', $this->partnerPosOrderIds)->select('id','type', 'pos_order_id', 'log', 'details')->get();
+        }])->whereIn('pos_order_id', $this->partnerPosOrderIds)->select('id','type', 'pos_order_id', 'log', 'details', 'created_by_name',
+            DB::raw('SUBTIME(created_at,"6:00:00") as created_at'))->get();
 
         $data = collect();
         collect($logs)->each(function ($pos_order_logs) use(&$data) {
             $temp = new stdClass();
+            $temp->type = $pos_order_logs->type;
             $temp->order_id = $pos_order_logs->pos_order_id;
             $temp->old_value = json_encode([
                 "log" => $pos_order_logs->log,
                 "previous_order_id" => $pos_order_logs->order->previous_order_id ?: null
             ],true);
             $temp->new_value = json_encode($pos_order_logs->details,true);
+            $temp->created_by_name = $pos_order_logs->created_by_name;
+            $temp->created_at = $pos_order_logs->created_at->toDateTimeString();
             $data->push($temp);
         });
         return $data;
