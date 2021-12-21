@@ -19,7 +19,7 @@ class PosClient
     {
         $this->client = $client;
         $this->baseUrl = config('sheba.api_url');
-        $this->apiKey = 'sheba.xyz';
+        $this->apiKey = config('pos.api_key');
     }
 
     /**
