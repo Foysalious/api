@@ -204,6 +204,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $partner = $this->paymentLink->getPaymentReceiver();
             $payment_data    = [
                 'amount' => $this->transaction->getEntryAmount(),
+                'payment_method' => $this->payment->payable->type,
                 'payment_method_en' => $paymentMethodDetail['name'],
                 'payment_method_bn' => $paymentMethodDetail['name_bn'],
                 'payment_method_icon' => $paymentMethodDetail['icon'],

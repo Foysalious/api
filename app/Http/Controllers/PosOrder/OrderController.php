@@ -164,7 +164,7 @@ class OrderController extends Controller
     {
         $this->validate($request, [
             'amount' => 'required|numeric',
-            'payment_method' => 'sometimes|numeric',
+            'payment_method' => 'sometimes',
             'payment_method_en' => 'sometimes',
             'payment_method_bn' => 'sometimes',
             'payment_method_icon' => 'sometimes',
