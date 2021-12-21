@@ -67,7 +67,7 @@ class BaseRepository
         $attachments=[];
         if (isset($request->attachments) && $request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $key => $file) {
-                if (!empty($file)&&is_uploaded_file($filename)) {
+                if (!empty($file)) {
                     list($file, $filename) = $this->makeAttachment($file, '_' . getFileName($file) . '_attachments');
                     $attachments[] = $this->saveFileToCDN($file, getDueTrackerAttachmentsFolder(), $filename);
                 }
