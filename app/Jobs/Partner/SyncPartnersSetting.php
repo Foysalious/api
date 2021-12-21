@@ -19,7 +19,6 @@ class SyncPartnersSetting extends Job implements ShouldQueue
     public function __construct($model)
     {
         $this->model = $model;
-        $this->queue = 'partner_sync';
     }
 
     /**
