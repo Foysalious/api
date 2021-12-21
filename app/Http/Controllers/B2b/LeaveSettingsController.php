@@ -147,6 +147,7 @@ class LeaveSettingsController extends Controller
             ->setMember($business_member->member)
             ->setSandwichLeave($request->sandwich_leave)
             ->setFiscalYear($request->fiscal_year)
+            ->setIsLeaveProrateEnable($request->is_leave_prorate_enable)
             ->update();
 
         return api_response($request, null, 200);
