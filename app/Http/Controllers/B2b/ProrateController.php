@@ -299,6 +299,8 @@ class ProrateController extends Controller
         if (!$business->is_leave_prorate_enable) return api_response($request, null, 400, ['message' => 'Leave Prorate is deactivated for this business.']);
         $leave_type = $leave_type_repo->find($request->leave_type_id);
         if (!$leave_type) return api_response($request, null, 404, ['message' => 'Sorry! Leave Type not found.']);
+        $manager_member = $request->manager_member;
+        $this->setModifier($manager_member);
         $auto_prorate_calculator = new AutoProrateCalculator();
         $auto_prorate_calculator->setBusiness($business)->setProrateType($request->prorate_type)->setLeaveType($leave_type)->run();
         return api_response($request, null, 200);
