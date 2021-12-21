@@ -146,7 +146,7 @@ class SettingController extends Controller
      */
     public function duePaymentRequestSms(Request $request, PosCustomerResolver $posCustomerResolver)
     {
-        $this->validate($request, ['customer_id' => 'required|numeric', 'due_amount' => 'required']);
+        $this->validate($request, ['customer_id' => 'required', 'due_amount' => 'required']);
         /** @var Partner $partner */
         $partner = $request->partner;
         $this->setModifier($request->manager_resource);
