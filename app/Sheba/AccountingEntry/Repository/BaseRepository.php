@@ -79,7 +79,9 @@ class BaseRepository
         $attachments=$this->uploadFiles($request);
         $old_attachments = $request->old_attachments ?: [];
         if ($request->has('attachment_should_remove') && (!empty($request->attachment_should_remove))) {
-            $this->deleteFile($request->attachment_should_remove);
+            foreach ($request->attachment_should_remove as $item){
+                $this->deleteFile($item);
+            }
             $old_attachments = array_diff($old_attachments, $request->attachment_should_remove);
         }
 
