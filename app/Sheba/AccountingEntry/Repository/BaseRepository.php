@@ -59,8 +59,11 @@ class BaseRepository
 
     public function uploadAttachments($request)
     {
-        $attachments = [];
-//        todo: have to refactor the attachment
+        $attachments = $this->uploadFiles($request);
+        return json_encode($attachments);
+    }
+    private function uploadFiles($request){
+        $attachments=[];
         if (isset($request->attachments) && $request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $key => $file) {
                 if (!empty($file)) {
@@ -69,6 +72,19 @@ class BaseRepository
                 }
             }
         }
+        return $attachments;
+    }
+    protected function updateAttachments($request){
+        $attachments=$this->uploadFiles($request);
+        $old_attachments = $request->old_attachments ?: [];
+        if ($request->has('attachment_should_remove') && (!empty($request->attachment_should_remove))) {
+            foreach ($request->attachment_should_remove as $item){
+                $this->deleteFile($item);
+            }
+            $old_attachments = array_diff($old_attachments, $request->attachment_should_remove);
+        }
+
+        $attachments = array_filter(array_merge($attachments, $old_attachments));
         return json_encode($attachments);
     }
 
