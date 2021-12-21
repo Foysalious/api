@@ -198,7 +198,7 @@ class OrderController extends Controller
             'paid_by' => 'sometimes|in:' . implode(',', PaymentLinkStatics::paidByTypes()),
             'partner_profit' => 'sometimes'
         ]);
-        if ($request->header('api-key') != config('expense_tracker.api_key'))
+        if ($request->header('api-key') != config('pos.api_key'))
             throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
         /** @var Partner $partner */
         $partner = Partner::find($partner);
