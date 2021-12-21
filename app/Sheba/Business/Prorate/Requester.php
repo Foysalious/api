@@ -7,6 +7,7 @@ class Requester
     private $totalDays;
     private $leaveTypeId;
     private $businessMemberIds;
+    private $isAutoProrated;
 
     /**
      * @return mixed
@@ -96,6 +97,17 @@ class Requester
     public function getBusinessMemberIds()
     {
         return $this->businessMemberIds;
+    }
+
+    public function setIsAutoProrated($is_auto_prorated)
+    {
+        $this->isAutoProrated = $is_auto_prorated;
+        return $this;
+    }
+
+    public function getIsAutoProrated()
+    {
+        return $this->isAutoProrated;
     }
 
 }

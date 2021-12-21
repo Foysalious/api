@@ -1,10 +1,15 @@
 <?php namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use App\Sheba\Customer\Events\PartnerPosCustomerCreatedEvent;
+use App\Sheba\Customer\Events\PartnerPosCustomerUpdatedEvent;
+use Sheba\Dal\BaseModel;
 
-class PartnerPosCustomer extends Model
+class PartnerPosCustomer extends BaseModel
 {
     protected $guarded = ['id'];
+
+    public static $createdEventClass = PartnerPosCustomerCreatedEvent::class;
+    public static $updatedEventClass = PartnerPosCustomerUpdatedEvent::class;
 
     public function customer()
     {
@@ -18,7 +23,7 @@ class PartnerPosCustomer extends Model
 
     public function scopeByPartnerAndCustomer($query, $partner_id, $customer_id)
     {
-        return $query->where('partner_id', $partner_id)->where('customer_id',$customer_id);
+        return $query->where('partner_id', $partner_id)->where('customer_id', $customer_id);
     }
 
     public function details()
@@ -37,14 +42,17 @@ class PartnerPosCustomer extends Model
 
         ];
     }
-    public function scopeDueDateReminder($query,$partner_id,$customer_id){
-        return $query->where('partner_id', $partner_id)->where('customer_id',$customer_id)->pluck('due_date_reminder');
+
+    public function scopeDueDateReminder($query, $partner_id, $customer_id)
+    {
+        return $query->where('partner_id', $partner_id)->where('customer_id', $customer_id)->pluck('due_date_reminder');
 
     }
 
-    public function scopeGetPartnerPosCustomerName($query,$partner_id,$customer_id) {
-        $partnerPosCustomer = $query->where('partner_id', $partner_id)->where('customer_id',$customer_id)->first();
-        if($partnerPosCustomer && $partnerPosCustomer->nick_name) return $partnerPosCustomer->nick_name;
+    public function scopeGetPartnerPosCustomerName($query, $partner_id, $customer_id)
+    {
+        $partnerPosCustomer = $query->where('partner_id', $partner_id)->where('customer_id', $customer_id)->first();
+        if ($partnerPosCustomer && $partnerPosCustomer->nick_name) return $partnerPosCustomer->nick_name;
         $customer = PosCustomer::find((int)$customer_id);
         return $customer->profile->name;
     }

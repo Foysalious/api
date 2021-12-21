@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use App\Exceptions\HyperLocationNotFoundException;
 use App\Models\Transport\TransportTicketOrder;
 use App\Sheba\InventoryService\Partner\Events\Updated;
 use App\Sheba\Payment\Rechargable;
@@ -735,9 +736,16 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return new \Sheba\TopUp\Commission\Partner();
     }
 
+    /**
+     * @return mixed
+     * @throws HyperLocationNotFoundException
+     */
     public function getHyperLocation()
     {
         $geo = json_decode($this->geo_informations);
+        if (empty($geo)){
+            throw  new HyperLocationNotFoundException();
+        }
         return HyperLocal::insidePolygon($geo->lat, $geo->lng)->first();
     }
 
