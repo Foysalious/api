@@ -1,6 +1,6 @@
 <?php namespace App\Transformers;
 
-use App\Sheba\Gender\Gender;
+use Sheba\Gender\Gender;
 use League\Fractal\TransformerAbstract;
 
 class NidInfoTransformer extends TransformerAbstract
