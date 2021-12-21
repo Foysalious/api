@@ -60,7 +60,7 @@ class BaseRepository
 
     public function uploadAttachments($request)
     {
-        $attachments = $this->uploadAttachments($request);
+        $attachments = $this->uploadFiles($request);
         return json_encode($attachments);
     }
     private function uploadFiles($request){
