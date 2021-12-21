@@ -223,45 +223,64 @@ class PosOrderDataMigration
         $digital_payment_details = json_encode(['payment_method_en' => 'Digital Payment', 'payment_method_bn' => 'ডিজিটাল পেমেন্ট', 'payment_method_icon' => config('s3.url') . 'pos/payment/digital_collection_v2.png']);
         $other_details = json_encode(['payment_method_en' => 'Others', 'payment_method_bn' => 'অন্যান্য', 'payment_method_icon' => config('s3.url') . 'pos/payment/others_v2.png']);
         $payments = $collection->map(function($payment) use ($cash_details, $digital_payment_details, $other_details) {
-            if ($payment->method == 'advance_balance' || $payment->method == 'cod') return [
-                "order_id" => $payment->order_id,
-                "amount" => $payment->amount,
-                "transaction_type" => $payment->transaction_type,
-                "method" => $payment->method,
-                "method_details" => $cash_details,
-                "emi_month" => $payment->emi_month,
-                "interest" => $payment->interest,
-                "created_by_name" => $payment->created_by_name,
-                "updated_by_name" => $payment->updated_by_name,
-                "created_at" => $payment->created_at,
-                "updated_at" => $payment->updated_at,
-            ];
-            if ($payment->method == 'later' || $payment->method == 'transfer' || $payment->method == 'others') return [
-                "order_id" => $payment->order_id,
-                "amount" => $payment->amount,
-                "transaction_type" => $payment->transaction_type,
-                "method" => $payment->method,
-                "method_details" => $other_details,
-                "emi_month" => $payment->emi_month,
-                "interest" => $payment->interest,
-                "created_by_name" => $payment->created_by_name,
-                "updated_by_name" => $payment->updated_by_name,
-                "created_at" => $payment->created_at,
-                "updated_at" => $payment->updated_at,
-            ];
-            return [
-                "order_id" => $payment->order_id,
-                "amount" => $payment->amount,
-                "transaction_type" => $payment->transaction_type,
-                "method" => $payment->method,
-                "method_details" => $digital_payment_details,
-                "emi_month" => $payment->emi_month,
-                "interest" => $payment->interest,
-                "created_by_name" => $payment->created_by_name,
-                "updated_by_name" => $payment->updated_by_name,
-                "created_at" => $payment->created_at,
-                "updated_at" => $payment->updated_at,
-            ];
+            if ($payment->method == 'advance_balance' || $payment->method == 'cod' || $payment->method == 'qr_code') {
+                return [
+                    "order_id" => $payment->order_id,
+                    "amount" => $payment->amount,
+                    "transaction_type" => $payment->transaction_type,
+                    "method" => $payment->method,
+                    "method_details" => $cash_details,
+                    "emi_month" => $payment->emi_month,
+                    "interest" => $payment->interest,
+                    "created_by_name" => $payment->created_by_name,
+                    "updated_by_name" => $payment->updated_by_name,
+                    "created_at" => $payment->created_at,
+                    "updated_at" => $payment->updated_at,
+                ];
+            } elseif ($payment->method == 'later' || $payment->method == 'transfer' || $payment->method == 'others') {
+                return [
+                    "order_id" => $payment->order_id,
+                    "amount" => $payment->amount,
+                    "transaction_type" => $payment->transaction_type,
+                    "method" => $payment->method,
+                    "method_details" => $other_details,
+                    "emi_month" => $payment->emi_month,
+                    "interest" => $payment->interest,
+                    "created_by_name" => $payment->created_by_name,
+                    "updated_by_name" => $payment->updated_by_name,
+                    "created_at" => $payment->created_at,
+                    "updated_at" => $payment->updated_at,
+                ];
+            } elseif ($payment->method == 'bkash' || $payment->method == 'payment_link' || $payment->method == 'emi' || $payment->method == 'online') {
+                return [
+                    "order_id" => $payment->order_id,
+                    "amount" => $payment->amount,
+                    "transaction_type" => $payment->transaction_type,
+                    "method" => $payment->method,
+                    "method_details" => $digital_payment_details,
+                    "emi_month" => $payment->emi_month,
+                    "interest" => $payment->interest,
+                    "created_by_name" => $payment->created_by_name,
+                    "updated_by_name" => $payment->updated_by_name,
+                    "created_at" => $payment->created_at,
+                    "updated_at" => $payment->updated_at,
+                ];
+            } else {
+                return [
+                    "order_id" => $payment->order_id,
+                    "amount" => $payment->amount,
+                    "transaction_type" => $payment->transaction_type,
+                    "method" => $payment->method,
+                    "method_details" => $cash_details,
+                    "emi_month" => $payment->emi_month,
+                    "interest" => $payment->interest,
+                    "created_by_name" => $payment->created_by_name,
+                    "updated_by_name" => $payment->updated_by_name,
+                    "created_at" => $payment->created_at,
+                    "updated_at" => $payment->updated_at,
+                ];
+            }
+
         });
         return $payments->toArray();
     }
