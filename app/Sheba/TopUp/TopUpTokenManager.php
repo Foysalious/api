@@ -39,7 +39,7 @@ class TopUpTokenManager
             'iss' => "topup-jwt",
             'sub' => $this->partner->id,
             'iat' => time(),
-            'exp' => time() + $remaining_time
+            'exp' => time() + 120, // $remaining_time
         ];
 
         return JWT::encode($payload, config('jwt.secret'));

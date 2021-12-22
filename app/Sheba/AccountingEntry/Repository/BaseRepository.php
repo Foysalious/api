@@ -1,7 +1,6 @@
 <?php namespace App\Sheba\AccountingEntry\Repository;
 
 use App\Models\Partner;
-use App\Models\PosOrderPayment;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
 use Sheba\AccountingEntry\Repository\UserMigrationRepository;
@@ -10,7 +9,6 @@ use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
 use Sheba\Pos\Customer\PosCustomerResolver;
-use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\Pos\Repositories\PosOrderPaymentRepository;
 
 class BaseRepository
