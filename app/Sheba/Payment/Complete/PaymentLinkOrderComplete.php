@@ -1,6 +1,7 @@
 <?php namespace Sheba\Payment\Complete;
 
 use App\Jobs\Partner\PaymentLink\SendPaymentLinkSms;
+use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
 use App\Models\Payable;
 use App\Models\Order;
@@ -78,8 +79,8 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $this->payment_receiver = $this->paymentLink->getPaymentReceiver();
             DB::transaction(function () {
                 $this->paymentRepository->setPayment($this->payment);
-                $payable = $this->payment->payable;
-                $payableUser = $payable->user;
+                $payable      = $this->payment->payable;
+                $payableUser  = $payable->user;
                 $this->target = $this->paymentLink->getTarget();
 //                if ($this->target instanceof PosOrder) {
 //                    $payableUser = null;
@@ -111,38 +112,44 @@ class PaymentLinkOrderComplete extends PaymentComplete
 
     private function storeEntry()
     {
-        $payable = $this->payment->payable;
-        /** @var AutomaticEntryRepository $entry_repo */
-        $entry_repo = app(AutomaticEntryRepository::class)
-            ->setPartner($this->payment_receiver)
-            ->setAmount($this->transaction->getEntryAmount())
-            ->setHead(AutomaticIncomes::PAYMENT_LINK)
-            ->setEmiMonth($this->transaction->getEmiMonth())
-            ->setAmountCleared($this->transaction->getEntryAmount())
-            ->setInterest($this->transaction->getInterest())
-            ->setBankTransactionCharge($this->transaction->getFee());
-        if ($this->target) {
-            $entry_repo->setCreatedAt($this->target->created_at);
-            $entry_repo->setSourceType($this->getSourceType());
-            $entry_repo->setSourceId($this->target->id);
-        }
-        $payer = $this->paymentLink->getPayer();
-        if (empty($payer)) {
-            $payer = $payable->getUserProfile();
-        }
-        if ($payer instanceof Profile) {
-            $entry_repo->setParty($payer);
-        }
-        $entry_repo->setPaymentMethod($this->payment->paymentDetails->last()->readable_method)
-            ->setPaymentId($this->payment->id)
-            ->setIsPaymentLink(1)
-            ->setIsDueTrackerPaymentLink($this->paymentLink->isDueTrackerPaymentLink());
+        /** @var  Partner $partner */
+        $partner = $this->payment_receiver;
+        if (!$partner->isMigrated('expense')) {
 
-        if ($this->target instanceof PosOrder) {
-            $entry_repo->setIsWebstoreOrder($this->target->sales_channel == SalesChannels::WEBSTORE ? 1 : 0);
-            $entry_repo->updateFromSrc();
-        } else {
-            $entry_repo->store();
+
+            $payable = $this->payment->payable;
+            /** @var AutomaticEntryRepository $entry_repo */
+            $entry_repo = app(AutomaticEntryRepository::class)
+                ->setPartner($this->payment_receiver)
+                ->setAmount($this->transaction->getEntryAmount())
+                ->setHead(AutomaticIncomes::PAYMENT_LINK)
+                ->setEmiMonth($this->transaction->getEmiMonth())
+                ->setAmountCleared($this->transaction->getEntryAmount())
+                ->setInterest($this->transaction->getInterest())
+                ->setBankTransactionCharge($this->transaction->getFee());
+            if ($this->target) {
+                $entry_repo->setCreatedAt($this->target->created_at);
+                $entry_repo->setSourceType($this->getSourceType());
+                $entry_repo->setSourceId($this->target->id);
+            }
+            $payer = $this->paymentLink->getPayer();
+            if (empty($payer)) {
+                $payer = $payable->getUserProfile();
+            }
+            if ($payer instanceof Profile) {
+                $entry_repo->setParty($payer);
+            }
+            $entry_repo->setPaymentMethod($this->payment->paymentDetails->last()->readable_method)
+                ->setPaymentId($this->payment->id)
+                ->setIsPaymentLink(1)
+                ->setIsDueTrackerPaymentLink($this->paymentLink->isDueTrackerPaymentLink());
+
+            if ($this->target instanceof PosOrder) {
+                $entry_repo->setIsWebstoreOrder($this->target->sales_channel == SalesChannels::WEBSTORE ? 1 : 0);
+                $entry_repo->updateFromSrc();
+            } else {
+                $entry_repo->store();
+            }
         }
     }
 
@@ -204,11 +211,12 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $partner = $this->paymentLink->getPaymentReceiver();
             $payment_data    = [
                 'amount' => $this->transaction->getEntryAmount(),
+                'payment_method' => $this->payment->payable->type,
                 'payment_method_en' => $paymentMethodDetail['name'],
                 'payment_method_bn' => $paymentMethodDetail['name_bn'],
                 'payment_method_icon' => $paymentMethodDetail['icon'],
-                'emi_month' => $this->transaction->getEmiMonth(),
-                'interest' => $this->transaction->isPaidByPartner() ? $this->transaction->getInterest() : 0,
+                'emi_month'           => $this->transaction->getEmiMonth(),
+                'interest'            => $this->transaction->isPaidByPartner() ? $this->transaction->getInterest() : 0,
                 'is_paid_by_customer' => (bool)$this->transaction->isPaidByCustomer(),
             ];
             /** @var PosClientRepository $posOrderRepo */
@@ -279,12 +287,12 @@ class PaymentLinkOrderComplete extends PaymentComplete
         /** @var Payable $payable */
         $payable = Payable::find($this->payment->payable_id);
         (new PushNotificationHandler())->send([
-          "title"      => 'Order Successful',
-          "message"    => "$formatted_amount Tk has been collected from {$payable->getName() } by order link- {$payment_link->getLinkID()}",
-          "event_type" => $event_type,
-          "event_id"   => $this->target->id,
-          "sound"      => "notification_sound",
-          "channel_id" => $channel
+            "title"      => 'Order Successful',
+            "message"    => "$formatted_amount Tk has been collected from {$payable->getName() } by order link- {$payment_link->getLinkID()}",
+            "event_type" => $event_type,
+            "event_id"   => $this->target->id,
+            "sound"      => "notification_sound",
+            "channel_id" => $channel
         ], $topic, $channel, $sound);
     }
 }

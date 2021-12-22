@@ -11,6 +11,7 @@ class Updater
     private $member;
     private $sandwichLeave;
     private $fiscalYear;
+    private $isLeaveProrateEnable;
 
     public function setBusiness(Business $business)
     {
@@ -36,11 +37,18 @@ class Updater
         return $this;
     }
 
+    public function setIsLeaveProrateEnable($is_leave_prorate_enable)
+    {
+        $this->isLeaveProrateEnable = $is_leave_prorate_enable;
+        return $this;
+    }
+
     public function update()
     {
         $data = [
             'is_sandwich_leave_enable' => $this->sandwichLeave,
-            'fiscal_year' => $this->fiscalYear
+            'fiscal_year' => $this->fiscalYear,
+            'is_leave_prorate_enable' => $this->isLeaveProrateEnable
         ];
 
        return $this->business->update($this->withUpdateModificationField($data));
