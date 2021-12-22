@@ -164,7 +164,7 @@ class OrderController extends Controller
     {
         $this->validate($request, [
             'amount' => 'required|numeric',
-            'payment_method' => 'sometimes|numeric',
+            'payment_method' => 'sometimes',
             'payment_method_en' => 'sometimes',
             'payment_method_bn' => 'sometimes',
             'payment_method_icon' => 'sometimes',
@@ -172,7 +172,7 @@ class OrderController extends Controller
             'interest' => 'sometimes',
             'is_paid_by_customer' => 'sometimes',
         ]);
-        if ($request->header('api-key') != config('expense_tracker.api_key'))
+        if ($request->header('api-key') != config('pos.api_key'))
             throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
 
         $method_details = ['payment_method_en' => $request->payment_method_en, 'payment_method_bn' => $request->payment_method_bn, 'payment_method_icon' => $request->payment_method_icon];

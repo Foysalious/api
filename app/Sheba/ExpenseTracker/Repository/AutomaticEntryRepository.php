@@ -161,14 +161,20 @@ class AutomaticEntryRepository extends BaseRepository
     }
 
     /**
-     * @param Carbon $created_at
+     * @param $created_at
      * @return $this
      */
-    public function setCreatedAt(Carbon $created_at)
+    public function setCreatedAt($created_at)
     {
         try {
-            $this->createdAt = $created_at->format('Y-m-d H:i:s');
+            if ($created_at instanceof Carbon) {
+                $this->createdAt = $created_at->format('Y-m-d H:i:s');
+            } else {
+                Carbon::parse($created_at, 'Asia/Dhaka')->format('Y-m-d H:i:s');
+            }
             return $this;
+
+
         } catch (Throwable $e) {
             $this->createdAt = Carbon::now()->format('Y-m-d H:i:s');
             $this->notifyBug($e);
