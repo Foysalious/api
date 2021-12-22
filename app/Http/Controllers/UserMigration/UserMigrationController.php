@@ -5,6 +5,7 @@ namespace App\Http\Controllers\UserMigration;
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Models\User;
+use App\Sheba\UserMigration\Events\StatusUpdated;
 use App\Sheba\UserMigration\Modules;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -22,7 +23,7 @@ class UserMigrationController extends Controller
 
     public function __construct(UserMigrationService $migrationService)
     {
-        $this->modules          = config('user_migration.modules');
+        $this->modules = config('user_migration.modules');
         $this->userMigrationSvc = $migrationService;
     }
 
@@ -31,19 +32,19 @@ class UserMigrationController extends Controller
      */
     public function getMigrationList(Request $request): JsonResponse
     {
-        $banner  = null;
+        $banner = null;
         $modules = $this->modules;
-        $userId  = $request->partner->id;
+        $userId = $request->partner->id;
         foreach ($modules as $key => $value) {
             /** @var UserMigrationRepository $class */
-            $class                   = $this->userMigrationSvc->resolveClass($value['key']);
+            $class = $this->userMigrationSvc->resolveClass($value['key']);
             $modules[$key]['status'] = $class->setUserId($userId)->setModuleName($value['key'])->getStatus();
             if (!$banner && $modules[$key]['status'] !== UserStatus::UPGRADED) {
                 $banner = $class->getBanner();
             }
         }
         $res['modules'] = $modules;
-        $res['banner']  = $banner;
+        $res['banner'] = $banner;
         return api_response($request, $res, 200, ['data' => $res]);
 
     }
@@ -56,20 +57,20 @@ class UserMigrationController extends Controller
         $userId = $request->partner->id;
         /** @var UserMigrationRepository $class */
         $class = $this->userMigrationSvc->resolveClass($moduleName);
-        $res   = $class->setUserId($userId)->setModuleName($moduleName)->getStatusWiseResponse();
+        $res = $class->setUserId($userId)->setModuleName($moduleName)->getStatusWiseResponse();
         return api_response($request, $res, 200, ['data' => $res]);
     }
 
     /**
      * @throws Exception
      */
-    public function updateMigrationStatus(Request $request, $moduleName, $partner=null): JsonResponse
+    public function updateMigrationStatus(Request $request, $moduleName, $partner = null): JsonResponse
     {
         ini_set('memory_limit', '4096M');
         ini_set('max_execution_time', 120);
         $this->validate($request, ['status' => 'required|string']);
         if (!empty($partner)) {
-            $partner_    = Partner::find($moduleName);
+            $partner_ = Partner::find($moduleName);
             $moduleName = $partner;
             $request->merge(['partner' => $partner_, 'user' => User::find(1)]);
         }
@@ -78,7 +79,7 @@ class UserMigrationController extends Controller
         if (!in_array($moduleName, Modules::get())) throw new Exception('Invalid Module');
         /** @var UserMigrationRepository $class */
         $class = $this->userMigrationSvc->resolveClass($moduleName);
-        $res   = $class->setUserId($userId)->setModuleName($moduleName)->setModifierUser($request->user)->updateStatus($request->status);
+        $res = $class->setUserId($userId)->setModuleName($moduleName)->setModifierUser($request->user)->updateStatus($request->status);
         return api_response($request, $res, 200, ['data' => $res]);
     }
 
@@ -93,7 +94,8 @@ class UserMigrationController extends Controller
         $this->validate($request, ['status' => 'required|string', 'module_name' => 'required|string', 'user_id' => 'required']);
         /** @var UserMigrationRepository $class */
         $class = $this->userMigrationSvc->resolveClass($request->module_name);
-        $res   = $class->setUserId($request->user_id)->setModuleName($request->module_name)->setModifierUser(User::find(1))->updateStatus($request->status);
+        $res = $class->setUserId($request->user_id)->setModuleName($request->module_name)->setModifierUser(User::find(1))->updateStatus($request->status);
+        event(new StatusUpdated($request->user_id, $request->module_name, $request->status));
         return api_response($request, $res, 200, ['data' => $res]);
     }
 
@@ -109,7 +111,7 @@ class UserMigrationController extends Controller
             if ($value['key'] == $moduleName) {
                 /** @var UserMigrationRepository $class */
                 $class = $this->userMigrationSvc->resolveClass($moduleName);
-                $res   = $class->versionCodeCheck($request->header('version-code'), $value);
+                $res = $class->versionCodeCheck($request->header('version-code'), $value);
                 return api_response($request, $res, 200, ['data' => $res]);
             }
         }
