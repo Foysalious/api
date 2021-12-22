@@ -2,14 +2,29 @@
 
 use App\Models\Business;
 use App\Models\BusinessDepartment;
+use App\Models\BusinessMember;
 use App\Models\Member;
+use App\Sheba\Business\LeaveProrateLogs\Creator as LeaveProrateLogCreator;
+use App\Sheba\Business\LeaveProrateLogs\ManualLeaveProrateLogRequester;
+use App\Sheba\Business\Prorate\RunProrateOnActiveLeaveTypes;
+use App\Sheba\Business\Prorate\AutoProrateCalculator;
+use App\Transformers\Business\BusinessMemberLeaveProrateTransformer;
+use App\Transformers\Business\BusinessMemberProrateLogsTransformer;
+use App\Transformers\Business\LeaveProrateEmployeeInfoTransformer;
+use App\Transformers\CustomSerializer;
 use Illuminate\Http\JsonResponse;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
+use League\Fractal\Resource\Item;
+use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Business\Prorate\Updater;
 use Sheba\Dal\BusinessMemberLeaveType\Contract as BusinessMemberLeaveTypeInterface;
 use Sheba\Dal\BusinessMemberLeaveType\Model as BusinessMemberLeaveType;
 use App\Http\Controllers\Controller;
 use Sheba\Business\Prorate\Creator;
 use Sheba\Business\Prorate\Requester as ProrateRequester;
+use Sheba\Dal\LeaveProrateLog\Contract as LeaveProrateLogRepo;
+use Sheba\Dal\LeaveType\Contract as LeaveTypeRepo;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 
@@ -125,12 +140,56 @@ class ProrateController extends Controller
 
         return api_response($request, null, 200, ['leave_prorate' => $department_info]);
     }
+    
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function indexV2(Request $request)
+    {
+        /** @var Business $business */
+        $business = $request->business;
+        list($offset, $limit) = calculatePagination($request);
+        $business_members = $business->getActiveBusinessMember();
+        if ($request->has('department_id')) {
+            $business_members = $business_members->whereHas('role', function ($q) use ($request) {
+                $q->whereHas('businessDepartment', function ($q) use ($request) {
+                    $q->where('business_departments.id', $request->department_id);
+                });
+            });
+        }
+        if ($request->has('name')) {
+            $business_members = $business_members->whereHas('member', function ($q) use ($request) {
+                $q->whereHas('profile', function ($q) use ($request) {
+                    $q->where('profiles.name', 'LIKE','%'.$request->name.'%');
+                });
+            });
+        }
+        $business_member_ids = $business_members->pluck('id')->toArray();
+        $prorates = $this->businessMemberLeaveTypeRepo->getAllBusinessMemberProratesWithLeaveTypes($business_member_ids);
+        if ($request->has('prorate_type') && $request->prorate_type == 'auto') {
+            $prorates = $prorates->where('is_auto_prorated', 1);
+        }else if($request->has('prorate_type') && $request->prorate_type == 'manual'){
+            $prorates = $prorates->where('is_auto_prorated', 0);
+        }
+        if ($request->has('sort_column') && $request->sort_column == 'created_at') {
+            $prorates = $prorates->OrderBy($request->sort_column, $request->sort_order);
+        }
+        $manager = new Manager();
+        $manager->setSerializer(new ArraySerializer());
+        $prorates = new Collection($prorates->get(), new BusinessMemberLeaveProrateTransformer());
+        $prorates = collect($manager->createData($prorates)->toArray()['data']);
+        if ($request->has('sort_column') && $request->sort_column !== 'created_at') $prorates = $this->sortByColumn($prorates, $request->sort_column, $request->sort_order)->values();
+        $total_count = count($prorates);
+        $prorates = collect($prorates)->splice($offset, $limit);
+        return api_response($request, null, 200, ['total' => $total_count, 'leave_prorate' => $prorates]);
+    }
 
     /**
      * @param Request $request
      * @return JsonResponse
      */
-    public function store(Request $request)
+    public function store(Request $request, ManualLeaveProrateLogRequester $manual_leave_prorate_log_requester)
     {
         $this->validate($request, [
             'business_member_ids' => 'required|array',
@@ -148,6 +207,7 @@ class ProrateController extends Controller
             ->setNote($request->note);
 
         $this->creator->setRequester($this->requester)->create();
+        $manual_leave_prorate_log_requester->setBusinessMemberIds($request->business_member_ids)->setLeaveTypeId($request->leave_type_id)->setProratedLeaveDays($request->total_days)->create();
         return api_response($request, null, 200);
     }
 
@@ -157,7 +217,7 @@ class ProrateController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function edit($business, $prorate, Request $request)
+    public function edit($business, $prorate, Request $request, ManualLeaveProrateLogRequester $manual_leave_prorate_log_requester)
     {
         /**@var BusinessMemberLeaveType $business_member_leave_type */
         $business_member_leave_type = $this->businessMemberLeaveTypeRepo->find($prorate);
@@ -177,6 +237,7 @@ class ProrateController extends Controller
             ->setNote($request->note);
 
         $this->updater->setRequester($this->requester)->setBusinessMemberLeaveType($business_member_leave_type)->update();
+        $manual_leave_prorate_log_requester->setBusinessMemberIds([$business_member_leave_type->businessMember->id])->setLeaveTypeId($request->leave_type_id)->setProratedLeaveDays($request->total_days)->create();
         return api_response($request, null, 200);
     }
 
@@ -204,5 +265,79 @@ class ProrateController extends Controller
         if($not_found_counter === $total_prorate) return api_response($request, null, 404, ['message' => 'No prorates found']);
         $message = $not_found_counter > 0 ? 'One or more prorates not found.' : 'Successful';
         return api_response($request, null, 200, ['message' => $message]);
+    }
+
+    public function runAutoProrate(Request $request, AutoProrateCalculator $auto_prorate_calculator)
+    {
+        $this->validate($request, [
+            'is_prorated' => 'required|string',
+            'prorate_type' => 'required|string'
+        ]);
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 420);
+        if ($request->is_prorated === 'no') return api_response($request, null, 400, ['message' => 'User does not want to prorate']);
+        $business = $business_member->business;
+        if (!$business->is_leave_prorate_enable) return api_response($request, null, 400, ['message' => 'Leave Prorate is deactivated for this business.']);
+        $run_prorate_on_active_leaves = new RunProrateOnActiveLeaveTypes();
+        $run_prorate_on_active_leaves->setBusiness($business)->setProrateType($request->prorate_type)->run();
+        return api_response($request, null, 200);
+    }
+
+    public function leaveTypeAutoProrate(Request $request, LeaveTypeRepo $leave_type_repo)
+    {
+        $this->validate($request, [
+            'is_prorated' => 'required|string',
+            'leave_type_id' => 'required',
+            'prorate_type' => 'required|string'
+        ]);
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 420);
+        if ($request->is_prorated === 'no') return api_response($request, null, 400, ['message' => 'User does not want to prorate']);
+        $business = $business_member->business;
+        if (!$business->is_leave_prorate_enable) return api_response($request, null, 400, ['message' => 'Leave Prorate is deactivated for this business.']);
+        $leave_type = $leave_type_repo->find($request->leave_type_id);
+        if (!$leave_type) return api_response($request, null, 404, ['message' => 'Sorry! Leave Type not found.']);
+        $auto_prorate_calculator = new AutoProrateCalculator();
+        $auto_prorate_calculator->setBusiness($business)->setProrateType($request->prorate_type)->setLeaveType($leave_type)->run();
+        return api_response($request, null, 200);
+    }
+
+    public function employeeInfo(Request $request, $business, $prorate)
+    {
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 420);
+        $business_member_leave_prorate = $this->businessMemberLeaveTypeRepo->find($prorate);
+        if (!$business_member_leave_prorate) return api_response($request, null, 404, ['message' => 'Sorry! Leave Prorate doesn\'t exist.']);
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Item($business_member_leave_prorate, new LeaveProrateEmployeeInfoTransformer());
+        $prorated_employee_info = $manager->createData($resource)->toArray()['data'];
+        return api_response($request, null, 200, ['leave_prorate' => $prorated_employee_info]);
+    }
+
+    public function employeeLeaveProrateLog(Request $request, $business, $prorate, LeaveProrateLogRepo $leave_prorate_log_repo)
+    {
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 420);
+        $business_member_leave_prorate = $this->businessMemberLeaveTypeRepo->find($prorate);
+        if (!$business_member_leave_prorate) return api_response($request, null, 404, ['message' => 'Sorry! Leave Prorate doesn\'t exist.']);
+        $prorate_logs = $leave_prorate_log_repo->getBusinessMemberLeaveProrateLogs($business_member_leave_prorate);
+        $manager = new Manager();
+        $manager->setSerializer(new ArraySerializer());
+        $prorate_logs = new Collection($prorate_logs->get(), new BusinessMemberProrateLogsTransformer());
+        $prorate_logs = collect($manager->createData($prorate_logs)->toArray()['data']);
+        return api_response($request, null, 200, ['leave_prorate_logs' => $prorate_logs]);
+    }
+
+    private function sortByColumn($data, $column, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($data)->$sort_by(function ($value, $key) use ($column) {
+            return strtoupper($value['profile'][$column]);
+        });
     }
 }

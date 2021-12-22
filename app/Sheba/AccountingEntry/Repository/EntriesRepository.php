@@ -69,7 +69,14 @@ class EntriesRepository extends BaseRepository
                 return true;
             }
             $url = "api/entries/" . $this->entry_id;
-            return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->delete($url);
+            $data =  $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->delete($url);
+            foreach ($data as $datum) {
+                //pos order reconcile while storing entry
+                if ($datum['source_type'] == 'pos') {
+                    $this->removePosOrderPayment(abs($datum['amount_cleared']), $datum['source_id'], 'advance_balance');
+                }
+            }
+
         } catch (AccountingEntryServerError $e) {
             logError($e);
         }

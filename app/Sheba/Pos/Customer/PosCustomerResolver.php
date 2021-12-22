@@ -68,7 +68,7 @@ class PosCustomerResolver
         if (!$partner_pos_customer) return null;
         return $this->posCustomerObject->setId($partner_pos_customer->customer_id)->setPartnerId($partner_pos_customer->partner_id)
             ->setName($partner_pos_customer->nick_name ?: $partner_pos_customer->customer->profile->name)->setIsSupplier($partner_pos_customer->is_supplier)
-            ->setMobile($partner_pos_customer->customer->profile->name)->setEmail($partner_pos_customer->customer->profile->email)
+            ->setMobile($partner_pos_customer->customer->profile->mobile)->setEmail($partner_pos_customer->customer->profile->email)
             ->setGender($partner_pos_customer->customer->profile->gender)->setDob($partner_pos_customer->customer->profile->dob)
             ->setProPic($partner_pos_customer->customer->profile->pro_pic);
 

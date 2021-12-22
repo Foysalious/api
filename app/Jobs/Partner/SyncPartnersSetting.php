@@ -3,6 +3,7 @@
 use App\Jobs\Job;
 use App\Sheba\InventoryService\Services\SyncService\PartnerInventorySetting;
 use App\Sheba\PosOrderService\Services\SyncService\PartnerPosSetting;
+use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
@@ -19,7 +20,6 @@ class SyncPartnersSetting extends Job implements ShouldQueue
     public function __construct($model)
     {
         $this->model = $model;
-        $this->queue = 'partner_sync';
     }
 
     /**
@@ -34,12 +34,13 @@ class SyncPartnersSetting extends Job implements ShouldQueue
 
     public function handle()
     {
+        if ($this->attempts() > 1) return;
         try {
             /** @var PartnerInventorySetting|PartnerPosSetting $sync_service */
             $sync_service = App::make($this->syncServiceClass);
             $sync_service->setModel($this->model)->syncSettings();
-        } catch (\Exception $e) {
-            logError($e->getMessage());
+        } catch (Exception $e) {
+            app('sentry')->captureException($e);
         }
     }
 }

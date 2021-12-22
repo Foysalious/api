@@ -21,7 +21,8 @@ class BasicInfo
             'fiscal_year' => $fiscal_year->start->format('F'). ' - ' .$fiscal_year->end->format('F'),
             'fiscal_year_start_month' => $fiscal_year->start->month,
             'fiscal_year_start_date' => $fiscal_year->start->format('Y-m-d'),
-            'fiscal_year_end_date' => $fiscal_year->end->format('Y-m-d')
+            'fiscal_year_end_date' => $fiscal_year->end->format('Y-m-d'),
+            'is_leave_prorate_enable' => $this->business->is_leave_prorate_enable
         ];
     }
 
