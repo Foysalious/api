@@ -10,6 +10,7 @@ use App\Sheba\InventoryService\Services\PartnerService;
 use App\Sheba\PosOrderService\Services\OrderService;
 use App\Sheba\UserMigration\Modules;
 use Exception;
+use Sheba\Pos\Customer\PosCustomerResolver;
 use Sheba\Sms\BusinessType;
 use Sheba\Sms\FeatureType;
 use Illuminate\Http\JsonResponse;
@@ -146,13 +147,13 @@ class SettingController extends Controller
      * @throws InsufficientBalanceException
      * @throws Exception
      */
-    public function duePaymentRequestSms(Request $request)
+    public function duePaymentRequestSms(Request $request, PosCustomerResolver $posCustomerResolver)
     {
-        $this->validate($request, ['customer_id' => 'required|numeric', 'due_amount' => 'required']);
+        $this->validate($request, ['customer_id' => 'required', 'due_amount' => 'required']);
         /** @var Partner $partner */
         $partner = $request->partner;
         $this->setModifier($request->manager_resource);
-        $customer = PosCustomer::find($request->customer_id);
+        $customer =$posCustomerResolver->setCustomerId($request->customer_id)->setPartner($partner)->get();
         $variables=[
             'partner_name' => $partner->name,
             'due_amount' => $request->due_amount,
@@ -162,12 +163,12 @@ class SettingController extends Controller
             ->setBusinessType(BusinessType::SMANAGER)
             ->setFeatureType(FeatureType::POS)
             ->setMessage($variables)
-            ->setMobile($customer->profile->mobile);
+            ->setMobile($customer->mobile);
         $sms_cost = $sms->estimateCharge();
         //freeze money amount check
         WalletTransactionHandler::isDebitTransactionAllowed($partner, $sms_cost, 'এস-এম-এস পাঠানোর');
         if ((double)$partner->wallet < $sms_cost) throw new InsufficientBalanceException();
-        $sms->send($customer->profile->mobile,$variables);
+        $sms->send($customer->mobile,$variables);
         $log = $sms_cost. " BDT has been deducted for sending due payment request sms";
         (new WalletTransactionHandler())->setModel($request->partner)->setAmount($sms_cost)->setType(Types::debit())->setLog($log)->setTransactionDetails([])->setSource(TransactionSources::SMS)->store();
 
