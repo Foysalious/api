@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use Sheba\Checkout\ShebaOrderInterface;
+use Sheba\Dal\ApiRequest\ApiRequest;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\LafsOrder\Model as LafsOrder;
 use Sheba\Dal\Order\Events\OrderCreated;
@@ -62,6 +63,11 @@ class Order extends BaseModel implements ShebaOrderInterface, CanHaveVoucher
     public function lafsOrder()
     {
         return $this->hasOne(LafsOrder::class);
+    }
+
+    public function apiRequest()
+    {
+        return $this->hasOne(ApiRequest::class);
     }
 
     public function subscription()
