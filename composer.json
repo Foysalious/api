@@ -59,7 +59,8 @@
     "fakerphp/faker": "^1.9.1",
     "mockery/mockery": "1.4.*",
     "phpunit/phpunit": "^9.0",
-    "itsgoingd/clockwork": "5.0.*"
+    "itsgoingd/clockwork": "5.0.*",
+    "brianium/paratest": "^6.4"
   },
   "autoload": {
     "classmap": [
