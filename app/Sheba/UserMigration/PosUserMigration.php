@@ -203,8 +203,8 @@ class PosUserMigration extends UserMigrationRepository
         $userMigrationRepo = app(UserMigrationRepo::class);
         $info = $userMigrationRepo->builder()->where('user_id', $this->userId)->where('module_name', $moduleName)->first();
         if (!$info) {
-            $data = ['status' => $status];
-            return $info->update($this->withUpdateModificationField($data));
+            $data = ['status' => $status, 'user_id', $this->userId, 'module_name', $moduleName];
+            return $userMigrationRepo->create($this->withCreateModificationField($data));
         }
         if ($info->status == UserStatus::UPGRADED) {
             throw new Exception('Sorry! Already Migrated.');
