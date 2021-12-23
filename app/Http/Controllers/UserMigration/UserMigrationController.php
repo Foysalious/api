@@ -17,6 +17,7 @@ use Sheba\Dal\UserMigration\UserStatus;
 class UserMigrationController extends Controller
 {
     const X_API_KEY = 'sheba_user_migration';
+    const NOT_ELIGIBLE = 'not_eligible';
 
     private $modules;
     private $userMigrationSvc;
@@ -39,7 +40,7 @@ class UserMigrationController extends Controller
             /** @var UserMigrationRepository $class */
             $class = $this->userMigrationSvc->resolveClass($value['key']);
             $modules[$key]['status'] = $class->setUserId($userId)->setModuleName($value['key'])->getStatus();
-            if (!$banner && $modules[$key]['status'] && $modules[$key]['status'] !== UserStatus::UPGRADED) {
+            if (!$banner && $modules[$key]['status'] !== self::NOT_ELIGIBLE && $modules[$key]['status'] !== UserStatus::UPGRADED) {
                 $banner = $class->getBanner();
             }
         }
