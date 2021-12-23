@@ -91,6 +91,10 @@ class OrderController extends Controller
             'created_by' => 'numeric',
             'created_by_name' => 'string',
         ], ['mobile' => 'Invalid mobile number!']);
+        $api_request_id = null;
+        if ($request->has('api_request')) {
+            $api_request_id = $request->api_request ? $request->api_request->id : null;
+        }
         $this->setModifierFromRequest($request);
         $userAgentInformation->setRequest($request);
         $order = $order_place
@@ -114,6 +118,7 @@ class OrderController extends Controller
             ->setScheduleTime($request->time)
             ->setVendorId($request->vendor_id)
             ->setUserAgentInformation($userAgentInformation)
+            ->setApiRequestId($api_request_id)
             ->create();
 
         if (!$order) return api_response($request, null, 500);
