@@ -202,9 +202,6 @@ class PosUserMigration extends UserMigrationRepository
         /** @var UserMigrationRepo $userMigrationRepo */
         $userMigrationRepo = app(UserMigrationRepo::class);
         $info = $userMigrationRepo->builder()->where('user_id', $this->userId)->where('module_name', $moduleName)->first();
-        if (!$info) {
-            throw new Exception('Sorry! Not Found');
-        }
         if ($info->status == UserStatus::UPGRADED) {
             throw new Exception('Sorry! Already Migrated.');
         }
