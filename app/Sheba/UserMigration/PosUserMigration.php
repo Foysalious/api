@@ -43,7 +43,7 @@ class PosUserMigration extends UserMigrationRepository
     public function updateStatus($status)
     {
         if ($status == UserStatus::UPGRADING) {
-            $this->migrate();
+            return $this->migrate();
         } else {
             return $this->updateMigrationStatus($status);
         }
@@ -127,21 +127,31 @@ class PosUserMigration extends UserMigrationRepository
      */
     private function migrate()
     {
+        $this->checkPosMigrationStatus();
         $accMigrationStatus = $this->getMigrationStatus(Modules::EXPENSE);
-        if ($accMigrationStatus == UserStatus::PENDING) {
-            $this->migrateToAccounting(UserStatus::UPGRADING);
+        if ($accMigrationStatus == self::NOT_ELIGIBLE) {
             /**
+             * Accounting migration status updated to 'Pending'
+             * Accounting migration process started
              * Pos migration status updated to 'Upgrading'
              * Pos migration process will start after accounting migration completed
              **/
-            $this->checkPosMigrationStatus();
+            $this->updateModuleMigrationStatus(UserStatus::PENDING, Modules::EXPENSE);
+            $this->migrateToAccounting(UserStatus::UPGRADING);
+            return $this->updateMigrationStatus(UserStatus::UPGRADING);
+        } else if ($accMigrationStatus == UserStatus::PENDING) {
+            /**
+             * Accounting migration process started
+             * Pos migration status updated to 'Upgrading'
+             * Pos migration process will start after accounting migration completed
+             **/
+            $this->migrateToAccounting(UserStatus::UPGRADING);
             return $this->updateMigrationStatus(UserStatus::UPGRADING);
         } elseif ($accMigrationStatus == UserStatus::UPGRADED) {
             /**
              * Pos migration status updated to 'Upgrading'
-             * Pos migration start
+             * Pos migration process started
              */
-            $this->checkPosMigrationStatus();
             return $this->migrateToPos();
         } else {
             throw new Exception('Please Complete Accounting Migration First!');
