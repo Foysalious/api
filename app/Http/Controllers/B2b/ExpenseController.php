@@ -47,55 +47,41 @@ class ExpenseController extends Controller
         list($offset, $limit) = calculatePagination($request);
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
-
         /** @var Business $business */
         $business = $request->business;
         $business_members = $business->getAccessibleBusinessMember();
-
-        if ($request->filled('department_id')) {
+        if ($request->has('department_id')) {
             $business_members = $business_members->whereHas('role', function ($q) use ($request) {
                 $q->whereHas('businessDepartment', function ($q) use ($request) {
                     $q->where('business_departments.id', $request->department_id);
                 });
             });
         }
-
-        $members_ids = $business_members->pluck('member_id')->toArray();
-
-        $expenses = $this->expense_repo->getExpenseByMember($members_ids);
-
+        $business_members_ids = $business_members->pluck('id')->toArray();
+        $expenses = $this->expense_repo->getExpenseByBusinessMember($business_members_ids);
         $start_date = date('Y-m-01');
         $end_date = date('Y-m-t');
-
-        if ($request->filled('date')) {
+        if ($request->has('date')) {
             $dates = $this->getStartDateEndDate($request->date);
             $start_date = $dates['start_date'];
             $end_date = $dates['end_date'];
         }
-
         $expenses->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
-        $expenses = $expenses->get()->groupBy('member_id');
-        $expenses = $expenseList->setData($expenses)->get();
-        if ($request->filled('search')) $expenses = $this->searchExpenseList($expenses, $request);
-        $total_calculation = $this->getTotalCalculation($expenses);
-
+        $expenses_data = $expenseList->setData($expenses->get())->get();
+        $expenses = $expenses_data['expense_breakdown'];
+        if ($request->has('search')) $expenses = $this->searchExpenseList($expenses, $request);
         $total_expense_count = count($expenses);
-
-        if ($request->filled('limit')) $expenses = collect($expenses)->splice($offset, $limit);
-
-        if ($request->filled('sort_employee_name')) {
+        if ($request->has('limit')) $expenses = collect($expenses)->splice($offset, $limit);
+        if ($request->has('sort_employee_name')) {
             $expenses = $this->sortByName($expenses, $request->sort_employee_name)->values();
         }
         if ($request->filled('sort_amount')) {
             $expenses = $this->sortByAmount($expenses, $request->sort_amount)->values();
         }
-
-        if ($request->file == 'excel') {
-             $excel = new ExpenseExcel(is_array($expenses) ? $expenses : $expenses->toArray());
-             return MaatwebsiteExcel::download($excel, 'Expense_Report.xlsx');
-        }
-
-        return api_response($request, $expenses, 200, ['expenses' => $expenses, 'total_expenses_count' => $total_expense_count, 'total_calculation' => $total_calculation]);
+        if ($request->file == 'excel') return $excel->setData(is_array($expenses) ? $expenses : $expenses->toArray())
+            ->setName('Expense Report')
+            ->get();
+        return api_response($request, $expenses, 200, ['expenses' => $expenses, 'total_expenses_count' => $total_expense_count, 'total_calculation' => $expenses_data['expense_summary']]);
     }
 
     /**
@@ -108,35 +94,6 @@ class ExpenseController extends Controller
         return [
             'start_date' => Carbon::createFromDate($splitDate[0], $splitDate[1])->startOfMonth()->format('Y-m-d'),
             'end_date' => Carbon::createFromDate($splitDate[0], $splitDate[1])->endOfMonth()->format('Y-m-d')
-        ];
-    }
-
-    /**
-     * @param $expenses
-     * @return array
-     */
-    private function getTotalCalculation($expenses)
-    {
-        $total_employee = sizeof(array_unique(array_map(function ($expense) {
-            return $expense['member_id'];
-        }, $expenses)));
-
-        $total_department = sizeof(array_unique(array_map(function ($expense) {
-            return $expense['employee_department'];
-        }, $expenses)));
-
-        $total_amount = array_sum(array_column($expenses,'amount'));
-        $total_transport = array_sum(array_column($expenses,'transport'));
-        $total_food = array_sum(array_column($expenses,'food'));
-        $total_other = array_sum(array_column($expenses,'other'));
-
-        return [
-            'employee' => $total_employee,
-            'department' => $total_department,
-            'transport' => $total_transport,
-            'food' => $total_food,
-            'other' => $total_other,
-            'amount' => $total_amount
         ];
     }
 
