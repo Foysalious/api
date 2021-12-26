@@ -1,20 +1,16 @@
 <?php
 
-namespace Tests\Feature\Accounting;
+namespace Tests\Unit\Accounting;
 
 class DueTrackerListApiTest extends AccountingFeatureTest
 {
     public function test_due_tracker_list()
     {
-        $response = $this->get(
-            config('sheba.api_url'). '/v2/accounting/due-tracker/due-list',
-            [
-                'Authorization' => $this->token ?? $this->generateToken()
-            ]
-        );
+        $response = $this->get(config('sheba.api_url').'/v2/accounting/due-tracker/due-list', [
+                'Authorization' => $this->token ?? $this->generateToken(),
+            ]);
         $response->assertResponseOk();
-        $response->seeJsonStructure(
-            [
+        $response->seeJsonStructure([
                 'code',
                 'message',
                 'data' => [
@@ -25,10 +21,9 @@ class DueTrackerListApiTest extends AccountingFeatureTest
                     'partner' => [
                         'name',
                         'avatar',
-                        'mobile'
-                    ]
-                ]
-            ]
-        );
+                        'mobile',
+                    ],
+                ],
+            ]);
     }
 }

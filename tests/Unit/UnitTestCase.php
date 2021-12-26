@@ -1,7 +1,10 @@
-<?php namespace Tests\Unit;
+<?php
+
+namespace Tests\Unit;
 
 use Closure;
-use TestCase;
+use Exception;
+use Tests\TestCase;
 
 class UnitTestCase extends TestCase
 {
@@ -9,8 +12,8 @@ class UnitTestCase extends TestCase
     {
         try {
             $closure();
-        } catch (\Exception $e) {
-            $this->fail("Failed: " . $e->getMessage());
+        } catch (Exception $e) {
+            $this->fail("Failed: ".$e->getMessage());
         }
     }
 }

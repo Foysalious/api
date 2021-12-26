@@ -1,5 +1,4 @@
-<?php namespace Tests\Feature\Accounting;
-
+<?php namespace Tests\Unit\Accounting;
 
 class TransferApiTest extends AccountingFeatureTest
 {

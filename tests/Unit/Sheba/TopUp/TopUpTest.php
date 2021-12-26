@@ -1,6 +1,9 @@
-<?php namespace Tests\Unit\Sheba\TopUp;
+<?php
+
+namespace Tests\Unit\Sheba\TopUp;
 
 use App\Models\TopUpOrder;
+use Exception;
 use Sheba\TopUp\StatusChanger;
 use Sheba\TopUp\TopUpRechargeManager;
 use Sheba\TopUp\TopUpValidator;
@@ -20,7 +23,7 @@ class TopUpTest extends UnitTestCase
     /** @var TestableTopUpOrder */
     private $topUpOrder;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->topUpOrder = new TestableTopUpOrder();
         parent::setUp();
@@ -30,6 +33,44 @@ class TopUpTest extends UnitTestCase
     {
         $top_up = $this->tryToRechargeInvalidOrder();
         $this->assertTrue($top_up->isNotSuccessful());
+    }
+
+    /**
+     * @return TopUpRechargeManager
+     * @throws Exception
+     */
+    private function tryToRechargeInvalidOrder()
+    {
+        $top_up = new TopUpRechargeManager($this->getValidationWithError(), app(StatusChanger::class));
+        $top_up->setTopUpOrder($this->topUpOrder);
+        $this->shouldNotThrowException(function () use ($top_up) {
+            $top_up->recharge();
+        });
+
+        return $top_up;
+    }
+
+    /**
+     * @return PHPUnit_Framework_MockObject_MockObject | TopUpValidator
+     */
+    private function getValidationWithError()
+    {
+        $validator = $this->getMock(TopUpValidator::class);
+        $validator->method('hasError')->willReturn(true);
+        $validator->method('setTopUpOrder')->willReturn($validator);
+        $validator->method('validate')->willReturn($validator);
+        $validator->method('getError')->willReturn($this->getError());
+
+        return $validator;
+    }
+
+    private function getError()
+    {
+        $error = new TopUpErrorResponse();
+        $error->errorCode = 400;
+        $error->errorMessage = "Some Error.";
+
+        return $error;
     }
 
     public function testShouldStateErrorWithInvalidOrder()
@@ -45,39 +86,5 @@ class TopUpTest extends UnitTestCase
         $this->tryToRechargeInvalidOrder();
         $this->assertTrue($this->topUpOrder->isFailed());
         $this->assertEquals($this->getError()->toJson(), $this->topUpOrder->transaction_details);
-    }
-
-    /**
-     * @return TopUpRechargeManager
-     */
-    private function tryToRechargeInvalidOrder()
-    {
-        $top_up = new TopUpRechargeManager($this->getValidationWithError(), app(StatusChanger::class));
-        $top_up->setTopUpOrder($this->topUpOrder);
-        $this->shouldNotThrowException(function () use ($top_up) {
-            $top_up->recharge();
-        });
-        return $top_up;
-    }
-
-    /**
-     * @return PHPUnit_Framework_MockObject_MockObject | TopUpValidator
-     */
-    private function getValidationWithError()
-    {
-        $validator = $this->getMock(TopUpValidator::class);
-        $validator->method('hasError')->willReturn(true);
-        $validator->method('setTopUpOrder')->willReturn($validator);
-        $validator->method('validate')->willReturn($validator);
-        $validator->method('getError')->willReturn($this->getError());
-        return $validator;
-    }
-
-    private function getError()
-    {
-        $error = new TopUpErrorResponse();
-        $error->errorCode = 400;
-        $error->errorMessage = "Some Error.";
-        return $error;
     }
 }

@@ -1,7 +1,6 @@
-<?php namespace Tests\Feature\Accounting;
+<?php
 
-
-use Illuminate\Support\Facades\Log;
+namespace Tests\Unit\Accounting;
 
 class IncomeExpenseAccountListWithTotalDebitTest extends AccountingFeatureTest
 {
@@ -10,20 +9,25 @@ class IncomeExpenseAccountListWithTotalDebitTest extends AccountingFeatureTest
 
     public function test_income_accounts_list()
     {
-        $response = $this->get(config('sheba.api_url')."/v2/accounting/income-expense-total?account_type=income&start_date=$this->start_date&end_date=$this->end_date", [
-            'Authorization' => $this->token ?? $this->generateToken()
-        ]);
+        $response = $this->get(config(
+                'sheba.api_url'
+            )."/v2/accounting/income-expense-total?account_type=income&start_date=$this->start_date&end_date=$this->end_date",
+            [
+                'Authorization' => $this->token ?? $this->generateToken(),
+            ]);
         $response->assertResponseOk();
         $response->seeJsonStructure(["code", "message", "data"]);
     }
 
     public function test_expense_accounts_list()
     {
-        $response = $this->get(config('sheba.api_url')."/v2/accounting/income-expense-total?account_type=expense&start_date=$this->start_date&end_date=$this->end_date", [
-            'Authorization' => $this->token ?? $this->generateToken()
-        ]);
+        $response = $this->get(config(
+                'sheba.api_url'
+            )."/v2/accounting/income-expense-total?account_type=expense&start_date=$this->start_date&end_date=$this->end_date",
+            [
+                'Authorization' => $this->token ?? $this->generateToken(),
+            ]);
         $response->assertResponseOk();
         $response->seeJsonStructure(["code", "message", "data"]);
     }
-
 }
