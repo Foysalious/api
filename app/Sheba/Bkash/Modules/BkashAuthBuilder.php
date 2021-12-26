@@ -4,7 +4,12 @@ use App\Models\Affiliate;
 use App\Models\Business;
 use App\Models\Customer;
 use App\Models\Partner;
+use App\Models\Payable;
 use Exception;
+use Sheba\Payment\Methods\Bkash\Stores\BkashDefaultStore;
+use Sheba\Payment\Methods\Bkash\Stores\BkashDynamicStore;
+use Sheba\Payment\Methods\Bkash\Stores\BkashMarketplaceStore;
+use Sheba\Payment\Methods\Bkash\Stores\BkashStore;
 
 class BkashAuthBuilder
 {
@@ -56,6 +61,26 @@ class BkashAuthBuilder
             return self::set017BkashAuth();
         } elseif ($user instanceof Partner) {
             return self::set017BkashAuth();
+        } else {
+            throw new Exception('Invalid User Type');
+        }
+    }
+    /**
+     *
+     * @return BkashStore
+     * @throws Exception
+     */
+    public static function getStore(Payable $payable)
+    {
+        $type=$payable->type;
+        $user=$payable->user;
+        if ($type == 'payment_link') return (new BkashDynamicStore())->setPayable($payable)->setBkashAuth();
+        if ($user instanceof Customer || $user instanceof Business) {
+            return (new BkashMarketplaceStore());
+        } elseif ($user instanceof Affiliate) {
+            return (new BkashDefaultStore());
+        } elseif ($user instanceof Partner) {
+            return (new BkashDefaultStore());
         } else {
             throw new Exception('Invalid User Type');
         }

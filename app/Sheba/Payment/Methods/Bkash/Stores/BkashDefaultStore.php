@@ -4,9 +4,10 @@ namespace Sheba\Payment\Methods\Bkash\Stores;
 
 use Sheba\Bkash\Modules\BkashAuthBuilder;
 
-class BkashManagerStore extends BkashStore
+class BkashDefaultStore extends BkashStore
 {
-    const NAME='smanager';
+    const NAME = 'default';
+
     public function __construct()
     {
         $this->auth = BkashAuthBuilder::sManagerStore();
@@ -14,6 +15,6 @@ class BkashManagerStore extends BkashStore
 
     function getName(): string
     {
-       return self::NAME;
+        return self::NAME;
     }
 }

@@ -166,16 +166,6 @@ class AvailableMethods
      */
     public static function getPaymentLinkPayments($payment_link_identifier)
     {
-        /*
-         * TODO: Load payment methods depending on the link.
-         *
-         * /** @var PaymentLinkRepositoryInterface $repo *
-         * $repo = app(PaymentLinkRepositoryInterface::class);
-         * $payment_link = $repo->findByIdentifier($payment_link_identifier);
-         * if ($payment_link->isForMissionSaveBangladesh()) return [PaymentStrategy::ONLINE];
-         * if ($payment_link->isEmi()) return [PaymentStrategy::ONLINE];
-         *
-         */
 
         /** @var PaymentLinkRepositoryInterface $repo */
         $repo = app(PaymentLinkRepositoryInterface::class);

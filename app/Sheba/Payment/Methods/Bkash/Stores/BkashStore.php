@@ -12,7 +12,13 @@ abstract class BkashStore
     protected $auth;
     /** @var Payment */
     protected $payment;
-    abstract function getName():string;
+    /**
+     * @var Payable
+     */
+    protected $payable;
+
+    abstract function getName(): string;
+
     public function getAuth(): BkashAuth
     {
         return $this->auth;
@@ -26,6 +32,12 @@ abstract class BkashStore
         return $this->payment;
     }
 
+    public function setPayable(Payable $payable)
+    {
+        $this->payable = $payable;
+        return $this;
+    }
+
     /**
      * @param Payment $payment
      * @return BkashStore
@@ -33,7 +45,16 @@ abstract class BkashStore
     public function setPayment(Payment $payment): BkashStore
     {
         $this->payment = $payment;
+        $this->payable = $payment->payable;
         return $this;
+    }
+
+    public function getUser()
+    {
+        return $this->payable->user;
+    }
+    public function getType(){
+        return $this->payable->type;
     }
 
 }
