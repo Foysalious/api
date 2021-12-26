@@ -124,10 +124,11 @@ class LeaveController extends Controller
         $total_leave_approval_requests = $leave_approval_requests->count();
         $leave_approval_requests = $this->sortByStatus($leave_approval_requests);
 
-        if ($request->filled('limit') && !$request->filled('file')) $leave_approval_requests = $leave_approval_requests->splice($offset, $limit);
+        if ($request->has('limit') && !$request->has('file')) $leave_approval_requests = $leave_approval_requests->splice($offset, $limit);
+        $leave_types = $business->leaveTypes()->withTrashed()->pluck('title', 'id')->toArray();
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Collection($leave_approval_requests, new LeaveApprovalRequestListTransformer($business, $business_member));
+        $resource = new Collection($leave_approval_requests, new LeaveApprovalRequestListTransformer($business, $business_member, $leave_types));
         $leaves = $manager->createData($resource)->toArray()['data'];
 
         if ($request->filled('sort')) {
