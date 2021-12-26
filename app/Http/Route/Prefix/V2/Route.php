@@ -17,6 +17,7 @@ class Route
             (new PartnerRoute())->set($api);
             (new HelpRoute())->set($api);
             (new ResourceRoute())->set($api);
+            (new EmployeeRoute())->set($api);
             $api->post('training-status-update', 'ResourceController@trainingStatusUpdate');
             $api->post('profile-check', 'Profile\ProfileController@checkProfile');
             $api->post('newsletter', 'NewsletterController@create');
@@ -49,7 +50,7 @@ class Route
             $api->get('top-up/success/ssl', 'TopUpController@sslSuccess');
             $api->post('top-up/status-update', 'TopUpController@statusUpdate');
             $api->post('top-up/bdrecharge/status', 'TopUpController@bdRechargeStatusUpdate');
-            $api->get('top-up/restart-queue', 'TopUpController@restartQueue');
+            $api->get('top-up/paystation/status', 'TopUpController@payStationStatusUpdate');
             $api->group(['prefix' => 'wallet'], function ($api) {
                 $api->post('recharge', 'WalletController@recharge');
                 $api->post('purchase', 'WalletController@purchase');
@@ -217,8 +218,8 @@ class Route
             });
             // $api->get('refresh-token', 'ProfileController@refresh');
             $api->get('service-price-calculate', 'Service\ServicePricingController@getCalculatedPrice');
-            $api->post('due-tracker/create-pos-order-payment', 'Pos\DueTrackerController@createPosOrderPayment');
-            $api->delete('due-tracker/remove-pos-order-payment/{pos_order_id}', 'Pos\DueTrackerController@removePosOrderPayment');
+            $api->post('due-tracker/create-pos-order-payment', 'Pos\OrderController@createPayment');
+            $api->delete('due-tracker/remove-pos-order-payment/{pos_order_id}', 'Pos\OrderController@removePayment');
             $api->group(['prefix' => 'voucher'], function ($api) {
                 $api->post('/vendor', 'VoucherController@voucherAgainstVendor');
             });

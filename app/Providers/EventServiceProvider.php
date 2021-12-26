@@ -2,6 +2,23 @@
 
 namespace App\Providers;
 
+use App\Jobs\WebstoreSettingsSyncJob;
+use App\Sheba\InventoryService\Partner\Events\Updated as PartnerUpdatedEvent;
+use App\Sheba\InventoryService\Partner\Listeners\Updated as PartnerUpdatedListener;
+
+use App\Sheba\PosOrderService\PosSetting\Events\Created as PosSettingCreatedEvent;
+use App\Sheba\PosOrderService\PosSetting\Listeners\Created as PosSettingCreatedListener;
+use App\Sheba\PosOrderService\PosSetting\Events\Updated as PosSettingUpdatedEvent;
+use App\Sheba\PosOrderService\PosSetting\Listeners\Updated as PosSettingUpdatedListener;
+
+use App\Sheba\WebstoreBanner\Events\WebstoreBannerUpdate;
+use App\Sheba\WebstoreBanner\Listeners\WebstoreBannerListener;
+
+use App\Sheba\Customer\Events\PartnerPosCustomerCreatedEvent;
+use App\Sheba\Customer\Events\PartnerPosCustomerUpdatedEvent;
+use App\Sheba\Customer\Jobs\AccountingCustomer\AccountingCustomerUpdateJob;
+use App\Sheba\Customer\Listeners\PartnerPosCustomerCreateListener;
+use App\Sheba\Customer\Listeners\PartnerPosCustomerUpdateListener;
 use Illuminate\Contracts\Events\Dispatcher as DispatcherContract;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Sheba\Business\BusinessMember\Events\BusinessMemberCreated;
@@ -23,8 +40,17 @@ class EventServiceProvider extends ServiceProvider
      * @var array
      */
     protected $listen = [
+        PartnerPosCustomerCreatedEvent::class => [
+            PartnerPosCustomerCreateListener::class
+        ],
+        PartnerPosCustomerUpdatedEvent::class => [
+            PartnerPosCustomerUpdateListener::class
+        ],
         TopUpRequestOfBlockedNumberEvent::class => [
             TopUpRequestOfBlockedNumber::class
+        ],
+        WebstoreBannerUpdate::class => [
+            WebstoreBannerListener::class
         ],
         ProfilePasswordUpdated::class => [
             ProfilePasswordUpdatedListener::class
@@ -37,6 +63,15 @@ class EventServiceProvider extends ServiceProvider
         ],
         BusinessMemberDeleted::class => [
             BusinessMemberDeletedListener::class
+        ],
+        PartnerUpdatedEvent::class => [
+            PartnerUpdatedListener::class,
+        ],
+        PosSettingCreatedEvent::class => [
+            PosSettingCreatedListener::class
+        ],
+        PosSettingUpdatedEvent::class => [
+            PosSettingUpdatedListener::class
         ]
     ];
 

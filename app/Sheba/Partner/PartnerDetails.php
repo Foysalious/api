@@ -6,6 +6,8 @@ use App\Models\PartnerResource;
 use App\Models\ReviewQuestionAnswer;
 use App\Repositories\ReviewRepository;
 use App\Sheba\Partner\Delivery\Methods;
+use App\Sheba\PosOrderService\Services\OrderService;
+use App\Sheba\UserMigration\Modules;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -77,6 +79,9 @@ class PartnerDetails
         return $this;
     }
 
+    /**
+     * @throws Exception
+     */
     public function get()
     {
         // $this->loadPartnerRelations();
@@ -90,12 +95,14 @@ class PartnerDetails
             'status',
             'logo',
             'address',
-            'delivery_charge',
             'is_webstore_published'
         ]);
         $info->put('mobile', $partner->getContactNumber());
         $info->put('banner', $this->getWebStoreBanner());
+        $info->put('delivery_charge', (double) $this->getdeliveryCharge());
         $info->put('delivery_method', $this->getDeliveryMethod());
+        $can_use_webstore = $partner->isMigrated(Modules::POS) ? 1 : 0;
+        $info->put('can_use_webstore', $can_use_webstore);
         // $this->calculateWorkingDaysInfo();
         // $info->put('working_days', $this->workingInfo);
         // $info->put('is_available', $this->isOpenToday() ? 1 : 0);
@@ -116,10 +123,19 @@ class PartnerDetails
         return $info;
     }
 
+    public function getDeliveryCharge()
+    {
+        if(!$this->partner->isMigrated(Modules::POS))
+            return $this->partner->delivery_charge;
+        /** @var OrderService $orderService */
+        $orderService = app(OrderService::class);
+        return $orderService->setPartnerId($this->partner->id)->getPartnerDetails()['partner']['delivery_charge'];
+    }
+
     private function getDeliveryMethod()
     {
-        $partnerDeliveryInformation = PartnerDeliveryInformation::where('partner_id', $this->partner->id)->first();
-        return !empty($partnerDeliveryInformation) ? $partnerDeliveryInformation->delivery_vendor : Methods::OWN_DELIVERY;
+        $partnerDeliveryInformation =  PartnerDeliveryInformation::where('partner_id', $this->partner->id)->first();
+        return (empty($partnerDeliveryInformation) || ($partnerDeliveryInformation->delivery_vendor == Methods::OWN_DELIVERY)) ? Methods::OWN_DELIVERY : Methods::SDELIVERY;
     }
 
     private function loadPartnerRelations()

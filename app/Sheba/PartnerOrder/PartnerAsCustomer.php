@@ -6,14 +6,19 @@ namespace App\Sheba\PartnerOrder;
 use App\Exceptions\HyperLocationNotFoundException;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
+use App\Models\Partner;
 use App\Models\Profile;
+use App\Models\Resource;
 use Illuminate\Http\Request;
 use Sheba\PartnerOrder\Exceptions\PartnerAddressNotFound;
 use Sheba\Voucher\Creator\Referral;
 
 class PartnerAsCustomer
 {
-    public $partner, $resource;
+    /** @var Partner */
+    public $partner;
+    /** @var Resource $resource */
+    public $resource;
 
     public function __construct(Request $request)
     {

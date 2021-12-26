@@ -244,7 +244,7 @@ class PaymentLinkAccountingRepository extends AccountingRepository
     private function makeData($userId)
     {
         if ($this->debit_account_key == null && $this->credit_account_key == null) {
-            $this->setDebitAccountKey((new Accounts())->expense->paymentLinkServiceCharge::PAYMENT_LINK_SERVICE_CHARGE);
+            $this->setDebitAccountKey((new Accounts())->asset->cash::SSL);
 
             if ($this->interest > 0) {
                 $this->setCreditAccountKey((new Accounts())->income->incomeFromEmi::INCOME_FROM_EMI);
@@ -261,8 +261,8 @@ class PaymentLinkAccountingRepository extends AccountingRepository
         $data['amount'] = $this->amount;
         $data['amount_cleared'] = $this->amount_cleared;
         $data['entry_at'] = Carbon::now()->format('Y-m-d H:i:s');
-        $data['bank_transaction_charge'] = $this->bank_transaction_charge;
-        $data['interest'] = $this->interest;
+        $data['bank_transaction_charge'] = 0;
+        $data['interest'] = 0;
         $data['source_id'] = $this->source_id;
         $data['source_type'] = $this->source_type;
         $data['to_account_key'] = $this->debit_account_key;

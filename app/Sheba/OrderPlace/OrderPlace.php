@@ -95,6 +95,7 @@ class OrderPlace
     private $businessId;
     private $vendorId;
     private $categoryAnswers;
+    private $apiRequestId;
     /** @var Location */
     private $location;
     /** @var PriceCalculation */
@@ -331,6 +332,17 @@ class OrderPlace
     }
 
     /**
+     * @param mixed $apiRequestId
+     * @return OrderPlace
+     */
+    public function setApiRequestId($apiRequestId)
+    {
+        $this->apiRequestId = $apiRequestId;
+        return $this;
+    }
+
+
+    /**
      * @throws NotFoundException
      */
     private function setDeliveryAddressFromId()
@@ -542,6 +554,7 @@ class OrderPlace
         $order->business_id = $this->businessId;
         $order->vendor_id = $this->vendorId;
         $order->delivery_address_id = $this->deliveryAddress->id;
+        $order->api_request_id = $this->apiRequestId;
         $order->fill((new RequestIdentification())->get());
         $this->withCreateModificationField($order);
         $order->save();

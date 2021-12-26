@@ -73,6 +73,22 @@ class DiscountCalculation
     /**
      * @return mixed
      */
+    public function getCalculatedDiscount()
+    {
+        if ($this->serviceDiscount) {
+            if (!$this->serviceDiscount->isPercentage())
+                return (double)$this->discount;
+            $this->cap = (double)$this->serviceDiscount->cap;
+            $discount = ($this->originalPrice * $this->discount) / 100;
+            $discount = ($this->cap && $discount > $this->cap) ? $this->cap : $discount;
+        }
+        else $discount = (double)$this->discount;
+        return $discount;
+    }
+
+    /**
+     * @return mixed
+     */
     public function getIsDiscountPercentage()
     {
         return $this->isDiscountPercentage;

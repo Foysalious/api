@@ -2,9 +2,18 @@
 
 namespace Sheba\AccountingEntry\Repository;
 
+use Closure;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\BadResponseException;
+use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Handler\CurlHandler;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Middleware;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Response;
+use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 
 class AccountingEntryClient
@@ -15,12 +24,14 @@ class AccountingEntryClient
     protected $userType;
     protected $userId;
     protected $reportType;
+    const RETRY          = 5;
+    const RETRY_DURATION = 2000;
 
     public function __construct(Client $client)
     {
-        $this->client = $client;
+        $this->client  = $client;
         $this->baseUrl = rtrim(config('accounting_entry.api_url'), '/');
-        $this->apiKey = config('accounting_entry.api_key');
+        $this->apiKey  = config('accounting_entry.api_key');
     }
 
     /**
@@ -80,7 +91,11 @@ class AccountingEntryClient
             if (!$this->userType || !$this->userId) {
                 throw new AccountingEntryServerError('Set user type and user id', 400);
             }
-            $res = decodeGuzzleResponse(
+
+            $handlerStack = HandlerStack::create(new CurlHandler());
+            $handlerStack->push(Middleware::retry($this->retryDecider(), $this->retryDelay()));
+            $this->client = new Client(array('handler' => $handlerStack));
+            $res          = decodeGuzzleResponse(
                 $this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data))
             );
             if ($res['code'] != 200) {
@@ -90,7 +105,7 @@ class AccountingEntryClient
 
         } catch (GuzzleException $e) {
             $response = $e->getResponse() ? json_decode($e->getResponse()->getBody()->getContents(), true) : null;
-            $message = $e->getMessage();
+            $message  = $e->getMessage();
             if (isset($response['message'])) {
                 $message = $response['message'];
             } else if (isset($response['detail'])) {
@@ -113,14 +128,14 @@ class AccountingEntryClient
      * @param null $data
      * @return array
      */
-    public function getOptions($data = null)
+    public function getOptions($data = null): array
     {
         $options['headers'] = [
             'Content-Type' => 'application/json',
-            'x-api-key' => $this->apiKey,
-            'Accept' => 'application/json',
-            'Ref-Id' => $this->userId,
-            'Ref-Type' => $this->userType
+            'x-api-key'    => $this->apiKey,
+            'Accept'       => 'application/json',
+            'Ref-Id'       => $this->userId,
+            'Ref-Type'     => $this->userType
         ];
         if ($data) {
             $options['json'] = $data;
@@ -133,7 +148,7 @@ class AccountingEntryClient
      * @param $userType
      * @return $this
      */
-    public function setUserType($userType)
+    public function setUserType($userType): AccountingEntryClient
     {
         $this->userType = $userType;
         return $this;
@@ -148,5 +163,41 @@ class AccountingEntryClient
     {
         $this->userId = $userId;
         return $this;
+    }
+
+    private function retryDecider(): Closure
+    {
+        return function (
+            $retries,
+            Request $request,
+            Response $response = null,
+            RequestException $exception = null
+        ) {
+            // Limit the number of retries to 5
+            if ($retries >= self::RETRY) {
+                return false;
+            }
+
+            // Retry connection exceptions
+            if ($exception instanceof ConnectException) {
+                return true;
+            }
+
+            if ($response) {
+                // Retry on server errors
+                if ($response->getStatusCode() > 500) {
+                    return true;
+                }
+            }
+
+            return false;
+        };
+    }
+
+    private function retryDelay(): Closure
+    {
+        return function ($numberOfRetries) {
+            return self::RETRY_DURATION * $numberOfRetries;
+        };
     }
 }

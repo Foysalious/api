@@ -11,6 +11,7 @@ use App\Sheba\Business\CoWorker\ProfileInformation\OfficialInfoUpdater;
 use App\Sheba\Business\CoWorker\ProfileInformation\PersonalInfoUpdater;
 use App\Sheba\Business\CoWorker\ProfileInformation\ProfileRequester;
 use App\Sheba\Business\CoWorker\ProfileInformation\ProfileUpdater;
+use Sheba\Gender\Gender;
 use App\Transformers\Business\CoWorkerMinimumTransformer;
 use App\Transformers\Business\EmergencyContactInfoTransformer;
 use App\Transformers\Business\FinancialInfoTransformer;
@@ -108,7 +109,7 @@ class EmployeeController extends Controller
             'name' => 'string',
             'date_of_birth' => 'date',
             'profile_picture' => 'file',
-            'gender' => 'in:Female,Male,Other',
+            'gender' => 'in:' . Gender::implodeEnglish(),
             'address' => 'string',
             'blood_group' => 'in:' . implode(',', getBloodGroupsList(false)),
         ]);
@@ -192,7 +193,7 @@ class EmployeeController extends Controller
         $profile_completion_score = $completion_calculator->setBusinessMember($business_member)->getDigiGoScore();
 
         $pending_visit = $visit_repository->where('visitor_id', $business_member->id)
-            ->whereIn('status', [Status::STARTED, Status::REACHED]);
+            ->whereIn('status', [Status::CREATED, Status::STARTED, Status::REACHED]);
         $pending_visit_count = $pending_visit->count();
 
         $current_visit = $visit_repository->where('visitor_id', $business_member->id)
@@ -466,7 +467,7 @@ class EmployeeController extends Controller
             'department' => 'required|string',
             'designation' => 'required|string',
             'joining_date' => 'required|date',
-            'gender' => 'required|string|in:Female,Male,Other'
+            'gender' => 'required|string|in:' . Gender::implodeEnglish()
         ]);
 
         try {
