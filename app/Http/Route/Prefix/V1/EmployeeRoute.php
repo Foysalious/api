@@ -55,6 +55,7 @@ class EmployeeRoute
             //$api->post('password', 'Employee\EmployeeController@updateMyPassword');
             $api->get('dashboard', 'Employee\EmployeeController@getDashboard')->middleware('throttle:400');
             $api->get('dashboard-menu', 'Employee\DashboardController@index');
+            $api->get('menu-info', 'Employee\DashboardController@dashboardMenuInfo');
             $api->get('notifications', 'Employee\NotificationController@index')->middleware('throttle:400');
             $api->get('last-notifications', 'Employee\NotificationController@lastNotificationCount')->middleware('throttle:400');
             $api->get('test-notification', 'Employee\NotificationController@test');
