@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Sheba\Dal\SubscriptionWisePaymentGateway\Model as SubscriptionWisePaymentGateway;
@@ -10,6 +11,8 @@ use Sheba\Subscription\SubscriptionPackage;
 
 class PartnerSubscriptionPackage extends Model implements SubscriptionPackage,PayableType
 {
+    use HasFactory;
+
     protected $guarded = ['id'];
     protected $table = 'partner_subscription_packages';
     protected $dates = ['activate_from'];

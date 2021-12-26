@@ -2,6 +2,7 @@
 
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Query\Builder;
 use Sheba\CancelRequest\CancelRequestStatuses;
 use Sheba\Comment\JobNotificationHandler;
@@ -37,7 +38,7 @@ use Sheba\Dal\Service\Service;
 
 class Job extends BaseModel implements MorphCommentable
 {
-    use MorphComments;
+    use MorphComments, HasFactory;
 
     protected $guarded = ['id'];
     protected $materialPivotColumns = ['id', 'material_name', 'material_price', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];

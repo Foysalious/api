@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\ResourceStatusChangeLog\Model;
@@ -13,7 +14,7 @@ use Sheba\Dal\Category\Category;
 
 class Resource extends BaseModel implements Rewardable, HasWalletTransaction
 {
-    use Wallet;
+    use Wallet, HasFactory;
 
     protected $guarded = ['id'];
     protected $casts = ['wallet' => 'double'];

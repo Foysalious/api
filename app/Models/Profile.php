@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Dal\Retailer\Retailer;
 use Sheba\Dal\RetailerMembers\RetailerMember;
@@ -7,6 +8,8 @@ use Sheba\Dal\StrategicPartnerMember\StrategicPartnerMember;
 
 class Profile extends Model
 {
+    use HasFactory;
+
     protected $guarded  = ['id'];
     protected $fillable = [
         'name',

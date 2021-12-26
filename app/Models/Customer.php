@@ -2,6 +2,7 @@
 
 use App\Models\Transport\TransportTicketOrder;
 use App\Sheba\Payment\Rechargable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Sheba\Dal\Customer\Events\CustomerCreated;
 use Sheba\Dal\Customer\Events\CustomerSaved;
 use Sheba\FraudDetection\TransactionSources;
@@ -28,7 +29,7 @@ use Sheba\Dal\InfoCall\InfoCall;
 
 class Customer extends Authenticatable implements Rechargable, Rewardable, TopUpAgent, MovieAgent, TransportAgent, CanApplyVoucher, PayableUser, HasWalletTransaction, HasWallet
 {
-    use TopUpTrait, MovieTicketTrait, Wallet, ReportUpdater, VoucherGeneratorTrait;
+    use TopUpTrait, MovieTicketTrait, Wallet, ReportUpdater, VoucherGeneratorTrait, HasFactory;
 
     protected $fillable = ['name', 'mobile', 'email', 'password', 'fb_id', 'mobile_verified', 'email_verified', 'address', 'gender', 'dob', 'pro_pic', 'wallet', 'created_by', 'created_by_name', 'updated_by', 'updated_by_name', 'remember_token', 'reference_code', 'referrer_id', 'profile_id', 'has_rated_customer_app','is_completed'];
     protected $hidden = ['password', 'remember_token',];

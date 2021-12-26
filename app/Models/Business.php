@@ -2,6 +2,7 @@
 
 use App\Sheba\Business\Attendance\HalfDaySetting\HalfDayType;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Sheba\Business\AttendanceActionLog\TimeByBusiness;
 use Sheba\Business\CoWorker\Statuses;
 use Sheba\Dal\BaseModel;
@@ -28,7 +29,7 @@ use Sheba\Dal\BusinessOfficeHours\Model as BusinessOfficeHour;
 
 class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTransaction
 {
-    use Wallet, ModificationFields, TopUpTrait;
+    use Wallet, ModificationFields, TopUpTrait, HasFactory;
 
     protected $guarded = ['id'];
     const BUSINESS_FISCAL_START_MONTH = 7;
