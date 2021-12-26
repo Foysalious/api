@@ -127,7 +127,11 @@ class TopUpController extends Controller
         elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
         elseif ($user == 'partner') {
             $agent = $auth_user->getPartner();
-            $this->tokenManager->setPartner($agent)->validate($request->topup_token);
+            try {
+                $this->tokenManager->setPartner($agent)->validate($request->topup_token);
+            } catch (InvalidTopUpTokenException $e) {
+                logError($e);
+            }
         } else return api_response($request, null, 400);
 
         $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setPurpose(Purpose::TOPUP)->setRequest($request)->verify();
