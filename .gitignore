@@ -13,3 +13,6 @@ composer-auth.json
 .sentryclirc
 .env.testing
 storage/exports/*
+_ide_helper.php
+
+.phpunit.result.cache
