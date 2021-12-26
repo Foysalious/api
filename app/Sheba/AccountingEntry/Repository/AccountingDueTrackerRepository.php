@@ -123,8 +123,8 @@ class AccountingDueTrackerRepository extends BaseRepository
                 }
                 $item['created_at'] = Carbon::parse($item['created_at'])->format('Y-m-d h:i A');
                 $item['entry_at'] = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
-                $pos_order = $item['source_type'] == EntryTypes::POS ? $this->posOrderByOrderId($item['source_id']): null;
-                $item['partner_wise_order_id'] = $pos_order ? $pos_order->partner_wise_order_id : null;
+                $pos_order = $item['source_id'] && $item['source_type'] == EntryTypes::POS ? $this->posOrderByOrderId($item['source_id']): null;
+                $item['partner_wise_order_id'] = isset($pos_order) ? $pos_order->partner_wise_order_id : null;
                 if ($pos_order) {
                     $item['source_type'] = 'PosOrder';
                     $item['head'] = 'POS sales';
