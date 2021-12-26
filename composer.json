@@ -60,7 +60,7 @@
     "mockery/mockery": "1.4.*",
     "phpunit/phpunit": "^9.0",
     "itsgoingd/clockwork": "5.0.*",
-    "brianium/paratest": "^6.4"
+    "barryvdh/laravel-ide-helper": "^2.10"
   },
   "autoload": {
     "classmap": [
@@ -91,7 +91,8 @@
       "Illuminate\\Foundation\\ComposerScripts::postInstall"
     ],
     "post-update-cmd": [
-      "Illuminate\\Foundation\\ComposerScripts::postUpdate"
+      "Illuminate\\Foundation\\ComposerScripts::postUpdate",
+      "@php artisan ide-helper:generate"
     ],
     "post-autoload-dump": [
       "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
