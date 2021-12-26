@@ -81,19 +81,19 @@ class FeatureTestCase extends TestCase
     /** @var TopUpVendor $topupVendor */
     protected $topupVendor;
     /** @var Category $secondaryCategory */
-    private $secondaryCategory;
+    protected $secondaryCategory;
     /** @var JobService $job_service */
-    private $job_service;
+    protected $job_service;
     /** @var PartnerOrder $partner_order */
-    private $partner_order;
+    protected $partner_order;
     /** @var Location $location */
-    private $location;
+    protected $location;
     /** @var CustomerDeliveryAddress $customer_delivery_address */
-    private $customer_delivery_address;
+    protected $customer_delivery_address;
     /** @var Order $order */
-    private $order;
+    protected $order;
     /** @var Job $job */
-    private $job;
+    protected $job;
 
     public function setUp(): void
     {
