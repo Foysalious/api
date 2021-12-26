@@ -22,7 +22,6 @@ use App\Models\TopUpVendor;
 use App\Sheba\InventoryService\InventoryServerClient;
 use App\Sheba\PosOrderService\PosOrderServerClient;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\Schema;
 use Sheba\Dal\AuthorizationRequest\AuthorizationRequest;
@@ -32,9 +31,7 @@ use Sheba\Dal\CategoryLocation\CategoryLocation;
 use Sheba\Dal\JobService\JobService;
 use Sheba\Dal\LocationService\LocationService;
 use Sheba\Dal\Service\Service;
-use Sheba\Dal\SubscriptionWisePaymentGateway\Model;
 use Sheba\Services\Type as ServiceType;
-use Tests\Mocks\MockAccountingEntryClient;
 use Tests\Mocks\MockInventoryServerClient;
 use Tests\Mocks\MockPosOrderServerClient;
 use Tests\TestCase;
@@ -188,17 +185,17 @@ class FeatureTestCase extends TestCase
 
     private function createClientAccounts()
     {
-        $this->affiliate = Affiliate::factory()->create(['profile_id' => $this->profile->id]);
-        $this->customer = Customer::factory()->create(['profile_id' => $this->profile->id]);
-        $this->resource = Resource::factory()->create(['profile_id' => $this->profile->id]);
+        $this->affiliate = Affiliate::factory()->for($this->profile)->create();
+        $this->customer = Customer::factory()->for($this->profile)->create();
+        $this->resource = Resource::factory()->for($this->profile)->create();
+        $this->partner_package = PartnerSubscriptionPackage::factory()->create();
         $this->partner = Partner::factory()->create([
             'package_id'         => $this->partner_package->id,
             'subscription_rules' => '{"resource_cap":{"value":5,"is_published":1},"commission":{"value":20,"is_published":1},"fee":{"monthly":{"value":95,"is_published":1},"yearly":{"value":310,"is_published":1},"half_yearly":{"value":410,"is_published":0}},"access_rules":{"loan":true,"dashboard_analytics":true,"pos":{"invoice":{"print":true,"download":true},"due":{"alert":true,"ledger":true},"inventory":{"warranty":{"add":true}},"report":false,"ecom":{"product_publish":false,"webstore_publish":true}},"extra_earning":{"topup":true,"movie":true,"transport":true,"utility":true},"resource":{"type":{"add":true}},"expense":true,"extra_earning_global":true,"customer_list":true,"marketing_promo":true,"digital_collection":true,"old_dashboard":false,"notification":true,"eshop":true,"emi":true,"due_tracker":true},"tags":{"monthly":{"bn":"\u09eb\u09e6% \u099b\u09be\u09dc","en":"50% discount","amount":"540"},"yearly":{"bn":"\u09eb\u09e6% \u099b\u09be\u09dc","en":"50% discount","amount":"540"},"half_yearly":{"bn":"\u09eb\u09e6% \u099b\u09be\u09dc","en":"50% discount","amount":"540"}},"subscription_fee":[{"title":"monthly","title_bn":"\u09ae\u09be\u09b8\u09bf\u0995","price":95,"duration":30,"is_published":0},{"title":"yearly","title_bn":"\u09ac\u09be\u09ce\u09b8\u09b0\u09bf\u0995","price":310,"duration":365,"is_published":0},{"title":"two_yearly","title_bn":"\u09a6\u09cd\u09ac\u09bf-\u09ac\u09be\u09b0\u09cd\u09b7\u09bf\u0995","price":735,"duration":730,"is_published":1},{"title":"3_monthly","title_bn":"\u09e9 \u09ae\u09be\u09b8","price":285,"duration":90,"is_published":0},{"title":"6_monthly","title_bn":"\u09ec \u09ae\u09be\u09b8","price":570,"duration":180,"is_published":0},{"title":"9_monthly","title_bn":"\u09ef \u09ae\u09be\u09b8","price":855,"duration":270,"is_published":0},{"title":"11_month","title_bn":"egaro mash","price":880,"duration":330,"is_published":1},{"title":"13_month","title_bn":"month","price":900,"duration":800,"is_published":1}]}',
             'billing_type'       => "monthly",
         ]);
-        $this->member = Member::factory()->create(['profile_id' => $this->profile->id]);
+        $this->member = Member::factory()->for($this->profile)->create();
         $this->business = Business::factory()->create();
-        $this->partner_package = PartnerSubscriptionPackage::factory()->create();
         $this->partner_resource = PartnerResource::factory()->create(
             ['resource_id' => $this->resource->id, 'partner_id' => $this->partner->id, 'resource_type' => "Admin"]
         );
@@ -209,7 +206,7 @@ class FeatureTestCase extends TestCase
 
     protected function generateToken(): string
     {
-        return JWTAuth::fromUser($this->profile, [
+        $data = [
             'name'                     => $this->profile->name,
             'image'                    => $this->profile->pro_pic,
             'profile'                  => [
@@ -247,12 +244,14 @@ class FeatureTestCase extends TestCase
             'strategic_partner_member' => null,
             'avatar'                   => null,
             "exp"                      => Carbon::now()->addDay()->timestamp,
-        ]);
+        ];
+
+        return JWTAuth::fromUser($this->profile, $data);
     }
 
     private function createAuthTables()
     {
-        $authorization_request = AuthorizationRequest::factory()->create(['profile_id' => $this->profile->id]);
+        $authorization_request = AuthorizationRequest::factory()->for($this->profile)->create();
         AuthorizationToken::factory()->create(
             ['authorization_request_id' => $authorization_request->id, 'token' => $this->token]
         );
@@ -271,6 +270,7 @@ class FeatureTestCase extends TestCase
             PartnerOrder::class,
             Job::class,
         ]);
+
         $master_category = Category::factory()->create();
 
         $this->secondaryCategory = Category::factory()->create(
@@ -321,6 +321,11 @@ class FeatureTestCase extends TestCase
         ]);
     }
 
+    /**
+     * @param $mobile
+     * @param $email
+     * @return void
+     */
     protected function logInWithMobileNEmail($mobile, $email = null)
     {
         $this->createAccountWithMobileNEmail($mobile, $email);
@@ -328,6 +333,11 @@ class FeatureTestCase extends TestCase
         $this->createAuthTables();
     }
 
+    /**
+     * @param $mobile
+     * @param $email
+     * @return void
+     */
     private function createAccountWithMobileNEmail($mobile, $email = null)
     {
         $this->profile = Profile::factory()->create(['mobile' => $mobile, 'email' => $email,]);

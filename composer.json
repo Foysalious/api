@@ -54,24 +54,24 @@
     "mpdf/mpdf": "^8.0"
   },
   "require-dev": {
-    "nunomaduro/collision": "^5.0",
+    "barryvdh/laravel-ide-helper": "^2.10",
+    "brianium/paratest": "^6.4",
     "facade/ignition": "^2.3.6",
     "fakerphp/faker": "^1.9.1",
-    "mockery/mockery": "1.4.*",
-    "phpunit/phpunit": "^9.0",
     "itsgoingd/clockwork": "5.0.*",
-    "barryvdh/laravel-ide-helper": "^2.10"
+    "mockery/mockery": "1.4.*",
+    "nunomaduro/collision": "^5.0",
+    "phpunit/phpunit": "^9.0"
   },
   "autoload": {
-    "classmap": [
-      "database"
-    ],
     "files": [
       "app/Helper/helper_functions.php"
     ],
     "psr-4": {
       "App\\": "app/",
-      "Sheba\\": "app/Sheba"
+      "Sheba\\": "app/Sheba",
+      "Database\\Factories\\": "database/factories/",
+      "Database\\Seeders\\": "database/seeders/"
     }
   },
   "autoload-dev": {

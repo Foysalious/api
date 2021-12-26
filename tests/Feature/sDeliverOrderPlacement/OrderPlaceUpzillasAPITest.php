@@ -1,6 +1,9 @@
-<?php namespace Tests\Feature\sDeliverOrderPlacement;
+<?php
+
+namespace Tests\Feature\sDeliverOrderPlacement;
 
 use Tests\Feature\FeatureTestCase;
+use Throwable;
 
 class OrderPlaceUpzillasAPITest extends FeatureTestCase
 {
@@ -10,6 +13,9 @@ class OrderPlaceUpzillasAPITest extends FeatureTestCase
         $this->logIn();
     }
 
+    /**
+     * @throws Throwable
+     */
     public function testGetDeliveryAddressUpzillaAccordingDhakaDistrict()
     {
         $response = $this->get('/v2/pos/delivery/upzillas/Dhaka/district');
