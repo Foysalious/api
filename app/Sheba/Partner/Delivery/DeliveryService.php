@@ -294,7 +294,7 @@ class DeliveryService
                     'zilla' => $customer_delivery_info['delivery_zilla']
                 ],
                 'payment_method' => $customer_delivery_info['payment_method'] ,
-                'cod_amount' => $customer_delivery_info['cod_amount'],
+                'cod_amount' => (double) $customer_delivery_info['cod_amount'] - (double) $customer_delivery_info['delivery_charge'],
             ],
         ];
     }
