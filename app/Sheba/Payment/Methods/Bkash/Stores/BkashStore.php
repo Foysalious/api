@@ -32,7 +32,7 @@ abstract class BkashStore
         return $this->payment;
     }
 
-    public function setPayable(Payable $payable)
+    public function setPayable(Payable $payable): BkashStore
     {
         $this->payable = $payable;
         return $this;
@@ -47,14 +47,6 @@ abstract class BkashStore
         $this->payment = $payment;
         $this->payable = $payment->payable;
         return $this;
-    }
-
-    public function getUser()
-    {
-        return $this->payable->user;
-    }
-    public function getType(){
-        return $this->payable->type;
     }
 
 }
