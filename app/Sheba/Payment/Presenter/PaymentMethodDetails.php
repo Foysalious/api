@@ -15,6 +15,9 @@ class PaymentMethodDetails extends PresentableDTO
     private $icon;
     private $cashInCharge;
 
+    /**
+     * @throws InvalidPaymentMethod
+     */
     public function __construct($method_name, $payable_type=null)
     {
         if($payable_type == "payment_link")
@@ -61,6 +64,9 @@ class PaymentMethodDetails extends PresentableDTO
         return $store_details;
     }
 
+    /**
+     * @throws InvalidPaymentMethod
+     */
     private function setMethodDetailsForPaymentLink($method_name)
     {
         $pgw_store_details = $this->getPgwAccountDetails($method_name);
