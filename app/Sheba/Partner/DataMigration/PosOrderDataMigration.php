@@ -148,12 +148,12 @@ class PosOrderDataMigration
            'name' => 'own_delivery'
         ]);
 
-        $paperfly = json_encode([
-           'name' => 'paperfly',
+        $sdelivery = json_encode([
+           'name' => 'sdelivery',
            'image'  => config('pos_delivery.vendor_list_v2.paperfly.icon')
         ]);
 
-        $delivery_vendor_query = DB::raw("(CASE WHEN pos_orders.delivery_vendor_name = 'own_delivery' THEN '$own_delivery'  WHEN pos_orders.delivery_vendor_name = 'sdelivery' THEN '$paperfly' ELSE NULL END) as delivery_vendor");
+        $delivery_vendor_query = DB::raw("(CASE WHEN pos_orders.delivery_vendor_name = 'own_delivery' THEN '$own_delivery'  WHEN pos_orders.delivery_vendor_name = 'sdelivery' THEN '$sdelivery' ELSE NULL END) as delivery_vendor");
         $delivery_name = DB::raw("(CASE WHEN partner_pos_customers.nick_name IS NOT NULL THEN partner_pos_customers.nick_name ELSE profiles.name END) as delivery_name");
         $pos_orders = PosOrder::where('pos_orders.partner_id', $this->partner->id)->where(function ($q) {
             $q->where('pos_orders.is_migrated', null)->orWhere('pos_orders.is_migrated', 0);
