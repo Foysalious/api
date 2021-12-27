@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Sheba\NeoBanking;
+namespace Sheba\NeoBanking\Traits;
 
 
 use ReflectionClass;
