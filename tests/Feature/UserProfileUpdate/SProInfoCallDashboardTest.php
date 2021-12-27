@@ -1,4 +1,6 @@
-<?php namespace Tests\Feature\UserProfileUpdate;
+<?php
+
+namespace Tests\Feature\UserProfileUpdate;
 
 use App\Models\CustomerDeliveryAddress;
 use App\Models\Job;
@@ -48,17 +50,16 @@ class SProInfoCallDashboardTest extends FeatureTestCase
 
         $month = Carbon::now()->month;
 
-        $this->infocall = factory(InfoCall::class)->create([
-            'created_by' => $this->resource->id,
+        $this->infocall = InfoCall::factory()->create([
+            'created_by'      => $this->resource->id,
             'created_by_type' => get_class($this->resource),
-            'portal_name' => 'resource-app'
+            'portal_name'     => 'resource-app',
         ]);
 
         //act
-        $response = $this->get('/v2/resources/info-call/dashboard?year=' . $year . '&month='. $month ,
-            [
-                'Authorization' => "Bearer $this->token"
-            ]);
+        $response = $this->get('/v2/resources/info-call/dashboard?year='.$year.'&month='.$month, [
+            'Authorization' => "Bearer $this->token",
+        ]);
 
         $data = $response->decodeResponseJson();
 
@@ -71,7 +72,6 @@ class SProInfoCallDashboardTest extends FeatureTestCase
         $this->assertEquals(0, $data["service_request_dashboard"]["cancelled_order"]);
         $this->assertEquals(0, $data["service_request_dashboard"]["completed_order"]);
         $this->assertEquals(0, $data["service_request_dashboard"]["total_rewards"]);
-
     }
 
     public function testInfoCallDashboardAPIForCancelledOrder()
@@ -81,20 +81,19 @@ class SProInfoCallDashboardTest extends FeatureTestCase
 
         $month = Carbon::now()->month;
 
-        $this->infoCall = factory(InfoCall::class)->create([
-            'created_by' => $this->resource->id,
+        $this->infoCall = InfoCall::factory()->create([
+            'created_by'      => $this->resource->id,
             'created_by_type' => get_class($this->resource),
-            'portal_name' => 'resource-app',
-            'status' => "Rejected"
+            'portal_name'     => 'resource-app',
+            'status'          => "Rejected",
         ]);
 
-        $this->infocall_Reject_reason = factory(InfoCallRejectReason::class)->create();
+        $this->infocall_Reject_reason = InfoCallRejectReason::factory()->create();
 
         //act
-        $response = $this->get('/v2/resources/info-call/dashboard?year=' . $year . '&month='. $month ,
-            [
-                'Authorization' => "Bearer $this->token"
-            ]);
+        $response = $this->get('/v2/resources/info-call/dashboard?year='.$year.'&month='.$month, [
+            'Authorization' => "Bearer $this->token",
+        ]);
 
         $data = $response->decodeResponseJson();
 
@@ -107,7 +106,6 @@ class SProInfoCallDashboardTest extends FeatureTestCase
         $this->assertEquals(1, $data["service_request_dashboard"]["cancelled_order"]);
         $this->assertEquals(0, $data["service_request_dashboard"]["completed_order"]);
         $this->assertEquals(0, $data["service_request_dashboard"]["total_rewards"]);
-
     }
 
     public function testInfoCallDashboardAPIForTotalOrder()
@@ -117,119 +115,16 @@ class SProInfoCallDashboardTest extends FeatureTestCase
 
         $month = Carbon::now()->month;
 
-        $this->infocall = factory(InfoCall::class)->create([
-            'created_by' => $this->resource->id,
+        $this->infocall = InfoCall::factory()->create([
+            'created_by'      => $this->resource->id,
             'created_by_type' => get_class($this->resource),
-            'portal_name' => 'resource-app',
-            'status' => "Converted"
+            'portal_name'     => 'resource-app',
+            'status'          => "Converted",
         ]);
 
-        $this->infocall_Reject_reason = factory(InfoCallRejectReason::class)->create();
+        $this->infocall_Reject_reason = InfoCallRejectReason::factory()->create();
 
-        $this->infocall_Status_log = factory(InfoCallStatusLog::class)->create();
-
-        $this->location = Location::find(1);
-
-        $this->truncateTables([
-            Category::class,
-            Service::class,
-            CategoryLocation::class,
-            LocationService::class,
-            CustomerDeliveryAddress::class,
-            Order::class,
-            PartnerOrder::class,
-            Job::class
-        ]);
-
-        $master_category = factory(Category::class)->create();
-
-        $this->secondaryCategory = factory(Category::class)->create([
-            'parent_id' => $master_category->id,
-            'publication_status' => 1
-        ]);
-
-        $this->secondaryCategory->locations()->attach($this->location->id);
-
-        $this->service = factory(Service::class)->create([
-            'category_id' => $this->secondaryCategory->id,
-            'variable_type' => ServiceType::FIXED,
-            'variables' => '{"price":"1700","min_price":"1000","max_price":"2500","description":""}',
-            'publication_status' => 1
-        ]);
-
-        $this->customer_delivery_address = factory(CustomerDeliveryAddress::class)->create([
-            'customer_id'=>$this->customer->id
-        ]);
-
-        $this->order = factory(Order::class)->create([
-            'customer_id'=>$this->customer->id,
-            'partner_id'=>$this->partner->id,
-            'delivery_address'=>$this->customer_delivery_address->address,
-            'location_id'=>$this->location->id,
-            'info_call_id' => 1
-        ]);
-
-        $this->partner_order = factory(PartnerOrder::class)->create([
-            'partner_id'=>$this->partner->id,
-            'order_id'=>$this->order->id
-        ]);
-
-        $this->job = factory(Job::class)->create([
-            'partner_order_id'=>$this->partner_order->id,
-            'category_id'=>$this->secondaryCategory->id,
-            'service_id'=>$this->service->id,
-            'service_variable_type'=>$this->service->variable_type,
-            'service_variables'=>$this->service->variables,
-            'resource_id'=>$this->resource->id,
-            'schedule_date'=>"2021-02-16",
-            'preferred_time'=>"19:48:04-20:48:04",
-            'preferred_time_start'=>"19:48:04",
-            'preferred_time_end'=>"20:48:04"
-        ]);
-
-        $this->resource_Transaction = factory(Model::class)->create([
-            'job_id' => $this->job->id,
-        ]);
-
-        //act
-        $response = $this->get('/v2/resources/info-call/dashboard?year=' . $year . '&month='. $month ,
-            [
-                'Authorization' => "Bearer $this->token"
-            ]);
-
-        $data = $response->decodeResponseJson();
-
-        //assert
-        $this->assertEquals(200, $data["code"]);
-        $this->assertEquals('Successful', $data["message"]);
-        $this->assertEquals(1, $data["service_request_dashboard"]["total_service_requests"]);
-        $this->assertEquals(1, $data["service_request_dashboard"]["service_requests"]);
-        $this->assertEquals(1, $data["service_request_dashboard"]["total_order"]);
-        $this->assertEquals(0, $data["service_request_dashboard"]["cancelled_order"]);
-        $this->assertEquals(0, $data["service_request_dashboard"]["completed_order"]);
-        $this->assertEquals(0, $data["service_request_dashboard"]["total_rewards"]);
-
-    }
-
-    public function testInfoCallDashboardAPIForCompletedOrder()
-    {
-        //arrange
-        $year = Carbon::now()->year;
-
-        $month = Carbon::now()->month;
-
-        $today = Carbon::now()->toDateTimeString();
-
-        $this->infocall = factory(InfoCall::class)->create([
-            'created_by' => $this->resource->id,
-            'created_by_type' => get_class($this->resource),
-            'portal_name' => 'resource-app',
-            'status' => "Converted"
-        ]);
-
-        $this->infocall_Reject_reason = factory(InfoCallRejectReason::class)->create();
-
-        $this->infocall_Status_log = factory(InfoCallStatusLog::class)->create();
+        $this->infocall_Status_log = InfoCallStatusLog::factory()->create();
 
         $this->location = Location::find(1);
 
@@ -244,63 +139,163 @@ class SProInfoCallDashboardTest extends FeatureTestCase
             Job::class,
         ]);
 
-        $master_category = factory(Category::class)->create();
+        $master_category = Category::factory()->create();
 
-        $this->secondaryCategory = factory(Category::class)->create([
-            'parent_id' => $master_category->id,
-            'publication_status' => 1
+        $this->secondaryCategory = Category::factory()->create([
+            'parent_id'          => $master_category->id,
+            'publication_status' => 1,
         ]);
 
         $this->secondaryCategory->locations()->attach($this->location->id);
 
-        $this->service = factory(Service::class)->create([
-            'category_id' => $this->secondaryCategory->id,
-            'variable_type' => ServiceType::FIXED,
-            'variables' => '{"price":"1700","min_price":"1000","max_price":"2500","description":""}',
-            'publication_status' => 1
+        $this->service = Service::factory()->create([
+            'category_id'        => $this->secondaryCategory->id,
+            'variable_type'      => ServiceType::FIXED,
+            'variables'          => '{"price":"1700","min_price":"1000","max_price":"2500","description":""}',
+            'publication_status' => 1,
         ]);
 
-        $this->customer_delivery_address = factory(CustomerDeliveryAddress::class)->create([
-            'customer_id'=>$this->customer->id
+        $this->customer_delivery_address = CustomerDeliveryAddress::factory()->create([
+            'customer_id' => $this->customer->id,
         ]);
 
-        $this->order = factory(Order::class)->create([
-            'customer_id'=>$this->customer->id,
-            'partner_id'=>$this->partner->id,
-            'delivery_address'=>$this->customer_delivery_address->address,
-            'location_id'=>$this->location->id,
-            'info_call_id' => 1
+        $this->order = Order::factory()->create([
+            'customer_id'      => $this->customer->id,
+            'partner_id'       => $this->partner->id,
+            'delivery_address' => $this->customer_delivery_address->address,
+            'location_id'      => $this->location->id,
+            'info_call_id'     => 1,
         ]);
 
-        $this->partner_order = factory(PartnerOrder::class)->create([
-            'partner_id'=>$this->partner->id,
-            'order_id'=>$this->order->id,
-            'closed_and_paid_at'=>$today
+        $this->partner_order = PartnerOrder::factory()->create([
+            'partner_id' => $this->partner->id,
+            'order_id'   => $this->order->id,
         ]);
 
-        $this->job = factory(Job::class)->create([
-            'partner_order_id'=>$this->partner_order->id,
-            'category_id'=>$this->secondaryCategory->id,
-            'service_id'=>$this->service->id,
-            'service_variable_type'=>$this->service->variable_type,
-            'service_variables'=>$this->service->variables,
-            'resource_id'=>$this->resource->id,
-            'schedule_date'=>"2021-02-16",
-            'preferred_time'=>"19:48:04-20:48:04",
-            'preferred_time_start'=>"19:48:04",
-            'preferred_time_end'=>"20:48:04"
+        $this->job = Job::factory()->create([
+            'partner_order_id'      => $this->partner_order->id,
+            'category_id'           => $this->secondaryCategory->id,
+            'service_id'            => $this->service->id,
+            'service_variable_type' => $this->service->variable_type,
+            'service_variables'     => $this->service->variables,
+            'resource_id'           => $this->resource->id,
+            'schedule_date'         => "2021-02-16",
+            'preferred_time'        => "19:48:04-20:48:04",
+            'preferred_time_start'  => "19:48:04",
+            'preferred_time_end'    => "20:48:04",
         ]);
 
-        $this->resource_Transaction = factory(Model::class)->create([
+        $this->resource_Transaction = Model::factory()->create([
             'job_id' => $this->job->id,
-            'created_at' => $today
         ]);
 
         //act
-        $response = $this->get('/v2/resources/info-call/dashboard?year=' . $year . '&month='. $month ,
-            [
-                'Authorization' => "Bearer $this->token"
-            ]);
+        $response = $this->get('/v2/resources/info-call/dashboard?year='.$year.'&month='.$month, [
+            'Authorization' => "Bearer $this->token",
+        ]);
+
+        $data = $response->decodeResponseJson();
+
+        //assert
+        $this->assertEquals(200, $data["code"]);
+        $this->assertEquals('Successful', $data["message"]);
+        $this->assertEquals(1, $data["service_request_dashboard"]["total_service_requests"]);
+        $this->assertEquals(1, $data["service_request_dashboard"]["service_requests"]);
+        $this->assertEquals(1, $data["service_request_dashboard"]["total_order"]);
+        $this->assertEquals(0, $data["service_request_dashboard"]["cancelled_order"]);
+        $this->assertEquals(0, $data["service_request_dashboard"]["completed_order"]);
+        $this->assertEquals(0, $data["service_request_dashboard"]["total_rewards"]);
+    }
+
+    public function testInfoCallDashboardAPIForCompletedOrder()
+    {
+        //arrange
+        $year = Carbon::now()->year;
+
+        $month = Carbon::now()->month;
+
+        $today = Carbon::now()->toDateTimeString();
+
+        $this->infocall = InfoCall::factory()->create([
+            'created_by'      => $this->resource->id,
+            'created_by_type' => get_class($this->resource),
+            'portal_name'     => 'resource-app',
+            'status'          => "Converted",
+        ]);
+
+        $this->infocall_Reject_reason = InfoCallRejectReason::factory()->create();
+
+        $this->infocall_Status_log = InfoCallStatusLog::factory()->create();
+
+        $this->location = Location::find(1);
+
+        $this->truncateTables([
+            Category::class,
+            Service::class,
+            CategoryLocation::class,
+            LocationService::class,
+            CustomerDeliveryAddress::class,
+            Order::class,
+            PartnerOrder::class,
+            Job::class,
+        ]);
+
+        $master_category = Category::factory()->create();
+
+        $this->secondaryCategory = Category::factory()->create([
+            'parent_id'          => $master_category->id,
+            'publication_status' => 1,
+        ]);
+
+        $this->secondaryCategory->locations()->attach($this->location->id);
+
+        $this->service = Service::factory()->create([
+            'category_id'        => $this->secondaryCategory->id,
+            'variable_type'      => ServiceType::FIXED,
+            'variables'          => '{"price":"1700","min_price":"1000","max_price":"2500","description":""}',
+            'publication_status' => 1,
+        ]);
+
+        $this->customer_delivery_address = CustomerDeliveryAddress::factory()->create([
+            'customer_id' => $this->customer->id,
+        ]);
+
+        $this->order = Order::factory()->create([
+            'customer_id'      => $this->customer->id,
+            'partner_id'       => $this->partner->id,
+            'delivery_address' => $this->customer_delivery_address->address,
+            'location_id'      => $this->location->id,
+            'info_call_id'     => 1,
+        ]);
+
+        $this->partner_order = PartnerOrder::factory()->create([
+            'partner_id'         => $this->partner->id,
+            'order_id'           => $this->order->id,
+            'closed_and_paid_at' => $today,
+        ]);
+
+        $this->job = Job::factory()->create([
+            'partner_order_id'      => $this->partner_order->id,
+            'category_id'           => $this->secondaryCategory->id,
+            'service_id'            => $this->service->id,
+            'service_variable_type' => $this->service->variable_type,
+            'service_variables'     => $this->service->variables,
+            'resource_id'           => $this->resource->id,
+            'schedule_date'         => "2021-02-16",
+            'preferred_time'        => "19:48:04-20:48:04",
+            'preferred_time_start'  => "19:48:04",
+            'preferred_time_end'    => "20:48:04",
+        ]);
+
+        $this->resource_Transaction = Model::factory()->create([
+            'job_id'     => $this->job->id,
+            'created_at' => $today,
+        ]);
+
+        //act
+        $response = $this->get('/v2/resources/info-call/dashboard?year='.$year.'&month='.$month, [
+            'Authorization' => "Bearer $this->token",
+        ]);
 
         $data = $response->decodeResponseJson();
 
@@ -313,7 +308,6 @@ class SProInfoCallDashboardTest extends FeatureTestCase
         $this->assertEquals(0, $data["service_request_dashboard"]["cancelled_order"]);
         $this->assertEquals(1, $data["service_request_dashboard"]["completed_order"]);
         $this->assertEquals(1000, $data["service_request_dashboard"]["total_rewards"]);
-
     }
 
     public function testInfoCallDashboardAPIWithoutMonthAndYearParameter()
@@ -321,18 +315,17 @@ class SProInfoCallDashboardTest extends FeatureTestCase
         //arrange
         $today = Carbon::now()->toDateTimeString();
 
-        $this->infocall = factory(InfoCall::class)->create([
-            'created_by' => $this->resource->id,
+        $this->infocall = InfoCall::factory()->create([
+            'created_by'      => $this->resource->id,
             'created_by_type' => get_class($this->resource),
-            'portal_name' => 'resource-app',
+            'portal_name'     => 'resource-app',
         ]);
 
 
         //act
-        $response = $this->get('/v2/resources/info-call/dashboard',
-            [
-                'Authorization' => "Bearer $this->token"
-            ]);
+        $response = $this->get('/v2/resources/info-call/dashboard', [
+            'Authorization' => "Bearer $this->token",
+        ]);
 
         $data = $response->decodeResponseJson();
 
@@ -345,7 +338,6 @@ class SProInfoCallDashboardTest extends FeatureTestCase
         $this->assertEquals(0, $data["service_request_dashboard"]["cancelled_order"]);
         $this->assertEquals(0, $data["service_request_dashboard"]["completed_order"]);
         $this->assertEquals(0, $data["service_request_dashboard"]["total_rewards"]);
-
     }
 
     public function testInfoCallDashboardAPIWithInvalidMonth13()
@@ -353,17 +345,16 @@ class SProInfoCallDashboardTest extends FeatureTestCase
         //arrange
         $year = Carbon::now()->year;
 
-        $this->infocall = factory(InfoCall::class)->create([
-            'created_by' => $this->resource->id,
+        $this->infocall = InfoCall::factory()->create([
+            'created_by'      => $this->resource->id,
             'created_by_type' => get_class($this->resource),
-            'portal_name' => 'resource-app',
+            'portal_name'     => 'resource-app',
         ]);
 
         //act
-        $response = $this->get('/v2/resources/info-call/dashboard?year='. $year . '&month=13',
-            [
-                'Authorization' => "Bearer $this->token"
-            ]);
+        $response = $this->get('/v2/resources/info-call/dashboard?year='.$year.'&month=13', [
+            'Authorization' => "Bearer $this->token",
+        ]);
 
         $data = $response->decodeResponseJson();
 
@@ -377,17 +368,16 @@ class SProInfoCallDashboardTest extends FeatureTestCase
         //arrange
         $year = Carbon::now()->year;
 
-        $this->infocall = factory(InfoCall::class)->create([
-            'created_by' => $this->resource->id,
+        $this->infocall = InfoCall::factory()->create([
+            'created_by'      => $this->resource->id,
             'created_by_type' => get_class($this->resource),
-            'portal_name' => 'resource-app',
+            'portal_name'     => 'resource-app',
         ]);
 
         //act
-        $response = $this->get('/v2/resources/info-call/dashboard?year='. $year . '&month=0',
-            [
-                'Authorization' => "Bearer $this->token"
-            ]);
+        $response = $this->get('/v2/resources/info-call/dashboard?year='.$year.'&month=0', [
+            'Authorization' => "Bearer $this->token",
+        ]);
 
         $data = $response->decodeResponseJson();
 
@@ -401,17 +391,16 @@ class SProInfoCallDashboardTest extends FeatureTestCase
         //arrange
         $year = Carbon::now()->year;
 
-        $this->infocall = factory(InfoCall::class)->create([
-            'created_by' => $this->resource->id,
+        $this->infocall = InfoCall::factory()->create([
+            'created_by'      => $this->resource->id,
             'created_by_type' => get_class($this->resource),
-            'portal_name' => 'resource-app',
+            'portal_name'     => 'resource-app',
         ]);
 
         //act
-        $response = $this->get('/v2/resources/info-call/dashboard?year='. $year . '&month=abc',
-            [
-                'Authorization' => "Bearer $this->token"
-            ]);
+        $response = $this->get('/v2/resources/info-call/dashboard?year='.$year.'&month=abc', [
+            'Authorization' => "Bearer $this->token",
+        ]);
 
         $data = $response->decodeResponseJson();
 
@@ -425,17 +414,16 @@ class SProInfoCallDashboardTest extends FeatureTestCase
         //arrange
         $month = Carbon::now()->month;
 
-        $this->infocall = factory(InfoCall::class)->create([
-            'created_by' => $this->resource->id,
+        $this->infocall = InfoCall::factory()->create([
+            'created_by'      => $this->resource->id,
             'created_by_type' => get_class($this->resource),
-            'portal_name' => 'resource-app',
+            'portal_name'     => 'resource-app',
         ]);
 
         //act
-        $response = $this->get('/v2/resources/info-call/dashboard?year=abc&month=' . $month ,
-            [
-                'Authorization' => "Bearer $this->token"
-            ]);
+        $response = $this->get('/v2/resources/info-call/dashboard?year=abc&month='.$month, [
+            'Authorization' => "Bearer $this->token",
+        ]);
 
         $data = $response->decodeResponseJson();
 
@@ -447,17 +435,16 @@ class SProInfoCallDashboardTest extends FeatureTestCase
     public function testInfoCallDashboardAPIWithoutMonthAndYearValue()
     {
         //arrange
-        $this->infocall = factory(InfoCall::class)->create([
-            'created_by' => $this->resource->id,
+        $this->infocall = InfoCall::factory()->create([
+            'created_by'      => $this->resource->id,
             'created_by_type' => get_class($this->resource),
-            'portal_name' => 'resource-app',
+            'portal_name'     => 'resource-app',
         ]);
 
         //act
-        $response = $this->get('/v2/resources/info-call/dashboard?year=&month=',
-            [
-                'Authorization' => "Bearer $this->token"
-            ]);
+        $response = $this->get('/v2/resources/info-call/dashboard?year=&month=', [
+            'Authorization' => "Bearer $this->token",
+        ]);
 
         $data = $response->decodeResponseJson();
 
@@ -471,17 +458,16 @@ class SProInfoCallDashboardTest extends FeatureTestCase
         //arrange
         $month = Carbon::now()->month;
 
-        $this->infocall = factory(InfoCall::class)->create([
-            'created_by' => $this->resource->id,
+        $this->infocall = InfoCall::factory()->create([
+            'created_by'      => $this->resource->id,
             'created_by_type' => get_class($this->resource),
-            'portal_name' => 'resource-app',
+            'portal_name'     => 'resource-app',
         ]);
 
         //act
-        $response = $this->get('/v2/resources/info-call/dashboard?month=' . $month,
-            [
-                'Authorization' => "Bearer $this->token"
-            ]);
+        $response = $this->get('/v2/resources/info-call/dashboard?month='.$month, [
+            'Authorization' => "Bearer $this->token",
+        ]);
 
         $data = $response->decodeResponseJson();
 
@@ -501,17 +487,16 @@ class SProInfoCallDashboardTest extends FeatureTestCase
         //arrange
         $year = Carbon::now()->year;
 
-        $this->infocall = factory(InfoCall::class)->create([
-            'created_by' => $this->resource->id,
+        $this->infocall = InfoCall::factory()->create([
+            'created_by'      => $this->resource->id,
             'created_by_type' => get_class($this->resource),
-            'portal_name' => 'resource-app',
+            'portal_name'     => 'resource-app',
         ]);
 
         //act
-        $response = $this->get('/v2/resources/info-call/dashboard?year=' . $year,
-            [
-                'Authorization' => "Bearer $this->token"
-            ]);
+        $response = $this->get('/v2/resources/info-call/dashboard?year='.$year, [
+            'Authorization' => "Bearer $this->token",
+        ]);
 
         $data = $response->decodeResponseJson();
 

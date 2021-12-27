@@ -1,4 +1,6 @@
-<?php namespace Tests\Feature\sProOrderCreate;
+<?php
+
+namespace Tests\Feature\sProOrderCreate;
 
 use Sheba\Dal\PartnerLocation\PartnerLocation;
 use Tests\Feature\FeatureTestCase;
@@ -9,15 +11,13 @@ class sProOrderCreateLocationTest extends FeatureTestCase
 
     public function setUp(): void
     {
-
         parent::setUp();
 
         $this->logIn();
 
-        $this->partner ->update([
-            'geo_informations' => '{"lat":"23.814800953807","lng":"90.362328935888","radius":"100"}'
+        $this->partner->update([
+            'geo_informations' => '{"lat":"23.814800953807","lng":"90.362328935888","radius":"100"}',
         ]);
-
     }
 
     public function testSProLocationAPIWithValidPartnerId()
@@ -25,7 +25,7 @@ class sProOrderCreateLocationTest extends FeatureTestCase
         //arrange
 
         //act
-        $response = $this->get('/v2/partners/' . $this->partner->id . '/locations');
+        $response = $this->get('/v2/partners/'.$this->partner->id.'/locations');
 
         $data = $response->decodeResponseJson();
 
@@ -81,7 +81,7 @@ class sProOrderCreateLocationTest extends FeatureTestCase
         //arrange
 
         //act
-        $response = $this->put('/v2/partners/' . $this->partner->id . '/locations');
+        $response = $this->put('/v2/partners/'.$this->partner->id.'/locations');
 
         $data = $response->decodeResponseJson();
 
@@ -94,7 +94,7 @@ class sProOrderCreateLocationTest extends FeatureTestCase
         //arrange
 
         //act
-        $response = $this->post('/v2/partners/' . $this->partner->id . '/locations');
+        $response = $this->post('/v2/partners/'.$this->partner->id.'/locations');
 
         $data = $response->decodeResponseJson();
 
@@ -107,7 +107,7 @@ class sProOrderCreateLocationTest extends FeatureTestCase
         //arrange
 
         //act
-        $response = $this->delete('/v2/partners/' . $this->partner->id . '/locations');
+        $response = $this->delete('/v2/partners/'.$this->partner->id.'/locations');
 
         $data = $response->decodeResponseJson();
 
@@ -120,7 +120,7 @@ class sProOrderCreateLocationTest extends FeatureTestCase
         //arrange
 
         //act
-        $response = $this->get('/v2/partnerss/' . $this->partner->id . '/locations');
+        $response = $this->get('/v2/partnerss/'.$this->partner->id.'/locations');
 
         $data = $response->decodeResponseJson();
 

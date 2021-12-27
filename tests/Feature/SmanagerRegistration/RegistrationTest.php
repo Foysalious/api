@@ -1,4 +1,6 @@
-<?php namespace Tests\Feature\SmanagerRegistration;
+<?php
+
+namespace Tests\Feature\SmanagerRegistration;
 
 use App\Models\Partner;
 use App\Models\PartnerResource;
@@ -22,30 +24,38 @@ class RegistrationTest extends FeatureTestCase
         parent::setUp();
 
         $this->truncateTables([
-            PartnerSubscriptionPackage::class, Partner::class, Resource::class, PartnerResource::class, Tag::class
+            PartnerSubscriptionPackage::class,
+            Partner::class,
+            Resource::class,
+            PartnerResource::class,
+            Tag::class,
         ]);
 
         $this->logIn();
 
-        $this->freeSubscription = factory(PartnerSubscriptionPackage::class)->create();
-        $this->basicSubscription = factory(PartnerSubscriptionPackage::class)->create([
-            'name' => "Basic"
+        $this->freeSubscription = PartnerSubscriptionPackage::factory()->create();
+        $this->basicSubscription = PartnerSubscriptionPackage::factory()->create([
+            'name' => "Basic",
         ]);
 
         Tag::create([
-            'name' => "Subscription fee", 'taggable_type' => 'App\\Models\\PartnerTransaction',
+            'name'          => "Subscription fee",
+            'taggable_type' => 'App\\Models\\PartnerTransaction',
         ]);
 
-        // $this->app->singleton(SmsVendor::class, MockSmsVendor::class);
         $this->app->singleton(ExpenseTrackerClient::class, MockExpenseClient::class);
     }
 
     public function testRegistrationPartner()
     {
         $response = $this->post("v2/profile/registration/partner", [
-            "name" => "ZUBAYER", "company_name" => "ZUBAYER TEST", "gender" => "পুরুষ", "bussiness_type" => "োবাইল এবং গ্যাজেট", "from" => "manager-app"
+            "name"           => "ZUBAYER",
+            "company_name"   => "ZUBAYER TEST",
+            "gender"         => "পুরুষ",
+            "bussiness_type" => "োবাইল এবং গ্যাজেট",
+            "from"           => "manager-app",
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
 
         $response->decodeResponseJson();
@@ -73,13 +83,19 @@ class RegistrationTest extends FeatureTestCase
         $this->assertEquals(3, $partner_registration->subscription_rules->access_rules->value);
     }
 
-    // Test resource table data
+    /**
+     * Test resource table data
+     */
     public function testPartnerRegistrationResourceCreate()
     {
         $response = $this->post("v2/profile/registration/partner", [
-            "name" => "ZUBAYER", "company_name" => "ZUBAYER TEST", "gender" => "পুরুষ", "bussiness_type" => "োবাইল এবং গ্যাজেট", "from" => "manager-app"
+            "name"           => "ZUBAYER",
+            "company_name"   => "ZUBAYER TEST",
+            "gender"         => "পুরুষ",
+            "bussiness_type" => "োবাইল এবং গ্যাজেট",
+            "from"           => "manager-app",
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $response->decodeResponseJson();
         $resource_registration = Resource::first();
@@ -87,13 +103,19 @@ class RegistrationTest extends FeatureTestCase
         $this->assertEquals(1, $resource_registration->profile_id);
     }
 
-    // Test Partner_resource table data
+    /**
+     * Test Partner_resource table data
+     */
     public function testPartnerRegistrationPartnerResourceCreate()
     {
         $response = $this->post("v2/profile/registration/partner", [
-            "name" => "ZUBAYER", "company_name" => "ZUBAYER TEST", "gender" => "পুরুষ", "bussiness_type" => "োবাইল এবং গ্যাজেট", "from" => "manager-app"
+            "name"           => "ZUBAYER",
+            "company_name"   => "ZUBAYER TEST",
+            "gender"         => "পুরুষ",
+            "bussiness_type" => "োবাইল এবং গ্যাজেট",
+            "from"           => "manager-app",
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $partner_resource = PartnerResource::all();
@@ -105,14 +127,18 @@ class RegistrationTest extends FeatureTestCase
         $this->assertEquals(1, $partner_resource[1]->partner_id);
     }
 
-    // Test case: Post api without a mandatory payload and check response
+    /**
+     * Test case: Post api without a mandatory payload and check response
+     */
     public function testRRegistrationPartnerWithWrongPayload()
     {
         $response = $this->post("v2/profile/registration/partner", [
-            "name" => "ZUBAYER", "company_name" => "ZUBAYER TEST", //"gender"=> "পুরুষ",
-            "bussiness_type" => "োবাইল এবং গ্যাজেট", "from" => "manager-app"
+            "name"           => "ZUBAYER",
+            "company_name"   => "ZUBAYER TEST", //"gender"=> "পুরুষ",
+            "bussiness_type" => "োবাইল এবং গ্যাজেট",
+            "from"           => "manager-app",
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(403, $data["code"]);
@@ -121,10 +147,12 @@ class RegistrationTest extends FeatureTestCase
     public function testRRegistrationPartnerWithWrongPayloadInBusiness_type()
     {
         $response = $this->post("v2/profile/registration/partner", [
-            "name" => "ZUBAYER", "company_name" => "ZUBAYER TEST", //"gender"=> "পুরুষ",
-            "bussiness_type" => 123456, "from" => "manager-app"
+            "name"           => "ZUBAYER",
+            "company_name"   => "ZUBAYER TEST", //"gender"=> "পুরুষ",
+            "bussiness_type" => 123456,
+            "from"           => "manager-app",
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(403, $data["code"]);
@@ -134,10 +162,13 @@ class RegistrationTest extends FeatureTestCase
     public function testRRegistrationPartnerWithEmptyPayload()
     {
         $response = $this->post("v2/profile/registration/partner", [
-            "name" => "", "company_name" => "", //"gender"=> "",
-            "bussiness_type" => "", "from" => ""
+            "name"           => "",
+            "company_name"   => "",
+            // "gender"=> "",
+            "bussiness_type" => "",
+            "from"           => "",
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(400, $data["code"]);

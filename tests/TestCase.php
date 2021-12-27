@@ -4,12 +4,16 @@ namespace Tests;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use DB;
 use Illuminate\Support\Str;
+use Illuminate\Contracts\Console\Kernel;
 
 abstract class TestCase extends BaseTestCase
 {
-    use CreatesApplication, HasFactory;
+    use CreatesApplication, HasFactory, RefreshDatabase;
 
     public function setUp(): void
     {
@@ -26,5 +30,25 @@ abstract class TestCase extends BaseTestCase
             // Laravel will find our model factory
             return $namespace.$modelName.'Factory';
         });
+    }
+
+    protected function refreshTestDatabase()
+    {
+        ini_set('memory_limit', '-1');
+        ini_set('max_execution_time', 1000);
+
+        if (!RefreshDatabaseState::$migrated) {
+            /**
+             * NEED TO RUN ONLY ONE TIMES
+             *
+             * DB::unprepared(file_get_contents(database_path('seeds/sheba_testing.sql')));
+             */
+            $this->artisan('migrate');
+            $this->app[Kernel::class]->setArtisan(null);
+
+            RefreshDatabaseState::$migrated = true;
+        }
+
+        $this->beginDatabaseTransaction();
     }
 }

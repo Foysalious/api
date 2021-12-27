@@ -1,4 +1,6 @@
-<?php namespace Tests\Feature\sProOrderCreate;
+<?php
+
+namespace Tests\Feature\sProOrderCreate;
 
 use App\Models\District;
 use App\Models\Division;
@@ -14,7 +16,6 @@ class sProOrderCreateThanaTest extends FeatureTestCase
 
     public function setUp(): void
     {
-
         parent::setUp();
 
         $this->truncateTable(Division::class);
@@ -25,12 +26,11 @@ class sProOrderCreateThanaTest extends FeatureTestCase
 
         $this->logIn();
 
-        $this->division = factory(Division::class)->create();
+        $this->division = Division::factory()->create();
 
-        $this->district = factory(District::class)->create();
+        $this->district = District::factory()->create();
 
-        $this->thana = factory(Thana::class)->create();
-
+        $this->thana = Thana::factory()->create();
     }
 
     public function testSProThanaAPIForSingleThana()
@@ -56,19 +56,18 @@ class sProOrderCreateThanaTest extends FeatureTestCase
         $this->assertEquals(1, $data["thanas"][0]["district"]["id"]);
         $this->assertEquals('Dhaka', $data["thanas"][0]["district"]["name"]);
         $this->assertEquals('ঢাকা', $data["thanas"][0]["district"]["bn_name"]);
-
     }
 
     public function testSProThanaAPIForMultipleThana()
     {
         //arrange
-        $this->thana = factory(Thana::class)->create([
+        $this->thana = Thana::factory()->create([
             'district_id' => 1,
             'location_id' => 5,
-            'name' => 'Mirpur',
-            'bn_name' => 'মিরপুর',
-            'lat' => 23.8223490,
-            'lng' => 90.3654200
+            'name'        => 'Mirpur',
+            'bn_name'     => 'মিরপুর',
+            'lat'         => 23.8223490,
+            'lng'         => 90.3654200,
         ]);
 
         //act
@@ -99,27 +98,26 @@ class sProOrderCreateThanaTest extends FeatureTestCase
         $this->assertEquals(1, $data["thanas"][1]["district"]["id"]);
         $this->assertEquals('Dhaka', $data["thanas"][1]["district"]["name"]);
         $this->assertEquals('ঢাকা', $data["thanas"][1]["district"]["bn_name"]);
-
     }
 
     public function testSProThanaAPIForMultipleDistrict()
     {
         //arrange
-        $this->district = factory(District::class)->create([
+        $this->district = District::factory()->create([
             'division_id' => 1,
-            'name' => 'Faridpur',
-            'bn_name' => 'ফরিদপুর',
-            'lat' => 23.6070822,
-            'lng' => 89.8429406
+            'name'        => 'Faridpur',
+            'bn_name'     => 'ফরিদপুর',
+            'lat'         => 23.6070822,
+            'lng'         => 89.8429406,
         ]);
 
-        $this->thana = factory(Thana::class)->create([
+        $this->thana = Thana::factory()->create([
             'district_id' => 2,
             'location_id' => 2,
-            'name' => 'Faridpur Sadar',
-            'bn_name' => 'ফরিদপুর সদর',
-            'lat' => 23.6203524,
-            'lng' => 89.8130356
+            'name'        => 'Faridpur Sadar',
+            'bn_name'     => 'ফরিদপুর সদর',
+            'lat'         => 23.6203524,
+            'lng'         => 89.8130356,
         ]);
 
         //act
@@ -150,32 +148,31 @@ class sProOrderCreateThanaTest extends FeatureTestCase
         $this->assertEquals(2, $data["thanas"][1]["district"]["id"]);
         $this->assertEquals('Faridpur', $data["thanas"][1]["district"]["name"]);
         $this->assertEquals('ফরিদপুর', $data["thanas"][1]["district"]["bn_name"]);
-
     }
 
     public function testSProThanaAPIForMultipleDivision()
     {
         //arrange
-        $this->division = factory(Division::class)->create([
-            'name' => 'Chattogram',
-            'bn_name' => 'চট্টগ্রাম'
+        $this->division = Division::factory()->create([
+            'name'    => 'Chattogram',
+            'bn_name' => 'চট্টগ্রাম',
         ]);
 
-        $this->district = factory(District::class)->create([
+        $this->district = District::factory()->create([
             'division_id' => 2,
-            'name' => 'Faridpur',
-            'bn_name' => 'ফরিদপুর',
-            'lat' => 23.6070822,
-            'lng' => 89.8429406
+            'name'        => 'Faridpur',
+            'bn_name'     => 'ফরিদপুর',
+            'lat'         => 23.6070822,
+            'lng'         => 89.8429406,
         ]);
 
-        $this->thana = factory(Thana::class)->create([
+        $this->thana = Thana::factory()->create([
             'district_id' => 2,
             'location_id' => 2,
-            'name' => 'Faridpur Sadar',
-            'bn_name' => 'ফরিদপুর সদর',
-            'lat' => 23.6203524,
-            'lng' => 89.8130356
+            'name'        => 'Faridpur Sadar',
+            'bn_name'     => 'ফরিদপুর সদর',
+            'lat'         => 23.6203524,
+            'lng'         => 89.8130356,
         ]);
 
         //act
@@ -206,7 +203,6 @@ class sProOrderCreateThanaTest extends FeatureTestCase
         $this->assertEquals(2, $data["thanas"][1]["district"]["id"]);
         $this->assertEquals('Faridpur', $data["thanas"][1]["district"]["name"]);
         $this->assertEquals('ফরিদপুর', $data["thanas"][1]["district"]["bn_name"]);
-
     }
 
     public function testSProThanaAPIForInvalidURL()
@@ -222,5 +218,4 @@ class sProOrderCreateThanaTest extends FeatureTestCase
         //assert
         $this->assertEquals('404 Not Found', $data["message"]);
     }
-
 }

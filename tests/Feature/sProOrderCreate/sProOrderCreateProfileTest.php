@@ -1,4 +1,6 @@
-<?php namespace Tests\Feature\sProOrderCreate;
+<?php
+
+namespace Tests\Feature\sProOrderCreate;
 
 use Tests\Feature\FeatureTestCase;
 
@@ -11,11 +13,10 @@ class sProOrderCreateProfileTest extends FeatureTestCase
 
         $this->logIn();
 
-        $this->profile -> update([
-            'name' => 'Kazi Fahd Zakwan',
-            'mobile' =>'+8801835559988',
+        $this->profile->update([
+            'name'   => 'Kazi Fahd Zakwan',
+            'mobile' => '+8801835559988',
         ]);
-
     }
 
     public function testSProProfileAPIWithValidPhoneNumber()
@@ -24,7 +25,7 @@ class sProOrderCreateProfileTest extends FeatureTestCase
 
         //act
         $response = $this->get('/v1/profiles?mobile=+8801835559988', [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
 
         $data = $response->decodeResponseJson();
@@ -41,7 +42,7 @@ class sProOrderCreateProfileTest extends FeatureTestCase
 
         //act
         $response = $this->get('/v1/profiles?mobile=abcdefghijk', [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
 
         $data = $response->decodeResponseJson();
@@ -57,7 +58,7 @@ class sProOrderCreateProfileTest extends FeatureTestCase
 
         //act
         $response = $this->get('/v1/profiles?mobile=!@#$%^&*()!', [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
 
         $data = $response->decodeResponseJson();
@@ -73,7 +74,7 @@ class sProOrderCreateProfileTest extends FeatureTestCase
 
         //act
         $response = $this->get('/v1/profiles?mobile=01835559988', [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
 
         $data = $response->decodeResponseJson();
@@ -90,7 +91,7 @@ class sProOrderCreateProfileTest extends FeatureTestCase
 
         //act
         $response = $this->get('/v1/profiles?mobile=0183555998', [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
 
         $data = $response->decodeResponseJson();
@@ -106,7 +107,7 @@ class sProOrderCreateProfileTest extends FeatureTestCase
 
         //act
         $response = $this->get('/v1/profiles?mobile=+880183555998', [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
 
         $data = $response->decodeResponseJson();
@@ -122,7 +123,7 @@ class sProOrderCreateProfileTest extends FeatureTestCase
 
         //act
         $response = $this->get('/v1/profiles?mobile=+88018355599888', [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
 
         $data = $response->decodeResponseJson();
@@ -138,7 +139,7 @@ class sProOrderCreateProfileTest extends FeatureTestCase
 
         //act
         $response = $this->get('/v1/profiles?mobile=018355599888', [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
 
         $data = $response->decodeResponseJson();
@@ -154,7 +155,7 @@ class sProOrderCreateProfileTest extends FeatureTestCase
 
         //act
         $response = $this->get('/v1/profiles', [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
 
         $data = $response->decodeResponseJson();
@@ -170,7 +171,7 @@ class sProOrderCreateProfileTest extends FeatureTestCase
 
         //act
         $response = $this->get('/v1/profiles?mobile=+8801835559999', [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
 
         $data = $response->decodeResponseJson();
@@ -186,7 +187,7 @@ class sProOrderCreateProfileTest extends FeatureTestCase
 
         //act
         $response = $this->get('/v1/profiles?mobile=01835559999', [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
 
         $data = $response->decodeResponseJson();
@@ -195,5 +196,4 @@ class sProOrderCreateProfileTest extends FeatureTestCase
         $this->assertEquals(404, $data["code"]);
         $this->assertEquals('Profile Not Found', $data["message"]);
     }
-
 }

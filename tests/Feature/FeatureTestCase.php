@@ -22,7 +22,9 @@ use App\Models\TopUpVendor;
 use App\Sheba\InventoryService\InventoryServerClient;
 use App\Sheba\PosOrderService\PosOrderServerClient;
 use Carbon\Carbon;
+use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Illuminate\Support\Facades\Schema;
 use Sheba\Dal\AuthorizationRequest\AuthorizationRequest;
 use Sheba\Dal\AuthorizationToken\AuthorizationToken;
@@ -133,17 +135,13 @@ class FeatureTestCase extends TestCase
      */
     public function runDatabaseMigrations()
     {
-        // \Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
-        // $this->artisan('migrate');
-        // $this->beforeApplicationDestroyed(function () {
-        //     \Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
-        // });
+        $this->beforeApplicationDestroyed(function () {
+            foreach ($this->app->make('db')->getConnections() as $connection) {
+                $connection->disconnect();
+            }
 
-//        $this->beforeApplicationDestroyed(function () {
-//            foreach ($this->app->make('db')->getConnections() as $connection) {
-//                $connection->disconnect();
-//            }
-//        });
+            RefreshDatabaseState::$migrated = false;
+        });
     }
 
     protected function logIn()
@@ -197,11 +195,9 @@ class FeatureTestCase extends TestCase
         $this->member = Member::factory()->for($this->profile)->create();
         $this->business = Business::factory()->create();
         $this->partner_resource = PartnerResource::factory()->create(
-            ['resource_id' => $this->resource->id, 'partner_id' => $this->partner->id, 'resource_type' => "Admin"]
-        );
+            ['resource_id' => $this->resource->id, 'partner_id' => $this->partner->id, 'resource_type' => "Admin"]);
         $this->business_member = BusinessMember::factory()->create(
-            ['business_id' => $this->business->id, 'member_id' => $this->member->id]
-        );
+            ['business_id' => $this->business->id, 'member_id' => $this->member->id]);
     }
 
     protected function generateToken(): string
@@ -253,8 +249,7 @@ class FeatureTestCase extends TestCase
     {
         $authorization_request = AuthorizationRequest::factory()->for($this->profile)->create();
         AuthorizationToken::factory()->create(
-            ['authorization_request_id' => $authorization_request->id, 'token' => $this->token]
-        );
+            ['authorization_request_id' => $authorization_request->id, 'token' => $this->token]);
     }
 
     protected function mxOrderCreate()
@@ -274,8 +269,7 @@ class FeatureTestCase extends TestCase
         $master_category = Category::factory()->create();
 
         $this->secondaryCategory = Category::factory()->create(
-            ['parent_id' => $master_category->id, 'publication_status' => 1]
-        );
+            ['parent_id' => $master_category->id, 'publication_status' => 1]);
         $this->secondaryCategory->locations()->attach($this->location->id);
         $service = Service::factory()->create([
             'category_id'        => $this->secondaryCategory->id,
@@ -284,8 +278,7 @@ class FeatureTestCase extends TestCase
             'publication_status' => 1,
         ]);
         $this->customer_delivery_address = CustomerDeliveryAddress::factory()->create(
-            ['customer_id' => $this->customer->id]
-        );
+            ['customer_id' => $this->customer->id]);
         $this->order = Order::factory()->create([
             'customer_id'      => $this->customer->id,
             'partner_id'       => $this->partner->id,

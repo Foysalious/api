@@ -1,10 +1,15 @@
-<?php namespace App\Models;
+<?php
 
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 
 class PosCategory extends Model
 {
+    use HasFactory;
+    
     protected $guarded = ['id'];
 
     public function parent()
@@ -44,13 +49,16 @@ class PosCategory extends Model
 
     public function partnerPosCategory()
     {
-       return $this->hasMany(PartnerPosCategory::class,'category_id');
+        return $this->hasMany(PartnerPosCategory::class, 'category_id');
     }
 
     public function scopeMasterCategoryByPartner($q, $partner_id)
     {
-        return $q->leftJoin('partner_pos_categories', 'pos_categories.id', '=', 'partner_pos_categories.category_id')
-            ->where('partner_pos_categories.partner_id',$partner_id)
-            ->whereNull('pos_categories.parent_id');
+        return $q->leftJoin(
+            'partner_pos_categories',
+            'pos_categories.id',
+            '=',
+            'partner_pos_categories.category_id'
+        )->where('partner_pos_categories.partner_id', $partner_id)->whereNull('pos_categories.parent_id');
     }
 }
