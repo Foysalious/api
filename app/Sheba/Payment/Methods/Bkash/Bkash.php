@@ -74,19 +74,24 @@ class Bkash extends PaymentMethod
             $payment_details->amount     = $payable->amount;
             $payment_details->save();
         });
-        if (false && $payment->payable->user->getAgreementId()) {
-            /** @var TokenizedPayment $tokenized_payment */
-            $tokenized_payment               = (new ShebaBkash())->setModule('tokenized')->getModuleMethod('payment');
-            $data                            = $tokenized_payment->create($payment);
-            $payment->gateway_transaction_id = $data->paymentID;
-            $payment->redirect_url           = $data->bkashURL;
-        } else {
-            $data                            = $this->create($payment);
-            $payment->gateway_transaction_id = $data->paymentID;
-            $payment->redirect_url           = config('sheba.front_url') . '/bkash?paymentID=' . $data->paymentID;
+        try {
+            if (false && $payment->payable->user->getAgreementId()) {
+                /** @var TokenizedPayment $tokenized_payment */
+                $tokenized_payment               = (new ShebaBkash())->setModule('tokenized')->getModuleMethod('payment');
+                $data                            = $tokenized_payment->create($payment);
+                $payment->gateway_transaction_id = $data->paymentID;
+                $payment->redirect_url           = $data->bkashURL;
+            } else {
+                $data                            = $this->create($payment);
+                $payment->gateway_transaction_id = $data->paymentID;
+                $payment->redirect_url           = config('sheba.front_url') . '/bkash?paymentID=' . $data->paymentID;
+            }
+            $payment->transaction_details = json_encode($data);
+            $payment->update();
+        } catch (\Throwable $e) {
+            $this->statusChanger->setPayment($payment)->changeToInitiationFailed($e->getMessage());
         }
-        $payment->transaction_details = json_encode($data);
-        $payment->update();
+
         return $payment;
     }
 
