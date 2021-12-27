@@ -2,12 +2,12 @@
 
 class BkashAuth
 {
-    private $appKey;
-    private $appSecret;
-    private $username;
-    private $password;
-    private $url;
-    private $merchantNumber;
+    protected $appKey;
+    protected $appSecret;
+    protected $username;
+    protected $password;
+    protected $url;
+    protected $merchantNumber;
 
     public function setKey($key)
     {
