@@ -138,12 +138,11 @@ class TopUpController extends Controller
         elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
         elseif ($user == 'partner') {
             $agent = $auth_user->getPartner();
-            $status = (new ComplianceInfo())->setPartner($agent)->getComplianceStatus();
-            if ($status === Statics::REJECTED) {
-                return api_response($request, null, 412, ["message" => "Precondition Failed", "error_message" => Statics::complianceRejectedMessage()]);
+            try {
+                $this->tokenManager->setPartner($agent)->validate($request->topup_token);
+            } catch (InvalidTopUpTokenException $e) {
+                // logError($e);
             }
-            
-            $this->tokenManager->setPartner($agent)->validate($request->topup_token);
         } else return api_response($request, null, 400);
 
         $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setPurpose(Purpose::TOPUP)->setRequest($request)->verify();

@@ -24,5 +24,9 @@ return [
     [
         'key' => 'user_migration',
         'function' => 'lastUpdatedUserMigration'
+    ],
+    [
+        'key' => 'pgw_store_configuration',
+        'function' => 'lastUpdatedPGWStore'
     ]
 ];
