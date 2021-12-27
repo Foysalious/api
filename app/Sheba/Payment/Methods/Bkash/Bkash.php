@@ -15,6 +15,7 @@ use Sheba\Bkash\Modules\Tokenized\TokenizedPayment;
 use Sheba\Bkash\ShebaBkash;
 use Sheba\ModificationFields;
 use Sheba\Payment\Methods\Bkash\Response\ExecuteResponse;
+use Sheba\Payment\Methods\Bkash\Stores\BkashStore;
 use Sheba\Payment\Methods\PaymentMethod;
 use Sheba\Payment\Methods\Response\PaymentMethodResponse;
 use Sheba\Payment\Methods\Response\PaymentMethodSuccessResponse;
@@ -36,6 +37,8 @@ class Bkash extends PaymentMethod
     private $merchantNumber;
     /** @var Registrar $registrar */
     private $registrar;
+    /** @var BkashStore */
+    private $store;
 
     public function __construct(Registrar $registrar)
     {
@@ -57,6 +60,7 @@ class Bkash extends PaymentMethod
         DB::transaction(function () use ($payment, $payable, $invoice) {
             $payment->payable_id             = $payable->id;
             $payment->transaction_id         = $invoice;
+            $payment->gateway_account_name   = $this->store->getName();
             $payment->gateway_transaction_id = $invoice;
             $payment->status                 = 'initiated';
             $payment->valid_till             = $this->getValidTill();
@@ -112,7 +116,8 @@ class Bkash extends PaymentMethod
      */
     private function setStore(Payable $payable)
     {
-        $bkash_auth = BkashAuthBuilder::getStore($payable)->getAuth();
+        $this->store = BkashAuthBuilder::getStore($payable);
+        $bkash_auth  = $this->store->getAuth();
         $this->setCredFromAuth($bkash_auth);
     }
 

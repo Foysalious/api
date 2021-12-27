@@ -13,8 +13,8 @@ class BkashDynamicAuth extends BkashAuth implements Arrayable
 {
 
 
-    public $configuration;
-
+    public    $configuration;
+    protected $url = "https://checkout.sandbox.bka.sh/v1.2.0-beta";
     /**
      * @param mixed $store
      * @return BkashDynamicAuth
@@ -43,7 +43,7 @@ class BkashDynamicAuth extends BkashAuth implements Arrayable
     {
 
         foreach ($this->configuration as $key => $value) {
-            if (isset($this->$key)) {
+            if (!empty($value)) {
                 $this->$key = $value;
             }
         }
