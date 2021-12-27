@@ -55,6 +55,7 @@ class Cars
                 'discounted_price' => $discounted_price,
                 'original_price' => $original_price,
                 'discount' => $this->discount_calculation->getDiscount(),
+                'calculated_discount_amount' => $this->discount_calculation->getCalculatedDiscount(),
                 'quantity' => $this->service->getQuantity(),
                 'is_surcharge_applied' => !!($surcharge) ? 1 : 0,
                 'surcharge_percentage' => $surcharge ? $surcharge->amount : null,
