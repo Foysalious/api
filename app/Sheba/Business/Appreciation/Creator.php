@@ -59,6 +59,6 @@ class Creator
 
     private function sendPushToAppreciationReceiver(Appreciation $appreciation)
     {
-        (new AppreciationPushNotification($appreciation))->handle();
+        dispatch(new AppreciationPushNotification($appreciation));
     }
 }

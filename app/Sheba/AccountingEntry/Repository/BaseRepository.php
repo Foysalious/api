@@ -1,7 +1,6 @@
 <?php namespace App\Sheba\AccountingEntry\Repository;
 
 use App\Models\Partner;
-use App\Models\PosOrderPayment;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
 use Sheba\AccountingEntry\Repository\UserMigrationRepository;
@@ -10,7 +9,7 @@ use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
 use Sheba\Pos\Customer\PosCustomerResolver;
-use Sheba\Pos\Payment\Creator as PaymentCreator;
+use Sheba\Pos\Repositories\PosOrderPaymentRepository;
 
 class BaseRepository
 {
@@ -60,8 +59,11 @@ class BaseRepository
 
     public function uploadAttachments($request)
     {
-        $attachments = [];
-//        todo: have to refactor the attachment
+        $attachments = $this->uploadFiles($request);
+        return json_encode($attachments);
+    }
+    private function uploadFiles($request){
+        $attachments=[];
         if (isset($request->attachments) && $request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $key => $file) {
                 if (!empty($file)) {
@@ -70,6 +72,19 @@ class BaseRepository
                 }
             }
         }
+        return $attachments;
+    }
+    protected function updateAttachments($request){
+        $attachments=$this->uploadFiles($request);
+        $old_attachments = $request->old_attachments ?: [];
+        if ($request->has('attachment_should_remove') && (!empty($request->attachment_should_remove))) {
+            foreach ($request->attachment_should_remove as $item){
+                $this->deleteFile($item);
+            }
+            $old_attachments = array_diff($old_attachments, $request->attachment_should_remove);
+        }
+
+        $attachments = array_filter(array_merge($attachments, $old_attachments));
         return json_encode($attachments);
     }
 
@@ -82,22 +97,17 @@ class BaseRepository
     //TODO: should remove in next release (after pos rebuild)
     public function createPosOrderPayment($amount_cleared, $pos_order_id, $payment_method)
     {
-        $payment_data['pos_order_id'] = $pos_order_id;
-        $payment_data['amount']       = $amount_cleared;
-        $payment_data['method']       = $payment_method;
-        /** @var PaymentCreator $paymentCreator */
-        $paymentCreator = app(PaymentCreator::class);
-        $paymentCreator->credit($payment_data);
+        /** @var PosOrderPaymentRepository $posOrderPaymentRepository */
+        $posOrderPaymentRepository = app(PosOrderPaymentRepository::class);
+        $method_details = ['payment_method_en' => 'Cash', 'payment_method_bn' => ' নগদ গ্রহন', 'payment_method_icon' => config('s3.url') . 'pos/payment/cash_v2.png'];
+        $posOrderPaymentRepository->setMethodDetails($method_details)->createPosOrderPayment($amount_cleared, $pos_order_id, $payment_method);
     }
 
-    public function removePosOrderPayment($pos_order_id, $amount)
+    public function removePosOrderPayment($amount_cleared, $pos_order_id, $payment_method)
     {
-        $payment = PosOrderPayment::where('pos_order_id', $pos_order_id)
-            ->where('amount', $amount)
-            ->where('transaction_type', 'Credit')
-            ->first();
-
-        return $payment ? $payment->delete() : false;
+        /** @var PosOrderPaymentRepository $posOrderPaymentRepository */
+        $posOrderPaymentRepository = app(PosOrderPaymentRepository::class);
+        $posOrderPaymentRepository->removePosOrderPayment($pos_order_id, $amount_cleared);
     }
 
     /**

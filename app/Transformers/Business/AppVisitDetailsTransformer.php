@@ -125,7 +125,7 @@ class AppVisitDetailsTransformer extends TransformerAbstract
                 'time' => $visit_status_change_log->created_at->format('h:i A'),
                 'status' => $this->statusFormat($visit_status_change_log->new_status),
                 'color_code' => $this->getColorCode($visit_status_change_log->new_status),
-                'location' => json_decode($visit_status_change_log->new_location)
+                'location' => $visit_status_change_log->new_location
             ];
         }
         return $status_change_logs ?: null;
