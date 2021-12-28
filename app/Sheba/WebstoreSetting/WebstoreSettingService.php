@@ -17,6 +17,10 @@ class WebstoreSettingService
     private $instagram;
     private $youtube;
     private $email;
+    private $title;
+    private $description;
+    private $isPublish;
+    private $image;
 
     public function __construct(WebstoreSettingServerClient $client)
     {
@@ -70,6 +74,31 @@ class WebstoreSettingService
         $this->email = $email;
         return $this;
     }
+
+    public function setTitle($title)
+    {
+        $this->title = $title;
+        return $this;
+    }
+
+    public function setDescription($description)
+    {
+        $this->description = $description;
+        return $this;
+    }
+
+    public function setIsPublish($isPublish)
+    {
+        $this->isPublish = $isPublish;
+        return $this;
+    }
+
+    public function setImage($image)
+    {
+        $this->image = $image;
+        return $this;
+    }
+
 
     public function getallSettings($partner)
     {
@@ -155,5 +184,50 @@ class WebstoreSettingService
     {
         $data = $this->makeStoreData();
         return $this->client->post('api/v1/partners/' . $this->partner . '/theme-settings/sync', $data);
+    }
+
+    public function getBannerSettings($partner)
+    {
+        $url = 'api/v1/partners/' . $partner . '/banners';
+        return $this->client->get($url);
+    }
+
+    public function getBanner($partner, $banner)
+    {
+        $url = 'api/v1/partners/' . $partner . '/banners/' . $banner;
+        return $this->client->get($url);
+    }
+
+    public function makeBannerStoreData()
+    {
+        $data = [];
+        $data['partner_id'] = $this->partner;
+        $data['title'] = $this->title;
+        $data['description'] = $this->description;
+        $data['is_published'] = $this->isPublish;
+        $data['image_link'] = $this->image;
+        return $data;
+    }
+
+    public function storeBanner()
+    {
+        $data = $this->makeBannerStoreData();
+        return $this->client->post('api/v1/partners/' . $this->partner . '/banner-settings', $data);
+    }
+
+    public function makeBannerUpdateData()
+    {
+        $data = [];
+        if (isset($this->title)) $data['title'] = $this->title;
+        if (isset($this->description)) $data['description'] = $this->description;
+        if (isset($this->isPublish)) $data['is_published'] = $this->isPublish;
+        if (isset($this->image)) $data['image_link'] = $this->image;
+        return $data;
+    }
+
+    public function updateBanner($banner)
+    {
+        $data = $this->makeBannerUpdateData();
+        return $this->client->put('api/v1/partners/' . $this->partner . '/banners/' . $banner, $data);
     }
 }
