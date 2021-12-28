@@ -52,6 +52,6 @@ class AnnouncementController extends Controller
             });
         }
 
-        return api_response($request, $announcements, 200, ['announcements' => $announcements]);
+        return api_response($request, $announcements, 200, ['announcements' => $announcements->values()]);
     }
 }
