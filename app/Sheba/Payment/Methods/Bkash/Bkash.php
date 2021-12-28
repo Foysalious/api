@@ -187,7 +187,6 @@ class Bkash extends PaymentMethod
     /**
      * @param Payment $payment
      * @return Payment|mixed
-     * @throws GuzzleException
      * @throws Exception
      */
     public function validate(Payment $payment): Payment
@@ -207,11 +206,11 @@ class Bkash extends PaymentMethod
         if ($execute_response->hasSuccess()) {
             $success = $execute_response->getSuccess();
             try {
-                $this->registrar->setAmount($payment->payable->amount)
-                    ->setDetails(json_encode($success->details))
-                    ->setTime(Carbon::now()->format('Y-m-d H:i:s'))
-                    ->setIsValidated(1)
-                    ->register($payment->payable->user, 'bkash', $success->id, $this->merchantNumber);
+//                $this->registrar->setAmount($payment->payable->amount)
+//                    ->setDetails(json_encode($success->details))
+//                    ->setTime(Carbon::now()->format('Y-m-d H:i:s'))
+//                    ->setIsValidated(1)
+//                    ->register($payment->payable->user, 'bkash', $success->id, $this->merchantNumber);
                 $status              = Statuses::VALIDATED;
                 $transaction_details = json_encode($success->details);
             } catch (InvalidTransaction $e) {
