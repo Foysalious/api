@@ -45,7 +45,7 @@ class CustomerOrderController extends Controller
                 } else {
                     $q->whereNull('orders.partner_id');
                 }
-                if ($filter) {
+                if ($filter === 'history') {
                     $q->leftjoin('partner_orders as p1', 'p1.order_id', '=', 'orders.id')
                         ->leftjoin('partner_orders as p2', function($join) {
                             $join->on('p2.order_id', '=', 'orders.id');
@@ -54,6 +54,10 @@ class CustomerOrderController extends Controller
                             $q->where([['p1.closed_and_paid_at', '<>', null], ['p1.cancelled_at', null]])
                                 ->orWhere('p1.cancelled_at', '<>', null);
                         });
+                } elseif ($filter) {
+                    $q->whereHas('partnerOrders', function ($q) use ($filter) {
+                        $q->$filter();
+                    });
                 }
 
                 $q->with(['partnerOrders' => function ($q) use ($filter, $status) {
