@@ -19,23 +19,17 @@ class StatusUpdatedListener
     public function handle(StatusUpdated $event)
     {
         if ($event->getModuleName() == Modules::EXPENSE) {
-            if ($event->getStatus() == UserStatus::UPGRADED) {
-                /** @var UserMigrationRepo $userMigrationRepo */
-                $userMigrationRepo = app(UserMigrationRepo::class);
-                $userPosMigration = $userMigrationRepo->builder()->where('user_id', $event->getUserId())
-                    ->where('module_name', Modules::POS)->first();
-                if ($userPosMigration && $userPosMigration->status == UserStatus::UPGRADING) {
+            /** @var UserMigrationRepo $userMigrationRepo */
+            $userMigrationRepo = app(UserMigrationRepo::class);
+            $userPosMigration = $userMigrationRepo->builder()->where('user_id', $event->getUserId())
+                ->where('module_name', Modules::POS)->first();
+            if ($userPosMigration && $userPosMigration->status == UserStatus::UPGRADING) {
+                if ($event->getStatus() == UserStatus::UPGRADED) {
                     /** @var DataMigration $posDataMigration */
                     $posDataMigration = app(DataMigration::class);
                     $partner = Partner::find($event->getUserId());
                     $posDataMigration->setPartner($partner)->migrate();
-                }
-            } elseif ($event->getStatus() == UserStatus::FAILED) {
-                /** @var UserMigrationRepo $userMigrationRepo */
-                $userMigrationRepo = app(UserMigrationRepo::class);
-                $userPosMigration = $userMigrationRepo->builder()->where('user_id', $event->getUserId())
-                    ->where('module_name', Modules::POS)->first();
-                if ($userPosMigration && $userPosMigration->status == UserStatus::UPGRADING) {
+                } elseif ($event->getStatus() == UserStatus::FAILED) {
                     /** @var UserMigrationService $userMigrationSvc */
                     $userMigrationSvc = app(UserMigrationService::class);
                     /** @var UserMigrationRepository $class */
