@@ -15,6 +15,7 @@ use Sheba\Bkash\Modules\Tokenized\TokenizedPayment;
 use Sheba\Bkash\ShebaBkash;
 use Sheba\ModificationFields;
 use Sheba\Payment\Methods\Bkash\Response\ExecuteResponse;
+use Sheba\Payment\Methods\Bkash\Stores\BkashStore;
 use Sheba\Payment\Methods\PaymentMethod;
 use Sheba\Payment\Methods\Response\PaymentMethodResponse;
 use Sheba\Payment\Methods\Response\PaymentMethodSuccessResponse;
@@ -36,6 +37,8 @@ class Bkash extends PaymentMethod
     private $merchantNumber;
     /** @var Registrar $registrar */
     private $registrar;
+    /** @var BkashStore */
+    private $store;
 
     public function __construct(Registrar $registrar)
     {
@@ -57,6 +60,7 @@ class Bkash extends PaymentMethod
         DB::transaction(function () use ($payment, $payable, $invoice) {
             $payment->payable_id             = $payable->id;
             $payment->transaction_id         = $invoice;
+            $payment->gateway_account_name   = $this->store->getName();
             $payment->gateway_transaction_id = $invoice;
             $payment->status                 = 'initiated';
             $payment->valid_till             = $this->getValidTill();
@@ -70,19 +74,24 @@ class Bkash extends PaymentMethod
             $payment_details->amount     = $payable->amount;
             $payment_details->save();
         });
-        if (false && $payment->payable->user->getAgreementId()) {
-            /** @var TokenizedPayment $tokenized_payment */
-            $tokenized_payment               = (new ShebaBkash())->setModule('tokenized')->getModuleMethod('payment');
-            $data                            = $tokenized_payment->create($payment);
-            $payment->gateway_transaction_id = $data->paymentID;
-            $payment->redirect_url           = $data->bkashURL;
-        } else {
-            $data                            = $this->create($payment);
-            $payment->gateway_transaction_id = $data->paymentID;
-            $payment->redirect_url           = config('sheba.front_url') . '/bkash?paymentID=' . $data->paymentID;
+        try {
+            if (false && $payment->payable->user->getAgreementId()) {
+                /** @var TokenizedPayment $tokenized_payment */
+                $tokenized_payment               = (new ShebaBkash())->setModule('tokenized')->getModuleMethod('payment');
+                $data                            = $tokenized_payment->create($payment);
+                $payment->gateway_transaction_id = $data->paymentID;
+                $payment->redirect_url           = $data->bkashURL;
+            } else {
+                $data                            = $this->create($payment);
+                $payment->gateway_transaction_id = $data->paymentID;
+                $payment->redirect_url           = config('sheba.front_url') . '/bkash?paymentID=' . $data->paymentID;
+            }
+            $payment->transaction_details = json_encode($data);
+            $payment->update();
+        } catch (\Throwable $e) {
+            $this->statusChanger->setPayment($payment)->changeToInitiationFailed($e->getMessage());
         }
-        $payment->transaction_details = json_encode($data);
-        $payment->update();
+
         return $payment;
     }
 
@@ -112,7 +121,8 @@ class Bkash extends PaymentMethod
      */
     private function setStore(Payable $payable)
     {
-        $bkash_auth = BkashAuthBuilder::getStore($payable)->getAuth();
+        $this->store = BkashAuthBuilder::getStore($payable);
+        $bkash_auth  = $this->store->getAuth();
         $this->setCredFromAuth($bkash_auth);
     }
 

@@ -91,4 +91,38 @@ class WebstoreSettingController extends Controller
         return api_response($request, null, 200, ['message' => 'Successful', 'data' => $systemDefinedSettings]);
     }
 
+    public function getBannerSettings(Request $request)
+    {
+        $partner = $request->auth_user->getPartner();
+        $bannerSettings = $this->webstoreSettingService->getBannerSettings($partner->id);
+        return api_response($request, null, 200, ['message' => 'Successful', 'data' => $bannerSettings]);
+    }
+
+    public function getBanner(Request $request, $banner)
+    {
+        $partner = $request->auth_user->getPartner();
+        $bannerSettings = $this->webstoreSettingService->getBanner($partner->id, $banner);
+        return api_response($request, null, 200, ['message' => 'Successful', 'data' => $bannerSettings]);
+    }
+
+    public function storeBanner(Request $request)
+    {
+        $partner = $request->auth_user->getPartner();
+        if ($request->input('image')) {
+            $image = base64_encode(file_get_contents($request->file('image')->path()));
+        }
+        $this->webstoreSettingService->setPartner($partner->id)->setTitle($request->title)->setDescription($request->description)->setIsPublish($request->is_published)->setImage($image)->storeBanner();
+        return api_response($request, null, 200, ['message' => 'Successful']);
+    }
+
+    public function updateBanner(Request $request, $banner)
+    {
+        $partner = $request->auth_user->getPartner();
+        if ($request->input('image')) {
+            $image = base64_encode(file_get_contents($request->file('image')->path()));
+        }
+        $this->webstoreSettingService->setPartner($partner->id)->setTitle($request->title)->setDescription($request->description)->setIsPublish($request->is_published)->setImage($image ?? null)->updateBanner($banner);
+        return api_response($request, null, 200, ['message' => 'Successful']);
+    }
+
 }
