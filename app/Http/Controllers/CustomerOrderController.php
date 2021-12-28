@@ -34,21 +34,26 @@ class CustomerOrderController extends Controller
             $search = $request->search;
             list($offset, $limit) = calculatePagination($request);
             $customer = $request->customer->load(['orders' => function ($q) use ($filter, $offset, $limit, $for, $status, $search) {
-                $q->select('id', 'customer_id', 'partner_id', 'location_id', 'sales_channel', 'delivery_name', 'delivery_mobile', 'delivery_address', 'subscription_order_id')->orderBy('id', 'desc');
+                $q->select('orders.id', 'customer_id', 'orders.partner_id', 'location_id', 'sales_channel', 'delivery_name', 'delivery_mobile', 'delivery_address', 'subscription_order_id')->orderBy('id', 'desc');
                 if (!$search && !$status) {
                     $q->skip($offset)->take($limit);
                 }
                 if ($for == 'eshop') {
-                    $q->whereNotNull('partner_id');
+                    $q->whereNotNull('orders.partner_id');
                 } else if ($for == "business") {
-                    $q->whereNotNull('business_id');
+                    $q->whereNotNull('orders.business_id');
                 } else {
-                    $q->whereNull('partner_id');
+                    $q->whereNull('orders.partner_id');
                 }
                 if ($filter) {
-                    $q->whereHas('partnerOrders', function ($q) use ($filter) {
-                        $q->$filter();
-                    });
+                    $q->leftjoin('partner_orders as p1', 'p1.order_id', '=', 'orders.id')
+                        ->leftjoin('partner_orders as p2', function($join) {
+                            $join->on('p2.order_id', '=', 'orders.id');
+                            $join->on('p2.id', '>', 'p1.id');
+                        })->where('p2.id', null)->where(function($q){
+                            $q->where([['p1.closed_and_paid_at', '<>', null], ['p1.cancelled_at', null]])
+                                ->orWhere('p1.cancelled_at', '<>', null);
+                        });
                 }
 
                 $q->with(['partnerOrders' => function ($q) use ($filter, $status) {
