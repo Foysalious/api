@@ -31,11 +31,17 @@ class StatusUpdatedListener
                     $posDataMigration->setPartner($partner)->migrate();
                 }
             } elseif ($event->getStatus() == UserStatus::FAILED) {
-                /** @var UserMigrationService $userMigrationSvc */
-                $userMigrationSvc = app(UserMigrationService::class);
-                /** @var UserMigrationRepository $class */
-                $class = $userMigrationSvc->resolveClass(Modules::POS);
-                $class->setUserId($event->getUserId())->setModuleName(Modules::POS)->updateStatus(UserStatus::FAILED);
+                /** @var UserMigrationRepo $userMigrationRepo */
+                $userMigrationRepo = app(UserMigrationRepo::class);
+                $userPosMigration = $userMigrationRepo->builder()->where('user_id', $event->getUserId())
+                    ->where('module_name', Modules::POS)->first();
+                if ($userPosMigration && $userPosMigration->status == UserStatus::UPGRADING) {
+                    /** @var UserMigrationService $userMigrationSvc */
+                    $userMigrationSvc = app(UserMigrationService::class);
+                    /** @var UserMigrationRepository $class */
+                    $class = $userMigrationSvc->resolveClass(Modules::POS);
+                    $class->setUserId($event->getUserId())->setModuleName(Modules::POS)->updateStatus(UserStatus::FAILED);
+                }
             }
         }
     }
