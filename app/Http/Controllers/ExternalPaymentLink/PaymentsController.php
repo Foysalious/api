@@ -83,7 +83,6 @@ class PaymentsController extends Controller
     }
 
     /**
-     * @param Request $request
      * @param $partner_id
      * @param ExternalPayments $payments
      * @return JsonResponse
@@ -92,7 +91,7 @@ class PaymentsController extends Controller
     {
         try {
             $partner = Partner::find($partner_id);
-            $data = $payments->getPaymentStatus($partner);
+            $data = $payments->getPaymentGatewayStatus($partner);
             return response()->json($data);
         }  catch (\Throwable $e) {
             logError($e);

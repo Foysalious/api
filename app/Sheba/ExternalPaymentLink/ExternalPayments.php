@@ -274,7 +274,7 @@ class ExternalPayments
      * @param $partner
      * @return array
      */
-    public function getPaymentStatus($partner): array
+    public function getPaymentGatewayStatus($partner): array
     {
         $regular_payment_link = $this->getPaymentLinkStatus($partner);
         $emi_payment_link = $this->getPaymentLinkStatus($partner, 1);
