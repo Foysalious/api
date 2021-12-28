@@ -1,10 +1,6 @@
 <?php namespace App\Sheba\AccountingEntry\Repository;
 
 use App\Models\Partner;
-use App\Models\PartnerPosCustomer;
-use App\Models\PosCustomer;
-use App\Models\PosOrder;
-use App\Models\PosOrderPayment;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
 use Sheba\AccountingEntry\Repository\UserMigrationRepository;
@@ -12,7 +8,8 @@ use Sheba\Dal\UserMigration\UserStatus;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
-use Sheba\Pos\Payment\Creator as PaymentCreator;
+use Sheba\Pos\Customer\PosCustomerResolver;
+use Sheba\Pos\Repositories\PosOrderPaymentRepository;
 
 class BaseRepository
 {
@@ -35,22 +32,26 @@ class BaseRepository
     /**
      * @param $request
      * @return mixed
-     * @throws AccountingEntryServerError
+     * @throws AccountingEntryServerError|\Exception
      */
     public function getCustomer($request)
     {
-        $partner = $this->getPartner($request);
-        $partner_pos_customer = PartnerPosCustomer::byPartner($partner->id)->where('customer_id', $request->customer_id)->with(['customer'])->first();
-        if ( isset($request->customer_id) && empty($partner_pos_customer)){
-            $customer = PosCustomer::find($request->customer_id);
-            if(!$customer) throw new AccountingEntryServerError('pos customer not available', 404);
-            $partner_pos_customer = PartnerPosCustomer::create(['partner_id' => $partner->id, 'customer_id' => $request->customer_id]);
+        if (!isset($request->customer_id) || $request->customer_id == null) {
+            return $request;
         }
+        if (isset($request->customer_name) && isset($request->customer_mobile)) {
+            return $request;
+        }
+        $partner = $this->getPartner($request);
+        /** @var PosCustomerResolver $posCustomerResolver */
+        $posCustomerResolver = app(PosCustomerResolver::class);
+        $partner_pos_customer = $posCustomerResolver->setCustomerId($request->customer_id)->setPartner($partner)->get();
+
         if ($partner_pos_customer) {
-            $request->customer_id = $partner_pos_customer->customer_id;
-            $request->customer_name = $partner_pos_customer->details()["name"];
-            $request->customer_mobile = $partner_pos_customer->details()["phone"];
-            $request->customer_pro_pic = $partner_pos_customer->details()["image"];
+            $request->customer_id = $partner_pos_customer->id;
+            $request->customer_name = $partner_pos_customer->name;
+            $request->customer_mobile = $partner_pos_customer->mobile;
+            $request->customer_pro_pic = $partner_pos_customer->pro_pic;
             $request->customer_is_supplier = $partner_pos_customer->is_supplier;
         }
         return $request;
@@ -58,8 +59,11 @@ class BaseRepository
 
     public function uploadAttachments($request)
     {
-        $attachments = [];
-//        todo: have to refactor the attachment
+        $attachments = $this->uploadFiles($request);
+        return json_encode($attachments);
+    }
+    private function uploadFiles($request){
+        $attachments=[];
         if (isset($request->attachments) && $request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $key => $file) {
                 if (!empty($file)) {
@@ -68,6 +72,19 @@ class BaseRepository
                 }
             }
         }
+        return $attachments;
+    }
+    protected function updateAttachments($request){
+        $attachments=$this->uploadFiles($request);
+        $old_attachments = $request->old_attachments ?: [];
+        if ($request->has('attachment_should_remove') && (!empty($request->attachment_should_remove))) {
+            foreach ($request->attachment_should_remove as $item){
+                $this->deleteFile($item);
+            }
+            $old_attachments = array_diff($old_attachments, $request->attachment_should_remove);
+        }
+
+        $attachments = array_filter(array_merge($attachments, $old_attachments));
         return json_encode($attachments);
     }
 
@@ -76,33 +93,21 @@ class BaseRepository
         $partner_id = $request->partner->id ?? (int)$request->partner;
         return Partner::find($partner_id);
     }
-//TODO: should remove in next release (after pos rebuild)
+
+    //TODO: should remove in next release (after pos rebuild)
     public function createPosOrderPayment($amount_cleared, $pos_order_id, $payment_method)
     {
-        /** @var PosOrder $order */
-        $order = PosOrder::find($pos_order_id);
-        if(isset($order)) {
-            $order->calculate();
-            if ($order->getDue() > 0) {
-                $payment_data['pos_order_id'] = $pos_order_id;
-                $payment_data['amount']       = $amount_cleared;
-                $payment_data['method']       = $payment_method;
-                /** @var PaymentCreator $paymentCreator */
-                $paymentCreator = app(PaymentCreator::class);
-                $paymentCreator->credit($payment_data);
-                $order->calculate();
-            }
-        }
+        /** @var PosOrderPaymentRepository $posOrderPaymentRepository */
+        $posOrderPaymentRepository = app(PosOrderPaymentRepository::class);
+        $method_details = ['payment_method_en' => 'Cash', 'payment_method_bn' => ' নগদ গ্রহন', 'payment_method_icon' => config('s3.url') . 'pos/payment/cash_v2.png'];
+        $posOrderPaymentRepository->setMethodDetails($method_details)->createPosOrderPayment($amount_cleared, $pos_order_id, $payment_method);
     }
 
-    public function removePosOrderPayment($pos_order_id, $amount)
+    public function removePosOrderPayment($amount_cleared, $pos_order_id, $payment_method)
     {
-        $payment = PosOrderPayment::where('pos_order_id', $pos_order_id)
-            ->where('amount', $amount)
-            ->where('transaction_type', 'Credit')
-            ->first();
-
-        return $payment ? $payment->delete() : false;
+        /** @var PosOrderPaymentRepository $posOrderPaymentRepository */
+        $posOrderPaymentRepository = app(PosOrderPaymentRepository::class);
+        $posOrderPaymentRepository->removePosOrderPayment($pos_order_id, $amount_cleared);
     }
 
     /**

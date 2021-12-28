@@ -19,26 +19,18 @@ class SalesStatisticsController extends Controller
      */
     public function index(Request $request, PartnerSale $sale, TimeFrame $time_frame)
     {
-        try {
-            $this->validate($request, [
-                'frequency' => 'required|string|in:day,week,month,year',
-                'date'      => 'required_if:frequency,day|date',
-                'week'      => 'required_if:frequency,week|numeric',
-                'month'     => 'required_if:frequency,month|numeric',
-                'year'      => 'required_if:frequency,month,year|numeric',
-            ]);
+        $this->validate($request, [
+            'frequency' => 'required|string|in:day,week,month,year',
+            'date'      => 'required_if:frequency,day|date',
+            'week'      => 'required_if:frequency,week|numeric',
+            'month'     => 'required_if:frequency,month|numeric',
+            'year'      => 'required_if:frequency,month,year|numeric',
+        ]);
 
-            $time_frame = $this->makeTimeFrame($request, $time_frame);
-            $sale = $sale->setParams($request->frequency)->setTimeFrame($time_frame)->setPartner($request->partner)->get();
+        $time_frame = $this->makeTimeFrame($request, $time_frame);
+        $sale = $sale->setParams($request->frequency)->setTimeFrame($time_frame)->setPartner($request->partner)->get();
 
-            return api_response($request, $sale, 200, ['data' => $sale]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        return api_response($request, $sale, 200, ['data' => $sale]);
     }
 
     /**

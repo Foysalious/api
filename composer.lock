@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "490b790081e21552a8967887d678c9a8",
+    "content-hash": "97a9445bf582d18dbfdf4988618df51f",
     "packages": [
         {
             "name": "algolia/algoliasearch-client-php",
@@ -4013,7 +4013,7 @@
             "source": {
                 "type": "git",
                 "url": "https://bitbucket.org/startern/sheba_dal.git",
-                "reference": "f376173e7f6d765fa0a0703337d64e0f3fefcccc"
+                "reference": "da21b95b323d84594e8ed64b4cf52f9c0eacd786"
             },
             "require": {
                 "php": ">=5.4"
@@ -4040,7 +4040,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2021-12-07T06:14:28+00:00"
+            "time": "2021-12-21T09:34:35+00:00"
         },
         {
             "name": "sheba/elasticsearch",
@@ -4156,7 +4156,7 @@
             "source": {
                 "type": "git",
                 "url": "https://bitbucket.org/startern/sheba_sms.git",
-                "reference": "074f6a0534e982ce08a7cb768b3d9decf42c8ca4"
+                "reference": "171514b92d5e12800f6097887584557820f9b790"
             },
             "require": {
                 "ext-curl": "*"
@@ -4177,7 +4177,7 @@
                 }
             ],
             "description": "Sms for Sheba",
-            "time": "2021-06-22T08:18:14+00:00"
+            "time": "2021-12-01T04:35:48+00:00"
         },
         {
             "name": "sheba/voucher",
@@ -7048,7 +7048,6 @@
         "ext-calendar": "*",
         "ext-simplexml": "*",
         "ext-openssl": "^7.0",
-        "ext-mcrypt": "^7.0",
         "ext-redis": "*",
         "ext-mysql_xdevapi": "*",
         "ext-intl": "*"
