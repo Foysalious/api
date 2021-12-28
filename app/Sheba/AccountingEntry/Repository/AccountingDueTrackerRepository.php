@@ -2,6 +2,7 @@
 
 namespace App\Sheba\AccountingEntry\Repository;
 
+use App\Exceptions\Pos\Customer\PosCustomerNotFoundException;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Constants\UserType;
 use App\Sheba\Pos\Order\PosOrderObject;
@@ -34,7 +35,7 @@ class AccountingDueTrackerRepository extends BaseRepository
      * @param $type
      * @param bool $with_update
      * @return mixed
-     * @throws AccountingEntryServerError
+     * @throws AccountingEntryServerError|PosCustomerNotFoundException
      */
     public function storeEntry(Request $request, $type, bool $with_update = false)
     {
@@ -48,7 +49,7 @@ class AccountingDueTrackerRepository extends BaseRepository
         $request->merge(['source_id' =>  $posOrder ? $posOrder->id : null]);
         $data = $this->createEntryData($request, $type, $with_update);
         if (!$request->customer_id) {
-            throw new AccountingEntryServerError('Sorry! Cannot create entry without customer', 404);
+            throw new PosCustomerNotFoundException('Sorry! Cannot create entry without customer', 404);
         }
         $url = $with_update ? "api/entries/" . $request->entry_id : "api/entries/";
         $data = $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
