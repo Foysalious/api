@@ -3,11 +3,14 @@
 namespace Sheba\ResellerPayment\Store;
 
 use Sheba\Dal\PgwStoreAccount\Contract as PgwStoreAccountRepo;
+use Sheba\Payment\Exceptions\InvalidConfigurationException;
 use Sheba\Payment\Methods\Ssl\Stores\DynamicSslStoreConfiguration;
 use Sheba\ResellerPayment\Statics\StoreConfigurationStatic;
 
 class Ssl extends PaymentStore
 {
+    private $conn_data;
+
     public function getConfiguration()
     {
         $data = (new StoreConfigurationStatic())->getStoreConfiguration($this->key);
@@ -28,12 +31,16 @@ class Ssl extends PaymentStore
         return $static_data;
     }
 
+    /**
+     * @return void
+     * @throws InvalidConfigurationException
+     */
     public function postConfiguration()
     {
         $data = $this->makeStoreAccountData();
+        $this->test();
         $pgw_store_repo = app()->make(PgwStoreAccountRepo::class);
         $pgw_store_repo->create($data);
-        dd(123);
     }
 
     private static function staticSslConfigurations(): array
@@ -55,14 +62,25 @@ class Ssl extends PaymentStore
 
     private function makeStoreAccountData(): array
     {
-        $configuration_data = $this->makeAndGetConfigurationData();
+        $this->conn_data = $this->makeAndGetConfigurationData();
         return [
             "pgw_store_id"  => (int)$this->gateway_id,
             "user_id"       => $this->partner->id,
             "user_type"     => get_class($this->partner),
             "name"          => "dynamic_ssl",
-            "configuration" =>  json_encode($configuration_data)
+            "configuration" => json_encode($this->conn_data)
         ];
+    }
+
+    /**
+     * @return void
+     * @throws InvalidConfigurationException
+     */
+    public function test()
+    {
+        /** @var \Sheba\Payment\Methods\Ssl\Ssl $ssl_method */
+        $ssl_method = app()->make(\Sheba\Payment\Methods\Ssl\Ssl::class);
+        $ssl_method->testInit(json_encode($this->conn_data));
     }
 
 }

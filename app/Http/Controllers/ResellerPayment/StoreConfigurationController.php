@@ -5,6 +5,7 @@ namespace App\Http\Controllers\ResellerPayment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Sheba\Payment\Exceptions\InvalidConfigurationException;
 use Sheba\ResellerPayment\StoreConfiguration;
 
 class StoreConfigurationController extends Controller
@@ -33,15 +34,16 @@ class StoreConfigurationController extends Controller
         }
     }
 
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         try {
             $this->validate($request, ["key" => "required"]);
-            $configuration = $this->storeConfiguration->setPartner($request->partner)->setKey($request->key)
+            $this->storeConfiguration->setPartner($request->partner)->setKey($request->key)
                 ->setGatewayId($request->gateway_id)->setRequestData($request->configuration_data)->storeConfiguration();
-            return api_response($request, $configuration, 200, ['data' => $configuration]);
+            return api_response($request, null, 200);
+        } catch (InvalidConfigurationException $e) {
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         } catch (\Throwable $e) {
-            dd($e);
             logError($e);
             return api_response($request, null, 500);
         }

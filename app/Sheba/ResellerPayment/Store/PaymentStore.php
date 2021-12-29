@@ -59,4 +59,6 @@ abstract class PaymentStore
 
     public abstract function postConfiguration();
 
+    public abstract function test();
+
 }
