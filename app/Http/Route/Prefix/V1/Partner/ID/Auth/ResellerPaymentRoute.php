@@ -10,6 +10,7 @@ class ResellerPaymentRoute
                 $api->post('/store-configuration', 'ResellerPayment\\StoreConfigurationController@store');
                 $api->get('/payment-gateways', 'ResellerPayment\\PaymentServiceController@getPaymentGateway');
                 $api->get('/payment-service-charge', 'ResellerPayment\\PaymentServiceController@getPaymentServiceCharge');
+                $api->post('payment-service-charge', 'ResellerPayment\\PaymentServiceController@storePaymentServiceCharge');
             });
         });
     }

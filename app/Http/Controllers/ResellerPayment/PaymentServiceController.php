@@ -4,6 +4,7 @@ namespace App\Http\Controllers\ResellerPayment;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Sheba\Dal\DigitalCollectionSetting\Model as DigitalCollectionSetting;
 use Sheba\Dal\PgwStore\Model as PgwStore;
 use Sheba\PaymentService\PaymentServiceStatics;
@@ -65,5 +66,21 @@ class PaymentServiceController extends Controller
     public static function get_maximum_percentage()
     {
         return config('payment_link.maximum_percentage');
+    }
+
+    public function storePaymentServiceCharge(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                "current_percentage" => "required"
+            ]);
+            return api_response($request, null, 200);
+        } catch (ValidationException $e) {
+            $msg = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, null, 400, ['message' => $msg]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
     }
 }
