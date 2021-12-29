@@ -12,7 +12,7 @@ class DynamicSslStoreConfiguration
     private $order_validation_url;
     private $refund_url;
 
-    public function __construct($configuration)
+    public function __construct($configuration = "")
     {
         $this->configuration = json_decode($configuration);
         if(isset($this->configuration))
@@ -78,5 +78,46 @@ class DynamicSslStoreConfiguration
     public function getConfiguration()
     {
         return $this->configuration;
+    }
+
+    public function toArray(): array
+    {
+        return [
+            "storeId" => $this->storeId,
+            "password" => $this->password,
+            "session_url" => $this->session_url,
+            "order_validation_url" => $this->order_validation_url,
+            "refund_url" => $this->refund_url,
+        ];
+    }
+
+    /**
+     * @param mixed $session_url
+     * @return DynamicSslStoreConfiguration
+     */
+    public function setSessionUrl($session_url): DynamicSslStoreConfiguration
+    {
+        $this->session_url = $session_url;
+        return $this;
+    }
+
+    /**
+     * @param mixed $order_validation_url
+     * @return DynamicSslStoreConfiguration
+     */
+    public function setOrderValidationUrl($order_validation_url): DynamicSslStoreConfiguration
+    {
+        $this->order_validation_url = $order_validation_url;
+        return $this;
+    }
+
+    /**
+     * @param mixed $refund_url
+     * @return DynamicSslStoreConfiguration
+     */
+    public function setRefundUrl($refund_url): DynamicSslStoreConfiguration
+    {
+        $this->refund_url = $refund_url;
+        return $this;
     }
 }
