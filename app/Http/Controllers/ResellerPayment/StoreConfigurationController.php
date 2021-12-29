@@ -26,7 +26,7 @@ class StoreConfigurationController extends Controller
     {
         try {
             $this->validate($request, ["key" => "required"]);
-            $configuration = $this->storeConfiguration->setKey($request->key)->getConfiguration();
+            $configuration = $this->storeConfiguration->setPartner($request->partner)->setKey($request->key)->getConfiguration();
             return api_response($request, $configuration, 200, ['data' => $configuration]);
         } catch (\Throwable $e) {
             logError($e);

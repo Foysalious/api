@@ -2,11 +2,17 @@
 
 namespace Sheba\ResellerPayment;
 
-use Sheba\ResellerPayment\Statics\StoreConfigurationStatic;
+use App\Models\Partner;
+use Sheba\ResellerPayment\Store\PaymentStore;
+use Sheba\ResellerPayment\Store\StoreFactory;
 
 class StoreConfiguration
 {
     private $key;
+    /**
+     * @var Partner
+     */
+    private $partner;
 
     public function __construct()
     {
@@ -22,8 +28,21 @@ class StoreConfiguration
         return $this;
     }
 
+    /**
+     * @param mixed $partner
+     * @return StoreConfiguration
+     */
+    public function setPartner($partner): StoreConfiguration
+    {
+        $this->partner = $partner;
+        return $this;
+    }
+
     public function getConfiguration()
     {
-        return (new StoreConfigurationStatic())->getStoreConfiguration($this->key);
+        /** @var PaymentStore $store */
+        $store = (new StoreFactory())->setKey($this->key)->get();
+        return $store->setPartner($this->partner)->setKey($this->key)->getConfiguration();
     }
+
 }

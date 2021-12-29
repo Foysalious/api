@@ -4,7 +4,7 @@ namespace Sheba\Payment\Methods\Ssl\Stores;
 
 class DynamicSslStoreConfiguration
 {
-    private $configuration;
+    protected $configuration;
 
     private $password;
     private $storeId;
@@ -15,9 +15,10 @@ class DynamicSslStoreConfiguration
     public function __construct($configuration)
     {
         $this->configuration = json_decode($configuration);
-        foreach ($this->configuration as $key => $value) {
-            $this->$key = $value;
-        }
+        if(isset($this->configuration))
+            foreach ($this->configuration as $key => $value) {
+                $this->$key = $value;
+            }
     }
 
     public function getPassword()
@@ -72,5 +73,10 @@ class DynamicSslStoreConfiguration
     public function getRefundUrl()
     {
         return $this->refund_url;
+    }
+
+    public function getConfiguration()
+    {
+        return $this->configuration;
     }
 }
