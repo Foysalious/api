@@ -4,6 +4,7 @@ namespace App\Http\Controllers\ResellerPayment;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Sheba\Dal\DigitalCollectionSetting\Model as DigitalCollectionSetting;
 use Sheba\Dal\PgwStore\Model as PgwStore;
 
 class PaymentServiceController extends Controller
@@ -24,6 +25,23 @@ class PaymentServiceController extends Controller
                 ];
             }
             return api_response($request, null, 200, ['data' => $pgwData]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getPaymentServiceCharge(Request $request)
+    {
+        try {
+            $partnerId = $request->partner->id;
+            $serviceCharge = DigitalCollectionSetting::where('partner_id', $partnerId)->select('service_charge')->get();
+
+            return api_response($request, null, 200, ['data' => $serviceCharge]);
         } catch (\Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
