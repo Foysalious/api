@@ -39,13 +39,13 @@ class PaymentServiceController extends Controller
     {
         try {
             $partnerId = $request->partner->id;
-//            $serviceCharge = DigitalCollectionSetting::where('partner_id', $partnerId)->select('service_charge')->get();
+            $digitalCollection = DigitalCollectionSetting::where('partner_id', $partnerId)->select('service_charge')->first();
 
             $data = [
                 "step"                           => self::get_step_margin(),
                 "minimum_percentage"             => self::get_minimum_percentage(),
                 "maximum_percentage"             => self::get_maximum_percentage(),
-                "current_percentage"             => 2
+                "current_percentage"             => $digitalCollection->service_charge
             ];
 
             return api_response($request, null, 200, ['data' => $data]);
