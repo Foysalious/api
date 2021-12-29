@@ -44,7 +44,11 @@ class PaymentServiceController extends Controller
             $digitalCollection = DigitalCollectionSetting::where('partner_id', $partnerId)->select('service_charge')->first();
 
             $data = PaymentLinkStatics::customPaymentServiceData();
-            $data['current_percentage'] = $digitalCollection->service_charge;
+            if ($digitalCollection) {
+                $data['current_percentage'] = $digitalCollection->service_charge;
+            } else {
+                $data['current_percentage'] = 2;
+            }
 
             return api_response($request, null, 200, ['data' => $data]);
         } catch (\Throwable $e) {
