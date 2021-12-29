@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Sheba\Payment\Exceptions\InvalidConfigurationException;
+use Sheba\ResellerPayment\Exceptions\StoreValidationException;
 use Sheba\ResellerPayment\StoreConfiguration;
 
 class StoreConfigurationController extends Controller
@@ -41,6 +42,8 @@ class StoreConfigurationController extends Controller
             $this->storeConfiguration->setPartner($request->partner)->setKey($request->key)
                 ->setGatewayId($request->gateway_id)->setRequestData($request->configuration_data)->storeConfiguration();
             return api_response($request, null, 200);
+        } catch (StoreValidationException $e) {
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         } catch (InvalidConfigurationException $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         } catch (\Throwable $e) {

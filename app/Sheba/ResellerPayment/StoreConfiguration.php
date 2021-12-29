@@ -3,6 +3,8 @@
 namespace Sheba\ResellerPayment;
 
 use App\Models\Partner;
+use Sheba\ResellerPayment\Exceptions\StoreValidationException;
+use Sheba\ResellerPayment\Statics\StoreConfigurationStatic;
 use Sheba\ResellerPayment\Store\PaymentStore;
 use Sheba\ResellerPayment\Store\StoreFactory;
 
@@ -47,8 +49,13 @@ class StoreConfiguration
         return $store->setPartner($this->partner)->setKey($this->key)->getConfiguration();
     }
 
+    /**
+     * @return void
+     * @throws StoreValidationException
+     */
     public function storeConfiguration()
     {
+        $this->validate();
         /** @var PaymentStore $store */
         $store = (new StoreFactory())->setKey($this->key)->get();
         $store->setData($this->request_data)->setPartner($this->partner)->setGatewayId($this->gateway_id)->postConfiguration();
@@ -72,6 +79,22 @@ class StoreConfiguration
     {
         $this->gateway_id = $gateway_id;
         return $this;
+    }
+
+    /**
+     * @return bool|void
+     * @throws StoreValidationException
+     */
+    public function validate()
+    {
+        $static_data = (new StoreConfigurationStatic())->getStoreConfiguration($this->key);
+        $request = json_decode($this->request_data, 1);
+        foreach ($static_data as $data) {
+            if ($data["mandatory"]) {
+                if(array_key_exists($data["id"], $request)) continue;
+                throw new StoreValidationException();
+            }
+        }
     }
 
 }
