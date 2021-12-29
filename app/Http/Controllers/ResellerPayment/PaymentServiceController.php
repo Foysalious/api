@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Dal\DigitalCollectionSetting\Model as DigitalCollectionSetting;
 use Sheba\Dal\PgwStore\Model as PgwStore;
-use Sheba\PaymentService\PaymentServiceStatics;
+use Sheba\PaymentLink\PaymentLinkStatics;
 
 class PaymentServiceController extends Controller
 {
@@ -43,7 +43,7 @@ class PaymentServiceController extends Controller
             $partnerId = $request->partner->id;
             $digitalCollection = DigitalCollectionSetting::where('partner_id', $partnerId)->select('service_charge')->first();
 
-            $data = PaymentServiceStatics::customPaymentServiceData();
+            $data = PaymentLinkStatics::customPaymentServiceData();
             $data['current_percentage'] = $digitalCollection->service_charge;
 
             return api_response($request, null, 200, ['data' => $data]);
@@ -53,20 +53,6 @@ class PaymentServiceController extends Controller
         }
     }
 
-    public static function get_step_margin()
-    {
-        return config('payment_link.step_margin');
-    }
-
-    public static function get_minimum_percentage()
-    {
-        return config('payment_link.minimum_percentage');
-    }
-
-    public static function get_maximum_percentage()
-    {
-        return config('payment_link.maximum_percentage');
-    }
 
     public function storePaymentServiceCharge(Request $request)
     {

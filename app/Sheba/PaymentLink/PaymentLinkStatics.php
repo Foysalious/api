@@ -51,6 +51,15 @@ class  PaymentLinkStatics
         ];
     }
 
+    public static function customPaymentServiceData()
+    {
+        return [
+            "step"                           => self::get_step_margin(),
+            "minimum_percentage"             => self::get_minimum_percentage(),
+            "maximum_percentage"             => self::get_maximum_percentage(),
+        ];
+    }
+
     public static function paidByTypes()
     {
         return ['partner', 'customer'];
