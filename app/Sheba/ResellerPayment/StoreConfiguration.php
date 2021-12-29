@@ -89,7 +89,7 @@ class StoreConfiguration
     {
         $static_data = (new StoreConfigurationStatic())->getStoreConfiguration($this->key);
         $request = json_decode($this->request_data, 1);
-        if(!isset($request)) throw new StoreValidationException();
+        if(!isset($request) || !is_array($request)) throw new StoreValidationException();
         foreach ($static_data as $data) {
             if ($data["mandatory"]) {
                 if(array_key_exists($data["id"], $request)) continue;

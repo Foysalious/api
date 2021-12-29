@@ -8,4 +8,13 @@ class StoreConfigurationStatic
     {
         return config("store_configuration.dynamic_store_configuration.$key");
     }
+
+    public static function validateStoreConfigurationPost(): array
+    {
+        return [
+            "key"                => "required",
+            "configuration_data" => "required",
+            "gateway_id"         => "required"
+        ];
+    }
 }
