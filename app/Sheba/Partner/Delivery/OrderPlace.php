@@ -161,6 +161,9 @@ class OrderPlace
             'status' => OrderStatuses::SHIPPED
         ];
         if ($this->posOrder && !$this->posOrder->is_migrated) return $this->posOrderRepository->update($this->posOrder, $data);
+        $data['pickup_district'] = $this->pickupDistrict;
+        $data['pickup_thana'] =  $this->pickupThana;
+        $data['delivery_charge'] = $info['delivery_charge'];
         return $this->orderService->setPartnerId($this->partner->id)->setOrderId($this->posOrderId)->storeDeliveryInformation($data);
     }
 

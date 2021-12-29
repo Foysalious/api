@@ -222,7 +222,7 @@ class DeliveryController extends Controller
             ->setPickupThana($request->pickup_thana)
             ->orderPlace();
 
-        $orderPlace->setPartner($partner)->setPosOrder($request->pos_order_id)->storeDeliveryInformation($orderPlaceInfo['data']);
+        $orderPlace->setPartner($partner)->setPosOrder($request->pos_order_id)->setPickupAddress($request->pickup_address)->setPickupThana($request->pickup_thana)->storeDeliveryInformation($orderPlaceInfo['data']);
         return $orderPlaceInfo;
     }
 
