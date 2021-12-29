@@ -39,9 +39,9 @@ class PaymentServiceController extends Controller
     {
         try {
             $partnerId = $request->partner->id;
-            $serviceCharge = DigitalCollectionSetting::where('partner_id', $partnerId)->select('service_charge')->get();
+//            $serviceCharge = DigitalCollectionSetting::where('partner_id', $partnerId)->select('service_charge')->get();
 
-            return api_response($request, null, 200, ['data' => $serviceCharge]);
+            return api_response($request, null, 200, ['data' => 2]);
         } catch (\Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
