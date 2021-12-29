@@ -39,8 +39,14 @@ class Ssl extends PaymentStore
     {
         $data = $this->makeStoreAccountData();
         $this->test();
-        $pgw_store_repo = app()->make(PgwStoreAccountRepo::class);
-        $pgw_store_repo->create($data);
+        $storeAccount = $this->partner->pgwStoreAccounts()->where("pgw_store_id", $this->gateway_id)->first();
+        if(isset($storeAccount)) {
+            $storeAccount->configuration = $data["configuration"];
+            $storeAccount->save();
+        } else {
+            $pgw_store_repo = app()->make(PgwStoreAccountRepo::class);
+            $pgw_store_repo->create($data);
+        }
     }
 
     private static function staticSslConfigurations(): array
