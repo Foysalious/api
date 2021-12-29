@@ -39,12 +39,34 @@ class PaymentServiceController extends Controller
     {
         try {
             $partnerId = $request->partner->id;
-            $serviceCharge = DigitalCollectionSetting::where('partner_id', $partnerId)->select('service_charge')->get();
+//            $serviceCharge = DigitalCollectionSetting::where('partner_id', $partnerId)->select('service_charge')->get();
 
-            return api_response($request, null, 200, ['data' => $serviceCharge]);
+            $data = [
+                "step"                           => self::get_step_margin(),
+                "minimum_percentage"             => self::get_minimum_percentage(),
+                "maximum_percentage"             => self::get_maximum_percentage(),
+                "current_percentage"             => 2
+            ];
+
+            return api_response($request, null, 200, ['data' => 2]);
         } catch (\Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public static function get_step_margin()
+    {
+        return config('payment_link.step_margin');
+    }
+
+    public static function get_minimum_percentage()
+    {
+        return config('payment_link.minimum_percentage');
+    }
+
+    public static function get_maximum_percentage()
+    {
+        return config('payment_link.maximum_percentage');
     }
 }
