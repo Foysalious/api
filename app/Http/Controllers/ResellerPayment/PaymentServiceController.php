@@ -16,7 +16,7 @@ class PaymentServiceController extends Controller
             $pgwStores = $pgwStore->select('id', 'name', 'key', 'name_bn', 'icon')->get();
 
             foreach ($pgwStores as $pgwStore) {
-                $pgwData[$pgwStore->key] = [
+                $pgwData[] = [
                     'id' => $pgwStore->id,
                     'name' => $pgwStore->name,
                     'key' => $pgwStore->key,
