@@ -13,6 +13,8 @@ class StoreConfiguration
      * @var Partner
      */
     private $partner;
+    private $request_data;
+    private $gateway_id;
 
     public function __construct()
     {
@@ -43,6 +45,33 @@ class StoreConfiguration
         /** @var PaymentStore $store */
         $store = (new StoreFactory())->setKey($this->key)->get();
         return $store->setPartner($this->partner)->setKey($this->key)->getConfiguration();
+    }
+
+    public function storeConfiguration()
+    {
+        /** @var PaymentStore $store */
+        $store = (new StoreFactory())->setKey($this->key)->get();
+        $store->setData($this->request_data)->setPartner($this->partner)->setGatewayId($this->gateway_id)->postConfiguration();
+    }
+
+    /**
+     * @param mixed $request_data
+     * @return StoreConfiguration
+     */
+    public function setRequestData($request_data): StoreConfiguration
+    {
+        $this->request_data = $request_data;
+        return $this;
+    }
+
+    /**
+     * @param mixed $gateway_id
+     * @return StoreConfiguration
+     */
+    public function setGatewayId($gateway_id): StoreConfiguration
+    {
+        $this->gateway_id = $gateway_id;
+        return $this;
     }
 
 }

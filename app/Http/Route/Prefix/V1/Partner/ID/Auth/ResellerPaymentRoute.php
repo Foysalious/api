@@ -8,6 +8,7 @@ class ResellerPaymentRoute
             $api->group(['prefix' => 'reseller-payment'], function ($api) {
                 $api->get('/store-configuration', 'ResellerPayment\\StoreConfigurationController@get');
                 $api->get('/payment-gateways', 'ResellerPayment\\PaymentServiceController@getPaymentGateway');
+                $api->post('/store-configuration', 'ResellerPayment\\StoreConfigurationController@store');
             });
         });
     }
