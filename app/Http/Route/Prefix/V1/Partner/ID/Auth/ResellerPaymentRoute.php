@@ -7,6 +7,7 @@ class ResellerPaymentRoute
         $api->group(['prefix' => 'partners', 'middleware' => ['jwtGlobalAuth']], function ($api) {
             $api->group(['prefix' => 'reseller-payment'], function ($api) {
                 $api->get('/store-configuration', 'ResellerPayment\\StoreConfigurationController@get');
+                $api->post('/store-configuration', 'ResellerPayment\\StoreConfigurationController@store');
             });
         });
     }
