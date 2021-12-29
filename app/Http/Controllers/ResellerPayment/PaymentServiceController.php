@@ -48,7 +48,7 @@ class PaymentServiceController extends Controller
                 "current_percentage"             => 2
             ];
 
-            return api_response($request, null, 200, ['data' => 2]);
+            return api_response($request, null, 200, ['data' => $data]);
         } catch (\Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
