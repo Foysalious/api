@@ -69,7 +69,7 @@ class PaymentServiceController extends Controller
     {
         try {
             $this->validate($request, [
-                "current_percentage" => "required"
+                "current_percentage" => "required | numeric"
             ]);
 
             $digitalCollectionSetting = new DigitalCollectionSetting();
