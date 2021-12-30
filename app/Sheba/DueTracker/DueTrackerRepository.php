@@ -514,8 +514,8 @@ class DueTrackerRepository extends BaseRepository
         $data    = [
             'type'           => $type,
             'partner_name'   => $partner->name,
-            'customer_name'  => $customer->profile->name,
-            'mobile'         => $customer->profile->mobile,
+            'customer_name'  => $customer->name,
+            'mobile'         => $customer->mobile,
             'amount'         => $request->amount,
             'company_number' => $partner->getContactNumber()
         ];
