@@ -11,6 +11,8 @@ class ResellerPaymentRoute
                 $api->get('/payment-gateways', 'ResellerPayment\\PaymentServiceController@getPaymentGateway');
                 $api->get('/payment-service-charge', 'ResellerPayment\\PaymentServiceController@getPaymentServiceCharge');
                 $api->post('payment-service-charge', 'ResellerPayment\\PaymentServiceController@storePaymentServiceCharge');
+
+                $api->get('/emi-info/manager', 'ResellerPayment\\PaymentServiceController@emiInformationForManager');
             });
         });
     }
