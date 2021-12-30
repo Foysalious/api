@@ -2,6 +2,8 @@
 
 class  PaymentLinkStatics
 {
+    const SERVICE_CHARGE = 2;
+
     public static function faq_webview()
     {
         return config('sheba.partners_url') . "/api/payment-link-faq";

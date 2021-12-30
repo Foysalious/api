@@ -7,10 +7,13 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Dal\DigitalCollectionSetting\Model as DigitalCollectionSetting;
 use Sheba\Dal\PgwStore\Model as PgwStore;
+use Sheba\ModificationFields;
 use Sheba\PaymentLink\PaymentLinkStatics;
 
 class PaymentServiceController extends Controller
 {
+    use ModificationFields;
+
     public function getPaymentGateway(Request $request, PgwStore $pgwStore)
     {
         try {
@@ -47,7 +50,7 @@ class PaymentServiceController extends Controller
             if ($digitalCollection) {
                 $data['current_percentage'] = $digitalCollection->service_charge;
             } else {
-                $data['current_percentage'] = 2;
+                $data['current_percentage'] = PaymentLinkStatics::SERVICE_CHARGE;
             }
 
             return api_response($request, null, 200, ['data' => $data]);
@@ -58,12 +61,32 @@ class PaymentServiceController extends Controller
     }
 
 
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function storePaymentServiceCharge(Request $request)
     {
         try {
             $this->validate($request, [
                 "current_percentage" => "required"
             ]);
+
+            $digitalCollectionSetting = new DigitalCollectionSetting();
+            $partnerId = $request->partner->id;
+            $partner = $digitalCollectionSetting->where('partner_id', $partnerId)->first();
+
+            if (!$partner) {
+                $digitalCollectionSetting->partner_id = $request->partner->id;
+                $digitalCollectionSetting->service_charge = $request->current_percentage;
+                $this->withCreateModificationField($digitalCollectionSetting);
+                $digitalCollectionSetting->save();
+            } else {
+                $data = ['service_charge' => $request->current_percentage];
+                $digitalCollectionSetting->query()->where('partner_id', $partnerId)
+                    ->update($this->withUpdateModificationField($data));
+            }
+
             return api_response($request, null, 200);
         } catch (ValidationException $e) {
             $msg = getValidationErrorMessage($e->validator->errors()->all());
