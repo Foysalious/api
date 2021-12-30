@@ -4,7 +4,7 @@ class ResellerPaymentRoute
 {
     public function set($api)
     {
-        $api->group(['prefix' => 'partners', 'middleware' => ['jwtGlobalAuth']], function ($api) {
+        $api->group(['prefix' => 'partners', 'middleware' => ['paymentLink.auth']], function ($api) {
             $api->group(['prefix' => 'reseller-payment'], function ($api) {
                 $api->get('/store-configuration', 'ResellerPayment\\StoreConfigurationController@get');
                 $api->post('/store-configuration', 'ResellerPayment\\StoreConfigurationController@store');
