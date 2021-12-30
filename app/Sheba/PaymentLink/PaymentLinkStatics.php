@@ -53,12 +53,13 @@ class  PaymentLinkStatics
         ];
     }
 
-    public static function customPaymentServiceData()
+    public static function customPaymentServiceData(): array
     {
         return [
             "step"                           => self::get_step_margin(),
             "minimum_percentage"             => self::get_minimum_percentage(),
             "maximum_percentage"             => self::get_maximum_percentage(),
+            "faq_webview_url"                => self::faq_webview()
         ];
     }
 
