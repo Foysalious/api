@@ -3,6 +3,7 @@
 namespace Sheba\ResellerPayment;
 
 use App\Models\Partner;
+use Sheba\ResellerPayment\Exceptions\InvalidKeyException;
 use Sheba\ResellerPayment\Exceptions\StoreValidationException;
 use Sheba\ResellerPayment\Statics\StoreConfigurationStatic;
 use Sheba\ResellerPayment\Store\PaymentStore;
@@ -42,6 +43,10 @@ class StoreConfiguration
         return $this;
     }
 
+    /**
+     * @return mixed
+     * @throws Exceptions\InvalidKeyException
+     */
     public function getConfiguration()
     {
         /** @var PaymentStore $store */
@@ -51,7 +56,7 @@ class StoreConfiguration
 
     /**
      * @return void
-     * @throws StoreValidationException
+     * @throws StoreValidationException|Exceptions\InvalidKeyException
      */
     public function storeConfiguration()
     {
@@ -82,12 +87,13 @@ class StoreConfiguration
     }
 
     /**
-     * @return bool|void
-     * @throws StoreValidationException
+     * @return void
+     * @throws StoreValidationException|InvalidKeyException
      */
     public function validate()
     {
         $static_data = (new StoreConfigurationStatic())->getStoreConfiguration($this->key);
+        if(!isset($static_data)) throw new InvalidKeyException();
         $request = json_decode($this->request_data, 1);
         if(!isset($request) || !is_array($request)) throw new StoreValidationException();
         foreach ($static_data as $data) {
