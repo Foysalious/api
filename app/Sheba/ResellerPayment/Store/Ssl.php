@@ -5,6 +5,7 @@ namespace Sheba\ResellerPayment\Store;
 use Sheba\Dal\PgwStoreAccount\Contract as PgwStoreAccountRepo;
 use Sheba\Payment\Exceptions\InvalidConfigurationException;
 use Sheba\Payment\Methods\Ssl\Stores\DynamicSslStoreConfiguration;
+use Sheba\ResellerPayment\EncryptionAndDecryption;
 use Sheba\ResellerPayment\Statics\StoreConfigurationStatic;
 
 class Ssl extends PaymentStore
@@ -69,12 +70,14 @@ class Ssl extends PaymentStore
     private function makeStoreAccountData(): array
     {
         $this->conn_data = $this->makeAndGetConfigurationData();
+        $configuration = json_encode($this->conn_data);
+        $configuration = (new EncryptionAndDecryption())->setData($configuration)->getEncryptedData();
         return [
             "pgw_store_id"  => (int)$this->gateway_id,
             "user_id"       => $this->partner->id,
             "user_type"     => get_class($this->partner),
             "name"          => "dynamic_ssl",
-            "configuration" => json_encode($this->conn_data)
+            "configuration" => $configuration
         ];
     }
 
