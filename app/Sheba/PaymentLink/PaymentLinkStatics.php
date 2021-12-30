@@ -2,6 +2,8 @@
 
 class  PaymentLinkStatics
 {
+    const SERVICE_CHARGE = 2;
+
     const PAYMENT_LINK_TYPE_EMI = "emi";
     const PAYMENT_LINK_TYPE_DIGITAL_COLLECTION = "digital_collection";
 
