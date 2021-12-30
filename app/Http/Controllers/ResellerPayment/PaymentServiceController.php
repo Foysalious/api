@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\ResellerPayment;
 
 use App\Http\Controllers\Controller;
+use App\Models\Partner;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Dal\DigitalCollectionSetting\Model as DigitalCollectionSetting;
 use Sheba\Dal\PgwStore\Model as PgwStore;
 use Sheba\ModificationFields;
 use Sheba\PaymentLink\PaymentLinkStatics;
+use Sheba\PaymentLink\PaymentLinkStatus;
 
 class PaymentServiceController extends Controller
 {
@@ -18,16 +20,33 @@ class PaymentServiceController extends Controller
     {
         try {
             $pgwData = [];
+            $partner = Partner::where('id', $request->partner->id)->first();
+            $partner_account = $partner->pgwStoreAccounts()->published()->first();
+
             $pgwStores = $pgwStore->select('id', 'name', 'key', 'name_bn', 'icon')->get();
 
-            foreach ($pgwStores as $pgwStore) {
-                $pgwData[] = [
-                    'id' => $pgwStore->id,
-                    'name' => $pgwStore->name,
-                    'key' => $pgwStore->key,
-                    'name_bn' => $pgwStore->name_bn,
-                    'icon' => $pgwStore->icon,
-                ];
+            if ($partner_account) {
+                foreach ($pgwStores as $pgwStore) {
+                    $pgwData[] = [
+                        'id' => $pgwStore->id,
+                        'name' => $pgwStore->name,
+                        'key' => $pgwStore->key,
+                        'name_bn' => $pgwStore->name_bn,
+                        'icon' => $pgwStore->icon,
+                        'status' => PaymentLinkStatus::ACTIVE
+                    ];
+                }
+            } else {
+                foreach ($pgwStores as $pgwStore) {
+                    $pgwData[] = [
+                        'id' => $pgwStore->id,
+                        'name' => $pgwStore->name,
+                        'key' => $pgwStore->key,
+                        'name_bn' => $pgwStore->name_bn,
+                        'icon' => $pgwStore->icon,
+                        'status' => PaymentLinkStatus::INACTIVE
+                    ];
+                }
             }
             return api_response($request, null, 200, ['data' => $pgwData]);
         } catch (\Throwable $e) {
