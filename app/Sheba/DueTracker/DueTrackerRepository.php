@@ -9,6 +9,7 @@ use App\Models\Profile;
 use App\Repositories\FileRepository;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
 use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
+use Exception;
 use Sheba\AccountingEntry\Exceptions\MigratedToAccountingException;
 use Sheba\Pos\Customer\PosCustomerResolver;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
@@ -33,6 +34,7 @@ use Sheba\ModificationFields;
 use Sheba\PaymentLink\Creator as PaymentLinkCreator;
 use Sheba\RequestIdentification;
 use Sheba\Transactions\Types;
+use Sheba\Transactions\Wallet\WalletDebitForbiddenException;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Sheba\Pos\Repositories\PosOrderPaymentRepository;
 
@@ -484,20 +486,22 @@ class DueTrackerRepository extends BaseRepository
         $this->client->delete($url);
 
     }
-
+    private function getCustomer($partner,$customer_id){
+        /** @var PosCustomerResolver $posCustomerResolver */
+        $posCustomerResolver = app(PosCustomerResolver::class);
+        return $posCustomerResolver->setCustomerId($customer_id)->setPartner($partner)->get();
+    }
     /**
      * @param Request $request
-     * @return mixed
+     * @return bool
      * @throws InvalidPartnerPosCustomer|InsufficientBalance
-     * @throws \Sheba\Transactions\Wallet\WalletDebitForbiddenException
-     * @throws \Exception
+     * @throws WalletDebitForbiddenException
+     * @throws Exception
      */
     public function sendSMS(Request $request)
     {
-        /** @var PosCustomerResolver $posCustomerResolver */
-        $posCustomerResolver = app(PosCustomerResolver::class);
-        $customer            = $posCustomerResolver->setCustomerId($request->customer_id)->setPartner($request->partner)->get();
-        if (empty($partner_pos_customer)) throw new InvalidPartnerPosCustomer();
+        $customer=$this->getCustomer($request->partner,$request->customer_id);
+        if (empty($customer)) throw new InvalidPartnerPosCustomer();
         /** @var PosCustomer $customer */
         $smsType = [
             'receivable' => 'due',
@@ -627,12 +631,12 @@ class DueTrackerRepository extends BaseRepository
      * @param Request $request
      * @param PaymentLinkCreator $paymentLinkCreator
      * @return mixed
-     * @throws \Exception
+     * @throws Exception
      */
     public function createPaymentLink(Request $request, $paymentLinkCreator)
     {
         $purpose            = 'Due Collection';
-        $customer           = PosCustomer::find($request->customer_id);
+        $customer           = $this->getCustomer($request->partner,$request->customer_id);
         $payment_link_store = $paymentLinkCreator->setAmount($request->amount)
             ->setReason($purpose)
             ->setUserName($request->partner->name)
@@ -648,6 +652,6 @@ class DueTrackerRepository extends BaseRepository
             return $paymentLinkCreator->getPaymentLink();
         }
 
-        throw new \Exception('payment link creation fail');
+        throw new Exception('payment link creation fail');
     }
 }
