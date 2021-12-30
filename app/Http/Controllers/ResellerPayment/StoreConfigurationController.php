@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Validation\ValidationException;
 use Sheba\Payment\Exceptions\InvalidConfigurationException;
+use Sheba\ResellerPayment\Exceptions\ResellerPaymentException;
 use Sheba\ResellerPayment\Exceptions\StoreValidationException;
 use Sheba\ResellerPayment\Statics\StoreConfigurationStatic;
 use Sheba\ResellerPayment\StoreConfiguration;
@@ -30,6 +31,9 @@ class StoreConfigurationController extends Controller
             $this->validate($request, ["key" => "required"]);
             $configuration = $this->storeConfiguration->setPartner($request->partner)->setKey($request->key)->getConfiguration();
             return api_response($request, $configuration, 200, ['data' => $configuration]);
+        } catch (ResellerPaymentException $e) {
+            logError($e);
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         } catch (\Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
@@ -45,7 +49,7 @@ class StoreConfigurationController extends Controller
             return api_response($request, null, 200);
         } catch (StoreValidationException $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
-        } catch (InvalidConfigurationException $e) {
+        } catch (ResellerPaymentException $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         } catch (ValidationException $e) {
             $msg = getValidationErrorMessage($e->validator->errors()->all());

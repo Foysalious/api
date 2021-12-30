@@ -2,6 +2,9 @@
 
 namespace Sheba\ResellerPayment\Store;
 
+use Illuminate\Foundation\Application;
+use Sheba\ResellerPayment\Exceptions\InvalidKeyException;
+
 class StoreFactory
 {
     private $key;
@@ -16,10 +19,18 @@ class StoreFactory
         return $this;
     }
 
+    /**
+     * @return Application|mixed
+     * @throws InvalidKeyException
+     */
     public function get()
     {
-        $storeClassPath = "Sheba\\ResellerPayment\\Store\\";
-        $class = "$storeClassPath".ucfirst($this->key);
-        return app($class);
+        try {
+            $storeClassPath = "Sheba\\ResellerPayment\\Store\\";
+            $class = "$storeClassPath" . ucfirst($this->key);
+            return app($class);
+        } catch (\Throwable $exception) {
+            throw new InvalidKeyException();
+        }
     }
 }
