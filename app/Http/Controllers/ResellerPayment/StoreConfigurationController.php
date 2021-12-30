@@ -47,7 +47,7 @@ class StoreConfigurationController extends Controller
             $this->storeConfiguration->setPartner($request->partner)->setKey($request->key)
                 ->setGatewayId($request->gateway_id)->setRequestData($request->configuration_data)->storeConfiguration();
             return api_response($request, null, 200);
-        } catch (StoreValidationException $e) {
+        } catch (InvalidConfigurationException $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         } catch (ResellerPaymentException $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
