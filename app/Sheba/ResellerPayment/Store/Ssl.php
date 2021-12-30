@@ -39,7 +39,7 @@ class Ssl extends PaymentStore
     public function postConfiguration()
     {
         $data = $this->makeStoreAccountData();
-        $this->test();
+//        $this->test();
         $storeAccount = $this->partner->pgwStoreAccounts()->where("pgw_store_id", $this->gateway_id)->first();
         if(isset($storeAccount)) {
             $storeAccount->configuration = $data["configuration"];

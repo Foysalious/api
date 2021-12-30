@@ -16,7 +16,7 @@ class DynamicSslStoreConfiguration
 
     public function __construct($configuration = "")
     {
-        $configuration = !empty($configuration) ? (new EncryptionAndDecryption())->setData($configuration)->getDecryptedData() : "";
+        $configuration = (new EncryptionAndDecryption())->setData($configuration)->getDecryptedData();
         $this->configuration = json_decode($configuration);
         if(isset($this->configuration))
             foreach ($this->configuration as $key => $value) {
