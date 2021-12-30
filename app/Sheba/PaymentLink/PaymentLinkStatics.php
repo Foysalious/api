@@ -59,7 +59,7 @@ class  PaymentLinkStatics
             "step"                           => self::get_step_margin(),
             "minimum_percentage"             => self::get_minimum_percentage(),
             "maximum_percentage"             => self::get_maximum_percentage(),
-            "faq_webview_url"                => self::faq_webview()
+            "terms_and_condition"            => self::faq_webview()
         ];
     }
 
