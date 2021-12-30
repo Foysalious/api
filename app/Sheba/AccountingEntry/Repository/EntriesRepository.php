@@ -70,10 +70,12 @@ class EntriesRepository extends BaseRepository
             }
             $url = "api/entries/" . $this->entry_id;
             $data =  $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->delete($url);
-            foreach ($data as $datum) {
-                //pos order reconcile while storing entry
-                if ($datum['source_type'] == 'pos') {
-                    $this->removePosOrderPayment(abs($datum['amount_cleared']), $datum['source_id'], 'advance_balance');
+            if (is_array($data)){
+                foreach ($data as $datum) {
+                    //pos order reconcile while storing entry
+                    if ($datum['source_type'] == 'pos') {
+                        $this->removePosOrderPayment(abs($datum['amount_cleared']), $datum['source_id'], 'advance_balance');
+                    }
                 }
             }
 
