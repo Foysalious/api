@@ -217,7 +217,8 @@ class HomepageController extends Controller
             "total_liability" => 2000,
             "total_due"    => 500,
             "date" => "৯ ডিসেম্বর",
-            "month" => "ডিসেম্বর"
+            "month" => "ডিসেম্বর",
+            "api_time" => Carbon::now()->toDateTimeString()
         ];
         return api_response($request, $data, 200, ['data' => $data]);
     }
