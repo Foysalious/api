@@ -1,6 +1,8 @@
 <?php
 
 return [
+    "encryption_key" => env("ENCRYPTION_KEY", 1234567890),
+
     "dynamic_store_configuration" => [
         "ssl" => [
             [

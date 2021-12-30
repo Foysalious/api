@@ -2,6 +2,8 @@
 
 namespace Sheba\Payment\Methods\Ssl\Stores;
 
+use Sheba\ResellerPayment\EncryptionAndDecryption;
+
 class DynamicSslStoreConfiguration
 {
     protected $configuration;
@@ -14,6 +16,7 @@ class DynamicSslStoreConfiguration
 
     public function __construct($configuration = "")
     {
+        $configuration = !empty($configuration) ? (new EncryptionAndDecryption())->setData($configuration)->getDecryptedData() : "";
         $this->configuration = json_decode($configuration);
         if(isset($this->configuration))
             foreach ($this->configuration as $key => $value) {
