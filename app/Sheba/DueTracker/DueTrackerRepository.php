@@ -625,6 +625,9 @@ class DueTrackerRepository extends BaseRepository
     {
         $purpose            = 'Due Collection';
         $customer           = $this->getCustomer($request->partner,$request->customer_id);
+       if (empty($customer)){
+           throw new InvalidPartnerPosCustomer();
+       }
         $payment_link_store = $paymentLinkCreator->setAmount($request->amount)
             ->setReason($purpose)
             ->setUserName($request->partner->name)
