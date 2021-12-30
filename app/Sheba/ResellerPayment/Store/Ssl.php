@@ -39,7 +39,7 @@ class Ssl extends PaymentStore
     public function postConfiguration()
     {
         $data = $this->makeStoreAccountData();
-//        $this->test();
+        $this->test();
         $storeAccount = $this->partner->pgwStoreAccounts()->where("pgw_store_id", $this->gateway_id)->first();
         if(isset($storeAccount)) {
             $storeAccount->configuration = $data["configuration"];
@@ -69,15 +69,14 @@ class Ssl extends PaymentStore
 
     private function makeStoreAccountData(): array
     {
-        $this->conn_data = $this->makeAndGetConfigurationData();
-        $configuration = json_encode($this->conn_data);
-        $configuration = (new EncryptionAndDecryption())->setData($configuration)->getEncryptedData();
+        $configuration = json_encode($this->makeAndGetConfigurationData());
+        $this->conn_data = (new EncryptionAndDecryption())->setData($configuration)->getEncryptedData();
         return [
             "pgw_store_id"  => (int)$this->gateway_id,
             "user_id"       => $this->partner->id,
             "user_type"     => get_class($this->partner),
             "name"          => "dynamic_ssl",
-            "configuration" => $configuration
+            "configuration" => $this->conn_data
         ];
     }
 
@@ -89,7 +88,7 @@ class Ssl extends PaymentStore
     {
         /** @var \Sheba\Payment\Methods\Ssl\Ssl $ssl_method */
         $ssl_method = app()->make(\Sheba\Payment\Methods\Ssl\Ssl::class);
-        $ssl_method->testInit(json_encode($this->conn_data));
+        $ssl_method->testInit($this->conn_data);
     }
 
 }
