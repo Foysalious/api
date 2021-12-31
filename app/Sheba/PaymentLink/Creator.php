@@ -89,7 +89,8 @@ class Creator
         $this->partnerProfit                  = 0;
         $this->transactionFeePercentage       = PaymentLinkStatics::get_payment_link_commission();
         $this->transactionFeePercentageConfig = PaymentLinkStatics::get_payment_link_commission();
-        $this->tax                            = PaymentLinkStatics::get_payment_link_tax();
+//        $this->tax                            = PaymentLinkStatics::get_payment_link_tax();
+        $this->tax                            = 0;
     }
 
     public function setAmount($amount)
@@ -391,8 +392,8 @@ class Creator
                 $data = Calculations::getMonthData($amount, $this->emiMonth, false, $this->transactionFeePercentage);
                 $this->setInterest($data['total_interest'])->setBankTransactionCharge($data['bank_transaction_fee'] + $this->tax)->setAmount($data['total_amount'] + $this->tax)->setPartnerProfit($data['partner_profit']);
             } else {
-                $this->setAmount($amount + round($amount * $this->transactionFeePercentage / 100, 2))
-                    ->setPartnerProfit($this->amount - ($amount + round($amount * $this->transactionFeePercentageConfig / 100, 2)))
+                $this->setAmount($amount + round($amount * $this->transactionFeePercentage / 100, 2) + $this->tax)
+                    ->setPartnerProfit($this->amount - ($amount + round($amount * $this->transactionFeePercentageConfig / 100, 2) + $this->tax))
                     ->setRealAmount($amount);
             }
         } else {
