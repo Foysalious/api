@@ -281,7 +281,7 @@ class PaymentLinkController extends Controller
                 if (!$request->filled('emi_month')) {
                     $this->creator->sentSms();
                 }
-                return api_response($request, $payment_link, 200, ['payment_link' => $payment_link]);
+                return api_response($request, $payment_link, 200, array_merge(['payment_link' => $payment_link], $this->creator->getSuccessMessage()));
             } else {
                 return api_response($request, null, 500);
             }
