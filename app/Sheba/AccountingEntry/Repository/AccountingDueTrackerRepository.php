@@ -2,6 +2,7 @@
 
 namespace App\Sheba\AccountingEntry\Repository;
 
+use App\Exceptions\Pos\Customer\PosCustomerNotFoundException;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Constants\UserType;
 use App\Sheba\Pos\Order\PosOrderObject;
@@ -34,7 +35,7 @@ class AccountingDueTrackerRepository extends BaseRepository
      * @param $type
      * @param bool $with_update
      * @return mixed
-     * @throws AccountingEntryServerError
+     * @throws AccountingEntryServerError|PosCustomerNotFoundException
      */
     public function storeEntry(Request $request, $type, bool $with_update = false)
     {
@@ -44,15 +45,18 @@ class AccountingDueTrackerRepository extends BaseRepository
         }
         $this->getCustomer($request);
         $this->setModifier($request->partner);
-        $posOrder = $this->posOrderByPartnerWiseOrderId($request->partner, $request->partner_wise_order_id);
-        $request->merge(['source_id' =>  $posOrder? $posOrder->id : null]);
-        $data = $this->createEntryData($request, $type,$with_update);
+        $posOrder = ($type == EntryTypes::POS) ? $this->posOrderByPartnerWiseOrderId($request->partner, $request->partner_wise_order_id) : null;
+        $request->merge(['source_id' =>  $posOrder ? $posOrder->id : null]);
+        $data = $this->createEntryData($request, $type, $with_update);
+        if (!$request->customer_id) {
+            throw new PosCustomerNotFoundException('Sorry! Cannot create entry without customer', 404);
+        }
         $url = $with_update ? "api/entries/" . $request->entry_id : "api/entries/";
         $data = $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
         // if type deposit then auto reconcile happen. for that we have to reconcile pos order.
-        if ($type == "deposit" && !$with_update) {
+        if ($type == EntryTypes::DEPOSIT && !$with_update) {
             foreach ($data as $datum) {
-                if ($datum['source_type'] == 'pos' && $datum['amount_cleared'] > 0) {
+                if ($datum['source_type'] == EntryTypes::POS && $datum['amount_cleared'] > 0) {
                     $this->createPosOrderPayment($datum['amount_cleared'], $datum['source_id'], 'advance_balance');
                 }
             }
@@ -124,7 +128,7 @@ class AccountingDueTrackerRepository extends BaseRepository
                 }
                 $item['created_at'] = Carbon::parse($item['created_at'])->format('Y-m-d h:i A');
                 $item['entry_at'] = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
-                $pos_order = $this->posOrderByOrderId($item['source_id']);
+                $pos_order = $item['source_id'] && $item['source_type'] == EntryTypes::POS ? $this->posOrderByOrderId($item['source_id']): null;
                 $item['partner_wise_order_id'] = isset($pos_order) ? $pos_order->partner_wise_order_id : null;
                 if ($pos_order) {
                     $item['source_type'] = 'PosOrder';

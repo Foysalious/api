@@ -12,16 +12,12 @@
     @foreach($list as $key=>$item)
         <tr>
             <td style="width: 9%">{{++$key}}</td>
-            <td style="width: 15%">{{date('d-m-Y', strtotime($item['created_at'])) }}</td>
+            <td style="width: 15%">{{date('d-m-Y', strtotime($item['entry_at'])) }}</td>
 
             @if($item['source_type'] === 'PosOrder')
                 <td style="text-align: center; width: 50%">Purchase, Order Id #{{$item['partner_wise_order_id']}}</td>
-            @elseif($item['head'] === 'Due Tracker')
-                @if($item['note'])
-                    <td style="text-align: center; width: 50%"> {{$item['note']}} </td>
-                @else
-                    <td style="text-align: center; width: 50%"> -- </td>
-                @endif
+            @elseif($item['note'])
+                <td style="text-align: center; width: 50%"> {{$item['note']}} </td>
             @else
                 <td style="text-align: center; width: 50%">{{$item['head']}}</td>
             @endif
