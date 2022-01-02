@@ -107,7 +107,6 @@ class CustomerWise extends PosReport
 
     /**
      * @param string $name
-     * @return void
      * @throws NotAssociativeArray
      */
     public function downloadExcel($name = 'Sales Report')

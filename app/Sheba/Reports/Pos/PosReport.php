@@ -3,6 +3,7 @@
 use App\Models\Partner;
 use App\Sheba\PosOrderService\PosOrderServerClient;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
@@ -145,9 +146,8 @@ abstract class PosReport
 
     /**
      * @param string $name
-     * @return void
      * @throws NotAssociativeArray
-     * @throws \Exception
+     * @throws Exception
      */
     public function downloadExcel($name = 'Sales Report')
     {
@@ -194,7 +194,11 @@ abstract class PosReport
      */
     public function savePdf($name = 'Sales Report', $template = 'generic_template')
     {
-        $data = $this->data;
+        if(!is_array($this->data)){
+            $data = $this->data->toArray();
+        } else {
+            $data = $this->data;
+        }
         $file_name = request()->partner->id . '_sales_report_' . time();
         $cdn = $this->pdfHandler->setName($file_name)
             ->setViewFile($template)
@@ -211,7 +215,11 @@ abstract class PosReport
      */
     public function saveExcel($name = 'Sales Report')
     {
-        $data = $this->data->toArray();
+        if(!is_array($this->data)){
+            $data = $this->data->toArray();
+        } else {
+            $data = $this->data;
+        }
         $file_name = request()->partner->id . '_sales_report_' . time();
         $path = $this->excelHandler->setName($file_name)->createReport($data)->save();
         $cdn = $this->saveFileToCDN($path, $this->folder_excel, $file_name .'.csv');
