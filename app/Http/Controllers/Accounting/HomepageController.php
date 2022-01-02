@@ -214,8 +214,8 @@ class HomepageController extends Controller
         $data = [
             "daily_income" => 100,
             "monthly_income" => 1200,
-            "total_liability" => 2000,
-            "total_due"    => 500,
+            "receivable" => 2000,
+            "payable"    => 500,
             "date" => "৯ ডিসেম্বর",
             "month" => "ডিসেম্বর",
             "api_time" => Carbon::now()->toDateTimeString()
