@@ -234,7 +234,7 @@ class PaymentLinkTransaction
         } else {
             if ($this->paymentLink->isEmi()) {
 //                $this->entryAmount = $amount - $this->getFee() - $this->getInterest();
-                $this->entryAmount = $amount;
+                $this->entryAmount = $amount - $this->partnerProfit;
             } else {
                 $this->entryAmount = $amount - $this->getFee() - $this->partnerProfit;
             }
