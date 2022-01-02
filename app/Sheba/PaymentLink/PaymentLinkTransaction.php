@@ -231,7 +231,7 @@ class PaymentLinkTransaction
     {
         $amount = $this->getAmount();
         Log::debug("Entry AMount ----");
-        Log::debug([$amount, $this->getFee(), $this->getInterest(), $this->partnerProfit]);
+        Log::debug([$amount, $this->getFee(), $this->getInterest(), $this->partnerProfit, $this->real_amount]);
         if ($this->isPaidByPartner()) {
             $this->entryAmount = $amount;
         } else {
