@@ -24,7 +24,7 @@ class DigitalCollectionSetting
         return $this;
     }
 
-    public function getServiceCharge(): float
+    public function getServiceCharge()
     {
         if(isset($this->partner))
             $digitalCollection = $this->digitalCollectionSetting->where("partner_id", $this->partner->id)->first();
