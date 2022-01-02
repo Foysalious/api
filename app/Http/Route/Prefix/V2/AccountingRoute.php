@@ -38,6 +38,7 @@ class AccountingRoute
                 $api->get('cash-accounts-entries/{accountKey}', 'Accounting\\HomepageController@getEntriesByAccountKey');
                 $api->get('time-filter', 'Accounting\\HomepageController@getTimeFilters');
                 $api->get('training-video', 'Accounting\\HomepageController@getTrainingVideo');
+                $api->get('homepage-stat', 'Accounting\\HomepageController@homePageStat');
             });
             $api->group(['prefix' => 'entries'], function ($api) {
                 $api->get('/{entry_id}', 'Accounting\\EntriesController@details');

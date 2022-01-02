@@ -250,10 +250,10 @@ class PaymentLinkController extends Controller
     {
         try {
             $this->validate($request, [
-                'amount'             => 'required|numeric',
-                'customer_id'        => 'sometimes|integer|exists:pos_customers,id',
-                'emi_month'          => 'sometimes|integer|in:' . implode(',', config('emi.valid_months')),
-                'interest_paid_by'   => 'sometimes|in:' . implode(',', PaymentLinkStatics::paidByTypes()),
+                'amount' => 'required|numeric',
+                'customer_id' => 'sometimes',
+                'emi_month' => 'sometimes|integer|in:' . implode(',', config('emi.valid_months')),
+                'interest_paid_by' => 'sometimes|in:' . implode(',', PaymentLinkStatics::paidByTypes()),
                 'transaction_charge' => 'sometimes|numeric|min:' . PaymentLinkStatics::get_payment_link_commission()
             ]);
             $purpose = 'Due Collection';
@@ -263,7 +263,11 @@ class PaymentLinkController extends Controller
                 if (!count($available_methods))
                     return api_response($request, null, 404, ['message' => "No active payment method found"]);
             }
-            if ($request->filled('customer_id')) $customer = PosCustomer::find($request->customer_id);
+            if ($request->has('customer_id') && $request->customer_id) {
+                /** @var PosCustomerResolver $posCustomerResolver */
+                $posCustomerResolver = app(PosCustomerResolver::class);
+                $customer = $posCustomerResolver->setCustomerId($request->customer_id)->setPartner($request->partner)->get();
+            }
 
             $this->creator->setAmount($request->amount)
                 ->setReason($purpose)
@@ -281,7 +285,7 @@ class PaymentLinkController extends Controller
                 if (!$request->filled('emi_month')) {
                     $this->creator->sentSms();
                 }
-                return api_response($request, $payment_link, 200, ['payment_link' => $payment_link]);
+                return api_response($request, $payment_link, 200, array_merge(['payment_link' => $payment_link], $this->creator->getSuccessMessage()));
             } else {
                 return api_response($request, null, 500);
             }

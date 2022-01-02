@@ -208,4 +208,18 @@ class HomepageController extends Controller
             Carbon::createFromFormat('Y-m-d H:i:s', $date . ' 23:59:59')->timestamp :
             strtotime('tomorrow midnight') - 1;
     }
+
+    public function homePageStat(Request $request): JsonResponse
+    {
+        $data = [
+            "daily_income" => 100,
+            "monthly_income" => 1200,
+            "total_liability" => 2000,
+            "total_due"    => 500,
+            "date" => "৯ ডিসেম্বর",
+            "month" => "ডিসেম্বর",
+            "api_time" => Carbon::now()->toDateTimeString()
+        ];
+        return api_response($request, $data, 200, ['data' => $data]);
+    }
 }
