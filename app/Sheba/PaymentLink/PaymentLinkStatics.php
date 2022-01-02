@@ -2,7 +2,7 @@
 
 class  PaymentLinkStatics
 {
-    const SERVICE_CHARGE = 2;
+    const SERVICE_CHARGE = 2.0;
 
     public static function faq_webview()
     {

@@ -170,9 +170,15 @@ class PaymentLinkTransaction
     public function create()
     {
         $this->walletTransactionHandler->setModel($this->receiver);
-        $paymentLinkTransaction = $this->amountTransaction()->configurePaymentLinkCharge()->feeTransaction()->setEntryAmount();
+        $paymentLinkTransaction = $this->amountTransaction()->configureServiceCharge()->feeTransaction()->setEntryAmount();
         $this->storePaymentLinkEntry($this->amount, $this->fee, $this->interest);
         return $paymentLinkTransaction;
+    }
+
+    private function configureServiceCharge(): PaymentLinkTransaction
+    {
+        $this->linkCommission = (new DigitalCollectionSetting())->setPartner($this->receiver)->getServiceCharge();
+        return $this;
     }
 
     private function amountTransaction()
