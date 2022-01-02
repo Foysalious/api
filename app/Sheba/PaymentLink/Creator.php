@@ -392,7 +392,7 @@ class Creator
         if ($this->paidBy != 'partner') {
             if ($this->emiMonth) {
                 $data = Calculations::getMonthData($amount, $this->emiMonth, false, $this->transactionFeePercentage);
-                $this->setInterest($data['total_interest'])->setBankTransactionCharge($data['bank_transaction_fee'] + $this->tax)->setRealAmount($data['total_amount'])->setAmount($data['total_amount'] + $this->tax)->setPartnerProfit($data['partner_profit']);
+                $this->setInterest($data['total_interest'])->setBankTransactionCharge($data['bank_transaction_fee'] + $this->tax)->setRealAmount($data['total_amount'] - $data['partner_profit'])->setAmount($data['total_amount'] + $this->tax)->setPartnerProfit($data['partner_profit']);
             } else {
                 $this->setAmount($amount + round($amount * $this->transactionFeePercentage / 100, 2) + $this->tax)
                     ->setPartnerProfit($this->amount - ($amount + round($amount * $this->transactionFeePercentageConfig / 100, 2) + $this->tax))
