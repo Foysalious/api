@@ -220,7 +220,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
                 'is_paid_by_customer' => (bool)$this->transaction->isPaidByCustomer(),
             ];
             Log::debug("----------- PAYMENT LINK -----------");
-            Log::debug($payment_data['amount'], $this->transaction);
+            Log::debug([$payment_data, $this->transaction]);
             /** @var PosClientRepository $posOrderRepo */
             $posOrderRepo = app(PosClientRepository::class);
             $posOrderRepo->setPartnerId($partner->id)->setOrderId($this->target->id)->addOnlinePayment($payment_data);
