@@ -100,7 +100,8 @@ class AccountingDueTrackerRepository extends BaseRepository
      */
     public function getDuelistBalance($request): array
     {
-        $url = "api/due-list/balance";
+        $url = "api/due-list/balance/?";
+        $url=$this->updateRequestParam($request, $url);
         $result = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
         return [
             'total_transactions' => $result['total_transactions'],
@@ -157,9 +158,12 @@ class AccountingDueTrackerRepository extends BaseRepository
      * @throws InvalidPartnerPosCustomer
      * @throws \Exception
      */
-    public function dueListBalanceByCustomer($customerId): array
+    public function dueListBalanceByCustomer($customerId,$request=null): array
     {
-        $url = "api/due-list/" . $customerId . "/balance";
+        $url = "api/due-list/" . $customerId . "/balance/?";
+        if ($request){
+            $url=$this->updateRequestParam($request, $url);
+        }
         $result = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
         $customer = [];
 
