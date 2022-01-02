@@ -54,7 +54,7 @@ class AccountingDueTrackerRepository extends BaseRepository
         }
         $url = $with_update ? "api/entries/" . $request->entry_id : "api/entries/";
         Log::debug(['data for accounting', $payload]);
-        $data = $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
+        $data = $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $payload);
         Log::debug(['data from accounting', $data]);
         // if type deposit then auto reconcile happen. for that we have to reconcile pos order.
         if ($type == EntryTypes::DEPOSIT && !$with_update) {
