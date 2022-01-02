@@ -141,7 +141,7 @@ class TopUpController extends Controller
             try {
                 $this->tokenManager->setPartner($agent)->validate($request->topup_token);
             } catch (InvalidTopUpTokenException $e) {
-                logError($e);
+                // logError($e);
             }
         } else return api_response($request, null, 400);
 

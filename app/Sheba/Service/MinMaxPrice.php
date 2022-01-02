@@ -30,7 +30,7 @@ class MinMaxPrice
     private function calculate($condition)
     {
         if ($this->service->isFixed()) return $this->locationService ? (double)$this->locationService->prices : null;
-        $prices = (array)json_decode($this->locationService->prices);
+        $prices = $this->locationService ? (array)json_decode($this->locationService->prices) : null;
         if(empty($prices)) return null;
         return $condition == 'min' ? (double)min($prices) : (double)max($prices);
     }

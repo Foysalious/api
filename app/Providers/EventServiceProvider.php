@@ -10,6 +10,8 @@ use App\Sheba\PosOrderService\PosSetting\Listeners\Created as PosSettingCreatedL
 use App\Sheba\PosOrderService\PosSetting\Events\Updated as PosSettingUpdatedEvent;
 use App\Sheba\PosOrderService\PosSetting\Listeners\Updated as PosSettingUpdatedListener;
 
+use App\Sheba\UserMigration\Events\StatusUpdated as UserMigrationStatusUpdatedByHookEvent;
+use App\Sheba\UserMigration\Listeners\StatusUpdatedListener as UserMigrationStatusUpdatedByHookListener;
 use App\Sheba\WebstoreBanner\Events\WebstoreBannerUpdate;
 use App\Sheba\WebstoreBanner\Listeners\WebstoreBannerListener;
 
@@ -71,6 +73,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         PosSettingUpdatedEvent::class => [
             PosSettingUpdatedListener::class
-        ]
+        ],
+        UserMigrationStatusUpdatedByHookEvent::class => [
+            UserMigrationStatusUpdatedByHookListener::class
+        ],
     ];
 }
