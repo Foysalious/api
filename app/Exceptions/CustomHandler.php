@@ -19,7 +19,8 @@ class CustomHandler extends DingoHandler
      */
     protected $dontReport = [
         AuthorizationException::class,
-        HttpException::class
+        HttpException::class,
+        AllarKosomWillNotReportException::class
     ];
 
     /**

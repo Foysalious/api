@@ -1,9 +1,9 @@
 <?php namespace Sheba\TopUp\Exception;
 
-use App\Exceptions\DoNotReportException;
+use App\Exceptions\AllarKosomWillNotReportException;
 use Throwable;
 
-class InvalidTopUpTokenException extends DoNotReportException
+class InvalidTopUpTokenException extends AllarKosomWillNotReportException
 {
     public function __construct($message = "Not a valid token", $code = 406, Throwable $previous = null)
     {
