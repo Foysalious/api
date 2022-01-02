@@ -1,10 +1,9 @@
-<?php namespace Tests\Mocks;
+<?php
 
-use Sheba\Sms\SmsVendor;
+namespace Tests\Mocks;
 
-class MockSmsVendor implements SmsVendor
+class MockSmsVendor
 {
-
     public function send($mobile, $msg)
     {
         // TODO: Implement send() method.

@@ -1,4 +1,6 @@
-<?php namespace App\Console;
+<?php
+
+namespace App\Console;
 
 use App\Console\Commands\GeneratePayslip;
 use App\Console\Commands\ProductUpload;
@@ -9,6 +11,7 @@ use App\Console\Commands\Payslip;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use Sheba\Algolia\AlgoliaSync;
+use Tests\Console\Commands\GenerateTestAuthorList;
 
 class Kernel extends ConsoleKernel
 {
@@ -24,18 +27,19 @@ class Kernel extends ConsoleKernel
         TopUpTestCommand::class,
         Payslip::class,
         TestCommand::class,
-        GeneratePayslip::class
+        GeneratePayslip::class,
+        GenerateTestAuthorList::class,
     ];
 
     /**
      * Define the application's command schedule.
      *
-     * @param Schedule $schedule
+     * @param  Schedule  $schedule
      * @return void
      */
     protected function schedule(Schedule $schedule)
     {
-        #$schedule->command('product-upload-csv')->dailyAt('00:00');
+        # $schedule->command('product-upload-csv')->dailyAt('00:00');
         $schedule->command('sheba:generate-payslips')->dailyAt('00:20');
     }
 }

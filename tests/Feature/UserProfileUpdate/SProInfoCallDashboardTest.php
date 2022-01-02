@@ -18,15 +18,13 @@ use Sheba\Dal\ResourceTransaction\Model;
 use Sheba\Dal\Service\Service;
 use Sheba\Services\Type as ServiceType;
 use Tests\Feature\FeatureTestCase;
+use Throwable;
 
 class SProInfoCallDashboardTest extends FeatureTestCase
 {
     private $infocall;
-    private $year;
-    private $month;
     private $infocall_Reject_reason;
     private $infocall_Status_log;
-    private $today;
 
     public function setUp(): void
     {
@@ -43,9 +41,11 @@ class SProInfoCallDashboardTest extends FeatureTestCase
         $this->logIn();
     }
 
+    /**
+     * @throws Throwable
+     */
     public function testInfoCallDashboardAPIForServiceRequest()
     {
-        //arrange
         $year = Carbon::now()->year;
 
         $month = Carbon::now()->month;
@@ -56,14 +56,12 @@ class SProInfoCallDashboardTest extends FeatureTestCase
             'portal_name'     => 'resource-app',
         ]);
 
-        //act
         $response = $this->get('/v2/resources/info-call/dashboard?year='.$year.'&month='.$month, [
             'Authorization' => "Bearer $this->token",
         ]);
 
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(200, $data["code"]);
         $this->assertEquals('Successful', $data["message"]);
         $this->assertEquals(1, $data["service_request_dashboard"]["total_service_requests"]);
@@ -74,9 +72,11 @@ class SProInfoCallDashboardTest extends FeatureTestCase
         $this->assertEquals(0, $data["service_request_dashboard"]["total_rewards"]);
     }
 
+    /**
+     * @throws Throwable
+     */
     public function testInfoCallDashboardAPIForCancelledOrder()
     {
-        //arrange
         $year = Carbon::now()->year;
 
         $month = Carbon::now()->month;
@@ -90,14 +90,12 @@ class SProInfoCallDashboardTest extends FeatureTestCase
 
         $this->infocall_Reject_reason = InfoCallRejectReason::factory()->create();
 
-        //act
         $response = $this->get('/v2/resources/info-call/dashboard?year='.$year.'&month='.$month, [
             'Authorization' => "Bearer $this->token",
         ]);
 
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(200, $data["code"]);
         $this->assertEquals('Successful', $data["message"]);
         $this->assertEquals(1, $data["service_request_dashboard"]["total_service_requests"]);
@@ -108,9 +106,11 @@ class SProInfoCallDashboardTest extends FeatureTestCase
         $this->assertEquals(0, $data["service_request_dashboard"]["total_rewards"]);
     }
 
+    /**
+     * @throws Throwable
+     */
     public function testInfoCallDashboardAPIForTotalOrder()
     {
-        //arrange
         $year = Carbon::now()->year;
 
         $month = Carbon::now()->month;
@@ -189,14 +189,12 @@ class SProInfoCallDashboardTest extends FeatureTestCase
             'job_id' => $this->job->id,
         ]);
 
-        //act
         $response = $this->get('/v2/resources/info-call/dashboard?year='.$year.'&month='.$month, [
             'Authorization' => "Bearer $this->token",
         ]);
 
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(200, $data["code"]);
         $this->assertEquals('Successful', $data["message"]);
         $this->assertEquals(1, $data["service_request_dashboard"]["total_service_requests"]);
@@ -207,9 +205,11 @@ class SProInfoCallDashboardTest extends FeatureTestCase
         $this->assertEquals(0, $data["service_request_dashboard"]["total_rewards"]);
     }
 
+    /**
+     * @throws Throwable
+     */
     public function testInfoCallDashboardAPIForCompletedOrder()
     {
-        //arrange
         $year = Carbon::now()->year;
 
         $month = Carbon::now()->month;
@@ -292,14 +292,12 @@ class SProInfoCallDashboardTest extends FeatureTestCase
             'created_at' => $today,
         ]);
 
-        //act
         $response = $this->get('/v2/resources/info-call/dashboard?year='.$year.'&month='.$month, [
             'Authorization' => "Bearer $this->token",
         ]);
 
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(200, $data["code"]);
         $this->assertEquals('Successful', $data["message"]);
         $this->assertEquals(1, $data["service_request_dashboard"]["total_service_requests"]);
@@ -310,9 +308,11 @@ class SProInfoCallDashboardTest extends FeatureTestCase
         $this->assertEquals(1000, $data["service_request_dashboard"]["total_rewards"]);
     }
 
+    /**
+     * @throws Throwable
+     */
     public function testInfoCallDashboardAPIWithoutMonthAndYearParameter()
     {
-        //arrange
         $today = Carbon::now()->toDateTimeString();
 
         $this->infocall = InfoCall::factory()->create([
@@ -321,15 +321,12 @@ class SProInfoCallDashboardTest extends FeatureTestCase
             'portal_name'     => 'resource-app',
         ]);
 
-
-        //act
         $response = $this->get('/v2/resources/info-call/dashboard', [
             'Authorization' => "Bearer $this->token",
         ]);
 
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(200, $data["code"]);
         $this->assertEquals('Successful', $data["message"]);
         $this->assertEquals(1, $data["service_request_dashboard"]["total_service_requests"]);
@@ -340,9 +337,11 @@ class SProInfoCallDashboardTest extends FeatureTestCase
         $this->assertEquals(0, $data["service_request_dashboard"]["total_rewards"]);
     }
 
+    /**
+     * @throws Throwable
+     */
     public function testInfoCallDashboardAPIWithInvalidMonth13()
     {
-        //arrange
         $year = Carbon::now()->year;
 
         $this->infocall = InfoCall::factory()->create([
@@ -351,21 +350,21 @@ class SProInfoCallDashboardTest extends FeatureTestCase
             'portal_name'     => 'resource-app',
         ]);
 
-        //act
         $response = $this->get('/v2/resources/info-call/dashboard?year='.$year.'&month=13', [
             'Authorization' => "Bearer $this->token",
         ]);
 
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(400, $data["code"]);
         $this->assertEquals('The month must be between 1 and 12.', $data["message"]);
     }
 
+    /**
+     * @throws Throwable
+     */
     public function testInfoCallDashboardAPIWithInvalidMonth0()
     {
-        //arrange
         $year = Carbon::now()->year;
 
         $this->infocall = InfoCall::factory()->create([
@@ -374,21 +373,21 @@ class SProInfoCallDashboardTest extends FeatureTestCase
             'portal_name'     => 'resource-app',
         ]);
 
-        //act
         $response = $this->get('/v2/resources/info-call/dashboard?year='.$year.'&month=0', [
             'Authorization' => "Bearer $this->token",
         ]);
 
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(400, $data["code"]);
         $this->assertEquals('The month must be between 1 and 12.', $data["message"]);
     }
 
+    /**
+     * @throws Throwable
+     */
     public function testInfoCallDashboardAPIWithInvalidMonthString()
     {
-        //arrange
         $year = Carbon::now()->year;
 
         $this->infocall = InfoCall::factory()->create([
@@ -397,21 +396,21 @@ class SProInfoCallDashboardTest extends FeatureTestCase
             'portal_name'     => 'resource-app',
         ]);
 
-        //act
         $response = $this->get('/v2/resources/info-call/dashboard?year='.$year.'&month=abc', [
             'Authorization' => "Bearer $this->token",
         ]);
 
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(400, $data["code"]);
         $this->assertEquals('The month must be an integer.', $data["message"]);
     }
 
+    /**
+     * @throws Throwable
+     */
     public function testInfoCallDashboardAPIWithInvalidYearString()
     {
-        //arrange
         $month = Carbon::now()->month;
 
         $this->infocall = InfoCall::factory()->create([
@@ -420,42 +419,42 @@ class SProInfoCallDashboardTest extends FeatureTestCase
             'portal_name'     => 'resource-app',
         ]);
 
-        //act
         $response = $this->get('/v2/resources/info-call/dashboard?year=abc&month='.$month, [
             'Authorization' => "Bearer $this->token",
         ]);
 
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(400, $data["code"]);
         $this->assertEquals('The year must be an integer.', $data["message"]);
     }
 
+    /**
+     * @throws Throwable
+     */
     public function testInfoCallDashboardAPIWithoutMonthAndYearValue()
     {
-        //arrange
         $this->infocall = InfoCall::factory()->create([
             'created_by'      => $this->resource->id,
             'created_by_type' => get_class($this->resource),
             'portal_name'     => 'resource-app',
         ]);
 
-        //act
         $response = $this->get('/v2/resources/info-call/dashboard?year=&month=', [
             'Authorization' => "Bearer $this->token",
         ]);
 
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(400, $data["code"]);
         $this->assertEquals('The month field is required.The year field is required.', $data["message"]);
     }
 
+    /**
+     * @throws Throwable
+     */
     public function testInfoCallDashboardAPIWithOnlyMonthParameter()
     {
-        //arrange
         $month = Carbon::now()->month;
 
         $this->infocall = InfoCall::factory()->create([
@@ -464,14 +463,12 @@ class SProInfoCallDashboardTest extends FeatureTestCase
             'portal_name'     => 'resource-app',
         ]);
 
-        //act
         $response = $this->get('/v2/resources/info-call/dashboard?month='.$month, [
             'Authorization' => "Bearer $this->token",
         ]);
 
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(200, $data["code"]);
         $this->assertEquals('Successful', $data["message"]);
         $this->assertEquals(1, $data["service_request_dashboard"]["total_service_requests"]);
@@ -482,9 +479,11 @@ class SProInfoCallDashboardTest extends FeatureTestCase
         $this->assertEquals(0, $data["service_request_dashboard"]["total_rewards"]);
     }
 
+    /**
+     * @throws Throwable
+     */
     public function testInfoCallDashboardAPIWithOnlyYearParameter()
     {
-        //arrange
         $year = Carbon::now()->year;
 
         $this->infocall = InfoCall::factory()->create([
@@ -493,14 +492,12 @@ class SProInfoCallDashboardTest extends FeatureTestCase
             'portal_name'     => 'resource-app',
         ]);
 
-        //act
         $response = $this->get('/v2/resources/info-call/dashboard?year='.$year, [
             'Authorization' => "Bearer $this->token",
         ]);
 
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(200, $data["code"]);
         $this->assertEquals('Successful', $data["message"]);
         $this->assertEquals(1, $data["service_request_dashboard"]["total_service_requests"]);

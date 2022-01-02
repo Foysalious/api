@@ -20,8 +20,6 @@ use Tests\Mocks\MockSmsVendor;
 
 class PurchaseSubscriptionApiTest extends FeatureTestCase
 {
-
-
     public function setUp(): void
     {
         parent::setUp();
