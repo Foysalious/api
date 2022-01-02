@@ -90,8 +90,7 @@ class Creator
         $this->partnerProfit                  = 0;
         $this->transactionFeePercentage       = PaymentLinkStatics::get_payment_link_commission();
         $this->transactionFeePercentageConfig = PaymentLinkStatics::get_payment_link_commission();
-//        $this->tax                            = PaymentLinkStatics::get_payment_link_tax();
-        $this->tax                            = 0;
+        $this->tax                            = PaymentLinkStatics::get_payment_link_tax();
     }
 
     public function setAmount($amount)
