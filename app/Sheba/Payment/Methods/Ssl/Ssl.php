@@ -2,9 +2,11 @@
 
 use App\Models\Payable;
 use App\Models\Payment;
+use Sheba\Payment\Exceptions\InvalidConfigurationException;
 use Sheba\Payment\Methods\PaymentMethod;
 use Sheba\Payment\Methods\Ssl\Response\InitResponse;
 use Sheba\Payment\Methods\Ssl\Response\ValidationResponse;
+use Sheba\Payment\Methods\Ssl\Stores\DynamicSslStoreConfiguration;
 use Sheba\Payment\Methods\Ssl\Stores\SslStore;
 use Sheba\Payment\Statuses;
 use DB;
@@ -23,6 +25,9 @@ class Ssl extends PaymentMethod
     CONST NAME        = 'ssl';
     CONST NAME_DONATE = 'ssl_donation';
     private $isDonate = false;
+
+    /*** @var DynamicSslStoreConfiguration*/
+    private $configuration;
 
     /** @var TPProxyClient */
     private $tpClient;
@@ -46,6 +51,21 @@ class Ssl extends PaymentMethod
     {
         $this->isDonate = true;
         return $this;
+    }
+
+    /**
+     * @param $configuration
+     * @return bool
+     * @throws InvalidConfigurationException
+     */
+    public function testInit($configuration): bool
+    {
+        $this->configuration = (new DynamicSslStoreConfiguration($configuration));
+        $response = $this->getTestSslSession();
+        $init_response = new InitResponse();
+        $init_response->setResponse($response);
+        if($init_response->hasSuccess()) return true;
+        throw new InvalidConfigurationException("Invalid credentials! Please try again.");
     }
 
     /**
@@ -266,5 +286,25 @@ class Ssl extends PaymentMethod
     public function getMethodName()
     {
         return $this->isDonate ? self::NAME_DONATE : self::NAME;
+    }
+
+    public function getTestSslSession()
+    {
+        $data                 = array();
+        $data['store_id']     = $this->configuration->getStoreId();
+        $data['store_passwd'] = $this->configuration->getPassword();
+        $data['total_amount'] = 10;
+        $data['currency']     = "BDT";
+        $data['success_url']  = $this->successUrl;
+        $data['fail_url']     = $this->failUrl;
+        $data['cancel_url']   = $this->cancelUrl;
+        $data['tran_id']      = "test_transaction_id_".time();
+        $data['cus_name']     = "test_customer_name";
+        $data['cus_email']    = "test@email.com";
+        $data['cus_phone']    = "01774567890";
+
+        $request = (new TPRequest())->setUrl($this->configuration->getSessionUrl())
+            ->setMethod(TPRequest::METHOD_POST)->setInput($data);
+        return $this->tpClient->call($request);
     }
 }
