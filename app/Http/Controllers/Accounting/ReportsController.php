@@ -36,6 +36,16 @@ class ReportsController extends Controller
                 $name = 'Customer Wise Sales Report';
                 $template = 'pos_customer_wise_sales';
                 return $this->posReportRepository->getCustomerWise()->prepareQuery($request, $request->partner)->prepareData(false)->downloadPdf($name, $template);
+            } else if ($request->has('save_excel')) {
+                $name = 'Customer Wise Sales Report';
+                $link = $this->posReportRepository->getCustomerWise()->prepareQuery($request, $request->partner)->prepareData(false)->saveExcel($name);
+                return api_response($request, $link, 200, ['link' => $link]);
+
+            } elseif ($request->has('save_pdf')) {
+                $name = 'Customer Wise Sales Report';
+                $template = 'pos_customer_wise_sales';
+                $link = $this->posReportRepository->getCustomerWise()->prepareQuery($request, $request->partner)->prepareData(false)->savePdf($name, $template);
+                return api_response($request, $link, 200, ['link' => $link]);
             } else {
                 $data = $this->posReportRepository->getCustomerWise()->prepareQuery($request, $request->partner)->prepareData()->getData();
                 return api_response($request, $data, 200, ['result' => $data]);
@@ -44,7 +54,7 @@ class ReportsController extends Controller
             $errorMessage = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, null, 400, ['message' => $errorMessage]);
         } catch (\Throwable $e) {
-            logError($e);
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
 
@@ -60,7 +70,19 @@ class ReportsController extends Controller
                 $name = 'Product Wise Sales Report';
                 $template = 'pos_product_wise_sales';
                 return $this->posReportRepository->getProductWise()->prepareQuery($request, $request->partner)->prepareData(false)->downloadPdf($name, $template);
-            } else {
+            } elseif ($request->has('save_excel')) {
+                $name = 'Product Wise Sales Report';
+                $template = 'pos_product_wise_sales';
+                $link = $this->posReportRepository->getProductWise()->prepareQuery($request, $request->partner)->prepareData(false)->saveExcel($name, $template);
+                return api_response($request, $link, 200, ['link' => $link]);
+            }
+            elseif ($request->has('save_pdf')) {
+                $name = 'Product Wise Sales Report';
+                $template = 'pos_product_wise_sales';
+                $link = $this->posReportRepository->getProductWise()->prepareQuery($request, $request->partner)->prepareData(false)->savePdf($name, $template);
+                return api_response($request, $link, 200, ['link' => $link]);
+            }
+            else {
                 $data = $this->posReportRepository->getProductWise()->prepareQuery($request, $request->partner)->prepareData()->getData();
                 return api_response($request, $data, 200, ['result' => $data]);
             }
