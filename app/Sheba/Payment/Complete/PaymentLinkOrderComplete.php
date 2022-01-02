@@ -205,6 +205,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
 
     private function clearTarget()
     {
+        Log::debug("----------- CLEAR TARGET-----------");
         $this->target = $this->paymentLink->getTarget();
         if ($this->target instanceof PosOrderObject) {
             $paymentMethodDetail = (new PaymentMethodDetails($this->payment->paymentDetails->last()->method))->toArray();
@@ -219,6 +220,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
                 'interest'            => $this->transaction->isPaidByPartner() ? $this->transaction->getInterest() : 0,
                 'is_paid_by_customer' => (bool)$this->transaction->isPaidByCustomer(),
             ];
+            Log::debug("----------- PAYMENT LINK -----------");
             Log::debug($payment_data, $this->transaction);
             /** @var PosClientRepository $posOrderRepo */
             $posOrderRepo = app(PosClientRepository::class);
