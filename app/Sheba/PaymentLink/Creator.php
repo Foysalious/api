@@ -1,5 +1,6 @@
 <?php namespace Sheba\PaymentLink;
 
+use App\Models\Partner;
 use App\Models\PosCustomer;
 use App\Sheba\Bitly\BitlyLinkShort;
 use Sheba\Sms\BusinessType;
@@ -385,6 +386,8 @@ class Creator
 
     public function calculate()
     {
+        $partner = Partner::find($this->userId);
+        $this->transactionFeePercentageConfig = (new DigitalCollectionSetting())->setPartner($partner)->getServiceCharge();
         $amount = $this->amount;
         if ($this->paidBy != 'partner') {
             if ($this->emiMonth) {

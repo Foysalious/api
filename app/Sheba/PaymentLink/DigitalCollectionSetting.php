@@ -26,7 +26,8 @@ class DigitalCollectionSetting
 
     public function getServiceCharge(): float
     {
-        $digitalCollection = $this->digitalCollectionSetting->where("partner_id", $this->partner->id)->first();
+        if(isset($this->partner))
+            $digitalCollection = $this->digitalCollectionSetting->where("partner_id", $this->partner->id)->first();
         return isset($digitalCollection) ? $digitalCollection->service_charge : PaymentLinkStatics::SERVICE_CHARGE;
     }
 }
