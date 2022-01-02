@@ -219,6 +219,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
                 'interest'            => $this->transaction->isPaidByPartner() ? $this->transaction->getInterest() : 0,
                 'is_paid_by_customer' => (bool)$this->transaction->isPaidByCustomer(),
             ];
+            Log::debug($payment_data, $this->transaction);
             /** @var PosClientRepository $posOrderRepo */
             $posOrderRepo = app(PosClientRepository::class);
             $posOrderRepo->setPartnerId($partner->id)->setOrderId($this->target->id)->addOnlinePayment($payment_data);
