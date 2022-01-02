@@ -18,7 +18,7 @@ trait UserMigrationCheckMiddleware
         }
         $isMigrationRunning = Redis::get("user-migration:".$partner->id);
         if ($isMigrationRunning) {
-            if (str_contains(request()->route()->getUri(), 'employee')) {
+            if (str_contains(request()->route()->uri(), 'employee')) {
                 return true;
             }
             $routes = config('user_migration_whitelist.routes');
