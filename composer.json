@@ -58,6 +58,7 @@
     "brianium/paratest": "^6.4",
     "facade/ignition": "^2.3.6",
     "fakerphp/faker": "^1.9.1",
+    "haydenpierce/class-finder": "^0.4.3",
     "itsgoingd/clockwork": "5.0.*",
     "johnkary/phpunit-speedtrap": "^4.0",
     "mockery/mockery": "1.4.*",
