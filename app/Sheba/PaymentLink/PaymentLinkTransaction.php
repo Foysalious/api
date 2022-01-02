@@ -223,6 +223,8 @@ class PaymentLinkTransaction
     private function setEntryAmount()
     {
         $amount = $this->getAmount();
+        Log::debug("Entry AMount ----");
+        Log::debug([$amount, $this->getFee(), $this->partnerProfit]);
         if ($this->isPaidByPartner()) {
             $this->entryAmount = $amount;
         } else {

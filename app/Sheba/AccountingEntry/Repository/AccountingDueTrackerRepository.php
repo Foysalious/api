@@ -8,6 +8,7 @@ use App\Sheba\AccountingEntry\Constants\UserType;
 use App\Sheba\Pos\Order\PosOrderObject;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\POSOrder\SalesChannels;
@@ -47,12 +48,14 @@ class AccountingDueTrackerRepository extends BaseRepository
         $this->setModifier($request->partner);
         $posOrder = ($type == EntryTypes::POS) ? $this->posOrderByPartnerWiseOrderId($request->partner, $request->partner_wise_order_id) : null;
         $request->merge(['source_id' =>  $posOrder ? $posOrder->id : null]);
-        $data = $this->createEntryData($request, $type, $with_update);
+        $payload = $this->createEntryData($request, $type, $with_update);
         if (!$request->customer_id) {
             throw new PosCustomerNotFoundException('Sorry! Cannot create entry without customer', 404);
         }
         $url = $with_update ? "api/entries/" . $request->entry_id : "api/entries/";
-        $data = $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
+        Log::debug(['data for accounting', $payload]);
+        $data = $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $payload);
+        Log::debug(['data from accounting', $data]);
         // if type deposit then auto reconcile happen. for that we have to reconcile pos order.
         if ($type == EntryTypes::DEPOSIT && !$with_update) {
             foreach ($data as $datum) {
