@@ -59,14 +59,12 @@ class PosOrder  extends BaseModel
         $this->originalTotal = round($this->totalBill - $this->appliedDiscount, 2);
         if (isset($this->emi_month) && !$this->interest) {
             $data = Calculations::getMonthData($this->originalTotal, (int)$this->emi_month, false);
-            Log::debug(["TAXXXXXXX" => $data, "total" => $this->originalTotal]);
             $this->interest = $data['total_interest'];
             $this->bank_transaction_charge = $data['bank_transaction_fee'];
             $this->update(['interest' => $this->interest, 'bank_transaction_charge' => $this->bank_transaction_charge]);
             $this->netBill = $this->originalTotal;
-        } else {
-            $this->netBill = $this->originalTotal + round((double)$this->interest, 2) + (double)round($this->bank_transaction_charge, 2);
         }
+        $this->netBill = $this->originalTotal + round((double)$this->interest, 2) + (double)round($this->bank_transaction_charge, 2);
         if ($this->delivery_charge && !in_array($this->status, [POSOrderStatuses::CANCELLED, POSOrderStatuses::DECLINED])) $this->netBill += (double)round($this->delivery_charge, 2);
         $this->_calculatePaidAmount();
         $this->paid = round($this->paid ?: 0, 2);

@@ -330,7 +330,6 @@ class Creator
         $entry = app(AutomaticEntryRepository::class);
         $order = $order->calculate();
         $amount = (double)$order->getNetBill();
-        Log::debug(["POS" => $amount]);
         $profile = $order->customer ? $order->customer->profile : new Profile();
         $entry->setPartner($this->partner)
             ->setParty($profile)
