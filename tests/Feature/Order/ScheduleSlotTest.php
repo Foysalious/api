@@ -4,6 +4,9 @@ use App\Models\ScheduleSlot;
 use Tests\Feature\FeatureTestCase;
 use Carbon\Carbon;
 
+/**
+ * @author Mahanaz Tabassum <mahanaz.tabassum@sheba.xyz>
+ */
 class ScheduleSlotTest extends FeatureTestCase
 {
     public function setUp(): void

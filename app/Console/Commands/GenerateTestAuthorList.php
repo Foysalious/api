@@ -1,13 +1,17 @@
 <?php
 
-namespace Tests\Console\Commands;
+namespace App\Console\Commands;
 
 use Exception;
 use HaydenPierce\ClassFinder\ClassFinder;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
+use Jasny\PhpdocParser\PhpdocParser;
+use Jasny\PhpdocParser\Set\PhpDocumentor;
+use Jasny\PhpdocParser\Tag\FlagTag;
 use ReflectionClass;
-use SplFileObject;
+
+use function base_path;
 
 class GenerateTestAuthorList extends Command
 {
@@ -45,16 +49,37 @@ class GenerateTestAuthorList extends Command
     {
         $classes = ClassFinder::getClassesInNamespace('Tests', ClassFinder::RECURSIVE_MODE);
         $test_case_author = [];
+        $custom_tags = [new FlagTag('important')];
+        $tags = PhpDocumentor::tags()->with($custom_tags);
+        $parser = new PHPDocParser($tags);
+
         foreach ($classes as $class) {
             $class = new ReflectionClass($class);
-            $class_file = new SplFileObject($class->getFileName());
-            dump($class_file);
+
+            $doc = $class->getDocComment();
+
+            $annotations = $parser->parse($doc);
+            $author = $annotations['author'];
+            $test_case_author[$class->getName()] = [
+                'author'  => $author['name'],
+                'email'   => $author['email'],
+            ];
+
+            /**
+             * GET DOC BLOCK ON FUNCTION LEVEL
+             *
+             * $class->getMethod('refreshTestDatabase')->getDocComment();
+             */
+
+            /**
+             * MANUALLY GIT LOG FOR AUTHORS
+             *
+             * $class_file = new SplFileObject($class->getFileName());
             foreach ($class_file as $line => $content) {
                 if ($this->isFunctionMatched($content)) {
                     $git_logs = 'git log --pretty=short -u -L '.$line.','.$line.':'.$class->getFileName().' | grep  "^Author" | sort -u';
                     $commit_hash = trim(exec($git_logs));
                     $name_with_email = explode(": ", $commit_hash);
-                    dump($commit_hash, $name_with_email);
                     [$name, $email] = explode("<", $name_with_email[1]);
                     $name = trim($name);
                     $email = str_replace(">", "", $email);
@@ -66,7 +91,7 @@ class GenerateTestAuthorList extends Command
                         'email'   => $email,
                     ];
                 }
-            }
+            }*/
         }
         $test_case_author = json_encode($test_case_author, JSON_PRETTY_PRINT);
         File::put(base_path('results/test_case_author.json'), $test_case_author);

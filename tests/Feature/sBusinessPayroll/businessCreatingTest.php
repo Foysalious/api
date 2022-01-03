@@ -7,6 +7,9 @@ use App\Models\Profile;
 use Illuminate\Foundation\Testing\WithFaker;
 use Tests\Feature\FeatureTestCase;
 
+/**
+ * @author Nawshin Tabassum <nawshin.tabassum@sheba.xyz>
+ */
 class businessCreatingTest extends FeatureTestCase
 {
 

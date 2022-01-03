@@ -8,6 +8,9 @@ use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\Feature\FeatureTestCase;
 
+/**
+ * @author Zubayer alam <zubayer@sheba.xyz>
+ */
 class DueDepositApiTest extends AccountingFeatureTest
 {
     public function test_entry_type_due()

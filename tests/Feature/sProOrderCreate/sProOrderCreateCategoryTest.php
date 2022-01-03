@@ -11,6 +11,9 @@ use Sheba\Dal\Service\Service;
 use Sheba\Services\Type as ServiceType;
 use Tests\Feature\FeatureTestCase;
 
+/**
+ * @author Dolon Banik <dolon@sheba.xyz>
+ */
 class sProOrderCreateCategoryTest extends FeatureTestCase
 {
     protected $categoryPartner;

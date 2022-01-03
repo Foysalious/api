@@ -17,6 +17,9 @@ use Tests\Mocks\MockExpenseClient;
 use Tests\Mocks\MockNotificationRepository;
 use Tests\Mocks\MockSmsVendor;
 
+/**
+ * @author Mahanaz Tabassum <mahanaz.tabassum@sheba.xyz>
+ */
 
 class PurchaseSubscriptionApiTest extends FeatureTestCase
 {

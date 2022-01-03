@@ -5,6 +5,9 @@ namespace Tests\Feature\sProOrderCreate;
 use Sheba\Dal\PartnerLocation\PartnerLocation;
 use Tests\Feature\FeatureTestCase;
 
+/**
+ * @author Dolon Banik <dolon@sheba.xyz>
+ */
 class sProOrderCreateLocationTest extends FeatureTestCase
 {
     private $partnerLocation;

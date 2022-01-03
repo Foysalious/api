@@ -7,6 +7,9 @@ use Sheba\Dal\Category\Category;
 use Sheba\Dal\CategoryLocation\CategoryLocation;
 use Tests\Feature\FeatureTestCase;
 
+/**
+ * @author Dolon Banik <dolon@sheba.xyz>
+ */
 class sProSubCategoryTest extends FeatureTestCase
 {
     protected $secondaryCategory;

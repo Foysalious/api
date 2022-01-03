@@ -6,6 +6,9 @@ use Closure;
 use Exception;
 use Tests\TestCase;
 
+/**
+ * @author Shafiqul Islam <shafiqul@sheba.xyz>
+ */
 class UnitTestCase extends TestCase
 {
     protected function shouldNotThrowException(Closure $closure)

@@ -12,6 +12,9 @@ use Sheba\Payment\Adapters\Payable\TransportTicketPurchaseAdapter;
 use Sheba\Payment\Adapters\Payable\UtilityOrderAdapter;
 use Tests\Unit\UnitTestCase;
 
+/**
+ * @author Shafiqul Islam <shafiqul@sheba.xyz>
+ */
 class Adapters extends UnitTestCase
 {
     protected $database;

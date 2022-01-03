@@ -5,6 +5,9 @@ namespace Tests\Feature\Locations;
 use App\Models\Location;
 use Tests\Feature\FeatureTestCase;
 
+/**
+ * @author Mahanaz Tabassum <mahanaz.tabassum@sheba.xyz>
+ */
 class LocationTest extends FeatureTestCase
 {
     public function testPublishedLocationCountMatches()

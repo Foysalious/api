@@ -20,6 +20,9 @@ use Sheba\Dal\Service\Service;
 use Sheba\Services\Type as ServiceType;
 use Tests\Feature\FeatureTestCase;
 
+/**
+ * @author Mahanaz Tabassum <mahanaz.tabassum@sheba.xyz>
+ */
 class NewOrderListTest extends FeatureTestCase
 {
     public function setUp(): void

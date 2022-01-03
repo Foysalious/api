@@ -7,6 +7,9 @@ use Sheba\Cache\CacheAside;
 use Sheba\Cache\Location\LocationCacheRequest;
 use Tests\Feature\FeatureTestCase;
 
+/**
+ * @author Mahanaz Tabassum <mahanaz.tabassum@sheba.xyz>
+ */
 class V3LocationTest extends FeatureTestCase
 {
     public function testResponseReturnsTwoCities()

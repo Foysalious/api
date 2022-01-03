@@ -11,6 +11,9 @@ use Sheba\Dal\LocationService\LocationService;
 use Sheba\Dal\Service\Service;
 use Tests\Feature\FeatureTestCase;
 
+/**
+ * @author Mahanaz Tabassum <mahanaz.tabassum@sheba.xyz>
+ */
 class ServiceLocationTest extends featureTestCase
 {
     protected $location;

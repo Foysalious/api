@@ -60,6 +60,7 @@
     "fakerphp/faker": "^1.9.1",
     "haydenpierce/class-finder": "^0.4.3",
     "itsgoingd/clockwork": "5.0.*",
+    "jasny/phpdoc-parser": "dev-master",
     "johnkary/phpunit-speedtrap": "^4.0",
     "mockery/mockery": "1.4.*",
     "nunomaduro/collision": "^5.0",

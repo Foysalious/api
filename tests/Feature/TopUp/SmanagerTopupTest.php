@@ -20,6 +20,9 @@ use Tests\Feature\FeatureTestCase;
 use Tests\Mocks\MockAccountingEntryClient;
 use Tests\Mocks\MockExpenseClient;
 
+/**
+ * @author Khairun Nahar <khairun@sheba.xyz>
+ */
 class SmanagerTopupTest extends FeatureTestCase
 {
     /** @var $topUpVendor */

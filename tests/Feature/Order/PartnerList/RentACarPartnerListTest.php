@@ -1,8 +1,13 @@
-<?php namespace Tests\Feature\Order\PartnerList;
+<?php
+
+namespace Tests\Feature\Order\PartnerList;
 
 use GuzzleHttp\Client;
 use Tests\Feature\FeatureTestCase;
 
+/**
+ * @author Mahanaz Tabassum <mahanaz.tabassum@sheba.xyz>
+ */
 class RentACarPartnerListTest extends FeatureTestCase
 {
     private $list;
@@ -14,17 +19,49 @@ class RentACarPartnerListTest extends FeatureTestCase
             'code',
             'message',
             'partners' => [
-                '*' => ['id', 'name', 'sub_domain', 'description', 'logo', 'contact_no', 'is_available', 'discount', 'discounted_price', 'original_price', 'is_min_price_applied', 'total_jobs', 'total_jobs_of_category',
-                    'rating', 'total_ratings', 'total_five_star_ratings', 'ongoing_jobs',
+                '*' => [
+                    'id',
+                    'name',
+                    'sub_domain',
+                    'description',
+                    'logo',
+                    'contact_no',
+                    'is_available',
+                    'discount',
+                    'discounted_price',
+                    'original_price',
+                    'is_min_price_applied',
+                    'total_jobs',
+                    'total_jobs_of_category',
+                    'rating',
+                    'total_ratings',
+                    'total_five_star_ratings',
+                    'ongoing_jobs',
                     'breakdown' => [
-                        '*' => ['id', 'discount', 'cap', 'amount', 'is_percentage', 'discounted_price', 'original_price', 'min_price', 'unit_price', 'sheba_contribution', 'partner_contribution',
-                            'is_min_price_applied', 'name', 'option', 'quantity', 'unit', 'questions' => [
-                                '*' => ['question', 'answer']
-                            ]
-                        ]
-                    ]
-                ]
-            ]
+                        '*' => [
+                            'id',
+                            'discount',
+                            'cap',
+                            'amount',
+                            'is_percentage',
+                            'discounted_price',
+                            'original_price',
+                            'min_price',
+                            'unit_price',
+                            'sheba_contribution',
+                            'partner_contribution',
+                            'is_min_price_applied',
+                            'name',
+                            'option',
+                            'quantity',
+                            'unit',
+                            'questions' => [
+                                '*' => ['question', 'answer'],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
         ];
     }
 

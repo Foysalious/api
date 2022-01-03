@@ -6,6 +6,9 @@ use Tests\Feature\FeatureTestCase;
 use Sheba\Dal\InfoCall\InfoCall;
 use Throwable;
 
+/**
+ * @author Mahanaz Tabassum <mahanaz.tabassum@sheba.xyz>
+ */
 class InfoCallDetailsTest extends FeatureTestCase
 {
     private $infocall;

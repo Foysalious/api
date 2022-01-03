@@ -5,6 +5,9 @@ namespace Tests\Unit\Accounting;
 use Sheba\Repositories\PaymentLinkRepository;
 use Tests\Unit\UnitTestCase;
 
+/**
+ * @author Zubayer alam <zubayer@sheba.xyz>
+ */
 class PaymentLinkAccountingEntryTest extends UnitTestCase
 {
     private $payload = [

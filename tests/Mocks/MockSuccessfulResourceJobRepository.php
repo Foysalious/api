@@ -1,7 +1,12 @@
-<?php namespace Tests\Mocks;
+<?php
+
+namespace Tests\Mocks;
 
 use App\Repositories\ResourceJobRepository;
 
+/**
+ * @author Shafiqul Islam <shafiqul@sheba.xyz>
+ */
 class MockSuccessfulResourceJobRepository extends ResourceJobRepository
 {
     public function changeStatus($job, $request)

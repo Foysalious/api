@@ -2,6 +2,9 @@
 
 namespace Tests\Unit\Accounting;
 
+/**
+ * @author Zubayer alam <zubayer@sheba.xyz>
+ */
 class IncomeExpenseEntryApiTest extends AccountingFeatureTest
 {
     public function test_income_entry_api()

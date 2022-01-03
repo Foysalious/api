@@ -3,6 +3,9 @@
 use Sheba\Dal\Service\Service;
 use Tests\Feature\FeatureTestCase;
 
+/**
+ * @author Dolon Banik <dolon@sheba.xyz>
+ */
 class sProOrderDetailsTest extends FeatureTestCase
 {
     private $service;

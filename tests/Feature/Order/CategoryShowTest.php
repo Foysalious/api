@@ -8,6 +8,9 @@ use Sheba\Dal\Service\Service;
 use Sheba\Services\Type as ServiceType;
 use Tests\Feature\FeatureTestCase;
 
+/**
+ * @author Mahanaz Tabassum <mahanaz.tabassum@sheba.xyz>
+ */
 class CategoryShowTest extends FeatureTestCase
 {
     /** @var Location */

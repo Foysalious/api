@@ -5,6 +5,9 @@ namespace Tests\Unit\Accounting;
 use GuzzleHttp\Client;
 use Tests\Feature\FeatureTestCase;
 
+/**
+ * @author Zubayer alam <zubayer@sheba.xyz>
+ */
 class AccountingFeatureTest extends FeatureTestCase
 {
     protected $token;

@@ -4,6 +4,9 @@ use Tests\Feature\FeatureTestCase;
 use Sheba\Dal\PaymentGateway\Model as PaymentGateway;
 use Throwable;
 
+/**
+ * @author Mahanaz Tabassum <mahanaz.tabassum@sheba.xyz>
+ */
 class CustomerTransactionWalletTest extends FeatureTestCase
 {
     private $shebaCredit;

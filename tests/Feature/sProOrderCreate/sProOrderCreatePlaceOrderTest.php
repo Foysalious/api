@@ -26,6 +26,9 @@ use Sheba\Dal\PartnerService\PartnerService;
 use Sheba\Dal\Service\Service;
 use Tests\Feature\FeatureTestCase;
 
+/**
+ * @author Dolon Banik <dolon@sheba.xyz>
+ */
 class sProOrderCreatePlaceOrderTest extends FeatureTestCase
 {
     protected $secondaryCategory;

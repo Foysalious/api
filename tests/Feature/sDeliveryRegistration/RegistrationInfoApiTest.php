@@ -5,6 +5,9 @@ namespace Tests\Feature\sDeliveryRegistration;
 use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInfo;
 use Tests\Feature\FeatureTestCase;
 
+/**
+ * @author Md Taufiqur Rahman Miraz <taufiqur.rahman@sheba.xyz>
+ */
 class RegistrationInfoApiTest extends FeatureTestCase
 {
     private $partnerDeliveryinfo;

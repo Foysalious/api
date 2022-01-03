@@ -7,10 +7,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
-use DB;
 use Illuminate\Support\Str;
 use Illuminate\Contracts\Console\Kernel;
 
+/**
+ * @author Shafiqul Islam <shafiqul@sheba.xyz>
+ */
 abstract class TestCase extends BaseTestCase
 {
     use CreatesApplication, HasFactory, RefreshDatabase;
@@ -32,6 +34,9 @@ abstract class TestCase extends BaseTestCase
         });
     }
 
+    /**
+     * @author Hasan Hafiz Pasha <mach.pasha@gmail.com>
+     */
     protected function refreshTestDatabase()
     {
         ini_set('memory_limit', '-1');

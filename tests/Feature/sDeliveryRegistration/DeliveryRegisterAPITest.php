@@ -7,6 +7,9 @@ use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInfo;
 use Tests\Feature\FeatureTestCase;
 use Tests\Mocks\MockDeliveryServerClient;
 
+/**
+ * @author Md Taufiqur Rahman Miraz <taufiqur.rahman@sheba.xyz>
+ */
 class DeliveryRegisterAPITest extends FeatureTestCase
 {
     private $partnerDeliveryinfo;

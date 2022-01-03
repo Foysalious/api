@@ -7,6 +7,9 @@ use GuzzleHttp\Client;
 use Illuminate\Support\Collection;
 use Tests\Feature\FeatureTestCase;
 
+/**
+ * @author Mahanaz Tabassum <mahanaz.tabassum@sheba.xyz>
+ */
 class OrderPlaceTest extends FeatureTestCase
 {
     protected $profile;

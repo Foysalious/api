@@ -4,6 +4,9 @@ namespace Tests\Feature\sProOrderCreate;
 
 use Tests\Feature\FeatureTestCase;
 
+/**
+ * @author Dolon Banik <dolon@sheba.xyz>
+ */
 class sProOrderCreateProfileTest extends FeatureTestCase
 {
 

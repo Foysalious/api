@@ -3,6 +3,7 @@
 namespace App\Console;
 
 use App\Console\Commands\GeneratePayslip;
+use App\Console\Commands\GenerateTestAuthorList;
 use App\Console\Commands\ProductUpload;
 use App\Console\Commands\SetReleaseVersion;
 use App\Console\Commands\TestCommand;
@@ -11,7 +12,6 @@ use App\Console\Commands\Payslip;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use Sheba\Algolia\AlgoliaSync;
-use Tests\Console\Commands\GenerateTestAuthorList;
 
 class Kernel extends ConsoleKernel
 {

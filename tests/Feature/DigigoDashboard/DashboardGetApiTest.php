@@ -2,6 +2,9 @@
 
 namespace Tests\Feature\DigigoDashboard;
 
+/**
+ * @author Nawshin Tabassum <nawshin.tabassum@sheba.xyz>
+ */
 class DashboardGetApiTest extends \Tests\Feature\FeatureTestCase
 {
     public function setUp(): void

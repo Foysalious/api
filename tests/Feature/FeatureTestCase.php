@@ -39,6 +39,9 @@ use Tests\Mocks\MockPosOrderServerClient;
 use Tests\TestCase;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
+/**
+ * @author Shafiqul Islam <shafiqul@sheba.xyz>
+ */
 class FeatureTestCase extends TestCase
 {
     use DatabaseMigrations;

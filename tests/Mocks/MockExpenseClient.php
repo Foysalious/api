@@ -1,7 +1,12 @@
-<?php namespace Tests\Mocks;
+<?php
+
+namespace Tests\Mocks;
 
 use Sheba\ExpenseTracker\Repository\ExpenseTrackerClient;
 
+/**
+ * @author Shafiqul Islam <shafiqul@sheba.xyz>
+ */
 class MockExpenseClient extends ExpenseTrackerClient
 {
     /**
@@ -22,8 +27,8 @@ class MockExpenseClient extends ExpenseTrackerClient
     {
         return [
             "account" => [
-                "id" => 1
-            ]
+                "id" => 1,
+            ],
         ];
     }
 

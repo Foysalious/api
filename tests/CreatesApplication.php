@@ -3,6 +3,9 @@
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Foundation\Application;
 
+/**
+ * @author Khairun Nahar <khairun@sheba.xyz>
+ */
 trait CreatesApplication
 {
     /**

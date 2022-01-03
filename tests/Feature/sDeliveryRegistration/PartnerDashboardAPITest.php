@@ -7,6 +7,9 @@ use App\Models\PartnerResource;
 use Tests\Feature\FeatureTestCase;
 use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInfo;
 
+/**
+ * @author Md Taufiqur Rahman Miraz <taufiqur.rahman@sheba.xyz>
+ */
 class PartnerDashboardAPITest extends FeatureTestCase
 {
     public function setUp(): void

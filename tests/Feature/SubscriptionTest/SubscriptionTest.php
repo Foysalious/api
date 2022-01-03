@@ -13,6 +13,9 @@ use Tests\Feature\FeatureTestCase;
 use Tests\Mocks\MockExpenseClient;
 use Tests\Mocks\MockSmsVendor;
 
+/**
+ * @author Mahanaz Tabassum <mahanaz.tabassum@sheba.xyz>
+ */
 class SubscriptionTest extends FeatureTestCase
 {
     /** @var PartnerSubscriptionPackage */

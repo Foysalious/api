@@ -1,21 +1,31 @@
-<?php namespace Tests\Mocks;
+<?php
+namespace Tests\Mocks;
 
 use App\Sheba\Partner\Delivery\DeliveryServerClient;
 
+/**
+ * @author Shafiqul Islam <shafiqul@sheba.xyz>
+ */
 class MockDeliveryServerClient extends DeliveryServerClient
 {
     public function post($uri, $data, $multipart = false)
     {
-        if ($uri == 'merchants/register') return $this->getRegistrationData();
+        if ($uri == 'merchants/register') {
+            return $this->getRegistrationData();
+        }
         // if($uri == 'merchants/register' && $this->get422Registrationersponse()['code']==422) return $this->get422Registrationersponse();
-        if ($uri == 'orders') return $this->getOrderData();
-        if ($uri == 'orders/track' && $this->getDeliveryOrderCreatedStatus()['data']['status'] == "Created") return $this->getDeliveryOrderCreatedStatus();
-
+        if ($uri == 'orders') {
+            return $this->getOrderData();
+        }
+        if ($uri == 'orders/track' && $this->getDeliveryOrderCreatedStatus()['data']['status'] == "Created") {
+            return $this->getDeliveryOrderCreatedStatus();
+        }
     }
 
     private function getRegistrationData()
     {
-        json_decode('{
+        json_decode(
+            '{
             "data": {
                 "uid": "M-2021-0001",
                 "paperfly_merchant_code": "M-1-6563",
@@ -43,13 +53,15 @@ class MockDeliveryServerClient extends DeliveryServerClient
                     "designation": "Manager"
                 }
             }
-        }', true);
+        }',
+            true
+        );
     }
 
     private function getOrderData()
     {
-
-        return json_decode('{
+        return json_decode(
+            '{
             "data": {
                 "id": 16,
                 "merchant_id": 1,
@@ -78,9 +90,9 @@ class MockDeliveryServerClient extends DeliveryServerClient
                 },
                 "created_at": "2021-03-23T09:26:01.000000Z"
             }
-        }', true);
-
-
+        }',
+            true
+        );
     }
 
     /*    private function get422Registrationersponse()
@@ -94,7 +106,8 @@ class MockDeliveryServerClient extends DeliveryServerClient
 
     private function getDeliveryOrderCreatedStatus()
     {
-        return json_decode('{
+        return json_decode(
+            '{
           "data": {
                 "id": 16,
                 "merchant_id": 1,
@@ -130,6 +143,8 @@ class MockDeliveryServerClient extends DeliveryServerClient
                 },
                 "created_at": "2021-03-23T09:26:01.000000Z"
           }
-        }', true);
+        }',
+            true
+        );
     }
 }

@@ -7,6 +7,9 @@ use Carbon\Carbon;
 use Tests\Feature\FeatureTestCase;
 use Sheba\Dal\BusinessHoliday\Model as BusinessHoliday;
 
+/**
+ * @author Nawshin Tabassum <nawshin.tabassum@sheba.xyz>
+ */
 class HolidaySettingsGetApiTest extends FeatureTestCase
 {
     /** @var BusinessHoliday $business_holidays */

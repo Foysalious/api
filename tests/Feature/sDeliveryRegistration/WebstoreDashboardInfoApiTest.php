@@ -8,6 +8,9 @@ use Factory\PartnerDeliveryInfoFactory;
 use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInfo;
 use Tests\Feature\FeatureTestCase;
 
+/**
+ * @author Md Taufiqur Rahman Miraz <taufiqur.rahman@sheba.xyz>
+ */
 class WebstoreDashboardInfoApiTest extends FeatureTestCase
 
 {

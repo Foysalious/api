@@ -2,6 +2,9 @@
 
 namespace Tests\Mocks;
 
+/**
+ * @author Shafiqul Islam <shafiqul@sheba.xyz>
+ */
 class MockSmsVendor
 {
     public function send($mobile, $msg)

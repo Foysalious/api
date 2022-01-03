@@ -12,6 +12,9 @@ use Tests\Feature\FeatureTestCase;
 use Tests\Mocks\MockExpenseClient;
 use Carbon\Carbon;
 
+/**
+ * @author Zubayer alam <zubayer@sheba.xyz>
+ */
 class RegistrationTest extends FeatureTestCase
 {
     /** @var PartnerSubscriptionPackage */
