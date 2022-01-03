@@ -89,7 +89,11 @@ class IncomeExpenseController extends Controller
             $this->validate($request, ['customer_id' => 'required']);
         }
 //            $product = (json_decode($request->inventory_products, true));
-        $type = count(json_decode($request->inventory_products, true)) ? EntryTypes::INVENTORY : EntryTypes::EXPENSE;
+        if ($request->has('inventory_products')) {
+            $type = count(json_decode($request->inventory_products, true)) ? EntryTypes::INVENTORY : EntryTypes::EXPENSE;
+        } else {
+            $type = EntryTypes::EXPENSE;
+        }
         $response = $this->accountingRepo->updateEntry($request, $type, $expense_id);
         return api_response($request, $response, 200, ['data' => $response]);
     }
