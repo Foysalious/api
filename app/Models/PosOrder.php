@@ -2,6 +2,7 @@
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Log;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\POSOrder\Events\PosOrderSaved as PosOrderSavedEvent;
 use Sheba\Dal\POSOrder\OrderStatuses as POSOrderStatuses;
@@ -58,6 +59,7 @@ class PosOrder  extends BaseModel
         $this->originalTotal = round($this->totalBill - $this->appliedDiscount, 2);
         if (isset($this->emi_month) && !$this->interest) {
             $data = Calculations::getMonthData($this->originalTotal, (int)$this->emi_month, false);
+            Log::debug(["TAXXXXXXX" => $data]);
             $this->interest = $data['total_interest'];
             $this->bank_transaction_charge = $data['bank_transaction_fee'];
             $this->update(['interest' => $this->interest, 'bank_transaction_charge' => $this->bank_transaction_charge]);
