@@ -15,6 +15,7 @@ use App\Sheba\Partner\Delivery\Methods;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\AccountingRepository;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\JournalCreateRepository;
@@ -329,6 +330,7 @@ class Creator
         $entry = app(AutomaticEntryRepository::class);
         $order = $order->calculate();
         $amount = (double)$order->getNetBill();
+        Log::debug(["POS" => $amount]);
         $profile = $order->customer ? $order->customer->profile : new Profile();
         $entry->setPartner($this->partner)
             ->setParty($profile)
