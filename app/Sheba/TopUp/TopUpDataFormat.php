@@ -21,7 +21,7 @@ class TopUpDataFormat
         foreach ($topups as $topup) {
             /** @var TopUpOrder $topup */
             $payee_mobile = $topup->payee_mobile;
-            $payee_name = $topup->payee_name ? $topup->payee_name : 'N/A';
+            $payee_name = $topup->payee_name ?: 'N/A';
             $amount = $topup->amount;
             $operator = $topup->vendor->name;
             $payee_mobile_type = $topup->payee_mobile_type;

@@ -74,16 +74,19 @@ class DataFormatValidator extends Validator
         $this->total = $this->excel->getTotal();
         $this->data = $this->excel->getData();
         $this->filePath = $this->excel->getFilePath();
-
         $excel_error = null;
         $halt_top_up = false;
+        $this->excelDataFormatError->setAgent($this->agent)->setFile($this->filePath);
+        if ($this->total <= 0){
+            $top_up_excel_data_format_errors = $this->excelDataFormatError->takeCompletedAction();
+            throw new InvalidTopupData($top_up_excel_data_format_errors, 'Check The Excel Data Format Properly. There may be excel header or column missing.', 420);
+        }
         $total_recharge_amount = 0;
 
         $mobile_field = TopUpExcel::MOBILE_COLUMN_TITLE;
         $amount_field = TopUpExcel::AMOUNT_COLUMN_TITLE;
         $operator_field = TopUpExcel::VENDOR_COLUMN_TITLE;
         $connection_type = TopUpExcel::TYPE_COLUMN_TITLE;
-        $this->excelDataFormatError->setAgent($this->agent)->setFile($this->filePath);
 
         $this->data->each(function ($value, $key) use ($excel_error, &$halt_top_up, &$total_recharge_amount, $mobile_field, $amount_field, $operator_field, $connection_type) {
             if (!$this->isMobileNumberValid($value->$mobile_field) && !$this->isAmountInteger($value->$amount_field)) {

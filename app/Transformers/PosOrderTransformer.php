@@ -20,6 +20,12 @@ class PosOrderTransformer extends TransformerAbstract
     {
         $refundable = $order->isRefundable();
         $refund_status = $order->getRefundStatus();
+        $delivery_by_third_party = 0;
+        if ($order->delivery_vendor_name && $order->delivery_vendor_name == Methods::SDELIVERY) {
+            $delivery_by_third_party = 1;
+        } elseif ($order->delivery_thana && $order->delivery_district) {
+            $delivery_by_third_party = 1;
+        }
         $data = [
             'id' => $order->id,
             'previous_order_id' => $order->previous_order_id,
@@ -46,8 +52,8 @@ class PosOrderTransformer extends TransformerAbstract
             'partner_wise_previous_order_id' => $order->previousOrder ? $order->previousOrder->partner_wise_order_id : null,
             'sales_channel' => $order->sales_channel,
             'delivery_charge' => $order->delivery_charge,
-            'delivery_by_third_party' => $order->delivery_thana && $order->delivery_district ? 1 : 0,
-            'selected_delivery_method' => $this->getDeliveryMethod($order->partner),
+            'delivery_by_third_party' => $delivery_by_third_party,
+            'selected_delivery_method' => $delivery_by_third_party ? Methods::SDELIVERY : Methods::OWN_DELIVERY,
             'total_weight' => $order->weight
         ];
 

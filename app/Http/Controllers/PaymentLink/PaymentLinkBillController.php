@@ -11,6 +11,7 @@ use Sheba\Payment\AvailableMethods;
 use Sheba\Payment\Exceptions\FailedToInitiate;
 use Sheba\Payment\Exceptions\InitiateFailedException;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
+use Sheba\Payment\Exceptions\StoreNotFoundException;
 use Sheba\Payment\Factory\PaymentStrategy;
 use Sheba\Payment\PaymentManager;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
@@ -89,6 +90,9 @@ class PaymentLinkBillController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (InitiateFailedException $e) {
+            logError($e);
+            return api_response($request, null, $e->getCode(),['message'=>$e->getMessage()]);
+        } catch (StoreNotFoundException $e) {
             logError($e);
             return api_response($request, null, $e->getCode(),['message'=>$e->getMessage()]);
         } catch (\Throwable $e) {

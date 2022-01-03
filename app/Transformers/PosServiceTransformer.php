@@ -1,9 +1,14 @@
 <?php namespace App\Transformers;
 
+use App\Models\PartnerPosService;
 use League\Fractal\TransformerAbstract;
 
 class PosServiceTransformer extends TransformerAbstract
 {
+    /**
+     * @param PartnerPosService $service
+     * @return array
+     */
     public function transform($service)
     {
         $service_discount = $service->discount();
@@ -19,15 +24,17 @@ class PosServiceTransformer extends TransformerAbstract
             'weight_unit' => $service->weight_unit ? array_merge(config('weight.weight_unit')[$service->weight_unit], ['key' => $service->weight_unit]) : null,
             'is_published_for_shop' => (int)$service->is_published_for_shop,
             'price' => $service->price,
+            'original_price' => (double) $service->price,
             'wholesale_price' => $service->wholesale_price,
-            'cost' => $service->cost,
+            'cost' => $service->getLastCost(),
             'category_id' => $service->subCategory->parent->id,
             'master_category_id' => $service->subCategory->parent->id,
             'category_name' => $service->subCategory->parent->name,
             'sub_category_id' => $service->subCategory->id,
             'sub_category_name' => $service->subCategory->name,
-            'stock_applicable' => !is_null($service->stock) ? true : false,
-            'stock' => $service->stock,
+            'stock_applicable' => !is_null($service->getStock()) ? true : false,
+            'last_stock' => $service->getLastStock(),
+            'stock' => $service->getStock(),
             'vat_applicable' => $service->vat_percentage ? true : false,
             'vat' => $service->vat_percentage,
             'unit' => $service->unit ? array_merge(constants('POS_SERVICE_UNITS')[$service->unit], ['key' => $service->unit]) : null,
@@ -53,8 +60,7 @@ class PosServiceTransformer extends TransformerAbstract
                     'id' => $image->id,
                     'image_link' => $image->image_link
                 ];
-
-            }) : []
+            }) : [],
         ];
     }
 }

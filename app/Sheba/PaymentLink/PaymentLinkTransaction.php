@@ -3,9 +3,15 @@
 
 namespace Sheba\PaymentLink;
 
-
 use App\Models\Payment;
+use App\Models\PosCustomer;
+use App\Models\PosOrder;
+use App\Sheba\AccountingEntry\Constants\EntryTypes;
+use App\Sheba\AccountingEntry\Repository\PaymentLinkAccountingRepository;
+use App\Sheba\Pos\Order\PosOrderObject;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\FraudDetection\TransactionSources;
+use Sheba\Pos\Customer\PosCustomerResolver;
 use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
@@ -21,7 +27,9 @@ class PaymentLinkTransaction
     private $formattedRechargeAmount;
     /** @var HasWalletTransaction $receiver */
     private $receiver;
+    private $customer;
     private $tax;
+    private $target;
     private $walletTransactionHandler;
     /**
      * @var PaymentLinkTransformer
@@ -31,7 +39,7 @@ class PaymentLinkTransaction
      * @var Payment
      */
     private $payment;
-    private $rechargeTransaction;
+//    private $rechargeTransaction;
     private $linkCommission;
     /**
      * @var string[]
@@ -45,6 +53,8 @@ class PaymentLinkTransaction
 
     /*** @var SubscriptionWisePaymentLinkCharges */
     private $paymentLinkCharge;
+    private $is_due_tracker_payment_link;
+    private $real_amount;
 
     /**
      * @param Payment                $payment
@@ -75,6 +85,18 @@ class PaymentLinkTransaction
     public function getInterest()
     {
         return $this->interest;
+    }
+
+    public function setIsDueTrackerPaymentLink($is_due_tracker_payment_link)
+    {
+        $this->is_due_tracker_payment_link = $is_due_tracker_payment_link;
+        return $this;
+    }
+
+    public function setPaidBy($paid_by)
+    {
+        $this->paidBy = $paid_by;
+        return $this;
     }
 
     /**
@@ -109,6 +131,15 @@ class PaymentLinkTransaction
         return $this->paymentLink->getAmount();
     }
 
+    /**
+     * @param $target
+     * @return $this
+     */
+    public function setTarget($target)
+    {
+        $this->target = $target;
+        return $this;
+    }
 
     /**
      * @param mixed $receiver
@@ -117,6 +148,12 @@ class PaymentLinkTransaction
     public function setReceiver($receiver)
     {
         $this->receiver = $receiver;
+        return $this;
+    }
+
+    public function setCustomer($customer)
+    {
+        $this->customer = $customer;
         return $this;
     }
 
@@ -133,26 +170,21 @@ class PaymentLinkTransaction
     public function create()
     {
         $this->walletTransactionHandler->setModel($this->receiver);
-        return $this->amountTransaction()->interestTransaction()->configurePaymentLinkCharge()->feeTransaction()->setEntryAmount();
+        $paymentLinkTransaction = $this->amountTransaction()->configureServiceCharge()->feeTransaction()->setEntryAmount();
+        $this->storePaymentLinkEntry($this->amount, $this->fee, $this->interest);
+        return $paymentLinkTransaction;
+    }
 
+    private function configureServiceCharge(): PaymentLinkTransaction
+    {
+        $this->linkCommission = (new DigitalCollectionSetting())->setPartner($this->receiver)->getServiceCharge();
+        return $this;
     }
 
     private function amountTransaction()
     {
         $this->amount                  = $this->payment->payable->amount;
         $this->formattedRechargeAmount = number_format($this->amount, 2);
-        $recharge_log                  = "$this->formattedRechargeAmount TK has been collected from {$this->payment->payable->getName()}, {$this->paymentLink->getReason()}";
-        $this->rechargeTransaction     = $this->walletTransactionHandler->setType(Types::credit())->setAmount($this->amount)->setSource(TransactionSources::PAYMENT_LINK)->setTransactionDetails($this->payment->getShebaTransaction()->toArray())->setLog($recharge_log)->store();
-        return $this;
-    }
-
-    private function interestTransaction()
-    {
-        if ($this->paymentLink->isEmi()) {
-            $formatted_interest = number_format($this->interest, 2);
-            $log                = "$formatted_interest TK has been charged as emi interest fees against of Transc ID {$this->rechargeTransaction->id}, and Transc amount $this->formattedRechargeAmount";
-            $this->walletTransactionHandler->setLog($log)->setType(Types::debit())->setAmount($this->interest)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
-        }
         return $this;
     }
 
@@ -186,14 +218,11 @@ class PaymentLinkTransaction
     {
         if ($this->paymentLink->isEmi()) {
             $this->fee = $this->paymentLink->isOld() || $this->isPaidByPartner() ? $this->paymentLink->getBankTransactionCharge() + $this->tax : $this->paymentLink->getBankTransactionCharge() - $this->paymentLink->getPartnerProfit();
+            $this->real_amount = $this->paymentLink->getRealAmount();
         } else {
-            $realAmount = $this->paymentLink->getRealAmount() !== null ? $this->paymentLink->getRealAmount() : $this->calculateRealAmount();
+            $this->real_amount = $realAmount = $this->paymentLink->getRealAmount() !== null ? $this->paymentLink->getRealAmount() : $this->calculateRealAmount();
             $this->fee  = $this->paymentLink->isOld() || $this->isPaidByPartner() ? round(($this->amount * $this->linkCommission / 100) + $this->tax, 2) : round(($realAmount * $this->linkCommission / 100) + $this->tax, 2);
-
         }
-        $formatted_minus_amount = number_format($this->fee, 2);
-        $minus_log              = "($this->tax" . "TK + $this->linkCommission%) $formatted_minus_amount TK has been charged as link service fees against of Transc ID: {$this->rechargeTransaction->id}, and Transc amount: $this->formattedRechargeAmount";
-        $this->walletTransactionHandler->setLog($minus_log)->setType(Types::debit())->setAmount($this->fee)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
         return $this;
     }
 
@@ -205,7 +234,8 @@ class PaymentLinkTransaction
             $this->entryAmount = $amount;
         } else {
             if ($this->paymentLink->isEmi()) {
-                $this->entryAmount = $amount - $this->getFee() - $this->getInterest();
+//                $this->entryAmount = $amount - $this->getFee() - $this->getInterest();
+                $this->entryAmount = $amount - $this->partnerProfit;
             } else {
                 $this->entryAmount = $amount - $this->getFee() - $this->partnerProfit;
             }
@@ -223,4 +253,34 @@ class PaymentLinkTransaction
         return round($real_amount, 2);
     }
 
+    /**
+     * @param $amount
+     * @param $feeTransaction
+     * @param $interest
+     * @throws AccountingEntryServerError
+     */
+    private function storePaymentLinkEntry($amount, $feeTransaction, $interest) {
+        $this->real_amount = $this->real_amount ? : 0;
+        $customer = $this->paymentLink->getPayer();
+        /** @var PaymentLinkAccountingRepository $paymentLinkRepo */
+        $paymentLinkRepo =  app(PaymentLinkAccountingRepository::class);
+        $transaction = $paymentLinkRepo->setAmount($amount)
+            ->setBankTransactionCharge($feeTransaction)
+            ->setInterest($interest)
+            ->setAmountCleared(0)
+            ->setPaidBy($this->paidBy)
+            ->setIsDueTrackerPaymentLink($this->is_due_tracker_payment_link)
+            ->setRealAmount($this->real_amount);
+        if ($customer) {
+            $transaction = $transaction->setCustomerId($customer->id)
+                    ->setCustomerName($customer->name)
+                    ->setCustomerMobile($customer->mobile)
+                    ->setCustomerProPic($customer->pro_pic)
+                    ->setCustomerIsSupplier($customer->is_supplier);
+        }
+        if ($this->target instanceof PosOrderObject) {
+            $transaction = $transaction->setSourceId($this->target->id)->setSourceType(EntryTypes::POS);
+        }
+        $transaction->store($this->receiver->id);
+    }
 }

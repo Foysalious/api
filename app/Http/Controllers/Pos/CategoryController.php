@@ -3,12 +3,12 @@
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Models\PosCategory;
+use App\Sheba\UserMigration\Modules;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use App\Sheba\Pos\Category\Category;
-use Illuminate\Validation\ValidationException;
-use Sheba\ModificationFields;
 
 
 class CategoryController extends Controller
@@ -17,8 +17,9 @@ class CategoryController extends Controller
     {
         ini_set('memory_limit', '2048M');
         try {
+            /** @var Partner $partner */
             $partner = $request->partner->load(['posServices' => function($q){
-                $q->published();
+                $q->with('batches')->published();
             }]);
             $total_items = 0.00;
             $total_buying_price = 0.00;
@@ -92,13 +93,16 @@ class CategoryController extends Controller
                 $deleted_services = [];
             });
 
-            $master_categories->each(function ($category) use (&$category_id, &$total_items, &$total_buying_price, &$items_with_buying_price) {
+            $is_migrated_to_accounting = $partner->isMigrated(Modules::EXPENSE);
+
+            $master_categories->each(function ($category) use (&$category_id, &$total_items, &$total_buying_price, &$items_with_buying_price,$is_migrated_to_accounting) {
                 $category_id = $category->id;
                 $category->total_services = count($category->services);
-                $category->services->each(function ($service) use ($category_id, &$total_items, &$total_buying_price, &$items_with_buying_price) {
+                $category->services->each(function ($service) use ($category_id, &$total_items, &$total_buying_price, &$items_with_buying_price,$is_migrated_to_accounting) {
                     $service->pos_category_id = $category_id;
                     $service->unit = $service->unit ? constants('POS_SERVICE_UNITS')[$service->unit] : null;
                     $service->warranty_unit = $service->warranty_unit ? config('pos.warranty_unit')[$service->warranty_unit] : null;
+                    $service->stock = $is_migrated_to_accounting ? $service->batches->sum('stock') : $service->stock;
                     $service->image_gallery = $service->imageGallery ? $service->imageGallery->map(function($image){
                         return [
                             'id' =>   $image->id,
@@ -107,7 +111,7 @@ class CategoryController extends Controller
                     }) : [];
                     $total_items++;
                     if ($service->cost) $items_with_buying_price++;
-                    $total_buying_price += $service->cost * $service->stock;
+                    $total_buying_price += $this->getBuyingPriceOfService($service,$is_migrated_to_accounting);
                 });
             });
 
@@ -266,4 +270,20 @@ class CategoryController extends Controller
         $category->update($modifier, $pos_category, $request->name);
         return api_response($request, null, 200, ['message' => 'Category Updated Successfully']);
     }
+
+    public function getBuyingPriceOfService($service,$is_migrated_to_accounting)
+    {
+        /** @var $partner Partner */
+        if($is_migrated_to_accounting) {
+            $batches = $service->batches;
+            $total_buying_price = 0.0;
+            foreach ($batches as $batch) {
+                $total_buying_price += $batch->cost * $batch->stock;
+            }
+            return $total_buying_price;
+        }
+        return $service->cost * $service->stock;
+
+    }
+
 }
