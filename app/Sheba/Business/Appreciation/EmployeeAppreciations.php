@@ -68,8 +68,8 @@ class EmployeeAppreciations
         if ($early_bird_badge->count()) {
             array_push($grouped_stickers, [
             'id' => rand(-9999,-1),
-            'image' => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/stickers/sharp_cookiee_stickers-3.png",
-            'appreciation_givers' => null,
+            'image' => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/stickers/early_bird.png",
+            'appreciation_givers' => 'Auto Generated',
             'number_of_stickers' => $early_bird_badge->count()
         ]);
         array_push($all_complements, [
@@ -77,17 +77,17 @@ class EmployeeAppreciations
             "complement" => "Thanks for your extra effort! keep up the pace.",
             "sticker" => [
                 "id" => rand(-9999,-1),
-                "image" => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/stickers/thank_you_stickers.png"
+                "image" => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/stickers/early_bird.png"
             ],
-            "given_by" => ['name' => 'Admin'],
+            "given_by" => ['name' => 'Auto Generated'],
             "date" => $early_bird_badge->last()->created_at->format('dS F')
         ]);
         }
         if ($late_lateef_badge->count()) {
             array_push($grouped_stickers, [
                 'id' => rand(-9999,-1),
-                'image' => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/stickers/sharp_cookiee_stickers-3.png",
-                'appreciation_givers' => null,
+                'image' => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/stickers/late_loteef.png",
+                'appreciation_givers' => 'Auto Generated',
                 'number_of_stickers' => $late_lateef_badge->count()
             ]);
             array_push($all_complements, [
@@ -95,9 +95,9 @@ class EmployeeAppreciations
                 "complement" => "Sometimes it’s considerable. Make sure you don’t make it a habit!",
                 "sticker" => [
                     "id" => rand(-9999,-1),
-                    "image" => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/stickers/thank_you_stickers.png"
+                    "image" => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/stickers/late_loteef.png"
                 ],
-                "given_by" => ['name' => 'Admin'],
+                "given_by" => ['name' => 'Auto Generated'],
                 "date" => $late_lateef_badge->last()->created_at->format('dS F')
             ]);
         }
