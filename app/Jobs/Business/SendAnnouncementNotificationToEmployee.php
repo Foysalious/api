@@ -3,7 +3,6 @@
 use App\Models\Member;
 use App\Sheba\Business\BusinessQueue;
 use Sheba\Dal\Announcement\Announcement;
-use Sheba\PushNotificationHandler;
 
 class SendAnnouncementNotificationToEmployee extends BusinessQueue
 {
@@ -11,13 +10,11 @@ class SendAnnouncementNotificationToEmployee extends BusinessQueue
     private $members;
     /** @var Announcement */
     private $announcement;
-    private $pushNotification;
 
     public function __construct($members, Announcement $announcement)
     {
         $this->members = $members;
         $this->announcement = $announcement;
-        $this->pushNotification = new PushNotificationHandler();
         parent::__construct();
     }
 

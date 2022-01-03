@@ -19,5 +19,9 @@ class ExternalPaymentLinkRoute
             $api->post('/initiate', 'ExternalPaymentLink\\PaymentsController@initiate');
             $api->get('/details', 'ExternalPaymentLink\\PaymentsController@getDetails');
         });
+        $api->group(['middleware' => ['external_payment_link.auth']], function ($api) {
+            $api->get('/gateway-status', 'ExternalPaymentLink\\PaymentsController@getStatus');
+        });
+        $api->get('/partners/{partner}/check-gateway-status', "ExternalPaymentLink\\PaymentsController@checkGatewayStatus");
     }
 }

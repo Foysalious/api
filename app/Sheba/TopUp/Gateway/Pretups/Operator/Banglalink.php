@@ -1,5 +1,7 @@
 <?php namespace Sheba\TopUp\Gateway\Pretups\Operator;
 
+use Sheba\TopUp\Gateway\FailedReason;
+use Sheba\TopUp\Gateway\FailedReason\BanglalinkFailedReason;
 use Sheba\TopUp\Gateway\Gateway;
 use Sheba\TopUp\Gateway\Names;
 use Sheba\TopUp\Gateway\Pretups\Pretups;
@@ -69,5 +71,10 @@ class Banglalink extends Pretups implements Gateway
     public function getName()
     {
         return Names::BANGLALINK;
+    }
+
+    public function getFailedReason(): FailedReason
+    {
+        return new BanglalinkFailedReason();
     }
 }

@@ -68,6 +68,7 @@ class BusinessRoute
                 $api->group(['prefix' => 'attendances'], function ($api) {
                     $api->get('daily', 'B2b\AttendanceController@getDailyStats');
                     $api->get('monthly', 'B2b\AttendanceController@getMonthlyStats');
+                    $api->post('reconciliation', 'B2b\AttendanceReconciliationController@create');
                 });
                 $api->group(['prefix' => 'office-time'], function ($api) {
                     $api->get('/', 'B2b\AttendanceController@getOfficeTime');
@@ -89,6 +90,7 @@ class BusinessRoute
                         $api->delete('/', 'B2b\AttendanceController@destroy');
                     });
                 });
+
                 $api->group(['prefix' => 'employees'], function ($api) {
                     $api->get('/', 'B2b\CoWorkerController@index');
                     $api->post('/', 'B2b\CoWorkerController@basicInfoStore');
@@ -156,9 +158,12 @@ class BusinessRoute
                         $api->post('/', 'B2b\ProrateController@store');
                         $api->get('/', 'B2b\ProrateController@index');
                         $api->post('/delete', 'B2b\ProrateController@delete');
+                        $api->post('/run-prorate', 'B2b\ProrateController@runAutoProrate');
+                        $api->post('/leave-type-auto-prorate', 'B2b\ProrateController@leaveTypeAutoProrate');
                         $api->group(['prefix' => '{prorate}'], function ($api) {
                             $api->post('/', 'B2b\ProrateController@edit');
                         });
+
                     });
                 });
                 $api->group(['prefix' => 'orders'], function ($api) {

@@ -17,12 +17,14 @@ use Sheba\ExternalPaymentLink\Exceptions\TransactionIDNotFoundException;
 use Sheba\ExternalPaymentLink\Statics\ExternalPaymentStatics;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\ModificationFields;
+use Sheba\Payment\AvailableMethods;
 use Sheba\PaymentLink\PaymentLinkStatics;
 use Sheba\Pos\Repositories\PartnerPosCustomerRepository;
 use Sheba\Pos\Repositories\PosCustomerRepository;
 use Sheba\Repositories\ProfileRepository;
 use Sheba\RequestIdentification;
 use Sheba\PaymentLink\Creator;
+use Sheba\Dal\PgwStoreAccount\Model as PgwStoreAccount;
 
 class ExternalPayments
 {
@@ -149,11 +151,15 @@ class ExternalPayments
         ] : null;
     }
 
-
     /**
+     * @return array|null
+     * @throws InvalidEmiMonthException
+     * @throws PaymentLinkInitiateException
      */
     public function create()
     {
+        $available_methods = (new AvailableMethods())->getPublishedPartnerPaymentGateways($this->client->partner);
+        if (!count($available_methods)) throw new PaymentLinkInitiateException("No configured/published pgw store account found", 404);
         $response = null;
         DB::transaction(function () use (&$response) {
             $this->processData();
@@ -232,5 +238,48 @@ class ExternalPayments
         }
         return $this->posCustomerRepo->save(['profile_id' => $profile->id]);
 
+    }
+
+    /**
+     * @param null $partner
+     * @return bool
+     */
+    public function getGatewayStatus($partner = null): bool
+    {
+        if(!$partner && !$this->client) return false;
+        $partner = $partner ? : $this->client->partner;
+        return (bool)$partner->pgwStoreAccounts()->published()->first();
+    }
+
+    /**
+     * @param $partner
+     * @param int $for_emi
+     * @return bool
+     */
+    public function getPaymentLinkStatus($partner, $for_emi = 0): bool
+    {
+        if(!isset($partner)) return false;
+        $partner_store_accounts = $partner->pgwStoreAccounts()->published()->get();
+        if (isset($partner_store_accounts) && count($partner_store_accounts)) {
+            foreach ($partner_store_accounts as $account) {
+                $pgw_store = $account->pgw_store;
+                if ($for_emi === 1 && $pgw_store->is_emi_enabled) return true;
+            }
+            return !$for_emi;
+        }
+        return false;
+    }
+
+    /**
+     * @param $partner
+     * @return array
+     */
+    public function getPaymentGatewayStatus($partner): array
+    {
+        $regular_payment_link = $this->getPaymentLinkStatus($partner);
+        $emi_payment_link = $this->getPaymentLinkStatus($partner, 1);
+        $status = $this->getGatewayStatus($partner);
+        return ['data' => $status, "regular_payment_link" => $regular_payment_link,
+            "emi_payment_link" => $emi_payment_link, "message" => "Successful", "code" => 200];
     }
 }

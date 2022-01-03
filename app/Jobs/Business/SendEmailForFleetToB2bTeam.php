@@ -2,14 +2,12 @@
 
 use App\Models\Business;
 use App\Models\HyperLocal;
-use App\Models\Procurement;
-use Illuminate\Contracts\Queue\ShouldQueue;
+use App\Sheba\Business\BusinessEmailQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Jobs\Job;
-use Mail;
+use Sheba\Mail\BusinessMail;
 
-class SendEmailForFleetToB2bTeam extends Job implements ShouldQueue
+class SendEmailForFleetToB2bTeam extends BusinessEmailQueue
 {
     use InteractsWithQueue, SerializesModels;
 
@@ -26,6 +24,7 @@ class SendEmailForFleetToB2bTeam extends Job implements ShouldQueue
     {
         $this->business = $business;
         $this->toMail = $to_mail;
+        parent::__construct();
     }
 
     public function handle()
@@ -43,9 +42,7 @@ class SendEmailForFleetToB2bTeam extends Job implements ShouldQueue
             $address = $location->name;
             $subject = $company_name . " has shown interest in Fleet management.";
 
-            Mail::send('emails.fleet-mail', [
-                'company_name' => $company_name, 'contact_person_name' => $contact_person_name, 'contact_person_email' => $contact_person_email, 'contact_person_mobile' => $contact_person_mobile, 'address' => $address
-            ], function ($m) use ($subject) {
+            BusinessMail::send('emails.fleet-mail', ['company_name' => $company_name, 'contact_person_name' => $contact_person_name, 'contact_person_email' => $contact_person_email, 'contact_person_mobile' => $contact_person_mobile, 'address' => $address], function ($m) use ($subject) {
                 $m->to($this->toMail)->subject($subject);
             });
         }

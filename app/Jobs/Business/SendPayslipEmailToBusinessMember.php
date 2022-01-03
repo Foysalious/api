@@ -1,12 +1,11 @@
 <?php namespace App\Jobs\Business;
 
-use App\Jobs\Job;
-use Illuminate\Contracts\Queue\ShouldQueue;
+use App\Sheba\Business\BusinessEmailQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Mail;
+use Sheba\Mail\BusinessMail;
 
-class SendPayslipEmailToBusinessMember extends Job implements ShouldQueue
+class SendPayslipEmailToBusinessMember extends BusinessEmailQueue
 {
     use InteractsWithQueue, SerializesModels;
 
@@ -25,13 +24,14 @@ class SendPayslipEmailToBusinessMember extends Job implements ShouldQueue
         $this->employeeName = $employee_name;
         $this->timePeriod = $time_period;
         $this->payslipPdfFile = $payslip_pdf_file;
+        parent::__construct();
     }
 
     public function handle()
     {
         if ($this->attempts() <= 1) {
             $subject = 'Payslip of '.$this->timePeriod->start->format('F Y');
-            Mail::send('emails.payslip-email', [
+            BusinessMail::send('emails.payslip-email', [
                 'title' => $subject,
                 'employee_name' => $this->employeeName,
                 'time_period' => $this->timePeriod->start->format('F Y'),

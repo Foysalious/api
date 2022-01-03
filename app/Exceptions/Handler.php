@@ -1,5 +1,6 @@
 <?php namespace App\Exceptions;
 
+use App\Exceptions\Pos\SMS\InsufficientBalanceException;
 use App\Sheba\Release\Release;
 use Exception;
 use Illuminate\Http\Request;
@@ -26,7 +27,10 @@ class Handler extends ExceptionHandler
         HttpException::class,
         InitiateFailedException::class,
         AccessRestrictedExceptionForPackage::class,
-        PinMismatchException::class
+        PinMismatchException::class,
+        InsufficientBalanceException::class,
+        NotFoundAndDoNotReportException::class,
+        AllarKosomWillNotReportException::class
     ];
 
     /**

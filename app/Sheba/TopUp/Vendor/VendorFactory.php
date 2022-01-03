@@ -67,35 +67,9 @@ class VendorFactory
         return $this->getConstants()[$name];
     }
 
-    /**
-     * @param $mobile
-     * @return Vendor
-     * @throws Exception
-     */
-    public function getByMobile($mobile)
-    {
-        return $this->getById(1);
-    }
-
     public function getModel($id)
     {
         return TopUpVendor::find($id);
-    }
-
-    /**
-     * @return array
-     */
-    public static function sslVendorsId()
-    {
-        return [self::GP, self::TELETALK];
-    }
-
-    /**
-     * @return Builder
-     */
-    public static function sslVendors()
-    {
-        return TopUpVendor::whereIn('id', self::sslVendorsId());
     }
 
     private function getConstants()

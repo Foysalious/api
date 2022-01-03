@@ -11,6 +11,7 @@ use App\Models\Profile;
 use App\Repositories\CustomerRepository;
 use App\Repositories\FileRepository;
 use App\Repositories\ProfileRepository;
+use Sheba\Gender\Gender;
 use Carbon\Carbon;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
@@ -67,7 +68,7 @@ class CustomerController extends Controller
             $profile->dob = $request->value;
         } elseif ($field == 'gender') {
             $this->validate($request, [
-                'value' => 'required|string|in:Male,Female,Other',
+                'value' => 'required|string|in:' . Gender::implodeEnglish(),
             ]);
             $profile->gender = $request->value;
         } else {
@@ -95,7 +96,7 @@ class CustomerController extends Controller
         $request['email'] = trim($request->email);
         $this->validate($request, [
             'name' => 'string',
-            'gender'=>'string|in:Male,Female,Other',
+            'gender'=>'string|in:' . Gender::implodeEnglish(),
             'address'=>'string',
             'dob' => 'date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
             'email' => 'email|unique:profiles,email,' . $profile->id,
@@ -449,7 +450,7 @@ class CustomerController extends Controller
         $validator = Validator::make($request->all(), [
             'name'  => 'required|string',
             'email' => 'required|email|unique:profiles,email,' . $profile->id,
-            'gender'=> 'sometimes|required|in:Male,Female,Other',
+            'gender'=> 'sometimes|required|in:' . Gender::implodeEnglish(),
             'dob'   => 'sometimes|required|date|date_format:Y-m-d|before:' . date('Y-m-d')
         ]);
         return $validator->fails() ? $validator->errors()->all()[0] : false;
