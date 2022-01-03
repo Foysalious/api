@@ -156,7 +156,6 @@ class PaymentLinkController extends Controller
 
     public function store(Request $request)
     {
-        Log::debug("PAYMENT LINK STORE");
         $this->validate($request, [
             'amount'             => 'required',
             'purpose'            => 'required',
@@ -193,7 +192,7 @@ class PaymentLinkController extends Controller
         $interest                = 0;
         $bank_transaction_charge = 0;
         if ($request->filled('pos_order_id') && $request->pos_order_id) {
-            Log::debug([$this->creator->getInterest(), $this->creator->getBankTransactionCharge()]);
+            Log::debug($this->creator->getPaidBy());
             /** @var PosOrderResolver $posOrderResolver */
             $posOrderResolver = (app(PosOrderResolver::class));
             $pos_order        = $posOrderResolver->setOrderId($request->pos_order_id)->get();
@@ -222,6 +221,7 @@ class PaymentLinkController extends Controller
             }
             $payment_link['interest']                = $interest;
             $payment_link['bank_transaction_charge'] = $bank_transaction_charge;
+            Log::debug($payment_link);
             if (isset($request->partner) && isset($pos_order)) {
                 $this->dispatch(app(PosApiAfterPaymentLinkCreated::class)->setPartnerId($request->partner->id)
                     ->setPosOrderId($pos_order->id)->setPaymentLink($payment_link));
