@@ -66,16 +66,16 @@ class EmployeeAppreciations
         $late_lateef_badge = $this->businessMemberBadgeRepo->where('business_member_id', $business_member->id)->where('badge', self::LATE_LATEEF);
         if ($early_bird_badge->count()) {
             array_push($grouped_stickers, [
-            'id' => rand(-9999,-1),
+            'id' => rand(9999, 99999),
             'image' => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/stickers/early_bird.png",
             'appreciation_givers' => 'Auto Generated',
             'number_of_stickers' => $early_bird_badge->count()
         ]);
         array_push($all_complements, [
-            "id" => rand(-9999,-1),
+            "id" => rand(9999, 99999),
             "complement" => "Thanks for your extra effort! keep up the pace.",
             "sticker" => [
-                "id" => rand(-9999,-1),
+                "id" => rand(9999, 99999),
                 "image" => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/stickers/early_bird.png"
             ],
             "given_by" => ['name' => 'Auto Generated'],
@@ -84,16 +84,16 @@ class EmployeeAppreciations
         }
         if ($late_lateef_badge->count()) {
             array_push($grouped_stickers, [
-                'id' => rand(-9999,-1),
+                'id' => rand(9999, 99999),
                 'image' => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/stickers/late_loteef.png",
                 'appreciation_givers' => 'Auto Generated',
                 'number_of_stickers' => $late_lateef_badge->count()
             ]);
             array_push($all_complements, [
-                "id" => rand(-9999,-1),
+                "id" => rand(9999, 99999),
                 "complement" => "Sometimes it’s considerable. Make sure you don’t make it a habit!",
                 "sticker" => [
-                    "id" => rand(-9999,-1),
+                    "id" => rand(9999, 99999),
                     "image" => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/stickers/late_loteef.png"
                 ],
                 "given_by" => ['name' => 'Auto Generated'],
